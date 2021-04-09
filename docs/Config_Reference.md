@@ -3196,16 +3196,14 @@ mightyboard based printers).
 lcd_type: hd44780_spi
 #   Set to "hd44780_spi" for hd44780_spi displays.
 latch_pin:
-spi_speed:
 spi_software_sclk_pin:
 spi_software_mosi_pin:
 spi_software_miso_pin:
 #   The pins connected to the shift register controlling the display.
-#   The spi_software_sclk_pin corresponds to sclk_pin and
-#   spi_software_mosi_pin corresponds to sid_pin. The
-#   spi_software_miso_pin needs to be set to an unused pin of the
-#   printer mainboard as the display has no MISO pin but the software
-#   spi implementation requires this pin to be configured.
+#   The spi_software_miso_pin needs to be set to an unused pin of the
+#   printer mainboard as the shift register does not have a MISO pin,
+#   but the software spi implementation requires this pin to be
+#   configured.
 #hd44780_protocol_init: True
 #   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
 #   This is necessary on real hd44780 devices. However, one may need
@@ -3236,7 +3234,7 @@ sid_pin:
 
 ### emulated_st7920 display
 
-Information on configuring an emulated st7920 displays - found in some
+Information on configuring an emulated st7920 display - found in some
 "2.4 inch touchscreen devices" and similar.
 
 ```
