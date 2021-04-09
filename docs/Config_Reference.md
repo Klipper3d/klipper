@@ -2982,9 +2982,6 @@ define any number of sections with an "mcp4451" prefix).
 
 ```
 [mcp4451 my_digipot]
-#i2c_mcu: mcu
-#   The name of the micro-controller that the MCP4451 chip is
-#   connected to. The default is "mcu".
 i2c_address:
 #   The i2c address that the chip is using on the i2c bus. This
 #   parameter must be provided.
