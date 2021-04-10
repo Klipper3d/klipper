@@ -142,7 +142,7 @@ class CalibrationData:
         self._psd_map = {'x': self.psd_x, 'y': self.psd_y, 'z': self.psd_z,
                          'all': self.psd_sum}
         self.data_sets = 1
-    def join(self, other):
+    def add_data(self, other):
         np = self.numpy
         joined_data_sets = self.data_sets + other.data_sets
         for psd, other_psd in zip(self._psd_list, other._psd_list):

@@ -13,7 +13,8 @@ class PauseResume:
         self.is_paused = False
         self.sd_paused = False
         self.pause_command_sent = False
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         self.gcode.register_command("PAUSE", self.cmd_PAUSE)
         self.gcode.register_command("RESUME", self.cmd_RESUME)
         self.gcode.register_command("CLEAR_PAUSE", self.cmd_CLEAR_PAUSE)
@@ -25,7 +26,7 @@ class PauseResume:
                                    self._handle_pause_request)
         webhooks.register_endpoint("pause_resume/resume",
                                    self._handle_resume_request)
-    def handle_ready(self):
+    def handle_connect(self):
         self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
     def _handle_cancel_request(self, web_request):
         self.gcode.run_script("CANCEL_PRINT")

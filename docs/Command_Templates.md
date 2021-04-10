@@ -202,6 +202,9 @@ The following are common printer attributes:
   limits that are in effect. This may differ from the config file
   settings if a `SET_VELOCITY_LIMIT` (or `M204`) command alters them
   at run-time.
+- `printer.toolhead.stalls`: The total number of times (since the last
+  restart) that the printer had to be paused because the toolhead
+  moved faster than moves could be read from the G-Code input.
 - `printer.heaters.available_heaters`: Returns a list of all currently
   available heaters by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater"]`.
@@ -307,6 +310,9 @@ The following are common printer attributes:
   between micro-controller architectures and with each code revision.
 - `printer.mcu.last_stats.<statistics_name>`: Statistics information
   on the micro-controller connection.
+- `printer.system_stats.sysload`, `printer.system_stats.cputime`,
+  `printer.system_stats.memavail`: Information on the host operating
+  system and process load.
 - `printer.palette2.ping`: Amount of the last reported Palette 2 ping
   in percent.
 - `printer.palette2.remaining_load_length`: When starting a Palette 2

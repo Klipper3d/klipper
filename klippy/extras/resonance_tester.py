@@ -178,7 +178,10 @@ class ResonanceTester:
                             "%s-axis accelerometer measured no data" % (
                                 chip_axis,))
                 new_data = helper.process_accelerometer_data(chip_values)
-                data = data.join(new_data) if data else new_data
+                if data is None:
+                    data = new_data
+                else:
+                    data.add_data(new_data)
         if csv_output:
             csv_name = self.save_calibration_data('resonances', name_suffix,
                                                   helper, axis, data)
@@ -251,7 +254,7 @@ class ResonanceTester:
                     if calibration_data[axis] is None:
                         calibration_data[axis] = new_data
                     else:
-                        calibration_data[axis].join(new_data)
+                        calibration_data[axis].add_data(new_data)
 
         configfile = self.printer.lookup_object('configfile')
 

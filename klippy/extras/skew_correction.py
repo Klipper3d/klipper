@@ -26,8 +26,8 @@ class PrinterSkew:
         self.yz_factor = 0.
         self.skew_profiles = {}
         self._load_storage(config)
-        self.printer.register_event_handler("klippy:ready",
-                                            self._handle_ready)
+        self.printer.register_event_handler("klippy:connect",
+                                            self._handle_connect)
         self.next_transform = None
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('GET_CURRENT_SKEW', self.cmd_GET_CURRENT_SKEW,
@@ -39,7 +39,7 @@ class PrinterSkew:
                                desc=self.cmd_SET_SKEW_help)
         gcode.register_command('SKEW_PROFILE', self.cmd_SKEW_PROFILE,
                                desc=self.cmd_SKEW_PROFILE_help)
-    def _handle_ready(self):
+    def _handle_connect(self):
         gcode_move = self.printer.lookup_object('gcode_move')
         self.next_transform = gcode_move.set_move_transform(self, force=True)
     def _load_storage(self, config):

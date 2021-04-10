@@ -255,7 +255,7 @@ choice
     config STM32_CANBUS_PB8_PB9
         bool "CAN bus (on PB8/PB9)" if LOW_LEVEL_OPTIONS && HAVE_STM32_CANBUS
         select CANSERIAL
-    config STM32_CANBUS_PI8_PH13
+    config STM32_CANBUS_PI9_PH13
         bool "CAN bus (on PI9/PH13)" if LOW_LEVEL_OPTIONS && MACH_STM32F4
         select CANSERIAL
     config STM32_CANBUS_PB5_PB6

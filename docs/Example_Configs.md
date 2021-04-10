@@ -1,8 +1,10 @@
 This document contains guidelines for contributing an example Klipper
-configuration.
+configuration to the Klipper github repository (located in the [config
+directory](../config/)).
 
-The example Klipper configs are located in the [config
-directory](../config/).
+Note that the [Klipper Community Discourse
+server](https://community.klipper3d.org) is also a useful resource for
+finding and sharing config files.
 
 # Guidelines
 
@@ -35,7 +37,8 @@ directory](../config/).
    track in the main Klipper repository.) Similarly, we only add
    example config files for printers, kits, and boards that have
    mainstream popularity (eg, there should be at least a 100 of them
-   in active use).
+   in active use). Consider using the [Klipper Community Discourse
+   server](https://community.klipper3d.org) for other configs.
 5. Only specify those devices present on the given printer or board.
    Do not specify settings specific to your particular setup.
    1. For `generic` config files, only those devices on the mainboard

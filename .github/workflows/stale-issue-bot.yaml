@@ -27,7 +27,7 @@ jobs:
           PS: I'm just an automated script, not a human being.
 
         exempt-issue-labels: 'enhancement,bug'
-        days-before-stale: 21
+        days-before-stale: 35
         days-before-close: 7
   invalid:
     runs-on: ubuntu-latest

@@ -802,6 +802,11 @@ Visual Examples:
 #   A point index in the mesh to reference all z values to. Enabling
 #   this parameter produces a mesh relative to the probed z position
 #   at the provided index.
+#faulty_region_1_min:
+#faulty_region_1_max:
+#   Optional points that define a faulty region.  See docs/Bed_Mesh.md
+#   for details on faulty regions.  Up to 99 faulty regions may be added.
+#   By default no faulty regions are set.
 ```
 
 ## [bed_tilt]
@@ -2472,6 +2477,30 @@ clock_pin:
 #   See the "neopixel" section for information on these parameters.
 ```
 
+## [PCA9533]
+
+PCA9533 LED support. The PCA9533 is used on the mightyboard.
+
+```
+[pca9533 my_pca9533]
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. Use 98 for
+#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#initial_RED: 0
+#initial_GREEN: 0
+#initial_BLUE: 0
+#initial_WHITE: 0
+#   The PCA9533 only supports 1 or 0. The default is 0. On the
+#   mightyboard, the white led is not populated.
+#   Use GCODE to modify led values after startup.
+#   set_led led=my_pca9533 red=1 green=1 blue=1
+```
+
 ## [gcode_button]
 
 Execute gcode when a button is pressed or released (or when a pin
@@ -2982,9 +3011,6 @@ define any number of sections with an "mcp4451" prefix).
 
 ```
 [mcp4451 my_digipot]
-#i2c_mcu: mcu
-#   The name of the micro-controller that the MCP4451 chip is
-#   connected to. The default is "mcu".
 i2c_address:
 #   The i2c address that the chip is using on the i2c bus. This
 #   parameter must be provided.
@@ -3088,82 +3114,11 @@ Support for a display attached to the micro-controller.
 ```
 [display]
 lcd_type:
-#   The type of LCD chip in use. This may be "hd44780" (which is used
-#   in "RepRapDiscount 2004 Smart Controller" type displays), "st7920"
-#   (which is used in "RepRapDiscount 12864 Full Graphic Smart
-#   Controller" type displays), "emulated_st7920" (which emulate a ST7920
-#   display but won't work properly with the "st7920" display driver),
-#   "uc1701" (which is used in "MKS Mini 12864" type displays),
-#   "ssd1306", or "sh1106". This parameter must be provided.
-#hd44780_protocol_init: True
-#    Perform 8-bit/4-bit protocol initialization on an hd44780 display.
-#    This is necessary on real hd44780 devices.  However, one may
-#    need to disable this on some "clone" devices.  The default
-#    is True.
-#rs_pin:
-#e_pin:
-#d4_pin:
-#d5_pin:
-#d6_pin:
-#d7_pin:
-#   The pins connected to an hd44780 type lcd. These parameters must
-#   be provided when using an hd44780 display.
-#line_length:
-#   Set the number of characters per line for an hd44780 type lcd.
-#   Possible values are 20 (default) and 16. The number of lines is
-#   fixed to 4.
-#cs_pin:
-#sclk_pin:
-#sid_pin:
-#   The pins connected to an st7920 type lcd. These parameters must be
-#   provided when using an st7920 display.
-#en_pin:
-#spi_speed:
-#spi_software_sclk_pin:
-#spi_software_mosi_pin:
-#spi_software_miso_pin:
-#   The pins connected to an emulated_st7920 type lcd. The en_pin corresponds
-#   to the cs_pin of the st7920 type lcd, spi_software_sclk_pin corresponds
-#   to sclk_pin and spi_software_mosi_pin corresponds to sid_pin. The
-#   spi_software_miso_pin needs to be set to an unused pin of the printer
-#   mainboard as the st7920 as no MISO pin but the software spi implementation
-#   requires this pin to be configured. The default spi_speed is 1MHz.
-#cs_pin:
-#a0_pin:
-#rst_pin:
-#   The pins connected to an uc1701 type lcd. The rst_pin is
-#   optional. The cs_pin and a0_pin parameters must be provided when
-#   using an uc1701 display.
-#contrast:
-#   The contrast to set when using a uc1701 or SSD1306/SH1106 type
-#   display For UC1701 the value may range from 0 to 63. Default is
-#   40. For SSD1306/SH1106 the value may range from 0 to 256. Default
-#   is 239.
-#vcomh: 0
-#   Set the Vcomh value on SSD1306/SH1106 displays. This value is
-#   associated with a "smearing" effect on some OLED displays. The
-#   value may range from 0 to 63. Default is 0.
-#x_offset: 0
-#   Set the horizontal offset value on SSD1306/SH1106 displays.
-#   Default is 0.
-#invert: False
-#   TRUE inverts the pixels on certain OLED (SSD1306/SH1106) displays.
-#   The default is False.
-#cs_pin:
-#dc_pin:
-#spi_speed:
-#spi_bus:
-#spi_software_sclk_pin:
-#spi_software_mosi_pin:
-#spi_software_miso_pin:
-#   The pins connected to an ssd1306 type lcd when in "4-wire" spi
-#   mode. See the "common SPI settings" section for a description of
-#   the parameters that start with "spi_". The default is to use i2c
-#   mode for ssd1306 displays.
-#reset_pin:
-#   A reset pin may be specified on ssd1306 displays. If it is not
-#   specified then the hardware must have a pull-up on the
-#   corresponding lcd line.
+#   The type of LCD chip in use. This may be "hd44780", "hd44780_spi",
+#   "st7920", "emulated_st7920", "uc1701", "ssd1306", or "sh1106".
+#   See the display sections below for information on each type and
+#   additional parameters they provide. This parameter must be
+#   provided.
 #display_group:
 #   The name of the display_data group to show on the display. This
 #   controls the content of the screen (see the "display_data" section
@@ -3229,6 +3184,172 @@ lcd_type:
 #   The resistance range for a 'kill' button. Range minimum and
 #   maximum comma-separated values must be provided when using analog
 #   button.
+```
+
+### hd44780 display
+
+Information on configuring hd44780 displays (which is used in
+"RepRapDiscount 2004 Smart Controller" type displays).
+
+```
+[display]
+lcd_type: hd44780
+#   Set to "hd44780" for hd44780 displays.
+rs_pin:
+e_pin:
+d4_pin:
+d5_pin:
+d6_pin:
+d7_pin:
+#   The pins connected to an hd44780 type lcd. These parameters must
+#   be provided.
+#hd44780_protocol_init: True
+#   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
+#   This is necessary on real hd44780 devices. However, one may need
+#   to disable this on some "clone" devices. The default is True.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
+...
+```
+
+### hd44780_spi display
+
+Information on configuring an hd44780_spi display - a 20x04 display
+controlled via a hardware "shift register" (which is used in
+mightyboard based printers).
+
+```
+[display]
+lcd_type: hd44780_spi
+#   Set to "hd44780_spi" for hd44780_spi displays.
+latch_pin:
+spi_software_sclk_pin:
+spi_software_mosi_pin:
+spi_software_miso_pin:
+#   The pins connected to the shift register controlling the display.
+#   The spi_software_miso_pin needs to be set to an unused pin of the
+#   printer mainboard as the shift register does not have a MISO pin,
+#   but the software spi implementation requires this pin to be
+#   configured.
+#hd44780_protocol_init: True
+#   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
+#   This is necessary on real hd44780 devices. However, one may need
+#   to disable this on some "clone" devices. The default is True.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
+...
+```
+
+### st7920 display
+
+Information on configuring st7920 displays (which is used in
+"RepRapDiscount 12864 Full Graphic Smart Controller" type displays).
+
+```
+[display]
+lcd_type: st7920
+#   Set to "st7920" for st7920 displays.
+cs_pin:
+sclk_pin:
+sid_pin:
+#   The pins connected to an st7920 type lcd. These parameters must be
+#   provided.
+...
+```
+
+### emulated_st7920 display
+
+Information on configuring an emulated st7920 display - found in some
+"2.4 inch touchscreen devices" and similar.
+
+```
+[display]
+lcd_type: emulated_st7920
+#   Set to "emulated_st7920" for emulated_st7920 displays.
+en_pin:
+spi_software_sclk_pin:
+spi_software_mosi_pin:
+spi_software_miso_pin:
+#   The pins connected to an emulated_st7920 type lcd. The en_pin
+#   corresponds to the cs_pin of the st7920 type lcd,
+#   spi_software_sclk_pin corresponds to sclk_pin and
+#   spi_software_mosi_pin corresponds to sid_pin. The
+#   spi_software_miso_pin needs to be set to an unused pin of the
+#   printer mainboard as the st7920 as no MISO pin but the software
+#   spi implementation requires this pin to be configured.
+...
+```
+
+### uc1701 display
+
+Information on configuring uc1701 displays (which is used in "MKS Mini
+12864" type displays).
+
+```
+[display]
+lcd_type: uc1701
+#   Set to "uc1701" for uc1701 displays.
+cs_pin:
+a0_pin:
+#   The pins connected to a uc1701 type lcd. These parameters must be
+#   provided.
+#rst_pin:
+#   The pin connected to the "rst" pin on the lcd. If it is not
+#   specified then the hardware must have a pull-up on the
+#   corresponding lcd line.
+#contrast:
+#   The contrast to set. The value may range from 0 to 63 and the
+#   default is 40.
+...
+```
+
+### ssd1306 and sh1106 displays
+
+Information on configuring ssd1306 and sh1106 displays.
+
+```
+[display]
+lcd_type:
+#   Set to either "ssd1306" or "sh1106" for the given display type.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   Optional parameters available for displays connected via an i2c
+#   bus. See the "common I2C settings" section for a description of
+#   the above parameters.
+#cs_pin:
+#dc_pin:
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   The pins connected to the lcd when in "4-wire" spi mode. See the
+#   "common SPI settings" section for a description of the parameters
+#   that start with "spi_". The default is to use i2c mode for the
+#   display.
+#reset_pin:
+#   A reset pin may be specified on the display. If it is not
+#   specified then the hardware must have a pull-up on the
+#   corresponding lcd line.
+#contrast:
+#   The contrast to set. The value may range from 0 to 256 and the
+#   default is 239.
+#vcomh: 0
+#   Set the Vcomh value on the display. This value is associated with
+#   a "smearing" effect on some OLED displays. The value may range
+#   from 0 to 63. Default is 0.
+#invert: False
+#   TRUE inverts the pixels on certain OLED displays.  The default is
+#   False.
+#x_offset: 0
+#   Set the horizontal offset value on SH1106 displays. The default is
+#   0.
+...
 ```
 
 ## [display_data]
