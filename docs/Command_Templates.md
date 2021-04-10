@@ -307,6 +307,9 @@ The following are common printer attributes:
   between micro-controller architectures and with each code revision.
 - `printer.mcu.last_stats.<statistics_name>`: Statistics information
   on the micro-controller connection.
+- `printer.system_stats.sysload`, `printer.system_stats.cputime`,
+  `printer.system_stats.memavail`: Information on the host operating
+  system and process load.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading
