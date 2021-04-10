@@ -289,7 +289,6 @@ class ProbeEndstopWrapper:
         self.home_start = self.mcu_endstop.home_start
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
-        self.gcode = self.printer.lookup_object('gcode')
         # multi probes state
         self.multi = 'OFF'
     def _build_config(self):
@@ -297,17 +296,6 @@ class ProbeEndstopWrapper:
         for stepper in kin.get_steppers():
             if stepper.is_active_axis('z'):
                 self.add_stepper(stepper)
-    def verify_raise_probe(self):
-        for retry in range(3):
-            success = self.query_endstop(0.100)
-            if success:
-                # The "probe raised" test completed successfully
-                break
-            if retry >= 2:
-                raise self.printer.command_error("Failed to raise probe")
-            self.gcode.respond_info(
-                "Failed to verify probe is raised; retrying.")
-            self.deactivate_gcode.run_gcode_from_command()
     def raise_probe(self):
         toolhead = self.printer.lookup_object('toolhead')
         start_pos = toolhead.get_position()
@@ -330,7 +318,6 @@ class ProbeEndstopWrapper:
         if self.stow_on_each_sample:
             return
         self.raise_probe()
-        self.verify_raise_probe()
         self.multi = 'OFF'
     def probe_prepare(self, hmove):
         if self.multi == 'OFF' or self.multi == 'FIRST':
@@ -339,7 +326,7 @@ class ProbeEndstopWrapper:
                 self.multi = 'ON'
     def probe_finish(self, hmove):
         if self.multi == 'OFF':
-            self.verify_raise_probe()
+            self.raise_probe()
     def get_position_endstop(self):
         return self.position_endstop
 
