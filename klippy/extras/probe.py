@@ -305,7 +305,8 @@ class ProbeEndstopWrapper:
                 break
             if retry >= 2:
                 raise self.printer.command_error("Failed to raise probe")
-            self.gcode.respond_info("Failed to verify probe is raised; retrying.")
+            self.gcode.respond_info(
+                "Failed to verify probe is raised; retrying.")
             self.deactivate_gcode.run_gcode_from_command()
     def raise_probe(self):
         toolhead = self.printer.lookup_object('toolhead')
