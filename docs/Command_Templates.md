@@ -202,6 +202,9 @@ The following are common printer attributes:
   limits that are in effect. This may differ from the config file
   settings if a `SET_VELOCITY_LIMIT` (or `M204`) command alters them
   at run-time.
+- `printer.toolhead.stalls`: The total number of times (since the last
+  restart) that the printer had to be paused because the toolhead
+  moved faster than moves could be read from the G-Code input.
 - `printer.heaters.available_heaters`: Returns a list of all currently
   available heaters by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater"]`.
