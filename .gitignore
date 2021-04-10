@@ -4,5 +4,3 @@ out
 .config
 .config.old
 klippy/.version
-.idea
-venv
