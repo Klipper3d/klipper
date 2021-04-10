@@ -1515,6 +1515,11 @@ stepper_z config section.
 [probe]
 pin:
 #   Probe detection pin. This parameter must be provided.
+#stow_on_each_sample: True
+#   This determines if Klipper should command the pin to move up
+#   between each probe attempt when performing a multiple probe
+#   sequence. Read the directions in docs/BLTouch.md before setting
+#   this to False. The default is True.
 #x_offset: 0.0
 #   The distance (in mm) between the probe and the nozzle along the
 #   x-axis. The default is 0.
@@ -1584,7 +1589,6 @@ control_pin:
 #pin_move_time: 0.680
 #   The amount of time (in seconds) to wait for the BLTouch pin to
 #   move up or down. The default is 0.680 seconds.
-#stow_on_each_sample: True
 #   This determines if Klipper should command the pin to move up
 #   between each probe attempt when performing a multiple probe
 #   sequence. Read the directions in docs/BLTouch.md before setting
@@ -1609,6 +1613,7 @@ control_pin:
 #   the controller board needs 5V mode and is 5V tolerant on its input
 #   signal line). Set to "OD" to request the sensor pin output use
 #   open drain mode. The default is to not request an output mode.
+#stow_on_each_sample:
 #x_offset:
 #y_offset:
 #z_offset:
