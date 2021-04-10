@@ -220,14 +220,13 @@ class Palette2:
 
     def _wait_for_heartbeat(self):
         startTs = self.reactor.monotonic()
+        currTs = startTs
         while self.heartbeat is None and self.heartbeat < (
-                self.reactor.monotonic() -
-                SETUP_TIMEOUT) and startTs > (
-                self.reactor.monotonic() -
-                SETUP_TIMEOUT):
-            self.reactor.pause(1)
+                currTs - SETUP_TIMEOUT) and startTs > (
+                currTs - SETUP_TIMEOUT):
+            currTs = self.reactor.pause(currTs + 1.)
 
-        if self.heartbeat < (self.reactor.monotonic() - SETUP_TIMEOUT):
+        if self.heartbeat < (currTs - SETUP_TIMEOUT):
             self.signal_disconnect = True
             raise self.printer.command_error(
                 "No response from Palette 2")
