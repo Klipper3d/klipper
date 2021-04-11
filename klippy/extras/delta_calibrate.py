@@ -6,6 +6,7 @@
 import math, logging, collections
 import mathutil
 from . import probe
+from kinematics import delta
 
 # A "stable position" is a 3-tuple containing the number of steps
 # taken since hitting the endstop on each delta tower.  Delta
@@ -133,6 +134,8 @@ class DeltaCalibrate:
                                     desc=self.cmd_DELTA_ANALYZE_help)
         self.gcode.register_command('DELTA_GET_CALIBRATION', self.cmd_DELTA_GET_CALIBRATION,
                                     desc=self.cmd_DELTA_GET_CALIBRATION_help)
+        self.gcode.register_command('DELTA_SET_CALIBRATION', self.cmd_DELTA_SET_CALIBRATION,
+                                    desc=self.cmd_DELTA_SET_CALIBRATION_help)
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         if not hasattr(kin, "get_calibration"):
@@ -296,14 +299,54 @@ class DeltaCalibrate:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         delta_params = kin.get_calibration()
         self.gcode.respond_info(
-            "stepper_a: position_endstop: %.6f angle: %.6f arm: %.6f step_dist: %.6f\n"
-            "stepper_b: position_endstop: %.6f angle: %.6f arm: %.6f step_dist: %.6f\n"
-            "stepper_c: position_endstop: %.6f angle: %.6f arm: %.6f step_dist: %.6f\n"
-            "delta_radius: %.6f"
-            % (delta_params.endstops[0], delta_params.angles[0], delta_params.arms[0], delta_params.stepdists[0],
-               delta_params.endstops[1], delta_params.angles[1], delta_params.arms[1], delta_params.stepdists[1],
-               delta_params.endstops[2], delta_params.angles[2], delta_params.arms[2], delta_params.stepdists[2],
-               delta_params.radius))
+            "RADIUS=%.6f ENDSTOP_HEIGHTS=%s TOWER_ANGLES=%s ARM_LENGHTS=%s STEP_DISTANCES=%s" 
+            % (delta_params.radius,
+                (",".join(("%.6f" % (n)) for n in delta_params.endstops)),
+                (",".join(("%.6f" % (n)) for n in delta_params.angles)),
+                (",".join(("%.6f" % (n)) for n in delta_params.arms)),
+                (",".join(("%.6f" % (n)) for n in delta_params.stepdists))))
+    cmd_DELTA_SET_CALIBRATION_help = "Sets the Delta calibration values"
+    def cmd_DELTA_SET_CALIBRATION(self, gcmd):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        delta_params = kin.get_calibration()
+        new_calibration = {
+            'RADIUS': [delta_params.radius], 
+            'ENDSTOP_HEIGHTS': delta_params.angles, 
+            'TOWER_ANGLES': delta_params.arms, 
+            'ARM_LENGHTS': delta_params.endstops, 
+            'STEP_DISTANCES': delta_params.stepdists}
+
+        args = {'RADIUS': 1, 'ENDSTOP_HEIGHTS': 3, 'TOWER_ANGLES': 3, 'ARM_LENGHTS': 3, 'STEP_DISTANCES': 3}
+        for name, count in args.items():
+            data = gcmd.get(name, None)
+            if data is None:
+                continue
+            try:
+                parts = list(map(float, data.split(',')))
+            except:
+                raise gcmd.error("Unable to parse parameter '%s'" % (name,))
+            if len(parts) != count:
+                raise gcmd.error("Parameter '%s' must have %d values"
+                                 % (name, count))
+            new_calibration[name] = parts
+            logging.info("DELTA_SET_CALIBRATION %s = %s", name, parts)
+
+        logging.info("DELTA_SET_CALIBRATION %s", new_calibration)
+
+        new_delta_params = delta.DeltaCalibration(
+            new_calibration['RADIUS'][0], 
+            new_calibration['TOWER_ANGLES'], 
+            new_calibration['ARM_LENGHTS'], 
+            new_calibration['ENDSTOP_HEIGHTS'], 
+            new_calibration['STEP_DISTANCES'],
+            delta_params.rotation_steps)
+
+        configfile = self.printer.lookup_object('configfile')
+        new_delta_params.save_state(configfile)
+        self.gcode.respond_info(
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with these parameters and restart the printer.")
+
 
 def load_config(config):
     return DeltaCalibrate(config)
