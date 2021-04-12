@@ -299,7 +299,7 @@ class DeltaCalibrate:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         delta_params = kin.get_calibration()
         self.gcode.respond_info(
-            "RADIUS=%.6f ENDSTOP_HEIGHTS=%s TOWER_ANGLES=%s ARM_LENGHTS=%s STEP_DISTANCES=%s" 
+            "DELTA_CALIBRATION: RADIUS=%.6f ENDSTOP_HEIGHTS=%s TOWER_ANGLES=%s ARM_LENGTHS=%s STEP_DISTANCES=%s" 
             % (delta_params.radius,
                 (",".join(("%.6f" % (n)) for n in delta_params.endstops)),
                 (",".join(("%.6f" % (n)) for n in delta_params.angles)),
@@ -311,12 +311,12 @@ class DeltaCalibrate:
         delta_params = kin.get_calibration()
         new_calibration = {
             'RADIUS': [delta_params.radius], 
-            'ENDSTOP_HEIGHTS': delta_params.angles, 
-            'TOWER_ANGLES': delta_params.arms, 
-            'ARM_LENGHTS': delta_params.endstops, 
+            'ENDSTOP_HEIGHTS': delta_params.endstops, 
+            'TOWER_ANGLES': delta_params.angles, 
+            'ARM_LENGTHS': delta_params.arms, 
             'STEP_DISTANCES': delta_params.stepdists}
 
-        args = {'RADIUS': 1, 'ENDSTOP_HEIGHTS': 3, 'TOWER_ANGLES': 3, 'ARM_LENGHTS': 3, 'STEP_DISTANCES': 3}
+        args = {'RADIUS': 1, 'ENDSTOP_HEIGHTS': 3, 'TOWER_ANGLES': 3, 'ARM_LENGTHS': 3, 'STEP_DISTANCES': 3}
         for name, count in args.items():
             data = gcmd.get(name, None)
             if data is None:
@@ -336,7 +336,7 @@ class DeltaCalibrate:
         new_delta_params = delta.DeltaCalibration(
             new_calibration['RADIUS'][0], 
             new_calibration['TOWER_ANGLES'], 
-            new_calibration['ARM_LENGHTS'], 
+            new_calibration['ARM_LENGTHS'], 
             new_calibration['ENDSTOP_HEIGHTS'], 
             new_calibration['STEP_DISTANCES'],
             delta_params.rotation_steps)
