@@ -579,7 +579,7 @@ class Palette2:
 
     def _run_Heartbeat(self, eventtime):
         self.write_queue.put(COMMAND_HEARTBEAT)
-        self.reactor.pause(5)
+        eventtime = self.reactor.pause(eventtime + 5)
         if self.heartbeat and self.heartbeat < (
                 eventtime - HEARTBEAT_TIMEOUT):
             logging.error(
