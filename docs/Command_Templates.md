@@ -313,6 +313,12 @@ The following are common printer attributes:
 - `printer.system_stats.sysload`, `printer.system_stats.cputime`,
   `printer.system_stats.memavail`: Information on the host operating
   system and process load.
+- `printer.palette2.ping`: Amount of the last reported Palette 2 ping
+  in percent.
+- `printer.palette2.remaining_load_length`: When starting a Palette 2
+  print, this will be the amount of filament to load into the extruder.
+- `printer.palette2.is_splicing`: True when the Palette 2 is splicing
+  filament.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading
