@@ -89,6 +89,7 @@ class TMC2209:
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
         set_config_field(config, "SGTHRS", 0)
+        set_config_field(config, "internal_Rsense", 0)
 
 def load_config_prefix(config):
     return TMC2209(config)
