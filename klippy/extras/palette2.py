@@ -638,10 +638,12 @@ class Palette2:
 
     def get_status(self, eventtime=None):
         status = {
-            "ping": self.omega_pings[-1],
+            "ping": None,
             "remaining_load_length": self.remaining_load_length,
             "is_splicing": self.is_splicing
         }
+        if self.omega_pings:
+            status["ping"] = self.omega_pings[-1]
         return status
 
 def load_config(config):
