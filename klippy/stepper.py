@@ -314,6 +314,7 @@ class PrinterRail:
                 raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'" % (
                         config.get_name(),))
+            config.getboolean('homing_positive_dir', self.homing_positive_dir)
         elif ((self.homing_positive_dir
                and self.position_endstop == self.position_min)
               or (not self.homing_positive_dir
