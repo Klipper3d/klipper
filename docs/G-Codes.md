@@ -66,6 +66,13 @@ In addition, the following extended commands are availble when the
 - Load a file and start SD print: `SDCARD_PRINT_FILE FILENAME=<filename>`
 - Unload file and clear SD state: `SDCARD_RESET_FILE`
 
+When the [sdcard_loop config section](Config_Reference.md#sdcard_loop) is
+enabled, the following extended commands are available.
+- Begin a looped section in the SD print: `SDCARD_LOOP_BEGIN COUNT=<count>`
+  - A count of 0 indicates that the section should be looped indefinately.
+- End a looped section in the SD print: `SDCARD_LOOP_END`
+- Complete existing loops without further iterations: `SDCARD_LOOP_DESIST`
+
 ## G-Code arcs
 
 The following standard G-Code commands are available if a

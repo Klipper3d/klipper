@@ -1312,6 +1312,20 @@ path:
 #   be provided.
 ```
 
+## [sdcard_loop]
+
+Some printers with stage-clearing features, such as a part ejector or
+a belt printer, can find use in looping sections of the sdcard file.
+(For example, to print the same part over and over, or repeat the
+a section of a part for a chain or other repeated pattern).
+
+See the `config/sample-macros.cfg` file for a Marlin compatible M808
+G-Code macro.
+
+```
+[sdcard_loop]
+```
+
 ## [force_move]
 
 Support manually moving stepper motors for diagnostic purposes. Note,
