@@ -168,7 +168,7 @@ timer_dispatch(void)
                 next_wake_time = timespec_add(now, TIMER_DEFER_REPEAT_NS);
                 return;
             }
-            timer_repeat_until = timespec_add(now, TIMER_IDLE_REPEAT_NS);
+            timer_repeat_until = tru = timespec_add(now, TIMER_IDLE_REPEAT_NS);
         }
 
         // Next timer in the past or near future - wait for it to be ready
