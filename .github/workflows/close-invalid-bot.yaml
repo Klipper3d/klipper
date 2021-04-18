@@ -2,7 +2,7 @@
 name: "Close issues marked as invalid"
 on:
   schedule:
-    - cron: '0 */6 * * * *'
+    - cron: '0 */6 * * *'
 jobs:
   close_invalid:
     runs-on: ubuntu-latest
