@@ -100,11 +100,15 @@ timer_is_before(uint32_t time1, uint32_t time2)
     return (int32_t)(time1 - time2) < 0;
 }
 
+static uint32_t last_timer_read_time;
+
 // Return the current time (in clock ticks)
 uint32_t
 timer_read_time(void)
 {
-    return timespec_to_time(timespec_read());
+    uint32_t t = timespec_to_time(timespec_read());
+    last_timer_read_time = t;
+    return t;
 }
 
 // Activate timer dispatch as soon as possible
@@ -126,10 +130,18 @@ static uint32_t timer_repeat_until;
 static uint32_t
 timer_dispatch_many(void)
 {
-    uint32_t tru = timer_repeat_until;
+    uint32_t tru = timer_repeat_until, prev_ltrt = 0;
     for (;;) {
         // Run the next software timer
         uint32_t next = sched_timer_dispatch();
+
+        uint32_t ltrt = last_timer_read_time;
+        if (!timer_is_before(ltrt, next) && !timer_is_before(tru, ltrt)
+            && ltrt != prev_ltrt) {
+            // Can run next timer without overhead of calling timer_read_time()
+            prev_ltrt = ltrt;
+            continue;
+        }
 
         uint32_t now = timer_read_time();
         int32_t diff = next - now;
@@ -158,7 +170,7 @@ timer_dispatch_many(void)
 void
 timer_task(void)
 {
-    uint32_t now = timer_read_time();
+    uint32_t now = last_timer_read_time;
     irq_disable();
     if (timer_is_before(timer_repeat_until, now))
         timer_repeat_until = now;
