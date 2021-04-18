@@ -371,15 +371,15 @@ config_stepper oid=2 step_pin=gpio6 dir_pin=gpio7 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `06437c58` with gcc version `gcc
+The test was last run on commit `db0fb5d5` with gcc version `gcc
 (Raspbian 6.3.0-18+rpi1+deb9u1) 6.3.0 20170516` on a Raspberry Pi 3
 (revision a22082).
 
 | Linux (RPi3)         | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 340   |
-| 2 stepper            | 356   |
-| 3 stepper            | 450   |
+| 1 stepper            | 349   |
+| 2 stepper            | 350   |
+| 3 stepper            | 400   |
 
 ## Command dispatch benchmark ##
 
