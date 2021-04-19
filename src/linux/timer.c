@@ -12,14 +12,23 @@
 #include "internal.h" // console_sleep
 #include "sched.h" // DECL_INIT
 
+// Global storage for timer handling
+static struct {
+    // Last time reported by timer_read_time()
+    uint32_t last_read_time;
+    // Fields for converting from a systime to ticks
+    time_t start_sec;
+    // Maximum absolute time that can be spent in timer_dispatch()
+    uint32_t timer_repeat_until;
+    // Time of next software timer (also used to convert from ticks to systime)
+    uint32_t next_wake_counter;
+    struct timespec next_wake;
+} TimerInfo;
+
 
 /****************************************************************
  * Timespec helpers
  ****************************************************************/
-
-static uint32_t next_wake_time_counter;
-static struct timespec next_wake_time;
-static time_t start_sec;
 
 // Compare two 'struct timespec' times
 static inline uint8_t
@@ -33,7 +42,7 @@ timespec_is_before(struct timespec ts1, struct timespec ts2)
 static inline uint32_t
 timespec_to_time(struct timespec ts)
 {
-    return ((ts.tv_sec - start_sec) * CONFIG_CLOCK_FREQ
+    return ((ts.tv_sec - TimerInfo.start_sec) * CONFIG_CLOCK_FREQ
             + ts.tv_nsec / NSECS_PER_TICK);
 }
 
@@ -41,10 +50,10 @@ timespec_to_time(struct timespec ts)
 static inline struct timespec
 timespec_from_time(uint32_t time)
 {
-    int32_t counter_diff = time - next_wake_time_counter;
+    int32_t counter_diff = time - TimerInfo.next_wake_counter;
     struct timespec ts;
-    ts.tv_sec = next_wake_time.tv_sec;
-    ts.tv_nsec = next_wake_time.tv_nsec + counter_diff * NSECS_PER_TICK;
+    ts.tv_sec = TimerInfo.next_wake.tv_sec;
+    ts.tv_nsec = TimerInfo.next_wake.tv_nsec + counter_diff * NSECS_PER_TICK;
     if ((unsigned long)ts.tv_nsec >= NSECS) {
         if (ts.tv_nsec < 0) {
             ts.tv_sec--;
@@ -70,9 +79,9 @@ timespec_read(void)
 int
 timer_check_periodic(struct timespec *ts)
 {
-    if (timespec_is_before(next_wake_time, *ts))
+    if (timespec_is_before(TimerInfo.next_wake, *ts))
         return 0;
-    *ts = next_wake_time;
+    *ts = TimerInfo.next_wake;
     ts->tv_sec += 2;
     return 1;
 }
@@ -100,14 +109,12 @@ timer_is_before(uint32_t time1, uint32_t time2)
     return (int32_t)(time1 - time2) < 0;
 }
 
-static uint32_t last_timer_read_time;
-
 // Return the current time (in clock ticks)
 uint32_t
 timer_read_time(void)
 {
     uint32_t t = timespec_to_time(timespec_read());
-    last_timer_read_time = t;
+    TimerInfo.last_read_time = t;
     return t;
 }
 
@@ -115,11 +122,10 @@ timer_read_time(void)
 void
 timer_kick(void)
 {
-    next_wake_time = timespec_read();
-    next_wake_time_counter = timespec_to_time(next_wake_time);
+    TimerInfo.next_wake = timespec_read();
+    TimerInfo.next_wake_counter = timespec_to_time(TimerInfo.next_wake);
 }
 
-static uint32_t timer_repeat_until;
 #define TIMER_IDLE_REPEAT_TICKS timer_from_us(500)
 #define TIMER_REPEAT_TICKS timer_from_us(100)
 
@@ -130,16 +136,16 @@ static uint32_t timer_repeat_until;
 static uint32_t
 timer_dispatch_many(void)
 {
-    uint32_t tru = timer_repeat_until, prev_ltrt = 0;
+    uint32_t tru = TimerInfo.timer_repeat_until, prev_lrt = 0;
     for (;;) {
         // Run the next software timer
         uint32_t next = sched_timer_dispatch();
 
-        uint32_t ltrt = last_timer_read_time;
-        if (!timer_is_before(ltrt, next) && !timer_is_before(tru, ltrt)
-            && ltrt != prev_ltrt) {
+        uint32_t lrt = TimerInfo.last_read_time;
+        if (!timer_is_before(lrt, next) && !timer_is_before(tru, lrt)
+            && lrt != prev_lrt) {
             // Can run next timer without overhead of calling timer_read_time()
-            prev_ltrt = ltrt;
+            prev_lrt = lrt;
             continue;
         }
 
@@ -154,10 +160,10 @@ timer_dispatch_many(void)
             if (diff < (int32_t)(-timer_from_us(100000)))
                 try_shutdown("Rescheduled timer in the past");
             if (sched_tasks_busy()) {
-                timer_repeat_until = now + TIMER_REPEAT_TICKS;
+                TimerInfo.timer_repeat_until = now + TIMER_REPEAT_TICKS;
                 return now + TIMER_DEFER_REPEAT_TICKS;
             }
-            timer_repeat_until = tru = now + TIMER_IDLE_REPEAT_TICKS;
+            TimerInfo.timer_repeat_until = tru = now + TIMER_IDLE_REPEAT_TICKS;
         }
 
         // Next timer in the past or near future - wait for it to be ready
@@ -170,10 +176,10 @@ timer_dispatch_many(void)
 void
 timer_task(void)
 {
-    uint32_t now = last_timer_read_time;
+    uint32_t lrt = TimerInfo.last_read_time;
     irq_disable();
-    if (timer_is_before(timer_repeat_until, now))
-        timer_repeat_until = now;
+    if (timer_is_before(TimerInfo.timer_repeat_until, lrt))
+        TimerInfo.timer_repeat_until = lrt;
     irq_enable();
 }
 DECL_TASK(timer_task);
@@ -183,14 +189,14 @@ static void
 timer_dispatch(void)
 {
     uint32_t next = timer_dispatch_many();
-    next_wake_time = timespec_from_time(next);
-    next_wake_time_counter = next;
+    TimerInfo.next_wake = timespec_from_time(next);
+    TimerInfo.next_wake_counter = next;
 }
 
 void
 timer_init(void)
 {
-    start_sec = timespec_read().tv_sec + 1;
+    TimerInfo.start_sec = timespec_read().tv_sec + 1;
     timer_kick();
 }
 DECL_INIT(timer_init);
@@ -224,12 +230,12 @@ irq_restore(irqstatus_t flag)
 void
 irq_wait(void)
 {
-    console_sleep(next_wake_time);
+    console_sleep(TimerInfo.next_wake);
 }
 
 void
 irq_poll(void)
 {
-    if (!timespec_is_before(timespec_read(), next_wake_time))
+    if (!timespec_is_before(timespec_read(), TimerInfo.next_wake))
         timer_dispatch();
 }
