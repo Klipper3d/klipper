@@ -75,23 +75,23 @@ timespec_read(void)
     return ts;
 }
 
-// Check if a given time has past
-int
-timer_check_periodic(struct timespec *ts)
-{
-    if (timespec_is_before(TimerInfo.next_wake, *ts))
-        return 0;
-    *ts = TimerInfo.next_wake;
-    ts->tv_sec += 2;
-    return 1;
-}
-
 
 /****************************************************************
  * Timers
  ****************************************************************/
 
 DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
+
+// Check if a given time has past
+int
+timer_check_periodic(uint32_t *ts)
+{
+    uint32_t lrt = TimerInfo.last_read_time;
+    if (timer_is_before(lrt, *ts))
+        return 0;
+    *ts = lrt + timer_from_us(2000000);
+    return 1;
+}
 
 // Return the number of clock ticks for a given number of microseconds
 uint32_t
