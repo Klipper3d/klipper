@@ -6,6 +6,7 @@
 
 #include <time.h> // struct timespec
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
 #include "command.h" // DECL_CONSTANT
@@ -19,7 +20,7 @@ static struct {
     // Fields for converting from a systime to ticks
     time_t start_sec;
     // Flags for tracking irq_enable()/irq_disable()
-    uint32_t can_run_timers, must_wake_timers;
+    uint32_t must_wake_timers;
     // Maximum absolute time that can be spent in timer_dispatch()
     uint32_t timer_repeat_until;
     // Fields to convert from ticks to systime
@@ -171,19 +172,14 @@ timer_dispatch_many(void)
 
 // Invoke timers
 static void
-timer_dispatch(int signal)
+timer_dispatch(void)
 {
-    if (!TimerInfo.can_run_timers) {
-        TimerInfo.must_wake_timers = 1;
-        return;
-    }
-    TimerInfo.can_run_timers = 0;
     uint32_t next = timer_dispatch_many();
-    TimerInfo.can_run_timers = 1;
     struct itimerspec it;
     it.it_interval = (struct timespec){0, 0};
     TimerInfo.next_wake = it.it_value = timespec_from_time(next);
     TimerInfo.next_wake_counter = next;
+    TimerInfo.must_wake_timers = 0;
     timer_settime(TimerInfo.t_alarm, TIMER_ABSTIME, &it, NULL);
 }
 
@@ -198,6 +194,12 @@ timer_task(void)
     irq_enable();
 }
 DECL_TASK(timer_task);
+
+static void
+timer_signal(int signal)
+{
+    TimerInfo.must_wake_timers = 1;
+}
 
 void
 timer_init(void)
@@ -236,7 +238,7 @@ timer_init(void)
         return;
     }
     irq_disable();
-    struct sigaction act = {.sa_handler = timer_dispatch, .sa_flags = SA_RESTART
+    struct sigaction act = {.sa_handler = timer_signal, .sa_flags = SA_RESTART
                             , .sa_mask = TimerInfo.ss_alarm };
     ret = sigaction(SIGALRM, &act, NULL);
     if (ret < 0) {
@@ -265,44 +267,25 @@ timer_enable_signals(void)
  * Interrupt wrappers
  ****************************************************************/
 
-static void
-timer_force_wakeup(void)
-{
-    TimerInfo.must_wake_timers = 0;
-    timer_kick();
-}
-
 void
 irq_disable(void)
 {
-    barrier();
-    TimerInfo.can_run_timers = 0;
-    barrier();
 }
 
 void
 irq_enable(void)
 {
-    barrier();
-    TimerInfo.can_run_timers = 1;
-    barrier();
-    if (TimerInfo.must_wake_timers)
-        timer_force_wakeup();
 }
 
 irqstatus_t
 irq_save(void)
 {
-    uint32_t old = TimerInfo.can_run_timers;
-    irq_disable();
-    return old;
+    return 0;
 }
 
 void
 irq_restore(irqstatus_t flag)
 {
-    if (flag)
-        irq_enable();
 }
 
 void
@@ -310,20 +293,15 @@ irq_wait(void)
 {
     // Must atomically enable irqs and check for console activity
     timer_disable_signals();
-    TimerInfo.can_run_timers = 1;
-    if (TimerInfo.must_wake_timers) {
-        timer_enable_signals();
-        timer_force_wakeup();
-        TimerInfo.can_run_timers = 0;
-        barrier();
-        return;
-    }
-    console_sleep(&TimerInfo.ss_sleep);
-    TimerInfo.can_run_timers = 0;
+    if (!TimerInfo.must_wake_timers)
+        console_sleep(&TimerInfo.ss_sleep);
     timer_enable_signals();
+    irq_poll();
 }
 
 void
 irq_poll(void)
 {
+    if (readl(&TimerInfo.must_wake_timers))
+        timer_dispatch();
 }
