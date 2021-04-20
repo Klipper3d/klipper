@@ -226,6 +226,7 @@ run_tasks(void)
     uint32_t start = timer_read_time();
     for (;;) {
         // Check if can sleep
+        irq_poll();
         if (tasks_status != TS_REQUESTED) {
             start -= timer_read_time();
             irq_disable();
