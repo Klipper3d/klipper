@@ -248,6 +248,18 @@ timer_init(void)
 }
 DECL_INIT(timer_init);
 
+void
+timer_disable_signals(void)
+{
+    sigprocmask(SIG_BLOCK, &TimerInfo.ss_alarm, NULL);
+}
+
+void
+timer_enable_signals(void)
+{
+    sigprocmask(SIG_UNBLOCK, &TimerInfo.ss_alarm, NULL);
+}
+
 
 /****************************************************************
  * Interrupt wrappers
@@ -297,10 +309,10 @@ void
 irq_wait(void)
 {
     // Must atomically enable irqs and check for console activity
-    sigprocmask(SIG_BLOCK, &TimerInfo.ss_alarm, NULL);
+    timer_disable_signals();
     TimerInfo.can_run_timers = 1;
     if (TimerInfo.must_wake_timers) {
-        sigprocmask(SIG_UNBLOCK, &TimerInfo.ss_alarm, NULL);
+        timer_enable_signals();
         timer_force_wakeup();
         TimerInfo.can_run_timers = 0;
         barrier();
@@ -308,7 +320,7 @@ irq_wait(void)
     }
     console_sleep(&TimerInfo.ss_sleep);
     TimerInfo.can_run_timers = 0;
-    sigprocmask(SIG_UNBLOCK, &TimerInfo.ss_alarm, NULL);
+    timer_enable_signals();
 }
 
 void
