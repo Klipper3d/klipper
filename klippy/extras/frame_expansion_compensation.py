@@ -1,11 +1,11 @@
 # Frame Expansion Compensation
 #
-# Compensate for thermal expansion induced toolhead Z movement in real-time
-# using a frame-coupled temperature probe.
-#
 # Copyright (C) 2021  Robert Pazdzior <robertp@norbital.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+
+# Compensates for thermal expansion induced toolhead Z movement in real-time
+# using a frame-coupled temperature probe.
 
 KELVIN_TO_CELSIUS = -273.15
 STD_TEMP = 25. # reference temperature for frame measurement
@@ -48,6 +48,7 @@ class FrameExpansionCompensator:
         self.comp_enable = True
         self.last_position = [0., 0., 0., 0.]
         self.next_transform = None
+        self.comp_state = 'not homed'
 
         # Register gcode commands
         self.gcode.register_command('SET_FRAME_COMP',
@@ -83,7 +84,10 @@ class FrameExpansionCompensator:
         return {
             'temperature': self.last_temp,
             'measured_min_temp': self.measured_min,
-            'measured_max_temp': self.measured_max
+            'measured_max_temp': self.measured_max,
+            'current_z_comp': self.z_drift_offset,
+            'frame_ref_temp': self.last_home_temp,
+            'state': self.comp_state
         }
 
     def check_eligible(self, endstops):
@@ -116,6 +120,8 @@ class FrameExpansionCompensator:
 
             self.z_drift_offset = min([self.max_offset*sign, offset], key=abs)
 
+        self.update_state()
+
         # Apply offset
         new_z = pos[2] + self.z_drift_offset
         return [pos[0], pos[1], new_z, pos[3]]
@@ -139,11 +145,27 @@ class FrameExpansionCompensator:
         self.last_position[:] = newpos
 
     def temperature_callback(self, read_time, temp):
-        'Called everytime the thermistor is read.'
+        'Called everytime the thermistor is read'
         self.last_temp = temp
         if temp:
             self.measured_min = min(self.measured_min, temp)
             self.measured_max = max(self.measured_max, temp)
+
+    def update_state(self):
+        'String output for g-code and get_status state tracking.'
+        if self.last_home_temp:
+            state = 'Enabled' if self.comp_enable else "Disabled"
+        else:
+            state = 'Not homed'
+            self.z_drift_offset = 0
+
+        if self.max_comp_z and self.last_position[2] > self.max_comp_z:
+            state = 'Disabled above Z=%.3f' % self.max_comp_z
+
+        if self.z_drift_offset > self.max_offset:
+            state += ', offset limit (%.5fmm) reached' % self.max_offset
+        
+        self.comp_state = state
 
     def cmd_SET_FRAME_COMP(self, gcmd):
         new_state = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
@@ -157,26 +179,14 @@ class FrameExpansionCompensator:
             self.comp_enable = new_state
 
     def cmd_QUERY_FRAME_COMP(self, gcmd):
-        if self.last_home_temp:
-            self.calc_offset(self.last_position)
-            state = 'enabled' if self.comp_enable else "disabled"
-        else:
-            state = 'not homed'
-            self.z_drift_offset = 0
-
-        if self.max_comp_z and self.last_position[2] > self.max_comp_z:
-            state = 'disabled, above Z=%.3f' % self.max_comp_z
-
-        if self.z_drift_offset > self.max_offset:
-            state += ', offset limit (%.5f) reached' % self.max_offset
-
+        self.update_state()
         msg = ("Z Drift / Thermal Expansion Compensation:\n"
                "STATE: %s\n"
                "FRAME TEMPERATURE: ref=%.2f; now=%.2f\n"
-               "TOTAL Z COMP: z=%.4f mm" % (state,
-                                                       self.last_home_temp,
-                                                       self.last_temp,
-                                                       self.z_drift_offset)
+               "TOTAL Z COMP: z=%.4f mm" % (self.comp_state,
+                                            self.last_home_temp,
+                                            self.last_temp,
+                                            self.z_drift_offset)
         )
         gcmd.respond_info(msg)
     cmd_SET_FRAME_COMP_help = 'Enable/disable Z drift compensation.'
