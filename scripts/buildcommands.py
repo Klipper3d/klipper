@@ -46,7 +46,9 @@ class HandleCallList:
             func_code = ['    extern void %s(void);\n    %s();' % (f, f)
                          for f in funcs]
             if funcname == 'ctr_run_taskfuncs':
-                func_code = ['    irq_poll();\n' + fc for fc in func_code]
+                add_poll = '    irq_poll();\n'
+                func_code = [add_poll + fc for fc in func_code]
+                func_code.append(add_poll)
             fmt = """
 void
 %s(void)
