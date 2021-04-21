@@ -18,8 +18,6 @@ static struct {
     uint32_t last_read_time;
     // Fields for converting from a systime to ticks
     time_t start_sec;
-    // Maximum absolute time that can be spent in timer_dispatch()
-    uint32_t timer_repeat_until;
     // Time of next software timer (also used to convert from ticks to systime)
     uint32_t next_wake_counter;
     struct timespec next_wake;
@@ -126,28 +124,25 @@ timer_kick(void)
     TimerInfo.next_wake_counter = timespec_to_time(TimerInfo.next_wake);
 }
 
-#define TIMER_IDLE_REPEAT_TICKS timer_from_us(500)
-#define TIMER_REPEAT_TICKS timer_from_us(100)
+#define TIMER_IDLE_REPEAT_COUNT 100
+#define TIMER_REPEAT_COUNT 20
 
 #define TIMER_MIN_TRY_TICKS timer_from_us(2)
-#define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
 
 // Invoke timers
 static uint32_t
 timer_dispatch_many(void)
 {
-    uint32_t tru = TimerInfo.timer_repeat_until, prev_lrt = 0;
+    uint32_t repeat_count = TIMER_REPEAT_COUNT;
     for (;;) {
         // Run the next software timer
         uint32_t next = sched_timer_dispatch();
 
+        repeat_count--;
         uint32_t lrt = TimerInfo.last_read_time;
-        if (!timer_is_before(lrt, next) && !timer_is_before(tru, lrt)
-            && lrt != prev_lrt) {
+        if (!timer_is_before(lrt, next) && repeat_count)
             // Can run next timer without overhead of calling timer_read_time()
-            prev_lrt = lrt;
             continue;
-        }
 
         uint32_t now = timer_read_time();
         int32_t diff = next - now;
@@ -155,15 +150,13 @@ timer_dispatch_many(void)
             // Schedule next timer normally.
             return next;
 
-        if (unlikely(timer_is_before(tru, now))) {
+        if (unlikely(!repeat_count)) {
             // Check if there are too many repeat timers
             if (diff < (int32_t)(-timer_from_us(100000)))
                 try_shutdown("Rescheduled timer in the past");
-            if (sched_tasks_busy()) {
-                TimerInfo.timer_repeat_until = now + TIMER_REPEAT_TICKS;
-                return now + TIMER_DEFER_REPEAT_TICKS;
-            }
-            TimerInfo.timer_repeat_until = tru = now + TIMER_IDLE_REPEAT_TICKS;
+            if (sched_tasks_busy())
+                return now;
+            repeat_count = TIMER_IDLE_REPEAT_COUNT;
         }
 
         // Next timer in the past or near future - wait for it to be ready
@@ -172,19 +165,6 @@ timer_dispatch_many(void)
     }
 }
 
-// Make sure timer_repeat_until doesn't wrap 32bit comparisons
-void
-timer_task(void)
-{
-    uint32_t lrt = TimerInfo.last_read_time;
-    irq_disable();
-    if (timer_is_before(TimerInfo.timer_repeat_until, lrt))
-        TimerInfo.timer_repeat_until = lrt;
-    irq_enable();
-}
-DECL_TASK(timer_task);
-
-// Invoke timers
 static void
 timer_dispatch(void)
 {
