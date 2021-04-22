@@ -2,7 +2,7 @@
 name: "Close stale issues"
 on:
   schedule:
-  - cron: "0 0 * * *"
+    - cron: '0 0 * * *'
 jobs:
   stale:
     runs-on: ubuntu-latest
@@ -27,5 +27,5 @@ jobs:
           PS: I'm just an automated script, not a human being.
 
         exempt-issue-labels: 'enhancement,bug'
-        days-before-stale: 21
+        days-before-stale: 35
         days-before-close: 7

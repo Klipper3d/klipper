@@ -6,6 +6,40 @@ All dates in this document are approximate.
 
 # Changes
 
+20210325: Support for the `pin_map` config option is deprecated. Use
+the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
+translate to the actual micro-controller pin names. The `pin_map`
+config option will be removed in the near future.
+
+20210313: Klipper's support for micro-controllers that communicate
+with CAN bus has changed. If using CAN bus then all micro-controllers
+must be reflashed and the [Klipper configuration must be
+updated](CANBUS.md).
+
+20210310: The TMC2660 default for driver_SFILT has been changed from 1
+to 0.
+
+20210227: TMC stepper motor drivers in UART or SPI mode are now
+queried once per second whenever they are enabled - if the driver can
+not be contacted or if the driver reports an error, then Klipper will
+transition to a shutdown state.
+
+20210219: The `rpi_temperature` module has been renamed to
+`temperature_host`.  Replace any occurrences of `sensor_type:
+rpi_temperature` with `sensor_type: temperature_host`.  The path to
+the temperature file may be specified in the `sensor_path` config
+variable.  The `rpi_temperature` name is deprecated and will be
+removed in the near future.
+
+20210201: The `TEST_RESONANCES` command will now disable input shaping
+if it was previously enabled (and re-enable it after the test). In order
+to override this behavior and keep the input shaping enabled, one can
+pass an additional parameter `INPUT_SHAPING=1` to the command.
+
+20210201: The `ACCELEROMETER_MEASURE` command will now append the name
+of the accelerometer chip to the output file name if the chip was given
+a name in the corresponding adxl345 section of the printer.cfg.
+
 20201222: The `step_distance` setting in the stepper config sections
 is deprecated.  It is advised to update the config to use the
 [`rotation_distance`](Rotation_Distance.md) setting.  Support for

@@ -129,6 +129,10 @@ The following are common printer attributes:
   This is also available on "heater_fan", "fan_generic", and
   "controller_fan" config sections (eg,
   `printer["fan_generic my_fan"].speed`).
+- `printer.fan.rpm`: The measured fan speed in rotations per minute if
+  the fan has a tachometer_pin defined.  This is also available on
+  "heater_fan", "fan_generic", and "controller_fan" config sections
+  (eg, `printer["fan_generic my_fan"].rpm`).
 - `printer.gcode_move.gcode_position`: The current position of the
   toolhead relative to the current G-Code origin. That is, positions
   that one might directly send to a `G1` command. It is possible to
@@ -198,6 +202,9 @@ The following are common printer attributes:
   limits that are in effect. This may differ from the config file
   settings if a `SET_VELOCITY_LIMIT` (or `M204`) command alters them
   at run-time.
+- `printer.toolhead.stalls`: The total number of times (since the last
+  restart) that the printer had to be paused because the toolhead
+  moved faster than moves could be read from the G-Code input.
 - `printer.heaters.available_heaters`: Returns a list of all currently
   available heaters by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater"]`.
@@ -214,6 +221,8 @@ The following are common printer attributes:
   as "triggered" during the last QUERY_PROBE command. Note, due to the
   order of template expansion (see above), the QUERY_PROBE command
   must be run prior to the macro containing this reference.
+- `printer.probe.last_z_result`: Returns the Z result value of the last
+  PROBE command.
 - `printer.configfile.settings.<section>.<option>`: Returns the given
   config file setting (or default value) during the last software
   start or restart. (Any settings changed at run-time will not be
@@ -258,14 +267,15 @@ The following are common printer attributes:
   the config file if a `SET_RETRACTION` command alters them.
 - `printer["bme280 <sensor_name>"].temperature`,
   `printer["bme280 <sensor_name>"].humidity`,
-  `printer["bme280 <sensor_name>"].pressure`: The last read values
+  `printer["bme280 <sensor_name>"].pressure`,
+  `printer["bme280 <sensor_name>"].gas`: The last read values
   from the sensor.
 - `printer["htu21d <sensor_name>"].temperature`,
   `printer["htu21d <sensor_name>"].humidity`: The last read values
   from the sensor.
 - `printer["lm75 <sensor_name>"].temperature`: The last read
   temperature from the sensor.
-- `printer["rpi_temperature <sensor_name>"].temperature`: The last read
+- `printer["temperature_host <sensor_name>"].temperature`: The last read
   temperature from the sensor.
 - `printer["temperature_sensor <config_name>"].temperature`: The last read
   temperature from the sensor.
@@ -300,6 +310,15 @@ The following are common printer attributes:
   between micro-controller architectures and with each code revision.
 - `printer.mcu.last_stats.<statistics_name>`: Statistics information
   on the micro-controller connection.
+- `printer.system_stats.sysload`, `printer.system_stats.cputime`,
+  `printer.system_stats.memavail`: Information on the host operating
+  system and process load.
+- `printer.palette2.ping`: Amount of the last reported Palette 2 ping
+  in percent.
+- `printer.palette2.remaining_load_length`: When starting a Palette 2
+  print, this will be the amount of filament to load into the extruder.
+- `printer.palette2.is_splicing`: True when the Palette 2 is splicing
+  filament.
 
 The above list is subject to change - if using an attribute be sure to
 review the [Config Changes document](Config_Changes.md) when upgrading

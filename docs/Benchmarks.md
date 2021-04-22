@@ -371,15 +371,15 @@ config_stepper oid=2 step_pin=gpio6 dir_pin=gpio7 min_stop_interval=0 invert_ste
 finalize_config crc=0
 ```
 
-The test was last run on commit `06437c58` with gcc version `gcc
+The test was last run on commit `db0fb5d5` with gcc version `gcc
 (Raspbian 6.3.0-18+rpi1+deb9u1) 6.3.0 20170516` on a Raspberry Pi 3
 (revision a22082).
 
 | Linux (RPi3)         | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 340   |
-| 2 stepper            | 356   |
-| 3 stepper            | 450   |
+| 1 stepper            | 349   |
+| 2 stepper            | 350   |
+| 3 stepper            | 400   |
 
 ## Command dispatch benchmark ##
 
@@ -399,17 +399,20 @@ reported in the two "uptime" response messages. The total number of
 commands per second is then `100000 * mcu_frequency / clock_diff`.
 
 Note that this test may saturate the USB/CPU capacity of a Raspberry
-Pi. The benchmarks below are with console.py running on a desktop
-class machine with the device connected via a high-speed hub.
+Pi. If running on a Raspberry Pi, Beaglebone, or similar host computer
+then increase the delay (eg, `DELAY {clock + 20*freq} get_uptime`).
+Where applicable, the benchmarks below are with console.py running on
+a desktop class machine with the device connected via a high-speed
+hub.
 
 | MCU                 | Rate | Build    | Build compiler      |
 | ------------------- | ---- | -------- | ------------------- |
-| pru (shared memory) |   5K | b161a69e | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
 | stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
 | samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
+| pru (shared memory) | 260K | c5968a08 | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
 | stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | sam3x8e (USB)       | 418K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | lpc1768 (USB)       | 534K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |

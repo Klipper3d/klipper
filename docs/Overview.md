@@ -42,10 +42,12 @@ communication with the Klipper developers.
 - [Slicers](Slicers.md): Configure "slicer" software for Klipper.
 - [Command Templates](Command_Templates.md): G-Code macros and
   conditional evaluation.
-- [Sensorless homing](Sensorless_Homing.md): Configuring tmc2130
-  sensorless homing.
+- [TMC Drivers](TMC_Drivers.md): Using Trinamic stepper motor drivers
+  with Klipper.
 - [Skew correction](skew_correction.md): Adjustments for axes not
   perfectly square.
+- [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
+  tools such as lasers or spindles.
 - [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 
 # Developer Documentation
@@ -60,6 +62,8 @@ communication with the Klipper developers.
   control API.
 - [MCU commands](MCU_Commands.md): A description of low-level commands
   implemented in the micro-controller software.
+- [CAN bus protocol](CANBUS_protocol.md): Klipper CAN bus message
+  format.
 - [Debugging](Debugging.md): Information on how to test and debug
   Klipper.
 - [Benchmarks](Benchmarks.md): Information on the Klipper benchmark
@@ -70,13 +74,16 @@ communication with the Klipper developers.
 
 # Device Specific Documents
 
+- [Example configs](Example_Configs.md): Information on adding an
+  example config file to Klipper.
+- [SDCard Updates](SDCard_Updates.md): Flash a micro-controller by
+  copying a binary to an sdcard in the micro-controller.
 - [Raspberry Pi as Micro-controller](RPi_microcontroller.md): Details
   for controlling devices wired to the GPIO pins of a Raspberry Pi.
 - [Beaglebone](beaglebone.md): Details for running Klipper on the
   Beaglebone PRU.
 - [Bootloaders](Bootloaders.md): Developer information on
   micro-controller flashing.
-- [stm32f0](stm32f0_CAN.md): Information on the STM32F0 micro-controller
-  port.
+- [CAN bus](CANBUS.md): Information on using CAN bus with Klipper.
 - [TSL1401CL filament width sensor](TSL1401CL_Filament_Width_Sensor.md)
 - [Hall filament width sensor](HallFilamentWidthSensor.md)

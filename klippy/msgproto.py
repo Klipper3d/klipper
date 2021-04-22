@@ -1,6 +1,6 @@
 # Protocol definitions for firmware communication
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import json, zlib, logging
@@ -128,6 +128,25 @@ def lookup_params(msgformat, enumerations={}):
         out.append((name, pt))
     return out
 
+# Lookup the message types for a debugging "output()" format string
+def lookup_output_params(msgformat):
+    param_types = []
+    args = msgformat
+    while 1:
+        pos = args.find('%')
+        if pos < 0:
+            break
+        if pos+1 >= len(args) or args[pos+1] != '%':
+            for i in range(4):
+                t = MessageTypes.get(args[pos:pos+1+i])
+                if t is not None:
+                    param_types.append(t)
+                    break
+            else:
+                raise error("Invalid output format for '%s'" % (msgformat,))
+        args = args[pos+1:]
+    return param_types
+
 # Update the message format to be compatible with python's % operator
 def convert_msg_format(msgformat):
     for c in ['%u', '%i', '%hu', '%hi', '%c', '%.*s', '%*s']:
@@ -177,21 +196,7 @@ class OutputFormat:
         self.msgid = msgid
         self.msgformat = msgformat
         self.debugformat = convert_msg_format(msgformat)
-        self.param_types = []
-        args = msgformat
-        while 1:
-            pos = args.find('%')
-            if pos < 0:
-                break
-            if pos+1 >= len(args) or args[pos+1] != '%':
-                for i in range(4):
-                    t = MessageTypes.get(args[pos:pos+1+i])
-                    if t is not None:
-                        self.param_types.append(t)
-                        break
-                else:
-                    raise error("Invalid output format for '%s'" % (msgformat,))
-            args = args[pos+1:]
+        self.param_types = lookup_output_params(msgformat)
     def parse(self, s, pos):
         pos += 1
         out = []
@@ -219,7 +224,7 @@ class MessageParser:
     def __init__(self):
         self.unknown = UnknownFormat()
         self.enumerations = {}
-        self.command_ids = []
+        self.messages = []
         self.messages_by_id = {}
         self.messages_by_name = {}
         self.config = {}
@@ -334,7 +339,7 @@ class MessageParser:
             #logging.exception("Unable to encode")
             raise error("Unable to encode: %s" % (msgname,))
         return cmd
-    def _fill_enumerations(self, enumerations):
+    def fill_enumerations(self, enumerations):
         for add_name, add_enums in enumerations.items():
             enums = self.enumerations.setdefault(add_name, {})
             for enum, value in add_enums.items():
@@ -352,30 +357,38 @@ class MessageParser:
                 start_value, count = value
                 for i in range(count):
                     enums[enum_root + str(start_enum + i)] = start_value + i
-    def _init_messages(self, messages, output_ids=[]):
-        for msgformat, msgid in messages.items():
-            msgid = int(msgid)
-            if msgid in output_ids:
+    def _init_messages(self, messages, command_tags=[], output_tags=[]):
+        for msgformat, msgtag in messages.items():
+            msgtype = 'response'
+            if msgtag in command_tags:
+                msgtype = 'command'
+            elif msgtag in output_tags:
+                msgtype = 'output'
+            self.messages.append((msgtag, msgtype, msgformat))
+            if msgtag < -32 or msgtag > 95:
+                raise error("Multi-byte msgtag not supported")
+            msgid = msgtag & 0x7f
+            if msgtype == 'output':
                 self.messages_by_id[msgid] = OutputFormat(msgid, msgformat)
-                continue
-            msg = MessageFormat(msgid, msgformat, self.enumerations)
-            self.messages_by_id[msgid] = msg
-            self.messages_by_name[msg.name] = msg
+            else:
+                msg = MessageFormat(msgid, msgformat, self.enumerations)
+                self.messages_by_id[msgid] = msg
+                self.messages_by_name[msg.name] = msg
     def process_identify(self, data, decompress=True):
         try:
             if decompress:
                 data = zlib.decompress(data)
             self.raw_identify_data = data
             data = json.loads(data)
-            self._fill_enumerations(data.get('enumerations', {}))
+            self.fill_enumerations(data.get('enumerations', {}))
             commands = data.get('commands')
             responses = data.get('responses')
             output = data.get('output', {})
             all_messages = dict(commands)
             all_messages.update(responses)
             all_messages.update(output)
-            self.command_ids = sorted(commands.values())
-            self._init_messages(all_messages, output.values())
+            self._init_messages(all_messages, commands.values(),
+                                output.values())
             self.config.update(data.get('config', {}))
             self.version = data.get('version', '')
             self.build_versions = data.get('build_versions', '')
@@ -384,6 +397,10 @@ class MessageParser:
         except Exception as e:
             logging.exception("process_identify error")
             raise error("Error during identify: %s" % (str(e),))
+    def get_version_info(self):
+        return self.version, self.build_versions
+    def get_messages(self):
+        return list(self.messages)
     def get_enumerations(self):
         return dict(self.enumerations)
     def get_constants(self):

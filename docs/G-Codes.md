@@ -474,7 +474,7 @@ enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC2130, TMC2660, TMC2208, TMC2209 and TMC5160
+## TMC stepper drivers
 
 The following commands are available when any of the
 [tmcXXXX config sections](Config_Reference.md#tmc-stepper-driver-configuration)
@@ -486,14 +486,14 @@ are enabled:
   turned off then back on.
 - `SET_TMC_CURRENT STEPPER=<name> CURRENT=<amps> HOLDCURRENT=<amps>`:
   This will adjust the run and hold currents of the TMC driver.
-  HOLDCURRENT is applicable only to the tmc2130, tmc2208, tmc2209 and tmc5160.
-- `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
-  alter the value of the specified register field of the TMC driver.
-  This command is intended for low-level diagnostics and debugging only because
-  changing the fields during run-time can lead to undesired and potentially
-  dangerous behavior of your printer. Permanent changes should be made using
-  the printer configuration file instead. No sanity checks are performed for the
-  given values.
+  (HOLDCURRENT is not applicable to tmc2660 drivers.)
+- `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This
+  will alter the value of the specified register field of the TMC
+  driver. This command is intended for low-level diagnostics and
+  debugging only because changing the fields during run-time can lead
+  to undesired and potentially dangerous behavior of your printer.
+  Permanent changes should be made using the printer configuration
+  file instead. No sanity checks are performed for the given values.
 
 ## Endstop adjustments by stepper phase
 
@@ -574,7 +574,7 @@ enabled:
 ## Filament Sensor
 
 The following command is available when the
-[filament_switch_sensor config section](Config_Reference.md#filament_switch_sensor)
+[filament_switch_sensor or filament_motion_sensor config section](Config_Reference.md#filament_switch_sensor)
 is enabled.
 - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current
   status of the filament sensor. The data displayed on the terminal
@@ -688,9 +688,9 @@ The following command is available when a
 [temperature_fan config section](Config_Reference.md#temperature_fan)
 is enabled:
 - `SET_TEMPERATURE_FAN_TARGET temperature_fan=<temperature_fan_name>
-  [target=<target_temperature>]`: Sets the target temperature for a
+  [target=<target_temperature>] [min_speed=<min_speed>]  [max_speed=<max_speed>]`: Sets the target temperature for a
   temperature_fan. If a target is not supplied, it is set to the
-  specified temperature in the config file.
+  specified temperature in the config file. If speeds are not supplied, no change is applied.
 
 ## Adxl345 Accelerometer Commands
 
@@ -704,10 +704,13 @@ The following commands are available when an
   the first time, it starts the measurements, next execution stops
   them. If RATE is not specified, then the default value is used
   (either from `printer.cfg` or `3200` default value). The results of
-  measurements are written to a file named `/tmp/adxl345-<name>.csv`
-  where `<name>` is the optional NAME parameter. If NAME is not
-  specified it defaults to the current time in "YYYYMMDD_HHMMSS"
-  format.
+  measurements are written to a file named
+  `/tmp/adxl345-<chip>-<name>.csv` where `<chip>` is the name of the
+  accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`) and
+  `<name>` is the optional NAME parameter. If NAME is not specified it
+  defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
+  accelerometer does not have a name in its config section (simply
+  `[adxl345]`) <chip> part of the name is not generated.
 - `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
   accelerometer for the current value. If CHIP is not specified it
   defaults to "default". If RATE is not specified, the default value
@@ -725,12 +728,15 @@ is enabled (also see the
   all enabled accelerometer chips.
 - `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
   [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
-  [HZ_PER_SEC=<hz_per_sec>]`: Runs the resonance test in all
-  configured probe points for the requested axis (X or Y) and measures
-  the acceleration using the accelerometer chips configured for the
-  respective axis. `OUTPUT` parameter is a comma-separated list of
-  which outputs will be written. If `raw_data` is requested, then the
-  raw accelerometer data is written into a file or a series of files
+  [HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
+  test in all configured probe points for the requested axis (X or Y)
+  and measures the acceleration using the accelerometer chips configured
+  for the respective axis. If `INPUT_SHAPING=0` or not set (default),
+  disables input shaping for the resonance testing, because it is not valid
+  to run the resonance testing with the input shaper enabled.
+  `OUTPUT` parameter is a comma-separated list of which outputs will be
+  written. If `raw_data` is requested, then the raw accelerometer data
+  is written into a file or a series of files
   `/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
   the name generated only if more than 1 probe point is configured).
   If `resonances` is specified, the frequency response is calculated
@@ -754,3 +760,27 @@ is enabled (also see the
   defaults to the current time in "YYYYMMDD_HHMMSS" format. Note that
   the suggested input shaper parameters can be persisted in the config
   by issuing `SAVE_CONFIG` command.
+
+## Palette 2 Commands
+
+The following command is available when the
+[palette2 config section](Config_Reference.md#palette2)
+is enabled:
+- `PALETTE_CONNECT`: This command initializes the connection with
+  the Palette 2.
+- `PALETTE_DISCONNECT`: This command disconnects from the Palette 2.
+- `PALETTE_CLEAR`: This command instructs the Palette 2 to clear all of the
+  input and output paths of filament.
+- `PALETTE_CUT`: This command instructs the Palette 2 to cut the filament
+  currently loaded in the splice core.
+- `PALETTE_SMART_LOAD`: This command start the smart load sequence on the
+  Palette 2. Filament is loaded automatically by extruding it the distance
+  calibrated on the device for the printer, and instructs the Palette 2
+  once the loading has been completed. This command is the same as pressing
+  **Smart Load** directly on the Palette 2 screen after the filament load
+  is complete.
+
+Palette prints work by embedding special OCodes (Omega Codes)
+in the GCode file:
+- `O1`...`O32`: These codes are read from the GCode stream and processed
+  by this module and passed to the Palette 2 device.
