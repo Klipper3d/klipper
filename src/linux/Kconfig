@@ -21,4 +21,26 @@ config CLOCK_FREQ
     int
     default 50000000
 
+
+choice
+    prompt "GPIO Access"
+    depends on LOW_LEVEL_OPTIONS
+    config GPIO_GENERIC
+        bool "Generic Linux"
+    config GPIO_NATIVE_RPI3
+        bool "Raspberry Pi 2/3"
+#    config GPIO_NATIVE_RPI4
+#        bool "Raspberry Pi 4"
+endchoice
+
+config LINUX_GPIO_IMPLEMENTATION
+    string
+    default "gpio_generic.c"
+    depends on GPIO_GENERIC
+
+config LINUX_GPIO_IMPLEMENTATION
+    string
+    default "gpio_bcm.c"
+    depends on GPIO_NATIVE_RPI3 || GPIO_NATIVE_RPI4
+
 endif
