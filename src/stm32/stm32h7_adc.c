@@ -13,14 +13,36 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
+#if CONFIG_MACH_STM32H7
+#define ADCIN_BANK_SIZE                     (20)
+#define RCC_AHBENR_ADC                      (RCC->AHB1ENR)
+#define RCC_AHBENR_ADCEN                    (RCC_AHB1ENR_ADC12EN)
+#define ADC_CKMODE                          (0b11)
+#define ADC_ATICKS                          (0b101)
+#define ADC_RES                             (0b110)
+#define ADC_TS                              (ADC3_COMMON)
+
 // Number of samples is 2^OVERSAMPLES_EXPONENT (exponent can be 0-10)
 #define OVERSAMPLES_EXPONENT 3
 #define OVERSAMPLES (1 << OVERSAMPLES_EXPONENT)
+#define ADC_MEAS_DELAY  (1 + 2.3666*OVERSAMPLES)
 
 // LDORDY registers are missing from CMSIS (only available on revision V!)
-#define ADC_ISR_LDORDY_Pos                 (12U)
-#define ADC_ISR_LDORDY_Msk                 (0x1UL << ADC_ISR_LDORDY_Pos)
-#define ADC_ISR_LDORDY                     ADC_ISR_LDORDY_Msk
+#define ADC_ISR_LDORDY_Pos                  (12U)
+#define ADC_ISR_LDORDY_Msk                  (0x1UL << ADC_ISR_LDORDY_Pos)
+#define ADC_ISR_LDORDY                      ADC_ISR_LDORDY_Msk
+
+#else // stm32l4
+#define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
+#define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
+#define ADC_CKMODE                          (0)
+#define ADC_ATICKS                          (0b100)
+#define ADC_RES                             (0b00)
+#define ADC_TS                              (ADC12_COMMON)
+
+#define OVERSAMPLES                         (0)
+#define ADC_MEAS_DELAY                      (10)
+#endif
 
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
@@ -30,6 +52,7 @@ DECL_CONSTANT("ADC_MAX", 4095);
 // GPIOs like A0_C are not covered!
 // This always gives the pin connected to the positive channel
 static const uint8_t adc_pins[] = {
+#if CONFIG_MACH_STM32H7
     // ADC1
     0, // PA0_C                ADC12_INP0
     0, // PA1_C                ADC12_INP1
@@ -93,6 +116,27 @@ static const uint8_t adc_pins[] = {
     0,             //              Vbat/4
     ADC_TEMPERATURE_PIN,//         VSENSE
     0,             //             VREFINT
+#else // stm32l4
+    0,                      // vref
+    GPIO('C', 0),           // ADC12_IN1 .. 16
+    GPIO('C', 1),
+    GPIO('C', 2),
+    GPIO('C', 3),
+    GPIO('A', 0),
+    GPIO('A', 1),
+    GPIO('A', 2),
+    GPIO('A', 3),
+    GPIO('A', 4),
+    GPIO('A', 5),
+    GPIO('A', 6),
+    GPIO('A', 7),
+    GPIO('C', 4),
+    GPIO('C', 5),
+    GPIO('B', 0),
+    GPIO('B', 1),
+    ADC_TEMPERATURE_PIN,    // temp
+    0,                      // vbat
+#endif
 };
 
 
@@ -115,25 +159,29 @@ gpio_adc_setup(uint32_t pin)
     // (SYSCLK 480Mhz) /HPRE(2) /CKMODE divider(4) /additional divider(2)
     // (ADC clock 30Mhz)
     ADC_TypeDef *adc;
-    if (chan >= 40){
+#ifdef ADC3
+    if (chan >= 2 * ADCIN_BANK_SIZE){
         adc = ADC3;
         if (!is_enabled_pclock(ADC3_BASE)) {
             enable_pclock(ADC3_BASE);
         }
         MODIFY_REG(ADC3_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            0b11 << ADC_CCR_CKMODE_Pos);
-    } else if (chan >= 20){
+            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
+        chan -= 2 * ADCIN_BANK_SIZE;
+    } else if (chan >= ADCIN_BANK_SIZE){
         adc = ADC2;
-        RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
         MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            0b11 << ADC_CCR_CKMODE_Pos);
-    } else{
+            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
+        chan -= ADCIN_BANK_SIZE;
+    } else
+#endif
+    {
         adc = ADC1;
-        RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
+        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
         MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            0b11 << ADC_CCR_CKMODE_Pos);
+            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
     }
-    chan %= 20;
 
     // Enable the ADC
     if (!(adc->CR & ADC_CR_ADEN)){
@@ -142,16 +190,27 @@ gpio_adc_setup(uint32_t pin)
         MODIFY_REG(adc->CR, ADC_CR_DEEPPWD_Msk, 0);
         // Switch on voltage regulator
         adc->CR |= ADC_CR_ADVREGEN;
+#ifdef ADC_ISR_LDORDY
         while(!(adc->ISR & ADC_ISR_LDORDY))
             ;
+#else // stm32l4 lacks ldordy, delay to spec instead
+        uint32_t end = timer_read_time() + timer_from_us(20);
+        while (timer_is_before(timer_read_time(), end))
+            ;
+#endif
+
         // Set Boost mode for 25Mhz < ADC clock <= 50Mhz
+#ifdef ADC_CR_BOOST
         MODIFY_REG(adc->CR, ADC_CR_BOOST_Msk, 0b11 << ADC_CR_BOOST_Pos);
+#endif
 
         // Calibration
         // Set calibration mode to Single ended (not differential)
         MODIFY_REG(adc->CR, ADC_CR_ADCALDIF_Msk, 0);
         // Enable linearity calibration
+#ifdef ADC_CR_ADCALLIN
         MODIFY_REG(adc->CR, ADC_CR_ADCALLIN_Msk, ADC_CR_ADCALLIN);
+#endif
         // Start the calibration
         MODIFY_REG(adc->CR, ADC_CR_ADCAL_Msk, ADC_CR_ADCAL);
         while(adc->CR & ADC_CR_ADCAL)
@@ -160,13 +219,14 @@ gpio_adc_setup(uint32_t pin)
         // Enable ADC
         // "Clear the ADRDY bit in the ADC_ISR register by writing ‘1’"
         adc->ISR |= ADC_ISR_ADRDY;
+        adc->ISR; // Dummy read to make sure write is flushed
         adc->CR |= ADC_CR_ADEN;
         while(!(adc->ISR & ADC_ISR_ADRDY))
            ;
 
         // Set 64.5 ADC clock cycles sample time for every channel
         // (Reference manual pg.940)
-        uint32_t aticks = 0b101;
+        uint32_t aticks = ADC_ATICKS;
         // Channel 0-9
         adc->SMPR1 = (aticks        | (aticks << 3)  | (aticks << 6)
                    | (aticks << 9)  | (aticks << 12) | (aticks << 15)
@@ -180,23 +240,29 @@ gpio_adc_setup(uint32_t pin)
         // Disable Continuous Mode
         MODIFY_REG(adc->CFGR, ADC_CFGR_CONT_Msk, 0);
         // Set to 12 bit
-        MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, 0b110 << ADC_CFGR_RES_Pos);
+        MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, ADC_RES << ADC_CFGR_RES_Pos);
+#if CONFIG_MACH_STM32H7
         // Set hardware oversampling
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_ROVSE_Msk, ADC_CFGR2_ROVSE);
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSR_Msk,
             (OVERSAMPLES - 1) << ADC_CFGR2_OVSR_Pos);
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSS_Msk,
             OVERSAMPLES_EXPONENT << ADC_CFGR2_OVSS_Pos);
+#else // stm32l4
+        adc->CFGR |= ADC_CFGR_JQDIS | ADC_CFGR_OVRMOD;
+#endif
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
-        ADC3_COMMON->CCR |= ADC_CCR_TSEN;
+        ADC_TS->CCR |= ADC_CCR_TSEN;
     } else {
         gpio_peripheral(pin, GPIO_ANALOG, 0);
     }
 
     // Preselect (connect) channel
+#ifdef ADC_PCSEL_PCSEL
     adc->PCSEL |= (1 << chan);
+#endif
     return (struct gpio_adc){ .adc = adc, .chan = chan };
 }
 
@@ -211,16 +277,16 @@ gpio_adc_sample(struct gpio_adc g)
     // EOC flag is cleared by hardware when reading DR
     // the channel condition only works if this ist the only channel
     // on the sequence and length set to 1 (ADC_SQR1_L = 0000)
-    if (adc->ISR & ADC_ISR_EOC && adc->SQR1 == (g.chan << 6))
+    if (adc->ISR & ADC_ISR_EOC && adc->SQR1 == (g.chan << ADC_SQR1_SQ1_Pos))
         return 0;
     // Conversion started but not ready or wrong channel
     if (adc->CR & ADC_CR_ADSTART)
         return timer_from_us(10);
     // Start sample
-    adc->SQR1 = (g.chan << 6);
+    adc->SQR1 = (g.chan << ADC_SQR1_SQ1_Pos);
     adc->CR |= ADC_CR_ADSTART;
     // Should take 2.3666us, add 1us for clock synchronisation etc.
-    return timer_from_us(1 + 2.3666*OVERSAMPLES);
+    return timer_from_us(ADC_MEAS_DELAY);
 }
 
 // Read a value; use only after gpio_adc_sample() returns zero
@@ -239,7 +305,7 @@ gpio_adc_cancel_sample(struct gpio_adc g)
     irqstatus_t flag = irq_save();
     // ADSTART is not as long true as SR_STRT on stm32f4
     if ((adc->CR & ADC_CR_ADSTART || adc->ISR & ADC_ISR_EOC)
-        && adc->SQR1 == (g.chan << 6))
+        && adc->SQR1 == (g.chan << ADC_SQR1_SQ1_Pos))
         gpio_adc_read(g);
     irq_restore(flag);
 }
