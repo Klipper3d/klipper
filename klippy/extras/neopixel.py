@@ -29,7 +29,10 @@ class PrinterNeoPixel:
         elem_size = len(self.color_order)
         self.chain_count = config.getint('chain_count', 1, minval=1,
                                          maxval=MAX_MCU_SIZE//elem_size)
-        self.periodic_refresh = config.getfloat('periodic_refresh', 0.0, minval=0.0)
+        self.periodic_refresh = config.getfloat('periodic_refresh',
+                                                0.0,
+                                                minval=0.0)
+        self.colors_finalize = True
         self.neopixel_update_cmd = self.neopixel_send_cmd = None
         # Initial color
         self.color_data = bytearray(self.chain_count * elem_size)
@@ -42,20 +45,21 @@ class PrinterNeoPixel:
         self.update_color_data(red, green, blue, white)
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])
         # Register commands
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
                                    desc=self.cmd_SET_LED_help)
     def handle_connect(self):
-        self.send_data();
+        self.send_data()
         if self.periodic_refresh > 0.0:
             reactor = self.printer.get_reactor()
             event_time = reactor.NOW + self.periodic_refresh
             reactor.register_timer(self._refresh_callback, event_time)
     def _refresh_callback(self, event_time):
-        logging.info("<<<<<<Refreshing Neopixels %s !>>>>>>>" % (event_time))
-        with self.mutex:
-            self.send_data()
+        if self.colors_finalize:
+            with self.mutex:
+                self.send_data()
         return event_time + self.periodic_refresh
     def build_config(self):
         bmt = self.mcu.seconds_to_clock(BIT_MAX_TIME)
@@ -136,7 +140,10 @@ class PrinterNeoPixel:
             with self.mutex:
                 self.update_color_data(red, green, blue, white, index)
                 if transmit:
+                    self.colors_finalize = True
                     self.send_data(print_time)
+                else:
+                    self.colors_finalize = False
         def lookahead_bgfunc(print_time):
             reactor = self.printer.get_reactor()
             reactor.register_callback(lambda et: reactor_bgfunc(print_time))
