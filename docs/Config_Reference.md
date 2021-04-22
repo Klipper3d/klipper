@@ -2453,6 +2453,13 @@ pin:
 #   Sets the initial LED color of the Neopixel. Each value should be
 #   between 0.0 and 1.0. The WHITE option is only available on RGBW
 #   LEDs. The default for each color is 0.
+#periodic_refresh: 0.0
+#   Automatically refresh the LED chain with the last colors set
+#   by the SET_LED command or default colors. Sometimes noise and
+#   other factors can cause neopixels to display color erratically,
+#   it  may be beneficial in these cases to periodically resend the
+#   color data. This value is in seconds and the default value
+#   is 0.0.
 ```
 
 ## [dotstar]
