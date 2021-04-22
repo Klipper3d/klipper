@@ -25,7 +25,6 @@ class FrameExpansionCompensator:
         self.max_comp_z = config.getfloat('max_comp_z', 0.)
         self.max_offset = config.getfloat('max_z_offset', 99999999.)
 
-
         # Register printer events
         self.printer.register_event_handler("klippy:ready",
                                             self.handle_ready)
@@ -164,7 +163,7 @@ class FrameExpansionCompensator:
 
         if self.z_drift_offset > self.max_offset:
             state += ', offset limit (%.5fmm) reached' % self.max_offset
-        
+
         self.comp_state = state
 
     def cmd_SET_FRAME_COMP(self, gcmd):
