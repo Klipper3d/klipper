@@ -56,6 +56,14 @@ serial:
 #   sending a Klipper command to the micro-controller so that it can
 #   reset itself. The default is 'arduino' if the micro-controller
 #   communicates over a serial port, 'command' otherwise.
+#restart_command:
+#   This option takes path to executable or script that will be executed
+#   as firmware reset. If restart command is defined for given MCU,
+#   it will be sent prior to closing port and executing script.
+#   use this to poke some GPIO that leads to mcu reset pin
+#   or to force reload kernel drivers.
+#   Note that content and results of execution of such script are beyond
+#   scope of klipper software.
 ```
 
 ## [mcu my_extra_mcu]

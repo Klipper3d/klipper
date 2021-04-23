@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, zlib, logging, math
+import sys, os, zlib, logging, math, subprocess
 import serialhdl, pins, chelper, clocksync
 
 class error(Exception):
@@ -436,6 +436,9 @@ class MCU:
             rmethods = {m: m for m in restart_methods}
             self._restart_method = config.getchoice('restart_method',
                                                     rmethods, None)
+        self._restart_command= config.get('restart_command',None)
+        if self._restart_command!=None:
+            self._restart_method = 'host_command'
         self._reset_cmd = self._config_reset_cmd = None
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
@@ -585,7 +588,7 @@ class MCU:
     def _connect(self):
         config_params = self._send_get_config()
         if not config_params['is_config']:
-            if self._restart_method == 'rpi_usb':
+            if self._restart_method in ['rpi_usb','host_command']:
                 # Only configure mcu after usb power reset
                 self._check_restart("full reset before config")
             # Not configured - send config and issue get_config again
@@ -621,7 +624,7 @@ class MCU:
             self._connect_file()
         else:
             resmeth = self._restart_method
-            if resmeth == 'rpi_usb' and not os.path.exists(self._serialport):
+            if resmeth in ['rpi_usb','host_command'] and not os.path.exists(self._serialport):
                 # Try toggling usb power
                 self._check_restart("enable power")
             try:
@@ -774,9 +777,18 @@ class MCU:
         chelper.run_hub_ctrl(0)
         self._reactor.pause(self._reactor.monotonic() + 2.)
         chelper.run_hub_ctrl(1)
+    def _restart_via_host_command(self):
+        logging.info("Attempting MCU '%s' reset via host command", self._name)
+        if self._reset_cmd is not None: #let mcu cleanup themself first
+            self._reset_cmd.send()
+            self._reactor.pause(self._reactor.monotonic() + 0.015)
+        self._disconnect()
+        logging.info(subprocess.check_output([self._restart_command],shell=True))
     def microcontroller_restart(self):
         if self._restart_method == 'rpi_usb':
             self._restart_rpi_usb()
+        elif self._restart_method == 'host_command':
+            self._restart_via_host_command()
         elif self._restart_method == 'command':
             self._restart_via_command()
         elif self._restart_method == 'cheetah':
