@@ -138,6 +138,7 @@ CONFIG ../../config/generic-mks-robin-nano-v1.cfg
 CONFIG ../../config/generic-mks-robin-nano-v2.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
 CONFIG ../../config/printer-creality-cr6se-2020.cfg
+CONFIG ../../config/printer-creality-cr6se-2021.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
