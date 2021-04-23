@@ -1588,10 +1588,6 @@ control_pin:
 #pin_move_time: 0.680
 #   The amount of time (in seconds) to wait for the BLTouch pin to
 #   move up or down. The default is 0.680 seconds.
-#   This determines if Klipper should command the pin to move up
-#   between each probe attempt when performing a multiple probe
-#   sequence. Read the directions in docs/BLTouch.md before setting
-#   this to False. The default is True.
 #stow_on_each_sample: True
 #   This determines if Klipper should command the pin to move up
 #   between each probe attempt when performing a multiple probe
