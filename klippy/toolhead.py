@@ -539,12 +539,6 @@ class ToolHead:
         self.last_kin_move_time = max(self.last_kin_move_time, kin_time)
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
-    def get_max_axis_halt(self):
-        # Determine the maximum velocity a cartesian axis could halt
-        # at due to the junction_deviation setting.  The 8.0 was
-        # determined experimentally.
-        return min(self.max_velocity,
-                   math.sqrt(8. * self.junction_deviation * self.max_accel))
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel

@@ -28,7 +28,6 @@ class ManualStepper:
         self.trapq_free_moves = ffi_lib.trapq_free_moves
         self.rail.setup_itersolve('cartesian_stepper_alloc', 'x')
         self.rail.set_trapq(self.trapq)
-        self.rail.set_max_jerk(9999999.9, 9999999.9)
         # Register commands
         stepper_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object('gcode')
