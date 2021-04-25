@@ -624,7 +624,8 @@ class MCU:
             self._connect_file()
         else:
             resmeth = self._restart_method
-            if resmeth in ['rpi_usb','host_command'] and not os.path.exists(self._serialport):
+            if resmeth in ['rpi_usb','host_command'] 
+                    and not os.path.exists(self._serialport):
                 # Try toggling usb power
                 self._check_restart("enable power")
             try:
@@ -783,7 +784,9 @@ class MCU:
             self._reset_cmd.send()
             self._reactor.pause(self._reactor.monotonic() + 0.015)
         self._disconnect()
-        logging.info(subprocess.check_output([self._restart_command],shell=True))
+        logging.info(
+            subprocess.check_output([self._restart_command],
+                                    shell=True))
     def microcontroller_restart(self):
         if self._restart_method == 'rpi_usb':
             self._restart_rpi_usb()
