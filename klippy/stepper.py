@@ -61,8 +61,7 @@ class MCU_stepper:
         self.set_stepper_kinematics(sk)
     def _build_config(self):
         self._mcu.add_config_cmd(
-            "config_stepper oid=%d step_pin=%s dir_pin=%s"
-            " min_stop_interval=0 invert_step=%d" % (
+            "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d" % (
                 self._oid, self._step_pin, self._dir_pin, self._invert_step))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)

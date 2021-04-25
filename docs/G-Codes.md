@@ -517,15 +517,13 @@ enabled:
   the given distance (in mm) at the given constant velocity (in
   mm/s). If ACCEL is specified and is greater than zero, then the
   given acceleration (in mm/s^2) will be used; otherwise no
-  acceleration is performed. If acceleration is not performed then it
-  can lead to the micro-controller reporting "No next step" errors
-  (avoid these errors by specifying an ACCEL value or use a very low
-  VELOCITY). No boundary checks are performed; no kinematic updates
-  are made; other parallel steppers on an axis will not be moved. Use
-  caution as an incorrect command could cause damage! Using this
-  command will almost certainly place the low-level kinematics in an
-  incorrect state; issue a G28 afterwards to reset the kinematics.
-  This command is intended for low-level diagnostics and debugging.
+  acceleration is performed. No boundary checks are performed; no
+  kinematic updates are made; other parallel steppers on an axis will
+  not be moved. Use caution as an incorrect command could cause
+  damage! Using this command will almost certainly place the low-level
+  kinematics in an incorrect state; issue a G28 afterwards to reset
+  the kinematics. This command is intended for low-level diagnostics
+  and debugging.
 - `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
   the low-level kinematic code to believe the toolhead is at the given
   cartesian position. This is a diagnostic and debugging command; use

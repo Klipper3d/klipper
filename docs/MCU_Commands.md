@@ -138,17 +138,12 @@ This section lists some commonly used config commands.
   sampled at regular interval using the query_analog_in command (see
   below).
 
-* `config_stepper oid=%c step_pin=%c dir_pin=%c min_stop_interval=%u
-  invert_step=%c` : This command creates an internal stepper
-  object. The 'step_pin' and 'dir_pin' parameters specify the step and
-  direction pins respectively; this command will configure them in
-  digital output mode. The 'invert_step' parameter specifies whether a
-  step occurs on a rising edge (invert_step=0) or falling edge
-  (invert_step=1). The 'min_stop_interval' implements a safety
-  feature - it is checked when the micro-controller finishes all moves
-  for a stepper - if it is non-zero it specifies the minimum number of
-  clock ticks since the last step. It is used as a check on the
-  maximum stepper velocity that a stepper may have before stopping.
+* `config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c` : This
+  command creates an internal stepper object. The 'step_pin' and
+  'dir_pin' parameters specify the step and direction pins
+  respectively; this command will configure them in digital output
+  mode. The 'invert_step' parameter specifies whether a step occurs on
+  a rising edge (invert_step=0) or falling edge (invert_step=1).
 
 * `config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
   command creates an internal "endstop" object. It is used to specify
