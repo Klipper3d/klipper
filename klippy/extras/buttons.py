@@ -214,12 +214,11 @@ class RotaryEncoder:
 
     def encoder_callback(self, eventtime, state):
         es = ENCODER_STATES[self.encoder_state & 0xf][state & 0x3]
-        logging.debug(
-            "encoder_callback: self.encoder_state='%0x', state='%0x', es='%0x'" % (
-            self.encoder_state, state, es,))
-        logging.debug(
-            "  cw_masked='%0x', ccw_masked='%0x'" % (
-            es & self.cw_mask, es & self.ccw_mask,))
+        logging.info(
+            "encoder_callback: self.encoder_state='%0x', state='%0x', es='%0x'"
+            % (self.encoder_state, state, es,))
+        logging.info("cw_masked='%0x', ccw_masked='%0x'"
+                     % (es & self.cw_mask, es & self.ccw_mask,))
         self.encoder_state = es
         if (es & self.cw_mask):
             self.cw_callback(eventtime)
