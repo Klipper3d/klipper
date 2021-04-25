@@ -6,6 +6,10 @@ All dates in this document are approximate.
 
 # Changes
 
+20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
+velocity, acceleration, and square_corner_velocity larger than the
+specified values in the config file.
+
 20210325: Support for the `pin_map` config option is deprecated. Use
 the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
 translate to the actual micro-controller pin names. The `pin_map`
