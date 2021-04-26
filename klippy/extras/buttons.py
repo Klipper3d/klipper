@@ -198,7 +198,7 @@ ENCODER_STATES = (
 
 
 class RotaryEncoder:
-    def __init__(self, cw_callback, ccw_callback, steps_per_detent=4):
+    def __init__(self, cw_callback, ccw_callback, steps_per_detent=2):
         self.cw_callback = cw_callback
         self.ccw_callback = ccw_callback
         self.encoder_state = R_START
