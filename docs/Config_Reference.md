@@ -1155,16 +1155,6 @@ G-Code macros (one may define any number of sections with a
 #   A list of G-Code commands to execute in place of "my_cmd". See
 #   docs/Command_Templates.md for G-Code format. This parameter must
 #   be provided.
-#default_parameter_<parameter>:
-#   One may define any number of options with a "default_parameter_"
-#   prefix. Use this to define default values for g-code parameters.
-#   For example, if one were to define the macro MY_DELAY with gcode
-#   "G4 P{DELAY}" along with "default_parameter_DELAY = 50" then the
-#   command "MY_DELAY" would evaluate to "G4 P50". To override the
-#   default parameter when calling the command then using
-#   "MY_DELAY DELAY=30" would evaluate to "G4 P30". The default is
-#   to require that all parameters used in the gcode script be
-#   present in the command invoking the macro.
 #variable_<name>:
 #   One may specify any number of options with a "variable_" prefix.
 #   The given variable name will be assigned the given value (parsed
