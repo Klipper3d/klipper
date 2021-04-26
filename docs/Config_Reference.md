@@ -592,6 +592,11 @@ filament_diameter:
 #   specified then they are calculated to match the limit an XY
 #   printing move with a cross section of 4.0*nozzle_diameter^2 would
 #   have.
+#max_extrude_print_velocity:
+#max_extrude_print_accel:
+#   Maximum velocity (in mm/s) and acceleration (in mm/s^2) of the
+#   extruder motor for print moves. If not specified the limits are
+#   effectively infinite.
 #pressure_advance: 0.0
 #   The amount of raw filament to push into the extruder during
 #   extruder acceleration. An equal amount of filament is retracted

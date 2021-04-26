@@ -181,6 +181,9 @@ The following standard commands are supported:
   result in excessive pressure between extruder and hot end. Do proper
   calibration steps with filament before use. If 'DISTANCE' value is
   not included command will return current step distance.
+- `SET_EXTRUDER_VELOCITY_LIMIT [EXTRUDER=<config_name>]
+  [PRINT_VELOCITY=<value>] [PRINT_ACCEL=<value>]`: Set new values
+  for the extruder velocity/acceleration limits.
 - `SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
   disable only the given stepper. This is a diagnostic and debugging
   tool and must be used with care. Disabling an axis motor does not
