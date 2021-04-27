@@ -38,7 +38,7 @@ to change this setting by editing ***MEASUREMENT_INTERVAL_MM*** parameter in
 ## Commands
 
 **QUERY_FILAMENT_WIDTH** - Return the current measured filament width as result
-**RESET_FILAMENT_WIDTH_SENSOR** ¨C Clear all sensor readings. Can be used after
-filament change. **DISABLE_FILAMENT_WIDTH_SENSOR** ¨C Turn off the filament width
+**RESET_FILAMENT_WIDTH_SENSOR** â€“ Clear all sensor readings. Can be used after
+filament change. **DISABLE_FILAMENT_WIDTH_SENSOR** â€“ Turn off the filament width
 sensor and stop using it to do flow control **ENABLE_FILAMENT_WIDTH_SENSOR** -
 Turn on the filament width sensor and start using it to do flow control

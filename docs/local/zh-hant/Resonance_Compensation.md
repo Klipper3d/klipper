@@ -89,7 +89,7 @@ shows *N* = 6 oscillations.
 11. Compute the ringing frequency of X axis as *V* &middot; *N* / *D* (Hz), where
 *V* is the velocity for outer perimeters (mm/sec). For the example above, we
 marked 6 oscillations, and the test was printed at 100 mm/sec velocity, so the
-frequency is 100 * 6 / 12.14 ¡Ö 49.4 Hz.
+frequency is 100 * 6 / 12.14 â‰ˆ 49.4 Hz.
 
 12. Do (9) - (11) for Y mark as well.
 
@@ -307,7 +307,7 @@ of the axis equal to 45 Hz. This gives start = 45 * 83 / 132 = 28.30 and factor
 = 45 / 66 = 0.6818 values for `TUNING_TOWER` command. Now let's assume that
 after printing the test model, the fourth band from the bottom gives the least
 ringing. This gives the updated shaper_freq_? value equal to 45 * (39 + 5 * 4) /
-66 ¡Ö 40.23.
+66 â‰ˆ 40.23.
 
 After both new `shaper_freq_x` and `shaper_freq_y` parameters have been
 calculated, you can update `[input_shaper]` section in `printer.cfg` with the
@@ -461,11 +461,11 @@ each shaper.
 
 | Input <br> shaper | Shaper <br> duration | Vibration reduction 20x <br> (5% vibration tolerance) | Vibration reduction 10x <br> (10% vibration tolerance) |
 | :---------------: | :------------------: | :---------------------------------------------------: | :----------------------------------------------------: |
-| ZV | 0.5 / shaper_freq | N/A | ¡À 5% shaper_freq |
-| MZV | 0.75 / shaper_freq | ¡À 4% shaper_freq | -10%...+15% shaper_freq |
-| ZVD | 1 / shaper_freq | ¡À 15% shaper_freq | ¡À 22% shaper_freq |
-| EI | 1 / shaper_freq | ¡À 20% shaper_freq | ¡À 25% shaper_freq |
-| 2HUMP_EI | 1.5 / shaper_freq | ¡À 35% shaper_freq | ¡À 40 shaper_freq |
+| ZV | 0.5 / shaper_freq | N/A | Â± 5% shaper_freq |
+| MZV | 0.75 / shaper_freq | Â± 4% shaper_freq | -10%...+15% shaper_freq |
+| ZVD | 1 / shaper_freq | Â± 15% shaper_freq | Â± 22% shaper_freq |
+| EI | 1 / shaper_freq | Â± 20% shaper_freq | Â± 25% shaper_freq |
+| 2HUMP_EI | 1.5 / shaper_freq | Â± 35% shaper_freq | Â± 40 shaper_freq |
 | 3HUMP_EI | 2 / shaper_freq | -45...+50% shaper_freq | -50%...+55% shaper_freq |
 
 A note on vibration reduction: the values in the table above are approximate. If
@@ -485,7 +485,7 @@ so the values for 10% vibration tolerance are provided only for the reference.
 * Shaper duration affects the smoothing in parts - the larger it is, the more
 smooth the parts are. This dependency is not linear, but can give a sense of
 which shapers 'smooth' more for the same frequency. The ordering by smoothing
-is like this: ZV < MZV < ZVD ¡Ö EI < 2HUMP_EI < 3HUMP_EI. Also, it is rarely
+is like this: ZV < MZV < ZVD â‰ˆ EI < 2HUMP_EI < 3HUMP_EI. Also, it is rarely
 practical to set shaper_freq = resonance freq for shapers 2HUMP_EI and 3HUMP_EI
 (they should be used to reduce vibrations for several frequencies).
 * One can estimate a range of frequencies in which the shaper reduces vibrations.
@@ -500,7 +500,7 @@ at 35 Hz and 60 Hz on the same axis: a) EI shaper needs to have shaper_freq =
 shaper_freq = 35 / (1 - 0.35) = 53.85 Hz and will reduce vibrations until 53.85
 * (1 + 0.35) = 72.7 Hz - so this is an acceptable configuration. Always try to
 use as high shaper_freq as possible for a given shaper (perhaps with some
-safety margin, so in this example shaper_freq ¡Ö 50-52 Hz would work best), and
+safety margin, so in this example shaper_freq â‰ˆ 50-52 Hz would work best), and
 try to use a shaper with as small shaper duration as possible.
 * If one needs to reduce vibrations at several very different frequencies (say,
 30 Hz and 100 Hz), they may see that the table above does not provide enough
