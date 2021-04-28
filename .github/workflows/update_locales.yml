@@ -3,6 +3,10 @@ name: Update Locales
 on:
   workflow_dispatch:
 
+defaults:
+  run:
+    working-directory: docs
+
 jobs:
   build:
 
