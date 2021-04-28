@@ -54,7 +54,7 @@ probe_count: 5,3
   3 points along the Y axis, for a total of 15 probed points.  Note that
   if you wanted a square grid, for example 3x3, this could be specified
   as a single integer value that is used for both axes, ie `probe_count: 3`.
-  Note that a mesh requires a minimum probe_count of 3 along each axis.
+  Note that a mesh requires a minimum probe_count of 2 along each axis.
 
 The illustration below demonstrates how the `mesh_min`, `mesh_max`, and
 `probe_count` options are used to generate probe points.  The arrows indicate
