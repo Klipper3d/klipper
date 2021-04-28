@@ -16,6 +16,11 @@ for dir in ./locales/*/; do
   if [ $dir != "en" ]; then
     echo "Updating ${dir##*/}"
     for file in *.md; do
+
+    echo "Converting $file to ${file//.md/.pot}"
+    md2po $file --md-encoding utf-8 --po-encoding utf-8 \
+    -e utf-8 -w 71 -s --po-filepath locales/$dir/LC_MESSAGES/${file//.md/.po}
+
     echo "Converting ${file//.md/.po} to $file"
     po2md $file --md-encoding utf-8 --po-encoding utf-8 \
     --pofiles locales/$dir/LC_MESSAGES/${file//.md/.po} -q -s locales/$dir/$file

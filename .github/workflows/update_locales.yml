@@ -1,0 +1,21 @@
+name: Update Locales
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install mdpo
+      run: pip3 install mdpo
+    - name: add permission
+      run: chmod +x update_locales.sh
+    - name: run update_locales.sh
+      run: bash update_locales.sh
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Apply documentation changes
