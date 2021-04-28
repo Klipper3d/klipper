@@ -82,7 +82,8 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, delta, rotary_delta, polar, winch, or none. This
+#   corexy, corexz, hybrid-codexy, hybrid-corexz, rotary_delta, delta,
+#   polar, winch, or none. This
 #   parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
@@ -345,6 +346,74 @@ parameters.
 ```
 [printer]
 kinematics: corexz
+max_z_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the z
+#   axis. The default is to use max_velocity for max_z_velocity.
+max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. The default is to use max_accel for max_z_accel.
+
+# The stepper_x section is used to describe the X axis as well as the
+# stepper controlling the X+Z movement.
+[stepper_x]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis.
+[stepper_y]
+
+# The stepper_z section is used to describe the Z axis as well as the
+# stepper controlling the X-Z movement.
+[stepper_z]
+```
+
+## Hybrid-CoreXY Kinematics
+
+See [example-hybrid-corexy.cfg](../config/example-hybrid-corexy.cfg)
+for an example hybrid corexy kinematics config file.
+
+This kinematic is also known as Markforged kinematic.
+
+Only parameters specific to hybrid corexy printers are described here
+see [common kinematic settings](#common-kinematic-settings) for available
+parameters.
+
+```
+[printer]
+kinematics: hybrid_corexy
+max_z_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the z
+#   axis. The default is to use max_velocity for max_z_velocity.
+max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. The default is to use max_accel for max_z_accel.
+
+# The stepper_x section is used to describe the X axis as well as the
+# stepper controlling the X+Z movement.
+[stepper_x]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis.
+[stepper_y]
+
+# The stepper_z section is used to describe the Z axis as well as the
+# stepper controlling the X-Z movement.
+[stepper_z]
+```
+
+## Hybrid-CoreXZ Kinematics
+
+See [example-hybrid-corexz.cfg](../config/example-hybrid-corexz.cfg)
+for an example hybrid corexz kinematics config file.
+
+This kinematic is also known as Markforged kinematic.
+
+Only parameters specific to hybrid corexy printers are described here
+see [common kinematic settings](#common-kinematic-settings) for available
+parameters.
+
+```
+[printer]
+kinematics: hybrid_corexz
 max_z_velocity:
 #   This sets the maximum velocity (in mm/s) of movement along the z
 #   axis. The default is to use max_velocity for max_z_velocity.
