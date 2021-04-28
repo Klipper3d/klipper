@@ -18,7 +18,7 @@ for dir in ./locales/*/; do
     for file in *.md; do
     echo "Converting ${file//.md/.po} to $file"
     po2md $file --md-encoding utf-8 --po-encoding utf-8 \
-    --pofiles locales/$dir/${file//.md/.po} -q -s locales/$dir/$file
+    --pofiles locales/$dir/LC_MESSAGES/${file//.md/.po} -q -s locales/$dir/$file
     done
   fi
 done
