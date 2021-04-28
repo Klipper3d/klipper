@@ -387,7 +387,7 @@ class BedMeshCalibrate:
         else:
             # rectangular
             x_cnt, y_cnt = parse_pair(
-                config, ('probe_count', '3'), check=False, cast=int, minval=3)
+                config, ('probe_count', '3'), check=False, cast=int, minval=2)
             min_x, min_y = parse_pair(config, ('mesh_min',))
             max_x, max_y = parse_pair(config, ('mesh_max',))
             if max_x <= min_x or max_y <= min_y:
