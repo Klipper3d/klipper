@@ -38,17 +38,19 @@ The following information is available in the `display_status` object
 # fan
 
 The following information is available in
-[fan](Config_Reference.md#fan), [heater_fan
-some_name](Config_Reference.md#heater_fan) and [controller_fan
-some_name](Config_Reference.md#controller_fan) objects:
+[fan](Config_Reference.md#fan),
+[heater_fan some_name](Config_Reference.md#heater_fan) and
+[controller_fan some_name](Config_Reference.md#controller_fan)
+objects:
 - `speed`: The fan speed as a float between 0.0 and 1.0.
 - `rpm`: The measured fan speed in rotations per minute if the fan has
   a tachometer_pin defined.
 
 # filament_switch_sensor
 
-The following information is available in [filament_switch_sensor
-some_name](Config_Reference.md#filament_switch_sensor) objects:
+The following information is available in
+[filament_switch_sensor some_name](Config_Reference.md#filament_switch_sensor)
+objects:
 - `enabled`: Returns True if the switch sensor is currently enabled.
 - `filament_detected`: Returns True if the sensor is in a triggered
   state.
@@ -64,10 +66,10 @@ The following information is available in the
 
 # gcode_macro
 
-The following information is available in [gcode_macro
-some_name](Config_Reference.md#gcode_macro) objects:
-- `<variable>`: The current value of a [gcode_macro
-  variable](Command_Templates.md#variables).
+The following information is available in
+[gcode_macro some_name](Config_Reference.md#gcode_macro) objects:
+- `<variable>`: The current value of a
+  [gcode_macro variable](Command_Templates.md#variables).
 
 # gcode_move
 
@@ -146,8 +148,8 @@ is always available):
 # mcu
 
 The following information is available in
-[mcu](Config_Reference.md#mcu) and [mcu
-some_name](Config_Reference.md#mcu-my_extra_mcu) objects:
+[mcu](Config_Reference.md#mcu) and
+[mcu some_name](Config_Reference.md#mcu-my_extra_mcu) objects:
 - `mcu_version`: The Klipper code version reported by the
   micro-controller.
 - `mcu_build_versions`: Information on the build tools used to
@@ -161,8 +163,8 @@ some_name](Config_Reference.md#mcu-my_extra_mcu) objects:
 
 # output_pin
 
-The following information is available in [output_pin
-some_name](Config_Reference.md#output_pin) objects:
+The following information is available in
+[output_pin some_name](Config_Reference.md#output_pin) objects:
 - `value`: The "value" of the pin, as set by a `SET_PIN` command.
 
 # palette2
@@ -218,8 +220,8 @@ The following information is available in the `query_endstops` object
 
 # servo
 
-The following information is available in [servo
-some_name](Config_Reference.md#servo) objects:
+The following information is available in
+[servo some_name](Config_Reference.md#servo) objects:
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
 
@@ -245,15 +247,17 @@ objects:
 
 # temperature_fan
 
-The following information is available in [temperature_fan
-some_name](Config_Reference.md#temperature_fan) objects:
+The following information is available in
+[temperature_fan some_name](Config_Reference.md#temperature_fan)
+objects:
 - `temperature`: The last read temperature from the sensor.
 - `target`: The target temperature for the fan.
 
 # temperature_sensor
 
-The following information is available in [temperature_sensor
-some_name](Config_Reference.md#temperature_sensor) objects:
+The following information is available in
+[temperature_sensor some_name](Config_Reference.md#temperature_sensor)
+objects:
 - `temperature`: The last read temperature from the sensor.
 - `measured_min_temp`, `measured_max_temp`: The lowest and highest
   temperature seen by the sensor since the Klipper host software was
