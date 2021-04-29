@@ -42,6 +42,8 @@ communication with the Klipper developers.
 - [Slicers](Slicers.md): Configure "slicer" software for Klipper.
 - [Command Templates](Command_Templates.md): G-Code macros and
   conditional evaluation.
+  - [Status Reference](Status_Reference.md): Information available to
+    macros (and similar).
 - [TMC Drivers](TMC_Drivers.md): Using Trinamic stepper motor drivers
   with Klipper.
 - [Skew correction](skew_correction.md): Adjustments for axes not
