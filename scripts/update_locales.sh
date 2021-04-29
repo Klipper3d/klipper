@@ -14,7 +14,6 @@ for file in docs/*.md; do
   md2po docs/$mdfile --md-encoding utf-8 --po-encoding utf-8 -e utf-8 \
   -w $width -q -s --po-filepath docs/locales/en/$potfile
 done
-md2po API_Server.md --md-encoding utf-8 --po-encoding utf-8 -e utf-8 -w 71 -q -s --po-filepath docs/locales/en/API_Server.pot
 
 for dir in docs/locales/*/; do
   dir=${dir%*/}
