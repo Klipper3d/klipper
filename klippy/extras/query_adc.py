@@ -8,6 +8,7 @@ class QueryADC:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.adc = {}
+        self.last_values = {}
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("QUERY_ADC", self.cmd_QUERY_ADC,
                                desc=self.cmd_QUERY_ADC_help)
@@ -22,6 +23,8 @@ class QueryADC:
             gcmd.respond_info(msg)
             return
         value, timestamp = self.adc[name].get_last_value()
+        self.last_values.update({name: {'value': value,
+                                        'timestamp': timestamp}})
         msg = 'ADC object "%s" has value %.6f (timestamp %.3f)' % (
             name, value, timestamp)
         pullup = gcmd.get_float('PULLUP', None, above=0.)
@@ -29,7 +32,10 @@ class QueryADC:
             v = max(.00001, min(.99999, value))
             r = pullup * v / (1.0 - v)
             msg += "\n resistance %.3f (with %.0f pullup)" % (r, pullup)
+            self.last_values.update({name: {'resistance': r,
+                                            'pullup': pullup}})
         gcmd.respond_info(msg)
-
+    def get_status(self, eventtime):
+        return {'last_value': self.last_values}
 def load_config(config):
     return QueryADC(config)
