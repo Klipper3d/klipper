@@ -118,7 +118,6 @@ class EndstopPhases:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.tracking = {}
-        self.last_home_info = {}
         # Register handlers
         self.printer.register_event_handler("homing:home_rails_end",
                                             self.handle_home_rails_end)
@@ -150,10 +149,6 @@ class EndstopPhases:
             return
         phase = convert_phase(driver_phase, driver_phases, len(phase_history))
         phase_history[phase] += 1
-        self.last_home_info[stepper.get_name()] = {
-            'phase': phase, 'phases': len(phase_history),
-            'mcu_position': stepper.get_mcu_position()
-        }
     def handle_home_rails_end(self, homing_state, rails):
         for rail in rails:
             stepper = rail.get_steppers()[0]
@@ -210,8 +205,6 @@ class EndstopPhases:
             if info is None:
                 continue
             self.generate_stats(stepper_name, info)
-    def get_status(self, eventtime):
-        return { 'last_home': self.last_home_info }
 
 def load_config_prefix(config):
     return EndstopPhase(config)
