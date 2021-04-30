@@ -174,14 +174,14 @@ class ADXL345:
             cq=self.spi.get_command_queue())
         self.query_adxl345_end_cmd = self.mcu.lookup_query_command(
             "query_adxl345 oid=%c clock=%u rest_ticks=%u",
-            "adxl345_end oid=%c end1_time=%u end2_time=%u"
+            "adxl345_end oid=%c end1_clock=%u end2_clock=%u"
             " limit_count=%hu sequence=%hu",
             oid=self.oid, cq=self.spi.get_command_queue())
     def _clock_to_print_time(self, clock):
         return self.mcu.clock_to_print_time(self.mcu.clock32_to_clock64(clock))
     def _handle_adxl345_start(self, params):
-        self.samples_start1 = self._clock_to_print_time(params['start1_time'])
-        self.samples_start2 = self._clock_to_print_time(params['start2_time'])
+        self.samples_start1 = self._clock_to_print_time(params['start1_clock'])
+        self.samples_start2 = self._clock_to_print_time(params['start2_clock'])
     def _handle_adxl345_data(self, params):
         last_sequence = self.last_sequence
         sequence = (last_sequence & ~0xffff) | params['sequence']
@@ -252,8 +252,8 @@ class ADXL345:
         raw_samples = self.raw_samples
         self.raw_samples = []
         # Generate results
-        end1_time = self._clock_to_print_time(params['end1_time'])
-        end2_time = self._clock_to_print_time(params['end2_time'])
+        end1_time = self._clock_to_print_time(params['end1_clock'])
+        end2_time = self._clock_to_print_time(params['end2_clock'])
         end_sequence = self._convert_sequence(params['sequence'])
         overflows = params['limit_count']
         res = ADXL345Results()
