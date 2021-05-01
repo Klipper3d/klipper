@@ -247,12 +247,10 @@ class GCodeMove:
         steppers = kin.get_steppers()
         mcu_pos = " ".join(["%s:%d" % (s.get_name(), s.get_mcu_position())
                             for s in steppers])
-        for s in steppers:
-            s.set_tag_position(s.get_commanded_position())
-        stepper_pos = " ".join(["%s:%.6f" % (s.get_name(), s.get_tag_position())
-                                for s in steppers])
-        kin_pos = " ".join(["%s:%.6f" % (a, v)
-                            for a, v in zip("XYZ", kin.calc_tag_position())])
+        cinfo = [(s.get_name(), s.get_commanded_position()) for s in steppers]
+        stepper_pos = " ".join(["%s:%.6f" % (a, v) for a, v in cinfo])
+        kinfo = zip("XYZ", kin.calc_position(dict(cinfo)))
+        kin_pos = " ".join(["%s:%.6f" % (a, v) for a, v in kinfo])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
             "XYZE", toolhead.get_position())])
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)

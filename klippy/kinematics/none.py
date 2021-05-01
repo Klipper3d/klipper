@@ -9,7 +9,7 @@ class NoneKinematics:
         self.axes_minmax = toolhead.Coord(0., 0., 0., 0.)
     def get_steppers(self):
         return []
-    def calc_tag_position(self):
+    def calc_position(self, stepper_positions):
         return [0, 0, 0]
     def set_position(self, newpos, homing_axes):
         pass

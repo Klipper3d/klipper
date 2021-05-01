@@ -102,17 +102,16 @@ class EndstopPhase:
                     self.name, phase, self.endstop_phase))
         return delta * self.step_dist
     def handle_home_rails_end(self, homing_state, rails):
+        kin_spos = homing_state.get_stepper_trigger_positions()
+        orig_pos = kin_spos.get(self.name)
+        if orig_pos is None:
+            return
         for rail in rails:
             stepper = rail.get_steppers()[0]
-            if stepper.get_name() != self.name:
-                continue
-            orig_pos = rail.get_tag_position()
-            offset = self.get_homed_offset(stepper)
-            pos = self.align_endstop(orig_pos) + offset
-            if pos == orig_pos:
-                return False
-            rail.set_tag_position(pos)
-            return True
+            if stepper.get_name() == self.name:
+                offset = self.get_homed_offset(stepper)
+                kin_spos[self.name] = self.align_endstop(orig_pos) + offset
+                return
 
 class EndstopPhases:
     def __init__(self, config):

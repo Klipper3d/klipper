@@ -31,7 +31,7 @@ class MCU_stepper:
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']
         self._invert_dir = dir_pin_params['invert']
-        self._mcu_position_offset = self._tag_position = 0.
+        self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -108,10 +108,6 @@ class MCU_stepper:
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
-    def get_tag_position(self):
-        return self._tag_position
-    def set_tag_position(self, position):
-        self._tag_position = position
     def get_past_mcu_position(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -258,9 +254,8 @@ class PrinterRail:
         self.endstops = []
         self.add_extra_stepper(config)
         mcu_stepper = self.steppers[0]
+        self.get_name = mcu_stepper.get_name
         self.get_commanded_position = mcu_stepper.get_commanded_position
-        self.get_tag_position = mcu_stepper.get_tag_position
-        self.set_tag_position = mcu_stepper.set_tag_position
         self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]
