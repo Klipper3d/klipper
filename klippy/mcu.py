@@ -811,7 +811,7 @@ class MCU:
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         return dict(self._get_status_info)
     def stats(self, eventtime):
         load = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
