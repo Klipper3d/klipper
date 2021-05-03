@@ -390,7 +390,7 @@ communication mechanism. The test is run using the console.py tool
 cut-and-paste into the console.py terminal window:
 ```
 DELAY {clock + 2*freq} get_uptime
-FLOOD 100000 0.0 end_group
+FLOOD 100000 0.0 debug_nop
 get_uptime
 ```
 
