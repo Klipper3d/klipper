@@ -1,5 +1,4 @@
 # Code for handling the kinematics of hybrid-corexz robots
-# The hybrid-corexz kinematic is also known as Markforged kinematics
 #
 # Copyright (C) 2021  Fabrice Gallet <tircown@gmail.com>
 #
@@ -7,6 +6,7 @@
 import logging
 import stepper
 
+# The hybrid-corexz kinematic is also known as Markforged kinematics
 class HybridCoreXZKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()

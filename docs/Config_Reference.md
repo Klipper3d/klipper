@@ -388,15 +388,15 @@ max_z_accel:
 #   the z axis. The default is to use max_accel for max_z_accel.
 
 # The stepper_x section is used to describe the X axis as well as the
-# stepper controlling the X+Z movement.
+# stepper controlling the X-Y movement.
 [stepper_x]
 
 # The stepper_y section is used to describe the stepper controlling
 # the Y axis.
 [stepper_y]
 
-# The stepper_z section is used to describe the Z axis as well as the
-# stepper controlling the X-Z movement.
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis.
 [stepper_z]
 ```
 
@@ -422,15 +422,15 @@ max_z_accel:
 #   the z axis. The default is to use max_accel for max_z_accel.
 
 # The stepper_x section is used to describe the X axis as well as the
-# stepper controlling the X+Z movement.
+# stepper controlling the X-Z movement.
 [stepper_x]
 
 # The stepper_y section is used to describe the stepper controlling
 # the Y axis.
 [stepper_y]
 
-# The stepper_z section is used to describe the Z axis as well as the
-# stepper controlling the X-Z movement.
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis.
 [stepper_z]
 ```
 
