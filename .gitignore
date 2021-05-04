@@ -4,3 +4,7 @@ out
 .config
 .config.old
 klippy/.version
+
+# Ignore files created by PyCharm
+venv/
+.idea/
