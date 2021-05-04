@@ -23,24 +23,27 @@ config CLOCK_FREQ
 
 
 choice
-    prompt "GPIO Access"
+    prompt "Processor model"
     depends on LOW_LEVEL_OPTIONS
-    config GPIO_GENERIC
+    config MACH_LINUX_GENERIC
         bool "Generic Linux"
-    config GPIO_NATIVE_RPI3
+
+
+    # For naming conventions see https://github.com/raspberrypi/linux/issues/22
+    config MACH_LINUX_BCM2709
         bool "Raspberry Pi 2/3"
-#    config GPIO_NATIVE_RPI4
-#        bool "Raspberry Pi 4"
+    config MACH_LINUX_BCM2711
+        bool "Raspberry Pi 4"
 endchoice
 
-config LINUX_GPIO_IMPLEMENTATION
-    string
-    default "gpio_generic.c"
-    depends on GPIO_GENERIC
+#config LINUX_GPIO_IMPLEMENTATION
+#    string
+#    default "gpio_generic.c"
+#    depends on MACH_LINUX_GENERIC
 
-config LINUX_GPIO_IMPLEMENTATION
-    string
-    default "gpio_bcm.c"
-    depends on GPIO_NATIVE_RPI3 || GPIO_NATIVE_RPI4
+#config LINUX_GPIO_IMPLEMENTATION
+#    string
+#    default "gpio_bcm.c"
+#    depends on MACH_LINUX_BCM2709 || MACH_LINUX_BCM2711
 
 endif

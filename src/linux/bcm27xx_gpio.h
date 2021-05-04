@@ -1,10 +1,16 @@
+// Efficient support via direct memory access for Raspberry Pi 2/3/4
 //
-// Created by Klaus Schwartz on 22/04/2021.
+// Copyright (C) 2021 Klaus Schwartz <klaus@eraga.net>
 //
-//
+// This file may be distributed under the terms of the GNU GPLv3 license.
 
-#ifndef KLIPPER_GPIO_COMMONS_H
-#define KLIPPER_GPIO_COMMONS_H
+
+// References and credits:
+// https://elinux.org/RPi_GPIO_Code_Samples#Direct_register_access
+// https://github.com/WiringPi/WiringPi/blob/master/wiringPi/wiringPi.c
+
+#ifndef KLIPPER_BCM27XX_GPIO_H
+#define KLIPPER_BCM27XX_GPIO_H
 
 #include "command.h" // shutdown
 #include "internal.h" // report_errno
@@ -12,6 +18,38 @@
 
 #include </usr/include/linux/gpio.h>
 #include <sys/ioctl.h>
+
+#include <sys/mman.h>
+
+#if CONFIG_MACH_LINUX_BCM2709 == 1
+#include "bcm2709_gpio.h"
+#elif CONFIG_MACH_LINUX_BCM2711 == 1
+#include "bcm2711_gpio.h"
+#else
+error("MACH_LINUX_BCM should be defined");
+#endif
+
+#define GPIO_BASE                (GPIO_PERI_BASE + 0x200000)
+
+#define INP_GPIO(g) *(gpio+((g)/10)) &= ~(7<<(((g)%10)*3))
+#define OUT_GPIO(g) *(gpio+((g)/10)) |=  (1<<(((g)%10)*3))
+
+#define GPIO_SET *(gpio+7)
+#define GPIO_CLR *(gpio+10)
+
+#define GET_GPIO(g) (*(gpio + gpioToGPLEV [g]) & (1 << (g & 31)))
+
+static uint8_t gpioToGPLEV [] =
+        {
+                13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,
+                13,13,13,13,13,13,13,13,13,13,13,13,13,13,
+                14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,
+                14,14,14,14,14,14,14,14,14,14,14,14,14,14,
+        } ;
+
+
+#define MMAP_BLOCK_SIZE (4*1024)
+
 
 
 #define CHIP_FILE_NAME "/dev/gpiochip%u"
@@ -77,8 +115,6 @@ gpio_release_line(struct gpio_line* line)
     }
 }
 
-
-
 static void
 gpio_claim_line(struct gpio_line* line, uint8_t val, __u32 flags) {
     int rv;
@@ -110,4 +146,4 @@ gpio_claim_line(struct gpio_line* line, uint8_t val, __u32 flags) {
     }
 }
 
-#endif //KLIPPER_GPIO_COMMONS_H
+#endif //KLIPPER_BCM27XX_GPIO_H

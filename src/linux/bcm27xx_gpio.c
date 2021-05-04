@@ -1,15 +1,8 @@
-// Includes very efficient support for gpio calls via direct memory
-// access for Raspberry Pi 2/3
+// Efficient support via direct memory access for Raspberry Pi 2/3/4
 //
-// Signed off to klipper codebase by
-// Klaus Schwartz <klaus@eraga.net> on 19/04/2021.
+// Copyright (C) 2021 Klaus Schwartz <klaus@eraga.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
-//
-// References and credits:
-// https://elinux.org/RPi_GPIO_Code_Samples#Direct_register_access
-// https://github.com/WiringPi/WiringPi/blob/master/wiringPi/wiringPi.c
-//
 #include "autoconf.h"
 #include "gpio.h"
 #include "sched.h" // shutdown
@@ -19,41 +12,14 @@
 #include <string.h> // memset
 #include <stdlib.h> // atexit
 
-#include "gpio_commons.h"
+#include "bcm27xx_gpio.h"
 
-
-#include <sys/mman.h>
-
-#if CONFIG_GPIO_NATIVE_RPI3 == 1
-#include "gpio_bcm2835.h"
-#elif CONFIG_GPIO_NATIVE_RPI4 == 1
-#include "gpio_bcm2711.h"
-#endif
-
-#define BLOCK_SIZE (4*1024)
-
-#define GPIO_BASE                (GPIO_PERI_BASE + 0x200000)
 
 int  mem_fd = -1;
 void *gpio_map;
 
 volatile unsigned *gpio;
 
-#define INP_GPIO(g) *(gpio+((g)/10)) &= ~(7<<(((g)%10)*3))
-#define OUT_GPIO(g) *(gpio+((g)/10)) |=  (1<<(((g)%10)*3))
-
-#define GPIO_SET *(gpio+7)
-#define GPIO_CLR *(gpio+10)
-
-#define GET_GPIO(g) (*(gpio + gpioToGPLEV [g]) & (1 << (g & 31)))
-
-static uint8_t gpioToGPLEV [] =
-        {
-                13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,
-                13,13,13,13,13,13,13,13,13,13,13,13,13,13,
-                14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,
-                14,14,14,14,14,14,14,14,14,14,14,14,14,14,
-        } ;
 
 void
 setup_io(void)
@@ -67,7 +33,7 @@ setup_io(void)
 
     gpio_map = mmap(
             NULL,
-            BLOCK_SIZE,
+            MMAP_BLOCK_SIZE,
             PROT_READ|PROT_WRITE,
             MAP_SHARED,
             mem_fd,
@@ -82,9 +48,8 @@ setup_io(void)
     }
 
     gpio = (volatile unsigned *)gpio_map;
-
-
 }
+
 struct gpio_out
 gpio_out_setup(uint32_t pin, uint8_t val)
 {
@@ -155,7 +120,7 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
         pud = 1;
     }
 
-#if CONFIG_GPIO_NATIVE_RPI3 == 1
+#if CONFIG_MACH_LINUX_BCM2709 == 1
     // Pi 2/3 pull up/down method
     GPIO_PULL   = pud & 3 ;
     usleep(5);
@@ -166,7 +131,7 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     usleep(5) ;
     GPIO_PULLCLK(g.line->offset) = 0 ;
     usleep(5) ;
-#elif CONFIG_GPIO_NATIVE_RPI4 == 1
+#elif CONFIG_MACH_LINUX_BCM2711 == 1
     //TODO test
     // Pi 4B pull up/down method
     int pullreg = 57 + (g.line->offset>>4);
@@ -177,6 +142,8 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     pullbits &= ~(3 << pullshift);
     pullbits |= (pud << pullshift);
     *(gpio + pullreg) = pullbits;
+#else
+    error("MACH_LINUX_BCM should be defined");
 #endif
 }
 
