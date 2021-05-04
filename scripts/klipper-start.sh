@@ -28,6 +28,8 @@ start)  log_daemon_msg "Starting klipper" $NAME
                           --background --pidfile $PIDFILE --make-pidfile \
                           --chuid $KLIPPY_USER --user $KLIPPY_USER \
                           -- $KLIPPY_ARGS
+        chrt -p 99 $(cat $PIDFILE)
+        taskset -pc 3 $(cat $PIDFILE)
         log_end_msg $?
         ;;
 stop)   log_daemon_msg "Stopping klipper" $NAME
