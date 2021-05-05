@@ -154,6 +154,7 @@ class PrinterProbe:
         must_notify_multi_probe = not self.multi_probe_pending
         if must_notify_multi_probe:
             self.multi_probe_begin()
+        probexy = self.printer.lookup_object('toolhead').get_position()[:2]
         retries = 0
         positions = []
         while len(positions) < sample_count:
@@ -170,8 +171,7 @@ class PrinterProbe:
                 positions = []
             # Retract
             if len(positions) < sample_count:
-                liftpos = [None, None, pos[2] + sample_retract_dist]
-                self._move(liftpos, lift_speed)
+                self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
         if must_notify_multi_probe:
             self.multi_probe_end()
         # Calculate and return result
