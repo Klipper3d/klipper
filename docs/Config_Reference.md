@@ -82,7 +82,7 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, hybrid-codexy, hybrid-corexz, rotary_delta, delta,
+#   corexy, corexz, hybrid-corexy, hybrid-corexz, rotary_delta, delta,
 #   polar, winch, or none. This
 #   parameter must be specified.
 max_velocity:
