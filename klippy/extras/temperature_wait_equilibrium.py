@@ -72,7 +72,7 @@ class TemperatureWaitEquilibrium:
                 if len(temp_data) >= min_data_points and \
                         rate_per_minute <= target_rate_per_minute:
                     time_taken = round(eventtime - start_time, 0)
-                    gcmd.respond_raw('Temperature equilibrium reached in' \
+                    gcmd.respond_raw('Temperature equilibrium reached in ' \
                         '{0}s at {1}C '.format(time_taken, round(temp, 1)))
                     return
                 gcmd.respond_raw('{0}:{1}C @ {2}C/min /{3}C/min'.format(
