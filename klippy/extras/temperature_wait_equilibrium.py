@@ -54,7 +54,7 @@ class TemperatureWaitEquilibrium:
         # if debugging, immediately return
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
-        
+
         temp_data = []
         reactor = self.printer.get_reactor()
         start_time = reactor.monotonic()
