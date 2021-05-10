@@ -60,7 +60,7 @@ objects:
 The following information is available in
 [filament_motion_sensor some_name](Config_Reference.md#filament_motion_sensor)
 objects:
-- `enabled`: Returns True if the switch sensor is currently enabled.
+- `enabled`: Returns True if the motion sensor is currently enabled.
 - `filament_detected`: Returns True if the sensor is in a triggered
   state.
 
