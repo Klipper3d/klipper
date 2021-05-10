@@ -4,7 +4,7 @@
 # Copyright (C) 2020  Janar Sööt <janar.soot@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging, ast
+import os, logging, ast, re
 from string import Template
 from . import menu_keys
 
@@ -24,8 +24,7 @@ class MenuElement(object):
             raise error(
                 'Abstract MenuElement cannot be instantiated directly')
         self._manager = manager
-        self.cursor = '>'
-        self._scroll = True
+        self._cursor = '>'
         # set class defaults and attributes from arguments
         self._index = kwargs.get('index', None)
         self._enable = kwargs.get('enable', True)
@@ -50,12 +49,9 @@ class MenuElement(object):
             self._ns = Template(
                 'menu ' + kwargs.get('ns', __id)).safe_substitute(__id=__id)
         self._last_heartbeat = None
-        self.__scroll_offs = 0
-        self.__scroll_diff = 0
-        self.__scroll_dir = None
-        self.__last_state = True
-        # display width is used and adjusted by cursor size
-        self._width = self.manager.cols - len(self._cursor)
+        self.__scroll_pos = None
+        self.__scroll_request_pending = False
+        self.__scroll_next = 0
         # menu scripts
         self._scripts = {}
         # init
@@ -110,7 +106,6 @@ class MenuElement(object):
         # get default menu context
         context = self.manager.get_context(cxt)
         context['menu'].update({
-            'width': self._width,
             'ns': self.get_ns()
         })
         return context
@@ -122,63 +117,56 @@ class MenuElement(object):
 
     # Called when a item is selected
     def select(self):
-        self.__clear_scroll()
+        self.__reset_scroller()
 
     def heartbeat(self, eventtime):
         self._last_heartbeat = eventtime
-        state = bool(int(eventtime) & 1)
-        if self.__last_state ^ state:
-            self.__last_state = state
+        if eventtime >= self.__scroll_next:
+            self.__scroll_next = eventtime + 0.5
             if not self.is_editing():
-                self.__update_scroll(eventtime)
+                self.__update_scroller()
 
-    def __clear_scroll(self):
-        self.__scroll_dir = None
-        self.__scroll_diff = 0
-        self.__scroll_offs = 0
+    def __update_scroller(self):
+        if self.__scroll_pos is None and self.__scroll_request_pending is True:
+            self.__scroll_pos = 0
+        elif self.__scroll_request_pending is True:
+            self.__scroll_pos += 1
+            self.__scroll_request_pending = False
+        elif self.__scroll_request_pending is False:
+            pass  # hold scroll position
+        elif self.__scroll_request_pending is None:
+            self.__reset_scroller()
 
-    def __update_scroll(self, eventtime):
-        if self.__scroll_dir == 0 and self.__scroll_diff > 0:
-            self.__scroll_dir = 1
-            self.__scroll_offs = 0
-        elif self.__scroll_dir and self.__scroll_diff > 0:
-            self.__scroll_offs += self.__scroll_dir
-            if self.__scroll_offs >= self.__scroll_diff:
-                self.__scroll_dir = -1
-            elif self.__scroll_offs <= 0:
-                self.__scroll_dir = 1
-        else:
-            self.__clear_scroll()
+    def __reset_scroller(self):
+        self.__scroll_pos = None
+        self.__scroll_request_pending = False
 
-    def __name_scroll(self, s):
-        if self.__scroll_dir is None:
-            self.__scroll_dir = 0
-            self.__scroll_offs = 0
-        return s[
-            self.__scroll_offs:self._width + self.__scroll_offs
-        ].ljust(self._width)
+    def need_scroller(self, value):
+        """
+        Allows to control the scroller
+        Parameters:
+            value (bool, None): True  - inc. scroll pos. on next update
+                                False - hold scroll pos.
+                                None  - reset the scroller
+        """
+        self.__scroll_request_pending = value
+
+    def __slice_name(self, name, index):
+        chunks = []
+        for i, text in enumerate(re.split(r'(\~.*?\~)', name)):
+            if i & 1 == 0:  # text
+                chunks += text
+            else:  # glyph placeholder
+                chunks.append(text)
+        return "".join(chunks[index:])
 
     def render_name(self, selected=False):
-        s = str(self._render_name())
-        # scroller
-        if self._width > 0:
-            self.__scroll_diff = len(s) - self._width
-            if (selected and self._scroll is True and self.is_scrollable()
-                    and self.__scroll_diff > 0):
-                s = self.__name_scroll(s)
-            else:
-                self.__clear_scroll()
-                s = s[:self._width].ljust(self._width)
+        name = str(self._render_name())
+        if selected and self.__scroll_pos is not None:
+            name = self.__slice_name(name, self.__scroll_pos)
         else:
-            self.__clear_scroll()
-        # add cursors
-        if selected and not self.is_editing():
-            s = self.cursor + s
-        elif selected and self.is_editing():
-            s = '*' + s
-        else:
-            s = ' ' + s
-        return s
+            self.__reset_scroller()
+        return name
 
     def get_ns(self, name='.'):
         name = str(name).strip()
@@ -235,10 +223,6 @@ class MenuElement(object):
     def cursor(self):
         return str(self._cursor)[:1]
 
-    @cursor.setter
-    def cursor(self, value):
-        self._cursor = str(value)[:1]
-
     @property
     def manager(self):
         return self._manager
@@ -256,7 +240,7 @@ class MenuContainer(MenuElement):
                 'Abstract MenuContainer cannot be instantiated directly')
         super(MenuContainer, self).__init__(manager, config, **kwargs)
         self._populate_cb = kwargs.get('populate', None)
-        self.cursor = '>'
+        self._cursor = '>'
         self.__selected = None
         self._allitems = []
         self._names = []
@@ -413,8 +397,8 @@ class MenuContainer(MenuElement):
         return self.select_at(index)
 
     # override
-    def render_container(self, nrows, eventtime):
-        return []
+    def draw_container(self, nrows, eventtime):
+        pass
 
     def __iter__(self):
         return iter(self._items)
@@ -614,9 +598,8 @@ class MenuList(MenuContainer):
         #  add back as first item
         self.insert_item(self._itemBack, 0)
 
-    def render_container(self, nrows, eventtime):
-        manager = self.manager
-        lines = []
+    def draw_container(self, nrows, eventtime):
+        display = self.manager.display
         selected_row = self.selected
         # adjust viewport
         if selected_row is not None:
@@ -629,24 +612,51 @@ class MenuList(MenuContainer):
         # clamps viewport
         self._viewport_top = max(0, min(self._viewport_top, len(self) - nrows))
         try:
+            y = 0
             for row in range(self._viewport_top, self._viewport_top + nrows):
-                s = ""
+                text = ""
+                prefix = ""
+                suffix = ""
                 if row < len(self):
                     current = self[row]
                     selected = (row == selected_row)
                     if selected:
                         current.heartbeat(eventtime)
-                    name = manager.stripliterals(
-                        manager.aslatin(current.render_name(selected)))
-                    if isinstance(current, MenuList):
-                        s += name[:manager.cols-1].ljust(manager.cols-1)
-                        s += '>'
+                    text = current.render_name(selected)
+                    # add prefix (selection indicator)
+                    if selected and not current.is_editing():
+                        prefix = current.cursor
+                    elif selected and current.is_editing():
+                        prefix = '*'
                     else:
-                        s += name
-                lines.append(s[:manager.cols].ljust(manager.cols))
+                        prefix = ' '
+                    # add suffix (folder indicator)
+                    if isinstance(current, MenuList):
+                        suffix += '>'
+                # draw to display
+                plen = len(prefix)
+                slen = len(suffix)
+                width = self.manager.cols - plen - slen
+                # draw item prefix (cursor)
+                ppos = display.draw_text(y, 0, prefix, eventtime)
+                # draw item name
+                tpos = display.draw_text(y, ppos, text.ljust(width), eventtime)
+                # check scroller
+                if (selected and tpos > self.manager.cols
+                        and current.is_scrollable()):
+                    # scroll next
+                    current.need_scroller(True)
+                else:
+                    # reset scroller
+                    current.need_scroller(None)
+                # draw item suffix
+                if suffix:
+                    display.draw_text(
+                        y, self.manager.cols - slen, suffix, eventtime)
+                # next display row
+                y += 1
         except Exception:
-            logging.exception('List rendering error')
-        return lines
+            logging.exception('List drawing error')
 
 
 class MenuVSDList(MenuList):
@@ -829,21 +839,16 @@ class MenuManager:
             container = self.menustack[self.stack_size() - lvl - 1]
         return container
 
-    def render(self, eventtime):
-        lines = []
-        self.update_context(eventtime)
-        container = self.stack_peek()
-        if self.running and isinstance(container, MenuContainer):
-            container.heartbeat(eventtime)
-            lines = container.render_container(self.rows, eventtime)
-        return lines
-
     def screen_update_event(self, eventtime):
         # screen update
         if not self.is_running():
             return False
-        for y, line in enumerate(self.render(eventtime)):
-            self.display.draw_text(y, 0, line, eventtime)
+        # draw menu
+        self.update_context(eventtime)
+        container = self.stack_peek()
+        if self.running and isinstance(container, MenuContainer):
+            container.heartbeat(eventtime)
+            container.draw_container(self.rows, eventtime)
         return True
 
     def up(self, fast_rate=False):
@@ -1058,9 +1063,5 @@ class MenuManager:
             return str(s)
 
     @classmethod
-    def asflatline(cls, s):
-        return ''.join(cls.aslatin(s).splitlines())
-
-    @classmethod
     def asflat(cls, s):
-        return cls.stripliterals(cls.asflatline(s))
+        return cls.stripliterals(''.join(cls.aslatin(s).splitlines()))

@@ -74,6 +74,7 @@ SignedFields = ["CUR_A", "CUR_B", "sgt"]
 FieldFormatters = {
     "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
     "shaft":            (lambda v: "1(Reverse)" if v else ""),
+    "reset":            (lambda v: "1(Reset)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
     "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
     "VERSION":          (lambda v: "%#x" % v),
@@ -84,6 +85,7 @@ FieldFormatters = {
     "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
     "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
     "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
+    "CS_ACTUAL":        (lambda v: ("%d" % v) if v else "0(Reset?)"),
 }
 
 
@@ -108,10 +110,6 @@ class TMCCurrentHelper:
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("IHOLD", ihold)
         self.fields.set_field("IRUN", irun)
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
-                                   self.cmd_SET_TMC_CURRENT,
-                                   desc=self.cmd_SET_TMC_CURRENT_help)
     def _calc_current_bits(self, current, vsense):
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
@@ -137,26 +135,12 @@ class TMCCurrentHelper:
         vref = 0.32
         if self.fields.get_field("vsense"):
             vref = 0.18
-        current = (bits + 1) * vref / (32 * sense_resistor * math.sqrt(2.))
-        return round(current, 2)
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, gcmd):
-        run_current = gcmd.get_float('CURRENT', None,
-                                     minval=0., maxval=MAX_CURRENT)
-        hold_current = gcmd.get_float('HOLDCURRENT', None,
-                                      above=0., maxval=MAX_CURRENT)
-        if run_current is None and hold_current is None:
-            # Query only
-            run_current = self._calc_current_from_field("IRUN")
-            hold_current = self._calc_current_from_field("IHOLD")
-            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                              % (run_current, hold_current))
-            return
-        if run_current is None:
-            run_current = self._calc_current_from_field("IRUN")
-        if hold_current is None:
-            hold_current = self._calc_current_from_field("IHOLD")
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        return (bits + 1) * vref / (32 * sense_resistor * math.sqrt(2.))
+    def get_current(self):
+        run_current = self._calc_current_from_field("IRUN")
+        hold_current = self._calc_current_from_field("IHOLD")
+        return run_current, hold_current, MAX_CURRENT
+    def set_current(self, run_current, hold_current, print_time):
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         if vsense != self.fields.get_field("vsense"):
             val = self.fields.set_field("vsense", vsense)
@@ -170,12 +154,77 @@ class TMCCurrentHelper:
 # TMC2130 SPI
 ######################################################################
 
+class MCU_TMC_SPI_chain:
+    def __init__(self, config, chain_len=1):
+        self.printer = config.get_printer()
+        self.chain_len = chain_len
+        self.mutex = self.printer.get_reactor().mutex()
+        share = None
+        if chain_len > 1:
+            share = "tmc_spi_cs"
+        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000,
+                                           share_type=share)
+        self.taken_chain_positions = []
+    def _build_cmd(self, data, chain_pos):
+        return ([0x00] * ((self.chain_len - chain_pos) * 5) +
+                data + [0x00] * ((chain_pos - 1) * 5))
+    def reg_read(self, reg, chain_pos):
+        cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain_pos)
+        self.spi.spi_send(cmd)
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
+        params = self.spi.spi_transfer(cmd)
+        pr = bytearray(params['response'])
+        pr = pr[(self.chain_len - chain_pos) * 5 :
+                (self.chain_len - chain_pos + 1) * 5]
+        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+    def reg_write(self, reg, val, chain_pos, print_time=None):
+        minclock = 0
+        if print_time is not None:
+            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
+        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
+                (val >> 8) & 0xff, val & 0xff]
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            self.spi.spi_send(self._build_cmd(data, chain_pos), minclock)
+            return val
+        write_cmd = self._build_cmd(data, chain_pos)
+        dummy_read = self._build_cmd([0x00, 0x00, 0x00, 0x00, 0x00], chain_pos)
+        params = self.spi.spi_transfer_with_preface(write_cmd, dummy_read,
+                                                    minclock=minclock)
+        pr = bytearray(params['response'])
+        pr = pr[(self.chain_len - chain_pos) * 5 :
+                (self.chain_len - chain_pos + 1) * 5]
+        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+
+# Helper to setup an spi daisy chain bus from settings in a config section
+def lookup_tmc_spi_chain(config):
+    chain_len = config.getint('chain_length', None, minval=2)
+    if chain_len is None:
+        # Simple, non daisy chained SPI connection
+        return MCU_TMC_SPI_chain(config, 1), 1
+
+    # Shared SPI bus - lookup existing MCU_TMC_SPI_chain
+    ppins = config.get_printer().lookup_object("pins")
+    cs_pin_params = ppins.lookup_pin(config.get('cs_pin'),
+                                     share_type="tmc_spi_cs")
+    tmc_spi = cs_pin_params.get('class')
+    if tmc_spi is None:
+        tmc_spi = cs_pin_params['class'] = MCU_TMC_SPI_chain(config, chain_len)
+    if chain_len != tmc_spi.chain_len:
+        raise config.error("TMC SPI chain must have same length")
+    chain_pos = config.getint('chain_position', minval=1, maxval=chain_len)
+    if chain_pos in tmc_spi.taken_chain_positions:
+        raise config.error("TMC SPI chain can not have duplicate position")
+    tmc_spi.taken_chain_positions.append(chain_pos)
+    return tmc_spi, chain_pos
+
 # Helper code for working with TMC devices via SPI
 class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields):
         self.printer = config.get_printer()
-        self.mutex = self.printer.get_reactor().mutex()
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
+        self.name = config.get_name().split()[-1]
+        self.tmc_spi, self.chain_pos = lookup_tmc_spi_chain(config)
+        self.mutex = self.tmc_spi.mutex
         self.name_to_reg = name_to_reg
         self.fields = fields
     def get_fields(self):
@@ -183,21 +232,17 @@ class MCU_TMC_SPI:
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
         with self.mutex:
-            self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
-            if self.printer.get_start_args().get('debugoutput') is not None:
-                return 0
-            params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
-        pr = bytearray(params['response'])
-        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+            read = self.tmc_spi.reg_read(reg, self.chain_pos)
+        return read
     def set_register(self, reg_name, val, print_time=None):
-        minclock = 0
-        if print_time is not None:
-            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         reg = self.name_to_reg[reg_name]
-        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
-                (val >> 8) & 0xff, val & 0xff]
         with self.mutex:
-            self.spi.spi_send(data, minclock)
+            for retry in range(5):
+                v = self.tmc_spi.reg_write(reg, val, self.chain_pos, print_time)
+                if v == val:
+                    return
+        raise self.printer.command_error(
+            "Unable to write tmc spi '%s' register %s" % (self.name, reg_name))
 
 
 ######################################################################
@@ -212,10 +257,10 @@ class TMC2130:
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
+        current_helper = TMCCurrentHelper(config, self.mcu_tmc)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
-        TMCCurrentHelper(config, self.mcu_tmc)
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase

@@ -1,6 +1,6 @@
 # Code for reading and writing the Klipper config file
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, glob, re, time, logging, ConfigParser as configparser, StringIO
@@ -25,11 +25,12 @@ class ConfigWrapper:
                      above=None, below=None, note_valid=True):
         if not self.fileconfig.has_option(self.section, option):
             if default is not sentinel:
+                if note_valid and default is not None:
+                    acc_id = (self.section.lower(), option.lower())
+                    self.access_tracking[acc_id] = default
                 return default
             raise error("Option '%s' in section '%s' must be specified"
                         % (option, self.section))
-        if note_valid:
-            self.access_tracking[(self.section.lower(), option.lower())] = 1
         try:
             v = parser(self.section, option)
         except self.error as e:
@@ -37,6 +38,8 @@ class ConfigWrapper:
         except:
             raise error("Unable to parse option '%s' in section '%s'"
                         % (option, self.section))
+        if note_valid:
+            self.access_tracking[(self.section.lower(), option.lower())] = v
         if minval is not None and v < minval:
             raise error("Option '%s' in section '%s' must have minimum of %s"
                         % (option, self.section, minval))
@@ -93,7 +96,8 @@ class PrinterConfig:
     def __init__(self, printer):
         self.printer = printer
         self.autosave = None
-        self.status_info = {}
+        self.status_raw_config = {}
+        self.status_settings = {}
         self.save_config_pending = False
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
@@ -247,6 +251,10 @@ class PrinterConfig:
                 if (section, option) not in access_tracking:
                     raise error("Option '%s' is not valid in section '%s'"
                                 % (option, section))
+        # Setup self.status_settings
+        self.status_settings = {}
+        for (section, option), value in config.access_tracking.items():
+            self.status_settings.setdefault(section, {})[option] = value
     def log_config(self, config):
         lines = ["===== Config file =====",
                  self._build_config_string(config),
@@ -254,13 +262,14 @@ class PrinterConfig:
         self.printer.set_rollover_info("config", "\n".join(lines))
     # Status reporting
     def _build_status(self, config):
-        self.status_info.clear()
+        self.status_raw_config.clear()
         for section in config.get_prefix_sections(''):
-            self.status_info[section.get_name()] = section_status = {}
+            self.status_raw_config[section.get_name()] = section_status = {}
             for option in section.get_prefix_options(''):
                 section_status[option] = section.get(option, note_valid=False)
     def get_status(self, eventtime):
-        return {'config': self.status_info,
+        return {'config': self.status_raw_config,
+                'settings': self.status_settings,
                 'save_config_pending': self.save_config_pending}
     # Autosave functions
     def set(self, section, option, value):

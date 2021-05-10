@@ -1,9 +1,9 @@
 # Add ability to define custom g-code macros
 #
-# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import traceback, logging, ast
+import traceback, logging, ast, copy
 import jinja2
 
 
@@ -26,7 +26,7 @@ class GetStatusWrapper:
             raise KeyError(val)
         if self.eventtime is None:
             self.eventtime = self.printer.get_reactor().monotonic()
-        self.cache[sval] = res = dict(po.get_status(self.eventtime))
+        self.cache[sval] = res = copy.deepcopy(po.get_status(self.eventtime))
         return res
     def __contains__(self, val):
         try:
@@ -157,9 +157,8 @@ class GCodeMacro:
         pdesc = "Renamed builtin of '%s'" % (self.alias,)
         self.gcode.register_command(self.rename_existing, prev_cmd, desc=pdesc)
         self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
-        return dict(self.variables)
     def get_status(self, eventtime):
-        return dict(self.variables)
+        return self.variables
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"
     def cmd_SET_GCODE_VARIABLE(self, gcmd):
         variable = gcmd.get('VARIABLE')

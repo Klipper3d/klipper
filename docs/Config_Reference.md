@@ -13,11 +13,6 @@ Klipper and choosing an initial config file.
 Many config options require the name of a micro-controller pin.
 Klipper uses the hardware names for these pins - for example `PA4`.
 
-For AVR micro-controllers one may also use an Arduino alias (such as
-"ar29" or "analog3"). In order to use Arduino names, the `pin_map`
-variable in the `[mcu]` section must be present and have a value of
-`arduino`.
-
 Pin names may be preceded by `!` to indicate that a reverse polarity
 should be used (eg, trigger on low instead of high).
 
@@ -39,12 +34,16 @@ Configuration of the primary micro-controller.
 serial:
 #   The serial port to connect to the MCU. If unsure (or if it
 #   changes) see the "Where's my serial port?" section of the FAQ.
-#   This parameter must be provided.
+#   This parameter must be provided when using a serial port.
 #baud: 250000
 #   The baud rate to use. The default is 250000.
-#pin_map:
-#   This option may be used to enable Arduino pin name aliases. The
-#   default is to not enable the aliases.
+#canbus_uuid:
+#   If using a device connected to a CAN bus then this sets the unique
+#   chip identifier to connect to. This value must be provided when using
+#   CAN bus for communication.
+#canbus_interface:
+#   If using a device connected to a CAN bus then this sets the CAN
+#   network interface to use. The default is 'can0'.
 #restart_method:
 #   This controls the mechanism the host will use to reset the
 #   micro-controller. The choices are 'arduino', 'cheetah', 'rpi_usb',
@@ -83,7 +82,8 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, delta, rotary_delta, polar, winch, or none. This
+#   corexy, corexz, hybrid-corexy, hybrid-corexz, rotary_delta, delta,
+#   polar, winch, or none. This
 #   parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
@@ -363,6 +363,74 @@ max_z_accel:
 
 # The stepper_z section is used to describe the Z axis as well as the
 # stepper controlling the X-Z movement.
+[stepper_z]
+```
+
+## Hybrid-CoreXY Kinematics
+
+See [example-hybrid-corexy.cfg](../config/example-hybrid-corexy.cfg)
+for an example hybrid corexy kinematics config file.
+
+This kinematic is also known as Markforged kinematic.
+
+Only parameters specific to hybrid corexy printers are described here
+see [common kinematic settings](#common-kinematic-settings) for available
+parameters.
+
+```
+[printer]
+kinematics: hybrid_corexy
+max_z_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the z
+#   axis. The default is to use max_velocity for max_z_velocity.
+max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. The default is to use max_accel for max_z_accel.
+
+# The stepper_x section is used to describe the X axis as well as the
+# stepper controlling the X-Y movement.
+[stepper_x]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis.
+[stepper_y]
+
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis.
+[stepper_z]
+```
+
+## Hybrid-CoreXZ Kinematics
+
+See [example-hybrid-corexz.cfg](../config/example-hybrid-corexz.cfg)
+for an example hybrid corexz kinematics config file.
+
+This kinematic is also known as Markforged kinematic.
+
+Only parameters specific to hybrid corexy printers are described here
+see [common kinematic settings](#common-kinematic-settings) for available
+parameters.
+
+```
+[printer]
+kinematics: hybrid_corexz
+max_z_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the z
+#   axis. The default is to use max_velocity for max_z_velocity.
+max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. The default is to use max_accel for max_z_accel.
+
+# The stepper_x section is used to describe the X axis as well as the
+# stepper controlling the X-Z movement.
+[stepper_x]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis.
+[stepper_y]
+
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis.
 [stepper_z]
 ```
 
@@ -803,6 +871,11 @@ Visual Examples:
 #   A point index in the mesh to reference all z values to. Enabling
 #   this parameter produces a mesh relative to the probed z position
 #   at the provided index.
+#faulty_region_1_min:
+#faulty_region_1_max:
+#   Optional points that define a faulty region.  See docs/Bed_Mesh.md
+#   for details on faulty regions.  Up to 99 faulty regions may be added.
+#   By default no faulty regions are set.
 ```
 
 ## [bed_tilt]
@@ -1151,16 +1224,6 @@ G-Code macros (one may define any number of sections with a
 #   A list of G-Code commands to execute in place of "my_cmd". See
 #   docs/Command_Templates.md for G-Code format. This parameter must
 #   be provided.
-#default_parameter_<parameter>:
-#   One may define any number of options with a "default_parameter_"
-#   prefix. Use this to define default values for g-code parameters.
-#   For example, if one were to define the macro MY_DELAY with gcode
-#   "G4 P{DELAY}" along with "default_parameter_DELAY = 50" then the
-#   command "MY_DELAY" would evaluate to "G4 P50". To override the
-#   default parameter when calling the command then using
-#   "MY_DELAY DELAY=30" would evaluate to "G4 P30". The default is
-#   to require that all parameters used in the gcode script be
-#   present in the command invoking the macro.
 #variable_<name>:
 #   One may specify any number of options with a "variable_" prefix.
 #   The given variable name will be assigned the given value (parsed
@@ -1516,6 +1579,10 @@ stepper_z config section.
 [probe]
 pin:
 #   Probe detection pin. This parameter must be provided.
+#deactivate_on_each_sample: True
+#   This determines if Klipper should execute deactivation gcode
+#   between each probe attempt when performing a multiple probe
+#   sequence. The default is True.
 #x_offset: 0.0
 #   The distance (in mm) between the probe and the nozzle along the
 #   x-axis. The default is 0.
@@ -2032,18 +2099,18 @@ sensor_pin:
 #   name in the above list.
 ```
 
-## bme280 temperature sensor
+## BMP280/BME280/BME680 temperature sensor
 
-BME280 two wire interface (I2C) environmental sensor. Note that this
-sensor is not intended for use with extruders and heater beds, but
-rather for monitoring ambient temperature (C), pressure (hPa), and
-relative humidity. See
-[sample-macros.cfg](../config/sample-macros.cfg) for a gcode_macro
+BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
+Note that thoose sensors aee not intended for use with extruders and
+heater beds, but rather for monitoring ambient temperature (C),
+pressure (hPa), relative humidity and in case of the BME680 gas level.
+See [sample-macros.cfg](../config/sample-macros.cfg) for a gcode_macro
 that may be used to report pressure and humidity in addition to
 temperature.
 
 ```
-sensor_type: bme280
+sensor_type: BME280
 #i2c_address:
 #   Default is 118 (0x76). Some BME280 sensors have an address of 119
 #   (0x77).
@@ -2145,12 +2212,33 @@ sensor_type: temperature_mcu
 #   micro-controller specification.
 ```
 
-## RPi temperature sensor
+## Host temperature sensor
 
-CPU temperature from the Raspberry Pi running the host software.
+Temperature from the machine (eg Raspberry Pi) running the host software.
 
 ```
-sensor_type: rpi_temperature
+sensor_type: temperature_host
+#sensor_path:
+#   The path to temperature system file. The default is
+#   "/sys/class/thermal/thermal_zone0/temp" which is the temperature
+#   system file on a Raspberry Pi computer.
+```
+
+## DS18B20 temperature sensor
+
+DS18B20 is a 1-wire (w1) digital temperature sensor. Note that this sensor is not intended for use with extruders and heater beds, but rather for monitoring ambient temperature (C). These sensors have range up to 125 C, so are usable for e.g. chamber temperature monitoring. They can also function as simple fan/heater controllers. DS18B20 sensors are only supported on the "host mcu", e.g. the Raspberry Pi. The w1-gpio Linux kernel module must be installed.
+
+```
+sensor_type: DS18B20
+serial_no:
+#   Each 1-wire device has a unique serial number used to identify the device,
+#   usually in the format 28-031674b175ff. This parameter must be provided.
+#   Attached 1-wire devices can be listed using the following Linux command:
+#   ls /sys/bus/w1/devices/
+#ds18_report_time:
+#   Interval in seconds between readings. Default is 3.0, with a minimum of 1.0
+#sensor_mcu:
+#   The micro-controller to read from. Must be the host_mcu
 ```
 
 # Fans
@@ -2205,6 +2293,19 @@ pin:
 #   input speed which reliably drives the fan without stalls. Set
 #   off_below to the duty cycle corresponding to this value (for
 #   example, 12% -> 0.12) or slightly higher.
+#tachometer_pin:
+#   Tachometer input pin for monitoring fan speed. A pullup is generally
+#   required. This parameter is optional.
+#tachometer_ppr: 2
+#   When tachometer_pin is specified, this is the number of pulses per
+#   revolution of the tachometer signal. For a BLDC fan this is
+#   normally half the number of poles. The default is 2.
+#tachometer_poll_interval: 0.0015
+#   When tachometer_pin is specified, this is the polling period of the
+#   tachometer pin, in seconds. The default is 0.0015, which is fast
+#   enough for fans below 10000 RPM at 2 PPR. This must be smaller than
+#   30/(tachometer_ppr*rpm), with some margin, where rpm is the
+#   maximum speed (in RPM) of the fan.
 ```
 
 ## [heater_fan]
@@ -2223,6 +2324,9 @@ a shutdown_speed equal to max_power.
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 #heater: extruder
 #   Name of the config section defining the heater that this fan is
@@ -2256,6 +2360,9 @@ watched component.
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 #fan_speed: 1.0
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
@@ -2296,6 +2403,9 @@ additional information.
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 #sensor_type:
 #sensor_pin:
@@ -2341,6 +2451,9 @@ with the SET_FAN_SPEED
 #hardware_pwm:
 #kick_start_time:
 #off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
 ```
 
@@ -2427,6 +2540,30 @@ clock_pin:
 #   See the "neopixel" section for information on these parameters.
 ```
 
+## [PCA9533]
+
+PCA9533 LED support. The PCA9533 is used on the mightyboard.
+
+```
+[pca9533 my_pca9533]
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. Use 98 for
+#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#initial_RED: 0
+#initial_GREEN: 0
+#initial_BLUE: 0
+#initial_WHITE: 0
+#   The PCA9533 only supports 1 or 0. The default is 0. On the
+#   mightyboard, the white led is not populated.
+#   Use GCODE to modify led values after startup.
+#   set_led led=my_pca9533 red=1 green=1 blue=1
+```
+
 ## [gcode_button]
 
 Execute gcode when a button is pressed or released (or when a pin
@@ -2484,6 +2621,13 @@ pin:
 #shutdown_value:
 #   The value to set the pin to on an MCU shutdown event. The default
 #   is 0 (for low voltage).
+#maximum_mcu_duration:
+#   The maximum duration a non-shutdown value may be driven by the MCU
+#   without an acknowledge from the host.
+#   If host can not keep up with an update, the MCU will shutdown
+#   and set all pins to their respective shutdown values.
+#   Default: 0 (disabled)
+#   Usual values are around 5 seconds.
 #cycle_time: 0.100
 #   The amount of time (in seconds) per PWM cycle. It is recommended
 #   this be 10 milliseconds or greater when using software based PWM.
@@ -2539,6 +2683,10 @@ pins:
 
 # TMC stepper driver configuration
 
+Configuration of Trinamic stepper motor drivers in UART/SPI mode.
+Additional information is in the [TMC Drivers guide](TMC_Drivers.md)
+and in the [command reference](G-Codes.md#tmc-stepper-drivers).
+
 ## [tmc2130]
 
 Configure a TMC2130 stepper motor driver via SPI bus. To use this
@@ -2559,6 +2707,12 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
+#chain_position:
+#chain_length:
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). The default is True.
@@ -2595,13 +2749,13 @@ run_current:
 #diag0_pin:
 #diag1_pin:
 #   The micro-controller pin attached to one of the DIAG lines of the
-#   TMC2130 chip. Only a single diag pin should be specified.
-#   Setting this creates a "tmc2130_stepper_x:virtual_endstop" virtual
-#   pin which may be used as the stepper's endstop_pin. Doing this
-#   enables "sensorless homing". (Be sure to also set driver_SGT to an
+#   TMC2130 chip. Only a single diag pin should be specified. The pin
+#   is "active low" and is thus normally prefaced with "^!". Setting
+#   this creates a "tmc2130_stepper_x:virtual_endstop" virtual pin
+#   which may be used as the stepper's endstop_pin. Doing this enables
+#   "sensorless homing". (Be sure to also set driver_SGT to an
 #   appropriate sensitivity value.) The default is to not enable
-#   sensorless homing. See docs/Sensorless_Homing.md for details on
-#   how to configure this.
+#   sensorless homing.
 ```
 
 ## [tmc2208]
@@ -2704,11 +2858,12 @@ run_current:
 #   above list.
 #diag_pin:
 #   The micro-controller pin attached to the DIAG line of the TMC2209
-#   chip. Setting this creates a "tmc2209_stepper_x:virtual_endstop"
-#   virtual pin which may be used as the stepper's endstop_pin. Doing
-#   this enables "sensorless homing". (Be sure to also set
-#   driver_SGTHRS to an appropriate sensitivity value.) The default is
-#   to not enable sensorless homing.
+#   chip. The pin is normally prefaced with "^" to enable a pullup.
+#   Setting this creates a "tmc2209_stepper_x:virtual_endstop" virtual
+#   pin which may be used as the stepper's endstop_pin. Doing this
+#   enables "sensorless homing". (Be sure to also set driver_SGTHRS to
+#   an appropriate sensitivity value.) The default is to not enable
+#   sensorless homing.
 ```
 
 ## [tmc2660]
@@ -2765,7 +2920,7 @@ run_current:
 #driver_SEMAX: 0
 #driver_SEUP: 0
 #driver_SEMIN: 0
-#driver_SFILT: 1
+#driver_SFILT: 0
 #driver_SGT: 0
 #driver_SLPH: 0
 #driver_SLPL: 0
@@ -2801,6 +2956,12 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
+#chain_position:
+#chain_length:
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). The default is True.
@@ -2855,13 +3016,13 @@ run_current:
 #diag0_pin:
 #diag1_pin:
 #   The micro-controller pin attached to one of the DIAG lines of the
-#   TMC5160 chip. Only a single diag pin should be specified.
-#   Setting this creates a "tmc5160_stepper_x:virtual_endstop" virtual
-#   pin which may be used as the stepper's endstop_pin. Doing this
-#   enables "sensorless homing". (Be sure to also set driver_SGT to an
+#   TMC5160 chip. Only a single diag pin should be specified. The pin
+#   is "active low" and is thus normally prefaced with "^!". Setting
+#   this creates a "tmc5160_stepper_x:virtual_endstop" virtual pin
+#   which may be used as the stepper's endstop_pin. Doing this enables
+#   "sensorless homing". (Be sure to also set driver_SGT to an
 #   appropriate sensitivity value.) The default is to not enable
-#   sensorless homing. See docs/Sensorless_Homing.md for details on
-#   how to configure this.
+#   sensorless homing.
 ```
 
 # Run-time stepper motor current configuration
@@ -2913,9 +3074,6 @@ define any number of sections with an "mcp4451" prefix).
 
 ```
 [mcp4451 my_digipot]
-#i2c_mcu: mcu
-#   The name of the micro-controller that the MCP4451 chip is
-#   connected to. The default is "mcu".
 i2c_address:
 #   The i2c address that the chip is using on the i2c bus. This
 #   parameter must be provided.
@@ -3019,65 +3177,11 @@ Support for a display attached to the micro-controller.
 ```
 [display]
 lcd_type:
-#   The type of LCD chip in use. This may be "hd44780" (which is used
-#   in "RepRapDiscount 2004 Smart Controller" type displays), "st7920"
-#   (which is used in "RepRapDiscount 12864 Full Graphic Smart
-#   Controller" type displays), "uc1701" (which is used in "MKS Mini
-#   12864" type displays), "ssd1306", or "sh1106". This parameter must
-#   be provided.
-#rs_pin:
-#e_pin:
-#d4_pin:
-#d5_pin:
-#d6_pin:
-#d7_pin:
-#   The pins connected to an hd44780 type lcd. These parameters must
-#   be provided when using an hd44780 display.
-#line_length:
-#   Set the number of characters per line for an hd44780 type lcd.
-#   Possible values are 20 (default) and 16. The number of lines is
-#   fixed to 4.
-#cs_pin:
-#sclk_pin:
-#sid_pin:
-#   The pins connected to an st7920 type lcd. These parameters must be
-#   provided when using an st7920 display.
-#cs_pin:
-#a0_pin:
-#rst_pin:
-#   The pins connected to an uc1701 type lcd. The rst_pin is
-#   optional. The cs_pin and a0_pin parameters must be provided when
-#   using an uc1701 display.
-#contrast:
-#   The contrast to set when using a uc1701 or SSD1306/SH1106 type
-#   display For UC1701 the value may range from 0 to 63. Default is
-#   40. For SSD1306/SH1106 the value may range from 0 to 256. Default
-#   is 239.
-#vcomh: 0
-#   Set the Vcomh value on SSD1306/SH1106 displays. This value is
-#   associated with a "smearing" effect on some OLED displays. The
-#   value may range from 0 to 63. Default is 0.
-#x_offset: 0
-#   Set the horizontal offset value on SSD1306/SH1106 displays.
-#   Default is 0.
-#invert: False
-#   TRUE inverts the pixels on certain OLED (SSD1306/SH1106) displays.
-#   The default is False.
-#cs_pin:
-#dc_pin:
-#spi_speed:
-#spi_bus:
-#spi_software_sclk_pin:
-#spi_software_mosi_pin:
-#spi_software_miso_pin:
-#   The pins connected to an ssd1306 type lcd when in "4-wire" spi
-#   mode. See the "common SPI settings" section for a description of
-#   the parameters that start with "spi_". The default is to use i2c
-#   mode for ssd1306 displays.
-#reset_pin:
-#   A reset pin may be specified on ssd1306 displays. If it is not
-#   specified then the hardware must have a pull-up on the
-#   corresponding lcd line.
+#   The type of LCD chip in use. This may be "hd44780", "hd44780_spi",
+#   "st7920", "emulated_st7920", "uc1701", "ssd1306", or "sh1106".
+#   See the display sections below for information on each type and
+#   additional parameters they provide. This parameter must be
+#   provided.
 #display_group:
 #   The name of the display_data group to show on the display. This
 #   controls the content of the screen (see the "display_data" section
@@ -3143,6 +3247,172 @@ lcd_type:
 #   The resistance range for a 'kill' button. Range minimum and
 #   maximum comma-separated values must be provided when using analog
 #   button.
+```
+
+### hd44780 display
+
+Information on configuring hd44780 displays (which is used in
+"RepRapDiscount 2004 Smart Controller" type displays).
+
+```
+[display]
+lcd_type: hd44780
+#   Set to "hd44780" for hd44780 displays.
+rs_pin:
+e_pin:
+d4_pin:
+d5_pin:
+d6_pin:
+d7_pin:
+#   The pins connected to an hd44780 type lcd. These parameters must
+#   be provided.
+#hd44780_protocol_init: True
+#   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
+#   This is necessary on real hd44780 devices. However, one may need
+#   to disable this on some "clone" devices. The default is True.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
+...
+```
+
+### hd44780_spi display
+
+Information on configuring an hd44780_spi display - a 20x04 display
+controlled via a hardware "shift register" (which is used in
+mightyboard based printers).
+
+```
+[display]
+lcd_type: hd44780_spi
+#   Set to "hd44780_spi" for hd44780_spi displays.
+latch_pin:
+spi_software_sclk_pin:
+spi_software_mosi_pin:
+spi_software_miso_pin:
+#   The pins connected to the shift register controlling the display.
+#   The spi_software_miso_pin needs to be set to an unused pin of the
+#   printer mainboard as the shift register does not have a MISO pin,
+#   but the software spi implementation requires this pin to be
+#   configured.
+#hd44780_protocol_init: True
+#   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
+#   This is necessary on real hd44780 devices. However, one may need
+#   to disable this on some "clone" devices. The default is True.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
+...
+```
+
+### st7920 display
+
+Information on configuring st7920 displays (which is used in
+"RepRapDiscount 12864 Full Graphic Smart Controller" type displays).
+
+```
+[display]
+lcd_type: st7920
+#   Set to "st7920" for st7920 displays.
+cs_pin:
+sclk_pin:
+sid_pin:
+#   The pins connected to an st7920 type lcd. These parameters must be
+#   provided.
+...
+```
+
+### emulated_st7920 display
+
+Information on configuring an emulated st7920 display - found in some
+"2.4 inch touchscreen devices" and similar.
+
+```
+[display]
+lcd_type: emulated_st7920
+#   Set to "emulated_st7920" for emulated_st7920 displays.
+en_pin:
+spi_software_sclk_pin:
+spi_software_mosi_pin:
+spi_software_miso_pin:
+#   The pins connected to an emulated_st7920 type lcd. The en_pin
+#   corresponds to the cs_pin of the st7920 type lcd,
+#   spi_software_sclk_pin corresponds to sclk_pin and
+#   spi_software_mosi_pin corresponds to sid_pin. The
+#   spi_software_miso_pin needs to be set to an unused pin of the
+#   printer mainboard as the st7920 as no MISO pin but the software
+#   spi implementation requires this pin to be configured.
+...
+```
+
+### uc1701 display
+
+Information on configuring uc1701 displays (which is used in "MKS Mini
+12864" type displays).
+
+```
+[display]
+lcd_type: uc1701
+#   Set to "uc1701" for uc1701 displays.
+cs_pin:
+a0_pin:
+#   The pins connected to a uc1701 type lcd. These parameters must be
+#   provided.
+#rst_pin:
+#   The pin connected to the "rst" pin on the lcd. If it is not
+#   specified then the hardware must have a pull-up on the
+#   corresponding lcd line.
+#contrast:
+#   The contrast to set. The value may range from 0 to 63 and the
+#   default is 40.
+...
+```
+
+### ssd1306 and sh1106 displays
+
+Information on configuring ssd1306 and sh1106 displays.
+
+```
+[display]
+lcd_type:
+#   Set to either "ssd1306" or "sh1106" for the given display type.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   Optional parameters available for displays connected via an i2c
+#   bus. See the "common I2C settings" section for a description of
+#   the above parameters.
+#cs_pin:
+#dc_pin:
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   The pins connected to the lcd when in "4-wire" spi mode. See the
+#   "common SPI settings" section for a description of the parameters
+#   that start with "spi_". The default is to use i2c mode for the
+#   display.
+#reset_pin:
+#   A reset pin may be specified on the display. If it is not
+#   specified then the hardware must have a pull-up on the
+#   corresponding lcd line.
+#contrast:
+#   The contrast to set. The value may range from 0 to 256 and the
+#   default is 239.
+#vcomh: 0
+#   Set the Vcomh value on the display. This value is associated with
+#   a "smearing" effect on some OLED displays. The value may range
+#   from 0 to 63. Default is 0.
+#invert: False
+#   TRUE inverts the pixels on certain OLED displays.  The default is
+#   False.
+#x_offset: 0
+#   Set the horizontal offset value on SH1106 displays. The default is
+#   0.
+...
 ```
 
 ## [display_data]
@@ -3377,6 +3647,34 @@ information.
 #   provided.
 ```
 
+## [filament_motion_sensor]
+
+Filament Motion Sensor. Support for filament insert and runout
+detection using an encoder that toggles the output pin during filament
+movement through the sensor.
+
+See the [command reference](G-Codes.md#filament-sensor) for more
+information.
+
+```
+[filament_motion_sensor my_sensor]
+detection_length: 7.0
+#   The minimum length of filament pulled through the sensor to trigger
+#   a state change on the switch_pin
+#   Default is 7 mm.
+extruder:
+#   The name of the extruder section this sensor is associated with.
+#   This parameter must be provided.
+switch_pin:
+#pause_on_runout:
+#runout_gcode:
+#insert_gcode:
+#event_delay:
+#pause_delay:
+#   See the "filament_switch_sensor" section for a description of the
+#   above parameters.
+```
+
 ## [tsl1401cl_filament_width_sensor]
 
 TSLl401CL Based Filament Width Sensor. See the
@@ -3547,8 +3845,9 @@ example.
 revision:
 #   The replicape hardware revision. Currently only revision "B3" is
 #   supported. This parameter must be provided.
-#enable_pin: !P9_41
-#   The replicape global enable pin. The default is !P9_41.
+#enable_pin: !gpio0_20
+#   The replicape global enable pin. The default is !gpio0_20 (aka
+#   P9_41).
 host_mcu:
 #   The name of the mcu config section that communicates with the
 #   Klipper "linux process" mcu instance. This parameter must be
@@ -3595,6 +3894,42 @@ host_mcu:
 #stepper_h_chopper_blank_time_high:
 #   This parameter controls the CFG5 pin of the stepper motor driver
 #   (True sets CFG5 high, False sets it low). The default is True.
+```
+
+# Other Custom Modules
+
+## [palette2]
+
+Palette 2 multimaterial support - provides a tighter integration
+supporting Palette 2 devices in connected mode.
+
+This modules also requires `[virtual_sdcard]` and `[pause_resume]`
+for full functionality.
+
+If you use this module, do not use the Palette 2 plugin for
+Octoprint as they will conflict, and 1 will fail to initialize
+properly likely aborting your print.
+
+If you use Octoprint and stream gcode over the serial port instead of
+printing from virtual_sd, then remo **M1** and **M0** from *Pausing commands*
+in *Settings > Serial Connection > Firmware & protocol* will prevent
+the need to start print on the Palette 2 and unpausing in Octoprint
+for your print to begin.
+
+```
+[palette2]
+serial:
+#   The serial port to connect to the Palette 2.
+#baud: 115200
+#   The baud rate to use. The default is 115200.
+#feedrate_splice: 0.8
+#   The feedrate to use when splicing, default is 0.8
+#feedrate_normal: 1.0
+#   The feedrate to use after splicing, default is 1.0
+#auto_load_speed: 2
+#   Extrude feedrate when autoloading, default is 2 (mm/s)
+#auto_cancel_variation: 0.1
+#   Auto cancel print when ping varation is above this threshold
 ```
 
 # Common bus parameters

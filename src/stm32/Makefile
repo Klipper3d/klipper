@@ -46,8 +46,9 @@ src-$(CONFIG_USBSERIAL) += $(usb-src-y) stm32/chipid.c generic/usb_cdc.c
 serial-src-y := stm32/serial.c
 serial-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
-can-src-$(CONFIG_CANSERIAL) += stm32/can.c ../lib/fast-hash/fasthash.c
-src-$(CONFIG_CANSERIAL) += $(can-src-y) generic/serial_irq.c
+src-$(CONFIG_CANSERIAL) += stm32/can.c ../lib/fast-hash/fasthash.c
+src-$(CONFIG_CANSERIAL) += generic/canbus.c
+src-$(CONFIG_HAVE_GPIO_HARD_PWM) += stm32/hard_pwm.c
 
 dirs-$(CONFIG_CANSERIAL) += lib/fast-hash
 

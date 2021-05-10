@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # Script to handle build time requests embedded in C code.
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
@@ -46,7 +46,9 @@ class HandleCallList:
             func_code = ['    extern void %s(void);\n    %s();' % (f, f)
                          for f in funcs]
             if funcname == 'ctr_run_taskfuncs':
-                func_code = ['    irq_poll();\n' + fc for fc in func_code]
+                add_poll = '    irq_poll();\n'
+                func_code = [add_poll + fc for fc in func_code]
+                func_code.append(add_poll)
             fmt = """
 void
 %s(void)
@@ -172,8 +174,8 @@ class HandleInitialPins:
         if not self.initial_pins:
             return []
         mp = msgproto.MessageParser()
-        mp._fill_enumerations(HandlerEnumerations.enumerations)
-        pinmap = mp.enumerations.get('pin', {})
+        mp.fill_enumerations(HandlerEnumerations.enumerations)
+        pinmap = mp.get_enumerations().get('pin', {})
         out = []
         for p in self.initial_pins:
             flag = "IP_OUT_HIGH"
@@ -286,31 +288,36 @@ class HandleCommandGeneration:
             if msg not in self.msg_to_id:
                 msgid += 1
                 self.msg_to_id[msg] = msgid
-        if msgid >= 96:
+        if msgid >= 128:
             # The mcu currently assumes all message ids encode to one byte
             error("Too many message ids")
     def update_data_dictionary(self, data):
-        command_ids = [self.msg_to_id[msg]
-                       for msgname, msg in self.messages_by_name.items()
-                       if msgname in self.commands]
-        response_ids = [self.msg_to_id[msg]
+        # Handle message ids over 96 (they are decoded as negative numbers)
+        msg_to_tag = {msg: msgid if msgid < 96 else msgid - 128
+                      for msg, msgid in self.msg_to_id.items()}
+        command_tags = [msg_to_tag[msg]
                         for msgname, msg in self.messages_by_name.items()
-                        if msgname not in self.commands]
-        data['commands'] = { msg: msgid for msg, msgid in self.msg_to_id.items()
-                             if msgid in command_ids }
-        data['responses'] = {msg: msgid for msg, msgid in self.msg_to_id.items()
-                             if msgid in response_ids }
-        output = { msg: msgid for msg, msgid in self.msg_to_id.items()
-                   if msgid not in command_ids and msgid not in response_ids }
+                        if msgname in self.commands]
+        response_tags = [msg_to_tag[msg]
+                         for msgname, msg in self.messages_by_name.items()
+                         if msgname not in self.commands]
+        data['commands'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+                             if msgtag in command_tags }
+        data['responses'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+                              if msgtag in response_tags }
+        output = {msg: msgtag for msg, msgtag in msg_to_tag.items()
+                  if msgtag not in command_tags and msgtag not in response_tags}
         if output:
             data['output'] = output
-    def build_parser(self, parser, iscmd):
-        if parser.name == "#output":
-            comment = "Output: " + parser.msgformat
+    def build_parser(self, msgid, msgformat, msgtype):
+        if msgtype == "output":
+            param_types = msgproto.lookup_output_params(msgformat)
+            comment = "Output: " + msgformat
         else:
-            comment = parser.msgformat
+            param_types = [t for name, t in msgproto.lookup_params(msgformat)]
+            comment = msgformat
         params = '0'
-        types = tuple([t.__class__.__name__ for t in parser.param_types])
+        types = tuple([t.__class__.__name__ for t in param_types])
         if types:
             paramid = self.all_param_types.get(types)
             if paramid is None:
@@ -322,15 +329,15 @@ class HandleCommandGeneration:
     .msg_id=%d,
     .num_params=%d,
     .param_types = %s,
-""" % (comment, parser.msgid, len(types), params)
-        if iscmd:
+""" % (comment, msgid, len(types), params)
+        if msgtype == 'response':
             num_args = (len(types) + types.count('PT_progmem_buffer')
                         + types.count('PT_buffer'))
             out += "    .num_args=%d," % (num_args,)
         else:
             max_size = min(msgproto.MESSAGE_MAX,
                            (msgproto.MESSAGE_MIN + 1
-                            + sum([t.max_length for t in parser.param_types])))
+                            + sum([t.max_length for t in param_types])))
             out += "    .max_size=%d," % (max_size,)
         return out
     def generate_responses_code(self):
@@ -342,17 +349,15 @@ class HandleCommandGeneration:
             msgid = self.msg_to_id[msg]
             if msgid in did_output:
                 continue
-            s = msg
             did_output[msgid] = True
             code = ('    if (__builtin_strcmp(str, "%s") == 0)\n'
-                    '        return &command_encoder_%s;\n' % (s, msgid))
+                    '        return &command_encoder_%s;\n' % (msg, msgid))
             if msgname is None:
-                parser = msgproto.OutputFormat(msgid, msg)
+                parsercode = self.build_parser(msgid, msg, 'output')
                 output_code.append(code)
             else:
-                parser = msgproto.MessageFormat(msgid, msg)
+                parsercode = self.build_parser(msgid, msg, 'command')
                 encoder_code.append(code)
-            parsercode = self.build_parser(parser, 0)
             encoder_defs.append(
                 "const struct command_encoder command_encoder_%s PROGMEM = {"
                 "    %s\n};\n" % (
@@ -392,8 +397,7 @@ ctr_lookup_output(const char *str)
             funcname, flags, msgname = cmd_by_id[msgid]
             msg = self.messages_by_name[msgname]
             externs[funcname] = 1
-            parser = msgproto.MessageFormat(msgid, msg)
-            parsercode = self.build_parser(parser, 1)
+            parsercode = self.build_parser(msgid, msg, 'response')
             index.append(" {%s\n    .flags=%s,\n    .func=%s\n}," % (
                 parsercode, flags, funcname))
         index = "".join(index).strip()
@@ -462,14 +466,18 @@ def git_version():
     logging.debug("Got git version: %s" % (repr(ver),))
     return ver
 
-def build_version(extra):
+def build_version(extra, cleanbuild):
     version = git_version()
     if not version:
+        cleanbuild = False
         version = "?"
-    btime = time.strftime("%Y%m%d_%H%M%S")
-    hostname = socket.gethostname()
-    version = "%s-%s-%s%s" % (version, btime, hostname, extra)
-    return version
+    elif 'dirty' in version:
+        cleanbuild = False
+    if not cleanbuild:
+        btime = time.strftime("%Y%m%d_%H%M%S")
+        hostname = socket.gethostname()
+        version = "%s-%s-%s" % (version, btime, hostname)
+    return version + extra
 
 # Run "tool --version" for each specified tool and extract versions
 def tool_versions(tools):
@@ -511,7 +519,7 @@ class HandleVersions:
         data['build_versions'] = self.toolstr
     def generate_code(self, options):
         cleanbuild, self.toolstr = tool_versions(options.tools)
-        self.version = build_version(options.extra)
+        self.version = build_version(options.extra, cleanbuild)
         sys.stdout.write("Version: %s\n" % (self.version,))
         return "\n// version: %s\n// build_versions: %s\n" % (
             self.version, self.toolstr)
