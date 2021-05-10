@@ -44,7 +44,6 @@ struct stepper {
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
     struct move_queue_head mq;
-    uint32_t min_stop_interval;
     // gcc (pre v6) does better optimization when uint8_t are bitfields
     uint8_t flags : 8;
 };
@@ -53,7 +52,7 @@ enum { POSITION_BIAS=0x40000000 };
 
 enum {
     SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
-    SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5, SF_NEED_RESET=1<<6
+    SF_LAST_RESET=1<<4, SF_NEED_RESET=1<<5
 };
 
 // Setup a stepper for the next move in its queue
@@ -62,9 +61,6 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
     if (move_queue_empty(&s->mq)) {
         // There is no next move - the queue is empty
-        if (s->interval - s->add < s->min_stop_interval
-            && !(s->flags & SF_NO_NEXT_CHECK))
-            shutdown("No next step");
         s->count = 0;
         return SF_DONE;
     }
@@ -186,16 +182,14 @@ command_config_stepper(uint32_t *args)
     struct stepper *s = oid_alloc(args[0], command_config_stepper, sizeof(*s));
     if (!CONFIG_INLINE_STEPPER_HACK)
         s->time.func = stepper_event;
-    s->flags = args[4] ? SF_INVERT_STEP : 0;
+    s->flags = args[3] ? SF_INVERT_STEP : 0;
     s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP);
     s->dir_pin = gpio_out_setup(args[2], 0);
-    s->min_stop_interval = args[3];
     s->position = -POSITION_BIAS;
     move_queue_setup(&s->mq, sizeof(struct stepper_move));
 }
 DECL_COMMAND(command_config_stepper,
-             "config_stepper oid=%c step_pin=%c dir_pin=%c"
-             " min_stop_interval=%u invert_step=%c");
+             "config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c");
 
 // Return the 'struct stepper' for a given stepper oid
 struct stepper *
@@ -223,10 +217,6 @@ command_queue_step(uint32_t *args)
         flags ^= SF_LAST_DIR;
         m->flags |= MF_DIR;
     }
-    flags &= ~SF_NO_NEXT_CHECK;
-    if (m->count == 1 && (m->flags || flags & SF_LAST_RESET))
-        // count=1 moves after a reset or dir change can have small intervals
-        flags |= SF_NO_NEXT_CHECK;
     flags &= ~SF_LAST_RESET;
     if (s->count) {
         s->flags = flags;

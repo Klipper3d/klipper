@@ -84,6 +84,10 @@ finding and sharing config files.
       value. For example, one should not specify `min_extrude_temp:
       170` as that is already the default value.
    7. Where possible, lines should not exceed 80 columns.
+   8. Avoid adding attribution or revision messages to the config
+      files. (For example, avoid adding lines like "this file was
+      created by ...".) Place attribution and change history in the
+      git commit message.
 7. Do not use any deprecated features in the example config file. The
    `step_distance` and `pin_map` parameters are deprecated and should
    not be in any example config file.

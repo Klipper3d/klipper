@@ -425,6 +425,13 @@ indicates the driver has disabled itself because it detected very high
 current passing through the driver. This may indicate a loose or
 shorted wire to the stepper motor or within the stepper motor itself.
 
+This error may also occur if using stealthchop mode and the TMC driver
+is not able to accurately predict the mechanical load of the motor.
+(If the driver makes a poor prediction then it may send too much
+current through the motor and trigger its own over-current detection.)
+To test this, disable stealthchop mode and check if the errors
+continue to occur.
+
 **TMC reports error: ... reset=1(Reset)** OR **CS_ACTUAL=0(Reset?)**
 OR **SE=0(Reset?)**: This indicates that the driver has reset itself
 mid-print. This may be due to voltage or wiring issues.

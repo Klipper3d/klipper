@@ -131,7 +131,7 @@ config STACK_SIZE
 ######################################################################
 
 choice
-    prompt "Bootloader offset" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F405 || MACH_STM32F103 || MACH_STM32F070
+    prompt "Bootloader offset" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F405 || MACH_STM32F446 || MACH_STM32F103 || MACH_STM32F070
     config STM32_FLASH_START_2000
         bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070
     config STM32_FLASH_START_5000
@@ -143,7 +143,7 @@ choice
     config STM32_FLASH_START_C000
         bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F407
     config STM32_FLASH_START_10000
-        bool "64KiB bootloader (Alfawise)" if MACH_STM32F103
+        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446
     config STM32_FLASH_START_800
         bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
 

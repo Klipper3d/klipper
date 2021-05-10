@@ -29,14 +29,3 @@ jobs:
         exempt-issue-labels: 'enhancement,bug'
         days-before-stale: 35
         days-before-close: 7
-  invalid:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/stale@v3
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-label: invalid
-        stale-pr-label: invalid
-        days-before-stale: -1
-        days-before-close: 2
-        remove-stale-when-updated: false

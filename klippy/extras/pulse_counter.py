@@ -13,6 +13,7 @@ class MCU_counter:
         self._pin = pin_params['pin']
         self._pullup = pin_params['pullup']
         self._poll_time = poll_time
+        self._poll_ticks = 0
         self._sample_time = sample_time
         self._callback = None
         self._last_count = 0
@@ -22,11 +23,11 @@ class MCU_counter:
         self._mcu.add_config_cmd("config_counter oid=%d pin=%s pull_up=%d"
             % (self._oid, self._pin, self._pullup))
         clock = self._mcu.get_query_slot(self._oid)
-        poll_ticks = self._mcu.seconds_to_clock(self._poll_time)
+        self._poll_ticks = self._mcu.seconds_to_clock(self._poll_time)
         sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
         self._mcu.add_config_cmd(
             "query_counter oid=%d clock=%d poll_ticks=%d sample_ticks=%d"
-            % (self._oid, clock, poll_ticks, sample_ticks), is_init=True)
+            % (self._oid, clock, self._poll_ticks, sample_ticks), is_init=True)
         self._mcu.register_response(self._handle_counter_state,
                                     "counter_state", self._oid)
 
@@ -35,10 +36,10 @@ class MCU_counter:
         self._callback = cb
 
     def _handle_counter_state(self, params):
-        clock = self._mcu.clock32_to_clock64(params['time'])
-        time = self._mcu.clock_to_print_time(clock)
+        next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
+        time = self._mcu.clock_to_print_time(next_clock - self._poll_ticks)
 
-        count_clock = self._mcu.clock32_to_clock64(params['count_time'])
+        count_clock = self._mcu.clock32_to_clock64(params['count_clock'])
         count_time = self._mcu.clock_to_print_time(count_clock)
 
         # handle 32-bit counter overflow

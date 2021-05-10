@@ -25,15 +25,11 @@ class DeltaKinematics:
         self.rails = [rail_a, rail_b, rail_c]
         config.get_printer().register_event_handler("stepper_enable:motor_off",
                                                     self._motor_off)
-        # Setup stepper max halt velocity
+        # Setup max velocity
         self.max_velocity, self.max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', self.max_velocity,
             above=0., maxval=self.max_velocity)
-        max_halt_velocity = toolhead.get_max_axis_halt() * SLOW_RATIO
-        max_halt_accel = self.max_accel * SLOW_RATIO
-        for rail in self.rails:
-            rail.set_max_jerk(max_halt_velocity, max_halt_accel)
         # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
         print_radius = config.getfloat('print_radius', radius, above=0.)

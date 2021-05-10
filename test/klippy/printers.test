@@ -6,6 +6,8 @@ DICTIONARY atmega2560.dict
 CONFIG ../../config/example-cartesian.cfg
 CONFIG ../../config/example-corexy.cfg
 CONFIG ../../config/example-corexz.cfg
+CONFIG ../../config/example-hybrid-corexy.cfg
+CONFIG ../../config/example-hybrid-corexz.cfg
 CONFIG ../../config/example-delta.cfg
 CONFIG ../../config/example-rotary-delta.cfg
 CONFIG ../../config/example-winch.cfg
@@ -31,6 +33,7 @@ CONFIG ../../config/printer-creality-cr20-2018.cfg
 CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
 CONFIG ../../config/printer-creality-ender5plus-2019.cfg
 CONFIG ../../config/printer-eryone-thinker-series-v2-2020.cfg
+CONFIG ../../config/printer-flashforge-creator-pro-2018.cfg
 CONFIG ../../config/printer-hiprecy-leo-2019.cfg
 CONFIG ../../config/printer-longer-lk4-pro-2019.cfg
 CONFIG ../../config/printer-lulzbot-mini1-2016.cfg
@@ -47,6 +50,7 @@ CONFIG ../../config/printer-sunlu-s8-2020.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-tevo-tarantula-pro-2020.cfg
 CONFIG ../../config/printer-velleman-k8200-2013.cfg
+CONFIG ../../config/printer-velleman-k8800-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-mini-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
 CONFIG ../../config/printer-wanhao-duplicator-i3-plus-mark2-2019.cfg
@@ -130,19 +134,23 @@ CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f103-serial.dict
 CONFIG ../../config/generic-creality-v4.2.7.cfg
+CONFIG ../../config/generic-creality-v4.2.10.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
 CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
 CONFIG ../../config/generic-mks-robin-e3.cfg
 CONFIG ../../config/generic-mks-robin-nano-v1.cfg
 CONFIG ../../config/generic-mks-robin-nano-v2.cfg
 CONFIG ../../config/printer-alfawise-u30-2018.cfg
+CONFIG ../../config/printer-creality-cr30-2021.cfg
 CONFIG ../../config/printer-creality-cr6se-2020.cfg
+CONFIG ../../config/printer-creality-cr6se-2021.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-creality-ender6-2020.cfg
 CONFIG ../../config/printer-flsun-q5-2020.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
+CONFIG ../../config/printer-tronxy-x5sa-pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 
@@ -150,6 +158,7 @@ CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
+CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 
@@ -157,6 +166,7 @@ CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-fysetc-s6.cfg
 CONFIG ../../config/generic-fysetc-s6-v2.cfg
+CONFIG ../../config/generic-fysetc-spider.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
 
 # Printers using the PRU

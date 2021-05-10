@@ -499,7 +499,7 @@ stepcompress_append(struct stepcompress *sc, int sdir
     // Flush previous pending step (if any)
     if (sc->next_step_clock) {
         if (unlikely(sdir != sc->next_step_dir)) {
-            double diff = step_clock - sc->next_step_clock;
+            double diff = (int64_t)(step_clock - sc->next_step_clock);
             if (diff < SDS_FILTER_TIME * sc->mcu_freq) {
                 // Rollback last step to avoid rapid step+dir+step
                 sc->next_step_clock = 0;

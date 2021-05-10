@@ -214,32 +214,38 @@ def plot_frequency(data, mcu):
     ax1.grid(True)
     return fig
 
-def plot_temperature(data, heater):
-    temp_key = heater + ':' + 'temp'
-    target_key = heater + ':' + 'target'
-    pwm_key = heater + ':' + 'pwm'
-    times = []
-    temps = []
-    targets = []
-    pwm = []
-    for d in data:
-        temp = d.get(temp_key)
-        if temp is None:
-            continue
-        times.append(datetime.datetime.utcfromtimestamp(d['#sampletime']))
-        temps.append(float(temp))
-        pwm.append(float(d.get(pwm_key, 0.)))
-        targets.append(float(d.get(target_key, 0.)))
-    # Build plot
+def plot_temperature(data, heaters):
     fig, ax1 = matplotlib.pyplot.subplots()
-    ax1.set_title("Temperature of heater %s" % (heater,))
+    ax2 = ax1.twinx()
+    for heater in heaters.split(','):
+        heater = heater.strip()
+        temp_key = heater + ':' + 'temp'
+        target_key = heater + ':' + 'target'
+        pwm_key = heater + ':' + 'pwm'
+        times = []
+        temps = []
+        targets = []
+        pwm = []
+        for d in data:
+            temp = d.get(temp_key)
+            if temp is None:
+                continue
+            times.append(datetime.datetime.utcfromtimestamp(d['#sampletime']))
+            temps.append(float(temp))
+            pwm.append(float(d.get(pwm_key, 0.)))
+            targets.append(float(d.get(target_key, 0.)))
+        ax1.plot_date(times, temps, '-', label='%s temp' % (heater,), alpha=0.8)
+        if any(targets):
+            label = '%s target' % (heater,)
+            ax1.plot_date(times, targets, '-', label=label, alpha=0.3)
+        if any(pwm):
+            label = '%s pwm' % (heater,)
+            ax2.plot_date(times, pwm, '-', label=label, alpha=0.2)
+    # Build plot
+    ax1.set_title("Temperature of %s" % (heaters,))
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Temperature')
-    ax1.plot_date(times, temps, 'r', label='Measured temp', alpha=0.8)
-    ax1.plot_date(times, targets, 'g', label='Target', alpha=0.8)
-    ax2 = ax1.twinx()
     ax2.set_ylabel('pwm')
-    ax2.plot_date(times, pwm, 'y', label='pwm', alpha=0.8)
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
     ax1.legend(loc='best', prop=fontP)
