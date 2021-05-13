@@ -1,28 +1,32 @@
-# Code for handling the kinematics of corexy robots
+# Code for handling the kinematics of hybrid-corexz robots
 #
-# Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2021  Fabrice Gallet <tircown@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math
+import logging
 import stepper
 
-class CoreXYKinematics:
+# The hybrid-corexz kinematic is also known as Markforged kinematics
+class HybridCoreXZKinematics:
     def __init__(self, toolhead, config):
-        # Setup axis rails
+        self.printer = config.get_printer()
+        printer_config = config.getsection('printer')
+        # itersolve parameters
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
-                       stepper.PrinterRail(config.getsection('stepper_y')),
-                       stepper.LookupMultiRail(config.getsection('stepper_z')) ]
-        self.rails[0].get_endstops()[0][0].add_stepper(
-            self.rails[1].get_steppers()[0])
-        self.rails[1].get_endstops()[0][0].add_stepper(
+                       stepper.LookupMultiRail(config.getsection('stepper_y')),
+                       stepper.LookupMultiRail(config.getsection('stepper_z'))]
+        self.rails[2].get_endstops()[0][0].add_stepper(
             self.rails[0].get_steppers()[0])
-        self.rails[0].setup_itersolve('corexy_stepper_alloc', '+')
-        self.rails[1].setup_itersolve('corexy_stepper_alloc', '-')
+        self.rails[0].setup_itersolve('corexz_stepper_alloc', '-')
+        self.rails[1].setup_itersolve('cartesian_stepper_alloc', 'y')
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', 'z')
+        ranges = [r.get_range() for r in self.rails]
+        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
+        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        config.get_printer().register_event_handler("stepper_enable:motor_off",
+        self.printer.register_event_handler("stepper_enable:motor_off",
                                                     self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
@@ -31,14 +35,11 @@ class CoreXYKinematics:
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.limits = [(1.0, -1.0)] * 3
-        ranges = [r.get_range() for r in self.rails]
-        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
-        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_tag_position(self):
         pos = [rail.get_tag_position() for rail in self.rails]
-        return [0.5 * (pos[0] + pos[1]), 0.5 * (pos[0] - pos[1]), pos[2]]
+        return [pos[0] + pos[2], pos[1], pos[2]]
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
@@ -47,22 +48,21 @@ class CoreXYKinematics:
     def note_z_not_homed(self):
         # Helper for Safe Z Home
         self.limits[2] = (1.0, -1.0)
+    def _home_axis(self, homing_state, axis, rail):
+        position_min, position_max = rail.get_range()
+        hi = rail.get_homing_info()
+        homepos = [None, None, None, None]
+        homepos[axis] = hi.position_endstop
+        forcepos = list(homepos)
+        if hi.positive_dir:
+            forcepos[axis] -= 1.5 * (hi.position_endstop - position_min)
+        else:
+            forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
+        # Perform homing
+        homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
-        # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            rail = self.rails[axis]
-            # Determine movement
-            position_min, position_max = rail.get_range()
-            hi = rail.get_homing_info()
-            homepos = [None, None, None, None]
-            homepos[axis] = hi.position_endstop
-            forcepos = list(homepos)
-            if hi.positive_dir:
-                forcepos[axis] -= 1.5 * (hi.position_endstop - position_min)
-            else:
-                forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
-            # Perform homing
-            homing_state.home_rails([rail], forcepos, homepos)
+            self._home_axis(homing_state, axis, self.rails[axis])
     def _motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
     def _check_endstops(self, move):
@@ -97,4 +97,4 @@ class CoreXYKinematics:
         }
 
 def load_kinematics(toolhead, config):
-    return CoreXYKinematics(toolhead, config)
+    return HybridCoreXZKinematics(toolhead, config)

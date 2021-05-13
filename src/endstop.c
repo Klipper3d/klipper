@@ -132,10 +132,11 @@ endstop_report(uint8_t oid, struct endstop *e)
     irq_disable();
     uint8_t eflags = e->flags;
     e->flags &= ~ESF_REPORT;
+    uint32_t nextwake = e->nextwake;
     irq_enable();
 
-    sendf("endstop_state oid=%c homing=%c pin_value=%c"
-          , oid, !!(eflags & ESF_HOMING), gpio_in_read(e->pin));
+    sendf("endstop_state oid=%c homing=%c next_clock=%u pin_value=%c"
+          , oid, !!(eflags & ESF_HOMING), nextwake, gpio_in_read(e->pin));
 }
 
 void

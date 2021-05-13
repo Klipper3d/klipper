@@ -55,7 +55,7 @@ enable_pclock(uint32_t pclk)
 uint32_t
 get_pclock_frequency(uint32_t pclk)
 {
-    return CONFIG_CLOCK_FREQ / 4;
+    return CONFIG_CLOCK_FREQ;
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()

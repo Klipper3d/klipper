@@ -36,7 +36,6 @@ class PrinterExtruder:
         self.max_e_accel = config.getfloat(
             'max_extrude_only_accel', max_accel * def_max_extrude_ratio
             , above=0.)
-        self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.max_e_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
         self.instant_corner_v = config.getfloat(

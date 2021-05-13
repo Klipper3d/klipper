@@ -152,10 +152,11 @@ class VirtualSD:
         self._load_file(gcmd, filename)
     def _load_file(self, gcmd, filename, check_subdirs=False):
         files = self.get_file_list(check_subdirs)
+        flist = [f[0] for f in files]
         files_by_lower = { fname.lower(): fname for fname, fsize in files }
         fname = filename
         try:
-            if fname not in files:
+            if fname not in flist:
                 fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
             f = open(fname, 'rb')

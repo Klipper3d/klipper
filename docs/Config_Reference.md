@@ -82,7 +82,8 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, delta, rotary_delta, polar, winch, or none. This
+#   corexy, corexz, hybrid-corexy, hybrid-corexz, rotary_delta, delta,
+#   polar, winch, or none. This
 #   parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
@@ -362,6 +363,74 @@ max_z_accel:
 
 # The stepper_z section is used to describe the Z axis as well as the
 # stepper controlling the X-Z movement.
+[stepper_z]
+```
+
+## Hybrid-CoreXY Kinematics
+
+See [example-hybrid-corexy.cfg](../config/example-hybrid-corexy.cfg)
+for an example hybrid corexy kinematics config file.
+
+This kinematic is also known as Markforged kinematic.
+
+Only parameters specific to hybrid corexy printers are described here
+see [common kinematic settings](#common-kinematic-settings) for available
+parameters.
+
+```
+[printer]
+kinematics: hybrid_corexy
+max_z_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the z
+#   axis. The default is to use max_velocity for max_z_velocity.
+max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. The default is to use max_accel for max_z_accel.
+
+# The stepper_x section is used to describe the X axis as well as the
+# stepper controlling the X-Y movement.
+[stepper_x]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis.
+[stepper_y]
+
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis.
+[stepper_z]
+```
+
+## Hybrid-CoreXZ Kinematics
+
+See [example-hybrid-corexz.cfg](../config/example-hybrid-corexz.cfg)
+for an example hybrid corexz kinematics config file.
+
+This kinematic is also known as Markforged kinematic.
+
+Only parameters specific to hybrid corexy printers are described here
+see [common kinematic settings](#common-kinematic-settings) for available
+parameters.
+
+```
+[printer]
+kinematics: hybrid_corexz
+max_z_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the z
+#   axis. The default is to use max_velocity for max_z_velocity.
+max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. The default is to use max_accel for max_z_accel.
+
+# The stepper_x section is used to describe the X axis as well as the
+# stepper controlling the X-Z movement.
+[stepper_x]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis.
+[stepper_y]
+
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis.
 [stepper_z]
 ```
 
@@ -1155,16 +1224,6 @@ G-Code macros (one may define any number of sections with a
 #   A list of G-Code commands to execute in place of "my_cmd". See
 #   docs/Command_Templates.md for G-Code format. This parameter must
 #   be provided.
-#default_parameter_<parameter>:
-#   One may define any number of options with a "default_parameter_"
-#   prefix. Use this to define default values for g-code parameters.
-#   For example, if one were to define the macro MY_DELAY with gcode
-#   "G4 P{DELAY}" along with "default_parameter_DELAY = 50" then the
-#   command "MY_DELAY" would evaluate to "G4 P50". To override the
-#   default parameter when calling the command then using
-#   "MY_DELAY DELAY=30" would evaluate to "G4 P30". The default is
-#   to require that all parameters used in the gcode script be
-#   present in the command invoking the macro.
 #variable_<name>:
 #   One may specify any number of options with a "variable_" prefix.
 #   The given variable name will be assigned the given value (parsed
