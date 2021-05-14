@@ -89,7 +89,7 @@ WantedBy=multi-user.target
 Type=simple
 User=$KLIPPER_USER
 RemainAfterExit=yes
-ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${CONFIGDIR}/printer.cfg -l ${KLIPPER_LOG}
+ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${CONFIGDIR}/printer.cfg -l ${KLIPPER_LOG} -a /tmp/klippy_uds
 EOF
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
