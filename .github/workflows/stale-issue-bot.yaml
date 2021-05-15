@@ -29,3 +29,43 @@ jobs:
         exempt-issue-labels: 'enhancement,bug'
         days-before-stale: 35
         days-before-close: 7
+  close_resolved:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          script: |
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'resolved',
+              per_page: 100,
+              page: 1
+            });
+            const expireMillis = 1000 * 60 * 60 * 24 * 7;
+            const curtime = new Date().getTime();
+            for (var issue of issues.data.values()) {
+              const updatetime = new Date(issue.updated_at).getTime();
+              if (curtime < updatetime + expireMillis)
+                continue;
+              msg = "This ticket is being closed because the underlying issue"
+                  + " is now thought to be resolved."
+                  + "\n\n"
+                  + "Best regards,\n"
+                  + "~ Your friendly GitIssueBot"
+                  + "\n\n"
+                  + "PS: I'm just an automated script, not a human being.";
+              await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: msg
+              });
+              await github.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
