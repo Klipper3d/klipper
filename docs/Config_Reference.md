@@ -1757,14 +1757,17 @@ for an example configuration.
 
 ## [dual_carriage]
 
-Support for cartesian printers with dual carriages on a single
-axis. The active carriage is set via the SET_DUAL_CARRIAGE extended
-g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will
-activate the carriage defined in this section (CARRIAGE=0 will return
-activation to the primary carriage). Dual carriage support is
-typically combined with extra extruders - the SET_DUAL_CARRIAGE
-command is often called at the same time as the ACTIVATE_EXTRUDER
-command. Be sure to park the carriages during deactivation.
+Support for cartesian, hybrid-corexy or hybrid-corexz printers with
+dual carriages on a single axis. The active carriage is set via the
+SET_DUAL_CARRIAGE extended g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1"
+command will activate the carriage defined in this section (CARRIAGE=0
+will return activation to the primary carriage). In a hybrid-corexy or
+hybrid-corexz robot one can use the extra parameter HOMING for the
+SET_DUAL_CARRIAGE g-code command. "HOMING=1" will home the carriage
+designated by "CARRIAGE=" prior to use. Default is 0, no homing. Dual carriage
+support is typically combined with extra extruders - the SET_DUAL_CARRIAGE
+command is often called at the same time as the ACTIVATE_EXTRUDER command.
+Be sure to park the carriages during deactivation.
 
 See [sample-idex.cfg](../config/sample-idex.cfg) for an example
 configuration.
