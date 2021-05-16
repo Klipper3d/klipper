@@ -50,12 +50,12 @@ install_packages()
     # Install ARM build package. PKGBUILD recompresses it, so this takes a *LONG* time
     # even on a Pi 4
     report_status "Installing arm-none-eabi-gcc. This will take some time..."
-    paru -S --skip-review gcc-arm-none-eabi-bin
+    paru -S --skipreview gcc-arm-none-eabi-bin
 
     # Install stm32flash. Paru will warn about incompatable architecture, but aarch64 is backwards
     # compatabile, so this works fine.
     report_status "Installing stm32flash. Please ignore incompatability error warning"
-    paru -S --skip-review stm32flash
+    paru -S --skipreview stm32flash
 }
 
 # Step 2: Create python virtual environment
