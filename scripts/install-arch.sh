@@ -86,6 +86,11 @@ verify_ready()
         echo "This script must not run as root"
         exit -1
     fi
+
+    if [[ "$(uname -m)" != "x86_64" ]]; then
+        echo "This script is only compatabile with x86_64 installations"
+        exit -1
+    fi
 }
 
 # Force script to exit if an error occurs

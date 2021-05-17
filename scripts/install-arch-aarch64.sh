@@ -121,6 +121,12 @@ verify_ready()
         echo "This script is only compatabile with aarch64-based installations"
         exit -1
     fi
+
+    if ! which sudo > /dev/null 2>&1; then 
+        echo "Sudo is not installed, please install Sudo and add user to sudoers list."
+        exit -1
+    fi
+
 }
 
 # Force script to exit if an error occurs
