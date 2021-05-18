@@ -1128,11 +1128,8 @@ home_xy_position:
 #   applied to any homing command, even if it doesn't home the Z axis.
 #   If the Z axis is already homed and the current Z position is less
 #   than z_hop, then this will lift the head to a height of z_hop. If
-#   the Z axis is not already homed, then prior to any XY homing
-#   movement the Z axis boundary checks are disabled and the head is
-#   lifted by z_hop. If z_hop is specified, be sure to home the Z
-#   immediately after any XY home requests so that the Z boundary
-#   checks are accurate. The default is to not implement Z hop.
+#   the Z axis is not already homed the head is lifted by z_hop.
+#   The default is to not implement Z hop.
 #z_hop_speed: 20.0
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
 #   default is 20mm/s.
