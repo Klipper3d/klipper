@@ -1,6 +1,45 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+Klipper 0.9.0
+=============
+
+Available on 20201020. Major changes in this release:
+* Support for "Input Shaping" - a mechanism to counteract printer
+  resonance. It can reduce or eliminate "ringing" in prints.
+* New "Smooth Pressure Advance" system. This implements "Pressure
+  Advance" without introducing instantaneous velocity changes. It is
+  also now possible to tune pressure advance using a "Tuning Tower"
+  method.
+* New "webhooks" API server. This provides a programmable JSON
+  interface to Klipper.
+* The LCD display and menu are now configurable using the Jinja2
+  template language.
+* The TMC2208 stepper motor drivers can now be used in "standalone"
+  mode with Klipper.
+* Improved BL-Touch v3 support.
+* Improved USB identification. Klipper now has its own USB
+  identification code and micro-controllers can now report their
+  unique serial numbers during USB identification.
+* New kinematic support for "Rotary Delta" and "CoreXZ" printers.
+* Micro-controller improvements: support for stm32f070, support for
+  stm32f207, support for GPIO pins on "Linux MCU", stm32 "HID
+  bootloader" support, Chitu bootloader support, MKS Robin bootloader
+  support.
+* Improved handling of Python "garbage collection" events.
+* Many additional modules added: adc_scaled, adxl345, bme280,
+  display_status, extruder_stepper, fan_generic,
+  hall_filament_width_sensor, htu21d, homing_heaters, input_shaper,
+  lm75, print_stats, resonance_tester, shaper_calibrate, query_adc,
+  graph_accelerometer, graph_extruder, graph_motion, graph_shaper,
+  graph_temp_sensor, whconsole
+* Several bug fixes and code cleanups.
+
+Klipper 0.9.1
+--------------
+
+Available on 20201028. Release containing only bug fixes.
+
 Klipper 0.8.0
 =============
 

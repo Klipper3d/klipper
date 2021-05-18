@@ -6,23 +6,22 @@ Klipper supports Input Shaping - a technique that can be used to reduce ringing
 printing defect when, typically, elements like edges repeat themselves on a
 printed surface as a subtle 'echo':
 
-|![Ringing test](img/ringing-test.jpg) |![3D Benchy](img/ringing-3dbenchy.jpg) |
-|:--:|:--:|
+|![Ringing test](img/ringing-test.jpg)|![3D Benchy](img/ringing-3dbenchy.jpg)|
 
 Ringing is caused by mechanical vibrations in the printer due to quick changes
-of the printing direction.
+of the printing direction. Note that ringing usually has mechanical origins:
+insufficiently rigid printer frame, non-tight or too springy belts, alignment
+issues of mechanical parts, heavy moving mass, etc. Those should be checked
+and fixed first, if possible.
+
+
 [Input shaping](https://en.wikipedia.org/wiki/Input_shaping) is an open-loop
 control technique which creates a commanding signal that cancels its
-own vibrations.
+own vibrations. Input shaping requires some tuning and measurements before it
+can be enabled. Besides ringing, Input Shaping typically reduces the vibrations
+and shaking of the printer in general, and may also improve the reliability
+of the stealthChop mode of Trinamic stepper drivers.
 
-**Warning**: Input Shaping support is experimental. You should consider using it
-only if you already have ghosting and ringing in prints, otherwise it is not
-advised to enable it. Input shaping requires some tuning and measurements
-before it can be enabled.
-
-Note that ringing usually has mechanical origins: insufficiently rigid printer
-frame, non-tight or too springy belts, alignment issues of mechanical parts,
-heavy moving mass, etc. Those should be checked and fixed first.
 
 Tuning
 ===========================
@@ -37,8 +36,13 @@ Slice the ringing test model, which can be found in
  * Suggested layer height is 0.2 or 0.25 mm.
  * Infill and top layers can be set to 0.
  * Use 1-2 perimeters, or even better the smooth vase mode with 1-2 mm base.
- * Use sufficiently high speed, around 80-100 mm/sec, for *external* perimeters.
- * Make sure that the minimum layer time is *at most* 3 seconds.
+ * Use sufficiently high speed, around 80-100 mm/sec, for **external** perimeters.
+ * Make sure that the minimum layer time is **at most** 3 seconds.
+ * Make sure any "dynamic acceleration control" is disabled in the slicer.
+ * Do not turn the model. The model has X and Y marks at the back of the model.
+   Note the unusual location of the marks vs. the axes of the printer - it is
+   not a mistake. The marks can be used later in the tuning process as a
+   reference, because they show which axis the measurements correspond to.
 
 ## Ringing frequency
 
@@ -48,37 +52,44 @@ First, measure the **ringing frequency**.
    `printer.cfg` to 7000. Note that this is only needed for tuning, and more
    proper value will be selected in the corresponding
    [section](#selecting-max_accel).
-2. Restart the firmware: `RESTART`.
-3. Disable Pressure Advance: `SET_PRESSURE_ADVANCE ADVANCE=0`.
-4. If you have already added `[input_shaper]` section to the printer.cfg,
+2. If `square_corner_velocity` parameter was changed, revert it back to 5.0.
+   It is not advised to increase it when using the input shaper because it can
+   cause more smoothing in parts - it is better to use higher acceleration
+   value instead.
+3. Restart the firmware: `RESTART`.
+4. Disable Pressure Advance: `SET_PRESSURE_ADVANCE ADVANCE=0`.
+5. If you have already added `[input_shaper]` section to the printer.cfg,
    execute `SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0` command. If you
    get "Unknown command" error, you can safely ignore it at this point and
    continue with the measurements.
-5. Execute the command
+6. Execute the command
    `TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1250 FACTOR=100 BAND=5`.
    Basically, we try to make ringing more pronounced by setting different large
-   values for acceleration.
-6. Print the test model sliced with the suggested parameters.
-7. You can stop the print earlier if the ringing is clearly visible and you see
+   values for acceleration. This command will increase the acceleration every
+   5 mm starting from 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2
+   and so forth up until 7000 mm/sec^2 at the last band.
+7. Print the test model sliced with the suggested parameters.
+8. You can stop the print earlier if the ringing is clearly visible and you see
    that acceleration gets too high for your printer (e.g. printer shakes too
    much or starts skipping steps).
-8. Measure the distance *D* (in mm) between *N* oscillations for X axis near
-   the notches, preferably skipping the first oscillation or two. Pay attention
-   to the notches X axis corresponds to - the test model has large 'X' and 'Y'
-   marks on the back side for convenience. Note that 'X' mark is on Y axis and
-   vice versa, it is not a mistake - ringing of X axis shows *along* Y axis.
-   To measure the distance between oscillations more easily, mark the
-   oscillations first, then measure the distance between the marks with a ruler
-   or calipers:
+9. Use X and Y marks at the back of the model for reference. The measurements
+   from the side with X mark should be used for X axis *configuration*, and
+   Y mark - for Y axis configuration. Measure the distance *D* (in mm) between
+   several oscillations on the part with X mark, near the notches, preferably
+   skipping the first oscillation or two. To measure the distance between
+   oscillations more easily, mark the oscillations first, then measure the
+   distance between the marks with a ruler or calipers:
 
     |![Mark ringing](img/ringing-mark.jpg)|![Measure ringing](img/ringing-measure.jpg)|
-    |:--:|:--:|
 
-9. Compute the ringing frequency = *V* &middot; *N* / *D* (Hz) where *V* is the
-   velocity for outer perimeters (mm/sec). For the example above, we marked 6
-   oscillations, and the test was printed at 100 mm/sec velocity, so the
-   frequency is 100 * 6 / 12.14 ≈ 49.4 Hz.
-10. Do (8) - (9) for Y axis as well.
+10. Count how many oscillations *N* the measured distance *D* corresponds to.
+    If you are unsure how to count the oscillations, refer to the picture
+    above, which shows *N* = 6 oscillations.
+11. Compute the ringing frequency of X axis as *V* &middot; *N* / *D* (Hz),
+    where *V* is the velocity for outer perimeters (mm/sec). For the example
+    above, we marked 6 oscillations, and the test was printed at 100 mm/sec
+    velocity, so the frequency is 100 * 6 / 12.14 ≈ 49.4 Hz.
+12. Do (9) - (11) for Y mark as well.
 
 Note that ringing on the test print should follow the pattern of the curved
 notches, as in the picture above. If it doesn't, then this defect is not really
@@ -124,8 +135,8 @@ After the ringing frequencies for X and Y axes are measured, you can add the
 following section to your `printer.cfg`:
 ```
 [input_shaper]
-shaper_freq_x: ...
-shaper_freq_y: ...
+shaper_freq_x: ...  # frequency for the X mark of the test model
+shaper_freq_y: ...  # frequency for the Y mark of the test model
 ```
 
 For the example above, we get shaper_freq_x/y = 49.4.
@@ -195,12 +206,16 @@ A few notes on shaper selection:
 
 ## Selecting max_accel
 
-You should have a printed test for the shaper you chose from the previous step.
+You should have a printed test for the shaper you chose from the previous step
+(if you don't, print the test model sliced with the
+[suggested parameters](#tuning) with the pressure advance disabled
+`SET_PRESSURE_ADVANCE ADVANCE=0` and with the tuning tower enabled as
+`TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1250 FACTOR=100 BAND=5`).
 Note that at very high accelerations, depending on the resonance frequency and
 the input shaper you chose (e.g. EI shaper creates more smoothing than MZV),
 input shaping may cause too much smoothing and rounding of the parts. So,
 max_accel should be chosen such as to prevent that. Another parameter that can
-impact smoothing is square_corner_velocity, so it is not advisable to increase
+impact smoothing is `square_corner_velocity`, so it is not advisable to increase
 it above the default 5 mm/sec to prevent increased smoothing.
 
 In order to select a suitable max_accel value, inspect the model for the chosen
@@ -212,8 +227,8 @@ in the wall (0.15 mm):
 
 ![Test gap](img/smoothing-test.png)
 
-As the acceleration increases, so does the smoothing, and the actual gap
-widens:
+As the acceleration increases, so does the smoothing, and the actual gap in
+the print widens:
 
 ![Shaper smoothing](img/shaper-smoothing.jpg)
 
@@ -267,7 +282,7 @@ to 7000 already, complete the following steps for each of the axes X and Y:
 
 1. Make sure Pressure Advance is disabled: `SET_PRESSURE_ADVANCE ADVANCE=0`.
 2. Execute `SET_INPUT_SHAPER SHAPER_TYPE=ZV`.
-2. From the existing ringing test model with your chosen input shaper select
+3. From the existing ringing test model with your chosen input shaper select
    the acceleration that shows ringing sufficiently well, and set it with:
    `SET_VELOCITY_LIMIT ACCEL=...`.
 4. Calculate the necessary parameters for the `TUNING_TOWER` command to tune
@@ -318,9 +333,9 @@ between the oscillations is not stable, you may still be able to take advantage
 of input shaping techniques, but the results may not be as good as with proper
 measurements of the frequencies, and will require a bit more tuning and printing
 the test model. Note that another possibility is to purchase and install an
-accelerometer and measure the resonances with it (there is a separate
-[branch](https://github.com/dmbutyugin/klipper/blob/adxl345-spi/docs/Measuring_Resonances.md)
-with ADXL345 support) - but this option requires some crimping and soldering.
+accelerometer and measure the resonances with it (refer to the
+[docs](Measuring_Resonances.md) describing the required hardware and the setup
+process) - but this option requires some crimping and soldering.
 
 
 For tuning, add empty `[input_shaper]` section to your `printer.cfg`. Then,
@@ -394,7 +409,10 @@ between the oscillations is not stable, it might mean that the printer has
 several resonance frequencies on the same axis. One may try to follow the
 tuning process described in
 [Unreliable measurements of ringing frequencies](#unreliable-measurements-of-ringing-frequencies)
-section and still get something out of the input shaping technique.
+section and still get something out of the input shaping technique. Another
+possibility is to install an accelerometer, [measure](Measuring_Resonances.md)
+the resonances with it, and auto-tune the input shaper using the results of
+those measurements.
 
 ### After enabling [input_shaper], I get too smoothed printed parts and fine details are lost
 

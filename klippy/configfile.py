@@ -1,6 +1,6 @@
 # Code for reading and writing the Klipper config file
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, glob, re, time, logging, ConfigParser as configparser, StringIO
@@ -23,32 +23,35 @@ class ConfigWrapper:
         return self.section
     def _get_wrapper(self, parser, option, default, minval=None, maxval=None,
                      above=None, below=None, note_valid=True):
-        if (default is not sentinel
-            and not self.fileconfig.has_option(self.section, option)):
-            return default
-        if note_valid:
-            self.access_tracking[(self.section.lower(), option.lower())] = 1
+        if not self.fileconfig.has_option(self.section, option):
+            if default is not sentinel:
+                if note_valid and default is not None:
+                    acc_id = (self.section.lower(), option.lower())
+                    self.access_tracking[acc_id] = default
+                return default
+            raise error("Option '%s' in section '%s' must be specified"
+                        % (option, self.section))
         try:
             v = parser(self.section, option)
         except self.error as e:
             raise
         except:
-            raise error("Unable to parse option '%s' in section '%s'" % (
-                option, self.section))
+            raise error("Unable to parse option '%s' in section '%s'"
+                        % (option, self.section))
+        if note_valid:
+            self.access_tracking[(self.section.lower(), option.lower())] = v
         if minval is not None and v < minval:
-            raise error(
-                "Option '%s' in section '%s' must have minimum of %s" % (
-                    option, self.section, minval))
+            raise error("Option '%s' in section '%s' must have minimum of %s"
+                        % (option, self.section, minval))
         if maxval is not None and v > maxval:
-            raise error(
-                "Option '%s' in section '%s' must have maximum of %s" % (
-                    option, self.section, maxval))
+            raise error("Option '%s' in section '%s' must have maximum of %s"
+                        % (option, self.section, maxval))
         if above is not None and v <= above:
-            raise error("Option '%s' in section '%s' must be above %s" % (
-                option, self.section, above))
+            raise error("Option '%s' in section '%s' must be above %s"
+                        % (option, self.section, above))
         if below is not None and v >= below:
-            raise self.error("Option '%s' in section '%s' must be below %s" % (
-                option, self.section, below))
+            raise self.error("Option '%s' in section '%s' must be below %s"
+                             % (option, self.section, below))
         return v
     def get(self, option, default=sentinel, note_valid=True):
         return self._get_wrapper(self.fileconfig.get, option, default,
@@ -93,7 +96,9 @@ class PrinterConfig:
     def __init__(self, printer):
         self.printer = printer
         self.autosave = None
-        self.status_info = {}
+        self.status_raw_config = {}
+        self.status_settings = {}
+        self.save_config_pending = False
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
                                desc=self.cmd_SAVE_CONFIG_help)
@@ -239,13 +244,17 @@ class PrinterConfig:
         for section_name in fileconfig.sections():
             section = section_name.lower()
             if section not in valid_sections and section not in objects:
-                raise error("Section '%s' is not a valid config section" % (
-                    section,))
+                raise error("Section '%s' is not a valid config section"
+                            % (section,))
             for option in fileconfig.options(section_name):
                 option = option.lower()
                 if (section, option) not in access_tracking:
-                    raise error("Option '%s' is not valid in section '%s'" % (
-                        option, section))
+                    raise error("Option '%s' is not valid in section '%s'"
+                                % (option, section))
+        # Setup self.status_settings
+        self.status_settings = {}
+        for (section, option), value in config.access_tracking.items():
+            self.status_settings.setdefault(section, {})[option] = value
     def log_config(self, config):
         lines = ["===== Config file =====",
                  self._build_config_string(config),
@@ -253,29 +262,33 @@ class PrinterConfig:
         self.printer.set_rollover_info("config", "\n".join(lines))
     # Status reporting
     def _build_status(self, config):
-        self.status_info.clear()
+        self.status_raw_config.clear()
         for section in config.get_prefix_sections(''):
-            self.status_info[section.get_name()] = section_status = {}
+            self.status_raw_config[section.get_name()] = section_status = {}
             for option in section.get_prefix_options(''):
                 section_status[option] = section.get(option, note_valid=False)
     def get_status(self, eventtime):
-        return {'config': self.status_info}
+        return {'config': self.status_raw_config,
+                'settings': self.status_settings,
+                'save_config_pending': self.save_config_pending}
     # Autosave functions
     def set(self, section, option, value):
         if not self.autosave.fileconfig.has_section(section):
             self.autosave.fileconfig.add_section(section)
         svalue = str(value)
         self.autosave.fileconfig.set(section, option, svalue)
+        self.save_config_pending = True
         logging.info("save_config: set [%s] %s = %s", section, option, svalue)
     def remove_section(self, section):
         self.autosave.fileconfig.remove_section(section)
+        self.save_config_pending = True
     def _disallow_include_conflicts(self, regular_data, cfgname, gcode):
         config = self._build_config_wrapper(regular_data, cfgname)
         for section in self.autosave.fileconfig.sections():
             for option in self.autosave.fileconfig.options(section):
                 if config.fileconfig.has_option(section, option):
-                    msg = "SAVE_CONFIG section '%s' option '%s' conflicts " \
-                          "with included value" % (section, option)
+                    msg = ("SAVE_CONFIG section '%s' option '%s' conflicts "
+                           "with included value" % (section, option))
                     raise gcode.error(msg)
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
     def cmd_SAVE_CONFIG(self, gcmd):

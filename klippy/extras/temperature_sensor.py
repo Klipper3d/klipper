@@ -9,6 +9,7 @@ KELVIN_TO_CELSIUS = -273.15
 class PrinterSensorGeneric:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
         pheaters = self.printer.load_object(config, 'heaters')
         self.sensor = pheaters.setup_sensor(config)
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
@@ -28,6 +29,8 @@ class PrinterSensorGeneric:
             self.measured_max = max(self.measured_max, temp)
     def get_temp(self, eventtime):
         return self.last_temp, 0.
+    def stats(self, eventtime):
+        return False, '%s: temp=%.1f' % (self.name, self.last_temp)
     def get_status(self, eventtime):
         return {
             'temperature': self.last_temp,

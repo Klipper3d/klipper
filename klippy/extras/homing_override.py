@@ -13,6 +13,7 @@ class HomingOverride:
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'gcode')
         self.in_script = False
+        self.printer.load_object(config, 'homing')
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
@@ -32,14 +33,14 @@ class HomingOverride:
         if no_axis:
             override = True
         else:
-            # check if we home an axsis which needs the override
+            # check if we home an axis which needs the override
             override = False
             for axis in self.axes:
                 if gcmd.get(axis, None) is not None:
                     override = True
 
         if not override:
-            self.gcode.cmd_G28(gcmd)
+            self.prev_G28(gcmd)
             return
 
         # Calculate forced position (if configured)
@@ -51,13 +52,12 @@ class HomingOverride:
                 pos[axis] = loc
                 homing_axes.append(axis)
         toolhead.set_position(pos, homing_axes=homing_axes)
-        self.gcode.reset_last_position()
         # Perform homing
-        kwparams = { 'printer': self.template.create_status_wrapper() }
-        kwparams['params'] = gcmd.get_command_parameters()
+        context = self.template.create_template_context()
+        context['params'] = gcmd.get_command_parameters()
         try:
             self.in_script = True
-            self.template.run_gcode_from_command(kwparams)
+            self.template.run_gcode_from_command(context)
         finally:
             self.in_script = False
 

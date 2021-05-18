@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # Main code for host side printer firmware
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, optparse, logging, time, threading, collections, importlib
-import util, reactor, queuelogger, msgproto, homing
+import sys, os, gc, optparse, logging, time, collections, importlib
+import util, reactor, queuelogger, msgproto
 import gcode, configfile, pins, mcu, toolhead, webhooks
 
 message_ready = "Printer is ready"
@@ -22,10 +22,12 @@ command to reload the config and restart the host software.
 Printer is halted
 """
 
-message_protocol_error = """
+message_protocol_error1 = """
 This type of error is frequently caused by running an older
 version of the firmware on the micro-controller (fix by
 recompiling and flashing the firmware).
+"""
+message_protocol_error2 = """
 Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
 Protocol error connecting to printer
@@ -47,11 +49,11 @@ Printer is shutdown
 
 class Printer:
     config_error = configfile.error
-    command_error = homing.CommandError
-    def __init__(self, bglogger, start_args):
+    command_error = gcode.CommandError
+    def __init__(self, main_reactor, bglogger, start_args):
         self.bglogger = bglogger
         self.start_args = start_args
-        self.reactor = reactor.Reactor()
+        self.reactor = main_reactor
         self.reactor.register_callback(self._connect)
         self.state_message = message_startup
         self.in_shutdown_state = False
@@ -59,7 +61,7 @@ class Printer:
         self.event_handlers = {}
         self.objects = collections.OrderedDict()
         # Init printer components that must be setup prior to config
-        for m in [webhooks, gcode]:
+        for m in [gcode, webhooks]:
             m.add_early_printer_objects(self)
     def get_start_args(self):
         return self.start_args
@@ -70,6 +72,8 @@ class Printer:
             category = "ready"
         elif self.state_message == message_startup:
             category = "startup"
+        elif self.in_shutdown_state:
+            category = "shutdown"
         else:
             category = "error"
         return self.state_message, category
@@ -82,7 +86,7 @@ class Printer:
             and self.start_args.get('debuginput') is not None):
             self.request_exit('error_exit')
     def add_object(self, name, obj):
-        if obj in self.objects:
+        if name in self.objects:
             raise self.config_error(
                 "Printer object '%s' already created" % (name,))
         self.objects[name] = obj
@@ -139,6 +143,15 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
+    def _get_versions(self):
+        try:
+            parts = ["%s=%s" % (n.split()[-1], m.get_status()['mcu_version'])
+                     for n, m in self.lookup_objects('mcu')]
+            parts.insert(0, "host=%s" % (self.start_args['software_version'],))
+            return "\nKnown versions: %s\n" % (", ".join(parts),)
+        except:
+            logging.exception("Error in _get_versions()")
+            return ""
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -153,7 +166,9 @@ class Printer:
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
-            self._set_state("%s%s" % (str(e), message_protocol_error))
+            self._set_state("%s%s%s%s" % (str(e), message_protocol_error1,
+                                          self._get_versions(),
+                                          message_protocol_error2))
             util.dump_mcu_build()
             return
         except mcu.error as e:
@@ -163,8 +178,8 @@ class Printer:
             return
         except Exception as e:
             logging.exception("Unhandled exception during connect")
-            self._set_state("Internal error during connect: %s\n%s" % (
-                str(e), message_restart,))
+            self._set_state("Internal error during connect: %s\n%s"
+                            % (str(e), message_restart,))
             return
         try:
             self._set_state(message_ready)
@@ -174,8 +189,8 @@ class Printer:
                 cb()
         except Exception as e:
             logging.exception("Unhandled exception during ready callback")
-            self.invoke_shutdown("Internal error during ready callback: %s" % (
-                str(e),))
+            self.invoke_shutdown("Internal error during ready callback: %s"
+                                 % (str(e),))
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
@@ -185,8 +200,17 @@ class Printer:
         try:
             self.reactor.run()
         except:
-            logging.exception("Unhandled exception during run")
-            return "error_exit"
+            msg = "Unhandled exception during run"
+            logging.exception(msg)
+            # Exception from a reactor callback - try to shutdown
+            try:
+                self.reactor.register_callback((lambda e:
+                                                self.invoke_shutdown(msg)))
+                self.reactor.run()
+            except:
+                logging.exception("Repeat unhandled exception during run")
+                # Another exception - try to exit
+                self.run_result = "error_exit"
         # Check restart flags
         run_result = self.run_result
         try:
@@ -213,6 +237,8 @@ class Printer:
                 cb()
             except:
                 logging.exception("Exception during shutdown handler")
+        logging.info("Reactor garbage collection: %s",
+                     self.reactor.get_gc_stats())
     def invoke_async_shutdown(self, msg):
         self.reactor.register_async_callback(
             (lambda e: self.invoke_shutdown(msg)))
@@ -247,6 +273,8 @@ def main():
     opts.add_option("-I", "--input-tty", dest="inputtty",
                     default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
+    opts.add_option("-a", "--api-server", dest="apiserver",
+                    help="api server unix domain socket filename")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
@@ -259,7 +287,8 @@ def main():
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    start_args = {'config_file': args[0], 'start_reason': 'startup'}
+    start_args = {'config_file': args[0], 'apiserver': options.apiserver,
+                  'start_reason': 'startup'}
 
     debuglevel = logging.INFO
     if options.verbose:
@@ -292,17 +321,22 @@ def main():
     elif not options.debugoutput:
         logging.warning("No log file specified!"
                         " Severe timing issues may result!")
+    gc.disable()
 
     # Start Printer() class
     while 1:
         if bglogger is not None:
             bglogger.clear_rollover_info()
             bglogger.set_rollover_info('versions', versions)
-        printer = Printer(bglogger, start_args)
+        gc.collect()
+        main_reactor = reactor.Reactor(gc_checking=True)
+        printer = Printer(main_reactor, bglogger, start_args)
         res = printer.run()
         if res in ['exit', 'error_exit']:
             break
         time.sleep(1.)
+        main_reactor.finalize()
+        main_reactor = printer = None
         logging.info("Restarting printer")
         start_args['start_reason'] = res
 

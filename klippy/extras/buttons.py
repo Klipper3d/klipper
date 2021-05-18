@@ -62,7 +62,7 @@ class MCU_buttons:
             ack_diff -= 0x100
         msg_ack_count = ack_count - ack_diff
         # Determine new buttons
-        buttons = params['state']
+        buttons = bytearray(params['state'])
         new_count = msg_ack_count + len(buttons) - self.ack_count
         if new_count <= 0:
             return
@@ -71,9 +71,9 @@ class MCU_buttons:
         self.ack_cmd.send([self.oid, new_count])
         self.ack_count += new_count
         # Call self.handle_button() with this event in main thread
-        for b in new_buttons:
+        for nb in new_buttons:
             self.reactor.register_async_callback(
-                (lambda e, s=self, b=ord(b): s.handle_button(e, b)))
+                (lambda e, s=self, b=nb: s.handle_button(e, b)))
     def handle_button(self, eventtime, button):
         button ^= self.invert
         changed = button ^ self.last_button

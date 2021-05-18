@@ -1,10 +1,10 @@
 # Code for handling the kinematics of rotary delta robots
 #
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-import stepper, homing, mathutil, chelper
+import stepper, mathutil, chelper
 
 class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
@@ -23,13 +23,10 @@ class RotaryDeltaKinematics:
         self.rails = [rail_a, rail_b, rail_c]
         config.get_printer().register_event_handler("stepper_enable:motor_off",
                                                     self._motor_off)
-        # Setup stepper max halt velocity
+        # Read config
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
                                               above=0., maxval=max_velocity)
-        for rail in self.rails:
-            rail.set_max_jerk(9999999.9, 9999999.9)
-        # Read config
         shoulder_radius = config.getfloat('shoulder_radius', above=0.)
         shoulder_height = config.getfloat('shoulder_height', above=0.)
         a_upper_arm = stepper_configs[0].getfloat('upper_arm_length', above=0.)
@@ -76,6 +73,9 @@ class RotaryDeltaKinematics:
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
             % (self.max_z, self.limit_z))
+        max_xy = math.sqrt(self.max_xy2)
+        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.)
+        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.)
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
@@ -106,7 +106,7 @@ class RotaryDeltaKinematics:
             # Normal XY move
             return
         if self.need_home:
-            raise homing.EndstopMoveError(end_pos, "Must home first")
+            raise move.move_error("Must home first")
         end_z = end_pos[2]
         limit_xy2 = self.max_xy2
         if end_z > self.limit_z:
@@ -115,14 +115,18 @@ class RotaryDeltaKinematics:
             # Move out of range - verify not a homing move
             if (end_pos[:2] != self.home_position[:2]
                 or end_z < self.min_z or end_z > self.home_position[2]):
-                raise homing.EndstopMoveError(end_pos)
+                raise move.move_error()
             limit_xy2 = -1.
         if move.axes_d[2]:
             move.limit_speed(self.max_z_velocity, move.accel)
             limit_xy2 = -1.
         self.limit_xy2 = limit_xy2
     def get_status(self, eventtime):
-        return {'homed_axes': '' if self.need_home else 'XYZ'}
+        return {
+            'homed_axes': '' if self.need_home else 'xyz',
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
     def get_calibration(self):
         return self.calibration
 

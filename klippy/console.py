@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # Script to implement a test console with firmware over serial port
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, os, re, logging
@@ -30,8 +30,12 @@ help_txt = """
 re_eval = re.compile(r'\{(?P<eval>[^}]*)\}')
 
 class KeyboardReader:
-    def __init__(self, ser, reactor):
-        self.ser = ser
+    def __init__(self, reactor, serialport, baud, canbus_iface, canbus_nodeid):
+        self.serialport = serialport
+        self.baud = baud
+        self.canbus_iface = canbus_iface
+        self.canbus_nodeid = canbus_nodeid
+        self.ser = serialhdl.SerialReader(reactor)
         self.reactor = reactor
         self.start_time = reactor.monotonic()
         self.clocksync = clocksync.ClockSync(self.reactor)
@@ -52,13 +56,20 @@ class KeyboardReader:
     def connect(self, eventtime):
         self.output(help_txt)
         self.output("="*20 + " attempting to connect " + "="*20)
-        self.ser.connect()
+        if self.canbus_iface is not None:
+            self.ser.connect_canbus(self.serialport, self.canbus_nodeid,
+                                    self.canbus_iface)
+        elif self.baud:
+            self.ser.connect_uart(self.serialport, self.baud)
+        else:
+            self.ser.connect_pipe(self.serialport)
         msgparser = self.ser.get_msgparser()
-        self.output("Loaded %d commands (%s / %s)" % (
-            len(msgparser.messages_by_id),
-            msgparser.version, msgparser.build_versions))
+        message_count = len(msgparser.get_messages())
+        version, build_versions = msgparser.get_version_info()
+        self.output("Loaded %d commands (%s / %s)"
+                    % (message_count, version, build_versions))
         self.output("MCU config: %s" % (" ".join(
-            ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
+            ["%s=%s" % (k, v) for k, v in msgparser.get_constants().items()])))
         self.clocksync.connect(self.ser)
         self.ser.handle_default = self.handle_default
         self.ser.register_response(self.handle_output, '#output')
@@ -137,9 +148,10 @@ class KeyboardReader:
     def command_LIST(self, parts):
         self.update_evals(self.reactor.monotonic())
         mp = self.ser.get_msgparser()
+        cmds = [msgformat for msgtag, msgtype, msgformat in mp.get_messages()
+                if msgtype == 'command']
         out = "Available mcu commands:"
-        out += "\n  ".join([""] + sorted([
-            mp.messages_by_id[i].msgformat for i in mp.command_ids]))
+        out += "\n  ".join([""] + sorted(cmds))
         out += "\nAvailable artificial commands:"
         out += "\n  ".join([""] + [n for n in sorted(self.local_commands)])
         out += "\nAvailable local variables:"
@@ -195,16 +207,33 @@ class KeyboardReader:
         self.data = kbdlines[-1]
 
 def main():
-    usage = "%prog [options] <serialdevice> <baud>"
+    usage = "%prog [options] <serialdevice>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-v", action="store_true", dest="verbose",
+                    help="enable debug messages")
+    opts.add_option("-b", "--baud", type="int", dest="baud", help="baud rate")
+    opts.add_option("-c", "--canbus_iface", dest="canbus_iface",
+                    help="Use CAN bus interface; serialdevice is the chip UUID")
+    opts.add_option("-i", "--canbus_nodeid", type="int", dest="canbus_nodeid",
+                    default=64, help="The CAN nodeid to use (default 64)")
     options, args = opts.parse_args()
-    serialport, baud = args
-    baud = int(baud)
+    if len(args) != 1:
+        opts.error("Incorrect number of arguments")
+    serialport = args[0]
 
-    logging.basicConfig(level=logging.DEBUG)
+    baud = options.baud
+    if baud is None and not (serialport.startswith("/dev/rpmsg_")
+                             or serialport.startswith("/tmp/")):
+        baud = 250000
+
+    debuglevel = logging.INFO
+    if options.verbose:
+        debuglevel = logging.DEBUG
+    logging.basicConfig(level=debuglevel)
+
     r = reactor.Reactor()
-    ser = serialhdl.SerialReader(r, serialport, baud)
-    kbd = KeyboardReader(ser, r)
+    kbd = KeyboardReader(r, serialport, baud, options.canbus_iface,
+                         options.canbus_nodeid)
     try:
         r.run()
     except KeyboardInterrupt:

@@ -1,6 +1,6 @@
 # Wrapper around C helper code
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging
@@ -11,9 +11,11 @@ import cffi
 # c_helper.so compiling
 ######################################################################
 
-COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
-               " -flto -fwhole-program -fno-use-linker-plugin"
-               " -o %s %s")
+GCC_CMD = "gcc"
+COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
+                " -flto -fwhole-program -fno-use-linker-plugin"
+                " -o %s %s")
+SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
@@ -29,10 +31,14 @@ OTHER_FILES = [
 defs_stepcompress = """
     struct stepcompress *stepcompress_alloc(uint32_t oid);
     void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-        , uint32_t invert_sdir, uint32_t queue_step_msgid
-        , uint32_t set_next_step_dir_msgid);
+        , uint32_t invert_sdir, int32_t queue_step_msgtag
+        , int32_t set_next_step_dir_msgtag);
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+    int stepcompress_set_last_position(struct stepcompress *sc
+        , int64_t last_position);
+    int64_t stepcompress_find_past_position(struct stepcompress *sc
+        , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
 
@@ -139,7 +145,8 @@ defs_serialqueue = """
         uint64_t notify_id;
     };
 
-    struct serialqueue *serialqueue_alloc(int serial_fd, int write_only);
+    struct serialqueue *serialqueue_alloc(int serial_fd, char serial_fd_type
+        , int client_id);
     void serialqueue_exit(struct serialqueue *sq);
     void serialqueue_free(struct serialqueue *sq);
     struct command_queue *serialqueue_alloc_commandqueue(void);
@@ -176,52 +183,72 @@ defs_all = [
     defs_kin_winch, defs_kin_extruder, defs_kin_shaper,
 ]
 
+# Update filenames to an absolute path
+def get_abs_files(srcdir, filelist):
+    return [os.path.join(srcdir, fname) for fname in filelist]
+
 # Return the list of file modification times
-def get_mtimes(srcdir, filelist):
+def get_mtimes(filelist):
     out = []
     for filename in filelist:
-        pathname = os.path.join(srcdir, filename)
         try:
-            t = os.path.getmtime(pathname)
+            t = os.path.getmtime(filename)
         except os.error:
             continue
         out.append(t)
     return out
 
 # Check if the code needs to be compiled
-def check_build_code(srcdir, target, sources, cmd, other_files=[]):
-    src_times = get_mtimes(srcdir, sources + other_files)
-    obj_times = get_mtimes(srcdir, [target])
-    if not obj_times or max(src_times) > min(obj_times):
-        logging.info("Building C code module %s", target)
-        srcfiles = [os.path.join(srcdir, fname) for fname in sources]
-        destlib = os.path.join(srcdir, target)
-        res = os.system(cmd % (destlib, ' '.join(srcfiles)))
-        if res:
-            msg = "Unable to build C code module (error=%s)" % (res,)
-            logging.error(msg)
-            raise Exception(msg)
+def check_build_code(sources, target):
+    src_times = get_mtimes(sources)
+    obj_times = get_mtimes([target])
+    return not obj_times or max(src_times) > min(obj_times)
+
+# Check if the current gcc version supports a particular command-line option
+def check_gcc_option(option):
+    cmd = "%s %s -S -o /dev/null -xc /dev/null > /dev/null 2>&1" % (
+        GCC_CMD, option)
+    res = os.system(cmd)
+    return res == 0
+
+# Check if the current gcc version supports a particular command-line option
+def do_build_code(cmd):
+    res = os.system(cmd)
+    if res:
+        msg = "Unable to build C code module (error=%s)" % (res,)
+        logging.error(msg)
+        raise Exception(msg)
 
 FFI_main = None
 FFI_lib = None
 pyhelper_logging_callback = None
+
+# Hepler invoked from C errorf() code to log errors
+def logging_callback(msg):
+    logging.error(FFI_main.string(msg))
 
 # Return the Foreign Function Interface api to the caller
 def get_ffi():
     global FFI_main, FFI_lib, pyhelper_logging_callback
     if FFI_lib is None:
         srcdir = os.path.dirname(os.path.realpath(__file__))
-        check_build_code(srcdir, DEST_LIB, SOURCE_FILES, COMPILE_CMD
-                         , OTHER_FILES)
+        srcfiles = get_abs_files(srcdir, SOURCE_FILES)
+        ofiles = get_abs_files(srcdir, OTHER_FILES)
+        destlib = get_abs_files(srcdir, [DEST_LIB])[0]
+        if check_build_code(srcfiles+ofiles+[__file__], destlib):
+            if check_gcc_option(SSE_FLAGS):
+                cmd = "%s %s %s" % (GCC_CMD, SSE_FLAGS, COMPILE_ARGS)
+            else:
+                cmd = "%s %s" % (GCC_CMD, COMPILE_ARGS)
+            logging.info("Building C code module %s", DEST_LIB)
+            do_build_code(cmd % (destlib, ' '.join(srcfiles)))
         FFI_main = cffi.FFI()
         for d in defs_all:
             FFI_main.cdef(d)
-        FFI_lib = FFI_main.dlopen(os.path.join(srcdir, DEST_LIB))
+        FFI_lib = FFI_main.dlopen(destlib)
         # Setup error logging
-        def logging_callback(msg):
-            logging.error(FFI_main.string(msg))
-        pyhelper_logging_callback = FFI_main.callback(
-            "void(const char *)", logging_callback)
+        pyhelper_logging_callback = FFI_main.callback("void func(const char *)",
+                                                      logging_callback)
         FFI_lib.set_python_logging_callback(pyhelper_logging_callback)
     return FFI_main, FFI_lib
 
@@ -239,7 +266,11 @@ HC_CMD = "sudo %s/hub-ctrl -h 0 -P 2 -p %d"
 def run_hub_ctrl(enable_power):
     srcdir = os.path.dirname(os.path.realpath(__file__))
     hubdir = os.path.join(srcdir, HC_SOURCE_DIR)
-    check_build_code(hubdir, HC_TARGET, HC_SOURCE_FILES, HC_COMPILE_CMD)
+    srcfiles = get_abs_files(hubdir, HC_SOURCE_FILES)
+    destlib = get_abs_files(hubdir, [HC_TARGET])[0]
+    if check_build_code(srcfiles, destlib):
+        logging.info("Building C code module %s", HC_TARGET)
+        do_build_code(HC_COMPILE_CMD % (destlib, ' '.join(srcfiles)))
     os.system(HC_CMD % (hubdir, enable_power))
 
 

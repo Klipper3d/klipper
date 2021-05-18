@@ -58,11 +58,7 @@ alloc_chunks(size_t size, size_t count, uint16_t *avail)
  * Move queue
  ****************************************************************/
 
-struct move_freed {
-    struct move_freed *next;
-};
-
-static struct move_freed *move_free_list;
+static struct move_node *move_free_list;
 static void *move_list;
 static uint16_t move_count;
 static uint8_t move_item_size;
@@ -79,7 +75,7 @@ is_finalized(void)
 void
 move_free(void *m)
 {
-    struct move_freed *mf = m;
+    struct move_node *mf = m;
     mf->next = move_free_list;
     move_free_list = mf;
 }
@@ -89,18 +85,64 @@ void *
 move_alloc(void)
 {
     irqstatus_t flag = irq_save();
-    struct move_freed *mf = move_free_list;
+    struct move_node *mf = move_free_list;
     if (!mf)
-        shutdown("Move queue empty");
+        shutdown("Move queue overflow");
     move_free_list = mf->next;
     irq_restore(flag);
     return mf;
 }
 
-// Request minimum size of runtime allocations returned by move_alloc()
-void
-move_request_size(int size)
+// Check if a move_queue is empty
+int
+move_queue_empty(struct move_queue_head *mh)
 {
+    return mh->first == NULL;
+}
+
+// Return first node in a move queue
+struct move_node *
+move_queue_first(struct move_queue_head *mh)
+{
+    return mh->first;
+}
+
+// Add move to queue
+int
+move_queue_push(struct move_node *m, struct move_queue_head *mh)
+{
+    m->next = NULL;
+    if (mh->first) {
+        mh->last->next = m;
+        mh->last = m;
+        return 0;
+    }
+    mh->first = mh->last = m;
+    return 1;
+}
+
+// Remove first item from queue (caller must ensure queue not empty)
+struct move_node *
+move_queue_pop(struct move_queue_head *mh)
+{
+    struct move_node *mn = mh->first;
+    mh->first = mn->next;
+    return mn;
+}
+
+// Completely clear move queue (used in shutdown handlers)
+void
+move_queue_clear(struct move_queue_head *mh)
+{
+    mh->first = NULL;
+}
+
+// Initialize a move_queue with nodes of the give size
+void
+move_queue_setup(struct move_queue_head *mh, int size)
+{
+    mh->first = mh->last = NULL;
+
     if (size > UINT8_MAX || is_finalized())
         shutdown("Invalid move request size");
     if (size > move_item_size)
@@ -115,10 +157,10 @@ move_reset(void)
     // Add everything in move_list to the free list.
     uint32_t i;
     for (i=0; i<move_count-1; i++) {
-        struct move_freed *mf = move_list + i*move_item_size;
+        struct move_node *mf = move_list + i*move_item_size;
         mf->next = move_list + (i + 1)*move_item_size;
     }
-    struct move_freed *mf = move_list + (move_count - 1)*move_item_size;
+    struct move_node *mf = move_list + (move_count - 1)*move_item_size;
     mf->next = NULL;
     move_free_list = move_list;
 }
@@ -129,7 +171,8 @@ move_finalize(void)
 {
     if (is_finalized())
         shutdown("Already finalized");
-    move_request_size(sizeof(*move_free_list));
+    struct move_queue_head dummy;
+    move_queue_setup(&dummy, sizeof(*move_free_list));
     move_list = alloc_chunks(move_item_size, 1024, &move_count);
     move_reset();
 }

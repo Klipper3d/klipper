@@ -127,7 +127,8 @@ pll_setup(void)
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 48Mhz PLL from external crystal (HSE)
         uint32_t div = CONFIG_CLOCK_FREQ / CONFIG_CLOCK_REF_FREQ;
-        RCC->CR |= RCC_CR_HSEON;
+        RCC->CR = ((RCC->CR & ~RCC_CR_HSITRIM) | RCC_CR_HSEON
+                   | (CONFIG_STM32F0_TRIM << RCC_CR_HSITRIM_Pos));
         cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((div - 2) << RCC_CFGR_PLLMUL_Pos);
     } else {
         // Configure 48Mhz PLL from internal 8Mhz oscillator (HSI)
@@ -148,9 +149,10 @@ pll_setup(void)
 
     // Setup CFGR3 register
     uint32_t cfgr3 = RCC_CFGR3_I2C1SW;
-    if (CONFIG_USBSERIAL)
+#if CONFIG_USBSERIAL
         // Select PLL as source for USB clock
         cfgr3 |= RCC_CFGR3_USBSW;
+#endif
     RCC->CFGR3 = cfgr3;
 }
 
@@ -211,7 +213,8 @@ armcm_main(void)
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL)
+    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL
+        && CONFIG_USBSERIAL)
         hsi48_setup();
     else
         pll_setup();
@@ -221,7 +224,8 @@ armcm_main(void)
 
     // Support pin remapping USB/CAN pins on low pinout stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
-    if (CONFIG_STM32F042_PIN_SWAP) {
+    if (CONFIG_STM32_USB_PA11_PA12_REMAP
+        || CONFIG_STM32_CANBUS_PA11_PA12_REMAP) {
         enable_pclock(SYSCFG_BASE);
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
     }

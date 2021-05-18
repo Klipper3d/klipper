@@ -115,6 +115,9 @@ DECL_INIT(timer_init);
  * Console IO
  ****************************************************************/
 
+// Writes over 496 bytes don't fit in a single "rpmsg" page
+DECL_CONSTANT("RECEIVE_WINDOW", 496 - 1);
+
 // Process any incoming commands
 void
 console_task(void)

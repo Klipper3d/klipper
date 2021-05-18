@@ -7,6 +7,8 @@
 import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
+LINE_LENGTH_DEFAULT="20"
+LINE_LENGTH_OPTIONS={"16":16, "20":20}
 
 TextGlyphs = { 'right_arrow': '\x7e' }
 
@@ -19,6 +21,10 @@ class HD44780:
         ppins = self.printer.lookup_object('pins')
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
+        self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
+            True)
+        self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
+            LINE_LENGTH_DEFAULT)
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
@@ -31,12 +37,15 @@ class HD44780:
         self.send_data_cmd = self.send_cmds_cmd = None
         self.icons = {}
         # framebuffers
-        self.text_framebuffers = [bytearray(' '*40), bytearray(' '*40)]
+        self.text_framebuffers = [bytearray(' '*2*self.line_length),
+                                  bytearray(' '*2*self.line_length)]
         self.glyph_framebuffer = bytearray(64)
         self.all_framebuffers = [
             # Text framebuffers
-            (self.text_framebuffers[0], bytearray('~'*40), 0x80),
-            (self.text_framebuffers[1], bytearray('~'*40), 0xc0),
+            (self.text_framebuffers[0], bytearray('~'*2*self.line_length),
+              0x80),
+            (self.text_framebuffers[1], bytearray('~'*2*self.line_length),
+              0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
     def build_config(self):
@@ -82,7 +91,10 @@ class HD44780:
         curtime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(curtime)
         # Program 4bit / 2-line mode and then issue 0x02 "Home" command
-        init = [[0x33], [0x33], [0x33, 0x22, 0x28, 0x02]]
+        if self.hd44780_protocol_init:
+            init = [[0x33], [0x33], [0x32], [0x28, 0x28, 0x02]]
+        else:
+            init = [[0x02]]
         # Reset (set positive direction ; enable display and hide cursor)
         init.append([0x06, 0x0c])
         for i, cmds in enumerate(init):
@@ -90,9 +102,9 @@ class HD44780:
             self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
         self.flush()
     def write_text(self, x, y, data):
-        if x + len(data) > 20:
-            data = data[:20 - min(x, 20)]
-        pos = x + ((y & 0x02) >> 1) * 20
+        if x + len(data) > self.line_length:
+            data = data[:self.line_length - min(x, self.line_length)]
+        pos = x + ((y & 0x02) >> 1) * self.line_length
         self.text_framebuffers[y & 1][pos:pos+len(data)] = data
     def set_glyphs(self, glyphs):
         for glyph_name, glyph_data in glyphs.items():
@@ -103,7 +115,7 @@ class HD44780:
         data = self.icons.get(glyph_name)
         if data is not None:
             slot, bits = data
-            self.write_text(x, y, chr(slot))
+            self.write_text(x, y, [slot])
             self.glyph_framebuffer[slot * 8:(slot + 1) * 8] = bits
             return 1
         char = TextGlyphs.get(glyph_name)
@@ -115,8 +127,8 @@ class HD44780:
     def write_graphics(self, x, y, data):
         pass
     def clear(self):
-        spaces = ' ' * 40
+        spaces = ' ' * 2*self.line_length
         self.text_framebuffers[0][:] = spaces
         self.text_framebuffers[1][:] = spaces
     def get_dimensions(self):
-        return (20, 4)
+        return (self.line_length, 4)

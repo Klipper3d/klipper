@@ -2,7 +2,7 @@ Frequently asked questions
 ==========================
 
 1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
-2. [How do I calculate the step_distance parameter in the printer config file?](#how-do-i-calculate-the-step_distance-parameter-in-the-printer-config-file)
+2. [How do I calculate the rotation_distance config parameter?](#how-do-i-calculate-the-rotation_distance-config-parameter)
 3. [Where's my serial port?](#wheres-my-serial-port)
 4. [When the micro-controller restarts the device changes to /dev/ttyUSB1](#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1)
 5. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
@@ -31,25 +31,9 @@ Frequently asked questions
 Thanks. Kevin has a Patreon page at:
 [https://www.patreon.com/koconnor](https://www.patreon.com/koconnor)
 
-### How do I calculate the step_distance parameter in the printer config file?
+### How do I calculate the rotation_distance config parameter?
 
-If you know the steps per millimeter for the axis then use a
-calculator to divide 1.0 by steps_per_mm. Then round this number to
-six decimal places and place it in the config (six decimal places is
-nano-meter precision).
-
-The step_distance defines the distance that the axis will travel on
-each motor driver pulse. It can also be calculated from the axis
-pitch, motor step angle, and driver microstepping. If unsure, do a web
-search for "calculate steps per mm" to find an online calculator.
-
-Klipper uses step_distance instead of steps_per_mm in order to use
-consistent units of measurement in the config file. (The config uses
-millimeters for all distance measurements.) It is believed that
-steps_per_mm originated as an optimization on old 8-bit
-micro-controllers (the desire to use a multiply instead of a divide in
-some low-level code). Continuing to configure this one distance in
-units of "inverse millimeters" is felt to be quirky and unnecessary.
+See the [rotation distance document](Rotation_Distance.md).
 
 ### Where's my serial port?
 
@@ -103,12 +87,12 @@ and make sure FLASH_DEVICE is set correctly for your board (see the
 
 However, if "make flash" just doesn't work for your board, then you
 will need to manually flash. See if there is a config file in the
-[config directory](https://github.com/KevinOConnor/klipper/tree/master/config)
-with specific instructions for flashing the device. Also, check the
-board manufacturer's documentation to see if it describes how to flash
-the device. Finally, it may be possible to manually flash the device
-using tools such as "avrdude" or "bossac" - see the
-[bootloader document](Bootloaders.md) for additional information.
+[config directory](../config) with specific instructions for flashing
+the device. Also, check the board manufacturer's documentation to see
+if it describes how to flash the device. Finally, it may be possible
+to manually flash the device using tools such as "avrdude" or
+"bossac" - see the [bootloader document](Bootloaders.md) for
+additional information.
 
 ### How do I change the serial baud rate?
 
@@ -121,8 +105,9 @@ If you want to change the baud rate anyway, then the new rate will
 need to be configured in the micro-controller (during **make
 menuconfig**) and that updated code will need to be compiled and
 flashed to the micro-controller. The Klipper printer.cfg file will
-also need to be updated to match that baud rate (see the example.cfg
-file for details).  For example:
+also need to be updated to match that baud rate (see the
+[config reference](Config_Reference.md#mcu) for details).  For
+example:
 ```
 [mcu]
 baud: 250000
@@ -149,8 +134,7 @@ when printing directly from OctoPrint. (The printer may move faster
 than OctoPrint can send movement commands.) If you wish to run on one
 one of these slower boards anyway, consider using the "virtual_sdcard"
 feature when printing (see
-[config/example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for details).
+[config reference](Config_Reference.md#virtual_sdcard) for details).
 
 For running on the Beaglebone, see the
 [Beaglebone specific installation instructions](beaglebone.md).
@@ -159,9 +143,20 @@ Klipper has been run on other machines. The Klipper host software only
 requires Python running on a Linux (or similar) computer. However, if
 you wish to run it on a different machine you will need Linux admin
 knowledge to install the system prerequisites for that particular
-machine. See the
-[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
+machine. See the [install-octopi.sh](../scripts/install-octopi.sh)
 script for further information on the necessary Linux admin steps.
+
+If you are looking to run the Klipper host software on a low-end chip,
+then be aware that, at a minimum, a machine with "double precision
+floating point" hardware is required.
+
+If you are looking to run the Klipper host software on a shared
+general-purpose desktop or server class machine, then note that
+Klipper has some real-time scheduling requirements. If, during a
+print, the host computer also performs an intensive general-purpose
+computing task (such as defragmenting a hard drive, 3d rendering,
+heavy swapping, etc.), then it may cause Klipper to report print
+errors.
 
 Note: If you are not using an OctoPi image, be aware that several
 Linux distributions enable a "ModemManager" (or similar) package that
@@ -187,10 +182,9 @@ own pseudo-tty. For example:
 
 If you choose to do this, you will need to implement the necessary
 start, stop, and installation scripts (if any). The
-[install-octopi.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/install-octopi.sh)
-script and the
-[klipper-start.sh](https://github.com/KevinOConnor/klipper/tree/master/scripts/klipper-start.sh)
-script may be useful as examples.
+[install-octopi.sh](../scripts/install-octopi.sh) script and the
+[klipper-start.sh](../scripts/klipper-start.sh) script may be useful
+as examples.
 
 ### Do I have to use OctoPrint?
 
@@ -225,8 +219,7 @@ process itself (or fundamentally does not have a homing process) then
 consider using a safe_z_home or homing_override section in the config
 file. If you need to move a stepper for diagnostic or debugging
 purposes then consider adding a force_move section to the config
-file. See
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
+file. See [config reference](Config_Reference.md#customized_homing)
 for further details on these options.
 
 ### Why is the Z position_endstop set to 0.5 in the default configs?
@@ -253,9 +246,9 @@ around 10000 steps per second. If it is requested to move at a speed
 that would require a higher step rate then Marlin will generally just
 step as fast as it can. Klipper is able to achieve much higher step
 rates, but the stepper motor may not have sufficient torque to move at
-a higher speed. So, for a Z axis with a very precise step_distance the
-actual obtainable max_z_velocity may be smaller than what is
-configured in Marlin.
+a higher speed. So, for a Z axis with a high gearing ratio or high
+microsteps setting the actual obtainable max_z_velocity may be smaller
+than what is configured in Marlin.
 
 ### My TMC motor driver turns off in the middle of a print
 
@@ -329,35 +322,28 @@ See the "config_digital_out" command in the
 In addition, the micro-controller software is configured with a
 minimum and maximum temperature range for each heater at startup (see
 the min_temp and max_temp parameters in the
-[example.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example.cfg)
-file for details). If the micro-controller detects that the
-temperature is outside of that range then it will also enter a
-"shutdown" state.
+[config reference](Config_Reference.md#extruder) for details). If the
+micro-controller detects that the temperature is outside of that range
+then it will also enter a "shutdown" state.
 
 Separately, the host software also implements code to check that
 heaters and temperature sensors are functioning correctly. See the
-"verify_heater" section of the
-[example-extras.cfg](https://github.com/KevinOConnor/klipper/tree/master/config/example-extras.cfg)
-for further details.
+[config reference](Config_Reference.md#verify_heater) for further
+details.
 
 ### How do I convert a Marlin pin number to a Klipper pin name?
 
-Short answer: In some cases one can use Klipper's `pin_map: arduino`
-feature. Otherwise, for "digital" pins, one method is to search for
-the requested pin in Marlin's fastio header files. The Atmega2560 and
-Atmega1280 chips use
-[fastio_1280.h](https://github.com/MarlinFirmware/Marlin/blob/1.1.9/Marlin/fastio_1280.h),
-while the Atmega644p and Atmega1284p chips use
-[fastio_644.h](https://github.com/MarlinFirmware/Marlin/blob/1.1.9/Marlin/fastio_644.h).
-For example, if you are looking to translate Marlin's digital pin
-number 23 on an atmega2560 then one could find the following line in
-Marlin's fastio_1280.h file:
-```
-#define DIO23_PIN PINA1
-```
-The `DIO23` indicates the line is for Marlin's pin 23 and the `PINA1`
-indicates the pin uses the hardware name of `PA1`. Klipper uses the
-hardware names (eg, `PA1`).
+Short answer: A mapping is available in the
+[sample-aliases.cfg](../config/sample-aliases.cfg) file. Use that file
+as a guide to finding the actual micro-controller pin names. (It is
+also possible to copy the relevant
+[board_pins](Config_Reference.md#board_pins) config section into your
+config file and use the aliases in your config, but it is preferable
+to translate and use the actual micro-controller pin names.) Note that
+the sample-aliases.cfg file uses pin names that start with the prefix
+"ar" instead of "D" (eg, Arduino pin `D23` is Klipper alias `ar23`)
+and the prefix "analog" instead of "A" (eg, Arduino pin `A14` is
+Klipper alias `analog14`).
 
 Long answer: Klipper uses the standard pin names defined by the
 micro-controller. On the Atmega chips these hardware pins have names
@@ -371,22 +357,8 @@ In particular the Arduino pin numbers frequently don't translate to
 the same hardware names. For example, `D21` is `PD0` on one common
 Arduino board, but is `PC7` on another common Arduino board.
 
-In order to support 3d printers based on real Arduino boards, Klipper
-supports the Arduino pin aliases. This feature is enabled by adding
-`pin_map: arduino` to the [mcu] section of the config file. When these
-aliases are enabled, Klipper understands pin names that start with the
-prefix "ar" (eg, Arduino pin `D23` is Klipper alias `ar23`) and the
-prefix "analog" (eg, Arduino pin `A14` is Klipper alias `analog14`).
-Klipper does not use the Arduino names directly because we feel a name
-like D7 is too easily confused with the hardware name PD7.
-
-Marlin primarily follows the Arduino pin numbering scheme.  However,
-Marlin supports a few chips that Arduino does not support and in some
-cases it supports pins that Arduino boards do not expose. In these
-cases, Marlin chose their own pin numbering scheme. Klipper does not
-support these custom pin numbers - check Marlin's fastio headers (see
-above) to translate these pin numbers to their standard hardware
-names.
+To avoid this confusion, the core Klipper code uses the standard pin
+names defined by the micro-controller.
 
 ### Do I have to wire my device to a specific type of micro-controller pin?
 
@@ -403,8 +375,7 @@ similar devices to any general purpose IO pin. However, fans and
 output_pin devices may be optionally configured to use `hardware_pwm:
 True`, in which case the micro-controller must support hardware PWM on
 the pin (otherwise, Klipper will report a "Not a valid PWM pin"
-error). Note that hardware PWM is currently only supported on the avr,
-atsam, samd21, and linux micro-controllers.
+error).
 
 IRQ pins (or Interrupt pins): Klipper does not use hardware interrupts
 on IO pins, so it is never necessary to wire a device to one of these
@@ -535,9 +506,12 @@ flash" commands are needed for a software change to take effect.
 
 ### How do I uninstall Klipper?
 
-On the firmware end, nothing special needs to happen. Just follow the flashing directions for the new firmware.
+On the firmware end, nothing special needs to happen. Just follow the
+flashing directions for the new firmware.
 
-On the raspberry pi end, an uninstall script is available in [`scripts/klipper-uninstall.sh`](https://github.com/KevinOConnor/klipper/blob/master/scripts/klipper-uninstall.sh). Assuming you cloned `klipper` to `$HOME`
+On the raspberry pi end, an uninstall script is available in
+[scripts/klipper-uninstall.sh](../scripts/klipper-uninstall.sh). For
+example:
 ```
 sudo ~/klipper/scripts/klipper-uninstall.sh
 rm -rf ~/klippy-env ~/klipper

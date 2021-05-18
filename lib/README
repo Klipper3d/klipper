@@ -74,3 +74,21 @@ revision 425a42d82006cf0aa24be27b483d2f6a41607489. The code is taken
 from the repo's hc-sr04-range-sensor directory. It has been modified
 so that the IEP definitions compile correctly. See pru_rpmsg.patch for
 the modifications.
+
+The fast-hash directory contains code from:
+  https://github.com/ztanml/fast-hash
+revision ae3bb53c199fe75619e940b5b6a3584ede99c5fc
+
+The kconfiglib directory contains code from:
+  https://github.com/ulfalizer/Kconfiglib.git
+version v14.1.0 (061e71f7d78cb057762d88de088055361863deff). It has
+been modified to always emit symbols and to simplify the "menuconfig"
+screens. See kconfiglib.patch for the modifications.
+
+The fatfs directory contains code from:
+  http://elm-chan.org/fsw/ff/00index_e.html
+version R0.14a (extracted 20210116).  The configuration (ffconf.h)
+has been modfied to enable the US code page (437) and enable label
+support.  The file "diskio.c" in the original archive is not included
+as it is only serves as an example for how to implement the media api
+callbacks.

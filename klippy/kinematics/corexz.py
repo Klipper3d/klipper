@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
-import stepper, homing
+import stepper
 
 class CoreXZKinematics:
     def __init__(self, toolhead, config):
@@ -31,13 +31,9 @@ class CoreXZKinematics:
         self.max_z_accel = config.getfloat(
             'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.limits = [(1.0, -1.0)] * 3
-        # Setup stepper max halt velocity
-        max_halt_velocity = toolhead.get_max_axis_halt()
-        max_xy_halt_velocity = max_halt_velocity * math.sqrt(2.)
-        max_xy_accel = max_accel * math.sqrt(2.)
-        self.rails[0].set_max_jerk(max_xy_halt_velocity, max_xy_accel)
-        self.rails[1].set_max_jerk(max_xy_halt_velocity, max_xy_accel)
-        self.rails[2].set_max_jerk(max_xy_halt_velocity, max_xy_accel)
+        ranges = [r.get_range() for r in self.rails]
+        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
+        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_tag_position(self):
@@ -76,9 +72,8 @@ class CoreXZKinematics:
                 and (end_pos[i] < self.limits[i][0]
                      or end_pos[i] > self.limits[i][1])):
                 if self.limits[i][0] > self.limits[i][1]:
-                    raise homing.EndstopMoveError(
-                        end_pos, "Must home axis first")
-                raise homing.EndstopMoveError(end_pos)
+                    raise move.move_error("Must home axis first")
+                raise move.move_error()
     def check_move(self, move):
         limits = self.limits
         xpos, ypos = move.end_pos[:2]
@@ -95,7 +90,11 @@ class CoreXZKinematics:
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
-        return {'homed_axes': "".join(axes)}
+        return {
+            'homed_axes': "".join(axes),
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
 
 def load_kinematics(toolhead, config):
     return CoreXZKinematics(toolhead, config)

@@ -3,7 +3,6 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import homing
 
 def parse_coord(config, param):
     pair = config.get(param).strip().split(',', 1)
@@ -46,13 +45,7 @@ class BedScrews:
                                     self.cmd_BED_SCREWS_ADJUST,
                                     desc=self.cmd_BED_SCREWS_ADJUST_help)
     def move(self, coord, speed):
-        toolhead = self.printer.lookup_object('toolhead')
-        curpos = toolhead.get_position()
-        for i in range(len(coord)):
-            if coord[i] is not None:
-                curpos[i] = coord[i]
-        toolhead.move(curpos, speed)
-        self.gcode.reset_last_position()
+        self.printer.lookup_object('toolhead').manual_move(coord, speed)
     def move_to_screw(self, state, screw):
         # Move up, over, and then down
         self.move((None, None, self.horizontal_move_z), self.lift_speed)

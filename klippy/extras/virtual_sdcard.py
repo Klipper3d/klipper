@@ -24,7 +24,6 @@ class VirtualSD:
         self.work_timer = None
         # Register commands
         self.gcode = printer.lookup_object('gcode')
-        self.gcode.register_command('M21', None)
         for cmd in ['M20', 'M21', 'M23', 'M24', 'M25', 'M26', 'M27']:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
@@ -92,6 +91,12 @@ class VirtualSD:
             self.must_pause_work = True
             while self.work_timer is not None and not self.cmd_from_sd:
                 self.reactor.pause(self.reactor.monotonic() + .001)
+    def do_resume(self):
+        if self.work_timer is not None:
+            raise self.gcode.error("SD busy")
+        self.must_pause_work = False
+        self.work_timer = self.reactor.register_timer(
+            self.work_handler, self.reactor.NOW)
     # G-Code commands
     def cmd_error(self, gcmd):
         raise gcmd.error("SD write not supported")
@@ -147,9 +152,12 @@ class VirtualSD:
         self._load_file(gcmd, filename)
     def _load_file(self, gcmd, filename, check_subdirs=False):
         files = self.get_file_list(check_subdirs)
+        flist = [f[0] for f in files]
         files_by_lower = { fname.lower(): fname for fname, fsize in files }
+        fname = filename
         try:
-            fname = files_by_lower[filename.lower()]
+            if fname not in flist:
+                fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
             f = open(fname, 'rb')
             f.seek(0, os.SEEK_END)
@@ -166,11 +174,7 @@ class VirtualSD:
         self.print_stats.set_current_file(filename)
     def cmd_M24(self, gcmd):
         # Start/resume SD print
-        if self.work_timer is not None:
-            raise gcmd.error("SD busy")
-        self.must_pause_work = False
-        self.work_timer = self.reactor.register_timer(
-            self.work_handler, self.reactor.NOW)
+        self.do_resume()
     def cmd_M25(self, gcmd):
         # Pause SD print
         self.do_pause()

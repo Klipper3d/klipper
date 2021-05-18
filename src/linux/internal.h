@@ -2,7 +2,7 @@
 #define __LINUX_INTERNAL_H
 // Local definitions for micro-controllers running on linux
 
-#include <time.h> // struct timespec
+#include <stdint.h> // uint32_t
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 
 #define MAX_GPIO_LINES    256
@@ -22,7 +22,7 @@ int console_setup(char *name);
 void console_sleep(struct timespec ts);
 
 // timer.c
-int timer_check_periodic(struct timespec *ts);
+int timer_check_periodic(uint32_t *ts);
 
 // watchdog.c
 int watchdog_setup(void);

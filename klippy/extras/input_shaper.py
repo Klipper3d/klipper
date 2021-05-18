@@ -25,14 +25,12 @@ class InputShaper:
                 , 'ei': ffi_lib.INPUT_SHAPER_EI
                 , '2hump_ei': ffi_lib.INPUT_SHAPER_2HUMP_EI
                 , '3hump_ei': ffi_lib.INPUT_SHAPER_3HUMP_EI}
-        shaper_type = config.getchoice('shaper_type', self.shapers, None)
-        if shaper_type is None:
-            self.shaper_type_x = config.getchoice(
-                    'shaper_type_x', self.shapers, 'mzv')
-            self.shaper_type_y = config.getchoice(
-                    'shaper_type_y', self.shapers, 'mzv')
-        else:
-            self.shaper_type_x = self.shaper_type_y = shaper_type
+        shaper_type = config.get('shaper_type', 'mzv')
+        self.shaper_type_x = config.getchoice(
+                'shaper_type_x', self.shapers, shaper_type)
+        self.shaper_type_y = config.getchoice(
+                'shaper_type_y', self.shapers, shaper_type)
+        self.saved_shaper_freq_x = self.saved_shaper_freq_y = 0.
         self.stepper_kinematics = []
         self.orig_stepper_kinematics = []
         # Register gcode commands
@@ -86,6 +84,24 @@ class InputShaper:
                     , shaper_type_x, shaper_type_y
                     , shaper_freq_x, shaper_freq_y
                     , damping_ratio_x, damping_ratio_y)
+    def disable_shaping(self):
+        if (self.saved_shaper_freq_x or self.saved_shaper_freq_y) and not (
+                self.shaper_freq_x or self.shaper_freq_y):
+            # Input shaper is already disabled
+            return
+        self.saved_shaper_freq_x = self.shaper_freq_x
+        self.saved_shaper_freq_y = self.shaper_freq_y
+        self._set_input_shaper(self.shaper_type_x, self.shaper_type_y, 0., 0.,
+                               self.damping_ratio_x, self.damping_ratio_y)
+    def enable_shaping(self):
+        saved = self.saved_shaper_freq_x or self.saved_shaper_freq_y
+        if saved:
+            self._set_input_shaper(self.shaper_type_x, self.shaper_type_y,
+                                   self.saved_shaper_freq_x,
+                                   self.saved_shaper_freq_y,
+                                   self.damping_ratio_x, self.damping_ratio_y)
+        self.saved_shaper_freq_x = self.saved_shaper_freq_y = 0.
+        return saved
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
     def cmd_SET_INPUT_SHAPER(self, gcmd):
         damping_ratio_x = gcmd.get_float(
@@ -118,15 +134,14 @@ class InputShaper:
                                shaper_freq_x, shaper_freq_y,
                                damping_ratio_x, damping_ratio_y)
 
+        id_to_name = {v: n for n, v in self.shapers.items()}
         gcmd.respond_info("shaper_type_x:%s shaper_type_y:%s "
                           "shaper_freq_x:%.3f shaper_freq_y:%.3f "
-                          "damping_ratio_x:%.6f damping_ratio_y:%.6f" % (
-                              self.shapers.keys()[
-                                  self.shapers.values().index(shaper_type_x)]
-                              , self.shapers.keys()[
-                                  self.shapers.values().index(shaper_type_x)]
-                              , shaper_freq_x, shaper_freq_y
-                              , damping_ratio_x, damping_ratio_y))
+                          "damping_ratio_x:%.6f damping_ratio_y:%.6f"
+                          % (id_to_name[shaper_type_x],
+                             id_to_name[shaper_type_y],
+                             shaper_freq_x, shaper_freq_y,
+                             damping_ratio_x, damping_ratio_y))
 
 def load_config(config):
     return InputShaper(config)

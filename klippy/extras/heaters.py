@@ -49,13 +49,10 @@ class Heater:
         # Setup output heater pin
         heater_pin = config.get('heater_pin')
         ppins = self.printer.lookup_object('pins')
-        if algo is ControlBangBang and self.max_power == 1.:
-            self.mcu_pwm = ppins.setup_pin('digital_out', heater_pin)
-        else:
-            self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
-            pwm_cycle_time = config.getfloat(
-                'pwm_cycle_time', 0.100, above=0., maxval=self.pwm_delay)
-            self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
+        self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
+        pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
+                                         maxval=self.pwm_delay)
+        self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (self.name,))
@@ -74,10 +71,10 @@ class Heater:
         pwm_time = read_time + self.pwm_delay
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
-        logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
-                      self.name, value, pwm_time,
-                      self.last_temp, self.last_temp_time, self.target_temp)
         self.mcu_pwm.set_pwm(pwm_time, value)
+        #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
+        #              self.name, value, pwm_time,
+        #              self.last_temp, self.last_temp_time, self.target_temp)
     def temperature_callback(self, read_time, temp):
         with self.lock:
             time_diff = read_time - self.last_temp_time
@@ -135,11 +132,14 @@ class Heater:
         with self.lock:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
-        return {'temperature': smoothed_temp, 'target': target_temp}
+            last_pwm_value = self.last_pwm_value
+        return {'temperature': smoothed_temp, 'target': target_temp,
+                'power': last_pwm_value}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
-        self.set_temp(temp)
+        pheaters = self.printer.lookup_object('heaters')
+        pheaters.set_temperature(self, temp)
 
 
 ######################################################################
@@ -182,7 +182,9 @@ class ControlPID:
         self.min_deriv_time = heater.get_smooth_time()
         imax = config.getfloat('pid_integral_max', self.heater_max_power,
                                minval=0.)
-        self.temp_integ_max = imax / self.Ki
+        self.temp_integ_max = 0.
+        if self.Ki:
+            self.temp_integ_max = imax / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
@@ -239,6 +241,8 @@ class PrinterHeaters:
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
         gcode.register_command("M105", self.cmd_M105, when_not_ready=True)
+        gcode.register_command("TEMPERATURE_WAIT", self.cmd_TEMPERATURE_WAIT,
+                               desc=self.cmd_TEMPERATURE_WAIT_help)
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
     def setup_heater(self, config, gcode_id=None):
@@ -261,7 +265,9 @@ class PrinterHeaters:
         return self.heaters[heater_name]
     def setup_sensor(self, config):
         modules = ["thermistor", "adc_temperature", "spi_temperature",
-                   "bme280", "htu21d", "lm75"]
+                   "bme280", "htu21d", "lm75", "temperature_host",
+                   "temperature_mcu", "ds18b20"]
+
         for module_name in modules:
             self.printer.load_object(config, module_name)
         sensor_type = config.get('sensor_type')
@@ -270,6 +276,7 @@ class PrinterHeaters:
                 "Unknown temperature sensor '%s'" % (sensor_type,))
         return self.sensor_factories[sensor_type](config)
     def register_sensor(self, config, psensor, gcode_id=None):
+        self.available_sensors.append(config.get_name())
         if gcode_id is None:
             gcode_id = config.get('gcode_id', None)
             if gcode_id is None:
@@ -278,7 +285,6 @@ class PrinterHeaters:
             raise self.printer.config_error(
                 "G-Code sensor id %s already registered" % (gcode_id,))
         self.gcode_id_to_sensor[gcode_id] = psensor
-        self.available_sensors.append(config.get_name())
     def get_status(self, eventtime):
         return {'available_heaters': self.available_heaters,
                 'available_sensors': self.available_sensors}
@@ -308,7 +314,7 @@ class PrinterHeaters:
         did_ack = gcmd.ack(msg)
         if not did_ack:
             gcmd.respond_raw(msg)
-    def wait_for_temperature(self, heater):
+    def _wait_for_temperature(self, heater):
         # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
@@ -319,6 +325,38 @@ class PrinterHeaters:
         while not self.printer.is_shutdown() and heater.check_busy(eventtime):
             print_time = toolhead.get_last_move_time()
             gcode.respond_raw(self._get_temp(eventtime))
+            eventtime = reactor.pause(eventtime + 1.)
+    def set_temperature(self, heater, temp, wait=False):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.register_lookahead_callback((lambda pt: None))
+        heater.set_temp(temp)
+        if wait and temp:
+            self._wait_for_temperature(heater)
+    cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
+    def cmd_TEMPERATURE_WAIT(self, gcmd):
+        sensor_name = gcmd.get('SENSOR')
+        if sensor_name not in self.available_sensors:
+            raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
+        min_temp = gcmd.get_float('MINIMUM', float('-inf'))
+        max_temp = gcmd.get_float('MAXIMUM', float('inf'), above=min_temp)
+        if min_temp == float('-inf') and max_temp == float('inf'):
+            raise gcmd.error(
+                "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return
+        if sensor_name in self.heaters:
+            sensor = self.heaters[sensor_name]
+        else:
+            sensor = self.printer.lookup_object(sensor_name)
+        toolhead = self.printer.lookup_object("toolhead")
+        reactor = self.printer.get_reactor()
+        eventtime = reactor.monotonic()
+        while not self.printer.is_shutdown():
+            temp, target = sensor.get_temp(eventtime)
+            if temp >= min_temp and temp <= max_temp:
+                return
+            print_time = toolhead.get_last_move_time()
+            gcmd.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
 
 def load_config(config):

@@ -1,9 +1,9 @@
 # Add ability to define custom g-code macros
 #
-# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import traceback, logging, ast
+import traceback, logging, ast, copy
 import jinja2
 
 
@@ -26,7 +26,7 @@ class GetStatusWrapper:
             raise KeyError(val)
         if self.eventtime is None:
             self.eventtime = self.printer.get_reactor().monotonic()
-        self.cache[sval] = res = dict(po.get_status(self.eventtime))
+        self.cache[sval] = res = copy.deepcopy(po.get_status(self.eventtime))
         return res
     def __contains__(self, val):
         try:
@@ -45,6 +45,8 @@ class TemplateWrapper:
         self.printer = printer
         self.name = name
         self.gcode = self.printer.lookup_object('gcode')
+        gcode_macro = self.printer.lookup_object('gcode_macro')
+        self.create_template_context = gcode_macro.create_template_context
         try:
             self.template = env.from_string(script)
         except Exception as e:
@@ -52,11 +54,9 @@ class TemplateWrapper:
                  name, traceback.format_exception_only(type(e), e)[-1])
             logging.exception(msg)
             raise printer.config_error(msg)
-    def create_status_wrapper(self, eventtime=None):
-        return GetStatusWrapper(self.printer, eventtime)
     def render(self, context=None):
         if context is None:
-            context = {'printer': self.create_status_wrapper()}
+            context = self.create_template_context()
         try:
             return str(self.template.render(context))
         except Exception as e:
@@ -79,6 +79,29 @@ class PrinterGCodeMacro:
         else:
             script = config.get(option, default)
         return TemplateWrapper(self.printer, self.env, name, script)
+    def _action_emergency_stop(self, msg="action_emergency_stop"):
+        self.printer.invoke_shutdown("Shutdown due to %s" % (msg,))
+        return ""
+    def _action_respond_info(self, msg):
+        self.printer.lookup_object('gcode').respond_info(msg)
+        return ""
+    def _action_raise_error(self, msg):
+        raise self.printer.command_error(msg)
+    def _action_call_remote_method(self, method, **kwargs):
+        webhooks = self.printer.lookup_object('webhooks')
+        try:
+            webhooks.call_remote_method(method, **kwargs)
+        except self.printer.command_error:
+            logging.exception("Remote Call Error")
+        return ""
+    def create_template_context(self, eventtime=None):
+        return {
+            'printer': GetStatusWrapper(self.printer, eventtime),
+            'action_emergency_stop': self._action_emergency_stop,
+            'action_respond_info': self._action_respond_info,
+            'action_raise_error': self._action_raise_error,
+            'action_call_remote_method': self._action_call_remote_method,
+        }
 
 def load_config(config):
     return PrinterGCodeMacro(config)
@@ -134,9 +157,8 @@ class GCodeMacro:
         pdesc = "Renamed builtin of '%s'" % (self.alias,)
         self.gcode.register_command(self.rename_existing, prev_cmd, desc=pdesc)
         self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
-        return dict(self.variables)
     def get_status(self, eventtime):
-        return dict(self.variables)
+        return self.variables
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"
     def cmd_SET_GCODE_VARIABLE(self, gcmd):
         variable = gcmd.get('VARIABLE')
@@ -159,7 +181,7 @@ class GCodeMacro:
         kwparams = dict(self.kwparams)
         kwparams.update(params)
         kwparams.update(self.variables)
-        kwparams['printer'] = self.template.create_status_wrapper()
+        kwparams.update(self.template.create_template_context())
         kwparams['params'] = params
         self.in_script = True
         try:

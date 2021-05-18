@@ -1,6 +1,6 @@
 # Support for "dotstar" leds
 #
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import bus
@@ -36,7 +36,10 @@ class PrinterDotstar:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
                                    desc=self.cmd_SET_LED_help)
-    def send_data(self, minclock=0):
+    def send_data(self, print_time=None):
+        minclock = 0
+        if print_time is not None:
+            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         data = self.color_data
         for d in [data[i:i+20] for i in range(0, len(data), 20)]:
             self.spi.spi_send(d, minclock=minclock,
@@ -58,10 +61,9 @@ class PrinterDotstar:
         else:
             self.color_data[4:-4] = color_data * self.chain_count
         # Send command
-        if not transmit:
-            return
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.send_data(self.spi.get_mcu().print_time_to_clock(print_time))
+        if transmit:
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.register_lookahead_callback(self.send_data)
 
 def load_config_prefix(config):
     return PrinterDotstar(config)

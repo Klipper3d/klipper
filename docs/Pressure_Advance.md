@@ -20,7 +20,8 @@ running the test.
 Use a slicer to generate g-code for the large hollow square found in
 [docs/prints/square_tower.stl](prints/square_tower.stl). Use a high
 speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer
-height should be around 75% of the nozzle diameter).
+height should be around 75% of the nozzle diameter). Make sure any
+"dynamic acceleration control" is disabled in the slicer.
 
 Prepare for the test by issuing the following G-Code command:
 ```
@@ -76,10 +77,11 @@ Although this tuning exercise directly improves the quality of
 corners, it's worth remembering that a good pressure advance
 configuration also reduces ooze throughout the print.
 
-At the completion of this test, update the extruder's pressure_advance
-setting in the configuration file and issue a RESTART command. The
-RESTART command will clear the test state and return the acceleration
-and cornering speeds to their normal values.
+At the completion of this test, set
+`pressure_advance = <calculated_value>` in the `[extruder]` section of
+the configuration file and issue a RESTART command. The RESTART
+command will clear the test state and return the acceleration and
+cornering speeds to their normal values.
 
 Important Notes
 ===============
@@ -91,8 +93,8 @@ Important Notes
   pressure advance on each printer and with each spool of filament.
 
 * Printing temperature and extrusion rates can impact pressure
-  advance. Be sure to tune the extruder
-  [E steps](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#E_steps)
+  advance. Be sure to tune the
+  [extruder rotation_distance](Rotation_Distance.md#calibrating-rotation_distance-on-extruders)
   and
   [nozzle temperature](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#Nozzle_Temperature)
   prior to tuning pressure advance.

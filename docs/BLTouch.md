@@ -10,11 +10,13 @@ Hook up the BL-Touch "servo" connector to a `control_pin` according to
 the BL-Touch documentation or your MCU documentation. Using the
 original wiring, the yellow wire from the triple is the `control_pin`
 and the white wire from the pair is the `sensor_pin`. You need to
-configure these pins according to your wiring. For example:
+configure these pins according to your wiring. Most BL-Touch devices
+require a pullup on the sensor pin (prefix the pin name with "^"). For
+example:
 
 ```
 [bltouch]
-sensor_pin: P1.24
+sensor_pin: ^P1.24
 control_pin: P1.26
 ```
 

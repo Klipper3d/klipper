@@ -21,10 +21,14 @@ enable_pclock(uint32_t periph_base)
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         RCC->APB1ENR |= (1<<pos);
         RCC->APB1ENR;
+        RCC->APB1RSTR |= (1<<pos);
+        RCC->APB1RSTR &= ~(1<<pos);
     } else if (periph_base < AHBPERIPH_BASE) {
         uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
         RCC->APB2ENR |= (1<<pos);
         RCC->APB2ENR;
+        RCC->APB2RSTR |= (1<<pos);
+        RCC->APB2RSTR &= ~(1<<pos);
     } else {
         uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
         RCC->AHBENR |= (1<<pos);
@@ -124,10 +128,45 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     // way from other STM32s.
     // Code below is emulating a few mappings to work like an STM32F4
     uint32_t func = (mode >> 4) & 0xf;
-    if(( gpio == GPIO('B', 8) || gpio == GPIO('B', 9)) &&
-       func == 9) { // CAN
-        stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
-                                  AFIO_MAPR_CAN_REMAP_REMAP2);
+    if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9)) {
+        if (func == 9) {
+            // CAN
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP2);
+        } else if (func == 4) {
+            // I2C1 Alt
+            stm32f1_alternative_remap(AFIO_MAPR_I2C1_REMAP_Msk,
+                                      AFIO_MAPR_I2C1_REMAP);
+        }
+    } else if ((gpio == GPIO('A', 15)
+                || gpio == GPIO('B', 3)) && (func == 1)) {
+        // TIM2 CH1/2
+        stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1_Msk,
+                                  AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1);
+    }  else if ((gpio == GPIO('B', 10)
+                || gpio == GPIO('B', 11)) && (func == 1)) {
+        // TIM2 CH3/4
+        stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2_Msk,
+                                  AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2);
+    } else if ((gpio == GPIO('B', 4)
+                || gpio == GPIO('B', 5)) && (func == 2)) {
+        // TIM3 partial remap
+        stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_PARTIALREMAP_Msk,
+                                  AFIO_MAPR_TIM3_REMAP_PARTIALREMAP);
+    } else if ((gpio == GPIO('C', 6)
+                || gpio == GPIO('C', 7)
+                || gpio == GPIO('C', 8)
+                || gpio == GPIO('C', 9)) && (func == 2)) {
+        // TIM3 full remap
+        stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_FULLREMAP_Msk,
+                                  AFIO_MAPR_TIM3_REMAP_FULLREMAP);
+    } else if ((gpio == GPIO('D', 12)
+                || gpio == GPIO('D', 13)
+                || gpio == GPIO('D', 14)
+                || gpio == GPIO('D', 15)) && (func == 2)) {
+        // TIM4
+        stm32f1_alternative_remap(AFIO_MAPR_TIM4_REMAP_Msk,
+                                  AFIO_MAPR_TIM4_REMAP);
     }
     // Add more as needed
 }
@@ -162,9 +201,14 @@ clock_setup(void)
     uint32_t cfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 72Mhz PLL from external crystal (HSE)
-        uint32_t div = CONFIG_CLOCK_FREQ / CONFIG_CLOCK_REF_FREQ;
         RCC->CR |= RCC_CR_HSEON;
-        cfgr = (1 << RCC_CFGR_PLLSRC_Pos) | ((div - 2) << RCC_CFGR_PLLMULL_Pos);
+        uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
+        cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
+        if ((div & 1) && div <= 16)
+            cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
+        else
+            div /= 2;
+        cfgr |= (div - 2) << RCC_CFGR_PLLMULL_Pos;
     } else {
         // Configure 72Mhz PLL from internal 8Mhz oscillator (HSI)
         uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;

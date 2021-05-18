@@ -123,11 +123,14 @@ possible to manually send these MCU commands (functions marked with
 the DECL_COMMAND() macro in the Klipper source code). To do so, run:
 
 ```
-~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial 250000
+~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial
 ```
 
 See the "HELP" command within the tool for more information on its
 functionality.
+
+Some command-line options are available. For more information run:
+`~/klippy-env/bin/python ./klippy/console.py --help`
 
 Generating load graphs
 ======================
@@ -178,8 +181,9 @@ and effect scenarios.
 Running the regression tests
 ============================
 
-The main Klipper GitHub repository uses TravisCI to run a series of
-regression tests. It can be useful to run some of these tests locally.
+The main Klipper GitHub repository uses "github actions" to run a
+series of regression tests. It can be useful to run some of these
+tests locally.
 
 The source code "whitespace check" can be run with:
 ```

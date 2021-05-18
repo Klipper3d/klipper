@@ -21,10 +21,10 @@ DECL_CONSTANT("STEP_DELAY", CONFIG_STEP_DELAY);
  ****************************************************************/
 
 struct stepper_move {
+    struct move_node node;
     uint32_t interval;
     int16_t add;
     uint16_t count;
-    struct stepper_move *next;
     uint8_t flags;
 };
 
@@ -43,8 +43,7 @@ struct stepper {
 #endif
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
-    struct stepper_move *first, **plast;
-    uint32_t min_stop_interval;
+    struct move_queue_head mq;
     // gcc (pre v6) does better optimization when uint8_t are bitfields
     uint8_t flags : 8;
 };
@@ -53,24 +52,22 @@ enum { POSITION_BIAS=0x40000000 };
 
 enum {
     SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
-    SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5, SF_NEED_RESET=1<<6
+    SF_LAST_RESET=1<<4, SF_NEED_RESET=1<<5
 };
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t
 stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
-    struct stepper_move *m = s->first;
-    if (!m) {
+    if (move_queue_empty(&s->mq)) {
         // There is no next move - the queue is empty
-        if (s->interval - s->add < s->min_stop_interval
-            && !(s->flags & SF_NO_NEXT_CHECK))
-            shutdown("No next step");
         s->count = 0;
         return SF_DONE;
     }
 
     // Load next 'struct stepper_move' into 'struct stepper'
+    struct move_node *mn = move_queue_pop(&s->mq);
+    struct stepper_move *m = container_of(mn, struct stepper_move, node);
     s->next_step_time += m->interval;
     s->add = m->add;
     s->interval = m->interval + m->add;
@@ -101,7 +98,6 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
         s->position += m->count;
     }
 
-    s->first = m->next;
     move_free(m);
     return SF_RESCHEDULE;
 }
@@ -186,16 +182,14 @@ command_config_stepper(uint32_t *args)
     struct stepper *s = oid_alloc(args[0], command_config_stepper, sizeof(*s));
     if (!CONFIG_INLINE_STEPPER_HACK)
         s->time.func = stepper_event;
-    s->flags = args[4] ? SF_INVERT_STEP : 0;
+    s->flags = args[3] ? SF_INVERT_STEP : 0;
     s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP);
     s->dir_pin = gpio_out_setup(args[2], 0);
-    s->min_stop_interval = args[3];
     s->position = -POSITION_BIAS;
-    move_request_size(sizeof(struct stepper_move));
+    move_queue_setup(&s->mq, sizeof(struct stepper_move));
 }
 DECL_COMMAND(command_config_stepper,
-             "config_stepper oid=%c step_pin=%c dir_pin=%c"
-             " min_stop_interval=%u invert_step=%c");
+             "config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c");
 
 // Return the 'struct stepper' for a given stepper oid
 struct stepper *
@@ -215,7 +209,6 @@ command_queue_step(uint32_t *args)
     if (!m->count)
         shutdown("Invalid count parameter");
     m->add = args[3];
-    m->next = NULL;
     m->flags = 0;
 
     irq_disable();
@@ -224,23 +217,15 @@ command_queue_step(uint32_t *args)
         flags ^= SF_LAST_DIR;
         m->flags |= MF_DIR;
     }
-    flags &= ~SF_NO_NEXT_CHECK;
-    if (m->count == 1 && (m->flags || flags & SF_LAST_RESET))
-        // count=1 moves after a reset or dir change can have small intervals
-        flags |= SF_NO_NEXT_CHECK;
     flags &= ~SF_LAST_RESET;
     if (s->count) {
         s->flags = flags;
-        if (s->first)
-            *s->plast = m;
-        else
-            s->first = m;
-        s->plast = &m->next;
+        move_queue_push(&m->node, &s->mq);
     } else if (flags & SF_NEED_RESET) {
         move_free(m);
     } else {
         s->flags = flags;
-        s->first = m;
+        move_queue_push(&m->node, &s->mq);
         stepper_load_next(s, s->next_step_time + m->interval);
         sched_add_timer(&s->time);
     }
@@ -317,10 +302,10 @@ stepper_stop(struct stepper *s)
     s->flags = (s->flags & SF_INVERT_STEP) | SF_NEED_RESET;
     gpio_out_write(s->dir_pin, 0);
     gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP);
-    while (s->first) {
-        struct stepper_move *next = s->first->next;
-        move_free(s->first);
-        s->first = next;
+    while (!move_queue_empty(&s->mq)) {
+        struct move_node *mn = move_queue_pop(&s->mq);
+        struct stepper_move *m = container_of(mn, struct stepper_move, node);
+        move_free(m);
     }
 }
 
@@ -330,7 +315,7 @@ stepper_shutdown(void)
     uint8_t i;
     struct stepper *s;
     foreach_oid(i, s, command_config_stepper) {
-        s->first = NULL;
+        move_queue_clear(&s->mq);
         stepper_stop(s);
     }
 }

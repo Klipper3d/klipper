@@ -1,6 +1,6 @@
 // Serial port command queuing
 //
-// Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -13,6 +13,7 @@
 // background thread is launched to do this work and minimize latency.
 
 #include <fcntl.h> // fcntl
+#include <linux/can.h> // // struct can_frame
 #include <math.h> // ceil
 #include <poll.h> // poll
 #include <pthread.h> // pthread_mutex_lock
@@ -88,10 +89,11 @@ pollreactor_free(struct pollreactor *pr)
 
 // Add a callback for when a file descriptor (fd) becomes readable
 static void
-pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback)
+pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback
+                   , int write_only)
 {
     pr->fds[pos].fd = fd;
-    pr->fds[pos].events = POLLIN|POLLHUP;
+    pr->fds[pos].events = POLLHUP | (write_only ? 0 : POLLIN);
     pr->fds[pos].revents = 0;
     pr->fd_callbacks[pos] = callback;
 }
@@ -122,24 +124,27 @@ pollreactor_update_timer(struct pollreactor *pr, int pos, double waketime)
 
 // Internal code to invoke timer callbacks
 static int
-pollreactor_check_timers(struct pollreactor *pr, double eventtime)
+pollreactor_check_timers(struct pollreactor *pr, double eventtime, int busy)
 {
     if (eventtime >= pr->next_timer) {
+        // Find and run pending timers
         pr->next_timer = PR_NEVER;
         int i;
         for (i=0; i<pr->num_timers; i++) {
             struct pollreactor_timer *timer = &pr->timers[i];
             double t = timer->waketime;
             if (eventtime >= t) {
+                busy = 1;
                 t = timer->callback(pr->callback_data, eventtime);
                 timer->waketime = t;
             }
             if (t < pr->next_timer)
                 pr->next_timer = t;
         }
-        if (eventtime >= pr->next_timer)
-            return 0;
     }
+    if (busy)
+        return 0;
+    // Calculate sleep duration
     double timeout = ceil((pr->next_timer - eventtime) * 1000.);
     return timeout < 1. ? 1 : (timeout > 1000. ? 1000 : (int)timeout);
 }
@@ -149,11 +154,14 @@ static void
 pollreactor_run(struct pollreactor *pr)
 {
     double eventtime = get_monotonic();
+    int busy = 1;
     while (! pr->must_exit) {
-        int timeout = pollreactor_check_timers(pr, eventtime);
+        int timeout = pollreactor_check_timers(pr, eventtime, busy);
+        busy = 0;
         int ret = poll(pr->fds, pr->num_fds, timeout);
         eventtime = get_monotonic();
         if (ret > 0) {
+            busy = 1;
             int i;
             for (i=0; i<pr->num_fds; i++)
                 if (pr->fds[i].revents)
@@ -347,7 +355,7 @@ message_queue_free(struct list_head *root)
 struct serialqueue {
     // Input reading
     struct pollreactor pr;
-    int serial_fd;
+    int serial_fd, serial_fd_type, client_id;
     int pipe_fds[2];
     uint8_t input_buf[4096];
     uint8_t need_sync;
@@ -389,8 +397,13 @@ struct serialqueue {
 #define SQPT_COMMAND    1
 #define SQPT_NUM        2
 
+#define SQT_UART 'u'
+#define SQT_CAN 'c'
+#define SQT_DEBUGFILE 'f'
+
 #define MIN_RTO 0.025
 #define MAX_RTO 5.000
+#define MAX_PENDING_BLOCKS 12
 #define MIN_REQTIME_DELTA 0.250
 #define MIN_BACKGROUND_DELTA 0.005
 #define IDLE_QUERY_TIME 1.0
@@ -501,18 +514,21 @@ update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
 }
 
 // Process a well formed input message
-static void
+static int
 handle_message(struct serialqueue *sq, double eventtime, int len)
 {
     // Calculate receive sequence number
     uint64_t rseq = ((sq->receive_seq & ~MESSAGE_SEQ_MASK)
                      | (sq->input_buf[MESSAGE_POS_SEQ] & MESSAGE_SEQ_MASK));
-    if (rseq < sq->receive_seq)
-        rseq += MESSAGE_SEQ_MASK+1;
-
-    if (rseq != sq->receive_seq)
+    if (rseq != sq->receive_seq) {
         // New sequence number
+        if (rseq < sq->receive_seq)
+            rseq += MESSAGE_SEQ_MASK+1;
+        if (rseq > sq->send_seq && sq->receive_seq != 1)
+            // An ack for a message not sent?  Out of order message?
+            return -1;
         update_receive_seq(sq, eventtime, rseq);
+    }
 
     // Check for pending messages on notify_queue
     int must_wake = 0;
@@ -552,41 +568,62 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
 
     if (must_wake)
         check_wake_receive(sq);
+    return 0;
 }
 
 // Callback for input activity on the serial fd
 static void
 input_event(struct serialqueue *sq, double eventtime)
 {
-    int ret = read(sq->serial_fd, &sq->input_buf[sq->input_pos]
-                   , sizeof(sq->input_buf) - sq->input_pos);
-    if (ret <= 0) {
-        report_errno("read", ret);
-        pollreactor_do_exit(&sq->pr);
-        return;
+    if (sq->serial_fd_type == SQT_CAN) {
+        struct can_frame cf;
+        int ret = read(sq->serial_fd, &cf, sizeof(cf));
+        if (ret <= 0) {
+            report_errno("can read", ret);
+            pollreactor_do_exit(&sq->pr);
+            return;
+        }
+        if (cf.can_id != sq->client_id + 1)
+            return;
+        memcpy(&sq->input_buf[sq->input_pos], cf.data, cf.can_dlc);
+        sq->input_pos += cf.can_dlc;
+    } else {
+        int ret = read(sq->serial_fd, &sq->input_buf[sq->input_pos]
+                       , sizeof(sq->input_buf) - sq->input_pos);
+        if (ret <= 0) {
+            if(ret < 0)
+                report_errno("read", ret);
+            else
+                errorf("Got EOF when reading from device");
+            pollreactor_do_exit(&sq->pr);
+            return;
+        }
+        sq->input_pos += ret;
     }
-    sq->input_pos += ret;
     for (;;) {
-        ret = check_message(&sq->need_sync, sq->input_buf, sq->input_pos);
-        if (!ret)
+        int len = check_message(&sq->need_sync, sq->input_buf, sq->input_pos);
+        if (!len)
             // Need more data
             return;
-        if (ret > 0) {
+        if (len > 0) {
             // Received a valid message
             pthread_mutex_lock(&sq->lock);
-            handle_message(sq, eventtime, ret);
-            sq->bytes_read += ret;
+            int ret = handle_message(sq, eventtime, len);
+            if (ret)
+                sq->bytes_invalid += len;
+            else
+                sq->bytes_read += len;
             pthread_mutex_unlock(&sq->lock);
         } else {
             // Skip bad data at beginning of input
-            ret = -ret;
+            len = -len;
             pthread_mutex_lock(&sq->lock);
-            sq->bytes_invalid += ret;
+            sq->bytes_invalid += len;
             pthread_mutex_unlock(&sq->lock);
         }
-        sq->input_pos -= ret;
+        sq->input_pos -= len;
         if (sq->input_pos)
-            memmove(sq->input_buf, &sq->input_buf[ret], sq->input_pos);
+            memmove(sq->input_buf, &sq->input_buf[len], sq->input_pos);
     }
 }
 
@@ -601,18 +638,46 @@ kick_event(struct serialqueue *sq, double eventtime)
     pollreactor_update_timer(&sq->pr, SQPT_COMMAND, PR_NOW);
 }
 
+static void
+do_write(struct serialqueue *sq, void *buf, int buflen)
+{
+    if (sq->serial_fd_type != SQT_CAN) {
+        int ret = write(sq->serial_fd, buf, buflen);
+        if (ret < 0)
+            report_errno("write", ret);
+        return;
+    }
+    // Write to CAN fd
+    struct can_frame cf;
+    while (buflen) {
+        int size = buflen > 8 ? 8 : buflen;
+        cf.can_id = sq->client_id;
+        cf.can_dlc = size;
+        memcpy(cf.data, buf, size);
+        int ret = write(sq->serial_fd, &cf, sizeof(cf));
+        if (ret < 0) {
+            report_errno("can write", ret);
+            return;
+        }
+        buf += size;
+        buflen -= size;
+    }
+}
+
 // Callback timer for when a retransmit should be done
 static double
 retransmit_event(struct serialqueue *sq, double eventtime)
 {
-    int ret = tcflush(sq->serial_fd, TCOFLUSH);
-    if (ret < 0)
-        report_errno("tcflush", ret);
+    if (sq->serial_fd_type == SQT_UART) {
+        int ret = tcflush(sq->serial_fd, TCOFLUSH);
+        if (ret < 0)
+            report_errno("tcflush", ret);
+    }
 
     pthread_mutex_lock(&sq->lock);
 
     // Retransmit all pending messages
-    uint8_t buf[MESSAGE_MAX * MESSAGE_SEQ_MASK + 1];
+    uint8_t buf[MESSAGE_MAX * MAX_PENDING_BLOCKS + 1];
     int buflen = 0, first_buflen = 0;
     buf[buflen++] = MESSAGE_SYNC;
     struct queue_message *qm;
@@ -622,9 +687,7 @@ retransmit_event(struct serialqueue *sq, double eventtime)
         if (!first_buflen)
             first_buflen = qm->len + 1;
     }
-    ret = write(sq->serial_fd, buf, buflen);
-    if (ret < 0)
-        report_errno("retransmit write", ret);
+    do_write(sq, buf, buflen);
     sq->bytes_retransmit += buflen;
 
     // Update rto
@@ -650,13 +713,11 @@ retransmit_event(struct serialqueue *sq, double eventtime)
     return waketime;
 }
 
-// Construct a block of data and send to the serial port
-static void
-build_and_send_command(struct serialqueue *sq, double eventtime)
+// Construct a block of data to be sent to the serial port
+static int
+build_and_send_command(struct serialqueue *sq, uint8_t *buf, double eventtime)
 {
-    struct queue_message *out = message_alloc();
-    out->len = MESSAGE_HEADER_SIZE;
-
+    int len = MESSAGE_HEADER_SIZE;
     while (sq->ready_bytes) {
         // Find highest priority message (message with lowest req_clock)
         uint64_t min_clock = MAX_CLOCK;
@@ -674,13 +735,13 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
             }
         }
         // Append message to outgoing command
-        if (out->len + qm->len > sizeof(out->msg) - MESSAGE_TRAILER_SIZE)
+        if (len + qm->len > MESSAGE_MAX - MESSAGE_TRAILER_SIZE)
             break;
         list_del(&qm->node);
         if (list_empty(&cq->ready_queue) && list_empty(&cq->stalled_queue))
             list_del(&cq->node);
-        memcpy(&out->msg[out->len], qm->msg, qm->len);
-        out->len += qm->len;
+        memcpy(&buf[len], qm->msg, qm->len);
+        len += qm->len;
         sq->ready_bytes -= qm->len;
         if (qm->notify_id) {
             // Message requires notification - add to notify list
@@ -692,23 +753,21 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
     }
 
     // Fill header / trailer
-    out->len += MESSAGE_TRAILER_SIZE;
-    out->msg[MESSAGE_POS_LEN] = out->len;
-    out->msg[MESSAGE_POS_SEQ] = (MESSAGE_DEST
-                                 | (sq->send_seq & MESSAGE_SEQ_MASK));
-    uint16_t crc = crc16_ccitt(out->msg, out->len - MESSAGE_TRAILER_SIZE);
-    out->msg[out->len - MESSAGE_TRAILER_CRC] = crc >> 8;
-    out->msg[out->len - MESSAGE_TRAILER_CRC+1] = crc & 0xff;
-    out->msg[out->len - MESSAGE_TRAILER_SYNC] = MESSAGE_SYNC;
+    len += MESSAGE_TRAILER_SIZE;
+    buf[MESSAGE_POS_LEN] = len;
+    buf[MESSAGE_POS_SEQ] = MESSAGE_DEST | (sq->send_seq & MESSAGE_SEQ_MASK);
+    uint16_t crc = crc16_ccitt(buf, len - MESSAGE_TRAILER_SIZE);
+    buf[len - MESSAGE_TRAILER_CRC] = crc >> 8;
+    buf[len - MESSAGE_TRAILER_CRC+1] = crc & 0xff;
+    buf[len - MESSAGE_TRAILER_SYNC] = MESSAGE_SYNC;
 
-    // Send message
-    int ret = write(sq->serial_fd, out->msg, out->len);
-    if (ret < 0)
-        report_errno("write", ret);
-    sq->bytes_write += out->len;
+    // Store message block
     if (eventtime > sq->idle_time)
         sq->idle_time = eventtime;
-    sq->idle_time += out->len * sq->baud_adjust;
+    sq->idle_time += len * sq->baud_adjust;
+    struct queue_message *out = message_alloc();
+    memcpy(out->msg, buf, len);
+    out->len = len;
     out->sent_time = eventtime;
     out->receive_time = sq->idle_time;
     if (list_empty(&sq->sent_queue))
@@ -717,15 +776,16 @@ build_and_send_command(struct serialqueue *sq, double eventtime)
     if (!sq->rtt_sample_seq)
         sq->rtt_sample_seq = sq->send_seq;
     sq->send_seq++;
-    sq->need_ack_bytes += out->len;
+    sq->need_ack_bytes += len;
     list_add_tail(&out->node, &sq->sent_queue);
+    return len;
 }
 
 // Determine the time the next serial data should be sent
 static double
 check_send_command(struct serialqueue *sq, double eventtime)
 {
-    if (sq->send_seq - sq->receive_seq >= MESSAGE_SEQ_MASK
+    if (sq->send_seq - sq->receive_seq >= MAX_PENDING_BLOCKS
         && sq->receive_seq != (uint64_t)-1)
         // Need an ack before more messages can be sent
         return PR_NEVER;
@@ -800,12 +860,22 @@ static double
 command_event(struct serialqueue *sq, double eventtime)
 {
     pthread_mutex_lock(&sq->lock);
+    uint8_t buf[MESSAGE_MAX * MAX_PENDING_BLOCKS];
+    int buflen = 0;
     double waketime;
     for (;;) {
         waketime = check_send_command(sq, eventtime);
-        if (waketime != PR_NOW)
-            break;
-        build_and_send_command(sq, eventtime);
+        if (waketime != PR_NOW || buflen + MESSAGE_MAX > sizeof(buf)) {
+            if (buflen) {
+                // Write message blocks
+                do_write(sq, buf, buflen);
+                sq->bytes_write += buflen;
+                buflen = 0;
+            }
+            if (waketime != PR_NOW)
+                break;
+        }
+        buflen += build_and_send_command(sq, &buf[buflen], eventtime);
     }
     pthread_mutex_unlock(&sq->lock);
     return waketime;
@@ -827,20 +897,23 @@ background_thread(void *data)
 
 // Create a new 'struct serialqueue' object
 struct serialqueue * __visible
-serialqueue_alloc(int serial_fd, int write_only)
+serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id)
 {
     struct serialqueue *sq = malloc(sizeof(*sq));
     memset(sq, 0, sizeof(*sq));
-
-    // Reactor setup
     sq->serial_fd = serial_fd;
+    sq->serial_fd_type = serial_fd_type;
+    sq->client_id = client_id;
+
     int ret = pipe(sq->pipe_fds);
     if (ret)
         goto fail;
+
+    // Reactor setup
     pollreactor_setup(&sq->pr, SQPF_NUM, SQPT_NUM, sq);
-    if (!write_only)
-        pollreactor_add_fd(&sq->pr, SQPF_SERIAL, serial_fd, input_event);
-    pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event);
+    pollreactor_add_fd(&sq->pr, SQPF_SERIAL, serial_fd, input_event
+                       , serial_fd_type==SQT_DEBUGFILE);
+    pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event, 0);
     pollreactor_add_timer(&sq->pr, SQPT_RETRANSMIT, retransmit_event);
     pollreactor_add_timer(&sq->pr, SQPT_COMMAND, command_event);
     set_non_blocking(serial_fd);
@@ -849,7 +922,8 @@ serialqueue_alloc(int serial_fd, int write_only)
 
     // Retransmit setup
     sq->send_seq = 1;
-    if (write_only) {
+    if (serial_fd_type == SQT_DEBUGFILE) {
+        // Debug file output
         sq->receive_seq = -1;
         sq->rto = PR_NEVER;
     } else {
