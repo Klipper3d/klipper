@@ -46,7 +46,7 @@ install_packages()
     # Install desired packages
     report_status "Installing packages..."
     paru -S --needed ${PKGLIST}
-     
+
     # Install ARM build package. PKGBUILD recompresses it, so this takes a *LONG* time
     # even on a Pi 4
     report_status "Installing arm-none-eabi-gcc. This will take some time..."
@@ -122,7 +122,7 @@ verify_ready()
         exit -1
     fi
 
-    if ! which sudo > /dev/null 2>&1; then 
+    if ! which sudo > /dev/null 2>&1; then
         echo "Sudo is not installed, please install Sudo and add user to sudoers list."
         exit -1
     fi
