@@ -138,17 +138,17 @@ choice
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000
         bool "28KiB bootloader" if MACH_STM32F103
+    config STM32_FLASH_START_8000
+        bool "32KiB bootloader" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F446
     config STM32_FLASH_START_8800
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_C000
         bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F407
     config STM32_FLASH_START_10000
         bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446
+
     config STM32_FLASH_START_800
         bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
-
-    config STM32_FLASH_START_8000
-        bool "32KiB bootloader (SKR-PRO or TFT35-V3.0)" if MACH_STM32F207 || MACH_STM32F407
     config STM32_FLASH_START_4000
         bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F405 || MACH_STM32F407
 
