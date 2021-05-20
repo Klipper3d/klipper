@@ -1,6 +1,21 @@
-#
+# Adolfo Jayme Barrientos <fitojb@ubuntu.com>, 2021.
 msgid ""
 msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-05-20 19:33+0200\n"
+"PO-Revision-Date: 2021-05-20 17:33+0000\n"
+"Last-Translator: Adolfo Jayme Barrientos <fitojb@ubuntu.com>\n"
+"Language-Team: Spanish <https://hosted.weblate.org/projects/klipper/"
+"installation/es/>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.7-dev\n"
+
+#
 
 msgid ""
 "These instructions assume the software will run on a Raspberry Pi "
@@ -9,6 +24,11 @@ msgid ""
 " [FAQ](FAQ.md#can-i-run-klipper-on-something-other-than-a-raspberry-"
 "pi-3) for other machines)."
 msgstr ""
+"En estas instrucciones se presupone que el sóftwer se ejecutará en un equipo "
+"Raspberry Pi en conjunto con OctoPrint. Es recomendable que se emplee como "
+"máquina anfitriona un Raspberry Pi 2, 3 o 4 (para otras máquinas, vea las ["
+"preguntas frecuentes](FAQ.md#can-i-run-klipper-on-something-other-than-a"
+"-raspberry-pi-3))."
 
 msgid ""
 "Klipper currently supports a number of Atmel ATmega based micro-"
@@ -17,7 +37,7 @@ msgid ""
 msgstr ""
 
 msgid "Prepping an OS image"
-msgstr ""
+msgstr "Preparación de una imagen del SO"
 
 msgid ""
 "Start by installing [OctoPi](https://github.com/guysoft/OctoPi) on "
@@ -85,6 +105,8 @@ msgid ""
 "Be sure to update the FLASH_DEVICE with the printer's unique serial "
 "port name."
 msgstr ""
+"No se olvide de actualizar el FLASH_DEVICE con el nombre de puerto en serie "
+"único de la impresora."
 
 msgid ""
 "When flashing for the first time, make sure that OctoPrint is not "
@@ -134,7 +156,7 @@ msgid ""
 msgstr ""
 
 msgid "Configuring Klipper"
-msgstr ""
+msgstr "Configurar Klipper"
 
 msgid ""
 "The Klipper configuration is stored in a text file on the Raspberry "
