@@ -115,7 +115,7 @@ class GCodeMacro:
     def __init__(self, config):
         if len(config.get_name().split()) > 2:
             raise config.error(
-                    "Name of section '%s' contains illegal whitespace" 
+                    "Name of section '%s' contains illegal whitespace"
                     % (config.get_name()))
         name = config.get_name().split()[1]
         self.alias = name.upper()
