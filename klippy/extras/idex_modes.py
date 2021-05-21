@@ -41,13 +41,13 @@ class DualCarriages:
             'mode': mode,
             'axis_positions': (dc0.axis_position, dc1.axis_position)
             }
-    def recover_status(self, saved_status):    
+    def recover_status(self, saved_status):
         # set carriage 0 active
-        if (saved_status['mode'][1] == 'CARRIAGE_0' 
+        if (saved_status['mode'][1] == 'CARRIAGE_0'
                     and self.dc[0].is_active() is False):
             self.toggle_active_dc_rail(0)
         # set carriage 1 active
-        elif (saved_status['mode'][1] == 'CARRIAGE_1' 
+        elif (saved_status['mode'][1] == 'CARRIAGE_1'
                     and self.dc[1].is_active() is False):
             self.toggle_active_dc_rail(1)
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"

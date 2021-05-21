@@ -25,7 +25,7 @@ hybrid_corexy_stepper_alloc(char status)
 {
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
-    
+
     if (status == 'w') {
         sk->calc_position_cb = hybrid_corexy_stepper_a_wait_calc_position;
     }
