@@ -217,6 +217,13 @@ is defined):
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
 
+# quad_gantry_level
+
+The following information is available in the `quad_gantry_level` object
+(this object is available if quad_gantry_level is defined):
+- `leveled`: True if the gantry leveling process has been run and completed
+  successfully.
+
 # query_endstops
 
 The following information is available in the `query_endstops` object
