@@ -4,3 +4,5 @@ out
 .config
 .config.old
 klippy/.version
+klippy/extras/gcode_sound.py
+klippy/extras/led_effect.py
