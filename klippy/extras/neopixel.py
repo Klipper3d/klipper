@@ -94,8 +94,6 @@ class PrinterNeoPixel:
             self.color_data[(index-1)*elem_size:index*elem_size] = color_data
     def send_data(self, print_time=None):
         old_data, new_data = self.old_color_data, self.color_data
-        if new_data == old_data:
-            return
         # Find the position of all changed bytes in this framebuffer
         diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
                  if n != o]
@@ -135,20 +133,26 @@ class PrinterNeoPixel:
         white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
         index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
+        sync = gcmd.get_int('SYNC', 1)
         # Update and transmit data
-        def reactor_bgfunc(print_time):
+        def reactor_bgfunc(print_time=None):
             with self.mutex:
                 self.update_color_data(red, green, blue, white, index)
                 if transmit:
                     self.colors_finalize = True
+                    if not sync:
+                        print_time = None
                     self.send_data(print_time)
                 else:
                     self.colors_finalize = False
-        def lookahead_bgfunc(print_time):
+        if sync:
+            def lookahead_bgfunc(print_time):
+                reactor = self.printer.get_reactor()
+                reactor.register_callback(lambda et: reactor_bgfunc(print_time))
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.register_lookahead_callback(lookahead_bgfunc)
+        else:
             reactor = self.printer.get_reactor()
-            reactor.register_callback(lambda et: reactor_bgfunc(print_time))
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.register_lookahead_callback(lookahead_bgfunc)
-
+            reactor.register_callback(reactor_bgfunc, reactor.NOW)
 def load_config_prefix(config):
     return PrinterNeoPixel(config)
