@@ -210,7 +210,11 @@ class PrinterExtruder:
     def cmd_SET_NONLINEAR_EXTRUSION(self, gcmd):
         a = gcmd.get_float('A', self.nonlinear_a)
         b = gcmd.get_float('B', self.nonlinear_b)
+
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
         self._set_nonlinear_extrusion(a, b)
+
         msg = ("a: %.6f\n"
                "b: %.6f"
                % (a, b))
