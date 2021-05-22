@@ -15,6 +15,7 @@ MAX_MCU_SIZE = 500  # Sanity check on LED chain length
 class PrinterNeoPixel:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
         name = config.get_name().split()[1]
         self.mutex = self.printer.get_reactor().mutex()
         # Configure neopixel
@@ -93,9 +94,8 @@ class PrinterNeoPixel:
             elem_size = len(color_data)
             self.color_data[(index-1)*elem_size:index*elem_size] = color_data
     def send_data(self, print_time=None):
+        self.gcode.respond_info("sending color data")
         old_data, new_data = self.old_color_data, self.color_data
-        if new_data == old_data:
-            return
         # Find the position of all changed bytes in this framebuffer
         diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
                  if n != o]
@@ -116,6 +116,7 @@ class PrinterNeoPixel:
         minclock = 0
         if print_time is not None:
             minclock = self.mcu.print_time_to_clock(print_time)
+        self.gcode.respond_info("sending command at %s" % print_time)
         scmd = self.neopixel_send_cmd.send
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
@@ -126,6 +127,7 @@ class PrinterNeoPixel:
                 break
         else:
             logging.info("Neopixel update did not succeed")
+        self.gcode.respond_info("color data sent")
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, gcmd):
         # Parse parameters
@@ -135,20 +137,30 @@ class PrinterNeoPixel:
         white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
         index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
+        sync = gcmd.get_int('SYNC', 1)
         # Update and transmit data
-        def reactor_bgfunc(print_time):
+        def reactor_bgfunc(print_time=None):
+            gcmd.respond_info("reactor_bgfunc")
             with self.mutex:
+                gcmd.respond_info("updating color data")
                 self.update_color_data(red, green, blue, white, index)
                 if transmit:
+                    gcmd.respond_info("transmitting color data")
                     self.colors_finalize = True
+                    if not sync:
+                        print_time = None
                     self.send_data(print_time)
                 else:
+                    gcmd.respond_info("saving color data")
                     self.colors_finalize = False
-        def lookahead_bgfunc(print_time):
+        if sync:
+            def lookahead_bgfunc(print_time):
+                reactor = self.printer.get_reactor()
+                reactor.register_callback(lambda et: reactor_bgfunc(print_time))
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.register_lookahead_callback(lookahead_bgfunc)
+        else:
             reactor = self.printer.get_reactor()
-            reactor.register_callback(lambda et: reactor_bgfunc(print_time))
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.register_lookahead_callback(lookahead_bgfunc)
-
+            reactor.register_callback(reactor_bgfunc, reactor.NOW)
 def load_config_prefix(config):
     return PrinterNeoPixel(config)
