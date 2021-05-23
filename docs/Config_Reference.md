@@ -2178,7 +2178,7 @@ sensor_type: lm75
 #   0.5.
 ```
 
-## DHT11/DHT22/AM2302/SHT71 temperature sensor
+## DHT11/DHT22/AM2302/SHT71 temp sensor
 
 DHT11/DHT22/AM2302/SHT71 serial environmental sensors.
 Note that these sensors are not intended for use with extruders and
