@@ -55,6 +55,15 @@ objects:
 - `filament_detected`: Returns True if the sensor is in a triggered
   state.
 
+# filament_motion_sensor
+
+The following information is available in
+[filament_motion_sensor some_name](Config_Reference.md#filament_motion_sensor)
+objects:
+- `enabled`: Returns True if the motion sensor is currently enabled.
+- `filament_detected`: Returns True if the sensor is in a triggered
+  state.
+
 # firmware_retraction
 
 The following information is available in the
