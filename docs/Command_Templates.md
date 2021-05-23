@@ -31,8 +31,8 @@ beginning.
 
 The help indetify the functionality a short description can be added. To
 do that add `description:` with a short text.
-Default is "G-Code macro" if not specified. 
- For example:
+Default is "G-Code macro" if not specified.
+For example:
 
 ```
 [gcode_macro blink_led]
