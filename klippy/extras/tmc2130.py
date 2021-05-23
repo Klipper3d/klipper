@@ -85,6 +85,7 @@ FieldFormatters = {
     "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
     "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
     "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
+    "CS_ACTUAL":        (lambda v: ("%d" % v) if v else "0(Reset?)"),
 }
 
 
@@ -257,8 +258,7 @@ class TMC2130:
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         current_helper = TMCCurrentHelper(config, self.mcu_tmc)
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper,
-                                         clear_gstat=False)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         # Setup basic register values
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)

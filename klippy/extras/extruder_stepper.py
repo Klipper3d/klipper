@@ -12,7 +12,6 @@ class ExtruderStepper:
         stepper_name = config.get_name().split()[1]
         self.extruder_name = config.get('extruder', 'extruder')
         self.stepper = stepper.PrinterStepper(config)
-        self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.stepper.setup_itersolve('extruder_stepper_alloc')
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)

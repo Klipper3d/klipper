@@ -224,7 +224,8 @@ armcm_main(void)
 
     // Support pin remapping USB/CAN pins on low pinout stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
-    if (CONFIG_STM32F042_PIN_SWAP) {
+    if (CONFIG_STM32_USB_PA11_PA12_REMAP
+        || CONFIG_STM32_CANBUS_PA11_PA12_REMAP) {
         enable_pclock(SYSCFG_BASE);
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
     }

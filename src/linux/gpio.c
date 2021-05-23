@@ -1,27 +1,22 @@
 // Very basic support via a Linux gpiod device
 //
-// Copyright (C) 2017-2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
-#include "autoconf.h"
-#include "gpio.h"
-#include "command.h" // shutdown
-#include "sched.h" // shutdown
 
 #include <fcntl.h> // open
 #include <stdio.h> // snprintf
-#include <string.h> // memset
 #include <stdlib.h> // atexit
-
+#include <string.h> // memset
+#include <sys/ioctl.h> // ioctl
+#include <unistd.h> // close
+#include </usr/include/linux/gpio.h> // GPIOHANDLE_REQUEST_OUTPUT
+#include "command.h" // shutdown
+#include "gpio.h" // gpio_out_write
 #include "internal.h" // report_errno
+#include "sched.h" // sched_shutdown
 
-#include </usr/include/linux/gpio.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-
-#define CHIP_FILE_NAME "/dev/gpiochip%u"
 #define GPIO_CONSUMER "klipper"
-
 
 DECL_ENUMERATION_RANGE("pin", "gpio0", GPIO(0, 0), MAX_GPIO_LINES);
 DECL_ENUMERATION_RANGE("pin", "gpiochip0/gpio0", GPIO(0, 0), MAX_GPIO_LINES);
@@ -39,43 +34,40 @@ struct gpio_line {
     int fd;
     int state;
 };
-
-static struct gpio_line lines[8*MAX_GPIO_LINES];
-
-static int gpio_chip_fd[8] = { -1 };
+static struct gpio_line gpio_lines[8 * MAX_GPIO_LINES];
+static int gpio_chip_fd[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 
 static int
-get_chip_fd(uint8_t chipId) {
-    char chipFilename[64],errorMessage[256];
-    int i = 0;
-    if (gpio_chip_fd[chipId] <= 0) {
-        snprintf(chipFilename,sizeof(chipFilename), CHIP_FILE_NAME, chipId);
-        if(access(chipFilename, F_OK) < 0){
-            snprintf(errorMessage,sizeof(errorMessage),
-                "%s not found!",chipFilename);
-            report_errno(errorMessage,-1);
-            shutdown("GPIO chip device not found");
-        }
-        gpio_chip_fd[chipId] = open(chipFilename,O_RDWR | O_CLOEXEC);
-        if (gpio_chip_fd[chipId] < 0) {
-            snprintf(errorMessage,sizeof(errorMessage),
-                "Unable to open GPIO %s",chipFilename);
-            report_errno(errorMessage,-1);
-            shutdown("Unable to open GPIO chip device");
-        }
-        for (i=0; i<MAX_GPIO_LINES; ++i) {
-            lines[GPIO(chipId,i)].offset = i;
-            lines[GPIO(chipId,i)].fd = -1;
-            lines[GPIO(chipId,i)].chipid = chipId;
-        }
+get_chip_fd(uint8_t chipId)
+{
+    if (gpio_chip_fd[chipId] >= 0)
+        return gpio_chip_fd[chipId];
+    char chipFilename[64];
+    snprintf(chipFilename, sizeof(chipFilename), "/dev/gpiochip%u", chipId);
+    int ret = access(chipFilename, F_OK);
+    if (ret < 0) {
+        report_errno("gpio access", ret);
+        shutdown("GPIO chip device not found");
     }
-    return gpio_chip_fd[chipId];
+    int fd = open(chipFilename, O_RDWR | O_CLOEXEC);
+    if (fd < 0) {
+        report_errno("gpio open", fd);
+        shutdown("Unable to open GPIO chip device");
+    }
+    gpio_chip_fd[chipId] = fd;
+    int i;
+    for (i=0; i<MAX_GPIO_LINES; i++) {
+        gpio_lines[GPIO(chipId, i)].offset = i;
+        gpio_lines[GPIO(chipId, i)].fd = -1;
+        gpio_lines[GPIO(chipId, i)].chipid = chipId;
+    }
+    return fd;
 }
 
 struct gpio_out
 gpio_out_setup(uint32_t pin, uint8_t val)
 {
-    struct gpio_line* line = &lines[pin];
+    struct gpio_line *line = &gpio_lines[pin];
     line->offset = GPIO2PIN(pin);
     line->chipid = GPIO2PORT(pin);
     struct gpio_out g = { .line = line };
@@ -84,7 +76,7 @@ gpio_out_setup(uint32_t pin, uint8_t val)
 }
 
 static void
-gpio_release_line(struct gpio_line* line)
+gpio_release_line(struct gpio_line *line)
 {
     if (line->fd > 0) {
         close(line->fd);
@@ -95,18 +87,18 @@ gpio_release_line(struct gpio_line* line)
 void
 gpio_out_reset(struct gpio_out g, uint8_t val)
 {
-    int rv;
-    struct gpiohandle_request req;
     gpio_release_line(g.line);
+    struct gpiohandle_request req;
     memset(&req, 0, sizeof(req));
     req.lines = 1;
     req.flags = GPIOHANDLE_REQUEST_OUTPUT;
     req.lineoffsets[0] = g.line->offset;
     req.default_values[0] = !!val;
-    strncpy(req.consumer_label,GPIO_CONSUMER,sizeof(req.consumer_label) - 1);
-    rv = ioctl(get_chip_fd(g.line->chipid), GPIO_GET_LINEHANDLE_IOCTL, &req);
-    if (rv < 0) {
-        report_errno("gpio_out_reset get line",rv);
+    strncpy(req.consumer_label, GPIO_CONSUMER, sizeof(req.consumer_label) - 1);
+    int fd = get_chip_fd(g.line->chipid);
+    int ret = ioctl(fd, GPIO_GET_LINEHANDLE_IOCTL, &req);
+    if (ret < 0) {
+        report_errno("gpio_out_reset get line", ret);
         shutdown("Unable to open out GPIO chip line");
     }
     set_close_on_exec(req.fd);
@@ -125,34 +117,33 @@ gpio_out_write(struct gpio_out g, uint8_t val)
 }
 
 void
-gpio_out_toggle(struct gpio_out g)
+gpio_out_toggle_noirq(struct gpio_out g)
 {
-    gpio_out_write(g,!g.line->state);
+    gpio_out_write(g, !g.line->state);
 }
 
 void
-gpio_out_toggle_noirq(struct gpio_out g)
+gpio_out_toggle(struct gpio_out g)
 {
-    gpio_out_toggle(g);
+    gpio_out_toggle_noirq(g);
 }
 
 struct gpio_in
 gpio_in_setup(uint32_t pin, int8_t pull_up)
 {
-    struct gpio_line* line = &lines[pin];
+    struct gpio_line *line = &gpio_lines[pin];
     line->offset = GPIO2PIN(pin);
     line->chipid = GPIO2PORT(pin);
     struct gpio_in g = { .line = line };
-    gpio_in_reset(g,pull_up);
+    gpio_in_reset(g, pull_up);
     return g;
 }
 
 void
 gpio_in_reset(struct gpio_in g, int8_t pull_up)
 {
-    int rv;
-    struct gpiohandle_request req;
     gpio_release_line(g.line);
+    struct gpiohandle_request req;
     memset(&req, 0, sizeof(req));
     req.lines = 1;
     req.flags = GPIOHANDLE_REQUEST_INPUT;
@@ -162,13 +153,16 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     } else if (pull_up < 0) {
         req.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN;
     }
+#else
+    if (pull_up)
+        shutdown("Linux gpio interface does not support pullup/pulldown");
 #endif
     req.lineoffsets[0] = g.line->offset;
-    strncpy(req.consumer_label,GPIO_CONSUMER,sizeof(req.consumer_label) - 1);
-    rv = ioctl(
-        get_chip_fd(g.line->chipid),GPIO_GET_LINEHANDLE_IOCTL,&req);
-    if (rv < 0) {
-        report_errno("gpio_in_reset get line",rv);
+    strncpy(req.consumer_label, GPIO_CONSUMER, sizeof(req.consumer_label) - 1);
+    int fd = get_chip_fd(g.line->chipid);
+    int ret = ioctl(fd, GPIO_GET_LINEHANDLE_IOCTL, &req);
+    if (ret < 0) {
+        report_errno("gpio_in_reset get line", ret);
         shutdown("Unable to open in GPIO chip line");
     }
     set_close_on_exec(req.fd);

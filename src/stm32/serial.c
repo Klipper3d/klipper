@@ -12,28 +12,28 @@
 #include "sched.h" // DECL_INIT
 
 // Select the configured serial port
-#if CONFIG_SERIAL_PORT == 1
+#if CONFIG_STM32_SERIAL_USART1
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
   #define GPIO_Rx GPIO('A', 10)
   #define GPIO_Tx GPIO('A', 9)
   #define USARTx USART1
   #define USARTx_IRQn USART1_IRQn
-#elif CONFIG_SERIAL_PORT == 2
+#elif CONFIG_STM32_SERIAL_USART2
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
   #define GPIO_Rx GPIO('A', 3)
   #define GPIO_Tx GPIO('A', 2)
   #define USARTx USART2
   #define USARTx_IRQn USART2_IRQn
-#elif CONFIG_SERIAL_PORT == 3
-  #if CONFIG_STM32_SERIAL_USART3_ALT
-    DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD9,PD8");
-    #define GPIO_Rx GPIO('D', 9)
-    #define GPIO_Tx GPIO('D', 8)
-  #else
-    DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB11,PB10");
-    #define GPIO_Rx GPIO('B', 11)
-    #define GPIO_Tx GPIO('B', 10)
-  #endif
+#elif CONFIG_STM32_SERIAL_USART3
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB11,PB10");
+  #define GPIO_Rx GPIO('B', 11)
+  #define GPIO_Tx GPIO('B', 10)
+  #define USARTx USART3
+  #define USARTx_IRQn USART3_IRQn
+#elif CONFIG_STM32_SERIAL_USART3_ALT
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD9,PD8");
+  #define GPIO_Rx GPIO('D', 9)
+  #define GPIO_Tx GPIO('D', 8)
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
 #endif

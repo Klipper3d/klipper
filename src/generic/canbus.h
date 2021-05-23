@@ -15,6 +15,7 @@ void canbus_set_filter(uint32_t id);
 // canbus.c
 void canbus_notify_tx(void);
 void canbus_notify_rx(void);
+void canbus_process_data(uint32_t id, uint32_t len, uint8_t *data);
 void canbus_set_uuid(void *data);
 
 #endif // canbus.h

@@ -517,15 +517,13 @@ enabled:
   the given distance (in mm) at the given constant velocity (in
   mm/s). If ACCEL is specified and is greater than zero, then the
   given acceleration (in mm/s^2) will be used; otherwise no
-  acceleration is performed. If acceleration is not performed then it
-  can lead to the micro-controller reporting "No next step" errors
-  (avoid these errors by specifying an ACCEL value or use a very low
-  VELOCITY). No boundary checks are performed; no kinematic updates
-  are made; other parallel steppers on an axis will not be moved. Use
-  caution as an incorrect command could cause damage! Using this
-  command will almost certainly place the low-level kinematics in an
-  incorrect state; issue a G28 afterwards to reset the kinematics.
-  This command is intended for low-level diagnostics and debugging.
+  acceleration is performed. No boundary checks are performed; no
+  kinematic updates are made; other parallel steppers on an axis will
+  not be moved. Use caution as an incorrect command could cause
+  damage! Using this command will almost certainly place the low-level
+  kinematics in an incorrect state; issue a G28 afterwards to reset
+  the kinematics. This command is intended for low-level diagnostics
+  and debugging.
 - `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
   the low-level kinematic code to believe the toolhead is at the given
   cartesian position. This is a diagnostic and debugging command; use
@@ -717,6 +715,13 @@ The following commands are available when an
   is used. This command is useful to test the connection to the
   ADXL345 accelerometer: one of the returned values should be a
   free-fall acceleration (+/- some noise of the chip).
+- `ADXL345_DEBUG_READ [CHIP=<config_name>] REG=<register>`: queries
+  ADXL345 register <register> (e.g. 44 or 0x2C). Can be useful for
+  debugging purposes.
+- `ADXL345_DEBUG_WRITE [CHIP=<config_name>] REG=<reg> VAL=<value>`:
+  writes raw <value> into a register <register>. Both <value> and
+  <register> can be a decimal or a hexadecimal integer. Use with care,
+  and refer to ADXL345 data sheet for the reference.
 
 ## Resonance Testing Commands
 
@@ -760,3 +765,27 @@ is enabled (also see the
   defaults to the current time in "YYYYMMDD_HHMMSS" format. Note that
   the suggested input shaper parameters can be persisted in the config
   by issuing `SAVE_CONFIG` command.
+
+## Palette 2 Commands
+
+The following command is available when the
+[palette2 config section](Config_Reference.md#palette2)
+is enabled:
+- `PALETTE_CONNECT`: This command initializes the connection with
+  the Palette 2.
+- `PALETTE_DISCONNECT`: This command disconnects from the Palette 2.
+- `PALETTE_CLEAR`: This command instructs the Palette 2 to clear all of the
+  input and output paths of filament.
+- `PALETTE_CUT`: This command instructs the Palette 2 to cut the filament
+  currently loaded in the splice core.
+- `PALETTE_SMART_LOAD`: This command start the smart load sequence on the
+  Palette 2. Filament is loaded automatically by extruding it the distance
+  calibrated on the device for the printer, and instructs the Palette 2
+  once the loading has been completed. This command is the same as pressing
+  **Smart Load** directly on the Palette 2 screen after the filament load
+  is complete.
+
+Palette prints work by embedding special OCodes (Omega Codes)
+in the GCode file:
+- `O1`...`O32`: These codes are read from the GCode stream and processed
+  by this module and passed to the Palette 2 device.

@@ -1,10 +1,9 @@
 // Analog to digital support on lpc176x
 //
-// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
@@ -67,7 +66,8 @@ gpio_adc_setup(uint8_t pin)
     if (!is_enabled_pclock(PCLK_ADC)) {
         // Power up ADC
         enable_pclock(PCLK_ADC);
-        uint32_t prescal = DIV_ROUND_UP(CONFIG_CLOCK_FREQ, ADC_FREQ_MAX) - 1;
+        uint32_t pclk = get_pclock_frequency(PCLK_ADC);
+        uint32_t prescal = DIV_ROUND_UP(pclk, ADC_FREQ_MAX) - 1;
         LPC_ADC->ADCR = adc_status.adcr = (1<<21) | ((prescal & 0xff) << 8);
         LPC_ADC->ADINTEN = 0xff;
         adc_status.chan = ADC_DONE;
@@ -102,8 +102,9 @@ gpio_adc_sample(struct gpio_adc g)
     adc_status.chan = g.chan;
     LPC_ADC->ADCR = adc_status.adcr | (1 << g.chan) | (1<<16);
 
-need_delay:
-    return ((64 * DIV_ROUND_UP(CONFIG_CLOCK_FREQ, ADC_FREQ_MAX)
+need_delay: ;
+    uint32_t pclk = get_pclock_frequency(PCLK_ADC);
+    return ((64 * DIV_ROUND_UP(pclk, ADC_FREQ_MAX)
              * ARRAY_SIZE(adc_status.samples)) / 4 + timer_from_us(10));
 }
 

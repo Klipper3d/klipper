@@ -52,15 +52,15 @@ class HomingHeaters:
                                 for es in endstops
                                 for s in es.get_steppers()]
         return any(x in self.flaky_steppers for x in steppers_being_homed)
-    def handle_homing_move_begin(self, endstops):
-        if not self.check_eligible(endstops):
+    def handle_homing_move_begin(self, hmove):
+        if not self.check_eligible(hmove.get_mcu_endstops()):
             return
         for heater_name in self.disable_heaters:
             heater = self.pheaters.lookup_heater(heater_name)
             self.target_save[heater_name] = heater.get_temp(0)[1]
             heater.set_temp(0.)
-    def handle_homing_move_end(self, endstops):
-        if not self.check_eligible(endstops):
+    def handle_homing_move_end(self, hmove):
+        if not self.check_eligible(hmove.get_mcu_endstops()):
             return
         for heater_name in self.disable_heaters:
             heater = self.pheaters.lookup_heater(heater_name)

@@ -81,22 +81,33 @@ class FieldHelper:
 ######################################################################
 
 class TMCErrorCheck:
-    def __init__(self, config, mcu_tmc, clear_gstat=True):
+    def __init__(self, config, mcu_tmc):
         self.printer = config.get_printer()
-        self.stepper_name = ' '.join(config.get_name().split()[1:])
+        name_parts = config.get_name().split()
+        self.stepper_name = ' '.join(name_parts[1:])
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.check_timer = None
         # Setup for GSTAT query
-        self.clear_gstat = clear_gstat
         reg_name = self.fields.lookup_register("drv_err")
         if reg_name is not None:
-            self.gstat_reg_info = [0, reg_name, 0xffffffff, 0xffffffff]
+            self.gstat_reg_info = [0, reg_name, 0xffffffff, 0xffffffff, 0]
         else:
             self.gstat_reg_info = None
+        self.clear_gstat = True
         # Setup for DRV_STATUS query
-        reg_name = self.fields.lookup_register("ot")
-        mask = err_mask = 0
+        self.irun_field = "IRUN"
+        reg_name = "DRV_STATUS"
+        mask = err_mask = cs_actual_mask = 0
+        if name_parts[0] == 'tmc2130':
+            # TMC2130 driver quirks
+            self.clear_gstat = False
+            cs_actual_mask = self.fields.all_fields[reg_name]["CS_ACTUAL"]
+        elif name_parts[0] == 'tmc2660':
+            # TMC2660 driver quirks
+            self.irun_field = "CS"
+            reg_name = "READRSP@RDSEL2"
+            cs_actual_mask = self.fields.all_fields[reg_name]["SE"]
         err_fields = ["ot", "s2ga", "s2gb", "s2vsa", "s2vsb"]
         warn_fields = ["otpw", "t120", "t143", "t150", "t157"]
         for f in err_fields + warn_fields:
@@ -104,9 +115,9 @@ class TMCErrorCheck:
                 mask |= self.fields.all_fields[reg_name][f]
                 if f in err_fields:
                     err_mask |= self.fields.all_fields[reg_name][f]
-        self.drv_status_reg_info = [0, reg_name, mask, err_mask]
+        self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
     def _query_register(self, reg_info, try_clear=False):
-        last_value, reg_name, mask, err_mask = reg_info
+        last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         count = 0
         while 1:
             try:
@@ -124,13 +135,21 @@ class TMCErrorCheck:
                 logging.info("TMC '%s' reports %s", self.stepper_name, fmt)
                 reg_info[0] = last_value = val
             if not val & err_mask:
-                break
+                if not cs_actual_mask or val & cs_actual_mask:
+                    break
+                irun = self.fields.get_field(self.irun_field)
+                if self.check_timer is None or irun < 4:
+                    break
+                if (self.irun_field == "IRUN"
+                    and not self.fields.get_field("IHOLD")):
+                    break
+                # CS_ACTUAL field of zero - indicates a driver reset
             count += 1
             if count >= 3:
                 fmt = self.fields.pretty_format(reg_name, val)
                 raise self.printer.command_error("TMC '%s' reports error: %s"
                                                  % (self.stepper_name, fmt))
-            if try_clear:
+            if try_clear and val & err_mask:
                 try_clear = False
                 self.mcu_tmc.set_register(reg_name, val & err_mask)
     def _do_periodic_check(self, eventtime, try_clear=False):
@@ -162,13 +181,13 @@ class TMCErrorCheck:
 ######################################################################
 
 class TMCCommandHelper:
-    def __init__(self, config, mcu_tmc, current_helper, clear_gstat=True):
+    def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.current_helper = current_helper
-        self.echeck_helper = TMCErrorCheck(config, mcu_tmc, clear_gstat)
+        self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
         self.toff = None
@@ -341,8 +360,8 @@ class TMCVirtualPinHelper:
                                             self.handle_homing_move_end)
         self.mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
         return self.mcu_endstop
-    def handle_homing_move_begin(self, endstops):
-        if self.mcu_endstop not in endstops:
+    def handle_homing_move_begin(self, hmove):
+        if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
@@ -357,8 +376,8 @@ class TMCVirtualPinHelper:
         self.mcu_tmc.set_register("GCONF", val)
         tc_val = self.fields.set_field("TCOOLTHRS", 0xfffff)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
-    def handle_homing_move_end(self, endstops):
-        if self.mcu_endstop not in endstops:
+    def handle_homing_move_end(self, hmove):
+        if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:

@@ -32,7 +32,6 @@ class MCU_stepper:
         self._dir_pin = dir_pin_params['pin']
         self._invert_dir = dir_pin_params['invert']
         self._mcu_position_offset = self._tag_position = 0.
-        self._min_stop_interval = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -56,26 +55,14 @@ class MCU_stepper:
         # Calculate the time it takes to travel a distance with constant accel
         time_offset = start_velocity / accel
         return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
-    def set_max_jerk(self, max_halt_velocity, max_accel):
-        # Calculate the firmware's maximum halt interval time
-        last_step_time = self._dist_to_time(self._step_dist,
-                                            max_halt_velocity, max_accel)
-        second_last_step_time = self._dist_to_time(2. * self._step_dist,
-                                                   max_halt_velocity, max_accel)
-        self._min_stop_interval = second_last_step_time - last_step_time
     def setup_itersolve(self, alloc_func, *params):
         ffi_main, ffi_lib = chelper.get_ffi()
         sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
         self.set_stepper_kinematics(sk)
     def _build_config(self):
-        max_error = self._mcu.get_max_stepper_error()
-        min_stop_interval = max(0., self._min_stop_interval - max_error)
         self._mcu.add_config_cmd(
-            "config_stepper oid=%d step_pin=%s dir_pin=%s"
-            " min_stop_interval=%d invert_step=%d" % (
-                self._oid, self._step_pin, self._dir_pin,
-                self._mcu.seconds_to_clock(min_stop_interval),
-                self._invert_step))
+            "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d" % (
+                self._oid, self._step_pin, self._dir_pin, self._invert_step))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)
         step_cmd_tag = self._mcu.lookup_command_tag(
@@ -87,6 +74,7 @@ class MCU_stepper:
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
+        max_error = self._mcu.get_max_stepper_error()
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.stepcompress_fill(self._stepqueue,
                                   self._mcu.seconds_to_clock(max_error),
@@ -314,6 +302,7 @@ class PrinterRail:
                 raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'" % (
                         config.get_name(),))
+            config.getboolean('homing_positive_dir', self.homing_positive_dir)
         elif ((self.homing_positive_dir
                and self.position_endstop == self.position_min)
               or (not self.homing_positive_dir
@@ -359,9 +348,6 @@ class PrinterRail:
     def set_trapq(self, trapq):
         for stepper in self.steppers:
             stepper.set_trapq(trapq)
-    def set_max_jerk(self, max_halt_velocity, max_accel):
-        for stepper in self.steppers:
-            stepper.set_max_jerk(max_halt_velocity, max_accel)
     def set_position(self, coord):
         for stepper in self.steppers:
             stepper.set_position(coord)

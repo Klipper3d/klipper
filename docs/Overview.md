@@ -42,10 +42,14 @@ communication with the Klipper developers.
 - [Slicers](Slicers.md): Configure "slicer" software for Klipper.
 - [Command Templates](Command_Templates.md): G-Code macros and
   conditional evaluation.
+  - [Status Reference](Status_Reference.md): Information available to
+    macros (and similar).
 - [TMC Drivers](TMC_Drivers.md): Using Trinamic stepper motor drivers
   with Klipper.
 - [Skew correction](skew_correction.md): Adjustments for axes not
   perfectly square.
+- [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
+  tools such as lasers or spindles.
 - [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 
 # Developer Documentation
@@ -72,6 +76,8 @@ communication with the Klipper developers.
 
 # Device Specific Documents
 
+- [Example configs](Example_Configs.md): Information on adding an
+  example config file to Klipper.
 - [SDCard Updates](SDCard_Updates.md): Flash a micro-controller by
   copying a binary to an sdcard in the micro-controller.
 - [Raspberry Pi as Micro-controller](RPi_microcontroller.md): Details

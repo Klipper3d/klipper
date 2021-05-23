@@ -138,7 +138,7 @@ command_config_ds18b20(uint32_t *args)
 {
     // Open kernel port
     uint8_t serial_len = args[1];
-    uint8_t *serial = (void*)(size_t)args[2];
+    uint8_t *serial = command_decode_ptr(args[2]);
     if (memchr(serial, '/', serial_len))
         goto fail1;
     char fname[56];

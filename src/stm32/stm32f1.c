@@ -21,10 +21,14 @@ enable_pclock(uint32_t periph_base)
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         RCC->APB1ENR |= (1<<pos);
         RCC->APB1ENR;
+        RCC->APB1RSTR |= (1<<pos);
+        RCC->APB1RSTR &= ~(1<<pos);
     } else if (periph_base < AHBPERIPH_BASE) {
         uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
         RCC->APB2ENR |= (1<<pos);
         RCC->APB2ENR;
+        RCC->APB2RSTR |= (1<<pos);
+        RCC->APB2RSTR &= ~(1<<pos);
     } else {
         uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
         RCC->AHBENR |= (1<<pos);
@@ -134,6 +138,35 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
             stm32f1_alternative_remap(AFIO_MAPR_I2C1_REMAP_Msk,
                                       AFIO_MAPR_I2C1_REMAP);
         }
+    } else if ((gpio == GPIO('A', 15)
+                || gpio == GPIO('B', 3)) && (func == 1)) {
+        // TIM2 CH1/2
+        stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1_Msk,
+                                  AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1);
+    }  else if ((gpio == GPIO('B', 10)
+                || gpio == GPIO('B', 11)) && (func == 1)) {
+        // TIM2 CH3/4
+        stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2_Msk,
+                                  AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2);
+    } else if ((gpio == GPIO('B', 4)
+                || gpio == GPIO('B', 5)) && (func == 2)) {
+        // TIM3 partial remap
+        stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_PARTIALREMAP_Msk,
+                                  AFIO_MAPR_TIM3_REMAP_PARTIALREMAP);
+    } else if ((gpio == GPIO('C', 6)
+                || gpio == GPIO('C', 7)
+                || gpio == GPIO('C', 8)
+                || gpio == GPIO('C', 9)) && (func == 2)) {
+        // TIM3 full remap
+        stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_FULLREMAP_Msk,
+                                  AFIO_MAPR_TIM3_REMAP_FULLREMAP);
+    } else if ((gpio == GPIO('D', 12)
+                || gpio == GPIO('D', 13)
+                || gpio == GPIO('D', 14)
+                || gpio == GPIO('D', 15)) && (func == 2)) {
+        // TIM4
+        stm32f1_alternative_remap(AFIO_MAPR_TIM4_REMAP_Msk,
+                                  AFIO_MAPR_TIM4_REMAP);
     }
     // Add more as needed
 }

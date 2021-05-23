@@ -9,6 +9,8 @@
 #include <string.h> // memcpy
 #include "canbus.h" // canbus_set_uuid
 #include "command.h" // DECL_CONSTANT
+#include "generic/io.h" // readb
+#include "generic/irq.h" // irq_disable
 #include "sched.h" // sched_wake_task
 
 static uint32_t canbus_assigned_id;
@@ -183,16 +185,47 @@ canbus_notify_rx(void)
 static uint8_t receive_buf[192], receive_pos;
 DECL_CONSTANT("RECEIVE_WINDOW", ARRAY_SIZE(receive_buf));
 
-static void
-can_process_data(uint32_t id, uint32_t len, uint8_t *data)
+// Handle incoming data (called from IRQ handler)
+void
+canbus_process_data(uint32_t id, uint32_t len, uint8_t *data)
 {
+    if (!id || id != canbus_assigned_id)
+        return;
     int rpos = receive_pos;
     if (len > sizeof(receive_buf) - rpos)
         len = sizeof(receive_buf) - rpos;
     memcpy(&receive_buf[rpos], data, len);
     receive_pos = rpos + len;
+    canbus_notify_rx();
 }
 
+// Remove from the receive buffer the given number of bytes
+static void
+console_pop_input(int len)
+{
+    int copied = 0;
+    for (;;) {
+        int rpos = readb(&receive_pos);
+        int needcopy = rpos - len;
+        if (needcopy) {
+            memmove(&receive_buf[copied], &receive_buf[copied + len]
+                    , needcopy - copied);
+            copied = needcopy;
+            canbus_notify_rx();
+        }
+        irqstatus_t flag = irq_save();
+        if (rpos != readb(&receive_pos)) {
+            // Raced with irq handler - retry
+            irq_restore(flag);
+            continue;
+        }
+        receive_pos = needcopy;
+        irq_restore(flag);
+        break;
+    }
+}
+
+// Task to process incoming commands and admin messages
 void
 canbus_rx_task(void)
 {
@@ -206,8 +239,6 @@ canbus_rx_task(void)
         int ret = canbus_read(&id, data);
         if (ret < 0)
             break;
-        if (id && id == canbus_assigned_id)
-            can_process_data(id, ret, data);
         if (id && id == canbus_assigned_id + 1)
             can_id_conflict();
         else if (id == CANBUS_ID_ADMIN)
@@ -215,18 +246,15 @@ canbus_rx_task(void)
     }
 
     // Check for a complete message block and process it
-    uint_fast8_t rpos = receive_pos, pop_count;
-    int ret = command_find_and_dispatch(receive_buf, rpos, &pop_count);
+    uint_fast8_t rpos = readb(&receive_pos), pop_count;
+    int ret = command_find_block(receive_buf, rpos, &pop_count);
+    if (ret > 0)
+        command_dispatch(receive_buf, pop_count);
     if (ret) {
-        // Move buffer
-        int needcopy = rpos - pop_count;
-        if (needcopy) {
-            memmove(receive_buf, &receive_buf[pop_count], needcopy);
-            canbus_notify_rx();
-        }
-        rpos = needcopy;
+        console_pop_input(pop_count);
+        if (ret > 0)
+            command_send_ack();
     }
-    receive_pos = rpos;
 }
 DECL_TASK(canbus_rx_task);
 

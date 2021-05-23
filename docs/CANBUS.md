@@ -6,10 +6,9 @@ Klipper currently only supports CAN on stm32 chips. In addition, the
 micro-controller chip must support CAN and it must be on a board that
 has a CAN transceiver.
 
-To compile for CAN, run "make menuconfig", unselect "Use USB for
-communication (instead of serial)" and then select "Use CAN for
-communication (instead of serial)". Finally, compile the
-micro-controller code and flash it to the target board.
+To compile for CAN, run "make menuconfig" and select "CAN bus" as the
+communication interface. Finally, compile the micro-controller code
+and flash it to the target board.
 
 # Host Hardware
 
@@ -40,6 +39,24 @@ iface can0 can static
 
 Note that the "Raspberry Pi CAN hat" also requires [changes to
 config.txt](https://www.waveshare.com/wiki/RS485_CAN_HAT).
+
+# Terminating Resistors
+
+A CAN bus should have two 120 ohm resistors between the CANH and CANL
+wires. Ideally, one resistor located at each the end of the bus.
+
+Note that some devices have a builtin 120 ohm resistor (for example,
+the "Waveshare Raspberry Pi CAN hat" has a soldered on resistor that
+can not be easily removed). Some devices do not include a resistor at
+all. Other devices have a mechanism to select the resistor (typically
+by connecting a "pin jumper"). Be sure to check the schematics of all
+devices on the CAN bus to verify that there are two and only two 120
+Ohm resistors on the bus.
+
+To test that the resistors are correct, one can remove power to the
+printer and use a multi-meter to check the resistance between the CANH
+and CANL wires - it should report ~60 ohms on a correctly wired CAN
+bus.
 
 # Finding the canbus_uuid for new micro-controllers
 
