@@ -254,7 +254,7 @@ config_section_name](Config_Reference.md#dht11dht22am2302sht71-temp-sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`: The last read humidity from the sensor
-  (only on bme280, htu21d, lm75 and dht22 sensors).
+  (only on bme280, htu21d, lm75, and dht22 sensors).
 - `pressure`, `gas`: The last read values from the sensor
   (only on bme280, htu21d, and lm75 sensors).
 
