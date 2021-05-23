@@ -249,8 +249,8 @@ config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
 config_section_name](Config_Reference.md#lm75-temperature-sensor),
 [temperature_host
 config_section_name](Config_Reference.md#host-temperature-sensor), and
-[dht22 config_section_name](Config_Reference.md#
-dht11dht22am2302sht71-temperature-sensor)
+[dht22
+config_section_name](Config_Reference.md#dht11dht22am2302sht71-sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`: The last read humidity from the sensor
