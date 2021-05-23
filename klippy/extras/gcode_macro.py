@@ -120,7 +120,7 @@ class GCodeMacro:
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
         self.rename_existing = config.get("rename_existing", None)
-        self.cmd_desc = config.get("description", "G-Code macro")                                                                                                                  
+        self.cmd_desc = config.get("description", "G-Code macro")
         if self.rename_existing is not None:
             if (self.gcode.is_traditional_gcode(self.alias)
                 != self.gcode.is_traditional_gcode(self.rename_existing)):
