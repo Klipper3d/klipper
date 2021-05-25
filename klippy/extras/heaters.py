@@ -62,7 +62,7 @@ class TemperatureSensor(object):
     def get_report_time_delta(self):
         return self.sensor.get_report_time_delta()
     def get_temp(self, eventtime):
-        return self.sensor.smoothed_temp, 0.
+        return self.smoothed_temp, 0.
     def stats(self, eventtime):
         return False, '%s: temp=%.1f' % (self.name, self.temp)
     def get_status(self, eventtime):
