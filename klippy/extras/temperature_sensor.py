@@ -9,6 +9,8 @@ from .heaters import TemperatureSensor
 class PrinterSensorGeneric(TemperatureSensor):
     def __init__(self, config):
         super(PrinterSensorGeneric, self).__init__(config)
+        pheaters = self.printer.load_object(config, 'heaters')
+        pheaters.register_sensor(config, self)
 
 def load_config_prefix(config):
     return PrinterSensorGeneric(config)

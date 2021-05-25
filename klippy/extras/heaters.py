@@ -21,9 +21,7 @@ class TemperatureSensor(object):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         pheaters = self.printer.load_object(config, 'heaters')
-        #TODO: do we need both of these?
         self.sensor = pheaters.setup_sensor(config)
-        pheaters.register_sensor(config, self)
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
                                         minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', 99999999.9,
@@ -37,10 +35,8 @@ class TemperatureSensor(object):
         self.time_diff = 0.
         self.measured_min = 99999999.
         self.measured_max = 0.
-        self.sensor.setup_callback(self.temperature_callback)
-    def setup_callback(self, _callback):
-        self._callback = _callback
-    def temperature_callback(self, read_time, temp):
+        self.sensor.setup_callback(self._temperature_callback)
+    def _temperature_callback(self, read_time, temp):
         self.measured_min = min(self.measured_min, temp)
         self.measured_max = max(self.measured_max, temp)
         # Smoothed Temperature
@@ -60,20 +56,18 @@ class TemperatureSensor(object):
         self.temp = temp
         self.temp_time = read_time
         self.time_diff = time_diff
-        if self._callback:
-            self._callback(read_time, temp)
+        self.temperature_callback(read_time, temp)
+    def temperature_callback(self, read_time, temp):
+        pass
     def get_report_time_delta(self):
         return self.sensor.get_report_time_delta()
     def get_temp(self, eventtime):
-        return self.temp, 0.
+        return self.sensor.smoothed_temp, 0.
     def stats(self, eventtime):
-        # Q: does the heater status (False) belong on a Temperature Sensor
-        #  or should this only be implemented by Heater?
         return False, '%s: temp=%.1f' % (self.name, self.temp)
     def get_status(self, eventtime):
         return {
-            'temperature': self.temp,
-            'smoothed_temperature': self.smoothed_temp,
+            'temperature': self.smoothed_temp,
             'temperature_slope': self.temp_slope,
             'measured_min_temp': self.measured_min,
             'measured_max_temp': self.measured_max
@@ -83,18 +77,16 @@ class TemperatureSensor(object):
 # Heater
 ######################################################################
 
-class Heater:
-    def __init__(self, config, sensor):
+class Heater(TemperatureSensor):
+    def __init__(self, config):
+        super(Heater, self).__init__(config)
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.sensor = sensor
-        # Setup sensor
-        self.sensor.setup_callback(self.temperature_callback)
-        self.pwm_delay = self.sensor.get_report_time_delta()
+        self.pwm_delay = self.get_report_time_delta()
         # Setup temperature checks
         self.min_extrude_temp = config.getfloat('min_extrude_temp', 170.,
-                        minval=self.sensor.min_temp,
-                        maxval=self.sensor.max_temp)
+                        minval=self.min_temp,
+                        maxval=self.max_temp)
         is_fileoutput = (self.printer.get_start_args().get('debugoutput')
                          is not None)
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
@@ -134,15 +126,15 @@ class Heater:
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
         self.mcu_pwm.set_pwm(pwm_time, value)
-        #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
+        # logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
-        #              self.sensor.temp, self.sensor.temp_time,
+        #              self.temp, self.temp_time,
         #              self.target_temp)
     def temperature_callback(self, read_time, temp):
         with self.lock:
-            self.control.temperature_update(read_time, self.sensor,
+            self.control.temperature_update(read_time, self,
                                             self.target_temp)
-            self.can_extrude = (self.sensor.smoothed_temp >=
+            self.can_extrude = (self.smoothed_temp >=
                                     self.min_extrude_temp)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
@@ -151,10 +143,10 @@ class Heater:
     def get_max_power(self):
         return self.max_power
     def get_smooth_time(self):
-        return self.sensor.smooth_time
+        return self.smooth_time
     def set_temp(self, degrees):
-        if degrees and (degrees < self.sensor.min_temp or
-                    degrees > self.sensor.max_temp):
+        if degrees and (degrees < self.min_temp or
+                    degrees > self.max_temp):
             raise self.printer.command_error(
                 "Requested temperature (%.1f) out of range (%.1f:%.1f)"
                 % (degrees, self.min_temp, self.max_temp))
@@ -163,13 +155,13 @@ class Heater:
     def get_temp(self, eventtime):
         print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
-            if self.sensor.temp_time < print_time:
+            if self.temp_time < print_time:
                 return 0., self.target_temp
-            return self.sensor.smoothed_temp, self.target_temp
+            return self.smoothed_temp, self.target_temp
     def check_busy(self, eventtime):
         with self.lock:
             return self.control.check_busy(
-                eventtime, self.sensor.smoothed_temp, self.target_temp)
+                eventtime, self.smoothed_temp, self.target_temp)
     def set_control(self, control):
         with self.lock:
             old_control = self.control
@@ -178,24 +170,23 @@ class Heater:
         return old_control
     def alter_target(self, target_temp):
         if target_temp:
-            target_temp = max(self.sensor.min_temp,
-                                min(self.sensor.max_temp, target_temp))
+            target_temp = max(self.min_temp,
+                                min(self.max_temp, target_temp))
         self.target_temp = target_temp
     def stats(self, eventtime):
         with self.lock:
             target_temp = self.target_temp
-            last_temp = self.sensor.temp
+            last_temp = self.temp
             last_pwm_value = self.last_pwm_value
         is_active = target_temp or last_temp > 50.
         return is_active, '%s: target=%.0f temp=%.1f pwm=%.3f' % (
             self.name, target_temp, last_temp, last_pwm_value)
     def get_status(self, eventtime):
         with self.lock:
-            target_temp = self.target_temp
-            smoothed_temp = self.sensor.smoothed_temp
-            last_pwm_value = self.last_pwm_value
-        return {'temperature': smoothed_temp, 'target': target_temp,
-                'power': last_pwm_value}
+            status = TemperatureSensor.get_status(self, eventtime)
+            status['target'] = self.target_temp
+            status['power'] = self.last_pwm_value
+        return status
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
@@ -237,7 +228,6 @@ PID_SETTLE_SLOPE = .1
 class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
-        self.sensor = self.heater.sensor
         self.heater_max_power = heater.get_max_power()
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
@@ -267,7 +257,7 @@ class ControlPID:
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
-                or abs(self.sensor.temp_slope) > PID_SETTLE_SLOPE)
+                or abs(self.heater.temp_slope) > PID_SETTLE_SLOPE)
 
 
 ######################################################################
@@ -299,10 +289,8 @@ class PrinterHeaters:
         heater_name = config.get_name().split()[-1]
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
-        # Setup sensor
-        sensor = TemperatureSensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
+        self.heaters[heater_name] = heater = Heater(config)
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
@@ -395,6 +383,9 @@ class PrinterHeaters:
             raise gcmd.error(
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM, MAXIMUM"
                     + " or MAX_SLOPE.")
+        # convert degrees/minute to degrees/second
+        if max_slope != float('inf'):
+            max_slope = max_slope / 60
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         if sensor_name in self.heaters:
