@@ -12,13 +12,23 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // DECL_INIT
 
-DECL_CONSTANT_STR("RESERVE_PINS_serial", "P0.3,P0.2");
-#define GPIO_Rx GPIO(0, 3)
-#define GPIO_Tx GPIO(0, 2)
-#define GPIO_FUNCTION_UARTx 1
-#define LPC_UARTx LPC_UART0
-#define UARTx_IRQn UART0_IRQn
-#define PCLK_UARTx PCLK_UART0
+#if CONFIG_LPC_SERIAL_UART0_P03_P02
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "P0.3,P0.2");
+  #define GPIO_Rx GPIO(0, 3)
+  #define GPIO_Tx GPIO(0, 2)
+  #define GPIO_FUNCTION_UARTx 1
+  #define LPC_UARTx LPC_UART0
+  #define UARTx_IRQn UART0_IRQn
+  #define PCLK_UARTx PCLK_UART0
+#elif CONFIG_LPC_SERIAL_UART3_P429_P428
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "P4.29,P4.28");
+  #define GPIO_Rx GPIO(4, 29)
+  #define GPIO_Tx GPIO(4, 28)
+  #define GPIO_FUNCTION_UARTx 3
+  #define LPC_UARTx LPC_UART3
+  #define UARTx_IRQn UART3_IRQn
+  #define PCLK_UARTx PCLK_UART3
+#endif
 
 // Write tx bytes to the serial port
 static void
