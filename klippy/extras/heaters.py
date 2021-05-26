@@ -18,16 +18,16 @@ PID_PARAM_BASE = 255.
 # Adapter that wraps a hardware temp sensor
 class TemperatureSensor(object):
     def __init__(self, config):
-        self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        pheaters = self.printer.load_object(config, 'heaters')
-        self.sensor = pheaters.setup_sensor(config)
+        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
                                         minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', 99999999.9,
                                         above=self.min_temp)
+        self.printer = config.get_printer()
+        pheaters = self.printer.load_object(config, 'heaters')
+        self.sensor = pheaters.setup_sensor(config)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
-        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.min_deriv_time = self.smooth_time
         self.inv_smooth_time = 1. / self.smooth_time
         self.temp = self.smoothed_temp = self.temp_slope = 0.
@@ -377,29 +377,33 @@ class PrinterHeaters:
             raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
         min_temp = gcmd.get_float('MINIMUM', float('-inf'))
         max_temp = gcmd.get_float('MAXIMUM', float('inf'), above=min_temp)
-        max_slope = gcmd.get_float('MAX_SLOPE', float('inf'), above=0.)
+        max_slope_min = gcmd.get_float('MAX_SLOPE', float('inf'), above=0.)
         if min_temp == float('-inf') and max_temp == float('inf') \
-            and max_slope == float('inf'):
+            and max_slope_min == float('inf'):
             raise gcmd.error(
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM, MAXIMUM"
                     + " or MAX_SLOPE.")
         # convert degrees/minute to degrees/second
-        if max_slope != float('inf'):
-            max_slope = max_slope / 60
+        max_slope_sec = max_slope_min
+        if max_slope_sec != float('inf'):
+            max_slope_sec =  max_slope_sec / 60
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         if sensor_name in self.heaters:
-            sensor = self.heaters[sensor_name].sensor
+            sensor = self.heaters[sensor_name]
         else:
             sensor = self.printer.lookup_object(sensor_name)
+        inv_gcode_id = {v: k for k, v in self.gcode_id_to_sensor.iteritems()}
+        gcode_id = inv_gcode_id[sensor] or sensor_name
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
         while not self.printer.is_shutdown():
             temp = sensor.smoothed_temp
-            if temp >= min_temp and temp <= max_temp and \
-                    sensor.temp_slope < max_slope:
+            slope = sensor.temp_slope
+            if temp >= min_temp and temp <= max_temp and slope < max_slope_sec:
                 return
-            gcmd.respond_raw(self._get_temp(eventtime))
+            gcmd.respond_raw("TEMPERATURE_WAIT %s:%.1f@%.1f /%.1f/%.1f/%.1f" % (
+                gcode_id, temp, slope * 60, min_temp, max_temp, max_slope_min))
             eventtime = reactor.pause(eventtime + 1.)
 
 def load_config(config):
