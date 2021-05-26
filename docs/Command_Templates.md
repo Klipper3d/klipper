@@ -29,8 +29,8 @@ beginning.
 
 ### Add a description to your macro
 
-The help indetify the functionality a short description can be added. To
-do that add `description:` with a short text.
+To help indetify the functionality a short description can be added.
+Add `description:` with a short text to describe the functionality.
 Default is "G-Code macro" if not specified.
 For example:
 

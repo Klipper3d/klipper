@@ -1240,6 +1240,9 @@ G-Code macros (one may define any number of sections with a
 #   commands. Care should be taken when overriding commands as it can
 #   cause complex and unexpected results. The default is to not
 #   override an existing G-Code command.
+#description: G-Code macro
+#   This will add a short description used at the HELP command or while
+#   using the auto completion feature. Default "G-Code macro"
 ```
 
 ## [delayed_gcode]
