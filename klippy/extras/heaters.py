@@ -46,7 +46,7 @@ class TemperatureSensor(object):
         # Temperature Derivatives
         self.temp_slope = self._derivative(self.temp, temp,
                         time_diff, self.temp_slope)
-        smoothed_derivative = self._derivative(self.smoothed_temp, 
+        smoothed_derivative = self._derivative(self.smoothed_temp,
                         next_smoothed_temp, time_diff, self.smoothed_temp_slope)
         self.smoothed_temp_slope = self._smooth(time_diff, smoothed_derivative,
                          self.smoothed_temp_slope)
@@ -57,6 +57,7 @@ class TemperatureSensor(object):
         self.time_diff = time_diff
         self.temperature_callback(read_time, temp)
     def _smooth(self, time_diff, value, smoothed_value):
+        # Time based smoothing of a value
         adj_time = min(time_diff * self.inv_smooth_time, 1.)
         value_diff_smoothed = value - smoothed_value
         return smoothed_value + (value_diff_smoothed * adj_time)
