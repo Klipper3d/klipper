@@ -247,11 +247,11 @@ choice
         select SERIAL
     config STM32_SERIAL_USART3
         bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS
-        depends on MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F446
+        depends on !MACH_STM32F0 && !MACH_STM32F401
         select SERIAL
     config STM32_SERIAL_USART3_ALT_PD9_PD8
         bool "Serial (on USART3 PD9/PD8)" if LOW_LEVEL_OPTIONS
-        depends on MACH_STM32F405 || MACH_STM32F407 || MACH_STM32F446
+        depends on !MACH_STM32F0 && !MACH_STM32F401
         select SERIAL
     config STM32_CANBUS_PA11_PA12
         bool "CAN bus (on PA11/PA12)" if HAVE_STM32_CANBUS

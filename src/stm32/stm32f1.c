@@ -160,6 +160,10 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         // TIM3 full remap
         stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_FULLREMAP_Msk,
                                   AFIO_MAPR_TIM3_REMAP_FULLREMAP);
+    } else if ((gpio == GPIO('D', 8) || gpio == GPIO('D', 9)) && func == 7) {
+        // USART3 remap
+        stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_FULLREMAP_Msk,
+                                  AFIO_MAPR_USART3_REMAP_FULLREMAP);
     } else if ((gpio == GPIO('D', 12)
                 || gpio == GPIO('D', 13)
                 || gpio == GPIO('D', 14)
