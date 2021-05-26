@@ -22,6 +22,7 @@ class EncoderSensor:
         # Get printer objects
         self.reactor = self.printer.get_reactor()
         self.runout_helper = filament_switch_sensor.RunoutHelper(config)
+        self.get_status = self.runout_helper.get_status
         self.extruder = None
         self.estimated_print_time = None
         # Initialise internal state

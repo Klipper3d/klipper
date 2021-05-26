@@ -87,13 +87,13 @@ counter_task(void)
         if (!(c->flags & CF_PENDING))
             continue;
         irq_disable();
-        uint32_t time = c->timer.waketime - c->poll_ticks;
+        uint32_t waketime = c->timer.waketime;
         uint32_t count = c->count;
         uint32_t count_time = c->last_count_time;
         c->flags &= ~CF_PENDING;
         irq_enable();
-        sendf("counter_state oid=%c time=%u count=%u count_time=%u",
-              oid, time, count, count_time);
+        sendf("counter_state oid=%c next_clock=%u count=%u count_clock=%u",
+              oid, waketime, count, count_time);
     }
 }
 DECL_TASK(counter_task);

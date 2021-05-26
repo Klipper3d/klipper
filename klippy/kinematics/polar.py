@@ -36,11 +36,6 @@ class PolarKinematics:
         min_z, max_z = self.rails[1].get_range()
         self.axes_min = toolhead.Coord(-max_xy, -max_xy, min_z, 0.)
         self.axes_max = toolhead.Coord(max_xy, max_xy, max_z, 0.)
-        # Setup stepper max halt velocity
-        max_halt_velocity = toolhead.get_max_axis_halt()
-        stepper_bed.set_max_jerk(max_halt_velocity, max_accel)
-        rail_arm.set_max_jerk(max_halt_velocity, max_accel)
-        rail_z.set_max_jerk(max_halt_velocity, max_accel)
     def get_steppers(self):
         return list(self.steppers)
     def calc_tag_position(self):

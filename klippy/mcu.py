@@ -53,8 +53,8 @@ class MCU_endstop:
             "endstop_query_state oid=%c", cq=cmd_queue)
         self._query_cmd = self._mcu.lookup_query_command(
             "endstop_query_state oid=%c",
-            "endstop_state oid=%c homing=%c pin_value=%c", oid=self._oid,
-            cq=cmd_queue)
+            "endstop_state oid=%c homing=%c next_clock=%u pin_value=%c",
+            oid=self._oid, cq=cmd_queue)
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         clock = self._mcu.print_time_to_clock(print_time)
@@ -811,7 +811,7 @@ class MCU:
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         return dict(self._get_status_info)
     def stats(self, eventtime):
         load = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
@@ -824,7 +824,7 @@ class MCU:
         return False, '%s: %s' % (self._name, stats)
 
 Common_MCU_errors = {
-    ("Timer too close", "No next step"): """
+    ("Timer too close",): """
 This often indicates the host computer is overloaded. Check
 for other processes consuming excessive CPU time, high swap
 usage, disk errors, overheating, unstable voltage, or

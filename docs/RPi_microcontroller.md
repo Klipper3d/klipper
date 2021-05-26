@@ -34,6 +34,7 @@ for the "Linux process":
 cd ~/klipper/
 make menuconfig
 ```
+In the menu, set "Microcontroller Architecture" to "Linux process," then save and exit.
 
 To build and install the new micro-controller code, run:
 ```

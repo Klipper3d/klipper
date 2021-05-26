@@ -466,14 +466,18 @@ def git_version():
     logging.debug("Got git version: %s" % (repr(ver),))
     return ver
 
-def build_version(extra):
+def build_version(extra, cleanbuild):
     version = git_version()
     if not version:
+        cleanbuild = False
         version = "?"
-    btime = time.strftime("%Y%m%d_%H%M%S")
-    hostname = socket.gethostname()
-    version = "%s-%s-%s%s" % (version, btime, hostname, extra)
-    return version
+    elif 'dirty' in version:
+        cleanbuild = False
+    if not cleanbuild:
+        btime = time.strftime("%Y%m%d_%H%M%S")
+        hostname = socket.gethostname()
+        version = "%s-%s-%s" % (version, btime, hostname)
+    return version + extra
 
 # Run "tool --version" for each specified tool and extract versions
 def tool_versions(tools):
@@ -515,7 +519,7 @@ class HandleVersions:
         data['build_versions'] = self.toolstr
     def generate_code(self, options):
         cleanbuild, self.toolstr = tool_versions(options.tools)
-        self.version = build_version(options.extra)
+        self.version = build_version(options.extra, cleanbuild)
         sys.stdout.write("Version: %s\n" % (self.version,))
         return "\n// version: %s\n// build_versions: %s\n" % (
             self.version, self.toolstr)

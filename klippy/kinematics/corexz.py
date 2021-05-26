@@ -34,13 +34,6 @@ class CoreXZKinematics:
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
         self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
-        # Setup stepper max halt velocity
-        max_halt_velocity = toolhead.get_max_axis_halt()
-        max_xy_halt_velocity = max_halt_velocity * math.sqrt(2.)
-        max_xy_accel = max_accel * math.sqrt(2.)
-        self.rails[0].set_max_jerk(max_xy_halt_velocity, max_xy_accel)
-        self.rails[1].set_max_jerk(max_xy_halt_velocity, max_xy_accel)
-        self.rails[2].set_max_jerk(max_xy_halt_velocity, max_xy_accel)
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_tag_position(self):
