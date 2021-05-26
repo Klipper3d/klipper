@@ -30,7 +30,8 @@ class TemperatureSensor(object):
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.min_deriv_time = self.smooth_time
         self.inv_smooth_time = 1. / self.smooth_time
-        self.temp = self.smoothed_temp = self.temp_slope = 0.
+        self.temp = self.smoothed_temp = 0.
+        self.temp_slope = self.smoothed_temp_slope = 0.
         self.temp_time = 0.
         self.time_diff = 0.
         self.measured_min = 99999999.
@@ -41,22 +42,32 @@ class TemperatureSensor(object):
         self.measured_max = max(self.measured_max, temp)
         # Smoothed Temperature
         time_diff = read_time - self.temp_time
-        adj_time = min(time_diff * self.inv_smooth_time, 1.)
-        temp_diff_smoothed = temp - self.smoothed_temp
-        self.smoothed_temp += temp_diff_smoothed * adj_time
-        # Temperature Derivative
-        temp_diff = temp - self.temp
-        if time_diff >= self.min_deriv_time:
-            temp_deriv = temp_diff / time_diff
-        else:
-            temp_deriv = (self.temp_slope * (self.min_deriv_time - time_diff)
-                        + temp_diff) / self.min_deriv_time
-        self.temp_slope = temp_deriv
+        next_smoothed_temp = self._smooth(time_diff, temp, self.smoothed_temp)
+        # Temperature Derivatives
+        self.temp_slope = self._derivative(self.temp, temp,
+                        time_diff, self.temp_slope)
+        smoothed_derivative = self._derivative(self.smoothed_temp, 
+                        next_smoothed_temp, time_diff, self.smoothed_temp_slope)
+        self.smoothed_temp_slope = self._smooth(time_diff, smoothed_derivative,
+                         self.smoothed_temp_slope)
         # Store state for next measurement
         self.temp = temp
+        self.smoothed_temp = next_smoothed_temp
         self.temp_time = read_time
         self.time_diff = time_diff
         self.temperature_callback(read_time, temp)
+    def _smooth(self, time_diff, value, smoothed_value):
+        adj_time = min(time_diff * self.inv_smooth_time, 1.)
+        value_diff_smoothed = value - smoothed_value
+        return smoothed_value + (value_diff_smoothed * adj_time)
+    def _derivative(self, prev_temp, next_temp, time_diff, previous_deriv):
+        # Temperature Derivative
+        temp_diff = next_temp - prev_temp
+        if time_diff >= self.min_deriv_time:
+            return temp_diff / time_diff
+        else:
+            return (previous_deriv * (self.min_deriv_time - time_diff)
+                        + temp_diff) / self.min_deriv_time
     def temperature_callback(self, read_time, temp):
         pass
     def get_report_time_delta(self):
@@ -399,7 +410,7 @@ class PrinterHeaters:
         eventtime = reactor.monotonic()
         while not self.printer.is_shutdown():
             temp = sensor.smoothed_temp
-            slope = sensor.temp_slope
+            slope = sensor.smoothed_temp_slope
             if temp >= min_temp and temp <= max_temp and slope < max_slope_sec:
                 return
             gcmd.respond_raw("TEMPERATURE_WAIT %s:%.1f@%.1f /%.1f/%.1f/%.1f" % (
