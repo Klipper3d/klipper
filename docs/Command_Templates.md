@@ -27,6 +27,25 @@ Note how the `gcode:` config option always starts at the beginning of
 the line and subsequent lines in the G-Code macro never start at the
 beginning.
 
+### Add a description to your macro
+
+To help identify the functionality a short description can be added.
+Add `description:` with a short text to describe the functionality.
+Default is "G-Code macro" if not specified.
+For example:
+
+```
+[gcode_macro blink_led]
+description: Blink my_led one time
+gcode:
+  SET_PIN PIN=my_led VALUE=1
+  G4 P2000
+  SET_PIN PIN=my_led VALUE=0
+```
+
+This will be showing is you use the `HELP` command or use the autocomplete
+function.
+
 ### Save/Restore state for G-Code moves
 
 Unfortunately, the G-Code command language can be challenging to use.
