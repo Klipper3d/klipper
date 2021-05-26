@@ -156,7 +156,13 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
                                       AFIO_MAPR_I2C1_REMAP);
     } else if (func == 7) {
         // USART
-        if (gpio == GPIO('D', 8) || gpio == GPIO('D', 9))
+        if (gpio == GPIO('B', 6) || gpio == GPIO('B', 7))
+            stm32f1_alternative_remap(AFIO_MAPR_USART1_REMAP_Msk,
+                                      AFIO_MAPR_USART1_REMAP);
+        else if (gpio == GPIO('D', 5) || gpio == GPIO('D', 6))
+            stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
+                                      AFIO_MAPR_USART2_REMAP);
+        else if (gpio == GPIO('D', 8) || gpio == GPIO('D', 9))
             stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
                                       AFIO_MAPR_USART3_REMAP_FULLREMAP);
     } else if (func == 9) {

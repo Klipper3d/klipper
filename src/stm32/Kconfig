@@ -234,7 +234,7 @@ choice
         bool "Serial (on USART1 PA15/PA14)" if LOW_LEVEL_OPTIONS && MACH_STM32F0
         select SERIAL
     config STM32_SERIAL_USART1_ALT_PB7_PB6
-        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS && MACH_STM32F4
+        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
         select SERIAL
     config STM32_SERIAL_USART2
         bool "Serial (on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS
@@ -243,7 +243,7 @@ choice
         bool "Serial (on USART2 PA15/PA14)" if LOW_LEVEL_OPTIONS && MACH_STM32F0
         select SERIAL
     config STM32_SERIAL_USART2_ALT_PD6_PD5
-        bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && MACH_STM32F4
+        bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
         select SERIAL
     config STM32_SERIAL_USART3
         bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS
