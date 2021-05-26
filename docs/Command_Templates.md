@@ -29,7 +29,7 @@ beginning.
 
 ### Add a description to your macro
 
-To help indetify the functionality a short description can be added.
+To help identify the functionality a short description can be added.
 Add `description:` with a short text to describe the functionality.
 Default is "G-Code macro" if not specified.
 For example:
