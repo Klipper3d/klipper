@@ -150,15 +150,17 @@ __asm__ __volatile__ ("l.nop 0x6");
 
 
 void test_r_pio(void){
-  struct gpio_out pl4 = gpio_out_setup(4, 0);
+  struct gpio_out pl10 = gpio_out_setup(10, 0);
   while(1){
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0xFF;
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0x00;
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0xFF;
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0x00;
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0xFF;
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0x00;
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0xFF;
-    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0x00;
+    *((volatile uint32_t *)(0x01F02C00+0x10)) = 1<<10;
+    *((volatile uint32_t *)(0x01F02C00+0x10)) = 0<<10;
+  }
+}
+
+void test_pio(void){
+  struct gpio_out pe6 = gpio_out_setup((4*32)+6, 0);
+  while(1){
+    *((volatile uint32_t *)(0x01C20800+(4*0x24)+0x10)) = 0xFFF;
+    *((volatile uint32_t *)(0x01C20800+(4*0x24)+0x10)) = 0<<6;
   }
 }

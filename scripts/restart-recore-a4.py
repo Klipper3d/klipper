@@ -61,10 +61,10 @@ def prepare_motors():
         write_bytes(addr, 0x00, [0x00, 0x00, 0x01, 0x82], "/dev/ttyS2")
         write_bytes(addr, 0x00, [0x00, 0x00, 0x01, 0x82], "/dev/ttyS3")
         # Write Ihold
-        ihold = (5<<0) # 0..31
-        irun  = (10<<5) # 0..31
-        write_bytes(addr, 0x10, [0x00, 0x00, (irun>>8), (irun | ihold) & 0xFF], "/dev/ttyS2")
-        write_bytes(addr, 0x10, [0x00, 0x00, (irun>>8), (irun | ihold) & 0xFF], "/dev/ttyS3")
+        ihold = 5 # 0..31
+        irun  = 10 # 0..31
+        write_bytes(addr, 0x10, [0x00, 0x00, irun, ihold], "/dev/ttyS2")
+        write_bytes(addr, 0x10, [0x00, 0x00, irun, ihold], "/dev/ttyS3")
         # Chopconf
         write_bytes(addr, 0x6C, [0x43, 0x00, 0x00, 0x53], "/dev/ttyS2")
         write_bytes(addr, 0x6C, [0x43, 0x00, 0x00, 0x53], "/dev/ttyS3")
