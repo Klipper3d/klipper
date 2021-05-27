@@ -58,10 +58,10 @@ static void
 config_dpll(uint32_t pll, uint32_t mul, uint32_t ctrlb)
 {
     OSCCTRL->Dpll[pll].DPLLCTRLA.reg = 0;
-    while (OSCCTRL->Dpll[0].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_ENABLE)
+    while (OSCCTRL->Dpll[pll].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_ENABLE)
         ;
     OSCCTRL->Dpll[pll].DPLLRATIO.reg = OSCCTRL_DPLLRATIO_LDR(mul - 1);
-    while (OSCCTRL->Dpll[0].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_DPLLRATIO)
+    while (OSCCTRL->Dpll[pll].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_DPLLRATIO)
         ;
     OSCCTRL->Dpll[pll].DPLLCTRLB.reg = ctrlb | OSCCTRL_DPLLCTRLB_LBYPASS;
     OSCCTRL->Dpll[pll].DPLLCTRLA.reg = OSCCTRL_DPLLCTRLA_ENABLE;
@@ -97,7 +97,38 @@ config_dfll(uint32_t dfllmul, uint32_t ctrlb)
 
 #if CONFIG_CLOCK_REF_X32K
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PA0,PA1");
+#elif CONFIG_CLOCK_REF_X25M
+DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PB22,PB23");
 #endif
+
+// Initialize the clocks using an external 25M crystal connected to XOSC1
+static void
+clock_init_25m(void)
+{
+    // Enable XOSC1
+    uint32_t val = (OSCCTRL_XOSCCTRL_ENABLE | OSCCTRL_XOSCCTRL_XTALEN
+                    | OSCCTRL_XOSCCTRL_IPTAT(3) | OSCCTRL_XOSCCTRL_IMULT(6));
+    OSCCTRL->XOSCCTRL[1].reg = val;
+    while (!(OSCCTRL->STATUS.reg & OSCCTRL_STATUS_XOSCRDY1))
+        ;
+
+    // Generate 120Mhz clock on PLL0 (with XOSC1 as reference)
+    uint32_t mul = DIV_ROUND_CLOSEST(FREQ_MAIN, 2500000);
+    uint32_t ctrlb = (OSCCTRL_DPLLCTRLB_DIV(4)
+                      | OSCCTRL_DPLLCTRLB_REFCLK_XOSC1);
+    config_dpll(0, mul, ctrlb);
+
+    // Switch main clock to 120Mhz PLL0
+    gen_clock(CLKGEN_MAIN, GCLK_GENCTRL_SRC_DPLL0);
+
+    // Generate 48Mhz clock on PLL1 (with XOSC1 as reference)
+    ctrlb = (OSCCTRL_DPLLCTRLB_DIV(24)
+             | OSCCTRL_DPLLCTRLB_REFCLK_XOSC1);
+    config_dpll(1, 96, ctrlb);
+
+    // Switch 48Mhz clock to PLL1
+    gen_clock(CLKGEN_48M, GCLK_GENCTRL_SRC_DPLL1);
+}
 
 // Initialize the clocks using an external 32K crystal
 static void
@@ -167,6 +198,8 @@ SystemInit(void)
     // Init clocks
     if (CONFIG_CLOCK_REF_X32K)
         clock_init_32k();
+    else if (CONFIG_CLOCK_REF_X25M)
+        clock_init_25m();
     else
         clock_init_internal();
 

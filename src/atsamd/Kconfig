@@ -89,6 +89,9 @@ choice
     prompt "Clock Reference"
     config CLOCK_REF_X32K
         bool "32.768Khz crystal"
+    config CLOCK_REF_X25M
+        depends on MACH_SAMD51
+        bool "25Mhz crystal (on PB22/PB23)"
     config CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
