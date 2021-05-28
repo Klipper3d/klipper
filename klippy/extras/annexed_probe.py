@@ -182,6 +182,7 @@ class AnnexedProbe:
         self.dock_angle   = radians(config.getfloat('dock_angle')) - pi
         self.detach_angle = radians(config.getfloat('detach_angle')) - pi
         self.dock_safe_distance = config.getfloat('dock_safe_distance', 0.)
+        self.dock_retries = config.getint('dock_retries', 0)
         self.attach_speed = config.getfloat('attach_speed',
                                              self.speed, above=0.)
         self.decouple_speed = config.getfloat('decouple_speed',
@@ -426,17 +427,19 @@ class AnnexedProbe:
             return_pos = self.init_pos
         self._align_xy()
         retry = 0
-        while self.get_probe_state() != PROBE_ATTACHED and retry <= 2:
+        while (self.get_probe_state() != PROBE_ATTACHED
+               and retry < self.dock_retries):
             self._do_attach()
             retry += 1
         if self.get_probe_state() != PROBE_ATTACHED:
             raise self.printer.command_error("Probe attach failed!")
+        self.post_attach_gcode.run_gcode_from_command()
         if return_pos:
             if not self._check_probe_distance(return_pos):
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None],
                     self.travel_speed)
-        self.post_attach_gcode.run_gcode_from_command()
+
     def _do_attach(self):
         if self.get_probe_state() != PROBE_DOCKED:
             raise self.printer.command_error(
@@ -462,7 +465,8 @@ class AnnexedProbe:
             self._align_z()
         self._align_xy(self.dock_angle)
         retry = 0
-        while self.get_probe_state() != PROBE_DOCKED and retry <= 2:
+        while (self.get_probe_state() != PROBE_DOCKED
+               and retry < self.dock_retries):
             self._do_detach()
             retry += 1
         if self._check_probe_distance():
@@ -470,12 +474,13 @@ class AnnexedProbe:
             self._move_to_vector(self.detach_angle)
         if self.get_probe_state() != PROBE_DOCKED:
             raise self.printer.command_error("Probe detach failed!")
+        self.post_detach_gcode.run_gcode_from_command()
         if return_pos:
             if not self._check_probe_distance(return_pos):
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None],
                     self.travel_speed)
-        self.post_detach_gcode.run_gcode_from_command()
+
     def _do_detach(self):
         if self._check_probe_distance():
             self._align_to_vector(self.dock_angle)
