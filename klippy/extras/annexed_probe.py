@@ -185,7 +185,7 @@ class AnnexedProbe:
         self.dock_retries = config.getint('dock_retries', 0)
         self.attach_speed = config.getfloat('attach_speed',
                                              self.speed, above=0.)
-        self.decouple_speed = config.getfloat('decouple_speed',
+        self.detach_speed = config.getfloat('detach_speed',
                                              self.speed, above=0.)
         self.travel_speed = config.getfloat('travel_speed',
                                              self.speed, above=0.)
