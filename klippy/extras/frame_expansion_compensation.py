@@ -26,9 +26,9 @@ class FrameExpansionCompensator:
         self.max_offset = config.getfloat('max_z_offset', 99999999.)
 
         # Register printer events
-        self.printer.register_event_handler("klippy:ready",
-                                            self.handle_ready)
-        self.printer.register_event_handler("homing:homing_move_end",
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+        self.printer.register_event_handler("homing:home_rails_end",
                                             self.handle_homing_move_end)
 
         # Setup temperature sensor
@@ -57,8 +57,8 @@ class FrameExpansionCompensator:
                                     self.cmd_QUERY_FRAME_COMP,
                                     desc=self.cmd_QUERY_FRAME_COMP_help)
 
-    def handle_ready(self):
-        'Called when Klipper successfully connected, ready.'
+    def handle_connect(self):
+        'Called after all printer objects are instantiated'
         self.toolhead = self.printer.lookup_object('toolhead')
         gcode_move = self.printer.lookup_object('gcode_move')
 
@@ -66,8 +66,9 @@ class FrameExpansionCompensator:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         steppers = [s.get_name() for s in kin.get_steppers()]
         if not self.z_stepper_name in steppers:
-            raise self.printer.config_error(
-                "'%s' is not a valid stepper" % self.z_stepper_name)
+            msg = "frame_expansion_compensation: "
+            msg += "'%s' is not a valid 'stepper_z'" % self.z_stepper_name
+            raise self.printer.config_error(msg)
 
         # Transformation
         self.next_transform = gcode_move.set_move_transform(self, force=True)
@@ -89,16 +90,9 @@ class FrameExpansionCompensator:
             'state': self.comp_state
         }
 
-    def check_eligible(self, endstops):
-        'Check if homed axis is `stepper_z`.'
-        steppers_being_homed = [s.get_name()
-                                for es in endstops
-                                for s in es.get_steppers()]
-        return self.z_stepper_name in steppers_being_homed
-
-    def handle_homing_move_end(self, hmove):
+    def handle_homing_move_end(self, homing_state, rails):
         'Triggered when Z axis is homed.'
-        if self.check_eligible(hmove.get_mcu_endstops()):
+        if 2 in homing_state.get_axes():
             self.last_home_temp = self.last_temp
             self.z_drift_offset = 0.
 
@@ -140,15 +134,13 @@ class FrameExpansionCompensator:
         else:
             corrected_pos = self.calc_offset(newpos)
             self.next_transform.move(corrected_pos, speed)
-            self.last_position[:] = newpos
         self.last_position[:] = newpos
 
     def temperature_callback(self, read_time, temp):
         'Called everytime the thermistor is read'
         self.last_temp = temp
-        if temp:
-            self.measured_min = min(self.measured_min, temp)
-            self.measured_max = max(self.measured_max, temp)
+        self.measured_min = min(self.measured_min, temp)
+        self.measured_max = max(self.measured_max, temp)
 
     def update_state(self):
         'String output for g-code and get_status state tracking.'
@@ -188,7 +180,7 @@ class FrameExpansionCompensator:
                                             self.z_drift_offset)
         )
         gcmd.respond_info(msg)
-    cmd_SET_FRAME_COMP_help = 'Enable/disable Z drift compensation.'
+    cmd_SET_FRAME_COMP_help = 'Enable/disable Z thermal expansion compensation.'
     cmd_QUERY_FRAME_COMP_help = 'Report current compensation parameters.'
 
 def load_config(config):
