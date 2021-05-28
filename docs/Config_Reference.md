@@ -1626,6 +1626,97 @@ control_pin:
 #   See the "probe" section for information on these parameters.
 ```
 
+## [annexed_probe]
+
+Certain probes are stowed in a dock when not in use and mechanically
+coupled to the toolhead before probing. One should define this
+section instead of a probe section if the probe is annexed from the
+toolhead when not in use. See [Annexed Probe Guide](Annexed_Probe.md)
+for more detailed information regarding configuration and setup.
+
+```
+[annexed_probe]
+dock_position: 0, 0, 0
+#   The physical position of the probe dock relative to the origin of
+#   the bed. The coordinates are specified as a comma separated x, y, z
+#   list of values. Certain dock designs are independent of the z axis.
+#   if a z value is provided for these configurations, the z axis will
+#   be raised to that amount in order to prevent collisions.
+#   This parameter is required.
+#safe_z_position: 0,0
+#   Optional parameter. If the probe is being used to home the Z
+#   axis, the toolhead will move to these xy coordinates prior to homing.
+#   If this value is not provided, the center of the bed will be used.
+dock_angle:
+#   The angle in which the tool leaves the dock. This should be the angle
+#   of a straight line drawn from the dock location to the toolhead
+#   This parameter is required
+detach_angle:
+#   Similar to the dock_angle, the detach angle is the direction
+#   in which the toolhead will leave the dock in order to detach the probe.
+#   For magnetically coupled probes, this is typically perpendicular to
+#   the dock_angle in a direction that does not cause the tool to collide
+#   with the printer.
+#   This parameter is required
+dock_safe_distance: 50
+#   The minimum circular radius around the dock for the probe to be
+#   attached/detached and not collide with anything or cause the probe to
+#   be unintentionally attracted to the toolhead
+#dock_retries:
+#   The number of times to attempt to attach/dock the probe before raising
+#   and error and aborting probing.
+#attach_speed:
+#detach_speed:
+#travel_speed:
+#   Optional speeds used during various moves. These will default to probe
+#   speed if not specified.
+check_open_attach:     True
+#   The probe status should be verified prior to homing. Setting this option
+#   to true will ensure the probe "endstop" is "open" if the probe is attached
+#   and will abort probing if it reports "triggered" when docked
+#probe_sense_pin:
+#   This supplemental pin can be defined to determine an attached state
+#   instead of check_open_attach
+#dock_sense_pin:
+#   This supplemental pin can be defined to determine a docked state in
+#   addition to probe_sense_pin or check_open_attach
+#manual_probe_verify:  False
+#   In the rare case when a probe cannot be verified using the included options
+#   it is possible to manually set the state using a gcode command. See
+#   Annexed_Probe.md for more information
+dock_fixed_z:               True
+#   Whether or not the dock is located independently of the Z axis such as
+#   mounted to a moving gantry.
+# pre_attach_gcode:
+#   An optional list of gcode commands to execute prior to attaching the probe
+# attach_gcode:
+#   An optional list of gcode commands used to attach the probe
+# post_attach_gcode:
+#   An optional list of gcode commands to execute immediately after attaching
+#   the probe
+# pre_detach_gcode:
+#   An optional list of gcode commands to execute prior to detaching/docking
+#   the probe
+# detach_gcode:
+#   An optional list of gcode commands used to detach/dock the probe
+# post_detach_gcode:
+#   An optional list of gcode commands to execute immediately after
+#   detaching/docking the probe
+#x_offset:
+#y_offset:
+#z_offset:
+#lift_speed:
+#speed:
+#samples:
+#sample_retract_dist:
+#samples_result:
+#samples_tolerance:
+#samples_tolerance_retries:
+#activate_gcode:
+#deactivate_gcode:
+#   See the "probe" section for information on these parameters.
+```
+
 # Additional stepper motors and extruders
 
 ## [stepper_z1]
