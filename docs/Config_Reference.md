@@ -1173,11 +1173,8 @@ home_xy_position:
 #   applied to any homing command, even if it doesn't home the Z axis.
 #   If the Z axis is already homed and the current Z position is less
 #   than z_hop, then this will lift the head to a height of z_hop. If
-#   the Z axis is not already homed, then prior to any XY homing
-#   movement the Z axis boundary checks are disabled and the head is
-#   lifted by z_hop. If z_hop is specified, be sure to home the Z
-#   immediately after any XY home requests so that the Z boundary
-#   checks are accurate. The default is to not implement Z hop.
+#   the Z axis is not already homed the head is lifted by z_hop.
+#   The default is to not implement Z hop.
 #z_hop_speed: 20.0
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
 #   default is 20mm/s.
@@ -1285,6 +1282,9 @@ G-Code macros (one may define any number of sections with a
 #   commands. Care should be taken when overriding commands as it can
 #   cause complex and unexpected results. The default is to not
 #   override an existing G-Code command.
+#description: G-Code macro
+#   This will add a short description used at the HELP command or while
+#   using the auto completion feature. Default "G-Code macro"
 ```
 
 ## [delayed_gcode]
@@ -1355,6 +1355,21 @@ path:
 #   are not supported). One may point this to OctoPrint's upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
+```
+
+## [sdcard_loop]
+
+Some printers with stage-clearing features, such as a part ejector or
+a belt printer, can find use in looping sections of the sdcard file.
+(For example, to print the same part over and over, or repeat the
+a section of a part for a chain or other repeated pattern).
+
+See the [command reference](G-Codes.md#sdcard-loop) for supported
+commands. See the [sample-macros.cfg](../config/sample-macros.cfg)
+file for a Marlin compatible M808 G-Code macro.
+
+```
+[sdcard_loop]
 ```
 
 ## [force_move]

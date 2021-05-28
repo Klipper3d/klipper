@@ -138,17 +138,17 @@ choice
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000
         bool "28KiB bootloader" if MACH_STM32F103
+    config STM32_FLASH_START_8000
+        bool "32KiB bootloader" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F446
     config STM32_FLASH_START_8800
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_C000
         bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F407
     config STM32_FLASH_START_10000
         bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446
+
     config STM32_FLASH_START_800
         bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
-
-    config STM32_FLASH_START_8000
-        bool "32KiB bootloader (SKR-PRO or TFT35-V3.0)" if MACH_STM32F207 || MACH_STM32F407
     config STM32_FLASH_START_4000
         bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F405 || MACH_STM32F407
 
@@ -230,21 +230,28 @@ choice
     config STM32_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"
         select SERIAL
-    config STM32_SERIAL_USART1_ALT
+    config STM32_SERIAL_USART1_ALT_PA15_PA14
         bool "Serial (on USART1 PA15/PA14)" if LOW_LEVEL_OPTIONS && MACH_STM32F0
+        select SERIAL
+    config STM32_SERIAL_USART1_ALT_PB7_PB6
+        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
         select SERIAL
     config STM32_SERIAL_USART2
         bool "Serial (on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS
         select SERIAL
-    config STM32_SERIAL_USART2_ALT
+    config STM32_SERIAL_USART2_ALT_PA15_PA14
         bool "Serial (on USART2 PA15/PA14)" if LOW_LEVEL_OPTIONS && MACH_STM32F0
         select SERIAL
-    config STM32_SERIAL_USART3
-        bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
+    config STM32_SERIAL_USART2_ALT_PD6_PD5
+        bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
         select SERIAL
-    config STM32_SERIAL_USART3_ALT
-        depends on LOW_LEVEL_OPTIONS && (MACH_STM32F405 || MACH_STM32F407)
-        bool "Serial (on USART3 PD9/PD8)"
+    config STM32_SERIAL_USART3
+        bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS
+        depends on !MACH_STM32F0 && !MACH_STM32F401
+        select SERIAL
+    config STM32_SERIAL_USART3_ALT_PD9_PD8
+        bool "Serial (on USART3 PD9/PD8)" if LOW_LEVEL_OPTIONS
+        depends on !MACH_STM32F0 && !MACH_STM32F401
         select SERIAL
     config STM32_CANBUS_PA11_PA12
         bool "CAN bus (on PA11/PA12)" if HAVE_STM32_CANBUS

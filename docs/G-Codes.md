@@ -534,6 +534,17 @@ enabled:
   future boundary checks; issue a G28 afterwards to reset the
   kinematics.
 
+## SDcard loop
+
+When the [sdcard_loop config section](Config_Reference.md#sdcard_loop)
+is enabled, the following extended commands are available:
+- `SDCARD_LOOP_BEGIN COUNT=<count>`: Begin a looped section in the SD
+  print. A count of 0 indicates that the section should be looped
+  indefinately.
+- `SDCARD_LOOP_END`: End a looped section in the SD print.
+- `SDCARD_LOOP_DESIST`: Complete existing loops without further
+  iterations.
+
 ## Send message (respond) to host
 
 The following commands are availabe when the
