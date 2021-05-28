@@ -104,7 +104,7 @@ adxl_start(struct adxl345 *ax, uint8_t oid)
     ax->timer.waketime = start2_time + ax->rest_ticks;
     sched_add_timer(&ax->timer);
     irq_enable();
-    sendf("adxl345_start oid=%c start1_time=%u start2_time=%u"
+    sendf("adxl345_start oid=%c start1_clock=%u start2_clock=%u"
           , oid, start1_time, start2_time);
 }
 
@@ -132,7 +132,7 @@ adxl_stop(struct adxl345 *ax, uint8_t oid)
     // Report final data
     if (ax->data_count)
         adxl_report(ax, oid);
-    sendf("adxl345_end oid=%c end1_time=%u end2_time=%u"
+    sendf("adxl345_end oid=%c end1_clock=%u end2_clock=%u"
           " limit_count=%hu sequence=%hu"
           , oid, end1_time, end2_time, ax->limit_count, ax->sequence);
 }
