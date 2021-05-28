@@ -163,12 +163,8 @@ that if the method takes parameters they should be provided as keyword
 arguments. Below is an example of how it may called from a gcode_macro:
 ```
 [gcode_macro PANELDUE_BEEP]
-default_parameter_FREQUENCY: 300
-default_parameter_DURATION: 1.
 gcode:
-  {action_call_remote_method("paneldue_beep",
-                             frequency=FREQUENCY|int,
-                             duration=DURATION|float)}
+  {action_call_remote_method("paneldue_beep", frequency=300, duration=1.0)}
 ```
 
 When the PANELDUE_BEEP gcode macro is executed, Klipper would send something
@@ -208,9 +204,8 @@ object name and the value is a dictionary containing its fields. The
 response message will also contain an "eventtime" field containing the
 timestamp from when the query was taken.
 
-Available fields are documented in the
-[Command Template](Command_Templates.md#the-printer-variable)
-document.
+Available fields are documented in the [Status
+Reference](Status_Reference.md) document.
 
 ### objects/subscribe
 

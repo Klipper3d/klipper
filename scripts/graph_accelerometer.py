@@ -82,7 +82,7 @@ def calc_specgram(data, axis):
 def plot_frequency(datas, lognames, max_freq):
     calibration_data = calc_freq_response(datas[0], max_freq)
     for data in datas[1:]:
-        calibration_data.join(calc_freq_response(data, max_freq))
+        calibration_data.add_data(calc_freq_response(data, max_freq))
     freqs = calibration_data.freq_bins
     psd = calibration_data.psd_sum[freqs <= max_freq]
     px = calibration_data.psd_x[freqs <= max_freq]
@@ -158,7 +158,7 @@ def write_frequency_response(datas, output):
     helper = ShaperCalibrate(printer=None)
     calibration_data = helper.process_accelerometer_data(datas[0])
     for data in datas[1:]:
-        calibration_data.join(helper.process_accelerometer_data(data))
+        calibration_data.add_data(helper.process_accelerometer_data(data))
     helper.save_calibration_data(output, calibration_data)
 
 def write_specgram(psd, freq_bins, time, output):

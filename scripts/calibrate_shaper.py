@@ -45,12 +45,12 @@ def calibrate_shaper(datas, csv_output, max_smoothing):
     if isinstance(datas[0], CalibrationData):
         calibration_data = datas[0]
         for data in datas[1:]:
-            calibration_data.join(data)
+            calibration_data.add_data(data)
     else:
         # Process accelerometer data
         calibration_data = helper.process_accelerometer_data(datas[0])
         for data in datas[1:]:
-            calibration_data.join(helper.process_accelerometer_data(data))
+            calibration_data.add_data(helper.process_accelerometer_data(data))
         calibration_data.normalize_to_frequencies()
     shaper, all_shapers = helper.find_best_shaper(
             calibration_data, max_smoothing, print)

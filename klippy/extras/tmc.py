@@ -360,8 +360,8 @@ class TMCVirtualPinHelper:
                                             self.handle_homing_move_end)
         self.mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
         return self.mcu_endstop
-    def handle_homing_move_begin(self, endstops):
-        if self.mcu_endstop not in endstops:
+    def handle_homing_move_begin(self, hmove):
+        if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
@@ -376,8 +376,8 @@ class TMCVirtualPinHelper:
         self.mcu_tmc.set_register("GCONF", val)
         tc_val = self.fields.set_field("TCOOLTHRS", 0xfffff)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
-    def handle_homing_move_end(self, endstops):
-        if self.mcu_endstop not in endstops:
+    def handle_homing_move_end(self, hmove):
+        if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
