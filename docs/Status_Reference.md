@@ -216,6 +216,13 @@ is defined):
   command. Note, if this is used in a macro, due to the order of
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
+  
+# z_tilt
+
+The following information is available in the `z_tilt` object
+(this object is available if z_tilt is defined):
+- `leveled`: True if the gantry leveling process has been run and completed
+  successfully.
 
 # query_endstops
 

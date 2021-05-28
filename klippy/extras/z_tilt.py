@@ -111,6 +111,7 @@ class RetryHelper:
 class ZTilt:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.leveled = False
         z_positions = config.get('z_positions').split('\n')
         try:
             z_positions = [line.split(',', 1)
@@ -124,12 +125,18 @@ class ZTilt:
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
         self.z_helper = ZAdjustHelper(config, len(self.z_positions))
+
+        # Listen for steppers disabled
+        config.get_printer().register_event_handler("stepper_enable:motor_off",
+                                                    self._motor_off)
+        
         # Register Z_TILT_ADJUST command
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('Z_TILT_ADJUST', self.cmd_Z_TILT_ADJUST,
                                desc=self.cmd_Z_TILT_ADJUST_help)
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, gcmd):
+        self.leveled = False
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
     def probe_finalize(self, offsets, positions):
@@ -159,7 +166,16 @@ class ZTilt:
         adjustments = [x*x_adjust + y*y_adjust + z_adjust
                        for x, y in self.z_positions]
         self.z_helper.adjust_steppers(adjustments, speed)
-        return self.retry_helper.check_retry([p[2] for p in positions])
+        retry_status = self.retry_helper.check_retry([p[2] for p in positions])
+        if retry_status == "done":
+            self.leveled = True
+        return retry_status
+    def get_status(self, eventtime):
+        return {
+            'leveled': self.leveled,
+        }
+    def _motor_off(self, print_time):
+        self.leveled = False
 
 def load_config(config):
     return ZTilt(config)
