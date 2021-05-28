@@ -183,12 +183,12 @@ class AnnexedProbe:
         self.detach_angle = radians(config.getfloat('detach_angle')) - pi
         self.dock_safe_distance = config.getfloat('dock_safe_distance', 0.)
         self.dock_retries = config.getint('dock_retries', 0) + 1
-        self.attach_speed = config.getfloat('attach_speed',
-                                             self.speed, above=0.)
-        self.detach_speed = config.getfloat('detach_speed',
-                                             self.speed, above=0.)
         self.travel_speed = config.getfloat('travel_speed',
                                              self.speed, above=0.)
+        self.attach_speed = config.getfloat('attach_speed',
+                                             self.travel_speed, above=0.)
+        self.detach_speed = config.getfloat('detach_speed',
+                                             self.travel_speed, above=0.)
         self.dock_fixed_z = config.getboolean('dock_fixed_z', False)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
                                                    above=0.)
