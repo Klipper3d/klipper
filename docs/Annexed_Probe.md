@@ -48,13 +48,17 @@ For instance, if the dock opens towards the front of the printer, the angle
 is likely going to be 270 degrees.
 
 ```
-                  🡹
-          🡼       90     🡽
-            135         45
-      🡸 180    [Dock]      0 🡺
+                   x
+           x       |       x
+            \     90      /
+            135          45
+
+       x- 180    [Dock]    0 -x
+
             225        315
-          🡿      270     🡾
-                  🡻
+            /     270     \
+           x       |        x
+                   x
 ```
 
 ```
