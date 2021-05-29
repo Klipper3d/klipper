@@ -22,10 +22,12 @@ command to reload the config and restart the host software.
 Printer is halted
 """
 
-message_protocol_error = """
+message_protocol_error1 = """
 This type of error is frequently caused by running an older
 version of the firmware on the micro-controller (fix by
 recompiling and flashing the firmware).
+"""
+message_protocol_error2 = """
 Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
 Protocol error connecting to printer
@@ -141,6 +143,15 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
+    def _get_versions(self):
+        try:
+            parts = ["%s=%s" % (n.split()[-1], m.get_status()['mcu_version'])
+                     for n, m in self.lookup_objects('mcu')]
+            parts.insert(0, "host=%s" % (self.start_args['software_version'],))
+            return "\nKnown versions: %s\n" % (", ".join(parts),)
+        except:
+            logging.exception("Error in _get_versions()")
+            return ""
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -155,7 +166,9 @@ class Printer:
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
-            self._set_state("%s%s" % (str(e), message_protocol_error))
+            self._set_state("%s%s%s%s" % (str(e), message_protocol_error1,
+                                          self._get_versions(),
+                                          message_protocol_error2))
             util.dump_mcu_build()
             return
         except mcu.error as e:

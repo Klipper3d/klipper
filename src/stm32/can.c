@@ -27,7 +27,7 @@
  #define GPIO_Rx GPIO('B', 8)
  #define GPIO_Tx GPIO('B', 9)
 #endif
-#if CONFIG_STM32_CANBUS_PI8_PH13
+#if CONFIG_STM32_CANBUS_PI9_PH13
  DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PI9,PH13");
  #define GPIO_Rx GPIO('I', 9)
  #define GPIO_Tx GPIO('H', 13)

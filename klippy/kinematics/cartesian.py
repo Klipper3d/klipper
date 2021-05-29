@@ -31,12 +31,6 @@ class CartKinematics:
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
         self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
-        # Setup stepper max halt velocity
-        max_halt_velocity = toolhead.get_max_axis_halt()
-        self.rails[0].set_max_jerk(max_halt_velocity, max_accel)
-        self.rails[1].set_max_jerk(max_halt_velocity, max_accel)
-        self.rails[2].set_max_jerk(min(max_halt_velocity, self.max_z_velocity),
-                                   max_accel)
         # Check for dual carriage support
         if config.has_section('dual_carriage'):
             dc_config = config.getsection('dual_carriage')
@@ -46,7 +40,6 @@ class CartKinematics:
             dc_rail.setup_itersolve('cartesian_stepper_alloc', dc_axis)
             for s in dc_rail.get_steppers():
                 toolhead.register_step_generator(s.generate_steps)
-            dc_rail.set_max_jerk(max_halt_velocity, max_accel)
             self.dual_carriage_rails = [
                 self.rails[self.dual_carriage_axis], dc_rail]
             self.printer.lookup_object('gcode').register_command(

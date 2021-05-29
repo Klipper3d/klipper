@@ -217,9 +217,6 @@ class ToolHead:
         self.max_accel_to_decel = self.requested_accel_to_decel
         self.square_corner_velocity = config.getfloat(
             'square_corner_velocity', 5., minval=0.)
-        self.config_max_velocity = self.max_velocity
-        self.config_max_accel = self.max_accel
-        self.config_square_corner_velocity = self.square_corner_velocity
         self.junction_deviation = 0.
         self._calc_junction_deviation()
         # Print time tracking
@@ -502,6 +499,7 @@ class ToolHead:
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
         res = dict(self.kin.get_status(eventtime))
         res.update({ 'print_time': print_time,
+                     'stalls': self.print_stall,
                      'estimated_print_time': estimated_print_time,
                      'extruder': self.extruder.get_name(),
                      'position': self.Coord(*self.commanded_pos),
@@ -538,12 +536,6 @@ class ToolHead:
         self.last_kin_move_time = max(self.last_kin_move_time, kin_time)
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
-    def get_max_axis_halt(self):
-        # Determine the maximum velocity a cartesian axis could halt
-        # at due to the junction_deviation setting.  The 8.0 was
-        # determined experimentally.
-        return min(self.max_velocity,
-                   math.sqrt(8. * self.junction_deviation * self.max_accel))
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
@@ -565,10 +557,9 @@ class ToolHead:
             'SQUARE_CORNER_VELOCITY', self.square_corner_velocity, minval=0.)
         self.requested_accel_to_decel = gcmd.get_float(
             'ACCEL_TO_DECEL', self.requested_accel_to_decel, above=0.)
-        self.max_velocity = min(max_velocity, self.config_max_velocity)
-        self.max_accel = min(max_accel, self.config_max_accel)
-        self.square_corner_velocity = min(square_corner_velocity,
-                                          self.config_square_corner_velocity)
+        self.max_velocity = max_velocity
+        self.max_accel = max_accel
+        self.square_corner_velocity = square_corner_velocity
         self._calc_junction_deviation()
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"
@@ -591,7 +582,7 @@ class ToolHead:
                                   % (gcmd.get_commandline(),))
                 return
             accel = min(p, t)
-        self.max_accel = min(accel, self.config_max_accel)
+        self.max_accel = accel
         self._calc_junction_deviation()
 
 def add_printer_objects(config):

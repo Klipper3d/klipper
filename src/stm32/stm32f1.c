@@ -21,10 +21,14 @@ enable_pclock(uint32_t periph_base)
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         RCC->APB1ENR |= (1<<pos);
         RCC->APB1ENR;
+        RCC->APB1RSTR |= (1<<pos);
+        RCC->APB1RSTR &= ~(1<<pos);
     } else if (periph_base < AHBPERIPH_BASE) {
         uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
         RCC->APB2ENR |= (1<<pos);
         RCC->APB2ENR;
+        RCC->APB2RSTR |= (1<<pos);
+        RCC->APB2RSTR &= ~(1<<pos);
     } else {
         uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
         RCC->AHBENR |= (1<<pos);
@@ -124,85 +128,59 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     // way from other STM32s.
     // Code below is emulating a few mappings to work like an STM32F4
     uint32_t func = (mode >> 4) & 0xf;
-    if ((gpio == GPIO('A', 9)
-         || gpio == GPIO('A', 10)) && (func == 7)) {
-        // USART1 no remap
-        stm32f1_alternative_remap(AFIO_MAPR_USART1_REMAP_Msk,
-                                    0);
-    } else if ((gpio == GPIO('B', 6)
-                || gpio == GPIO('B', 7)) && (func == 7)) {
-        // USART1
-        stm32f1_alternative_remap(AFIO_MAPR_USART1_REMAP_Msk,
-                                  AFIO_MAPR_USART1_REMAP);
-    } else if ((gpio == GPIO('A', 2)
-                || gpio == GPIO('A', 3)) && (func == 7)) {
-        // USART2 no remap
-        stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
-                                  0);
-    } else if ((gpio == GPIO('D', 5)
-                || gpio == GPIO('D', 6)) && (func == 7)) {
-        // USART2
-        stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
-                                  AFIO_MAPR_USART2_REMAP);
-    } else if ((gpio == GPIO('B', 10)
-                || gpio == GPIO('B', 11)) && (func == 7)) {
-        // USART3 no remap
-        stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
-                                  AFIO_MAPR_USART3_REMAP_NOREMAP);
-    } else if ((gpio == GPIO('C', 10)
-                || gpio == GPIO('C', 11)) && (func == 7)) {
-        // USART3 partial remap
-        stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
-                                  AFIO_MAPR_USART3_REMAP_PARTIALREMAP);
-    } else if ((gpio == GPIO('D', 8)
-                || gpio == GPIO('D', 9)) && (func == 7)) {
-        // USART3 full remap
-        stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
-                                  AFIO_MAPR_USART3_REMAP_FULLREMAP);
-    } else if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9)) {
-        if (func == 9) {
-            // CAN
-            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
-                                      AFIO_MAPR_CAN_REMAP_REMAP2);
-        } else if (func == 4) {
-            // I2C1 Alt
+    if (func == 1) {
+        // TIM2
+        if (gpio == GPIO('A', 15) || gpio == GPIO('B', 3))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_Msk,
+                                      AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1);
+        else if (gpio == GPIO('B', 10) || gpio == GPIO('B', 11))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_Msk,
+                                      AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2);
+    } else if (func == 2) {
+        // TIM3 and TIM4
+        if (gpio == GPIO('B', 4) || gpio == GPIO('B', 5))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_Msk,
+                                      AFIO_MAPR_TIM3_REMAP_PARTIALREMAP);
+        else if (gpio == GPIO('C', 6) || gpio == GPIO('C', 7)
+                 || gpio == GPIO('C', 8) || gpio == GPIO('C', 9))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_Msk,
+                                      AFIO_MAPR_TIM3_REMAP_FULLREMAP);
+        else if (gpio == GPIO('D', 12) || gpio == GPIO('D', 13)
+                 || gpio == GPIO('D', 14) || gpio == GPIO('D', 15))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM4_REMAP_Msk,
+                                      AFIO_MAPR_TIM4_REMAP);
+    } else if (func == 4) {
+        // I2C
+        if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
             stm32f1_alternative_remap(AFIO_MAPR_I2C1_REMAP_Msk,
                                       AFIO_MAPR_I2C1_REMAP);
-        }
-    } else if ((gpio == GPIO('A', 15)
-                || gpio == GPIO('B', 3)) && (func == 1)) {
-        // TIM2 CH1/2
-        stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1_Msk,
-                                  AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1);
-    }  else if ((gpio == GPIO('B', 10)
-                || gpio == GPIO('B', 11)) && (func == 1)) {
-        // TIM2 CH3/4
-        stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2_Msk,
-                                  AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2);
-    } else if ((gpio == GPIO('B', 4)
-                || gpio == GPIO('B', 5)) && (func == 2)) {
-        // TIM3 partial remap
-        stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_PARTIALREMAP_Msk,
-                                  AFIO_MAPR_TIM3_REMAP_PARTIALREMAP);
-    } else if ((gpio == GPIO('C', 6)
-                || gpio == GPIO('C', 7)
-                || gpio == GPIO('C', 8)
-                || gpio == GPIO('C', 9)) && (func == 2)) {
-        // TIM3 full remap
-        stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_FULLREMAP_Msk,
-                                  AFIO_MAPR_TIM3_REMAP_FULLREMAP);
-    } else if ((gpio == GPIO('D', 12)
-                || gpio == GPIO('D', 13)
-                || gpio == GPIO('D', 14)
-                || gpio == GPIO('D', 15)) && (func == 2)) {
-        // TIM4
-        stm32f1_alternative_remap(AFIO_MAPR_TIM4_REMAP_Msk,
-                                  AFIO_MAPR_TIM4_REMAP);
+    } else if (func == 5) {
+        // SPI
+        if (gpio == GPIO('B', 3) || gpio == GPIO('B', 4)
+            || gpio == GPIO('B', 5))
+            stm32f1_alternative_remap(AFIO_MAPR_SPI1_REMAP_Msk,
+                                      AFIO_MAPR_SPI1_REMAP);
+    } else if (func == 7) {
+        // USART
+        if (gpio == GPIO('B', 6) || gpio == GPIO('B', 7))
+            stm32f1_alternative_remap(AFIO_MAPR_USART1_REMAP_Msk,
+                                      AFIO_MAPR_USART1_REMAP);
+        else if (gpio == GPIO('D', 5) || gpio == GPIO('D', 6))
+            stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
+                                      AFIO_MAPR_USART2_REMAP);
+        else if (gpio == GPIO('C', 10) || gpio == GPIO('C', 11))
+            stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
+                                      AFIO_MAPR_USART3_REMAP_PARTIALREMAP);
+        else if (gpio == GPIO('D', 8) || gpio == GPIO('D', 9))
+            stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
+                                      AFIO_MAPR_USART3_REMAP_FULLREMAP);
+    } else if (func == 9) {
+        // CAN
+        if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP2);
     }
-    // Add more as needed
 }
-
-
 
 // Handle USB reboot requests
 void

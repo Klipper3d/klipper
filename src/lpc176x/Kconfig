@@ -70,8 +70,11 @@ choice
     config LPC_USB
         bool "USB"
         select USBSERIAL
-    config LPC_SERIAL
-        bool "Serial"
+    config LPC_SERIAL_UART0_P03_P02
+        bool "Serial (on UART0 P0.3/P0.2)"
+        select SERIAL
+    config LPC_SERIAL_UART3_P429_P428
+        bool "Serial (on UART3 P4.29/P4.28)" if LOW_LEVEL_OPTIONS
         select SERIAL
 endchoice
 

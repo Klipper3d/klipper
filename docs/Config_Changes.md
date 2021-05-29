@@ -6,6 +6,17 @@ All dates in this document are approximate.
 
 # Changes
 
+20210503: The gcode_macro `default_parameter_<name>` config option is
+deprecated.  Use the `params` pseudo-variable to access macro
+parameters.  Other methods for accessing macro parameters will be
+removed in the near future.  See the
+[Command Templates document](Command_Templates.md#macro-parameters)
+for examples.
+
+20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
+velocity, acceleration, and square_corner_velocity larger than the
+specified values in the config file.
+
 20210325: Support for the `pin_map` config option is deprecated. Use
 the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
 translate to the actual micro-controller pin names. The `pin_map`
@@ -13,8 +24,8 @@ config option will be removed in the near future.
 
 20210313: Klipper's support for micro-controllers that communicate
 with CAN bus has changed. If using CAN bus then all micro-controllers
-must be reflashed and the [Klipper configuration must be
-updated](CANBUS.md).
+must be reflashed and the
+[Klipper configuration must be updated](CANBUS.md).
 
 20210310: The TMC2660 default for driver_SFILT has been changed from 1
 to 0.

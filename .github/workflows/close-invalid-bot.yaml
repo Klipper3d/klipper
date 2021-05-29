@@ -1,0 +1,33 @@
+# Close issues marked as invalid
+name: "Close issues marked as invalid"
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+jobs:
+  close_invalid:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          script: |
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'invalid',
+              per_page: 100,
+              page: 1
+            });
+            const expireMillis = 1000 * 60 * 60 * 36;
+            const curtime = new Date().getTime();
+            for (var issue of issues.data.values()) {
+              const updatetime = new Date(issue.updated_at).getTime();
+              if (curtime < updatetime + expireMillis)
+                continue;
+              await github.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
