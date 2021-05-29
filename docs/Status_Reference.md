@@ -1,5 +1,5 @@
-This document is a reference of printer status information that
-available in Klipper [macros](Command_Templates.md),
+This document is a reference of printer status information available
+in Klipper [macros](Command_Templates.md),
 [display fields](Config_Reference.md#display), and via the
 [API Server](API_Server.md).
 
