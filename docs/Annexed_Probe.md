@@ -8,6 +8,31 @@ a variety of designs including servo and stepper actuated couplings.
 
 # Basic Configuration
 
+The minimum requirements for functionality are a config section where the
+following options are specified. Some users may be transitioning from a macro
+based set of commands and many of the options for the `[probe]` config section
+are the same. The `[annexed_probe]` module is first and foremost a `[probe]`
+with additional functionality added. Any options that can be specified in
+for `[probe]` are valid for `[annexed_probe]` as well.
+
+```
+[annexed_probe]
+pin:
+z_offset:
+sample_retract_dist:
+dock_position:
+dock_angle:
+detach_angle:
+dock_safe_distance:
+check_open_attach:
+dock_fixed_z:
+```
+
+Additional optional parameters are described in this guide as well as the
+required parameters. Certain optional parameters are not required, but highly recommended in order to ensure desired probe behavior is observed. Additionally
+the [probe calibrate guide](Probe_Calibrate.md) is recommended reading
+for users unfamiliar with probe setup in Klipper.
+
 ## Dock Position
 
 The configuration options for the probe include all of the standard options
@@ -283,6 +308,38 @@ fails to detach and `dock_retries` are specified.
 If specified, the `post_detach_gcode` is called immediately after leaving the
 dock, but only if the probe was successfully docked.
 
+## Gcode commands
+
+There are 4 gcode commands that can be used with the probe to perform various
+tasks or obtain status information.
+
+```
+    ATTACH_PROBE
+```
+This command will move the toolhead to the dock, attach the probe, and then
+return to its previous position. If the probe is already attached, the command
+will not do anything
+
+```
+    DETACH_PROBE
+```
+This command will move the toolhead to the dock, detach the probe, and then
+return to its previous position. If the probe is already detached, the command
+will not do anything
+
+```
+    GET_PROBE_STATUS
+```
+Responds in the gcode terminal with the current status the probe is in. Valid
+states are UNKNOWN, ATTACHED, and DOCKED. This is useful during configuration
+to confirm probe validation methods are working as intended.
+
+```
+    SET_PROBE_STATUS STATE=<UNKNOWN|ATTACHED|DOCKED>
+```
+As previously decribed, this command is only available under certain conditions.
+It is used to manually set the probe state when automatic verification methods
+cannot be used.
 
 ## Setting Probe Status Manually
 
