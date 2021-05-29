@@ -58,10 +58,10 @@ static void
 config_dpll(uint32_t pll, uint32_t mul, uint32_t ctrlb)
 {
     OSCCTRL->Dpll[pll].DPLLCTRLA.reg = 0;
-    while (OSCCTRL->Dpll[0].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_ENABLE)
+    while (OSCCTRL->Dpll[pll].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_ENABLE)
         ;
     OSCCTRL->Dpll[pll].DPLLRATIO.reg = OSCCTRL_DPLLRATIO_LDR(mul - 1);
-    while (OSCCTRL->Dpll[0].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_DPLLRATIO)
+    while (OSCCTRL->Dpll[pll].DPLLSYNCBUSY.reg & OSCCTRL_DPLLSYNCBUSY_DPLLRATIO)
         ;
     OSCCTRL->Dpll[pll].DPLLCTRLB.reg = ctrlb | OSCCTRL_DPLLCTRLB_LBYPASS;
     OSCCTRL->Dpll[pll].DPLLCTRLA.reg = OSCCTRL_DPLLCTRLA_ENABLE;
