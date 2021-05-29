@@ -196,6 +196,21 @@ will be repeated until it succeeds. If the retry limit is reached and the probe
 is still not in the correct state, an error is raised and futher actions
 are aborted.
 
+```
+    allow_delayed_detach: False
+```
+Typically, a command that requires the use of the probe will cause the probe
+to be attached and then docked when it is no longer needed. In the context
+of start gcode, a homing macro, or any sequence with multiple commands requiring
+the use of the probe, this results in the probe repeatedly being attached and
+docked between commands. If the `allow_delayed_detach` option is set to True,
+the probe will wait for a short period of time before docking at the end of
+a command. This can result in calibration macros executing faster as the probe
+has to do less traveling. If this option is used, it is recommended to add
+the manual `DETACH_PROBE` command at the end of a macro or start gcode. Often
+the _next_ command will start to execute _prior_ to the probe detaching which
+can result in a collision.
+
 
 ## Custom Actions
 
@@ -365,16 +380,16 @@ following sections.
 
 # Use in macros
 
-The annexed_probe module uses a delayed detach call so that it does not
-repeatedly dock and undock the probe from the toolhead when it is being
-used in the context of a homing macro. This works in most use cases, but
-if a call to heat-and-wait (M109, M190) comes too soon after the macros
-are done with the probe, it may result in the probe staying attached to
-the toolhead until after the heater is done heating. This can be avoided
-by placing a call to `DETACH_PROBE` after the probing commands, but before
-the heater commands.
+The annexed_probe module can use a delayed detach so that it does not
+repeatedly dock and undock the probe from the toolhead while it is being
+used in the context of a homing macro or slicer start gcode. This works
+in most cases, but if a call to heat-and-wait (M109, M190) or a toolhead move
+comes too soon after probing is finished, it may result in the probe staying
+attached to the toolhead until after the heater is done heating or the gcode
+move completes. This can be avoided by placing a call to `DETACH_PROBE`
+immediately _after_ the last command requiring the probe.
 
-example:
+example 1:
 
 Gcode file from slicer
 ```
@@ -391,4 +406,19 @@ gcode:
     G28 Z0              ;rehome z axis
     DETACH_PROBE        ;ensure probe is detached
     M109 S{e}
+```
+
+example 2:
+
+Gcode file from slicer
+```
+M190 S[first_layer_bed_temperature]
+M109 S[first_layer_temperature]
+G28
+BED_MESH_CALIBRATE
+G28 Z0
+DETACH_PROBE
+G92 E0
+G1 X0.1 Y0 F8000 ;begin priming line
+G1 Z2.0 F3000
 ```
