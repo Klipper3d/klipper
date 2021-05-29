@@ -3533,9 +3533,9 @@ A [default set of menus](../klippy/extras/display/menu.cfg) are
 automatically created. One can replace or extend the menu by
 overriding the defaults in the main printer.cfg config file.
 
-See the [command template
-document](Command_Templates.md#menu-templates) for information on menu
-attributes available during template rendering.
+See the
+[command template document](Command_Templates.md#menu-templates) for
+information on menu attributes available during template rendering.
 
 ```
 # Common parameters available for all menu config sections.
