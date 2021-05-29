@@ -1760,24 +1760,31 @@ check_open_attach:     True
 #   addition to probe_sense_pin or check_open_attach
 #manual_probe_verify:  False
 #   In the rare case when a probe cannot be verified using the included options
-#   it is possible to manually set the state using a gcode command. See
-#   Annexed_Probe.md for more information
-dock_fixed_z:               True
+#   it is possible to manually set the state using a gcode command.
+#   See Annexed_Probe.md for more information
+#allow_delayed_detach: False
+#   When true, the probe will stay attached to the toolhead after the
+#   completion of a command in case there is another command requiring the
+#   use of the probe in the command queue. Once all commands have completed,
+#   the probe is docked. It is recommended to add the DETACH_PROBE command to
+#   macros and slicer start gcode to ensure the probe is correctly detached.
+#   See Annexed_Probe.md for more information
+dock_fixed_z: True
 #   Whether or not the dock is located independently of the Z axis such as
 #   mounted to a moving gantry.
-# pre_attach_gcode:
+#pre_attach_gcode:
 #   An optional list of gcode commands to execute prior to attaching the probe
-# attach_gcode:
+#attach_gcode:
 #   An optional list of gcode commands used to attach the probe
-# post_attach_gcode:
+#post_attach_gcode:
 #   An optional list of gcode commands to execute immediately after attaching
 #   the probe
-# pre_detach_gcode:
+#pre_detach_gcode:
 #   An optional list of gcode commands to execute prior to detaching/docking
 #   the probe
-# detach_gcode:
+#detach_gcode:
 #   An optional list of gcode commands used to detach/dock the probe
-# post_detach_gcode:
+#post_detach_gcode:
 #   An optional list of gcode commands to execute immediately after
 #   detaching/docking the probe
 #x_offset:
