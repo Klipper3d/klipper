@@ -139,8 +139,8 @@ gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
 ```
 
-Available fields are defined in the [Status
-Reference](Status_Reference.md) document.
+Available fields are defined in the
+[Status Reference](Status_Reference.md) document.
 
 Important! Macros are first evaluated in entirety and only then are
 the resulting commands executed. If a macro issues a command that

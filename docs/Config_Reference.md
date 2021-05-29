@@ -3458,12 +3458,12 @@ text:
 
 ## [display_template]
 
-Display data text "macros" (one may define any number of sections
-with a display_template prefix). This feature allows one to reduce
+Display data text "macros" (one may define any number of sections with
+a display_template prefix). This feature allows one to reduce
 repetitive definitions in display_data sections. One may use the
 builtin render() function in display_data sections to evaluate a
-template. For example, if one were to define [display_template
-my_template] then one could use `{ render('my_template') }` in a
+template. For example, if one were to define `[display_template
+my_template]` then one could use `{ render('my_template') }` in a
 display_data section.
 
 ```
