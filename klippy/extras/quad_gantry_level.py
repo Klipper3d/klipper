@@ -25,7 +25,6 @@ from . import probe, z_tilt
 class QuadGantryLevel:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.leveled = False
         self.retry_helper = z_tilt.RetryHelper(config,
             "Possibly Z motor numbering is wrong")
         self.max_adjust = config.getfloat("max_adjust", 4, above=0)
@@ -34,6 +33,7 @@ class QuadGantryLevel:
         if len(self.probe_helper.probe_points) != 4:
             raise config.error(
                 "Need exactly 4 probe points for quad_gantry_level")
+        self.z_status = z_tilt.ZAdjustStatus(self.printer)
         self.z_helper = z_tilt.ZAdjustHelper(config, 4)
         gantry_corners = config.get('gantry_corners').split('\n')
         try:
@@ -47,11 +47,6 @@ class QuadGantryLevel:
         if len(self.gantry_corners) < 2:
             raise config.error(
                 "quad_gantry_level requires at least two gantry_corners")
-
-        # Listen for steppers disabled
-        config.get_printer().register_event_handler("stepper_enable:motor_off",
-                                                    self._motor_off)
-
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -60,7 +55,7 @@ class QuadGantryLevel:
     cmd_QUAD_GANTRY_LEVEL_help = (
         "Conform a moving, twistable gantry to the shape of a stationary bed")
     def cmd_QUAD_GANTRY_LEVEL(self, gcmd):
-        self.leveled = False
+        self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
     def probe_finalize(self, offsets, positions):
@@ -121,10 +116,8 @@ class QuadGantryLevel:
 
         speed = self.probe_helper.get_lift_speed()
         self.z_helper.adjust_steppers(z_adjust, speed)
-        retry_status = self.retry_helper.check_retry(z_positions)
-        if retry_status == "done":
-            self.leveled = True
-        return retry_status
+        return self.z_status.check_retry_result(
+            self.retry_helper.check_retry(z_positions))
 
     def linefit(self,p1,p2):
         if p1[1] == p2[1]:
@@ -136,11 +129,7 @@ class QuadGantryLevel:
     def plot(self,f,x):
         return f[0]*x + f[1]
     def get_status(self, eventtime):
-        return {
-            'leveled': self.leveled,
-        }
-    def _motor_off(self, print_time):
-        self.leveled = False
+        return self.z_status.get_status(eventtime)
 
 def load_config(config):
     return QuadGantryLevel(config)
