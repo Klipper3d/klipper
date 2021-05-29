@@ -6,67 +6,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Merge changes
-        uses: actions/github-script@v3
-        with:
-          github-token: ${{ secrets.TOKEN }}
-          script: |
-            const timeout = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
-            const { data: pullRequest } = await github.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: "Upstream sync",
-              head: "KevinOConnor:master",
-              base: "snapshot",
-              maintainer_can_modify: false
-            })
-
-            await timeout(3000)
-
-            await github.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequest.number,
-              commit_title: "Merge upstream changes",
-              merge_method: "merge"
-            })
-
-            await timeout(3000)
       - name: Checkout snapshot
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.TOKEN }}
           ref: snapshot
-      - name: Generate tag parameters
-        id: params
+          fetch-depth: 0
+      - name: Fetch upstream
         run: |
-          echo "::set-output name=tagname::snapshot-$(date +'%y%m%d')"
-          echo "::set-output name=tagsha::$(git log -1 --format=%H)"
+          git remote add upstream https://github.com/KevinOConnor/klipper.git
+          git fetch upstream master
+      - name: Merge changes
+        id: merge
+        run: |
+          echo "::set-output name=status::success"
+          git config user.name Desuuuu
+          git config user.email Desuuuu@users.noreply.github.com
+          git merge --no-commit --no-ff upstream/master
+          git commit -m "Merge upstream changes" || echo "::set-output name=status::failure"
+      - name: Push changes
+        if: steps.merge.outputs.status == 'success'
+        run: |
+          git push origin snapshot
       - name: Create tag
-        uses: actions/github-script@v3
-        with:
-          github-token: ${{ secrets.TOKEN }}
-          script: |
-            const timeout = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
-            const { data: tag } = await github.git.createTag({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag: "${{ steps.params.outputs.tagname }}",
-              message: "/!\\ This is an automated, untested release. Use at your own risk /!\\",
-              object: "${{ steps.params.outputs.tagsha }}",
-              type: "commit"
-            })
-
-            await timeout(3000)
-
-            await github.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `refs/tags/${tag.tag}`,
-              sha: `${tag.sha}`
-            })
+        if: steps.merge.outputs.status == 'success'
+        run: |
+          export TAGNAME=snapshot-$(date +'%y%m%d')
+          git tag -m '/!\ This is an automated, untested release. Use at your own risk /!\' $TAGNAME
+          git push origin refs/tags/$TAGNAME
