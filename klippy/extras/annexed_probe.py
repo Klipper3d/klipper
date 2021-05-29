@@ -11,8 +11,8 @@ import logging
 from . import probe
 from math import sin, cos, atan2, pi, radians, degrees, sqrt
 
-PROBE_DETACH_DELAY         = .2
-PROBE_VERIFY_DELAY         = .25
+PROBE_DETACH_DELAY         = .005
+PROBE_VERIFY_DELAY         = .1
 
 PROBE_UNKNOWN   = 0
 PROBE_ATTACHED  = 1
@@ -190,6 +190,8 @@ class AnnexedProbe:
         self.detach_speed = config.getfloat('detach_speed',
                                              self.travel_speed, above=0.)
         self.dock_fixed_z = config.getboolean('dock_fixed_z', False)
+        self.allow_delayed_detach = config.getboolean('allow_delayed_detach',
+                                                       False)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
                                                    above=0.)
 
@@ -280,8 +282,6 @@ class AnnexedProbe:
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
     def _handle_ready(self):
-        # set initial states
-        # self.z_hopped = False
         self.last_z = -9999
         self.is_z_endstop = False
         self.multi = MULTI_OFF
@@ -439,7 +439,6 @@ class AnnexedProbe:
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None],
                     self.travel_speed)
-
     def _do_attach(self):
         if self.get_probe_state() != PROBE_DOCKED:
             raise self.printer.command_error(
@@ -480,7 +479,6 @@ class AnnexedProbe:
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None],
                     self.travel_speed)
-
     def _do_detach(self):
         if self._check_probe_distance():
             self._align_to_vector(self.dock_angle)
@@ -560,16 +558,19 @@ class AnnexedProbe:
         self.attach_probe()
     def multi_probe_end(self):
         self.multi = MULTI_OFF
-        self._delayed_detach()
         self.init_pos = None
         pos = self.toolhead.get_position()
         retract_z = (self.position_endstop + self.sample_retract_dist)
         if pos[2] < retract_z:
             self.toolhead.manual_move(
                 [None,
-                 None,
-                 retract_z],
-                 self.lift_speed)
+                None,
+                retract_z],
+                self.lift_speed)
+        if self.allow_delayed_detach:
+            self._delayed_detach()
+        else:
+            self.detach_probe()
     def probe_prepare(self, hmove):
         if self.multi == MULTI_FIRST:
             self.multi = MULTI_ON
