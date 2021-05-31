@@ -240,7 +240,8 @@ class GCodeMove:
             speed = gcmd.get_float('MOVE_SPEED', self.speed, above=0.)
             self.last_position[:3] = state['last_position'][:3]
             self.move_with_transform(self.last_position, speed)
-    cmd_GET_POSITION_help = "Return information on the current location of the toolhead"
+    cmd_GET_POSITION_help = (
+        "Return information on the current location of the toolhead")
     def cmd_GET_POSITION(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead', None)
         if toolhead is None:
