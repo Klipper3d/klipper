@@ -200,7 +200,8 @@ class ResonanceTester:
                                                   helper, axis, data)
             gcmd.respond_info(
                     "Resonances data written to %s file" % (csv_name,))
-    cmd_SHAPER_CALIBRATE_help = ("Simular to TEST_RESONANCES but suggest input shaper config")
+    cmd_SHAPER_CALIBRATE_help = (
+        "Simular to TEST_RESONANCES but suggest input shaper config")
     def cmd_SHAPER_CALIBRATE(self, gcmd):
         # Parse parameters
         axis = gcmd.get("AXIS", None)
@@ -244,7 +245,8 @@ class ResonanceTester:
         gcmd.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer.")
-    cmd_MEASURE_AXES_NOISE_help = ("Measures noise of all enabled accelerometer chips")
+    cmd_MEASURE_AXES_NOISE_help = (
+        "Measures noise of all enabled accelerometer chips")
     def cmd_MEASURE_AXES_NOISE(self, gcmd):
         meas_time = gcmd.get_float("MEAS_TIME", 2.)
         for _, chip in self.accel_chips:
