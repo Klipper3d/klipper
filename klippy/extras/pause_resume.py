@@ -19,7 +19,7 @@ class PauseResume:
                                     desc=self.cmd_PAUSE_help)
         self.gcode.register_command("RESUME", self.cmd_RESUME,
                                     desc=self.cmd_RESUME_help)
-        self.gcode.register_command("CLEAR_PAUSE", self.cmd_CLEAR_PAUSE, 
+        self.gcode.register_command("CLEAR_PAUSE", self.cmd_CLEAR_PAUSE,
                                     desc=self.cmd_CLEAR_PAUSE_help)
         self.gcode.register_command("CANCEL_PRINT", self.cmd_CANCEL_PRINT,
                                     desc=self.cmd_CANCEL_PRINT_help)
@@ -71,7 +71,7 @@ class PauseResume:
         else:
             self.gcode.respond_info("action:resumed")
         self.pause_command_sent = False
-    cmd_RESUME_help = ("Resumes the print from a pause")    
+    cmd_RESUME_help = ("Resumes the print from a pause")
     def cmd_RESUME(self, gcmd):
         if not self.is_paused:
             gcmd.respond_info("Print is not paused, resume aborted")
@@ -82,7 +82,8 @@ class PauseResume:
             % (velocity))
         self.send_resume_command()
         self.is_paused = False
-    cmd_CLEAR_PAUSE_help = ("Clears the current paused state without resuming the print")
+    cmd_CLEAR_PAUSE_help = (
+        "Clears the current paused state without resuming the print")
     def cmd_CLEAR_PAUSE(self, gcmd):
         self.is_paused = self.pause_command_sent = False
     cmd_CANCEL_PRINT_help = ("Cancel the current print")
