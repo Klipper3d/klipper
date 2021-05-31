@@ -325,6 +325,7 @@ class GCodeDispatch:
         msg = self.printer.get_state_message()[0]
         msg = msg.rstrip() + "\nKlipper state: Not ready"
         raise gcmd.error(msg)
+    cmd_HELP_help = "Report the list of available extended G-Code commands"
     def cmd_HELP(self, gcmd):
         cmdhelp = []
         if not self.is_printer_ready:
