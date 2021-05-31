@@ -558,7 +558,6 @@ class AnnexedProbe:
         self.attach_probe()
     def multi_probe_end(self):
         self.multi = MULTI_OFF
-        self.init_pos = None
         pos = self.toolhead.get_position()
         retract_z = (self.position_endstop + self.sample_retract_dist)
         if pos[2] < retract_z:
@@ -571,6 +570,7 @@ class AnnexedProbe:
             self._delayed_detach()
         else:
             self.detach_probe()
+        self.init_pos = None
     def probe_prepare(self, hmove):
         if self.multi == MULTI_FIRST:
             self.multi = MULTI_ON
