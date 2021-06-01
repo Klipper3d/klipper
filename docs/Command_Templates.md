@@ -27,6 +27,25 @@ Note how the `gcode:` config option always starts at the beginning of
 the line and subsequent lines in the G-Code macro never start at the
 beginning.
 
+### Add a description to your macro
+
+To help identify the functionality a short description can be added.
+Add `description:` with a short text to describe the functionality.
+Default is "G-Code macro" if not specified.
+For example:
+
+```
+[gcode_macro blink_led]
+description: Blink my_led one time
+gcode:
+  SET_PIN PIN=my_led VALUE=1
+  G4 P2000
+  SET_PIN PIN=my_led VALUE=0
+```
+
+This will be showing is you use the `HELP` command or use the autocomplete
+function.
+
 ### Save/Restore state for G-Code moves
 
 Unfortunately, the G-Code command language can be challenging to use.
@@ -120,8 +139,8 @@ gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
 ```
 
-Available fields are defined in the [Status
-Reference](Status_Reference.md) document.
+Available fields are defined in the
+[Status Reference](Status_Reference.md) document.
 
 Important! Macros are first evaluated in entirety and only then are
 the resulting commands executed. If a macro issues a command that
@@ -259,6 +278,30 @@ gcode:
 ```
 UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 ```
+
+### Menu templates
+
+If a [display config section](Config_Reference.md#display) is enabled,
+then it is possible to customize the menu with
+[menu](Config_Reference.md#menu) config sections.
+
+The following read-only attributes are available in menu templates:
+* `menu.width` - element width (number of display columns)
+* `menu.ns` - element namespace
+* `menu.event` - name of the event that triggered the script
+* `menu.input` - input value, only available in input script context
+
+The following actions are available in menu templates:
+* `menu.back(force, update)`: will execute menu back command, optional
+  boolean parameters `<force>` and `<update>`.
+  * When `<force>` is set True then it will also stop editing. Default
+    value is False.
+  * When `<update>` is set False then parent container items are not
+    updated. Default value is True.
+* `menu.exit(force)` - will execute menu exit command, optional
+  boolean parameter `<force>` default value False.
+  * When `<force>` is set True then it will also stop editing. Default
+    value is False.
 
 ### Save Variables to disk
 <!-- {% raw %} -->

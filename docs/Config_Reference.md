@@ -1237,6 +1237,9 @@ G-Code macros (one may define any number of sections with a
 #   commands. Care should be taken when overriding commands as it can
 #   cause complex and unexpected results. The default is to not
 #   override an existing G-Code command.
+#description: G-Code macro
+#   This will add a short description used at the HELP command or while
+#   using the auto completion feature. Default "G-Code macro"
 ```
 
 ## [delayed_gcode]
@@ -3455,12 +3458,12 @@ text:
 
 ## [display_template]
 
-Display data text "macros" (one may define any number of sections
-with a display_template prefix). This feature allows one to reduce
+Display data text "macros" (one may define any number of sections with
+a display_template prefix). This feature allows one to reduce
 repetitive definitions in display_data sections. One may use the
 builtin render() function in display_data sections to evaluate a
-template. For example, if one were to define [display_template
-my_template] then one could use `{ render('my_template') }` in a
+template. For example, if one were to define `[display_template
+my_template]` then one could use `{ render('my_template') }` in a
 display_data section.
 
 ```
@@ -3530,25 +3533,9 @@ A [default set of menus](../klippy/extras/display/menu.cfg) are
 automatically created. One can replace or extend the menu by
 overriding the defaults in the main printer.cfg config file.
 
-Available options in menu Jinja2 template context:
-
-Read-only attributes for menu element:
-* menu.width - element width (number of display columns)
-* menu.ns - element namespace
-* menu.event - name of the event that triggered the script
-* menu.input - input value, only available in input script context
-
-List of actions for menu element:
-* menu.back(force, update): will execute menu back command, optional
-  boolean parameters <force> and <update>.
-  * When <force> is set True then it will also stop editing. Default
-    value is False
-  * When <update> is set False then parent container items are not
-    updated. Default value is True
-* menu.exit(force) - will execute menu exit command, optional boolean
-  parameter <force> default value False
-  * When <force> is set True then it will also stop editing. Default
-    value is False
+See the
+[command template document](Command_Templates.md#menu-templates) for
+information on menu attributes available during template rendering.
 
 ```
 # Common parameters available for all menu config sections.
