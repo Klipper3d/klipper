@@ -82,6 +82,15 @@ class PrinterDotstar:
         else:
             #Send update now (so as not to wake toolhead and reset idle_timeout)
             lookahead_bgfunc(None)
+    def get_status(self, eventtime):
+        cdata = []
+        for i in range(self.chain_count):
+            idx = (i + 1) * 4
+            cdata.append(
+                {k: round(v / 255., 4) for k, v in
+                 zip("BGR", self.color_data[idx+1:idx+4])}
+            )
+        return {'color_data': cdata}
 
 def load_config_prefix(config):
     return PrinterDotstar(config)
