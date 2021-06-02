@@ -18,6 +18,7 @@ Klipper supports the following standard G-Code commands:
   - Note: If S is not specified and both P and T are specified, then
     the acceleration is set to the minimum of P and T. If only one of
     P or T is specified, the command has no effect.
+  - Note2: This command will set `max_accel_to_decel` to `value/2`
 - Get extruder temperature: `M105`
 - Set extruder temperature: `M104 [T<index>] [S<temperature>]`
 - Set extruder temperature and wait: `M109 [T<index>] S<temperature>`

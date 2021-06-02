@@ -583,6 +583,7 @@ class ToolHead:
                 return
             accel = min(p, t)
         self.max_accel = accel
+        self.requested_accel_to_decel = accel / 2.
         self._calc_junction_deviation()
 
 def add_printer_objects(config):
