@@ -34,7 +34,8 @@ class GCodeMove:
             gcode.register_command(cmd, func, False, desc)
         gcode.register_command('G0', self.cmd_G1)
         gcode.register_command('M114', self.cmd_M114, True)
-        gcode.register_command('GET_POSITION', self.cmd_GET_POSITION, True)
+        gcode.register_command('GET_POSITION', self.cmd_GET_POSITION, True,
+                               desc=self.cmd_GET_POSITION_help)
         self.Coord = gcode.Coord
         # G-Code coordinate manipulation
         self.absolute_coord = self.absolute_extrude = True
@@ -239,6 +240,8 @@ class GCodeMove:
             speed = gcmd.get_float('MOVE_SPEED', self.speed, above=0.)
             self.last_position[:3] = state['last_position'][:3]
             self.move_with_transform(self.last_position, speed)
+    cmd_GET_POSITION_help = (
+        "Return information on the current location of the toolhead")
     def cmd_GET_POSITION(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead', None)
         if toolhead is None:

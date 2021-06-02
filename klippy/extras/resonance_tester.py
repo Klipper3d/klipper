@@ -97,11 +97,14 @@ class ResonanceTester:
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("MEASURE_AXES_NOISE",
-                                    self.cmd_MEASURE_AXES_NOISE)
+                                    self.cmd_MEASURE_AXES_NOISE,
+                                    desc=self.cmd_MEASURE_AXES_NOISE_help)
         self.gcode.register_command("TEST_RESONANCES",
-                                    self.cmd_TEST_RESONANCES)
+                                    self.cmd_TEST_RESONANCES,
+                                    desc=self.cmd_TEST_RESONANCES_help)
         self.gcode.register_command("SHAPER_CALIBRATE",
-                                    self.cmd_SHAPER_CALIBRATE)
+                                    self.cmd_SHAPER_CALIBRATE,
+                                    desc=self.cmd_SHAPER_CALIBRATE_help)
         self.printer.register_event_handler("klippy:connect", self.connect)
 
     def connect(self):
@@ -159,7 +162,7 @@ class ResonanceTester:
                     else:
                         calibration_data[axis].add_data(new_data)
         return calibration_data
-
+    cmd_TEST_RESONANCES_help = ("Runs the resonance test for a specifed axis")
     def cmd_TEST_RESONANCES(self, gcmd):
         # Parse parameters
         if len(self.test.get_supported_axes()) > 1:
@@ -197,7 +200,8 @@ class ResonanceTester:
                                                   helper, axis, data)
             gcmd.respond_info(
                     "Resonances data written to %s file" % (csv_name,))
-
+    cmd_SHAPER_CALIBRATE_help = (
+        "Simular to TEST_RESONANCES but suggest input shaper config")
     def cmd_SHAPER_CALIBRATE(self, gcmd):
         # Parse parameters
         axis = gcmd.get("AXIS", None)
@@ -241,7 +245,8 @@ class ResonanceTester:
         gcmd.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer.")
-
+    cmd_MEASURE_AXES_NOISE_help = (
+        "Measures noise of all enabled accelerometer chips")
     def cmd_MEASURE_AXES_NOISE(self, gcmd):
         meas_time = gcmd.get_float("MEAS_TIME", 2.)
         for _, chip in self.accel_chips:
