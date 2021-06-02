@@ -56,7 +56,15 @@ is_enabled_pclock(uint32_t periph_base)
 uint32_t
 get_pclock_frequency(uint32_t periph_base)
 {
+#if CONFIG_MACH_STM32F401xE
+    if (periph_base < APB2PERIPH_BASE) {
+         return FREQ_PERIPH;           // APB1 periphiral clocks 42 MHz
+    } else {
+         return FREQ_PERIPH * 2;           // 84 MHz
+    }
+#else
     return FREQ_PERIPH;
+#endif
 }
 
 // Enable a GPIO peripheral clock
@@ -238,7 +246,11 @@ clock_setup(void)
 
     // Switch system clock to PLL
     if (FREQ_PERIPH_DIV == 2)
+#if CONFIG_MACH_STM32F401xE 
+        RCC->CFGR = RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1 | RCC_CFGR_SW_PLL;
+#else
         RCC->CFGR = RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_SW_PLL;
+#endif
     else
         RCC->CFGR = RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4 | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
