@@ -272,7 +272,7 @@ The following command is available when a
 [neopixel config section](Config_Reference.md#neopixel) or
 [dotstar config section](Config_Reference.md#dotstar) is enabled:
 - `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-  WHITE=<value> [INDEX=<index>] [TRANSMIT=0]`: This sets the LED
+  WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the LED
   output. Each color `<value>` must be between 0.0 and 1.0. The WHITE
   option is only valid on RGBW LEDs. If multiple LED chips are
   daisy-chained then one may specify INDEX to alter the color of just
@@ -281,7 +281,12 @@ The following command is available when a
   to the provided color. If TRANSMIT=0 is specified then the color
   change will only be made on the next SET_LED command that does not
   specify TRANSMIT=0; this may be useful in combination with the INDEX
-  parameter to batch multiple updates in a daisy-chain.
+  parameter to batch multiple updates in a daisy-chain. By default, the
+  SET_LED command will sync it's changes with other ongoing gcode commands.
+  This can lead to undesirable behavior if LEDs are being set while the
+  printer is not printing as it will reset the idle timeout. If careful
+  timing is not needed, the optional SYNC=0 parameter can be specified to
+  apply the changes instantly and not reset the idle timeout.
 
 ## Servo Commands
 
@@ -533,6 +538,17 @@ enabled:
   may lead to internal software errors. This command may invalidate
   future boundary checks; issue a G28 afterwards to reset the
   kinematics.
+
+## SDcard loop
+
+When the [sdcard_loop config section](Config_Reference.md#sdcard_loop)
+is enabled, the following extended commands are available:
+- `SDCARD_LOOP_BEGIN COUNT=<count>`: Begin a looped section in the SD
+  print. A count of 0 indicates that the section should be looped
+  indefinately.
+- `SDCARD_LOOP_END`: End a looped section in the SD print.
+- `SDCARD_LOOP_DESIST`: Complete existing loops without further
+  iterations.
 
 ## Send message (respond) to host
 

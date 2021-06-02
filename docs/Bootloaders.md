@@ -313,8 +313,10 @@ section above, substituting the file name for the desired hid bootloader binary
 It is not possible to use stm32flash for the SKR Mini E3 as the boot0 pin is
 tied directly to ground and not broken out via header pins.  It is recommended
 to use a STLink V2 with STM32Cubeprogrammer to flash the bootloader.   If you
-don't have access to a STLink it is also possible to use a [Raspberry Pi and
-OpenOCD](#running-openocd-on-the-raspberry-pi) with the following chip config:
+don't have access to a STLink it is also possible to use a
+[Raspberry Pi and OpenOCD](#running-openocd-on-the-raspberry-pi) with
+the following chip config:
+
 ```
 source [find target/stm32f1x.cfg]
 ```
@@ -398,8 +400,8 @@ board, a [build for the SKR Pro 1.1 is available here](
   https://github.com/Arksine/STM32_HID_Bootloader/releases/tag/v0.5-beta).
 
 Unless your board is DFU capable the most accessable flashing method
-is likely via 3.3v serial, which follows the same procedure as [flashing the
-STM32F103 using stm32flash](#stm32f103-micro-controllers-blue-pill-devices).
+is likely via 3.3v serial, which follows the same procedure as
+[flashing the STM32F103 using stm32flash](#stm32f103-micro-controllers-blue-pill-devices).
 For example:
 ```
 wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta/hid_bootloader_SKR_PRO.bin

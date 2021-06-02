@@ -79,8 +79,8 @@ class RotaryDeltaKinematics:
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
-    def calc_tag_position(self):
-        spos = [rail.get_tag_position() for rail in self.rails]
+    def calc_position(self, stepper_positions):
+        spos = [stepper_positions[rail.get_name()] for rail in self.rails]
         return self.calibration.actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:

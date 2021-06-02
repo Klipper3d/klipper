@@ -31,7 +31,7 @@ class MCU_stepper:
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']
         self._invert_dir = dir_pin_params['invert']
-        self._mcu_position_offset = self._tag_position = 0.
+        self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -108,14 +108,12 @@ class MCU_stepper:
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
-    def get_tag_position(self):
-        return self._tag_position
-    def set_tag_position(self, position):
-        self._tag_position = position
-    def get_past_commanded_position(self, clock):
+    def get_past_mcu_position(self, print_time):
+        clock = self._mcu.print_time_to_clock(print_time)
         ffi_main, ffi_lib = chelper.get_ffi()
-        sq = self._stepqueue
-        mcu_pos = ffi_lib.stepcompress_find_past_position(sq, clock)
+        return ffi_lib.stepcompress_find_past_position(self._stepqueue, clock)
+    def get_past_commanded_position(self, print_time):
+        mcu_pos = self.get_past_mcu_position(print_time)
         return mcu_pos * self._step_dist - self._mcu_position_offset
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
@@ -139,12 +137,12 @@ class MCU_stepper:
             return
         params = self._get_position_cmd.send([self._oid])
         last_pos = params['pos']
+        if self._invert_dir:
+            last_pos = -last_pos
         ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, last_pos)
         if ret:
             raise error("Internal error in stepcompress")
         mcu_pos_dist = last_pos * self._step_dist
-        if self._invert_dir:
-            mcu_pos_dist = -mcu_pos_dist
         self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
     def set_trapq(self, tq):
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -256,9 +254,8 @@ class PrinterRail:
         self.endstops = []
         self.add_extra_stepper(config)
         mcu_stepper = self.steppers[0]
+        self.get_name = mcu_stepper.get_name
         self.get_commanded_position = mcu_stepper.get_commanded_position
-        self.get_tag_position = mcu_stepper.get_tag_position
-        self.set_tag_position = mcu_stepper.set_tag_position
         self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]

@@ -1,11 +1,12 @@
-This document is a reference of printer status information that
-available in Klipper [macros](Command_Templates.md), [display
-fields](Config_Reference.md#display), and via the [API
-Server](API_Server.md).
+This document is a reference of printer status information available
+in Klipper [macros](Command_Templates.md),
+[display fields](Config_Reference.md#display), and via the
+[API Server](API_Server.md).
 
 The fields in this document are subject to change - if using an
-attribute be sure to review the [Config Changes
-document](Config_Changes.md) when upgrading the Klipper software.
+attribute be sure to review the
+[Config Changes document](Config_Changes.md) when upgrading the
+Klipper software.
 
 # bed_mesh
 
@@ -217,6 +218,13 @@ is defined):
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
 
+# quad_gantry_level
+
+The following information is available in the `quad_gantry_level` object
+(this object is available if quad_gantry_level is defined):
+- `applied`: True if the gantry leveling process has been run and completed
+  successfully.
+
 # query_endstops
 
 The following information is available in the `query_endstops` object
@@ -243,12 +251,13 @@ The following information is available in the `system_stats` object
 
 # temperature sensors
 
-The following information is available in [bme280
-config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
-[htu21d config_section_name](Config_Reference.md#htu21d-sensor), [lm75
-config_section_name](Config_Reference.md#lm75-temperature-sensor), and
-[temperature_host
-config_section_name](Config_Reference.md#host-temperature-sensor)
+The following information is available in
+
+[bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
+[htu21d config_section_name](Config_Reference.md#htu21d-sensor),
+[lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
+and
+[temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`, `pressure`, `gas`: The last read values from the sensor
@@ -314,3 +323,10 @@ object is always available):
   state. Possible values are: "ready", "startup", "shutdown", "error".
 - `state_message`: A human readable string giving additional context
   on the current Klipper state.
+
+# z_tilt
+
+The following information is available in the `z_tilt` object (this
+object is available if z_tilt is defined):
+- `applied`: True if the z-tilt leveling process has been run and completed
+  successfully.
