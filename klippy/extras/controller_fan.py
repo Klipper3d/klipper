@@ -24,6 +24,8 @@ class ControllerFan:
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
         self.last_speed = 0.
+        self.temperature_sensor_names = config.get("temperature_sensor", None)
+        self.temperature_sensors = []
     def handle_ready(self):
         pheaters = self.printer.lookup_object('heaters')
         self.heaters = [pheaters.lookup_heater(n.strip())
@@ -32,6 +34,9 @@ class ControllerFan:
         self.stepper_names = [s.get_name() for s in kin.get_steppers()]
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
+        if self.temperature_sensor_names:
+            self.temperature_sensors = [self.printer.lookup_object('temperature_sensor ' + n.strip()) 
+                                        for n in self.temperature_sensor_names.split(',')]
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
     def callback(self, eventtime):
@@ -42,6 +47,10 @@ class ControllerFan:
         for heater in self.heaters:
             _, target_temp = heater.get_temp(eventtime)
             if target_temp:
+                active = True
+        for temperature_sensor in self.temperature_sensors:
+            current_temp, target_temp = temperature_sensor.get_temp(eventtime)
+            if current_temp > target_temp:
                 active = True
         if active:
             self.last_on = 0
