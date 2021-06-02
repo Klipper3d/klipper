@@ -66,6 +66,22 @@ class ZAdjustHelper:
         curpos[2] += first_stepper_offset
         toolhead.set_position(curpos)
 
+class ZAdjustStatus:
+    def __init__(self, printer):
+        self.applied = False
+        printer.register_event_handler("stepper_enable:motor_off",
+                                        self._motor_off)
+    def check_retry_result(self, retry_result):
+        if retry_result == "done":
+            self.applied = True
+        return retry_result
+    def reset(self):
+        self.applied = False
+    def get_status(self, eventtime):
+        return {'applied': self.applied}
+    def _motor_off(self, print_time):
+        self.reset()
+
 class RetryHelper:
     def __init__(self, config, error_msg_extra = ""):
         self.gcode = config.get_printer().lookup_object('gcode')
@@ -123,6 +139,7 @@ class ZTilt:
         self.retry_helper = RetryHelper(config)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         self.probe_helper.minimum_points(2)
+        self.z_status = ZAdjustStatus(self.printer)
         self.z_helper = ZAdjustHelper(config, len(self.z_positions))
         # Register Z_TILT_ADJUST command
         gcode = self.printer.lookup_object('gcode')
@@ -130,6 +147,7 @@ class ZTilt:
                                desc=self.cmd_Z_TILT_ADJUST_help)
     cmd_Z_TILT_ADJUST_help = "Adjust the Z tilt"
     def cmd_Z_TILT_ADJUST(self, gcmd):
+        self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
     def probe_finalize(self, offsets, positions):
@@ -159,7 +177,10 @@ class ZTilt:
         adjustments = [x*x_adjust + y*y_adjust + z_adjust
                        for x, y in self.z_positions]
         self.z_helper.adjust_steppers(adjustments, speed)
-        return self.retry_helper.check_retry([p[2] for p in positions])
+        return self.z_status.check_retry_result(
+            self.retry_helper.check_retry([p[2] for p in positions]))
+    def get_status(self, eventtime):
+            return self.z_status.get_status(eventtime)
 
 def load_config(config):
     return ZTilt(config)

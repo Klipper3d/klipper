@@ -218,6 +218,13 @@ is defined):
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
 
+# quad_gantry_level
+
+The following information is available in the `quad_gantry_level` object
+(this object is available if quad_gantry_level is defined):
+- `applied`: True if the gantry leveling process has been run and completed
+  successfully.
+
 # query_endstops
 
 The following information is available in the `query_endstops` object
@@ -316,3 +323,10 @@ object is always available):
   state. Possible values are: "ready", "startup", "shutdown", "error".
 - `state_message`: A human readable string giving additional context
   on the current Klipper state.
+
+# z_tilt
+
+The following information is available in the `z_tilt` object (this
+object is available if z_tilt is defined):
+- `applied`: True if the z-tilt leveling process has been run and completed
+  successfully.
