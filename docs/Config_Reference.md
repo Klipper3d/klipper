@@ -2010,6 +2010,8 @@ temperature sensors that are reported via the M105 command.
 #max_temp:
 #   See the "extruder" section for the definition of the above
 #   parameters.
+#target_temp:
+# Specifies the target temperature when used in an controller_fan section
 #gcode_id:
 #   See the "heater_generic" section for the definition of this
 #   parameter.
@@ -2396,6 +2398,11 @@ watched component.
 #   associated with. If a comma separated list of heater names is
 #   provided here, then the fan will be enabled when any of the given
 #   heaters are enabled. The default is "extruder".
+#temperature_sensor:
+#   Name of the config section defining the temperature_sensor that this fan is
+#   associated with. If a comma separated list of temperature_sensor names is
+#   provided here, then the fan will be enabled when any of the given
+#   temperature_sensor exceeds it target_temp.
 ```
 
 ## [temperature_fan]
