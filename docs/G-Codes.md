@@ -802,12 +802,12 @@ in the GCode file:
   by this module and passed to the Palette 2 device.
 
 
-## Temperature Sensor Commands
+## Controller Fan Commands
 
 The following command is available when a
-[temperature_sensor config section](Config_Reference.md#temperature_sensor)
-is enabled:
-- `SET_TEMPERATURE_SENSOR_TARGET temperature_sensor=<temperature_sensor_name>
+[controller_fan config section](Config_Reference.md#controller_fan) with
+addition temperature_sensors is enabled:
+- `SET_CONTROLLER_FAN_TARGET temperature_sensor=<temperature_sensor_name>
   [target=<target_temperature>]`: Sets the target temperature for a
-  temperature_fan. If a target is not supplied, it is set to the
+  controller_fan. If a target is not supplied, it is set to the
   specified temperature in the config file.

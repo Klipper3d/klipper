@@ -24,8 +24,26 @@ class ControllerFan:
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
         self.last_speed = 0.
-        self.temperature_sensor_names = config.get("temperature_sensor", None)
-        self.temperature_sensors = []
+        self.temperature_sensor_targets = {}
+        self.conf_temperature_sensor_targets = {}
+        sensors = config.get("temperature_sensors", "").strip()
+        if sensors:
+            if sensors.endswith(','):
+                sensors = sensors[:-1]
+            parts = [a.split(':', 1) for a in sensors.split(',')]
+            for pair in parts:
+                if len(pair) != 2:
+                    raise self.printer.error("Unable to parse temperature_sensors in %s" 
+                                                % (config.get_name(),))
+                name, value = [s.strip() for s in pair]
+                self.conf_temperature_sensor_targets[name] = float(value)
+            
+                gcode = self.printer.lookup_object('gcode')
+                gcode.register_mux_command(
+                    "SET_CONTROLLER_FAN_TARGET", "TEMPERATURE_SENSOR", name,
+                    self.cmd_SET_CONTROLLER_FAN_TARGET,
+                    desc=self.cmd_SET_CONTROLLER_FAN_TARGET_help)
+
     def handle_ready(self):
         pheaters = self.printer.lookup_object('heaters')
         self.heaters = [pheaters.lookup_heater(n.strip())
@@ -34,9 +52,8 @@ class ControllerFan:
         self.stepper_names = [s.get_name() for s in kin.get_steppers()]
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
-        if self.temperature_sensor_names:
-            self.temperature_sensors = [self.printer.lookup_object('temperature_sensor ' + n.strip()) 
-                                        for n in self.temperature_sensor_names.split(',')]
+        for k, v in self.conf_temperature_sensor_targets.items():
+            self.temperature_sensor_targets[self.printer.lookup_object('temperature_sensor ' + k.strip())] = v
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
     def callback(self, eventtime):
@@ -48,9 +65,10 @@ class ControllerFan:
             _, target_temp = heater.get_temp(eventtime)
             if target_temp:
                 active = True
-        for temperature_sensor in self.temperature_sensors:
-            current_temp, target_temp = temperature_sensor.get_temp(eventtime)
-            if current_temp > target_temp:
+        for sensor, target in self.temperature_sensor_targets.items():
+            current_temp, _ = sensor.get_temp(eventtime)
+            logging.warn("sensor: %s current: %s target: %s", sensor, current_temp, target)
+            if current_temp > target:
                 active = True
         if active:
             self.last_on = 0
@@ -64,6 +82,23 @@ class ControllerFan:
             print_time = self.fan.get_mcu().estimated_print_time(curtime)
             self.fan.set_speed(print_time + PIN_MIN_TIME, speed)
         return eventtime + 1.
+
+    def set_target_temp(self, sensor_name, degrees):
+        sensor = self.printer.lookup_object('temperature_sensor ' + sensor_name)
+        min_temp, max_temp = sensor.get_min_max()
+        if degrees and (degrees < min_temp or degrees > max_temp):
+            raise self.printer.command_error(
+                "Requested temperature (%.1f) out of range (%.1f:%.1f)"
+                % (degrees, min_temp, max_temp))
+        self.temperature_sensor_targets[sensor] = degrees
+
+    cmd_SET_CONTROLLER_FAN_TARGET_help = \
+        "Sets a temperature sensor target"
+    def cmd_SET_CONTROLLER_FAN_TARGET(self, gcmd):
+        params = gcmd.get_command_parameters()
+        sensor = gcmd.get('TEMPERATURE_SENSOR')
+        temp = gcmd.get_float('TARGET', self.conf_temperature_sensor_targets[sensor])
+        self.set_target_temp(sensor, temp)
 
 def load_config_prefix(config):
     return ControllerFan(config)

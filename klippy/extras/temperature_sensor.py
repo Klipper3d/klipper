@@ -16,21 +16,12 @@ class PrinterSensorGeneric:
                                         minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', 99999999.9,
                                         above=self.min_temp)
-        self.target_temp_conf = config.getfloat(
-            'target_temp', 40. if self.max_temp > 40. else self.max_temp,
-            minval=self.min_temp, maxval=self.max_temp)
-        self.target_temp = self.target_temp_conf
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         pheaters.register_sensor(config, self)
         self.last_temp = 0.
         self.measured_min = 99999999.
         self.measured_max = 0.
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command(
-            "SET_TEMPERATURE_SENSOR_TARGET", "TEMPERATURE_SENSOR", self.name,
-            self.cmd_SET_TEMPERATURE_SENSOR_TARGET,
-            desc=self.cmd_SET_TEMPERATURE_SENSOR_TARGET_help)
 
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
@@ -38,7 +29,7 @@ class PrinterSensorGeneric:
             self.measured_min = min(self.measured_min, temp)
             self.measured_max = max(self.measured_max, temp)
     def get_temp(self, eventtime):
-        return self.last_temp, self.target_temp
+        return self.last_temp, 0.
     def stats(self, eventtime):
         return False, '%s: temp=%.1f' % (self.name, self.last_temp)
     def get_status(self, eventtime):
@@ -47,18 +38,8 @@ class PrinterSensorGeneric:
             'measured_min_temp': self.measured_min,
             'measured_max_temp': self.measured_max
         }
-    def set_target_temp(self, degrees):
-        if degrees and (degrees < self.min_temp or degrees > self.max_temp):
-            raise self.printer.command_error(
-                "Requested temperature (%.1f) out of range (%.1f:%.1f)"
-                % (degrees, self.min_temp, self.max_temp))
-        self.target_temp = degrees
-
-    cmd_SET_TEMPERATURE_SENSOR_TARGET_help = \
-        "Sets a temperature sensor target"
-    def cmd_SET_TEMPERATURE_SENSOR_TARGET(self, gcmd):
-        temp = gcmd.get_float('TARGET', self.target_temp_conf)
-        self.set_target_temp(temp)
+    def get_min_max(self):
+        return self.min_temp, self.max_temp
 
 def load_config_prefix(config):
     return PrinterSensorGeneric(config)
