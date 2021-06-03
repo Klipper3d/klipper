@@ -2010,8 +2010,6 @@ temperature sensors that are reported via the M105 command.
 #max_temp:
 #   See the "extruder" section for the definition of the above
 #   parameters.
-#target_temp:
-# Specifies the target temperature when used in an controller_fan section
 #gcode_id:
 #   See the "heater_generic" section for the definition of this
 #   parameter.
