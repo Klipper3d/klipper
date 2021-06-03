@@ -68,6 +68,7 @@ class PrinterTemperatureMCU:
             ('stm32f4', self.config_stm32f4),
             ('stm32f042', self.config_stm32f042),
             ('stm32f070', self.config_stm32f070),
+            ('stm32f072', self.config_stm32f070),
             ('', self.config_unknown)]
         for name, func in cfg_funcs:
             if self.mcu_type.startswith(name):
