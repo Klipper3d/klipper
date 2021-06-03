@@ -433,6 +433,10 @@ The following commands are available when the
   supplied name from persistent memory.  Note that after SAVE or
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
+- `BED_MESH_OFFSET [X=<value>] [Y=<value>]`:  Applies X and/or Y
+  offsets to the mesh lookup.  This is useful for printers with
+  independent extruders, as an offset is necessary to produce
+  correct Z adjustment after a tool change.
 
 ## Bed Screws Helper
 
