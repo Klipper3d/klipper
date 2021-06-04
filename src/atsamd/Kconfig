@@ -89,6 +89,8 @@ choice
     prompt "Clock Reference"
     config CLOCK_REF_X32K
         bool "32.768Khz crystal"
+    config CLOCK_REF_X25M
+        bool "25Mhz crystal" if MACH_SAMD51
     config CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
