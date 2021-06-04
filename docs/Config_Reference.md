@@ -119,7 +119,9 @@ different names for the stepper (eg, `stepper_x` vs `stepper_a`).
 Below are common stepper definitions.
 
 See the [rotation distance document](Rotation_Distance.md) for
-information on calculating the `rotation_distance` parameter.
+information on calculating the `rotation_distance` parameter. See the
+[Multi-MCU homing](Multi_MCU_Homing.md) document for information on
+homing using multiple micro-controllers.
 
 ```
 [stepper_x]
@@ -152,8 +154,10 @@ microsteps:
 #   distance the axis travels for one full rotation of the final gear.
 #   The default is to not use a gear ratio.
 endstop_pin:
-#   Endstop switch detection pin. This parameter must be provided for
-#   the X, Y, and Z steppers on cartesian style printers.
+#   Endstop switch detection pin. If this endstop pin is on a
+#   different mcu than the stepper motor then it enables "multi-mcu
+#   homing". This parameter must be provided for the X, Y, and Z
+#   steppers on cartesian style printers.
 #position_min: 0
 #   Minimum valid distance (in mm) the user may command the stepper to
 #   move to.  The default is 0mm.
@@ -1611,7 +1615,9 @@ stepper_z config section.
 ```
 [probe]
 pin:
-#   Probe detection pin. This parameter must be provided.
+#   Probe detection pin. If the pin is on a different microcontroller
+#   than the Z steppers then it enables "multi-mcu homing". This
+#   parameter must be provided.
 #deactivate_on_each_sample: True
 #   This determines if Klipper should execute deactivation gcode
 #   between each probe attempt when performing a multiple probe
