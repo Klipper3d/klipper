@@ -61,6 +61,7 @@ choice
     config MACH_STM32H750
         bool "STM32H750"
         select MACH_STM32H7
+        select HAVE_GPIO_HARD_PWM
 endchoice
 
 config MACH_STM32F0
