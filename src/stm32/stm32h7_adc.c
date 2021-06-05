@@ -94,7 +94,7 @@ static const uint8_t adc_pins[] = {
 
 
 // ADC timing:
-// ADC clock=30Mhz, Tconv=7.5, Tsamp=64.5, total=2.4us*OVERSAMPLES
+// ADC clock=30Mhz, Tconv=8.5, Tsamp=64.5, total=2.4333us*OVERSAMPLES
 
 struct gpio_adc
 gpio_adc_setup(uint32_t pin)
@@ -206,7 +206,7 @@ gpio_adc_sample(struct gpio_adc g)
     // Start sample
     adc->SQR1 = (g.chan << 6);
     adc->CR |= ADC_CR_ADSTART;
-    // Should take 2.4us, add 1us and 1 adc tick for clock synchronisation etc.
+    // Should take 2.4333us, add 1us for clock synchronisation etc.
     return timer_from_us(1 + 2.4333*OVERSAMPLES);
 }
 
