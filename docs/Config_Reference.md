@@ -1128,11 +1128,8 @@ home_xy_position:
 #   applied to any homing command, even if it doesn't home the Z axis.
 #   If the Z axis is already homed and the current Z position is less
 #   than z_hop, then this will lift the head to a height of z_hop. If
-#   the Z axis is not already homed, then prior to any XY homing
-#   movement the Z axis boundary checks are disabled and the head is
-#   lifted by z_hop. If z_hop is specified, be sure to home the Z
-#   immediately after any XY home requests so that the Z boundary
-#   checks are accurate. The default is to not implement Z hop.
+#   the Z axis is not already homed the head is lifted by z_hop.
+#   The default is to not implement Z hop.
 #z_hop_speed: 20.0
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
 #   default is 20mm/s.
@@ -1240,6 +1237,9 @@ G-Code macros (one may define any number of sections with a
 #   commands. Care should be taken when overriding commands as it can
 #   cause complex and unexpected results. The default is to not
 #   override an existing G-Code command.
+#description: G-Code macro
+#   This will add a short description used at the HELP command or while
+#   using the auto completion feature. Default "G-Code macro"
 ```
 
 ## [delayed_gcode]
@@ -1310,6 +1310,21 @@ path:
 #   are not supported). One may point this to OctoPrint's upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
+```
+
+## [sdcard_loop]
+
+Some printers with stage-clearing features, such as a part ejector or
+a belt printer, can find use in looping sections of the sdcard file.
+(For example, to print the same part over and over, or repeat the
+a section of a part for a chain or other repeated pattern).
+
+See the [command reference](G-Codes.md#sdcard-loop) for supported
+commands. See the [sample-macros.cfg](../config/sample-macros.cfg)
+file for a Marlin compatible M808 G-Code macro.
+
+```
+[sdcard_loop]
 ```
 
 ## [force_move]
@@ -3443,12 +3458,12 @@ text:
 
 ## [display_template]
 
-Display data text "macros" (one may define any number of sections
-with a display_template prefix). This feature allows one to reduce
+Display data text "macros" (one may define any number of sections with
+a display_template prefix). This feature allows one to reduce
 repetitive definitions in display_data sections. One may use the
 builtin render() function in display_data sections to evaluate a
-template. For example, if one were to define [display_template
-my_template] then one could use `{ render('my_template') }` in a
+template. For example, if one were to define `[display_template
+my_template]` then one could use `{ render('my_template') }` in a
 display_data section.
 
 ```
@@ -3518,25 +3533,9 @@ A [default set of menus](../klippy/extras/display/menu.cfg) are
 automatically created. One can replace or extend the menu by
 overriding the defaults in the main printer.cfg config file.
 
-Available options in menu Jinja2 template context:
-
-Read-only attributes for menu element:
-* menu.width - element width (number of display columns)
-* menu.ns - element namespace
-* menu.event - name of the event that triggered the script
-* menu.input - input value, only available in input script context
-
-List of actions for menu element:
-* menu.back(force, update): will execute menu back command, optional
-  boolean parameters <force> and <update>.
-  * When <force> is set True then it will also stop editing. Default
-    value is False
-  * When <update> is set False then parent container items are not
-    updated. Default value is True
-* menu.exit(force) - will execute menu exit command, optional boolean
-  parameter <force> default value False
-  * When <force> is set True then it will also stop editing. Default
-    value is False
+See the
+[command template document](Command_Templates.md#menu-templates) for
+information on menu attributes available during template rendering.
 
 ```
 # Common parameters available for all menu config sections.

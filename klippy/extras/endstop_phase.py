@@ -102,22 +102,22 @@ class EndstopPhase:
                     self.name, phase, self.endstop_phase))
         return delta * self.step_dist
     def handle_home_rails_end(self, homing_state, rails):
+        kin_spos = homing_state.get_stepper_trigger_positions()
+        orig_pos = kin_spos.get(self.name)
+        if orig_pos is None:
+            return
         for rail in rails:
             stepper = rail.get_steppers()[0]
-            if stepper.get_name() != self.name:
-                continue
-            orig_pos = rail.get_tag_position()
-            offset = self.get_homed_offset(stepper)
-            pos = self.align_endstop(orig_pos) + offset
-            if pos == orig_pos:
-                return False
-            rail.set_tag_position(pos)
-            return True
+            if stepper.get_name() == self.name:
+                offset = self.get_homed_offset(stepper)
+                kin_spos[self.name] = self.align_endstop(orig_pos) + offset
+                return
 
 class EndstopPhases:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.tracking = {}
+        self.last_home_info = {}
         # Register handlers
         self.printer.register_event_handler("homing:home_rails_end",
                                             self.handle_home_rails_end)
@@ -125,21 +125,30 @@ class EndstopPhases:
         self.gcode.register_command("ENDSTOP_PHASE_CALIBRATE",
                                     self.cmd_ENDSTOP_PHASE_CALIBRATE,
                                     desc=self.cmd_ENDSTOP_PHASE_CALIBRATE_help)
-    def lookup_rail(self, stepper, stepper_name):
+    def lookup_stepper(self, stepper, stepper_name):
         mod_name = "endstop_phase %s" % (stepper_name,)
         m = self.printer.lookup_object(mod_name, None)
         if m is not None:
-            return (None, m.phase_history)
+            return {"get_phase": None, "is_rail": False,
+                    "phase_history": m.phase_history}
         for driver in TRINAMIC_DRIVERS:
             mod_name = "%s %s" % (driver, stepper_name)
             m = self.printer.lookup_object(mod_name, None)
             if m is not None:
-                return (m.get_phase, [0] * (m.get_microsteps() * 4))
+                return {"get_phase": m.get_phase, "is_rail": False,
+                        "phase_history": [0] * (m.get_microsteps() * 4)}
         return None
-    def update_rail(self, info, stepper):
+    def update_stepper(self, stepper, is_rail):
+        stepper_name = stepper.get_name()
+        if stepper_name not in self.tracking:
+            info = self.lookup_stepper(stepper, stepper_name)
+            self.tracking[stepper_name] = info
+        info = self.tracking[stepper_name]
         if info is None:
             return
-        get_phase, phase_history = info
+        if is_rail:
+            info["is_rail"] = True
+        get_phase = info["get_phase"]
         if get_phase is None:
             return
         try:
@@ -147,16 +156,19 @@ class EndstopPhases:
         except:
             logging.exception("Error in EndstopPhases get_phase")
             return
+        phase_history = info["phase_history"]
         phase = convert_phase(driver_phase, driver_phases, len(phase_history))
         phase_history[phase] += 1
+        self.last_home_info[stepper.get_name()] = {
+            'phase': phase, 'phases': len(phase_history),
+            'mcu_position': stepper.get_mcu_position()
+        }
     def handle_home_rails_end(self, homing_state, rails):
         for rail in rails:
-            stepper = rail.get_steppers()[0]
-            stepper_name = stepper.get_name()
-            if stepper_name not in self.tracking:
-                info = self.lookup_rail(stepper, stepper_name)
-                self.tracking[stepper_name] = info
-            self.update_rail(self.tracking[stepper_name], stepper)
+            is_rail = True
+            for stepper in rail.get_steppers():
+                self.update_stepper(stepper, is_rail)
+                is_rail = False
     cmd_ENDSTOP_PHASE_CALIBRATE_help = "Calibrate stepper phase"
     def cmd_ENDSTOP_PHASE_CALIBRATE(self, gcmd):
         stepper_name = gcmd.get('STEPPER', None)
@@ -168,6 +180,8 @@ class EndstopPhases:
             raise gcmd.error("Stats not available for stepper %s"
                              % (stepper_name,))
         endstop_phase, phases = self.generate_stats(stepper_name, info)
+        if not info["is_rail"]:
+            return
         configfile = self.printer.lookup_object('configfile')
         section = 'endstop_phase %s' % (stepper_name,)
         configfile.remove_section(section)
@@ -177,7 +191,7 @@ class EndstopPhases:
             "The SAVE_CONFIG command will update the printer config\n"
             "file with these parameters and restart the printer.")
     def generate_stats(self, stepper_name, info):
-        get_phase, phase_history = info
+        phase_history = info["phase_history"]
         wph = phase_history + phase_history
         count = sum(phase_history)
         phases = len(phase_history)
@@ -201,10 +215,13 @@ class EndstopPhases:
             self.gcode.respond_info(
                 "No steppers found. (Be sure to home at least once.)")
             return
-        for stepper_name, info in sorted(self.tracking.items()):
-            if info is None:
+        for stepper_name in sorted(self.tracking.keys()):
+            info = self.tracking[stepper_name]
+            if info is None or not info["is_rail"]:
                 continue
             self.generate_stats(stepper_name, info)
+    def get_status(self, eventtime):
+        return { 'last_home': dict(self.last_home_info) }
 
 def load_config_prefix(config):
     return EndstopPhase(config)
