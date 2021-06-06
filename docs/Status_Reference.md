@@ -36,6 +36,20 @@ The following information is available in the `display_status` object
   `virtual_sdcard.progress` if no recent `M73` received).
 - `message`: The message contained in the last `M117` G-Code command.
 
+# endstop_phase
+
+The following information is available in the
+[endstop_phase](Config_Reference.md#endstop_phase) object:
+- `last_home.<stepper name>.phase`: The phase of the stepper motor at
+  the end of the last home attempt.
+- `last_home.<stepper name>.phases`: The total number of phases
+  available on the stepper motor.
+- `last_home.<stepper name>.mcu_position`: The position (as tracked by
+  the micro-controller) of the stepper motor at the end of the last
+  home attempt. The position is the total number of steps taken in a
+  forward direction minus the total number of steps taken in the
+  reverse direction since the micro-controller was last restarted.
+
 # fan
 
 The following information is available in

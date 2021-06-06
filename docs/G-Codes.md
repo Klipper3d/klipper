@@ -161,8 +161,7 @@ The following standard commands are supported:
   MINIMUM and/or at or below the supplied MAXIMUM.
 - `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
   [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
-  the printer's velocity limits. Note that one may only set values
-  less than or equal to the limits specified in the config file.
+  the printer's velocity limits.
 - `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
   Sets the target temperature for a heater. If a target temperature is
   not supplied, the target is 0.
