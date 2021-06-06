@@ -21,6 +21,7 @@ class VirtualSD:
         # Work timer
         self.reactor = printer.get_reactor()
         self.must_pause_work = self.cmd_from_sd = False
+        self.next_file_position = 0
         self.work_timer = None
         # Register commands
         self.gcode = printer.lookup_object('gcode')
@@ -124,7 +125,7 @@ class VirtualSD:
         if filename[0] == '/':
             filename = filename[1:]
         self._load_file(gcmd, filename, check_subdirs=True)
-        self.cmd_M24(gcmd)
+        self.do_resume()
     def cmd_M20(self, gcmd):
         # List SD card
         files = self.get_file_list()
@@ -191,6 +192,12 @@ class VirtualSD:
             return
         gcmd.respond_raw("SD printing byte %d/%d"
                          % (self.file_position, self.file_size))
+    def get_file_position(self):
+        return self.next_file_position
+    def set_file_position(self, pos):
+        self.next_file_position = pos
+    def is_cmd_from_sd(self):
+        return self.cmd_from_sd
     # Background work timer
     def work_handler(self, eventtime):
         logging.info("Starting SD card print (position %d)", self.file_position)
@@ -232,8 +239,11 @@ class VirtualSD:
                 continue
             # Dispatch command
             self.cmd_from_sd = True
+            line = lines.pop()
+            next_file_position = self.file_position + len(line) + 1
+            self.next_file_position = next_file_position
             try:
-                self.gcode.run_script(lines[-1])
+                self.gcode.run_script(line)
             except self.gcode.error as e:
                 self.print_stats.note_error(str(e))
                 break
@@ -241,7 +251,17 @@ class VirtualSD:
                 logging.exception("virtual_sdcard dispatch")
                 break
             self.cmd_from_sd = False
-            self.file_position += len(lines.pop()) + 1
+            self.file_position = self.next_file_position
+            # Do we need to skip around?
+            if self.next_file_position != next_file_position:
+                try:
+                    self.current_file.seek(self.file_position)
+                except:
+                    logging.exception("virtual_sdcard seek")
+                    self.work_timer = None
+                    return self.reactor.NEVER
+                lines = []
+                partial_input = ""
         logging.info("Exiting SD card print (position %d)", self.file_position)
         self.work_timer = None
         self.cmd_from_sd = False

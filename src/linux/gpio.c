@@ -153,9 +153,6 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     } else if (pull_up < 0) {
         req.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN;
     }
-#else
-    if (pull_up)
-        shutdown("Linux gpio interface does not support pullup/pulldown");
 #endif
     req.lineoffsets[0] = g.line->offset;
     strncpy(req.consumer_label, GPIO_CONSUMER, sizeof(req.consumer_label) - 1);

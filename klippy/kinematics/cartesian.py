@@ -51,8 +51,8 @@ class CartKinematics:
             dca = self.dual_carriage_axis
             rails = rails[:dca] + self.dual_carriage_rails + rails[dca+1:]
         return [s for rail in rails for s in rail.get_steppers()]
-    def calc_tag_position(self):
-        return [rail.get_tag_position() for rail in self.rails]
+    def calc_position(self, stepper_positions):
+        return [stepper_positions[rail.get_name()] for rail in self.rails]
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)

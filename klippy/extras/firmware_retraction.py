@@ -16,8 +16,10 @@ class FirmwareRetraction:
                                  + self.unretract_extra_length)
         self.is_retracted = False
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('SET_RETRACTION', self.cmd_SET_RETRACTION)
-        self.gcode.register_command('GET_RETRACTION', self.cmd_GET_RETRACTION)
+        self.gcode.register_command('SET_RETRACTION', self.cmd_SET_RETRACTION,
+                                    desc=self.cmd_SET_RETRACTION_help)
+        self.gcode.register_command('GET_RETRACTION', self.cmd_GET_RETRACTION,
+                                    desc=self.cmd_GET_RETRACTION_help)
         self.gcode.register_command('G10', self.cmd_G10)
         self.gcode.register_command('G11', self.cmd_G11)
 
@@ -28,7 +30,7 @@ class FirmwareRetraction:
             "unretract_extra_length": self.unretract_extra_length,
             "unretract_speed": self.unretract_speed,
         }
-
+    cmd_SET_RETRACTION_help = ("Set firmware retraction parameters")
     def cmd_SET_RETRACTION(self, gcmd):
         self.retract_length = gcmd.get_float('RETRACT_LENGTH',
                                              self.retract_length, minval=0.)
@@ -41,7 +43,7 @@ class FirmwareRetraction:
         self.unretract_length = (self.retract_length
                                  + self.unretract_extra_length)
         self.is_retracted = False
-
+    cmd_GET_RETRACTION_help = ("Report firmware retraction paramters")
     def cmd_GET_RETRACTION(self, gcmd):
         gcmd.respond_info("RETRACT_LENGTH=%.5f RETRACT_SPEED=%.5f"
                           " UNRETRACT_EXTRA_LENGTH=%.5f UNRETRACT_SPEED=%.5f"
