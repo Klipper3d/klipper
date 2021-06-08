@@ -46,7 +46,7 @@ class PrintStats:
     def note_error(self, message):
         self._note_finish("error", message)
     def note_cancel(self):
-        self._note_finish("canceled")
+        self._note_finish("cancelled")
     def _note_finish(self, state, error_message = None):
         self.state = state
         self.error_message = error_message
