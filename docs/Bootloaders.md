@@ -393,7 +393,7 @@ STM32F4 microcontrollers come equipped with a built-in system bootloader
 capable of flashing over USB (via DFU), 3.3v Serial, and various other
 methods (see STM Document AN2606 for more information).  Some
 STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
-bootloader.  The HID bootloader is available for STM32F405/407
+bootloader due to a [reworkable design flaw](https://github.com/bigtreetech/BIGTREETECH-SKR-PRO-V1.1/issues/153).  The HID bootloader is available for STM32F405/407
 based boards should the user prefer flashing over USB over using the sdcard.
 Note that you may need to configure and build a version specific to your
 board, a [build for the SKR Pro 1.1 is available here](
