@@ -380,6 +380,19 @@ micro-controller.
 Otherwise, this error is typically the result of incorrect UART pin
 wiring or an incorrect Klipper configuration of the UART pin settings.
 
+Another possible cause of this error is an abrupt reduction in baud rate
+after running some other firmware that communicates at a baud rate higher
+than Klipper's 9000 (e.g. Prusa's firmware which uses 115200).
+Once the MCU has communicated with the TMC driver at a high baud rate,
+the driver won't accept a significantly lower baud rate until it is fully
+power cycled. This is stated in the datasheet: "Remark, that due
+to this mechanism an abrupt reduction of the baud rate to less
+than 15 percent of the previous value is not possible."
+You must completely power down the printer (both USB and motor
+power off) before Klipper will communicate with the driver.
+If the board has a large power supply smoothing capacitor, it may
+be necessary to keep the power off for some time (e.g. 5-10 seconds).
+
 ## I keep getting "Unable to write tmc spi 'stepper_x' register ..." errors?
 
 This occurs when Klipper is unable to communicate with a tmc2130 or
