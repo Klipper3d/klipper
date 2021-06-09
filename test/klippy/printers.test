@@ -118,6 +118,7 @@ CONFIG ../../config/generic-bigtreetech-skr-e3-turbo.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.4.cfg
+CONFIG ../../config/generic-th3d-ezboard-lite-v1.2.cfg
 CONFIG ../../config/generic-mks-sgenl.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
