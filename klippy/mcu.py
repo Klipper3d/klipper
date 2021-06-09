@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
-import serialhdl, pins, chelper, clocksync
+import serialhdl, msgproto, pins, chelper, clocksync
 
 class error(Exception):
     pass
@@ -548,17 +548,26 @@ class MCU:
             raise error("MCU '%s' CRC does not match config" % (self._name,))
         # Transmit config messages (if needed)
         self.register_response(self._handle_starting, 'starting')
-        if prev_crc is None:
-            logging.info("Sending MCU '%s' printer configuration...",
-                         self._name)
-            for c in self._config_cmds:
+        try:
+            if prev_crc is None:
+                logging.info("Sending MCU '%s' printer configuration...",
+                             self._name)
+                for c in self._config_cmds:
+                    self._serial.send(c)
+            else:
+                for c in self._restart_cmds:
+                    self._serial.send(c)
+            # Transmit init messages
+            for c in self._init_cmds:
                 self._serial.send(c)
-        else:
-            for c in self._restart_cmds:
-                self._serial.send(c)
-        # Transmit init messages
-        for c in self._init_cmds:
-            self._serial.send(c)
+        except msgproto.enumeration_error as e:
+            enum_name, enum_value = e.get_enum_params()
+            if enum_name == 'pin':
+                # Raise pin name errors as a config error (not a protocol error)
+                raise self._printer.config_error(
+                    "Pin '%s' is not a valid pin name on mcu '%s'"
+                    % (enum_value, self._name))
+            raise
     def _send_get_config(self):
         get_config_cmd = self.lookup_query_command(
             "get_config",

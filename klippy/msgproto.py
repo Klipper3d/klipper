@@ -86,12 +86,14 @@ class PT_progmem_buffer(PT_string):
 class PT_buffer(PT_string):
     pass
 
-MessageTypes = {
-    '%u': PT_uint32(), '%i': PT_int32(),
-    '%hu': PT_uint16(), '%hi': PT_int16(),
-    '%c': PT_byte(),
-    '%s': PT_string(), '%.*s': PT_progmem_buffer(), '%*s': PT_buffer(),
-}
+class enumeration_error(error):
+    def __init__(self, enum_name, value):
+        self.enum_name = enum_name
+        self.value = value
+        error.__init__(self, "Unknown value '%s' in enumeration '%s'"
+                       % (value, enum_name))
+    def get_enum_params(self):
+        return self.enum_name, self.value
 
 class Enumeration:
     is_int = False
@@ -105,8 +107,7 @@ class Enumeration:
     def encode(self, out, v):
         tv = self.enums.get(v)
         if tv is None:
-            raise error("Unknown value '%s' in enumeration '%s'"
-                        % (v, self.enum_name))
+            raise enumeration_error(self.enum_name, v)
         self.pt.encode(out, tv)
     def parse(self, s, pos):
         v, pos = self.pt.parse(s, pos)
@@ -114,6 +115,13 @@ class Enumeration:
         if tv is None:
             tv = "?%d" % (v,)
         return tv, pos
+
+MessageTypes = {
+    '%u': PT_uint32(), '%i': PT_int32(),
+    '%hu': PT_uint16(), '%hi': PT_int16(),
+    '%c': PT_byte(),
+    '%s': PT_string(), '%.*s': PT_progmem_buffer(), '%*s': PT_buffer(),
+}
 
 # Lookup the message types for a format string
 def lookup_params(msgformat, enumerations={}):
