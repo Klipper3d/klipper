@@ -152,13 +152,11 @@ class DisplayBase:
             max_gap_to_join = 4
             first_col = last_col = cols[0]
             i = 1
-            while i == 1 or i < len(cols):
+            while i == 1 or i <= len(cols):
                 if i < len(cols) and cols[i] - last_col <= max_gap_to_join:
-                    if i < len(cols) - 1:
-                        last_col = cols[i]
-                        i += 1
-                        continue
                     last_col = cols[i]
+                    i += 1
+                    continue
 
                 # Transmit the strip from first_col to last_col.
                 strip = self.vram.crop((
@@ -191,7 +189,8 @@ class DisplayBase:
                 # transmitted.
                 self.remote_vram.paste(strip, (start_x + first_col, row))
 
-                first_col = last_col = cols[i]
+                if i < len(cols):
+                    first_col = last_col = cols[i]
                 i += 1
 
             # Take a break at least every 50ms or 16KB transmitted to
