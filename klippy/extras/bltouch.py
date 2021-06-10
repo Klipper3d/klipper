@@ -28,7 +28,7 @@ class BLTouchEndstopWrapper:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.position_endstop = config.getfloat('z_offset')
+        self.position_endstop = config.getfloat('z_offset', above=0)
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
         self.probe_touch_mode = config.getboolean('probe_with_touch_mode',
