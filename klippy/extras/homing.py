@@ -150,13 +150,16 @@ class Homing:
         self.printer = printer
         self.toolhead = printer.lookup_object('toolhead')
         self.changed_axes = []
-        self.kin_spos = {}
+        self.trigger_mcu_pos = {}
+        self.adjust_pos = {}
     def set_axes(self, axes):
         self.changed_axes = axes
     def get_axes(self):
         return self.changed_axes
-    def get_stepper_trigger_positions(self):
-        return self.kin_spos
+    def get_trigger_position(self, stepper_name):
+        return self.trigger_mcu_pos[stepper_name]
+    def set_stepper_adjustment(self, stepper_name, adjustment):
+        self.adjust_pos[stepper_name] = adjustment
     def _fill_coord(self, coord):
         # Fill in any None entries in 'coord' with current toolhead position
         thcoord = list(self.toolhead.get_position())
@@ -200,16 +203,19 @@ class Homing:
                     % (hmove.check_no_movement(),))
         # Signal home operation complete
         self.toolhead.flush_step_generation()
-        kin = self.toolhead.get_kinematics()
-        kin_spos = {s.get_name(): s.get_commanded_position()
-                    for s in kin.get_steppers()}
-        self.kin_spos = dict(kin_spos)
+        self.trigger_mcu_pos = {sp.stepper_name: sp.trig_pos
+                                for sp in hmove.stepper_positions}
+        self.adjust_pos = {}
         self.printer.send_event("homing:home_rails_end", self, rails)
-        if kin_spos != self.kin_spos:
+        if any(self.adjust_pos.values()):
             # Apply any homing offsets
-            adjustpos = kin.calc_position(self.kin_spos)
+            kin = self.toolhead.get_kinematics()
+            kin_spos = {s.get_name(): (s.get_commanded_position()
+                                       + self.adjust_pos.get(s.get_name(), 0.))
+                        for s in kin.get_steppers()}
+            newpos = kin.calc_position(kin_spos)
             for axis in homing_axes:
-                movepos[axis] = adjustpos[axis]
+                movepos[axis] = newpos[axis]
             self.toolhead.set_position(movepos)
 
 class PrinterHoming:
