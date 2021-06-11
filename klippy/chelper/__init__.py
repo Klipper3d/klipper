@@ -18,6 +18,7 @@ COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
 SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
+    'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c',
     'kin_shaper.c',
@@ -25,7 +26,7 @@ SOURCE_FILES = [
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
-    'trapq.h',
+    'trapq.h', 'pollreactor.h', 'msgblock.h'
 ]
 
 defs_stepcompress = """
@@ -161,10 +162,23 @@ defs_serialqueue = """
     void serialqueue_set_receive_window(struct serialqueue *sq
         , int receive_window);
     void serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
-        , double last_clock_time, uint64_t last_clock);
+        , double conv_time, uint64_t conv_clock, uint64_t last_clock);
     void serialqueue_get_stats(struct serialqueue *sq, char *buf, int len);
     int serialqueue_extract_old(struct serialqueue *sq, int sentq
         , struct pull_queue_message *q, int max);
+"""
+
+defs_trdispatch = """
+    void trdispatch_start(struct trdispatch *td, uint32_t dispatch_reason);
+    void trdispatch_stop(struct trdispatch *td);
+    struct trdispatch *trdispatch_alloc(void);
+    struct trdispatch_mcu *trdispatch_mcu_alloc(struct trdispatch *td
+        , struct serialqueue *sq, struct command_queue *cq, uint32_t trsync_oid
+        , uint32_t set_timeout_msgtag, uint32_t trigger_msgtag
+        , uint32_t state_msgtag);
+    void trdispatch_mcu_setup(struct trdispatch_mcu *tdm
+        , uint64_t last_status_clock, uint64_t expire_clock
+        , uint64_t expire_ticks, uint64_t min_extend_ticks);
 """
 
 defs_pyhelper = """
@@ -178,9 +192,10 @@ defs_std = """
 
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
-    defs_itersolve, defs_trapq, defs_kin_cartesian, defs_kin_corexy,
-    defs_kin_corexz, defs_kin_delta, defs_kin_polar, defs_kin_rotary_delta,
-    defs_kin_winch, defs_kin_extruder, defs_kin_shaper,
+    defs_itersolve, defs_trapq, defs_trdispatch,
+    defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
+    defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder,
+    defs_kin_shaper,
 ]
 
 # Update filenames to an absolute path

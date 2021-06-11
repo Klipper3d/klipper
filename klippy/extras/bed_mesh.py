@@ -93,6 +93,9 @@ class BedMesh:
         self.gcode.register_command(
             'BED_MESH_CLEAR', self.cmd_BED_MESH_CLEAR,
             desc=self.cmd_BED_MESH_CLEAR_help)
+        self.gcode.register_command(
+            'BED_MESH_OFFSET', self.cmd_BED_MESH_OFFSET,
+            desc=self.cmd_BED_MESH_OFFSET_help)
         # Register transform
         gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
@@ -118,8 +121,6 @@ class BedMesh:
                         "bed_mesh: ERROR, fade_target lies outside of mesh z "
                         "range\nmin: %.4f, max: %.4f, fade_target: %.4f"
                         % (min_z, max_z, err_target))
-            if self.fade_target:
-                mesh.offset_mesh(self.fade_target)
             min_z, max_z = mesh.get_z_range()
             if self.fade_dist <= max(abs(min_z), abs(max_z)):
                 self.z_mesh = None
@@ -132,7 +133,7 @@ class BedMesh:
         else:
             self.fade_target = 0.
         self.z_mesh = mesh
-        self.splitter.initialize(mesh)
+        self.splitter.initialize(mesh, self.fade_target)
         # cache the current position before a transform takes place
         gcode_move = self.printer.lookup_object('gcode_move')
         gcode_move.reset_last_position()
@@ -152,9 +153,9 @@ class BedMesh:
         else:
             # return current position minus the current z-adjustment
             x, y, z, e = self.toolhead.get_position()
-            z_adj = self.z_mesh.calc_z(x, y)
+            max_adj = self.z_mesh.calc_z(x, y)
             factor = 1.
-            max_adj = z_adj + self.fade_target
+            z_adj = max_adj - self.fade_target
             if min(z, (z - max_adj)) >= self.fade_end:
                 # Fade out is complete, no factor
                 factor = 0.
@@ -232,9 +233,20 @@ class BedMesh:
             gcmd.respond_raw("mesh_map_output " + json.dumps(outdict))
         else:
             gcmd.respond_info("Bed has not been probed")
-    cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjusment is made"
+    cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjustment is made"
     def cmd_BED_MESH_CLEAR(self, gcmd):
         self.set_mesh(None)
+    cmd_BED_MESH_OFFSET_help = "Add X/Y offsets to the mesh lookup"
+    def cmd_BED_MESH_OFFSET(self, gcmd):
+        if self.z_mesh is not None:
+            offsets = [None, None]
+            for i, axis in enumerate(['X', 'Y']):
+                offsets[i] = gcmd.get_float(axis, None)
+            self.z_mesh.set_mesh_offsets(offsets)
+            gcode_move = self.printer.lookup_object('gcode_move')
+            gcode_move.reset_last_position()
+        else:
+            gcmd.respond_info("No mesh loaded to offset")
 
 
 class BedMeshCalibrate:
@@ -707,9 +719,11 @@ class MoveSplitter:
         self.move_check_distance = config.getfloat(
             'move_check_distance', 5., minval=3.)
         self.z_mesh = None
+        self.fade_offset = 0.
         self.gcode = gcode
-    def initialize(self, mesh):
+    def initialize(self, mesh, fade_offset):
         self.z_mesh = mesh
+        self.fade_offset = fade_offset
     def build_move(self, prev_pos, next_pos, factor):
         self.prev_pos = tuple(prev_pos)
         self.next_pos = tuple(next_pos)
@@ -723,7 +737,8 @@ class MoveSplitter:
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
     def _calc_z_offset(self, pos):
         z = self.z_mesh.calc_z(pos[0], pos[1])
-        return self.z_factor * z + self.z_mesh.mesh_offset
+        offset = self.fade_offset
+        return self.z_factor * (z - offset) + offset
     def _set_next_move(self, distance_from_prev):
         t = distance_from_prev / self.total_move_length
         if t > 1. or t < 0.:
@@ -766,7 +781,7 @@ class ZMesh:
         self.probed_matrix = self.mesh_matrix = None
         self.mesh_params = params
         self.avg_z = 0.
-        self.mesh_offset = 0.
+        self.mesh_offsets = [0., 0.]
         logging.debug('bed_mesh: probe/mesh parameters:')
         for key, value in self.mesh_params.items():
             logging.debug("%s :  %s" % (key, value))
@@ -802,7 +817,7 @@ class ZMesh:
                            (self.mesh_y_count - 1)
     def get_mesh_matrix(self):
         if self.mesh_matrix is not None:
-            return [[round(z + self.mesh_offset, 6) for z in line]
+            return [[round(z, 6) for z in line]
                     for line in self.mesh_matrix]
         return [[]]
     def get_probed_matrix(self):
@@ -828,6 +843,8 @@ class ZMesh:
             msg = "Mesh X,Y: %d,%d\n" % (self.mesh_x_count, self.mesh_y_count)
             if move_z is not None:
                 msg += "Search Height: %d\n" % (move_z)
+            msg += "Mesh Offsets: X=%.4f, Y=%.4f\n" % (
+                self.mesh_offsets[0], self.mesh_offsets[1])
             msg += "Mesh Average: %.2f\n" % (self.avg_z)
             rng = self.get_z_range()
             msg += "Mesh Range: min=%.4f max=%.4f\n" % (rng[0], rng[1])
@@ -851,12 +868,10 @@ class ZMesh:
         # z step distances
         self.avg_z = round(self.avg_z, 2)
         self.print_mesh(logging.debug)
-    def offset_mesh(self, offset):
-        if self.mesh_matrix:
-            self.mesh_offset = offset
-            for y_line in self.mesh_matrix:
-                for idx, z in enumerate(y_line):
-                    y_line[idx] = z - self.mesh_offset
+    def set_mesh_offsets(self, offsets):
+        for i, o in enumerate(offsets):
+            if o is not None:
+                self.mesh_offsets[i] = o
     def get_x_coordinate(self, index):
         return self.mesh_x_min + self.mesh_x_dist * index
     def get_y_coordinate(self, index):
@@ -864,8 +879,8 @@ class ZMesh:
     def calc_z(self, x, y):
         if self.mesh_matrix is not None:
             tbl = self.mesh_matrix
-            tx, xidx = self._get_linear_index(x, 0)
-            ty, yidx = self._get_linear_index(y, 1)
+            tx, xidx = self._get_linear_index(x + self.mesh_offsets[0], 0)
+            ty, yidx = self._get_linear_index(y + self.mesh_offsets[1], 1)
             z0 = lerp(tx, tbl[yidx][xidx], tbl[yidx][xidx+1])
             z1 = lerp(tx, tbl[yidx+1][xidx], tbl[yidx+1][xidx+1])
             return lerp(ty, z0, z1)

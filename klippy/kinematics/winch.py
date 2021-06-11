@@ -29,10 +29,10 @@ class WinchKinematics:
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return list(self.steppers)
-    def calc_tag_position(self):
+    def calc_position(self, stepper_positions):
         # Use only first three steppers to calculate cartesian position
-        spos = [s.get_tag_position() for s in self.steppers[:3]]
-        return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in spos])
+        pos = [stepper_positions[rail.get_name()] for rail in self.steppers[:3]]
+        return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in pos])
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)

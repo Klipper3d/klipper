@@ -161,8 +161,7 @@ The following standard commands are supported:
   MINIMUM and/or at or below the supplied MAXIMUM.
 - `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
   [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
-  the printer's velocity limits. Note that one may only set values
-  less than or equal to the limits specified in the config file.
+  the printer's velocity limits.
 - `SET_HEATER_TEMPERATURE HEATER=<heater_name> [TARGET=<target_temperature>]`:
   Sets the target temperature for a heater. If a target temperature is
   not supplied, the target is 0.
@@ -272,7 +271,7 @@ The following command is available when a
 [neopixel config section](Config_Reference.md#neopixel) or
 [dotstar config section](Config_Reference.md#dotstar) is enabled:
 - `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-  WHITE=<value> [INDEX=<index>] [TRANSMIT=0]`: This sets the LED
+  WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the LED
   output. Each color `<value>` must be between 0.0 and 1.0. The WHITE
   option is only valid on RGBW LEDs. If multiple LED chips are
   daisy-chained then one may specify INDEX to alter the color of just
@@ -281,7 +280,12 @@ The following command is available when a
   to the provided color. If TRANSMIT=0 is specified then the color
   change will only be made on the next SET_LED command that does not
   specify TRANSMIT=0; this may be useful in combination with the INDEX
-  parameter to batch multiple updates in a daisy-chain.
+  parameter to batch multiple updates in a daisy-chain. By default, the
+  SET_LED command will sync it's changes with other ongoing gcode commands.
+  This can lead to undesirable behavior if LEDs are being set while the
+  printer is not printing as it will reset the idle timeout. If careful
+  timing is not needed, the optional SYNC=0 parameter can be specified to
+  apply the changes instantly and not reset the idle timeout.
 
 ## Servo Commands
 
@@ -429,6 +433,10 @@ The following commands are available when the
   supplied name from persistent memory.  Note that after SAVE or
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
+- `BED_MESH_OFFSET [X=<value>] [Y=<value>]`:  Applies X and/or Y
+  offsets to the mesh lookup.  This is useful for printers with
+  independent extruders, as an offset is necessary to produce
+  correct Z adjustment after a tool change.
 
 ## Bed Screws Helper
 

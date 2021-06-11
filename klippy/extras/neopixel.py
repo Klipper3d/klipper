@@ -119,6 +119,7 @@ class PrinterNeoPixel:
         white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
         index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
+        sync = gcmd.get_int('SYNC', 1)
         # Update and transmit data
         def reactor_bgfunc(print_time):
             with self.mutex:
@@ -128,8 +129,13 @@ class PrinterNeoPixel:
         def lookahead_bgfunc(print_time):
             reactor = self.printer.get_reactor()
             reactor.register_callback(lambda et: reactor_bgfunc(print_time))
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.register_lookahead_callback(lookahead_bgfunc)
+        if sync:
+            #Sync LED Update with print time and send
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.register_lookahead_callback(lookahead_bgfunc)
+        else:
+            #Send update now (so as not to wake toolhead and reset idle_timeout)
+            lookahead_bgfunc(None)
 
 def load_config_prefix(config):
     return PrinterNeoPixel(config)

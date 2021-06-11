@@ -32,25 +32,30 @@ class VibrationPulseTest:
         return ['x', 'y']
     def get_start_test_points(self):
         return self.probe_points
-    def prepare_test(self, toolhead, gcmd):
+    def prepare_test(self, gcmd):
         self.freq_start = gcmd.get_float("FREQ_START", self.min_freq, minval=1.)
         self.freq_end = gcmd.get_float("FREQ_END", self.max_freq,
                                        minval=self.freq_start, maxval=200.)
         self.hz_per_sec = gcmd.get_float("HZ_PER_SEC", self.hz_per_sec,
                                          above=0., maxval=2.)
-        # Attempt to adjust maximum acceleration and acceleration to
-        # deceleration based on the maximum test frequency.
-        max_accel = self.freq_end * self.accel_per_hz
-        toolhead.cmd_SET_VELOCITY_LIMIT(self.gcode.create_gcode_command(
-            "SET_VELOCITY_LIMIT", "SET_VELOCITY_LIMIT",
-            {"ACCEL": max_accel, "ACCEL_TO_DECEL": max_accel}))
-    def run_test(self, toolhead, axis, gcmd):
+    def run_test(self, axis, gcmd):
+        toolhead = self.printer.lookup_object('toolhead')
         X, Y, Z, E = toolhead.get_position()
         if axis not in self.get_supported_axes():
             raise gcmd.error("Test axis '%s' is not supported", axis)
         vib_dir = (1, 0) if axis == 'x' else (0., 1.)
         sign = 1.
         freq = self.freq_start
+        # Override maximum acceleration and acceleration to
+        # deceleration based on the maximum test frequency
+        systime = self.printer.get_reactor().monotonic()
+        toolhead_info = toolhead.get_status(systime)
+        old_max_accel = toolhead_info['max_accel']
+        old_max_accel_to_decel = toolhead_info['max_accel_to_decel']
+        max_accel = self.freq_end * self.accel_per_hz
+        self.gcode.run_script_from_command(
+                "SET_VELOCITY_LIMIT ACCEL=%.3f ACCEL_TO_DECEL=%.3f" % (
+                    max_accel, max_accel))
         input_shaper = self.printer.lookup_object('input_shaper', None)
         if input_shaper is not None and not gcmd.get_int('INPUT_SHAPING', 0):
             input_shaper.disable_shaping()
@@ -58,23 +63,26 @@ class VibrationPulseTest:
         else:
             input_shaper = None
         gcmd.respond_info("Testing frequency %.0f Hz" % (freq,))
-        _, max_accel = toolhead.get_max_velocity()
         while freq <= self.freq_end + 0.000001:
             t_seg = .25 / freq
-            accel = min(self.accel_per_hz * freq, max_accel)
-            V = accel * t_seg
+            accel = self.accel_per_hz * freq
+            max_v = accel * t_seg
             toolhead.cmd_M204(self.gcode.create_gcode_command(
                 "M204", "M204", {"S": accel}))
             L = .5 * accel * t_seg**2
             nX = X + sign * vib_dir[0] * L
             nY = Y + sign * vib_dir[1] * L
-            toolhead.move([nX, nY, Z, E], V)
-            toolhead.move([X, Y, Z, E], V)
+            toolhead.move([nX, nY, Z, E], max_v)
+            toolhead.move([X, Y, Z, E], max_v)
             sign = -sign
             old_freq = freq
             freq += 2. * t_seg * self.hz_per_sec
             if math.floor(freq) > math.floor(old_freq):
                 gcmd.respond_info("Testing frequency %.0f Hz" % (freq,))
+        # Restore the original acceleration values
+        self.gcode.run_script_from_command(
+                "SET_VELOCITY_LIMIT ACCEL=%.3f ACCEL_TO_DECEL=%.3f" % (
+                    old_max_accel, old_max_accel_to_decel))
         # Restore input shaper if it was disabled for resonance testing
         if input_shaper is not None:
             input_shaper.enable_shaping()
@@ -97,11 +105,14 @@ class ResonanceTester:
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("MEASURE_AXES_NOISE",
-                                    self.cmd_MEASURE_AXES_NOISE)
+                                    self.cmd_MEASURE_AXES_NOISE,
+                                    desc=self.cmd_MEASURE_AXES_NOISE_help)
         self.gcode.register_command("TEST_RESONANCES",
-                                    self.cmd_TEST_RESONANCES)
+                                    self.cmd_TEST_RESONANCES,
+                                    desc=self.cmd_TEST_RESONANCES_help)
         self.gcode.register_command("SHAPER_CALIBRATE",
-                                    self.cmd_SHAPER_CALIBRATE)
+                                    self.cmd_SHAPER_CALIBRATE,
+                                    desc=self.cmd_SHAPER_CALIBRATE_help)
         self.printer.register_event_handler("klippy:connect", self.connect)
 
     def connect(self):
@@ -113,7 +124,7 @@ class ResonanceTester:
         toolhead = self.printer.lookup_object('toolhead')
         calibration_data = {axis: None for axis in axes}
 
-        self.test.prepare_test(toolhead, gcmd)
+        self.test.prepare_test(gcmd)
         test_points = self.test.get_start_test_points()
         for point in test_points:
             toolhead.manual_move(point, self.move_speed)
@@ -130,7 +141,7 @@ class ResonanceTester:
                     if axis in chip_axis or chip_axis in axis:
                         chip.start_measurements()
                 # Generate moves
-                self.test.run_test(toolhead, axis, gcmd)
+                self.test.run_test(axis, gcmd)
                 raw_values = []
                 for chip_axis, chip in self.accel_chips:
                     if axis in chip_axis or chip_axis in axis:
@@ -159,7 +170,7 @@ class ResonanceTester:
                     else:
                         calibration_data[axis].add_data(new_data)
         return calibration_data
-
+    cmd_TEST_RESONANCES_help = ("Runs the resonance test for a specifed axis")
     def cmd_TEST_RESONANCES(self, gcmd):
         # Parse parameters
         if len(self.test.get_supported_axes()) > 1:
@@ -197,7 +208,8 @@ class ResonanceTester:
                                                   helper, axis, data)
             gcmd.respond_info(
                     "Resonances data written to %s file" % (csv_name,))
-
+    cmd_SHAPER_CALIBRATE_help = (
+        "Simular to TEST_RESONANCES but suggest input shaper config")
     def cmd_SHAPER_CALIBRATE(self, gcmd):
         # Parse parameters
         axis = gcmd.get("AXIS", None)
@@ -241,7 +253,8 @@ class ResonanceTester:
         gcmd.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer.")
-
+    cmd_MEASURE_AXES_NOISE_help = (
+        "Measures noise of all enabled accelerometer chips")
     def cmd_MEASURE_AXES_NOISE(self, gcmd):
         meas_time = gcmd.get_float("MEAS_TIME", 2.)
         for _, chip in self.accel_chips:

@@ -36,8 +36,8 @@ class CoreXZKinematics:
         self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
-    def calc_tag_position(self):
-        pos = [rail.get_tag_position() for rail in self.rails]
+    def calc_position(self, stepper_positions):
+        pos = [stepper_positions[rail.get_name()] for rail in self.rails]
         return [0.5 * (pos[0] + pos[2]), pos[1], 0.5 * (pos[0] - pos[2])]
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):

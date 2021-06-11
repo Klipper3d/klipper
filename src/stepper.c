@@ -1,6 +1,6 @@
 // Handling of stepper drivers.
 //
-// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -11,7 +11,8 @@
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
-#include "stepper.h" // command_config_stepper
+#include "stepper.h" // stepper_event
+#include "trsync.h" // trsync_add_signal
 
 DECL_CONSTANT("STEP_DELAY", CONFIG_STEP_DELAY);
 
@@ -44,6 +45,7 @@ struct stepper {
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
     struct move_queue_head mq;
+    struct trsync_signal stop_signal;
     // gcc (pre v6) does better optimization when uint8_t are bitfields
     uint8_t flags : 8;
 };
@@ -192,7 +194,7 @@ DECL_COMMAND(command_config_stepper,
              "config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c");
 
 // Return the 'struct stepper' for a given stepper oid
-struct stepper *
+static struct stepper *
 stepper_oid_lookup(uint8_t oid)
 {
     return oid_lookup(oid, command_config_stepper);
@@ -290,11 +292,11 @@ command_stepper_get_position(uint32_t *args)
 }
 DECL_COMMAND(command_stepper_get_position, "stepper_get_position oid=%c");
 
-// Stop all moves for a given stepper (used in end stop homing).  IRQs
-// must be off.
-void
-stepper_stop(struct stepper *s)
+// Stop all moves for a given stepper (caller must disable IRQs)
+static void
+stepper_stop(struct trsync_signal *tss, uint8_t reason)
 {
+    struct stepper *s = container_of(tss, struct stepper, stop_signal);
     sched_del_timer(&s->time);
     s->next_step_time = 0;
     s->position = -stepper_get_position(s);
@@ -309,6 +311,17 @@ stepper_stop(struct stepper *s)
     }
 }
 
+// Set the stepper to stop on a "trigger event" (used in homing)
+void
+command_stepper_stop_on_trigger(uint32_t *args)
+{
+    struct stepper *s = stepper_oid_lookup(args[0]);
+    struct trsync *ts = trsync_oid_lookup(args[1]);
+    trsync_add_signal(ts, &s->stop_signal, stepper_stop);
+}
+DECL_COMMAND(command_stepper_stop_on_trigger,
+             "stepper_stop_on_trigger oid=%c trsync_oid=%c");
+
 void
 stepper_shutdown(void)
 {
@@ -316,7 +329,7 @@ stepper_shutdown(void)
     struct stepper *s;
     foreach_oid(i, s, command_config_stepper) {
         move_queue_clear(&s->mq);
-        stepper_stop(s);
+        stepper_stop(&s->stop_signal, 0);
     }
 }
 DECL_SHUTDOWN(stepper_shutdown);

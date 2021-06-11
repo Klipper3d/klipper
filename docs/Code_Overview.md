@@ -331,12 +331,11 @@ Useful steps:
    seconds) to a cartesian coordinate (in millimeters), and then
    calculate the desired stepper position (in millimeters) from that
    cartesian coordinate.
-4. Implement the `calc_tag_position()` method in the new kinematics
-   class. This method calculates the position of the toolhead in
-   cartesian coordinates from the position of each stepper (as
-   returned by `stepper.get_tag_position()`). It does not need to be
-   efficient as it is typically only called during homing and probing
-   operations.
+4. Implement the `calc_position()` method in the new kinematics class.
+   This method calculates the position of the toolhead in cartesian
+   coordinates from the position of each stepper. It does not need to
+   be efficient as it is typically only called during homing and
+   probing operations.
 5. Other methods. Implement the `check_move()`, `get_status()`,
    `get_steppers()`, `home()`, and `set_position()` methods. These
    functions are typically used to provide kinematic specific checks.

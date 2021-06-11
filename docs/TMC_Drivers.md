@@ -6,8 +6,8 @@ However, when the drivers are in this mode, no special Klipper
 configuration is needed and the advanced Klipper features discussed in
 this document are not available.
 
-In addition to this document, be sure to review the [TMC driver config
-reference](Config_Reference.md#tmc-stepper-driver-configuration).
+In addition to this document, be sure to review the
+[TMC driver config reference](Config_Reference.md#tmc-stepper-driver-configuration).
 
 # Enabling "Stealthchop" mode
 
@@ -161,9 +161,9 @@ homing_retract_dist: 0
 ```
 
 The examples above only show settings specific to sensorless
-homing. See the [config
-reference](Config_Reference.md#tmc-stepper-driver-configuration) for
-all the available options.
+homing. See the
+[config reference](Config_Reference.md#tmc-stepper-driver-configuration)
+for all the available options.
 
 ### Find highest sensitivity that successfully homes
 
@@ -289,9 +289,9 @@ gcode:
 ```
 <!-- {% endraw %} -->
 
-The resulting macro can be called from a [homing_override config
-section](Config_Reference.md#homing_override) or from a [START_PRINT
-macro](Slicers.md#klipper-gcode_macro).
+The resulting macro can be called from a
+[homing_override config section](Config_Reference.md#homing_override)
+or from a [START_PRINT macro](Slicers.md#klipper-gcode_macro).
 
 Note that if the driver current during homing is changed, then the
 tuning process should be run again.
@@ -327,23 +327,24 @@ fields configured by Klipper as well as all fields that can be queried
 from the driver.
 
 All of the reported fields are defined in the Trinamic datasheet for
-each driver. These datasheets can be found on the [Trinamic
-website](https://www.trinamic.com/). Obtain and review the Trinamic
-datasheet for the driver to interpret the results of DUMP_TMC.
+each driver. These datasheets can be found on the
+[Trinamic website](https://www.trinamic.com/). Obtain and review the
+Trinamic datasheet for the driver to interpret the results of
+DUMP_TMC.
 
 # Configuring driver_XXX settings
 
 Klipper supports configuring many low-level driver fields using
-`driver_XXX` settings. The [TMC driver config
-reference](Config_Reference.md#tmc-stepper-driver-configuration) has
-the full list of fields available for each type of driver.
+`driver_XXX` settings. The
+[TMC driver config reference](Config_Reference.md#tmc-stepper-driver-configuration)
+has the full list of fields available for each type of driver.
 
 In addition, almost all fields can be modified at run-time using the
 [SET_TMC_FIELD command](G-Codes.md#tmc-stepper-drivers).
 
 Each of these fields is defined in the Trinamic datasheet for each
-driver. These datasheets can be found on the [Trinamic
-website](https://www.trinamic.com/).
+driver. These datasheets can be found on the
+[Trinamic website](https://www.trinamic.com/).
 
 Note that the Trinamic datasheets sometime use wording that can
 confuse a high-level setting (such as "hysteresis end") with a
@@ -359,9 +360,9 @@ high-level value of 0.
 ## Can I use stealthchop mode on an extruder with pressure advance?
 
 Many people successfully use "stealthchop" mode with Klipper's
-pressure advance. Klipper implements [smooth pressure
-advance](Kinematics.md#pressure-advance) which does not introduce any
-instantaneous velocity changes.
+pressure advance. Klipper implements
+[smooth pressure advance](Kinematics.md#pressure-advance) which does
+not introduce any instantaneous velocity changes.
 
 However, "stealthchop" mode may produce lower motor torque and/or
 produce higher motor heat. It may or may not be an adequate mode for
@@ -398,11 +399,11 @@ Klipper. If a device on a shared SPI bus is not configured, then it
 may incorrectly respond to commands not intended for it and corrupt
 the communication to the intended device. If there is a device on a
 shared SPI bus that can not be configured in Klipper, then use a
-[static_digital_output config
-section](Config_Reference.md#static_digital_output) to set the CS pin
-of the unused device high (so that it will not attempt to use the SPI
-bus). The board's schematic is often a useful reference for finding
-which devices are on an SPI bus and their associated pins.
+[static_digital_output config section](Config_Reference.md#static_digital_output)
+to set the CS pin of the unused device high (so that it will not
+attempt to use the SPI bus). The board's schematic is often a useful
+reference for finding which devices are on an SPI bus and their
+associated pins.
 
 ## Why did I get a "TMC reports error: ..." error?
 

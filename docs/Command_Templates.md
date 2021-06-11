@@ -139,8 +139,8 @@ gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
 ```
 
-Available fields are defined in the [Status
-Reference](Status_Reference.md) document.
+Available fields are defined in the
+[Status Reference](Status_Reference.md) document.
 
 Important! Macros are first evaluated in entirety and only then are
 the resulting commands executed. If a macro issues a command that
@@ -278,6 +278,30 @@ gcode:
 ```
 UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 ```
+
+### Menu templates
+
+If a [display config section](Config_Reference.md#display) is enabled,
+then it is possible to customize the menu with
+[menu](Config_Reference.md#menu) config sections.
+
+The following read-only attributes are available in menu templates:
+* `menu.width` - element width (number of display columns)
+* `menu.ns` - element namespace
+* `menu.event` - name of the event that triggered the script
+* `menu.input` - input value, only available in input script context
+
+The following actions are available in menu templates:
+* `menu.back(force, update)`: will execute menu back command, optional
+  boolean parameters `<force>` and `<update>`.
+  * When `<force>` is set True then it will also stop editing. Default
+    value is False.
+  * When `<update>` is set False then parent container items are not
+    updated. Default value is True.
+* `menu.exit(force)` - will execute menu exit command, optional
+  boolean parameter `<force>` default value False.
+  * When `<force>` is set True then it will also stop editing. Default
+    value is False.
 
 ### Save Variables to disk
 <!-- {% raw %} -->
