@@ -36,6 +36,8 @@ class PrinterProbe:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.,
                                                note_valid=False)
+        # Disregard first probe due to inaccuracy in first sample                                               
+        self.ignore_first_sample = config.getboolean('ignore_first_sample')                                      
         # Multi-sample support (for improved accuracy)
         self.sample_count = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
@@ -108,7 +110,8 @@ class PrinterProbe:
         return self.lift_speed
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
-    def _probe(self, speed):
+    def _probe(self, speed, ignore):
+        first_sample = True
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
         if 'z' not in toolhead.get_status(curtime)['homed_axes']:
@@ -123,7 +126,8 @@ class PrinterProbe:
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
             raise self.printer.command_error(reason)
-        self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
+        if not ignore:
+            self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                 % (epos[0], epos[1], epos[2]))
         return epos[:3]
     def _move(self, coord, speed):
@@ -141,6 +145,7 @@ class PrinterProbe:
         # even number of samples
         return self._calc_mean(z_sorted[middle-1:middle+1])
     def run_probe(self, gcmd):
+        ignore_first = self.ignore_first_sample
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
         lift_speed = self.get_lift_speed(gcmd)
         sample_count = gcmd.get_int("SAMPLES", self.sample_count, minval=1)
@@ -157,9 +162,14 @@ class PrinterProbe:
         probexy = self.printer.lookup_object('toolhead').get_position()[:2]
         retries = 0
         positions = []
+        first_sample = True
         while len(positions) < sample_count:
-            # Probe position
-            pos = self._probe(speed)
+            # Probe position    
+            if first_sample:
+               pos = self._probe(speed, ignore_first)
+               self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
+               first_sample = False
+            pos = self._probe(speed, False)
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
@@ -195,6 +205,7 @@ class PrinterProbe:
                 'last_z_result': self.last_z_result}
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, gcmd):
+        ignore_first = self.ignore_first_sample
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
         lift_speed = self.get_lift_speed(gcmd)
         sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
@@ -212,8 +223,12 @@ class PrinterProbe:
         self.multi_probe_begin()
         positions = []
         while len(positions) < sample_count:
+            if first_sample:
+               pos = self._probe(speed, ignore_first)
+               self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
+               first_sample = False
             # Probe position
-            pos = self._probe(speed)
+            pos = self._probe(speed, False)
             positions.append(pos)
             # Retract
             liftpos = [None, None, pos[2] + sample_retract_dist]
@@ -280,9 +295,8 @@ class ProbeEndstopWrapper:
         pin = config.get('pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         mcu = pin_params['chip']
+        mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
-        self.printer.register_event_handler('klippy:mcu_identify',
-                                            self._handle_mcu_identify)
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -292,7 +306,7 @@ class ProbeEndstopWrapper:
         self.query_endstop = self.mcu_endstop.query_endstop
         # multi probes state
         self.multi = 'OFF'
-    def _handle_mcu_identify(self):
+    def _build_config(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
             if stepper.is_active_axis('z'):
