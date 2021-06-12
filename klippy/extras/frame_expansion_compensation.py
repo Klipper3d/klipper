@@ -8,9 +8,6 @@
 # using a frame-coupled temperature probe.
 import threading
 
-KELVIN_TO_CELSIUS = -273.15
-STD_TEMP = 25. # reference temperature for frame measurement
-
 class FrameExpansionCompensator:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -21,7 +18,7 @@ class FrameExpansionCompensator:
         self.coeff = config.getfloat('coeff', minval=0., maxval=100.,)/1E6
         self.frame_z = config.getfloat('frame_z_length', minval=0.,)/1E3
         self.gantry_factor = config.getfloat('gantry_factor', default=1.0)
-        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
+        self.min_temp = config.getfloat('min_temp', minval=-273.15)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
@@ -78,6 +75,10 @@ class FrameExpansionCompensator:
         # Transformation
         self.next_transform = gcode_move.set_move_transform(self, force=True)
 
+        # Get Z step distance
+        z_stepper = kin.get_steppers()[steppers.index(self.z_stepper_name)]
+        self.z_step_dist = z_stepper.get_step_dist()
+
     def get_temp(self, eventtime):
         'Used by M105, for example, to query probe temperature.'
         return self.smoothed_temp, 0
@@ -113,8 +114,10 @@ class FrameExpansionCompensator:
             # compute sign (+1 or -1) for maximum offset setting
             sign = 1 - (offset <= 0)*2
 
-            self.z_drift_offset = min([self.max_offset*sign, offset], key=abs)
-
+            # Don't apply offsets smaller than step distance
+            if abs(offset - self.z_drift_offset) > self.z_step_dist:
+                self.z_drift_offset = min([self.max_offset*sign, 
+                    offset], key=abs)
         self.update_state()
 
         # Apply offset
@@ -159,10 +162,10 @@ class FrameExpansionCompensator:
             self.z_drift_offset = 0
 
         if self.max_comp_z and self.last_position[2] > self.max_comp_z:
-            state = 'Disabled above Z=%.3f' % self.max_comp_z
+            state = 'Inactive(Z>%.2f)' % self.max_comp_z
 
-        if self.z_drift_offset > self.max_offset:
-            state += ', offset limit (%.5fmm) reached' % self.max_offset
+        if self.z_drift_offset == self.max_offset:
+            state += '(limited)' % self.max_offset
 
         self.comp_state = state
 
