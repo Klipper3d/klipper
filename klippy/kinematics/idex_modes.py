@@ -21,16 +21,17 @@ class DualCarriages:
         pos = toolhead.get_position()
         kin = toolhead.get_kinematics()
         for i, dc in enumerate(self.dc):
+            dc_rail = dc.get_rail()
             if i != index:
                 dc.inactivate(pos)
-                kin.override_rail(3, dc.rail)
+                kin.override_rail(3, dc_rail)
             elif dc.is_active() is False:
                 newpos = pos[:self.axis] + [dc.axis_position] \
                             + pos[self.axis+1:]
                 dc.activate(newpos)
-                kin.override_rail(self.axis, dc.rail)
+                kin.override_rail(self.axis, dc_rail)
                 toolhead.set_position(newpos)
-                kin.update_limits(self.axis, dc.rail.get_range())
+                kin.update_limits(self.axis, dc_rail.get_range())
     def get_status(self):
         dc0, dc1 = self.dc
         if (dc0.is_active() is True):
@@ -53,19 +54,9 @@ class DualCarriages:
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         index = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
-        force_homing = gcmd.get_int('HOMING', 0, minval=0, maxval=1)
         if (not(self.dc[0].is_active() == self.dc[1].is_active() == True)
                     and self.dc[index].is_active() is False):
             self.toggle_active_dc_rail(index)
-            if force_homing:
-                kin = self.printer.lookup_object('toolhead').get_kinematics()
-                force_home_axis = getattr(kin, 'force_home_axis', None)
-                if callable(force_home_axis):
-                    kin.force_home_axis(self.axis, self.dc[index].rail)
-                else:
-                    errormes = 'Function \'force_home_axis\' is not defined \
-                                in kinematic'
-                    self.printer.lookup_object('gcode').respond_info(errormes)
 
 class DualCarriagesRail:
     ACTIVE=1
@@ -95,6 +86,8 @@ class DualCarriagesRail:
                 self.rail.setup_itersolve(*self.stepper_alloc_inactive)
                 self.rail.set_position(position)
                 self.rail.set_trapq(toolhead.get_trapq())
+    def get_rail(self):
+        return self.rail
     def is_active(self):
         return self.status == self.ACTIVE
     def activate(self, position):

@@ -319,6 +319,9 @@ The following information is available in the `toolhead` object
 - `stalls`: The total number of times (since the last restart) that
   the printer had to be paused because the toolhead moved faster than
   moves could be read from the G-Code input.
+- `dual_carriage_status`: Available if a dual_carriage config section is
+  defined. A list that includes the active idex mode and the active carriage
+  if concerned.
 
 # virtual_sdcard
 
