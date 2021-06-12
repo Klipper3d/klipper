@@ -116,7 +116,7 @@ class FrameExpansionCompensator:
 
             # Don't apply offsets smaller than step distance
             if abs(offset - self.z_drift_offset) > self.z_step_dist:
-                self.z_drift_offset = min([self.max_offset*sign, 
+                self.z_drift_offset = min([self.max_offset*sign,
                     offset], key=abs)
         self.update_state()
 
