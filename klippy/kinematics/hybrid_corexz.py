@@ -35,12 +35,12 @@ class HybridCoreXZKinematics:
             self.rails[3].setup_itersolve('cartesian_stepper_alloc', 'z')
             dc_rail_0 = idex_modes.DualCarriagesRail(
                 self.printer, self.rails[0], axis=0, active=True,
-                stepper_alloc_active= ('corexz_stepper_alloc', '-'),
-                stepper_alloc_inactive = ('cartesian_reverse_stepper_alloc', 'z'))
+                stepper_alloc_active=('corexz_stepper_alloc','-'),
+                stepper_alloc_inactive=('cartesian_reverse_stepper_alloc','z'))
             dc_rail_1 = idex_modes.DualCarriagesRail(
                 self.printer, self.rails[3], axis=0, active=False,
-                stepper_alloc_active = ('corexz_stepper_alloc', '+'),
-                stepper_alloc_inactive = ('cartesian_stepper_alloc', 'z'))
+                stepper_alloc_active=('corexz_stepper_alloc','+'),
+                stepper_alloc_inactive=('cartesian_stepper_alloc','z'))
             self.dc_module = idex_modes.DualCarriages(self.printer,
                         dc_rail_0, dc_rail_1, axis=0)
         for s in self.get_steppers():
