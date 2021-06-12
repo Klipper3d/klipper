@@ -6,6 +6,7 @@
 
 # Compensates for thermal expansion induced toolhead Z movement in real-time
 # using a frame-coupled temperature probe.
+import threading
 
 KELVIN_TO_CELSIUS = -273.15
 STD_TEMP = 25. # reference temperature for frame measurement
@@ -14,6 +15,7 @@ class FrameExpansionCompensator:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
+        self.lock = threading.Lock()
 
         # Get config parameters, convert to SI units where necessary
         self.coeff = config.getfloat('coeff', minval=0., maxval=100.,)/1E6
@@ -21,6 +23,8 @@ class FrameExpansionCompensator:
         self.gantry_factor = config.getfloat('gantry_factor', default=1.0)
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
+        self.inv_smooth_time = 1. / self.smooth_time
         self.z_stepper_name = config.get('z_stepper')
         self.max_comp_z = config.getfloat('max_comp_z', 0.)
         self.max_offset = config.getfloat('max_z_offset', 99999999.)
@@ -32,7 +36,8 @@ class FrameExpansionCompensator:
                                             self.handle_homing_move_end)
 
         # Setup temperature sensor
-        self.last_temp = 0.
+        self.last_temp = self.smoothed_temp = 0.
+        self.last_temp_time = 0.
         self.measured_min = 99999999.
         self.measured_max = 0.
         self.last_home_temp = 0.
@@ -75,14 +80,14 @@ class FrameExpansionCompensator:
 
     def get_temp(self, eventtime):
         'Used by M105, for example, to query probe temperature.'
-        return self.last_temp, 0
+        return self.smoothed_temp, 0
 
     def stats(self, eventtime):
-        return False, '%s: temp=%.1f' % ('Frame', self.last_temp)
+        return False, '%s: temp=%.1f' % ('Frame', self.smoothed_temp)
 
     def get_status(self, eventtime):
         return {
-            'temperature': self.last_temp,
+            'temperature': self.smoothed_temp,
             'measured_min_temp': self.measured_min,
             'measured_max_temp': self.measured_max,
             'current_z_comp': self.z_drift_offset,
@@ -93,19 +98,16 @@ class FrameExpansionCompensator:
     def handle_homing_move_end(self, homing_state, rails):
         'Triggered when Z axis is homed.'
         if 2 in homing_state.get_axes():
-            self.last_home_temp = self.last_temp
+            self.last_home_temp = self.smoothed_temp
             self.z_drift_offset = 0.
 
     def calc_offset(self, pos):
         'Calculate total linear thermal expansion relative to last homing.'
         if not self.max_comp_z or pos[2] < self.max_comp_z:
-            # Calculate the extrusion length at homing temperature
-            length_home = (self.frame_z + self.frame_z * ( self.coeff *
-                            (self.last_home_temp - STD_TEMP) ))
-            delta_t = self.last_temp - self.last_home_temp
+            delta_t = self.smoothed_temp - self.last_home_temp
 
             # Calculate Z offset, compensates for thermal expansion since homing
-            offset = -1 * (length_home *
+            offset = -1 * (self.frame_z *
                 (self.coeff * delta_t) * self.gantry_factor) * 1E3
 
             # compute sign (+1 or -1) for maximum offset setting
@@ -138,9 +140,15 @@ class FrameExpansionCompensator:
 
     def temperature_callback(self, read_time, temp):
         'Called everytime the thermistor is read'
-        self.last_temp = temp
-        self.measured_min = min(self.measured_min, temp)
-        self.measured_max = max(self.measured_max, temp)
+        with self.lock:
+            self.measured_min = min(self.measured_min, temp)
+            self.measured_max = max(self.measured_max, temp)
+            time_diff = read_time - self.last_temp_time
+            self.last_temp = temp
+            self.last_temp_time = read_time
+            temp_diff = temp - self.smoothed_temp
+            adj_time = min(time_diff * self.inv_smooth_time, 1.)
+            self.smoothed_temp += temp_diff * adj_time
 
     def update_state(self):
         'String output for g-code and get_status state tracking.'
@@ -176,7 +184,7 @@ class FrameExpansionCompensator:
                "FRAME TEMPERATURE: ref=%.2f; now=%.2f\n"
                "TOTAL Z COMP: z=%.4f mm" % (self.comp_state,
                                             self.last_home_temp,
-                                            self.last_temp,
+                                            self.smoothed_temp,
                                             self.z_drift_offset)
         )
         gcmd.respond_info(msg)
