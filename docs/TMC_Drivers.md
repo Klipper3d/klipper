@@ -381,6 +381,12 @@ Make sure that the motor power is enabled, as the stepper motor driver
 generally needs motor power before it can communicate with the
 micro-controller.
 
+If this error occurs after flashing Klipper for the first time, then
+the stepper driver may have been previously programmed in a state that
+is not compatible with Klipper. To reset the state, remove all power
+from the printer for several seconds (physically unplug both USB and
+power plugs).
+
 Otherwise, this error is typically the result of incorrect UART pin
 wiring or an incorrect Klipper configuration of the UART pin settings.
 
