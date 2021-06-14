@@ -12,10 +12,8 @@
 // clock times, prioritizes commands, and handles retransmissions.  A
 // background thread is launched to do this work and minimize latency.
 
-#include <fcntl.h> // fcntl
 #include <linux/can.h> // // struct can_frame
-#include <math.h> // ceil
-#include <poll.h> // poll
+#include <math.h> // fabs
 #include <pthread.h> // pthread_mutex_lock
 #include <stddef.h> // offsetof
 #include <stdint.h> // uint64_t
@@ -26,335 +24,19 @@
 #include <unistd.h> // pipe
 #include "compiler.h" // __visible
 #include "list.h" // list_add_tail
+#include "msgblock.h" // message_alloc
+#include "pollreactor.h" // pollreactor_alloc
 #include "pyhelper.h" // get_monotonic
 #include "serialqueue.h" // struct queue_message
-
-
-/****************************************************************
- * Poll reactor
- ****************************************************************/
-
-// The 'poll reactor' code is a mechanism for dispatching timer and
-// file descriptor events.
-
-#define PR_NOW   0.
-#define PR_NEVER 9999999999999999.
-
-struct pollreactor_timer {
-    double waketime;
-    double (*callback)(void *data, double eventtime);
-};
-
-struct pollreactor {
-    int num_fds, num_timers, must_exit;
-    void *callback_data;
-    double next_timer;
-    struct pollfd *fds;
-    void (**fd_callbacks)(void *data, double eventtime);
-    struct pollreactor_timer *timers;
-};
-
-// Allocate a new 'struct pollreactor' object
-static void
-pollreactor_setup(struct pollreactor *pr, int num_fds, int num_timers
-                  , void *callback_data)
-{
-    pr->num_fds = num_fds;
-    pr->num_timers = num_timers;
-    pr->must_exit = 0;
-    pr->callback_data = callback_data;
-    pr->next_timer = PR_NEVER;
-    pr->fds = malloc(num_fds * sizeof(*pr->fds));
-    memset(pr->fds, 0, num_fds * sizeof(*pr->fds));
-    pr->fd_callbacks = malloc(num_fds * sizeof(*pr->fd_callbacks));
-    memset(pr->fd_callbacks, 0, num_fds * sizeof(*pr->fd_callbacks));
-    pr->timers = malloc(num_timers * sizeof(*pr->timers));
-    memset(pr->timers, 0, num_timers * sizeof(*pr->timers));
-    int i;
-    for (i=0; i<num_timers; i++)
-        pr->timers[i].waketime = PR_NEVER;
-}
-
-// Free resources associated with a 'struct pollreactor' object
-static void
-pollreactor_free(struct pollreactor *pr)
-{
-    free(pr->fds);
-    pr->fds = NULL;
-    free(pr->fd_callbacks);
-    pr->fd_callbacks = NULL;
-    free(pr->timers);
-    pr->timers = NULL;
-}
-
-// Add a callback for when a file descriptor (fd) becomes readable
-static void
-pollreactor_add_fd(struct pollreactor *pr, int pos, int fd, void *callback
-                   , int write_only)
-{
-    pr->fds[pos].fd = fd;
-    pr->fds[pos].events = POLLHUP | (write_only ? 0 : POLLIN);
-    pr->fds[pos].revents = 0;
-    pr->fd_callbacks[pos] = callback;
-}
-
-// Add a timer callback
-static void
-pollreactor_add_timer(struct pollreactor *pr, int pos, void *callback)
-{
-    pr->timers[pos].callback = callback;
-    pr->timers[pos].waketime = PR_NEVER;
-}
-
-// Return the last schedule wake-up time for a timer
-static double
-pollreactor_get_timer(struct pollreactor *pr, int pos)
-{
-    return pr->timers[pos].waketime;
-}
-
-// Set the wake-up time for a given timer
-static void
-pollreactor_update_timer(struct pollreactor *pr, int pos, double waketime)
-{
-    pr->timers[pos].waketime = waketime;
-    if (waketime < pr->next_timer)
-        pr->next_timer = waketime;
-}
-
-// Internal code to invoke timer callbacks
-static int
-pollreactor_check_timers(struct pollreactor *pr, double eventtime, int busy)
-{
-    if (eventtime >= pr->next_timer) {
-        // Find and run pending timers
-        pr->next_timer = PR_NEVER;
-        int i;
-        for (i=0; i<pr->num_timers; i++) {
-            struct pollreactor_timer *timer = &pr->timers[i];
-            double t = timer->waketime;
-            if (eventtime >= t) {
-                busy = 1;
-                t = timer->callback(pr->callback_data, eventtime);
-                timer->waketime = t;
-            }
-            if (t < pr->next_timer)
-                pr->next_timer = t;
-        }
-    }
-    if (busy)
-        return 0;
-    // Calculate sleep duration
-    double timeout = ceil((pr->next_timer - eventtime) * 1000.);
-    return timeout < 1. ? 1 : (timeout > 1000. ? 1000 : (int)timeout);
-}
-
-// Repeatedly check for timer and fd events and invoke their callbacks
-static void
-pollreactor_run(struct pollreactor *pr)
-{
-    double eventtime = get_monotonic();
-    int busy = 1;
-    while (! pr->must_exit) {
-        int timeout = pollreactor_check_timers(pr, eventtime, busy);
-        busy = 0;
-        int ret = poll(pr->fds, pr->num_fds, timeout);
-        eventtime = get_monotonic();
-        if (ret > 0) {
-            busy = 1;
-            int i;
-            for (i=0; i<pr->num_fds; i++)
-                if (pr->fds[i].revents)
-                    pr->fd_callbacks[i](pr->callback_data, eventtime);
-        } else if (ret < 0) {
-            report_errno("poll", ret);
-            pr->must_exit = 1;
-        }
-    }
-}
-
-// Request that a currently running pollreactor_run() loop exit
-static void
-pollreactor_do_exit(struct pollreactor *pr)
-{
-    pr->must_exit = 1;
-}
-
-// Check if a pollreactor_run() loop has been requested to exit
-static int
-pollreactor_is_exit(struct pollreactor *pr)
-{
-    return pr->must_exit;
-}
-
-static int
-set_non_blocking(int fd)
-{
-    int flags = fcntl(fd, F_GETFL);
-    if (flags < 0) {
-        report_errno("fcntl getfl", flags);
-        return -1;
-    }
-    int ret = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-    if (ret < 0) {
-        report_errno("fcntl setfl", flags);
-        return -1;
-    }
-    return 0;
-}
-
-
-/****************************************************************
- * Serial protocol helpers
- ****************************************************************/
-
-// Implement the standard crc "ccitt" algorithm on the given buffer
-static uint16_t
-crc16_ccitt(uint8_t *buf, uint8_t len)
-{
-    uint16_t crc = 0xffff;
-    while (len--) {
-        uint8_t data = *buf++;
-        data ^= crc & 0xff;
-        data ^= data << 4;
-        crc = ((((uint16_t)data << 8) | (crc >> 8)) ^ (uint8_t)(data >> 4)
-               ^ ((uint16_t)data << 3));
-    }
-    return crc;
-}
-
-// Verify a buffer starts with a valid mcu message
-static int
-check_message(uint8_t *need_sync, uint8_t *buf, int buf_len)
-{
-    if (buf_len < MESSAGE_MIN)
-        // Need more data
-        return 0;
-    if (*need_sync)
-        goto error;
-    uint8_t msglen = buf[MESSAGE_POS_LEN];
-    if (msglen < MESSAGE_MIN || msglen > MESSAGE_MAX)
-        goto error;
-    uint8_t msgseq = buf[MESSAGE_POS_SEQ];
-    if ((msgseq & ~MESSAGE_SEQ_MASK) != MESSAGE_DEST)
-        goto error;
-    if (buf_len < msglen)
-        // Need more data
-        return 0;
-    if (buf[msglen-MESSAGE_TRAILER_SYNC] != MESSAGE_SYNC)
-        goto error;
-    uint16_t msgcrc = ((buf[msglen-MESSAGE_TRAILER_CRC] << 8)
-                       | (uint8_t)buf[msglen-MESSAGE_TRAILER_CRC+1]);
-    uint16_t crc = crc16_ccitt(buf, msglen-MESSAGE_TRAILER_SIZE);
-    if (crc != msgcrc)
-        goto error;
-    return msglen;
-
-error: ;
-    // Discard bytes until next SYNC found
-    uint8_t *next_sync = memchr(buf, MESSAGE_SYNC, buf_len);
-    if (next_sync) {
-        *need_sync = 0;
-        return -(next_sync - buf + 1);
-    }
-    *need_sync = 1;
-    return -buf_len;
-}
-
-// Encode an integer as a variable length quantity (vlq)
-static uint8_t *
-encode_int(uint8_t *p, uint32_t v)
-{
-    int32_t sv = v;
-    if (sv < (3L<<5)  && sv >= -(1L<<5))  goto f4;
-    if (sv < (3L<<12) && sv >= -(1L<<12)) goto f3;
-    if (sv < (3L<<19) && sv >= -(1L<<19)) goto f2;
-    if (sv < (3L<<26) && sv >= -(1L<<26)) goto f1;
-    *p++ = (v>>28) | 0x80;
-f1: *p++ = ((v>>21) & 0x7f) | 0x80;
-f2: *p++ = ((v>>14) & 0x7f) | 0x80;
-f3: *p++ = ((v>>7) & 0x7f) | 0x80;
-f4: *p++ = v & 0x7f;
-    return p;
-}
-
-
-/****************************************************************
- * Command queues
- ****************************************************************/
 
 struct command_queue {
     struct list_head stalled_queue, ready_queue;
     struct list_node node;
 };
 
-// Allocate a 'struct queue_message' object
-static struct queue_message *
-message_alloc(void)
-{
-    struct queue_message *qm = malloc(sizeof(*qm));
-    memset(qm, 0, sizeof(*qm));
-    return qm;
-}
-
-// Allocate a queue_message and fill it with the specified data
-static struct queue_message *
-message_fill(uint8_t *data, int len)
-{
-    struct queue_message *qm = message_alloc();
-    memcpy(qm->msg, data, len);
-    qm->len = len;
-    return qm;
-}
-
-// Allocate a queue_message and fill it with a series of encoded vlq integers
-struct queue_message *
-message_alloc_and_encode(uint32_t *data, int len)
-{
-    struct queue_message *qm = message_alloc();
-    int i;
-    uint8_t *p = qm->msg;
-    for (i=0; i<len; i++) {
-        p = encode_int(p, data[i]);
-        if (p > &qm->msg[MESSAGE_PAYLOAD_MAX])
-            goto fail;
-    }
-    qm->len = p - qm->msg;
-    return qm;
-
-fail:
-    errorf("Encode error");
-    qm->len = 0;
-    return qm;
-}
-
-// Free the storage from a previous message_alloc() call
-static void
-message_free(struct queue_message *qm)
-{
-    free(qm);
-}
-
-// Free all the messages on a queue
-void
-message_queue_free(struct list_head *root)
-{
-    while (!list_empty(root)) {
-        struct queue_message *qm = list_first_entry(
-            root, struct queue_message, node);
-        list_del(&qm->node);
-        message_free(qm);
-    }
-}
-
-
-/****************************************************************
- * Serialqueue interface
- ****************************************************************/
-
 struct serialqueue {
     // Input reading
-    struct pollreactor pr;
+    struct pollreactor *pr;
     int serial_fd, serial_fd_type, client_id;
     int pipe_fds[2];
     uint8_t input_buf[4096];
@@ -368,8 +50,7 @@ struct serialqueue {
     // Baud / clock tracking
     int receive_window;
     double baud_adjust, idle_time;
-    double est_freq, last_clock_time;
-    uint64_t last_clock;
+    struct clock_estimate ce;
     double last_receive_sent_time;
     // Retransmit support
     uint64_t send_seq, receive_seq;
@@ -383,6 +64,9 @@ struct serialqueue {
     struct list_head notify_queue;
     // Received messages
     struct list_head receive_queue;
+    // Fastreader support
+    pthread_mutex_t fast_reader_dispatch_lock;
+    struct list_head fast_readers;
     // Debugging
     struct list_head old_sent, old_receive;
     // Stats
@@ -479,7 +163,7 @@ update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
         }
     }
     sq->receive_seq = rseq;
-    pollreactor_update_timer(&sq->pr, SQPT_COMMAND, PR_NOW);
+    pollreactor_update_timer(sq->pr, SQPT_COMMAND, PR_NOW);
 
     // Update retransmit info
     if (sq->rtt_sample_seq && rseq > sq->rtt_sample_seq
@@ -504,19 +188,21 @@ update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
         sq->rtt_sample_seq = 0;
     }
     if (list_empty(&sq->sent_queue)) {
-        pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NEVER);
+        pollreactor_update_timer(sq->pr, SQPT_RETRANSMIT, PR_NEVER);
     } else {
         struct queue_message *sent = list_first_entry(
             &sq->sent_queue, struct queue_message, node);
         double nr = eventtime + sq->rto + sent->len * sq->baud_adjust;
-        pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, nr);
+        pollreactor_update_timer(sq->pr, SQPT_RETRANSMIT, nr);
     }
 }
 
 // Process a well formed input message
-static int
+static void
 handle_message(struct serialqueue *sq, double eventtime, int len)
 {
+    pthread_mutex_lock(&sq->lock);
+
     // Calculate receive sequence number
     uint64_t rseq = ((sq->receive_seq & ~MESSAGE_SEQ_MASK)
                      | (sq->input_buf[MESSAGE_POS_SEQ] & MESSAGE_SEQ_MASK));
@@ -524,11 +210,15 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
         // New sequence number
         if (rseq < sq->receive_seq)
             rseq += MESSAGE_SEQ_MASK+1;
-        if (rseq > sq->send_seq && sq->receive_seq != 1)
+        if (rseq > sq->send_seq && sq->receive_seq != 1) {
             // An ack for a message not sent?  Out of order message?
-            return -1;
+            sq->bytes_invalid += len;
+            pthread_mutex_unlock(&sq->lock);
+            return;
+        }
         update_receive_seq(sq, eventtime, rseq);
     }
+    sq->bytes_read += len;
 
     // Check for pending messages on notify_queue
     int must_wake = 0;
@@ -554,7 +244,7 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
             sq->last_ack_seq = rseq;
         else if (rseq > sq->ignore_nak_seq && !list_empty(&sq->sent_queue))
             // Duplicate Ack is a Nak - do fast retransmit
-            pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT, PR_NOW);
+            pollreactor_update_timer(sq->pr, SQPT_RETRANSMIT, PR_NOW);
     } else {
         // Data message - add to receive queue
         struct queue_message *qm = message_fill(sq->input_buf, len);
@@ -566,9 +256,26 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
         must_wake = 1;
     }
 
+    // Check fast readers
+    struct fastreader *fr;
+    list_for_each_entry(fr, &sq->fast_readers, node) {
+        if (len < fr->prefix_len + MESSAGE_MIN
+            || memcmp(&sq->input_buf[MESSAGE_HEADER_SIZE]
+                      , fr->prefix, fr->prefix_len) != 0)
+            continue;
+        // Release main lock and invoke callback
+        pthread_mutex_lock(&sq->fast_reader_dispatch_lock);
+        if (must_wake)
+            check_wake_receive(sq);
+        pthread_mutex_unlock(&sq->lock);
+        fr->func(fr, sq->input_buf, len);
+        pthread_mutex_unlock(&sq->fast_reader_dispatch_lock);
+        return;
+    }
+
     if (must_wake)
         check_wake_receive(sq);
-    return 0;
+    pthread_mutex_unlock(&sq->lock);
 }
 
 // Callback for input activity on the serial fd
@@ -580,7 +287,7 @@ input_event(struct serialqueue *sq, double eventtime)
         int ret = read(sq->serial_fd, &cf, sizeof(cf));
         if (ret <= 0) {
             report_errno("can read", ret);
-            pollreactor_do_exit(&sq->pr);
+            pollreactor_do_exit(sq->pr);
             return;
         }
         if (cf.can_id != sq->client_id + 1)
@@ -595,25 +302,19 @@ input_event(struct serialqueue *sq, double eventtime)
                 report_errno("read", ret);
             else
                 errorf("Got EOF when reading from device");
-            pollreactor_do_exit(&sq->pr);
+            pollreactor_do_exit(sq->pr);
             return;
         }
         sq->input_pos += ret;
     }
     for (;;) {
-        int len = check_message(&sq->need_sync, sq->input_buf, sq->input_pos);
+        int len = msgblock_check(&sq->need_sync, sq->input_buf, sq->input_pos);
         if (!len)
             // Need more data
             return;
         if (len > 0) {
             // Received a valid message
-            pthread_mutex_lock(&sq->lock);
-            int ret = handle_message(sq, eventtime, len);
-            if (ret)
-                sq->bytes_invalid += len;
-            else
-                sq->bytes_read += len;
-            pthread_mutex_unlock(&sq->lock);
+            handle_message(sq, eventtime, len);
         } else {
             // Skip bad data at beginning of input
             len = -len;
@@ -635,7 +336,7 @@ kick_event(struct serialqueue *sq, double eventtime)
     int ret = read(sq->pipe_fds[0], dummy, sizeof(dummy));
     if (ret < 0)
         report_errno("pipe read", ret);
-    pollreactor_update_timer(&sq->pr, SQPT_COMMAND, PR_NOW);
+    pollreactor_update_timer(sq->pr, SQPT_COMMAND, PR_NOW);
 }
 
 static void
@@ -691,7 +392,7 @@ retransmit_event(struct serialqueue *sq, double eventtime)
     sq->bytes_retransmit += buflen;
 
     // Update rto
-    if (pollreactor_get_timer(&sq->pr, SQPT_RETRANSMIT) == PR_NOW) {
+    if (pollreactor_get_timer(sq->pr, SQPT_RETRANSMIT) == PR_NOW) {
         // Retransmit due to nak
         sq->ignore_nak_seq = sq->receive_seq;
         if (sq->receive_seq < sq->retransmit_seq)
@@ -756,7 +457,7 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, double eventtime)
     len += MESSAGE_TRAILER_SIZE;
     buf[MESSAGE_POS_LEN] = len;
     buf[MESSAGE_POS_SEQ] = MESSAGE_DEST | (sq->send_seq & MESSAGE_SEQ_MASK);
-    uint16_t crc = crc16_ccitt(buf, len - MESSAGE_TRAILER_SIZE);
+    uint16_t crc = msgblock_crc16_ccitt(buf, len - MESSAGE_TRAILER_SIZE);
     buf[len - MESSAGE_TRAILER_CRC] = crc >> 8;
     buf[len - MESSAGE_TRAILER_CRC+1] = crc & 0xff;
     buf[len - MESSAGE_TRAILER_SYNC] = MESSAGE_SYNC;
@@ -771,7 +472,7 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, double eventtime)
     out->sent_time = eventtime;
     out->receive_time = sq->idle_time;
     if (list_empty(&sq->sent_queue))
-        pollreactor_update_timer(&sq->pr, SQPT_RETRANSMIT
+        pollreactor_update_timer(sq->pr, SQPT_RETRANSMIT
                                  , sq->idle_time + sq->rto);
     if (!sq->rtt_sample_seq)
         sq->rtt_sample_seq = sq->send_seq;
@@ -801,9 +502,7 @@ check_send_command(struct serialqueue *sq, double eventtime)
     // Check for stalled messages now ready
     double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
     idletime += MESSAGE_MIN * sq->baud_adjust;
-    double timedelta = idletime - sq->last_clock_time;
-    uint64_t ack_clock = ((uint64_t)(timedelta * sq->est_freq)
-                          + sq->last_clock);
+    uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
     uint64_t min_stalled_clock = MAX_CLOCK, min_ready_clock = MAX_CLOCK;
     struct command_queue *cq;
     list_for_each_entry(cq, &sq->pending_queues, node) {
@@ -826,11 +525,9 @@ check_send_command(struct serialqueue *sq, double eventtime)
             struct queue_message *qm = list_first_entry(
                 &cq->ready_queue, struct queue_message, node);
             uint64_t req_clock = qm->req_clock;
+            double bgoffset = MIN_REQTIME_DELTA + MIN_BACKGROUND_DELTA;
             if (req_clock == BACKGROUND_PRIORITY_CLOCK)
-                req_clock = (uint64_t)(
-                    (sq->idle_time - sq->last_clock_time
-                     + MIN_REQTIME_DELTA + MIN_BACKGROUND_DELTA)
-                    * sq->est_freq) + sq->last_clock;
+                req_clock = clock_from_time(&sq->ce, sq->idle_time + bgoffset);
             if (req_clock < min_ready_clock)
                 min_ready_clock = req_clock;
         }
@@ -839,20 +536,20 @@ check_send_command(struct serialqueue *sq, double eventtime)
     // Check for messages to send
     if (sq->ready_bytes >= MESSAGE_PAYLOAD_MAX)
         return PR_NOW;
-    if (! sq->est_freq) {
+    if (! sq->ce.est_freq) {
         if (sq->ready_bytes)
             return PR_NOW;
         sq->need_kick_clock = MAX_CLOCK;
         return PR_NEVER;
     }
-    uint64_t reqclock_delta = MIN_REQTIME_DELTA * sq->est_freq;
+    uint64_t reqclock_delta = MIN_REQTIME_DELTA * sq->ce.est_freq;
     if (min_ready_clock <= ack_clock + reqclock_delta)
         return PR_NOW;
     uint64_t wantclock = min_ready_clock - reqclock_delta;
     if (min_stalled_clock < wantclock)
         wantclock = min_stalled_clock;
     sq->need_kick_clock = wantclock;
-    return idletime + (wantclock - ack_clock) / sq->est_freq;
+    return idletime + (wantclock - ack_clock) / sq->ce.est_freq;
 }
 
 // Callback timer to send data to the serial port
@@ -886,7 +583,7 @@ static void *
 background_thread(void *data)
 {
     struct serialqueue *sq = data;
-    pollreactor_run(&sq->pr);
+    pollreactor_run(sq->pr);
 
     pthread_mutex_lock(&sq->lock);
     check_wake_receive(sq);
@@ -910,15 +607,15 @@ serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id)
         goto fail;
 
     // Reactor setup
-    pollreactor_setup(&sq->pr, SQPF_NUM, SQPT_NUM, sq);
-    pollreactor_add_fd(&sq->pr, SQPF_SERIAL, serial_fd, input_event
+    sq->pr = pollreactor_alloc(SQPF_NUM, SQPT_NUM, sq);
+    pollreactor_add_fd(sq->pr, SQPF_SERIAL, serial_fd, input_event
                        , serial_fd_type==SQT_DEBUGFILE);
-    pollreactor_add_fd(&sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event, 0);
-    pollreactor_add_timer(&sq->pr, SQPT_RETRANSMIT, retransmit_event);
-    pollreactor_add_timer(&sq->pr, SQPT_COMMAND, command_event);
-    set_non_blocking(serial_fd);
-    set_non_blocking(sq->pipe_fds[0]);
-    set_non_blocking(sq->pipe_fds[1]);
+    pollreactor_add_fd(sq->pr, SQPF_PIPE, sq->pipe_fds[0], kick_event, 0);
+    pollreactor_add_timer(sq->pr, SQPT_RETRANSMIT, retransmit_event);
+    pollreactor_add_timer(sq->pr, SQPT_COMMAND, command_event);
+    fd_set_non_blocking(serial_fd);
+    fd_set_non_blocking(sq->pipe_fds[0]);
+    fd_set_non_blocking(sq->pipe_fds[1]);
 
     // Retransmit setup
     sq->send_seq = 1;
@@ -937,6 +634,7 @@ serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id)
     list_init(&sq->sent_queue);
     list_init(&sq->receive_queue);
     list_init(&sq->notify_queue);
+    list_init(&sq->fast_readers);
 
     // Debugging
     list_init(&sq->old_sent);
@@ -949,6 +647,9 @@ serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id)
     if (ret)
         goto fail;
     ret = pthread_cond_init(&sq->cond, NULL);
+    if (ret)
+        goto fail;
+    ret = pthread_mutex_init(&sq->fast_reader_dispatch_lock, NULL);
     if (ret)
         goto fail;
     ret = pthread_create(&sq->tid, NULL, background_thread, sq);
@@ -966,7 +667,7 @@ fail:
 void __visible
 serialqueue_exit(struct serialqueue *sq)
 {
-    pollreactor_do_exit(&sq->pr);
+    pollreactor_do_exit(sq->pr);
     kick_bg_thread(sq);
     int ret = pthread_join(sq->tid, NULL);
     if (ret)
@@ -979,7 +680,7 @@ serialqueue_free(struct serialqueue *sq)
 {
     if (!sq)
         return;
-    if (!pollreactor_is_exit(&sq->pr))
+    if (!pollreactor_is_exit(sq->pr))
         serialqueue_exit(sq);
     pthread_mutex_lock(&sq->lock);
     message_queue_free(&sq->sent_queue);
@@ -995,7 +696,7 @@ serialqueue_free(struct serialqueue *sq)
         message_queue_free(&cq->stalled_queue);
     }
     pthread_mutex_unlock(&sq->lock);
-    pollreactor_free(&sq->pr);
+    pollreactor_free(sq->pr);
     free(sq);
 }
 
@@ -1021,6 +722,27 @@ serialqueue_free_commandqueue(struct command_queue *cq)
         return;
     }
     free(cq);
+}
+
+// Add a low-latency message handler
+void
+serialqueue_add_fastreader(struct serialqueue *sq, struct fastreader *fr)
+{
+    pthread_mutex_lock(&sq->lock);
+    list_add_tail(&fr->node, &sq->fast_readers);
+    pthread_mutex_unlock(&sq->lock);
+}
+
+// Remove a previously registered low-latency message handler
+void
+serialqueue_rm_fastreader(struct serialqueue *sq, struct fastreader *fr)
+{
+    pthread_mutex_lock(&sq->lock);
+    list_del(&fr->node);
+    pthread_mutex_unlock(&sq->lock);
+
+    pthread_mutex_lock(&sq->fast_reader_dispatch_lock); // XXX - goofy locking
+    pthread_mutex_unlock(&sq->fast_reader_dispatch_lock);
 }
 
 // Add a batch of messages to the given command_queue
@@ -1059,6 +781,17 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
         kick_bg_thread(sq);
 }
 
+// Helper to send a single message
+void
+serialqueue_send_one(struct serialqueue *sq, struct command_queue *cq
+                     , struct queue_message *qm)
+{
+    struct list_head msgs;
+    list_init(&msgs);
+    list_add_tail(&qm->node, &msgs);
+    serialqueue_send_batch(sq, cq, &msgs);
+}
+
 // Schedule the transmission of a message on the serial port at a
 // given time and priority.
 void __visible
@@ -1070,11 +803,7 @@ serialqueue_send(struct serialqueue *sq, struct command_queue *cq, uint8_t *msg
     qm->min_clock = min_clock;
     qm->req_clock = req_clock;
     qm->notify_id = notify_id;
-
-    struct list_head msgs;
-    list_init(&msgs);
-    list_add_tail(&qm->node, &msgs);
-    serialqueue_send_batch(sq, cq, &msgs);
+    serialqueue_send_one(sq, cq, qm);
 }
 
 // Return a message read from the serial port (or wait for one if none
@@ -1085,7 +814,7 @@ serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm)
     pthread_mutex_lock(&sq->lock);
     // Wait for message to be available
     while (list_empty(&sq->receive_queue)) {
-        if (pollreactor_is_exit(&sq->pr))
+        if (pollreactor_is_exit(sq->pr))
             goto exit;
         sq->receive_waiting = 1;
         int ret = pthread_cond_wait(&sq->cond, &sq->lock);
@@ -1137,12 +866,23 @@ serialqueue_set_receive_window(struct serialqueue *sq, int receive_window)
 // serial port
 void __visible
 serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
-                          , double last_clock_time, uint64_t last_clock)
+                          , double conv_time, uint64_t conv_clock
+                          , uint64_t last_clock)
 {
     pthread_mutex_lock(&sq->lock);
-    sq->est_freq = est_freq;
-    sq->last_clock_time = last_clock_time;
-    sq->last_clock = last_clock;
+    sq->ce.est_freq = est_freq;
+    sq->ce.conv_time = conv_time;
+    sq->ce.conv_clock = conv_clock;
+    sq->ce.last_clock = last_clock;
+    pthread_mutex_unlock(&sq->lock);
+}
+
+// Return the latest clock estimate
+void
+serialqueue_get_clock_est(struct serialqueue *sq, struct clock_estimate *ce)
+{
+    pthread_mutex_lock(&sq->lock);
+    memcpy(ce, &sq->ce, sizeof(sq->ce));
     pthread_mutex_unlock(&sq->lock);
 }
 

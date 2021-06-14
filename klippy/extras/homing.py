@@ -13,8 +13,13 @@ ENDSTOP_SAMPLE_COUNT = 4
 def multi_complete(printer, completions):
     if len(completions) == 1:
         return completions[0]
-    cb = (lambda e: all([c.wait() for c in completions]))
-    return printer.get_reactor().register_callback(cb)
+    # Build completion that waits for all completions
+    reactor = printer.get_reactor()
+    cp = reactor.register_callback(lambda e: [c.wait() for c in completions])
+    # If any completion indicates an error, then exit main completion early
+    for c in completions:
+        reactor.register_callback(lambda e: cp.complete(1) if c.wait() else 0)
+    return cp
 
 # Implementation of homing/probing moves
 class HomingMove:
