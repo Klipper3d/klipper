@@ -1758,10 +1758,6 @@ check_open_attach:     True
 #dock_sense_pin:
 #   This supplemental pin can be defined to determine a docked state in
 #   addition to probe_sense_pin or check_open_attach
-#manual_probe_verify:  False
-#   In the rare case when a probe cannot be verified using the included options
-#   it is possible to manually set the state using a gcode command.
-#   See Annexed_Probe.md for more information
 #allow_delayed_detach: False
 #   When true, the probe will stay attached to the toolhead after the
 #   completion of a command in case there is another command requiring the

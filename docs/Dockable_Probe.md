@@ -205,18 +205,6 @@ this pin is checked. If the probe is not stowed, an error will be raised and
 further action will be aborted.
 
 ```
-    manual_probe_verify:  False
-```
-It is possible to manually set the probe state by calling the `SET_PROBE_STATUS`
-command. This command is disabled by default unless the `manual_probe_verify`
-option is set to "True", `dock_sense_pin` and `probe_sense_pin` are undefined,
-and `check_open_attach` is set to "False".
-
-It is ill advised to use this option unless the probe state is independently
-verified. To set the probe state manually, the SET_PROBE_STATUS must be called
-within the custom gcode sections below.
-
-```
     dock_retries:   0
 ```
 A magnetic probe may require repeated attempts to attach. If `dock_retries` is
@@ -333,36 +321,6 @@ will not do anything
 Responds in the gcode terminal with the current status the probe is in. Valid
 states are UNKNOWN, ATTACHED, and DOCKED. This is useful during configuration
 to confirm probe validation methods are working as intended.
-
-```
-    SET_PROBE_STATUS STATE=<UNKNOWN|ATTACHED|DOCKED>
-```
-As previously decribed, this command is only available under certain conditions.
-It is used to manually set the probe state when automatic verification methods
-cannot be used.
-
-## Setting Probe Status Manually
-
-In the case where manual probe states must be set, they must be set within the
-following sections.
-
-```
-    pre_attach_gcode:
-        # Set probe status to "docked" prior to
-        # approaching dock.
-        SET_PROBE_STATUS STATE=DOCKED
-
-    attach_gcode:
-        # It is assumed at this point the probe is
-        # attached, set the status to reflect this
-        SET_PROBE_STATUS STATE=ATTACHED
-
-    detach_gcode:
-        # It is assumed at this point the probe is
-        # docked, set the status to reflect this
-        SET_PROBE_STATUS STATE=DOCKED
-
-```
 
 ## Typical probe execution flow
 

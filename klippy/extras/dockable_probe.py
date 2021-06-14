@@ -85,7 +85,6 @@ class ProbeState:
         self.check_open_attach = config.getboolean('check_open_attach', False)
         self.probe_sense_pin = config.get('probe_sense_pin', None)
         self.dock_sense_pin = config.get('dock_sense_pin', None)
-        manual_verify = config.getboolean('manual_probe_verify', False)
         self.printer.register_event_handler("klippy:ready",
                                             self._handle_ready)
 
@@ -98,13 +97,8 @@ class ProbeState:
         if not any([self.check_open_attach,
                     self.probe_sense_pin,
                     self.dock_sense_pin]):
-            if manual_verify:
-                phelper = ManualStateHelper(config)
-                self.probe_sense_pin = phelper.query_pin
-                self.dock_sense_pin  = phelper.query_pin_inv
-            else:
-                raise self.printer.config_error(HINT_VERIFICATION_ERROR.format(
-                                                aProbe.name))
+            raise self.printer.config_error(HINT_VERIFICATION_ERROR.format(
+                                            aProbe.name))
         else:
             ehelper = PinPollingHelper(config, aProbe.query_endstop)
 
