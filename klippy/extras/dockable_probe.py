@@ -1,7 +1,6 @@
-# Annexed Probe
-#   This provides support for probes that are annexed to
-#   the toolhead prior to probing and then stowed upon
-#   completion.
+# Dockable Probe
+#   This provides support for probes that are magnetically coupled
+#   to the toolhead and stowed in a dock when not in use and
 #
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2021       Paul McGowan <mental405@gmail.com>
@@ -87,7 +86,6 @@ class ProbeState:
         self.probe_sense_pin = config.get('probe_sense_pin', None)
         self.dock_sense_pin = config.get('dock_sense_pin', None)
         manual_verify = config.getboolean('manual_probe_verify', False)
-
         self.printer.register_event_handler("klippy:ready",
                                             self._handle_ready)
 
@@ -167,7 +165,7 @@ class ProbeState:
                 self.last_verify_state = PROBE_UNKNOWN
         return self.last_verify_state
 
-class AnnexedProbe:
+class DockableProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
@@ -589,6 +587,6 @@ class AnnexedProbe:
         return self.position_endstop
 
 def load_config(config):
-    msp = AnnexedProbe(config)
+    msp = DockableProbe(config)
     config.get_printer().add_object('probe', probe.PrinterProbe(config, msp))
     return msp

@@ -1704,16 +1704,16 @@ control_pin:
 #   See the "probe" section for information on these parameters.
 ```
 
-## [annexed_probe]
+## [dockable_probe]
 
-Certain probes are stowed in a dock when not in use and mechanically
-coupled to the toolhead before probing. One should define this
-section instead of a probe section if the probe is annexed from the
-toolhead when not in use. See [Annexed Probe Guide](Annexed_Probe.md)
+Certain probes are magnetically coupled to the toolhead and stowed
+in a dock when not in use. One should define this section instead
+of a probe section if the probe uses magnets to attach and a dock
+for storage. See [Dockable Probe Guide](Dockable_Probe.md)
 for more detailed information regarding configuration and setup.
 
 ```
-[annexed_probe]
+[dockable_probe]
 dock_position: 0, 0, 0
 #   The physical position of the probe dock relative to the origin of
 #   the bed. The coordinates are specified as a comma separated x, y, z

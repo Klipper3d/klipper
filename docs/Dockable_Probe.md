@@ -1,6 +1,6 @@
 
 
-This document is meant to describe behavior related to annexed probes.
+This document is meant to describe behavior related to dockable probes.
 These probes are typically microswitches mounted to a printed body that
 attaches to the toolhead through some means of mechanical coupling.
 This coupling is commonly done with magnets though this module can support
@@ -11,12 +11,12 @@ a variety of designs including servo and stepper actuated couplings.
 The minimum requirements for functionality are a config section where the
 following options are specified. Some users may be transitioning from a macro
 based set of commands and many of the options for the `[probe]` config section
-are the same. The `[annexed_probe]` module is first and foremost a `[probe]`
+are the same. The `[dockable_probe]` module is first and foremost a `[probe]`
 with additional functionality added. Any options that can be specified in
-for `[probe]` are valid for `[annexed_probe]` as well.
+for `[probe]` are valid for `[dockable_probe]` as well.
 
 ```
-[annexed_probe]
+[dockable_probe]
 pin:
 z_offset:
 sample_retract_dist:
@@ -441,7 +441,7 @@ following sections.
 
 # Use in macros
 
-The annexed_probe module can use a delayed detach so that it does not
+The dockable_probe module can use a delayed detach so that it does not
 repeatedly dock and undock the probe from the toolhead while it is being
 used in the context of a homing macro or slicer start gcode. This works
 in most cases, but if a call to heat-and-wait (M109, M190) or a toolhead move
