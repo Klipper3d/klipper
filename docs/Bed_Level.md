@@ -61,7 +61,7 @@ test".
 
 In order to perform the paper test, cut a small rectangular piece of
 paper using a pair of scissors (eg, 5x3 cm). The paper generally has a
-width of around 100 microns (0.100mm). (The exact width of the paper
+thickness of around 100 microns (0.100mm). (The exact width of the paper
 isn't crucial.)
 
 The first step of the paper test is to inspect the printer's nozzle
