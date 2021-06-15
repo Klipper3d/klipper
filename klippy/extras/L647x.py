@@ -54,17 +54,17 @@ class FieldHelper:
         config_name = "driver_" + field_name.upper()
         reg_name = self.field_to_register[field_name]
         mask = self.all_fields[reg_name][field_name]
-        maxval = mask >> ffs(mask)    
+        maxval = mask >> ffs(mask)
         if maxval == 1:
             val = config.getboolean(config_name, default)
         elif field_name in self.signed_fields:
             val = config.getint(config_name, default,
                                 minval=-(maxval//2 + 1), maxval=maxval//2)
-        else:   
+        else:
             val = config.getint(config_name, default, minval=0, maxval=maxval)
-                
+
         return self.set_field(field_name, val)
-    
+
     def pretty_format(self, reg_name, reg_value):
         # Provide a string description of a register
         reg_fields = self.all_fields.get(reg_name, {})
@@ -138,7 +138,6 @@ class L647xCommandHelper:
     def _do_disable(self, print_time):
         try:
             self.mcu_L647x.set_register("CMD_DISABLE",0, print_time)
-
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
     def handle_stepper_enable(self, print_time, is_enable):
@@ -157,7 +156,8 @@ class L647xCommandHelper:
         # Send init
         try:
             self._init_registers()
-            print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+            print_time = self.printer.lookup_object('toolhead')\
+                .get_last_move_time()
             self._do_disable(print_time)
             val = self.cmd_GET_STATUS()
 
@@ -185,6 +185,3 @@ class L647xCommandHelper:
 
     def cmd_GET_STATUS(self):
         return self.mcu_L647x.get_register("CMD_GET_STATUS")
-
-
-

@@ -8,11 +8,12 @@ import math, logging
 from . import bus, L647x
 
 
-commands = {"CMD_ENABLE" : 0xB8 , "CMD_DISABLE" : 0xA8 , "CMD_GET_STATUS" : 0xd0 , "CMD_GET_PARAM" : 0x20}
+commands = {"CMD_ENABLE" : 0xB8 , "CMD_DISABLE" : 0xA8 ,\
+    "CMD_GET_STATUS" : 0xd0 , "CMD_GET_PARAM" : 0x20}
 
 
 Registers = {
-    
+
     "ABS_POS"   :       0x01,
     "EL_POS"    :       0x02,
     "MARK"      :       0x03,
@@ -35,14 +36,14 @@ Registers = {
 Fields = {}
 
 Fields["CONFIG"] = {
-    
+
     "OSC_SEL"       : 7 << 0,
     "EXT_CLK"       : 1 << 3,
     "EN_TQREG"      : 1 << 5,
     "OC_SD"         : 1 << 7,
     "POW_SR"        : 3 << 8,
     "TOFF"          : 0x1f << 10
-    
+
 }
 
 Fields["TVAL"] = { "TVAL" : 0x7f}
@@ -54,7 +55,7 @@ Fields["TON_MIN"] = {"TON_MIN" : 0x7f}
 Fields["TOFF_MIN"] = {"TOFF_MIN" : 0x7f}
 
 Fields["STATUS"] = {
-    
+
     "HiZ"           : 1 << 0,
     "DIR"           : 1 << 4,
     "NOTPERF_CMD"   : 1 << 7,
@@ -63,21 +64,21 @@ Fields["STATUS"] = {
     "TH_WRN"        : 1 << 10,
     "TH_SD"         : 1 << 11,
     "OCD"           : 1 << 12
-    
+
 }
 
 Fields["STEP_MODE"] = {
-    
+
     "STEP_SEL"      : 0xf,
     "SYNC_SEL"      : 0xf << 4
-    
+
 }
 
 Fields["T_FAST"] = {
-    
+
     "FAST_STEP"     : 0xf << 0,
     "TOFF_FAST"     : 0Xf << 4
-    
+
 }
 
 Fields["EL_POS"] = {
@@ -167,34 +168,36 @@ class MCU_L647x_SPI_chain:
             respNum = 2
         else:
             respNum = 1
-            
+
         if (reg_name == "CMD_GET_STATUS"):
             data = self._build_cmd([reg & 0xff], chain_pos)
             params = self.spi.spi_transfer(data)
         else:
-            params = self.spi.spi_transfer(self._build_cmd([(reg & 0x1f) | commands["CMD_GET_PARAM"]], chain_pos))
+            params = self.spi.spi_transfer(self._build_cmd([(reg & 0x1f) \
+                | commands["CMD_GET_PARAM"]], chain_pos))
 
         resp = 0x000000
         for i in range(respNum,0,-1):
             params = self.spi.spi_transfer(self._build_cmd([0x00], chain_pos))
             pr = bytearray(params['response'])
             pr = pr[self.chain_len-chain_pos]
-            resp = resp | (pr << (i-1)*8)   
-        return resp       
+            resp = resp | (pr << (i-1)*8)
+        return resp
     def reg_write(self, reg_name, val, chain_pos, print_time=None):
         spiTX = []
-        minclock = 0 
+        minclock = 0
         reg = Registers[reg_name]
         if print_time is not None:
-            minclock = self.spi.get_mcu().print_time_to_clock(print_time)    
+            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         if reg_name in ["ABS_POS" , "MARK"]:
-            spiTX  = [reg] + [(val >> 16) & 0xff] +[(val >> 8) & 0xff] + [val & 0xff]    
+            spiTX  = [reg] + [(val >> 16) & 0xff] \
+                +[(val >> 8) & 0xff] + [val & 0xff]
         elif reg_name in ["EL_POS" , "CONFIG"]:
-            spiTX  = [reg] + [(val >> 8) & 0xff] + [val & 0xff]  
+            spiTX  = [reg] + [(val >> 8) & 0xff] + [val & 0xff]
         elif reg_name in ["CMD_ENABLE" or "CMD_DISABLE"]:
-            spiTX = [reg] 
+            spiTX = [reg]
         else:
-            spiTX  = [reg] + [val & 0xff]   
+            spiTX  = [reg] + [val & 0xff]
         for i in spiTX:
             self.spi.spi_send(self._build_cmd([i], chain_pos), minclock)
 # Helper to setup an spi daisy chain bus from settings in a config section
@@ -210,7 +213,8 @@ def lookup_L647x_spi_chain(config):
                                      share_type="L647x_spi_cs")
     L647x_spi = cs_pin_params.get('class')
     if L647x_spi is None:
-        L647x_spi = cs_pin_params['class'] = MCU_L647x_SPI_chain(config, chain_len)
+        L647x_spi = cs_pin_params['class'] \
+            = MCU_L647x_SPI_chain(config, chain_len)
     if chain_len != L647x_spi.chain_len:
         raise config.error("L647x SPI chain must have same length")
     chain_pos = config.getint('chain_position', minval=1, maxval=chain_len)
@@ -226,7 +230,7 @@ class MCU_L647x_SPI:
         self.L647x_spi, self.chain_pos = lookup_L647x_spi_chain(config)
         self.mutex = self.L647x_spi.mutex
         self.name_to_reg = name_to_reg
-        self.fields = fields 
+        self.fields = fields
     def get_fields(self):
         return self.fields
     def get_commands(self):
@@ -252,18 +256,18 @@ class L6474:
         self.mcu_L647x = MCU_L647x_SPI(config, Registers, self.fields)
         # Register commands
         current_helper = L647xCurrentHelper(config, self.mcu_L647x)
-        cmdhelper = L647x.L647xCommandHelper(config, self.mcu_L647x, current_helper,
-                                         clear_gstat=False)
+        cmdhelper = L647x.L647xCommandHelper(config, self.mcu_L647x,
+                                             current_helper, clear_gstat=False)
         cmdhelper.setup_register_dump(Registers)
 
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
-        set_config_field(config, "TVAL", 7)
+        set_config_field(config, "TVAL", 20)
         set_config_field(config, "TOFF_FAST", 3)
         set_config_field(config, "FAST_STEP", 5)
         set_config_field(config, "TON_MIN", 5)
         set_config_field(config, "TOFF_MIN", 21)
-        set_config_field(config, "OCD_TH", 1)
+        set_config_field(config, "OCD_TH", 2)
         set_config_field(config, "STEP_SEL", 12)
         set_config_field(config, "SYNC_SEL", 8)
         # Alarm Enable Register "

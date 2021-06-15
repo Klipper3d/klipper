@@ -96,11 +96,13 @@ gpio_adc_setup(uint32_t pin)
     // Enable the ADC
     if (!is_enabled_pclock(adc_base)) {
         enable_pclock(adc_base);
-    
+
 #if CONFIG_MACH_STM32F401xE
-        //ADC max clock frequency is 36MHz   
-        adc_common -> CCR &= ~(ADC_CCR_ADCPRE) ;  // CLEAR ADC PRESCALAR
-        adc_common -> CCR |= (uint32_t)(0x1UL << ADC_CCR_ADCPRE_Pos) ;  // SET ADC PRESCALAR TO 4
+        //ADC max clock frequency is 36MHz
+        // CLEAR ADC PRESCALAR
+        adc_common -> CCR &= ~(ADC_CCR_ADCPRE) ;
+        // SET ADC PRESCALAR TO 4
+        adc_common -> CCR |= (uint32_t)(0x1UL << ADC_CCR_ADCPRE_Pos) ;
 #endif
         adc_calibrate(adc);
         uint32_t aticks = 4; // 4-12us sample time (depending on stm32 chip)
