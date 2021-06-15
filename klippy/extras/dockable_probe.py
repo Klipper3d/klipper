@@ -33,7 +33,7 @@ valid state verification methods and examples.
 class PinPollingHelper:
     def __init__(self, config, endstop):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect",
+        self.printer.register_event_handler('klippy:connect',
                                         self._handle_connect)
         self.query_endstop = endstop
         self.last_verify_time  = 0
@@ -55,7 +55,7 @@ class ManualStateHelper:
     def __init__(self, config):
         self.printer = config.get_printer()
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("SET_PROBE_STATUS",
+        gcode.register_command('SET_PROBE_STATUS',
                                 self.cmd_SET_PROBE_STATUS,
                                 desc=self.cmd_SET_PROBE_STATUS_help)
 
@@ -85,12 +85,12 @@ class ProbeState:
         self.check_open_attach = config.getboolean('check_open_attach', False)
         self.probe_sense_pin = config.get('probe_sense_pin', None)
         self.dock_sense_pin = config.get('dock_sense_pin', None)
-        self.printer.register_event_handler("klippy:ready",
+        self.printer.register_event_handler('klippy:ready',
                                             self._handle_ready)
 
         ppins = self.printer.lookup_object('pins')
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("GET_PROBE_STATUS",
+        gcode.register_command('GET_PROBE_STATUS',
                                 self.cmd_GET_PROBE_STATUS,
                                 self.cmd_GET_PROBE_STATUS_help)
 
@@ -143,11 +143,9 @@ class ProbeState:
         self.last_verify_state = PROBE_UNKNOWN
     def get_probe_state(self):
         curtime = self.printer.get_reactor().monotonic()
-        refreshed = "Last Value"
         last = self.last_verify_time
         if (self.last_verify_state == PROBE_UNKNOWN
             or curtime > self.last_verify_time + PROBE_VERIFY_DELAY):
-            refreshed = "New Query"
             self.last_verify_time = curtime
             a = self.probe_sense_pin(curtime)
             d = self.dock_sense_pin(curtime)
@@ -171,9 +169,6 @@ class DockableProbe:
         self.y_offset = config.getfloat('y_offset', 0.)
         self.speed = config.getfloat('speed', 5.0, above=0.)
         self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
-        self.dock_angle   = radians(config.getfloat('dock_angle')) - pi
-        self.detach_angle = radians(config.getfloat('detach_angle')) - pi
-        self.dock_safe_distance = config.getfloat('dock_safe_distance', 0.)
         self.dock_retries = config.getint('dock_retries', 0) + 1
         self.travel_speed = config.getfloat('travel_speed',
                                              self.speed, above=0.)
@@ -187,28 +182,30 @@ class DockableProbe:
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
                                                    above=0.)
 
-        dock_position = config.get("dock_position")
-        try:
-            dock_position = dock_position.split(',')
-            self.dock_position = [float(dock_position[0].strip()),
-                                  float(dock_position[1].strip()),
-                                  float(dock_position[2].strip())]
-        except:
-            e = "Unable to parse dock_position in {0}"
-            raise config.error(e.format(self.name))
-
-        home_xy = config.get("safe_z_position", None)
-        if home_xy:
+        def parseCoord(name, c=3):
             try:
-                home_xy = home_xy.split(',')
-                self.safe_z_position  = [float(home_xy[0].strip()),
-                                         float(home_xy[1].strip()),
-                                         None]
+                p = [None] * 3
+                val = config.get(name, None)
+                if not val:
+                    return None
+                p[0:c] = map(lambda x: float(x.strip()),
+                             val.split(','))[0:c]
             except:
-                e = "Unable to parse safe_z_position in {0}"
-                raise config.error(e.format(self.name))
-        else:
-            self.safe_z_position = None
+                e = "Unable to parse {0} in {1}"
+                raise config.error(e.format(self.name, name))
+            return p
+
+        self.approach_position = parseCoord('approach_position')
+        self.detach_position   = parseCoord('detach_position')
+        self.dock_position     = parseCoord('dock_position')
+        self.safe_z_position   = parseCoord('safe_z_position', 2)
+
+        self.dock_angle, self.approach_distance = self._get_vector(
+                                                        self.dock_position,
+                                                        self.approach_position)
+        self.detach_angle, self.detach_distance = self._get_vector(
+                                                        self.dock_position,
+                                                        self.detach_position)
 
         #Pins
         ppins = self.printer.lookup_object('pins')
@@ -245,19 +242,19 @@ class DockableProbe:
             config, 'post_detach_gcode', '')
 
         #Gcode Commands
-        self.gcode.register_command("ATTACH_PROBE",
+        self.gcode.register_command('ATTACH_PROBE',
                                     self.cmd_ATTACH_PROBE)
-        self.gcode.register_command("DETACH_PROBE",
+        self.gcode.register_command('DETACH_PROBE',
                                     self.cmd_DETACH_PROBE)
 
         #Event Handlers
-        self.printer.register_event_handler("klippy:connect",
+        self.printer.register_event_handler('klippy:connect',
                                             self._handle_connect)
-        self.printer.register_event_handler("klippy:ready",
+        self.printer.register_event_handler('klippy:ready',
                                             self._handle_ready)
-        self.printer.register_event_handler("homing:home_rails_begin",
+        self.printer.register_event_handler('homing:home_rails_begin',
                                             self._handle_homing_rails_begin)
-        self.printer.register_event_handler("homing:home_rails_end",
+        self.printer.register_event_handler('homing:home_rails_end',
                                             self._handle_homing_rails_end)
 
     def _build_config(self):
@@ -316,7 +313,7 @@ class DockableProbe:
     def _move_to_vector(self, angle):
         x, y = self._get_point_on_vector(self.dock_position[:2],
                                          angle,
-                                         self.dock_safe_distance)
+                                         self.approach_distance)
         self.toolhead.manual_move([x,y,None], self.travel_speed)
 
     # Move the toolhead to angle within minimium safe distance
@@ -329,12 +326,13 @@ class DockableProbe:
                                   self.attach_speed)
 
     # Determine toolhead distance to dock coordinates
-    def _check_probe_distance(self, pos=None):
+    def _check_distance(self, pos=None, dist=None):
         if not pos:
             pos = self.toolhead.get_position()
         dock = self.dock_position
-        if self.dock_safe_distance > sqrt((pos[0]-dock[0])**2 +
-                                          (pos[1]-dock[1])**2 ):
+
+        if dist > sqrt((pos[0]-dock[0])**2 +
+                       (pos[1]-dock[1])**2 ):
             return True
         else:
             return False
@@ -358,14 +356,14 @@ class DockableProbe:
         y = float((det1 * (y3 - y4)) - ((y1 - y2) * det2)) / d
         return (x, y)
 
-    # Align toolhead to vector to prevent
-    # unintended detach/attach actions
-    def _align_xy(self, angle=None):
-        if not angle:
-            angle = self.dock_angle
-        if self._check_probe_distance():
-            self._align_to_vector(angle)
-            self._move_to_vector(angle)
+    # Determine the vector of two points
+    def _get_vector(self, point1, point2):
+        x1, y1 = point1[:2]
+        x2, y2 = point2[:2]
+        magnitude = sqrt((x2-x1)**2 + (y2-y1)**2 )
+        angle = atan2(y2-y1, x2-x1) + pi
+
+        return angle, magnitude
 
     # Align z axis to prevent crashes
     def _align_z(self):
@@ -417,72 +415,79 @@ class DockableProbe:
             self._align_z()
         if not return_pos:
             return_pos = self.init_pos
-        self._align_xy()
+        if self._check_distance(dist=self.approach_distance):
+            self._align_to_vector(self.dock_angle)
         retry = 0
         while (self.get_probe_state() != PROBE_ATTACHED
                and retry < self.dock_retries):
             self._do_attach()
             retry += 1
         if self.get_probe_state() != PROBE_ATTACHED:
-            raise self.printer.command_error("Probe attach failed!")
+            raise self.printer.command_error('Probe attach failed!')
         self.post_attach_gcode.run_gcode_from_command()
         if return_pos:
-            if not self._check_probe_distance(return_pos):
+            if not self._check_distance(return_pos, self.approach_distance):
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None],
                     self.travel_speed)
     def _do_attach(self):
         if self.get_probe_state() != PROBE_DOCKED:
             raise self.printer.command_error(
-                "Attach Probe: Probe not detected in dock, aborting")
-        if self._check_probe_distance():
+                'Attach Probe: Probe not detected in dock, aborting')
+        if self._check_distance(dist=self.approach_distance):
             self._align_to_vector(self.dock_angle)
         else:
             self._move_to_vector(self.dock_angle)
         self.toolhead.manual_move(
-            [self.dock_position[0],
-             self.dock_position[1],
-             None],
+            [self.dock_position[0],self.dock_position[1], None],
              self.attach_speed)
         self.attach_gcode.run_gcode_from_command()
-        if self._check_probe_distance():
+        if self._check_distance(dist=self.approach_distance):
             self._align_to_vector(self.dock_angle)
-        self._move_to_vector(self.dock_angle)
+        self.toolhead.manual_move(
+            [self.approach_position[0], self.approach_position[1], None],
+             self.travel_speed)
 
     # Detaching actions
     def detach_probe(self, return_pos=None):
         self.pre_detach_gcode.run_gcode_from_command()
         if self.get_probe_state() == PROBE_ATTACHED:
             self._align_z()
-        self._align_xy(self.dock_angle)
+        self.toolhead.manual_move(
+            [self.approach_position[0], self.approach_position[1], None],
+             self.travel_speed)
         retry = 0
         while (self.get_probe_state() != PROBE_DOCKED
                and retry < self.dock_retries):
             self._do_detach()
             retry += 1
-        if self._check_probe_distance():
+        if self._check_distance(dist=self.detach_distance):
             self._align_to_vector(self.detach_angle)
-            self._move_to_vector(self.detach_angle)
+            self.toolhead.manual_move(
+                [self.detach_position[0], self.detach_position[1], None],
+                 self.travel_speed)
         if self.get_probe_state() != PROBE_DOCKED:
-            raise self.printer.command_error("Probe detach failed!")
+            raise self.printer.command_error('Probe detach failed!')
         self.post_detach_gcode.run_gcode_from_command()
         if return_pos:
-            if not self._check_probe_distance(return_pos):
+            if not self._check_distance(return_pos, self.detach_distance):
                 self.toolhead.manual_move(
                     [return_pos[0], return_pos[1], None],
                     self.travel_speed)
     def _do_detach(self):
-        if self._check_probe_distance():
+        if self._check_distance(dist=self.detach_distance):
             self._align_to_vector(self.dock_angle)
         else:
-            self._move_to_vector(self.dock_angle)
+            self.toolhead.manual_move(
+                [self.detach_position[0], self.detach_position[1], None],
+                 self.travel_speed)
         self.toolhead.manual_move(
-            [self.dock_position[0],
-             self.dock_position[1],
-             None],
+            [self.dock_position[0], self.dock_position[1], None],
              self.attach_speed)
         self.detach_gcode.run_gcode_from_command()
-        self._move_to_vector(self.detach_angle)
+        self.toolhead.manual_move(
+            [self.detach_position[0], self.detach_position[1], None],
+             self.travel_speed)
 
     # Register a callback to detach the probe in the future if
     # no pending probing actions are queued
@@ -517,10 +522,15 @@ class DockableProbe:
         if self.get_probe_state() == PROBE_UNKNOWN:
                 self._force_z_hop()
         if self.get_probe_state() == PROBE_ATTACHED:
+            # If X and Y endstop are within the dock location,
+            # Move out of the dock before attempting to home Z
             if any(a in ['x','y'] for a in homing_axes):
                 self._force_z_hop()
                 if 'xy' in self._last_homed:
-                    self._align_xy()
+                    if self._check_probe_distance(self.dock_position,
+                                                  self.dock_angle):
+                        self._align_to_vector(angle)
+                        self._move_to_vector(angle)
             if 'z' in homing_axes:
                 if self.is_z_endstop:
                     self._align_z()
