@@ -119,10 +119,10 @@ homing. If this parameter is omitted, the center of the bed will be used.
 
 ```
     attach_speed:   default is probe speed or 5mm/s
-    decouple_speed: default is probe speed or 5mm/s
+    detach_speed: default is probe speed or 5mm/s
     travel_speed:   default is 50 mm/s
 ```
-Various optional speeds can be defined for approaching, decoupling and
+Various optional speeds can be defined for approaching, detaching and
 traveling. If these parameters are omitted, the module will use the `speed`
 parameter of the probe if defined. If this option is not supplied, 5mm/s
 will be used.
