@@ -527,10 +527,10 @@ class DockableProbe:
             if any(a in ['x','y'] for a in homing_axes):
                 self._force_z_hop()
                 if 'xy' in self._last_homed:
-                    if self._check_probe_distance(self.dock_position,
-                                                  self.dock_angle):
-                        self._align_to_vector(angle)
-                        self._move_to_vector(angle)
+                    if self._check_distance(self.dock_position,
+                                            self.approach_distance):
+                        self._align_to_vector(self.dock_angle)
+                        self._move_to_vector(self.dock_angle)
             if 'z' in homing_axes:
                 if self.is_z_endstop:
                     self._align_z()
