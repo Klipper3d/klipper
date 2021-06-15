@@ -447,17 +447,16 @@ but does not include moves on the look-ahead queue. One may use the
 `toolhead.flush_step_generation()` or `toolhead.wait_moves()` calls to
 fully flush the look-ahead and step generation code.
 
-The "kinematic" position (`stepper.set_tag_position()` and
-`kin.calc_tag_position()`) is the cartesian position of the toolhead
-as derived from the "stepper" position and is relative to the
-coordinate system specified in the config file. This may differ from
-the requested cartesian position due to the granularity of the stepper
-motors. If the robot is in motion when `stepper.set_tag_position()` is
-issued then the reported value includes moves buffered on the
-micro-controller, but does not include moves on the look-ahead
-queue. One may use the `toolhead.flush_step_generation()` or
-`toolhead.wait_moves()` calls to fully flush the look-ahead and step
-generation code.
+The "kinematic" position (`kin.calc_position()`) is the cartesian
+position of the toolhead as derived from "stepper" positions and is
+relative to the coordinate system specified in the config file. This
+may differ from the requested cartesian position due to the
+granularity of the stepper motors. If the robot is in motion when the
+"stepper" positions are taken then the reported value includes moves
+buffered on the micro-controller, but does not include moves on the
+look-ahead queue. One may use the `toolhead.flush_step_generation()`
+or `toolhead.wait_moves()` calls to fully flush the look-ahead and
+step generation code.
 
 The "toolhead" position (`toolhead.get_position()`) is the last
 requested position of the toolhead in cartesian coordinates relative
