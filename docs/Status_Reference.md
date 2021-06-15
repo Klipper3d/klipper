@@ -144,6 +144,8 @@ The following information is available for heater objects such as
   the given heater.
 - `power`: The last setting of the PWM pin (a value between 0.0 and
   1.0) associated with the heater.
+- `can_extrude`: If extruder can extrude (defined by `min_extrude_temp`),
+  available only for [extruder](Config_Reference.md#extruder)
 
 # heaters
 
