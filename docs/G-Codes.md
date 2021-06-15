@@ -587,6 +587,7 @@ enabled:
   print. This is useful if one decides to cancel a print after a
   PAUSE. It is recommended to add this to your start gcode to make
   sure the paused state is fresh for each print.
+- `CANCEL_PRINT`: Cancels the current print.
 
 ## Filament Sensor
 
