@@ -162,11 +162,11 @@ class Printer:
                 cb()
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
-            self._set_state("%s%s" % (str(e), message_restart))
+            self._set_state("%s\n%s" % (str(e), message_restart))
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
-            self._set_state("%s%s%s%s" % (str(e), message_protocol_error1,
+            self._set_state("%s\n%s%s%s" % (str(e), message_protocol_error1,
                                           self._get_versions(),
                                           message_protocol_error2))
             util.dump_mcu_build()

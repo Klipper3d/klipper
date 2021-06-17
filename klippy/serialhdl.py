@@ -13,11 +13,12 @@ class error(Exception):
 
 class SerialReader:
     BITS_PER_BYTE = 10.
-    def __init__(self, reactor):
+    def __init__(self, reactor, warn_prefix=""):
         self.reactor = reactor
+        self.warn_prefix = warn_prefix
         # Serial port
         self.serial_dev = None
-        self.msgparser = msgproto.MessageParser()
+        self.msgparser = msgproto.MessageParser(warn_prefix=warn_prefix)
         # C interface
         self.ffi_main, self.ffi_lib = chelper.get_ffi()
         self.serialqueue = None
@@ -55,7 +56,10 @@ class SerialReader:
                     hdl = self.handlers.get(hdl, self.handle_default)
                     hdl(params)
             except:
-                logging.exception("Exception in serial callback")
+                logging.exception("%sException in serial callback",
+                                  self.warn_prefix)
+    def _error(self, msg, *params):
+        raise error(self.warn_prefix + (msg % params))
     def _get_identify_data(self, eventtime):
         # Query the "data dictionary" from the micro-controller
         identify_data = ""
@@ -64,7 +68,8 @@ class SerialReader:
             try:
                 params = self.send_with_response(msg, 'identify_response')
             except error as e:
-                logging.exception("Wait for identify_response")
+                logging.exception("%sWait for identify_response",
+                                  self.warn_prefix)
                 return None
             if params['offset'] == len(identify_data):
                 msgdata = params['data']
@@ -84,10 +89,10 @@ class SerialReader:
         completion = self.reactor.register_callback(self._get_identify_data)
         identify_data = completion.wait(self.reactor.monotonic() + 5.)
         if identify_data is None:
-            logging.info("Timeout on connect")
+            logging.info("%sTimeout on connect", self.warn_prefix)
             self.disconnect()
             return False
-        msgparser = msgproto.MessageParser()
+        msgparser = msgproto.MessageParser(warn_prefix=self.warn_prefix)
         msgparser.process_identify(identify_data)
         self.msgparser = msgparser
         self.register_response(self.handle_unknown, '#unknown')
@@ -112,7 +117,7 @@ class SerialReader:
         except ValueError:
             uuid = -1
         if uuid < 0 or uuid > 0xffffffffffff:
-            raise error("Invalid CAN uuid")
+            self._error("Invalid CAN uuid")
         uuid = [(uuid >> (40 - i*8)) & 0xff for i in range(6)]
         CANBUS_ID_ADMIN = 0x3f0
         CMD_SET_NODEID = 0x01
@@ -120,18 +125,19 @@ class SerialReader:
         set_id_msg = can.Message(arbitration_id=CANBUS_ID_ADMIN,
                                  data=set_id_cmd, is_extended_id=False)
         # Start connection attempt
-        logging.info("Starting CAN connect")
+        logging.info("%sStarting CAN connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
         while 1:
             if self.reactor.monotonic() > start_time + 90.:
-                raise error("Unable to connect")
+                self._error("Unable to connect")
             try:
                 bus = can.interface.Bus(channel=canbus_iface,
                                         can_filters=filters,
                                         bustype='socketcan')
                 bus.send(set_id_msg)
             except can.CanError as e:
-                logging.warn("Unable to open CAN port: %s", e)
+                logging.warn("%sUnable to open CAN port: %s",
+                             self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
                 continue
             bus.close = bus.shutdown # XXX
@@ -145,19 +151,21 @@ class SerialReader:
                 if got_uuid == bytearray(uuid):
                     break
             except:
-                logging.exception("Error in canbus_uuid check")
-            logging.info("Failed to match canbus_uuid - retrying..")
+                logging.exception("%sError in canbus_uuid check",
+                                  self.warn_prefix)
+            logging.info("%sFailed to match canbus_uuid - retrying..",
+                         self.warn_prefix)
             self.disconnect()
     def connect_pipe(self, filename):
-        logging.info("Starting connect")
+        logging.info("%sStarting connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
         while 1:
             if self.reactor.monotonic() > start_time + 90.:
-                raise error("Unable to connect")
+                self._error("Unable to connect")
             try:
                 fd = os.open(filename, os.O_RDWR | os.O_NOCTTY)
             except OSError as e:
-                logging.warn("Unable to open port: %s", e)
+                logging.warn("%sUnable to open port: %s", self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
                 continue
             serial_dev = os.fdopen(fd, 'rb+', 0)
@@ -166,11 +174,11 @@ class SerialReader:
                 break
     def connect_uart(self, serialport, baud, rts=True):
         # Initial connection
-        logging.info("Starting serial connect")
+        logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
         while 1:
             if self.reactor.monotonic() > start_time + 90.:
-                raise error("Unable to connect")
+                self._error("Unable to connect")
             try:
                 serial_dev = serial.Serial(baudrate=baud, timeout=0,
                                            exclusive=True)
@@ -178,7 +186,8 @@ class SerialReader:
                 serial_dev.rts = rts
                 serial_dev.open()
             except (OSError, IOError, serial.SerialException) as e:
-                logging.warn("Unable to open serial port: %s", e)
+                logging.warn("%sUnable to open serial port: %s",
+                             self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
                 continue
             stk500v2_leave(serial_dev, self.reactor)
@@ -191,9 +200,9 @@ class SerialReader:
         self.serialqueue = self.ffi_main.gc(
             self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), 'f', 0),
             self.ffi_lib.serialqueue_free)
-    def set_clock_est(self, freq, last_time, last_clock):
+    def set_clock_est(self, freq, conv_time, conv_clock, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
-            self.serialqueue, freq, last_time, last_clock)
+            self.serialqueue, freq, conv_time, conv_clock, last_clock)
     def disconnect(self):
         if self.serialqueue is not None:
             self.ffi_lib.serialqueue_exit(self.serialqueue)
@@ -238,7 +247,7 @@ class SerialReader:
                                       cmd, len(cmd), minclock, reqclock, nid)
         params = completion.wait()
         if params is None:
-            raise error("Serial connection closed")
+            self._error("Serial connection closed")
         return params
     def send(self, msg, minclock=0, reqclock=0):
         cmd = self.msgparser.create_command(msg)
@@ -276,15 +285,16 @@ class SerialReader:
         return '\n'.join(out)
     # Default message handlers
     def _handle_unknown_init(self, params):
-        logging.debug("Unknown message %d (len %d) while identifying",
-                      params['#msgid'], len(params['#msg']))
+        logging.debug("%sUnknown message %d (len %d) while identifying",
+                      self.warn_prefix, params['#msgid'], len(params['#msg']))
     def handle_unknown(self, params):
-        logging.warn("Unknown message type %d: %s",
-                     params['#msgid'], repr(params['#msg']))
+        logging.warn("%sUnknown message type %d: %s",
+                     self.warn_prefix, params['#msgid'], repr(params['#msg']))
     def handle_output(self, params):
-        logging.info("%s: %s", params['#name'], params['#msg'])
+        logging.info("%s%s: %s", self.warn_prefix,
+                     params['#name'], params['#msg'])
     def handle_default(self, params):
-        logging.warn("got %s", params)
+        logging.warn("%sgot %s", self.warn_prefix, params)
 
 # Class to send a query command and return the received response
 class SerialRetryCommand:

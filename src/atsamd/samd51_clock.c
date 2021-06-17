@@ -154,6 +154,33 @@ clock_init_32k(void)
     gen_clock(CLKGEN_48M, GCLK_GENCTRL_SRC_DPLL1);
 }
 
+// Initialize the clocks using an external 25M crystal
+static void
+clock_init_25m(void)
+{
+    // Enable XOSC1
+    uint32_t freq_xosc = 25000000;
+    uint32_t val = (OSCCTRL_XOSCCTRL_ENABLE | OSCCTRL_XOSCCTRL_XTALEN
+                    | OSCCTRL_XOSCCTRL_IPTAT(3) | OSCCTRL_XOSCCTRL_IMULT(6));
+    OSCCTRL->XOSCCTRL[1].reg = val;
+    while (!(OSCCTRL->STATUS.reg & OSCCTRL_STATUS_XOSCRDY1))
+        ;
+
+    // Generate 120Mhz clock on PLL0 (with XOSC1 as reference)
+    uint32_t p0div = 10, p0mul = DIV_ROUND_CLOSEST(FREQ_MAIN, freq_xosc/p0div);
+    uint32_t p0ctrlb = OSCCTRL_DPLLCTRLB_DIV(p0div / 2 - 1);
+    config_dpll(0, p0mul, p0ctrlb | OSCCTRL_DPLLCTRLB_REFCLK_XOSC1);
+
+    // Switch main clock to 120Mhz PLL0
+    gen_clock(CLKGEN_MAIN, GCLK_GENCTRL_SRC_DPLL0);
+
+    // Generate 48Mhz clock on PLL1 (with XOSC1 as reference)
+    uint32_t p1div = 50, p1mul = DIV_ROUND_CLOSEST(FREQ_48M, freq_xosc/p1div);
+    uint32_t p1ctrlb = OSCCTRL_DPLLCTRLB_DIV(p1div / 2 - 1);
+    config_dpll(1, p1mul, p1ctrlb | OSCCTRL_DPLLCTRLB_REFCLK_XOSC1);
+    gen_clock(CLKGEN_48M, GCLK_GENCTRL_SRC_DPLL1);
+}
+
 // Initialize clocks from factory calibrated internal clock
 static void
 clock_init_internal(void)

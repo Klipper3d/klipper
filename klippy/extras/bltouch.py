@@ -28,6 +28,8 @@ class BLTouchEndstopWrapper:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
+        self.printer.register_event_handler('klippy:mcu_identify',
+                                            self.handle_mcu_identify)
         self.position_endstop = config.getfloat('z_offset')
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
@@ -45,7 +47,6 @@ class BLTouchEndstopWrapper:
         pin = config.get('sensor_pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         mcu = pin_params['chip']
-        mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
         # output mode
         omodes = {'5V': '5V', 'OD': 'OD', None: None}
@@ -72,7 +73,7 @@ class BLTouchEndstopWrapper:
                                     desc=self.cmd_BLTOUCH_STORE_help)
         # multi probes state
         self.multi = 'OFF'
-    def _build_config(self):
+    def handle_mcu_identify(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
             if stepper.is_active_axis('z'):

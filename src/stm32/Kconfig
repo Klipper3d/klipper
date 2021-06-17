@@ -142,6 +142,8 @@ choice
         bool "32KiB bootloader" if MACH_STM32F207 || MACH_STM32F407 || MACH_STM32F446
     config STM32_FLASH_START_8800
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
+    config STM32_FLASH_START_20200
+        bool "128KiB bootloader with 512 byte offset (Prusa Buddy)" if MACH_STM32F407
     config STM32_FLASH_START_C000
         bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F407
     config STM32_FLASH_START_10000
@@ -166,6 +168,7 @@ config FLASH_START
     default 0x8008800 if STM32_FLASH_START_8800
     default 0x800C000 if STM32_FLASH_START_C000
     default 0x8010000 if STM32_FLASH_START_10000
+    default 0x8020200 if STM32_FLASH_START_20200
     default 0x8000000
 
 config ARMCM_RAM_VECTORTABLE

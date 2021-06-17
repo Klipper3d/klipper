@@ -98,6 +98,13 @@ class VirtualSD:
         self.must_pause_work = False
         self.work_timer = self.reactor.register_timer(
             self.work_handler, self.reactor.NOW)
+    def do_cancel(self):
+        if self.current_file is not None:
+            self.do_pause()
+            self.current_file.close()
+            self.current_file = None
+            self.print_stats.note_cancel()
+        self.file_position = self.file_size = 0.
     # G-Code commands
     def cmd_error(self, gcmd):
         raise gcmd.error("SD write not supported")
@@ -212,6 +219,7 @@ class VirtualSD:
         gcode_mutex = self.gcode.get_mutex()
         partial_input = ""
         lines = []
+        error_message = None
         while not self.must_pause_work:
             if not lines:
                 # Read more data
@@ -245,7 +253,7 @@ class VirtualSD:
             try:
                 self.gcode.run_script(line)
             except self.gcode.error as e:
-                self.print_stats.note_error(str(e))
+                error_message = str(e)
                 break
             except:
                 logging.exception("virtual_sdcard dispatch")
@@ -265,7 +273,9 @@ class VirtualSD:
         logging.info("Exiting SD card print (position %d)", self.file_position)
         self.work_timer = None
         self.cmd_from_sd = False
-        if self.current_file is not None:
+        if error_message is not None:
+            self.print_stats.note_error(error_message)
+        elif self.current_file is not None:
             self.print_stats.note_pause()
         else:
             self.print_stats.note_complete()

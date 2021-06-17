@@ -331,12 +331,11 @@ Useful steps:
    seconds) to a cartesian coordinate (in millimeters), and then
    calculate the desired stepper position (in millimeters) from that
    cartesian coordinate.
-4. Implement the `calc_tag_position()` method in the new kinematics
-   class. This method calculates the position of the toolhead in
-   cartesian coordinates from the position of each stepper (as
-   returned by `stepper.get_tag_position()`). It does not need to be
-   efficient as it is typically only called during homing and probing
-   operations.
+4. Implement the `calc_position()` method in the new kinematics class.
+   This method calculates the position of the toolhead in cartesian
+   coordinates from the position of each stepper. It does not need to
+   be efficient as it is typically only called during homing and
+   probing operations.
 5. Other methods. Implement the `check_move()`, `get_status()`,
    `get_steppers()`, `home()`, and `set_position()` methods. These
    functions are typically used to provide kinematic specific checks.
@@ -448,17 +447,16 @@ but does not include moves on the look-ahead queue. One may use the
 `toolhead.flush_step_generation()` or `toolhead.wait_moves()` calls to
 fully flush the look-ahead and step generation code.
 
-The "kinematic" position (`stepper.set_tag_position()` and
-`kin.calc_tag_position()`) is the cartesian position of the toolhead
-as derived from the "stepper" position and is relative to the
-coordinate system specified in the config file. This may differ from
-the requested cartesian position due to the granularity of the stepper
-motors. If the robot is in motion when `stepper.set_tag_position()` is
-issued then the reported value includes moves buffered on the
-micro-controller, but does not include moves on the look-ahead
-queue. One may use the `toolhead.flush_step_generation()` or
-`toolhead.wait_moves()` calls to fully flush the look-ahead and step
-generation code.
+The "kinematic" position (`kin.calc_position()`) is the cartesian
+position of the toolhead as derived from "stepper" positions and is
+relative to the coordinate system specified in the config file. This
+may differ from the requested cartesian position due to the
+granularity of the stepper motors. If the robot is in motion when the
+"stepper" positions are taken then the reported value includes moves
+buffered on the micro-controller, but does not include moves on the
+look-ahead queue. One may use the `toolhead.flush_step_generation()`
+or `toolhead.wait_moves()` calls to fully flush the look-ahead and
+step generation code.
 
 The "toolhead" position (`toolhead.get_position()`) is the last
 requested position of the toolhead in cartesian coordinates relative
