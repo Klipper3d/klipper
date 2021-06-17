@@ -279,6 +279,7 @@ class PrinterProbe:
                 "with the above and restart the printer." % (self.name, new_calibrate))
             configfile.set(self.name, 'z_offset', "%.3f" % (new_calibrate,))
     cmd_PROBE_UPDATE_OFFSET_help = "Adjust the probe's z_offset using the current gcode offset"
+
 # Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
     def __init__(self, config):
