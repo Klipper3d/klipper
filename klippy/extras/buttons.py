@@ -180,7 +180,8 @@ R_MSK_CCW_4 = 0x0020
 R_MSK_CW_2 = 0x0110
 R_MSK_CCW_2 = 0x0220
 
-# Use modified half step state table, allowing user-selectable steps per direction pulse
+# Use modified half step state table,
+# allowing user-selectable steps per direction pulse
 ENCODER_STATES = (
     # R_START
     (R_MID, R_CW_A, R_CCW_A, R_START),
