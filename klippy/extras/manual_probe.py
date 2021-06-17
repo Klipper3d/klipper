@@ -19,6 +19,9 @@ class ManualProbe:
             self.gcode.register_command(
                 'Z_ENDSTOP_CALIBRATE', self.cmd_Z_ENDSTOP_CALIBRATE,
                 desc=self.cmd_Z_ENDSTOP_CALIBRATE_help)
+            self.gcode.register_command(
+                'Z_ENDSTOP_UPDATE_POSITION', self.cmd_Z_ENDSTOP_UPDATE_POSITION, 
+                desc=self.cmd_Z_ENDSTOP_UPDATE_POSITION_help)
     def manual_probe_finalize(self, kin_pos):
         if kin_pos is not None:
             self.gcode.respond_info("Z position is %.3f" % (kin_pos[2],))
@@ -38,6 +41,20 @@ class ManualProbe:
     cmd_Z_ENDSTOP_CALIBRATE_help = "Calibrate a Z endstop"
     def cmd_Z_ENDSTOP_CALIBRATE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.z_endstop_finalize)
+    def cmd_Z_ENDSTOP_UPDATE_POSITION(self,gcmd):
+        gcode_move = self.printer.lookup_object('gcode_move')
+        offset = gcode_move.base_position[2]
+        configfile = self.printer.lookup_object('configfile')
+        if offset == 0:
+            self.gcode.respond_info("Nothing to do: Z Offset is 0")
+        else:
+            new_calibrate = self.z_position_endstop - offset
+            self.gcode.respond_info(
+                "stepper_z: position_endstop: %.3f\n"
+                "The SAVE_CONFIG command will update the printer config file\n"
+                "with the above and restart the printer." % (new_calibrate))
+            configfile.set('stepper_z', 'position_endstop', "%.3f" % (new_calibrate,))
+    cmd_Z_ENDSTOP_UPDATE_POSITION_help = "Adjust the stepper_z endstop_position using the current gcode offset"
 
 # Verify that a manual probe isn't already in progress
 def verify_no_manual_probe(printer):
