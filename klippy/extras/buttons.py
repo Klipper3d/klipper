@@ -198,32 +198,45 @@ ENCODER_STATES = (
 )
 
 
+class HalfSteppingRotaryEncoder:
+    def __init__(self, cw_callback, ccw_callback):
+        self.inner = RotaryEncoder(cw_callback, ccw_callback)
+        self.cw_mask = R_MSK_CW_4
+        self.ccw_mask = R_MSK_CCW_4
+
+    def encoder_callback(self, eventtime, state):
+        self.inner.encoder_callback(eventtime,state, self.cw_mask,
+                                    self.ccw_mask)
+
+
+class FullSteppingRotaryEncoder:
+    def __init__(self, cw_callback, ccw_callback):
+        self.inner = RotaryEncoder(cw_callback, ccw_callback)
+        self.cw_mask = R_MSK_CW_2
+        self.ccw_mask = R_MSK_CCW_2
+
+    def encoder_callback(self, eventtime, state):
+        self.inner.encoder_callback(eventtime,state, self.cw_mask,
+                                    self.ccw_mask)
+
+
 class RotaryEncoder:
-    def __init__(self, cw_callback, ccw_callback, steps_per_detent=2):
+    def __init__(self, cw_callback, ccw_callback):
         self.cw_callback = cw_callback
         self.ccw_callback = ccw_callback
         self.encoder_state = R_START
-        if steps_per_detent == 4:
-            self.cw_mask = R_MSK_CW_4
-            self.ccw_mask = R_MSK_CCW_4
-        elif steps_per_detent == 2:
-            self.cw_mask = R_MSK_CW_2
-            self.ccw_mask = R_MSK_CCW_2
-        else:
-            raise ppins.error(
-                "%d steps per detent not supported" % steps_per_detent)
 
-    def encoder_callback(self, eventtime, state):
+    def encoder_callback(self, eventtime, state, cw_mask, ccw_mask):
         es = ENCODER_STATES[self.encoder_state & 0xf][state & 0x3]
         logging.info(
             "encoder_callback: self.encoder_state='%0x', state='%0x', es='%0x'"
             % (self.encoder_state, state, es,))
         logging.info("cw_masked='%0x', ccw_masked='%0x'"
-                     % (es & self.cw_mask, es & self.ccw_mask,))
+                     % (es & cw_mask, es & ccw_mask))
         self.encoder_state = es
-        if (es & self.cw_mask):
+        if (es & cw_mask):
             self.cw_callback(eventtime)
-        elif (es & self.ccw_mask):
+        elif (es & ccw_mask):
             self.ccw_callback(eventtime)
 
 
@@ -274,7 +287,15 @@ class PrinterButtons:
 
     def register_rotary_encoder(self, pin1, pin2, cw_callback, ccw_callback,
                                 steps_per_detent):
-        re = RotaryEncoder(cw_callback, ccw_callback, steps_per_detent)
+        if steps_per_detent == 2:
+            re = FullSteppingRotaryEncoder(cw_callback, ccw_callback)
+        elif steps_per_detent == 4:
+            re = HalfSteppingRotaryEncoder(ccw_callback, ccw_callback)
+        else:
+            ppins = self.printer.lookup_object('pins')
+            raise ppins.error(
+                "%d steps per detent not supported" % steps_per_detent)
+
         self.register_buttons([pin1, pin2], re.encoder_callback)
 
     def register_button_push(self, pin, callback):
