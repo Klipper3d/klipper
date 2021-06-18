@@ -82,7 +82,6 @@ gpio_adc_setup(uint32_t pin)
 
     // Determine which ADC block to use
     ADC_TypeDef *adc = ADC1;
-    ADC_Common_TypeDef *adc_common = ADC;
     uint32_t adc_base = ADC1_BASE;
 #if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F446
     if (chan >= 19) {
@@ -100,6 +99,7 @@ gpio_adc_setup(uint32_t pin)
 #if CONFIG_MACH_STM32F401xE
         //ADC max clock frequency is 36MHz
         // CLEAR ADC PRESCALAR
+        ADC_Common_TypeDef *adc_common = ADC;
         adc_common -> CCR &= ~(ADC_CCR_ADCPRE) ;
         // SET ADC PRESCALAR TO 4
         adc_common -> CCR |= (uint32_t)(0x1UL << ADC_CCR_ADCPRE_Pos) ;
