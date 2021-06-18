@@ -23,6 +23,7 @@ jobs:
         id: merge
         run: |
           echo "::set-output name=status::success"
+          echo "::set-output name=tagname::snapshot-$(date +'%y%m%d')"
           git config user.name Desuuuu
           git config user.email Desuuuu@users.noreply.github.com
           git merge --no-commit --no-ff upstream/master
@@ -34,6 +35,17 @@ jobs:
       - name: Create tag
         if: steps.merge.outputs.status == 'success'
         run: |
-          export TAGNAME=snapshot-$(date +'%y%m%d')
-          git tag -m '/!\ This is an automated, untested release. Use at your own risk /!\' $TAGNAME
-          git push origin refs/tags/$TAGNAME
+          git tag -m '/!\ This is an automated, untested release. Use at your own risk /!\' ${{ steps.merge.outputs.tagname }}
+          git push origin refs/tags/${{ steps.merge.outputs.tagname }}
+      - name: Create prerelease
+        uses: actions/github-script@v3
+        if: steps.merge.outputs.status == 'success'
+        with:
+          github-token: ${{ secrets.TOKEN }}
+          script: |
+            await github.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: "${{ steps.merge.outputs.tagname }}",
+              prerelease: true
+            })
