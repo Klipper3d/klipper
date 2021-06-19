@@ -78,7 +78,7 @@ class MixingExtruder:
         self.gradient_method = 'linear'
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        logging.info("MixingExtruder %d extruders=%s", idx,
+        logging.info("MixingExtruder %d extruders=%s weights=%s", idx,
                      ",".join(self.extruder_names),
                      ",".join("%.1f" % (x) for x in self.mixing))
         # Register commands
@@ -181,6 +181,7 @@ class MixingExtruder:
                           move.cruise_t if hasattr(
                               move, "cruise_t") else move.min_move_t,
                           move.decel_t if hasattr(move, "decel_t") else 0.)
+        return move
 
     def _check_move(self, scaled_move, move):
         axis_r = scaled_move.axes_r[3]
