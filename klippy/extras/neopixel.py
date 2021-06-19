@@ -136,6 +136,16 @@ class PrinterNeoPixel:
         else:
             #Send update now (so as not to wake toolhead and reset idle_timeout)
             lookahead_bgfunc(None)
+    def get_status(self, eventtime):
+        cdata = []
+        elem_size = len(self.color_order)
+        for i in range(self.chain_count):
+            idx = i * elem_size
+            cdata.append(
+                {k: round(v / 255., 4) for k, v in
+                 zip(self.color_order, self.color_data[idx:idx+elem_size])}
+            )
+        return {'color_data': cdata}
 
 def load_config_prefix(config):
     return PrinterNeoPixel(config)
