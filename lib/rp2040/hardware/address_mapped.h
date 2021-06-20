@@ -7,7 +7,9 @@
 #ifndef _HARDWARE_ADDRESS_MAPPED_H
 #define _HARDWARE_ADDRESS_MAPPED_H
 
-#include "pico.h"
+//#include "pico.h"
+#define __force_inline inline
+#define static_assert(a,b)
 #include "hardware/regs/addressmap.h"
 
 /** \file address_mapped.h
