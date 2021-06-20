@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import filament_switch_sensor
+import logging
+from time import strftime
 
 ADC_REPORT_TIME = 0.500
 ADC_SAMPLE_TIME = 0.001
@@ -18,7 +20,7 @@ class FilamentWidthSensor:
             'default_nominal_filament_diameter', above=1.0)
         self.measurement_delay = config.getfloat('measurement_delay', above=0.)
         # Logging on/off
-        self.is_log = config.getboolean('logging', False)
+        self.is_log = config.getboolean('logging', True)
         # Enable extrusion modifier and/or use sensor as Runout switch only
         self.extrude_factor_enable = config.getboolean('extrude_factor_enable', False)
         # Set measurement interval
@@ -56,6 +58,8 @@ class FilamentWidthSensor:
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('QUERY_FILAMENT_WIDTH', self.cmd_M407)
+        self.gcode.register_command('QUERY_RAW_FILAMENT_WIDTH', 
+                                    self.cmd_QueryRawFilament)
         self.gcode.register_command('RESET_FILAMENT_WIDTH_SENSOR',
                                     self.cmd_ClearFilamentArray)
         self.gcode.register_command('DISABLE_FILAMENT_WIDTH_SENSOR',
@@ -69,7 +73,7 @@ class FilamentWidthSensor:
                                         self.cmd_log_enable)
         self.gcode.register_command('DISABLE_FILAMENT_WIDTH_LOG',
                                         self.cmd_log_disable)
-
+                       
     # Initialization
     def handle_ready(self):
         # Load printer objects
@@ -81,6 +85,7 @@ class FilamentWidthSensor:
 
     def adc_callback(self, read_time, read_value):
         # read sensor value, Filament width = acd-value * slope + offset, y=mx+b
+        self.RawFilamentWidth = round(read_value, 2)
         self.lastFilamentWidthReading = round((read_value * self.measurement_slope) + self.measurement_offset, 2)
 
     def update_filament_array(self, last_epos):
@@ -93,10 +98,11 @@ class FilamentWidthSensor:
             if next_reading_position <= (last_epos + self.measurement_delay):
                 self.filament_array.append([last_epos + self.measurement_delay,
                                             self.lastFilamentWidthReading])
-              # Logging                              
+              # Logging
                 if self.is_log:
-                    self.gcode.respond_info("Filament width:%.3f" %
-                                                ( self.diameter ))
+                    with open("/tmp/width.log", "a") as width_log:
+                        width_log.write(strftime("%a, %d %b %Y %H:%M:%S") + " Filament dia: "
+                            + str(self.lastFilamentWidthReading) + " mm\n")         
         else:
             # add first item to array
             self.filament_array.append([self.measurement_delay + last_epos,
@@ -146,6 +152,9 @@ class FilamentWidthSensor:
         if self.lastFilamentWidthReading > 0:
             response += ("Filament dia (measured mm): "
                          + str(self.lastFilamentWidthReading))
+            with open("/tmp/width.log", "a") as width_log:
+                width_log.write(strftime("%a, %d %b %Y %H:%M:%S") + " Query Filament dia: "
+                    + str(self.lastFilamentWidthReading) + " mm\n")
         else:
             response += "Filament NOT present"
         gcmd.respond_info(response)
@@ -188,7 +197,11 @@ class FilamentWidthSensor:
 
     def cmd_log_disable(self, gcmd):
         self.is_log = False
-        gcmd.respond_info("Filament width logging Turned Off")    
+        gcmd.respond_info("Filament width logging Turned Off")
+    
+    def cmd_QueryRawFilament(self, gcmd):
+         gcmd.respond_info("Raw filament dia (measured mm): "
+                         + str(self.RawFilamentWidth))
         
 def load_config(config):
     return FilamentWidthSensor(config)
