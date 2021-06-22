@@ -33,11 +33,12 @@ class ControllerFan:
             parts = [a.split(':', 1) for a in sensors.split(',')]
             for pair in parts:
                 if len(pair) != 2:
-                    raise self.printer.error("Unable to parse temperature_sensors in %s" 
-                                                % (config.get_name(),))
+                    raise self.printer.error(
+                        "Unable to parse temperature_sensors in %s"
+                        % (config.get_name(),))
                 name, value = [s.strip() for s in pair]
                 self.conf_temperature_sensor_targets[name] = float(value)
-            
+
                 gcode = self.printer.lookup_object('gcode')
                 gcode.register_mux_command(
                     "SET_CONTROLLER_FAN_TARGET", "TEMPERATURE_SENSOR", name,
@@ -53,7 +54,11 @@ class ControllerFan:
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
         for k, v in self.conf_temperature_sensor_targets.items():
-            self.temperature_sensor_targets[self.printer.lookup_object('temperature_sensor ' + k.strip())] = v
+            sensor = self.printer.lookup_object('temperature_sensor ' + k.strip())
+            if sensor is None:
+                raise self.printer.error(
+                    "'%s' is not a valid temperature_sensor." % (k,))
+            self.temperature_sensor_targets[sensor] = v
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
     def callback(self, eventtime):
@@ -67,7 +72,6 @@ class ControllerFan:
                 active = True
         for sensor, target in self.temperature_sensor_targets.items():
             current_temp, _ = sensor.get_temp(eventtime)
-            logging.warn("sensor: %s current: %s target: %s", sensor, current_temp, target)
             if current_temp > target:
                 active = True
         if active:
@@ -97,7 +101,8 @@ class ControllerFan:
     def cmd_SET_CONTROLLER_FAN_TARGET(self, gcmd):
         params = gcmd.get_command_parameters()
         sensor = gcmd.get('TEMPERATURE_SENSOR')
-        temp = gcmd.get_float('TARGET', self.conf_temperature_sensor_targets[sensor])
+        temp = gcmd.get_float('TARGET',
+            self.conf_temperature_sensor_targets[sensor])
         self.set_target_temp(sensor, temp)
 
 def load_config_prefix(config):
