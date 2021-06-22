@@ -170,7 +170,7 @@ gcode:
 When the PANELDUE_BEEP gcode macro is executed, Klipper would send something
 like the following over the socket:
 `{"action": "run_paneldue_beep",
-"params": {"frequency": 300, "duration": 1.0}}
+"params": {"frequency": 300, "duration": 1.0}}`
 
 ### objects/list
 
