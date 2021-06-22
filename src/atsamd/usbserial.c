@@ -177,9 +177,9 @@ usb_set_configure(void)
 
 static inline uint8_t nvmReady(void) {
 #if defined(__SAMD51__)
-		return NVMCTRL->STATUS.reg & NVMCTRL_STATUS_READY;
+    return NVMCTRL->STATUS.reg & NVMCTRL_STATUS_READY;
 #else
-        return NVMCTRL->INTFLAG.reg & NVMCTRL_INTFLAG_READY;
+    return NVMCTRL->INTFLAG.reg & NVMCTRL_INTFLAG_READY;
 #endif
 }
 #endif
@@ -204,19 +204,19 @@ usb_request_bootloader(void)
     writel((void*)0x20007FFC, 0x07738135);
 #elif CONFIG_MACH_SAMD51
     writel((void*)(HSRAM_ADDR + HSRAM_SIZE - 4), 0xf01669ef);
-#endif 
+#endif
 
 #if CONFIG_ARDUINO_STYLE_BOOTLOADER_TRIGGERING
-	// Erase application
-	while (!(nvmReady()))
-		;
+    // Erase application
+    while (!(nvmReady()))
+        ;
 
-	NVMCTRL->STATUS.reg |= NVMCTRL_STATUS_MASK;
-	NVMCTRL->ADDR.reg  = (uintptr_t)&NVM_MEMORY[CONFIG_FLASH_START / 4];
-	NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMD_ER | NVMCTRL_CTRLA_CMDEX_KEY;
-	
-	while (!nvmReady())
-	;  
+    NVMCTRL->STATUS.reg |= NVMCTRL_STATUS_MASK;
+    NVMCTRL->ADDR.reg  = (uintptr_t)&NVM_MEMORY[CONFIG_FLASH_START / 4];
+    NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMD_ER | NVMCTRL_CTRLA_CMDEX_KEY;
+
+    while (!nvmReady())
+        ;
 #endif
 
     NVIC_SystemReset();
