@@ -23,8 +23,8 @@ class HybridCoreXZKinematics:
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
         self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
+        self.dc_module = None
         if config.has_section('dual_carriage'):
-            self.printer.add_object("dual_carriage", self)
             dc_config = config.getsection('dual_carriage')
             # dummy for cartesian config users
             dc_config.getchoice('axis', {'x': 'x'}, default='x')
@@ -59,8 +59,8 @@ class HybridCoreXZKinematics:
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self, stepper_positions):
         pos = [stepper_positions[rail.get_name()] for rail in self.rails]
-        if (hasattr(self, 'dc_module') and ['FULL_CONTROL','CARRIAGE_1'] == \
-                    self.dc_module.get_status()['mode']):
+        if (self.dc_module is not None and self.dc_module.get_status() == \
+                {'mode': 'FULL_CONTROL', 'active_carriage': 'CARRIAGE_1'}):
             return [pos[0] - pos[2], pos[1], pos[2]]
         else:
             return [pos[0] + pos[2], pos[1], pos[2]]
@@ -90,12 +90,12 @@ class HybridCoreXZKinematics:
         homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         for axis in homing_state.get_axes():
-            if (hasattr(self, 'dc_module') and axis == 0):
-                saved_status = self.dc_module.get_status();
+            if (self.dc_module is not None and axis == 0):
+                self.dc_module.save_idex_state()
                 for i in [0,1]:
                     self.dc_module.toggle_active_dc_rail(i)
                     self._home_axis(homing_state, axis, self.rails[0])
-                self.dc_module.recover_status(saved_status)
+                self.dc_module.restore_idex_state()
             else:
                 self._home_axis(homing_state, axis, self.rails[axis])
     def _motor_off(self, print_time):
@@ -125,15 +125,11 @@ class HybridCoreXZKinematics:
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
-        status = {
+        return {
             'homed_axes': "".join(axes),
             'axis_minimum': self.axes_min,
             'axis_maximum': self.axes_max
         }
-        if hasattr(self, 'dc_module'):
-            status.update({ 'dual_carriage_status':
-                        self.dc_module.get_status()['mode']})
-        return status
 
 def load_kinematics(toolhead, config):
     return HybridCoreXZKinematics(toolhead, config)

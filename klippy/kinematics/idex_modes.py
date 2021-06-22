@@ -10,7 +10,8 @@ class DualCarriages:
         self.printer = printer
         self.axis = axis
         self.dc = (rail_0, rail_1)
-        self.printer.add_object("idex_modes", self)
+        self.saved_state = None
+        self.printer.add_object('dual_carriage', self)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command(
                    'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
@@ -32,25 +33,33 @@ class DualCarriages:
                 kin.override_rail(self.axis, dc_rail)
                 toolhead.set_position(newpos)
                 kin.update_limits(self.axis, dc_rail.get_range())
-    def get_status(self):
+    def get_status(self, eventtime):
         dc0, dc1 = self.dc
         if (dc0.is_active() is True):
-            mode = ['FULL_CONTROL','CARRIAGE_0']
+            return { 'mode': 'FULL_CONTROL', 'active_carriage': 'CARRIAGE_0' }
         else:
-            mode = ['FULL_CONTROL','CARRIAGE_1']
-        return {
+            return { 'mode': 'FULL_CONTROL', 'active_carriage': 'CARRIAGE_1' }
+    def save_idex_state(self):
+        dc0, dc1 = self.dc
+        if (dc0.is_active() is True):
+            mode, active_carriage = ('FULL_CONTROL', 'CARRIAGE_0')
+        else:
+            mode, active_carriage = ('FULL_CONTROL', 'CARRIAGE_1')
+        self.saved_state = {
             'mode': mode,
+            'active_carriage': active_carriage,
             'axis_positions': (dc0.axis_position, dc1.axis_position)
             }
-    def recover_status(self, saved_status):
-        # set carriage 0 active
-        if (saved_status['mode'][1] == 'CARRIAGE_0'
-                    and self.dc[0].is_active() is False):
-            self.toggle_active_dc_rail(0)
-        # set carriage 1 active
-        elif (saved_status['mode'][1] == 'CARRIAGE_1'
-                    and self.dc[1].is_active() is False):
-            self.toggle_active_dc_rail(1)
+    def restore_idex_state(self):
+        if self.saved_state is not None:
+            # set carriage 0 active
+            if (self.saved_state['active_carriage'] == 'CARRIAGE_0'
+                        and self.dc[0].is_active() is False):
+                self.toggle_active_dc_rail(0)
+            # set carriage 1 active
+            elif (self.saved_state['active_carriage'] == 'CARRIAGE_1'
+                        and self.dc[1].is_active() is False):
+                self.toggle_active_dc_rail(1)
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         index = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
