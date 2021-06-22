@@ -329,7 +329,9 @@ The following information is available in the
 - `is_active`: Returns True if a print from file is currently active.
 - `progress`: An estimate of the current print progress (based of file
   size and file position).
+- `file_path`: A full path to the file of currently loaded file.
 - `file_position`: The current position (in bytes) of an active print.
+- `file_size`: The file size (in bytes) of currently loaded file.
 
 # webhooks
 
