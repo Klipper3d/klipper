@@ -76,8 +76,9 @@ CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
 for the completion of the installation. On some occasions, if the board has
 too little RAM, the installation may fail and you will need to enable swap.
 
-Next, run the following command to install the additional dependencies:
+Next, run the following commands to install the additional dependencies:
 ```
+sudo apt update
 sudo apt install python-numpy python-matplotlib
 ```
 
