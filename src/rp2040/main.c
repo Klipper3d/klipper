@@ -42,6 +42,7 @@ DECL_INIT(watchdog_init);
 
 #define FREQ_XOSC 12000000
 #define FREQ_SYS 125000000
+#define FREQ_USB 48000000
 
 void
 enable_pclock(uint32_t reset_bit)
@@ -126,8 +127,13 @@ clock_setup(void)
     while (!(csys->selected & (1 << 1)))
         ;
 
-    // Setup clk_peri
+    // Setup pll_usb
+    enable_pclock(RESETS_RESET_PLL_USB_BITS);
+    pll_setup(pll_usb_hw, 40, 40*FREQ_XOSC/FREQ_USB);
+
+    // Setup clk_peri and clk_adc
     clk_aux_setup(clk_peri, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS);
+    clk_aux_setup(clk_adc, CLOCKS_CLK_ADC_CTRL_AUXSRC_VALUE_CLKSRC_PLL_USB);
 
     // Enable watchdog tick (at 12Mhz)
     cref->div = 1<<CLOCKS_CLK_REF_DIV_INT_LSB;

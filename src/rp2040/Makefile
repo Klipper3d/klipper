@@ -13,7 +13,7 @@ CFLAGS_klipper.elf += -T $(OUT)src/rp2040/rp2040_link.ld
 $(OUT)klipper.elf: $(OUT)stage2.o $(OUT)src/rp2040/rp2040_link.ld
 
 # Add source files
-src-y += rp2040/main.c rp2040/gpio.c generic/crc16_ccitt.c
+src-y += rp2040/main.c rp2040/gpio.c rp2040/adc.c generic/crc16_ccitt.c
 src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
 src-y += generic/timer_irq.c rp2040/timer.c
 src-$(CONFIG_SERIAL) += rp2040/serial.c generic/serial_irq.c
