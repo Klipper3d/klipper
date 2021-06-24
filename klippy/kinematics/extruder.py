@@ -91,6 +91,7 @@ class PrinterExtruder:
         self.pressure_advance_smooth_time = smooth_time
     def get_status(self, eventtime):
         return dict(self.heater.get_status(eventtime),
+                    can_extrude=self.heater.can_extrude,
                     pressure_advance=self.pressure_advance,
                     smooth_time=self.pressure_advance_smooth_time)
     def get_name(self):

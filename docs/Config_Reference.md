@@ -132,7 +132,8 @@ enable_pin:
 #   driver must always be enabled.
 rotation_distance:
 #   Distance (in mm) that the axis travels with one full rotation of
-#   the stepper motor. This parameter must be provided.
+#   the stepper motor (or final gear if gear_ratio is specified).
+#   This parameter must be provided.
 microsteps:
 #   The number of microsteps the stepper motor driver uses. This
 #   parameter must be provided.
@@ -714,9 +715,6 @@ pid_Ki:
 pid_Kd:
 #   Kd is the "derivative" constant for the pid. This parameter must
 #   be provided for PID heaters.
-#pid_integral_max:
-#   The maximum "windup" the integral term may accumulate. The default
-#   is to use the same value as max_power.
 #max_delta: 2.0
 #   On 'watermark' controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater
@@ -2034,7 +2032,6 @@ temperature.
 #pid_Kp:
 #pid_Ki:
 #pid_Kd:
-#pid_integral_max:
 #pwm_cycle_time:
 #min_temp:
 #max_temp:
@@ -2474,7 +2471,6 @@ additional information.
 #pid_Ki:
 #pid_Kd:
 #pid_deriv_time:
-#pid_integral_max:
 #max_delta:
 #min_temp:
 #max_temp:
