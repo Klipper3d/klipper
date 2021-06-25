@@ -52,6 +52,9 @@ config SERIAL
     bool
 choice
     prompt "Communication interface"
+    config RP2040_USB
+        bool "USB"
+        select USBSERIAL
     config RP2040_SERIAL_UART0
         bool "Serial (on UART0 GPIO1/GPIO0)"
         select SERIAL
