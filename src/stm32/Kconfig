@@ -85,7 +85,7 @@ config MCU
     default "stm32f042x6" if MACH_STM32F042
     default "stm32f070xb" if MACH_STM32F070
     default "stm32f103xe" if MACH_STM32F103
-    default "gd32f103rtc" if MACH_GD32F103
+    default "gd32f103rct" if MACH_GD32F103
     default "stm32f207xx" if MACH_STM32F207
     default "stm32f401xc" if MACH_STM32F401
     default "stm32f405xx" if MACH_STM32F405
