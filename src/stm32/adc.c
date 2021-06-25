@@ -96,7 +96,7 @@ gpio_adc_setup(uint32_t pin)
     if (!is_enabled_pclock(adc_base)) {
         enable_pclock(adc_base);
 
-#if CONFIG_MACH_STM32F401xE
+#if CONFIG_MACH_STM32F401
         //ADC max clock frequency is 36MHz
         // CLEAR ADC PRESCALAR
         ADC_Common_TypeDef *adc_common = ADC;
