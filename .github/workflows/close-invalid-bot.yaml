@@ -1,5 +1,5 @@
-# Close issues marked as not_on_github
-name: "Close issues marked as not_on_github"
+# Close issues marked as "not on github"
+name: "Close issues marked as 'not on github'"
 on:
   schedule:
     - cron: '0 */6 * * *'
@@ -14,7 +14,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              labels: 'not_on_github',
+              labels: 'not on github',
               per_page: 100,
               page: 1
             });
