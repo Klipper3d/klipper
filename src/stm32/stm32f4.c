@@ -246,9 +246,7 @@ clock_setup(void)
 
     // Switch system clock to PLL
     if (FREQ_PERIPH_DIV == 2)
-#if CONFIG_MACH_STM32F401
         RCC->CFGR = RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1 | RCC_CFGR_SW_PLL;
-#endif
     else
         RCC->CFGR = RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4 | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
