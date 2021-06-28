@@ -66,8 +66,9 @@ class PrinterTemperatureMCU:
             ('samd21', self.config_samd21), ('samd51', self.config_samd51),
             ('stm32f1', self.config_stm32f1), ('stm32f2', self.config_stm32f2),
             ('stm32f4', self.config_stm32f4),
-            ('stm32f042', self.config_stm32f042),
+            ('stm32f042', self.config_stm32f0x2),
             ('stm32f070', self.config_stm32f070),
+            ('stm32f072', self.config_stm32f0x2),
             ('', self.config_unknown)]
         for name, func in cfg_funcs:
             if self.mcu_type.startswith(name):
@@ -122,7 +123,7 @@ class PrinterTemperatureMCU:
         cal_adc_110 = self.read16(addr2) / 4095.
         self.slope = (110. - 30.) / (cal_adc_110 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
-    def config_stm32f042(self):
+    def config_stm32f0x2(self):
         self.config_stm32f4(addr1=0x1FFFF7B8, addr2=0x1FFFF7C2)
     def config_stm32f070(self):
         self.slope = 3.3 / -.004300
