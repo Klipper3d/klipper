@@ -27,6 +27,7 @@ class PrinterProbe:
         self.multi_probe_pending = False
         self.last_state = False
         self.last_z_result = 0.
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -267,8 +268,7 @@ class PrinterProbe:
                                        self.probe_calibrate_finalize)
     def cmd_PROBE_UPDATE_OFFSET(self,gcmd):
         z_offset = self.probe_calibrate_z
-        gcode_move = self.printer.lookup_object('gcode_move')
-        offset = gcode_move.base_position[2]
+        offset = self.gcode_move.get_status()['homing_origin'].z
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
             self.gcode.respond_info("Nothing to do: Z Offset is 0")

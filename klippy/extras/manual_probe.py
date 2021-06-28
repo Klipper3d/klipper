@@ -10,6 +10,7 @@ class ManualProbe:
         self.printer = config.get_printer()
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
         zconfig = config.getsection('stepper_z')
@@ -43,8 +44,7 @@ class ManualProbe:
     def cmd_Z_ENDSTOP_CALIBRATE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.z_endstop_finalize)
     def cmd_Z_ENDSTOP_UPDATE_POSITION(self,gcmd):
-        gcode_move = self.printer.lookup_object('gcode_move')
-        offset = gcode_move.base_position[2]
+        offset = self.gcode_move.get_status()['homing_origin'].z
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
             self.gcode.respond_info("Nothing to do: Z Offset is 0")
