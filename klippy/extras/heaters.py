@@ -114,12 +114,13 @@ class Heater:
         with self.lock:
             self.target_temp = degrees
     def set_temp(self, degrees):
-        if self.sync_heaters_master is None:
-            self._set_temp(degrees)
-            for sync_heater in self.sync_heaters:
-                offset = self.sync_heaters[sync_heater]
-                sync_degrees = 0. if degrees <= 0. else max(degrees + offset, 0.)
-                sync_heater._set_temp(sync_degrees)
+        if self.sync_heaters_master is not None:
+            return
+        self._set_temp(degrees)
+        for sync_heater in self.sync_heaters:
+            offset = self.sync_heaters[sync_heater]
+            sync_degrees = 0. if degrees <= 0. else max(degrees + offset, 0.)
+            sync_heater._set_temp(sync_degrees)
     def get_temp(self, eventtime):
         print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
@@ -203,7 +204,7 @@ class Heater:
         heater = pheaters.lookup_heater(name_heater, None)
         if heater is not None:
             heater.sync_heater(self, offset_temp)
-            gcmd.respond_info("Heater '%s' is now synchronized with '%s'" 
+            gcmd.respond_info("Heater '%s' is now synchronized with '%s'"
                         % (self.name, heater.get_name(),))
         else:
             raise gcmd.error("Heater '%s' not found" % name_heater)

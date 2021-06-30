@@ -233,7 +233,7 @@ class PrinterExtruder:
         else:
             extruder_master.sync_stepper(self.stepper)
             extruder_master.get_heater().sync_heater(heater, offset_temp)
-            gcmd.respond_info("Extruder '%s' now synchronized with '%s'" 
+            gcmd.respond_info("Extruder '%s' now synchronized with '%s'"
                         % (self.name, name_master,))
 
 # Dummy extruder class used when a printer has no extruder at all
