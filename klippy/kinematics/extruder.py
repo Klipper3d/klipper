@@ -172,10 +172,10 @@ class PrinterExtruder:
                 if temp <= 0.:
                     return
                 raise gcmd.error("Extruder not configured")
-            if current_extruder != extruder and \
-                    current_extruder.get_heater() == extruder.get_heater():
-                gcmd.respond_info("not changing temperature of current heater")
-                return
+#            if current_extruder != extruder and \
+#                    current_extruder.get_heater() == extruder.get_heater():
+#                gcmd.respond_info("not changing temperature of current heater")
+#                return
         else:
             extruder = self.printer.lookup_object('toolhead').get_extruder()
         pheaters = self.printer.lookup_object('heaters')
