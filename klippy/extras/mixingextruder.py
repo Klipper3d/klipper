@@ -76,6 +76,7 @@ class MixingExtruder:
         # assumed to be sorted list of ((start, middle, end), (ref1, ref2))
         self.gradients = []
         self.gradient_method = 'linear'
+        self.retracted = 0.0
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         logging.info("MixingExtruder %d extruders=%s weights=%s", idx,
@@ -260,8 +261,24 @@ class MixingExtruder:
         self.extruders[0].check_move(move)
 
     def move(self, print_time, move):
+        # Track extrusion to handle retractions.
+        # FIXME: May need to split the move!
+        delta_e = move.end_pos[3] - move.start_pos[3]
+        if delta_e < 0.0:
+            if self.retracted == 0.0:
+                logging.debug("%s is retracting / unretracting" % self.name)
+            retracting = True
+            self.retracted += -delta_e
+        else:
+            retracting = self.retracted > 0.0
+            self.retracted -= delta_e
+            self.retracted = max(0.0, self.retracted)
+            if self.retracted == 0.0:
+                logging.debug("%s is mixing" % self.name)
         mixing = self.mixing if not self.gradient_enabled \
             else self._get_gradient(move.start_pos[:3], move.end_pos[:3])
+        if retracting:
+            mixing = [1. / len(self.extruders) for p in range(len(self.extruders))]
         self.current_mixing = tuple(mixing)
         for idx, extruder in enumerate(self.extruders):
             scaled_move = self._scale_move(move, idx, mixing)
