@@ -211,6 +211,9 @@ Fields["TPWMTHRS"] = {
 Fields["TCOOLTHRS"] = {
     "TCOOLTHRS":                0xfffff << 0
 }
+Fields["THIGH"] = {
+    "THIGH":                    0xfffff << 0
+}
 Fields["TSTEP"] = {
     "TSTEP":                    0xfffff << 0
 }
@@ -299,8 +302,10 @@ class TMC5160:
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
-        #   CHOPCONF
+        tmc.TMCTHIGHHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCcoolStepHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
+        # CHOPCONF
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 2)
@@ -313,17 +318,17 @@ class TMC5160:
         set_config_field(config, "tpfd", 4)
         set_config_field(config, "diss2g", 0)
         set_config_field(config, "diss2vs", 0)
-        #   COOLCONF
-        set_config_field(config, "semin", 0)    # page 52
+        # COOLCONF
+        set_config_field(config, "semin", 0)
         set_config_field(config, "seup", 0)
         set_config_field(config, "semax", 0)
         set_config_field(config, "sedn", 0)
         set_config_field(config, "seimin", 0)
         set_config_field(config, "sgt", 0)
         set_config_field(config, "sfilt", 0)
-        #   IHOLDIRUN
+        # IHOLDIRUN
         set_config_field(config, "IHOLDDELAY", 6)
-        #   PWMCONF
+        # PWMCONF
         set_config_field(config, "PWM_OFS", 30)
         set_config_field(config, "PWM_GRAD", 0)
         set_config_field(config, "pwm_freq", 0)
@@ -332,7 +337,7 @@ class TMC5160:
         set_config_field(config, "freewheel", 0)
         set_config_field(config, "PWM_REG", 4)
         set_config_field(config, "PWM_LIM", 12)
-        #   TPOWERDOWN
+        # TPOWERDOWN
         set_config_field(config, "TPOWERDOWN", 10)
 
 def load_config_prefix(config):

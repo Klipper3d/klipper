@@ -73,22 +73,38 @@ class TMC2209:
         self.get_microsteps = mh.get_microsteps
         self.get_phase = mh.get_phase
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCcoolStepHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        # CHOPCONF
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
         set_config_field(config, "TBL", 2)
+        set_config_field(config, "diss2g", 0)
+        set_config_field(config, "diss2vs", 0)
+        # COOLCONF
+        set_config_field(config, "semin", 0)
+        set_config_field(config, "seup", 0)
+        set_config_field(config, "semax", 0)
+        set_config_field(config, "sedn", 0)
+        set_config_field(config, "seimin", 0)
+        # IHOLDIRUN
         set_config_field(config, "IHOLDDELAY", 8)
-        set_config_field(config, "TPOWERDOWN", 20)
+        # PWMCONF
         set_config_field(config, "PWM_OFS", 36)
         set_config_field(config, "PWM_GRAD", 14)
         set_config_field(config, "pwm_freq", 1)
-        set_config_field(config, "pwm_autoscale", True)
-        set_config_field(config, "pwm_autograd", True)
+        set_config_field(config, "pwm_autoscale", 1)
+        set_config_field(config, "pwm_autograd", 1)
+        set_config_field(config, "freewheel", 0)
         set_config_field(config, "PWM_REG", 8)
         set_config_field(config, "PWM_LIM", 12)
+        # TPOWERDOWN
+        set_config_field(config, "TPOWERDOWN", 20)
+        # SGTHRS
         set_config_field(config, "SGTHRS", 0)
+
 
 def load_config_prefix(config):
     return TMC2209(config)

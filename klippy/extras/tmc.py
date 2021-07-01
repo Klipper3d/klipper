@@ -333,6 +333,7 @@ class TMCVirtualPinHelper:
         self.mcu_endstop = None
         self.en_pwm = False
         self.pwmthrs = 0
+        self.tcoolthrs = 0
         # Register virtual_endstop pin
         name_parts = config.get_name().split()
         ppins = self.printer.lookup_object("pins")
@@ -354,6 +355,7 @@ class TMCVirtualPinHelper:
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.pwmthrs = 0
+        self.coolthrs = self.fields.get_field("TCOOLTHRS")
         self.printer.register_event_handler("homing:homing_move_begin",
                                             self.handle_homing_move_begin)
         self.printer.register_event_handler("homing:homing_move_end",
@@ -368,12 +370,13 @@ class TMCVirtualPinHelper:
             # On "stallguard4" drivers, "stealthchop" must be enabled
             tp_val = self.fields.set_field("TPWMTHRS", 0)
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadCycle", 0)
+            gconf_val = self.fields.set_field("en_spreadCycle", 0)
+            self.mcu_tmc.set_register("GCONF", gconf_val)
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self.fields.set_field("en_pwm_mode", 0)
-            val = self.fields.set_field(self.diag_pin_field, 1)
-        self.mcu_tmc.set_register("GCONF", val)
+            gconf_val = self.fields.set_field(self.diag_pin_field, 1)
+            self.mcu_tmc.set_register("GCONF", gconf_val)
         tc_val = self.fields.set_field("TCOOLTHRS", 0xfffff)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
     def handle_homing_move_end(self, hmove):
@@ -388,7 +391,7 @@ class TMCVirtualPinHelper:
             self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
-        tc_val = self.fields.set_field("TCOOLTHRS", 0)
+        tc_val = self.fields.set_field("TCOOLTHRS", self.coolthrs)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
 
 
@@ -423,18 +426,29 @@ class TMCMicrostepHelper:
         mscnt = self.fields.get_field(field_name, reg)
         return 1023 - mscnt, 1024
 
-# Helper to configure "stealthchop" mode
-def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+# Helper for calculating TSTEP based values from velocity
+def TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, default_val):
     fields = mcu_tmc.get_fields()
-    en_pwm_mode = False
-    velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-    if velocity:
+    if velocity is None:
+        return default_val
+    elif velocity > 0:
         stepper_name = " ".join(config.get_name().split()[1:])
         stepper_config = config.getsection(stepper_name)
         step_dist = stepper.parse_step_distance(stepper_config)
         step_dist_256 = step_dist / (1 << fields.get_field("MRES"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
-        fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
+        return max(0, min(0xfffff, threshold))
+    else:
+        return 0xfffff
+
+# Helper to configure stealthChop-spreadCycle transition velocity
+def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    en_pwm_mode = False
+    velocity = config.getfloat('stealthchop_threshold', None, minval=0.)
+    tpwmthrs = TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, 0xfffff)
+    fields.set_field("TPWMTHRS", tpwmthrs)
+    if velocity is not None:
         en_pwm_mode = True
     reg = fields.lookup_register("en_pwm_mode", None)
     if reg is not None:
@@ -442,3 +456,20 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     else:
         # TMC2208 uses en_spreadCycle
         fields.set_field("en_spreadCycle", not en_pwm_mode)
+
+# Helper to configure spreadCycle-highVelocity transition velocity
+# It is also the top speed for coolStep and stallGuard operation
+def TMCTHIGHHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    velocity = config.getfloat(
+        'high_velocity_threshold', None, minval=0.)
+    fields.set_field("THIGH",
+        TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, 0))
+
+# Helper to configure coolStep and stallGuard lower velocity limit
+def TMCcoolStepHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    velocity = config.getfloat(
+        'coolStep_min_velocity_threshold', None, minval=0.)
+    fields.set_field("TCOOLTHRS",
+        TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, 0))
