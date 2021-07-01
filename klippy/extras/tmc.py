@@ -351,10 +351,9 @@ class TMCVirtualPinHelper:
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             self.en_pwm = not self.fields.get_field("en_spreadCycle")
-            self.pwmthrs = self.fields.get_field("TPWMTHRS")
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
-            self.pwmthrs = 0
+        self.pwmthrs = self.fields.get_field("TPWMTHRS")
         self.coolthrs = self.fields.get_field("TCOOLTHRS")
         self.printer.register_event_handler("homing:homing_move_begin",
                                             self.handle_homing_move_begin)
@@ -374,6 +373,8 @@ class TMCVirtualPinHelper:
             self.mcu_tmc.set_register("GCONF", gconf_val)
         else:
             # On earlier drivers, "stealthchop" must be disabled
+            tp_val = self.fields.set_field("TPWMTHRS", 0xfffff)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             self.fields.set_field("en_pwm_mode", 0)
             gconf_val = self.fields.set_field(self.diag_pin_field, 1)
             self.mcu_tmc.set_register("GCONF", gconf_val)
@@ -388,6 +389,8 @@ class TMCVirtualPinHelper:
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             val = self.fields.set_field("en_spreadCycle", not self.en_pwm)
         else:
+            tp_val = self.fields.set_field("TPWMTHRS", self.pwmthrs)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
