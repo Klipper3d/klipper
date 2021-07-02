@@ -229,6 +229,7 @@ class TMC2660:
         current_helper = TMC2660CurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
+        tmc.TMCHomingCurrentHelper(config, self.mcu_tmc, current_helper)
         # DRVCTRL
         mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         self.get_microsteps = mh.get_microsteps
