@@ -153,7 +153,8 @@ usb_set_configure(void)
 void
 usb_request_bootloader(void)
 {
-    // XXX
+    // Use the bootrom-provided code to reset into BOOTSEL mode
+    reset_to_usb_boot(0, 0);
 }
 
 
