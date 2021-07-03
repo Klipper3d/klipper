@@ -258,10 +258,13 @@ After sensorless homing completes the carriage will be pressed against
 the end of the rail and the stepper will exert a force on the frame
 until the carriage is moved away. It is a good idea to create a macro
 to home the axis and immediately move the carriage away from the end
-of the rail. It is recommended to set the speed of this subsequent
-move so that it lasts at least two seconds (eg, `G1 X40 F1200`) to
-ensure the stall flag in the TMC driver is cleared after the move
-completes.
+of the rail.
+
+It is a good idea for the macro to pause at least 2 seconds prior to
+starting sensorless homing (or otherwise ensure that there has been no
+movement on the stepper for 2 seconds). Without a delay it is possible
+for the driver's internal stall flag to still be set from a previous
+move.
 
 It can also be useful to have that macro set the driver current before
 homing and set a new current after the carriage has moved away. This
@@ -279,11 +282,13 @@ gcode:
     {% set HOLD_CUR = driver_config.hold_current %}
     # Set current for sensorless homing
     SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR} HOLDCURRENT={HOME_CUR}
+    # Pause to ensure driver stall flag is clear
+    G4 P2000
     # Home
     G28 X0
     # Move away
     G90
-    G1 X40 F1200
+    G1 X5 F1200
     # Set current during print
     SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR} HOLDCURRENT={HOLD_CUR}
 ```
@@ -308,16 +313,15 @@ sensitivity" for each carriage, but be aware of the following
 restrictions:
 1. When using sensorless homing on CoreXY, make sure there is no
    `hold_current` in effect for either stepper during homing.
-2. Make sure both the X and Y carriages are near the center of their
-   rails before each home attempt.
+2. While tuning, make sure both the X and Y carriages are near the
+   center of their rails before each home attempt.
 3. After tuning is complete, when homing both X and Y, use macros to
    ensure that one axis is homed first, then move that carriage away
-   from the axis limit using a move that lasts at least two seconds,
-   and then start the homing of the other carriage. The move away from
-   the axis helps ensure the stall flag is cleared from both stepper
-   drivers before starting the next home attempt. It also avoids
-   homing one axis while the other is pressed against the axis limit
-   (which may skew the stall detection).
+   from the axis limit, pause for at least 2 seconds, and then start
+   the homing of the other carriage. The move away from the axis
+   avoids homing one axis while the other is pressed against the axis
+   limit (which may skew the stall detection). The pause is necessary
+   to ensure the driver's stall flag is cleared prior to homing again.
 
 # Querying and diagnosing driver settings
 
@@ -376,6 +380,12 @@ tmc2209 driver.
 Make sure that the motor power is enabled, as the stepper motor driver
 generally needs motor power before it can communicate with the
 micro-controller.
+
+If this error occurs after flashing Klipper for the first time, then
+the stepper driver may have been previously programmed in a state that
+is not compatible with Klipper. To reset the state, remove all power
+from the printer for several seconds (physically unplug both USB and
+power plugs).
 
 Otherwise, this error is typically the result of incorrect UART pin
 wiring or an incorrect Klipper configuration of the UART pin settings.
