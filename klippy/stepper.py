@@ -33,6 +33,7 @@ class MCU_stepper:
         self._invert_dir = dir_pin_params['invert']
         self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
+        self._stop_on_trigger_cmd = None
         self._active_callbacks = []
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(ffi_lib.stepcompress_alloc(oid),
@@ -76,13 +77,13 @@ class MCU_stepper:
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
+        self._stop_on_trigger_cmd = self._mcu.lookup_command(
+            "stepper_stop_on_trigger oid=%c trsync_oid=%c")
         max_error = self._mcu.get_max_stepper_error()
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.stepcompress_fill(self._stepqueue,
                                   self._mcu.seconds_to_clock(max_error),
                                   self._invert_dir, step_cmd_tag, dir_cmd_tag)
-    def get_oid(self):
-        return self._oid
     def get_step_dist(self):
         return self._step_dist
     def set_step_dist(self, dist):
@@ -138,6 +139,8 @@ class MCU_stepper:
         self.set_trapq(self._trapq)
         self._set_mcu_position(mcu_pos)
         return old_sk
+    def stop_on_trigger(self, trsync_oid, cmd_queue):
+        self._stop_on_trigger_cmd.send([self._oid, trsync_oid], cq=cmd_queue)
     def note_homing_end(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         ret = ffi_lib.stepcompress_reset(self._stepqueue, 0)
