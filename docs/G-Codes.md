@@ -433,6 +433,10 @@ The following commands are available when the
   supplied name from persistent memory.  Note that after SAVE or
   REMOVE operations have been run the SAVE_CONFIG gcode must be run
   to make the changes to peristent memory permanent.
+- `BED_MESH_OFFSET [X=<value>] [Y=<value>]`:  Applies X and/or Y
+  offsets to the mesh lookup.  This is useful for printers with
+  independent extruders, as an offset is necessary to produce
+  correct Z adjustment after a tool change.
 
 ## Bed Screws Helper
 
@@ -452,12 +456,13 @@ The following commands are available when the
 [screws_tilt_adjust config section](Config_Reference.md#screws_tilt_adjust)
 is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)):
-- `SCREWS_TILT_CALCULATE [<probe_parameter>=<value>]`: This command
-  will invoke the bed screws adjustment tool. It will command the
+- `SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [<probe_parameter>=<value>]`:
+  This command will invoke the bed screws adjustment tool. It will command the
   nozzle to different locations (as defined in the config file)
   probing the z height and calculate the number of knob turns to
-  adjust the bed level. See the PROBE command for details on the
-  optional probe parameters.
+  adjust the bed level. If DIRECTION is specified, the knob turns will all
+  be in the same direction, clockwise (CW) or counterclockwise (CCW).
+  See the PROBE command for details on the optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
 
 ## Z Tilt
@@ -583,6 +588,7 @@ enabled:
   print. This is useful if one decides to cancel a print after a
   PAUSE. It is recommended to add this to your start gcode to make
   sure the paused state is fresh for each print.
+- `CANCEL_PRINT`: Cancels the current print.
 
 ## Filament Sensor
 
