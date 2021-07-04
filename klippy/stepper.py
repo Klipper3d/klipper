@@ -200,6 +200,10 @@ class MCU_stepper:
 def PrinterStepper(config, units_in_radians=False):
     printer = config.get_printer()
     name = config.get_name()
+    # Mechaduino hack (this is temporary code)
+    mechaduino = printer.lookup_object('mechaduino ' + name, None)
+    if mechaduino is not None:
+        return mechaduino.get_mcu_stepper()
     # Stepper definition
     ppins = printer.lookup_object('pins')
     step_pin = config.get('step_pin')
