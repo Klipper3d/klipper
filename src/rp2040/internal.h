@@ -14,4 +14,8 @@ void connect_internal_flash(void);
 void flash_exit_xip(void);
 void flash_flush_cache(void);
 
+// Force a function to run from ram
+#define UNIQSEC __FILE__ "." __stringify(__LINE__)
+#define _ramfunc noinline __section(".ramfunc." UNIQSEC)
+
 #endif // internal.h

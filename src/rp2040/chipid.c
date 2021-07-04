@@ -30,7 +30,7 @@ usbserial_get_serialid(void)
 // Functions for reading out the flash chip ID. Adapted from the official
 // Pi SDK.
 
-static void noinline __section(".ramfunc.read_chip_id")
+static void _ramfunc
 flash_cs_force(int high)
 {
     uint32_t field_val = high ?
@@ -60,7 +60,7 @@ flash_enter_xip_prepare(void)
   barrier();
 }
 
-static void noinline __section(".ramfunc.read_chip_id")
+static void _ramfunc
 flash_enter_xip_perform(void)
 {
   ((void (*)(void))boot2_copy+1)();
@@ -71,7 +71,7 @@ flash_enter_xip_perform(void)
 #define FLASH_RUID_DATA_BYTES  8
 #define FLASH_RUID_TOTAL_BYTES (1+FLASH_RUID_DUMMY_BYTES+FLASH_RUID_DATA_BYTES)
 
-static void noinline __section(".ramfunc.read_chip_id")
+static void _ramfunc
 read_unique_id(uint8_t *out)
 {
     uint8_t txbuf[FLASH_RUID_TOTAL_BYTES] = {0};
