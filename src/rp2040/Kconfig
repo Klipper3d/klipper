@@ -9,6 +9,7 @@ config RP2040_SELECT
     select HAVE_GPIO_ADC
     select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
 
 config BOARD_DIRECTORY
     string
