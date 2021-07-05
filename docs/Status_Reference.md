@@ -144,6 +144,8 @@ The following information is available for heater objects such as
   the given heater.
 - `power`: The last setting of the PWM pin (a value between 0.0 and
   1.0) associated with the heater.
+- `can_extrude`: If extruder can extrude (defined by `min_extrude_temp`),
+  available only for [extruder](Config_Reference.md#extruder)
 
 # heaters
 
@@ -320,6 +322,15 @@ The following information is available in the `toolhead` object
   the printer had to be paused because the toolhead moved faster than
   moves could be read from the G-Code input.
 
+# dual_carriage
+
+The following information is available in
+[dual_carriage](Config_Reference.md#dual_carriage)
+on a hybrid_corexy or hybrid_corexz robot
+- `mode`: The current mode. Possible values are: "FULL_CONTROL"
+- `active_carriage`: The current active carriage.
+Possible values are: "CARRIAGE_0", "CARRIAGE_1"
+
 # virtual_sdcard
 
 The following information is available in the
@@ -327,7 +338,9 @@ The following information is available in the
 - `is_active`: Returns True if a print from file is currently active.
 - `progress`: An estimate of the current print progress (based of file
   size and file position).
+- `file_path`: A full path to the file of currently loaded file.
 - `file_position`: The current position (in bytes) of an active print.
+- `file_size`: The file size (in bytes) of currently loaded file.
 
 # webhooks
 
@@ -344,3 +357,12 @@ The following information is available in the `z_tilt` object (this
 object is available if z_tilt is defined):
 - `applied`: True if the z-tilt leveling process has been run and completed
   successfully.
+
+# neopixel / dotstar
+The following information is available for each `[neopixel led_name]` and
+`[dotstar led_name]` defined in printer.cfg:
+- `color_data`:  An array of objects, with each object containing the RGBW
+  values for a led in the chain.  Note that not all configurations will contain
+  a white value.  Each value is represented as a float from 0 to 1.  For
+  example, the blue value of the second neopixel in a chain could be accessed
+  at `printer["neopixel <config_name>"].colordata[1].B`.

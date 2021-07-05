@@ -16,6 +16,10 @@ int stepcompress_append(struct stepcompress *sc, int sdir
                         , double print_time, double step_time);
 int stepcompress_commit(struct stepcompress *sc);
 int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+int stepcompress_set_last_position(struct stepcompress *sc
+                                   , int64_t last_position);
+int64_t stepcompress_find_past_position(struct stepcompress *sc
+                                        , uint64_t clock);
 int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
 
 struct serialqueue;

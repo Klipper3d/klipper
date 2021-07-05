@@ -61,8 +61,8 @@ class MCU_stepper:
         self.set_stepper_kinematics(sk)
     def _build_config(self):
         self._mcu.add_config_cmd(
-            "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d" % (
-                self._oid, self._step_pin, self._dir_pin, self._invert_step))
+            "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d"
+            % (self._oid, self._step_pin, self._dir_pin, self._invert_step))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)
         step_cmd_tag = self._mcu.lookup_command_tag(
@@ -84,8 +84,10 @@ class MCU_stepper:
     def get_step_dist(self):
         return self._step_dist
     def set_step_dist(self, dist):
+        mcu_pos = self.get_mcu_position()
         self._step_dist = dist
         self.set_stepper_kinematics(self._stepper_kinematics)
+        self._set_mcu_position(mcu_pos)
     def is_dir_inverted(self):
         return self._invert_dir
     def calc_position_from_coord(self, coord):
@@ -93,21 +95,23 @@ class MCU_stepper:
         return ffi_lib.itersolve_calc_position_from_coord(
             self._stepper_kinematics, coord[0], coord[1], coord[2])
     def set_position(self, coord):
-        opos = self.get_commanded_position()
+        mcu_pos = self.get_mcu_position()
         sk = self._stepper_kinematics
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.itersolve_set_position(sk, coord[0], coord[1], coord[2])
-        self._mcu_position_offset += opos - self.get_commanded_position()
+        self._set_mcu_position(mcu_pos)
     def get_commanded_position(self):
-        sk = self._stepper_kinematics
         ffi_main, ffi_lib = chelper.get_ffi()
-        return ffi_lib.itersolve_get_commanded_pos(sk)
+        return ffi_lib.itersolve_get_commanded_pos(self._stepper_kinematics)
     def get_mcu_position(self):
         mcu_pos_dist = self.get_commanded_position() + self._mcu_position_offset
         mcu_pos = mcu_pos_dist / self._step_dist
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
         return int(mcu_pos - 0.5)
+    def _set_mcu_position(self, mcu_pos):
+        mcu_pos_dist = mcu_pos * self._step_dist
+        self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
     def get_past_mcu_position(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -117,12 +121,14 @@ class MCU_stepper:
         return mcu_pos * self._step_dist - self._mcu_position_offset
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
+        mcu_pos = 0
+        if old_sk is not None:
+            mcu_pos = self.get_mcu_position()
         self._stepper_kinematics = sk
-        if sk is not None:
-            ffi_main, ffi_lib = chelper.get_ffi()
-            ffi_lib.itersolve_set_stepcompress(sk, self._stepqueue,
-                                               self._step_dist)
-            self.set_trapq(self._trapq)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.itersolve_set_stepcompress(sk, self._stepqueue, self._step_dist)
+        self.set_trapq(self._trapq)
+        self._set_mcu_position(mcu_pos)
         return old_sk
     def note_homing_end(self, did_trigger=False):
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -142,8 +148,7 @@ class MCU_stepper:
         ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, last_pos)
         if ret:
             raise error("Internal error in stepcompress")
-        mcu_pos_dist = last_pos * self._step_dist
-        self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
+        self._set_mcu_position(last_pos)
     def set_trapq(self, tq):
         ffi_main, ffi_lib = chelper.get_ffi()
         if tq is None:
@@ -157,16 +162,16 @@ class MCU_stepper:
     def generate_steps(self, flush_time):
         # Check for activity if necessary
         if self._active_callbacks:
-            ret = self._itersolve_check_active(self._stepper_kinematics,
-                                               flush_time)
+            sk = self._stepper_kinematics
+            ret = self._itersolve_check_active(sk, flush_time)
             if ret:
                 cbs = self._active_callbacks
                 self._active_callbacks = []
                 for cb in cbs:
                     cb(ret)
         # Generate steps
-        ret = self._itersolve_generate_steps(self._stepper_kinematics,
-                                             flush_time)
+        sk = self._stepper_kinematics
+        ret = self._itersolve_generate_steps(sk, flush_time)
         if ret:
             raise error("Internal error in stepcompress")
     def is_active_axis(self, axis):
@@ -297,8 +302,8 @@ class PrinterRail:
                 self.homing_positive_dir = True
             else:
                 raise config.error(
-                    "Unable to infer homing_positive_dir in section '%s'" % (
-                        config.get_name(),))
+                    "Unable to infer homing_positive_dir in section '%s'"
+                    % (config.get_name(),))
             config.getboolean('homing_positive_dir', self.homing_positive_dir)
         elif ((self.homing_positive_dir
                and self.position_endstop == self.position_min)
