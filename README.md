@@ -30,6 +30,11 @@ There are many advantages to using Klipper:
   frontends including [Fluidd](https://github.com/cadriel/fluidd) and
   [Mainsail](https://github.com/meteyou/mainsail).
 
+For a demo of the LCD, watch [this video](https://youtu.be/PKduopITGcU).
+
+![Status](docs/img/prusa-mini-lcd-1.jpg)
+![Control](docs/img/prusa-mini-lcd-2.jpg)
+
 ---
 
 ## Installing Klipper
