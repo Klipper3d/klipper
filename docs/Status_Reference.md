@@ -322,6 +322,15 @@ The following information is available in the `toolhead` object
   the printer had to be paused because the toolhead moved faster than
   moves could be read from the G-Code input.
 
+# dual_carriage
+
+The following information is available in
+[dual_carriage](Config_Reference.md#dual_carriage)
+on a hybrid_corexy or hybrid_corexz robot
+- `mode`: The current mode. Possible values are: "FULL_CONTROL"
+- `active_carriage`: The current active carriage.
+Possible values are: "CARRIAGE_0", "CARRIAGE_1"
+
 # virtual_sdcard
 
 The following information is available in the
