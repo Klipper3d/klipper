@@ -61,13 +61,14 @@ Once you have done that, you can install Klipper.
 Follow the standard Klipper instructions [here](https://www.klipper3d.org/Installation.html).
 Instead of:
 
-```git clone https://github.com/KevinOConnor/klipper```
+```
+git clone https://github.com/KevinOConnor/klipper
+```
 
 Use:
 
 ```
 git clone https://github.com/matthewlloyd/klipper.git
-git checkout prusamini-beta
 ```
 
 Then follow the instructions in `config/printer-prusa-mini-plus-2020.cfg`,
