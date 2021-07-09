@@ -13,6 +13,7 @@ import logging
 import collections
 import time
 import traceback
+import json
 import board_defs
 import fatfs_lib
 import reactor
@@ -951,13 +952,22 @@ class MCUConnection:
             % (fw_path, sd_size, sd_chksm))
         return sd_chksm
 
-    def verify_flash(self, req_chksm, old_dictionary):
+    def verify_flash(self, req_chksm, old_dictionary, req_dictionary):
         output("Verifying Flash...")
         validation_passed = False
         msgparser = self._serial.get_msgparser()
         cur_dictionary = msgparser.get_raw_data_dictionary()
-        # Check that the version changed
-        if cur_dictionary != old_dictionary:
+        # If we have a dictionary, check that it matches.
+        if req_dictionary:
+            if cur_dictionary != req_dictionary:
+                raise SPIFlashError("Version Mismatch: Got '%s...', "
+                                    "expected '%s...'"
+                                    % (msgparser.get_version_info()[0],
+                                       json.loads(req_dictionary)['version']))
+            output("Version matched...")
+            validation_passed = True
+        # Otherwise check that the MCU dictionary changed
+        elif cur_dictionary != old_dictionary:
             output("Version updated...")
             validation_passed = True
         else:
@@ -1018,6 +1028,14 @@ class SPIFlash:
         self.task_complete = False
         self.need_upload = True
         self.old_dictionary = None
+        self.new_dictionary = None
+        if args['klipper_dict_path'] is not None:
+            try:
+                with open(args['klipper_dict_path'], 'rb') as dict_f:
+                    self.new_dictionary = dict_f.read(32*1024)
+            except Exception:
+                raise SPIFlashError("Missing or invalid dictionary at '%s'"
+                                    % (args['klipper_dict_path'],))
 
     def _wait_for_reconnect(self):
         output("Waiting for device to reconnect...")
@@ -1062,7 +1080,8 @@ class SPIFlash:
         # Reconnect and verify
         self.mcu_conn.connect()
         self.mcu_conn.configure_mcu()
-        self.mcu_conn.verify_flash(self.firmware_checksum, self.old_dictionary)
+        self.mcu_conn.verify_flash(self.firmware_checksum, self.old_dictionary,
+                                   self.new_dictionary)
         self.mcu_conn.reset()
         self.task_complete = True
 
@@ -1113,6 +1132,9 @@ def main():
         "-v", "--verbose", action="store_true",
         help="Enable verbose output")
     parser.add_argument(
+        "-d", "--dict_path", metavar="<klipper.dict>", type=str,
+        default=None, help="Klipper firmware dictionary")
+    parser.add_argument(
         "device", metavar="<device>", help="Device Serial Port")
     parser.add_argument(
         "board", metavar="<board>", help="Board Type")
@@ -1129,6 +1151,7 @@ def main():
     flash_args['device'] = args.device
     flash_args['baud'] = args.baud
     flash_args['klipper_bin_path'] = args.klipper_bin_path
+    flash_args['klipper_dict_path'] = args.dict_path
     check_need_convert(args.board, flash_args)
     fatfs_lib.check_fatfs_build(output)
     try:
