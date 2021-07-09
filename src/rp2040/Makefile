@@ -15,15 +15,16 @@ $(OUT)klipper.elf: $(OUT)stage2.o $(OUT)src/rp2040/rp2040_link.ld
 # Add source files
 src-y += rp2040/main.c rp2040/gpio.c rp2040/adc.c generic/crc16_ccitt.c
 src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
-src-y += generic/timer_irq.c rp2040/timer.c
+src-y += generic/timer_irq.c rp2040/timer.c rp2040/bootrom.c
 src-$(CONFIG_USBSERIAL) += rp2040/usbserial.c generic/usb_cdc.c
+src-$(CONFIG_USBSERIAL) += rp2040/chipid.c
 src-$(CONFIG_SERIAL) += rp2040/serial.c generic/serial_irq.c
 
 # rp2040 stage2 building
 $(OUT)stage2.o: lib/rp2040/boot_stage2/boot2_w25q080.S
 	@echo "  Building rp2040 stage2 $@"
 	$(Q)$(CC) $(CFLAGS) -Ilib/rp2040/boot_stage2 -Ilib/rp2040/boot_stage2/asminclude -DPICO_FLASH_SPI_CLKDIV=2 -c $< -o $(OUT)stage2raw1.o
-	$(Q)$(LD) $(OUT)stage2raw1.o -nostartfiles --script=lib/rp2040/boot_stage2/boot_stage2.ld -o $(OUT)stage2raw.o
+	$(Q)$(LD) $(OUT)stage2raw1.o --script=lib/rp2040/boot_stage2/boot_stage2.ld -o $(OUT)stage2raw.o
 	$(Q)$(OBJCOPY) -O binary $(OUT)stage2raw.o $(OUT)stage2raw.bin
 	$(Q)lib/rp2040/boot_stage2/pad_checksum -s 0xffffffff $(OUT)stage2raw.bin $(OUT)stage2.S
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)stage2.S -o $(OUT)stage2.o
