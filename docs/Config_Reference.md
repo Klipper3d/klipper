@@ -4001,6 +4001,33 @@ serial:
 #   Auto cancel print when ping varation is above this threshold
 ```
 
+### [angle]
+
+Magnetic hall angle sensor support for reading stepper motor angle
+shaft measurements using a1333, as5047d, or tle5012b SPI chips.  The
+measurements are available via the [API Server](API_Server.md) and
+[motion analysis tool](Debugging.md#motion-analysis-and-data-logging).
+
+```
+[angle my_angle_sensor]
+sensor_type:
+#   The type of the magnetic hall sensor chip. Available choices are
+#   "a1333", "as5047d", and "tle5012b". This parameter must be
+#   specified.
+#sample_period: 0.000400
+#   The query period (in seconds) to use during measurements. The
+#   default is 0.000400 (which is 2500 samples per second).
+cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided.
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+```
+
 ## Common bus parameters
 
 ### Common SPI settings
