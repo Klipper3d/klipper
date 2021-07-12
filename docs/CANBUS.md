@@ -15,17 +15,17 @@ and flash it to the target board.
 In order to use a CAN bus, it is necessary to have a host adapter.
 There are currently two common options:
 
-1. Use a [Waveshare Raspberry Pi CAN
-   hat](https://www.waveshare.com/rs485-can-hat.htm) or one of its
-   many clones.
+1. Use a
+   [Waveshare Raspberry Pi CAN hat](https://www.waveshare.com/rs485-can-hat.htm)
+   or one of its many clones.
 
 2. Use a USB CAN adapter (for example
    [https://hacker-gadgets.com/product/cantact-usb-can-adapter/](https://hacker-gadgets.com/product/cantact-usb-can-adapter/)). There
    are many different USB to CAN adapters available - when choosing
-   one, we recommend verifying it can run the [candlelight
-   firmware](https://github.com/candle-usb/candleLight_fw). (Unfortunately,
-   we've found some USB adapters run defective firmware and are locked
-   down, so verify before purchasing.)
+   one, we recommend verifying it can run the
+   [candlelight firmware](https://github.com/candle-usb/candleLight_fw).
+   (Unfortunately, we've found some USB adapters run defective
+   firmware and are locked down, so verify before purchasing.)
 
 It is also necessary to configure the host operating system to use the
 adapter. This is typically done by creating a new file named
@@ -37,8 +37,8 @@ iface can0 can static
     up ifconfig $IFACE txqueuelen 128
 ```
 
-Note that the "Raspberry Pi CAN hat" also requires [changes to
-config.txt](https://www.waveshare.com/wiki/RS485_CAN_HAT).
+Note that the "Raspberry Pi CAN hat" also requires
+[changes to config.txt](https://www.waveshare.com/wiki/RS485_CAN_HAT).
 
 # Terminating Resistors
 

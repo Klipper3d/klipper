@@ -1,11 +1,12 @@
-This document is a reference of printer status information that
-available in Klipper [macros](Command_Templates.md), [display
-fields](Config_Reference.md#display), and via the [API
-Server](API_Server.md).
+This document is a reference of printer status information available
+in Klipper [macros](Command_Templates.md),
+[display fields](Config_Reference.md#display), and via the
+[API Server](API_Server.md).
 
 The fields in this document are subject to change - if using an
-attribute be sure to review the [Config Changes
-document](Config_Changes.md) when upgrading the Klipper software.
+attribute be sure to review the
+[Config Changes document](Config_Changes.md) when upgrading the
+Klipper software.
 
 # bed_mesh
 
@@ -34,6 +35,20 @@ The following information is available in the `display_status` object
 - `progress`: The progress value of the last `M73` G-Code command (or
   `virtual_sdcard.progress` if no recent `M73` received).
 - `message`: The message contained in the last `M117` G-Code command.
+
+# endstop_phase
+
+The following information is available in the
+[endstop_phase](Config_Reference.md#endstop_phase) object:
+- `last_home.<stepper name>.phase`: The phase of the stepper motor at
+  the end of the last home attempt.
+- `last_home.<stepper name>.phases`: The total number of phases
+  available on the stepper motor.
+- `last_home.<stepper name>.mcu_position`: The position (as tracked by
+  the micro-controller) of the stepper motor at the end of the last
+  home attempt. The position is the total number of steps taken in a
+  forward direction minus the total number of steps taken in the
+  reverse direction since the micro-controller was last restarted.
 
 # fan
 
@@ -129,6 +144,8 @@ The following information is available for heater objects such as
   the given heater.
 - `power`: The last setting of the PWM pin (a value between 0.0 and
   1.0) associated with the heater.
+- `can_extrude`: If extruder can extrude (defined by `min_extrude_temp`),
+  available only for [extruder](Config_Reference.md#extruder)
 
 # heaters
 
@@ -217,6 +234,13 @@ is defined):
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
 
+# quad_gantry_level
+
+The following information is available in the `quad_gantry_level` object
+(this object is available if quad_gantry_level is defined):
+- `applied`: True if the gantry leveling process has been run and completed
+  successfully.
+
 # query_endstops
 
 The following information is available in the `query_endstops` object
@@ -243,12 +267,13 @@ The following information is available in the `system_stats` object
 
 # temperature sensors
 
-The following information is available in [bme280
-config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
-[htu21d config_section_name](Config_Reference.md#htu21d-sensor), [lm75
-config_section_name](Config_Reference.md#lm75-temperature-sensor), and
-[temperature_host
-config_section_name](Config_Reference.md#host-temperature-sensor)
+The following information is available in
+
+[bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
+[htu21d config_section_name](Config_Reference.md#htu21d-sensor),
+[lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
+and
+[temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`, `pressure`, `gas`: The last read values from the sensor
@@ -297,6 +322,15 @@ The following information is available in the `toolhead` object
   the printer had to be paused because the toolhead moved faster than
   moves could be read from the G-Code input.
 
+# dual_carriage
+
+The following information is available in
+[dual_carriage](Config_Reference.md#dual_carriage)
+on a hybrid_corexy or hybrid_corexz robot
+- `mode`: The current mode. Possible values are: "FULL_CONTROL"
+- `active_carriage`: The current active carriage.
+Possible values are: "CARRIAGE_0", "CARRIAGE_1"
+
 # virtual_sdcard
 
 The following information is available in the
@@ -304,7 +338,9 @@ The following information is available in the
 - `is_active`: Returns True if a print from file is currently active.
 - `progress`: An estimate of the current print progress (based of file
   size and file position).
+- `file_path`: A full path to the file of currently loaded file.
 - `file_position`: The current position (in bytes) of an active print.
+- `file_size`: The file size (in bytes) of currently loaded file.
 
 # webhooks
 
@@ -314,3 +350,19 @@ object is always available):
   state. Possible values are: "ready", "startup", "shutdown", "error".
 - `state_message`: A human readable string giving additional context
   on the current Klipper state.
+
+# z_tilt
+
+The following information is available in the `z_tilt` object (this
+object is available if z_tilt is defined):
+- `applied`: True if the z-tilt leveling process has been run and completed
+  successfully.
+
+# neopixel / dotstar
+The following information is available for each `[neopixel led_name]` and
+`[dotstar led_name]` defined in printer.cfg:
+- `color_data`:  An array of objects, with each object containing the RGBW
+  values for a led in the chain.  Note that not all configurations will contain
+  a white value.  Each value is represented as a float from 0 to 1.  For
+  example, the blue value of the second neopixel in a chain could be accessed
+  at `printer["neopixel <config_name>"].colordata[1].B`.

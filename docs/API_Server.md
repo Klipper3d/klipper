@@ -170,7 +170,7 @@ gcode:
 When the PANELDUE_BEEP gcode macro is executed, Klipper would send something
 like the following over the socket:
 `{"action": "run_paneldue_beep",
-"params": {"frequency": 300, "duration": 1.0}}
+"params": {"frequency": 300, "duration": 1.0}}`
 
 ### objects/list
 
@@ -204,8 +204,8 @@ object name and the value is a dictionary containing its fields. The
 response message will also contain an "eventtime" field containing the
 timestamp from when the query was taken.
 
-Available fields are documented in the [Status
-Reference](Status_Reference.md) document.
+Available fields are documented in the
+[Status Reference](Status_Reference.md) document.
 
 ### objects/subscribe
 

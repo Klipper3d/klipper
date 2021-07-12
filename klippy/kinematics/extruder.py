@@ -91,6 +91,7 @@ class PrinterExtruder:
         self.pressure_advance_smooth_time = smooth_time
     def get_status(self, eventtime):
         return dict(self.heater.get_status(eventtime),
+                    can_extrude=self.heater.can_extrude,
                     pressure_advance=self.pressure_advance,
                     smooth_time=self.pressure_advance_smooth_time)
     def get_name(self):
@@ -152,9 +153,7 @@ class PrinterExtruder:
                           1., pressure_advance, 0.,
                           start_v, cruise_v, accel)
     def find_past_position(self, print_time):
-        mcu = self.stepper.get_mcu()
-        clock = mcu.print_time_to_clock(print_time)
-        return self.stepper.get_past_commanded_position(clock)
+        return self.stepper.get_past_commanded_position(print_time)
     def cmd_M104(self, gcmd, wait=False):
         # Set Extruder Temperature
         temp = gcmd.get_float('S', 0.)

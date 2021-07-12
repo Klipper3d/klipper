@@ -6,8 +6,8 @@ However, when the drivers are in this mode, no special Klipper
 configuration is needed and the advanced Klipper features discussed in
 this document are not available.
 
-In addition to this document, be sure to review the [TMC driver config
-reference](Config_Reference.md#tmc-stepper-driver-configuration).
+In addition to this document, be sure to review the
+[TMC driver config reference](Config_Reference.md#tmc-stepper-driver-configuration).
 
 # Enabling "Stealthchop" mode
 
@@ -161,9 +161,9 @@ homing_retract_dist: 0
 ```
 
 The examples above only show settings specific to sensorless
-homing. See the [config
-reference](Config_Reference.md#tmc-stepper-driver-configuration) for
-all the available options.
+homing. See the
+[config reference](Config_Reference.md#tmc-stepper-driver-configuration)
+for all the available options.
 
 ### Find highest sensitivity that successfully homes
 
@@ -258,10 +258,13 @@ After sensorless homing completes the carriage will be pressed against
 the end of the rail and the stepper will exert a force on the frame
 until the carriage is moved away. It is a good idea to create a macro
 to home the axis and immediately move the carriage away from the end
-of the rail. It is recommended to set the speed of this subsequent
-move so that it lasts at least two seconds (eg, `G1 X40 F1200`) to
-ensure the stall flag in the TMC driver is cleared after the move
-completes.
+of the rail.
+
+It is a good idea for the macro to pause at least 2 seconds prior to
+starting sensorless homing (or otherwise ensure that there has been no
+movement on the stepper for 2 seconds). Without a delay it is possible
+for the driver's internal stall flag to still be set from a previous
+move.
 
 It can also be useful to have that macro set the driver current before
 homing and set a new current after the carriage has moved away. This
@@ -279,19 +282,21 @@ gcode:
     {% set HOLD_CUR = driver_config.hold_current %}
     # Set current for sensorless homing
     SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR} HOLDCURRENT={HOME_CUR}
+    # Pause to ensure driver stall flag is clear
+    G4 P2000
     # Home
     G28 X0
     # Move away
     G90
-    G1 X40 F1200
+    G1 X5 F1200
     # Set current during print
     SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR} HOLDCURRENT={HOLD_CUR}
 ```
 <!-- {% endraw %} -->
 
-The resulting macro can be called from a [homing_override config
-section](Config_Reference.md#homing_override) or from a [START_PRINT
-macro](Slicers.md#klipper-gcode_macro).
+The resulting macro can be called from a
+[homing_override config section](Config_Reference.md#homing_override)
+or from a [START_PRINT macro](Slicers.md#klipper-gcode_macro).
 
 Note that if the driver current during homing is changed, then the
 tuning process should be run again.
@@ -308,16 +313,15 @@ sensitivity" for each carriage, but be aware of the following
 restrictions:
 1. When using sensorless homing on CoreXY, make sure there is no
    `hold_current` in effect for either stepper during homing.
-2. Make sure both the X and Y carriages are near the center of their
-   rails before each home attempt.
+2. While tuning, make sure both the X and Y carriages are near the
+   center of their rails before each home attempt.
 3. After tuning is complete, when homing both X and Y, use macros to
    ensure that one axis is homed first, then move that carriage away
-   from the axis limit using a move that lasts at least two seconds,
-   and then start the homing of the other carriage. The move away from
-   the axis helps ensure the stall flag is cleared from both stepper
-   drivers before starting the next home attempt. It also avoids
-   homing one axis while the other is pressed against the axis limit
-   (which may skew the stall detection).
+   from the axis limit, pause for at least 2 seconds, and then start
+   the homing of the other carriage. The move away from the axis
+   avoids homing one axis while the other is pressed against the axis
+   limit (which may skew the stall detection). The pause is necessary
+   to ensure the driver's stall flag is cleared prior to homing again.
 
 # Querying and diagnosing driver settings
 
@@ -327,23 +331,24 @@ fields configured by Klipper as well as all fields that can be queried
 from the driver.
 
 All of the reported fields are defined in the Trinamic datasheet for
-each driver. These datasheets can be found on the [Trinamic
-website](https://www.trinamic.com/). Obtain and review the Trinamic
-datasheet for the driver to interpret the results of DUMP_TMC.
+each driver. These datasheets can be found on the
+[Trinamic website](https://www.trinamic.com/). Obtain and review the
+Trinamic datasheet for the driver to interpret the results of
+DUMP_TMC.
 
 # Configuring driver_XXX settings
 
 Klipper supports configuring many low-level driver fields using
-`driver_XXX` settings. The [TMC driver config
-reference](Config_Reference.md#tmc-stepper-driver-configuration) has
-the full list of fields available for each type of driver.
+`driver_XXX` settings. The
+[TMC driver config reference](Config_Reference.md#tmc-stepper-driver-configuration)
+has the full list of fields available for each type of driver.
 
 In addition, almost all fields can be modified at run-time using the
 [SET_TMC_FIELD command](G-Codes.md#tmc-stepper-drivers).
 
 Each of these fields is defined in the Trinamic datasheet for each
-driver. These datasheets can be found on the [Trinamic
-website](https://www.trinamic.com/).
+driver. These datasheets can be found on the
+[Trinamic website](https://www.trinamic.com/).
 
 Note that the Trinamic datasheets sometime use wording that can
 confuse a high-level setting (such as "hysteresis end") with a
@@ -359,9 +364,9 @@ high-level value of 0.
 ## Can I use stealthchop mode on an extruder with pressure advance?
 
 Many people successfully use "stealthchop" mode with Klipper's
-pressure advance. Klipper implements [smooth pressure
-advance](Kinematics.md#pressure-advance) which does not introduce any
-instantaneous velocity changes.
+pressure advance. Klipper implements
+[smooth pressure advance](Kinematics.md#pressure-advance) which does
+not introduce any instantaneous velocity changes.
 
 However, "stealthchop" mode may produce lower motor torque and/or
 produce higher motor heat. It may or may not be an adequate mode for
@@ -375,6 +380,12 @@ tmc2209 driver.
 Make sure that the motor power is enabled, as the stepper motor driver
 generally needs motor power before it can communicate with the
 micro-controller.
+
+If this error occurs after flashing Klipper for the first time, then
+the stepper driver may have been previously programmed in a state that
+is not compatible with Klipper. To reset the state, remove all power
+from the printer for several seconds (physically unplug both USB and
+power plugs).
 
 Otherwise, this error is typically the result of incorrect UART pin
 wiring or an incorrect Klipper configuration of the UART pin settings.
@@ -398,11 +409,11 @@ Klipper. If a device on a shared SPI bus is not configured, then it
 may incorrectly respond to commands not intended for it and corrupt
 the communication to the intended device. If there is a device on a
 shared SPI bus that can not be configured in Klipper, then use a
-[static_digital_output config
-section](Config_Reference.md#static_digital_output) to set the CS pin
-of the unused device high (so that it will not attempt to use the SPI
-bus). The board's schematic is often a useful reference for finding
-which devices are on an SPI bus and their associated pins.
+[static_digital_output config section](Config_Reference.md#static_digital_output)
+to set the CS pin of the unused device high (so that it will not
+attempt to use the SPI bus). The board's schematic is often a useful
+reference for finding which devices are on an SPI bus and their
+associated pins.
 
 ## Why did I get a "TMC reports error: ..." error?
 

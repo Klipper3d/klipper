@@ -1,10 +1,10 @@
 This document contains guidelines for contributing an example Klipper
-configuration to the Klipper github repository (located in the [config
-directory](../config/)).
+configuration to the Klipper github repository (located in the
+[config directory](../config/)).
 
-Note that the [Klipper Community Discourse
-server](https://community.klipper3d.org) is also a useful resource for
-finding and sharing config files.
+Note that the
+[Klipper Community Discourse server](https://community.klipper3d.org)
+is also a useful resource for finding and sharing config files.
 
 # Guidelines
 
@@ -37,8 +37,9 @@ finding and sharing config files.
    track in the main Klipper repository.) Similarly, we only add
    example config files for printers, kits, and boards that have
    mainstream popularity (eg, there should be at least a 100 of them
-   in active use). Consider using the [Klipper Community Discourse
-   server](https://community.klipper3d.org) for other configs.
+   in active use). Consider using the
+   [Klipper Community Discourse server](https://community.klipper3d.org)
+   for other configs.
 5. Only specify those devices present on the given printer or board.
    Do not specify settings specific to your particular setup.
    1. For `generic` config files, only those devices on the mainboard
@@ -97,5 +98,5 @@ finding and sharing config files.
    example there should not be a `force_move` config section.
 
 Example config files are submitted by creating a github "pull
-request". Please also follow the directions in the [contributing
-document](CONTRIBUTING.md).
+request". Please also follow the directions in the
+[contributing document](CONTRIBUTING.md).
