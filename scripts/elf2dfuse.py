@@ -94,16 +94,24 @@ out += mk_uint8(1)   # bTargets:     Number of targets that follow
 
 # Single DFU Image
 # Target prefix
-out += "Target"                    # szSignature:                 Magic
-out += mk_uint8(0)                 # bAlternateSetting:           Alternate setting to program on
-out += 259 * mk_uint8(0)           # bTargetNamed + szTargetName: No name for this target
-out += mk_uint32(len(image_data))  # dwTargetSize:                Size of the image for this target
-out += mk_uint32(1)                # dwNbElements:                Number of elements that make up the image
+# szSignature:                 Magic
+# bAlternateSetting:           Alternate setting to program on
+# bTargetNamed + szTargetName: No name for this target
+# dwTargetSize:                Size of the image for this target
+# dwNbElements:                Number of elements that make up the image
+out += "Target"
+out += mk_uint8(0)
+out += 259 * mk_uint8(0)
+out += mk_uint32(len(image_data))
+out += mk_uint32(1)
 
 # Single Image Element
-out += mk_uint32(image_addr)       # dwElementAddress: Address at which to load this element
-out += mk_uint32(len(image_data))  # dwElementSize:    Size of the element to load
-out += image_data                  # Data:             The actual data to write
+# dwElementAddress: Address at which to load this element
+# dwElementSize:    Size of the element to load
+# Data:             The actual data to write
+out += mk_uint32(image_addr)
+out += mk_uint32(len(image_data))
+out += image_data
 
 # DFU Suffix
 out += mk_uint16(0xFFFF)    # bcdDevice
@@ -114,10 +122,8 @@ out += "UFD"                # ucDFUSignature
 out += mk_uint8(16)         # bLength: Length of suffix
 out += mk_uint32(compute_crc(out))   # dwCRC:
 
-try:  # Erase temporary files at shutdown
-    with open(outfile, "wb") as f:
-        f.write(out)
-except:
+# Erase temporary files at shutdown
+with open(outfile, "wb") as f:
+    f.write(out)
     try_delete_file(outfile)
-    raise
 print('DFuse file: {}'.format(outfile))
