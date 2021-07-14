@@ -74,6 +74,9 @@ class PrinterExtruder:
         gcode.register_mux_command("SET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
+        gcode.register_mux_command("SYNC_EXTRUDER_STEPPERS", "EXTRUDER",
+                                   self.name, self.cmd_SYNC_EXTRUDER_STEPPERS,
+                                   desc=self.cmd_SYNC_EXTRUDER_STEPPERS_help)
     def update_move_time(self, flush_time):
         self.trapq_finalize_moves(self.trapq, flush_time)
     def _set_pressure_advance(self, pressure_advance, smooth_time):
@@ -216,6 +219,22 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.stepper.get_commanded_position())
         self.printer.send_event("extruder:activate_extruder")
+    cmd_SYNC_EXTRUDER_STEPPERS_help = "Synchronize extruders heaters and motors"
+    def cmd_SYNC_EXTRUDER_STEPPERS(self, gcmd):
+        name_master = gcmd.get('TO', None)
+        heater = self.get_heater()
+        if name_master == self.name or name_master is None:
+            # unsync
+            self.sync_stepper(self.stepper)
+            gcmd.respond_info("Extruder '%s' is now unsynchronized" % self.name)
+            return
+        extruder_master = self.printer.lookup_object(name_master, None)
+        if extruder_master is None:
+            gcmd.error("'%s' is not a valid extruder." % (name_master,))
+        else:
+            extruder_master.sync_stepper(self.stepper)
+            gcmd.respond_info("Extruder '%s' now synchronized with '%s'"
+                        % (self.name, name_master,))
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:

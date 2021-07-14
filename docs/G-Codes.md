@@ -170,6 +170,9 @@ The following standard commands are supported:
 - `ACTIVATE_EXTRUDER EXTRUDER=<config_name>`: In a printer with
   multiple extruders this command is used to change the active
   extruder.
+- `SYNC_EXTRUDER_STEPPERS EXTRUDER=<config_name> [TO=<config_name>]`:
+  Synchronize extruders steppers. To unsynchronize an extruder, omits the TO
+  parameter.
 - `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>] [ADVANCE=<pressure_advance>]
   [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
   parameters. If EXTRUDER is not specified, it defaults to the active
