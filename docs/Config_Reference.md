@@ -3035,6 +3035,94 @@ run_current:
 #   sensorless homing.
 ```
 
+# L6474 stepper driver configuration
+
+Configure a L6474 stepper motor driver via SPI bus. To use this
+feature, define a config section with a "L6474" prefix followed by
+the name of the corresponding stepper config section (for example,
+"[L6474 stepper_x]").
+
+```
+[L6474 stepper_x]
+#chain_length:
+#chain_position:
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
+#spi_bus:
+#cs_pin: PA4
+## 	chip select pin
+## 	for daisy chain configuration, the chip select pin is common.
+
+#driver_TVAL: 20    #(default : 656.25mA)
+## 	 Operating current
+## 	 step of 31.25mA (range 31.25mA --> 4A)
+## 	 formula: (targeted in mA / 31.25mA)-1
+#driver_TOFF_FAST: 3 #(default : 8us)
+## 	 Maximum fast decay duration
+## 	 step of 2us ( range 2us --> 32us)
+## 	 formula : (target value in us / 2us)-1
+#driver_FAST_STEP: 5  #(default : 12us)
+## 	 Maximum fall step time
+## 	 step 2us (range 2us --> 32us)
+## 	 (target value in us / 2us)-1
+#driver_TON_MIN: 5  #(default : 3us)
+## 	 The shortest on-time that guarentees a correct operation of the current control algo
+##   step 0.5 us (range : 0.5us --> 64us)
+##   formula (target value / 0.5us)-1
+#driver_TOFF_MIN: 21 #(default : 11us)
+##   The minimum OFF time value used by the current control
+##   Step 0.5us (range 0.5us --> 64us)
+##   Formula : (target value in us / 0.5)-1
+#driver_OCD_TH: 2  #(default : 1.125A)
+##   Overcurrent threashold
+##   step 375mA (range 375mA --> 6A)
+##   (target value in mA / 375)-1
+
+## 	 microsteps
+#driver_STEP_SEL: 8  #(full step)
+#driver_STEP_SEL: 9  #(half step)
+#driver_STEP_SEL: 10 #(1/4)
+#driver_STEP_SEL: 11 #(1/8)
+#driver_STEP_SEL: 12  #(1/16) #default
+
+## 	 Synchronisation signal
+#driver_SYNC_SEL: 8   #sync signal obtained starting from EL_POS[7]  #(default)
+#driver_SYNC_SEL: 9   # sync signal obtained starting from EL_POS[6]
+#driver_SYNC_SEL: 10  # sync signal obtained starting from EL_POS[5]
+#driver_SYNC_SEL: 11  # sync signal obtained starting from EL_POS[4]
+#driver_SYNC_SEL: 12  # sync signal obtained starting from EL_POS[3]
+
+##	 Alarm Enable Register
+#driver_over_current: 1
+#driver_thermal_shut: 1
+#driver_thermal_warn: 1
+#driver_under_voltage: 1
+#driver_switch: 1
+#driver_wrong:  1
+
+##   Config Register
+#driver_OSC_SEL: 0
+#driver_EXT_CLK: 0
+## 	 OSC_SEL and EXT_CLK set the system clock source
+##	 default : Internal oscillator
+#driver_EN_TQREG: 0 #(internal)
+## 	 The EN_TQREG sets if the torque regulation is performed through
+## 	 the ADCIN voltage (external) or TVAL register (internal)
+##   Default : internal
+#driver_OC_SD: 1
+## 	 The OC_SD sets wether or not an overcurrent event causes the bridges to turn off
+#driver_POW_SR: 0
+## 	 The POW_SR bits set the slew rate value of power bridge
+#driver_TOFF: 11    #(Default : 48us)
+## 	 OFF time value
+## 	 If TOFF value is less than TOFF_MIN, then TOFF = TOFF_MIN
+## 	 Step 4 (range 4us --> 124us)
+## 	 Formula : (target value in us / 4us)-1
+
+```
+
 # Run-time stepper motor current configuration
 
 ## [ad5206]
