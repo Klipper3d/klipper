@@ -1,45 +1,22 @@
 # Measuring Resonances
 
-Klipper has built-in support for ADXL345 accelerometer, which can be used to
+Klipper has built-in support for the ADXL345 accelerometer, which can be used to
 measure resonance frequencies of the printer for different axes, and auto-tune
 [input shapers](Resonance_Compensation.md) to compensate for resonances.
-Note that using ADXL345 requires some soldering and crimping. ADXL345 can be
+Note that using an ADXL345 requires some soldering and crimping. The ADXL345 can be
 connected to a Raspberry Pi directly, or to an SPI interface of an MCU
-board (it needs to be reasonably fast).
+board (see important requirements below).
 
-When sourcing ADLX345, be aware that there is a variety of different PCB
+When sourcing an ADLX345, be aware that there is a variety of different PCB
 board designs and different clones of them. Make sure that the board supports
-SPI mode (small number of boards appear to be hard-configured for I2C by
+SPI mode (a small number of boards appear to be hard-configured for I2C by
 pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU,
 that it has a voltage regulator and a level shifter.
 
+Installation Instructions
+===========================
 
-## Installation instructions
-
-### Wiring
-
-You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
-connection, which is suggested by ADXL345 documentation, has too low throughput
-and **will not work**. The recommended connection scheme:
-
-| ADXL345 pin | RPi pin | RPi pin name |
-|:--:|:--:|:--:|
-| 3V3 (or VCC) | 01 | 3.3v DC power |
-| GND | 06 | Ground |
-| CS | 24 | GPIO08 (SPI0_CE0_N) |
-| SDO | 21 | GPIO09 (SPI0_MISO) |
-| SDA | 19 | GPIO10 (SPI0_MOSI) |
-| SCL | 23 | GPIO11 (SPI0_SCLK) |
-
-Fritzing wiring diagrams for some of the ADXL345 boards:
-
-![ADXL345-Rpi](img/adxl345-fritzing.png)
-
-
-Double-check your wiring before powering up the Raspberry Pi to prevent
-damaging it or the accelerometer.
-
-### Mounting the accelerometer
+## Mounting the accelerometer
 
 The accelerometer must be attached to the toolhead. One needs to design a proper
 mount that fits their own 3D printer. It is better to align the axes of the
@@ -63,77 +40,116 @@ the system that may damage the electronics.
 
 ### Software installation
 
-Because setting up the software for auto-calibration takes significant
+Because setting up the software for measuring resonances takes significant
 time and resources, it is not installed by default. Run the following
 script to setup `numpy` and `matplotlib` to get started:
+
 ```
 ~/klipper/scripts/setup-shaper-calibrate.sh
 ```
+
 Note that, depending on the performance of the
 CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
 for the completion of the installation. On some occasions, if the board has
 too little RAM, the installation may fail, and you will need to
 [enable swap](https://nebl.io/neblio-university/enabling-increasing-raspberry-pi-swap/).
 
-## Hardware Configuration
-You can connect your ADXL345 to any spi bus supported by Klipper. Regular printer
-control boards, dedicated boards, and the Raspberry Pi mcu are all options that have
-their own advantages and disadvantages.
+## Wiring Option 1: Direct Raspberry Pi Connection
 
-### Raspberry Pi MCU
-The reccomended way to connect the sensor to the printer in a permenant installation
-is to connect it directly to the SPI bus on the Raspberry Pi. Check and follow the
+The recommended way to connect the sensor to the printer is to connect it directly to
+the SPI bus on the Raspberry Pi.
+
+You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
+connection, which is suggested by ADXL345 documentation, has too low throughput
+and **will not work**. The recommended connection scheme:
+
+| ADXL345 pin  | RPi pin | RPi pin name |
+| :--:         | :--:    | :--: |
+| 3V3 (or VCC) | 01      | 3.3v DC power |
+| GND          | 06      | Ground |
+| CS           | 24      | GPIO08 (SPI0_CE0_N) |
+| SDO          | 21      | GPIO09 (SPI0_MISO) |
+| SDA          | 19      | GPIO10 (SPI0_MOSI) |
+| SCL          | 23      | GPIO11 (SPI0_SCLK) |
+
+Fritzing wiring diagrams for some of the ADXL345 boards:
+
+![ADXL345-Rpi](img/adxl345-fritzing.png)
+
+Double-check your wiring before powering up the Raspberry Pi to prevent
+damaging it or the accelerometer.
+
+Check and follow the
 instructions in the [RPi Microcontroller document](RPi_microcontroller.md) to setup the
 "linux mcu" on the Raspberry Pi. Make sure the Linux SPI driver is enabled by running
 `sudo raspi-config` and enabling SPI under the "Interfacing options" menu.
 
 Add the following to the printer.cfg file:
+
 ```
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
 
 [adxl345]
-cs_pin: rpi:None
+cs_pin: rpi: None
 
 [resonance_tester]
 accel_chip: adxl345
 probe_points:
-    100,100,20  # an example
+    100,100,20  # It is advised to start with 1 probe point, in the middle
+    of the print bed, slightly above it.
 ```
 
-### Primary MCU
-Add the following to the printer.cfg file:
+Restart Klipper via the `RESTART` command.
+
+## Wiring Option 2: MCU Connection (Advanced Users)
+If you want to avoid installing the Linux MCU software on the Raspberry Pi, your Pi's
+GPIO is already in use, or some other reason prevents you from using option 1, you can
+connect the accelerometer to your Primary MCU, or even a secondary MCU. There are some
+caveats, however:
+* As most printer boards output 5V power for accessories, you'll likely need an ADXL345
+board with a built in voltage level shifter.
+* The ADXL345 does not adhere to the SPI spec and cannot share an SPI bus with another
+device. (Thanks @dmbutyugin for pointing that out!) The sensor will need to be the only
+device connected to its SPI bus.
+* The sensor requires a reasonably fast SPI bus
+
+Identify the MOSI, MISO, SCLK, CS, Ground, and power (see above) pins to be used for
+your sensor anc connect your sensor as follows:
+
+| ADXL345 pin | MCU |
+| :--:        | :--: |
+| 3V3/5V/VCC  | 3V3/5V/VCC |
+| GND         | Ground |
+| CS          | Any |
+| SDO         | MISO |
+| SDA         | MOSI |
+| SCL         | SCLK |
+
+Double-check your wiring, especially the voltage tolerated by your sensor and that
+provided by it's connection, before powering up your printer to prevent damaging it
+or the accelerometer.
+
+Add something like the following to the printer.cfg file:
+
 ```
 [adxl345]
 cs_pin: AB0 # The MCU pin connected to the CS pin on your sensor
+spi_bus: # This may be necessary if your board has multiple busses available
 
 [resonance_tester]
 accel_chip: adxl345
 probe_points:
-    100,100,20  # an example
+    100,100,20  # It is advised to start with 1 probe point, in the middle
+    of the print bed, slightly above it.
 ```
 
-### Secondary MCU
-If you want to avoid rewireing your printer to install your sensor permenantly,
-you can use a second mcu such as an Uno or 8-bit board
+For more information about how to configure the SPI behavior of Klipper, review the
+[common SPI settings](config_reference.md#common_SPI_settings).
 
-To use an Uno, add the following to the printer.cfg file:
-```
-[mcu arduino]
-serial: /dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_8523535303735111F150-if00
-
-[adxl345]
-cs_pin: arduino:PB2
-
-[resonance_tester]
-accel_chip: adxl345
-probe_points:
-    100,100,20  # an example
-```
-For more information, refer to the [extra mcu documentation](config_reference.md#mcu-my_extra_mcu)
-
-It is advised to start with 1 probe point, in the middle of the print bed,
-slightly above it.
+If necessary, configure a [secondary MCU](config_reference.md#mcu-my_extra_mcu) as well.
+Non-3D-printing related boards like Arduinos are a smart choice since they typically don't
+have anything connected to the SPI bus.
 
 Restart Klipper via the `RESTART` command.
 
@@ -141,7 +157,7 @@ Restart Klipper via the `RESTART` command.
 
 ### Checking the setup
 
-Now you can test a connection.
+Now you can test the connection.
 
 - For "non bed-slingers" (e.g. one accelerometer), in Octoprint,
   enter `ACCELEROMETER_QUERY`
@@ -236,7 +252,7 @@ or you can choose some other configuration yourself based on the generated
 charts: peaks in the power spectral density on the charts correspond to
 the resonance frequencies of the printer.
 
-Note that alternatively you can run the input shaper autocalibration
+Note that alternatively you can run the input shaper auto-calibration
 from Klipper [directly](#input-shaper-auto-calibration), which can be
 convenient, for example, for the input shaper
 [re-calibration](#input-shaper-re-calibration).
