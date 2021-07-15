@@ -31,7 +31,7 @@ class FilamentWidthSensor:
         self.measurement_offset = config.getfloat('offset_mm', 0)
         self.measurement_slope = config.getfloat('slope', 1)
         # Filament diameter variation,
-        # that does NOT cause the flow rate to be modified 
+        # that does NOT cause the flow rate to be modified
         # (for imprecise filament sensors)
         self.measurement_difference_max = config.getfloat(
             'difference_max', 0)
@@ -91,7 +91,7 @@ class FilamentWidthSensor:
         # read sensor value
         # Filament width = acd-value * slope + offset, y=mx+b
         self.RawFilamentWidth = round(read_value, 2)
-        self.lastFilamentWidthReading = round((read_value 
+        self.lastFilamentWidthReading = round((read_value
             * self.measurement_slope) + self.measurement_offset, 2)
 
     def update_filament_array(self, last_epos):
