@@ -20,6 +20,7 @@ src-$(CONFIG_USBSERIAL) += rp2040/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_USBSERIAL) += rp2040/chipid.c
 src-$(CONFIG_SERIAL) += rp2040/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += rp2040/hard_pwm.c
+src-$(CONFIG_HAVE_GPIO_SPI) += rp2040/spi.c
 
 # rp2040 stage2 building
 $(OUT)stage2.o: lib/rp2040/boot_stage2/boot2_w25q080.S
