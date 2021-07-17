@@ -143,16 +143,16 @@ class ST7920(DisplayBase):
         mcu = None
         
         # Spec says 72us, but faster is possible in practice
-        delay_cmd = config.getfloat('delay_cmd', .000020, minval=.000020)
-        delay_sync = config.getfloat('delay_sync', .000045, minval=.000045)
+        st7920_delay_cmd = config.getfloat('st7920_delay_cmd', .000020, minval=.000020)
+        st7920_delay_sync = config.getfloat('st7920_delay_sync', .000045, minval=.000045)
         
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("st7920 all pins must be on same mcu")
             mcu = pin_params['chip']
         self.pins = [pin_params['pin'] for pin_params in pins]
-        self.delay_cmd = delay_cmd
-        self.delay_sync = delay_sync
+        self.st7920_delay_cmd = st7920_delay_cmd
+        self.st7920_delay_sync = st7920_delay_sync
         # prepare send functions
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
@@ -167,8 +167,8 @@ class ST7920(DisplayBase):
             "config_st7920 oid=%u cs_pin=%s sclk_pin=%s sid_pin=%s"
             " sync_delay_ticks=%d cmd_delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1], self.pins[2],
-                self.mcu.seconds_to_clock(self.delay_sync),
-                self.mcu.seconds_to_clock(self.delay_cmd)))
+                self.mcu.seconds_to_clock(self.st7920_delay_sync),
+                self.mcu.seconds_to_clock(self.st7920_delay_cmd)))
         cmd_queue = self.mcu.alloc_command_queue()
         self.send_cmds_cmd = self.mcu.lookup_command(
             "st7920_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
