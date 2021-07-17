@@ -9,10 +9,6 @@ from . import font8x14
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
-# Spec says 72us, but faster is possible in practice
-ST7920_CMD_DELAY  = .000020
-ST7920_SYNC_DELAY = .000045
-
 TextGlyphs = { 'right_arrow': '\x1a' }
 CharGlyphs = { 'degrees': bytearray(font8x14.VGA_FONT[0xf8]) }
 
@@ -145,11 +141,18 @@ class ST7920(DisplayBase):
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['cs', 'sclk', 'sid']]
         mcu = None
+        
+        # Spec says 72us, but faster is possible in practice
+        delay_cmd = config.getfloat('delay_cmd', .000020, minval=.000020)
+        delay_sync = config.getfloat('delay_sync', .000045, minval=.000045)
+        
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("st7920 all pins must be on same mcu")
             mcu = pin_params['chip']
         self.pins = [pin_params['pin'] for pin_params in pins]
+        self.delay_cmd = delay_cmd
+        self.delay_sync = delay_sync
         # prepare send functions
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
@@ -164,8 +167,8 @@ class ST7920(DisplayBase):
             "config_st7920 oid=%u cs_pin=%s sclk_pin=%s sid_pin=%s"
             " sync_delay_ticks=%d cmd_delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1], self.pins[2],
-                self.mcu.seconds_to_clock(ST7920_SYNC_DELAY),
-                self.mcu.seconds_to_clock(ST7920_CMD_DELAY)))
+                self.mcu.seconds_to_clock(self.delay_sync),
+                self.mcu.seconds_to_clock(self.delay_cmd)))
         cmd_queue = self.mcu.alloc_command_queue()
         self.send_cmds_cmd = self.mcu.lookup_command(
             "st7920_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
