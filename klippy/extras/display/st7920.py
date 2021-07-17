@@ -141,11 +141,9 @@ class ST7920(DisplayBase):
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['cs', 'sclk', 'sid']]
         mcu = None
-        
         # Spec says 72us, but faster is possible in practice
         st7920_delay_cmd = config.getfloat('st7920_delay_cmd', .000020, minval=.000020)
         st7920_delay_sync = config.getfloat('st7920_delay_sync', .000045, minval=.000045)
-        
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
                 raise ppins.error("st7920 all pins must be on same mcu")
