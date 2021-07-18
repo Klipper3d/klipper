@@ -29,7 +29,8 @@ class ControllerFan:
         self.last_speed = 0.
     def handle_connect(self):
         steppers = [n.strip() for n in self.steppers_to_monitor.split(',')]
-        all_steppers = [s.get_name() for s in self.stepper_enable.get_steppers()]
+        all_steppers = [s.get_name()
+                        for s in self.stepper_enable.get_steppers()]
         if steppers == [""]:
             self.stepper_names = all_steppers
             return
