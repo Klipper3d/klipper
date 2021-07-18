@@ -35,7 +35,8 @@ class ControllerFan:
             return
         if not all(x in all_steppers for x in steppers):
             raise self.printer.config_error(
-                "One or more of these steppers are unknown: %s (valid steppers are: %s)"
+                ("One or more of these steppers are unknown: "
+                 "%s (valid steppers are: %s)")
                 % (steppers, ", ".join(all_steppers)))
         self.stepper_names = steppers
     def handle_ready(self):
