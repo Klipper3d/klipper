@@ -2409,8 +2409,8 @@ watched component.
 #   Name of the config section defining the heater/stepper that this fan
 #   is associated with. If a comma separated list of heater/stepper names
 #   is provided here, then the fan will be enabled when any of the given
-#   heaters/steppers are enabled. Extruder steppers cannot be used here.
-#   The default heater is "extruder", the default stepper is all of them.
+#   heaters/steppers are enabled. The default heater is "extruder", the
+#   default stepper is all of them.
 ```
 
 ## [temperature_fan]

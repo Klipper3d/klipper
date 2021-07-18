@@ -29,14 +29,14 @@ class ControllerFan:
         self.last_speed = 0.
     def handle_connect(self):
         steppers = [n.strip() for n in self.steppers_to_monitor.split(',')]
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        all_steppers = [s.get_name() for s in kin.get_steppers()]
+        all_steppers = [s.get_name() for s in self.stepper_enable.get_steppers()]
         if steppers == [""]:
             self.stepper_names = all_steppers
             return
         if not all(x in all_steppers for x in steppers):
             raise self.printer.config_error(
-                "One or more of these steppers are unknown: %s" % (steppers))
+                "One or more of these steppers are unknown: %s (valid steppers are: %s)"
+                % (steppers, ", ".join(all_steppers)))
         self.stepper_names = steppers
     def handle_ready(self):
         pheaters = self.printer.lookup_object('heaters')
