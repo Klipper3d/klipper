@@ -36,6 +36,6 @@ struct trapq *trapq_alloc(void);
 void trapq_free(struct trapq *tq);
 void trapq_check_sentinels(struct trapq *tq);
 void trapq_add_move(struct trapq *tq, struct move *m);
-void trapq_free_moves(struct trapq *tq, double print_time);
+void trapq_finalize_moves(struct trapq *tq, double print_time);
 
 #endif // trapq.h
