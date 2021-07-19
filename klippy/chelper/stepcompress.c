@@ -60,8 +60,7 @@ struct history_steps {
     struct list_node node;
     uint64_t first_clock, last_clock;
     int64_t start_position;
-    int step_count;
-    struct step_move sm;
+    int step_count, interval, add;
 };
 
 
@@ -355,9 +354,10 @@ add_move(struct stepcompress *sc, uint64_t first_clock, struct step_move *move)
     hs->first_clock = first_clock;
     hs->last_clock = last_clock;
     hs->start_position = sc->last_position;
+    hs->interval = move->interval;
+    hs->add = move->add;
     hs->step_count = sc->sdir ? move->count : -move->count;
     sc->last_position += hs->step_count;
-    memcpy(&hs->sm, move, sizeof(hs->sm));
     list_add_head(&hs->node, &sc->history_list);
 }
 
@@ -559,6 +559,13 @@ stepcompress_set_last_position(struct stepcompress *sc, int64_t last_position)
     if (ret)
         return ret;
     sc->last_position = last_position;
+
+    // Add a marker to the history list
+    struct history_steps *hs = malloc(sizeof(*hs));
+    memset(hs, 0, sizeof(*hs));
+    hs->first_clock = hs->last_clock = sc->last_step_clock;
+    hs->start_position = last_position;
+    list_add_head(&hs->node, &sc->history_list);
     return 0;
 }
 
@@ -575,7 +582,7 @@ stepcompress_find_past_position(struct stepcompress *sc, uint64_t clock)
         }
         if (clock >= hs->last_clock)
             return hs->start_position + hs->step_count;
-        int32_t interval = hs->sm.interval, add = hs->sm.add;
+        int32_t interval = hs->interval, add = hs->add;
         int32_t ticks = (int32_t)(clock - hs->first_clock) + interval, offset;
         if (!add) {
             offset = ticks / interval;
@@ -603,6 +610,30 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
     qm->req_clock = sc->last_step_clock;
     list_add_tail(&qm->node, &sc->msg_queue);
     return 0;
+}
+
+// Return history of queue_step commands
+int __visible
+stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
+                         , int max, uint64_t start_clock, uint64_t end_clock)
+{
+    int res = 0;
+    struct history_steps *hs;
+    list_for_each_entry(hs, &sc->history_list, node) {
+        if (start_clock >= hs->last_clock || res >= max)
+            break;
+        if (end_clock <= hs->first_clock)
+            continue;
+        p->first_clock = hs->first_clock;
+        p->last_clock = hs->last_clock;
+        p->start_position = hs->start_position;
+        p->step_count = hs->step_count;
+        p->interval = hs->interval;
+        p->add = hs->add;
+        p++;
+        res++;
+    }
+    return res;
 }
 
 

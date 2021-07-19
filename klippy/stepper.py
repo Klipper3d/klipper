@@ -119,6 +119,12 @@ class MCU_stepper:
     def get_past_commanded_position(self, print_time):
         mcu_pos = self.get_past_mcu_position(print_time)
         return mcu_pos * self._step_dist - self._mcu_position_offset
+    def dump_steps(self, count, start_clock, end_clock):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        data = ffi_main.new('struct pull_history_steps[]', count)
+        count = ffi_lib.stepcompress_extract_old(self._stepqueue, data, count,
+                                                 start_clock, end_clock)
+        return (data, count)
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         mcu_pos = 0
