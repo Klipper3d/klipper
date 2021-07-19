@@ -21,7 +21,14 @@ struct move {
 };
 
 struct trapq {
-    struct list_head moves;
+    struct list_head moves, history;
+};
+
+struct pull_move {
+    double print_time, move_t;
+    double start_v, accel;
+    double start_x, start_y, start_z;
+    double x_r, y_r, z_r;
 };
 
 struct move *move_alloc(void);
@@ -37,5 +44,7 @@ void trapq_free(struct trapq *tq);
 void trapq_check_sentinels(struct trapq *tq);
 void trapq_add_move(struct trapq *tq, struct move *m);
 void trapq_finalize_moves(struct trapq *tq, double print_time);
+int trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
+                      , double start_time, double end_time);
 
 #endif // trapq.h

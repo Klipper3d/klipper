@@ -68,6 +68,13 @@ defs_itersolve = """
 """
 
 defs_trapq = """
+    struct pull_move {
+        double print_time, move_t;
+        double start_v, accel;
+        double start_x, start_y, start_z;
+        double x_r, y_r, z_r;
+    };
+
     void trapq_append(struct trapq *tq, double print_time
         , double accel_t, double cruise_t, double decel_t
         , double start_pos_x, double start_pos_y, double start_pos_z
@@ -76,6 +83,8 @@ defs_trapq = """
     struct trapq *trapq_alloc(void);
     void trapq_free(struct trapq *tq);
     void trapq_finalize_moves(struct trapq *tq, double print_time);
+    int trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
+        , double start_time, double end_time);
 """
 
 defs_kin_cartesian = """
