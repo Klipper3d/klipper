@@ -197,12 +197,10 @@ def PrinterStepper(config, units_in_radians=False):
     step_dist = parse_step_distance(config, units_in_radians, True)
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
                               units_in_radians)
-    # Support for stepper enable pin handling
-    stepper_enable = printer.load_object(config, 'stepper_enable')
-    stepper_enable.register_stepper(mcu_stepper, config.get('enable_pin', None))
-    # Register STEPPER_BUZZ command
-    force_move = printer.load_object(config, 'force_move')
-    force_move.register_stepper(mcu_stepper)
+    # Register with helper modules
+    for mname in ['stepper_enable', 'force_move']:
+        m = printer.load_object(config, mname)
+        m.register_stepper(config, mcu_stepper)
     return mcu_stepper
 
 # Parse stepper gear_ratio config parameter

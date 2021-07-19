@@ -49,9 +49,8 @@ class ForceMove:
             gcode.register_command('SET_KINEMATIC_POSITION',
                                    self.cmd_SET_KINEMATIC_POSITION,
                                    desc=self.cmd_SET_KINEMATIC_POSITION_help)
-    def register_stepper(self, stepper):
-        name = stepper.get_name()
-        self.steppers[name] = stepper
+    def register_stepper(self, config, mcu_stepper):
+        self.steppers[mcu_stepper.get_name()] = mcu_stepper
     def lookup_stepper(self, name):
         if name not in self.steppers:
             raise self.printer.config_error("Unknown stepper %s" % (name,))
