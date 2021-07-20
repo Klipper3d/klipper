@@ -2585,10 +2585,12 @@ PCA9533 LED support. The PCA9533 is used on the mightyboard.
 #initial_GREEN: 0
 #initial_BLUE: 0
 #initial_WHITE: 0
-#   The PCA9533 only supports 1 or 0. The default is 0. On the
-#   mightyboard, the white led is not populated.
-#   Use GCODE to modify led values after startup.
-#   set_led led=my_pca9533 red=1 green=1 blue=1
+#   The PCA9533 supports any value between 0 and 1. The default is 0 for all leds.
+#   The PCA9533 has one on/off channel and two PWM channels for controlling led brightness
+#   so some combinations of led settings are approximated.
+# . On the mightyboard, the white led is not populated.  Using it may result in odd colors.
+#   Use GCODE to modify led values after startup.  Leds may be controlled individually.
+#   set_led led=my_pca9533 red=1 green=0.3 blue=0.7
 ```
 
 ## [gcode_button]
