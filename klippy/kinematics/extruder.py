@@ -98,6 +98,8 @@ class PrinterExtruder:
         return self.name
     def get_heater(self):
         return self.heater
+    def get_trapq(self):
+        return self.trapq
     def sync_stepper(self, stepper):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
@@ -229,6 +231,8 @@ class DummyExtruder:
     def get_name(self):
         return ""
     def get_heater(self):
+        raise self.printer.command_error("Extruder not configured")
+    def get_trapq(self):
         raise self.printer.command_error("Extruder not configured")
 
 def add_printer_objects(config):
