@@ -28,9 +28,13 @@ class ControllerFan:
         self.last_on = self.idle_timeout
         self.last_speed = 0.
     def handle_connect(self):
+        # Heater lookup
+        pheaters = self.printer.lookup_object('heaters')
+        self.heaters = [pheaters.lookup_heater(n.strip())
+                        for n in self.heater_name.split(',')]
+        # Stepper lookup
+        all_steppers = self.stepper_enable.get_steppers()
         steppers = [n.strip() for n in self.steppers_to_monitor.split(',')]
-        all_steppers = [s.get_name()
-                        for s in self.stepper_enable.get_steppers()]
         if steppers == [""]:
             self.stepper_names = all_steppers
             return
@@ -41,9 +45,6 @@ class ControllerFan:
                 % (steppers, ", ".join(all_steppers)))
         self.stepper_names = steppers
     def handle_ready(self):
-        pheaters = self.printer.lookup_object('heaters')
-        self.heaters = [pheaters.lookup_heater(n.strip())
-                        for n in self.heater_name.split(',')]
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
     def get_status(self, eventtime):

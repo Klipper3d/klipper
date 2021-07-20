@@ -127,7 +127,7 @@ class PrinterStepperEnable:
             raise self.printer.config_error("Unknown stepper '%s'" % (name,))
         return self.enable_lines[name]
     def get_steppers(self):
-        return [e.stepper for e in self.enable_lines.values()]
+        return list(self.enable_lines.keys())
 
 def load_config(config):
     return PrinterStepperEnable(config)
