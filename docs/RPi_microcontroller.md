@@ -25,6 +25,10 @@ sudo cp "./scripts/klipper-mcu-start.sh" /etc/init.d/klipper_mcu
 sudo update-rc.d klipper_mcu defaults
 ```
 
+Enabling SPI
+============
+Make sure the Linux SPI driver is enabled by running sudo raspi-config and enabling SPI under the "Interfacing options" menu.
+
 Building the micro-controller code
 ==================================
 
