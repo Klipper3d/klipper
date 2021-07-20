@@ -13,7 +13,6 @@ PCA9533_PSC1=0b011
 PCA9533_PWM1=0b100
 PCA9533_PLS0=0b101
 
-
 class PCA9533:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -64,7 +63,6 @@ class PCA9533:
             else:
                 pwm1 = (pwm1 + led) / 2
                 ls0 |= 0b11<<(2*index)
-            
 
         self.i2c.i2c_write([PCA9533_PWM0,int(255*pwm0)])
         self.i2c.i2c_write([PCA9533_PWM1,int(255*pwm1)])
