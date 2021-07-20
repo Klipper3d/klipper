@@ -77,18 +77,28 @@ class DumpTrapQ:
         data = ffi_main.new('struct pull_move[1]')
         count = ffi_lib.trapq_extract_old(self.trapq, data, 1, 0., print_time)
         if not count:
-            return None
+            return None, None
         move = data[0]
         move_time = max(0., min(move.move_t, print_time - move.print_time))
         dist = (move.start_v + .5 * move.accel * move_time) * move_time;
-        return (move.start_x + move.x_r * dist, move.start_y + move.y_r * dist,
-                move.start_z + move.z_r * dist)
+        pos = (move.start_x + move.x_r * dist, move.start_y + move.y_r * dist,
+               move.start_z + move.z_r * dist)
+        velocity = move.start_v + move.accel * move_time
+        return pos, velocity
+
+STATUS_REFRESH_TIME = 0.250
 
 class PrinterMotionReport:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.steppers = {}
         self.trapqs = {}
+        # get_status information
+        self.next_status_time = 0.
+        gcode = self.printer.lookup_object('gcode')
+        self.last_status = {'live_position': gcode.Coord(0., 0., 0., 0.),
+                            'live_velocity': 0., 'live_extruder_velocity': 0.}
+        # Register handlers
         self.printer.register_event_handler("klippy:connect", self._connect)
         self.printer.register_event_handler("klippy:shutdown", self._shutdown)
     def register_stepper(self, config, mcu_stepper):
@@ -135,12 +145,41 @@ class PrinterMotionReport:
         dtrapq = self.trapqs.get('toolhead')
         if dtrapq is None:
             return
-        pos = dtrapq.get_trapq_position(shutdown_time)
+        pos, velocity = dtrapq.get_trapq_position(shutdown_time)
         if pos is not None:
             logging.info("Requested toolhead position at shutdown time %.6f: %s"
                          , shutdown_time, pos)
     def _shutdown(self):
         self.printer.get_reactor().register_callback(self._dump_shutdown)
+    # Status reporting
+    def get_status(self, eventtime):
+        if eventtime < self.next_status_time or not self.trapqs:
+            return self.last_status
+        self.next_status_time = eventtime + STATUS_REFRESH_TIME
+        xyzpos = (0., 0., 0.)
+        epos = (0.,)
+        xyzvelocity = evelocity = 0.
+        # Calculate current requested toolhead position
+        mcu = self.printer.lookup_object('mcu')
+        print_time = mcu.estimated_print_time(eventtime)
+        pos, velocity = self.trapqs['toolhead'].get_trapq_position(print_time)
+        if pos is not None:
+            xyzpos = pos[:3]
+            xyzvelocity = velocity
+        # Calculate requested position of currently active extruder
+        toolhead = self.printer.lookup_object('toolhead')
+        ehandler = self.trapqs.get(toolhead.get_extruder().get_name())
+        if ehandler is not None:
+            pos, velocity = ehandler.get_trapq_position(print_time)
+            if pos is not None:
+                epos = (pos[0],)
+                evelocity = velocity
+        # Report status
+        self.last_status = dict(self.last_status)
+        self.last_status['live_position'] = toolhead.Coord(*(xyzpos + epos))
+        self.last_status['live_velocity'] = xyzvelocity
+        self.last_status['live_extruder_velocity'] = evelocity
+        return self.last_status
 
 def load_config(config):
     return PrinterMotionReport(config)
