@@ -44,7 +44,8 @@ class PCA9533:
 
         def reactor_bgfunc(print_time):
             with self.mutex:
-                self._set_led([self.led0,self.led1,self.led2,self.led3],print_time)
+                self._set_led([self.led0,self.led1,self.led2,self.led3],
+                        print_time)
         def lookahead_bgfunc(print_time):
             reactor = self.printer.get_reactor()
             reactor.register_callback(lambda et: reactor_bgfunc(print_time))
@@ -83,9 +84,12 @@ class PCA9533:
                 pwm1 = (pwm1 + led) / 2
                 ls0 |= 0b11<<(2*index)
 
-        self.i2c.i2c_write([PCA9533_PWM0,int(255*pwm0)], minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.i2c.i2c_write([PCA9533_PWM1,int(255*pwm1)], minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.i2c.i2c_write([PCA9533_PLS0,ls0], minclock=minclock, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.i2c.i2c_write([PCA9533_PWM0,int(255*pwm0)], minclock=minclock, 
+                reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.i2c.i2c_write([PCA9533_PWM1,int(255*pwm1)], minclock=minclock, 
+                reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.i2c.i2c_write([PCA9533_PLS0,ls0], minclock=minclock, 
+                reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 def load_config_prefix(config):
     return PCA9533(config)
