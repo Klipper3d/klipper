@@ -1,7 +1,9 @@
+# Benchmarks
+
 This document describes Klipper benchmarks.
 
 Micro-controller Benchmarks
-===========================
+---------------------------
 
 This section describes the mechanism used to generate the Klipper
 micro-controller step rate benchmarks.
@@ -23,7 +25,7 @@ or other innocuous pins. **Always verify that it is safe to drive the
 configured pins prior to running a benchmark.** It is not recommended
 to drive an actual stepper during a benchmark.
 
-## Step rate benchmark test ##
+### Step rate benchmark test ###
 
 The test is performed using the console.py tool (described in
 [Debugging.md](Debugging.md)). The micro-controller is configured for
@@ -449,7 +451,7 @@ hub.
 | rp2040 (USB)        | 873K | c5667193 | arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0 |
 
 Host Benchmarks
-===============
+---------------
 
 It is possible to run timing tests on the host software using the
 "batch mode" processing mechanism (described in

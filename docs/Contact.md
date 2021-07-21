@@ -1,3 +1,5 @@
+# Contact
+
 This document provides contact information for Klipper.
 
 1. [Community Forum](#community-forum)
@@ -8,13 +10,13 @@ This document provides contact information for Klipper.
 6. [I have diagnosed a defect in the Klipper software](#i-have-diagnosed-a-defect-in-the-klipper-software)
 7. [I am making changes that I'd like to include in Klipper](#i-am-making-changes-that-id-like-to-include-in-klipper)
 
-# Community Forum
+## Community Forum
 
 There is a
 [Klipper Community Discourse server](https://community.klipper3d.org)
 for discussions on Klipper.
 
-# Discord Chat
+## Discord Chat
 
 There is a Discord server dedicated to Klipper at:
 [https://discord.klipper3d.org](https://discord.klipper3d.org).
@@ -23,7 +25,7 @@ This server is run by a community of Klipper enthusiasts dedicated to
 discussions on Klipper. It allows users to chat with other users in
 real-time.
 
-# I have a question about Klipper
+## I have a question about Klipper
 
 Many questions we receive are already answered in the
 [Klipper documentation](Overview.md). Please be sure to to read the
@@ -46,7 +48,7 @@ dedicated to your printer hardware.
 
 Do not open a Klipper github issue to ask a question.
 
-# I have a feature request
+## I have a feature request
 
 All new features require someone interested and able to implement that
 feature. If you are interested in helping to implement or test a new
@@ -57,7 +59,7 @@ collaborators.
 
 Do not open a Klipper github issue to request a feature.
 
-# Help! It doesn't work!
+## Help! It doesn't work!
 
 Unfortunately, we receive many more requests for help than we could
 possibly answer. Most problem reports we see are eventually tracked
@@ -88,7 +90,7 @@ Klipper users can discuss Klipper with other users.
 
 Do not open a Klipper github issue to request help.
 
-# I have diagnosed a defect in the Klipper software
+## I have diagnosed a defect in the Klipper software
 
 Klipper is an open-source project and we appreciate when collaborators
 diagnose errors in the software.
@@ -145,7 +147,7 @@ bug. Please follow these steps:
 
    ![attach-issue](img/attach-issue.png)
 
-# I am making changes that I'd like to include in Klipper
+## I am making changes that I'd like to include in Klipper
 
 Klipper is open-source software and we appreciate new contributions.
 

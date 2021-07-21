@@ -1,8 +1,10 @@
+# Overview
+
 Welcome to the Klipper documentation. If new to Klipper, start with
 the [features](Features.md) and [installation](Installation.md)
 documents.
 
-# Overview information
+## Overview information
 
 - [Features](Features.md): A high-level list of features in Klipper.
 - [FAQ](FAQ.md): Frequently asked questions.
@@ -12,7 +14,7 @@ may require users to update their printer config file.
 - [Contact](Contact.md): Information on bug reporting and general
 communication with the Klipper developers.
 
-# Configuration and Tuning Guides
+## Configuration and Tuning Guides
 
 - [Installation](Installation.md): Guide to installing Klipper.
 - [Config Reference](Config_Reference.md): Description of config
@@ -52,7 +54,7 @@ communication with the Klipper developers.
   tools such as lasers or spindles.
 - [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 
-# Developer Documentation
+## Developer Documentation
 
 - [Code overview](Code_Overview.md): Developers should read this
   first.
@@ -74,7 +76,7 @@ communication with the Klipper developers.
   improvements to Klipper.
 - [Packaging](Packaging.md): Information on building OS packages.
 
-# Device Specific Documents
+## Device Specific Documents
 
 - [Example configs](Example_Configs.md): Information on adding an
   example config file to Klipper.

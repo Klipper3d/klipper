@@ -1,3 +1,5 @@
+# Bed Mesh
+
 The Bed Mesh module may be used to compensate for bed surface irregularties to
 achieve a better first layer across the entire bed.  It should be noted that
 software based correction will not achieve perfect results, it can only
