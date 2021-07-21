@@ -1,9 +1,11 @@
+# API server
+
 This document describes Klipper's Application Programmer Interface
 (API). This interface enables external applications to query and
 control the Klipper host software.
 
 Enabling the API socket
-=======================
+-----------------------
 
 In order to use the API server, the klippy.py host software must be
 started with the `-a` parameter. For example:
@@ -16,7 +18,7 @@ can then open a connection on that socket and send commands to
 Klipper.
 
 Request format
-==============
+--------------
 
 Messages sent and received on the socket are JSON encoded strings
 terminated by an ASCII 0x03 character:
@@ -37,7 +39,7 @@ terminator when transmitting a request. (The Klipper API server does
 not have a newline requirement.)
 
 API Protocol
-============
+------------
 
 The command protocol used on the communication socket is inspired by
 [json-rpc](https://www.jsonrpc.org/).
@@ -91,7 +93,7 @@ respect to responses from other requests. A JSON request will never
 pause the processing of future JSON requests.
 
 Subscriptions
-=============
+-------------
 
 Some Klipper "endpoint" requests allow one to "subscribe" to future
 asynchronous update messages.
@@ -119,7 +121,7 @@ send that template. If a "response_template" field is not provided
 then it defaults to an empty dictionary (`{}`).
 
 Available "endpoints"
-=====================
+---------------------
 
 By convention, Klipper "endpoints" are of the form
 `<module_name>/<some_name>`. When making a request to an "endpoint",

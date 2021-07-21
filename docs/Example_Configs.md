@@ -1,3 +1,5 @@
+# Example configurations
+
 This document contains guidelines for contributing an example Klipper
 configuration to the Klipper github repository (located in the
 [config directory](../config/)).
@@ -6,7 +8,7 @@ Note that the
 [Klipper Community Discourse server](https://community.klipper3d.org)
 is also a useful resource for finding and sharing config files.
 
-# Guidelines
+## Guidelines
 
 1. Select the appropriate config filename prefix.
    1. The `printer` prefix is used for stock printers sold by a

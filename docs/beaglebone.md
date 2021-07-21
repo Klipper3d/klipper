@@ -1,8 +1,10 @@
+# Beaglebone
+
 This document describes the process of running Klipper on a Beaglebone
 PRU.
 
 Building an OS image
-====================
+--------------------
 
 Start by installing the
 [Debian 9.9 2019-08-03 4GB SD IoT](https://beagleboard.org/latest-images)
@@ -19,7 +21,7 @@ git clone https://github.com/KevinOConnor/klipper
 ```
 
 Install Octoprint
-=================
+-----------------
 
 One may then install Octoprint:
 ```
@@ -55,7 +57,7 @@ Make sure the octoprint web server is accessible - it should be at:
 [http://beaglebone:5000/](http://beaglebone:5000/)
 
 Building the micro-controller code
-==================================
+----------------------------------
 
 To compile the Klipper micro-controller code, start by configuring it
 for the "Beaglebone PRU":
@@ -86,14 +88,14 @@ sudo service klipper start
 ```
 
 Remaining configuration
-=======================
+-----------------------
 
 Complete the installation by configuring Klipper and Octoprint
 following the instructions in
 [the main installation document](Installation.md#configuring-klipper).
 
 Printing on the Beaglebone
-==========================
+--------------------------
 
 Unfortunately, the Beaglebone processor can sometimes struggle to run
 OctoPrint well. Print stalls have been known to occur on complex

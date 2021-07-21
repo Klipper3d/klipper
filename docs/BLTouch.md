@@ -1,5 +1,7 @@
+# BL-Touch
+
 Connecting BL-Touch
-===================
+-------------------
 
 A **warning** before you start: Avoid touching the BL-Touch pin with
 your bare fingers, since it is quite sensitive to finger grease. And
@@ -38,7 +40,7 @@ that the probe doesn't hit anything even if the probe pin happens to
 be in its lowest state.
 
 Initial tests
-=============
+-------------
 
 Before moving on, verify that the BL-Touch is mounted at the correct
 height, the pin should be roughly 2 mm above the nozzle when retracted
@@ -82,7 +84,7 @@ If that was successful, do another `G28` (or `PROBE`) but this time
 let it touch the bed as it should.
 
 BL-Touch gone bad
-=================
+-----------------
 
 Once the BL-Touch is in inconsistent state, it starts blinking red.
 You can force it to leave that state by issuing:
@@ -105,7 +107,7 @@ light turns on and of. Use the `reset`, `pin_up` and `pin_down`
 commands to achieve this.
 
 BL-Touch "clones"
-=================
+-----------------
 
 Many BL-Touch "clone" devices work correctly with Klipper using the
 default configuration. However, some "clone" devices may require
@@ -143,7 +145,7 @@ the second query reports "probe: TRIGGERED" then it indicates that
 config file.
 
 BL-Touch v3
-===========
+-----------
 
 Some BL-Touch v3.0 and BL-Touch 3.1 devices may require configuring
 `probe_with_touch_mode` in the printer config file.
@@ -171,7 +173,7 @@ device, be sure to test the probe accuracy before and after setting
 this value (use the `PROBE_ACCURACY` command to test).
 
 Multi-probing without stowing
-=============================
+-----------------------------
 
 By default, Klipper will deploy the probe at the start of each probe
 attempt and then stow the probe afterwards. This repetitive deploying
@@ -202,7 +204,7 @@ before and after setting `probe_with_touch_mode` (use the
 `PROBE_ACCURACY` command to test).
 
 Calibrating the BL-Touch offsets
-================================
+--------------------------------
 
 Follow the directions in the [Probe Calibrate](Probe_Calibrate.md)
 guide to set the x_offset, y_offset, and z_offset config parameters.
@@ -217,7 +219,7 @@ If an adjustment is made to the probe position, then rerun the probe
 calibration steps.
 
 BL-Touch output mode
-====================
+--------------------
 
 * A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
   a BL-Touch V3.1 supports this too, but can also store this in its
