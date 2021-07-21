@@ -21,7 +21,7 @@ class PCA9533:
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
         #i2c_addr = self.i2c.get_i2c_address()
         self.mutex = self.printer.get_reactor().mutex()
- 
+
         name = config.get_name().split()[1]
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_mux_command("SET_LED","LED",name,self.cmd_SET_LED,
@@ -84,11 +84,11 @@ class PCA9533:
                 pwm1 = (pwm1 + led) / 2
                 ls0 |= 0b11<<(2*index)
 
-        self.i2c.i2c_write([PCA9533_PWM0,int(255*pwm0)], minclock=minclock, 
+        self.i2c.i2c_write([PCA9533_PWM0,int(255*pwm0)], minclock=minclock,
                 reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.i2c.i2c_write([PCA9533_PWM1,int(255*pwm1)], minclock=minclock, 
+        self.i2c.i2c_write([PCA9533_PWM1,int(255*pwm1)], minclock=minclock,
                 reqclock=BACKGROUND_PRIORITY_CLOCK)
-        self.i2c.i2c_write([PCA9533_PLS0,ls0], minclock=minclock, 
+        self.i2c.i2c_write([PCA9533_PLS0,ls0], minclock=minclock,
                 reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 def load_config_prefix(config):
