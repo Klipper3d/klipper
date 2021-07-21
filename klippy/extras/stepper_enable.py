@@ -126,6 +126,8 @@ class PrinterStepperEnable:
         if name not in self.enable_lines:
             raise self.printer.config_error("Unknown stepper '%s'" % (name,))
         return self.enable_lines[name]
+    def get_steppers(self):
+        return list(self.enable_lines.keys())
 
 def load_config(config):
     return PrinterStepperEnable(config)
