@@ -45,7 +45,7 @@ time and resources, it is not installed by default. Run the following
 script to setup `numpy` and `matplotlib` to get started:
 
 ```
-~/klipper/scripts/setup-shaper-calibrate.sh
+~/klipper/scripts/setup-accelerometer-software.sh.sh
 ```
 
 Note that, depending on the performance of the
@@ -54,7 +54,7 @@ for the completion of the installation. On some occasions, if the board has
 too little RAM, the installation may fail, and you will need to
 [enable swap](https://nebl.io/neblio-university/enabling-increasing-raspberry-pi-swap/).
 
-## Wiring Option 1: Direct Raspberry Pi Connection
+## Wiring Option 1: Direct Raspberry Pi Connection (Recommended)
 
 The recommended way to connect the sensor to the printer is to connect it directly to
 the SPI bus on the Raspberry Pi.
@@ -91,13 +91,13 @@ Add the following to the printer.cfg file:
 serial: /tmp/klipper_host_mcu
 
 [adxl345]
-cs_pin: rpi: None
+cs_pin:rpi: None
 
 [resonance_tester]
 accel_chip: adxl345
 probe_points:
     100,100,20  # It is advised to start with 1 probe point, in the middle
-    of the print bed, slightly above it.
+                # of the print bed, slightly above it.
 ```
 
 Restart Klipper via the `RESTART` command.
@@ -108,18 +108,20 @@ GPIO is already in use, or some other reason prevents you from using option 1, y
 connect the accelerometer to your Primary MCU, or even a secondary MCU. There are some
 caveats, however:
 * As most printer boards output 5V power for accessories, you'll likely need an ADXL345
-board with a built in voltage level shifter.
+board with a built in voltage level shifter, besides a voltage regulator. You must
+check the schematics of your MCU board, the documentation on the chip the board
+uses, and the schematics of your particular ADXL345 board to see if they match by
+voltage **on all pins**.
 * The ADXL345 does not adhere to the SPI spec and cannot share an SPI bus with another
-device. (Thanks @dmbutyugin for pointing that out!) The sensor will need to be the only
-device connected to its SPI bus.
+device. The sensor will need to be the only device connected to its SPI bus.
 * The sensor requires a reasonably fast SPI bus
 
 Identify the MOSI, MISO, SCLK, CS, Ground, and power (see above) pins to be used for
-your sensor anc connect your sensor as follows:
+your sensor and connect your sensor as follows:
 
 | ADXL345 pin | MCU |
 | :--:        | :--: |
-| 3V3/5V/VCC  | 3V3/5V/VCC |
+| 3V3/5V/VCC  | Power* see point 1 above |
 | GND         | Ground |
 | CS          | Any |
 | SDO         | MISO |
@@ -135,19 +137,19 @@ Add something like the following to the printer.cfg file:
 ```
 [adxl345]
 cs_pin: AB0 # The MCU pin connected to the CS pin on your sensor
-spi_bus: # This may be necessary if your board has multiple busses available
+spi_bus: # This may be necessary if your board has multiple buses available
 
 [resonance_tester]
 accel_chip: adxl345
 probe_points:
     100,100,20  # It is advised to start with 1 probe point, in the middle
-    of the print bed, slightly above it.
+                # of the print bed, slightly above it.
 ```
 
 For more information about how to configure the SPI behavior of Klipper, review the
-[common SPI settings](config_reference.md#common_SPI_settings).
+[common SPI settings](Config_Reference.md#common-spi-settings).
 
-If necessary, configure a [secondary MCU](config_reference.md#mcu-my_extra_mcu) as well.
+If necessary, configure a [secondary MCU](Config_Reference.md#mcu-my_extra_mcu) as well.
 Non-3D-printing related boards like Arduinos are a smart choice since they typically don't
 have anything connected to the SPI bus.
 
