@@ -329,11 +329,13 @@ class PrinterConfig:
             f = open(temp_name, 'wb')
             f.write(data)
             f.close()
-            os.rename(cfgname, backup_name)
+            if gcmd.get_int('BACKUP', 1):
+                os.rename(cfgname, backup_name)
             os.rename(temp_name, cfgname)
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
             raise gcode.error(msg)
         # Request a restart
-        gcode.request_restart('restart')
+        if gcmd.get_int('RESTART', 1):
+            gcode.request_restart('restart')
