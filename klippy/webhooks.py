@@ -289,6 +289,7 @@ class WebHooks:
         self.printer = printer
         self._endpoints = {"list_endpoints": self._handle_list_endpoints}
         self._remote_methods = {}
+        self._mux_endpoints = {}
         self.register_endpoint("info", self._handle_info_request)
         self.register_endpoint("emergency_stop", self._handle_estop_request)
         self.register_endpoint("register_remote_method",
@@ -299,6 +300,33 @@ class WebHooks:
         if path in self._endpoints:
             raise WebRequestError("Path already registered to an endpoint")
         self._endpoints[path] = callback
+
+    def register_mux_endpoint(self, path, key, value, callback):
+        prev = self._mux_endpoints.get(path)
+        if prev is None:
+            self.register_endpoint(path, self._handle_mux)
+            self._mux_endpoints[path] = prev = (key, {})
+        prev_key, prev_values = prev
+        if prev_key != key:
+            raise self.printer.config_error(
+                "mux endpoint %s %s %s may have only one key (%s)"
+                % (path, key, value, prev_key))
+        if value in prev_values:
+            raise self.printer.config_error(
+                "mux endpoint %s %s %s already registered (%s)"
+                % (path, key, value, prev_values))
+        prev_values[value] = callback
+
+    def _handle_mux(self, web_request):
+        key, values = self._mux_endpoints[web_request.get_method()]
+        if None in values:
+            key_param = web_request.get(key, None)
+        else:
+            key_param = web_request.get(key)
+        if key_param not in values:
+            raise web_request.error("The value '%s' is not valid for %s"
+                                    % (key_param, key))
+        values[key_param](web_request)
 
     def _handle_list_endpoints(self, web_request):
         web_request.send({'endpoints': list(self._endpoints.keys())})
