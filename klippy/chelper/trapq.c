@@ -197,6 +197,23 @@ trapq_finalize_moves(struct trapq *tq, double print_time)
     }
 }
 
+// Note a position change in the trapq history
+void __visible
+trapq_set_position(struct trapq *tq, double print_time
+                   , double pos_x, double pos_y, double pos_z)
+{
+    // Flush all moves from trapq
+    trapq_finalize_moves(tq, NEVER_TIME);
+
+    // Add a marker to the trapq history
+    struct move *m = move_alloc();
+    m->print_time = print_time;
+    m->start_pos.x = pos_x;
+    m->start_pos.y = pos_y;
+    m->start_pos.z = pos_z;
+    list_add_head(&m->node, &tq->history);
+}
+
 // Return history of movement queue
 int __visible
 trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
