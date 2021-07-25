@@ -27,9 +27,10 @@ def parse_log(logname, mcu):
     out = []
     for line in f:
         parts = line.split()
-        if not parts or parts[0] not in ('Stats', 'INFO:root:Stats'):
-            #if parts and parts[0] == 'INFO:root:shutdown:':
-            #    break
+        # iterate till a message is found
+        while parts and parts[0] not in ('Stats', 'INFO:root:Stats'):
+            parts.pop(0)
+        if not parts:
             continue
         prefix = ""
         keyparts = {}
