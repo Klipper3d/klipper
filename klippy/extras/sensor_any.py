@@ -57,7 +57,12 @@ class Sensor_ANY:
             data = ''
 
             if self.path.startswith('http'):
-                data = urllib.urlopen(self.path).read()
+                try:
+                 data = urllib2.urlopen(self.path,timeout=0.07).read()
+                except urllib2.URLError as e:
+                 data = ''
+                except socket.timeout as e:
+                 data = ''
             else:
                 with open(self.path, 'r') as f:
                     data = f.read()
