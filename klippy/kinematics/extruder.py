@@ -308,7 +308,7 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.last_position)
         self.printer.send_event("extruder:activate_extruder")
-    cmd_SYNC_EXTRUDER_STEPPERS_help = "Synchronize extruders heaters and motors"
+    cmd_SYNC_EXTRUDER_STEPPERS_help = "Synchronize extruders steppers"
     def cmd_SYNC_EXTRUDER_STEPPERS(self, gcmd):
         name_master = gcmd.get('TO', None)
         heater = self.get_heater()
