@@ -78,10 +78,12 @@ class Sensor_ANY:
             return self.reactor.NEVER
 
         if self.temp < self.min_temp:
-            self.printer.invoke_shutdown('sensor_any value %0.1f below minimum value of %0.1f.'
+            self.printer.invoke_shutdown('sensor_any value %0.1f' +
+                     ' below minimum value of %0.1f.'
                      % (self.temp, self.min_temp))
         if self.temp > self.max_temp:
-            self.printer.invoke_shutdown('sensor_any value %0.1f above maximum value of %0.1f.'
+            self.printer.invoke_shutdown('sensor_any value %0.1f' +
+                     'above maximum value of %0.1f.'
                      % (self.temp, self.max_temp))
 
         mcu = self.printer.lookup_object('mcu')
