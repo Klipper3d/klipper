@@ -83,7 +83,8 @@ class BedScrews:
     def cmd_ACCEPT(self, gcmd):
         self.unregister_commands()
         self.accepted_screws = self.accepted_screws + 1
-        if self.current_screw + 1 < len(self.states[self.state]) and self.accepted_screws < self.number_of_screws:
+        if self.current_screw + 1 < len(self.states[self.state]) \
+                and self.accepted_screws < self.number_of_screws:
             # Continue with next screw
             self.move_to_screw(self.state, self.current_screw + 1)
             return
