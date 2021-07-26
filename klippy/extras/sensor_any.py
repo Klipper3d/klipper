@@ -1,6 +1,6 @@
 import logging
 import json
-import urllib
+import urllib2
 import re
 
 HOST_REPORT_TIME = 1.0
