@@ -6,6 +6,11 @@ All dates in this document are approximate.
 
 # Changes
 
+20210720: A controller_fan section now monitors all stepper motors by
+default (not just the kinematic stepper motors).  If the previous
+behavior is desired, see the `stepper` config option in the
+[config reference](Config_Reference.md#controller_fan).
+
 20210703: A `samd_sercom` config section must now specify the sercom
 bus it is configuring via the `sercom` option.
 
