@@ -37,6 +37,7 @@ theme:
       - search.share
 extra_css:
   - _klipper3d/css/extra.css
+use_directory_urls: False
 repo_url: https://github.com/KevinOConnor/klipper
 repo_name: KevinOConnor/klipper
 edit_uri: blob/master/docs/
