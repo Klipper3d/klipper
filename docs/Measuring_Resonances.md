@@ -1,5 +1,4 @@
-Measuring Resonances
-====================
+# Measuring Resonances
 
 Klipper has built-in support for ADXL345 accelerometer, which can be used to
 measure resonance frequencies of the printer for different axes, and auto-tune

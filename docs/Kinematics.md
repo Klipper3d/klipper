@@ -197,7 +197,7 @@ stepper_position = (sqrt(arm_length^2
                     + cartesian_z_position)
 ```
 
-### Stepper motor acceleration limits ###
+### Stepper motor acceleration limits
 
 With delta kinematics it is possible for a move that is accelerating
 in cartesian space to require an acceleration on a particular stepper
@@ -218,7 +218,7 @@ this limit, moves at the extreme edge of the build envelope (where a
 stepper arm may be nearly horizontal) will have a lower maximum
 acceleration and velocity.
 
-### Extruder kinematics ###
+### Extruder kinematics
 
 Klipper implements extruder motion in its own kinematic class. Since
 the timing and speed of each print head movement is fully known for
@@ -232,7 +232,7 @@ generation uses the same formulas that cartesian robots use:
 stepper_position = requested_e_position
 ```
 
-### Pressure advance ###
+### Pressure advance
 
 Experimentation has shown that it's possible to improve the modeling
 of the extruder beyond the basic extruder formula. In the ideal case,
