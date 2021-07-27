@@ -70,7 +70,8 @@ def lookup_tmc_uart_mutex(mcu):
         pmutexes.mcu_to_mutex[mcu] = mutex
     return mutex
 
-TMC_BAUD_RATE = 9000
+TMC_BAUD_RATE = 40000
+TMC_BAUD_RATE_AVR = 9000
 
 # Code for sending messages on a TMC uart
 class MCU_TMC_uart_bitbang:
@@ -90,7 +91,11 @@ class MCU_TMC_uart_bitbang:
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
     def build_config(self):
-        bit_ticks = self.mcu.seconds_to_clock(1. / TMC_BAUD_RATE)
+        baud = TMC_BAUD_RATE
+        mcu_type = self.mcu.get_constants().get("MCU", "")
+        if mcu_type.startswith("atmega") or mcu_type.startswith("at90usb"):
+            baud = TMC_BAUD_RATE_AVR
+        bit_ticks = self.mcu.seconds_to_clock(1. / baud)
         self.mcu.add_config_cmd(
             "config_tmcuart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
             % (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))

@@ -206,6 +206,10 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+  `Z_ENDSTOP_UPDATE_POSITION`: Take the current Z Gcode offset (aka,
+  babystepping), and subtract it from the stepper_z endstop_position.
+  This acts to take a frequently used babystepping value, and "make
+  it permanent".  Requires a `SAVE_CONFIG` to take effect.
 - `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
   FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
   each Z height during a print. The tool will run the given COMMAND
@@ -351,11 +355,13 @@ the [probe calibrate guide](Probe_Calibrate.md)):
   section.
 - `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
   helper script useful for calibrating the probe's z_offset. See the
-  PROBE command for details on the optional probe parameters. See the
-  MANUAL_PROBE command for details on the SPEED parameter and the
-  additional commands available while the tool is active. Please note,
-  the PROBE_CALIBRATE command uses the speed variable to move in XY direction
-  as well as Z.
+  PROBE command for details on the optional probe parameters. See
+  the MANUAL_PROBE command for details on the SPEED parameter and the additional commands available while the tool is active. Please note, the PROBE_CALIBRATE command uses the speed variable
+  to move in XY direction as well as Z.
+`PROBE_UPDATE_OFFSET`: Take the current Z Gcode offset (aka,
+  babystepping), and subtract if from the probe's z_offset.
+  This acts to take a frequently used babystepping value, and "make
+  it permanent".  Requires a `SAVE_CONFIG` to take effect.
 
 ## BLTouch
 
@@ -456,12 +462,13 @@ The following commands are available when the
 [screws_tilt_adjust config section](Config_Reference.md#screws_tilt_adjust)
 is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)):
-- `SCREWS_TILT_CALCULATE [<probe_parameter>=<value>]`: This command
-  will invoke the bed screws adjustment tool. It will command the
+- `SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [<probe_parameter>=<value>]`:
+  This command will invoke the bed screws adjustment tool. It will command the
   nozzle to different locations (as defined in the config file)
   probing the z height and calculate the number of knob turns to
-  adjust the bed level. See the PROBE command for details on the
-  optional probe parameters.
+  adjust the bed level. If DIRECTION is specified, the knob turns will all
+  be in the same direction, clockwise (CW) or counterclockwise (CCW).
+  See the PROBE command for details on the optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
 
 ## Z Tilt
@@ -754,9 +761,13 @@ is enabled (also see the
 - `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
   [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
   [HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
-  test in all configured probe points for the requested axis (X or Y)
+  test in all configured probe points for the requested <axis>
   and measures the acceleration using the accelerometer chips configured
-  for the respective axis. If `INPUT_SHAPING=0` or not set (default),
+  for the respective axis. <axis> can either be X or Y, or specify an
+  arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating point
+  numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
+  `AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy` and
+  `AXIS=-dx,-dy` is equivalent. If `INPUT_SHAPING=0` or not set (default),
   disables input shaping for the resonance testing, because it is not valid
   to run the resonance testing with the input shaper enabled.
   `OUTPUT` parameter is a comma-separated list of which outputs will be
