@@ -628,14 +628,35 @@ tuning pressure advance.
 ```
 [extruder]
 step_pin:
+#   Step GPIO pin (triggered high). This parameter must be provided.
 dir_pin:
+#   Direction GPIO pin (high indicates positive direction). This
+#   parameter must be provided.
 enable_pin:
+#   Enable pin (default is enable high; use ! to indicate enable
+#   low). If this parameter is not provided then the stepper motor
+#   driver must always be enabled.
 microsteps:
+#   The number of microsteps the stepper motor driver uses. This
+#   parameter must be provided.
 rotation_distance:
 #   See the "stepper" section for a description of the above parameters.
 nozzle_diameter:
 #   Diameter of the nozzle orifice (in mm). This parameter must be
 #   provided.
+#full_steps_per_rotation: 200
+#   The number of full steps for one rotation of the stepper motor.
+#   Set this to 200 for a 1.8 degree stepper motor or set to 400 for a
+#   0.9 degree motor. The default is 200.
+#gear_ratio:
+#   The gear ratio if the stepper motor is connected to the extruder via a
+#   gearbox or the extruder itself includes a gear reduction. For example, 
+#   one may specify "5:1" if a 5 to 1 gearbox is in use. If the axis 
+#   has multiple gearboxes one may specify a comma separated list of 
+#   gear ratios (for example, "57:11, 2:1"). If a gear_ratio is specified 
+#   then rotation_distance specifies the distance the axis travels 
+#   for one full rotation of the final gear.
+#   The default is to not use a gear ratio.
 filament_diameter:
 #   The nominal diameter of the raw filament (in mm) as it enters the
 #   extruder. This parameter must be provided.
