@@ -1,3 +1,4 @@
+/* Customization of mkdocs generated site */
 [data-md-color-scheme="slate"] {
     --md-primary-fg-color: hsla(var(--md-hue),15%,12%,1);
     --md-default-bg-color: hsla(var(--md-hue),17%,17%,1);

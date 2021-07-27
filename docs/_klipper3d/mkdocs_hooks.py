@@ -1,3 +1,4 @@
+# Tool to customize conversion of markdown files during mkdocs site generation
 import re
 import logging
 
