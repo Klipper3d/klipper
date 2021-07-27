@@ -26,4 +26,4 @@ jobs:
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
       - name: Build and deploy klipper3d
         run: |
-          mkdocs gh-deploy --force --remote-branch gh-pages --verbose
+          mkdocs gh-deploy --config-file docs/_klipper3d/mkdocs.yml --remote-branch gh-pages --force --verbose

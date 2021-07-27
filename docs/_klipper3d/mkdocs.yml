@@ -1,3 +1,6 @@
+# This is the main configuration file for mkdocs
+docs_dir: '../'
+site_dir: '../../site/'
 site_name: Klipper documentation
 theme:
   name: material
@@ -55,7 +58,7 @@ markdown_extensions:
   - mdx_partial_gfm
   - mdx_truly_sane_lists
   - mdx_breakless_lists
-  
+
 extra:
   analytics:
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
