@@ -45,7 +45,8 @@ class EncoderSensor:
 
         if self.time_based:
             logging.info(
-                    "Filament Sensor %s: using time-based detection, %.2f seconds" %
+                    "Filament Sensor %s: using time-based detection, "
+                    "%.2f seconds" %
                     (self.runout_helper.name, self.timeout_sec))
     def _update_filament_runout_pos(self, eventtime=None):
         logging.info(
@@ -99,9 +100,11 @@ class EncoderSensor:
 
             logging.info(
                     "Filament Sensor %s: last %f diff %f" %
-                    (self.runout_helper.name, self.last_filament_time, self.last_extruder_time - self.last_filament_time))
+                    (self.runout_helper.name, self.last_filament_time, 
+                        self.last_extruder_time - self.last_filament_time))
             self.runout_helper.note_filament_present(
-                    (self.last_extruder_time - self.last_filament_time) < self.timeout_sec)
+                    (self.last_extruder_time - self.last_filament_time) < 
+                    self.timeout_sec)
         else:
             # Check for filament runout
             self.runout_helper.note_filament_present(
