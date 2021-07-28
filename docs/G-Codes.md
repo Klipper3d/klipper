@@ -1,7 +1,9 @@
+# G-Codes
+
 This document describes the commands that Klipper supports. These are
 commands that one may enter into the OctoPrint terminal tab.
 
-# G-Code commands
+## G-Code commands
 
 Klipper supports the following standard G-Code commands:
 - Move (G0 or G1): `G1 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>] [F<speed>]`
@@ -48,7 +50,7 @@ to implement it with a custom
 example, one might use this to implement: `G12`, `G29`, `G30`, `G31`,
 `M42`, `M80`, `M81`, `T1`, etc.
 
-## G-Code SD card commands
+### G-Code SD card commands
 
 Klipper also supports the following standard G-Code commands if the
 [virtual_sdcard config section](Config_Reference.md#virtual_sdcard) is
@@ -66,7 +68,7 @@ In addition, the following extended commands are availble when the
 - Load a file and start SD print: `SDCARD_PRINT_FILE FILENAME=<filename>`
 - Unload file and clear SD state: `SDCARD_RESET_FILE`
 
-## G-Code arcs
+### G-Code arcs
 
 The following standard G-Code commands are available if a
 [gcode_arcs config section](Config_Reference.md#gcode_arcs) is
@@ -74,7 +76,7 @@ enabled:
 - Controlled Arc Move (G2 or G3): `G2 [X<pos>] [Y<pos>] [Z<pos>]
   [E<pos>] [F<speed>] I<value> J<value>`
 
-## G-Code firmware retraction
+### G-Code firmware retraction
 
 The following standard G-Code commands are available if a
 [firmware_retraction config section](Config_Reference.md#firmware_retraction)
@@ -82,20 +84,20 @@ is enabled:
 - Retract: `G10`
 - Unretract: `G11`
 
-## G-Code display commands
+### G-Code display commands
 
 The following standard G-Code commands are available if a
 [display config section](Config_Reference.md#display) is enabled:
 - Display Message: `M117 <message>`
 - Set build percentage: `M73 P<percent>`
 
-## Other available G-Code commands
+### Other available G-Code commands
 
 The following standard G-Code commands are currently available, but
 using them is not recommended:
 - Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
 
-# Extended G-Code Commands
+## Extended G-Code Commands
 
 Klipper uses "extended" G-Code commands for general configuration and
 status.  These extended commands all follow a similar format - they
@@ -206,6 +208,10 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
+- `Z_OFFSET_APPLY_ENDSTOP`: Take the current Z Gcode offset (aka,
+  babystepping), and subtract it from the stepper_z endstop_position.
+  This acts to take a frequently used babystepping value, and "make
+  it permanent".  Requires a `SAVE_CONFIG` to take effect.
 - `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
   FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
   each Z height during a print. The tool will run the given COMMAND
@@ -236,7 +242,7 @@ The following standard commands are supported:
 - `STATUS`: Report the Klipper host software status.
 - `HELP`: Report the list of available extended G-Code commands.
 
-## G-Code Macro Commands
+### G-Code Macro Commands
 
 The following command is available when a
 [gcode_macro config section](Config_Reference.md#gcode_macro) is
@@ -247,7 +253,7 @@ enabled (also see the
   gcode_macro variable at run-time. The provided VALUE is parsed as a
   Python literal.
 
-## Custom Pin Commands
+### Custom Pin Commands
 
 The following command is available when an
 [output_pin config section](Config_Reference.md#output_pin) is
@@ -257,7 +263,7 @@ enabled:
 Note: Hardware PWM does not currently support the CYCLE_TIME parameter
 and will use the cycle time defined in the config.
 
-## Manually Controlled Fans Commands
+### Manually Controlled Fans Commands
 
 The following command is available when a
 [fan_generic config section](Config_Reference.md#fan_generic) is
@@ -265,7 +271,7 @@ enabled:
 - `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets
   the speed of a fan. <speed> must be between 0.0 and 1.0.
 
-## Neopixel and Dotstar Commands
+### Neopixel and Dotstar Commands
 
 The following command is available when a
 [neopixel config section](Config_Reference.md#neopixel) or
@@ -287,7 +293,7 @@ The following command is available when a
   timing is not needed, the optional SYNC=0 parameter can be specified to
   apply the changes instantly and not reset the idle timeout.
 
-## Servo Commands
+### Servo Commands
 
 The following commands are available when a
 [servo config section](Config_Reference.md#servo) is enabled:
@@ -295,7 +301,7 @@ The following commands are available when a
   Set the servo position to the given angle (in degrees) or pulse
   width (in seconds). Use `WIDTH=0` to disable the servo output.
 
-## Manual stepper Commands
+### Manual stepper Commands
 
 The following command is available when a
 [manual_stepper config section](Config_Reference.md#manual_stepper) is
@@ -319,7 +325,7 @@ enabled:
   future G-Code movement commands may run in parallel with the stepper
   movement.
 
-## Extruder stepper Commands
+### Extruder stepper Commands
 
 The following command is available when an
 [extruder_stepper config section](Config_Reference.md#extruder_stepper)
@@ -329,7 +335,7 @@ is enabled:
   STEPPER to become synchronized to the given EXTRUDER, overriding
   the extruder defined in the "extruder_stepper" config section.
 
-## Probe
+### Probe
 
 The following commands are available when a
 [probe config section](Config_Reference.md#probe) is enabled (also see
@@ -351,13 +357,17 @@ the [probe calibrate guide](Probe_Calibrate.md)):
   section.
 - `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
   helper script useful for calibrating the probe's z_offset. See the
-  PROBE command for details on the optional probe parameters. See the
-  MANUAL_PROBE command for details on the SPEED parameter and the
+  PROBE command for details on the optional probe parameters. See
+  the MANUAL_PROBE command for details on the SPEED parameter and the
   additional commands available while the tool is active. Please note,
-  the PROBE_CALIBRATE command uses the speed variable to move in XY direction
-  as well as Z.
+  the PROBE_CALIBRATE command uses the speed variable
+  to move in XY direction as well as Z.
+- `Z_OFFSET_APPLY_PROBE`: Take the current Z Gcode offset (aka,
+  babystepping), and subtract if from the probe's z_offset.
+  This acts to take a frequently used babystepping value, and "make
+  it permanent".  Requires a `SAVE_CONFIG` to take effect.
 
-## BLTouch
+### BLTouch
 
 The following command is available when a
 [bltouch config section](Config_Reference.md#bltouch) is enabled (also
@@ -373,7 +383,7 @@ see the [BL-Touch guide](BLTouch.md)):
 - `BLTOUCH_STORE MODE=<output_mode>`: This stores an output mode in the
   EEPROM of a BLTouch V3.1 Available output_modes are: `5V`, `OD`
 
-## Delta Calibration
+### Delta Calibration
 
 The following commands are available when the
 [delta_calibrate config section](Config_Reference.md#linear-delta-kinematics)
@@ -388,7 +398,7 @@ is enabled (also see the [delta calibrate guide](Delta_Calibrate.md)):
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
 
-## Bed Tilt
+### Bed Tilt
 
 The following commands are available when the
 [bed_tilt config section](Config_Reference.md#bed_tilt) is enabled:
@@ -400,7 +410,7 @@ The following commands are available when the
   MANUAL_PROBE command above for details on the additional commands
   available while this tool is active.
 
-## Mesh Bed Leveling
+### Mesh Bed Leveling
 
 The following commands are available when the
 [bed_mesh config section](Config_Reference.md#bed_mesh) is enabled
@@ -438,7 +448,7 @@ The following commands are available when the
   independent extruders, as an offset is necessary to produce
   correct Z adjustment after a tool change.
 
-## Bed Screws Helper
+### Bed Screws Helper
 
 The following commands are available when the
 [bed_screws config section](Config_Reference.md#bed_screws) is enabled
@@ -450,7 +460,7 @@ The following commands are available when the
   the bed screws so that the bed is a constant distance from the
   nozzle.
 
-## Bed Screws Tilt Adjust Helper
+### Bed Screws Tilt Adjust Helper
 
 The following commands are available when the
 [screws_tilt_adjust config section](Config_Reference.md#screws_tilt_adjust)
@@ -465,7 +475,7 @@ is enabled (also see the
   See the PROBE command for details on the optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
 
-## Z Tilt
+### Z Tilt
 
 The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled:
@@ -474,7 +484,7 @@ The following commands are available when the
   adjustments to each Z stepper to compensate for tilt. See the PROBE
   command for details on the optional probe parameters.
 
-## Dual Carriages
+### Dual Carriages
 
 The following command is available when the
 [dual_carriage config section](Config_Reference.md#dual_carriage) is
@@ -483,7 +493,7 @@ enabled:
   carriage. It is typically invoked from the activate_gcode and
   deactivate_gcode fields in a multiple extruder configuration.
 
-## TMC stepper drivers
+### TMC stepper drivers
 
 The following commands are available when any of the
 [tmcXXXX config sections](Config_Reference.md#tmc-stepper-driver-configuration)
@@ -504,7 +514,7 @@ are enabled:
   Permanent changes should be made using the printer configuration
   file instead. No sanity checks are performed for the given values.
 
-## Endstop adjustments by stepper phase
+### Endstop adjustments by stepper phase
 
 The following commands are available when an
 [endstop_phase config section](Config_Reference.md#endstop_phase) is
@@ -516,7 +526,7 @@ enabled (also see the [endstop phase guide](Endstop_Phase.md)):
   setting to be written to the config file (in conjunction with the
   SAVE_CONFIG command).
 
-## Force movement
+### Force movement
 
 The following commands are available when the
 [force_move config section](Config_Reference.md#force_move) is
@@ -543,7 +553,7 @@ enabled:
   future boundary checks; issue a G28 afterwards to reset the
   kinematics.
 
-## SDcard loop
+### SDcard loop
 
 When the [sdcard_loop config section](Config_Reference.md#sdcard_loop)
 is enabled, the following extended commands are available:
@@ -554,7 +564,7 @@ is enabled, the following extended commands are available:
 - `SDCARD_LOOP_DESIST`: Complete existing loops without further
   iterations.
 
-## Send message (respond) to host
+### Send message (respond) to host
 
 The following commands are availabe when the
 [respond config section](Config_Reference.md#respond) is enabled.
@@ -573,7 +583,7 @@ The following commands are availabe when the
   prepended with `<prefix>`. (The `PREFIX` parameter will take
   priority over the `TYPE` parameter)
 
-## Pause Resume
+### Pause Resume
 
 The following commands are available when the
 [pause_resume config section](Config_Reference.md#pause_resume) is
@@ -590,7 +600,7 @@ enabled:
   sure the paused state is fresh for each print.
 - `CANCEL_PRINT`: Cancels the current print.
 
-## Filament Sensor
+### Filament Sensor
 
 The following command is available when the
 [filament_switch_sensor or filament_motion_sensor config section](Config_Reference.md#filament_switch_sensor)
@@ -602,7 +612,7 @@ is enabled.
   filament sensor on/off. If ENABLE is set to 0, the filament sensor
   will be disabled, if set to 1 it is enabled.
 
-## Firmware Retraction
+### Firmware Retraction
 
 The following commands are available when the
 [firmware_retraction config section](Config_Reference.md#firmware_retraction)
@@ -630,7 +640,7 @@ retraction required.
 - `G11`: Unretracts the extruder using the currently configured
   parameters.
 
-## Skew Correction
+### Skew Correction
 
 The following commands are available when the
 [skew_correction config section](Config_Reference.md#skew_correction)
@@ -660,7 +670,7 @@ is enabled (also see the [skew correction guide](skew_correction.md)):
   SAVE_CONFIG gcode must be run to make the changes to peristent
   memory permanent.
 
-## Delayed GCode
+### Delayed GCode
 
 The following command is enabled if a
 [delayed_gcode config section](Config_Reference.md#delayed_gcode) has
@@ -671,7 +681,7 @@ been enabled (also see the
   for gcode execution.  A value of 0 will cancel a pending delayed gcode
   from executing.
 
-## Save Variables
+### Save Variables
 
 The following command is enabled if a
 [save_variables config section](Config_Reference.md#save_variables)
@@ -682,7 +692,7 @@ has been enabled:
   startup and can be used in gcode macros. The provided VALUE is
   parsed as a Python literal.
 
-## Resonance compensation
+### Resonance compensation
 
 The following command is enabled if an
 [input_shaper config section](Config_Reference.md#input_shaper) has
@@ -701,7 +711,7 @@ been enabled (also see the
   [config reference](Config_Reference.md#input_shaper) for more
   details on each of these parameters.
 
-## Temperature Fan Commands
+### Temperature Fan Commands
 
 The following command is available when a
 [temperature_fan config section](Config_Reference.md#temperature_fan)
@@ -711,7 +721,7 @@ is enabled:
   temperature_fan. If a target is not supplied, it is set to the
   specified temperature in the config file. If speeds are not supplied, no change is applied.
 
-## Adxl345 Accelerometer Commands
+### Adxl345 Accelerometer Commands
 
 The following commands are available when an
 [adxl345 config section](Config_Reference.md#adxl345) is enabled:
@@ -744,7 +754,7 @@ The following commands are available when an
   <register> can be a decimal or a hexadecimal integer. Use with care,
   and refer to ADXL345 data sheet for the reference.
 
-## Resonance Testing Commands
+### Resonance Testing Commands
 
 The following commands are available when a
 [resonance_tester config section](Config_Reference.md#resonance_tester)
@@ -791,7 +801,7 @@ is enabled (also see the
   the suggested input shaper parameters can be persisted in the config
   by issuing `SAVE_CONFIG` command.
 
-## Palette 2 Commands
+### Palette 2 Commands
 
 The following command is available when the
 [palette2 config section](Config_Reference.md#palette2)
