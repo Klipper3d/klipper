@@ -3677,6 +3677,16 @@ detection_length: 7.0
 #   The minimum length of filament pulled through the sensor to trigger
 #   a state change on the switch_pin
 #   Default is 7 mm.
+# time_based: False
+#   When set to true, use a time-based calculation to trigger runout
+#   events instead of distance travelled.  This is less precise than
+#   length measurement, but addresses issues with some movement sensors.
+# timeout_seconds: 30
+#   When time_based is set to True, the number of seconds of no
+#   filament movement before a runout is triggered.
+#   This should be adjusted based on the length of your filament path,
+#   tolerance of jams, etc.
+#   Default is 30 seconds.
 extruder:
 #   The name of the extruder section this sensor is associated with.
 #   This parameter must be provided.
