@@ -7,6 +7,7 @@ config RP2040_SELECT
     default y
     select HAVE_GPIO
     select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
     select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID

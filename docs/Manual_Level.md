@@ -1,7 +1,9 @@
+# Manual leveling
+
 This document describes tools for calibrating a Z endstop and for
 performing adjustments to bed leveling screws.
 
-# Calibrating a Z endstop
+## Calibrating a Z endstop
 
 An accurate Z endstop position is critical to obtaining high quality
 prints.
@@ -47,7 +49,7 @@ location of the endstop is in a convenient location, one can make any
 further adjustments by running Z_ENDSTOP_CALIBRATE or by manually
 updating the Z position_endstop in the configuration file.
 
-# Adjusting bed leveling screws
+## Adjusting bed leveling screws
 
 The secret to getting good bed leveling with bed leveling screws is to
 utilize the printer's high precision motion system during the bed
@@ -101,7 +103,7 @@ This system works best when the printer has a flat printing surface
 (such as glass) and has straight rails. Upon successful completion of
 the bed leveling tool the bed should be ready for printing.
 
-## Fine grained bed screw adjustments
+### Fine grained bed screw adjustments
 
 If the printer uses three bed screws and all three screws are under
 the bed, then it may be possible to perform a second "high precision"
@@ -138,7 +140,7 @@ once those are accepted, it will prompt for fine adjustments at the
 additional locations. Continue to use `ACCEPT` and `ADJUSTED` at each
 position.
 
-# Adjusting bed leveling screws using the bed probe
+## Adjusting bed leveling screws using the bed probe
 
 This is another way to calibrate the bed level using the bed probe. To
 use it you must have a Z probe (BL Touch, Inductive sensor, etc).

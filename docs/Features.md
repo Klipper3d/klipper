@@ -1,3 +1,5 @@
+# Features
+
 Klipper has several compelling features:
 
 * High precision stepper movement. Klipper utilizes an application
@@ -72,8 +74,7 @@ Klipper has several compelling features:
   enables programmers to build external applications with detailed
   control of the printer.
 
-Additional features
-===================
+## Additional features
 
 Klipper supports many standard 3d printer features:
 
@@ -145,8 +146,7 @@ Klipper supports many standard 3d printer features:
 To get started with Klipper, read the [installation](Installation.md)
 guide.
 
-Step Benchmarks
-===============
+## Step Benchmarks
 
 Below are the results of stepper performance tests. The numbers shown
 represent total number of steps per second on the micro-controller.
