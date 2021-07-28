@@ -208,7 +208,7 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
-  `Z_ENDSTOP_UPDATE_POSITION`: Take the current Z Gcode offset (aka,
+- `Z_OFFSET_APPLY_ENDSTOP`: Take the current Z Gcode offset (aka,
   babystepping), and subtract it from the stepper_z endstop_position.
   This acts to take a frequently used babystepping value, and "make
   it permanent".  Requires a `SAVE_CONFIG` to take effect.
@@ -358,9 +358,11 @@ the [probe calibrate guide](Probe_Calibrate.md)):
 - `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
   helper script useful for calibrating the probe's z_offset. See the
   PROBE command for details on the optional probe parameters. See
-  the MANUAL_PROBE command for details on the SPEED parameter and the additional commands available while the tool is active. Please note, the PROBE_CALIBRATE command uses the speed variable
+  the MANUAL_PROBE command for details on the SPEED parameter and the
+  additional commands available while the tool is active. Please note,
+  the PROBE_CALIBRATE command uses the speed variable
   to move in XY direction as well as Z.
-`PROBE_UPDATE_OFFSET`: Take the current Z Gcode offset (aka,
+- `Z_OFFSET_APPLY_PROBE`: Take the current Z Gcode offset (aka,
   babystepping), and subtract if from the probe's z_offset.
   This acts to take a frequently used babystepping value, and "make
   it permanent".  Requires a `SAVE_CONFIG` to take effect.
