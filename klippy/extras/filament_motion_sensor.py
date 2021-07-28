@@ -100,10 +100,10 @@ class EncoderSensor:
 
             logging.info(
                     "Filament Sensor %s: last %f diff %f" %
-                    (self.runout_helper.name, self.last_filament_time, 
+                    (self.runout_helper.name, self.last_filament_time,
                         self.last_extruder_time - self.last_filament_time))
             self.runout_helper.note_filament_present(
-                    (self.last_extruder_time - self.last_filament_time) < 
+                    (self.last_extruder_time - self.last_filament_time) <
                     self.timeout_sec)
         else:
             # Check for filament runout
