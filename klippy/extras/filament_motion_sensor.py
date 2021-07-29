@@ -120,7 +120,7 @@ class EncoderSensor:
             if self.reactor.monotonic() < self.start_time - self.arm_sec:
                 logging.info(
                         "Filament Sensor %s: not armed (%f remaining)" %
-                        (self.runout_helper.name, 
+                        (self.runout_helper.name,
                             self.start_time - self.arm_sec))
                 return eventtime + CHECK_RUNOUT_TIMEOUT
 
@@ -136,7 +136,7 @@ class EncoderSensor:
             if self.reactor.monotonic() < self.start_time - self.arm_sec:
                 logging.info(
                         "Filament Sensor %s: not armed (%f remaining)" %
-                        (self.runout_helper.name, 
+                        (self.runout_helper.name,
                             self.start_time - self.arm_sec))
                 return eventtime + CHECK_RUNOUT_TIMEOUT
 
