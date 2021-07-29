@@ -836,11 +836,18 @@ class MCUConnection:
                 break
         self.connect_completion.complete(True)
 
-    def reset(self):
+    def reset(self, post_upload=False):
         output("Attempting MCU Reset...")
         if self.fatfs is not None:
             self.fatfs.unmount()
             self.fatfs.clear_callbacks()
+        if post_upload is True and self.board_config.get('interactive', False) is True:
+            try:
+                # fix for Python2
+                input = raw_input
+            except NameError:
+                pass
+            input("\n\n[USER INTERACTION REQUIRED: Reinsert SD card or powercycle printer, then press Enter to continue...]\n")
         # XXX: do we need to support other reset methods?
         self._serial.send(RESET_CMD)
         self.reactor.pause(self.reactor.monotonic() + 0.015)
@@ -1073,7 +1080,7 @@ class SPIFlash:
         self.old_dictionary = self.mcu_conn.raw_dictionary
         self.mcu_conn.configure_mcu(printfunc=output_line)
         self.firmware_checksum = self.mcu_conn.sdcard_upload()
-        self.mcu_conn.reset()
+        self.mcu_conn.reset(post_upload=True)
         self.task_complete = True
 
     def run_verify(self, eventtime):

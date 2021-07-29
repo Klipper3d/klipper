@@ -60,7 +60,8 @@ BOARD_DEFS = {
         'mcu': "stm32f407xx",
         'spi_bus': "swspi",
         'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': "PC11"
+        'cs_pin': "PC11",
+        'interactive': True
     }
 }
 
