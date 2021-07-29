@@ -3687,6 +3687,11 @@ detection_length: 7.0
 #   This should be adjusted based on the length of your filament path,
 #   tolerance of jams, etc.
 #   Default is 30 seconds.
+# arm_seconds: 120
+#   The amount of time from the start of printing before the filament
+#   sensor is used.  For sensors which incorrectly trigger during the
+#   homing and heatup sequence.
+#   Default is 0 seconds, immediately armed.
 extruder:
 #   The name of the extruder section this sensor is associated with.
 #   This parameter must be provided.

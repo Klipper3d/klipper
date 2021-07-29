@@ -19,6 +19,8 @@ class EncoderSensor:
         self.time_based = config.getboolean('time_based', False)
         self.timeout_sec = config.getfloat(
                 'timeout_seconds', 30., above=0.)
+        self.arm_sec = config.getfloat(
+                'arm_seconds', 120., above=0.)
         # Configure pins
         buttons = self.printer.load_object(config, 'buttons')
         buttons.register_buttons([switch_pin], self.encoder_event)
@@ -29,10 +31,11 @@ class EncoderSensor:
         self.extruder = None
         self.estimated_print_time = None
         # Initialise internal state
+        self.start_time = None
         self.filament_runout_pos = None
         self.last_extruder_pos = None
-        self.last_extruder_time = self.reactor.monotonic()
-        self.last_filament_time = self.reactor.monotonic()
+        self.last_extruder_time = None
+        self.last_filament_time = None
         # Register commands and event handlers
         self.printer.register_event_handler('klippy:ready',
                 self._handle_ready)
@@ -71,13 +74,15 @@ class EncoderSensor:
         # Force update the sensor time to the latest if we just started
         # printing since we might not tick for another 7mm
         if self.time_based:
-            self.last_filament_time = self.reactor.monotonic()
-        logging.info(
-                "Filament Sensor %s: print starting, resetting last time" %
-                (self.runout_helper.name))
+            self.last_filament_time = None
+            self.last_extruder_time = None
+        self.start_time = self.reactor.monotonic()
         self.reactor.update_timer(self._extruder_pos_update_timer,
                 self.reactor.NOW)
     def _handle_not_printing(self, print_time):
+        if self.time_based:
+            self.last_filament_time = None
+            self.last_extruder_time = None
         self.reactor.update_timer(self._extruder_pos_update_timer,
                 self.reactor.NEVER)
     def _get_extruder_pos(self, eventtime=None):
@@ -95,8 +100,29 @@ class EncoderSensor:
             if self.last_extruder_pos == extruder_pos:
                 return eventtime + CHECK_RUNOUT_TIMEOUT
 
+            # If this is the first time the extruder has moved
+            # set the location but don't start the timer
+            if self.last_extruder_pos == None:
+                self.last_extruder_pos = extruder_pos
+                return eventtime + CHECK_RUNOUT_TIMEOUT
+
             self.last_extruder_pos = extruder_pos
-            self.last_extruder_time = self.reactor.monotonic()
+
+            if self.last_extruder_time is None:
+                self.last_extruder_time = self.reactor.monotonic()
+                self.last_filament_time = self.last_extruder_time
+            else:
+                self.last_extruder_time = self.reactor.monotonic()
+
+            if self.last_filament_time is None:
+                self.last_filament_time = self.last_extruder_time
+
+            if self.reactor.monotonic() < self.start_time - self.arm_sec:
+                logging.info(
+                        "Filament Sensor %s: not armed (%f remaining)" %
+                        (self.runout_helper.name, 
+                            self.start_time - self.arm_sec))
+                return eventtime + CHECK_RUNOUT_TIMEOUT
 
             logging.info(
                     "Filament Sensor %s: last %f diff %f" %
@@ -107,6 +133,13 @@ class EncoderSensor:
                     self.timeout_sec)
         else:
             # Check for filament runout
+            if self.reactor.monotonic() < self.start_time - self.arm_sec:
+                logging.info(
+                        "Filament Sensor %s: not armed (%f remaining)" %
+                        (self.runout_helper.name, 
+                            self.start_time - self.arm_sec))
+                return eventtime + CHECK_RUNOUT_TIMEOUT
+
             self.runout_helper.note_filament_present(
                 extruder_pos < self.filament_runout_pos)
 
