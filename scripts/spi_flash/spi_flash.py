@@ -841,13 +841,16 @@ class MCUConnection:
         if self.fatfs is not None:
             self.fatfs.unmount()
             self.fatfs.clear_callbacks()
-        if post_upload is True and self.board_config.get('interactive', False) is True:
+        if (post_upload is True
+          and self.board_config.get('interactive', False) is True):
             try:
                 # fix for Python2
                 input = raw_input
             except NameError:
                 pass
-            input("\n\n[USER INTERACTION REQUIRED: Reinsert SD card or powercycle printer, then press Enter to continue...]\n")
+            input("\n\n[USER INTERACTION REQUIRED: " +
+                  "Reinsert SD card or powercycle printer, " +
+                  "then press Enter to continue...]\n")
         # XXX: do we need to support other reset methods?
         self._serial.send(RESET_CMD)
         self.reactor.pause(self.reactor.monotonic() + 0.015)
