@@ -1,8 +1,5 @@
 # Support for the PCA9533 LED driver ic
 #
-# Copyright (C) 2021  Marc-Andre Denis <marcadenis@msn.com>
-#               2021  Dean Cording <dean@cording.id.au>
-#
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 from . import bus
