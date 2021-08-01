@@ -64,7 +64,7 @@ class FrameExpansionCompensator:
         gcode_move = self.printer.lookup_object('gcode_move')
 
         # Detect old config section
-        try: 
+        try:
             self.config.get('sensor_pin')
             self.config.get('sensor_type')
         except:
