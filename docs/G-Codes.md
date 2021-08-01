@@ -831,7 +831,7 @@ in the GCode file:
 The following command is available when a
 [controller_fan config section](Config_Reference.md#controller_fan) with
 addition temperature_sensors is enabled:
-- `SET_CONTROLLER_FAN_TARGET ID=<name> TEMPERATURE_SENSOR=<temperature_sensor_name>
+- `SET_CONTROLLER_FAN_TARGET FAN=<name> TEMPERATURE_SENSOR=<temperature_sensor_name>
   [TARGET=<target_temperature>]`: Sets the target temperature for a
   controller_fan. If a target is not supplied, it is set to the
   specified temperature in the config file.

@@ -47,7 +47,7 @@ class ControllerFan:
                 self.conf_temperature_sensor_targets[name] = float(value)
 
             gcode.register_mux_command(
-                "SET_CONTROLLER_FAN_TARGET", "ID", self.name,
+                "SET_CONTROLLER_FAN_TARGET", "FAN", self.name,
                 self.cmd_SET_CONTROLLER_FAN_TARGET,
                 desc=self.cmd_SET_CONTROLLER_FAN_TARGET_help)
 
