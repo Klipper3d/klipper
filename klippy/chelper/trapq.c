@@ -1,6 +1,6 @@
 // Trapezoidal velocity movement queue
 //
-// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -95,6 +95,7 @@ trapq_alloc(void)
     struct trapq *tq = malloc(sizeof(*tq));
     memset(tq, 0, sizeof(*tq));
     list_init(&tq->moves);
+    list_init(&tq->history);
     struct move *head_sentinel = move_alloc(), *tail_sentinel = move_alloc();
     tail_sentinel->print_time = tail_sentinel->move_t = NEVER_TIME;
     list_add_head(&head_sentinel->node, &tq->moves);
@@ -108,6 +109,11 @@ trapq_free(struct trapq *tq)
 {
     while (!list_empty(&tq->moves)) {
         struct move *m = list_first_entry(&tq->moves, struct move, node);
+        list_del(&m->node);
+        free(m);
+    }
+    while (!list_empty(&tq->history)) {
+        struct move *m = list_first_entry(&tq->history, struct move, node);
         list_del(&m->node);
         free(m);
     }
@@ -157,21 +163,81 @@ trapq_add_move(struct trapq *tq, struct move *m)
     tail_sentinel->print_time = 0.;
 }
 
-// Free any moves older than `print_time` from the trapezoid velocity queue
+#define HISTORY_EXPIRE (30.0)
+
+// Expire any moves older than `print_time` from the trapezoid velocity queue
 void __visible
-trapq_free_moves(struct trapq *tq, double print_time)
+trapq_finalize_moves(struct trapq *tq, double print_time)
 {
     struct move *head_sentinel = list_first_entry(&tq->moves, struct move,node);
     struct move *tail_sentinel = list_last_entry(&tq->moves, struct move, node);
+    // Move expired moves from main "moves" list to "history" list
     for (;;) {
         struct move *m = list_next_entry(head_sentinel, node);
         if (m == tail_sentinel) {
             tail_sentinel->print_time = NEVER_TIME;
-            return;
+            break;
         }
         if (m->print_time + m->move_t > print_time)
-            return;
+            break;
+        list_del(&m->node);
+        list_add_head(&m->node, &tq->history);
+    }
+    // Free old moves from history list
+    if (list_empty(&tq->history))
+        return;
+    struct move *latest = list_first_entry(&tq->history, struct move, node);
+    double expire_time = latest->print_time + latest->move_t - HISTORY_EXPIRE;
+    for (;;) {
+        struct move *m = list_last_entry(&tq->history, struct move, node);
+        if (m == latest || m->print_time + m->move_t > expire_time)
+            break;
         list_del(&m->node);
         free(m);
     }
+}
+
+// Note a position change in the trapq history
+void __visible
+trapq_set_position(struct trapq *tq, double print_time
+                   , double pos_x, double pos_y, double pos_z)
+{
+    // Flush all moves from trapq
+    trapq_finalize_moves(tq, NEVER_TIME);
+
+    // Add a marker to the trapq history
+    struct move *m = move_alloc();
+    m->print_time = print_time;
+    m->start_pos.x = pos_x;
+    m->start_pos.y = pos_y;
+    m->start_pos.z = pos_z;
+    list_add_head(&m->node, &tq->history);
+}
+
+// Return history of movement queue
+int __visible
+trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
+                  , double start_time, double end_time)
+{
+    int res = 0;
+    struct move *m;
+    list_for_each_entry(m, &tq->history, node) {
+        if (start_time >= m->print_time + m->move_t || res >= max)
+            break;
+        if (end_time <= m->print_time)
+            continue;
+        p->print_time = m->print_time;
+        p->move_t = m->move_t;
+        p->start_v = m->start_v;
+        p->accel = 2. * m->half_accel;
+        p->start_x = m->start_pos.x;
+        p->start_y = m->start_pos.y;
+        p->start_z = m->start_pos.z;
+        p->x_r = m->axes_r.x;
+        p->y_r = m->axes_r.y;
+        p->z_r = m->axes_r.z;
+        p++;
+        res++;
+    }
+    return res;
 }

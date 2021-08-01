@@ -12,6 +12,9 @@ class ControllerFan:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+        self.steppers_to_monitor = config.get("stepper", "")
         self.stepper_names = []
         self.stepper_enable = self.printer.load_object(
             config, 'stepper_enable')
@@ -47,14 +50,25 @@ class ControllerFan:
                     self.cmd_SET_CONTROLLER_FAN_TARGET,
                     desc=self.cmd_SET_CONTROLLER_FAN_TARGET_help)
 
-    def handle_ready(self):
+    def handle_connect(self):
+        # Heater lookup
         pheaters = self.printer.lookup_object('heaters')
         self.heaters = [pheaters.lookup_heater(n.strip())
                         for n in self.heater_name.split(',')]
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        self.stepper_names = [s.get_name() for s in kin.get_steppers()]
-        reactor = self.printer.get_reactor()
-        reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
+        # Stepper lookup
+        all_steppers = self.stepper_enable.get_steppers()
+        steppers = [n.strip() for n in self.steppers_to_monitor.split(',')]
+        if steppers == [""]:
+            self.stepper_names = all_steppers
+            return
+        if not all(x in all_steppers for x in steppers):
+            raise self.printer.config_error(
+                ("One or more of these steppers are unknown: "
+                 "%s (valid steppers are: %s)")
+                % (steppers, ", ".join(all_steppers)))
+        self.stepper_names = steppers
+        
+        # Temperate sensor lookup
         for k, v in self.conf_temperature_sensor_targets.items():
             sensor = self.printer.lookup_object(
                 'temperature_sensor ' + k.strip())
@@ -62,6 +76,10 @@ class ControllerFan:
                 raise self.printer.error(
                     "'%s' is not a valid temperature_sensor." % (k,))
             self.temperature_sensor_targets[sensor] = v
+            
+    def handle_ready(self):
+        reactor = self.printer.get_reactor()
+        reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
 
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
