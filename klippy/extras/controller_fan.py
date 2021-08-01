@@ -29,10 +29,12 @@ class ControllerFan:
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
         self.last_speed = 0.
+        self.name = config.get_name().split()[1]
         self.temperature_sensor_targets = {}
         self.conf_temperature_sensor_targets = {}
         sensors = config.get("temperature_sensors", "").strip()
         if sensors:
+            gcode = self.printer.lookup_object('gcode')
             if sensors.endswith(','):
                 sensors = sensors[:-1]
             parts = [a.split(':', 1) for a in sensors.split(',')]
@@ -40,15 +42,14 @@ class ControllerFan:
                 if len(pair) != 2:
                     raise self.printer.error(
                         "Unable to parse temperature_sensors in %s"
-                        % (config.get_name(),))
+                        % (self.name))
                 name, value = [s.strip() for s in pair]
                 self.conf_temperature_sensor_targets[name] = float(value)
 
-                gcode = self.printer.lookup_object('gcode')
-                gcode.register_mux_command(
-                    "SET_CONTROLLER_FAN_TARGET", "TEMPERATURE_SENSOR", name,
-                    self.cmd_SET_CONTROLLER_FAN_TARGET,
-                    desc=self.cmd_SET_CONTROLLER_FAN_TARGET_help)
+            gcode.register_mux_command(
+                "SET_CONTROLLER_FAN_TARGET", "ID", self.name,
+                self.cmd_SET_CONTROLLER_FAN_TARGET,
+                desc=self.cmd_SET_CONTROLLER_FAN_TARGET_help)
 
     def handle_connect(self):
         # Heater lookup
@@ -60,13 +61,13 @@ class ControllerFan:
         steppers = [n.strip() for n in self.steppers_to_monitor.split(',')]
         if steppers == [""]:
             self.stepper_names = all_steppers
-            return
-        if not all(x in all_steppers for x in steppers):
-            raise self.printer.config_error(
-                ("One or more of these steppers are unknown: "
-                 "%s (valid steppers are: %s)")
-                % (steppers, ", ".join(all_steppers)))
-        self.stepper_names = steppers
+        else:
+            if not all(x in all_steppers for x in steppers):
+                raise self.printer.config_error(
+                    ("One or more of these steppers are unknown: "
+                     "%s (valid steppers are: %s)")
+                    % (steppers, ", ".join(all_steppers)))
+            self.stepper_names = steppers
 
         # Temperate sensor lookup
         for k, v in self.conf_temperature_sensor_targets.items():
@@ -94,6 +95,7 @@ class ControllerFan:
             _, target_temp = heater.get_temp(eventtime)
             if target_temp:
                 active = True
+
         for sensor, target in self.temperature_sensor_targets.items():
             current_temp, _ = sensor.get_temp(eventtime)
             if current_temp > target:
@@ -121,14 +123,13 @@ class ControllerFan:
                 % (degrees, min_temp, max_temp))
         self.temperature_sensor_targets[sensor] = degrees
 
-    cmd_SET_CONTROLLER_FAN_TARGET_help = \
-        "Sets a temperature sensor target"
+    cmd_SET_CONTROLLER_FAN_TARGET_help = "Sets a temperature sensor target"
 
     def cmd_SET_CONTROLLER_FAN_TARGET(self, gcmd):
-        params = gcmd.get_command_parameters()
         sensor = gcmd.get('TEMPERATURE_SENSOR')
         temp = gcmd.get_float(
             'TARGET', self.conf_temperature_sensor_targets[sensor])
+
         self.set_target_temp(sensor, temp)
 
 
