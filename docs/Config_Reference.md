@@ -1118,18 +1118,11 @@ See also: [extended g-code commands](G-Codes.md#Frame-Expansion-Compensation).
 
 ```
 [frame_expansion_compensation]
-#coeff:
-#   Coefficient of linear expansion for the frame material [μm/m·°C].
-#   E.g. 23.4 μm/m·°C for Misumi A6N01SS-T5 6005A-T5 aluminum alloy.
-#frame_z_length:
-#   Total length of vertical extrusions [mm].
-#gantry_factor:
-#   Relationship between gantry expansion and toolhead Z movement.
-#   Examples:
-#      if 1mm expansion moves toolhead up 1mm, gantry_factor: 1.0
-#      if 1mm expansion moves toolhead up 0.5mm, gantry_factor: 0.5
-#      if 1mm expansion moves toolhead down 1mm, gantry_factor: -1.0
-#   The default is 1.0.
+#temp_coeff:
+#   The temperature coefficient of expansion, in mm/K. For example, a
+#   temp_coeff of 0.01 mm/K will move the Z axis downwards by 0.01 mm for every
+#   Kelvin/degree celcius that the frame temperature increases. Defaults to 0.0,
+#   no offset.
 #temp_sensor:
 #   Temperature sensor to use for frame temp measurement. Use full config
 #   section name without quoutes. E.g. temperature_sensor frame
