@@ -7,12 +7,14 @@ from . import fan
 
 PIN_MIN_TIME = 0.100
 
+
 class ControllerFan:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.stepper_names = []
-        self.stepper_enable = self.printer.load_object(config, 'stepper_enable')
+        self.stepper_enable = self.printer.load_object(
+            config, 'stepper_enable')
         self.printer.load_object(config, 'heaters')
         self.heaters = []
         self.fan = fan.Fan(config)
@@ -54,18 +56,22 @@ class ControllerFan:
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
         for k, v in self.conf_temperature_sensor_targets.items():
-            sensor = self.printer.lookup_object('temperature_sensor ' + k.strip())
+            sensor = self.printer.lookup_object(
+                'temperature_sensor ' + k.strip())
             if sensor is None:
                 raise self.printer.error(
                     "'%s' is not a valid temperature_sensor." % (k,))
             self.temperature_sensor_targets[sensor] = v
+
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
+
     def callback(self, eventtime):
         speed = 0.
         active = False
         for name in self.stepper_names:
-            active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
+            active |= self.stepper_enable.lookup_enable(
+                name).is_motor_enabled()
         for heater in self.heaters:
             _, target_temp = heater.get_temp(eventtime)
             if target_temp:
@@ -88,7 +94,8 @@ class ControllerFan:
         return eventtime + 1.
 
     def set_target_temp(self, sensor_name, degrees):
-        sensor = self.printer.lookup_object('temperature_sensor ' + sensor_name)
+        sensor = self.printer.lookup_object(
+            'temperature_sensor ' + sensor_name)
         min_temp, max_temp = sensor.get_min_max()
         if degrees and (degrees < min_temp or degrees > max_temp):
             raise self.printer.command_error(
@@ -98,12 +105,14 @@ class ControllerFan:
 
     cmd_SET_CONTROLLER_FAN_TARGET_help = \
         "Sets a temperature sensor target"
+
     def cmd_SET_CONTROLLER_FAN_TARGET(self, gcmd):
         params = gcmd.get_command_parameters()
         sensor = gcmd.get('TEMPERATURE_SENSOR')
-        temp = gcmd.get_float('TARGET',
-            self.conf_temperature_sensor_targets[sensor])
+        temp = gcmd.get_float(
+            'TARGET', self.conf_temperature_sensor_targets[sensor])
         self.set_target_temp(sensor, temp)
+
 
 def load_config_prefix(config):
     return ControllerFan(config)
