@@ -5,6 +5,12 @@
 
 #define ERROR_RET -989898989
 
+struct pull_history_steps {
+    uint64_t first_clock, last_clock;
+    int64_t start_position;
+    int step_count, interval, add;
+};
+
 struct stepcompress *stepcompress_alloc(uint32_t oid);
 void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
                        , uint32_t invert_sdir, int32_t queue_step_msgtag
@@ -21,6 +27,9 @@ int stepcompress_set_last_position(struct stepcompress *sc
 int64_t stepcompress_find_past_position(struct stepcompress *sc
                                         , uint64_t clock);
 int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
+int stepcompress_extract_old(struct stepcompress *sc
+                             , struct pull_history_steps *p, int max
+                             , uint64_t start_clock, uint64_t end_clock);
 
 struct serialqueue;
 struct steppersync *steppersync_alloc(

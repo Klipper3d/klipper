@@ -1,3 +1,5 @@
+# Bed leveling
+
 Bed leveling (sometimes also referred to as "bed tramming") is
 critical to getting high quality prints. If a bed is not properly
 "leveled" it can lead to poor bed adhesion, "warping", and subtle
@@ -20,7 +22,7 @@ The secret to getting high accuracy is to use a repeatable process and
 to use a leveling method that leverages the high accuracy of the
 printer's own motion system.
 
-# Choose the appropriate calibration mechanism
+## Choose the appropriate calibration mechanism
 
 Different types of printers use different methods for performing bed
 leveling. All of them ultimately depend on the "paper test" (described
@@ -46,7 +48,7 @@ routines. Setting a negative number allows the printer to move below
 the nominal position of the bed, which may help when trying to
 determine the actual bed position.
 
-# The "paper test"
+## The "paper test"
 
 The primary bed calibration mechanism is the "paper test". It involves
 placing a regular piece of "copy machine paper" between the printer's
@@ -174,7 +176,7 @@ to obtain the same amount of friction each time one runs the test.
 If something goes wrong during the test, one can use the `ABORT`
 command to exit the calibration tool.
 
-# Determining Thermal Expansion
+## Determining Thermal Expansion
 
 After successfully performing bed leveling, one may go on to calculate
 a more precise value for the combined impact of "thermal expansion",
