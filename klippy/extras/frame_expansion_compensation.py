@@ -16,10 +16,8 @@ class FrameExpansionCompensator:
         self.config = config
 
         # Get config parameters, convert to SI units where necessary
-        self.coeff = config.getfloat('coeff', minval=0., maxval=100.,)/1E6
-        self.frame_z = config.getfloat('frame_z_length', minval=0.,)/1E3
-        self.gantry_factor = config.getfloat('gantry_factor', default=1.0)
-
+        self.temp_coeff = config.getfloat('temp_coeff', minval=-1, maxval=1,
+            default=0)
         self.temp_sensor_name = config.get('temp_sensor')
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
@@ -28,9 +26,14 @@ class FrameExpansionCompensator:
         self.max_comp_z = config.getfloat('max_comp_z', 0.)
         self.max_offset = config.getfloat('max_z_offset', 99999999.)
 
-        # Catch old config parameters (for useful error message)
+        # Catch old config parameters (for useful error messages)
         for param in ['sensor_pin', 'sensor_type', 'min_temp', 'max_temp']:
             config.get(param, None)
+        self.coeff = config.getfloat('coeff', minval=0., maxval=100.,
+            default=0)/1E6
+        self.frame_z = config.getfloat('frame_z_length', minval=0.,
+            default=0)/1E3
+        self.gantry_factor = config.getfloat('gantry_factor', default=1.0)
 
         # Register printer events
         self.printer.register_event_handler("klippy:connect",
@@ -63,7 +66,7 @@ class FrameExpansionCompensator:
         self.toolhead = self.printer.lookup_object('toolhead')
         gcode_move = self.printer.lookup_object('gcode_move')
 
-        # Detect old config section
+        # Detect old temp sensor config section
         try:
             self.config.get('sensor_pin')
             self.config.get('sensor_type')
@@ -80,6 +83,19 @@ class FrameExpansionCompensator:
             See Config_Reference.md for details on defining temp sensors and
             configuring frame expansion compensation.
             '''
+            raise self.printer.config_error(msg)
+
+        # Deprecated config option check
+        if any([self.coeff > 0, self.gantry_factor != 1, self.frame_z > 0]):
+            msg = '''
+            FRAME_EXPANSION_COMPENSATION:\n
+            Deprecated configuration parameters defined: "coeff", "frame_z", and
+            possibly "gantry_factor".
+
+            Remove these and use "temp_coeff" instead.
+            Based on your current settings, temp_coeff would be %.8f
+            ''' % self.calc_temp_coeff(self.coeff, self.frame_z,
+                self.gantry_factor)
             raise self.printer.config_error(msg)
 
         # Temperature sensor config check
@@ -123,14 +139,17 @@ class FrameExpansionCompensator:
             self.last_home_temp = self.smoothed_temp
             self.z_drift_offset = 0.
 
+    def calc_temp_coeff(self, coeff, frame_z, gantry_factor):
+        temp_coeff = (coeff * frame_z * gantry_factor) * 1E3
+        return temp_coeff
+
     def calc_offset(self, pos):
         'Calculate total linear thermal expansion relative to last homing.'
         if not self.max_comp_z or pos[2] < self.max_comp_z:
             delta_t = self.smoothed_temp - self.last_home_temp
 
             # Calculate Z offset, compensates for thermal expansion since homing
-            offset = -1 * (self.frame_z *
-                (self.coeff * delta_t) * self.gantry_factor) * 1E3
+            offset = -1 * self.temp_coeff * delta_t
 
             # compute sign (+1 or -1) for maximum offset setting
             sign = 1 - (offset <= 0)*2
