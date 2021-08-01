@@ -67,7 +67,7 @@ class ControllerFan:
                  "%s (valid steppers are: %s)")
                 % (steppers, ", ".join(all_steppers)))
         self.stepper_names = steppers
-        
+
         # Temperate sensor lookup
         for k, v in self.conf_temperature_sensor_targets.items():
             sensor = self.printer.lookup_object(
@@ -76,7 +76,7 @@ class ControllerFan:
                 raise self.printer.error(
                     "'%s' is not a valid temperature_sensor." % (k,))
             self.temperature_sensor_targets[sensor] = v
-            
+
     def handle_ready(self):
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
