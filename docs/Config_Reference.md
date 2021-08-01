@@ -1130,6 +1130,13 @@ See also: [extended g-code commands](G-Codes.md#Frame-Expansion-Compensation).
 #      if 1mm expansion moves toolhead up 0.5mm, gantry_factor: 0.5
 #      if 1mm expansion moves toolhead down 1mm, gantry_factor: -1.0
 #   The default is 1.0.
+#temp_sensor:
+#   Temperature sensor to use for frame temp measurement. Use full config
+#   section name without quoutes. E.g. temperature_sensor frame
+#smooth_time:
+#   Smoothing window applied to the temp_sensor, in seconds. Can reduce motor
+#   noise from excessive small corrections in response to sensor noise. The
+#   default is 2.0 seconds.
 #max_comp_z:
 #   Disables compensation above this Z height [mm]. The last computed correction
 #   will remain applied until the toolhead moves below the specified Z position
@@ -1137,15 +1144,6 @@ See also: [extended g-code commands](G-Codes.md#Frame-Expansion-Compensation).
 #max_z_offset:
 #   Maximum absolute compensation that can be applied to the Z axis [mm]. The
 #   default is 99999999.0mm (unlimited).
-#sensor_type:
-#sensor_pin:
-#min_temp:
-#max_temp:
-#   See the "extruder" section for the definition of the above
-#   parameters.
-#gcode_id:
-#   See the "heater_generic" section for the definition of this
-#   parameter.
 z_stepper:
 #   The Z stepper motor linked with the Z endstop, as written in printer.cfg.
 #   Used for triggering reference temperature measurement. Usually 'stepper_z'
