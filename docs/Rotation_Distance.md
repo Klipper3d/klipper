@@ -1,3 +1,5 @@
+# Rotation distance
+
 Stepper motor drivers on Klipper require a `rotation_distance`
 parameter in each
 [stepper config section](Config_Reference.md#stepper). The
@@ -5,7 +7,7 @@ parameter in each
 one full revolution of the stepper motor. This document describes how
 one can configure this value.
 
-# Obtaining rotation_distance from steps_per_mm (or step_distance)
+## Obtaining rotation_distance from steps_per_mm (or step_distance)
 
 The designers of your 3d printer originally calculated `steps_per_mm`
 from a rotation distance. If you know the steps_per_mm then it is
@@ -38,7 +40,7 @@ on x, y, and z type axes. If the above formula results in a
 rotation_distance that is within .01 of a whole number then round the
 final value to that whole_number.
 
-# Calibrating rotation_distance on extruders
+## Calibrating rotation_distance on extruders
 
 On an extruder, the `rotation_distance` is the amount of distance the
 filament travels for one full rotation of the stepper motor. The best
@@ -79,13 +81,13 @@ enough for those axes and will likely lead to a worse configuration.
 Instead, if needed, those axes can be determined by
 [measuring the belts, pulleys, and lead screw hardware](#obtaining-rotation_distance-by-inspecting-the-hardware).
 
-# Obtaining rotation_distance by inspecting the hardware
+## Obtaining rotation_distance by inspecting the hardware
 
 It's possible to calculate rotation_distance with knowledge of the
 stepper motors and printer kinematics. This may be useful if the
 steps_per_mm is not known or if designing a new printer.
 
-## Belt driven axes
+### Belt driven axes
 
 It is easy to calculate rotation_distance for a linear axis that uses
 a belt and pulley.
@@ -101,7 +103,7 @@ rotation_distance = <belt_pitch> * <number_of_teeth_on_pulley>
 For example, if a printer has a 2mm belt and uses a pulley with 20
 teeth, then the rotation distance is 40.
 
-## Axes with a lead screw
+### Axes with a lead screw
 
 It is easy to calculate the rotation_distance for common lead screws
 using the following formula:
@@ -118,7 +120,7 @@ screw pitch is the distance between each groove on the screw.) So, for
 example, an M6 metric rod has a rotation distance of 1 and an M8 rod
 has a rotation distance of 1.25.
 
-## Extruder
+### Extruder
 
 It's possible to obtain an initial rotation distance for extruders by
 measuring the diameter of the "hobbed bolt" that pushes the filament
@@ -135,7 +137,7 @@ obtaining an initial rotation_distance, use the
 [measure and trim procedure](#calibrating-rotation_distance-on-extruders)
 to obtain a more accurate setting.
 
-# Using a gear_ratio
+## Using a gear_ratio
 
 Setting a `gear_ratio` can make it easier to configure the
 `rotation_distance` on steppers that have a gear box (or similar)

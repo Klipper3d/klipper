@@ -1,0 +1,122 @@
+# This is the main configuration file for mkdocs
+docs_dir: '../'
+site_dir: '../../site/'
+site_name: Klipper documentation
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: blue
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: grey
+      accent: light blue
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+    # primary: white
+    # accent: blue
+  logo: img/klipper.svg
+  favicon: img/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+  features:
+      #- navigation.tabs
+      #- navigation.expand
+      - navigation.top
+      # if enabled, the TOC doesn't work for some pages
+      # - toc.integrate
+      - search.suggest
+      - search.highlight
+      - search.share
+extra_css:
+  - _klipper3d/css/extra.css
+use_directory_urls: False
+repo_url: https://github.com/KevinOConnor/klipper
+repo_name: KevinOConnor/klipper
+edit_uri: blob/master/docs/
+plugins:
+  - search
+  - section-index
+  - mkdocs-simple-hooks:
+      hooks:
+        on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
+  - exclude:
+      glob:
+        - README.md
+markdown_extensions:
+  - toc:
+      permalink: True
+      toc_depth: 6
+  #- pymdownx.snippets
+  - attr_list
+  - mdx_partial_gfm
+  - mdx_truly_sane_lists
+  - mdx_breakless_lists
+
+extra:
+  analytics:
+  # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
+    provider: google
+    property: UA-138371409-1
+  # version:
+  #   provider: mike
+nav:
+  - Overview:
+    - Overview.md
+    - Features.md
+    - FAQ.md
+    - Releases.md
+    - Config_Changes.md
+    - Contact.md
+  - Configuration and Tuning:
+    - Installation.md
+    - Configuration reference:
+      - Config_Reference.md
+      - Rotation_Distance.md
+    - Config_checks.md
+    - Bed level:
+      - Bed_Level.md
+      - Delta_Calibrate.md
+      - Probe_Calibrate.md
+      - BLTouch.md
+      - Manual_Level.md
+      - Bed_Mesh.md
+      - Endstop_Phase.md
+    - Resonance compensation:
+      - Resonance_Compensation.md
+      - Measuring_Resonances.md
+    - Pressure_Advance.md
+    - Slicers.md
+    - Command templates:
+      - Command_Templates.md
+      - Status_Reference.md
+    - TMC_Drivers.md
+    - skew_correction.md
+    - Using_PWM_Tools.md
+    - G-Codes.md
+  - Developer documentation:
+    - Code_Overview.md
+    - Kinematics.md
+    - Protocol.md
+    - API_Server.md
+    - MCU_Commands.md
+    - CANBUS_protocol.md
+    - Debugging.md
+    - Benchmarks.md
+    - CONTRIBUTING.md
+    - Packaging.md
+  - Device specific documents:
+    - Example_Configs.md
+    - SDCard_Updates.md
+    - RPi_microcontroller.md
+    - beaglebone.md
+    - Bootloaders.md
+    - CANBUS.md
+    - TSL1401CL_Filament_Width_Sensor.md
+    - HallFilamentWidthSensor.md

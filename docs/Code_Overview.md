@@ -1,8 +1,9 @@
+# Code overview
+
 This document describes the overall code layout and major code flow of
 Klipper.
 
-Directory Layout
-================
+## Directory Layout
 
 The **src/** directory contains the C source for the micro-controller
 code. The **src/atsam/**, **src/atsamd/**, **src/avr/**,
@@ -38,8 +39,7 @@ contains temporary build time objects. The final micro-controller
 object that is built is **out/klipper.elf.hex** on AVR and
 **out/klipper.bin** on ARM.
 
-Micro-controller code flow
-==========================
+## Micro-controller code flow
 
 Execution of the micro-controller code starts in architecture specific
 code (eg, **src/avr/main.c**) which ultimately calls sched_main()
@@ -89,8 +89,7 @@ inlining functions across compilation units, so most of these tiny
 gpio functions are inlined into their callers, and there is no
 run-time cost to using them.
 
-Klippy code overview
-====================
+## Klippy code overview
 
 The host code (Klippy) is intended to run on a low-cost computer (such
 as a Raspberry Pi) paired with the micro-controller. The code is
@@ -115,8 +114,7 @@ response messages from the micro-controller in the Python code (see
 the log (see **klippy/queuelogger.py**) so that the other threads
 never block on log writes.
 
-Code flow of a move command
-===========================
+## Code flow of a move command
 
 A typical printer movement starts when a "G1" command is sent to the
 Klippy host and it completes when the corresponding step pulses are
@@ -227,8 +225,7 @@ kinematic classes. It's this part of the code which specifies the
 movements and their timings. The remaining parts of the processing is
 mostly just communication and plumbing.
 
-Adding a host module
-====================
+## Adding a host module
 
 The Klippy host code has a dynamic module loading capability. If a
 config section named "[my_module]" is found in the printer config file
@@ -307,8 +304,7 @@ The following may also be useful:
   sure to place a copyright notice at the top of the module. See the
   existing modules for the preferred format.
 
-Adding new kinematics
-=====================
+## Adding new kinematics
 
 This section provides some tips on adding support to Klipper for
 additional types of printer kinematics. This type of activity requires
@@ -347,8 +343,7 @@ Useful steps:
    to micro-controller commands. This is useful to exercise corner
    cases and to check for regressions.
 
-Porting to a new micro-controller
-=================================
+## Porting to a new micro-controller
 
 This section provides some tips on porting Klipper's micro-controller
 code to a new architecture. This type of activity requires good
@@ -400,8 +395,7 @@ Useful steps:
    the micro-controller with the main klippy.py program.
 9. Consider adding build test cases in the test/ directory.
 
-Coordinate Systems
-==================
+## Coordinate Systems
 
 Internally, Klipper primarily tracks the position of the toolhead in
 cartesian coordinates that are relative to the coordinate system
@@ -486,8 +480,7 @@ cartesian coordinates relative to the coordinate system specified in
 the config file) after a `G28` home command. The `SET_GCODE_OFFSET`
 command can alter this value.
 
-Time
-====
+## Time
 
 Fundamental to the operation of Klipper is the handling of clocks,
 times, and timestamps. Klipper executes actions on the printer by

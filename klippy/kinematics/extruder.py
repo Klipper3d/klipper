@@ -48,7 +48,7 @@ class PrinterExtruder:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
-        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.sk_extruder = ffi_main.gc(ffi_lib.extruder_stepper_alloc(),
                                        ffi_lib.free)
         self.stepper.set_stepper_kinematics(self.sk_extruder)
@@ -75,7 +75,7 @@ class PrinterExtruder:
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
     def update_move_time(self, flush_time):
-        self.trapq_free_moves(self.trapq, flush_time)
+        self.trapq_finalize_moves(self.trapq, flush_time)
     def _set_pressure_advance(self, pressure_advance, smooth_time):
         old_smooth_time = self.pressure_advance_smooth_time
         if not self.pressure_advance:
@@ -98,6 +98,8 @@ class PrinterExtruder:
         return self.name
     def get_heater(self):
         return self.heater
+    def get_trapq(self):
+        return self.trapq
     def sync_stepper(self, stepper):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
@@ -229,6 +231,8 @@ class DummyExtruder:
     def get_name(self):
         return ""
     def get_heater(self):
+        raise self.printer.command_error("Extruder not configured")
+    def get_trapq(self):
         raise self.printer.command_error("Extruder not configured")
 
 def add_printer_objects(config):

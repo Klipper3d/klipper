@@ -155,6 +155,7 @@ CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-creality-ender6-2020.cfg
+CONFIG ../../config/printer-eryone-er20-2021.cfg
 CONFIG ../../config/printer-flsun-q5-2020.cfg
 CONFIG ../../config/printer-flsun-qqs-2020.cfg
 CONFIG ../../config/printer-fokoos-odin5-f3-2021.cfg
@@ -175,6 +176,7 @@ CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
 
 # Printers using the stm32f446
 DICTIONARY stm32f446.dict
+CONFIG ../../config/generic-bigtreetech-octopus.cfg
 CONFIG ../../config/generic-fysetc-s6.cfg
 CONFIG ../../config/generic-fysetc-s6-v2.cfg
 CONFIG ../../config/generic-fysetc-spider.cfg

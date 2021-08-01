@@ -1,0 +1,9 @@
+# Python virtualenv module requirements for mkdocs
+mkdocs==1.2.2
+mkdocs-material==7.2.0
+mkdocs-section-index==0.3.1
+mkdocs-simple-hooks==0.1.3
+mkdocs-exclude==1.0.2
+mdx-truly-sane-lists==1.2
+mdx-breakless-lists==1.0.1
+py-gfm==1.0.2

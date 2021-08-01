@@ -84,10 +84,10 @@ class PrinterStepperEnable:
         gcode.register_command("SET_STEPPER_ENABLE",
                                self.cmd_SET_STEPPER_ENABLE,
                                desc=self.cmd_SET_STEPPER_ENABLE_help)
-    def register_stepper(self, stepper, pin):
-        name = stepper.get_name()
-        enable = setup_enable_pin(self.printer, pin)
-        self.enable_lines[name] = EnableTracking(stepper, enable)
+    def register_stepper(self, config, mcu_stepper):
+        name = mcu_stepper.get_name()
+        enable = setup_enable_pin(self.printer, config.get('enable_pin', None))
+        self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
     def motor_off(self):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.dwell(DISABLE_STALL_TIME)
@@ -126,6 +126,8 @@ class PrinterStepperEnable:
         if name not in self.enable_lines:
             raise self.printer.config_error("Unknown stepper '%s'" % (name,))
         return self.enable_lines[name]
+    def get_steppers(self):
+        return list(self.enable_lines.keys())
 
 def load_config(config):
     return PrinterStepperEnable(config)
