@@ -11,7 +11,7 @@ from .. import bus
 from . import font8x14, logo
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
-MAX_FLUSH_DURATION_S = 0.050
+MAX_FLUSH_DURATION_S = 0.025
 MAX_FLUSH_BYTES = 16384
 
 # Screen size

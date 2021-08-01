@@ -13,7 +13,7 @@ REDRAW_TIME = 0.500
 # Minimum time between screen redraws
 REDRAW_MIN_TIME = 0.100
 # Minimum time between calls to flush() that did not have time to complete
-INCOMPLETE_FLUSH_MIN_TIME = 0.075
+INCOMPLETE_FLUSH_MIN_TIME = 0.100
 
 LCD_chips = {
     'st7920': st7920.ST7920, 'emulated_st7920': st7920.EmulatedST7920,
