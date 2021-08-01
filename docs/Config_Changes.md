@@ -1,10 +1,12 @@
+# Configuration changes
+
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.
 
 All dates in this document are approximate.
 
-# Changes
+## Changes
 
 20210720: A controller_fan section now monitors all stepper motors by
 default (not just the kinematic stepper motors).  If the previous

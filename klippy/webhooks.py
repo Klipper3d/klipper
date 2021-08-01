@@ -237,7 +237,7 @@ class ClientConnection:
         self.send(result)
 
     def send(self, data):
-        self.send_buffer += json.dumps(data) + "\x03"
+        self.send_buffer += json.dumps(data, separators=(',', ':')) + "\x03"
         if not self.is_sending_data:
             self.is_sending_data = True
             self.reactor.register_callback(self._do_send)

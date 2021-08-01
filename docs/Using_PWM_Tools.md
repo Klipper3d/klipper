@@ -1,3 +1,5 @@
+# Using PWM tools
+
 This document describes how to setup a PWM-controlled laser or spindle
 using `output_pin` and some macros.
 

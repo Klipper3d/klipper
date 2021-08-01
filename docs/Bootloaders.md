@@ -1,3 +1,5 @@
+# Bootloaders
+
 This document provides information on common bootloaders found on
 micro-controllers that Klipper supports.
 
@@ -23,8 +25,8 @@ application.  This document is not an authoritative reference; it is
 intended as a collection of useful information that the Klipper
 developers have accumulated.
 
-AVR micro-controllers
-=====================
+## AVR micro-controllers
+
 
 In general, the Arduino project is a good reference for bootloaders
 and flashing procedures on the 8-bit Atmel Atmega micro-controllers.
@@ -44,7 +46,7 @@ use.
 The "avrdude" program is the most common tool used to flash atmega
 chips (both bootloader flashing and application flashing).
 
-## Atmega2560 ##
+### Atmega2560
 
 This chip is typically found in the "Arduino Mega" and is very common
 in 3d printer boards.
@@ -63,7 +65,7 @@ To flash an application use something like:
 avrdude -cwiring -patmega2560 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
-## Atmega1280 ##
+### Atmega1280
 
 This chip is typically found in earlier versions of the "Arduino
 Mega".
@@ -82,7 +84,7 @@ To flash an application use something like:
 avrdude -carduino -patmega1280 -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
-## Atmega1284p ##
+### Atmega1284p
 
 This chip is commonly found in "Melzi" style 3d printer boards.
 
@@ -107,7 +109,7 @@ application use something like this instead:
 avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
-## At90usb1286 ##
+### At90usb1286
 
 This document does not cover the method to flash a bootloader to the
 At90usb1286 nor does it cover general application flashing to this
@@ -122,7 +124,7 @@ One can flash an application with it using something like:
 teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
 ```
 
-## Atmega168 ##
+### Atmega168
 
 The atmega168 has limited flash space. If using a bootloader, it is
 recommended to use the Optiboot bootloader. To flash that bootloader
@@ -141,8 +143,7 @@ like:
 avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
-SAM3 micro-controllers (Arduino Due)
-====================================
+## SAM3 micro-controllers (Arduino Due)
 
 It is not common to use a bootloader with the SAM3 mcu. The chip
 itself has a ROM that allows the flash to be programmed from 3.3V
@@ -165,8 +166,7 @@ bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
 bossac -U -p /dev/ttyACM0 -R
 ```
 
-SAM4 micro-controllers (Duet Wifi)
-====================================
+## SAM4 micro-controllers (Duet Wifi)
 
 It is not common to use a bootloader with the SAM4 mcu. The chip
 itself has a ROM that allows the flash to be programmed from 3.3V
@@ -185,8 +185,7 @@ To flash an application use something like:
 bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
 ```
 
-SAMD21 micro-controllers (Arduino Zero)
-=======================================
+## SAMD21 micro-controllers (Arduino Zero)
 
 The SAMD21 bootloader is flashed via the ARM Serial Wire Debug (SWD)
 interface. This is commonly done with a dedicated SWD hardware dongle.
@@ -224,8 +223,7 @@ flash command within the first few seconds of boot - something like:
 avrdude -c stk500v2 -p atmega2560 -P /dev/ttyACM0 -u -Uflash:w:out/klipper.elf.hex:i
 ```
 
-SAMD51 micro-controllers (Adafruit Metro-M4 and similar)
-========================================================
+## SAMD51 micro-controllers (Adafruit Metro-M4 and similar)
 
 Like the SAMD21, the SAMD51 bootloader is flashed via the ARM Serial
 Wire Debug (SWD) interface. To flash a bootloader with
@@ -253,8 +251,7 @@ like:
 bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
 ```
 
-STM32F103 micro-controllers (Blue Pill devices)
-===============================================
+## STM32F103 micro-controllers (Blue Pill devices)
 
 The STM32F103 devices have a ROM that can flash a bootloader or
 application via 3.3V serial. To access this ROM, one should connect
@@ -274,7 +271,7 @@ for details on enabling the full uart on the Raspberry Pi GPIO pins.
 After flashing, set both "boot 0" and "boot 1" back to low so that
 future resets boot from flash.
 
-## STM32F103 with stm32duino bootloader ##
+### STM32F103 with stm32duino bootloader
 
 The "stm32duino" project has a USB capable bootloader - see:
 [https://github.com/rogerclarkmelbourne/STM32duino-bootloader](https://github.com/rogerclarkmelbourne/STM32duino-bootloader)
@@ -299,7 +296,8 @@ bootloader is still active (the bootloader will flash a board led
 while it is running). Alternatively, set the "boot 0" pin to low and
 "boot 1" pin to high to stay in the bootloader after a reset.
 
-## STM32F103 with HID bootloader ##
+### STM32F103 with HID bootloader
+
 The [HID bootloader](https://github.com/Serasidis/STM32_HID_Bootloader) is a
 compact, driverless bootloader capable of flashing over USB. Also available
 is a [fork with builds specific to the SKR Mini E3 1.2](
@@ -387,8 +385,8 @@ not available, so it may be done by setting pin PA2 low if you flashed
 the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
 which you can use to pull PA2 low.
 
-STM32F4 micro-controllers (SKR Pro 1.1)
-===============================================
+## STM32F4 micro-controllers (SKR Pro 1.1)
+
 STM32F4 microcontrollers come equipped with a built-in system bootloader
 capable of flashing over USB (via DFU), 3.3v Serial, and various other
 methods (see STM Document AN2606 for more information).  Some
@@ -421,8 +419,7 @@ setting "boot 0" low, "boot 1" high and plugging in the device.  After
 programming is complete unplug the device and set "boot 1" back to low
 so the application will be loaded.
 
-LPC176x micro-controllers (Smoothieboards)
-==========================================
+## LPC176x micro-controllers (Smoothieboards)
 
 This document does not describe the method to flash a bootloader
 itself - see:
@@ -437,8 +434,7 @@ this bootloader is to copy the application file (eg,
 `out/klipper.bin`) to a file named `firmware.bin` on an SD card, and
 then to reboot the micro-controller with that SD card.
 
-Running OpenOCD on the Raspberry PI
-===================================
+## Running OpenOCD on the Raspberry PI
 
 OpenOCD is a software package that can perform low-level chip flashing
 and debugging. It can use the GPIO pins on a Raspberry Pi to
@@ -464,7 +460,7 @@ make
 make install
 ```
 
-## Configure OpenOCD
+### Configure OpenOCD
 
 Create an OpenOCD config file:
 
@@ -498,7 +494,7 @@ targets
 reset halt
 ```
 
-## Wire the Raspberry Pi to the target chip
+### Wire the Raspberry Pi to the target chip
 
 Poweroff both the the Raspberry Pi and the target chip before wiring!
 Verify the target chip uses 3.3V prior to connecting to a Raspberry
@@ -509,7 +505,7 @@ GPIO24, and GPIO18 respectively on the Raspberry Pi.
 
 Then power up the Raspberry Pi and provide power to the target chip.
 
-## Run OpenOCD
+### Run OpenOCD
 
 Run OpenOCD:
 
@@ -533,7 +529,7 @@ telnet 127.0.0.1 4444
 (One can exit telnet by pressing ctrl+] and then running the "quit"
 command.)
 
-## OpenOCD and gdb
+### OpenOCD and gdb
 
 It is possible to use OpenOCD with gdb to debug Klipper. The following
 commands assume one is running gdb on a desktop class machine.
