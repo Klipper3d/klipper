@@ -2,6 +2,16 @@
 import re
 import logging
 
+# This script translates some github specific markdown formatting to
+# improve rendering with mkdocs.  The goal is for pages to render
+# similarly on both github and the web site.  It has three main tasks:
+# 1. Convert links outside of the docs directory (any reference
+#    starting with "../") to an absolute link to the raw file on
+#    github.
+# 2. Convert a trailing backslash on a text line to a "<br>".
+# 3. Remove leading spaces from top-level lists so that those lists
+#    are rendered correctly.
+
 logger = logging.getLogger('mkdocs.mkdocs_hooks.transform')
 
 def transform(markdown: str, page, config, files):
