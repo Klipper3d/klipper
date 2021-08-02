@@ -1,7 +1,35 @@
-# This is the main configuration file for mkdocs
+# Main configuration file for mkdocs generation of klipper3d.org website
+
+# Site and directory configuration
+site_name: Klipper documentation
+repo_url: https://github.com/KevinOConnor/klipper
+repo_name: KevinOConnor/klipper
+edit_uri: blob/master/docs/
+use_directory_urls: False
 docs_dir: '../'
 site_dir: '../../site/'
-site_name: Klipper documentation
+
+# Markdown document translation settings
+markdown_extensions:
+  - toc:
+      permalink: True
+      toc_depth: 6
+  #- pymdownx.snippets
+  - attr_list
+  - mdx_partial_gfm
+  - mdx_truly_sane_lists
+  - mdx_breakless_lists
+plugins:
+  - search
+  - section-index
+  - mkdocs-simple-hooks:
+      hooks:
+        on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
+  - exclude:
+      glob:
+        - README.md
+
+# Website layout configuration (using mkdocs-material theme)
 theme:
   name: material
   palette:
@@ -19,8 +47,6 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
-    # primary: white
-    # accent: blue
   logo: img/klipper.svg
   favicon: img/favicon.ico
   icon:
@@ -36,36 +62,15 @@ theme:
       - search.share
 extra_css:
   - _klipper3d/css/extra.css
-use_directory_urls: False
-repo_url: https://github.com/KevinOConnor/klipper
-repo_name: KevinOConnor/klipper
-edit_uri: blob/master/docs/
-plugins:
-  - search
-  - section-index
-  - mkdocs-simple-hooks:
-      hooks:
-        on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
-  - exclude:
-      glob:
-        - README.md
-markdown_extensions:
-  - toc:
-      permalink: True
-      toc_depth: 6
-  #- pymdownx.snippets
-  - attr_list
-  - mdx_partial_gfm
-  - mdx_truly_sane_lists
-  - mdx_breakless_lists
 
+# Site usage statistics
 extra:
-  analytics:
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
+  analytics:
     provider: google
     property: UA-138371409-1
-  # version:
-  #   provider: mike
+
+# Navigation hierarchy (this should mimic the layout of Overview.md)
 nav:
   - Overview:
     - Overview.md
