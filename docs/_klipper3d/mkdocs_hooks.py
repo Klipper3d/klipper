@@ -28,7 +28,7 @@ def transform(markdown: str, page, config, files):
             line_out = re.sub("\\\s*$", "<br>", line_out)
             # check that lists at level 0 are not indented
             # (no space before *|-|1.)
-            if len(line_out) == 0:
+            if re.match(r"^[^-*0-9 ]", line_out):
                 in_list = False
             elif re.match(r"^(\*|-|\d+\.) ", line_out):
                 in_list = True
