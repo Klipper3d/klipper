@@ -74,9 +74,15 @@ git clone https://github.com/matthewlloyd/klipper.git
 Then follow the instructions in `config/printer-prusa-mini-plus-2020.cfg`,
 some of which are repeated here.
 
-To use this config, the firmware should be compiled for the STM32F407. When
-running "make menuconfig", enable "extra low-level configuration setup",
-select the "128KiB + 512 byte offset" bootloader, and USB communication.
+To use this config, the firmware should be compiled for the STM32F407. Run
+"make menuconfig" and set the following parameters:
+
+- check `Enable extra low-level configuration options`
+- set `Microcontroller Architecture` to `STMicroelectronics STM32`
+- set `Bootloader offset` to `128KiB + 512 byte offset`
+- set `Clock Reference` to `12 MHz crystal`
+- set `Communication interface` to `USB (on PA11/PA12)`
+
 Connect the printer to your Raspberry Pi using the printer's micro-USB port.
 If you prefer to remove Prusa's stock bootloader entirely, select the
 "No bootloader" option.
