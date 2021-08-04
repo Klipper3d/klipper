@@ -89,6 +89,8 @@ class GCodeDispatch:
         self.ready_gcode_handlers = {}
         self.mux_commands = {}
         self.gcode_help = {}
+        self.start_object_regex = re.compile("; printing object (.*)")
+        self.end_object_regex = re.compile("; stop printing object.*")
         # Register commands needed before config file is loaded
         handlers = ['M110', 'M112', 'M115',
                     'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -160,6 +162,15 @@ class GCodeDispatch:
         for line in commands:
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
+            comatch = self.start_object_regex.match(line)
+            if comatch:
+                name = comatch.group(1).replace(" ", "_")
+                line = "SET_CURRENT_OBJECT NAME=" + name
+                origline = line
+            comatch = self.end_object_regex.match(line)
+            if comatch:
+                line = "SET_CURRENT_OBJECT NAME=__NONE__"
+                origline = line
             cpos = line.find(';')
             if cpos >= 0:
                 line = line[:cpos]
