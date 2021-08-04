@@ -233,9 +233,9 @@ class DeltaCalibrate:
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
         kin = toolhead.get_kinematics()
-        for s in kin.get_steppers():
-            s.set_tag_position(s.get_commanded_position())
-        kin_pos = kin.calc_tag_position()
+        kin_spos = {s.get_name(): s.get_commanded_position()
+                    for s in kin.get_steppers()}
+        kin_pos = kin.calc_position(kin_spos)
         # Convert location to a stable position
         delta_params = kin.get_calibration()
         stable_pos = tuple(delta_params.calc_stable_position(kin_pos))

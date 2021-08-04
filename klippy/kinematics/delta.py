@@ -25,15 +25,11 @@ class DeltaKinematics:
         self.rails = [rail_a, rail_b, rail_c]
         config.get_printer().register_event_handler("stepper_enable:motor_off",
                                                     self._motor_off)
-        # Setup stepper max halt velocity
+        # Setup max velocity
         self.max_velocity, self.max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', self.max_velocity,
             above=0., maxval=self.max_velocity)
-        max_halt_velocity = toolhead.get_max_axis_halt() * SLOW_RATIO
-        max_halt_accel = self.max_accel * SLOW_RATIO
-        for rail in self.rails:
-            rail.set_max_jerk(max_halt_velocity, max_halt_accel)
         # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
         print_radius = config.getfloat('print_radius', radius, above=0.)
@@ -96,8 +92,8 @@ class DeltaKinematics:
     def _actuator_to_cartesian(self, spos):
         sphere_coords = [(t[0], t[1], sp) for t, sp in zip(self.towers, spos)]
         return mathutil.trilateration(sphere_coords, self.arm2)
-    def calc_tag_position(self):
-        spos = [rail.get_tag_position() for rail in self.rails]
+    def calc_position(self, stepper_positions):
+        spos = [stepper_positions[rail.get_name()] for rail in self.rails]
         return self._actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:

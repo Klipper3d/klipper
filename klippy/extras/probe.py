@@ -27,6 +27,7 @@ class PrinterProbe:
         self.multi_probe_pending = False
         self.last_state = False
         self.last_z_result = 0.
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -70,6 +71,9 @@ class PrinterProbe:
                                     desc=self.cmd_PROBE_CALIBRATE_help)
         self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
                                     desc=self.cmd_PROBE_ACCURACY_help)
+        self.gcode.register_command('Z_OFFSET_APPLY_PROBE',
+                                    self.cmd_Z_OFFSET_APPLY_PROBE,
+                                    desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
     def _handle_homing_move_begin(self, hmove):
         if self.mcu_probe in hmove.get_mcu_endstops():
             self.mcu_probe.probe_prepare(hmove)
@@ -262,6 +266,20 @@ class PrinterProbe:
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
+    def cmd_Z_OFFSET_APPLY_PROBE(self,gcmd):
+        offset = self.gcode_move.get_status()['homing_origin'].z
+        configfile = self.printer.lookup_object('configfile')
+        if offset == 0:
+            self.gcode.respond_info("Nothing to do: Z Offset is 0")
+        else:
+            new_calibrate = self.z_offset - offset
+            self.gcode.respond_info(
+                "%s: z_offset: %.3f\n"
+                "The SAVE_CONFIG command will update the printer config file\n"
+                "with the above and restart the printer."
+                % (self.name, new_calibrate))
+            configfile.set(self.name, 'z_offset', "%.3f" % (new_calibrate,))
+    cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
 
 # Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
@@ -280,8 +298,9 @@ class ProbeEndstopWrapper:
         pin = config.get('pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         mcu = pin_params['chip']
-        mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        self.printer.register_event_handler('klippy:mcu_identify',
+                                            self._handle_mcu_identify)
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -291,7 +310,7 @@ class ProbeEndstopWrapper:
         self.query_endstop = self.mcu_endstop.query_endstop
         # multi probes state
         self.multi = 'OFF'
-    def _build_config(self):
+    def _handle_mcu_identify(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
             if stepper.is_active_axis('z'):

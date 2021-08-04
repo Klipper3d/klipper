@@ -1,10 +1,35 @@
+# Configuration changes
+
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.
 
 All dates in this document are approximate.
 
-# Changes
+## Changes
+
+20210720: A controller_fan section now monitors all stepper motors by
+default (not just the kinematic stepper motors).  If the previous
+behavior is desired, see the `stepper` config option in the
+[config reference](Config_Reference.md#controller_fan).
+
+20210703: A `samd_sercom` config section must now specify the sercom
+bus it is configuring via the `sercom` option.
+
+20210612: The `pid_integral_max` config option in heater and
+temperature_fan sections is deprecated.  The option will be removed in
+the near future.
+
+20210503: The gcode_macro `default_parameter_<name>` config option is
+deprecated.  Use the `params` pseudo-variable to access macro
+parameters.  Other methods for accessing macro parameters will be
+removed in the near future.  See the
+[Command Templates document](Command_Templates.md#macro-parameters)
+for examples.
+
+20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
+velocity, acceleration, and square_corner_velocity larger than the
+specified values in the config file.
 
 20210325: Support for the `pin_map` config option is deprecated. Use
 the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
@@ -13,8 +38,8 @@ config option will be removed in the near future.
 
 20210313: Klipper's support for micro-controllers that communicate
 with CAN bus has changed. If using CAN bus then all micro-controllers
-must be reflashed and the [Klipper configuration must be
-updated](CANBUS.md).
+must be reflashed and the
+[Klipper configuration must be updated](CANBUS.md).
 
 20210310: The TMC2660 default for driver_SFILT has been changed from 1
 to 0.

@@ -36,7 +36,7 @@ class ForceMove:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
-        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc('x'), ffi_lib.free)
         # Register commands
@@ -49,14 +49,13 @@ class ForceMove:
             gcode.register_command('SET_KINEMATIC_POSITION',
                                    self.cmd_SET_KINEMATIC_POSITION,
                                    desc=self.cmd_SET_KINEMATIC_POSITION_help)
-    def register_stepper(self, stepper):
-        name = stepper.get_name()
-        self.steppers[name] = stepper
+    def register_stepper(self, config, mcu_stepper):
+        self.steppers[mcu_stepper.get_name()] = mcu_stepper
     def lookup_stepper(self, name):
         if name not in self.steppers:
             raise self.printer.config_error("Unknown stepper %s" % (name,))
         return self.steppers[name]
-    def force_enable(self, stepper):
+    def _force_enable(self, stepper):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         stepper_enable = self.printer.lookup_object('stepper_enable')
@@ -66,7 +65,7 @@ class ForceMove:
             enable.motor_enable(print_time)
             toolhead.dwell(STALL_TIME)
         return was_enable
-    def restore_enable(self, stepper, was_enable):
+    def _restore_enable(self, stepper, was_enable):
         if not was_enable:
             toolhead = self.printer.lookup_object('toolhead')
             toolhead.dwell(STALL_TIME)
@@ -87,7 +86,7 @@ class ForceMove:
                           0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
         print_time = print_time + accel_t + cruise_t + accel_t
         stepper.generate_steps(print_time)
-        self.trapq_free_moves(self.trapq, print_time + 99999.9)
+        self.trapq_finalize_moves(self.trapq, print_time + 99999.9)
         stepper.set_trapq(prev_trapq)
         stepper.set_stepper_kinematics(prev_sk)
         toolhead.note_kinematic_activity(print_time)
@@ -101,7 +100,7 @@ class ForceMove:
     def cmd_STEPPER_BUZZ(self, gcmd):
         stepper = self._lookup_stepper(gcmd)
         logging.info("Stepper buzz %s", stepper.get_name())
-        was_enable = self.force_enable(stepper)
+        was_enable = self._force_enable(stepper)
         toolhead = self.printer.lookup_object('toolhead')
         dist, speed = BUZZ_DISTANCE, BUZZ_VELOCITY
         if stepper.units_in_radians():
@@ -111,7 +110,7 @@ class ForceMove:
             toolhead.dwell(.050)
             self.manual_move(stepper, -dist, speed)
             toolhead.dwell(.450)
-        self.restore_enable(stepper, was_enable)
+        self._restore_enable(stepper, was_enable)
     cmd_FORCE_MOVE_help = "Manually move a stepper; invalidates kinematics"
     def cmd_FORCE_MOVE(self, gcmd):
         stepper = self._lookup_stepper(gcmd)
@@ -120,7 +119,7 @@ class ForceMove:
         accel = gcmd.get_float('ACCEL', 0., minval=0.)
         logging.info("FORCE_MOVE %s distance=%.3f velocity=%.3f accel=%.3f",
                      stepper.get_name(), distance, speed, accel)
-        self.force_enable(stepper)
+        self._force_enable(stepper)
         self.manual_move(stepper, distance, speed, accel)
     cmd_SET_KINEMATIC_POSITION_help = "Force a low-level kinematic position"
     def cmd_SET_KINEMATIC_POSITION(self, gcmd):

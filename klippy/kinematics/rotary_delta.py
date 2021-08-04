@@ -23,13 +23,10 @@ class RotaryDeltaKinematics:
         self.rails = [rail_a, rail_b, rail_c]
         config.get_printer().register_event_handler("stepper_enable:motor_off",
                                                     self._motor_off)
-        # Setup stepper max halt velocity
+        # Read config
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
                                               above=0., maxval=max_velocity)
-        for rail in self.rails:
-            rail.set_max_jerk(9999999.9, 9999999.9)
-        # Read config
         shoulder_radius = config.getfloat('shoulder_radius', above=0.)
         shoulder_height = config.getfloat('shoulder_height', above=0.)
         a_upper_arm = stepper_configs[0].getfloat('upper_arm_length', above=0.)
@@ -82,8 +79,8 @@ class RotaryDeltaKinematics:
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
-    def calc_tag_position(self):
-        spos = [rail.get_tag_position() for rail in self.rails]
+    def calc_position(self, stepper_positions):
+        spos = [stepper_positions[rail.get_name()] for rail in self.rails]
         return self.calibration.actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:

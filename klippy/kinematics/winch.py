@@ -22,11 +22,6 @@ class WinchKinematics:
             s.setup_itersolve('winch_stepper_alloc', *a)
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        # Setup stepper max halt velocity
-        max_velocity, max_accel = toolhead.get_max_velocity()
-        max_halt_velocity = toolhead.get_max_axis_halt()
-        for s in self.steppers:
-            s.set_max_jerk(max_halt_velocity, max_accel)
         # Setup boundary checks
         acoords = list(zip(*self.anchors))
         self.axes_min = toolhead.Coord(*[min(a) for a in acoords], e=0.)
@@ -34,10 +29,10 @@ class WinchKinematics:
         self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return list(self.steppers)
-    def calc_tag_position(self):
+    def calc_position(self, stepper_positions):
         # Use only first three steppers to calculate cartesian position
-        spos = [s.get_tag_position() for s in self.steppers[:3]]
-        return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in spos])
+        pos = [stepper_positions[rail.get_name()] for rail in self.steppers[:3]]
+        return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in pos])
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)

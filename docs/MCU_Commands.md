@@ -1,3 +1,5 @@
+# MCU commands
+
 This document provides information on the low-level micro-controller
 commands that are sent from the Klipper "host" software and processed
 by the Klipper micro-controller software. This document is not an
@@ -18,8 +20,7 @@ document) take a string value which is automatically converted to an
 integer value for the micro-controller. This is common with parameters
 named "pin" (or that have a suffix of "_pin").
 
-Startup Commands
-================
+## Startup Commands
 
 It may be necessary to take certain one-time actions to configure the
 micro-controller and its peripherals. This section lists common
@@ -45,8 +46,7 @@ Common startup commands:
   and 255 indicating a full on state. This command may be useful for
   enabling CPU and nozzle cooling fans.
 
-Low-level micro-controller configuration
-========================================
+## Low-level micro-controller configuration
 
 Most commands in the micro-controller require an initial setup before
 they can be successfully invoked. This section provides an overview of
@@ -102,8 +102,7 @@ it if not. Configuration involves the following phases:
   micro-controller has not been configured in the state desired by the
   host.
 
-Common micro-controller objects
--------------------------------
+### Common micro-controller objects
 
 This section lists some commonly used config commands.
 
@@ -138,17 +137,12 @@ This section lists some commonly used config commands.
   sampled at regular interval using the query_analog_in command (see
   below).
 
-* `config_stepper oid=%c step_pin=%c dir_pin=%c min_stop_interval=%u
-  invert_step=%c` : This command creates an internal stepper
-  object. The 'step_pin' and 'dir_pin' parameters specify the step and
-  direction pins respectively; this command will configure them in
-  digital output mode. The 'invert_step' parameter specifies whether a
-  step occurs on a rising edge (invert_step=0) or falling edge
-  (invert_step=1). The 'min_stop_interval' implements a safety
-  feature - it is checked when the micro-controller finishes all moves
-  for a stepper - if it is non-zero it specifies the minimum number of
-  clock ticks since the last step. It is used as a check on the
-  maximum stepper velocity that a stepper may have before stopping.
+* `config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c` : This
+  command creates an internal stepper object. The 'step_pin' and
+  'dir_pin' parameters specify the step and direction pins
+  respectively; this command will configure them in digital output
+  mode. The 'invert_step' parameter specifies whether a step occurs on
+  a rising edge (invert_step=0) or falling edge (invert_step=1).
 
 * `config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
   command creates an internal "endstop" object. It is used to specify
@@ -176,8 +170,7 @@ This section lists some commonly used config commands.
   without a CS pin definition. It is useful for SPI devices that do
   not have a chip select line.
 
-Common commands
-===============
+## Common commands
 
 This section lists some commonly used run-time commands. It is likely
 only of interest to developers looking to gain insight into Klipper.
@@ -223,8 +216,7 @@ only of interest to developers looking to gain insight into Klipper.
   the drift between host and micro-controller clocks. It enables the
   host to accurately estimate the micro-controller clock.
 
-Stepper commands
-----------------
+### Stepper commands
 
 * `queue_step oid=%c interval=%u count=%hu add=%hi` : This command
   schedules 'count' number of steps for the given stepper, with
@@ -284,8 +276,7 @@ space in the queue before sending a queue_step command. The host does
 this by calculating when each queue_step command completes and
 scheduling new queue_step commands accordingly.
 
-SPI Commands
-------------
+### SPI Commands
 
 * `spi_transfer oid=%c data=%*s` : This command causes the
   micro-controller to send 'data' to the spi device specified by 'oid'

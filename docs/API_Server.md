@@ -1,9 +1,10 @@
+# API server
+
 This document describes Klipper's Application Programmer Interface
 (API). This interface enables external applications to query and
 control the Klipper host software.
 
-Enabling the API socket
-=======================
+## Enabling the API socket
 
 In order to use the API server, the klippy.py host software must be
 started with the `-a` parameter. For example:
@@ -15,8 +16,7 @@ This causes the host software to create a Unix Domain Socket. A client
 can then open a connection on that socket and send commands to
 Klipper.
 
-Request format
-==============
+## Request format
 
 Messages sent and received on the socket are JSON encoded strings
 terminated by an ASCII 0x03 character:
@@ -36,8 +36,7 @@ be on a single line, and it will automatically append the 0x03
 terminator when transmitting a request. (The Klipper API server does
 not have a newline requirement.)
 
-API Protocol
-============
+## API Protocol
 
 The command protocol used on the communication socket is inspired by
 [json-rpc](https://www.jsonrpc.org/).
@@ -90,8 +89,7 @@ which could cause the associated response to be sent out of order with
 respect to responses from other requests. A JSON request will never
 pause the processing of future JSON requests.
 
-Subscriptions
-=============
+## Subscriptions
 
 Some Klipper "endpoint" requests allow one to "subscribe" to future
 asynchronous update messages.
@@ -118,8 +116,7 @@ with "endpoint" specific contents to the response template and then
 send that template. If a "response_template" field is not provided
 then it defaults to an empty dictionary (`{}`).
 
-Available "endpoints"
-=====================
+## Available "endpoints"
 
 By convention, Klipper "endpoints" are of the form
 `<module_name>/<some_name>`. When making a request to an "endpoint",
@@ -170,7 +167,7 @@ gcode:
 When the PANELDUE_BEEP gcode macro is executed, Klipper would send something
 like the following over the socket:
 `{"action": "run_paneldue_beep",
-"params": {"frequency": 300, "duration": 1.0}}
+"params": {"frequency": 300, "duration": 1.0}}`
 
 ### objects/list
 
@@ -204,8 +201,8 @@ object name and the value is a dictionary containing its fields. The
 response message will also contain an "eventtime" field containing the
 timestamp from when the query was taken.
 
-Available fields are documented in the [Status
-Reference](Status_Reference.md) document.
+Available fields are documented in the
+[Status Reference](Status_Reference.md) document.
 
 ### objects/subscribe
 

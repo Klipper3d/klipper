@@ -1,3 +1,5 @@
+# Bed Mesh
+
 The Bed Mesh module may be used to compensate for bed surface irregularties to
 achieve a better first layer across the entire bed.  It should be noted that
 software based correction will not achieve perfect results, it can only
@@ -430,3 +432,14 @@ probing the "Probe" points will refer to both the tool and nozzle locations.
 `BED_MESH_CLEAR`
 
 This gcode may be used to clear the internal mesh state.
+
+### Apply X/Y offsets
+
+`BED_MESH_OFFSET [X=<value>] [Y=<value>]`
+
+This is useful for printers with multiple independent extruders, as an offset
+is necessary to produce correct Z adjustment after a tool change.  Offsets
+should be specified relative to the primary extruder.  That is, a positive
+X offset should be specified if the secondary extruder is mounted to the
+right of the primary extruder, and a positive Y offset should be specified
+if the secondary extruder is mounted "behind" the primary extruder.

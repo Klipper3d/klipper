@@ -1,6 +1,6 @@
 // Handling of stepper drivers.
 //
-// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -11,7 +11,8 @@
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
-#include "stepper.h" // command_config_stepper
+#include "stepper.h" // stepper_event
+#include "trsync.h" // trsync_add_signal
 
 DECL_CONSTANT("STEP_DELAY", CONFIG_STEP_DELAY);
 
@@ -44,7 +45,7 @@ struct stepper {
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
     struct move_queue_head mq;
-    uint32_t min_stop_interval;
+    struct trsync_signal stop_signal;
     // gcc (pre v6) does better optimization when uint8_t are bitfields
     uint8_t flags : 8;
 };
@@ -53,7 +54,7 @@ enum { POSITION_BIAS=0x40000000 };
 
 enum {
     SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
-    SF_LAST_RESET=1<<4, SF_NO_NEXT_CHECK=1<<5, SF_NEED_RESET=1<<6
+    SF_LAST_RESET=1<<4, SF_NEED_RESET=1<<5
 };
 
 // Setup a stepper for the next move in its queue
@@ -62,9 +63,6 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
 {
     if (move_queue_empty(&s->mq)) {
         // There is no next move - the queue is empty
-        if (s->interval - s->add < s->min_stop_interval
-            && !(s->flags & SF_NO_NEXT_CHECK))
-            shutdown("No next step");
         s->count = 0;
         return SF_DONE;
     }
@@ -186,19 +184,17 @@ command_config_stepper(uint32_t *args)
     struct stepper *s = oid_alloc(args[0], command_config_stepper, sizeof(*s));
     if (!CONFIG_INLINE_STEPPER_HACK)
         s->time.func = stepper_event;
-    s->flags = args[4] ? SF_INVERT_STEP : 0;
+    s->flags = args[3] ? SF_INVERT_STEP : 0;
     s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP);
     s->dir_pin = gpio_out_setup(args[2], 0);
-    s->min_stop_interval = args[3];
     s->position = -POSITION_BIAS;
     move_queue_setup(&s->mq, sizeof(struct stepper_move));
 }
 DECL_COMMAND(command_config_stepper,
-             "config_stepper oid=%c step_pin=%c dir_pin=%c"
-             " min_stop_interval=%u invert_step=%c");
+             "config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c");
 
 // Return the 'struct stepper' for a given stepper oid
-struct stepper *
+static struct stepper *
 stepper_oid_lookup(uint8_t oid)
 {
     return oid_lookup(oid, command_config_stepper);
@@ -223,10 +219,6 @@ command_queue_step(uint32_t *args)
         flags ^= SF_LAST_DIR;
         m->flags |= MF_DIR;
     }
-    flags &= ~SF_NO_NEXT_CHECK;
-    if (m->count == 1 && (m->flags || flags & SF_LAST_RESET))
-        // count=1 moves after a reset or dir change can have small intervals
-        flags |= SF_NO_NEXT_CHECK;
     flags &= ~SF_LAST_RESET;
     if (s->count) {
         s->flags = flags;
@@ -300,11 +292,11 @@ command_stepper_get_position(uint32_t *args)
 }
 DECL_COMMAND(command_stepper_get_position, "stepper_get_position oid=%c");
 
-// Stop all moves for a given stepper (used in end stop homing).  IRQs
-// must be off.
-void
-stepper_stop(struct stepper *s)
+// Stop all moves for a given stepper (caller must disable IRQs)
+static void
+stepper_stop(struct trsync_signal *tss, uint8_t reason)
 {
+    struct stepper *s = container_of(tss, struct stepper, stop_signal);
     sched_del_timer(&s->time);
     s->next_step_time = 0;
     s->position = -stepper_get_position(s);
@@ -319,6 +311,17 @@ stepper_stop(struct stepper *s)
     }
 }
 
+// Set the stepper to stop on a "trigger event" (used in homing)
+void
+command_stepper_stop_on_trigger(uint32_t *args)
+{
+    struct stepper *s = stepper_oid_lookup(args[0]);
+    struct trsync *ts = trsync_oid_lookup(args[1]);
+    trsync_add_signal(ts, &s->stop_signal, stepper_stop);
+}
+DECL_COMMAND(command_stepper_stop_on_trigger,
+             "stepper_stop_on_trigger oid=%c trsync_oid=%c");
+
 void
 stepper_shutdown(void)
 {
@@ -326,7 +329,7 @@ stepper_shutdown(void)
     struct stepper *s;
     foreach_oid(i, s, command_config_stepper) {
         move_queue_clear(&s->mq);
-        stepper_stop(s);
+        stepper_stop(&s->stop_signal, 0);
     }
 }
 DECL_SHUTDOWN(stepper_shutdown);

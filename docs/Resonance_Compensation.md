@@ -1,5 +1,4 @@
-Resonance Compensation
-====================
+# Resonance Compensation
 
 Klipper supports Input Shaping - a technique that can be used to reduce ringing
 (also known as echoing, ghosting or rippling) in prints. Ringing is a surface
@@ -22,9 +21,7 @@ can be enabled. Besides ringing, Input Shaping typically reduces the vibrations
 and shaking of the printer in general, and may also improve the reliability
 of the stealthChop mode of Trinamic stepper drivers.
 
-
-Tuning
-===========================
+## Tuning
 
 Basic tuning requires measuring the ringing frequencies of the printer and
 adding a few parameters to `printer.cfg` file.
@@ -44,7 +41,7 @@ Slice the ringing test model, which can be found in
    not a mistake. The marks can be used later in the tuning process as a
    reference, because they show which axis the measurements correspond to.
 
-## Ringing frequency
+### Ringing frequency
 
 First, measure the **ringing frequency**.
 
@@ -129,7 +126,7 @@ for example:
 If such changes are made, it is a good idea to at least measure the ringing
 frequencies to see if they have changed.
 
-## Input shaper configuration
+### Input shaper configuration
 
 After the ringing frequencies for X and Y axes are measured, you can add the
 following section to your `printer.cfg`:
@@ -141,7 +138,7 @@ shaper_freq_y: ...  # frequency for the Y mark of the test model
 
 For the example above, we get shaper_freq_x/y = 49.4.
 
-## Choosing input shaper
+### Choosing input shaper
 
 Klipper supports several input shapers. They differ in their sensitivity to
 errors determining the resonance frequency and how much smoothing they cause
@@ -204,7 +201,7 @@ A few notes on shaper selection:
     `SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI`), but check the considerations in
     the [section below](#selecting-max_accel) before enabling it.
 
-## Selecting max_accel
+### Selecting max_accel
 
 You should have a printed test for the shaper you chose from the previous step
 (if you don't, print the test model sliced with the
@@ -266,7 +263,7 @@ moving mass. Otherwise, acceleration and printing speed may be limited due too
 much smoothing now instead of ringing.
 
 
-## Fine-tuning resonance frequencies
+### Fine-tuning resonance frequencies
 
 Note that the precision of the resonance frequencies measurements using the
 ringing test model is sufficient for most purposes, so further tuning is not
@@ -318,7 +315,7 @@ new `shaper_freq_x` and `shaper_freq_y` values.
 Do not forget to revert the changes to `max_accel` and `max_accel_to_decel`
 parameters in the `printer.cfg` after finishing this section.
 
-## Pressure Advance
+### Pressure Advance
 
 If you use Pressure Advance, it may need to be re-tuned. Follow the
 [instructions](Pressure_Advance.md#tuning-pressure-advance) to find the
@@ -326,7 +323,7 @@ new value, if it differs from the previous one. Make sure to restore the
 original values of `max_accel` and `max_accel_to_decel` parameters in the
 `printer.cfg` and restart Klipper before tuning Pressure Advance.
 
-## Unreliable measurements of ringing frequencies
+### Unreliable measurements of ringing frequencies
 
 If you are unable to measure the ringing frequencies, e.g. if the distance
 between the oscillations is not stable, you may still be able to take advantage
@@ -398,8 +395,7 @@ shaper_type: 2hump_ei
 Continue the tuning with [Selecting max_accel](#selecting-max_accel) section.
 
 
-Troubleshooting and FAQ
-=======================
+## Troubleshooting and FAQ
 
 ### I cannot get reliable measurements of resonance frequencies
 
@@ -452,10 +448,9 @@ itself. However, the value of `max_accel` certainly does (tuning of this
 parameter described in [this section](#selecting-max_accel)).
 
 
-Technical details
-=================
+## Technical details
 
-## Input shapers
+### Input shapers
 
 Input shapers used in Klipper are rather standard, and one can find more
 in-depth overview in the articles describing the corresponding shapers.
