@@ -114,29 +114,55 @@ LogHandlers["trapq"] = HandleTrapQ
 # Extract positions from queue_step log
 class HandleStepQ:
     ParametersSubscriptionId = 2
-    ParametersMin = ParametersMax = 2
+    ParametersMin = 2
+    ParametersMax = 3
     DataSets = [
         ('stepq:<stepper>', 'Commanded position of the given stepper'),
+        ('stepq:<stepper>:raw', 'Commanded position without smoothing'),
     ]
     def __init__(self, lmanager, name):
         self.name = name
         self.jdispatch = lmanager.get_jdispatch()
-        self.step_data = [(0., 0.), (0., 0.)] # [(time, pos), ...]
+        self.step_data = [(0., 0., 0.), (0., 0., 0.)] # [(time, half_pos, pos)]
         self.data_pos = 0
+        self.smooth_time = 0.010
+        name_parts = name.split(':')
+        if len(name_parts) == 3:
+            if name_parts[2] != 'raw':
+                raise error("Unknown stepq data selection '%s'" % (name,))
+            self.smooth_time = 0.
     def get_label(self):
         label = '%s position' % (self.name.split(':')[1],)
         return {'label': label, 'units': 'Position\n(mm)'}
     def pull_data(self, req_time):
+        smooth_time = self.smooth_time
         while 1:
             data_pos = self.data_pos
             step_data = self.step_data
-            next_time, next_pos = step_data[data_pos + 1]
-            if req_time < next_time:
-                return step_data[data_pos][1]
-            if data_pos + 2 < len(step_data):
-                self.data_pos = data_pos + 1
+            # Find steps before and after req_time
+            next_time, next_halfpos, next_pos = step_data[data_pos + 1]
+            if req_time >= next_time:
+                if data_pos + 2 < len(step_data):
+                    self.data_pos = data_pos + 1
+                    continue
+                self._pull_block(req_time)
                 continue
-            self._pull_block(req_time)
+            last_time, last_halfpos, last_pos = step_data[data_pos]
+            # Perform step smoothing
+            rtdiff = req_time - last_time
+            stime = next_time - last_time
+            if stime <= smooth_time:
+                pdiff = next_halfpos - last_halfpos
+                return last_halfpos + rtdiff * pdiff / stime
+            stime = .5 * smooth_time
+            if rtdiff < stime:
+                pdiff = last_pos - last_halfpos
+                return last_halfpos + rtdiff * pdiff / stime
+            rtdiff = next_time - req_time
+            if rtdiff < stime:
+                pdiff = last_pos - next_halfpos
+                return next_halfpos + rtdiff * pdiff / stime
+            return last_pos
     def _pull_block(self, req_time):
         step_data = self.step_data
         del step_data[:-1]
@@ -145,12 +171,13 @@ class HandleStepQ:
         while 1:
             jmsg = self.jdispatch.pull_msg(req_time, self.name)
             if jmsg is None:
-                self.step_data.append((req_time + .1, step_data[0][1]))
+                last_time, last_halfpos, last_pos = step_data[0]
+                self.step_data.append((req_time + .1, last_pos, last_pos))
                 return
             last_time = jmsg['last_step_time']
             if req_time <= last_time:
                 break
-        # Process block into (time, position) 2-tuples
+        # Process block into (time, half_position, position) 3-tuples
         first_time = step_time = jmsg['first_step_time']
         first_clock = jmsg['first_clock']
         step_clock = first_clock - jmsg['data'][0][0]
@@ -171,8 +198,9 @@ class HandleStepQ:
                 step_clock += interval
                 interval += add
                 step_time = first_time + (step_clock - first_clock) * inv_freq
+                step_halfpos = step_pos + .5 * qs_dist
                 step_pos += qs_dist
-                step_data.append((step_time, step_pos))
+                step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
 
