@@ -125,6 +125,19 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
 }
 
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+    irq_disable();
+    // System DFU Bootloader
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
+}
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif
@@ -137,7 +150,7 @@ clock_setup(void)
     // "The software has to program the supply configuration in PWR control
     // register 3" (pg. 259)
     // Only a single write is allowed (pg. 304)
-    PWR->CR3 = (PWR->CR3 | PWR_CR3_LDOEN) & ~(PWR_CR3_BYPASS | PWR_CR3_SCUEN);
+    PWR->CR3 = (PWR->CR3 | PWR_CR3_LDOEN ) & ~(PWR_CR3_BYPASS | PWR_CR3_SCUEN);
     while (!(PWR->CSR1 & PWR_CSR1_ACTVOSRDY))
         ;
     // (HSE 25mhz) /DIVM1(5) (pll_base 5Mhz) *DIVN1(192) (pll_freq 960Mhz)

@@ -37,6 +37,12 @@
   #define GPIO_Tx GPIO('D', 8)
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
+#elif CONFIG_STM32_SERIAL_UART4
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA0,PA1");
+  #define GPIO_Rx GPIO('A', 1)
+  #define GPIO_Tx GPIO('A', 0)
+  #define USARTx UART4
+  #define USARTx_IRQn UART4_IRQn
 #endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
