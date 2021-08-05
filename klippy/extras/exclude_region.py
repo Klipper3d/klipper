@@ -35,9 +35,6 @@ class ExcludeRegion:
             'CANCEL_OBJECT', self.cmd_CANCEL_OBJECT,
             desc=self.cmd_CANCEL_OBJECT_help)
         self.gcode.register_command(
-            'REMOVE_CANCELED_OBJECT', self.cmd_REMOVE_CANCELED_OBJECT,
-            desc=self.cmd_REMOVE_CANCELED_OBJECT_help)
-        self.gcode.register_command(
             'REMOVE_ALL_EXCLUDED', self.cmd_REMOVE_ALL_EXCLUDED,
             desc=self.cmd_REMOVE_ALL_EXCLUDED_help)
         # debugging
@@ -74,13 +71,13 @@ class ExcludeRegion:
         self.next_transform.move(newpos, speed)
         self.in_excluded_region = False
 
-    def _test_in_excluded_region():
+    def _test_in_excluded_region(self):
         # Inside cancelled object
         if self.current_object in self.objects:
             return True
 
     def move(self, newpos, speed):
-        move_in_excluded_region = _test_in_excluded_region()
+        move_in_excluded_region = self._test_in_excluded_region()
 
         if move_in_excluded_region:
             if self.in_excluded_region:
@@ -104,11 +101,6 @@ class ExcludeRegion:
         name = params.get_command_parameters()['NAME'].upper()
         if name not in self.objects:
             self.objects.append(name)
-    cmd_REMOVE_CANCELED_OBJECT_help = "Remove cancelled object"
-    def cmd_REMOVE_CANCELED_OBJECT(self, params):
-        name = self.gcode.get_str('NAME', params).upper()
-        if name in self.objects:
-            self.objects.remove(name)
     cmd_REMOVE_ALL_EXCLUDED_help = "Removes all excluded objects and regions"
     def cmd_REMOVE_ALL_EXCLUDED(self, params):
         self.objects = []

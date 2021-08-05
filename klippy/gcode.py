@@ -94,7 +94,6 @@ class GCodeDispatch:
         # Register commands needed before config file is loaded
         handlers = ['M110', 'M112', 'M115',
                     'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
-        self.has_excluded_region = self.printer.lookup_object('exclude_region', None) is not None
         for cmd in handlers:
             func = getattr(self, 'cmd_' + cmd)
             desc = getattr(self, 'cmd_' + cmd + '_help', None)
@@ -156,6 +155,7 @@ class GCodeDispatch:
     def _handle_ready(self):
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
+        self.has_excluded_region = self.printer.lookup_object('exclude_region', None) is not None
         self._respond_state("Ready")
 
     def _identify_object_markup(self, line_in):
