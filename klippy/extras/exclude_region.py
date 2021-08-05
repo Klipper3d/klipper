@@ -7,33 +7,6 @@
 import math
 import logging
 
-def parse_pair(pair):
-    pts = pair.strip().split(',', 1)
-    if len(pts) != 2:
-        raise Exception
-    return [float(p.strip()) for p in pts]
-
-class RectRegion:
-    def __init__(self, minpt, maxpt):
-        self.xmin = minpt[0]
-        self.ymin = minpt[1]
-        self.xmax = maxpt[0]
-        self.ymax = maxpt[1]
-    def check_within(self, pos):
-        return (self.xmin <= pos[0] <= self.xmax and
-                self.ymin <= pos[1] <= self.ymax)
-
-class CircRegion:
-    def __init__(self, center, radius):
-        self.x = center[0]
-        self.y = center[1]
-        self.radius = radius
-    def check_within(self, pos):
-        a = self.x - pos[0]
-        b = self.y - pos[1]
-        dist_from_pt = math.sqrt(a*a + b*b)
-        return dist_from_pt <= self.radius
-
 class ExcludeRegion:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -53,8 +26,11 @@ class ExcludeRegion:
         self.last_position = [0., 0., 0., 0.]
         self.last_delta = [0., 0., 0., 0.]
         self.gcode.register_command(
-            'SET_CURRENT_OBJECT', self.cmd_SET_CURRENT_OBJECT,
-            desc=self.cmd_SET_CURRENT_OBJECT_help)
+            'START_CURRENT_OBJECT', self.cmd_START_CURRENT_OBJECT,
+            desc=self.cmd_START_CURRENT_OBJECT_help)
+        self.gcode.register_command(
+            'END_CURRENT_OBJECT', self.cmd_END_CURRENT_OBJECT,
+            desc=self.cmd_END_CURRENT_OBJECT_help)
         self.gcode.register_command(
             'CANCEL_OBJECT', self.cmd_CANCEL_OBJECT,
             desc=self.cmd_CANCEL_OBJECT_help)
@@ -82,12 +58,12 @@ class ExcludeRegion:
     def _ignore_move(self, newpos, speed):
         return
 
-    def _move_to_excluded_region(self, newpos, speed):
+    def _move_into_excluded_region(self, newpos, speed):
         logging.info("Moving to excluded object: " + self.current_object)
         self.in_excluded_region = True
         self.last_extruder = newpos[3]
 
-    def _move_to_included_region(self, newpos, speed):
+    def _move_from_excluded_region(self, newpos, speed):
         logging.info("Moving to included object: " + self.current_object)
         logging.info("Filament position: " + str(self.last_extruder))
         logging.info("last_position: " + " ".join(str(x) for x in self.last_position))
@@ -98,26 +74,31 @@ class ExcludeRegion:
         self.next_transform.move(newpos, speed)
         self.in_excluded_region = False
 
-    def move(self, newpos, speed):
-        move_in_excluded_region = False
+    def _test_in_excluded_region():
+        # Inside cancelled object
         if self.current_object in self.objects:
-            # Inside cancelled object
-            move_in_excluded_region = True
+            return True
+
+    def move(self, newpos, speed):
+        move_in_excluded_region = _test_in_excluded_region()
 
         if move_in_excluded_region:
             if self.in_excluded_region:
                 self._ignore_move(newpos, speed)
             else:
-                self._move_to_excluded_region(newpos, speed)
+                self._move_into_excluded_region(newpos, speed)
         else:
             if self.in_excluded_region:
-                self._move_to_included_region(newpos, speed)
+                self._move_from_excluded_region(newpos, speed)
             else:
                 self._normal_move(newpos, speed)
 
-    cmd_SET_CURRENT_OBJECT_help = "Set the current object as labeled"
-    def cmd_SET_CURRENT_OBJECT(self, params):
+    cmd_START_CURRENT_OBJECT_help = "Marks the beginning the current object as labeled"
+    def cmd_START_CURRENT_OBJECT(self, params):
         self.current_object = params.get_command_parameters()['NAME'].upper()
+    cmd_END_CURRENT_OBJECT_help = "Markes the end the current object"
+    def cmd_END_CURRENT_OBJECT(self, params):
+        self.current_object = ""
     cmd_CANCEL_OBJECT_help = "Cancel moves inside a specified objects"
     def cmd_CANCEL_OBJECT(self, params):
         name = params.get_command_parameters()['NAME'].upper()

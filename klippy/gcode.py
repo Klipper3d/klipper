@@ -94,6 +94,7 @@ class GCodeDispatch:
         # Register commands needed before config file is loaded
         handlers = ['M110', 'M112', 'M115',
                     'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
+        self.has_excluded_region = self.printer.lookup_object('exclude_region', None) is not None
         for cmd in handlers:
             func = getattr(self, 'cmd_' + cmd)
             desc = getattr(self, 'cmd_' + cmd + '_help', None)
@@ -156,21 +157,31 @@ class GCodeDispatch:
         self.is_printer_ready = True
         self.gcode_handlers = self.ready_gcode_handlers
         self._respond_state("Ready")
+
+    def _identify_object_markup(self, line_in):
+        if not self.has_excluded_region:
+            return line_in, line_in
+
+        line = origline = line_in
+        # The original line needs to be modified, too, as the parser
+        # uses it in a later step.
+        comatch = self.start_object_regex.match(line_in)
+        if comatch:
+            name = comatch.group(1).replace(" ", "_")
+            line = "START_CURRENT_OBJECT NAME=" + name
+            origline = line + " " + line_in
+        comatch = self.end_object_regex.match(line_in)
+        if comatch:
+            line = "END_CURRENT_OBJECT NAME=__NONE__"
+            origline = line + " " + line_in
+        return line, origline
+
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*/])')
     def _process_commands(self, commands, need_ack=True):
         for line in commands:
             # Ignore comments and leading/trailing spaces
-            line = origline = line.strip()
-            comatch = self.start_object_regex.match(line)
-            if comatch:
-                name = comatch.group(1).replace(" ", "_")
-                line = "SET_CURRENT_OBJECT NAME=" + name
-                origline = line
-            comatch = self.end_object_regex.match(line)
-            if comatch:
-                line = "SET_CURRENT_OBJECT NAME=__NONE__"
-                origline = line
+            line, origline = self._identify_object_markup(line.strip())
             cpos = line.find(';')
             if cpos >= 0:
                 line = line[:cpos]
