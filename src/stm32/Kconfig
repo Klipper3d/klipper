@@ -255,14 +255,14 @@ choice
         bool "USB (on PA11/PA12)" if HAVE_STM32_USBFS || HAVE_STM32_USBOTG
         select USBSERIAL
     config STM32_USB_PA11_PA12_REMAP
-        bool "USB (on PA9/PA10)" if LOW_LEVEL_OPTIONS 
+        bool "USB (on PA9/PA10)" if LOW_LEVEL_OPTIONS
         depends on MACH_STM32F042 && !MACH_STM32H743
         select USBSERIAL
     config STM32_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"
         select SERIAL
     config STM32_SERIAL_USART1_ALT_PB7_PB6
-        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS 
+        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS
         depends on !MACH_STM32H7
         select SERIAL
     config STM32_SERIAL_USART2
@@ -274,7 +274,7 @@ choice
         depends on !MACH_STM32F0 && !MACH_STM32H743
         select SERIAL
     config STM32_SERIAL_USART2_ALT_PD6_PD5
-        bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS 
+        bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS
         depends on !MACH_STM32F0 && !MACH_STM32H743
         select SERIAL
     config STM32_SERIAL_USART3
