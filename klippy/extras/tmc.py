@@ -96,18 +96,18 @@ class TMCErrorCheck:
             self.gstat_reg_info = None
         self.clear_gstat = True
         # Setup for DRV_STATUS query
-        self.irun_field = "IRUN"
+        self.irun_field = "irun"
         reg_name = "DRV_STATUS"
         mask = err_mask = cs_actual_mask = 0
         if name_parts[0] == 'tmc2130':
             # TMC2130 driver quirks
             self.clear_gstat = False
-            cs_actual_mask = self.fields.all_fields[reg_name]["CS_ACTUAL"]
+            cs_actual_mask = self.fields.all_fields[reg_name]["cs_actual"]
         elif name_parts[0] == 'tmc2660':
             # TMC2660 driver quirks
-            self.irun_field = "CS"
+            self.irun_field = "cs"
             reg_name = "READRSP@RDSEL2"
-            cs_actual_mask = self.fields.all_fields[reg_name]["SE"]
+            cs_actual_mask = self.fields.all_fields[reg_name]["se"]
         err_fields = ["ot", "s2ga", "s2gb", "s2vsa", "s2vsb"]
         warn_fields = ["otpw", "t120", "t143", "t150", "t157"]
         for f in err_fields + warn_fields:
@@ -140,8 +140,8 @@ class TMCErrorCheck:
                 irun = self.fields.get_field(self.irun_field)
                 if self.check_timer is None or irun < 4:
                     break
-                if (self.irun_field == "IRUN"
-                    and not self.fields.get_field("IHOLD")):
+                if (self.irun_field == "irun"
+                    and not self.fields.get_field("ihold")):
                     break
                 # CS_ACTUAL field of zero - indicates a driver reset
             count += 1
@@ -215,7 +215,7 @@ class TMCCommandHelper:
         self._init_registers(print_time)
     cmd_SET_TMC_FIELD_help = "Set a register field of a TMC driver"
     def cmd_SET_TMC_FIELD(self, gcmd):
-        field_name = gcmd.get('FIELD')
+        field_name = gcmd.get('FIELD').lower()
         reg_name = self.fields.lookup_register(field_name, None)
         if reg_name is None:
             raise gcmd.error("Unknown field name '%s'" % (field_name,))
@@ -349,8 +349,8 @@ class TMCVirtualPinHelper:
         # Setup for sensorless homing
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
-            self.en_pwm = not self.fields.get_field("en_spreadCycle")
-            self.pwmthrs = self.fields.get_field("TPWMTHRS")
+            self.en_pwm = not self.fields.get_field("en_spreadcycle")
+            self.pwmthrs = self.fields.get_field("tpwmthrs")
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.pwmthrs = 0
@@ -366,29 +366,29 @@ class TMCVirtualPinHelper:
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
-            tp_val = self.fields.set_field("TPWMTHRS", 0)
+            tp_val = self.fields.set_field("tpwmthrs", 0)
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadCycle", 0)
+            val = self.fields.set_field("en_spreadcycle", 0)
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self.fields.set_field("en_pwm_mode", 0)
             val = self.fields.set_field(self.diag_pin_field, 1)
         self.mcu_tmc.set_register("GCONF", val)
-        tc_val = self.fields.set_field("TCOOLTHRS", 0xfffff)
+        tc_val = self.fields.set_field("tcoolthrs", 0xfffff)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
     def handle_homing_move_end(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
-            tp_val = self.fields.set_field("TPWMTHRS", self.pwmthrs)
+            tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadCycle", not self.en_pwm)
+            val = self.fields.set_field("en_spreadcycle", not self.en_pwm)
         else:
             self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
-        tc_val = self.fields.set_field("TCOOLTHRS", 0)
+        tc_val = self.fields.set_field("tcoolthrs", 0)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
 
 
@@ -410,15 +410,15 @@ class TMCMicrostepHelper:
         steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
                  '8': 5, '4': 6, '2': 7, '1': 8}
         mres = ms_config.getchoice('microsteps', steps)
-        self.fields.set_field("MRES", mres)
+        self.fields.set_field("mres", mres)
         self.fields.set_field("intpol", config.getboolean("interpolate", True))
     def get_microsteps(self):
-        return 256 >> self.fields.get_field("MRES")
+        return 256 >> self.fields.get_field("mres")
     def get_phase(self):
-        field_name = "MSCNT"
+        field_name = "mscnt"
         if self.fields.lookup_register(field_name, None) is None:
             # TMC2660 uses MSTEP
-            field_name = "MSTEP"
+            field_name = "mstep"
         reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
         mscnt = self.fields.get_field(field_name, reg)
         return 1023 - mscnt, 1024
@@ -432,13 +432,13 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
         stepper_name = " ".join(config.get_name().split()[1:])
         stepper_config = config.getsection(stepper_name)
         step_dist = stepper.parse_step_distance(stepper_config)
-        step_dist_256 = step_dist / (1 << fields.get_field("MRES"))
+        step_dist_256 = step_dist / (1 << fields.get_field("mres"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
-        fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
+        fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))
         en_pwm_mode = True
     reg = fields.lookup_register("en_pwm_mode", None)
     if reg is not None:
         fields.set_field("en_pwm_mode", en_pwm_mode)
     else:
         # TMC2208 uses en_spreadCycle
-        fields.set_field("en_spreadCycle", not en_pwm_mode)
+        fields.set_field("en_spreadcycle", not en_pwm_mode)
