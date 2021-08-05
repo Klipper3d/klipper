@@ -22,16 +22,22 @@ def parse_log(logname, opts):
         if not header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
             # Raw accelerometer data
             return np.loadtxt(logname, comments='#', delimiter=',')
-    # Power spectral density data or shaper calibration data
-    opts.error("File %s does not contain raw accelerometer data and therefore "
-               "is not supported by graph_accelerometer.py script. Please use "
-               "calibrate_shaper.py script to process it instead." % (logname,))
+    # Parse power spectral density data
+    data = np.loadtxt(logname, skiprows=1, comments='#', delimiter=',')
+    calibration_data = shaper_calibrate.CalibrationData(
+            freq_bins=data[:,0], psd_sum=data[:,4],
+            psd_x=data[:,1], psd_y=data[:,2], psd_z=data[:,3])
+    calibration_data.set_numpy(np)
+    return calibration_data
 
 ######################################################################
 # Raw accelerometer graphing
 ######################################################################
 
 def plot_accel(data, logname):
+    if isinstance(data, shaper_calibrate.CalibrationData):
+        raise error("Cannot plot raw accelerometer data using the processed"
+                    " resonances, raw_data input is required")
     first_time = data[0, 0]
     times = data[:,0] - first_time
     fig, axes = matplotlib.pyplot.subplots(nrows=3, sharex=True)
@@ -56,10 +62,15 @@ def plot_accel(data, logname):
 
 # Calculate estimated "power spectral density"
 def calc_freq_response(data, max_freq):
+    if isinstance(data, shaper_calibrate.CalibrationData):
+        return data
     helper = shaper_calibrate.ShaperCalibrate(printer=None)
     return helper.process_accelerometer_data(data)
 
 def calc_specgram(data, axis):
+    if isinstance(data, shaper_calibrate.CalibrationData):
+        raise error("Cannot calculate the spectrogram using the processed"
+                    " resonances, raw_data input is required")
     N = data.shape[0]
     Fs = N / (data[-1,0] - data[0,0])
     # Round up to a power of 2 for faster FFT
