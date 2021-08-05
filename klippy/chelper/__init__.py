@@ -30,6 +30,12 @@ OTHER_FILES = [
 ]
 
 defs_stepcompress = """
+    struct pull_history_steps {
+        uint64_t first_clock, last_clock;
+        int64_t start_position;
+        int step_count, interval, add;
+    };
+
     struct stepcompress *stepcompress_alloc(uint32_t oid);
     void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
         , uint32_t invert_sdir, int32_t queue_step_msgtag
@@ -42,6 +48,9 @@ defs_stepcompress = """
         , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
+    int stepcompress_extract_old(struct stepcompress *sc
+        , struct pull_history_steps *p, int max
+        , uint64_t start_clock, uint64_t end_clock);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
@@ -68,6 +77,13 @@ defs_itersolve = """
 """
 
 defs_trapq = """
+    struct pull_move {
+        double print_time, move_t;
+        double start_v, accel;
+        double start_x, start_y, start_z;
+        double x_r, y_r, z_r;
+    };
+
     void trapq_append(struct trapq *tq, double print_time
         , double accel_t, double cruise_t, double decel_t
         , double start_pos_x, double start_pos_y, double start_pos_z
@@ -75,7 +91,11 @@ defs_trapq = """
         , double start_v, double cruise_v, double accel);
     struct trapq *trapq_alloc(void);
     void trapq_free(struct trapq *tq);
-    void trapq_free_moves(struct trapq *tq, double print_time);
+    void trapq_finalize_moves(struct trapq *tq, double print_time);
+    void trapq_set_position(struct trapq *tq, double print_time
+        , double pos_x, double pos_y, double pos_z);
+    int trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
+        , double start_time, double end_time);
 """
 
 defs_kin_cartesian = """

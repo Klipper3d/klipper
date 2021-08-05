@@ -237,11 +237,8 @@ choice
     config STM32_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"
         select SERIAL
-    config STM32_SERIAL_USART1_ALT_PA15_PA14
-        bool "Serial (on USART1 PA15/PA14)" if LOW_LEVEL_OPTIONS && MACH_STM32F0
-        select SERIAL
     config STM32_SERIAL_USART1_ALT_PB7_PB6
-        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
+        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS
         select SERIAL
     config STM32_SERIAL_USART2
         bool "Serial (on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS

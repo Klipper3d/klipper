@@ -267,13 +267,12 @@ class PrinterProbe:
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
     def cmd_Z_OFFSET_APPLY_PROBE(self,gcmd):
-        z_offset = self.probe_calibrate_z
         offset = self.gcode_move.get_status()['homing_origin'].z
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
             self.gcode.respond_info("Nothing to do: Z Offset is 0")
         else:
-            new_calibrate = self.probe_calibrate_z - offset
+            new_calibrate = self.z_offset - offset
             self.gcode.respond_info(
                 "%s: z_offset: %.3f\n"
                 "The SAVE_CONFIG command will update the printer config file\n"
