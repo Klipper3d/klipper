@@ -43,7 +43,7 @@ usb_irq_enable(void)
 #define EPOUT(EP) ((USB_OTG_OUTEndpointTypeDef*)                        \
                    (USB2_OTG_FS + USB_OTG_OUT_ENDPOINT_BASE  \
                     + ((EP) << 5)))
-/*#else
+#else
 #define OTG ((USB_OTG_GlobalTypeDef*)USB_OTG_FS_PERIPH_BASE)
 #define OTGD ((USB_OTG_DeviceTypeDef*)                          \
               (USB_OTG_FS_PERIPH_BASE + USB_OTG_DEVICE_BASE))
@@ -54,7 +54,7 @@ usb_irq_enable(void)
                    + ((EP) << 5)))
 #define EPOUT(EP) ((USB_OTG_OUTEndpointTypeDef*)                        \
                    (USB_OTG_FS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
-                    + ((EP) << 5)))*/
+                    + ((EP) << 5)))
 #endif
 
 // Setup the USB fifos
