@@ -1,18 +1,12 @@
 # Main code build rules
 
-src-y += sched.c command.c basecmd.c
-src-$(CONFIG_HAVE_DEBUG) += debugcmds.c
-src-$(CONFIG_HAVE_ENDSTOPS) += endstop.c
-src-$(CONFIG_HAVE_STEPPERS) += stepper.c
-src-$(CONFIG_HAVE_GPIO) += gpiocmds.c #initial_pins.c
+src-y += sched.c command.c basecmd.c debugcmds.c
+src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
+    trsync.c
 src-$(CONFIG_HAVE_GPIO_ADC) += adccmds.c
 src-$(CONFIG_HAVE_GPIO_SPI) += spicmds.c thermocouple.c
 src-$(CONFIG_HAVE_GPIO_I2C) += i2ccmds.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += pwmcmds.c
-src-$(CONFIG_HAVE_GPIO_BITBANGING) += lcd_st7920.c lcd_hd44780.c buttons.c \
-    spi_software.c neopixel.c
-src-$(CONFIG_HAVE_GPIO_UART) += tmcuart.c
-
-ifeq ($(CONFIG_HAVE_SOFT_PWM),y)
-CFLAGS   += -DHAVE_SOFT_PWM=1
-endif
+bb-src-$(CONFIG_HAVE_GPIO_SPI) := spi_software.c sensor_adxl345.c
+src-$(CONFIG_HAVE_GPIO_BITBANGING) += $(bb-src-y) lcd_st7920.c lcd_hd44780.c \
+    buttons.c tmcuart.c neopixel.c pulse_counter.c

@@ -26,7 +26,7 @@ watchdog_setup(void)
 void
 watchdog_task(void)
 {
-    static struct timespec next_watchdog_time;
+    static uint32_t next_watchdog_time;
     if (watchdog_fd < 0 || !timer_check_periodic(&next_watchdog_time))
         return;
     int ret = write(watchdog_fd, ".", 1);

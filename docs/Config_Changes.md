@@ -1,10 +1,199 @@
+# Configuration changes
+
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.
 
 All dates in this document are approximate.
 
-# Changes
+## Changes
+
+20210720: A controller_fan section now monitors all stepper motors by
+default (not just the kinematic stepper motors).  If the previous
+behavior is desired, see the `stepper` config option in the
+[config reference](Config_Reference.md#controller_fan).
+
+20210703: A `samd_sercom` config section must now specify the sercom
+bus it is configuring via the `sercom` option.
+
+20210612: The `pid_integral_max` config option in heater and
+temperature_fan sections is deprecated.  The option will be removed in
+the near future.
+
+20210503: The gcode_macro `default_parameter_<name>` config option is
+deprecated.  Use the `params` pseudo-variable to access macro
+parameters.  Other methods for accessing macro parameters will be
+removed in the near future.  See the
+[Command Templates document](Command_Templates.md#macro-parameters)
+for examples.
+
+20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
+velocity, acceleration, and square_corner_velocity larger than the
+specified values in the config file.
+
+20210325: Support for the `pin_map` config option is deprecated. Use
+the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
+translate to the actual micro-controller pin names. The `pin_map`
+config option will be removed in the near future.
+
+20210313: Klipper's support for micro-controllers that communicate
+with CAN bus has changed. If using CAN bus then all micro-controllers
+must be reflashed and the
+[Klipper configuration must be updated](CANBUS.md).
+
+20210310: The TMC2660 default for driver_SFILT has been changed from 1
+to 0.
+
+20210227: TMC stepper motor drivers in UART or SPI mode are now
+queried once per second whenever they are enabled - if the driver can
+not be contacted or if the driver reports an error, then Klipper will
+transition to a shutdown state.
+
+20210219: The `rpi_temperature` module has been renamed to
+`temperature_host`.  Replace any occurrences of `sensor_type:
+rpi_temperature` with `sensor_type: temperature_host`.  The path to
+the temperature file may be specified in the `sensor_path` config
+variable.  The `rpi_temperature` name is deprecated and will be
+removed in the near future.
+
+20210201: The `TEST_RESONANCES` command will now disable input shaping
+if it was previously enabled (and re-enable it after the test). In order
+to override this behavior and keep the input shaping enabled, one can
+pass an additional parameter `INPUT_SHAPING=1` to the command.
+
+20210201: The `ACCELEROMETER_MEASURE` command will now append the name
+of the accelerometer chip to the output file name if the chip was given
+a name in the corresponding adxl345 section of the printer.cfg.
+
+20201222: The `step_distance` setting in the stepper config sections
+is deprecated.  It is advised to update the config to use the
+[`rotation_distance`](Rotation_Distance.md) setting.  Support for
+`step_distance` will be removed in the near future.
+
+20201218: The `endstop_phase` setting in the endstop_phase module has
+been replaced with `trigger_phase`. If using the endstop phases module
+then it will be necessary to convert to
+[`rotation_distance`](Rotation_Distance.md) and recalibrate any
+endstop phases by running the ENDSTOP_PHASE_CALIBRATE command.
+
+20201218: Rotary delta and polar printers must now specify a
+`gear_ratio` for their rotary steppers, and they may no longer specify
+a `step_distance` parameter.  See the
+[config reference](Config_Reference.md#stepper) for the format of the
+new gear_ratio paramter.
+
+20201213: It is not valid to specify a Z "position_endstop" when using
+"probe:z_virtual_endstop".  An error will now be raised if a Z
+"position_endstop" is specified with "probe:z_virtual_endstop".
+Remove the Z "position_endstop" definition to fix the error.
+
+20201120: The `[board_pins]` config section now specifies the mcu name
+in an explicit `mcu:` parameter.  If using board_pins for a secondary
+mcu, then the config must be updated to specify that name.  See the
+[config reference](Config_Reference.md#board_pins) for further
+details.
+
+20201112: The time reported by `print_stats.print_duration` has
+changed.  The duration prior to the first detected extrusion is
+now excluded.
+
+20201029: The neopixel `color_order_GRB` config option has been
+removed. If necessary, update the config to set the new `color_order`
+option to RGB, GRB, RGBW, or GRBW.
+
+20201029: The serial option in the mcu config section no longer
+defaults to /dev/ttyS0.  In the rare situation where /dev/ttyS0 is the
+desired serial port, it must be specified explicitly.
+
+20201020: Klipper v0.9.0 released.
+
+20200902: The RTD resistance-to-temperature calculation for MAX31865
+converters has been corrected to not read low.  If you are using such a
+device, you should recalibrate your print temperature and PID settings.
+
+20200816: The gcode macro `printer.gcode` object has been renamed to
+`printer.gcode_move`.  Several undocumented variables in
+`printer.toolhead` and `printer.gcode` have been removed.  See
+docs/Command_Templates.md for a list of available template variables.
+
+20200816: The gcode macro "action_" system has changed.  Replace any
+calls to `printer.gcode.action_emergency_stop()` with
+`action_emergency_stop()`, `printer.gcode.action_respond_info()` with
+`action_respond_info()`, and `printer.gcode.action_respond_error()`
+with `action_raise_error()`.
+
+20200809: The menu system has been rewritten. If the menu has been
+customized then it will be necessary to update to the new
+configuration. See config/example-menu.cfg for configuration details
+and see klippy/extras/display/menu.cfg for examples.
+
+20200731:  The behavior of the `progress` attribute reported by
+the `virtual_sdcard` printer object has changed.  Progress is no
+longer reset to 0 when a print is paused.  It will now always report
+progress based on the internal file position, or 0 if no file is
+currently loaded.
+
+20200725: The servo `enable` config parameter and the SET_SERVO
+`ENABLE` parameter have been removed.  Update any macros to use
+`SET_SERVO SERVO=my_servo WIDTH=0` to disable a servo.
+
+20200608: The LCD display support has changed the name of some
+internal "glyphs".  If a custom display layout was implemented it may
+be necessary to update to the latest glyph names (see
+klippy/extras/display/display.cfg for a list of available glyphs).
+
+20200606: The pin names on linux mcu have changed. Pins now have names
+of the form `gpiochip<chipid>/gpio<gpio>`.  For gpiochip0 you can also
+use a short `gpio<gpio>`.  For example, what was previously referred
+to as `P20` now becomes `gpio20` or `gpiochip0/gpio20`.
+
+20200603: The default 16x4 LCD layout will no longer show the
+estimated time remaining in a print.  (Only the elapsed time will be
+shown.)  If the old behavior is desired one can customize the menu
+display with that information (see the description of display_data in
+config/example-extras.cfg for details).
+
+20200531: The default USB vendor/product id is now 0x1d50/0x614e.
+These new ids are reserved for Klipper (thanks to the openmoko
+project). This change should not require any config changes, but the
+new ids may appear in system logs.
+
+20200524: The default value for the tmc5160 pwm_freq field is now zero
+(instead of one).
+
+20200425: The gcode_macro command template variable `printer.heater`
+was renamed to `printer.heaters`.
+
+20200313: The default lcd layout for multi-extruder printers with a
+16x4 screen has changed.  The single extruder screen layout is now the
+default and it will show the currently active extruder.  To use the
+previous display layout set "display_group: _multiextruder_16x4" in
+the [display] section of the printer.cfg file.
+
+20200308: The default `__test` menu item was removed. If the config
+file has a custom menu then be sure to remove all references to this
+`__test` menu item.
+
+20200308: The menu "deck" and "card" options were removed. To
+customize the layout of an lcd screen use the new display_data config
+sections (see config/example-extras.cfg for the details).
+
+20200109:  The bed_mesh module now references the probe's location
+in for the mesh configuration.  As such, some configuration options
+have been renamed to more accurately reflect their intended
+functionality.  For rectangular beds, `min_point` and `max_point`
+have been renamed to `mesh_min` and `mesh_max` respectively.  For
+round beds, `bed_radius` has been renamed to `mesh_radius`.  A new
+`mesh_origin` option has also been added for round beds.  Note that
+these changes are also incompatible with previously saved mesh profiles.
+If an incompatible profile is detected it will be ignored and scheduled
+for removal.  The removal process can be completed by issuing the
+SAVE_CONFIG command. The user will need to re-calibrate each profile.
+
+20191218: The display config section no longer supports "lcd_type:
+st7567".  Use the "uc1701" display type instead - set "lcd_type:
+uc1701" and change the "rs_pin: some_pin" to "rst_pin: some_pin".  It
+may also be necessary to add a "contrast: 60" config setting.
 
 20191210: The builtin T0, T1, T2, ... commands have been removed.  The
 extruder activate_gcode and deactivate_gcode config options have been

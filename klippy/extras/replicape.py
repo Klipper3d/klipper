@@ -4,7 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os
-import pins, mcu, bus
+import pins, mcu
+from . import bus
 
 REPLICAPE_MAX_CURRENT = 3.84
 REPLICAPE_PCA9685_BUS = 2
@@ -62,6 +63,7 @@ class pca9685_pwm:
                     self._bus, self._address, self._channel,
                     cycle_ticks, self._start_value * self._pwm_max))
             return
+        self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_pca9685 oid=%d bus=%d addr=%d channel=%d cycle_ticks=%d"
@@ -72,8 +74,8 @@ class pca9685_pwm:
                 self._mcu.seconds_to_clock(self._max_duration)))
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
-            "schedule_pca9685_out oid=%c clock=%u value=%hu", cq=cmd_queue)
-    def set_pwm(self, print_time, value):
+            "queue_pca9685_out oid=%c clock=%u value=%hu", cq=cmd_queue)
+    def set_pwm(self, print_time, value, cycle_time=None):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
@@ -108,16 +110,30 @@ class ReplicapeDACEnable:
             self.pwm.set_pwm(print_time, 0.)
 
 SERVO_PINS = {
-    "servo0": ("pwmchip0/pwm0", "gpio0_30", "gpio1_18"), # P9_11, P9_14
-    "servo1": ("pwmchip0/pwm1", "gpio3_17", "gpio1_19"), # P9_28, P9_16
+    "servo0": ("/pwm0", "gpio0_30", "gpio1_18"), # P9_11, P9_14
+    "servo1": ("/pwm1", "gpio3_17", "gpio1_19"), # P9_28, P9_16
 }
 
 class servo_pwm:
     def __init__(self, replicape, pin_params):
         config_name = pin_params['pin']
+        pwmchip = 'pwmchip0'
+        if not replicape.host_mcu.is_fileoutput():
+            try:
+                # Determine the pwmchip number for the servo channels
+                # /sys/devices/platform/ocp/48302000.epwmss/48302200.pwm/pwm
+                # should be stable on the beagle bone black.
+                # It contains only a "pwmchipX" directory. The entry in
+                # /sys/class/pwm/ used by the Linux MCU should be a symlink
+                # to this directory.
+                pwmdev = os.listdir(
+                '/sys/devices/platform/ocp/48302000.epwmss/48302200.pwm/pwm/')
+                pwmchip = [pc for pc in pwmdev if pc.startswith('pwmchip')][0]
+            except:
+                raise pins.error("Replicape unable to determine pwmchip")
         pwm_pin, resv1, resv2 = SERVO_PINS[config_name]
         pin_params = dict(pin_params)
-        pin_params['pin'] = pwm_pin
+        pin_params['pin'] = pwmchip + pwm_pin
         # Setup actual pwm pin using linux hardware pwm on host
         self.mcu_pwm = replicape.host_mcu.setup_pin("pwm", pin_params)
         self.get_mcu = self.mcu_pwm.get_mcu
@@ -151,7 +167,7 @@ class Replicape:
         config.getchoice('revision', revisions)
         self.host_mcu = mcu.get_printer_mcu(printer, config.get('host_mcu'))
         # Setup enable pin
-        enable_pin = config.get('enable_pin', '!P9_41')
+        enable_pin = config.get('enable_pin', '!gpio0_20')
         self.mcu_pwm_enable = ppins.setup_pin('digital_out', enable_pin)
         self.mcu_pwm_enable.setup_max_duration(0.)
         self.mcu_pwm_start_value = self.mcu_pwm_shutdown_value = False

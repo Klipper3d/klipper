@@ -11,6 +11,7 @@ config ATSAM_SELECT
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM
     select HAVE_GPIO_BITBANGING
+    select HAVE_STRICT_TIMING
     select HAVE_CHIPID
 
 config BOARD_DIRECTORY
@@ -79,11 +80,17 @@ config STACK_SIZE
     default 512
 
 config USBSERIAL
-    bool "Use USB for communication (instead of serial)"
-    default y
-config SERIAL
-    depends on !USBSERIAL
     bool
-    default y
+config SERIAL
+    bool
+choice
+    prompt "Communication interface"
+    config ATSAM_USB
+        bool "USB"
+        select USBSERIAL
+    config ATSAM_SERIAL
+        bool "Serial"
+        select SERIAL
+endchoice
 
 endif

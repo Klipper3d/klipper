@@ -1,8 +1,9 @@
+# Code overview
+
 This document describes the overall code layout and major code flow of
 Klipper.
 
-Directory Layout
-================
+## Directory Layout
 
 The **src/** directory contains the C source for the micro-controller
 code. The **src/atsam/**, **src/atsamd/**, **src/avr/**,
@@ -38,8 +39,7 @@ contains temporary build time objects. The final micro-controller
 object that is built is **out/klipper.elf.hex** on AVR and
 **out/klipper.bin** on ARM.
 
-Micro-controller code flow
-==========================
+## Micro-controller code flow
 
 Execution of the micro-controller code starts in architecture specific
 code (eg, **src/avr/main.c**) which ultimately calls sched_main()
@@ -68,10 +68,10 @@ function to be called at the requested clock time. Timer interrupts
 are initially handled in an architecture specific interrupt handler
 (eg, **src/avr/timer.c**) which calls sched_timer_dispatch() located
 in **src/sched.c**. The timer interrupt leads to execution of schedule
-timer functions. Timer functions always run with interrupts
-disabled. The timer functions should always complete within a few
-micro-seconds. At completion of the timer event, the function may
-choose to reschedule itself.
+timer functions. Timer functions always run with interrupts disabled.
+The timer functions should always complete within a few micro-seconds.
+At completion of the timer event, the function may choose to
+reschedule itself.
 
 In the event an error is detected the code can invoke shutdown() (a
 macro which calls sched_shutdown() located in **src/sched.c**).
@@ -89,8 +89,7 @@ inlining functions across compilation units, so most of these tiny
 gpio functions are inlined into their callers, and there is no
 run-time cost to using them.
 
-Klippy code overview
-====================
+## Klippy code overview
 
 The host code (Klippy) is intended to run on a low-cost computer (such
 as a Raspberry Pi) paired with the micro-controller. The code is
@@ -115,8 +114,7 @@ response messages from the micro-controller in the Python code (see
 the log (see **klippy/queuelogger.py**) so that the other threads
 never block on log writes.
 
-Code flow of a move command
-===========================
+## Code flow of a move command
 
 A typical printer movement starts when a "G1" command is sent to the
 Klippy host and it completes when the corresponding step pulses are
@@ -125,12 +123,13 @@ of a typical move command. The [kinematics](Kinematics.md) document
 provides further information on the mechanics of moves.
 
 * Processing for a move command starts in gcode.py. The goal of
-  gcode.py is to translate G-code into internal calls. Changes in
-  origin (eg, G92), changes in relative vs absolute positions (eg,
-  G90), and unit changes (eg, F6000=100mm/s) are handled here. The
-  code path for a move is: `_process_data() -> _process_commands() ->
-  cmd_G1()`. Ultimately the ToolHead class is invoked to execute the
-  actual request: `cmd_G1() -> ToolHead.move()`
+  gcode.py is to translate G-code into internal calls. A G1 command
+  will invoke cmd_G1() in klippy/extras/gcode_move.py. The
+  gcode_move.py code handles changes in origin (eg, G92), changes in
+  relative vs absolute positions (eg, G90), and unit changes (eg,
+  F6000=100mm/s). The code path for a move is: `_process_data() ->
+  _process_commands() -> cmd_G1()`. Ultimately the ToolHead class is
+  invoked to execute the actual request: `cmd_G1() -> ToolHead.move()`
 
 * The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:
@@ -188,8 +187,8 @@ provides further information on the mechanics of moves.
   with head movement even though the code is kept separate.
 
 * After the iterative solver calculates the step times they are added
-  to an array: `itersolve_gen_steps_range() -> queue_append()` (in
-  klippy/chelper/stepcompress.c). The array (struct
+  to an array: `itersolve_gen_steps_range() -> stepcompress_append()`
+  (in klippy/chelper/stepcompress.c). The array (struct
   stepcompress.queue) stores the corresponding micro-controller clock
   counter times for every step. Here the "micro-controller clock
   counter" value directly corresponds to the micro-controller's
@@ -220,14 +219,13 @@ provides further information on the mechanics of moves.
   runs the following, 'count' times: `do_step(); next_wake_time =
   last_wake_time + interval; interval += add;`
 
-The above may seem like a lot of complexity to execute a
-movement. However, the only really interesting parts are in the
-ToolHead and kinematic classes. It's this part of the code which
-specifies the movements and their timings. The remaining parts of the
-processing is mostly just communication and plumbing.
+The above may seem like a lot of complexity to execute a movement.
+However, the only really interesting parts are in the ToolHead and
+kinematic classes. It's this part of the code which specifies the
+movements and their timings. The remaining parts of the processing is
+mostly just communication and plumbing.
 
-Adding a host module
-====================
+## Adding a host module
 
 The Klippy host code has a dynamic module loading capability. If a
 config section named "[my_module]" is found in the printer config file
@@ -306,8 +304,7 @@ The following may also be useful:
   sure to place a copyright notice at the top of the module. See the
   existing modules for the preferred format.
 
-Adding new kinematics
-=====================
+## Adding new kinematics
 
 This section provides some tips on adding support to Klipper for
 additional types of printer kinematics. This type of activity requires
@@ -330,25 +327,23 @@ Useful steps:
    seconds) to a cartesian coordinate (in millimeters), and then
    calculate the desired stepper position (in millimeters) from that
    cartesian coordinate.
-4. Implement the `calc_tag_position()` method in the new kinematics
-   class. This method calculates the position of the toolhead in
-   cartesian coordinates from the position of each stepper (as
-   returned by `stepper.get_tag_position()`). It does not need to be
-   efficient as it is typically only called during homing and probing
-   operations.
+4. Implement the `calc_position()` method in the new kinematics class.
+   This method calculates the position of the toolhead in cartesian
+   coordinates from the position of each stepper. It does not need to
+   be efficient as it is typically only called during homing and
+   probing operations.
 5. Other methods. Implement the `check_move()`, `get_status()`,
    `get_steppers()`, `home()`, and `set_position()` methods. These
-   functions are typically used to provide kinematic specific
-   checks. However, at the start of development one can use
-   boiler-plate code here.
+   functions are typically used to provide kinematic specific checks.
+   However, at the start of development one can use boiler-plate code
+   here.
 6. Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    [debugging documentation](Debugging.md) to convert this g-code file
    to micro-controller commands. This is useful to exercise corner
    cases and to check for regressions.
 
-Porting to a new micro-controller
-=================================
+## Porting to a new micro-controller
 
 This section provides some tips on porting Klipper's micro-controller
 code to a new architecture. This type of activity requires good
@@ -400,8 +395,7 @@ Useful steps:
    the micro-controller with the main klippy.py program.
 9. Consider adding build test cases in the test/ directory.
 
-Coordinate Systems
-==================
+## Coordinate Systems
 
 Internally, Klipper primarily tracks the position of the toolhead in
 cartesian coordinates that are relative to the coordinate system
@@ -447,17 +441,16 @@ but does not include moves on the look-ahead queue. One may use the
 `toolhead.flush_step_generation()` or `toolhead.wait_moves()` calls to
 fully flush the look-ahead and step generation code.
 
-The "kinematic" position (`stepper.set_tag_position()` and
-`kin.calc_tag_position()`) is the cartesian position of the toolhead
-as derived from the "stepper" position and is relative to the
-coordinate system specified in the config file. This may differ from
-the requested cartesian position due to the granularity of the stepper
-motors. If the robot is in motion when `stepper.set_tag_position()` is
-issued then the reported value includes moves buffered on the
-micro-controller, but does not include moves on the look-ahead
-queue. One may use the `toolhead.flush_step_generation()` or
-`toolhead.wait_moves()` calls to fully flush the look-ahead and step
-generation code.
+The "kinematic" position (`kin.calc_position()`) is the cartesian
+position of the toolhead as derived from "stepper" positions and is
+relative to the coordinate system specified in the config file. This
+may differ from the requested cartesian position due to the
+granularity of the stepper motors. If the robot is in motion when the
+"stepper" positions are taken then the reported value includes moves
+buffered on the micro-controller, but does not include moves on the
+look-ahead queue. One may use the `toolhead.flush_step_generation()`
+or `toolhead.wait_moves()` calls to fully flush the look-ahead and
+step generation code.
 
 The "toolhead" position (`toolhead.get_position()`) is the last
 requested position of the toolhead in cartesian coordinates relative
@@ -473,9 +466,9 @@ system specified in the config file. This may differ from the
 bed_tilt, skew_correction) is in effect. This may differ from the
 actual coordinates specified in the last `G1` command if the g-code
 origin has been changed (eg, `G92`, `SET_GCODE_OFFSET`, `M221`). The
-`M114` command (`gcode.get_status()['gcode_position']`) will report
-the last g-code position relative to the current g-code coordinate
-system.
+`M114` command (`gcode_move.get_status()['gcode_position']`) will
+report the last g-code position relative to the current g-code
+coordinate system.
 
 The "gcode base" is the location of the g-code origin in cartesian
 coordinates relative to the coordinate system specified in the config
@@ -487,8 +480,7 @@ cartesian coordinates relative to the coordinate system specified in
 the config file) after a `G28` home command. The `SET_GCODE_OFFSET`
 command can alter this value.
 
-Time
-====
+## Time
 
 Fundamental to the operation of Klipper is the handling of clocks,
 times, and timestamps. Klipper executes actions on the printer by

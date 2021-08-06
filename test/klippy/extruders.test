@@ -1,0 +1,17 @@
+# Extruder tests
+DICTIONARY atmega2560.dict
+CONFIG extruders.cfg
+
+# Extrude only
+G1 E5
+G1 E-2
+G1 E7
+
+# Home and extrusion moves
+G28
+G1 X20 Y20 Z1
+G1 X25 Y25 E7.5
+
+# Update step_distance
+SET_EXTRUDER_STEP_DISTANCE EXTRUDER=extruder DISTANCE=.005
+G1 X30 Y30 E8.0

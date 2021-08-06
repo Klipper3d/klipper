@@ -279,9 +279,8 @@ command_tmcuart_send(uint32_t *args)
         return;
     // Workaround for 64 bit addr space
     uint8_t write_len = args[1];
-    size_t addr = args[2] | (size_t)args[3]<<32;
-    uint8_t *write = (void*)addr;
-    uint8_t read_len = args[4];
+    uint8_t *write = command_decode_ptr(args[2]);
+    uint8_t read_len = args[3];
     if (write_len > sizeof(t->data) || read_len > sizeof(t->data))
         shutdown("tmcuart data too large");
     memcpy(t->data, write, write_len);

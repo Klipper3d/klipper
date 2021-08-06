@@ -1,6 +1,6 @@
 // Analog to Digital Converter support
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -9,6 +9,8 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
+#define ADC_TEMPERATURE_PIN 0xfe
+DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 
 #if CONFIG_MACH_SAMD21
 
@@ -127,6 +129,18 @@ gpio_adc_setup(uint8_t pin)
 {
     // Enable ADC
     adc_init();
+
+    if (pin == ADC_TEMPERATURE_PIN) {
+#if CONFIG_MACH_SAMD21
+        SYSCTRL->VREF.reg |= SYSCTRL_VREF_TSEN;
+        return (struct gpio_adc){ .regs=ADC,
+                .chan=ADC_INPUTCTRL_MUXPOS_TEMP_Val };
+#else
+        SUPC->VREF.reg |= SUPC_VREF_TSEN;
+        return (struct gpio_adc){ .regs=ADC0,
+                .chan=ADC_INPUTCTRL_MUXPOS_PTAT_Val };
+#endif
+    }
 
     // Set pin in ADC mode
     gpio_peripheral(pin, 'B', 0);

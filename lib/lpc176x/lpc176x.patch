@@ -1,6 +1,6 @@
 --- device/system_LPC17xx.c	2018-05-02 12:23:57.292132454 -0400
-+++ device/system_LPC17xx.c	2018-05-23 20:09:29.681308483 -0400
-@@ -297,19 +297,16 @@
++++ device/system_LPC17xx.c	2021-05-04 10:08:17.637502030 -0400
+@@ -297,22 +297,19 @@
  #define CLKSRCSEL_Val         0x00000001
  #define PLL0_SETUP            1
  
@@ -26,5 +26,10 @@
 +#define CCLKCFG_Val           0x00000002
 +#define USBCLKCFG_Val         0x00000000
  
- #define PCLKSEL0_Val          0x00000000
- #define PCLKSEL1_Val          0x00000000
+-#define PCLKSEL0_Val          0x00000000
+-#define PCLKSEL1_Val          0x00000000
++#define PCLKSEL0_Val          0x55515155
++#define PCLKSEL1_Val          0x54555455
+ #define PCONP_Val             0x042887DE
+ #define CLKOUTCFG_Val         0x00000000
+ 

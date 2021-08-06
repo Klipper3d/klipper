@@ -57,6 +57,7 @@ spi_open(uint32_t bus, uint32_t dev)
     devices[devices_count].bus = bus;
     devices[devices_count].dev = dev;
     devices[devices_count].fd = fd;
+    devices_count++;
     return fd;
 }
 
@@ -69,6 +70,11 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     if (ret < 0) {
         report_errno("ioctl set max spi speed", ret);
         shutdown("Unable to set SPI speed");
+    }
+    ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+    if (ret < 0) {
+        report_errno("ioctl set spi mode", ret);
+        shutdown("Unable to set SPI mode");
     }
     return (struct spi_config) { fd , rate};
 }
