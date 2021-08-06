@@ -193,6 +193,8 @@ class TMCCommandHelper:
         self.toff = None
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
+        # Set microstep config options
+        TMCMicrostepHelper(config, mcu_tmc)
         # Register commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_TMC_FIELD", "STEPPER", self.name,
@@ -246,6 +248,17 @@ class TMCCommandHelper:
         else:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
                               % (prev_run_current, prev_hold_current))
+    # Stepper phase tracking
+    def get_microsteps(self):
+        return 256 >> self.fields.get_field("mres")
+    def get_phase(self):
+        field_name = "mscnt"
+        if self.fields.lookup_register(field_name, None) is None:
+            # TMC2660 uses MSTEP
+            field_name = "mstep"
+        reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
+        mscnt = self.fields.get_field(field_name, reg)
+        return 1023 - mscnt, 1024
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
         try:
@@ -397,31 +410,19 @@ class TMCVirtualPinHelper:
 ######################################################################
 
 # Helper to configure and query the microstep settings
-class TMCMicrostepHelper:
-    def __init__(self, config, mcu_tmc):
-        self.mcu_tmc = mcu_tmc
-        self.fields = mcu_tmc.get_fields()
-        stepper_name = " ".join(config.get_name().split()[1:])
-        stepper_config = ms_config = config.getsection(stepper_name)
-        if (stepper_config.get('microsteps', None, note_valid=False) is None
-            and config.get('microsteps', None, note_valid=False) is not None):
-            # Older config format with microsteps in tmc config section
-            ms_config = config
-        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-                 '8': 5, '4': 6, '2': 7, '1': 8}
-        mres = ms_config.getchoice('microsteps', steps)
-        self.fields.set_field("mres", mres)
-        self.fields.set_field("intpol", config.getboolean("interpolate", True))
-    def get_microsteps(self):
-        return 256 >> self.fields.get_field("mres")
-    def get_phase(self):
-        field_name = "mscnt"
-        if self.fields.lookup_register(field_name, None) is None:
-            # TMC2660 uses MSTEP
-            field_name = "mstep"
-        reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
-        mscnt = self.fields.get_field(field_name, reg)
-        return 1023 - mscnt, 1024
+def TMCMicrostepHelper(config, mcu_tmc):
+    fields = mcu_tmc.get_fields()
+    stepper_name = " ".join(config.get_name().split()[1:])
+    stepper_config = ms_config = config.getsection(stepper_name)
+    if (stepper_config.get('microsteps', None, note_valid=False) is None
+        and config.get('microsteps', None, note_valid=False) is not None):
+        # Older config format with microsteps in tmc config section
+        ms_config = config
+    steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
+             '8': 5, '4': 6, '2': 7, '1': 8}
+    mres = ms_config.getchoice('microsteps', steps)
+    fields.set_field("mres", mres)
+    fields.set_field("intpol", config.getboolean("interpolate", True))
 
 # Helper to configure "stealthchop" mode
 def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
