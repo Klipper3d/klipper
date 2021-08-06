@@ -25,7 +25,7 @@ class PhaseCalc:
             if module is not None:
                 self.tmc_module = module
                 if self.phases is None:
-                    self.phases = module.get_microsteps() * 4
+                    phase_offset, self.phases = module.get_phase_offset()
                 break
         if self.phases is not None:
             self.phase_history = [0] * self.phases
@@ -34,18 +34,15 @@ class PhaseCalc:
         return (int(float(driver_phase) / driver_phases * phases + .5) % phases)
     def calc_phase(self, stepper):
         mcu_pos = stepper.get_mcu_position()
-        if self.tmc_module is None:
-            phase = mcu_pos % self.phases
-        else:
-            try:
-                driver_phase, driver_phases = self.tmc_module.get_phase()
-            except Exception as e:
-                msg = "Unable to get stepper %s phase: %s" % (self.name, str(e))
-                logging.exception(msg)
-                raise self.printer.command_error(msg)
-            if stepper.is_dir_inverted():
-                driver_phase = (driver_phases - 1) - driver_phase
-            phase = self.convert_phase(driver_phase, driver_phases)
+        mcu_phase_offset = 0
+        if self.tmc_module is not None:
+            mcu_phase_offset, phases = self.tmc_module.get_phase_offset()
+            if mcu_phase_offset is None:
+                if self.printer.get_start_args().get('debugoutput') is None:
+                    raise self.printer.command_error("Stepper %s phase unknown"
+                                                     % (self.name,))
+                mcu_phase_offset = 0
+        phase = (mcu_pos + mcu_phase_offset) % self.phases
         self.phase_history[phase] += 1
         self.last_phase = phase
         self.last_mcu_position = mcu_pos

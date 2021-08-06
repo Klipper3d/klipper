@@ -266,21 +266,22 @@ class TMCCommandHelper:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
                               % (prev_run_current, prev_hold_current))
     # Stepper phase tracking
-    def get_microsteps(self):
-        return 256 >> self.fields.get_field("mres")
-    def get_phase(self):
+    def _get_phases(self):
+        return (256 >> self.fields.get_field("mres")) * 4
+    def get_phase_offset(self):
+        return self.mcu_phase_offset, self._get_phases()
+    def _query_phase(self):
         field_name = "mscnt"
         if self.fields.lookup_register(field_name, None) is None:
             # TMC2660 uses MSTEP
             field_name = "mstep"
         reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
-        mscnt = self.fields.get_field(field_name, reg)
-        return 1023 - mscnt, 1024
+        return self.fields.get_field(field_name, reg)
     def _handle_sync_mcu_pos(self, stepper):
         if stepper.get_name() != self.stepper_name:
             return
         try:
-            driver_phase, driver_phases = self.get_phase()
+            driver_phase = self._query_phase()
         except self.printer.command_error as e:
             logging.info("Unable to obtain tmc %s phase", self.stepper_name)
             self.mcu_phase_offset = None
@@ -288,10 +289,10 @@ class TMCCommandHelper:
             if enable_line.is_motor_enabled():
                 raise
             return
-        if stepper.is_dir_inverted():
-            driver_phase = (driver_phases - 1) - driver_phase
-        phases = self.get_microsteps() * 4
-        phase = int(float(driver_phase) / driver_phases * phases + .5) % phases
+        if not stepper.is_dir_inverted():
+            driver_phase = 1023 - driver_phase
+        phases = self._get_phases()
+        phase = int(float(driver_phase) / 1024 * phases + .5) % phases
         moff = (phase - stepper.get_mcu_position()) % phases
         if self.mcu_phase_offset is not None and self.mcu_phase_offset != moff:
             logging.warning("Stepper %s phase change (was %d now %d)",

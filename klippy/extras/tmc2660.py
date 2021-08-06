@@ -229,8 +229,7 @@ class TMC2660:
         current_helper = TMC2660CurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
-        self.get_microsteps = cmdhelper.get_microsteps
-        self.get_phase = cmdhelper.get_phase
+        self.get_phase_offset = cmdhelper.get_phase_offset
 
         # CHOPCONF
         set_config_field = self.fields.set_config_field

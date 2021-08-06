@@ -260,8 +260,7 @@ class TMC2130:
         current_helper = TMCCurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
-        self.get_microsteps = cmdhelper.get_microsteps
-        self.get_phase = cmdhelper.get_phase
+        self.get_phase_offset = cmdhelper.get_phase_offset
         # Setup basic register values
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
