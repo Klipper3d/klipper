@@ -163,6 +163,7 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
         self._set_mcu_position(last_pos)
+        self._mcu.get_printer().send_event("stepper:sync_mcu_position", self)
     def set_trapq(self, tq):
         ffi_main, ffi_lib = chelper.get_ffi()
         if tq is None:

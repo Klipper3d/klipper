@@ -118,6 +118,7 @@ class TMCErrorCheck:
         self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
+        cleared_flags = 0
         count = 0
         while 1:
             try:
@@ -151,12 +152,14 @@ class TMCErrorCheck:
                                                  % (self.stepper_name, fmt))
             if try_clear and val & err_mask:
                 try_clear = False
+                cleared_flags |= val & err_mask
                 self.mcu_tmc.set_register(reg_name, val & err_mask)
-    def _do_periodic_check(self, eventtime, try_clear=False):
+        return cleared_flags
+    def _do_periodic_check(self, eventtime):
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
-                self._query_register(self.gstat_reg_info, try_clear=try_clear)
+                self._query_register(self.gstat_reg_info)
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
             return self.printer.get_reactor().NEVER
@@ -169,11 +172,20 @@ class TMCErrorCheck:
     def start_checks(self):
         if self.check_timer is not None:
             self.stop_checks()
-        self._do_periodic_check(0., try_clear=self.clear_gstat)
+        cleared_flags = 0
+        self._query_register(self.drv_status_reg_info)
+        if self.gstat_reg_info is not None:
+            cleared_flags = self._query_register(self.gstat_reg_info,
+                                                 try_clear=self.clear_gstat)
         reactor = self.printer.get_reactor()
         curtime = reactor.monotonic()
         self.check_timer = reactor.register_timer(self._do_periodic_check,
                                                   curtime + 1.)
+        if cleared_flags:
+            reset_mask = self.fields.all_fields["GSTAT"]["reset"]
+            if cleared_flags & reset_mask:
+                return True
+        return False
 
 
 ######################################################################
@@ -191,6 +203,11 @@ class TMCCommandHelper:
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
         self.toff = None
+        self.mcu_phase_offset = None
+        self.stepper = None
+        self.stepper_enable = self.printer.load_object(config, "stepper_enable")
+        self.printer.register_event_handler("stepper:sync_mcu_position",
+                                            self._handle_sync_mcu_pos)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         # Set microstep config options
@@ -259,6 +276,27 @@ class TMCCommandHelper:
         reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
         mscnt = self.fields.get_field(field_name, reg)
         return 1023 - mscnt, 1024
+    def _handle_sync_mcu_pos(self, stepper):
+        if stepper.get_name() != self.stepper_name:
+            return
+        try:
+            driver_phase, driver_phases = self.get_phase()
+        except self.printer.command_error as e:
+            logging.info("Unable to obtain tmc %s phase", self.stepper_name)
+            self.mcu_phase_offset = None
+            enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
+            if enable_line.is_motor_enabled():
+                raise
+            return
+        if stepper.is_dir_inverted():
+            driver_phase = (driver_phases - 1) - driver_phase
+        phases = self.get_microsteps() * 4
+        phase = int(float(driver_phase) / driver_phases * phases + .5) % phases
+        moff = (phase - stepper.get_mcu_position()) % phases
+        if self.mcu_phase_offset is not None and self.mcu_phase_offset != moff:
+            logging.warning("Stepper %s phase change (was %d now %d)",
+                            self.mcu_phase_offset, moff)
+        self.mcu_phase_offset = moff
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
         try:
@@ -266,7 +304,20 @@ class TMCCommandHelper:
                 # Shared enable via comms handling
                 self.fields.set_field("toff", self.toff)
             self._init_registers()
-            self.echeck_helper.start_checks()
+            did_reset = self.echeck_helper.start_checks()
+            if did_reset:
+                self.mcu_phase_offset = None
+            # Calculate phase offset
+            if self.mcu_phase_offset is not None:
+                return
+            gcode = self.printer.lookup_object("gcode")
+            with gcode.get_mutex():
+                if self.mcu_phase_offset is not None:
+                    return
+                logging.info("Pausing toolhead to calculate %s phase offset",
+                             self.stepper_name)
+                self.printer.lookup_object('toolhead').wait_moves()
+                self._handle_sync_mcu_pos(self.stepper)
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
     def _do_disable(self, print_time):
@@ -285,9 +336,11 @@ class TMCCommandHelper:
             cb = (lambda ev: self._do_disable(print_time))
         self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
+        # Lookup stepper object
+        force_move = self.printer.lookup_object("force_move")
+        self.stepper = force_move.lookup_stepper(self.stepper_name)
         # Check for soft stepper enable/disable
-        stepper_enable = self.printer.lookup_object('stepper_enable')
-        enable_line = stepper_enable.lookup_enable(self.stepper_name)
+        enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
         enable_line.register_state_callback(self.handle_stepper_enable)
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
