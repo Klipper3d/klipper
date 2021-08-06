@@ -553,7 +553,8 @@ stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
 
 // Set last_position in the stepcompress object
 int __visible
-stepcompress_set_last_position(struct stepcompress *sc, int64_t last_position)
+stepcompress_set_last_position(struct stepcompress *sc, uint64_t clock
+                               , int64_t last_position)
 {
     int ret = stepcompress_flush(sc, UINT64_MAX);
     if (ret)
@@ -563,7 +564,7 @@ stepcompress_set_last_position(struct stepcompress *sc, int64_t last_position)
     // Add a marker to the history list
     struct history_steps *hs = malloc(sizeof(*hs));
     memset(hs, 0, sizeof(*hs));
-    hs->first_clock = hs->last_clock = sc->last_step_clock;
+    hs->first_clock = hs->last_clock = clock;
     hs->start_position = last_position;
     list_add_head(&hs->node, &sc->history_list);
     return 0;
