@@ -379,4 +379,4 @@ The following information is available for each `[neopixel led_name]` and
   values for a led in the chain.  Note that not all configurations will contain
   a white value.  Each value is represented as a float from 0 to 1.  For
   example, the blue value of the second neopixel in a chain could be accessed
-  at `printer["neopixel <config_name>"].colordata[1].B`.
+  at `printer["neopixel <config_name>"].color_data[1].B`.
