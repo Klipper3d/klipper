@@ -278,7 +278,8 @@ class MixingExtruder:
         mixing = self.mixing if not self.gradient_enabled \
             else self._get_gradient(move.start_pos[:3], move.end_pos[:3])
         if retracting:
-            mixing = [1. / len(self.extruders) for p in range(len(self.extruders))]
+            mixing = [1. / len(self.extruders) \
+                      for p in range(len(self.extruders))]
         self.current_mixing = tuple(mixing)
         for idx, extruder in enumerate(self.extruders):
             scaled_move = self._scale_move(move, idx, mixing)
