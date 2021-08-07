@@ -4,6 +4,24 @@
 # Copyright (C) 2020-2021  Mael Kerbiriou <piezo.wdimd@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+#
+# Usage:
+# Copying this file under `klipper/klippy/kinematics/` should be enough
+# (click the `raw` button on github, then save as)
+# Then your config's [printer] should look like:
+# [printer]
+# kinematics: cartesian_slinger
+# max_velocity: 875
+# max_x_velocity: 750
+# max_y_velocity: 450
+# max_z_velocity: 5
+# max_accel: 15000
+# max_x_accel: 12000
+# max_y_accel: 9000
+# max_z_accel: 100
+#
+# max_accel/velocity are the hypotenuse of X and Y values,
+
 from . import cartesian
 
 class CartSKinematics(cartesian.CartKinematics):
