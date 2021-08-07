@@ -113,47 +113,44 @@ config INITIAL_PINS
 # The HAVE_x options allow boards to disable support for some commands
 # if the hardware does not support the feature.
 config HAVE_GPIO
-    bool "have GPIO"
+    bool
     default n
 config HAVE_GPIO_ADC
     bool
     default n
 config HAVE_GPIO_SPI
-    bool "have spi"
+    bool
     default n
 config HAVE_GPIO_I2C
-    bool "have i2c"
+    bool
     default n
 config HAVE_GPIO_HARD_PWM
     bool
     default n
-config HAVE_SOFT_PWM
-    bool "have soft pwm"
-    default y
 config HAVE_GPIO_BITBANGING
-    bool "have GPIO bitbanging"
+    bool
     default n
 config HAVE_GPIO_UART
-    bool "have GPIO UART"
+    bool
     default n
 config HAVE_STRICT_TIMING
     bool
     default n
 config HAVE_CHIPID
-    bool "have chipid"
+    bool
     default n
 config HAVE_ENDSTOPS
-    bool "Endstops are controlled by the MCU"
+    bool
     default n
 config HAVE_STEPPERS
-    bool "Steppers are controlled by MCU"
+    bool
     default n
 config HAVE_DEBUG
-    bool "Include debug commands"
+    bool
     default n
 
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler
-    bool "Enables gcc to inline stepper_event()"
+    bool
     depends on HAVE_GPIO
     default y

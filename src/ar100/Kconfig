@@ -8,6 +8,7 @@ config AR100_SELECT
     select LOW_LEVEL_OPTIONS
     select HAVE_ENDSTOPS
     select HAVE_STEPPERS
+    select HAVE_GPIO
 
 config BOARD_DIRECTORY
     string
@@ -18,14 +19,6 @@ config CLOCK_FREQ
     default 300000000
 
 config STEP_DELAY
-    int
     default 0
-
-config HAVE_GPIO_SPI
-    default n
-
-config HAVE_GPIO
-    bool
-    default y
 
 endif
