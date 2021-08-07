@@ -21,4 +21,12 @@ config CLOCK_FREQ
 config STEP_DELAY
     default 0
 
+config CONFIG_HAVE_DEBUG
+    bool
+    default n
+
+config HAVE_SOFT_PWM
+  bool
+  default n
+
 endif

@@ -138,9 +138,10 @@ command_set_digital_out_pwm_cycle(uint32_t *args)
     d->cycle_time = args[1];
     irq_enable();
 }
+#ifdef HAVE_SOFT_PWM
 DECL_COMMAND(command_set_digital_out_pwm_cycle,
              "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u");
-
+#endif
 void
 command_queue_digital_out(uint32_t *args)
 {
@@ -192,8 +193,9 @@ command_update_digital_out(uint32_t *args)
         d->flags = (flags & DF_DEFAULT_ON) | on_flag;
     }
 }
+#ifdef HAVE_SOFT_PWM
 DECL_COMMAND(command_update_digital_out, "update_digital_out oid=%c value=%c");
-
+#endif
 void
 digital_out_shutdown(void)
 {
