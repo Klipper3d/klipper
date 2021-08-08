@@ -151,9 +151,9 @@ class InputShaper:
                 shaper_freq_x is None and shaper_freq_y is None and
                 shaper_type_x is None and shaper_type_y is None):
             id_to_name = {v: n for n, v in self.shapers.items()}
-            gcmd.respond_info("shaper_type_x:%s shaper_type_y:%s "
-                              "shaper_freq_x:%.3f shaper_freq_y:%.3f "
-                              "damping_ratio_x:%.6f damping_ratio_y:%.6f"
+            gcmd.respond_info("shaper_type_x:%s\nshaper_type_y:%s\n"
+                              "shaper_freq_x:%.3f\nshaper_freq_y:%.3f\n"
+                              "damping_ratio_x:%.6f\ndamping_ratio_y:%.6f"
                               % (id_to_name[self.shaper_type_x],
                                  id_to_name[self.shaper_type_y],
                                  self.shaper_freq_x, self.shaper_freq_y,
