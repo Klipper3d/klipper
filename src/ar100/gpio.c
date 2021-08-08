@@ -52,7 +52,8 @@ void gpio_out_write(struct gpio_out pin, uint8_t val){
   write_reg(pin.reg, data_regs[pin.bank]);
 }
 
-void gpio_out_reset(struct gpio_out pin){
+void gpio_out_reset(struct gpio_out pin, uint8_t val){
+  gpio_out_setup(pin.pin, val);
 }
 
 uint8_t gpio_in_read(struct gpio_in pin){
@@ -60,6 +61,7 @@ uint8_t gpio_in_read(struct gpio_in pin){
   return !!(data_regs[pin.bank] & (1<<pin.pin));
 }
 
+// TODO: support for pull-up
 struct gpio_in gpio_in_setup(uint8_t pin, int8_t pull_up){
   struct gpio_mux mux = gpio_mux_setup(pin, PIO_INPUT);
   struct gpio_in in = {
@@ -70,6 +72,6 @@ struct gpio_in gpio_in_setup(uint8_t pin, int8_t pull_up){
   data_regs[mux.bank] = read_reg(mux.reg);
   return in;
 }
-void gpio_in_reset(struct gpio_in pin){
-
+void gpio_in_reset(struct gpio_in pin, int8_t pull_up){
+  gpio_in_setup(pin.pin, pull_up);
 }

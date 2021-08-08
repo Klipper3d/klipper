@@ -112,7 +112,7 @@ __noreturn void main(uint32_t exception){
   r_prcm_set_cpus_clk_rate(PLL_PERIPH);
 
   r_uart_init();
-  uart_puts("**Start**\n");
+  uart_puts("**Start v0.0.4**\n");
   sched_main();
 	while(1){} // Stop complaining about noreturn
 }
