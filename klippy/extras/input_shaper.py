@@ -105,13 +105,13 @@ class InputShaper:
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
     def cmd_SET_INPUT_SHAPER(self, gcmd):
         damping_ratio_x = gcmd.get_float(
-                'DAMPING_RATIO_X', self.damping_ratio_x, minval=0., maxval=1.)
+                'DAMPING_RATIO_X', None, minval=0., maxval=1.)
         damping_ratio_y = gcmd.get_float(
-                'DAMPING_RATIO_Y', self.damping_ratio_y, minval=0., maxval=1.)
+                'DAMPING_RATIO_Y', None, minval=0., maxval=1.)
         shaper_freq_x = gcmd.get_float(
-                'SHAPER_FREQ_X', self.shaper_freq_x, minval=0.)
+                'SHAPER_FREQ_X', None, minval=0.)
         shaper_freq_y = gcmd.get_float(
-                'SHAPER_FREQ_Y', self.shaper_freq_y, minval=0.)
+                'SHAPER_FREQ_Y', None, minval=0.)
 
         def parse_shaper(shaper_type_str):
             shaper_type_str = shaper_type_str.lower()
@@ -123,25 +123,41 @@ class InputShaper:
 
         shaper_type = gcmd.get('SHAPER_TYPE', None, parser=parse_shaper)
         if shaper_type is None:
-            shaper_type_x = gcmd.get('SHAPER_TYPE_X', self.shaper_type_x,
+            shaper_type_x = gcmd.get('SHAPER_TYPE_X', None,
                                      parser=parse_shaper)
-            shaper_type_y = gcmd.get('SHAPER_TYPE_Y', self.shaper_type_y,
+            shaper_type_y = gcmd.get('SHAPER_TYPE_Y', None,
                                      parser=parse_shaper)
         else:
             shaper_type_x = shaper_type_y = shaper_type
 
-        self._set_input_shaper(shaper_type_x, shaper_type_y,
-                               shaper_freq_x, shaper_freq_y,
-                               damping_ratio_x, damping_ratio_y)
+        if damping_ratio_x is not None:
+            self.damping_ratio_x = damping_ratio_x
+        if damping_ratio_y is not None:
+            self.damping_ratio_y = damping_ratio_y
+        if shaper_freq_x is not None:
+            self.shaper_freq_x = shaper_freq_x
+        if shaper_freq_y is not None:
+            self.shaper_freq_y = shaper_freq_y
+        if shaper_type_x is not None:
+            self.shaper_type_x = shaper_type_x
+        if shaper_type_y is not None:
+            self.shaper_type_y = shaper_type_y
 
-        id_to_name = {v: n for n, v in self.shapers.items()}
-        gcmd.respond_info("shaper_type_x:%s shaper_type_y:%s "
-                          "shaper_freq_x:%.3f shaper_freq_y:%.3f "
-                          "damping_ratio_x:%.6f damping_ratio_y:%.6f"
-                          % (id_to_name[shaper_type_x],
-                             id_to_name[shaper_type_y],
-                             shaper_freq_x, shaper_freq_y,
-                             damping_ratio_x, damping_ratio_y))
+        self._set_input_shaper(self.shaper_type_x, self.shaper_type_y,
+                               self.shaper_freq_x, self.shaper_freq_y,
+                               self.damping_ratio_x, self.damping_ratio_y)
+
+        if (damping_ratio_x is None and damping_ratio_y is None and
+                shaper_freq_x is None and shaper_freq_y is None and
+                shaper_type_x is None and shaper_type_y is None):
+            id_to_name = {v: n for n, v in self.shapers.items()}
+            gcmd.respond_info("shaper_type_x:%s shaper_type_y:%s "
+                              "shaper_freq_x:%.3f shaper_freq_y:%.3f "
+                              "damping_ratio_x:%.6f damping_ratio_y:%.6f"
+                              % (id_to_name[self.shaper_type_x],
+                                 id_to_name[self.shaper_type_y],
+                                 self.shaper_freq_x, self.shaper_freq_y,
+                                 self.damping_ratio_x, self.damping_ratio_y))
 
 def load_config(config):
     return InputShaper(config)
