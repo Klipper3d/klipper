@@ -11,10 +11,6 @@
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_SHUTDOWN
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
 
 struct tmcuart_s {
     struct timer timer;
@@ -23,8 +19,6 @@ struct tmcuart_s {
     uint8_t flags;
     uint8_t pos, read_count, write_count;
     uint32_t cfg_bit_time, bit_time;
-    int is_tty;
-    int fd;
     uint8_t data[10];
 };
 
@@ -175,61 +169,6 @@ tmcuart_send_sync_event(struct timer *timer)
     return SF_RESCHEDULE;
 }
 
-static uint_fast8_t
-tmcuart_receive_tty(struct timer *timer){
-  struct tmcuart_s *t = container_of(timer, struct tmcuart_s, timer);
-  // Discard sent data
-  read(t->fd, t->data, t->write_count);
-  read(t->fd, t->data, t->read_count);
-  t->flags |= TU_REPORT;
-  sched_wake_task(&tmcuart_wake);
-  t->flags &= ~TU_ACTIVE;
-  return SF_DONE;
-}
-
-static uint_fast8_t
-tmcuart_send_tty(struct timer *timer){
-  struct tmcuart_s *t = container_of(timer, struct tmcuart_s, timer);
-  write (t->fd, t->data, t->write_count);
-  t->timer.func = tmcuart_receive_tty;
-  t->timer.waketime = timer_read_time() + timer_from_us(1);
-  return SF_RESCHEDULE;
-}
-
-
-void
-set_interface_attribs (int fd, int speed){
-  struct termios tty;
-  if (tcgetattr (fd, &tty) != 0){
-    fprintf(stderr, "error calling tcgetattr");
-  }
-
-  cfsetospeed (&tty, speed);
-  cfsetispeed (&tty, speed);
-
-  tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
-  // disable IGNBRK for mismatched speed tests; otherwise receive break
-  // as \000 chars
-  tty.c_iflag &= ~IGNBRK;         // disable break processing
-  tty.c_lflag = 0;                // no signaling chars, no echo,
-                                  // no canonical processing
-  tty.c_oflag = 0;                // no remapping, no delays
-  tty.c_cc[VMIN]  = 0;            // read doesn't block
-  tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
-
-  tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
-  tty.c_cflag |= (CLOCAL | CREAD);// ignore modem controls, enable reading
-  tty.c_cflag &= ~(PARENB | PARODD);      // shut off parity
-  tty.c_cflag |= 0;
-  tty.c_cflag &= ~CSTOPB;
-  tty.c_cflag &= ~CRTSCTS;
-
-  if (tcsetattr (fd, TCSANOW, &tty) != 0){
-    fprintf(stderr, "error setting tcsetattr");
-  }
-}
-
-
 void
 command_config_tmcuart(uint32_t *args)
 {
@@ -247,60 +186,29 @@ DECL_COMMAND(command_config_tmcuart,
              "config_tmcuart oid=%c rx_pin=%u pull_up=%c"
              " tx_pin=%u bit_time=%u");
 
- void
- command_config_tmcuart_tty(uint32_t *args)
- {
-     struct tmcuart_s *t = oid_alloc(args[0], command_config_tmcuart_tty
-                                     , sizeof(*t));
-     char portname[11];
-     sprintf(portname, "/dev/ttyS%d", args[1]);
-     t->fd = open (portname, O_RDWR | O_NOCTTY | O_SYNC);
-     if (t->fd < 0){
-           fprintf(stderr, "error opening %s", portname);
-     }
-     t->is_tty = 1;
-     fprintf(stderr, "opening %s", portname);
-     set_interface_attribs(t->fd, 9600);
-     // Flush out any remaining data
-     tcflush(t->fd, TCIOFLUSH);
- }
- DECL_COMMAND(command_config_tmcuart_tty,
-              "config_tmcuart_tty oid=%c tty=%u");
-
-
-
 // Parse and schedule a TMC UART transmission request
 void
 command_tmcuart_send(uint32_t *args)
 {
-    struct tmcuart_s *t = oid_lookup(args[0], command_config_tmcuart_tty);
+    struct tmcuart_s *t = oid_lookup(args[0], command_config_tmcuart);
     if (t->flags & TU_ACTIVE)
         // Uart is busy - silently drop this request (host should retransmit)
         return;
-    // Workaround for 64 bit addr space
     uint8_t write_len = args[1];
     uint8_t *write = command_decode_ptr(args[2]);
     uint8_t read_len = args[3];
     if (write_len > sizeof(t->data) || read_len > sizeof(t->data))
         shutdown("tmcuart data too large");
     memcpy(t->data, write, write_len);
-    if(t->is_tty){
-      t->timer.func = tmcuart_send_tty;
-      t->write_count = write_len;
-      t->read_count = read_len;
-      t->flags |= TU_ACTIVE;
-    }
-    else{
-      t->pos = 0;
-      t->flags = (t->flags & (TU_LINE_HIGH|TU_PULLUP|TU_SINGLE_WIRE)) | TU_ACTIVE;
-      t->write_count = write_len * 8;
-      t->read_count = read_len * 8;
-      if (write_len >= 1 && (t->data[0] & 0x3f) == 0x2a) {
-          t->timer.func = tmcuart_send_sync_event;
-      } else {
-          t->bit_time = t->cfg_bit_time;
-          t->timer.func = tmcuart_send_event;
-      }
+    t->pos = 0;
+    t->flags = (t->flags & (TU_LINE_HIGH|TU_PULLUP|TU_SINGLE_WIRE)) | TU_ACTIVE;
+    t->write_count = write_len * 8;
+    t->read_count = read_len * 8;
+    if (write_len >= 1 && (t->data[0] & 0x3f) == 0x2a) {
+        t->timer.func = tmcuart_send_sync_event;
+    } else {
+        t->bit_time = t->cfg_bit_time;
+        t->timer.func = tmcuart_send_event;
     }
     irq_disable();
     t->timer.waketime = timer_read_time() + timer_from_us(200);
@@ -317,22 +225,14 @@ tmcuart_task(void)
         return;
     uint8_t oid;
     struct tmcuart_s *t;
-    foreach_oid(oid, t, t->is_tty ?
-          command_config_tmcuart_tty : command_config_tmcuart) {
+    foreach_oid(oid, t, command_config_tmcuart) {
         if (!(t->flags & TU_REPORT))
             continue;
         irq_disable();
         t->flags &= ~TU_REPORT;
         irq_enable();
-        if(t->is_tty){
-          sendf("tmcuart_response oid=%c read=%*s"
-                , oid, t->read_count, t->data);
-
-        }
-        else{
-          sendf("tmcuart_response oid=%c read=%*s"
-                , oid, t->read_count/8, t->data);
-        }
+        sendf("tmcuart_response oid=%c read=%*s"
+              , oid, t->read_count / 8, t->data);
     }
 }
 DECL_TASK(tmcuart_task);
