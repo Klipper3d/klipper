@@ -105,7 +105,8 @@ class IdleTimeout:
     def cmd_SET_IDLE_TIMEOUT(self, gcmd):
         timeout = gcmd.get_float('TIMEOUT', None, above=0.)
         if timeout is None:
-            gcmd.respond_info("idle_timeout: Timeout %.2f s" % (self.idle_timeout))
+            gcmd.respond_info("idle_timeout: Timeout %.2f s" %
+                              (self.idle_timeout))
         else:
             self.idle_timeout = timeout
             if self.state == "Ready":
