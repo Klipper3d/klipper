@@ -33,7 +33,7 @@ class DualCarriages:
                 kin.override_rail(self.axis, dc_rail)
                 toolhead.set_position(newpos)
                 kin.update_limits(self.axis, dc_rail.get_range())
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         dc0, dc1 = self.dc
         if (dc0.is_active() is True):
             return { 'mode': 'FULL_CONTROL', 'active_carriage': 'CARRIAGE_0' }

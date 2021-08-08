@@ -184,12 +184,24 @@ class PrinterHoming:
     def manual_home(self, toolhead, endstops, pos, speed,
                     triggered, check_triggered):
         hmove = HomingMove(self.printer, endstops, toolhead)
-        hmove.homing_move(pos, speed, triggered=triggered,
-                          check_triggered=check_triggered)
+        try:
+            hmove.homing_move(pos, speed, triggered=triggered,
+                              check_triggered=check_triggered)
+        except self.printer.command_error:
+            if self.printer.is_shutdown():
+                raise self.printer.command_error(
+                    "Homing failed due to printer shutdown")
+            raise
     def probing_move(self, mcu_probe, pos, speed):
         endstops = [(mcu_probe, "probe")]
         hmove = HomingMove(self.printer, endstops)
-        epos = hmove.homing_move(pos, speed, probe_pos=True)
+        try:
+            epos = hmove.homing_move(pos, speed, probe_pos=True)
+        except self.printer.command_error:
+            if self.printer.is_shutdown():
+                raise self.printer.command_error(
+                    "Probing failed due to printer shutdown")
+            raise
         if hmove.check_no_movement() is not None:
             raise self.printer.command_error(
                 "Probe triggered prior to movement")
@@ -208,6 +220,9 @@ class PrinterHoming:
         try:
             kin.home(homing_state)
         except self.printer.command_error:
+            if self.printer.is_shutdown():
+                raise self.printer.command_error(
+                    "Homing failed due to printer shutdown")
             self.printer.lookup_object('stepper_enable').motor_off()
             raise
 

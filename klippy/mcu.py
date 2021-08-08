@@ -522,6 +522,7 @@ class MCU:
         self._reset_cmd = self._config_reset_cmd = None
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
+        self._shutdown_clock = 0
         self._shutdown_msg = ""
         # Config building
         printer.lookup_object('pins').register_chip(self._name, self)
@@ -565,6 +566,9 @@ class MCU:
         if self._is_shutdown:
             return
         self._is_shutdown = True
+        clock = params.get("clock")
+        if clock is not None:
+            self._shutdown_clock = self.clock32_to_clock64(clock)
         self._shutdown_msg = msg = params['static_string_id']
         logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, params['#name'],
                      self._shutdown_msg, self._clocksync.dump_debug(),
@@ -880,6 +884,8 @@ class MCU:
         return self._printer.get_start_args().get('debugoutput') is not None
     def is_shutdown(self):
         return self._is_shutdown
+    def get_shutdown_clock(self):
+        return self._shutdown_clock
     def flush_moves(self, print_time):
         if self._steppersync is None:
             return
