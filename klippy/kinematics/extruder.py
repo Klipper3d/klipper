@@ -184,20 +184,24 @@ class PrinterExtruder:
         pressure_advance = gcmd.get_float('ADVANCE', None, minval=0.)
         smooth_time = gcmd.get_float('SMOOTH_TIME', None, minval=0.,
                                      maxval=.200)
-        if pressure_advance is not None:
-            self.pressure_advance = pressure_advance
-        if smooth_time is not None:
-            pressure_advance_smooth_time = smooth_time
+        if (pressure_advance is None and smooth_time is None):
+            gcmd.respond_info("pressure_advance: %.6f\n"
+                              "pressure_advance_smooth_time: %.6f"
+                              % (self.pressure_advance,
+                                 self.pressure_advance_smooth_time))
         else:
-            pressure_advance_smooth_time = self.pressure_advance_smooth_time
-        self._set_pressure_advance(self.pressure_advance,
-                                   pressure_advance_smooth_time)
-        msg = ("pressure_advance: %.6f\n"
-               "pressure_advance_smooth_time: %.6f"
-               % (self.pressure_advance, self.pressure_advance_smooth_time))
-        self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
-        if pressure_advance is None and smooth_time is None:
-            gcmd.respond_info(msg, log=False)
+            if pressure_advance is not None:
+                self.pressure_advance = pressure_advance
+            if smooth_time is None:
+                smooth_time = self.pressure_advance_smooth_time
+            self._set_pressure_advance(self.pressure_advance, smooth_time)
+
+            msg = ("pressure_advance: %.6f\n"
+                   "pressure_advance_smooth_time: %.6f"
+                   % (self.pressure_advance,
+                      self.pressure_advance_smooth_time))
+            self.printer.set_rollover_info(self.name, "%s: %s" %
+                                           (self.name, msg))
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
     def cmd_SET_E_STEP_DISTANCE(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
