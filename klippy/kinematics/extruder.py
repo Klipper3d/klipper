@@ -181,17 +181,23 @@ class PrinterExtruder:
         extruder = self.printer.lookup_object('toolhead').get_extruder()
         extruder.cmd_SET_PRESSURE_ADVANCE(gcmd)
     def cmd_SET_PRESSURE_ADVANCE(self, gcmd):
-        pressure_advance = gcmd.get_float('ADVANCE', self.pressure_advance,
-                                          minval=0.)
-        smooth_time = gcmd.get_float('SMOOTH_TIME',
-                                     self.pressure_advance_smooth_time,
-                                     minval=0., maxval=.200)
-        self._set_pressure_advance(pressure_advance, smooth_time)
+        pressure_advance = gcmd.get_float('ADVANCE', None, minval=0.)
+        smooth_time = gcmd.get_float('SMOOTH_TIME', None, minval=0.,
+                                     maxval=.200)
+        if pressure_advance is not None:
+            self.pressure_advance = pressure_advance
+        if smooth_time is not None:
+            pressure_advance_smooth_time = smooth_time
+        else:
+            pressure_advance_smooth_time = self.pressure_advance_smooth_time
+        self._set_pressure_advance(self.pressure_advance,
+                                   pressure_advance_smooth_time)
         msg = ("pressure_advance: %.6f\n"
                "pressure_advance_smooth_time: %.6f"
-               % (pressure_advance, smooth_time))
+               % (self.pressure_advance, self.pressure_advance_smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
-        gcmd.respond_info(msg, log=False)
+        if pressure_advance is None and smooth_time is None:
+            gcmd.respond_info(msg, log=False)
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
     def cmd_SET_E_STEP_DISTANCE(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
