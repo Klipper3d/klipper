@@ -1,5 +1,4 @@
-Frequently asked questions
-==========================
+# Frequently asked questions
 
 1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
 2. [How do I calculate the rotation_distance config parameter?](#how-do-i-calculate-the-rotation_distance-config-parameter)
@@ -26,16 +25,16 @@ Frequently asked questions
 23. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
 24. [How do I uninstall klipper?](#how-do-i-uninstall-klipper)
 
-### How can I donate to the project?
+## How can I donate to the project?
 
 Thanks. Kevin has a Patreon page at:
 [https://www.patreon.com/koconnor](https://www.patreon.com/koconnor)
 
-### How do I calculate the rotation_distance config parameter?
+## How do I calculate the rotation_distance config parameter?
 
 See the [rotation distance document](Rotation_Distance.md).
 
-### Where's my serial port?
+## Where's my serial port?
 
 The general way to find a USB serial port is to run `ls
 /dev/serial/by-id/*` from an ssh terminal on the host machine. It will
@@ -65,13 +64,13 @@ If you are using multiple micro-controllers and they do not have
 unique ids (common on boards with a CH340 USB chip) then follow the
 directions above using the command `ls /dev/serial/by-path/*` instead.
 
-### When the micro-controller restarts the device changes to /dev/ttyUSB1
+## When the micro-controller restarts the device changes to /dev/ttyUSB1
 
 Follow the directions in the
 "[Where's my serial port?](#wheres-my-serial-port)" section to prevent
 this from occurring.
 
-### The "make flash" command doesn't work
+## The "make flash" command doesn't work
 
 The code attempts to flash the device using the most common method for
 each platform. Unfortunately, there is a lot of variance in flashing
@@ -94,7 +93,7 @@ to manually flash the device using tools such as "avrdude" or
 "bossac" - see the [bootloader document](Bootloaders.md) for
 additional information.
 
-### How do I change the serial baud rate?
+## How do I change the serial baud rate?
 
 The recommended baud rate for Klipper is 250000. This baud rate works
 well on all micro-controller boards that Klipper supports. If you've
@@ -122,7 +121,7 @@ of the micro-controller's bootloader. See the
 [bootloader document](Bootloaders.md) for additional information on
 bootloaders.
 
-### Can I run Klipper on something other than a Raspberry Pi 3?
+## Can I run Klipper on something other than a Raspberry Pi 3?
 
 The recommended hardware is a Raspberry Pi 2, Raspberry Pi 3, or
 Raspberry Pi 4.
@@ -165,7 +164,7 @@ seemingly random "Lost communication with MCU" errors.) If you install
 Klipper on one of these distributions you may need to disable that
 package.
 
-### Can I run multiple instances of Klipper on the same host machine?
+## Can I run multiple instances of Klipper on the same host machine?
 
 It is possible to run multiple instances of the Klipper host software,
 but doing so requires Linux admin knowledge. The Klipper installation
@@ -186,7 +185,7 @@ start, stop, and installation scripts (if any). The
 [klipper-start.sh](../scripts/klipper-start.sh) script may be useful
 as examples.
 
-### Do I have to use OctoPrint?
+## Do I have to use OctoPrint?
 
 The Klipper software is not dependent on OctoPrint. It is possible to
 use alternative software to send commands to Klipper, but doing so
@@ -197,7 +196,7 @@ and it emulates a classic 3d-printer serial interface via that file.
 In general, alternative software may work with Klipper as long as it
 can be configured to use "/tmp/printer" for the printer serial port.
 
-### Why can't I move the stepper before homing the printer?
+## Why can't I move the stepper before homing the printer?
 
 The code does this to reduce the chance of accidentally commanding the
 head into the bed or a wall. Once the printer is homed the software
@@ -222,7 +221,7 @@ purposes then consider adding a force_move section to the config
 file. See [config reference](Config_Reference.md#customized_homing)
 for further details on these options.
 
-### Why is the Z position_endstop set to 0.5 in the default configs?
+## Why is the Z position_endstop set to 0.5 in the default configs?
 
 For cartesian style printers the Z position_endstop specifies how far
 the nozzle is from the bed when the endstop triggers. If possible, it
@@ -234,7 +233,7 @@ bed. This way, when homing the axis, it will stop before the nozzle
 touches the bed. See the [bed level document](Bed_Level.md) for more
 information.
 
-### I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis
+## I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis
 
 Short answer: First, make sure you have verified the stepper
 configuration as described in the
@@ -250,7 +249,7 @@ a higher speed. So, for a Z axis with a high gearing ratio or high
 microsteps setting the actual obtainable max_z_velocity may be smaller
 than what is configured in Marlin.
 
-### My TMC motor driver turns off in the middle of a print
+## My TMC motor driver turns off in the middle of a print
 
 If using the TMC2208 (or TMC2224) driver in "standalone mode" then
 make sure to use the
@@ -258,7 +257,7 @@ make sure to use the
 workaround for a TMC2208 "stealthchop" driver problem was added to
 Klipper in mid-March of 2020.
 
-### I keep getting random "Lost communication with MCU" errors
+## I keep getting random "Lost communication with MCU" errors
 
 This is commonly caused by hardware errors on the USB connection
 between the host machine and the micro-controller. Things to look for:
@@ -287,14 +286,14 @@ between the host machine and the micro-controller. Things to look for:
   one may modify a USB cable so that it does not carry 5V power
   between the host and micro-controller.)
 
-### My Raspberry Pi keeps rebooting during prints
+## My Raspberry Pi keeps rebooting during prints
 
 This is most likely do to voltage fluctuations. Follow the same
 troubleshooting steps for a
 ["Lost communication with MCU"](#i-keep-getting-random-lost-communication-with-mcu-errors)
 error.
 
-### When I set "restart_method=command" my AVR device just hangs on a restart
+## When I set "restart_method=command" my AVR device just hangs on a restart
 
 Some old versions of the AVR bootloader have a known bug in watchdog
 event handling. This typically manifests when the printer.cfg file has
@@ -308,7 +307,7 @@ flash an updated bootloader to the AVR device. Flashing a new
 bootloader is a one time step that typically requires an external
 programmer - see [Bootloaders](Bootloaders.md) for further details.
 
-### Will the heaters be left on if the Raspberry Pi crashes?
+## Will the heaters be left on if the Raspberry Pi crashes?
 
 The software has been designed to prevent that. Once the host enables
 a heater, the host software needs to confirm that enablement every 5
@@ -331,7 +330,7 @@ heaters and temperature sensors are functioning correctly. See the
 [config reference](Config_Reference.md#verify_heater) for further
 details.
 
-### How do I convert a Marlin pin number to a Klipper pin name?
+## How do I convert a Marlin pin number to a Klipper pin name?
 
 Short answer: A mapping is available in the
 [sample-aliases.cfg](../config/sample-aliases.cfg) file. Use that file
@@ -360,7 +359,7 @@ Arduino board, but is `PC7` on another common Arduino board.
 To avoid this confusion, the core Klipper code uses the standard pin
 names defined by the micro-controller.
 
-### Do I have to wire my device to a specific type of micro-controller pin?
+## Do I have to wire my device to a specific type of micro-controller pin?
 
 It depends on the type of device and type of pin:
 
@@ -394,7 +393,7 @@ steppers, heaters, fans, Z probes, servos, LEDs, common hd44780/st7920
 LCD displays, the Trinamic UART control line may be wired to any
 general purpose IO pin.
 
-### How do I cancel an M109/M190 "wait for temperature" request?
+## How do I cancel an M109/M190 "wait for temperature" request?
 
 Navigate to the OctoPrint terminal tab and issue an M112 command in
 the terminal box. The M112 command will cause Klipper to enter into a
@@ -405,7 +404,7 @@ terminal tab and issue a FIRMWARE_RESTART command to clear the Klipper
 error state.  After completing this sequence, the previous heating
 request will be canceled and a new print may be started.
 
-### Can I find out whether the printer has lost steps?
+## Can I find out whether the printer has lost steps?
 
 In a way, yes. Home the printer, issue a `GET_POSITION` command, run
 your print, home again and issue another `GET_POSITION`. Then compare
@@ -423,7 +422,7 @@ only lose steps in increments of 4 full steps. (So, if one is using 16
 microsteps, then a lost step on the stepper would result in the "mcu:"
 step counter being off by a multiple of 64 microsteps.)
 
-### Why does Klipper report errors? I lost my print!
+## Why does Klipper report errors? I lost my print!
 
 Short answer: We want to know if our printers detect a problem so that
 the underlying issue can be fixed and we can obtain great quality
@@ -453,7 +452,7 @@ experience during abnormal events, but it is expected that will
 require notable infrastructure work (including a shift away from
 G-Code).
 
-### How do I upgrade to the latest software?
+## How do I upgrade to the latest software?
 
 The first step to upgrading the software is to review the latest
 [config changes](Config_Changes.md) document. On occasion, changes are
@@ -504,7 +503,7 @@ Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
 new software - the above "sudo service klipper restart" and "make
 flash" commands are needed for a software change to take effect.
 
-### How do I uninstall Klipper?
+## How do I uninstall Klipper?
 
 On the firmware end, nothing special needs to happen. Just follow the
 flashing directions for the new firmware.

@@ -244,7 +244,7 @@ class ToolHead:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
-        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.step_generators = []
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
@@ -285,7 +285,7 @@ class ToolHead:
             for sg in self.step_generators:
                 sg(sg_flush_time)
             free_time = max(lkft, sg_flush_time - kin_flush_delay)
-            self.trapq_free_moves(self.trapq, free_time)
+            self.trapq_finalize_moves(self.trapq, free_time)
             self.extruder.update_move_time(free_time)
             mcu_flush_time = max(lkft, sg_flush_time - self.move_flush_time)
             for m in self.all_mcus:
@@ -401,7 +401,9 @@ class ToolHead:
         return list(self.commanded_pos)
     def set_position(self, newpos, homing_axes=()):
         self.flush_step_generation()
-        self.trapq_free_moves(self.trapq, self.reactor.NEVER)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.trapq_set_position(self.trapq, self.print_time,
+                                   newpos[0], newpos[1], newpos[2])
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
         self.printer.send_event("toolhead:set_position")
@@ -477,7 +479,7 @@ class ToolHead:
             self.move_queue.flush()
         except DripModeEndSignal as e:
             self.move_queue.reset()
-            self.trapq_free_moves(self.trapq, self.reactor.NEVER)
+            self.trapq_finalize_moves(self.trapq, self.reactor.NEVER)
         # Exit "Drip" state
         self.flush_step_generation()
     # Misc commands

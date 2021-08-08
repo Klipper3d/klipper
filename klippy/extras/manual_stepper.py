@@ -25,7 +25,7 @@ class ManualStepper:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
-        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.rail.setup_itersolve('cartesian_stepper_alloc', 'x')
         self.rail.set_trapq(self.trapq)
         # Register commands
@@ -67,7 +67,7 @@ class ManualStepper:
                           0., cruise_v, accel)
         self.next_cmd_time = self.next_cmd_time + accel_t + cruise_t + accel_t
         self.rail.generate_steps(self.next_cmd_time)
-        self.trapq_free_moves(self.trapq, self.next_cmd_time + 99999.9)
+        self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.note_kinematic_activity(self.next_cmd_time)
         if sync:

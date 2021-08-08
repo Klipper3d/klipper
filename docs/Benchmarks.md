@@ -1,7 +1,8 @@
+# Benchmarks
+
 This document describes Klipper benchmarks.
 
-Micro-controller Benchmarks
-===========================
+## Micro-controller Benchmarks
 
 This section describes the mechanism used to generate the Klipper
 micro-controller step rate benchmarks.
@@ -23,7 +24,7 @@ or other innocuous pins. **Always verify that it is safe to drive the
 configured pins prior to running a benchmark.** It is not recommended
 to drive an actual stepper during a benchmark.
 
-## Step rate benchmark test ##
+### Step rate benchmark test
 
 The test is performed using the console.py tool (described in
 [Debugging.md](Debugging.md)). The micro-controller is configured for
@@ -86,7 +87,7 @@ delay"). This configuration is believed to be valid in real-world
 usage when one is solely using Trinamic stepper drivers. The results
 of these benchmarks are not reported in the Features.md document.
 
-### AVR step rate benchmark ###
+### AVR step rate benchmark
 
 The following configuration sequence is used on AVR chips:
 ```
@@ -109,7 +110,7 @@ results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
 | 2 stepper        | 296   |
 | 3 stepper        | 472   |
 
-### Arduino Due step rate benchmark ###
+### Arduino Due step rate benchmark
 
 The following configuration sequence is used on the Due:
 ```
@@ -131,7 +132,7 @@ The test was last run on commit `8d4a5c16` with gcc version
 | 1 stepper (no delay) | 77    |
 | 3 stepper (no delay) | 299   |
 
-### Duet Maestro step rate benchmark ###
+### Duet Maestro step rate benchmark
 
 The following configuration sequence is used on the Duet Maestro:
 ```
@@ -153,7 +154,7 @@ The test was last run on commit `8d4a5c16` with gcc version
 | 1 stepper (no delay) | 70    |
 | 3 stepper (no delay) | 254   |
 
-### Duet Wifi step rate benchmark ###
+### Duet Wifi step rate benchmark
 
 The following configuration sequence is used on the Duet Wifi:
 ```
@@ -177,7 +178,7 @@ The test was last run on commit `59a60d68` with gcc version
 | 3 stepper        | 525   |
 | 4 stepper        | 703   |
 
-### Beaglebone PRU step rate benchmark ###
+### Beaglebone PRU step rate benchmark
 
 The following configuration sequence is used on the PRU:
 ```
@@ -198,7 +199,7 @@ The test was last run on commit `b161a69e` with gcc version `pru-gcc
 | 2 stepper        | 853   |
 | 3 stepper        | 883   |
 
-### STM32F042 step rate benchmark ###
+### STM32F042 step rate benchmark
 
 The following configuration sequence is used on the STM32F042:
 ```
@@ -218,7 +219,7 @@ The test was last run on commit `0b0c47c5` with gcc version
 | 2 stepper        | 328   |
 | 3 stepper        | 558   |
 
-### STM32F103 step rate benchmark ###
+### STM32F103 step rate benchmark
 
 The following configuration sequence is used on the STM32F103:
 ```
@@ -240,7 +241,7 @@ The test was last run on commit `8d4a5c16` with gcc version
 | 1 stepper (no delay) | 71    |
 | 3 stepper (no delay) | 288   |
 
-### STM32F4 step rate benchmark ###
+### STM32F4 step rate benchmark
 
 The following configuration sequence is used on the STM32F4:
 ```
@@ -275,7 +276,7 @@ using a 168Mhz clock).
 | 1 stepper (no delay) | 52    |
 | 3 stepper (no delay) | 226   |
 
-### LPC176x step rate benchmark ###
+### LPC176x step rate benchmark
 
 The following configuration sequence is used on the LPC176x:
 ```
@@ -306,7 +307,7 @@ results were obtained by overclocking an LPC1768 to 120Mhz.
 | 1 stepper (no delay) | 56    |
 | 3 stepper (no delay) | 240   |
 
-### SAMD21 step rate benchmark ###
+### SAMD21 step rate benchmark
 
 The following configuration sequence is used on the SAMD21:
 ```
@@ -329,7 +330,7 @@ micro-controller.
 | 1 stepper (no delay) | 83    |
 | 3 stepper (no delay) | 321   |
 
-### SAMD51 step rate benchmark ###
+### SAMD51 step rate benchmark
 
 The following configuration sequence is used on the SAMD51:
 ```
@@ -360,7 +361,7 @@ micro-controller.
 | 1 stepper (no delay) | 42    |
 | 3 stepper (no delay) | 194   |
 
-### RP2040 step rate benchmark ###
+### RP2040 step rate benchmark
 
 The following configuration sequence is used on the RP2040:
 
@@ -386,7 +387,7 @@ Pico board.
 | 1 stepper (no delay) | 5     |
 | 3 stepper (no delay) | 22    |
 
-### Linux MCU step rate benchmark ###
+### Linux MCU step rate benchmark
 
 The following configuration sequence is used on a Raspberry Pi:
 ```
@@ -407,7 +408,7 @@ The test was last run on commit `db0fb5d5` with gcc version `gcc
 | 2 stepper            | 350   |
 | 3 stepper            | 400   |
 
-## Command dispatch benchmark ##
+## Command dispatch benchmark
 
 The command dispatch benchmark tests how many "dummy" commands the
 micro-controller can process. It is primarily a test of the hardware
@@ -448,8 +449,7 @@ hub.
 | stm32f446 (USB)     | 870K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | rp2040 (USB)        | 873K | c5667193 | arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0 |
 
-Host Benchmarks
-===============
+## Host Benchmarks
 
 It is possible to run timing tests on the host software using the
 "batch mode" processing mechanism (described in
