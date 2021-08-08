@@ -245,7 +245,7 @@ class TMCCommandHelper:
             if prev_hold_current is None:
                 gcmd.respond_info("Run Current: %0.2fA" % (prev_run_current,))
             else:
-                gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
+                gcmd.respond_info("Run Current: %0.2fA\nHold Current: %0.2fA"
                                   % (prev_run_current, prev_hold_current))
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
