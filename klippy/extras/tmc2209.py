@@ -78,7 +78,6 @@ class TMC2209:
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
-        set_config_field(config, "internal_Rsense", 1)
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)

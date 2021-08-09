@@ -1,4 +1,4 @@
-# Code to configure miscellaneous chips
+# Config for Recore,
 #
 # Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
 #
@@ -19,7 +19,6 @@ class recore:
         'A5': 'A5',
         'A6': 'A6'}
     config.getchoice('revision', revisions)
-    self.host_mcu = mcu.get_printer_mcu(printer, config.get('host_mcu'))
     # Setup enable pin
     enable_pin = config.get('enable_pin', 'ar100:PG1')
     self.mcu_power_enable = ppins.setup_pin('digital_out', enable_pin)

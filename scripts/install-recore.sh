@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script installs Klipper on an Ubuntu 18.04 machine with Octoprint
+# This script installs Klipper on a Debian 10 machine with Octoprint
 
 PYTHONDIR="${HOME}/klippy-env"
 SYSTEMDDIR="/etc/systemd/system"
@@ -60,7 +60,11 @@ WantedBy=multi-user.target
 Type=simple
 User=root
 RemainAfterExit=yes
-ExecStartPre=${SRCDIR}/scripts/restart-recore.py
+ExecStartPre=/usr/bin/gpioget 1 100
+ExecStartPre=/usr/bin/gpioget 1 235
+ExecStartPre=/usr/bin/gpioget 1 145
+ExecStartPre=/usr/bin/gpioget 1 34
+ExecStartPre=${SRCDIR}/scripts/flash-ar100.py ${SRCDIR}/out/ar100.bin
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l ${KLIPPER_LOG}
 EOF
 # Use systemctl to enable the klipper systemd service script

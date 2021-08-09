@@ -367,25 +367,20 @@ The following configuration sequence is used on AR100 CPU (Allwinner A64):
 ```
 PINS ar100
 allocate_oids count=3
-config_stepper oid=0 step_pin=PE0 dir_pin=PE8 min_stop_interval=0 invert_step=0
-config_stepper oid=1 step_pin=PE1 dir_pin=PE9 min_stop_interval=0 invert_step=0
-config_stepper oid=2 step_pin=PE2 dir_pin=PE10 min_stop_interval=0 invert_step=0
+config_stepper oid=0 step_pin=PL4 dir_pin=PE8 invert_step=0
+config_stepper oid=1 step_pin=PL5 dir_pin=PE9 invert_step=0
+config_stepper oid=2 step_pin=PL6 dir_pin=PE10 invert_step=0
 finalize_config crc=0
 ```
 
-Run on Recore rev A2,so the PIO bank is shared with the main CPU.
-Frequency is for the ar100 is 300 MHz. Commit `6192aace` from the
-intelligent-agent fork.
-
-| AR100 PIO            | ticks |
-| -------------------- | ----- |
-| 1 stepper (no delay) | 134   |
-| 2 stepper (no delay) | 308   |
-| 3 stepper (no delay) | 500   |
+Run on Recore rev A5 using the R_PIO bank to avoid collisions.
+Frequency is for the ar100 is 300 MHz.
 
 | AR100 R_PIO          | ticks |
 | -------------------- | ----- |
-| 1 stepper (no delay) | 98    |
+| 1 stepper (no delay) | 120   |
+| 2 stepper (no delay) | 280   |
+| 3 stepper (no delay) | 458   |
 
 
 ## Command dispatch benchmark ##
@@ -450,13 +445,6 @@ FLOOD 100000 0.0 debug_nop
 get_uptime
 ```
 
-To calculate the frequency, paste this in a bash terminal window:
-```
-export mcu_frequency=300000000
-export before=1900409982
-export after=3041976087
-echo "100000 * ${mcu_frequency} / (${after}-${before})" | bc
-```
 
 When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
