@@ -10,8 +10,6 @@
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
-#include "autoconf.h" // CONFIG_MACH_AR100
-
 
 struct digital_out_s {
     struct timer timer;
@@ -142,6 +140,7 @@ command_set_digital_out_pwm_cycle(uint32_t *args)
 }
 DECL_COMMAND(command_set_digital_out_pwm_cycle,
              "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u");
+
 void
 command_queue_digital_out(uint32_t *args)
 {
@@ -194,6 +193,7 @@ command_update_digital_out(uint32_t *args)
     }
 }
 DECL_COMMAND(command_update_digital_out, "update_digital_out oid=%c value=%c");
+
 void
 digital_out_shutdown(void)
 {
