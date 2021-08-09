@@ -57,6 +57,9 @@ void irq_poll(void){
  void
  console_task(void)
  {
+     if (!sched_check_wake(&console_wake))
+      return;
+
      // Read data
      int ret = 0;
      for(int i=0; i<r_uart_fifo_rcv(); i++){
@@ -105,14 +108,37 @@ const struct command_parser shutdown_request = {
     .func = shutdown_handler,
 };
 
+
+void restore_data(void){
+  extern char __data_start, __data_end, __copy_start;
+  memcpy (&__data_start, &__copy_start, &__data_end - &__data_start);
+}
+
+void
+command_reset(uint32_t *args)
+{
+    timer_reset();
+    restore_data();
+    void *reset = (void *)0x9000;
+    goto *reset;
+}
+DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
+
+void save_data(void){
+  extern char __data_start, __data_end, __copy_start;
+  memcpy (&__copy_start, &__data_start, &__data_end - &__data_start);
+}
+
 __noreturn void main(uint32_t exception);
 __noreturn void main(uint32_t exception){
+
+  save_data();
 
   /* Swith CPUS to 300 MHz. This should be done in Linux eventually */
   r_prcm_set_cpus_clk_rate(PLL_PERIPH);
 
   r_uart_init();
-  uart_puts("**Start v0.0.4**\n");
+  uart_puts("**AR100 v0.1.0**\n");
   sched_main();
 	while(1){} // Stop complaining about noreturn
 }

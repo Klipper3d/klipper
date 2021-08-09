@@ -3,9 +3,9 @@ OUTPUT_FORMAT(elf32-or1k)
 ENTRY (start)
 
 STACK_SIZE = 0x200;
-SRAM_SIZE = 20M;
+SRAM_A2_SIZE = 64K;
 MEMORY {
-  SRAM_A2 (rwx): ORIGIN = 0x00009000, LENGTH = SRAM_SIZE
+  SRAM_A2 (rwx): ORIGIN = 0x00009000, LENGTH = SRAM_A2_SIZE
 }
 
 SECTIONS
@@ -20,7 +20,16 @@ SECTIONS
 
   .data . : ALIGN(4) {
     *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
+    __data_start = .;
     *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data*)))
+    . = ALIGN(4);
+    __data_end = .;
+  } >SRAM_A2
+
+  .copy . : ALIGN(4) {
+    __copy_start = .;
+    . += __data_end - __data_start;
+    __copy_end = .;
     . = ALIGN(4);
   } >SRAM_A2
 

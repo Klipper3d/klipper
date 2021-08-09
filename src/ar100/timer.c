@@ -29,6 +29,10 @@ uint32_t timer_read_time(void){
   return mfspr(SPR_TICK_TTCR_ADDR);
 }
 
+void timer_reset(void){
+  mtspr(SPR_TICK_TTCR_ADDR, 0);
+}
+
 // Activate timer dispatch as soon as possible
 void timer_kick(void){
     timer_set(timer_read_time() + 50);
