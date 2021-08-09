@@ -22,7 +22,7 @@ config CLOCK_FREQ
 config STEP_DELAY
     default 0
 
-config CONFIG_HAVE_DEBUG
+config HAVE_DEBUG
     bool
     default n
 
