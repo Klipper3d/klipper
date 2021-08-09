@@ -22,7 +22,8 @@ class recore:
     # Setup enable pin
     enable_pin = config.get('enable_pin', 'ar100:PG1')
     self.mcu_power_enable = ppins.setup_pin('digital_out', enable_pin)
-    self.mcu_power_enable.setup_start_value(start_value=1., shutdown_value=0., is_static=False)
+    self.mcu_power_enable.setup_start_value(
+        start_value=1., shutdown_value=0., is_static=False)
     self.mcu_power_enable.setup_max_duration(0.)
     self.mcu_power_start_value = self.mcu_power_shutdown_value = False
     # Setup stepper config
