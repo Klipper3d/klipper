@@ -188,7 +188,7 @@ CONFIG ../../config/generic-cramps.cfg
 CONFIG ../../config/generic-replicape.cfg
 
 # Printers using the AR100
-DICTIONARY ar100.dict host=stm32f031.dict
+DICTIONARY stm32f031.dict ar100=ar100.dict
 CONFIG ../../config/generic-recore.cfg
 
 
