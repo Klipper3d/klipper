@@ -11,7 +11,6 @@ CFLAGS		+= -msfimm -mshftimm -msoft-div -msoft-mul
 CFLAGS_klipper.elf := $(CFLAGS) -Wl,-T,src/ar100/ar100.ld -Wl,-Map,out/klipper.map
 CFLAGS_klipper.elf += -Wl,--no-undefined  -Wl,--gc-sections -static
 CFLAGS_klipper.elf += -Wl,--no-dynamic-linker
-#CFLAGS_klipper.elf += -nostdlib
 
 # Add source files
 src-y += ar100/main.c ar100/gpio.c ar100/serial.c ar100/prcm.c
@@ -42,10 +41,10 @@ $(OUT)ar100.bin: $(OUT)klipper.elf
 
 flash: $(OUT)ar100.bin
 	@echo "  Flashing"
-	$(Q)sudo ./scripts/flash-ar100.sh
+	$(Q) ./scripts/flash-ar100.py $(OUT)ar100.bin
 
 dump:
-	or1k-linux-musl-objdump -d out/klipper.elf  > out/klipper.dump
+	$(CROSS_PREFIX)-objdump -d out/klipper.elf  > out/klipper.dump
 
 size:
-	or1k-linux-musl-size out/klipper.elf
+	$(CROSS_PREFIX)size out/klipper.elf

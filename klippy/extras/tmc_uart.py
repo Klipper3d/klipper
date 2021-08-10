@@ -53,15 +53,34 @@ class MCU_analog_mux:
 # TMC uart communication
 ######################################################################
 
+# Share mutexes so only one active tmc_uart command on a single mcu at
+# a time. This helps limit cpu usage on slower micro-controllers.
+class PrinterTMCUartMutexes:
+    def __init__(self):
+        self.mcu_to_mutex = {}
+def lookup_tmc_uart_mutex(mcu):
+    printer = mcu.get_printer()
+    pmutexes = printer.lookup_object('tmc_uart', None)
+    if pmutexes is None:
+        pmutexes = PrinterTMCUartMutexes()
+        printer.add_object('tmc_uart', pmutexes)
+    mutex = pmutexes.mcu_to_mutex.get(mcu)
+    if mutex is None:
+        mutex = printer.get_reactor().mutex()
+        pmutexes.mcu_to_mutex[mcu] = mutex
+    return mutex
+
+TMC_BAUD_RATE = 40000
+TMC_BAUD_RATE_AVR = 9000
+
 # Code for sending messages on a TMC uart
 class MCU_TMC_uart_bitbang:
-    def __init__(self, rx_pin_params, tx_pin_params, select_pins_desc, tty=None):
+    def __init__(self, rx_pin_params, tx_pin_params, select_pins_desc):
         self.mcu = rx_pin_params['chip']
-        self.mutex = self.mcu.get_printer().get_reactor().mutex()
+        self.mutex = lookup_tmc_uart_mutex(self.mcu)
         self.pullup = rx_pin_params['pullup']
         self.rx_pin = rx_pin_params['pin']
         self.tx_pin = tx_pin_params['pin']
-        self.tty = tty
         self.oid = self.mcu.create_oid()
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.analog_mux = None
@@ -72,16 +91,20 @@ class MCU_TMC_uart_bitbang:
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
     def build_config(self):
-        bit_ticks = int(self.mcu.get_adjusted_freq() / 9000.)
-        if self.tty:
-            self.mcu.add_config_cmd("config_tmcuart_tty oid=%d tty=%s" % (self.oid, self.tty))
-        else:
-            self.mcu.add_config_cmd("config_tmcuart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d" %
-                (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))
-        self.tmcuart_send_cmd = self.mcu.lookup_command(
-            "tmcuart_send oid=%c write=%*s read=%c", cq=self.cmd_queue)
+        baud = TMC_BAUD_RATE
+        mcu_type = self.mcu.get_constants().get("MCU", "")
+        if mcu_type.startswith("atmega") or mcu_type.startswith("at90usb"):
+            baud = TMC_BAUD_RATE_AVR
+        bit_ticks = self.mcu.seconds_to_clock(1. / baud)
+        self.mcu.add_config_cmd(
+            "config_tmcuart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
+            % (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))
+        self.tmcuart_send_cmd = self.mcu.lookup_query_command(
+            "tmcuart_send oid=%c write=%*s read=%c",
+            "tmcuart_response oid=%c read=%*s", oid=self.oid,
+            cq=self.cmd_queue, is_async=True)
     def register_instance(self, rx_pin_params, tx_pin_params,
-                          select_pins_desc, addr, tty):
+                          select_pins_desc, addr):
         if (rx_pin_params['pin'] != self.rx_pin
             or tx_pin_params['pin'] != self.tx_pin
             or (select_pins_desc is None) != (self.analog_mux is None)):
@@ -90,7 +113,7 @@ class MCU_TMC_uart_bitbang:
         instance_id = None
         if self.analog_mux is not None:
             instance_id = self.analog_mux.get_instance_id(select_pins_desc)
-        if (instance_id, addr) in self.instances and tty is None:
+        if (instance_id, addr) in self.instances:
             raise self.mcu.get_printer().config_error(
                 "Shared TMC uarts need unique address or select_pins polarity")
         self.instances[(instance_id, addr)] = True
@@ -129,21 +152,19 @@ class MCU_TMC_uart_bitbang:
         msg = bytearray([sync, addr, reg, (val >> 24) & 0xff,
                          (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff])
         msg.append(self._calc_crc8(msg))
-        return msg #self._add_serial_bits(msg)
+        return self._add_serial_bits(msg)
     def _decode_read(self, reg, data):
         # Extract a uart read response message
-        if len(data) != 8:
+        if len(data) != 10:
             return None
-        val = ord(data[6]) | ord(data[5]) << 8 | ord(data[4]) << 16 | ord(data[3]) << 24
-
         # Convert data into a long integer for easy manipulation
-        #mval = pos = 0
-        #for d in bytearray(data):
-        #    mval |= d << pos
-        #    pos += 8
+        mval = pos = 0
+        for d in bytearray(data):
+            mval |= d << pos
+            pos += 8
         # Extract register value
-        #val = ((((mval >> 31) & 0xff) << 24) | (((mval >> 41) & 0xff) << 16)
-        #       | (((mval >> 51) & 0xff) << 8) | ((mval >> 61) & 0xff))
+        val = ((((mval >> 31) & 0xff) << 24) | (((mval >> 41) & 0xff) << 16)
+               | (((mval >> 51) & 0xff) << 8) | ((mval >> 61) & 0xff))
         # Verify start/stop bits and crc
         encoded_data = self._encode_write(0x05, 0xff, reg, val)
         if data != encoded_data:
@@ -153,8 +174,7 @@ class MCU_TMC_uart_bitbang:
         if self.analog_mux is not None:
             self.analog_mux.activate(instance_id)
         msg = self._encode_read(0xf5, addr, reg)
-        params = self.tmcuart_send_cmd.send_with_response(
-            [self.oid, msg, 8], 'tmcuart_response', self.oid)
+        params = self.tmcuart_send_cmd.send([self.oid, msg, 10])
         return self._decode_read(reg, params['read'])
     def reg_write(self, instance_id, addr, reg, val, print_time=None):
         minclock = 0
@@ -163,9 +183,7 @@ class MCU_TMC_uart_bitbang:
         if self.analog_mux is not None:
             self.analog_mux.activate(instance_id)
         msg = self._encode_write(0xf5, addr, reg | 0x80, val)
-        self.tmcuart_send_cmd.send_with_response(
-            [self.oid, msg, 0], 'tmcuart_response', self.oid,
-            minclock=minclock)
+        self.tmcuart_send_cmd.send([self.oid, msg, 0], minclock=minclock)
 
 # Lookup a (possibly shared) tmc uart
 def lookup_tmc_uart_bitbang(config, max_addr):
@@ -181,15 +199,13 @@ def lookup_tmc_uart_bitbang(config, max_addr):
         raise ppins.error("TMC uart rx and tx pins must be on the same mcu")
     select_pins_desc = config.get('select_pins', None)
     addr = config.getint('uart_address', 0, minval=0, maxval=max_addr)
-    tty = config.getint('uart_tty', 2)
-    logging.info("TTY=%i" % (tty))
     mcu_uart = rx_pin_params.get('class')
     if mcu_uart is None:
         mcu_uart = MCU_TMC_uart_bitbang(rx_pin_params, tx_pin_params,
-                                        select_pins_desc, tty)
+                                        select_pins_desc)
         rx_pin_params['class'] = mcu_uart
     instance_id = mcu_uart.register_instance(rx_pin_params, tx_pin_params,
-                                             select_pins_desc, addr, tty)
+                                             select_pins_desc, addr)
     return instance_id, addr, mcu_uart
 
 # Helper code for communicating via TMC uart

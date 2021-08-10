@@ -99,6 +99,22 @@ usb_request_bootloader(void)
     NVIC_SystemReset();
 }
 
+// Copy vector table and remap ram so new vector table is used
+static void
+enable_ram_vectortable(void)
+{
+    // Symbols created by armcm_link.lds.S linker script
+    extern uint32_t _ram_vectortable_start, _ram_vectortable_end;
+    extern uint32_t _text_vectortable_start;
+
+    uint32_t count = (&_ram_vectortable_end - &_ram_vectortable_start) * 4;
+    __builtin_memcpy(&_ram_vectortable_start, &_text_vectortable_start, count);
+    barrier();
+
+    enable_pclock(SYSCFG_BASE);
+    SYSCFG->CFGR1 |= 3 << SYSCFG_CFGR1_MEM_MODE_Pos;
+}
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PF0,PF1");
 #endif
@@ -111,7 +127,8 @@ pll_setup(void)
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 48Mhz PLL from external crystal (HSE)
         uint32_t div = CONFIG_CLOCK_FREQ / CONFIG_CLOCK_REF_FREQ;
-        RCC->CR |= RCC_CR_HSEON;
+        RCC->CR = ((RCC->CR & ~RCC_CR_HSITRIM) | RCC_CR_HSEON
+                   | (CONFIG_STM32F0_TRIM << RCC_CR_HSITRIM_Pos));
         cfgr = RCC_CFGR_PLLSRC_HSE_PREDIV | ((div - 2) << RCC_CFGR_PLLMUL_Pos);
     } else {
         // Configure 48Mhz PLL from internal 8Mhz oscillator (HSI)
@@ -189,11 +206,15 @@ armcm_main(void)
 
     SystemInit();
 
+    if (CONFIG_ARMCM_RAM_VECTORTABLE)
+        enable_ram_vectortable();
+
     // Set flash latency
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL)
+    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL
+        && CONFIG_USBSERIAL)
         hsi48_setup();
     else
         pll_setup();
@@ -201,9 +222,10 @@ armcm_main(void)
     // Turn on hsi14 oscillator for ADC
     hsi14_setup();
 
-    // Support alternate USB pins on stm32f042
+    // Support pin remapping USB/CAN pins on low pinout stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
-    if (CONFIG_STM32F042_USB_PIN_SWAP) {
+    if (CONFIG_STM32_USB_PA11_PA12_REMAP
+        || CONFIG_STM32_CANBUS_PA11_PA12_REMAP) {
         enable_pclock(SYSCFG_BASE);
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
     }

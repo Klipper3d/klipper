@@ -5,7 +5,11 @@ if MACH_AR100
 config AR100_SELECT
     bool
     default y
+    select LOW_LEVEL_OPTIONS
+    select HAVE_ENDSTOPS
+    select HAVE_STEPPERS
     select HAVE_GPIO
+    select HAVE_TMC_UART
 
 config BOARD_DIRECTORY
     string
@@ -14,5 +18,12 @@ config BOARD_DIRECTORY
 config CLOCK_FREQ
     int
     default 300000000
+
+config STEP_DELAY
+    default 0
+
+config HAVE_DEBUG
+    bool
+    default n
 
 endif

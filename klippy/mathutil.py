@@ -1,9 +1,10 @@
 # Simple math helper functions
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, multiprocessing, traceback
+import queuelogger
 
 
 ######################################################################
@@ -51,6 +52,7 @@ def coordinate_descent(adj_params, params, error_func):
 def background_coordinate_descent(printer, adj_params, params, error_func):
     parent_conn, child_conn = multiprocessing.Pipe()
     def wrapper():
+        queuelogger.clear_bg_logging()
         try:
             res = coordinate_descent(adj_params, params, error_func)
         except:

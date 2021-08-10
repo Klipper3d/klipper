@@ -150,6 +150,10 @@ def get_aliases_beaglebone(mcu):
 ######################################################################
 
 ar100_mappings = {
+    'PB0': '32',
+    'PB1': '33',
+    'PD0': '96',
+    'PD1': '97',
     'PD4': '100',
     'PD5': '101',
     'PD6': '102',
@@ -270,6 +274,7 @@ class PrinterPins:
         self.chips = {}
         self.active_pins = {}
         self.pin_resolvers = {}
+        self.allow_multi_use_pins = {}
     def parse_pin(self, pin_desc, can_invert=False, can_pullup=False):
         desc = pin_desc.strip()
         pullup = invert = 0
@@ -306,10 +311,12 @@ class PrinterPins:
         share_name = "%s:%s" % (pin_params['chip_name'], pin)
         if share_name in self.active_pins:
             share_params = self.active_pins[share_name]
-            if share_type is None or share_type != share_params['share_type']:
+            if share_name in self.allow_multi_use_pins:
+                pass
+            elif share_type is None or share_type != share_params['share_type']:
                 raise error("pin %s used multiple times in config" % (pin,))
-            if (pin_params['invert'] != share_params['invert']
-                or pin_params['pullup'] != share_params['pullup']):
+            elif (pin_params['invert'] != share_params['invert']
+                  or pin_params['pullup'] != share_params['pullup']):
                 raise error("Shared pin %s must have same polarity" % (pin,))
             return share_params
         pin_params['share_type'] = share_type
@@ -333,6 +340,10 @@ class PrinterPins:
             raise error("Duplicate chip name '%s'" % (chip_name,))
         self.chips[chip_name] = chip
         self.pin_resolvers[chip_name] = PinResolver()
+    def allow_multi_use_pin(self, pin_desc):
+        pin_params = self.parse_pin(pin_desc)
+        share_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
+        self.allow_multi_use_pins[share_name] = True
 
 def add_printer_objects(config):
     config.get_printer().add_object('pins', PrinterPins())

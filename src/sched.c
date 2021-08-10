@@ -42,12 +42,6 @@ static struct timer periodic_timer = {
     .next = &sentinel_timer,
 };
 
-// Hack to cicumvent .data segment not being reinitilaized on reset
-void init_periodic(void){
-  periodic_timer.waketime = 0;
-}
-DECL_INIT(init_periodic);
-
 // The sentinel timer is always the last timer on timer_list - its
 // presence allows the code to avoid checking for NULL while
 // traversing timer_list.  Since sentinel_timer.waketime is always
@@ -232,6 +226,7 @@ run_tasks(void)
     uint32_t start = timer_read_time();
     for (;;) {
         // Check if can sleep
+        irq_poll();
         if (tasks_status != TS_REQUESTED) {
             start -= timer_read_time();
             irq_disable();

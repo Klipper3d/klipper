@@ -21,10 +21,14 @@ enable_pclock(uint32_t periph_base)
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         RCC->APB1ENR |= (1<<pos);
         RCC->APB1ENR;
+        RCC->APB1RSTR |= (1<<pos);
+        RCC->APB1RSTR &= ~(1<<pos);
     } else if (periph_base < AHBPERIPH_BASE) {
         uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
         RCC->APB2ENR |= (1<<pos);
         RCC->APB2ENR;
+        RCC->APB2RSTR |= (1<<pos);
+        RCC->APB2RSTR &= ~(1<<pos);
     } else {
         uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
         RCC->AHBENR |= (1<<pos);
@@ -62,6 +66,18 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     uint32_t rcc_pos = ((uint32_t)regs - APB2PERIPH_BASE) / 0x400;
     RCC->APB2ENR |= 1 << rcc_pos;
     RCC->APB2ENR;
+}
+
+
+static void stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
+{
+    // The MAPR register is a mix of write only and r/w bits
+    // We have to save the written values in a global variable
+    static uint32_t mapr = 0;
+
+    mapr &= ~mapr_mask;
+    mapr |= mapr_value;
+    AFIO->MAPR = mapr;
 }
 
 // Set the mode and extended function of a pin
@@ -105,20 +121,80 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 
     if (gpio == GPIO('A', 13) || gpio == GPIO('A', 14))
         // Disable SWD to free PA13, PA14
-        AFIO->MAPR = AFIO_MAPR_SWJ_CFG_DISABLE;
+        stm32f1_alternative_remap(AFIO_MAPR_SWJ_CFG_Msk,
+                                  AFIO_MAPR_SWJ_CFG_DISABLE);
+
+    // STM32F1 remaps functions to pins in a very different
+    // way from other STM32s.
+    // Code below is emulating a few mappings to work like an STM32F4
+    uint32_t func = (mode >> 4) & 0xf;
+    if (func == 1) {
+        // TIM2
+        if (gpio == GPIO('A', 15) || gpio == GPIO('B', 3))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_Msk,
+                                      AFIO_MAPR_TIM2_REMAP_PARTIALREMAP1);
+        else if (gpio == GPIO('B', 10) || gpio == GPIO('B', 11))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM2_REMAP_Msk,
+                                      AFIO_MAPR_TIM2_REMAP_PARTIALREMAP2);
+    } else if (func == 2) {
+        // TIM3 and TIM4
+        if (gpio == GPIO('B', 4) || gpio == GPIO('B', 5))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_Msk,
+                                      AFIO_MAPR_TIM3_REMAP_PARTIALREMAP);
+        else if (gpio == GPIO('C', 6) || gpio == GPIO('C', 7)
+                 || gpio == GPIO('C', 8) || gpio == GPIO('C', 9))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_Msk,
+                                      AFIO_MAPR_TIM3_REMAP_FULLREMAP);
+        else if (gpio == GPIO('D', 12) || gpio == GPIO('D', 13)
+                 || gpio == GPIO('D', 14) || gpio == GPIO('D', 15))
+            stm32f1_alternative_remap(AFIO_MAPR_TIM4_REMAP_Msk,
+                                      AFIO_MAPR_TIM4_REMAP);
+    } else if (func == 4) {
+        // I2C
+        if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
+            stm32f1_alternative_remap(AFIO_MAPR_I2C1_REMAP_Msk,
+                                      AFIO_MAPR_I2C1_REMAP);
+    } else if (func == 5) {
+        // SPI
+        if (gpio == GPIO('B', 3) || gpio == GPIO('B', 4)
+            || gpio == GPIO('B', 5))
+            stm32f1_alternative_remap(AFIO_MAPR_SPI1_REMAP_Msk,
+                                      AFIO_MAPR_SPI1_REMAP);
+    } else if (func == 7) {
+        // USART
+        if (gpio == GPIO('B', 6) || gpio == GPIO('B', 7))
+            stm32f1_alternative_remap(AFIO_MAPR_USART1_REMAP_Msk,
+                                      AFIO_MAPR_USART1_REMAP);
+        else if (gpio == GPIO('D', 5) || gpio == GPIO('D', 6))
+            stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
+                                      AFIO_MAPR_USART2_REMAP);
+        else if (gpio == GPIO('D', 8) || gpio == GPIO('D', 9))
+            stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
+                                      AFIO_MAPR_USART3_REMAP_FULLREMAP);
+    } else if (func == 9) {
+        // CAN
+        if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP2);
+    }
 }
 
 // Handle USB reboot requests
 void
 usb_request_bootloader(void)
 {
-    if (!CONFIG_STM32_FLASH_START_2000)
+    if (!(CONFIG_STM32_FLASH_START_2000 || CONFIG_STM32_FLASH_START_800))
         return;
-    // Enter "stm32duino" bootloader
+    // Enter "stm32duino" or HID bootloader
     irq_disable();
     RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
     PWR->CR |= PWR_CR_DBP;
-    BKP->DR10 = 0x01;
+    if (CONFIG_STM32_FLASH_START_800)
+        // HID Bootloader magic key
+        BKP->DR4 = 0x424C;
+    else
+        // stm32duino bootloader magic key
+        BKP->DR10 = 0x01;
     PWR->CR &=~ PWR_CR_DBP;
     NVIC_SystemReset();
 }
@@ -131,17 +207,22 @@ clock_setup(void)
     uint32_t cfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 72Mhz PLL from external crystal (HSE)
-        uint32_t div = CONFIG_CLOCK_FREQ / CONFIG_CLOCK_REF_FREQ;
         RCC->CR |= RCC_CR_HSEON;
-        cfgr = (1 << RCC_CFGR_PLLSRC_Pos) | ((div - 2) << RCC_CFGR_PLLMULL_Pos);
+        uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
+        cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
+        if ((div & 1) && div <= 16)
+            cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
+        else
+            div /= 2;
+        cfgr |= (div - 2) << RCC_CFGR_PLLMULL_Pos;
     } else {
         // Configure 72Mhz PLL from internal 8Mhz oscillator (HSI)
         uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
         cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
                 | ((div2 - 2) << RCC_CFGR_PLLMULL_Pos));
     }
-    RCC->CFGR = (cfgr | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2
-                 | RCC_CFGR_ADCPRE_DIV4);
+    cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV8;
+    RCC->CFGR = cfgr;
     RCC->CR |= RCC_CR_PLLON;
 
     // Set flash latency
@@ -165,12 +246,18 @@ armcm_main(void)
     SystemInit();
     SCB->VTOR = (uint32_t)VectorTable;
 
+    // Reset peripheral clocks (for some bootloaders that don't)
+    RCC->AHBENR = 0x14;
+    RCC->APB1ENR = 0;
+    RCC->APB2ENR = 0;
+
     // Setup clocks
     clock_setup();
 
     // Disable JTAG to free PA15, PB3, PB4
     enable_pclock(AFIO_BASE);
-    AFIO->MAPR = AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
+    stm32f1_alternative_remap(AFIO_MAPR_SWJ_CFG_Msk,
+                              AFIO_MAPR_SWJ_CFG_JTAGDISABLE);
 
     sched_main();
 }
