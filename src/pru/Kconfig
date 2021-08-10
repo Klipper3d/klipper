@@ -17,4 +17,8 @@ config CLOCK_FREQ
     int
     default 200000000
 
+config HAVE_TMC_UART
+    bool
+    default n
+
 endif
