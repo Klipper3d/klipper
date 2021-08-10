@@ -138,7 +138,7 @@ config HAVE_CHIPID
     default n
 config HAVE_TMC_UART
     bool
-    default n
+    default y
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler
     bool
