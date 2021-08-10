@@ -181,7 +181,10 @@ trapq_finalize_moves(struct trapq *tq, double print_time)
         if (m->print_time + m->move_t > print_time)
             break;
         list_del(&m->node);
-        list_add_head(&m->node, &tq->history);
+        if (m->start_v || m->half_accel)
+            list_add_head(&m->node, &tq->history);
+        else
+            free(m);
     }
     // Free old moves from history list
     if (list_empty(&tq->history))
@@ -204,6 +207,18 @@ trapq_set_position(struct trapq *tq, double print_time
 {
     // Flush all moves from trapq
     trapq_finalize_moves(tq, NEVER_TIME);
+
+    // Prune any moves in the trapq history that were interrupted
+    while (!list_empty(&tq->history)) {
+        struct move *m = list_first_entry(&tq->history, struct move, node);
+        if (m->print_time < print_time) {
+            if (m->print_time + m->move_t > print_time)
+                m->move_t = print_time - m->print_time;
+            break;
+        }
+        list_del(&m->node);
+        free(m);
+    }
 
     // Add a marker to the trapq history
     struct move *m = move_alloc();

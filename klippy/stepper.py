@@ -151,7 +151,10 @@ class MCU_stepper:
         last_pos = params['pos']
         if self._invert_dir:
             last_pos = -last_pos
-        ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, last_pos)
+        print_time = self._mcu.estimated_print_time(params['#receive_time'])
+        clock = self._mcu.print_time_to_clock(print_time)
+        ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, clock,
+                                                     last_pos)
         if ret:
             raise error("Internal error in stepcompress")
         self._set_mcu_position(last_pos)
