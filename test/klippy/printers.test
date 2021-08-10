@@ -1,10 +1,6 @@
 # Basic sanity checks on the example printer config files
 GCODE move.gcode
 
-# Printers using the AR100
-DICTIONARY ar100.dict  host=stm32f031.dict
-CONFIG ../../config/generic-recore.cfg
-
 # Example kinematic files
 DICTIONARY atmega2560.dict
 CONFIG ../../config/example-cartesian.cfg
@@ -192,8 +188,9 @@ CONFIG ../../config/generic-cramps.cfg
 CONFIG ../../config/generic-replicape.cfg
 
 # Printers using the AR100
-DICTIONARY stm32f031.dict ar100=ar100.dict
+DICTIONARY ar100.dict host=stm32f031.dict
 CONFIG ../../config/generic-recore.cfg
+
 
 # Tests with multiple mcus
 DICTIONARY atmega2560.dict zboard=atmega2560.dict auxboard=atmega2560.dict
