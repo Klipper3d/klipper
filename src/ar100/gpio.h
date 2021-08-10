@@ -37,7 +37,8 @@ struct gpio_in {
   uint32_t reg;
 };
 
-volatile uint32_t data_regs[8];
+extern volatile uint32_t data_regs[8];
+
 
 struct gpio_mux gpio_mux_setup(uint8_t pin, enum pin_func func);
 

@@ -9,6 +9,8 @@
 #define CFG_REG(x) ((x/8)*4)
 #define CFG_OFF(x) ((x%8)*4)
 
+volatile uint32_t data_regs[8];
+
 struct gpio_mux gpio_mux_setup(uint8_t pin, enum pin_func func){
   uint8_t bank = BANK(pin);
   uint8_t p = PIN(pin);
