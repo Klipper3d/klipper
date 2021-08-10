@@ -312,8 +312,6 @@ class MixingExtruder:
                     method=self.gradient_method,
                     enabled=str(self.gradient_enabled)).items())})
         active = self._active_extruder()
-        status['find_mixing_extruder'] = \
-            lambda name: find_mixing_extruder(name, active)
         return status
 
     def _reset_positions(self):
