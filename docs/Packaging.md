@@ -1,4 +1,4 @@
-# Packaging Klipper 
+# Packaging Klipper
 
 Klipper is somewhat of a packaging anomaly among python programs, as it doesn't
 use setuptools to build and install. Some notes regarding how best to package it

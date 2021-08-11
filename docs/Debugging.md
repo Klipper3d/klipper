@@ -59,7 +59,7 @@ make
 ```
 
 Once the above is done it is possible to run Klipper in batch mode
-(see [installation](Installation.md) for the steps necessary to build
+(see [Installation](Installation.md) for the steps necessary to build
 the python virtual environment and a printer.cfg file):
 
 ```
