@@ -15,7 +15,6 @@
 #include "serial.h"
 #include "prcm.h"
 #include "timer.h"
-#include "test.h"
 
 DECL_CONSTANT_STR("MCU", "ar100");
 
