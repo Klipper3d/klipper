@@ -284,4 +284,8 @@ config CANBUS_FREQUENCY
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
     default 500000
 
+config HAVE_TMC_UART
+    bool
+    default n if MACH_STM32F031
+
 endif

@@ -5,8 +5,13 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "misc.h" // dynmem_start
+#include "autoconf.h" // CONFIG_MACH_AR100
 
+#ifdef CONFIG_MACH_AR100
+static char dynmem_pool[2 * 1024];
+#else
 static char dynmem_pool[20 * 1024];
+#endif
 
 // Return the start of memory available for dynamic allocations
 void *
