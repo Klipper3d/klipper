@@ -326,7 +326,7 @@ The following information is available in the `toolhead` object
   "homed" state. This is a string containing one or more of "x", "y",
   "z".
 - `axis_minimum`, `axis_maximum`: The axis travel limits (mm) after
-  homing.  It is possible to access the x, y, z components of this
+  homing. It is possible to access the x, y, z components of this
   limit value (eg, `axis_minimum.x`, `axis_maximum.z`).
 - `max_velocity`, `max_accel`, `max_accel_to_decel`,
   `square_corner_velocity`: The current printing limits that are in
@@ -376,7 +376,7 @@ object is available if z_tilt is defined):
 The following information is available for each `[neopixel led_name]` and
 `[dotstar led_name]` defined in printer.cfg:
 - `color_data`:  An array of objects, with each object containing the RGBW
-  values for a led in the chain.  Note that not all configurations will contain
-  a white value.  Each value is represented as a float from 0 to 1.  For
+  values for a led in the chain. Note that not all configurations will contain
+  a white value. Each value is represented as a float from 0 to 1. For
   example, the blue value of the second neopixel in a chain could be accessed
   at `printer["neopixel <config_name>"].colordata[1].B`.

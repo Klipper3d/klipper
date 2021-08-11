@@ -46,7 +46,7 @@ experiencing general printing problems, then you will likely get a
 better response by asking in a general 3d-printing forum or a forum
 dedicated to your printer hardware.
 
-Do not open a Klipper github issue to ask a question.
+Do not open a Klipper GitHub issue to ask a question.
 
 ## I have a feature request
 
@@ -57,7 +57,7 @@ feature, you can search for ongoing developments in the
 [Klipper Discord Chat](#discord-chat) for discussions between
 collaborators.
 
-Do not open a Klipper github issue to request a feature.
+Do not open a Klipper GitHub issue to request a feature.
 
 ## Help! It doesn't work!
 
@@ -88,7 +88,7 @@ other Klipper users then you can join the
 [Klipper Discord Chat](#discord-chat). Both are communities where
 Klipper users can discuss Klipper with other users.
 
-Do not open a Klipper github issue to request help.
+Do not open a Klipper GitHub issue to request help.
 
 ## I have diagnosed a defect in the Klipper software
 
@@ -99,7 +99,7 @@ There is important information that will be needed in order to fix a
 bug. Please follow these steps:
 1. Be sure the bug is in the Klipper software. If you are thinking
    "there is a problem, I can't figure out why, and therefore it is a
-   Klipper bug", then **do not** open a github issue. In that case,
+   Klipper bug", then **do not** open a GitHub issue. In that case,
    someone interested and able will need to first research and
    diagnose the root cause of the problem. If you would like to share
    the results of your research or check if other users are
@@ -138,7 +138,7 @@ bug. Please follow these steps:
       necessary information.
    5. If the log file is very large (eg, greater than 2MB) then one
       may need to compress the log with zip or gzip.
-5. Open a new github issue at
+5. Open a new GitHub issue at
    [https://github.com/KevinOConnor/klipper/issues](https://github.com/KevinOConnor/klipper/issues)
    and provide a clear description of the problem. The Klipper
    developers need to understand what steps were taken, what the
@@ -152,7 +152,7 @@ bug. Please follow these steps:
 Klipper is open-source software and we appreciate new contributions.
 
 New contributions (for both code and documentation) are submitted via
-Github Pull Requests. See the [CONTRIBUTING document](CONTRIBUTING.md)
+GitHub Pull Requests. See the [CONTRIBUTING document](CONTRIBUTING.md)
 for important information.
 
 There are several
@@ -160,6 +160,6 @@ There are several
 you have questions on the code then you can also ask in the
 [Klipper Community Forum](#community-forum) or on the
 [Klipper Community Discord](#discord-chat). If you would like to
-provide an update on your current progress then you can open a Github
+provide an update on your current progress then you can open a GitHub
 issue with the location of your code, an overview of the changes, and
 a description of its current status.

@@ -10,16 +10,16 @@ an issue.
 
 ## Submitting a pull request
 
-Contributions of Code and documentation are managed through github
-pull requests.  Each commit should have a commit message formatted
+Contributions of Code and documentation are managed through GitHub
+pull requests. Each commit should have a commit message formatted
 similar to the following:
 
 ```
 module: Capitalized, short (50 chars or less) summary
 
-More detailed explanatory text, if necessary.  Wrap it to about 75
-characters or so.  In some contexts, the first line is treated as the
-subject of an email and the rest of the text as the body.  The blank
+More detailed explanatory text, if necessary. Wrap it to about 75
+characters or so. In some contexts, the first line is treated as the
+subject of an email and the rest of the text as the body. The blank
 line separating the summary from the body is critical (unless you omit
 the body entirely); tools like rebase can get confused if you run the
 two together.

@@ -21,7 +21,7 @@ bootloader to flash an application where possible.
 
 This document attempts to describe common bootloaders, the steps
 needed to flash a bootloader, and the steps needed to flash an
-application.  This document is not an authoritative reference; it is
+application. This document is not an authoritative reference; it is
 intended as a collection of useful information that the Klipper
 developers have accumulated.
 
@@ -309,8 +309,8 @@ section above, substituting the file name for the desired hid bootloader binary
 (ie: hid_generic_pc13.bin for the blue pill).
 
 It is not possible to use stm32flash for the SKR Mini E3 as the boot0 pin is
-tied directly to ground and not broken out via header pins.  It is recommended
-to use a STLink V2 with STM32Cubeprogrammer to flash the bootloader.   If you
+tied directly to ground and not broken out via header pins. It is recommended
+to use a STLink V2 with STM32Cubeprogrammer to flash the bootloader.  If you
 don't have access to a STLink it is also possible to use a
 [Raspberry Pi and OpenOCD](#running-openocd-on-the-raspberry-pi) with
 the following chip config:
@@ -319,7 +319,7 @@ the following chip config:
 source [find target/stm32f1x.cfg]
 ```
 If you wish you can make a backup of the current flash with the following
-command.  Note that it may take some time to complete:
+command. Note that it may take some time to complete:
 ```
 flash read_bank 0 btt_skr_mini_e3_backup.bin
 ```
@@ -329,13 +329,13 @@ stm32f1x mass_erase 0
 program hid_btt_skr_mini_e3.bin verify 0x08000000
 ```
 NOTES:
-- The example above erases the chip then programs the bootloader.  Regardless
+- The example above erases the chip then programs the bootloader. Regardless
   of the method chosen to flash it is recommended to erase the chip prior to
   flashing.
 - Prior flashing the SKR Mini E3 with this bootloader you should be aware
   that you will no longer be able to update firmware via the sdcard.
 - You may need to hold down the reset button on the board while launching
-  OpenOCD.  It should display something like:
+  OpenOCD. It should display something like:
   ```
   Open On-Chip Debugger 0.10.0+dev-01204-gc60252ac-dirty (2020-04-27-16:00)
   Licensed under GNU GPL v2
@@ -369,19 +369,19 @@ If the bootloader is running you can flash with something like:
 ```
 ~/klipper/lib/hidflash/hid-flash ~/klipper/out/klipper.bin
 ```
-alternatively, you can use `make flash` to flash klipper directly:
+alternatively, you can use `make flash` to flash Klipper directly:
 ```
 make flash FLASH_DEVICE=1209:BEBA
 ```
-OR if klipper has been previously flashed:
+OR if Klipper has been previously flashed:
 ```
 make flash FLASH_DEVICE=/dev/ttyACM0
 ```
 
 It may be necessary to manually enter the bootloader, this can be done by
-setting "boot 0" low and "boot 1" high.  On the SKR Mini E3 "Boot 1" is
+setting "boot 0" low and "boot 1" high. On the SKR Mini E3 "Boot 1" is
 not available, so it may be done by setting pin PA2 low if you flashed
-"hid_btt_skr_mini_e3.bin".  This pin is labeld "TX0" on the TFT header in
+"hid_btt_skr_mini_e3.bin". This pin is labeld "TX0" on the TFT header in
 the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
 which you can use to pull PA2 low.
 
@@ -389,9 +389,9 @@ which you can use to pull PA2 low.
 
 STM32F4 microcontrollers come equipped with a built-in system bootloader
 capable of flashing over USB (via DFU), 3.3v Serial, and various other
-methods (see STM Document AN2606 for more information).  Some
+methods (see STM Document AN2606 for more information). Some
 STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
-bootloader.  The HID bootloader is available for STM32F405/407
+bootloader. The HID bootloader is available for STM32F405/407
 based boards should the user prefer flashing over USB over using the sdcard.
 Note that you may need to configure and build a version specific to your
 board, a [build for the SKR Pro 1.1 is available here](
@@ -407,7 +407,7 @@ wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta
 stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
 ```
 
-This bootloader requires 16Kib of flash space on the STM32F4 (the application
+This bootloader requires 16KiB of flash space on the STM32F4 (the application
 must be compiled with a start address of 16KiB).
 
 As with the STM32F1, the STM32F4 uses the hid-flash tool to upload binaries to
@@ -415,7 +415,7 @@ the MCU. See the instructions above for details on how to build and use
 hid-flash.
 
 It may be necessary to manually enter the bootloader, this can be done by
-setting "boot 0" low, "boot 1" high and plugging in the device.  After
+setting "boot 0" low, "boot 1" high and plugging in the device. After
 programming is complete unplug the device and set "boot 1" back to low
 so the application will be loaded.
 

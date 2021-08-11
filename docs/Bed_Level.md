@@ -211,7 +211,7 @@ adjustment until the bottom layer of prints exhibit a small bulge, and
 then back-off until it disappears.
 
 The easiest way to apply the desired Z adjustment is to create a
-START_PRINT g-code macro, arrange for the slicer to call that macro
+START_PRINT G-Code macro, arrange for the slicer to call that macro
 during the start of each print, and add a SET_GCODE_OFFSET command to
-that macro. See the [slicers](Slicers.md) document for further
+that macro. See the [Slicers](Slicers.md) document for further
 details.

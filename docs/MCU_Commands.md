@@ -156,7 +156,7 @@ This section lists some commonly used config commands.
 
 * `config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s` :
   This command creates an internal SPI object. It is used with
-  spi_transfer and spi_send commands (see below).  The "bus"
+  spi_transfer and spi_send commands (see below). The "bus"
   identifies the SPI bus to use (if the micro-controller has more than
   one SPI bus available). The "pin" specifies the chip select (CS) pin
   for the device. The "mode" is the SPI mode (should be between 0 and

@@ -18,7 +18,7 @@ and operational as the tuning test involves printing and inspecting a
 test object. It is a good idea to read this document in full prior to
 running the test.
 
-Use a slicer to generate g-code for the large hollow square found in
+Use a slicer to generate G-Code for the large hollow square found in
 [docs/prints/square_tower.stl](prints/square_tower.stl). Use a high
 speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer
 height should be around 75% of the nozzle diameter). Make sure any

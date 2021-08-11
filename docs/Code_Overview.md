@@ -12,10 +12,10 @@ directories contain architecture specific micro-controller code. The
 **src/simulator/** contains code stubs that allow the micro-controller
 to be test compiled on other architectures. The **src/generic/**
 directory contains helper code that may be useful across different
-architectures. The build arranges for includes of "board/somefile.h"
+architectures. The build arranges for includes of **board/somefile.h**
 to first look in the current architecture directory (eg,
-src/avr/somefile.h) and then in the generic directory (eg,
-src/generic/somefile.h).
+**src/avr/somefile.h**) and then in the generic directory (eg,
+**src/generic/somefile.h**).
 
 The **klippy/** directory contains the host software. Most of the host
 software is written in Python, however the **klippy/chelper/**
@@ -106,7 +106,7 @@ commands to be executed on the micro-controller (as declared via the
 DECL_COMMAND macro in the micro-controller code).
 
 There are four threads in the Klippy host code. The main thread
-handles incoming gcode commands. A second thread (which resides
+handles incoming G-Code commands. A second thread (which resides
 entirely in the **klippy/chelper/serialqueue.c** C code) handles
 low-level IO with the serial port. The third thread is used to process
 response messages from the micro-controller in the Python code (see
@@ -124,40 +124,40 @@ provides further information on the mechanics of moves.
 
 * Processing for a move command starts in gcode.py. The goal of
   gcode.py is to translate G-code into internal calls. A G1 command
-  will invoke cmd_G1() in klippy/extras/gcode_move.py. The
-  gcode_move.py code handles changes in origin (eg, G92), changes in
+  will invoke cmd_G1() in **klippy/extras/gcode_move.py**. The
+  **gcode_move.py code** handles changes in origin (eg, G92), changes in
   relative vs absolute positions (eg, G90), and unit changes (eg,
   F6000=100mm/s). The code path for a move is: `_process_data() ->
   _process_commands() -> cmd_G1()`. Ultimately the ToolHead class is
   invoked to execute the actual request: `cmd_G1() -> ToolHead.move()`
 
-* The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
+* The ToolHead class (in **toolhead.py**) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:
   `ToolHead.move() -> MoveQueue.add_move() -> MoveQueue.flush() ->
   Move.set_junction() -> ToolHead._process_moves()`.
-  * ToolHead.move() creates a Move() object with the parameters of the
+  * `ToolHead.move()` creates a `Move()` object with the parameters of the
   move (in cartesian space and in units of seconds and millimeters).
   * The kinematics class is given the opportunity to audit each move
   (`ToolHead.move() -> kin.check_move()`). The kinematics classes are
-  located in the klippy/kinematics/ directory. The check_move() code
-  may raise an error if the move is not valid. If check_move()
+  located in the **klippy/kinematics/** directory. The `check_move()` code
+  may raise an error if the move is not valid. If `check_move()`
   completes successfully then the underlying kinematics must be able
   to handle the move.
-  * MoveQueue.add_move() places the move object on the "look-ahead"
+  * `MoveQueue.add_move()` places the move object on the "look-ahead"
   queue.
-  * MoveQueue.flush() determines the start and end velocities of each
+  * `MoveQueue.flush()` determines the start and end velocities of each
   move.
-  * Move.set_junction() implements the "trapezoid generator" on a
+  * `Move.set_junction()` implements the "trapezoid generator" on a
   move. The "trapezoid generator" breaks every move into three parts:
   a constant acceleration phase, followed by a constant velocity
   phase, followed by a constant deceleration phase. Every move
   contains these three phases in this order, but some phases may be of
   zero duration.
-  * When ToolHead._process_moves() is called, everything about the
+  * When `ToolHead._process_moves()` is called, everything about the
   move is known - its start location, its end location, its
   acceleration, its start/cruising/end velocity, and distance traveled
   during acceleration/cruising/deceleration. All the information is
-  stored in the Move() class and is in cartesian space in units of
+  stored in the `Move()` class and is in cartesian space in units of
   millimeters and seconds.
 
 * Klipper uses an
@@ -165,57 +165,57 @@ provides further information on the mechanics of moves.
   to generate the step times for each stepper. For efficiency reasons,
   the stepper pulse times are generated in C code. The moves are first
   placed on a "trapezoid motion queue": `ToolHead._process_moves() ->
-  trapq_append()` (in klippy/chelper/trapq.c). The step times are then
+  trapq_append()` (in **klippy/chelper/trapq.c**). The step times are then
   generated: `ToolHead._process_moves() ->
   ToolHead._update_move_time() -> MCU_Stepper.generate_steps() ->
   itersolve_generate_steps() -> itersolve_gen_steps_range()` (in
-  klippy/chelper/itersolve.c). The goal of the iterative solver is to
+  **klippy/chelper/itersolve.c**). The goal of the iterative solver is to
   find step times given a function that calculates a stepper position
   from a time. This is done by repeatedly "guessing" various times
   until the stepper position formula returns the desired position of
   the next step on the stepper. The feedback produced from each guess
   is used to improve future guesses so that the process rapidly
   converges to the desired time. The kinematic stepper position
-  formulas are located in the klippy/chelper/ directory (eg,
-  kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).
+  formulas are located in the **klippy/chelper/** directory (eg,
+  **kin_cart.c**, **kin_corexy.c**, **kin_delta.c**, **kin_extruder.c**).
 
 * Note that the extruder is handled in its own kinematic class:
   `ToolHead._process_moves() -> PrinterExtruder.move()`. Since
-  the Move() class specifies the exact movement time and since step
+  the `Move()` class specifies the exact movement time and since step
   pulses are sent to the micro-controller with specific timing,
   stepper movements produced by the extruder class will be in sync
   with head movement even though the code is kept separate.
 
 * After the iterative solver calculates the step times they are added
   to an array: `itersolve_gen_steps_range() -> stepcompress_append()`
-  (in klippy/chelper/stepcompress.c). The array (struct
-  stepcompress.queue) stores the corresponding micro-controller clock
+  (in **klippy/chelper/stepcompress.c**). The array (`struct
+  stepcompress.queue`) stores the corresponding micro-controller clock
   counter times for every step. Here the "micro-controller clock
   counter" value directly corresponds to the micro-controller's
   hardware counter - it is relative to when the micro-controller was
   last powered up.
 
 * The next major step is to compress the steps: `stepcompress_flush()
-  -> compress_bisect_add()` (in klippy/chelper/stepcompress.c). This
+  -> compress_bisect_add()` (in **klippy/chelper/stepcompress.c**). This
   code generates and encodes a series of micro-controller "queue_step"
   commands that correspond to the list of stepper step times built in
   the previous stage. These "queue_step" commands are then queued,
   prioritized, and sent to the micro-controller (via
-  stepcompress.c:steppersync and serialqueue.c:serialqueue).
+  **stepcompress.c**:`steppersync` and **serialqueue.c**:`serialqueue`).
 
 * Processing of the queue_step commands on the micro-controller starts
-  in src/command.c which parses the command and calls
-  `command_queue_step()`. The command_queue_step() code (in
-  src/stepper.c) just appends the parameters of each queue_step
+  in **src/command.c** which parses the command and calls
+  `command_queue_step()`. The `command_queue_step()` code (in
+  **src/stepper.c**) just appends the parameters of each queue_step
   command to a per stepper queue. Under normal operation the
   queue_step command is parsed and queued at least 100ms before the
   time of its first step. Finally, the generation of stepper events is
   done in `stepper_event()`. It's called from the hardware timer
   interrupt at the scheduled time of the first step. The
-  stepper_event() code generates a step pulse and then reschedules
+  `stepper_event()` code generates a step pulse and then reschedules
   itself to run at the time of the next step pulse for the given
   queue_step parameters. The parameters for each queue_step command
-  are "interval", "count", and "add". At a high-level, stepper_event()
+  are "interval", "count", and "add". At a high-level, `stepper_event()`
   runs the following, 'count' times: `do_step(); next_wake_time =
   last_wake_time + interval; interval += add;`
 
@@ -230,7 +230,7 @@ mostly just communication and plumbing.
 The Klippy host code has a dynamic module loading capability. If a
 config section named "[my_module]" is found in the printer config file
 then the software will automatically attempt to load the python module
-klippy/extras/my_module.py . This module system is the preferred
+**klippy/extras/my_module.py** . This module system is the preferred
 method for adding new functionality to Klipper.
 
 The easiest way to add a new module is to use an existing module as a
@@ -266,14 +266,14 @@ The following may also be useful:
   other printer objects. Each event name is a string, and by
   convention it is the name of the main source module that raises the
   event along with a short name for the action that is occurring (eg,
-  "klippy:connect"). The parameters passed to each event handler are
+  "`klippy:connect`"). The parameters passed to each event handler are
   specific to the given event (as are exception handling and execution
   context). Two common startup events are:
-  * klippy:connect - This event is generated after all printer objects
+  * `klippy:connect` - This event is generated after all printer objects
     are instantiated. It is commonly used to lookup other printer
     objects, to verify config settings, and to perform an initial
     "handshake" with printer hardware.
-  * klippy:ready - This event is generated after all connect handlers
+  * `klippy:ready` - This event is generated after all connect handlers
     have completed successfully. It indicates the printer is
     transitioning to a state ready to handle normal operations. Do not
     raise an error in this callback.
@@ -321,8 +321,8 @@ Useful steps:
    in cartesian coordinates to the movement on each stepper. One
    should be able to copy one of these files as a starting point.
 3. Implement the C stepper kinematic position functions for each
-   stepper if they are not already available (see kin_cart.c,
-   kin_corexy.c, and kin_delta.c in klippy/chelper/). The function
+   stepper if they are not already available (see **kin_cart.c**,
+   **kin_corexy.c**, and **kin_delta.c** in **klippy/chelper/**). The function
    should call `move_get_coord()` to convert a given move time (in
    seconds) to a cartesian coordinate (in millimeters), and then
    calculate the desired stepper position (in millimeters) from that
@@ -337,9 +337,9 @@ Useful steps:
    functions are typically used to provide kinematic specific checks.
    However, at the start of development one can use boiler-plate code
    here.
-6. Implement test cases. Create a g-code file with a series of moves
+6. Implement test cases. Create a G-Code file with a series of moves
    that can test important cases for the given kinematics. Follow the
-   [debugging documentation](Debugging.md) to convert this g-code file
+   [debugging documentation](Debugging.md) to convert this G-Code file
    to micro-controller commands. This is useful to exercise corner
    cases and to check for regressions.
 
@@ -355,14 +355,14 @@ Useful steps:
    during the port. Common examples include "CMSIS" wrappers and
    manufacturer "HAL" libraries. All 3rd party code needs to be GNU
    GPLv3 compatible. The 3rd party code should be committed to the
-   Klipper lib/ directory. Update the lib/README file with information
+   Klipper **lib/** directory. Update the **lib/README** file with information
    on where and when the library was obtained. It is preferable to
    copy the code into the Klipper repository unchanged, but if any
    changes are required then those changes should be listed explicitly
-   in the lib/README file.
-2. Create a new architecture sub-directory in the src/ directory and
+   in the **lib/README** file.
+2. Create a new architecture sub-directory in the **src/** directory and
    add initial Kconfig and Makefile support. Use the existing
-   architectures as a guide. The src/simulator provides a basic
+   architectures as a guide. The **src/simulator** provides a basic
    example of a minimum starting point.
 3. The first main coding task is to bring up communication support to
    the target board. This is the most difficult step in a new port.
@@ -370,13 +370,13 @@ Useful steps:
    much easier. It is typical to use an RS-232 style serial port
    during initial development as these types of hardware devices are
    generally easier to enable and control. During this phase, make
-   liberal use of helper code from the src/generic/ directory (check
-   how src/simulator/Makefile includes the generic C code into the
-   build). It is also necessary to define timer_read_time() (which
+   liberal use of helper code from the **src/generic/** directory (check
+   how **src/simulator/Makefile** includes the generic C code into the
+   build). It is also necessary to define `timer_read_time()` (which
    returns the current system clock) in this phase, but it is not
    necessary to fully support timer irq handling.
-4. Get familiar with the the console.py tool (as described in the
-   [debugging document](Debugging.md)) and verify connectivity to the
+4. Get familiar with the the **console.py** tool (as described in the
+   [Debugging document](Debugging.md)) and verify connectivity to the
    micro-controller with it. This tool translates the low-level
    micro-controller communication protocol to a human readable form.
 5. Add support for timer dispatch from hardware interrupts. See
@@ -461,20 +461,20 @@ stepper motor drivers).
 The "gcode" position is the last requested position from a `G1` (or
 `G0`) command in cartesian coordinates relative to the coordinate
 system specified in the config file. This may differ from the
-"toolhead" position if a g-code transformation (eg, bed_mesh,
+"toolhead" position if a G-Code transformation (eg, bed_mesh,
 bed_tilt, skew_correction) is in effect. This may differ from the
-actual coordinates specified in the last `G1` command if the g-code
+actual coordinates specified in the last `G1` command if the G-Code
 origin has been changed (eg, `G92`, `SET_GCODE_OFFSET`, `M221`). The
 `M114` command (`gcode_move.get_status()['gcode_position']`) will
-report the last g-code position relative to the current g-code
+report the last G-Code position relative to the current G-Code
 coordinate system.
 
-The "gcode base" is the location of the g-code origin in cartesian
+The "G-Code base" is the location of the G-Code origin in cartesian
 coordinates relative to the coordinate system specified in the config
 file. Commands such as `G92`, `SET_GCODE_OFFSET`, and `M221` alter
 this value.
 
-The "gcode homing" is the location to use for the g-code origin (in
+The "G-Code homing" is the location to use for the G-Code origin (in
 cartesian coordinates relative to the coordinate system specified in
 the config file) after a `G28` home command. The `SET_GCODE_OFFSET`
 command can alter this value.

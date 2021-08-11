@@ -1,6 +1,6 @@
 # Hall filament width sensor
 
-This document describes Filament Width Sensor host module. Hardware used for developing this host module is based on Two Hall liniar sensors (ss49e for example). Sensors in the body are located opposite sides.  Principle of operation : two hall sensors work in differential mode, temperature drift same for sensor. Special temperature compensation not needed. You can find designs at [thingiverse.com](https://www.thingiverse.com/thing:4138933)
+This document describes Filament Width Sensor host module. Hardware used for developing this host module is based on Two Hall liniar sensors (ss49e for example). Sensors in the body are located opposite sides. Principle of operation : two hall sensors work in differential mode, temperature drift same for sensor. Special temperature compensation not needed. You can find designs at [thingiverse.com](https://www.thingiverse.com/thing:4138933)
 
 [Hall based filament width sensor assembly video](https://www.youtube.com/watch?v=TDO9tME8vp4)
 
@@ -117,7 +117,7 @@ Save raw values in config
 
 ## How to enable sensor
 After power on by default sensor disabled.
-Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
+Enable sensor in start G-Code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
 
 ## Logging
 After power on by default diameter Logging disabled.

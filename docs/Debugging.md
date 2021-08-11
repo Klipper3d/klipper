@@ -4,7 +4,7 @@ This document describes some of the Klipper debugging tools.
 
 ## Running the regression tests
 
-The main Klipper GitHub repository uses "github actions" to run a
+The main Klipper GitHub repository uses "GitHub actions" to run a
 series of regression tests. It can be useful to run some of these
 tests locally.
 
@@ -15,7 +15,7 @@ The source code "whitespace check" can be run with:
 
 The Klippy regression test suite requires "data dictionaries" from
 many platforms. The easiest way to obtain them is to
-[download them from github](https://github.com/KevinOConnor/klipper/issues/1438).
+[download them from GitHub](https://github.com/KevinOConnor/klipper/issues/1438).
 Once the data dictionaries are downloaded, use the following to run
 the regression suite:
 ```
@@ -25,7 +25,7 @@ tar xfz klipper-dict-20??????.tar.gz
 
 ## Manually sending commands to the micro-controller
 
-Normally, the host klippy.py process would be used to translate gcode
+Normally, the host klippy.py process would be used to translate G-Code
 commands to Klipper micro-controller commands. However, it's also
 possible to manually send these MCU commands (functions marked with
 the DECL_COMMAND() macro in the Klipper source code). To do so, run:
@@ -40,10 +40,10 @@ functionality.
 Some command-line options are available. For more information run:
 `~/klippy-env/bin/python ./klippy/console.py --help`
 
-## Translating gcode files to micro-controller commands
+## Translating G-Code files to micro-controller commands
 
 The Klippy host code can run in a batch mode to produce the low-level
-micro-controller commands associated with a gcode file. Inspecting
+micro-controller commands associated with a G-Code file. Inspecting
 these low-level commands is useful when trying to understand the
 actions of the low-level hardware. It can also be useful to compare
 the difference in micro-controller commands after a code change.
@@ -130,7 +130,7 @@ and effect scenarios.
 
 The [simulavr](http://www.nongnu.org/simulavr/) tool enables one to
 simulate an Atmel ATmega micro-controller. This section describes how
-one can run test gcode files through simulavr. It is recommended to
+one can run test G-Code files through simulavr. It is recommended to
 run this on a desktop class machine (not a Raspberry Pi) as it does
 require significant cpu to run efficiently.
 
@@ -167,7 +167,7 @@ PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 200
 ```
 
 Then, with simulavr running in another window, one can run the
-following to read gcode from a file (eg, "test.gcode"), process it
+following to read G-Code from a file (eg, "test.gcode"), process it
 with Klippy, and send it to Klipper running in simulavr (see
 [installation](Installation.md) for the steps necessary to build the
 python virtual environment):

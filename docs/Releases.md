@@ -94,7 +94,7 @@ Available on 20181220. Major changes in this release:
   z_tilt, quad_gantry_level, endstop_phase, bltouch
 * Several new commands added: SAVE_CONFIG, SET_PRESSURE_ADVANCE,
   SET_GCODE_OFFSET, SET_VELOCITY_LIMIT, STEPPER_BUZZ, TURN_OFF_HEATERS,
-  M204, custom g-code macros
+  M204, custom G-Code macros
 * Expanded LCD display support:
   * Support for run-time menus
   * New display icons
@@ -129,7 +129,7 @@ Available on 20180331. Major changes in this release:
   * Support for shared heaters
   * Initial support for dual carriages
 * Support for configuring multiple steppers per axis (eg, dual Z)
-* Support for custom digital and pwm output pins (with a new SET_PIN command)
+* Support for custom digital and PWM output pins (with a new SET_PIN command)
 * Initial support for a "virtual sdcard" that allows printing directly
   from Klipper (helps on machines too slow to run OctoPrint well)
 * Support for setting different arm lengths on each tower of a delta
@@ -140,7 +140,7 @@ Available on 20180331. Major changes in this release:
   * New multiple MCU config example
   * New bltouch sensor config example
   * New FAQ, config check, and G-Code documents
-* Initial support for continuous integration testing on all github commits
+* Initial support for continuous integration testing on all GitHub commits
 * Several bug fixes and code cleanups
 
 ## Klipper 0.5.0
@@ -193,7 +193,7 @@ Available on 20161223. Major changes in this release:
   prints.
 * New "stepper phased based endstop" feature - enables higher
   precision on endstop homing.
-* Support for "extended g-code" commands such as "help", "restart",
+* Support for "extended G-Code" commands such as "help", "restart",
   and "status".
 * Support for reloading the Klipper config and restarting the host
   software by issuing a "restart" command from the terminal.
@@ -210,7 +210,7 @@ available in the initial release include:
 
 * Basic support for cartesian printers (steppers, extruder, heated
   bed, cooling fan).
-* Support for common g-code commands. Support for interfacing with
+* Support for common G-Code commands. Support for interfacing with
   OctoPrint.
 * Acceleration and lookahead handling
 * Support for AVR micro-controllers via standard serial ports

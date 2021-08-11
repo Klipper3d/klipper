@@ -172,7 +172,7 @@ Klipper reports error messages via the OctoPrint terminal tab. The
 Klipper startup script also places a log in **/tmp/klippy.log** which
 provides more detailed information.
 
-In addition to common g-code commands, Klipper supports a few extended
+In addition to common G-Code commands, Klipper supports a few extended
 commands - "status" and "restart" are examples of these commands. Use
 the "help" command to get a list of other extended commands.
 
