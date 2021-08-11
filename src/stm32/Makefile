@@ -74,8 +74,8 @@ serialflash: $(OUT)klipper.bin
 
 recoreflash: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(FLASH_DEVICE) via stm32flash"
-	gpioset 1 197=1
-	gpioset 1 196=0
+	$(Q)gpioset 1 197=1
+	$(Q)gpioset 1 196=0
 	$(Q)stm32flash -w $< -v -i -196,196 -g 0 $(FLASH_DEVICE)
-	gpioset 1 197=0
-	gpioget 1 196
+	$(Q)gpioset 1 197=0
+	$(Q)gpioget 1 196
