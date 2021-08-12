@@ -202,19 +202,6 @@ class ADXL345:
         mcu.register_config_callback(self._build_config)
         mcu.register_response(self._handle_adxl345_start, "adxl345_start", oid)
         mcu.register_response(self._handle_adxl345_data, "adxl345_data", oid)
-    def is_initialized(self):
-        # In case of miswiring, testing ADXL345 device ID prevents treating
-        # noise or wrong signal as a correctly initialized device
-        return (self.read_reg(REG_DEVID) == ADXL345_DEV_ID and
-                (self.read_reg(REG_DATA_FORMAT) & 0xB) != 0)
-    def initialize(self):
-        # Setup ADXL345 parameters and verify chip connectivity
-        self.set_reg(REG_POWER_CTL, 0x00)
-        dev_id = self.read_reg(REG_DEVID)
-        if dev_id != ADXL345_DEV_ID:
-            raise self.printer.command_error("Invalid adxl345 id (got %x vs %x)"
-                                             % (dev_id, ADXL345_DEV_ID))
-        self.set_reg(REG_DATA_FORMAT, 0x0B)
     def _build_config(self):
         self.query_adxl345_cmd = self.mcu.lookup_command(
             "query_adxl345 oid=%c clock=%u rest_ticks=%u",
@@ -263,13 +250,18 @@ class ADXL345:
     def start_measurements(self):
         if self.is_measuring():
             return
-        if not self.is_initialized():
-            self.initialize()
+        # In case of miswiring, testing ADXL345 device ID prevents treating
+        # noise or wrong signal as a correctly initialized device
+        dev_id = self.read_reg(REG_DEVID)
+        if dev_id != ADXL345_DEV_ID:
+            raise self.printer.command_error("Invalid adxl345 id (got %x vs %x)"
+                                             % (dev_id, ADXL345_DEV_ID))
         # Setup chip in requested query rate
         clock = 0
         if self.last_tx_time:
             clock = self.mcu.print_time_to_clock(self.last_tx_time)
         self.set_reg(REG_POWER_CTL, 0x00, minclock=clock)
+        self.set_reg(REG_DATA_FORMAT, 0x0B)
         self.set_reg(REG_FIFO_CTL, 0x00)
         self.set_reg(REG_BW_RATE, QUERY_RATES[self.data_rate])
         self.set_reg(REG_FIFO_CTL, 0x80)
