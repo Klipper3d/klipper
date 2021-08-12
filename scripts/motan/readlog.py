@@ -232,6 +232,50 @@ class HandleStepQ:
                 step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
+# Extract accelerometer data
+class HandleADXL345:
+    SubscriptionIdParts = 2
+    ParametersMin = ParametersMax = 2
+    DataSets = [
+        ('adxl345(<name>,<axis>)', 'Accelerometer for given axis (x, y, or z)'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
+        self.name = name
+        self.adxl_name = name_parts[1]
+        self.jdispatch = lmanager.get_jdispatch()
+        self.next_accel_time = self.last_accel_time = 0.
+        self.next_accel = self.last_accel = (0., 0., 0.)
+        self.cur_data = []
+        self.data_pos = 0
+        if name_parts[2] not in 'xyz':
+            raise error("Unknown adxl345 data selection '%s'" % (name,))
+        self.axis = 'xyz'.index(name_parts[2])
+    def get_label(self):
+        label = '%s %s acceleration' % (self.adxl_name, 'xyz'[self.axis])
+        return {'label': label, 'units': 'Acceleration\n(mm/s^2)'}
+    def pull_data(self, req_time):
+        axis = self.axis
+        while 1:
+            if req_time <= self.next_accel_time:
+                adiff = self.next_accel[axis] - self.last_accel[axis]
+                tdiff = self.next_accel_time - self.last_accel_time
+                rtdiff = req_time - self.last_accel_time
+                return self.last_accel[axis] + rtdiff * adiff / tdiff
+            if self.data_pos >= len(self.cur_data):
+                # Read next data block
+                jmsg = self.jdispatch.pull_msg(req_time, self.name)
+                if jmsg is None:
+                    return 0.
+                self.cur_data = jmsg['data']
+                self.data_pos = 0
+                continue
+            self.last_accel = self.next_accel
+            self.last_accel_time = self.next_accel_time
+            self.next_accel_time, x, y, z = self.cur_data[self.data_pos]
+            self.next_accel = (x, y, z)
+            self.data_pos += 1
+LogHandlers["adxl345"] = HandleADXL345
+
 
 ######################################################################
 # Log reading
