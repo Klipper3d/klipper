@@ -28,23 +28,28 @@ SCALE = 0.0039 * FREEFALL_ACCEL # 3.9mg/LSB * Earth gravity in mm/s**2
 Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
-# Sample results
-class ADXL345Results:
-    def __init__(self):
+# Helper class to obtain measurements
+class ADXL345QueryHelper:
+    def __init__(self, printer, chip, axes_map):
+        self.printer = printer
+        self.chip = chip
+        self.axes_map = axes_map
         self.raw_samples = None
         self.samples = []
         self.drops = self.overflows = 0
         self.time_per_sample = self.start_range = self.end_range = 0.
+    def finish_measurements(self):
+        self.chip._finish_measurements()
+        self._setup_data(*self.chip.final_results) # XXX
     def get_stats(self):
         return ("drops=%d,overflows=%d"
                 ",time_per_sample=%.9f,start_range=%.6f,end_range=%.6f"
                 % (self.drops, self.overflows,
                    self.time_per_sample, self.start_range, self.end_range))
-    def setup_data(self, axes_map, raw_samples, end_sequence, overflows,
-                   start1_time, start2_time, end1_time, end2_time):
+    def _setup_data(self, raw_samples, end_sequence, overflows,
+                    start1_time, start2_time, end1_time, end2_time):
         if not raw_samples or not end_sequence:
             return
-        self.axes_map = axes_map
         self.raw_samples = raw_samples
         self.overflows = overflows
         self.start2_time = start2_time
@@ -101,6 +106,7 @@ class ADXLCommandHelper:
     def __init__(self, config, chip):
         self.printer = config.get_printer()
         self.chip = chip
+        self.bg_client = None
         self.name = "default"
         if len(config.get_name().split()) > 1:
             self.name = config.get_name().split()[1]
@@ -126,30 +132,34 @@ class ADXLCommandHelper:
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
         if not self.chip.is_measuring():
             # Start measurements
-            self.chip.start_measurements()
+            self.bg_client = self.chip.start_internal_client()
             gcmd.respond_info("adxl345 measurements started")
             return
+        if self.bg_client is None:
+            raise gcmd.error("adxl345 measurements in progress")
         # End measurements
         name = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not name.replace('-', '').replace('_', '').isalnum():
             raise gcmd.error("Invalid adxl345 NAME parameter")
-        res = self.chip.finish_measurements()
+        bg_client = self.bg_client
+        self.bg_client = None
+        bg_client.finish_measurements()
         # Write data to file
         if self.name == "default":
             filename = "/tmp/adxl345-%s.csv" % (name,)
         else:
             filename = "/tmp/adxl345-%s-%s.csv" % (self.name, name,)
-        res.write_to_file(filename)
+        bg_client.write_to_file(filename)
         gcmd.respond_info("Writing raw accelerometer data to %s file"
                           % (filename,))
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
     def cmd_ACCELEROMETER_QUERY(self, gcmd):
         if self.chip.is_measuring():
             raise gcmd.error("adxl345 measurements in progress")
-        self.chip.start_measurements()
+        aclient = self.chip.start_internal_client()
         self.printer.lookup_object('toolhead').dwell(1.)
-        result = self.chip.finish_measurements()
-        values = result.decode_samples()
+        aclient.finish_measurements()
+        values = aclient.decode_samples()
         if not values:
             raise gcmd.error("No adxl345 measurements found")
         _, accel_x, accel_y, accel_z = values[-1]
@@ -247,7 +257,7 @@ class ADXL345:
                         reg, val, stored_val))
     def is_measuring(self):
         return self.query_rate > 0
-    def start_measurements(self):
+    def _start_measurements(self):
         if self.is_measuring():
             return
         # In case of miswiring, testing ADXL345 device ID prevents treating
@@ -277,9 +287,10 @@ class ADXL345:
         self.query_rate = self.data_rate
         self.query_adxl345_cmd.send([self.oid, reqclock, rest_ticks],
                                     reqclock=reqclock)
-    def finish_measurements(self):
+        logging.info("ADXL345 starting measurements")
+    def _finish_measurements(self):
         if not self.is_measuring():
-            return ADXL345Results()
+            return
         # Halt bulk reading
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         clock = self.mcu.print_time_to_clock(print_time)
@@ -294,13 +305,16 @@ class ADXL345:
         end2_time = self._clock_to_print_time(params['end2_clock'])
         end_sequence = self._convert_sequence(params['sequence'])
         overflows = params['limit_count']
-        res = ADXL345Results()
-        res.setup_data(self.axes_map, raw_samples, end_sequence, overflows,
-                       self.samples_start1, self.samples_start2,
-                       end1_time, end2_time)
-        logging.info("ADXL345 finished %d measurements: %s",
-                     res.total_count, res.get_stats())
-        return res
+        logging.info("ADXL345 finished measurements")
+        self.final_results = (raw_samples, end_sequence, overflows,
+                              self.samples_start1, self.samples_start2,
+                              end1_time, end2_time) # XXX
+    def start_internal_client(self):
+        if self.is_measuring():
+            raise self.printer.command_error(
+                "ADXL345 measurement already in progress")
+        self._start_measurements()
+        return ADXL345QueryHelper(self.printer, self, self.axes_map)
 
 def load_config(config):
     return ADXL345(config)
