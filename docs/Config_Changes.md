@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20210830: The adxl345 ACCELEROMETER_MEASURE command no longer supports
+a RATE parameter.  To alter the query rate, update the printer.cfg
+file and issue a RESTART command.
+
 20210821: Several config settings in `printer.configfile.settings`
 will now be reported as lists instead of raw strings.  If the actual
 raw string is desired, use `printer.configfile.config` instead.
