@@ -31,19 +31,6 @@ usb_irq_enable(void)
  * USB transfer memory
  ****************************************************************/
 
-#if CONFIG_MACH_STM32H7
-#define OTG ((USB_OTG_GlobalTypeDef*)USB2_OTG_FS)
-#define OTGD ((USB_OTG_DeviceTypeDef*)                          \
-              (USB2_OTG_FS + USB_OTG_DEVICE_BASE))
-#define EPFIFO(EP) ((void*)(USB2_OTG_FS + USB_OTG_FIFO_BASE  \
-                            + ((EP) << 12)))
-#define EPIN(EP) ((USB_OTG_INEndpointTypeDef*)                          \
-                  (USB2_OTG_FS + USB_OTG_IN_ENDPOINT_BASE    \
-                   + ((EP) << 5)))
-#define EPOUT(EP) ((USB_OTG_OUTEndpointTypeDef*)                        \
-                   (USB2_OTG_FS + USB_OTG_OUT_ENDPOINT_BASE  \
-                    + ((EP) << 5)))
-#else
 #define OTG ((USB_OTG_GlobalTypeDef*)USB_OTG_FS_PERIPH_BASE)
 #define OTGD ((USB_OTG_DeviceTypeDef*)                          \
               (USB_OTG_FS_PERIPH_BASE + USB_OTG_DEVICE_BASE))
@@ -55,7 +42,6 @@ usb_irq_enable(void)
 #define EPOUT(EP) ((USB_OTG_OUTEndpointTypeDef*)                        \
                    (USB_OTG_FS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
                     + ((EP) << 5)))
-#endif
 
 // Setup the USB fifos
 static void
@@ -404,25 +390,23 @@ usb_init(void)
 {
     // Enable USB clock
 #if CONFIG_MACH_STM32H7
-    RCC->AHB1ENR |= RCC_AHB1ENR_USB2OTGHSEN;
+    if (READ_BIT(PWR->CR3, PWR_CR3_USB33RDY) != (PWR_CR3_USB33RDY) ? 1 : 0) {
+        SET_BIT(PWR->CR3, PWR_CR3_USB33DEN);
+    }
+    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSEN);
 #else
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 #endif
-    while (!(OTG->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL))
-        ;
+    while ((OTG->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0);
 
     // Configure USB in full-speed device mode
     OTG->GUSBCFG = (USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL
                     | (6 << USB_OTG_GUSBCFG_TRDT_Pos));
     OTGD->DCFG |= (3 << USB_OTG_DCFG_DSPD_Pos);
-#if CONFIG_MACH_STM32F446
+#if CONFIG_MACH_STM32F446 || CONFIG_MACH_STM32H7
     OTG->GOTGCTL = USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL;
 #else
-#if CONFIG_MACH_STM32H7
-    OTG->GCCFG |= USB_OTG_GCCFG_VBDEN;
-#else
     OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
-#endif // CONFIG_MACH_STM32H7
 #endif
 
     // Route pins

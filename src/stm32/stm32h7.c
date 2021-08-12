@@ -146,6 +146,9 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 static void
 clock_setup(void)
 {
+    // Ensure USB OTG ULPI is not enabled
+    CLEAR_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSULPIEN);
+
     // Set this despite correct defaults.
     // "The software has to program the supply configuration in PWR control
     // register 3" (pg. 259)
@@ -225,6 +228,18 @@ clock_setup(void)
     MODIFY_REG(RCC->CFGR, RCC_CFGR_SW_Msk, RCC_CFGR_SW_PLL1);
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL1)
         ;
+
+    if (CONFIG_USBSERIAL) {
+        SET_BIT(RCC->CR, RCC_CR_HSI48ON);
+        while((RCC->CR & RCC_CR_HSI48RDY) == 0);
+        SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
+        SET_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
+        CLEAR_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
+        CLEAR_BIT(RCC->CFGR, CRS_CFGR_SYNCSRC);
+        SET_BIT(CRS->CR, CRS_CR_CEN | CRS_CR_AUTOTRIMEN);
+        CLEAR_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
+        SET_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
+    }
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
