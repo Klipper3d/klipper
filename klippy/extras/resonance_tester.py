@@ -181,8 +181,6 @@ class ResonanceTester:
                         gcmd.respond_info(
                                 "Writing raw accelerometer data to "
                                 "%s file" % (raw_name,))
-                    gcmd.respond_info("%s-axis accelerometer stats: %s" % (
-                        chip_axis, aclient.get_stats(),))
                 if helper is None:
                     continue
                 for chip_axis, chip_values in raw_values:
