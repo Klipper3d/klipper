@@ -121,7 +121,7 @@ class DualCarriages:
         else:
             raise self.printer.lookup_object('gcode').error(
                 "'%s' is not a valid mode." % mode)
-    def get_status(self, eventtime):
+    def get_status(self, eventtime=None):
         dc0, dc1 = self.dc
         if (dc0.is_active() == dc1.is_active() == True):
             mode = ('DUPLICATION','MIRRORED')[dc1.is_reversed()]
