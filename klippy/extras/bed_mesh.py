@@ -265,6 +265,7 @@ class BedMeshCalibrate:
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
         self._generate_points(config.error)
+        self._profile_name = None
         self.orig_points = self.points
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points())
@@ -573,6 +574,7 @@ class BedMeshCalibrate:
         return adj_pts
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
+        self._profile_name = gcmd.get('PROFILE', "default")
         self.bedmesh.set_mesh(None)
         self.update_config(gcmd)
         self.probe_helper.start_probe(gcmd)
@@ -693,7 +695,7 @@ class BedMeshCalibrate:
             raise self.gcode.error(str(e))
         self.bedmesh.set_mesh(z_mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
-        self.bedmesh.save_profile("default")
+        self.bedmesh.save_profile(self._profile_name)
     def _dump_points(self, probed_pts, corrected_pts, offsets):
         # logs generated points with offset applied, points received
         # from the finalize callback, and the list of corrected points
