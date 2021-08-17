@@ -1108,6 +1108,22 @@ print.
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
 
+### [z_calibration]
+
+The following commands are available when a
+[z_calibration config section](Config_Reference.md#z_calibration) is enabled
+(also see the [Z-Calibration guide](Z_Calibration.md)):
+- `CALIBRATE_Z`: This calibrates the current offset between the nozzle and
+  the print surface.
+- `PROBE_Z_ACCURACY [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
+  [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum,
+  average, median, and standard deviation of multiple probe
+  samples. By default, 10 SAMPLES are taken. Otherwise the optional
+  parameters default to their equivalent setting in the z_calibration or probe
+  config section.
+*Note* that appropriate macros and/or configurations are needed to attach
+and detach a mag-probe for these commands!
+
 ### [z_tilt]
 
 The following commands are available when the
