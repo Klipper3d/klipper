@@ -1,9 +1,10 @@
-# Enable the github stale issue bot tracker
-name: "Close stale issues"
+# Close and warn on tickets that have become stale
+name: "Close stale tickets"
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 */12 * * *'
 jobs:
+  # Check for stale issues (no updates in 5 weeks)
   stale:
     runs-on: ubuntu-latest
     steps:
@@ -29,6 +30,35 @@ jobs:
         exempt-issue-labels: 'enhancement,bug'
         days-before-stale: 35
         days-before-close: 7
+  # Close tickets marked with "not on github" label
+  close_not_on_github:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          script: |
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'not on github',
+              per_page: 100,
+              page: 1
+            });
+            const expireMillis = 1000 * 60 * 60 * 36;
+            const curtime = new Date().getTime();
+            for (var issue of issues.data.values()) {
+              const updatetime = new Date(issue.updated_at).getTime();
+              if (curtime < updatetime + expireMillis)
+                continue;
+              await github.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+  # Close tickets marked with "resolved" label
   close_resolved:
     runs-on: ubuntu-latest
     steps:
