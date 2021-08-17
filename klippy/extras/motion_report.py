@@ -23,8 +23,7 @@ class DumpStepper:
                 break
             end_clock = data[count-1].first_clock
         res.reverse()
-        return ([data[i] for i in range(count-1, -1, -1)
-                 for data, count in res], res)
+        return ([d[i] for d, cnt in res for i in range(cnt-1, -1, -1)], res)
     def log_steps(self, data):
         if not data:
             return
@@ -60,8 +59,7 @@ class DumpTrapQ:
                 break
             end_time = data[count-1].print_time
         res.reverse()
-        return ([data[i] for i in range(count-1, -1, -1)
-                 for data, count in res], res)
+        return ([d[i] for d, cnt in res for i in range(cnt-1, -1, -1)], res)
     def log_trapq(self, data):
         if not data:
             return
