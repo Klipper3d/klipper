@@ -21,19 +21,29 @@ DECL_ENUMERATION("spi_bus", "spi1", 1);
 DECL_CONSTANT_STR("BUS_PINS_spi1", "PA6,PA7,PA5");
 DECL_ENUMERATION("spi_bus", "spi1a", 2);
 DECL_CONSTANT_STR("BUS_PINS_spi1a", "PB4,PB5,PB3");
-#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4
+#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4 || CONFIG_MACH_STM32H7
  DECL_ENUMERATION("spi_bus", "spi2a", 3);
  DECL_CONSTANT_STR("BUS_PINS_spi2a", "PC2,PC3,PB10");
 #endif
 #ifdef SPI3
  DECL_ENUMERATION("spi_bus", "spi3", 4);
  DECL_CONSTANT_STR("BUS_PINS_spi3", "PB4,PB5,PB3");
- #if CONFIG_MACH_STM32F4
+ #if CONFIG_MACH_STM32F4 || CONFIG_MACH_STM32H7
   DECL_ENUMERATION("spi_bus", "spi3a", 5);
   DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
   #ifdef SPI4
    DECL_ENUMERATION("spi_bus", "spi4", 6);
    DECL_CONSTANT_STR("BUS_PINS_spi4", "PE13,PE14,PE12");
+   #ifdef SPI5
+    DECL_ENUMERATION("spi_bus", "spi5", 7);
+    DECL_CONSTANT_STR("BUS_PINS_spi5", "PF8,PF9,PF7");
+    DECL_ENUMERATION("spi_bus", "spi5a", 8);
+    DECL_CONSTANT_STR("BUS_PINS_spi5a", "PH7,PF11,PH6");
+    #ifdef SPI6
+      DECL_ENUMERATION("spi_bus", "spi6", 9);
+      DECL_CONSTANT_STR("BUS_PINS_spi6", "PG12,PG14,PG13");
+    #endif
+   #endif
   #elif defined(GPIOI)
    DECL_ENUMERATION("spi_bus", "spi2b", 6);
    DECL_CONSTANT_STR("BUS_PINS_spi2b", "PI2,PI3,PI1");
@@ -50,12 +60,19 @@ static const struct spi_info spi_bus[] = {
     { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION },
 #ifdef SPI3
     { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
- #if CONFIG_MACH_STM32F4
+ #if CONFIG_MACH_STM32F4 || CONFIG_MACH_STM32H7
     { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), GPIO_FUNCTION(6) },
   #ifdef SPI4
-    { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), GPIO_FUNCTION(5) },
-  #elif defined(GPIOI)
-    { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), GPIO_FUNCTION(5) },
+    { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), SPI_FUNCTION },
+   #ifdef SPI5
+    { SPI5, GPIO('F', 8), GPIO('F', 9), GPIO('F', 7), SPI_FUNCTION },
+    { SPI5, GPIO('H', 7), GPIO('F', 11), GPIO('H', 6), SPI_FUNCTION },
+    #ifdef SPI6
+    { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), SPI_FUNCTION },
+    #endif
+   #endif
+  #elif defined(GPIOI)  // Also for STM32H7
+    { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), SPI_FUNCTION },
   #endif
  #endif
 #endif
