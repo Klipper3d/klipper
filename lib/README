@@ -31,6 +31,11 @@ Atmel.SAMD51_DFP.1.1.96.atpack zip file found at:
   http://packs.download.atmel.com/
 version 1.1.96 (extracted on 20190110).
 
+The same70b directory contains code from the
+Atmel.SAME70_DFP.2.4.166.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 2.4.166 (extracted on 20210809).
+
 The lpc176x directory contains code from the mbed project:
   https://github.com/ARMmbed/mbed-os
 version mbed-os-5.8.3 (c05d72c3c005fbb7e92c3994c32bda45218ae7fe).
