@@ -1,4 +1,4 @@
-# Configuration changes
+# Configuration Changes
 
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this

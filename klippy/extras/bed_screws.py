@@ -17,7 +17,8 @@ class BedScrews:
         self.printer = config.get_printer()
         self.state = None
         self.current_screw = 0
-        self.adjust_again = False
+        self.accepted_screws = 0
+        self.number_of_screws = 0
         # Read config
         screws = []
         fine_adjust = []
@@ -34,6 +35,7 @@ class BedScrews:
                 fine_adjust.append((fine_coord, screw_name))
         if len(screws) < 3:
             raise config.error("bed_screws: Must have at least three screws")
+        self.number_of_screws = len(screws)
         self.states = {'adjust': screws, 'fine': fine_adjust}
         self.speed = config.getfloat('speed', 50., above=0.)
         self.lift_speed = config.getfloat('probe_speed', 5., above=0.)
@@ -73,22 +75,26 @@ class BedScrews:
     def cmd_BED_SCREWS_ADJUST(self, gcmd):
         if self.state is not None:
             raise gcmd.error("Already in bed_screws helper; use ABORT to exit")
-        self.adjust_again = False
+        # reset accepted screws
+        self.accepted_screws = 0
         self.move((None, None, self.horizontal_move_z), self.speed)
         self.move_to_screw('adjust', 0)
     cmd_ACCEPT_help = "Accept bed screw position"
     def cmd_ACCEPT(self, gcmd):
         self.unregister_commands()
-        if self.current_screw + 1 < len(self.states[self.state]):
+        self.accepted_screws = self.accepted_screws + 1
+        if self.current_screw + 1 < len(self.states[self.state]) \
+                and self.accepted_screws < self.number_of_screws:
             # Continue with next screw
             self.move_to_screw(self.state, self.current_screw + 1)
             return
-        if self.adjust_again:
+        if self.accepted_screws < self.number_of_screws:
             # Retry coarse adjustments
-            self.adjust_again = False
             self.move_to_screw('adjust', 0)
             return
         if self.state == 'adjust' and self.states['fine']:
+            # Reset accepted screws for fine adjustment
+            self.accepted_screws = 0
             # Perform fine screw adjustments
             self.move_to_screw('fine', 0)
             return
@@ -99,7 +105,7 @@ class BedScrews:
     cmd_ADJUSTED_help = "Accept bed screw position after notable adjustment"
     def cmd_ADJUSTED(self, gcmd):
         self.unregister_commands()
-        self.adjust_again = True
+        self.accepted_screws = -1
         self.cmd_ACCEPT(gcmd)
     cmd_ABORT_help = "Abort bed screws tool"
     def cmd_ABORT(self, gcmd):
