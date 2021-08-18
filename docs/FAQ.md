@@ -1,4 +1,4 @@
-# Frequently asked questions
+# Frequently Asked Questions
 
 1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
 2. [How do I calculate the rotation_distance config parameter?](#how-do-i-calculate-the-rotation_distance-config-parameter)

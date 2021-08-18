@@ -1,9 +1,10 @@
-# Enable the github stale issue bot tracker
-name: "Close stale issues"
+# Close and warn on tickets that have become stale
+name: "Close stale tickets"
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 */12 * * *'
 jobs:
+  # Check for stale issues (no updates in 5 weeks)
   stale:
     runs-on: ubuntu-latest
     steps:
@@ -29,6 +30,35 @@ jobs:
         exempt-issue-labels: 'enhancement,bug'
         days-before-stale: 35
         days-before-close: 7
+  # Close tickets marked with "not on github" label
+  close_not_on_github:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          script: |
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'not on github',
+              per_page: 100,
+              page: 1
+            });
+            const expireMillis = 1000 * 60 * 60 * 36;
+            const curtime = new Date().getTime();
+            for (var issue of issues.data.values()) {
+              const updatetime = new Date(issue.updated_at).getTime();
+              if (curtime < updatetime + expireMillis)
+                continue;
+              await github.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+  # Close tickets marked with "resolved" label
   close_resolved:
     runs-on: ubuntu-latest
     steps:
@@ -56,6 +86,96 @@ jobs:
                   + "~ Your friendly GitIssueBot"
                   + "\n\n"
                   + "PS: I'm just an automated script, not a human being.";
+              await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: msg
+              });
+              await github.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+  # Close PRs marked with "not mainline" label
+  close_not_mainline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          script: |
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'not mainline',
+              per_page: 100,
+              page: 1
+            });
+            const expireMillis = 1000 * 60 * 60 * 24 * 7;
+            const curtime = new Date().getTime();
+            for (var issue of issues.data.values()) {
+              const updatetime = new Date(issue.updated_at).getTime();
+              if (curtime < updatetime + expireMillis)
+                continue;
+              msg = "This PR is being closed because it is currently not"
+                  + " considered a good match for the master Klipper"
+                  + " repository."
+                  + "\n\n"
+                  + "Best regards,\n"
+                  + "~ Your friendly GitIssueBot"
+                  + "\n\n"
+                  + "PS: I'm just an automated script, not a human being.";
+              await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: msg
+              });
+              await github.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+  # Mark (and close) PRs with "pending feedback" for 3+ weeks
+  mark_inactive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          script: |
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'pending feedback',
+              per_page: 100,
+              page: 1
+            });
+            const expireMillis = 1000 * 60 * 60 * 24 * 21;
+            const curtime = new Date().getTime();
+            for (var issue of issues.data.values()) {
+              const updatetime = new Date(issue.updated_at).getTime();
+              if (curtime < updatetime + expireMillis)
+                continue;
+              msg = "It looks like this GitHub Pull Request has become"
+                  + " inactive.  If there are any further updates, you can"
+                  + " add a comment here or open a new ticket."
+                  + "\n\n"
+                  + "Best regards,\n"
+                  + "~ Your friendly GitIssueBot"
+                  + "\n\n"
+                  + "PS: I'm just an automated script, not a human being.";
+              await github.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['inactive']
+              });
               await github.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

@@ -265,6 +265,7 @@ class BedMeshCalibrate:
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
         self._generate_points(config.error)
+        self._profile_name = None
         self.orig_points = self.points
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points())
@@ -443,14 +444,16 @@ class BedMeshCalibrate:
                         raise config.error(
                             "bed_mesh: Existing faulty_region_%d %s overlaps "
                             "added faulty_region_%d %s"
-                            % (j, repr([prev_c1, prev_c3]), i, repr([c1, c3])))
+                            % (j+1, repr([prev_c1, prev_c3]),
+                               i, repr([c1, c3])))
                 # Validate that no new corner is within an existing region
                 for coord in [c1, c2, c3, c4]:
                     if within(coord, prev_c1, prev_c3):
                         raise config.error(
                             "bed_mesh: Added faulty_region_%d %s overlaps "
                             "existing faulty_region_%d %s"
-                            % (i, repr([c1, c3]), j, repr([prev_c1, prev_c3])))
+                            % (i, repr([c1, c3]),
+                               j+1, repr([prev_c1, prev_c3])))
             self.faulty_regions.append((c1, c3))
         self._verify_algorithm(config.error)
     def _verify_algorithm(self, error):
@@ -571,6 +574,7 @@ class BedMeshCalibrate:
         return adj_pts
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
+        self._profile_name = gcmd.get('PROFILE', "default")
         self.bedmesh.set_mesh(None)
         self.update_config(gcmd)
         self.probe_helper.start_probe(gcmd)
@@ -691,7 +695,7 @@ class BedMeshCalibrate:
             raise self.gcode.error(str(e))
         self.bedmesh.set_mesh(z_mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
-        self.bedmesh.save_profile("default")
+        self.bedmesh.save_profile(self._profile_name)
     def _dump_points(self, probed_pts, corrected_pts, offsets):
         # logs generated points with offset applied, points received
         # from the finalize callback, and the list of corrected points
