@@ -29,7 +29,7 @@ other desktops (eg,
 ssh utility to connect to the Raspberry Pi (ssh pi@octopi -- password
 is "raspberry") and run the following commands:
 
-```
+```bash
 git clone https://github.com/KevinOConnor/klipper
 ./klipper/scripts/install-octopi.sh
 ```
@@ -44,7 +44,7 @@ minutes to complete.
 To compile the micro-controller code, start by running these commands
 on the Raspberry Pi:
 
-```
+```bash
 cd ~/klipper/
 make menuconfig
 ```
@@ -52,7 +52,7 @@ make menuconfig
 Select the appropriate micro-controller and review any other options
 provided. Once configured, run:
 
-```
+```bash
 make
 ```
 
@@ -60,13 +60,13 @@ It is necessary to determine the serial port connected to the
 micro-controller. For micro-controllers that connect via USB, run the
 following:
 
-```
+```bash
 ls /dev/serial/by-id/*
 ```
 
 It should report something similar to the following:
 
-```
+```bash
 /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 ```
 
@@ -79,7 +79,7 @@ choose the line corresponding to the micro-controller (see the
 For common micro-controllers, the code can be flashed with something
 similar to:
 
-```
+```bash
 sudo service klipper stop
 make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 sudo service klipper start
@@ -139,7 +139,7 @@ config files as a starting point and save it as a file named
 Alternatively, one can also copy and edit the file directly on the
 Raspberry Pi via ssh - for example:
 
-```
+```bash
 cp ~/klipper/config/example-cartesian.cfg ~/printer.cfg
 nano ~/printer.cfg
 ```
@@ -153,7 +153,7 @@ the `ls /dev/serial/by-id/*` command and then update the config file
 with the unique name. For example, update the `[mcu]` section to look
 something similar to:
 
-```
+```cfg
 [mcu]
 serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 ```

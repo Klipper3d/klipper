@@ -9,7 +9,8 @@ series of regression tests. It can be useful to run some of these
 tests locally.
 
 The source code "whitespace check" can be run with:
-```
+
+```bash
 ./scripts/check_whitespace.sh
 ```
 
@@ -18,7 +19,8 @@ many platforms. The easiest way to obtain them is to
 [download them from GitHub](https://github.com/KevinOConnor/klipper/issues/1438).
 Once the data dictionaries are downloaded, use the following to run
 the regression suite:
-```
+
+```bash
 tar xfz klipper-dict-20??????.tar.gz
 ~/klippy-env/bin/python ~/klipper/scripts/test_klippy.py -d dict/ ~/klipper/test/klippy/*.test
 ```
@@ -30,15 +32,18 @@ commands to Klipper micro-controller commands. However, it's also
 possible to manually send these MCU commands (functions marked with
 the DECL_COMMAND() macro in the Klipper source code). To do so, run:
 
-```
+```bash
 ~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial
 ```
 
-See the "HELP" command within the tool for more information on its
+See the `HELP` command within the tool for more information on its
 functionality.
 
 Some command-line options are available. For more information run:
-`~/klippy-env/bin/python ./klippy/console.py --help`
+
+```bash
+~/klippy-env/bin/python ./klippy/console.py --help
+```
 
 ## Translating G-Code files to micro-controller commands
 
@@ -53,7 +58,7 @@ to generate the micro-controller "data dictionary". This is done by
 compiling the micro-controller code to obtain the **out/klipper.dict**
 file:
 
-```
+```bash
 make menuconfig
 make
 ```
@@ -62,14 +67,14 @@ Once the above is done it is possible to run Klipper in batch mode
 (see [Installation](Installation.md) for the steps necessary to build
 the python virtual environment and a printer.cfg file):
 
-```
+```bash
 ~/klippy-env/bin/python ./klippy/klippy.py ~/printer.cfg -i test.gcode -o test.serial -v -d out/klipper.dict
 ```
 
 The above will produce a file **test.serial** with the binary serial
 output. This output can be translated to readable text with:
 
-```
+```bash
 ~/klippy-env/bin/python ./klippy/parsedump.py out/klipper.dict test.serial > test.txt
 ```
 
@@ -91,14 +96,14 @@ these statistics after a print.
 To generate a graph, a one time step is necessary to install the
 "matplotlib" package:
 
-```
+```bash
 sudo apt-get update
 sudo apt-get install python-matplotlib
 ```
 
 Then graphs can be produced with:
 
-```
+```bash
 ~/klipper/scripts/graphstats.py /tmp/klippy.log -o loadgraph.png
 ```
 
@@ -114,7 +119,7 @@ information. There is a logextract.py script that may be useful when
 analyzing a micro-controller shutdown or similar problem. It is
 typically run with something like:
 
-```
+```bash
 mkdir work_directory
 cd work_directory
 cp /tmp/klippy.log .
@@ -137,7 +142,7 @@ require significant cpu to run efficiently.
 To use simulavr, download the simulavr package and compile with python
 support:
 
-```
+```bash
 git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr
 ./bootstrap
@@ -152,7 +157,7 @@ compilation.
 
 To compile Klipper for use in simulavr, run:
 
-```
+```bash
 cd /patch/to/klipper
 make menuconfig
 ```
@@ -162,7 +167,7 @@ the MCU frequency to 20Mhz, and select SIMULAVR software emulation
 support. Then one can compile Klipper (run `make`) and then start the
 simulation with:
 
-```
+```bash
 PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf
 ```
 
@@ -172,7 +177,7 @@ with Klippy, and send it to Klipper running in simulavr (see
 [installation](Installation.md) for the steps necessary to build the
 python virtual environment):
 
-```
+```bash
 ~/klippy-env/bin/python ./klippy/klippy.py config/generic-simulavr.cfg -i test.gcode -v
 ```
 
@@ -183,7 +188,7 @@ generation files with the exact timing of events. To do this, follow
 the directions above, but run avrsim.py with a command-line like the
 following:
 
-```
+```bash
 PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf -t PORTA.PORT,PORTC.PORT
 ```
 
@@ -191,6 +196,6 @@ The above would create a file **avrsim.vcd** with information on each
 change to the GPIOs on PORTA and PORTB. This could then be viewed
 using gtkwave with:
 
-```
+```bash
 gtkwave avrsim.vcd
 ```

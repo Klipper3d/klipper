@@ -32,7 +32,8 @@ There are currently two common options:
 It is also necessary to configure the host operating system to use the
 adapter. This is typically done by creating a new file named
 `/etc/network/interfaces.d/can0` with the following contents:
-```
+
+```nginx
 auto can0
 iface can0 can static
     bitrate 500000
@@ -66,13 +67,15 @@ Each micro-controller on the CAN bus is assigned a unique id based on
 the factory chip identifier encoded into each micro-controller. To
 find each micro-controller device id, make sure the hardware is
 powered and wired correctly, and then run:
-```
+
+```bash
 ~/klippy-env/bin/python ~/klipper/scripts/canbus_query.py can0
 ```
 
 If uninitialized CAN devices are detected the above command will
 report lines like the following:
-```
+
+```text
 Found canbus_uuid=11aa22bb33cc
 ```
 
@@ -87,7 +90,8 @@ will no longer appear in the list.
 
 Update the Klipper [mcu configuration](Config_Reference.md#mcu) to use
 the CAN bus to communicate with the device - for example:
-```
+
+```cfg
 [mcu my_can_mcu]
 canbus_uuid: 11aa22bb33cc
 ```

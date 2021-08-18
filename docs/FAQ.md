@@ -39,20 +39,24 @@ See the [rotation distance document](Rotation_Distance.md).
 The general way to find a USB serial port is to run `ls
 /dev/serial/by-id/*` from an ssh terminal on the host machine. It will
 likely produce output similar to the following:
-```
+
+```bash
 /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 ```
 
 The name found in the above command is stable and it is possible to
 use it in the config file and while flashing the micro-controller
 code. For example, a flash command might look similar to:
-```
+
+```bash
 sudo service klipper stop
 make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 sudo service klipper start
 ```
+
 and the updated config might look like:
-```
+
+```cfg
 [mcu]
 serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 ```
@@ -78,10 +82,10 @@ methods, so the "make flash" command may not work on all boards.
 
 If you're having an intermittent failure or you do have a standard
 setup, then double check that Klipper isn't running when flashing
-(sudo service klipper stop), make sure OctoPrint isn't trying to
+(`sudo service klipper stop`), make sure OctoPrint isn't trying to
 connect directly to the device (open the Connection tab in the web
 page and click Disconnect if the Serial Port is set to the device),
-and make sure FLASH_DEVICE is set correctly for your board (see the
+and make sure `FLASH_DEVICE` is set correctly for your board (see the
 [question above](#wheres-my-serial-port)).
 
 However, if "make flash" just doesn't work for your board, then you
@@ -105,9 +109,10 @@ need to be configured in the micro-controller (during **make
 menuconfig**) and that updated code will need to be compiled and
 flashed to the micro-controller. The Klipper printer.cfg file will
 also need to be updated to match that baud rate (see the
-[config reference](Config_Reference.md#mcu) for details). For
+[Config Reference](Config_Reference.md#mcu) for details). For
 example:
-```
+
+```cfg
 [mcu]
 baud: 250000
 ```
@@ -169,13 +174,16 @@ package.
 It is possible to run multiple instances of the Klipper host software,
 but doing so requires Linux admin knowledge. The Klipper installation
 scripts ultimately cause the following Unix command to be run:
-```
+
+```bash
 ~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log
 ```
+
 One can run multiple instances of the above command as long as each
 instance has its own printer config file, its own log file, and its
 own pseudo-tty. For example:
-```
+
+```bash
 ~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
 ```
 
@@ -201,7 +209,7 @@ can be configured to use "/tmp/printer" for the printer serial port.
 The code does this to reduce the chance of accidentally commanding the
 head into the bed or a wall. Once the printer is homed the software
 attempts to verify each move is within the position_min/max defined in
-the config file. If the motors are disabled (via an M84 or M18
+the config file. If the motors are disabled (via an `M84` or `M18`
 command) then the motors will need to be homed again prior to
 movement.
 
@@ -261,6 +269,7 @@ Klipper in mid-March of 2020.
 
 This is commonly caused by hardware errors on the USB connection
 between the host machine and the micro-controller. Things to look for:
+
 - Use a good quality USB cable between the host machine and
   micro-controller. Make sure the plugs are secure.
 - If using a Raspberry Pi, use a
@@ -315,7 +324,7 @@ seconds. If the micro-controller does not receive a confirmation every
 5 seconds it goes into a "shutdown" state which is designed to turn
 off all heaters and stepper motors.
 
-See the "config_digital_out" command in the
+See the `config_digital_out` command in the
 [MCU commands](MCU_Commands.md) document for further details.
 
 In addition, the micro-controller software is configured with a
@@ -463,7 +472,7 @@ prior to upgrading.
 When ready to upgrade, the general method is to ssh into the Raspberry
 Pi and run:
 
-```
+```bash
 cd ~/klipper
 git pull
 ~/klipper/scripts/install-octopi.sh
@@ -472,7 +481,7 @@ git pull
 Then one can recompile and flash the micro-controller code. For
 example:
 
-```
+```bash
 make menuconfig
 make clean
 make
@@ -485,7 +494,7 @@ sudo service klipper start
 However, it's often the case that only the host software changes. In
 this case, one can update and restart just the host software with:
 
-```
+```bash
 cd ~/klipper
 git pull
 sudo service klipper restart
@@ -511,7 +520,8 @@ flashing directions for the new firmware.
 On the raspberry pi end, an uninstall script is available in
 [scripts/klipper-uninstall.sh](../scripts/klipper-uninstall.sh). For
 example:
-```
+
+```bash
 sudo ~/klipper/scripts/klipper-uninstall.sh
 rm -rf ~/klippy-env ~/klipper
 ```

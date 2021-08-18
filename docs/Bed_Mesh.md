@@ -11,16 +11,17 @@ the probing process.
 Prior to Mesh Calibration you will need to be sure that your Probe's
 Z-Offset is calibrated. If using an endstop for Z homing it will need
 to be calibrated as well. See [Probe_Calibrate](Probe_Calibrate.md)
-and Z_ENDSTOP_CALIBRATE in [Manual_Level](Manual_Level.md) for more
+and `Z_ENDSTOP_CALIBRATE` in [Manual_Level](Manual_Level.md) for more
 information.
 
 ## Basic Configuration
 
 ### Rectangular Beds
+
 This example assumes a printer with a 250 mm x 220 mm rectangular
 bed and a probe with an x-offset of 24 mm and y-offset of 5 mm.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -67,11 +68,12 @@ is at `mesh_max`, the nozzle will be at (206, 193).
 ![bedmesh_rect_basic](img/bedmesh_rect_basic.svg)
 
 ### Round beds
+
 This example assumes a printer equipped with a round bed radius of 100mm.
 We will use the same probe offsets as the rectangular example, 24 mm on X
 and 5 mm on Y.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -121,7 +123,7 @@ to increase mesh density. These algorithms add curvature to the mesh,
 attempting to simulate the material properties of the bed. Bed Mesh offers
 lagrange and bicubic interpolation to accomplish this.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -175,7 +177,7 @@ to their Z coordinate. Long moves must be and split into smaller moves
 to correctly follow the shape of the bed. The options below control the
 splitting behavior.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -221,7 +223,7 @@ can result in visible artifacts on the print. Also, if your bed is
 significantly warped, fade can shrink or stretch the Z height of the print.
 As such, fade is disabled by default.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -269,7 +271,7 @@ challenging, particuarly at different bed temperatures. As such, some printers
 use an endstop for homing the Z axis, and a probe for calibrating the mesh.
 These printers can benefit from configuring the relative reference index.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -310,7 +312,7 @@ probe up to 4 points at the boundaries of this region. These probed values
 will be averaged and inserted in the mesh as the Z value at the generated
 (X, Y) coordinate.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -347,10 +349,12 @@ are identified in green.
 
 ### Calibration
 
-`BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>]
- [<mesh_parameter>=<value>]`\
-_Default Profile:  default_\
-_Default Method:  automatic if a probe is detected, otherwise manual_
+```gcode
+BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>] [<mesh_parameter>=<value>]
+```
+
+*Default Profile:  default*\
+*Default Method:  automatic if a probe is detected, otherwise manual*
 
 Initiates the probing procedure for Bed Mesh Calibration.
 
@@ -361,6 +365,7 @@ mesh points will automatically be adjusted.
 
 It is possible to specify mesh parameters to modify the probed area. The
 following parameters are available:
+
 - Rectangular beds (cartesian):
   - `MESH_MIN`
   - `MESH_MAX`
@@ -372,12 +377,15 @@ following parameters are available:
 - All beds:
   - `RELATIVE_REFERNCE_INDEX`
   - `ALGORITHM`
+
 See the configuration documentation above for details on how each parameter
 applies to the mesh.
 
 ### Profiles
 
-`BED_MESH_PROFILE SAVE=name LOAD=name REMOVE=name`
+```gcode
+BED_MESH_PROFILE SAVE=name LOAD=name REMOVE=name
+```
 
 After a BED_MESH_CALIBRATE has been performed, it is possible to save the
 current mesh state into a named profile. This makes it possible to load
@@ -392,14 +400,18 @@ state is automatically saved to the *default* profile. If this profile
 exists it is automatically loaded when Klipper starts. If this behavior
 is not desirable the *default* profile can be removed as follows:
 
-`BED_MESH_PROFILE REMOVE=default`
+```gcode
+BED_MESH_PROFILE REMOVE=default
+```
 
 Any other saved profile can be removed in the same fashion, replacing
 *default* with the named profile you wish to remove.
 
 ### Output
 
-`BED_MESH_OUTPUT PGP=[0 | 1]`
+```gcode
+BED_MESH_OUTPUT PGP=[0 | 1]
+```
 
 Outputs the current mesh state to the terminal. Note that the mesh itself
 is output
@@ -407,7 +419,7 @@ is output
 The PGP parameter is shorthand for "Print Generated Points". If `PGP=1` is
 set, the generated probed points will be output to the terminal:
 
-```
+```text
 // bed_mesh: generated points
 // Index | Tool Adjusted | Probe
 // 0 | (11.0, 1.0) | (35.0, 6.0)
@@ -433,13 +445,17 @@ probing the "Probe" points will refer to both the tool and nozzle locations.
 
 ### Clear Mesh State
 
-`BED_MESH_CLEAR`
+```gcode
+BED_MESH_CLEAR
+```
 
 This G-Code may be used to clear the internal mesh state.
 
 ### Apply X/Y offsets
 
-`BED_MESH_OFFSET [X=<value>] [Y=<value>]`
+```gcode
+BED_MESH_OFFSET [X=<value>] [Y=<value>]
+```
 
 This is useful for printers with multiple independent extruders, as an offset
 is necessary to produce correct Z adjustment after a tool change. Offsets

@@ -7,6 +7,7 @@ first use mechanical means to get your printer as square as possible prior
 to applying software based correction.
 
 ## Print a Calibration Object
+
 The first step in correcting skew is to print a
 [calibration object](https://www.thingiverse.com/thing:2563185/files)
 along the plane you want to correct. There is also a
@@ -19,6 +20,7 @@ do this by either removing the [skew_correction] module from printer.cfg
 or by issuing a `SET_SKEW CLEAR=1` gcode.
 
 ## Take your measurements
+
 The [skew_correcton] module requires 3 measurements for each plane you want
 to correct; the length from Corner A to Corner C, the length from Corner B
 to Corner D, and the length from corner A to corner D. When measuring length
@@ -27,10 +29,12 @@ AD do not include the flats on the corners that some test objects provide.
 ![skew_lengths](img/skew_lengths.png)
 
 ## Configure your skew
+
 Make sure [skew_correction] is in printer.cfg. You may now use the `SET_SKEW`
 gcode to configure skew_correcton. For example, if your measured lengths
 along XY are as follows:
-```
+
+```bash
 Length AC = 140.4
 Length BD = 142.8
 Length AD = 99.8
@@ -38,12 +42,13 @@ Length AD = 99.8
 
 `SET_SKEW` can be used to configure skew correction for the XY plane.
 
-```
+```gcode
 SET_SKEW XY=140.4,142.8,99.8
 ```
+
 You may also add measurements for XZ and YZ to the gcode:
 
-```
+```gcode
 SET_SKEW XY=140.4,142.8,99.8 XZ=141.6,141.4,99.8 YZ=142.4,140.5,99.5
 ```
 
@@ -51,33 +56,38 @@ The [skew_correction] module also supports profile management in a manner
 similar to [bed_mesh]. After setting skew using the `SET_SKEW` gcode,
 you may use the `SKEW_PROFILE` gcode to save it:
 
-```
+```gcode
 SKEW_PROFILE SAVE=my_skew_profile
 ```
+
 After this command you will be prompted to issue a `SAVE_CONFIG` gcode to
 save the profile to persistent storage. If no profile is named
 `my_skew_profile` then a new profile will be created. If the named profile
 exists it will be overwritten.
 
 Once you have a saved profile, you may load it:
-```
+
+```gcode
 SKEW_PROFILE LOAD=my_skew_profile
 ```
 
 It is also possible to remove an old or out of date profile:
-```
+
+```gcode
 SKEW_PROFILE REMOVE=my_skew_profile
 ```
+
 After removing a profile you will be prompted to issue a `SAVE_CONFIG` to
 make this change persist.
 
 ## Verifying your correction
+
 After skew_correction has been configured you may reprint the calibration
 part with correction enabled. Use the following gcode to check your
 skew on each plane. The results should be lower than those reported via
 `GET_CURRENT_SKEW`.
 
-```
+```gcode
 CALC_MEASURED_SKEW AC=<ac_length> BD=<bd_length> AD=<ad_length>
 ```
 

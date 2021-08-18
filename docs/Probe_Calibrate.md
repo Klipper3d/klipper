@@ -13,32 +13,38 @@ move the head to a position near the center of the bed.
 Place a piece of blue painters tape (or similar) on the bed underneath
 the probe. Navigate to the OctoPrint "Terminal" tab and issue a PROBE
 command:
-```
+
+```gcode
 PROBE
 ```
+
 Place a mark on the tape directly under where the probe is (or use a
 similar method to note the location on the bed).
 
 Issue a `GET_POSITION` command and record the toolhead XY location
 reported by that command. For example if one sees:
-```
+
+```text
 Recv: // toolhead: X:46.500000 Y:27.000000 Z:15.000000 E:0.000000
 ```
+
 then one would record a probe X position of 46.5 and probe Y position
 of 27.
 
 After recording the probe position, issue a series of G1 commands
 until the nozzle is directly above the mark on the bed. For example,
 one might issue:
-```
+
+```gcode
 G1 F300 X57 Y30 Z15
 ```
+
 to move the nozzle to an X position of 57 and Y of 30. Once one finds
 the position directly above the mark, use the `GET_POSITION` command
 to report that position. This is the nozzle position.
 
-The x_offset is then the `nozzle_x_position - probe_x_position` and
-y_offset is similarly the `nozzle_y_position - probe_y_position`.
+The x_offset is then the $nozzle\_x\_position - probe\_x\_position$ and
+y_offset is similarly the $nozzle\_y\_position - probe\_y\_position$.
 Update the printer.cfg file with the given values, remove the
 tape/marks from the bed, and then issue a `RESTART` command so that
 the new values take effect.
@@ -68,23 +74,24 @@ Once the manual probe tool starts, follow the steps described at
 actual distance between the nozzle and bed at the given location. Once
 those steps are complete one can `ACCEPT` the position and save the
 results to the config file with:
-```
+
+```gcode
 SAVE_CONFIG
 ```
 
-Note that if a change is made to the printer's motion system, hotend
+\*\*\* Note that if a change is made to the printer's motion system, hotend
 position, or probe location then it will invalidate the results of
-PROBE_CALIBRATE.
+`PROBE_CALIBRATE`.
 
 If the probe has an X or Y offset and the bed tilt is changed (eg, by
-adjusting bed screws, running DELTA_CALIBRATE, running Z_TILT_ADJUST,
-running QUAD_GANTRY_LEVEL, or similar) then it will invalidate the
-results of PROBE_CALIBRATE. After making any of the above adjustments
-it will be necessary to run PROBE_CALIBRATE again.
+adjusting bed screws, running `DELTA_CALIBRATE`, running `Z_TILT_ADJUST`,
+running `QUAD_GANTRY_LEVEL,` or similar) then it will invalidate the
+results of `PROBE_CALIBRATE`. After making any of the above adjustments
+it will be necessary to run `PROBE_CALIBRATE` again.
 
-If the results of PROBE_CALIBRATE are invalidated, then any previous
+If the results of `PROBE_CALIBRATE` are invalidated, then any previous
 [bed mesh](Bed_Mesh.md) results that were obtained using the probe are
-also invalidated - it will be necessary to rerun BED_MESH_CALIBRATE
+also invalidated - it will be necessary to rerun `BED_MESH_CALIBRATE`
 after recalibrating the probe.
 
 ## Repeatability check
@@ -97,7 +104,8 @@ bed. Navigate to the OctoPrint terminal tab and run the
 
 This command will run the probe ten times and produce output similar
 to the following:
-```
+
+```text
 Recv: // probe accuracy: at X:0.000 Y:0.000 Z:10.000
 Recv: // and read 10 times with speed of 5 mm/s
 Recv: // probe at -0.003,0.005 is z=2.506948
@@ -117,11 +125,11 @@ Ideally the tool will report an identical maximum and minimum value.
 (That is, ideally the probe obtains an identical result on all ten
 probes.) However, it's normal for the minimum and maximum values to
 differ by one Z "step distance" or up to 5 microns (.005mm). A "step
-distance" is
-`rotation_distance/(full_steps_per_rotation*microsteps)`. The distance
-between the minimum and the maximum value is called the range. So, in
-the above example, since the printer uses a Z step distance of .0125,
-a range of 0.012500 would be considered normal.
+distance" is$\frac{rotation\_distance}{full\_steps\_per\_rotation
+\times microsteps}$.
+The distance between the minimum and the maximum value is called the
+range. So, in the above example, since the printer uses a Z step
+distance of .0125, a range of 0.012500 would be considered normal.
 
 If the results of the test show a range value that is greater than 25
 microns (.025mm) then the probe does not have sufficient accuracy for

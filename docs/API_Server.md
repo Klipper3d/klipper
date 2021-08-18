@@ -8,7 +8,8 @@ control the Klipper host software.
 
 In order to use the API server, the klippy.py host software must be
 started with the `-a` parameter. For example:
-```
+
+```bash
 ~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -a /tmp/klippy_uds -l /tmp/klippy.log
 ```
 
@@ -20,13 +21,15 @@ Klipper.
 
 Messages sent and received on the socket are JSON encoded strings
 terminated by an ASCII 0x03 character:
-```
+
+```json
 <json_object_1><0x03><json_object_2><0x03>...
 ```
 
 Klipper contains a `scripts/whconsole.py` tool that can perform the
 above message framing. For example:
-```
+
+```bash
 ~/klipper/scripts/whconsole.py /tmp/klippy_uds
 ```
 
@@ -158,7 +161,8 @@ will return:
 The remote method `paneldue_beep` may now be called from Klipper. Note
 that if the method takes parameters they should be provided as keyword
 arguments. Below is an example of how it may called from a gcode_macro:
-```
+
+```gcode
 [gcode_macro PANELDUE_BEEP]
 gcode:
   {action_call_remote_method("paneldue_beep", frequency=300, duration=1.0)}

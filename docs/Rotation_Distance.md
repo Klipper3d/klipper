@@ -13,13 +13,15 @@ The designers of your 3d printer originally calculated `steps_per_mm`
 from a rotation distance. If you know the steps_per_mm then it is
 possible to use this general formula to obtain that original rotation
 distance:
-```
+
+```text
 rotation_distance = <full_steps_per_rotation> * <microsteps> / <steps_per_mm>
 ```
 
 Or, if you have an older Klipper configuration and know the
 `step_distance` parameter you can use this formula:
-```
+
+```text
 rotation_distance = <full_steps_per_rotation> * <microsteps> * <step_distance>
 ```
 
@@ -53,6 +55,7 @@ be obtained from
 or by [inspecting the hardware](#extruder).
 
 Then use the following procedure to "measure and trim":
+
 1. Make sure the extruder has filament in it, the hotend is heated to
    an appropriate temperature, and the printer is ready to extrude.
 2. Use a marker to place a mark on the filament around 70mm from the
@@ -96,7 +99,8 @@ First determine the type of belt. Most printers use a 2mm belt pitch
 (that is, each tooth on the belt is 2mm apart). Then count the number
 of teeth on the stepper motor pulley. The rotation_distance is then
 calculated as:
-```
+
+```text
 rotation_distance = <belt_pitch> * <number_of_teeth_on_pulley>
 ```
 
@@ -107,7 +111,8 @@ teeth, then the rotation distance is 40.
 
 It is easy to calculate the rotation_distance for common lead screws
 using the following formula:
-```
+
+```text
 rotation_distance = <screw_pitch> * <number_of_separate_threads>
 ```
 
@@ -124,7 +129,11 @@ has a rotation distance of 1.25.
 
 It's possible to obtain an initial rotation distance for extruders by
 measuring the diameter of the "hobbed bolt" that pushes the filament
-and using the following formula: `rotation_distance = <diameter> * 3.14`
+and using the following formula:
+
+```text
+rotation_distance = <diameter> * 3.14
+```
 
 If the extruder uses gears then it will also be necessary to
 [determine and set the gear_ratio](#using-a-gear_ratio) for the

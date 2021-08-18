@@ -13,7 +13,6 @@ SPI mode (small number of boards appear to be hard-configured for I2C by
 pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU,
 that it has a voltage regulator and a level shifter.
 
-
 ## Installation instructions
 
 ### Wiring
@@ -34,7 +33,6 @@ and **will not work**. The recommended connection scheme:
 Fritzing wiring diagrams for some of the ADXL345 boards:
 
 ![ADXL345-Rpi](img/adxl345-fritzing.png)
-
 
 Double-check your wiring before powering up the Raspberry Pi to prevent
 damaging it or the accelerometer.
@@ -66,16 +64,19 @@ the system that may damage the electronics.
 Note that resonance measurements and shaper auto-calibration require additional
 software dependencies not installed by default. First, you will have to run on
 your Raspberry Pi the following command:
-```
+
+```bash
 ~/klippy-env/bin/pip install -v numpy
 ```
+
 to install `numpy` package. Note that, depending on the performance of the
 CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
 for the completion of the installation. On some occasions, if the board has
 too little RAM, the installation may fail and you will need to enable swap.
 
 Next, run the following commands to install the additional dependencies:
-```
+
+```bash
 sudo apt update
 sudo apt install python-numpy python-matplotlib
 ```
@@ -88,7 +89,8 @@ Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
 
 Add the following to the printer.cfg file:
-```
+
+```cfg
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -100,6 +102,7 @@ accel_chip: adxl345
 probe_points:
     100,100,20  # an example
 ```
+
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
@@ -120,7 +123,8 @@ Now you can test a connection.
 
 You should see the current measurements from the accelerometer, including the
 free-fall acceleration, e.g.
-```
+
+```text
 Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
 ```
 
@@ -135,12 +139,14 @@ somewhere in the range of ~1-100). Too high axes noise (e.g. 1000 and more)
 can be indicative of the sensor issues, problems with its power, or too
 noisy imbalanced fans on a 3D printer.
 
-### Measuring the resonances
+### Run resonance tests
 
 Now you can run some real-life tests. Run the following command:
-```
+
+```gcode
 TEST_RESONANCES AXIS=X
 ```
+
 Note that it will create vibrations on X axis. It will also disable input
 shaping if it was enabled previously, as it is not valid to run the resonance
 testing with the input shaper enabled.
@@ -150,7 +156,8 @@ the vibrations do not become too violent (`M112` command can be used to abort
 the test in case of emergency; hopefully it will not come to this though).
 If the vibrations do get too strong, you can attempt to specify a lower than the
 default value for `accel_per_hz` parameter in `[resonance_tester]` section, e.g.
-```
+
+```cfg
 [resonance_tester]
 accel_chip: adxl345
 accel_per_hz: 50  # default is 75
@@ -158,23 +165,28 @@ probe_points: ...
 ```
 
 If it works for X axis, run for Y axis as well:
-```
+
+```gcode
 TEST_RESONANCES AXIS=Y
 ```
+
 This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
 `/tmp/resonances_y_*.csv`). These files can be processed with the stand-alone
 script on a Raspberry Pi. To do that, run running the following commands:
-```
+
+```bash
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
 ```
+
 This script will generate the charts `/tmp/shaper_calibrate_x.png` and
 `/tmp/shaper_calibrate_y.png` with frequency responses. You will also get the
 suggested frequencies for each input shaper, as well as which input shaper is
 recommended for your setup. For example:
 
 ![Resonances](img/calibrate-y.png)
-```
+
+```text
 Fitted shaper 'zv' frequency = 34.4 Hz (vibrations = 4.0%, smoothing ~= 0.132)
 To avoid too much smoothing with 'zv', suggested max_accel <= 4500 mm/sec^2
 Fitted shaper 'mzv' frequency = 34.6 Hz (vibrations = 0.0%, smoothing ~= 0.170)
@@ -190,7 +202,8 @@ Recommended shaper is mzv @ 34.6 Hz
 
 The suggested configuration can be added to `[input_shaper]` section of
 `printer.cfg`, e.g.:
-```
+
+```cfg
 [input_shaper]
 shaper_freq_x: ...
 shaper_type_x: ...
@@ -200,6 +213,7 @@ shaper_type_y: mzv
 [printer]
 max_accel: 3000  # should not exceed the estimated max_accel for X and Y axes
 ```
+
 or you can choose some other configuration yourself based on the generated
 charts: peaks in the power spectral density on the charts correspond to
 the resonance frequencies of the printer.
@@ -220,7 +234,8 @@ However, you can also connect two accelerometers simultaneously, though they
 must be connected to different boards (say, to an RPi and printer MCU board), or
 to two different physical SPI interfaces on the same board (rarely available).
 Then they can be configured in the following manner:
-```
+
+```cfg
 [adxl345 hotend]
 # Assuming `hotend` chip is connected to an RPi
 cs_pin: rpi:None
@@ -253,7 +268,8 @@ the maximum smoothing from the input shaper.
 Let's consider the following results from the automatic tuning:
 
 ![Resonances](img/calibrate-x.png)
-```
+
+```text
 Fitted shaper 'zv' frequency = 57.8 Hz (vibrations = 20.3%, smoothing ~= 0.053)
 To avoid too much smoothing with 'zv', suggested max_accel <= 13000 mm/sec^2
 Fitted shaper 'mzv' frequency = 34.8 Hz (vibrations = 3.6%, smoothing ~= 0.168)
@@ -266,6 +282,7 @@ Fitted shaper '3hump_ei' frequency = 48.0 Hz (vibrations = 0.0%, smoothing ~= 0.
 To avoid too much smoothing with '3hump_ei', suggested max_accel <= 1500 mm/sec^2
 Recommended shaper is 2hump_ei @ 45.2 Hz
 ```
+
 Note that the reported `smoothing` values are some abstract projected values.
 These values can be used to compare different configurations: the higher the
 value, the more smoothing a shaper will create. However, these smoothing scores
@@ -277,13 +294,16 @@ smoothing exactly a chosen configuration creates.
 In the example above the suggested shaper parameters are not bad, but what if
 you want to get less smoothing on the X axis? You can try to limit the maximum
 shaper smoothing using the following command:
-```
+
+```bash
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
 ```
+
 which limits the smoothing to 0.2 score. Now you can get the following result:
 
 ![Resonances](img/calibrate-x-max-smoothing.png)
-```
+
+```text
 Fitted shaper 'zv' frequency = 55.4 Hz (vibrations = 19.7%, smoothing ~= 0.057)
 To avoid too much smoothing with 'zv', suggested max_accel <= 12000 mm/sec^2
 Fitted shaper 'mzv' frequency = 34.6 Hz (vibrations = 3.6%, smoothing ~= 0.170)
@@ -314,12 +334,14 @@ reported by the script and make sure they are not too high.
 
 Note that if you chose a good `max_smoothing` value for both of your axes, you
 can store it in the `printer.cfg` as
-```
+
+```cfg
 [resonance_tester]
 accel_chip: ...
 probe_points: ...
 max_smoothing: 0.25  # an example
 ```
+
 Then, if you [rerun](#input-shaper-re-calibration) the input shaper auto-tuning
 using `SHAPER_CALIBRATE` Klipper command in the future, it will use the stored
 `max_smoothing` value as a reference.
@@ -361,27 +383,35 @@ useful for input shaper calibration, it can be used to study printer
 resonances in-depth and to check, for example, belt tension.
 
 To check the belt tension on CoreXY printers, execute
-```
+
+```gcode
 TEST_RESONANCES AXIS=1,1 OUTPUT=raw_data
 TEST_RESONANCES AXIS=1,-1 OUTPUT=raw_data
 ```
+
 and use `graph_accelerometer.py` to process the generated files, e.g.
-```
+
+```bash
 ~/klipper/scripts/graph_accelerometer.py -c /tmp/raw_data_axis*.csv -o /tmp/resonances.png
 ```
+
 which will generate `/tmp/resonances.png` comparing the resonances.
 
 For Delta printers with the default tower placement
 (tower A ~= 210 degrees, B ~= 330 degrees, and C ~= 90 degrees), execute
-```
+
+```gcode
 TEST_RESONANCES AXIS=0,1 OUTPUT=raw_data
 TEST_RESONANCES AXIS=-0.866025404,-0.5 OUTPUT=raw_data
 TEST_RESONANCES AXIS=0.866025404,-0.5 OUTPUT=raw_data
 ```
+
 and then use the same command
-```
+
+```bash
 ~/klipper/scripts/graph_accelerometer.py -c /tmp/raw_data_axis*.csv -o /tmp/resonances.png
 ```
+
 to generate `/tmp/resonances.png` comparing the resonances.
 
 ## Input Shaper auto-calibration
@@ -389,7 +419,8 @@ to generate `/tmp/resonances.png` comparing the resonances.
 Besides manually choosing the appropriate parameters for the input shaper
 feature, it is also possible to run the auto-tuning for the input shaper
 directly from Klipper. Run the following command via Octoprint terminal:
-```
+
+```gcode
 SHAPER_CALIBRATE
 ```
 
@@ -399,7 +430,7 @@ and the suggested input shapers. You will also get the suggested
 frequencies for each input shaper, as well as which input shaper is
 recommended for your setup, on Octoprint console. For example:
 
-```
+```text
 Calculating the best input shaper parameters for y axis
 Fitted shaper 'zv' frequency = 39.0 Hz (vibrations = 13.2%, smoothing ~= 0.105)
 To avoid too much smoothing with 'zv', suggested max_accel <= 5900 mm/sec^2
@@ -413,17 +444,18 @@ Fitted shaper '3hump_ei' frequency = 59.0 Hz (vibrations = 0.0%, smoothing ~= 0.
 To avoid too much smoothing with '3hump_ei', suggested max_accel <= 2500 mm/sec^2
 Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
 ```
+
 If you agree with the suggested parameters, you can execute `SAVE_CONFIG`
 now to save them and restart the Klipper. Note that this will not update
 `max_accel` value in `[printer]` section. You should update it manually
 following the considerations in [Selecting max_accel](#selecting-max_accel)
 section.
 
-
 If your printer is a bed slinger printer, you can specify which axis
 to test, so that you can change the accelerometer mounting point between
 the tests (by default the test is performed for both axes):
-```
+
+```gcode
 SHAPER_CALIBRATE AXIS=Y
 ```
 
@@ -440,7 +472,8 @@ the future, especially if some changes to the printer that can affect its
 kinematics are made. One can either re-run the full calibration using
 `SHAPER_CALIBRATE` command, or restrict the auto-calibration to a single axis by
 supplying `AXIS=` parameter, like
-```
+
+```gcode
 SHAPER_CALIBRATE AXIS=X
 ```
 
@@ -465,10 +498,12 @@ print some test prints before using them to confirm they are good.
 It is possible to generate the raw accelerometer data and process it offline
 (e.g. on a host machine), for example to find resonances. In order to do so,
 run the following commands via Octoprint terminal:
-```
+
+```gcode
 SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0
 TEST_RESONANCES AXIS=X OUTPUT=raw_data
 ```
+
 ignoring any errors for `SET_INPUT_SHAPER` command. For `TEST_RESONANCES`
 command, specify the desired test axis. The raw data will be written into
 `/tmp` directory on the RPi.
@@ -483,15 +518,15 @@ The data can be processed later by the following scripts:
 of them accept one or several raw csv files as the input depending on the
 mode. The graph_accelerometer.py script supports several modes of operation:
 
-  * plotting raw accelerometer data (use `-r` parameter), only 1 input is
+- plotting raw accelerometer data (use `-r` parameter), only 1 input is
     supported;
-  * plotting a frequency response (no extra parameters required), if multiple
+- plotting a frequency response (no extra parameters required), if multiple
     inputs are specified, the average frequency response is computed;
-  * comparison of the frequency response between several inputs (use `-c`
+- comparison of the frequency response between several inputs (use `-c`
     parameter); you can additionally specify which accelerometer axis to
     consider via `-a x`, `-a y` or `-a z` parameter (if none specified,
     the sum of vibrations for all axes is used);
-  * plotting the spectrogram (use `-s` parameter), only 1 input is supported;
+- plotting the spectrogram (use `-s` parameter), only 1 input is supported;
     you can additionally specify which accelerometer axis to consider via
     `-a x`, `-a y` or `-a z` parameter (if none specified, the sum of vibrations
     for all axes is used).
@@ -500,9 +535,11 @@ Note that graph_accelerometer.py script supports only the raw_data\*.csv files
 and not resonances\*.csv or calibration_data\*.csv files.
 
 For example,
-```
+
+```bash
 ~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png -c -a z
 ```
+
 will plot the comparison of several `/tmp/raw_data_x_*.csv` files for Z axis to
 `/tmp/resonances_x.png` file.
 
@@ -515,16 +552,16 @@ the CSV file if `-c output.csv` parameter is specified.
 Providing several inputs to shaper_calibrate.py script can be useful if running
 some advanced tuning of the input shapers, for example:
 
-  * Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
+- Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
     axis twice on a bed slinger printer with the accelerometer attached to the
     toolhead the first time, and the accelerometer attached to the bed the
     second time in order to detect axes cross-resonances and attempt to cancel
     them with input shapers.
-  * Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
+- Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
     a glass bed and a magnetic surfaces (which is lighter) to find the input
     shaper parameters that work well for any print surface configuration.
-  * Combining the resonance data from multiple test points.
-  * Combining the resonance data from 2 axis (e.g. on a bed slinger printer
+- Combining the resonance data from multiple test points.
+- Combining the resonance data from 2 axis (e.g. on a bed slinger printer
     to configure X-axis input_shaper from both X and Y axes resonances to
     cancel vibrations of the *bed* in case the nozzle 'catches' a print when
     moving in X axis direction).

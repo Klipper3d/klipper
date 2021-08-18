@@ -15,7 +15,7 @@ configure these pins according to your wiring. Most BL-Touch devices
 require a pullup on the sensor pin (prefix the pin name with "^"). For
 example:
 
-```
+```cfg
 [bltouch]
 sensor_pin: ^P1.24
 control_pin: P1.26
@@ -26,7 +26,7 @@ probe:z_virtual_endstop` in the `[stepper_z]` config section and add a
 `[safe_z_home]` config section to raise the z axis, home the xy axes,
 move to the center of the bed, and home the z axis. For example:
 
-```
+```cfg
 [safe_z_home]
 home_xy_position: 100,100 # Change coordinates to the center of your print bed
 speed: 50
@@ -86,7 +86,7 @@ let it touch the bed as it should.
 Once the BL-Touch is in inconsistent state, it starts blinking red.
 You can force it to leave that state by issuing:
 
-```
+```gcode
  BLTOUCH_DEBUG COMMAND=reset
 ```
 
@@ -215,7 +215,7 @@ calibration steps.
 
 ## BL-Touch output mode
 
-* A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
+- A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
   a BL-Touch V3.1 supports this too, but can also store this in its
   internal EEPROM. If your controller board needs the fixed 5V high
   logic level of the 5V mode you may set the 'set_output_mode'

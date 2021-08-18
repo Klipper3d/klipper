@@ -40,7 +40,7 @@ then be sure to rerun probe calibration after any delta calibration.
 
 ## Basic delta calibration
 
-Klipper has a DELTA_CALIBRATE command that can perform basic delta
+Klipper has a `DELTA_CALIBRATE` command that can perform basic delta
 calibration. This command probes seven different points on the bed and
 calculates new values for the tower angles, tower endstops, and delta
 radius.
@@ -49,7 +49,7 @@ In order to perform this calibration the initial delta parameters (arm
 lengths, radius, and endstop positions) must be provided and they
 should have an accuracy to within a few millimeters. Most delta
 printer kits will provide these parameters - configure the printer
-with these initial defaults and then go on to run the DELTA_CALIBRATE
+with these initial defaults and then go on to run the `DELTA_CALIBRATE`
 command as described below. If no defaults are available then search
 online for a delta calibration guide that can provide a basic starting
 point.
@@ -69,13 +69,16 @@ actual distance between the nozzle and bed at the given location.
 
 To perform the basic probe, make sure the config has a
 [delta_calibrate] section defined and then run the tool:
-```
+
+```gcode
 G28
 DELTA_CALIBRATE METHOD=manual
 ```
+
 After probing the seven points new delta parameters will be
 calculated. Save and apply these parameters by running:
-```
+
+```gcode
 SAVE_CONFIG
 ```
 
@@ -96,8 +99,8 @@ This calibration procedure requires printing a test object and
 measuring parts of that test object with digital calipers.
 
 Prior to running an enhanced delta calibration one must run the basic
-delta calibration (via the DELTA_CALIBRATE command) and save the
-results (via the SAVE_CONFIG command).
+delta calibration (via the `DELTA_CALIBRATE` command) and save the
+results (via the `SAVE_CONFIG` command).
 
 Use a slicer to generate G-Code from the
 [docs/prints/calibrate_size.stl](prints/calibrate_size.stl) file.
@@ -112,9 +115,9 @@ print size.
 
 Print the test object and wait for it to fully cool. The commands
 described below must be run with the same printer settings used to
-print the calibration object (don't run DELTA_CALIBRATE between
+print the calibration object (**don't run `DELTA_CALIBRATE` between
 printing and measuring, or do something that would otherwise change
-the printer configuration).
+the printer configuration**).
 
 If possible, perform the measurements described below while the object
 is still attached to the print bed, but don't worry if the part
@@ -135,9 +138,11 @@ from C label, distance from center to pillar with B label, etc.).
 
 Enter these parameters into Klipper with a comma separated list of
 floating point numbers:
-```
+
+```gcode
 DELTA_ANALYZE CENTER_DISTS=<a_dist>,<far_c_dist>,<b_dist>,<far_a_dist>,<c_dist>,<far_b_dist>
 ```
+
 Provide the values without spaces between them.
 
 Then measure the distance between the A pillar and the pillar across
@@ -152,7 +157,8 @@ the pillar across from A, and so on.
 ![delta_cal_e_step2](img/delta_cal_e_step2.png)
 
 Enter these parameters into Klipper:
-```
+
+```gcode
 DELTA_ANALYZE OUTER_DISTS=<a_to_far_c>,<far_c_to_b>,<b_to_far_a>,<far_a_to_c>,<c_to_far_b>,<far_b_to_a>
 ```
 
@@ -166,7 +172,8 @@ spoke.
 ![delta_cal_e_step3](img/delta_cal_e_step3.png)
 
 Enter them into Klipper:
-```
+
+```gcode
 DELTA_ANALYZE CENTER_PILLAR_WIDTHS=<a>,<b>,<c>
 ```
 
@@ -183,52 +190,58 @@ pillar across from A, etc.).
 ![delta_cal_e_step4](img/delta_cal_e_step4.png)
 
 And enter them into Klipper:
-```
+
+```gcode
 DELTA_ANALYZE OUTER_PILLAR_WIDTHS=<a>,<far_c>,<b>,<far_a>,<c>,<far_b>
 ```
 
 If the object was scaled to a smaller or larger size then provide the
 scale factor that was used when slicing the object:
-```
+
+```gcode
 DELTA_ANALYZE SCALE=1.0
 ```
+
 (A scale value of 2.0 would mean the object is twice its original
 size, 0.5 would be half its original size.)
 
 Finally, perform the enhanced delta calibration by running:
-```
+
+```gcode
 DELTA_ANALYZE CALIBRATE=extended
 ```
+
 This command can take several minutes to complete. After completion it
 will calculate updated delta parameters (delta radius, tower angles,
-endstop positions, and arm lengths). Use the SAVE_CONFIG command to
+endstop positions, and arm lengths). Use the `SAVE_CONFIG` command to
 save and apply the settings:
-```
+
+```gcode
 SAVE_CONFIG
 ```
 
-The SAVE_CONFIG command will save both the updated delta parameters
-and information from the distance measurements. Future DELTA_CALIBRATE
+The `SAVE_CONFIG` command will save both the updated delta parameters
+and information from the distance measurements. Future `DELTA_CALIBRATE`
 commands will also utilize this distance information. Do not attempt
-to reenter the raw distance measurements after running SAVE_CONFIG, as
+to reenter the raw distance measurements after running `SAVE_CONFIG`, as
 this command changes the printer configuration and the raw
 measurements no longer apply.
 
 ### Additional notes
 
-* If the delta printer has good dimensional accuracy then the distance
+- If the delta printer has good dimensional accuracy then the distance
   between any two pillars should be around 74mm and the width of every
   pillar should be around 9mm. (Specifically, the goal is for the
   distance between any two pillars minus the width of one of the
   pillars to be exactly 65mm.) Should there be a dimensional
-  inaccuracy in the part then the DELTA_ANALYZE routine will calculate
+  inaccuracy in the part then the `DELTA_ANALYZE` routine will calculate
   new delta parameters using both the distance measurements and the
-  previous height measurements from the last DELTA_CALIBRATE command.
+  previous height measurements from the last `DELTA_CALIBRATE` command.
 
-* DELTA_ANALYZE may produce delta parameters that are surprising. For
+- `DELTA_ANALYZE` may produce delta parameters that are surprising. For
   example, it may suggest arm lengths that do not match the printer's
   actual arm lengths. Despite this, testing has shown that
-  DELTA_ANALYZE often produces superior results. It is believed that
+  `DELTA_ANALYZE` often produces superior results. It is believed that
   the calculated delta parameters are able to account for slight
   errors elsewhere in the hardware. For example, small differences in
   arm length may result in a tilt to the effector and some of that
@@ -243,4 +256,4 @@ confusing and poor results.
 
 Note that performing delta calibration will invalidate any previously
 obtained bed mesh. After performing a new delta calibration be sure to
-rerun BED_MESH_CALIBRATE.
+rerun `BED_MESH_CALIBRATE`.
