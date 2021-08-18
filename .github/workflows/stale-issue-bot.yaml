@@ -164,7 +164,7 @@ jobs:
                 continue;
               msg = "It looks like this GitHub Pull Request has become"
                   + " inactive.  If there are any further updates, you can"
-                  " " add a comment here or open a new ticket."
+                  + " add a comment here or open a new ticket."
                   + "\n\n"
                   + "Best regards,\n"
                   + "~ Your friendly GitIssueBot"
