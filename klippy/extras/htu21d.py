@@ -199,7 +199,7 @@ class HTU21D:
                 if (self.humidity < 0):
                     #due to RH accuracy, measured value might be
                     # slightly less than 0 or more 100
-                    self.temp = 0
+                    self.humidity = 0
                 elif (self.humidity > 100):
                     self.humidity = 100
                 # Only for HTU21D & SHT21.

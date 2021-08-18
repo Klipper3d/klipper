@@ -14,7 +14,7 @@ may require users to update their printer config file.
 - [Contact](Contact.md): Information on bug reporting and general
 communication with the Klipper developers.
 
-## Configuration and Tuning Guides
+## Installation and Configuration
 
 - [Installation](Installation.md): Guide to installing Klipper.
 - [Config Reference](Config_Reference.md): Description of config

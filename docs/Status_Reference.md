@@ -189,6 +189,18 @@ The following information is available in
 - `last_stats.<statistics_name>`: Statistics information on the
   micro-controller connection.
 
+## motion_report
+
+The following information is available in the `motion_report` object
+(this object is automatically available if any stepper config section
+is defined):
+- `live_position`: The requested toolhead position interpolated to the
+  current time.
+- `live_velocity`: The requested toolhead velocity (in mm/s) at the
+  current time.
+- `live_extruder_velocity`: The requested extruder velocity (in mm/s)
+  at the current time.
+
 ## output_pin
 
 The following information is available in
@@ -367,4 +379,4 @@ The following information is available for each `[neopixel led_name]` and
   values for a led in the chain.  Note that not all configurations will contain
   a white value.  Each value is represented as a float from 0 to 1.  For
   example, the blue value of the second neopixel in a chain could be accessed
-  at `printer["neopixel <config_name>"].colordata[1].B`.
+  at `printer["neopixel <config_name>"].color_data[1].B`.

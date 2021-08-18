@@ -18,7 +18,7 @@ Arduino_standard = [
     "PB2", "PB3", "PB4", "PB5", "PC0", "PC1", "PC2", "PC3", "PC4", "PC5",
 ]
 Arduino_analog_standard = [
-    "PC0", "PC1", "PC2", "PC3", "PC4", "PC5", "PE0", "PE1",
+    "PC0", "PC1", "PC2", "PC3", "PC4", "PC5", "PE2", "PE3",
 ]
 
 Arduino_mega = [
