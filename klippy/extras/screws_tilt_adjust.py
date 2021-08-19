@@ -7,14 +7,6 @@
 import math
 from . import probe
 
-def parse_coord(config, param):
-    pair = config.get(param).strip().split(',', 1)
-    try:
-        return (float(pair[0]), float(pair[1]))
-    except:
-        raise config.error("%s:%s needs to be an x,y coordinate" % (
-            config.get_name(), param))
-
 class ScrewsTiltAdjust:
     def __init__(self, config):
         self.config = config
@@ -26,7 +18,7 @@ class ScrewsTiltAdjust:
             prefix = "screw%d" % (i + 1,)
             if config.get(prefix, None) is None:
                 break
-            screw_coord = parse_coord(config, prefix)
+            screw_coord = config.getfloatlist(prefix, count=2)
             screw_name = "screw at %.3f,%.3f" % screw_coord
             screw_name = config.get(prefix + "_name", screw_name)
             self.screws.append((screw_coord, screw_name))
