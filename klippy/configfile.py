@@ -74,6 +74,34 @@ class ConfigWrapper:
             raise error("Choice '%s' for option '%s' in section '%s'"
                         " is not a valid choice" % (c, option, self.section))
         return choices[c]
+    def getlists(self, option, default=sentinel, seps=(',',), count=None,
+                 parser=str, note_valid=True):
+        def lparser(value, pos):
+            if pos:
+                # Nested list
+                parts = [p.strip() for p in value.split(seps[pos])]
+                return tuple([lparser(p, pos - 1) for p in parts if p])
+            res = [parser(p.strip()) for p in value.split(seps[pos])]
+            if count is not None and len(res) != count:
+                raise error("Option '%s' in section '%s' must have %d elements"
+                            % (option, self.section, count))
+            return tuple(res)
+        def fcparser(section, option):
+            return lparser(self.fileconfig.get(section, option), len(seps) - 1)
+        return self._get_wrapper(fcparser, option, default,
+                                 note_valid=note_valid)
+    def getlist(self, option, default=sentinel, sep=',', count=None,
+                note_valid=True):
+        return self.getlists(option, default, seps=(sep,), count=count,
+                             parser=str, note_valid=note_valid)
+    def getintlist(self, option, default=sentinel, sep=',', count=None,
+                   note_valid=True):
+        return self.getlists(option, default, seps=(sep,), count=count,
+                             parser=int, note_valid=note_valid)
+    def getfloatlist(self, option, default=sentinel, sep=',', count=None,
+                     note_valid=True):
+        return self.getlists(option, default, seps=(sep,), count=count,
+                             parser=float, note_valid=note_valid)
     def getsection(self, section):
         return ConfigWrapper(self.printer, self.fileconfig,
                              self.access_tracking, section)
