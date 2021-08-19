@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20210821: Several config settings in `printer.configfile.settings`
+will now be reported as lists instead of raw strings.  If the actual
+raw string is desired, use `printer.configfile.config` instead.
+
 20210819: In some cases, a `G28` homing move may end in a position
 that is nominally outside the valid movement range.  In rare
 situations this may result in confusing "Move out of range" errors
