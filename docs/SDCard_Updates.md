@@ -15,7 +15,8 @@ The procedure for updating MCU firmware using the SD Card is similar to that
 of other methods.  Instead of using `make flash` it is necessary to run a
 helper script, `flash-sdcard.sh`.  Updating a BigTreeTech SKR 1.3 might look
 like the following:
-```
+
+```bash
 sudo service klipper stop
 cd ~/klipper
 git pull
@@ -32,9 +33,11 @@ If a user needs to flash multiple boards, `flash-sdcard.sh` (or
 restarting the Klipper service.
 
 Supported boards can be listed with the following command:
-```
+
+```bash
 ./scripts/flash-sdcard.sh -l
 ```
+
 If you do not see your board listed it may be necessary to add a new
 board definition as [described below](#board-definitions).
 
@@ -44,7 +47,8 @@ The above commands assume that your MCU connects at the default baud rate
 of 250000 and the firmware is located at `~/klipper/out/klipper.bin`.  The
 `flash-sdcard.sh` script provides options for changing these defaults.
 All options can be viewed by the help screen:
-```
+
+```bash
 ./scripts/flash-sdcard.sh -h
 SD Card upload utility for Klipper
 
@@ -64,13 +68,15 @@ optional arguments:
 
 If your board is flashed with firmware that connects at a custom baud
 rate it is possible to upgrade by specifying the `-b` option:
-```
+
+```bash
 ./scripts/flash-sdcard.sh -b 115200 /dev/ttyAMA0 btt-skr-v1.3
 ```
 
 If you wish to flash a build of Klipper located somewhere other than
 the default location it can be done by specifying the `-f` option:
-```
+
+```bash
 ./scripts/flash-sdcard.sh -f ~/downloads/klipper.bin /dev/ttyAMA0 btt-skr-v1.3
 ```
 
@@ -97,6 +103,7 @@ Most common boards should be available, however it is possible to add a new
 board definition if necessary.  Board definitions are located in
 `~/klipper/scripts/spi_flash/board_defs.py`.  The definitions are stored
 in dictionary, for example:
+
 ```python
 BOARD_DEFS = {
     'generic-lpc1768': {
@@ -135,6 +142,7 @@ existing board definition meets the criteria necessary for the new board.
 If this is the case, a `BOARD_ALIAS` may be specified.  For example, the
 following alias may be added to specify `my-new-board` as an alias for
 `generic-lpc1768`:
+
 ```python
 BOARD_ALIASES = {
     ...<previous aliases>,

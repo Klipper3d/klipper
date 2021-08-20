@@ -18,15 +18,18 @@ to move to a Z position that is at least five millimeters above the
 bed (if it is not already), command the head to move to an XY position
 near the center of the bed, then navigate to the OctoPrint terminal
 tab and run:
-```
+
+```gcode
 Z_ENDSTOP_CALIBRATE
 ```
+
 Then follow the steps described at
 ["the paper test"](Bed_Level.md#the-paper-test) to determine the
 actual distance between the nozzle and bed at the given location. Once
 those steps are complete one can `ACCEPT` the position and save the
 results to the config file with:
-```
+
+```gcode
 SAVE_CONFIG
 ```
 
@@ -61,7 +64,8 @@ screw XY location.
 
 This is done by creating a `[bed_screws]` config section. For example,
 it might look something similar to:
-```
+
+```cfg
 [bed_screws]
 screw1: 100,50
 screw2: 100,150
@@ -75,7 +79,8 @@ bed.
 
 Once the config file is ready, run `RESTART` to load that config, and
 then one can start the tool by running:
-```
+
+```gcode
 BED_SCREWS_ADJUST
 ```
 
@@ -124,7 +129,8 @@ adjustment when the nozzle is at position D.
 To enable this feature, one would determine the additional nozzle
 coordinates and add them to the config file. For example, it might
 look like:
-```
+
+```cfg
 [bed_screws]
 screw1: 100,50
 screw1_fine_adjust: 0,0
@@ -149,7 +155,7 @@ To enable this feature, one would determine the nozzle coordinates
 such that the Z probe is above the screws, and then add them to the
 config file. For example, it might look like:
 
-```
+```cfg
 [screws_tilt_adjust]
 screw1: -5,30
 screw1_name: front left screw
@@ -168,7 +174,8 @@ The screw1 is always the reference point for the others, so the system
 assumes that screw1 is at the correct height. Always run `G28` first
 and then run `SCREWS_TILT_CALCULATE` - it should produce output
 similar to:
-```
+
+```cfg
 Send: G28
 Recv: ok
 Send: SCREWS_TILT_CALCULATE
@@ -179,6 +186,7 @@ Recv: // rear right screw : y=155.0, y=190.0, z=2.71500 : adjust CCW 00:50
 Recv: // read left screw : x=-5.0, y=190.0, z=2.47250 : adjust CW 00:02
 Recv: ok
 ```
+
 This means that:
 
     - front left screw is the reference point you must not change it.

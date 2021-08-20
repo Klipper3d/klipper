@@ -7,7 +7,7 @@ of command and response strings that are compressed, transmitted, and
 then processed at the receiving side. An example series of commands in
 uncompressed human-readable format might look like:
 
-```
+```c
 set_digital_out pin=PA3 value=1
 set_digital_out pin=PA7 value=1
 schedule_digital_out oid=8 clock=4000000 value=0
@@ -43,7 +43,7 @@ results.
 The micro-controller software declares a "command" by using the
 DECL_COMMAND() macro in the C code. For example:
 
-```
+```c
 DECL_COMMAND(command_update_digital_out, "update_digital_out oid=%c value=%c");
 ```
 
@@ -75,7 +75,7 @@ To send information from the micro-controller to the host a "response"
 is generated. These are both declared and transmitted using the
 sendf() C macro. For example:
 
-```
+```c
 sendf("status clock=%u status=%c", sched_read_time(), sched_is_shutdown());
 ```
 
@@ -101,7 +101,7 @@ invoked, and it may invoke sendf() at any time from a task handler.
 To simplify debugging, there is also an output() C function. For
 example:
 
-```
+```c
 output("The value of %u is %s with size %u.", x, buf, buf_len);
 ```
 
@@ -114,7 +114,7 @@ Enumerations allow the host code to use string identifiers for
 parameters that the micro-controller handles as integers. They are
 declared in the micro-controller code - for example:
 
-```
+```c
 DECL_ENUMERATION("spi_bus", "spi", 0);
 
 DECL_ENUMERATION_RANGE("pin", "PC0", 16, 8);
@@ -135,7 +135,7 @@ be transmitted with integers 16, 17, 18, ..., 23.
 
 Constants can also be exported. For example, the following:
 
-```
+```c
 DECL_CONSTANT("SERIAL_BAUD", 250000);
 ```
 
@@ -143,7 +143,7 @@ would export a constant named "SERIAL_BAUD" with a value of 250000
 from the micro-controller to the host. It is also possible to declare
 a constant that is a string - for example:
 
-```
+```c
 DECL_CONSTANT_STR("MCU", "pru");
 ```
 
@@ -159,7 +159,7 @@ All data sent from host to micro-controller and vice-versa are
 contained in "message blocks". A message block has a two byte header
 and a three byte trailer. The format of a message block is:
 
-```
+```text
 <1 byte length><1 byte sequence><n-byte content><2 byte crc><1 byte sync>
 ```
 
@@ -193,7 +193,7 @@ parameters for the given command.
 As an example, the following four commands might be placed in a single
 message block:
 
-```
+```c
 update_digital_out oid=6 value=1
 update_digital_out oid=5 value=0
 get_config
@@ -202,7 +202,7 @@ get_clock
 
 and encoded into the following eight VLQ integers:
 
-```
+```text
 <id_update_digital_out><6><1><id_update_digital_out><5><0><id_get_config><id_get_clock>
 ```
 
@@ -250,7 +250,7 @@ command or response is a dynamic string then the parameter is not
 encoded as a simple VLQ integer. Instead it is encoded by transmitting
 the length as a VLQ encoded integer followed by the contents itself:
 
-```
+```text
 <VLQ encoded length><n-byte contents>
 ```
 

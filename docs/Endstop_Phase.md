@@ -40,7 +40,8 @@ If using Trinamic stepper motor drivers with run-time configuration
 then one can calibrate the endstop phases using the
 ENDSTOP_PHASE_CALIBRATE command. Start by adding the following to the
 config file:
-```
+
+```cfg
 [endstop_phase]
 ```
 
@@ -59,7 +60,8 @@ little later.)
 
 To save the endstop phase for a particular stepper motor, run
 something like the following:
-```
+
+```gcode
 ENDSTOP_PHASE_CALIBRATE STEPPER=stepper_z
 ```
 
@@ -67,7 +69,8 @@ Run the above for all the steppers one wishes to save. Typically, one
 would use this on stepper_z for cartesian and corexy printers, and for
 stepper_a, stepper_b, and stepper_c on delta printers. Finally, run
 the following to update the configuration file with the data:
-```
+
+```gcode
 SAVE_CONFIG
 ```
 

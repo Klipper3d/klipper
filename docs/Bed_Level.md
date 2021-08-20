@@ -115,7 +115,8 @@ choose one of them.
 Run the appropriate command in the OctoPrint terminal window. The
 script will prompt for user interaction in the OctoPrint terminal
 output. It will look something like:
-```
+
+```text
 Recv: // Starting manual Z probe. Use TESTZ to adjust position.
 Recv: // Finish with ACCEPT or ABORT command.
 Recv: // Z position: ?????? --> 5.000 <-- ??????
@@ -135,7 +136,8 @@ down on the bed when moving the paper back and forth.)
 
 Use the TESTZ command to request the nozzle to move closer to the
 paper. For example:
-```
+
+```gcode
 TESTZ Z=-.1
 ```
 
@@ -152,9 +154,11 @@ move the nozzle up. It is also possible to use `TESTZ Z=+` or `TESTZ
 Z=-` to "bisect" the last position - that is to move to a position
 half way between two positions. For example, if one received the
 following prompt from a TESTZ command:
-```
+
+```text
 Recv: // Z position: 0.130 --> 0.230 <-- 0.280
 ```
+
 Then a `TESTZ Z=-` would move the nozzle to a Z position of 0.180
 (half way between 0.130 and 0.230). One can use this feature to help
 rapidly narrow down to a consistent friction. It is also possible to
@@ -163,9 +167,11 @@ example, after the above prompt a `TESTZ Z=--` command would move the
 nozzle to a Z position of 0.130.
 
 After finding a small amount of friction run the ACCEPT command:
-```
+
+```gcode
 ACCEPT
 ```
+
 This will accept the given Z height and proceed with the given
 calibration tool.
 

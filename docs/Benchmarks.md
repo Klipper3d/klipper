@@ -30,7 +30,8 @@ The test is performed using the console.py tool (described in
 [Debugging.md](Debugging.md)). The micro-controller is configured for
 the particular hardware platform (see below) and then the following is
 cut-and-paste into the console.py terminal window:
-```
+
+```text
 SET start_clock {clock+freq}
 SET ticks 1000
 
@@ -63,7 +64,8 @@ ticks parameter until a stable value is found.
 
 On a failure, one can copy-and-paste the following to clear the error
 in preparation for the next test:
-```
+
+```text
 clear_shutdown
 ```
 
@@ -77,7 +79,8 @@ number of steps per second is calculated by multiplying the number of
 active steppers with the nominal mcu frequency and dividing by the
 final ticks parameter. The results are rounded to the nearest K. For
 example, with three active steppers:
-```
+
+```text
 ECHO Test result is: {"%.0fK" % (3. * freq / ticks / 1000.)}
 ```
 
@@ -90,7 +93,8 @@ of these benchmarks are not reported in the Features.md document.
 ### AVR step rate benchmark
 
 The following configuration sequence is used on AVR chips:
-```
+
+```text
 PINS arduino
 allocate_oids count=3
 config_stepper oid=0 step_pin=ar29 dir_pin=ar28 invert_step=0
@@ -113,7 +117,8 @@ results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
 ### Arduino Due step rate benchmark
 
 The following configuration sequence is used on the Due:
-```
+
+```text
 allocate_oids count=3
 config_stepper oid=0 step_pin=PB27 dir_pin=PA21 invert_step=0
 config_stepper oid=1 step_pin=PB26 dir_pin=PC30 invert_step=0
@@ -135,7 +140,8 @@ The test was last run on commit `8d4a5c16` with gcc version
 ### Duet Maestro step rate benchmark
 
 The following configuration sequence is used on the Duet Maestro:
-```
+
+```text
 allocate_oids count=3
 config_stepper oid=0 step_pin=PC26 dir_pin=PC18 invert_step=0
 config_stepper oid=1 step_pin=PC26 dir_pin=PA8 invert_step=0
@@ -157,7 +163,8 @@ The test was last run on commit `8d4a5c16` with gcc version
 ### Duet Wifi step rate benchmark
 
 The following configuration sequence is used on the Duet Wifi:
-```
+
+```text
 allocate_oids count=4
 config_stepper oid=0 step_pin=PD6 dir_pin=PD11 invert_step=0
 config_stepper oid=1 step_pin=PD7 dir_pin=PD12 invert_step=0
@@ -181,7 +188,8 @@ The test was last run on commit `59a60d68` with gcc version
 ### Beaglebone PRU step rate benchmark
 
 The following configuration sequence is used on the PRU:
-```
+
+```text
 PINS beaglebone
 allocate_oids count=3
 config_stepper oid=0 step_pin=P8_13 dir_pin=P8_12 invert_step=0
@@ -202,7 +210,8 @@ The test was last run on commit `b161a69e` with gcc version `pru-gcc
 ### STM32F042 step rate benchmark
 
 The following configuration sequence is used on the STM32F042:
-```
+
+```text
 allocate_oids count=3
 config_stepper oid=0 step_pin=PA1 dir_pin=PA2 invert_step=0
 config_stepper oid=1 step_pin=PA3 dir_pin=PA2 invert_step=0
@@ -222,7 +231,8 @@ The test was last run on commit `0b0c47c5` with gcc version
 ### STM32F103 step rate benchmark
 
 The following configuration sequence is used on the STM32F103:
-```
+
+```text
 allocate_oids count=3
 config_stepper oid=0 step_pin=PC13 dir_pin=PB5 invert_step=0
 config_stepper oid=1 step_pin=PB3 dir_pin=PB6 invert_step=0
@@ -244,7 +254,8 @@ The test was last run on commit `8d4a5c16` with gcc version
 ### STM32F4 step rate benchmark
 
 The following configuration sequence is used on the STM32F4:
-```
+
+```text
 allocate_oids count=4
 config_stepper oid=0 step_pin=PA5 dir_pin=PB5 invert_step=0
 config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=0
@@ -279,7 +290,8 @@ using a 168Mhz clock).
 ### LPC176x step rate benchmark
 
 The following configuration sequence is used on the LPC176x:
-```
+
+```text
 allocate_oids count=3
 config_stepper oid=0 step_pin=P1.20 dir_pin=P1.18 invert_step=0
 config_stepper oid=1 step_pin=P1.21 dir_pin=P1.18 invert_step=0
@@ -310,7 +322,8 @@ results were obtained by overclocking an LPC1768 to 120Mhz.
 ### SAMD21 step rate benchmark
 
 The following configuration sequence is used on the SAMD21:
-```
+
+```text
 allocate_oids count=3
 config_stepper oid=0 step_pin=PA27 dir_pin=PA20 invert_step=0
 config_stepper oid=1 step_pin=PB3 dir_pin=PA21 invert_step=0
@@ -333,7 +346,8 @@ micro-controller.
 ### SAMD51 step rate benchmark
 
 The following configuration sequence is used on the SAMD51:
-```
+
+```text
 allocate_oids count=5
 config_stepper oid=0 step_pin=PA22 dir_pin=PA20 invert_step=0
 config_stepper oid=1 step_pin=PA22 dir_pin=PA21 invert_step=0
@@ -365,7 +379,7 @@ micro-controller.
 
 The following configuration sequence is used on the RP2040:
 
-```
+```text
 allocate_oids count=4
 config_stepper oid=0 step_pin=gpio25 dir_pin=gpio3 invert_step=0
 config_stepper oid=1 step_pin=gpio26 dir_pin=gpio4 invert_step=0
@@ -390,7 +404,8 @@ Pico board.
 ### Linux MCU step rate benchmark
 
 The following configuration sequence is used on a Raspberry Pi:
-```
+
+```text
 allocate_oids count=3
 config_stepper oid=0 step_pin=gpio2 dir_pin=gpio3 invert_step=0
 config_stepper oid=1 step_pin=gpio4 dir_pin=gpio5 invert_step=0
@@ -415,7 +430,8 @@ micro-controller can process. It is primarily a test of the hardware
 communication mechanism. The test is run using the console.py tool
 (described in [Debugging.md](Debugging.md)). The following is
 cut-and-paste into the console.py terminal window:
-```
+
+```text
 DELAY {clock + 2*freq} get_uptime
 FLOOD 100000 0.0 debug_nop
 get_uptime
@@ -456,6 +472,7 @@ It is possible to run timing tests on the host software using the
 [Debugging.md](Debugging.md)). This is typically done by choosing a
 large and complex G-Code file and timing how long it takes for the
 host software to process it. For example:
-```
+
+```bash
 time ~/klippy-env/bin/python ./klippy/klippy.py config/example-cartesian.cfg -i something_complex.gcode -o /dev/null -d out/klipper.dict
 ```

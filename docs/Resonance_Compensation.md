@@ -130,7 +130,8 @@ frequencies to see if they have changed.
 
 After the ringing frequencies for X and Y axes are measured, you can add the
 following section to your `printer.cfg`:
-```
+
+```cfg
 [input_shaper]
 shaper_freq_x: ...  # frequency for the X mark of the test model
 shaper_freq_y: ...  # frequency for the Y mark of the test model
@@ -178,7 +179,8 @@ results than MZV, use EI shaper, otherwise prefer MZV. Note that EI shaper will
 cause more smoothing in printed parts (see the next section for further
 details). Add `shaper_type: mzv` (or ei) parameter to [input_shaper] section,
 e.g.:
-```
+
+```cfg
 [input_shaper]
 shaper_freq_x: ...
 shaper_freq_y: ...
@@ -385,7 +387,8 @@ providing the shaper_freq_x=... and shaper_freq_y=... as determined previously.
 If EI shaper shows very comparable good results as 2HUMP_EI shaper, stick with
 EI shaper and the frequency determined earlier, otherwise use 2HUMP_EI shaper
 with the corresponding frequency. Add the results to `printer.cfg` as, e.g.
-```
+
+```cfg
 [input_shaper]
 shaper_freq_x: 50
 shaper_freq_y: 50
@@ -434,7 +437,8 @@ of the carriages, and calculate the ringing frequencies for X and Y axes for
 each of the carriages independently. Then put the values for carriage 0 into
 [input_shaper] section, and change the values on the fly when changing
 carriages, e.g. as a part of some macro:
-```
+
+```gcode
 SET_DUAL_CARRIAGE CARRIAGE=1
 SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
 ```

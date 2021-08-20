@@ -52,7 +52,8 @@ This chip is typically found in the "Arduino Mega" and is very common
 in 3d printer boards.
 
 To flash the bootloader itself use something like:
-```
+
+```bash
 wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex'
 
 avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m -U lfuse:w:0xFF:m
@@ -61,7 +62,8 @@ avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 ```
 
 To flash an application use something like:
-```
+
+```bash
 avrdude -cwiring -patmega2560 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
@@ -71,7 +73,8 @@ This chip is typically found in earlier versions of the "Arduino
 Mega".
 
 To flash the bootloader itself use something like:
-```
+
+```bash
 wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex'
 
 avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m -U lfuse:w:0xFF:m
@@ -80,7 +83,8 @@ avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 ```
 
 To flash an application use something like:
-```
+
+```bash
 avrdude -carduino -patmega1280 -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
@@ -89,7 +93,8 @@ avrdude -carduino -patmega1280 -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.e
 This chip is commonly found in "Melzi" style 3d printer boards.
 
 To flash the bootloader itself use something like:
-```
+
+```bash
 wget 'https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex'
 
 avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m -U lfuse:w:0xFF:m
@@ -98,14 +103,16 @@ avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 ```
 
 To flash an application use something like:
-```
+
+```bash
 avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
 Note that a number of "Melzi" style boards come preloaded with a
 bootloader that uses a baud rate of 57600. In this case, to flash an
 application use something like this instead:
-```
+
+```bash
 avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
@@ -120,7 +127,7 @@ It requires a custom flashing tool from
 [https://github.com/PaulStoffregen/teensy_loader_cli](https://github.com/PaulStoffregen/teensy_loader_cli).
 One can flash an application with it using something like:
 
-```
+```bash
 teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
 ```
 
@@ -129,7 +136,8 @@ teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
 The atmega168 has limited flash space. If using a bootloader, it is
 recommended to use the Optiboot bootloader. To flash that bootloader
 use something like:
-```
+
+```bash
 wget 'https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega168.hex'
 
 avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0x04:m -U hfuse:w:0xDD:m -U lfuse:w:0xFF:m
@@ -139,7 +147,8 @@ avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 
 To flash an application via the Optiboot bootloader use something
 like:
-```
+
+```bash
 avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
@@ -161,7 +170,8 @@ can be used to program the SAM3. It is recommended to use version 1.9
 or later.
 
 To flash an application use something like:
-```
+
+```bash
 bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
 bossac -U -p /dev/ttyACM0 -R
 ```
@@ -181,7 +191,8 @@ can be used to program the SAM4. It is necessary to use version
 `1.8.0` or higher.
 
 To flash an application use something like:
-```
+
+```bash
 bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
 ```
 
@@ -193,15 +204,20 @@ Alternatively, one can use a
 [Raspberry Pi with OpenOCD](#running-openocd-on-the-raspberry-pi).
 
 To flash a bootloader with OpenOCD use the following chip config:
-```
+
+```gdb
 source [find target/at91samdXX.cfg]
 ```
+
 Obtain a bootloader - for example:
-```
+
+```bash
 wget 'https://github.com/arduino/ArduinoCore-samd/raw/1.8.3/bootloaders/zero/samd21_sam_ba.bin'
 ```
+
 Flash with OpenOCD commands similar to:
-```
+
+```gdb
 at91samd bootloader 0
 program samd21_sam_ba.bin verify
 ```
@@ -211,7 +227,8 @@ The most common bootloader on the SAMD21 is the one found on the
 compiled with a start address of 8KiB). One can enter this bootloader
 by double clicking the reset button. To flash an application use
 something like:
-```
+
+```bash
 bossac -U -p /dev/ttyACM0 --offset=0x2000 -w out/klipper.bin -v -b -R
 ```
 
@@ -219,7 +236,8 @@ In contrast, the "Arduino M0" uses a 16KiB bootloader (the application
 must be compiled with a start address of 16KiB). To flash an
 application on this bootloader, reset the micro-controller and run the
 flash command within the first few seconds of boot - something like:
-```
+
+```bash
 avrdude -c stk500v2 -p atmega2560 -P /dev/ttyACM0 -u -Uflash:w:out/klipper.elf.hex:i
 ```
 
@@ -229,16 +247,21 @@ Like the SAMD21, the SAMD51 bootloader is flashed via the ARM Serial
 Wire Debug (SWD) interface. To flash a bootloader with
 [OpenOCD on a Raspberry Pi](#running-openocd-on-the-raspberry-pi) use
 the following chip config:
-```
+
+```gdb
 source [find target/atsame5x.cfg]
 ```
+
 Obtain a bootloader - several bootloaders are available from
 [https://github.com/adafruit/uf2-samdx1/releases/latest](https://github.com/adafruit/uf2-samdx1/releases/latest). For example:
-```
+
+```bash
 wget 'https://github.com/adafruit/uf2-samdx1/releases/download/v3.7.0/bootloader-itsybitsy_m4-v3.7.0.bin'
 ```
+
 Flash with OpenOCD commands similar to:
-```
+
+```gdb
 at91samd bootloader 0
 program bootloader-itsybitsy_m4-v3.7.0.bin verify
 at91samd bootloader 16384
@@ -247,7 +270,8 @@ at91samd bootloader 16384
 The SAMD51 uses a 16KiB bootloader (the application must be compiled
 with a start address of 16KiB). To flash an application use something
 like:
-```
+
+```bash
 bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
 ```
 
@@ -258,7 +282,8 @@ application via 3.3V serial. To access this ROM, one should connect
 the "boot 0" pin to high and "boot 1" pin to low, and then reset the
 device. The "stm32flash" package can then be used to flash the device
 using something like:
-```
+
+```bash
 stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 ```
 
@@ -277,7 +302,8 @@ The "stm32duino" project has a USB capable bootloader - see:
 [https://github.com/rogerclarkmelbourne/STM32duino-bootloader](https://github.com/rogerclarkmelbourne/STM32duino-bootloader)
 
 This bootloader can be flashed via 3.3V serial with something like:
-```
+
+```bash
 wget 'https://github.com/rogerclarkmelbourne/STM32duino-bootloader/raw/master/binaries/generic_boot20_pc13.bin'
 
 stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
@@ -286,7 +312,8 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 This bootloader uses 8KiB of flash space (the application must be
 compiled with a start address of 8KiB). Flash an application with
 something like:
-```
+
+```bash
 dfu-util -d 1eaf:0003 -a 2 -R -D out/klipper.bin
 ```
 
@@ -315,19 +342,24 @@ don't have access to a STLink it is also possible to use a
 [Raspberry Pi and OpenOCD](#running-openocd-on-the-raspberry-pi) with
 the following chip config:
 
-```
+```gdb
 source [find target/stm32f1x.cfg]
 ```
+
 If you wish you can make a backup of the current flash with the following
 command.  Note that it may take some time to complete:
-```
+
+```gdb
 flash read_bank 0 btt_skr_mini_e3_backup.bin
 ```
+
 finally, you can flash with commands similar to:
-```
+
+```gdb
 stm32f1x mass_erase 0
 program hid_btt_skr_mini_e3.bin verify 0x08000000
 ```
+
 NOTES:
 - The example above erases the chip then programs the bootloader.  Regardless
   of the method chosen to flash it is recommended to erase the chip prior to
@@ -336,7 +368,8 @@ NOTES:
   that you will no longer be able to update firmware via the sdcard.
 - You may need to hold down the reset button on the board while launching
   OpenOCD.  It should display something like:
-  ```
+
+  ```gdb
   Open On-Chip Debugger 0.10.0+dev-01204-gc60252ac-dirty (2020-04-27-16:00)
   Licensed under GNU GPL v2
   For bug reports, read
@@ -351,30 +384,34 @@ NOTES:
   Info : starting gdb server for stm32f1x.cpu on 3333
   Info : Listening on port 3333 for gdb connections
   ```
-  After which you can release the reset button.
 
+  After which you can release the reset button.
 
 This bootloader requires 2KiB of flash space (the application
 must be compiled with a start address of 2KiB).
 
 The hid-flash program is used to upload a binary to the bootloader. You
 can install this software with the following commands:
-```
+
+```bash
 sudo apt install libusb-1.0
 cd ~/klipper/lib/hidflash
 make
 ```
 
 If the bootloader is running you can flash with something like:
-```
+
+```bash
 ~/klipper/lib/hidflash/hid-flash ~/klipper/out/klipper.bin
 ```
 alternatively, you can use `make flash` to flash klipper directly:
-```
+
+```bash
 make flash FLASH_DEVICE=1209:BEBA
 ```
 OR if klipper has been previously flashed:
-```
+
+```bash
 make flash FLASH_DEVICE=/dev/ttyACM0
 ```
 
@@ -401,7 +438,8 @@ Unless your board is DFU capable the most accessable flashing method
 is likely via 3.3v serial, which follows the same procedure as
 [flashing the STM32F103 using stm32flash](#stm32f103-micro-controllers-blue-pill-devices).
 For example:
-```
+
+```bash
 wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta/hid_bootloader_SKR_PRO.bin
 
 stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
@@ -447,7 +485,7 @@ derived from the instructions at:
 Begin by downloading and compiling the software (each step may take
 several minutes and the "make" step may take 30+ minutes):
 
-```
+```bash
 sudo apt-get update
 sudo apt-get install autoconf libtool telnet
 mkdir ~/openocd
@@ -464,13 +502,13 @@ make install
 
 Create an OpenOCD config file:
 
-```
+```bash
 nano ~/openocd/openocd.cfg
 ```
 
 Use a config similar to the following:
 
-```
+```gdb
 # Uses RPi pins: GPIO25 for SWDCLK, GPIO24 for SWDIO, GPIO18 for nRST
 source [find interface/raspberrypi2-native.cfg]
 bcm2835gpio_swd_nums 25 24
@@ -509,7 +547,7 @@ Then power up the Raspberry Pi and provide power to the target chip.
 
 Run OpenOCD:
 
-```
+```bash
 cd ~/openocd/
 sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
 ```
@@ -522,7 +560,7 @@ double check the wiring.
 Once OpenOCD is running and is stable, one can send it commands via
 telnet. Open another ssh session and run the following:
 
-```
+```bash
 telnet 127.0.0.1 4444
 ```
 
@@ -536,7 +574,7 @@ commands assume one is running gdb on a desktop class machine.
 
 Add the following to the OpenOCD config file:
 
-```
+```cfg
 bindto 0.0.0.0
 gdb_port 44444
 ```
@@ -544,14 +582,14 @@ gdb_port 44444
 Restart OpenOCD on the Raspberry Pi and then run the following Unix
 command on the desktop machine:
 
-```
+```bash
 cd /path/to/klipper/
 gdb out/klipper.elf
 ```
 
 Within gdb run:
 
-```
+```gdb
 target remote octopi:44444
 ```
 

@@ -17,7 +17,7 @@ Indentation is important when defining a macro in the config file. To
 specify a multi-line G-Code sequence it is important for each line to
 have proper indentation. For example:
 
-```
+```cfg
 [gcode_macro blink_led]
 gcode:
   SET_PIN PIN=my_led VALUE=1
@@ -36,7 +36,7 @@ Add `description:` with a short text to describe the functionality.
 Default is "G-Code macro" if not specified.
 For example:
 
-```
+```cfg
 [gcode_macro blink_led]
 description: Blink my_led one time
 gcode:
@@ -63,7 +63,7 @@ will make an undesirable request.)
 A common way to accomplish that is to wrap the `G1` moves in
 `SAVE_GCODE_STATE`, `G91`, and `RESTORE_GCODE_STATE`. For example:
 
-```
+```cfg
 [gcode_macro MOVE_UP]
 gcode:
   SAVE_GCODE_STATE NAME=my_move_up_state
@@ -88,7 +88,8 @@ wrapped in `{% %}`. See the
 for further information on the syntax.
 
 An example of a complex macro:
-```
+
+```cfg
 [gcode_macro clean_nozzle]
 gcode:
   {% set wipe_count = 8 %}
@@ -109,7 +110,7 @@ It is often useful to inspect parameters passed to the macro when
 it is called. These parameters are available via the `params`
 pseudo-variable. For example, if the macro:
 
-```
+```cfg
 [gcode_macro SET_PERCENT]
 gcode:
   M117 Now at { params.VALUE|float * 100 }%
@@ -123,7 +124,7 @@ math then they must be explicitly converted to integers or floats.
 It's common to use the Jinja2 `set` directive to use a default
 parameter and assign the result to a local name. For example:
 
-```
+```cfg
 [gcode_macro SET_BED_TEMPERATURE]
 gcode:
   {% set bed_temp = params.TEMPERATURE|default(40)|float %}
@@ -135,7 +136,7 @@ gcode:
 It is possible to inspect (and alter) the current state of the printer
 via the `printer` pseudo-variable. For example:
 
-```
+```cfg
 [gcode_macro slow_fan]
 gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
@@ -163,7 +164,8 @@ access it via the `[ ]` accessor - for example:
 Note that the Jinja2 `set` directive can assign a local name to an
 object in the `printer` hierarchy. This can make macros more readable
 and reduce typing. For example:
-```
+
+```cfg
 [gcode_macro QUERY_HTU21D]
 gcode:
     {% set sensor = printer["htu21d my_sensor"] %}
@@ -201,7 +203,7 @@ The SET_GCODE_VARIABLE command may be useful for saving state between
 macro calls. Variable names may not contain any upper case characters.
 For example:
 
-```
+```cfg
 [gcode_macro start_probe]
 variable_bed_temp: 0
 gcode:
@@ -228,7 +230,7 @@ into account when using SET_GCODE_VARIABLE.
 The [delayed_gcode] configuration option can be used to execute a delayed
 gcode sequence:
 
-```
+```cfg
 [delayed_gcode clear_display]
 gcode:
   M117
@@ -254,7 +256,7 @@ printer enters the "ready" state.  For example, the below delayed_gcode
 will execute 5 seconds after the printer is ready, initializing
 the display with a "Welcome!" message:
 
-```
+```cfg
 [delayed_gcode welcome]
 initial_duration: 5.
 gcode:
@@ -264,7 +266,7 @@ gcode:
 Its possible for a delayed gcode to repeat by updating itself in
 the gcode option:
 
-```
+```cfg
 [delayed_gcode report_temp]
 initial_duration: 2.
 gcode:
@@ -276,8 +278,7 @@ The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to
 Octoprint every 2 seconds.  This can be canceled with the following
 gcode:
 
-
-```
+```gcode
 UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 ```
 
@@ -316,7 +317,8 @@ restarts. All stored variables are loaded into the
 `printer.save_variables.variables` dict at startup and can be used in
 gcode macros. to avoid overly long lines you can add the following at
 the top of the macro:
-```
+
+```text
 {% set svv = printer.save_variables.variables %}
 ```
 
@@ -324,7 +326,7 @@ As an example, it could be used to save the state of 2-in-1-out hotend
 and when starting a print ensure that the active extruder is used,
 instead of T0:
 
-```
+```cfg
 [gcode_macro T1]
 gcode:
   ACTIVATE_EXTRUDER extruder=extruder1

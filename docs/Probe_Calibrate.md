@@ -13,26 +13,32 @@ move the head to a position near the center of the bed.
 Place a piece of blue painters tape (or similar) on the bed underneath
 the probe. Navigate to the OctoPrint "Terminal" tab and issue a PROBE
 command:
-```
+
+```gcode
 PROBE
 ```
+
 Place a mark on the tape directly under where the probe is (or use a
 similar method to note the location on the bed).
 
 Issue a `GET_POSITION` command and record the toolhead XY location
 reported by that command. For example if one sees:
-```
+
+```text
 Recv: // toolhead: X:46.500000 Y:27.000000 Z:15.000000 E:0.000000
 ```
+
 then one would record a probe X position of 46.5 and probe Y position
 of 27.
 
 After recording the probe position, issue a series of G1 commands
 until the nozzle is directly above the mark on the bed. For example,
 one might issue:
-```
+
+```gcode
 G1 F300 X57 Y30 Z15
 ```
+
 to move the nozzle to an X position of 57 and Y of 30. Once one finds
 the position directly above the mark, use the `GET_POSITION` command
 to report that position. This is the nozzle position.
@@ -68,7 +74,8 @@ Once the manual probe tool starts, follow the steps described at
 actual distance between the nozzle and bed at the given location. Once
 those steps are complete one can `ACCEPT` the position and save the
 results to the config file with:
-```
+
+```gcode
 SAVE_CONFIG
 ```
 
@@ -97,7 +104,8 @@ bed. Navigate to the OctoPrint terminal tab and run the
 
 This command will run the probe ten times and produce output similar
 to the following:
-```
+
+```text
 Recv: // probe accuracy: at X:0.000 Y:0.000 Z:10.000
 Recv: // and read 10 times with speed of 5 mm/s
 Recv: // probe at -0.003,0.005 is z=2.506948

@@ -101,7 +101,8 @@ stall at very slow speeds.
 A good starting point for the homing speed is for the stepper motor to
 make a full rotation every two seconds. For many axes this will be the
 `rotation_distance` divided by two. For example:
-```
+
+```gcode
 [stepper_x]
 rotation_distance: 40
 homing_speed: 20
@@ -125,7 +126,8 @@ will confuse the tuning process.)
 It is necessary to configure the sensorless homing pins and to
 configure initial "stallguard" settings. A tmc2209 example
 configuration for an X axis might look like:
-```
+
+```gcode
 [tmc2209 stepper_x]
 diag_pin: ^PA1      # Set to MCU pin connected to TMC DIAG pin
 driver_SGTHRS: 255  # 255 is most sensitive value, 0 is least sensitive
@@ -138,7 +140,8 @@ homing_retract_dist: 0
 ```
 
 An example tmc2130 or tmc5160 config might look like:
-```
+
+```gcode
 [tmc2130 stepper_x]
 diag1_pin: ^!PA1 # Pin connected to TMC DIAG1 pin (or use diag0_pin / DIAG0 pin)
 driver_SGT: -64  # -64 is most sensitive value, 63 is least sensitive
@@ -151,7 +154,8 @@ homing_retract_dist: 0
 ```
 
 An example tmc2660 config might look like:
-```
+
+```gcode
 [tmc2660 stepper_x]
 driver_SGT: -64     # -64 is most sensitive value, 63 is least sensitive
 ...
@@ -171,11 +175,14 @@ for all the available options.
 
 Place the carriage near the center of the rail. Use the SET_TMC_FIELD
 command to set the highest sensitivity. For tmc2209:
-```
+
+```gcode
 SET_TMC_FIELD STEPPER=stepper_x FIELD=SGTHRS VALUE=255
 ```
+
 For tmc2130, tmc5160, and tmc2660:
-```
+
+```gcode
 SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 ```
 
@@ -275,7 +282,8 @@ is not recommended during sensorless homing).
 
 An example macro might look something like:
 <!-- {% raw %} -->
-```
+
+```gcode
 [gcode_macro SENSORLESS_HOME_X]
 gcode:
     {% set HOME_CUR = 0.700 %}

@@ -410,7 +410,7 @@ some other coordinate system and Klipper has several tools to
 facilitate that. This can be seen by running the GET_POSITION
 command. For example:
 
-```
+```text
 Send: GET_POSITION
 Recv: // mcu: stepper_a:-2060 stepper_b:-1169 stepper_c:-1613
 Recv: // stepper: stepper_a:457.254159 stepper_b:466.085669 stepper_c:465.382132

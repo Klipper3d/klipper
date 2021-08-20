@@ -14,7 +14,8 @@ the instructions from the above link.
 Then ssh into the beaglebone machine (ssh debian@beaglebone --
 password is "temppwd") and install Klipper by running the following
 commands:
-```
+
+```bash
 git clone https://github.com/KevinOConnor/klipper
 ./klipper/scripts/install-beaglebone.sh
 ```
@@ -22,7 +23,8 @@ git clone https://github.com/KevinOConnor/klipper
 ## Install Octoprint
 
 One may then install Octoprint:
-```
+
+```bash
 git clone https://github.com/foosel/OctoPrint.git
 cd OctoPrint/
 virtualenv venv
@@ -30,7 +32,8 @@ virtualenv venv
 ```
 
 And setup OctoPrint to start at bootup:
-```
+
+```bash
 sudo cp ~/OctoPrint/scripts/octoprint.init /etc/init.d/octoprint
 sudo chmod +x /etc/init.d/octoprint
 sudo cp ~/OctoPrint/scripts/octoprint.default /etc/default/octoprint
@@ -42,12 +45,14 @@ configuration file. One must change the OCTOPRINT_USER user to
 "debian", change NICELEVEL to 0, uncomment the BASEDIR, CONFIGFILE,
 and DAEMON settings and change the references from "/home/pi/" to
 "/home/debian/":
-```
+
+```bash
 sudo nano /etc/default/octoprint
 ```
 
 Then start the Octoprint service:
-```
+
+```bash
 sudo systemctl start octoprint
 ```
 
@@ -58,13 +63,15 @@ Make sure the octoprint web server is accessible - it should be at:
 
 To compile the Klipper micro-controller code, start by configuring it
 for the "Beaglebone PRU":
-```
+
+```bash
 cd ~/klipper/
 make menuconfig
 ```
 
 To build and install the new micro-controller code, run:
-```
+
+```bash
 sudo service klipper stop
 make flash
 sudo service klipper start
@@ -73,12 +80,14 @@ sudo service klipper start
 It is also necessary to compile and install the micro-controller code
 for a Linux host process. Run "make menuconfig" a second time and
 configure it for a "Linux process":
-```
+
+```bash
 make menuconfig
 ```
 
 Then install this micro-controller code as well:
-```
+
+```bash
 sudo service klipper stop
 make flash
 sudo service klipper start

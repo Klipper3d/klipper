@@ -15,7 +15,7 @@ configure these pins according to your wiring. Most BL-Touch devices
 require a pullup on the sensor pin (prefix the pin name with "^"). For
 example:
 
-```
+```cfg
 [bltouch]
 sensor_pin: ^P1.24
 control_pin: P1.26
@@ -26,7 +26,7 @@ probe:z_virtual_endstop` in the `[stepper_z]` config section and add a
 `[safe_z_home]` config section to raise the z axis, home the xy axes,
 move to the center of the bed, and home the z axis. For example:
 
-```
+```cfg
 [safe_z_home]
 home_xy_position: 100,100 # Change coordinates to the center of your print bed
 speed: 50

@@ -25,19 +25,25 @@ height should be around 75% of the nozzle diameter). Make sure any
 "dynamic acceleration control" is disabled in the slicer.
 
 Prepare for the test by issuing the following G-Code command:
-```
+
+```gcode
 SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
 ```
+
 This command makes the nozzle travel slower through corners to
 emphasize the effects of extruder pressure. Then for printers with a
 direct drive extruder run the command:
-```
+
+```gcode
 TUNING_TOWER COMMAND=SET_PRESSURE_ADVANCE PARAMETER=ADVANCE START=0 FACTOR=.005
 ```
+
 For long bowden extruders use:
-```
+
+```gcode
 TUNING_TOWER COMMAND=SET_PRESSURE_ADVANCE PARAMETER=ADVANCE START=0 FACTOR=.020
 ```
+
 Then print the object. When fully printed the test print looks like:
 
 ![tuning_tower](img/tuning_tower.jpg)

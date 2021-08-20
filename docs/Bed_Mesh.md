@@ -20,7 +20,7 @@ information.
 This example assumes a printer with a 250 mm x 220 mm rectangular
 bed and a probe with an x-offset of 24 mm and y-offset of 5 mm.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -71,7 +71,7 @@ This example assumes a printer equipped with a round bed radius of 100mm.
 We will use the same probe offsets as the rectangular example, 24 mm on X
 and 5 mm on Y.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -121,7 +121,7 @@ to increase mesh density.  These algorithms add curvature to the mesh,
 attempting to simulate the material properties of the bed.  Bed Mesh offers
 lagrange and bicubic interpolation to accomplish this.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -175,7 +175,7 @@ to their Z coordinate. Long moves must be and split into smaller moves
 to correctly follow the shape of the bed. The options below control the
 splitting behavior.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -221,7 +221,7 @@ can result in visible artifacts on the print.  Also, if your bed is
 significantly warped, fade can shrink or stretch the Z height of the print.
 As such, fade is disabled by default.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -269,7 +269,7 @@ challenging, particuarly at different bed temperatures.  As such, some printers
 use an endstop for homing the Z axis, and a probe for calibrating the mesh.
 These printers can benefit from configuring the relative reference index.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -310,7 +310,7 @@ probe up to 4 points at the boundaries of this region.  These probed values
 will be averaged and inserted in the mesh as the Z value at the generated
 (X, Y) coordinate.
 
-```
+```cfg
 [bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -407,7 +407,7 @@ is output
 The PGP parameter is shorthand for "Print Generated Points".  If `PGP=1` is
 set, the generated probed points will be output to the terminal:
 
-```
+```text
 // bed_mesh: generated points
 // Index | Tool Adjusted | Probe
 // 0 | (11.0, 1.0) | (35.0, 6.0)
