@@ -1,7 +1,7 @@
 # Configuration checks
 
 This document provides a list of steps to help confirm the pin
-settings in the Klipper printer.cfg file.  It is a good idea to run
+settings in the Klipper printer.cfg file. It is a good idea to run
 through these steps after following the steps in the
 [installation document](Installation.md).
 
@@ -113,7 +113,7 @@ best to test the extruder motor separately (see the next section).
 
 After verifying all endstops and verifying all stepper motors the
 homing mechanism should be tested. Issue a G28 command to home all
-axes.  Remove power from the printer if it does not home properly.
+axes. Remove power from the printer if it does not home properly.
 Rerun the endstop and stepper motor verification steps if necessary.
 
 ## Verify extruder motor

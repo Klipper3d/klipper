@@ -5,7 +5,7 @@ using `output_pin` and some macros.
 
 
 ## How does it work?
-With re-purposing the printhead's fan pwm output, you can control
+With re-purposing the printhead's fan PWM output, you can control
 lasers or spindles.
 This is useful if you use switchable print heads, for example
 the E3D toolchanger or a DIY solution.

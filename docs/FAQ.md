@@ -23,7 +23,7 @@
 21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
 22. [Why does Klipper report errors? I lost my print!](#why-does-klipper-report-errors-i-lost-my-print)
 23. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
-24. [How do I uninstall klipper?](#how-do-i-uninstall-klipper)
+24. [How do I uninstall Klipper ?](#how-do-i-uninstall-klipper)
 
 ## How can I donate to the project?
 
@@ -109,7 +109,7 @@ need to be configured in the micro-controller (during **make
 menuconfig**) and that updated code will need to be compiled and
 flashed to the micro-controller. The Klipper printer.cfg file will
 also need to be updated to match that baud rate (see the
-[config reference](Config_Reference.md#mcu) for details).  For
+[Config Reference](Config_Reference.md#mcu) for details). For
 example:
 
 ```cfg
@@ -219,7 +219,7 @@ you. It's configured in OctoPrint via a web browser under:
 Settings->GCODE Scripts
 
 If you want to move the head after a print finishes, consider adding
-the desired movement to the "custom g-code" section of your slicer.
+the desired movement to the "custom G-Code" section of your slicer.
 
 If the printer requires some additional movement as part of the homing
 process itself (or fundamentally does not have a homing process) then
@@ -410,7 +410,7 @@ the terminal box. The M112 command will cause Klipper to enter into a
 Klipper. Navigate to the OctoPrint connection area and click on
 "Connect" to cause OctoPrint to reconnect. Navigate back to the
 terminal tab and issue a FIRMWARE_RESTART command to clear the Klipper
-error state.  After completing this sequence, the previous heating
+error state. After completing this sequence, the previous heating
 request will be canceled and a new print may be started.
 
 ## Can I find out whether the printer has lost steps?
@@ -508,7 +508,7 @@ If any errors persist then double check the
 [config changes](Config_Changes.md) document, as you may need to
 modify the printer configuration.
 
-Note that the RESTART and FIRMWARE_RESTART g-code commands do not load
+Note that the RESTART and FIRMWARE_RESTART G-Code commands do not load
 new software - the above "sudo service klipper restart" and "make
 flash" commands are needed for a software change to take effect.
 

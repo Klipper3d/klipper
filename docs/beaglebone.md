@@ -11,7 +11,7 @@ image. One may run the image from either a micro-SD card or from
 builtin eMMC. If using the eMMC, install it to eMMC now by following
 the instructions from the above link.
 
-Then ssh into the beaglebone machine (ssh debian@beaglebone --
+Then ssh into the Beaglebone machine (ssh debian@beaglebone --
 password is "temppwd") and install Klipper by running the following
 commands:
 

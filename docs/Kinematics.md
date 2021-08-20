@@ -280,7 +280,7 @@ retracted (the extruder will have a negative velocity).
 The "smoothing" is implemented using a weighted average of the
 extruder position over a small time period (as specified by the
 `pressure_advance_smooth_time` config parameter). This averaging can
-span multiple g-code moves. Note how the extruder motor will start
+span multiple G-Code moves. Note how the extruder motor will start
 moving prior to the nominal start of the first extrusion move and will
 continue to move after the nominal end of the last extrusion move.
 

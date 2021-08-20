@@ -1,7 +1,7 @@
 # Example configurations
 
 This document contains guidelines for contributing an example Klipper
-configuration to the Klipper github repository (located in the
+configuration to the Klipper GitHub repository (located in the
 [config directory](../config/)).
 
 Note that the
@@ -59,7 +59,7 @@ is also a useful resource for finding and sharing config files.
       hardware. For example, do not specify `[virtual_sdcard]` nor
       `[temperature_host]` config sections.
    4. Only define macros that utilize functionality specific to the
-      given printer or to define g-codes that are commonly emitted by
+      given printer or to define G-Codes that are commonly emitted by
       slicers configured for the given printer.
 6. Where possible, it is best to use the same wording, phrasing,
    indentation, and section ordering as the existing config files.
@@ -99,6 +99,6 @@ is also a useful resource for finding and sharing config files.
    `max_extrude_cross_section`. Do not enable debugging features. For
    example there should not be a `force_move` config section.
 
-Example config files are submitted by creating a github "pull
+Example config files are submitted by creating a GitHub "pull
 request". Please also follow the directions in the
 [contributing document](CONTRIBUTING.md).

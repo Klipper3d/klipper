@@ -156,7 +156,7 @@ endstop_pin:
 #   the X, Y, and Z steppers on cartesian style printers.
 #position_min: 0
 #   Minimum valid distance (in mm) the user may command the stepper to
-#   move to.  The default is 0mm.
+#   move to. The default is 0mm.
 position_endstop:
 #   Location of the endstop (in mm). This parameter must be provided
 #   for the X, Y, and Z steppers on cartesian style printers.
@@ -286,7 +286,7 @@ arm_length:
 [stepper_c]
 
 # The delta_calibrate section enables a DELTA_CALIBRATE extended
-# g-code command that can calibrate the tower endstop positions and
+# G-Code command that can calibrate the tower endstop positions and
 # angles.
 [delta_calibrate]
 radius:
@@ -503,7 +503,7 @@ max_z_velocity:
 #   max_velocity for max_z_velocity.
 #minimum_z_position: 0
 #   The minimum Z position that the user may command the head to move
-#   to.  The default is 0.
+#   to. The default is 0.
 shoulder_radius:
 #   Radius (in mm) of the horizontal circle formed by the three
 #   shoulder joints, minus the radius of the circle formed by the
@@ -555,7 +555,7 @@ lower_arm_length:
 [stepper_c]
 
 # The delta_calibrate section enables a DELTA_CALIBRATE extended
-# g-code command that can calibrate the shoulder endstop positions.
+# G-Code command that can calibrate the shoulder endstop positions.
 [delta_calibrate]
 radius:
 #   Radius (in mm) of the area that may be probed. This is the radius
@@ -835,10 +835,10 @@ Visual Examples:
 #   points to probe along each axis. This value must be an odd number.
 #   Default is 5.
 #fade_start: 1.0
-#   The gcode z position in which to start phasing out z-adjustment
+#   The G-Code z position in which to start phasing out z-adjustment
 #   when fade is enabled. Default is 1.0.
 #fade_end: 0.0
-#   The gcode z position in which phasing out completes. When set to a
+#   The G-Code z position in which phasing out completes. When set to a
 #   value below fade_start, fade is disabled. It should be noted that
 #   fade may add unwanted scaling along the z-axis of a print. If a
 #   user wishes to enable fade, a value of 10.0 is recommended.
@@ -876,8 +876,8 @@ Visual Examples:
 #   at the provided index.
 #faulty_region_1_min:
 #faulty_region_1_max:
-#   Optional points that define a faulty region.  See docs/Bed_Mesh.md
-#   for details on faulty regions.  Up to 99 faulty regions may be added.
+#   Optional points that define a faulty region. See docs/Bed_Mesh.md
+#   for details on faulty regions. Up to 99 faulty regions may be added.
 #   By default no faulty regions are set.
 ```
 
@@ -902,7 +902,7 @@ information.
 #   The amount to add to the Z height when the nozzle is nominally at
 #   0,0. The default is 0.
 # The remaining parameters control a BED_TILT_CALIBRATE extended
-# g-code command that may be used to calibrate appropriate x and y
+# G-Code command that may be used to calibrate appropriate x and y
 # adjustment parameters.
 #points:
 #   A list of X,Y coordinates (one per line; subsequent lines
@@ -921,7 +921,7 @@ information.
 ### [bed_screws]
 
 Tool to help adjust bed leveling screws. One may define a [bed_screws]
-config section to enable a BED_SCREWS_ADJUST g-code command.
+config section to enable a BED_SCREWS_ADJUST G-Code command.
 
 See the
 [leveling guide](Manual_Level.md#adjusting-bed-leveling-screws) and
@@ -967,7 +967,7 @@ information.
 
 Tool to help adjust bed screws tilt using Z probe. One may define a
 screws_tilt_adjust config section to enable a SCREWS_TILT_CALCULATE
-g-code command.
+G-Code command.
 
 See the
 [leveling guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)
@@ -1104,7 +1104,7 @@ Where x is the (0,0) point on the bed
 Printer Skew Correction. It is possible to use software to correct
 printer skew across 3 planes, xy, xz, yz. This is done by printing a
 calibration model along a plane and measuring three lengths. Due to
-the nature of skew correction these lengths are set via gcode. See
+the nature of skew correction these lengths are set via G-Code. See
 [skew correction](skew_correction.md) and
 [command reference](G-Codes.md#skew-correction) for details.
 
@@ -1145,8 +1145,8 @@ home_xy_position:
 
 ### [homing_override]
 
-Homing override. One may use this mechanism to run a series of g-code
-commands in place of a G28 found in the normal g-code input. This may
+Homing override. One may use this mechanism to run a series of G-Code
+commands in place of a G28 found in the normal G-Code input. This may
 be useful on printers that require a specific procedure to home the
 machine.
 
@@ -1154,7 +1154,7 @@ machine.
 [homing_override]
 gcode:
 #   A list of G-Code commands to execute in place of G28 commands
-#   found in the normal g-code input. See docs/Command_Templates.md
+#   found in the normal G-Code input. See docs/Command_Templates.md
 #   for G-Code format. If a G28 is contained in this list of commands
 #   then it will invoke the normal homing procedure for the printer.
 #   The commands listed here must home all axes. This parameter must
@@ -1169,7 +1169,7 @@ gcode:
 #set_position_y:
 #set_position_z:
 #   If specified, the printer will assume the axis is at the specified
-#   position prior to running the above g-code commands. Setting this
+#   position prior to running the above G-Code commands. Setting this
 #   disables homing checks for that axis. This may be useful if the
 #   head must move prior to invoking the normal G28 mechanism for an
 #   axis. The default is to not force a position for an axis.
@@ -1231,7 +1231,7 @@ G-Code macros (one may define any number of sections with a
 #   The given variable name will be assigned the given value (parsed
 #   as a Python literal) and will be available during macro expansion.
 #   For example, a config with "variable_fan_speed = 75" might have
-#   gcode commands containing "M106 S{ fan_speed * 255 }". Variables
+#   G-Code commands containing "M106 S{ fan_speed * 255 }". Variables
 #   can be changed at run-time using the SET_GCODE_VARIABLE command
 #   (see docs/Command_Templates.md for details). Variable names may
 #   not use upper case characters.
@@ -1249,7 +1249,7 @@ G-Code macros (one may define any number of sections with a
 
 ### [delayed_gcode]
 
-Execute a gcode on a set delay. See the
+Execute a G-Code on a set delay. See the
 [command template guide](Command_Templates.md#delayed-gcodes) and
 [command reference](G-Codes.md#delayed-gcode) for more information.
 
@@ -1304,14 +1304,14 @@ explicit idle_timeout config section to change the default settings.
 
 A virtual sdcard may be useful if the host machine is not fast enough
 to run OctoPrint well. It allows the Klipper host software to directly
-print gcode files stored in a directory on the host using standard
+print G-Code files stored in a directory on the host using standard
 sdcard G-Code commands (eg, M24).
 
 ```cfg
 [virtual_sdcard]
 path:
 #   The path of the local directory on the host machine to look for
-#   g-code files. This is a read-only directory (sdcard file writes
+#   G-Code files. This is a read-only directory (sdcard file writes
 #   are not supported). One may point this to OctoPrint's upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
@@ -1383,7 +1383,7 @@ allowing per-filament settings and runtime tuning.
 
 ### [gcode_arcs]
 
-Support for gcode arc (G2/G3) commands.
+Support for G-Code arc (G2/G3) commands.
 
 ```cfg
 [gcode_arcs]
@@ -1603,7 +1603,7 @@ pins:
 
 Z height probe. One may define this section to enable Z height probing
 hardware. When this section is enabled, PROBE and QUERY_PROBE extended
-[g-code commands](G-Codes.md#probe) become available. Also, see the
+[G-Code commands](G-Codes.md#probe) become available. Also, see the
 [probe calibrate guide](Probe_Calibrate.md). The probe section also
 creates a virtual "probe:z_virtual_endstop" pin. One may set the
 stepper_z endstop_pin to this virtual pin on cartesian style printers
@@ -1616,7 +1616,7 @@ stepper_z config section.
 pin:
 #   Probe detection pin. This parameter must be provided.
 #deactivate_on_each_sample: True
-#   This determines if Klipper should execute deactivation gcode
+#   This determines if Klipper should execute deactivation G-Code
 #   between each probe attempt when performing a multiple probe
 #   sequence. The default is True.
 #x_offset: 0.0
@@ -1780,7 +1780,7 @@ for an example configuration.
 
 Support for cartesian printers with dual carriages on a single
 axis. The active carriage is set via the SET_DUAL_CARRIAGE extended
-g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will
+G-Code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will
 activate the carriage defined in this section (CARRIAGE=0 will return
 activation to the primary carriage). Dual carriage support is
 typically combined with extra extruders - the SET_DUAL_CARRIAGE
@@ -1834,7 +1834,7 @@ more information.
 
 Manual steppers (one may define any number of sections with a
 "manual_stepper" prefix). These are steppers that are controlled by
-the MANUAL_STEPPER g-code command. For example: "MANUAL_STEPPER
+the MANUAL_STEPPER G-Code command. For example: "MANUAL_STEPPER
 STEPPER=my_stepper MOVE=10 SPEED=5". See
 [G-Codes](G-Codes.md#manual-stepper-commands) file for a description
 of the MANUAL_STEPPER command. The steppers are not connected to the
@@ -2475,8 +2475,8 @@ additional information.
 
 Manually controlled fan (one may define any number of sections with a
 "fan_generic" prefix). The speed of a manually controlled fan is set
-with the SET_FAN_SPEED
-[gcode command](G-Codes.md#manually-controlled-fans-commands).
+with the `SET_FAN_SPEED`
+[G-Code command](G-Codes.md#manually-controlled-fans-commands).
 
 ```cfg
 [fan_generic extruder_partfan]
@@ -2531,7 +2531,7 @@ pin:
 Neopixel (aka WS2812) LED support (one may define any number of
 sections with a "neopixel" prefix). One may set the LED color via
 "SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
+[G-Code commands](G-Codes.md#neopixel-and-dotstar-commands).
 
 ```cfg
 [neopixel my_neopixel]
@@ -2559,7 +2559,7 @@ pin:
 Dotstar (aka APA102) LED support (one may define any number of
 sections with a "dotstar" prefix). One may set the LED color via
 "SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
+[G-Code commands](G-Codes.md#neopixel-and-dotstar-commands).
 
 ```cfg
 [dotstar my_dotstar]
@@ -2602,7 +2602,7 @@ PCA9533 LED support. The PCA9533 is used on the mightyboard.
 
 ### [gcode_button]
 
-Execute gcode when a button is pressed or released (or when a pin
+Execute G-Code when a button is pressed or released (or when a pin
 changes state). You can check the state of the button by using
 `QUERY_BUTTON button=my_gcode_button`.
 
@@ -2634,7 +2634,7 @@ Run-time configurable output pins (one may define any number of
 sections with an "output_pin" prefix). Pins configured here will be
 setup as output pins and one may modify them at run-time using
 "SET_PIN PIN=my_pin VALUE=.1" type extended
-[g-code commands](G-Codes.md#custom-pin-commands).
+[G-Code commands](G-Codes.md#custom-pin-commands).
 
 ```cfg
 [output_pin my_pin]
@@ -3443,7 +3443,7 @@ lcd_type:
 #   a "smearing" effect on some OLED displays. The value may range
 #   from 0 to 63. Default is 0.
 #invert: False
-#   TRUE inverts the pixels on certain OLED displays.  The default is
+#   TRUE inverts the pixels on certain OLED displays. The default is
 #   False.
 #x_offset: 0
 #   Set the horizontal offset value on SH1106 displays. The default is
@@ -3572,7 +3572,7 @@ information on menu attributes available during template rendering.
 #       input   - same like 'command' but has value changing capabilities.
 #                 Press will start/stop edit mode.
 #       list    - it allows for menu items to be grouped together in a
-#                 scrollable list.  Add to the list by creating menu
+#                 scrollable list. Add to the list by creating menu
 #                 configurations using "some_list" as a prefix - for
 #                 example: [menu some_list some_item_in_the_list]
 #       vsdlist - same as 'list' but will append files from virtual sdcard
@@ -3619,7 +3619,7 @@ information on menu attributes available during template rendering.
 #   rate step is same input_step.
 #realtime:
 #   This attribute accepts static boolean value. When enabled then
-#   gcode script is run after each value change. The default is False.
+#   G-Code script is run after each value change. The default is False.
 #gcode:
 #   Script to run on button click, long click or value change.
 #   Evaluated as a template. The button click will trigger the edit
@@ -3773,7 +3773,7 @@ adc2:
 Configure an SX1509 I2C to GPIO expander. Due to the delay incurred by
 I2C communication you should NOT use SX1509 pins as stepper enable,
 step or dir pins or any other pin that requires fast bit-banging. They
-are best used as static or gcode controlled digital outputs or
+are best used as static or G-Code controlled digital outputs or
 hardware-pwm pins for e.g. fans. One may define any number of sections
 with an "sx1509" prefix. Each expander provides a set of 16 pins
 (sx1509_my_sx1509:PIN_0 to sx1509_my_sx1509:PIN_15) which can be used
@@ -3856,7 +3856,7 @@ vssa_pin:
 
 ### [replicape]
 
-Replicape support - see the [beaglebone guide](beaglebone.md) and the
+Replicape support - see the [Beaglebone guide](beaglebone.md) and the
 [generic-replicape.cfg](../config/generic-replicape.cfg) file for an
 example.
 
@@ -3934,7 +3934,7 @@ If you use this module, do not use the Palette 2 plugin for
 Octoprint as they will conflict, and 1 will fail to initialize
 properly likely aborting your print.
 
-If you use Octoprint and stream gcode over the serial port instead of
+If you use Octoprint and stream G-Code over the serial port instead of
 printing from virtual_sd, then remo **M1** and **M0** from *Pausing commands*
 in *Settings > Serial Connection > Firmware & protocol* will prevent
 the need to start print on the Palette 2 and unpausing in Octoprint

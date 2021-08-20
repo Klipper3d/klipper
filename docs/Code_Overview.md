@@ -106,7 +106,7 @@ commands to be executed on the micro-controller (as declared via the
 DECL_COMMAND macro in the micro-controller code).
 
 There are four threads in the Klippy host code. The main thread
-handles incoming gcode commands. A second thread (which resides
+handles incoming G-Code commands. A second thread (which resides
 entirely in the **klippy/chelper/serialqueue.c** C code) handles
 low-level IO with the serial port. The third thread is used to process
 response messages from the micro-controller in the Python code (see
@@ -337,9 +337,9 @@ Useful steps:
    functions are typically used to provide kinematic specific checks.
    However, at the start of development one can use boiler-plate code
    here.
-6. Implement test cases. Create a g-code file with a series of moves
+6. Implement test cases. Create a G-Code file with a series of moves
    that can test important cases for the given kinematics. Follow the
-   [debugging documentation](Debugging.md) to convert this g-code file
+   [debugging documentation](Debugging.md) to convert this G-Code file
    to micro-controller commands. This is useful to exercise corner
    cases and to check for regressions.
 
@@ -461,20 +461,20 @@ stepper motor drivers).
 The "gcode" position is the last requested position from a `G1` (or
 `G0`) command in cartesian coordinates relative to the coordinate
 system specified in the config file. This may differ from the
-"toolhead" position if a g-code transformation (eg, bed_mesh,
+"toolhead" position if a G-Code transformation (eg, bed_mesh,
 bed_tilt, skew_correction) is in effect. This may differ from the
-actual coordinates specified in the last `G1` command if the g-code
+actual coordinates specified in the last `G1` command if the G-Code
 origin has been changed (eg, `G92`, `SET_GCODE_OFFSET`, `M221`). The
 `M114` command (`gcode_move.get_status()['gcode_position']`) will
-report the last g-code position relative to the current g-code
+report the last G-Code position relative to the current G-Code
 coordinate system.
 
-The "gcode base" is the location of the g-code origin in cartesian
+The "G-Code base" is the location of the G-Code origin in cartesian
 coordinates relative to the coordinate system specified in the config
 file. Commands such as `G92`, `SET_GCODE_OFFSET`, and `M221` alter
 this value.
 
-The "gcode homing" is the location to use for the g-code origin (in
+The "G-Code homing" is the location to use for the G-Code origin (in
 cartesian coordinates relative to the coordinate system specified in
 the config file) after a `G28` home command. The `SET_GCODE_OFFSET`
 command can alter this value.

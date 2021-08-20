@@ -73,8 +73,8 @@ In addition, the following extended commands are availble when the
 The following standard G-Code commands are available if a
 [gcode_arcs config section](Config_Reference.md#gcode_arcs) is
 enabled:
-- Controlled Arc Move (G2 or G3): `G2 [X<pos>] [Y<pos>] [Z<pos>]
-  [E<pos>] [F<speed>] I<value> J<value>`
+- Controlled Arc Move (G2 or G3):
+  `G2 [X<pos>] [Y<pos>] [Z<pos>][E<pos>] [F<speed>] I<value> J<value>`
 
 ### G-Code firmware retraction
 
@@ -95,12 +95,12 @@ The following standard G-Code commands are available if a
 
 The following standard G-Code commands are currently available, but
 using them is not recommended:
-- Get Endstop Status: `M119` (Use QUERY_ENDSTOPS instead.)
+- Get Endstop Status: `M119` (Use `QUERY_ENDSTOPS` instead.)
 
 ## Extended G-Code Commands
 
 Klipper uses "extended" G-Code commands for general configuration and
-status.  These extended commands all follow a similar format - they
+status. These extended commands all follow a similar format - they
 start with a command name and may be followed by one or more
 parameters. For example: `SET_SERVO SERVO=myservo ANGLE=5.3`. In this
 document, the commands and parameters are shown in uppercase, however
@@ -123,11 +123,11 @@ The following standard commands are supported:
   [MOVE=1 [MOVE_SPEED=<speed>]]`: Set a positional offset to apply to
   future G-Code commands. This is commonly used to virtually change
   the Z bed offset or to set nozzle XY offsets when switching
-  extruders. For example, if "SET_GCODE_OFFSET Z=0.2" is sent, then
+  extruders. For example, if `SET_GCODE_OFFSET Z=0.2` is sent, then
   future G-Code moves will have 0.2mm added to their Z height. If the
   X_ADJUST style parameters are used, then the adjustment will be
-  added to any existing offset (eg, "SET_GCODE_OFFSET Z=-0.2" followed
-  by "SET_GCODE_OFFSET Z_ADJUST=0.3" would result in a total Z offset
+  added to any existing offset (eg, `SET_GCODE_OFFSET Z=-0.2` followed
+  by `SET_GCODE_OFFSET Z_ADJUST=0.3` would result in a total Z offset
   of 0.1). If "MOVE=1" is specified then a toolhead move will be
   issued to apply the given offset (otherwise the offset will take
   effect on the next absolute G-Code move that specifies the given
@@ -135,11 +135,11 @@ The following standard commands are supported:
   performed with the given speed (in mm/s); otherwise the toolhead
   move will use the last specified G-Code speed.
 - `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current
-  g-code coordinate parsing state. Saving and restoring the g-code
+  G-Code coordinate parsing state. Saving and restoring the G-Code
   state is useful in scripts and macros. This command saves the
-  current g-code absolute coordinate mode (G90/G91), absolute extrude
-  mode (M82/M83), origin (G92), offset (SET_GCODE_OFFSET), speed
-  override (M220), extruder override (M221), move speed, current XYZ
+  current G-Code absolute coordinate mode (`G90`/`G91`), absolute extrude
+  mode (`M82`/`M83`), origin (`G92`), offset (`SET_GCODE_OFFSET`), speed
+  override (`M220`), extruder override (`M221`), move speed, current XYZ
   position, and relative extruder "E" position. If NAME is provided it
   allows one to name the saved state to the given string. If NAME is
   not provided it defaults to "default".
@@ -149,7 +149,7 @@ The following standard commands are supported:
   be issued to move back to the previous XYZ position. If "MOVE_SPEED"
   is specified then the toolhead move will be performed with the given
   speed (in mm/s); otherwise the toolhead move will use the restored
-  g-code speed.
+  G-Code speed.
 - `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
   [WRITE_FILE=1]`: Perform a PID calibration test. The specified
   heater will be enabled until the specified target temperature is
@@ -208,10 +208,10 @@ The following standard commands are supported:
   for calibrating a Z position_endstop config setting. See the
   MANUAL_PROBE command for details on the parameters and the
   additional commands available while the tool is active.
-- `Z_OFFSET_APPLY_ENDSTOP`: Take the current Z Gcode offset (aka,
+- `Z_OFFSET_APPLY_ENDSTOP`: Take the current Z G-Code offset (aka,
   babystepping), and subtract it from the stepper_z endstop_position.
   This acts to take a frequently used babystepping value, and "make
-  it permanent".  Requires a `SAVE_CONFIG` to take effect.
+  it permanent". Requires a `SAVE_CONFIG` to take effect.
 - `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
   FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
   each Z height during a print. The tool will run the given COMMAND
@@ -224,7 +224,7 @@ The following standard commands are supported:
   active display group of an lcd display. This allows to define
   multiple display data groups in the config,
   e.g. `[display_data <group> <elementname>]` and switch between them
-  using this extended gcode command. If DISPLAY is not specified it
+  using this extended G-Code command. If DISPLAY is not specified it
   defaults to "display" (the primary display).
 - `SET_IDLE_TIMEOUT [TIMEOUT=<timeout>]`:  Allows the user to set the
   idle timeout (in seconds).
@@ -362,10 +362,10 @@ the [probe calibrate guide](Probe_Calibrate.md)):
   additional commands available while the tool is active. Please note,
   the PROBE_CALIBRATE command uses the speed variable
   to move in XY direction as well as Z.
-- `Z_OFFSET_APPLY_PROBE`: Take the current Z Gcode offset (aka,
+- `Z_OFFSET_APPLY_PROBE`: Take the current Z G-Code offset (aka,
   babystepping), and subtract if from the probe's z_offset.
   This acts to take a frequently used babystepping value, and "make
-  it permanent".  Requires a `SAVE_CONFIG` to take effect.
+  it permanent". Requires a `SAVE_CONFIG` to take effect.
 
 ### BLTouch
 
@@ -425,26 +425,26 @@ The following commands are available when the
   MANUAL_PROBE command above for details on the additional commands
   available while this tool is active.
 - `BED_MESH_OUTPUT PGP=[<0:1>]`: This command outputs the current probed
-  z values and current mesh values to the terminal.  If PGP=1 is specified
+  z values and current mesh values to the terminal. If PGP=1 is specified
   the x,y coordinates generated by bed_mesh, along with their associated
   indices, will be output to the terminal.
 - `BED_MESH_MAP`: Like to BED_MESH_OUTPUT, this command prints the current
-  state of the mesh to the terminal.  Instead of printing the values in a
+  state of the mesh to the terminal. Instead of printing the values in a
   human readable format, the state is serialized in json format. This allows
-  octoprint plugins to easily capture the data and generate height maps
+  Octoprint plugins to easily capture the data and generate height maps
   approximating the bed's surface.
 - `BED_MESH_CLEAR`: This command clears the mesh and removes all
-  z adjustment.  It is recommended to put this in your end-gcode.
+  z adjustment. It is recommended to put this in your end G-Code.
 - `BED_MESH_PROFILE LOAD=<name> SAVE=<name> REMOVE=<name>`: This
-  command provides profile management for mesh state.  LOAD will
+  command provides profile management for mesh state. LOAD will
   restore the mesh state from the profile matching the supplied name.
   SAVE will save the current mesh state to a profile matching the
-  supplied name.  Remove will delete the profile matching the
-  supplied name from persistent memory.  Note that after SAVE or
-  REMOVE operations have been run the SAVE_CONFIG gcode must be run
+  supplied name. Remove will delete the profile matching the
+  supplied name from persistent memory. Note that after SAVE or
+  REMOVE operations have been run the SAVE_CONFIG G-Code must be run
   to make the changes to peristent memory permanent.
 - `BED_MESH_OFFSET [X=<value>] [Y=<value>]`:  Applies X and/or Y
-  offsets to the mesh lookup.  This is useful for printers with
+  offsets to the mesh lookup. This is useful for printers with
   independent extruders, as an offset is necessary to produce
   correct Z adjustment after a tool change.
 
@@ -591,12 +591,12 @@ enabled:
 - `PAUSE`: Pauses the current print. The current position is captured
   for restoration upon resume.
 - `RESUME [VELOCITY=<value>]`: Resumes the print from a pause, first
-  restoring the previously captured position.  The VELOCITY parameter
+  restoring the previously captured position. The VELOCITY parameter
   determines the speed at which the tool should return to the original
   captured position.
 - `CLEAR_PAUSE`: Clears the current paused state without resuming the
   print. This is useful if one decides to cancel a print after a
-  PAUSE. It is recommended to add this to your start gcode to make
+  PAUSE. It is recommended to add this to your start G-Code to make
   sure the paused state is fresh for each print.
 - `CANCEL_PRINT`: Cancels the current print.
 
@@ -653,7 +653,7 @@ is enabled (also see the [skew correction guide](skew_correction.md)):
   then all skew correction will be disabled.
 - `GET_CURRENT_SKEW`: Reports the current printer skew for each plane
   in both radians and degrees. The skew is calculated based on
-  parameters provided via the `SET_SKEW` gcode.
+  parameters provided via the `SET_SKEW` G-Code.
 - `CALC_MEASURED_SKEW [AC=<ac_length>] [BD=<bd_length>]
   [AD=<ad_length>]`: Calculates and reports the skew (in radians and
   degrees) based on a measured print. This can be useful for
@@ -667,10 +667,10 @@ is enabled (also see the [skew correction guide](skew_correction.md)):
   skew state to a profile matching the supplied name. Remove will
   delete the profile matching the supplied name from persistent
   memory. Note that after SAVE or REMOVE operations have been run the
-  SAVE_CONFIG gcode must be run to make the changes to peristent
+  SAVE_CONFIG G-Code must be run to make the changes to peristent
   memory permanent.
 
-### Delayed GCode
+### Delayed G-Code
 
 The following command is enabled if a
 [delayed_gcode config section](Config_Reference.md#delayed_gcode) has
@@ -678,7 +678,7 @@ been enabled (also see the
 [template guide](Command_Templates.md#delayed-gcodes)):
 - `UPDATE_DELAYED_GCODE [ID=<name>] [DURATION=<seconds>]`:  Updates the
   delay duration for the identified [delayed_gcode] and starts the timer
-  for gcode execution.  A value of 0 will cancel a pending delayed gcode
+  for G-Code execution. A value of 0 will cancel a pending delayed G-Code
   from executing.
 
 ### Save Variables
@@ -689,7 +689,7 @@ has been enabled:
 - `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to
   disk so that it can be used across restarts. All stored variables
   are loaded into the `printer.save_variables.variables` dict at
-  startup and can be used in gcode macros. The provided VALUE is
+  startup and can be used in G-Code macros. The provided VALUE is
   parsed as a Python literal.
 
 ### Resonance compensation
@@ -821,6 +821,6 @@ is enabled:
   is complete.
 
 Palette prints work by embedding special OCodes (Omega Codes)
-in the GCode file:
-- `O1`...`O32`: These codes are read from the GCode stream and processed
+in the G-Code file:
+- `O1`...`O32`: These codes are read from the G-Code stream and processed
   by this module and passed to the Palette 2 device.

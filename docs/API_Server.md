@@ -149,7 +149,7 @@ transition to a "shutdown" state. It behaves similarly to the G-Code
 ### register_remote_method
 
 This endpoint allows clients to register methods that can be called
-from klipper.  It will return an empty object upon success.
+from Klipper. It will return an empty object upon success.
 
 For example:
 `{"id": 123, "method": "register_remote_method",
@@ -168,7 +168,7 @@ gcode:
   {action_call_remote_method("paneldue_beep", frequency=300, duration=1.0)}
 ```
 
-When the PANELDUE_BEEP gcode macro is executed, Klipper would send something
+When the PANELDUE_BEEP G-Code macro is executed, Klipper would send something
 like the following over the socket:
 `{"action": "run_paneldue_beep",
 "params": {"frequency": 300, "duration": 1.0}}`

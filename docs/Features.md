@@ -82,7 +82,7 @@ Klipper supports many standard 3d printer features:
   a regular web-browser. The same Raspberry Pi that runs Klipper can
   also run Octoprint.
 
-* Standard G-Code support. Common g-code commands that are produced by
+* Standard G-Code support. Common G-Code commands that are produced by
   typical "slicers" are supported. One may continue to use Slic3r,
   Cura, etc. with Klipper.
 

@@ -40,7 +40,7 @@ then be sure to rerun probe calibration after any delta calibration.
 
 ## Basic delta calibration
 
-Klipper has a DELTA_CALIBRATE command that can perform basic delta
+Klipper has a `DELTA_CALIBRATE` command that can perform basic delta
 calibration. This command probes seven different points on the bed and
 calculates new values for the tower angles, tower endstops, and delta
 radius.
@@ -49,7 +49,7 @@ In order to perform this calibration the initial delta parameters (arm
 lengths, radius, and endstop positions) must be provided and they
 should have an accuracy to within a few millimeters. Most delta
 printer kits will provide these parameters - configure the printer
-with these initial defaults and then go on to run the DELTA_CALIBRATE
+with these initial defaults and then go on to run the `DELTA_CALIBRATE`
 command as described below. If no defaults are available then search
 online for a delta calibration guide that can provide a basic starting
 point.
@@ -74,8 +74,9 @@ To perform the basic probe, make sure the config has a
 G28
 DELTA_CALIBRATE METHOD=manual
 ```
+
 After probing the seven points new delta parameters will be
-calculated.  Save and apply these parameters by running:
+calculated. Save and apply these parameters by running:
 
 ```gcode
 SAVE_CONFIG
@@ -209,6 +210,7 @@ Finally, perform the enhanced delta calibration by running:
 ```gcode
 DELTA_ANALYZE CALIBRATE=extended
 ```
+
 This command can take several minutes to complete. After completion it
 will calculate updated delta parameters (delta radius, tower angles,
 endstop positions, and arm lengths). Use the SAVE_CONFIG command to

@@ -55,7 +55,7 @@ The standard mechanism to move the toolhead is via the `G1` command
 (the `G0` command is an alias for `G1` and it can be used
 interchangeably with it). However, this command relies on the "G-Code
 parsing state" setup by `M82`, `M83`, `G90`, `G91`, `G92`, and
-previous `G1` commands.  When creating a G-Code macro it is a good
+previous `G1` commands. When creating a G-Code macro it is a good
 idea to always explicitly set the G-Code parsing state prior to
 issuing a `G1` command. (Otherwise, there is a risk the `G1` command
 will make an undesirable request.)
@@ -179,7 +179,7 @@ There are some commands available that can alter the state of the
 printer. For example, `{ action_emergency_stop() }` would cause the
 printer to go into a shutdown state. Note that these actions are taken
 at the time that the macro is evaluated, which may be a significant
-amount of time before the generated g-code commands are executed.
+amount of time before the generated G-Code commands are executed.
 
 Available "action" commands:
 - `action_respond_info(msg)`: Write the given `msg` to the
@@ -193,7 +193,7 @@ Available "action" commands:
   state. The `msg` parameter is optional, it may be useful to describe
   the reason for the shutdown.
 - `action_call_remote_method(method_name)`: Calls a method registered
-  by a remote client.  If the method takes parameters they should
+  by a remote client. If the method takes parameters they should
   be provided via keyword arguments, ie:
   `action_call_remote_method("print_stuff", my_arg="hello_world")`
 
@@ -225,10 +225,10 @@ gcode:
 Be sure to take the timing of macro evaluation and command execution
 into account when using SET_GCODE_VARIABLE.
 
-## Delayed Gcodes
+## Delayed G-Codes
 
 The [delayed_gcode] configuration option can be used to execute a delayed
-gcode sequence:
+G-Code sequence:
 
 ```cfg
 [delayed_gcode clear_display]
@@ -246,13 +246,13 @@ gcode:
 ```
 
 When the `load_filament` macro above executes, it will display a
-"Load Complete!" message after the extrusion is finished.  The
-last line of gcode enables the "clear_display" delayed_gcode, set
+"Load Complete!" message after the extrusion is finished. The
+last line of G-Code enables the "clear_display" delayed_gcode, set
 to execute in 10 seconds.
 
 The `initial_duration` config option can be set to execute the
-delayed_gcode on printer startup.  The countdown begins when the
-printer enters the "ready" state.  For example, the below delayed_gcode
+delayed_gcode on printer startup. The countdown begins when the
+printer enters the "ready" state. For example, the below delayed_gcode
 will execute 5 seconds after the printer is ready, initializing
 the display with a "Welcome!" message:
 
@@ -263,7 +263,7 @@ gcode:
   M117 Welcome!
 ```
 
-Its possible for a delayed gcode to repeat by updating itself in
+Its possible for a delayed G-Code to repeat by updating itself in
 the gcode option:
 
 ```cfg
@@ -275,7 +275,7 @@ gcode:
 ```
 
 The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to
-Octoprint every 2 seconds.  This can be canceled with the following
+Octoprint every 2 seconds. This can be canceled with the following
 gcode:
 
 ```gcode
@@ -315,7 +315,7 @@ has been enabled, `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>` can be
 used to save the variable to disk so that it can be used across
 restarts. All stored variables are loaded into the
 `printer.save_variables.variables` dict at startup and can be used in
-gcode macros. to avoid overly long lines you can add the following at
+G-Code macros. to avoid overly long lines you can add the following at
 the top of the macro:
 
 ```text
