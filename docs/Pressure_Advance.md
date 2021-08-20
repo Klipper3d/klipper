@@ -92,20 +92,20 @@ cornering speeds to their normal values.
 
 ## Important Notes
 
-* The pressure advance value is dependent on the extruder, the nozzle,
+- The pressure advance value is dependent on the extruder, the nozzle,
   and the filament. It is common for filament from different
   manufactures or with different pigments to require significantly
   different pressure advance values. Therefore, one should calibrate
   pressure advance on each printer and with each spool of filament.
 
-* Printing temperature and extrusion rates can impact pressure
+- Printing temperature and extrusion rates can impact pressure
   advance. Be sure to tune the
   [extruder rotation_distance](Rotation_Distance.md#calibrating-rotation_distance-on-extruders)
   and
   [nozzle temperature](http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#Nozzle_Temperature)
   prior to tuning pressure advance.
 
-* The test print is designed to run with a high extruder flow rate,
+- The test print is designed to run with a high extruder flow rate,
   but otherwise "normal" slicer settings. A high flow rate is obtained
   by using a high printing speed (eg, 100mm/s) and a coarse layer
   height (typically around 75% of the nozzle diameter). Other slicer
@@ -114,7 +114,7 @@ cornering speeds to their normal values.
   external perimeter speed to be the same speed as the rest of the
   print, but it is not a requirement.
 
-* It is common for the test print to show different behavior on each
+- It is common for the test print to show different behavior on each
   corner. Often the slicer will arrange to change layers at one corner
   which can result in that corner being significantly different from
   the remaining three corners. If this occurs, then ignore that corner
@@ -125,7 +125,7 @@ cornering speeds to their normal values.
   well for all the remaining corners. If in doubt, prefer a lower
   pressure advance value.
 
-* If a high pressure advance value (eg, over 0.200) is used then one
+- If a high pressure advance value (eg, over 0.200) is used then one
   may find that the extruder skips when returning to the printer's
   normal acceleration. The pressure advance system accounts for
   pressure by pushing in extra filament during acceleration and
@@ -134,7 +134,7 @@ cornering speeds to their normal values.
   enough torque to push the required filament. If this occurs, either
   use a lower acceleration value or disable pressure advance.
 
-* Once pressure advance is tuned in Klipper, it may still be useful to
+- Once pressure advance is tuned in Klipper, it may still be useful to
   configure a small retract value in the slicer (eg, 0.75mm) and to
   utilize the slicer's "wipe on retract option" if available. These
   slicer settings may help counteract ooze caused by filament cohesion
@@ -142,7 +142,7 @@ cornering speeds to their normal values.
   plastic). It is recommended to disable the slicer's "z-lift on
   retract" option.
 
-* The pressure advance system does not change the timing or path of
+- The pressure advance system does not change the timing or path of
   the toolhead. A print with pressure advance enabled will take the
   same amount of time as a print without pressure advance. Pressure
   advance also does not change the total amount of filament extruded

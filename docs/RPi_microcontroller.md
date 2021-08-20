@@ -13,7 +13,7 @@ possibility to directly use the GPIOs and the buses (i2c, spi) of the RPi
 inside Klipper without using Octoprint plugins (if used) or external
 programs giving the ability to control everything within the print GCODE.
 
-**Warning**: If your platform is a _Beaglebone_ and you have correctly followed the installation steps, the linux mcu is already installed and configured for your system.
+**Warning**: If your platform is a *Beaglebone* and you have correctly followed the installation steps, the linux mcu is already installed and configured for your system.
 
 ## Install the rc script
 
@@ -71,7 +71,7 @@ following the instructions in
 On Rasperry and on many clones the pins exposed on the GPIO belong to the first gpiochip. They can therefore be used on Klipper simply by referring them with the name `gpio0..n`.
 However, there are cases in which the exposed pins belong to gpiochips other than the first. For example in the case of some OrangePi models or if a Port Expander is used. In these cases it is useful to use the commands to access the *Linux GPIO character device* to verify the configuration.
 
-To install the _Linux GPIO character device - binary_ on a debian based distro like octopi run:
+To install the *Linux GPIO character device - binary* on a debian based distro like octopi run:
 
 ```bash
 sudo apt-get install gpiod
@@ -91,7 +91,7 @@ gpioinfo
 
 The chosen pin can thus be used within the configuration as `gpiochip<n>/gpio<o>` where **n** is the chip number as seen by the `gpiodetect` command and **o** is the line number seen by the` gpioinfo` command.
 
-***Warning:*** only gpio marked as `unused` can be used. It is not possible for a _line_ to be used by multiple processes simultaneously.
+***Warning:*** only gpio marked as `unused` can be used. It is not possible for a *line* to be used by multiple processes simultaneously.
 
 For example on a RPi 3B+ where Klipper use the GPIO20 for a switch:
 

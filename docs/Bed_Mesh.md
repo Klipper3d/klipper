@@ -31,27 +31,27 @@ probe_count: 5,3
 ```
 
 - `speed: 120`\
-  _Default Value: 50_\
+  *Default Value: 50*\
   The speed in which the tool moves between points.
 
 - `horizontal_move_z: 5`\
-  _Default Value: 5_\
+  *Default Value: 5*\
   The Z coordinate the probe rises to prior to traveling between points.
 
 - `mesh_min: 35,6`\
-  _Required_\
+  *Required*\
   The first probed coordinate, nearest to the origin. This coordinate
   is relative to the probe's location.
 
 - `mesh_max: 240,198`\
-  _Required_\
+  *Required*\
   The probed coordinate farthest farthest from the origin. This is not
   necessarily the last point probed, as the probing process occurs in a
   zig-zag fashion. As with `mesh_min`, this coordiante is relative to
   the probe's location.
 
 - `probe_count: 5,3`\
-  _Default Value: 3,3_\
+  *Default Value: 3,3*\
   The number of points to probe on each axis, specified as x,y integer
   values. In this example 5 points will be probed along the X axis, with
   3 points along the Y axis, for a total of 15 probed points. Note that
@@ -83,20 +83,20 @@ round_probe_count: 5
 ```
 
 - `mesh_radius: 75`\
-  _Required_\
+  *Required*\
   The radius of the probed mesh in mm, relative to the `mesh_origin`. Note
   that the probe's offsets limit the size of the mesh radius. In this example,
   a radius larger than 76 would move the tool beyond the range of the printer.
 
 - `mesh_origin: 0,0`\
-  _Default Value: 0,0_\
+  *Default Value: 0,0*\
   The center point of the mesh. This coordinate is relative to the probe's
   location. While the default is 0,0, it may be useful to adjust the origin
   in an effort to probe a larger portion of the bed. See the illustration
   below.
 
 - `round_probe_count: 5`\
-  _Default Value: 5_\
+  *Default Value: 5*\
   This is an integer value that defines the maximum number of probed points
   along the X and Y axes. By "maximum", we mean the number of points probed
   along the mesh origin. This value must be an odd number, as it is required
@@ -136,7 +136,7 @@ bicubic_tension: 0.2
 ```
 
 - `mesh_pps: 2,3`\
-  _Default Value: 2,2_\
+  *Default Value: 2,2*\
   The `mesh_pps` option is shorthand for Mesh Points Per Segment. This
   option specifies how many points to interpolate for each segment along
   the x and y axes. Consider a 'segment' to be the space between each
@@ -149,7 +149,7 @@ bicubic_tension: 0.2
   disabled and the probed matrix will be sampled directly.
 
 - `algorithm: lagrange`\
-  _Default Value: lagrange_\
+  *Default Value: lagrange*\
   The algorithm used to interpolate the mesh. May be `lagrange` or `bicubic`.
   Lagrange interpolation is capped at 6 probed points as oscillation tends to
   occur with a larger number of samples. Bicubic interpolation requires a
@@ -158,7 +158,7 @@ bicubic_tension: 0.2
   this value is ignored as no mesh interpolation is done.
 
 - `bicubic_tension: 0.2`\
-  _Default Value: 0.2_\
+  *Default Value: 0.2*\
   If the `algorithm` option is set to bicubic it is possible to specify the
   tension value. The higher the tension the more slope is interpolated. Be
   careful when adjusting this, as higher values also create more overshoot,
@@ -189,7 +189,7 @@ split_delta_z: .025
 ```
 
 - `move_check_distance: 5`\
-  _Default Value: 5_\
+  *Default Value: 5*\
   The minimum distance to check for the desired change in Z before performing
   a split. In this example, a move longer than 5mm will be traversed by the
   algorithm. Each 5mm a mesh Z lookup will occur, comparing it with the Z
@@ -201,7 +201,7 @@ split_delta_z: .025
   traversal or splitting.
 
 - `split_delta_z: .025`\
-  _Default Value: .025_\
+  *Default Value: .025*\
   As mentioned above, this is the minimum deviation required to trigger a
   move split. In this example, any Z value with a deviation +/- .025mm
   will trigger a split.
@@ -236,12 +236,12 @@ fade_target: 0
 ```
 
 - `fade_start: 1`\
-  _Default Value: 1_\
+  *Default Value: 1*\
   The Z height in which to start phasing out adjustment. It is a good idea
   to get a few layers down before starting the fade process.
 
 - `fade_end: 10`\
-  _Default Value: 0_\
+  *Default Value: 0*\
   The Z height in which fade should complete. If this value is lower than
   `fade_start` then fade is disabled. This value may be adjusted depending
   on how warped the print surface is. A significantly warped surface should
@@ -250,7 +250,7 @@ fade_target: 0
   using the default value of 1 for `fade_start`.
 
 - `fade_target: 0`\
-  _Default Value:  The average Z value of the mesh_\
+  *Default Value:  The average Z value of the mesh*\
   The `fade_target` can be thought of as an additional Z offset applied to the
   entire bed after fade completes. Generally speaking we would like this value
   to be 0, however there are circumstances where it should not be. For
@@ -282,7 +282,7 @@ relative_reference_index: 7
 ```
 
 - `relative_reference_index: 7`\
-  _Default Value: None (disabled)_\
+  *Default Value: None (disabled)*\
   When the probed points are generated they are each assigned an index. You
   can look up this index in klippy.log or by using BED_MESH_OUTPUT (see the
   section on Bed Mesh G-Codes below for more information). If you assign an
@@ -331,7 +331,7 @@ faulty_region_4_max: 45.0, 210.0
 
 - `faulty_region_{1...99}_min`\
   `faulty_region_{1..99}_max`\
-  _Default Value: None (disabled)_\
+  *Default Value: None (disabled)*\
   Faulty Regions are defined in a way similar to that of mesh itself, where
   minimum and maximum (X, Y) coordinates must be specified for each region.
   A faulty region may extend outside of a mesh, however the alternate points
@@ -353,8 +353,8 @@ are identified in green.
 BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>] [<mesh_parameter>=<value>]
 ```
 
-_Default Profile:  default_\
-_Default Method:  automatic if a probe is detected, otherwise manual_
+*Default Profile:  default*\
+*Default Method:  automatic if a probe is detected, otherwise manual*
 
 Initiates the probing procedure for Bed Mesh Calibration.
 
@@ -398,14 +398,14 @@ Profiles can be loaded by executing `BED_MESH_PROFILE LOAD=name`.
 It should be noted that each time a BED_MESH_CALIBRATE occurs, the current
 state is automatically saved to the *default* profile. If this profile
 exists it is automatically loaded when Klipper starts. If this behavior
-is not desirable the _default_ profile can be removed as follows:
+is not desirable the *default* profile can be removed as follows:
 
 ```gcode
 BED_MESH_PROFILE REMOVE=default
 ```
 
 Any other saved profile can be removed in the same fashion, replacing
-_default_ with the named profile you wish to remove.
+*default* with the named profile you wish to remove.
 
 ### Output
 

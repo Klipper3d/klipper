@@ -30,13 +30,13 @@ not require any particular setup.
 
 Common startup commands:
 
-* `set_digital_out pin=%u value=%c` : This command immediately
+- `set_digital_out pin=%u value=%c` : This command immediately
   configures the given pin as a digital out GPIO and it sets it to
   either a low level (value=0) or a high level (value=1). This command
   may be useful for configuring the initial value of LEDs and for
   configuring the initial value of stepper driver micro-stepping pins.
 
-* `set_pwm_out pin=%u cycle_ticks=%u value=%hu` : This command will
+- `set_pwm_out pin=%u cycle_ticks=%u value=%hu` : This command will
   immediately configure the given pin to use hardware based
   pulse-width-modulation (PWM) with the given number of
   cycle_ticks. The "cycle_ticks" is the number of MCU clock ticks each
@@ -60,7 +60,7 @@ information). After the data dictionary is obtained the host will
 check if the micro-controller is in a "configured" state and configure
 it if not. Configuration involves the following phases:
 
-* `get_config` : The host starts by checking if the micro-controller
+- `get_config` : The host starts by checking if the micro-controller
   is already configured. The micro-controller responds to this command
   with a "config" response message. The micro-controller software
   always starts in an unconfigured state at power-on. It remains in
@@ -70,7 +70,7 @@ it if not. Configuration involves the following phases:
   the desired settings) then no further action is needed by the host
   and the configuration process ends successfully.
 
-* `allocate_oids count=%c` : This command is issued to inform the
+- `allocate_oids count=%c` : This command is issued to inform the
   micro-controller of the maximum number of object-ids (oid) that the
   host requires. It is only valid to issue this command once. An oid
   is an integer identifier allocated to each stepper, each endstop,
@@ -79,7 +79,7 @@ it if not. Configuration involves the following phases:
   this to the micro-controller so that it may allocate sufficient
   memory to store a mapping from oid to internal object.
 
-* `config_XXX oid=%c ...` : By convention any command starting with
+- `config_XXX oid=%c ...` : By convention any command starting with
   the "config_" prefix creates a new micro-controller object and
   assigns the given oid to it. For example, the config_digital_out
   command will configure the specified pin as a digital output GPIO
@@ -91,7 +91,7 @@ it if not. Configuration involves the following phases:
   configured state (ie, prior to the host sending finalize_config) and
   after the allocate_oids command has been sent.
 
-* `finalize_config crc=%u` : The finalize_config command transitions
+- `finalize_config crc=%u` : The finalize_config command transitions
   the micro-controller from an unconfigured state to a configured
   state. The crc parameter passed to the micro-controller is stored
   and provided back to the host in "config" response messages. By
@@ -106,7 +106,7 @@ it if not. Configuration involves the following phases:
 
 This section lists some commonly used config commands.
 
-* `config_digital_out oid=%c pin=%u value=%c default_value=%c
+- `config_digital_out oid=%c pin=%u value=%c default_value=%c
   max_duration=%u` : This command creates an internal micro-controller
   object for the given GPIO 'pin'. The pin will be configured in
   digital output mode and set to an initial value as specified by
@@ -125,26 +125,26 @@ This section lists some commonly used config commands.
   used with heater pins to ensure the host does not enable the heater
   and then go off-line.
 
-* `config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu
+- `config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu
   default_value=%hu max_duration=%u` : This command creates an
   internal object for hardware based PWM pins that the host may
   schedule updates for. Its usage is analogous to config_digital_out -
   see the description of the 'set_pwm_out' and 'config_digital_out'
   commands for parameter description.
 
-* `config_analog_in oid=%c pin=%u` : This command is used to configure
+- `config_analog_in oid=%c pin=%u` : This command is used to configure
   a pin in analog input sampling mode. Once configured, the pin can be
   sampled at regular interval using the query_analog_in command (see
   below).
 
-* `config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c` : This
+- `config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c` : This
   command creates an internal stepper object. The 'step_pin' and
   'dir_pin' parameters specify the step and direction pins
   respectively; this command will configure them in digital output
   mode. The 'invert_step' parameter specifies whether a step occurs on
   a rising edge (invert_step=0) or falling edge (invert_step=1).
 
-* `config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
+- `config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
   command creates an internal "endstop" object. It is used to specify
   the endstop pins and to enable "homing" operations (see the
   endstop_home command below). The command will configure the
@@ -154,7 +154,7 @@ This section lists some commonly used config commands.
   specifies the maximum number of steppers that this endstop may need
   to halt during a homing operation (see endstop_home below).
 
-* `config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s` :
+- `config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s` :
   This command creates an internal SPI object. It is used with
   spi_transfer and spi_send commands (see below). The "bus"
   identifies the SPI bus to use (if the micro-controller has more than
@@ -165,7 +165,7 @@ This section lists some commonly used config commands.
   the given device should the micro-controller go into a shutdown
   state.
 
-* `config_spi_without_cs oid=%c bus=%u mode=%u rate=%u
+- `config_spi_without_cs oid=%c bus=%u mode=%u rate=%u
   shutdown_msg=%*s` : This command is similar to config_spi, but
   without a CS pin definition. It is useful for SPI devices that do
   not have a chip select line.
@@ -175,14 +175,14 @@ This section lists some commonly used config commands.
 This section lists some commonly used run-time commands. It is likely
 only of interest to developers looking to gain insight into Klipper.
 
-* `set_digital_out_pwm_cycle oid=%c cycle_ticks=%u` : This command
+- `set_digital_out_pwm_cycle oid=%c cycle_ticks=%u` : This command
   configures a digital output pin (as created by config_digital_out)
   to use "software PWM". The 'cycle_ticks' is the number of clock
   ticks for the PWM cycle. Because the output switching is implemented
   in the micro-controller software, it is recommended that
   'cycle_ticks' correspond to a time of 10ms or greater.
 
-* `queue_digital_out oid=%c clock=%u on_ticks=%u` : This command will
+- `queue_digital_out oid=%c clock=%u on_ticks=%u` : This command will
   schedule a change to a digital output GPIO pin at the given clock
   time. To use this command a 'config_digital_out' command with the
   same 'oid' parameter must have been issued during micro-controller
@@ -191,11 +191,11 @@ only of interest to developers looking to gain insight into Klipper.
   Otherwise, 'on_ticks' should be either 0 (for low voltage) or 1 (for
   high voltage).
 
-* `queue_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to a
+- `queue_pwm_out oid=%c clock=%u value=%hu` : Schedules a change to a
   hardware PWM output pin. See the 'queue_digital_out' and
   'config_pwm_out' commands for more info.
 
-* `query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c
+- `query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c
   rest_ticks=%u min_value=%hu max_value=%hu` : This command sets up a
   recurring schedule of analog input samples. To use this command a
   'config_analog_in' command with the same 'oid' parameter must have
@@ -210,7 +210,7 @@ only of interest to developers looking to gain insight into Klipper.
   pins attached to thermistors controlling heaters - it can be used to
   check that a heater is within a temperature range.
 
-* `get_clock` : This command causes the micro-controller to generate a
+- `get_clock` : This command causes the micro-controller to generate a
   "clock" response message. The host sends this command once a second
   to obtain the value of the micro-controller clock and to estimate
   the drift between host and micro-controller clocks. It enables the
@@ -218,7 +218,7 @@ only of interest to developers looking to gain insight into Klipper.
 
 ### Stepper commands
 
-* `queue_step oid=%c interval=%u count=%hu add=%hi` : This command
+- `queue_step oid=%c interval=%u count=%hu add=%hi` : This command
   schedules 'count' number of steps for the given stepper, with
   'interval' number of clock ticks between each step. The first step
   will be 'interval' number of clock ticks since the last scheduled
@@ -232,22 +232,22 @@ only of interest to developers looking to gain insight into Klipper.
   to queue potentially hundreds of thousands of steps - all with
   reliable and predictable schedule times.
 
-* `set_next_step_dir oid=%c dir=%c` : This command specifies the value
+- `set_next_step_dir oid=%c dir=%c` : This command specifies the value
   of the dir_pin that the next queue_step command will use.
 
-* `reset_step_clock oid=%c clock=%u` : Normally, step timing is
+- `reset_step_clock oid=%c clock=%u` : Normally, step timing is
   relative to the last step for a given stepper. This command resets
   the clock so that the next step is relative to the supplied 'clock'
   time. The host usually only sends this command at the start of a
   print.
 
-* `stepper_get_position oid=%c` : This command causes the
+- `stepper_get_position oid=%c` : This command causes the
   micro-controller to generate a "stepper_position" response message
   with the stepper's current position. The position is the total
   number of steps generated with dir=1 minus the total number of steps
   generated with dir=0.
 
-* `endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c
+- `endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c
   rest_ticks=%u pin_value=%c` : This command is used during stepper
   "homing" operations. To use this command a 'config_endstop' command
   with the same 'oid' parameter must have been issued during
@@ -278,11 +278,11 @@ scheduling new queue_step commands accordingly.
 
 ### SPI Commands
 
-* `spi_transfer oid=%c data=%*s` : This command causes the
+- `spi_transfer oid=%c data=%*s` : This command causes the
   micro-controller to send 'data' to the spi device specified by 'oid'
   and it generates a "spi_transfer_response" response message with the
   data returned during the transmission.
 
-* `spi_send oid=%c data=%*s` : This command is similar to
+- `spi_send oid=%c data=%*s` : This command is similar to
   "spi_transfer", but it does not generate a "spi_transfer_response"
   message.

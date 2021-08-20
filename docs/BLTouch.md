@@ -215,7 +215,7 @@ calibration steps.
 
 ## BL-Touch output mode
 
-* A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
+- A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
   a BL-Touch V3.1 supports this too, but can also store this in its
   internal EEPROM. If your controller board needs the fixed 5V high
   logic level of the 5V mode you may set the 'set_output_mode'
