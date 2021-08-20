@@ -5,6 +5,7 @@ This document describes Filament Width Sensor host module. Hardware used for dev
 [Hall based filament width sensor assembly video](https://www.youtube.com/watch?v=TDO9tME8vp4)
 
 ## How does it work?
+
 Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width . Host module monitors voltage changes and adjusts extrusion multiplier. I use aux2 connector on ramps-like board analog11 and analog12 pins. You can use different pins and differenr boards
 
 ## Configuration
@@ -69,8 +70,8 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
     #event_delay: 3.0
     #pause_delay: 0.5
 
-
 ## Commands
+
 **QUERY_FILAMENT_WIDTH** - Return the current measured filament width as result
 
 **RESET_FILAMENT_WIDTH_SENSOR** вЂ“ Clear all sensor readings. Can be used after filament change.
@@ -94,6 +95,7 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 **hall_filament_width_sensor.is_active** Sensor on or off
 
 ## Template for menu variables
+
     [menu __main __filament __width_current]
     type: command
     enable: {'hall_filament_width_sensor' in printer}
@@ -119,6 +121,8 @@ Save raw values in config
 After power on by default sensor disabled.
 Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
 
+
 ## Logging
 After power on by default diameter Logging disabled.
 Data to log added on every measurement interval (10 mm by default)
+

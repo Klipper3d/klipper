@@ -182,6 +182,7 @@ at the time that the macro is evaluated, which may be a significant
 amount of time before the generated G-Code commands are executed.
 
 Available "action" commands:
+
 - `action_respond_info(msg)`: Write the given `msg` to the
   /tmp/printer pseudo-terminal. Each line of `msg` will be sent with a
   "// " prefix.
@@ -289,12 +290,14 @@ then it is possible to customize the menu with
 [menu](Config_Reference.md#menu) config sections.
 
 The following read-only attributes are available in menu templates:
+
 * `menu.width` - element width (number of display columns)
 * `menu.ns` - element namespace
 * `menu.event` - name of the event that triggered the script
 * `menu.input` - input value, only available in input script context
 
 The following actions are available in menu templates:
+
 * `menu.back(force, update)`: will execute menu back command, optional
   boolean parameters `<force>` and `<update>`.
   * When `<force>` is set True then it will also stop editing. Default

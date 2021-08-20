@@ -27,7 +27,6 @@ developers have accumulated.
 
 ## AVR micro-controllers
 
-
 In general, the Arduino project is a good reference for bootloaders
 and flashing procedures on the 8-bit Atmel Atmega micro-controllers.
 In particular, the "boards.txt" file:
@@ -361,7 +360,8 @@ program hid_btt_skr_mini_e3.bin verify 0x08000000
 ```
 
 NOTES:
-- The example above erases the chip then programs the bootloader.  Regardless
+
+- The example above erases the chip then programs the bootloader. Regardless
   of the method chosen to flash it is recommended to erase the chip prior to
   flashing.
 - Prior flashing the SKR Mini E3 with this bootloader you should be aware

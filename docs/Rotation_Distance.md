@@ -55,6 +55,7 @@ be obtained from
 or by [inspecting the hardware](#extruder).
 
 Then use the following procedure to "measure and trim":
+
 1. Make sure the extruder has filament in it, the hotend is heated to
    an appropriate temperature, and the printer is ready to extrude.
 2. Use a marker to place a mark on the filament around 70mm from the

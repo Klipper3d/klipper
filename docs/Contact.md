@@ -64,6 +64,7 @@ Do not open a Klipper GitHub issue to request a feature.
 Unfortunately, we receive many more requests for help than we could
 possibly answer. Most problem reports we see are eventually tracked
 down to:
+
 1. Subtle errors in the hardware, or
 2. Not following all the steps described in the Klipper documentation.
 
@@ -97,6 +98,7 @@ diagnose errors in the software.
 
 There is important information that will be needed in order to fix a
 bug. Please follow these steps:
+
 1. Be sure the bug is in the Klipper software. If you are thinking
    "there is a problem, I can't figure out why, and therefore it is a
    Klipper bug", then **do not** open a GitHub issue. In that case,

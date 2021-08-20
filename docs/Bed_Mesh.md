@@ -17,6 +17,7 @@ information.
 ## Basic Configuration
 
 ### Rectangular Beds
+
 This example assumes a printer with a 250 mm x 220 mm rectangular
 bed and a probe with an x-offset of 24 mm and y-offset of 5 mm.
 
@@ -67,6 +68,7 @@ is at `mesh_max`, the nozzle will be at (206, 193).
 ![bedmesh_rect_basic](img/bedmesh_rect_basic.svg)
 
 ### Round beds
+
 This example assumes a printer equipped with a round bed radius of 100mm.
 We will use the same probe offsets as the rectangular example, 24 mm on X
 and 5 mm on Y.
@@ -363,6 +365,7 @@ mesh points will automatically be adjusted.
 
 It is possible to specify mesh parameters to modify the probed area. The
 following parameters are available:
+
 - Rectangular beds (cartesian):
   - `MESH_MIN`
   - `MESH_MAX`
@@ -374,6 +377,7 @@ following parameters are available:
 - All beds:
   - `RELATIVE_REFERNCE_INDEX`
   - `ALGORITHM`
+
 See the configuration documentation above for details on how each parameter
 applies to the mesh.
 

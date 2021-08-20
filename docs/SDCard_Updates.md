@@ -116,6 +116,7 @@ BOARD_DEFS = {
 ```
 
 The following fields may be specified:
+
 - `mcu`: The mcu type. This can be retrevied after configuring the build
   via `make menuconfig` by running `cat .config | grep CONFIG_MCU`. This
   field is required.
@@ -130,6 +131,7 @@ The following fields may be specified:
 
 If software SPI is required the `spi_bus` field should be set to `swspi`
 and the following additional field should be specified:
+
 - `spi_pins`:  This should be 3 comma separated pins that are connected to
   the SD Card in the format of `miso,mosi,sclk`.
 

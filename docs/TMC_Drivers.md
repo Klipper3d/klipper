@@ -81,6 +81,7 @@ A few prerequisites are needed to use sensorless homing:
 ### Tuning
 
 The procedure described here has six major steps:
+
 1. Choose a homing speed.
 2. Configure the `printer.cfg` file to enable sensorless homing.
 3. Find the stallguard setting with highest sensitivity that
@@ -321,6 +322,7 @@ to detect stalls when homing the Y carriage.
 Use the tuning guide described above to find the appropriate "stall
 sensitivity" for each carriage, but be aware of the following
 restrictions:
+
 1. When using sensorless homing on CoreXY, make sure there is no
    `hold_current` in effect for either stepper during homing.
 2. While tuning, make sure both the X and Y carriages are near the

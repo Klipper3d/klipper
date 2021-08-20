@@ -13,7 +13,6 @@ insufficiently rigid printer frame, non-tight or too springy belts, alignment
 issues of mechanical parts, heavy moving mass, etc. Those should be checked
 and fixed first, if possible.
 
-
 [Input shaping](https://en.wikipedia.org/wiki/Input_shaping) is an open-loop
 control technique which creates a commanding signal that cancels its
 own vibrations. Input shaping requires some tuning and measurements before it
@@ -25,7 +24,6 @@ of the stealthChop mode of Trinamic stepper drivers.
 
 Basic tuning requires measuring the ringing frequencies of the printer and
 adding a few parameters to `printer.cfg` file.
-
 
 Slice the ringing test model, which can be found in
 [docs/prints/ringing_tower.stl](prints/ringing_tower.stl), in the slicer:
@@ -247,7 +245,6 @@ Choose the minimum out of the two acceleration values (from ringing and
 smoothing), and put it as max_accel into printer.cfg (you can delete
 max_accel_or_decel or revert it to the old value).
 
-
 As a note, it may happen - especially at low ringing frequencies - that EI
 shaper will cause too much smoothing even at lower accelerations. In this case,
 MZV may be a better choice, because it may allow higher acceleration values.
@@ -336,7 +333,6 @@ accelerometer and measure the resonances with it (refer to the
 [docs](Measuring_Resonances.md) describing the required hardware and the setup
 process) - but this option requires some crimping and soldering.
 
-
 For tuning, add empty `[input_shaper]` section to your `printer.cfg`. Then,
 assuming that you have sliced the ringing model with suggested parameters and
 increased `max_accel` and `max_accel_to_decel` parameters in the `printer.cfg`
@@ -397,7 +393,6 @@ shaper_type: 2hump_ei
 
 Continue the tuning with [Selecting max_accel](#selecting-max_accel) section.
 
-
 ## Troubleshooting and FAQ
 
 ### I cannot get reliable measurements of resonance frequencies
@@ -419,7 +414,6 @@ Check the considerations in [Selecting max_accel](#selecting-max_accel) section.
 If the resonance frequency is low, one should not set too high max_accel or
 increase square_corner_velocity parameters. It might also be better to choose
 MZV or even ZV input shapers over EI (or 2HUMP_EI and 3HUMP_EI shapers).
-
 
 ### After successfully printing for some time without ringing, it appears to come back
 
@@ -450,7 +444,6 @@ And similarly when switching back to carriage 0.
 No, `input_shaper` feature has pretty much no impact on the print times by
 itself. However, the value of `max_accel` certainly does (tuning of this
 parameter described in [this section](#selecting-max_accel)).
-
 
 ## Technical details
 

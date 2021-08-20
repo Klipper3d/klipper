@@ -314,6 +314,7 @@ kinematics. It also requires software development skills - though one
 should only need to update the host software.
 
 Useful steps:
+
 1. Start by studying the
    "[code flow of a move](#code-flow-of-a-move-command)" section and
    the [Kinematics document](Kinematics.md).
@@ -352,6 +353,7 @@ knowledge of embedded development and hands-on access to the target
 micro-controller.
 
 Useful steps:
+
 1. Start by identifying any 3rd party libraries that will be used
    during the port. Common examples include "CMSIS" wrappers and
    manufacturer "HAL" libraries. All 3rd party code needs to be GNU
@@ -491,6 +493,7 @@ the handling of time within Klipper is critical to correct operation.
 
 There are three types of times tracked internally in the Klipper host
 software:
+
 * System time. The system time uses the system's monotonic clock - it
   is a floating point number stored as seconds and it is (generally)
   relative to when the host computer was last started. System times
@@ -522,6 +525,7 @@ Conversion between the different time formats is primarily implemented
 in the **klippy/clocksync.py** code.
 
 Some things to be aware of when reviewing the code:
+
 * 32bit and 64bit clocks: To reduce bandwidth and to improve
   micro-controller efficiency, clocks on the micro-controller are
   tracked as 32bit integers. When comparing two clocks in the mcu

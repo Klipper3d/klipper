@@ -7,6 +7,7 @@ History of Klipper releases. Please see
 
 Available on 20201020. Major changes in this release:
 * Support for "Input Shaping" - a mechanism to counteract printer
+
   resonance. It can reduce or eliminate "ringing" in prints.
 * New "Smooth Pressure Advance" system. This implements "Pressure
   Advance" without introducing instantaneous velocity changes. It is
@@ -44,6 +45,7 @@ Available on 20201028. Release containing only bug fixes.
 
 Available on 20191021. Major changes in this release:
 * New G-Code command template support. G-Code in the config file is
+
   now evaluated with the Jinja2 template language.
 * Improvements to Trinamic stepper drivers:
   * New support for TMC2209 and TMC5160 drivers.
@@ -85,6 +87,7 @@ Available on 20191021. Major changes in this release:
 Available on 20181220. Major changes in this release:
 * Klipper now supports "mesh" bed leveling
 * New support for "enhanced" delta calibration (calibrates print x/y
+
   dimensions on delta printers)
 * Support for run-time configuration of Trinamic stepper motor drivers
   (tmc2130, tmc2208, tmc2660)
@@ -119,6 +122,7 @@ Available on 20180331. Major changes in this release:
 * Enhanced heater and thermistor hardware failure checks
 * Support for Z probes
 * Initial support for automatic parameter calibration on deltas (via a
+
   new delta_calibrate command)
 * Initial support for bed tilt compensation (via bed_tilt_calibrate
   command)

@@ -13,7 +13,6 @@ SPI mode (small number of boards appear to be hard-configured for I2C by
 pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU,
 that it has a voltage regulator and a level shifter.
 
-
 ## Installation instructions
 
 ### Wiring
@@ -34,7 +33,6 @@ and **will not work**. The recommended connection scheme:
 Fritzing wiring diagrams for some of the ADXL345 boards:
 
 ![ADXL345-Rpi](img/adxl345-fritzing.png)
-
 
 Double-check your wiring before powering up the Raspberry Pi to prevent
 damaging it or the accelerometer.
