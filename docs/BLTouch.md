@@ -222,10 +222,10 @@ calibration steps.
   parameter in the [bltouch] section of the printer config file to
   "5V".
 
-  *** Only use the 5V mode if your controller boards input line is
+  ***Only use the 5V mode if your controller boards input line is
   5V tolerant. This is why the default configuration of these BL-Touch
   versions is OPEN-DRAIN mode. You could potentially damage your
-  controller boards CPU ***
+  controller boards CPU.***
 
   So therefore:
   If a controller board NEEDs 5V mode AND it is 5V tolerant on its

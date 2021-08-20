@@ -12,10 +12,10 @@ directories contain architecture specific micro-controller code. The
 **src/simulator/** contains code stubs that allow the micro-controller
 to be test compiled on other architectures. The **src/generic/**
 directory contains helper code that may be useful across different
-architectures. The build arranges for includes of "board/somefile.h"
+architectures. The build arranges for includes of **board/somefile.h**
 to first look in the current architecture directory (eg,
-src/avr/somefile.h) and then in the generic directory (eg,
-src/generic/somefile.h).
+**src/avr/somefile.h**) and then in the generic directory (eg,
+**src/generic/somefile.h**).
 
 The **klippy/** directory contains the host software. Most of the host
 software is written in Python, however the **klippy/chelper/**
@@ -124,14 +124,13 @@ provides further information on the mechanics of moves.
 
 - Processing for a move command starts in gcode.py. The goal of
   gcode.py is to translate G-code into internal calls. A G1 command
-  will invoke cmd_G1() in klippy/extras/gcode_move.py. The
-  gcode_move.py code handles changes in origin (eg, G92), changes in
+  will invoke cmd_G1() in **klippy/extras/gcode_move.py**. The
+  **gcode_move.py code** handles changes in origin (eg, G92), changes in
   relative vs absolute positions (eg, G90), and unit changes (eg,
   F6000=100mm/s). The code path for a move is: `_process_data() ->
   _process_commands() -> cmd_G1()`. Ultimately the ToolHead class is
   invoked to execute the actual request: `cmd_G1() -> ToolHead.move()`
 
-* The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
 - The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:
   `ToolHead.move() -> MoveQueue.add_move() -> MoveQueue.flush() ->
@@ -140,7 +139,7 @@ provides further information on the mechanics of moves.
   move (in cartesian space and in units of seconds and millimeters).
   - The kinematics class is given the opportunity to audit each move
   (`ToolHead.move() -> kin.check_move()`). The kinematics classes are
-  located in the klippy/kinematics/ directory. The `check_move()` code
+  located in the **klippy/kinematics/** directory. The `check_move()` code
   may raise an error if the move is not valid. If `check_move()`
   completes successfully then the underlying kinematics must be able
   to handle the move.
@@ -166,19 +165,19 @@ provides further information on the mechanics of moves.
   to generate the step times for each stepper. For efficiency reasons,
   the stepper pulse times are generated in C code. The moves are first
   placed on a "trapezoid motion queue": `ToolHead._process_moves() ->
-  trapq_append()` (in klippy/chelper/trapq.c). The step times are then
+  trapq_append()` (in **klippy/chelper/trapq.c**). The step times are then
   generated: `ToolHead._process_moves() ->
   ToolHead._update_move_time() -> MCU_Stepper.generate_steps() ->
   itersolve_generate_steps() -> itersolve_gen_steps_range()` (in
-  klippy/chelper/itersolve.c). The goal of the iterative solver is to
+  **klippy/chelper/itersolve.c**). The goal of the iterative solver is to
   find step times given a function that calculates a stepper position
   from a time. This is done by repeatedly "guessing" various times
   until the stepper position formula returns the desired position of
   the next step on the stepper. The feedback produced from each guess
   is used to improve future guesses so that the process rapidly
   converges to the desired time. The kinematic stepper position
-  formulas are located in the klippy/chelper/ directory (eg,
-  kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).
+  formulas are located in the **klippy/chelper/** directory (eg,
+  **kin_cart.c**, **kin_corexy.c**, **kin_delta.c**, **kin_extruder.c**).
 
 - Note that the extruder is handled in its own kinematic class:
   `ToolHead._process_moves() -> PrinterExtruder.move()`. Since
@@ -189,7 +188,7 @@ provides further information on the mechanics of moves.
 
 - After the iterative solver calculates the step times they are added
   to an array: `itersolve_gen_steps_range() -> stepcompress_append()`
-  (in klippy/chelper/stepcompress.c). The array (`struct
+  (in **klippy/chelper/stepcompress.c**). The array (`struct
   stepcompress.queue`) stores the corresponding micro-controller clock
   counter times for every step. Here the "micro-controller clock
   counter" value directly corresponds to the micro-controller's
@@ -197,17 +196,17 @@ provides further information on the mechanics of moves.
   last powered up.
 
 - The next major step is to compress the steps: `stepcompress_flush()
-  -> compress_bisect_add()` (in klippy/chelper/stepcompress.c). This
+  -> compress_bisect_add()` (in **klippy/chelper/stepcompress.c**). This
   code generates and encodes a series of micro-controller "queue_step"
   commands that correspond to the list of stepper step times built in
   the previous stage. These "queue_step" commands are then queued,
   prioritized, and sent to the micro-controller (via
-  stepcompress.c:`steppersync` and serialqueue.c:`serialqueue`).
+  **stepcompress.c**:`steppersync` and **serialqueue.c**:`serialqueue`).
 
-- Processing of the queue_step commands on the micro-controller starts
-  in src/command.c which parses the command and calls
-  src/stepper.c) just appends the parameters of each queue_step
+* Processing of the queue_step commands on the micro-controller starts
+  in **src/command.c** which parses the command and calls
   `command_queue_step()`. The `command_queue_step()` code (in
+  **src/stepper.c**) just appends the parameters of each queue_step
   command to a per stepper queue. Under normal operation the
   queue_step command is parsed and queued at least 100ms before the
   time of its first step. Finally, the generation of stepper events is
@@ -231,7 +230,7 @@ mostly just communication and plumbing.
 The Klippy host code has a dynamic module loading capability. If a
 config section named "[my_module]" is found in the printer config file
 then the software will automatically attempt to load the python module
-klippy/extras/my_module.py . This module system is the preferred
+**klippy/extras/my_module.py** . This module system is the preferred
 method for adding new functionality to Klipper.
 
 The easiest way to add a new module is to use an existing module as a
@@ -324,8 +323,8 @@ Useful steps:
    in cartesian coordinates to the movement on each stepper. One
    should be able to copy one of these files as a starting point.
 3. Implement the C stepper kinematic position functions for each
-   stepper if they are not already available (see kin_cart.c,
-   kin_corexy.c, and kin_delta.c in klippy/chelper/). The function
+   stepper if they are not already available (see **kin_cart.c**,
+   **kin_corexy.c**, and **kin_delta.c** in **klippy/chelper/**). The function
    should call `move_get_coord()` to convert a given move time (in
    seconds) to a cartesian coordinate (in millimeters), and then
    calculate the desired stepper position (in millimeters) from that
@@ -359,14 +358,14 @@ Useful steps:
    during the port. Common examples include "CMSIS" wrappers and
    manufacturer "HAL" libraries. All 3rd party code needs to be GNU
    GPLv3 compatible. The 3rd party code should be committed to the
-   Klipper lib/ directory. Update the lib/README file with information
+   Klipper **lib/** directory. Update the **lib/README** file with information
    on where and when the library was obtained. It is preferable to
    copy the code into the Klipper repository unchanged, but if any
    changes are required then those changes should be listed explicitly
-   in the lib/README file.
-2. Create a new architecture sub-directory in the src/ directory and
+   in the **lib/README** file.
+2. Create a new architecture sub-directory in the **src/** directory and
    add initial Kconfig and Makefile support. Use the existing
-   architectures as a guide. The src/simulator provides a basic
+   architectures as a guide. The **src/simulator** provides a basic
    example of a minimum starting point.
 3. The first main coding task is to bring up communication support to
    the target board. This is the most difficult step in a new port.
@@ -374,12 +373,12 @@ Useful steps:
    much easier. It is typical to use an RS-232 style serial port
    during initial development as these types of hardware devices are
    generally easier to enable and control. During this phase, make
-   liberal use of helper code from the src/generic/ directory (check
-   how src/simulator/Makefile includes the generic C code into the
-   build). It is also necessary to define timer_read_time() (which
+   liberal use of helper code from the **src/generic/** directory (check
+   how **src/simulator/Makefile** includes the generic C code into the
+   build). It is also necessary to define `timer_read_time()` (which
    returns the current system clock) in this phase, but it is not
    necessary to fully support timer irq handling.
-4. Get familiar with the the console.py tool (as described in the
+4. Get familiar with the the **console.py** tool (as described in the
    [Debugging document](Debugging.md)) and verify connectivity to the
    micro-controller with it. This tool translates the low-level
    micro-controller communication protocol to a human readable form.

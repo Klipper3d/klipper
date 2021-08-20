@@ -74,13 +74,13 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
 **QUERY_FILAMENT_WIDTH** - Return the current measured filament width as result
 
-**RESET_FILAMENT_WIDTH_SENSOR** вЂ“ Clear all sensor readings. Can be used after filament change.
+**RESET_FILAMENT_WIDTH_SENSOR** - Clear all sensor readings. Can be used after filament change.
 
-**DISABLE_FILAMENT_WIDTH_SENSOR** вЂ“ Turn off the filament width sensor and stop using it to do flow control
+**DISABLE_FILAMENT_WIDTH_SENSOR** - Turn off the filament width sensor and stop using it to do flow control
 
 **ENABLE_FILAMENT_WIDTH_SENSOR** - Turn on the filament width sensor and start using it to do flow control
 
-**QUERY_RAW_FILAMENT_WIDTH** Return the current ADC channel values and RAW sensor value for calibration points
+**QUERY_RAW_FILAMENT_WIDTH** - Return the current ADC channel values and RAW sensor value for calibration points
 
 **ENABLE_FILAMENT_WIDTH_LOG** - Turn on diameter logging
 
@@ -88,11 +88,11 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
 ## Menu variables
 
-**hall_filament_width_sensor.Diameter** current measured filament width in mm
+**hall_filament_width_sensor.Diameter** - current measured filament width in mm
 
-**hall_filament_width_sensor.Raw** current raw measured filament width in units
+**hall_filament_width_sensor.Raw** - current raw measured filament width in units
 
-**hall_filament_width_sensor.is_active** Sensor on or off
+**hall_filament_width_sensor.is_active** - Sensor on or off
 
 ## Template for menu variables
 

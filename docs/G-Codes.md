@@ -394,7 +394,7 @@ see the [BL-Touch guide](BLTouch.md)):
   `pin_down`, `touch_mode`, `pin_up`, `self_test`, `reset`,
   (*1): `set_5V_output_mode`, `set_OD_output_mode`, `output_mode_store`
 
-  *** Note that the commands marked by (*1) are solely supported
+  \*\*\* Note that the commands marked by (\*1) are solely supported
       by a BL-Touch V3.0 or V3.1(+)
 - `BLTOUCH_STORE MODE=<output_mode>`: This stores an output mode in the
   EEPROM of a BLTouch V3.1 Available output_modes are: `5V`, `OD`
@@ -597,16 +597,16 @@ The following commands are availabe when the
 [respond config section](Config_Reference.md#respond) is enabled.
 
 - `M118 <message>`: echo the message prepended with the configured
-  default prefix (or `echo: ` if no prefix is configured).
+  default prefix (or `echo:` if no prefix is configured).
 - `RESPOND MSG="<message>"`: echo the message prepended with the
-  configured default prefix (or `echo: ` if no prefix is configured).
+  configured default prefix (or `echo:` if no prefix is configured).
 - `RESPOND TYPE=echo MSG="<message>"`: echo the message prepended with
-  `echo: `.
+  `echo:`.
 - `RESPOND TYPE=command MSG="<message>"`: echo the message prepended
-  with `// `.  Octopint can be configured to respond to these messages
-  (e.g.  `RESPOND TYPE=command MSG=action:pause`).
+  with `//`. Octopint can be configured to respond to these messages
+  (e.g. `RESPOND TYPE=command MSG=action:pause`).
 - `RESPOND TYPE=error MSG="<message>"`: echo the message prepended
-  with `!! `.
+  with `!!`.
 - `RESPOND PREFIX=<prefix> MSG="<message>"`: echo the message
   prepended with `<prefix>`. (The `PREFIX` parameter will take
   priority over the `TYPE` parameter)

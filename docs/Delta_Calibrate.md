@@ -115,9 +115,9 @@ print size.
 
 Print the test object and wait for it to fully cool. The commands
 described below must be run with the same printer settings used to
-print the calibration object (don't run `DELTA_CALIBRATE` between
+print the calibration object (**don't run `DELTA_CALIBRATE` between
 printing and measuring, or do something that would otherwise change
-the printer configuration).
+the printer configuration**).
 
 If possible, perform the measurements described below while the object
 is still attached to the print bed, but don't worry if the part

@@ -79,7 +79,7 @@ results to the config file with:
 SAVE_CONFIG
 ```
 
-Note that if a change is made to the printer's motion system, hotend
+\*\*\* Note that if a change is made to the printer's motion system, hotend
 position, or probe location then it will invalidate the results of
 `PROBE_CALIBRATE`.
 
