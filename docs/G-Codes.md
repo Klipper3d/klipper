@@ -280,7 +280,7 @@ The following command is available when a
 enabled:
 
 - `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets
-  the speed of a fan. <speed> must be between 0.0 and 1.0.
+  the speed of a fan. \<speed\> must be between 0.0 and 1.0.
 
 ### Neopixel and Dotstar Commands
 

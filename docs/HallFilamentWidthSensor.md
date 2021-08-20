@@ -110,20 +110,17 @@ Sensor generates two analog output based on calculated filament width. Sum of ou
 
 ## Calibration procedure
 
-Insert first  calibration rod (1.5 mm size) get first  raw sensor value
-
-To get raw sensor value you can use menu item or  **QUERY_RAW_FILAMENT_WIDTH** command in terminal
-
-Insert second calibration rod (2.0 mm size) get second raw sensor value
-
-Save raw values in config
+1. Insert first  calibration rod (1.5 mm size) get first  raw sensor value
+2. To get raw sensor value you can use menu item or  **QUERY_RAW_FILAMENT_WIDTH** command in terminal
+3. Insert second calibration rod (2.0 mm size) get second raw sensor value
+4. Save raw values in config
 
 ## How to enable sensor
 
-After power on by default sensor disabled.
-Enable sensor in start g-code by command **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config
+After power on by default sensor disabled, enable sensor in start G-Code by command
+ **ENABLE_FILAMENT_WIDTH_SENSOR** or change enable parameter in config.
 
 ## Logging
 
-After power on by default diameter Logging disabled.
-Data to log added on every measurement interval (10 mm by default)
+After power on by default diameter Logging disabled, data to log added on every measurement interval
+ (10 mm by default).

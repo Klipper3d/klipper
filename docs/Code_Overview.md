@@ -203,7 +203,7 @@ provides further information on the mechanics of moves.
   prioritized, and sent to the micro-controller (via
   **stepcompress.c**:`steppersync` and **serialqueue.c**:`serialqueue`).
 
-* Processing of the queue_step commands on the micro-controller starts
+- Processing of the queue_step commands on the micro-controller starts
   in **src/command.c** which parses the command and calls
   `command_queue_step()`. The `command_queue_step()` code (in
   **src/stepper.c**) just appends the parameters of each queue_step

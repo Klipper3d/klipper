@@ -74,9 +74,7 @@ First, measure the **ringing frequency**.
    skipping the first oscillation or two. To measure the distance between
    oscillations more easily, mark the oscillations first, then measure the
    distance between the marks with a ruler or calipers:
-
     |![Mark ringing](img/ringing-mark.jpg)|![Measure ringing](img/ringing-measure.jpg)|
-
 10. Count how many oscillations *N* the measured distance *D* corresponds to.
     If you are unsure how to count the oscillations, refer to the picture
     above, which shows *N* = 6 oscillations.
@@ -290,9 +288,9 @@ to 7000 already, complete the following steps for each of the axes X and Y:
 6. Print the test model.
 7. Reset the original frequency value:
    `SET_INPUT_SHAPER SHAPER_FREQ_X=...`.
-7. Find the band which shows ringing the least and count its number from the
+8. Find the band which shows ringing the least and count its number from the
    bottom starting at 1.
-8. Calculate the new shaper_freq_x value via old
+9. Calculate the new shaper_freq_x value via old
    shaper_freq_x * (39 + 5 * #band-number) / 66.
 
 Repeat these steps for the Y axis in the same manner, replacing references to X

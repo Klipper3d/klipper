@@ -108,11 +108,11 @@ The test was last run on commit `01d2183f` with gcc version `avr-gcc
 configured for an atmega644p (previous tests have confirmed simulavr
 results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
 
-| avr              | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 104   |
-| 2 stepper        | 296   |
-| 3 stepper        | 472   |
+| avr       | ticks |
+| --------- | ----- |
+| 1 stepper | 104   |
+| 2 stepper | 296   |
+| 3 stepper | 472   |
 
 ### Arduino Due step rate benchmark
 
@@ -178,12 +178,12 @@ The test was last run on commit `59a60d68` with gcc version
 `arm-none-eabi-gcc 7.3.1 20180622 (release)
 [ARM/embedded-7-branch revision 261907]`.
 
-| sam4e8e          | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 519   |
-| 2 stepper        | 520   |
-| 3 stepper        | 525   |
-| 4 stepper        | 703   |
+| sam4e8e   | ticks |
+| --------- | ----- |
+| 1 stepper | 519   |
+| 2 stepper | 520   |
+| 3 stepper | 525   |
+| 4 stepper | 703   |
 
 ### Beaglebone PRU step rate benchmark
 
@@ -201,11 +201,11 @@ finalize_config crc=0
 The test was last run on commit `b161a69e` with gcc version `pru-gcc
 (GCC) 8.0.0 20170530 (experimental)`.
 
-| pru              | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 861   |
-| 2 stepper        | 853   |
-| 3 stepper        | 883   |
+| pru       | ticks |
+| --------- | ----- |
+| 1 stepper | 861   |
+| 2 stepper | 853   |
+| 3 stepper | 883   |
 
 ### STM32F042 step rate benchmark
 
@@ -222,11 +222,11 @@ finalize_config crc=0
 The test was last run on commit `0b0c47c5` with gcc version
 `arm-none-eabi-gcc (Fedora 9.2.0-1.fc30) 9.2.0`.
 
-| stm32f042        | ticks |
-| ---------------- | ----- |
-| 1 stepper        | 247   |
-| 2 stepper        | 328   |
-| 3 stepper        | 558   |
+| stm32f042 | ticks |
+| --------- | ----- |
+| 1 stepper | 247   |
+| 2 stepper | 328   |
+| 3 stepper | 558   |
 
 ### STM32F103 step rate benchmark
 
@@ -417,11 +417,11 @@ The test was last run on commit `db0fb5d5` with gcc version `gcc
 (Raspbian 6.3.0-18+rpi1+deb9u1) 6.3.0 20170516` on a Raspberry Pi 3
 (revision a22082).
 
-| Linux (RPi3)         | ticks |
-| -------------------- | ----- |
-| 1 stepper            | 349   |
-| 2 stepper            | 350   |
-| 3 stepper            | 400   |
+| Linux (RPi3) | ticks |
+| ------------ | ----- |
+| 1 stepper    | 349   |
+| 2 stepper    | 350   |
+| 3 stepper    | 400   |
 
 ## Command dispatch benchmark
 
@@ -448,22 +448,22 @@ Where applicable, the benchmarks below are with console.py running on
 a desktop class machine with the device connected via a high-speed
 hub.
 
-| MCU                 | Rate | Build    | Build compiler      |
-| ------------------- | ---- | -------- | ------------------- |
-| stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
-| atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
-| sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
-| samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| pru (shared memory) | 260K | c5968a08 | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
-| stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| sam3x8e (USB)       | 418K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| lpc1768 (USB)       | 534K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| lpc1769 (USB)       | 628K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| sam4s8c (USB)       | 650K | 8d4a5c16 | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| samd51 (USB)        | 864K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| stm32f446 (USB)     | 870K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
-| rp2040 (USB)        | 873K | c5667193 | arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0 |
+| MCU                 | Rate | Build    | Build compiler                                       |
+| ------------------- | ---- | -------- | ---------------------------------------------------- |
+| stm32f042 (CAN)     | 18K  | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
+| atmega2560 (serial) | 23K  | b161a69e | avr-gcc (GCC) 4.8.1                                  |
+| sam3x8e (serial)    | 23K  | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0        |
+| at90usb1286 (USB)   | 75K  | 01d2183f | avr-gcc (GCC) 5.4.0                                  |
+| samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| pru (shared memory) | 260K | c5968a08 | pru-gcc (GCC) 8.0.0 20170530 (experimental)          |
+| stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| sam3x8e (USB)       | 418K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| lpc1768 (USB)       | 534K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| lpc1769 (USB)       | 628K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| sam4s8c (USB)       | 650K | 8d4a5c16 | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| samd51 (USB)        | 864K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| stm32f446 (USB)     | 870K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0        |
+| rp2040 (USB)        | 873K | c5667193 | arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0      |
 
 ## Host Benchmarks
 

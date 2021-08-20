@@ -236,7 +236,7 @@ integers. The following table shows the number of bytes each integer
 takes to encode:
 
 | Integer                   | Encoded size |
-|---------------------------|--------------|
+| ------------------------- | ------------ |
 | -32 .. 95                 | 1            |
 | -4096 .. 12287            | 2            |
 | -524288 .. 1572863        | 3            |
