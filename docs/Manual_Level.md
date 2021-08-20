@@ -49,7 +49,7 @@ Some printers have the ability to manually adjust the location of the
 physical endstop switch. However, it's recommended to perform Z
 endstop positioning in software with Klipper - once the physical
 location of the endstop is in a convenient location, one can make any
-further adjustments by running Z_ENDSTOP_CALIBRATE or by manually
+further adjustments by running `Z_ENDSTOP_CALIBRATE` or by manually
 updating the Z position_endstop in the configuration file.
 
 ## Adjusting bed leveling screws

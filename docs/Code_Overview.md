@@ -135,29 +135,29 @@ provides further information on the mechanics of moves.
   the timing of printing actions. The main codepath for a move is:
   `ToolHead.move() -> MoveQueue.add_move() -> MoveQueue.flush() ->
   Move.set_junction() -> ToolHead._process_moves()`.
-  * ToolHead.move() creates a Move() object with the parameters of the
+  * `ToolHead.move()` creates a `Move()` object with the parameters of the
   move (in cartesian space and in units of seconds and millimeters).
   * The kinematics class is given the opportunity to audit each move
   (`ToolHead.move() -> kin.check_move()`). The kinematics classes are
-  located in the klippy/kinematics/ directory. The check_move() code
-  may raise an error if the move is not valid. If check_move()
+  located in the klippy/kinematics/ directory. The `check_move()` code
+  may raise an error if the move is not valid. If `check_move()`
   completes successfully then the underlying kinematics must be able
   to handle the move.
-  * MoveQueue.add_move() places the move object on the "look-ahead"
+  * `MoveQueue.add_move()` places the move object on the "look-ahead"
   queue.
-  * MoveQueue.flush() determines the start and end velocities of each
+  * `MoveQueue.flush()` determines the start and end velocities of each
   move.
-  * Move.set_junction() implements the "trapezoid generator" on a
+  * `Move.set_junction()` implements the "trapezoid generator" on a
   move. The "trapezoid generator" breaks every move into three parts:
   a constant acceleration phase, followed by a constant velocity
   phase, followed by a constant deceleration phase. Every move
   contains these three phases in this order, but some phases may be of
   zero duration.
-  * When ToolHead._process_moves() is called, everything about the
+  * When `ToolHead._process_moves()` is called, everything about the
   move is known - its start location, its end location, its
   acceleration, its start/cruising/end velocity, and distance traveled
   during acceleration/cruising/deceleration. All the information is
-  stored in the Move() class and is in cartesian space in units of
+  stored in the `Move()` class and is in cartesian space in units of
   millimeters and seconds.
 
 * Klipper uses an
@@ -181,15 +181,15 @@ provides further information on the mechanics of moves.
 
 * Note that the extruder is handled in its own kinematic class:
   `ToolHead._process_moves() -> PrinterExtruder.move()`. Since
-  the Move() class specifies the exact movement time and since step
+  the `Move()` class specifies the exact movement time and since step
   pulses are sent to the micro-controller with specific timing,
   stepper movements produced by the extruder class will be in sync
   with head movement even though the code is kept separate.
 
 * After the iterative solver calculates the step times they are added
   to an array: `itersolve_gen_steps_range() -> stepcompress_append()`
-  (in klippy/chelper/stepcompress.c). The array (struct
-  stepcompress.queue) stores the corresponding micro-controller clock
+  (in klippy/chelper/stepcompress.c). The array (`struct
+  stepcompress.queue`) stores the corresponding micro-controller clock
   counter times for every step. Here the "micro-controller clock
   counter" value directly corresponds to the micro-controller's
   hardware counter - it is relative to when the micro-controller was
@@ -201,21 +201,21 @@ provides further information on the mechanics of moves.
   commands that correspond to the list of stepper step times built in
   the previous stage. These "queue_step" commands are then queued,
   prioritized, and sent to the micro-controller (via
-  stepcompress.c:steppersync and serialqueue.c:serialqueue).
+  stepcompress.c:`steppersync` and serialqueue.c:`serialqueue`).
 
 * Processing of the queue_step commands on the micro-controller starts
   in src/command.c which parses the command and calls
-  `command_queue_step()`. The command_queue_step() code (in
   src/stepper.c) just appends the parameters of each queue_step
+  `command_queue_step()`. The `command_queue_step()` code (in
   command to a per stepper queue. Under normal operation the
   queue_step command is parsed and queued at least 100ms before the
   time of its first step. Finally, the generation of stepper events is
   done in `stepper_event()`. It's called from the hardware timer
   interrupt at the scheduled time of the first step. The
-  stepper_event() code generates a step pulse and then reschedules
+  `stepper_event()` code generates a step pulse and then reschedules
   itself to run at the time of the next step pulse for the given
   queue_step parameters. The parameters for each queue_step command
-  are "interval", "count", and "add". At a high-level, stepper_event()
+  are "interval", "count", and "add". At a high-level, `stepper_event()`
   runs the following, 'count' times: `do_step(); next_wake_time =
   last_wake_time + interval; interval += add;`
 
@@ -237,6 +237,7 @@ The easiest way to add a new module is to use an existing module as a
 reference - see **klippy/extras/servo.py** as an example.
 
 The following may also be useful:
+
 * Execution of the module starts in the module level `load_config()`
   function (for config sections of the form [my_module]) or in
   `load_config_prefix()` (for config sections of the form
@@ -266,14 +267,14 @@ The following may also be useful:
   other printer objects. Each event name is a string, and by
   convention it is the name of the main source module that raises the
   event along with a short name for the action that is occurring (eg,
-  "klippy:connect"). The parameters passed to each event handler are
+  "`klippy:connect`"). The parameters passed to each event handler are
   specific to the given event (as are exception handling and execution
   context). Two common startup events are:
-  * klippy:connect - This event is generated after all printer objects
+  * `klippy:connect` - This event is generated after all printer objects
     are instantiated. It is commonly used to lookup other printer
     objects, to verify config settings, and to perform an initial
     "handshake" with printer hardware.
-  * klippy:ready - This event is generated after all connect handlers
+  * `klippy:ready` - This event is generated after all connect handlers
     have completed successfully. It indicates the printer is
     transitioning to a state ready to handle normal operations. Do not
     raise an error in this callback.
@@ -376,7 +377,7 @@ Useful steps:
    returns the current system clock) in this phase, but it is not
    necessary to fully support timer irq handling.
 4. Get familiar with the the console.py tool (as described in the
-   [debugging document](Debugging.md)) and verify connectivity to the
+   [Debugging document](Debugging.md)) and verify connectivity to the
    micro-controller with it. This tool translates the low-level
    micro-controller communication protocol to a human readable form.
 5. Add support for timer dispatch from hardware interrupts. See

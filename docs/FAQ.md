@@ -82,10 +82,10 @@ methods, so the "make flash" command may not work on all boards.
 
 If you're having an intermittent failure or you do have a standard
 setup, then double check that Klipper isn't running when flashing
-(sudo service klipper stop), make sure OctoPrint isn't trying to
+(`sudo service klipper stop`), make sure OctoPrint isn't trying to
 connect directly to the device (open the Connection tab in the web
 page and click Disconnect if the Serial Port is set to the device),
-and make sure FLASH_DEVICE is set correctly for your board (see the
+and make sure `FLASH_DEVICE` is set correctly for your board (see the
 [question above](#wheres-my-serial-port)).
 
 However, if "make flash" just doesn't work for your board, then you
@@ -209,7 +209,7 @@ can be configured to use "/tmp/printer" for the printer serial port.
 The code does this to reduce the chance of accidentally commanding the
 head into the bed or a wall. Once the printer is homed the software
 attempts to verify each move is within the position_min/max defined in
-the config file. If the motors are disabled (via an M84 or M18
+the config file. If the motors are disabled (via an `M84` or `M18`
 command) then the motors will need to be homed again prior to
 movement.
 
@@ -324,7 +324,7 @@ seconds. If the micro-controller does not receive a confirmation every
 5 seconds it goes into a "shutdown" state which is designed to turn
 off all heaters and stepper motors.
 
-See the "config_digital_out" command in the
+See the `config_digital_out` command in the
 [MCU commands](MCU_Commands.md) document for further details.
 
 In addition, the micro-controller software is configured with a

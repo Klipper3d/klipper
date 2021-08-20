@@ -38,7 +38,7 @@ drivers - see below for details.)
 
 If using Trinamic stepper motor drivers with run-time configuration
 then one can calibrate the endstop phases using the
-ENDSTOP_PHASE_CALIBRATE command. Start by adding the following to the
+`ENDSTOP_PHASE_CALIBRATE` command. Start by adding the following to the
 config file:
 
 ```cfg

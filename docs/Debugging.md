@@ -36,11 +36,14 @@ the DECL_COMMAND() macro in the Klipper source code). To do so, run:
 ~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial
 ```
 
-See the "HELP" command within the tool for more information on its
+See the `HELP` command within the tool for more information on its
 functionality.
 
 Some command-line options are available. For more information run:
-`~/klippy-env/bin/python ./klippy/console.py --help`
+
+```bash
+~/klippy-env/bin/python ./klippy/console.py --help
+```
 
 ## Translating G-Code files to micro-controller commands
 

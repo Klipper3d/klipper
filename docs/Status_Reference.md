@@ -326,7 +326,7 @@ The following information is available in the `toolhead` object
   "homed" state. This is a string containing one or more of "x", "y",
   "z".
 - `axis_minimum`, `axis_maximum`: The axis travel limits (mm) after
-  homing.  It is possible to access the x, y, z components of this
+  homing. It is possible to access the x, y, z components of this
   limit value (eg, `axis_minimum.x`, `axis_maximum.z`).
 - `max_velocity`, `max_accel`, `max_accel_to_decel`,
   `square_corner_velocity`: The current printing limits that are in

@@ -128,7 +128,11 @@ has a rotation distance of 1.25.
 
 It's possible to obtain an initial rotation distance for extruders by
 measuring the diameter of the "hobbed bolt" that pushes the filament
-and using the following formula: `rotation_distance = <diameter> * 3.14`
+and using the following formula:
+
+```text
+rotation_distance = <diameter> * 3.14
+```
 
 If the extruder uses gears then it will also be necessary to
 [determine and set the gear_ratio](#using-a-gear_ratio) for the

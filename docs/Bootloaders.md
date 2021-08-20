@@ -369,21 +369,21 @@ NOTES:
 - You may need to hold down the reset button on the board while launching
   OpenOCD. It should display something like:
 
-  ```gdb
-  Open On-Chip Debugger 0.10.0+dev-01204-gc60252ac-dirty (2020-04-27-16:00)
-  Licensed under GNU GPL v2
-  For bug reports, read
-          http://openocd.org/doc/doxygen/bugs.html
-  DEPRECATED! use 'adapter speed' not 'adapter_khz'
-  Info : BCM2835 GPIO JTAG/SWD bitbang driver
-  Info : JTAG and SWD modes enabled
-  Info : clock speed 40 kHz
-  Info : SWD DPIDR 0x1ba01477
-  Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
-  Info : stm32f1x.cpu: external reset detected
-  Info : starting gdb server for stm32f1x.cpu on 3333
-  Info : Listening on port 3333 for gdb connections
-  ```
+    ```gdb
+      Open On-Chip Debugger 0.10.0+dev-01204-gc60252ac-dirty (2020-04-27-16:00)
+      Licensed under GNU GPL v2
+      For bug reports, read
+              http://openocd.org/doc/doxygen/bugs.html
+      DEPRECATED! use 'adapter speed' not 'adapter_khz'
+      Info : BCM2835 GPIO JTAG/SWD bitbang driver
+      Info : JTAG and SWD modes enabled
+      Info : clock speed 40 kHz
+      Info : SWD DPIDR 0x1ba01477
+      Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
+      Info : stm32f1x.cpu: external reset detected
+      Info : starting gdb server for stm32f1x.cpu on 3333
+      Info : Listening on port 3333 for gdb connections
+    ```
 
   After which you can release the reset button.
 

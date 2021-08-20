@@ -1457,7 +1457,7 @@ the [command reference](G-Codes.md#resonance-compensation).
 
 Support for ADXL345 accelerometers. This support allows one to query
 accelerometer measurements from the sensor. This enables an
-ACCELEROMETER_MEASURE command (see
+`ACCELEROMETER_MEASURE` command (see
 [G-Codes](G-Codes.md#adxl345-accelerometer-commands) for more
 information). The default chip name is "default", but one may specify
 an explicit name (eg, [adxl345 my_chip_name]).
@@ -1602,7 +1602,7 @@ pins:
 ### [probe]
 
 Z height probe. One may define this section to enable Z height probing
-hardware. When this section is enabled, PROBE and QUERY_PROBE extended
+hardware. When this section is enabled, `PROBE` and `QUERY_PROBE` extended
 [G-Code commands](G-Codes.md#probe) become available. Also, see the
 [probe calibrate guide](Probe_Calibrate.md). The probe section also
 creates a virtual "probe:z_virtual_endstop" pin. One may set the
@@ -1992,7 +1992,7 @@ section.
 
 Generic heaters (one may define any number of sections with a
 "heater_generic" prefix). These heaters behave similarly to standard
-heaters (extruders, heated beds). Use the SET_HEATER_TEMPERATURE
+heaters (extruders, heated beds). Use the `SET_HEATER_TEMPERATURE`
 command (see [G-Codes](G-Codes.md) for details) to set the target
 temperature.
 
@@ -2498,9 +2498,9 @@ with the `SET_FAN_SPEED`
 ### [servo]
 
 Servos (one may define any number of sections with a "servo"
-prefix). The servos may be controlled using the SET_SERVO
-[g-code command](G-Codes.md#servo-commands). For example: SET_SERVO
-SERVO=my_servo ANGLE=180
+prefix). The servos may be controlled using the `SET_SERVO`
+[G-Code command](G-Codes.md#servo-commands). For example: `SET_SERVO
+SERVO=my_servo ANGLE=180`
 
 ```cfg
 [servo my_servo]
@@ -2530,7 +2530,7 @@ pin:
 
 Neopixel (aka WS2812) LED support (one may define any number of
 sections with a "neopixel" prefix). One may set the LED color via
-"SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
+`SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1` type extended
 [G-Code commands](G-Codes.md#neopixel-and-dotstar-commands).
 
 ```cfg
@@ -2558,7 +2558,7 @@ pin:
 
 Dotstar (aka APA102) LED support (one may define any number of
 sections with a "dotstar" prefix). One may set the LED color via
-"SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1" type extended
+`SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1` type extended
 [G-Code commands](G-Codes.md#neopixel-and-dotstar-commands).
 
 ```cfg
@@ -2633,7 +2633,7 @@ pin:
 Run-time configurable output pins (one may define any number of
 sections with an "output_pin" prefix). Pins configured here will be
 setup as output pins and one may modify them at run-time using
-"SET_PIN PIN=my_pin VALUE=.1" type extended
+`SET_PIN PIN=my_pin VALUE=.1` type extended
 [G-Code commands](G-Codes.md#custom-pin-commands).
 
 ```cfg

@@ -11,7 +11,7 @@ the probing process.
 Prior to Mesh Calibration you will need to be sure that your Probe's
 Z-Offset is calibrated. If using an endstop for Z homing it will need
 to be calibrated as well. See [Probe_Calibrate](Probe_Calibrate.md)
-and Z_ENDSTOP_CALIBRATE in [Manual_Level](Manual_Level.md) for more
+and `Z_ENDSTOP_CALIBRATE` in [Manual_Level](Manual_Level.md) for more
 information.
 
 ## Basic Configuration
@@ -347,8 +347,10 @@ are identified in green.
 
 ### Calibration
 
-`BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>]
- [<mesh_parameter>=<value>]`\
+```gcode
+BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>] [<mesh_parameter>=<value>]
+```
+
 _Default Profile:  default_\
 _Default Method:  automatic if a probe is detected, otherwise manual_
 
@@ -377,7 +379,9 @@ applies to the mesh.
 
 ### Profiles
 
-`BED_MESH_PROFILE SAVE=name LOAD=name REMOVE=name`
+```gcode
+BED_MESH_PROFILE SAVE=name LOAD=name REMOVE=name
+```
 
 After a BED_MESH_CALIBRATE has been performed, it is possible to save the
 current mesh state into a named profile. This makes it possible to load
@@ -392,14 +396,18 @@ state is automatically saved to the *default* profile. If this profile
 exists it is automatically loaded when Klipper starts. If this behavior
 is not desirable the _default_ profile can be removed as follows:
 
-`BED_MESH_PROFILE REMOVE=default`
+```gcode
+BED_MESH_PROFILE REMOVE=default
+```
 
 Any other saved profile can be removed in the same fashion, replacing
 _default_ with the named profile you wish to remove.
 
 ### Output
 
-`BED_MESH_OUTPUT PGP=[0 | 1]`
+```gcode
+BED_MESH_OUTPUT PGP=[0 | 1]
+```
 
 Outputs the current mesh state to the terminal. Note that the mesh itself
 is output
@@ -433,13 +441,17 @@ probing the "Probe" points will refer to both the tool and nozzle locations.
 
 ### Clear Mesh State
 
-`BED_MESH_CLEAR`
+```gcode
+BED_MESH_CLEAR
+```
 
 This G-Code may be used to clear the internal mesh state.
 
 ### Apply X/Y offsets
 
-`BED_MESH_OFFSET [X=<value>] [Y=<value>]`
+```gcode
+BED_MESH_OFFSET [X=<value>] [Y=<value>]
+```
 
 This is useful for printers with multiple independent extruders, as an offset
 is necessary to produce correct Z adjustment after a tool change. Offsets

@@ -145,7 +145,7 @@ The following standard commands are supported:
   not provided it defaults to "default".
 - `RESTORE_GCODE_STATE [NAME=<state_name>]
   [MOVE=1 [MOVE_SPEED=<speed>]]`: Restore a state previously saved via
-  SAVE_GCODE_STATE. If "MOVE=1" is specified then a toolhead move will
+  `SAVE_GCODE_STATE`. If "MOVE=1" is specified then a toolhead move will
   be issued to move back to the previous XYZ position. If "MOVE_SPEED"
   is specified then the toolhead move will be performed with the given
   speed (in mm/s); otherwise the toolhead move will use the restored
@@ -193,7 +193,7 @@ The following standard commands are supported:
   diagnostic tool to help verify stepper connectivity.
 - `MANUAL_PROBE [SPEED=<speed>]`: Run a helper script useful for
   measuring the height of the nozzle at a given location. If SPEED is
-  specified, it sets the speed of TESTZ commands (the default is
+  specified, it sets the speed of `TESTZ` commands (the default is
   5mm/s). During a manual probe, the following additional commands are
   available:
   - `ACCEPT`: This command accepts the current Z position and
@@ -206,7 +206,7 @@ The following standard commands are supported:
     nozzle up or down an amount relative to previous attempts.
 - `Z_ENDSTOP_CALIBRATE [SPEED=<speed>]`: Run a helper script useful
   for calibrating a Z position_endstop config setting. See the
-  MANUAL_PROBE command for details on the parameters and the
+  `MANUAL_PROBE` command for details on the parameters and the
   additional commands available while the tool is active.
 - `Z_OFFSET_APPLY_ENDSTOP`: Take the current Z G-Code offset (aka,
   babystepping), and subtract it from the stepper_z endstop_position.
@@ -230,10 +230,10 @@ The following standard commands are supported:
   idle timeout (in seconds).
 - `RESTART`: This will cause the host software to reload its config
   and perform an internal reset. This command will not clear error
-  state from the micro-controller (see FIRMWARE_RESTART) nor will it
+  state from the micro-controller (see `FIRMWARE_RESTART`) nor will it
   load new software (see
   [the FAQ](FAQ.md#how-do-i-upgrade-to-the-latest-software)).
-- `FIRMWARE_RESTART`: This is similar to a RESTART command, but it
+- `FIRMWARE_RESTART`: This is similar to a `RESTART` command, but it
   also clears any error state from the micro-controller.
 - `SAVE_CONFIG`: This command will overwrite the main printer config
   file and restart the host software. This command is used in
@@ -284,10 +284,10 @@ The following command is available when a
   the given chip (1 for the first chip, 2 for the second, etc.). If
   INDEX is not provided then all LEDs in the daisy-chain will be set
   to the provided color. If TRANSMIT=0 is specified then the color
-  change will only be made on the next SET_LED command that does not
+  change will only be made on the next `SET_LED` command that does not
   specify TRANSMIT=0; this may be useful in combination with the INDEX
   parameter to batch multiple updates in a daisy-chain. By default, the
-  SET_LED command will sync it's changes with other ongoing gcode commands.
+  `SET_LED` command will sync it's changes with other ongoing G-Code commands.
   This can lead to undesirable behavior if LEDs are being set while the
   printer is not printing as it will reset the idle timeout. If careful
   timing is not needed, the optional SYNC=0 parameter can be specified to
@@ -310,7 +310,7 @@ enabled:
   [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>]
   [MOVE=<pos> [STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=0]]`: This command
   will alter the state of the stepper. Use the ENABLE parameter to
-  enable/disable the stepper. Use the SET_POSITION parameter to force
+  enable/disable the stepper. Use the `SET_POSITION` parameter to force
   the stepper to think it is at the given position. Use the MOVE
   parameter to request a movement to the given position. If SPEED
   and/or ACCEL is specified then the given values will be used instead
@@ -358,9 +358,9 @@ the [probe calibrate guide](Probe_Calibrate.md)):
 - `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
   helper script useful for calibrating the probe's z_offset. See the
   PROBE command for details on the optional probe parameters. See
-  the MANUAL_PROBE command for details on the SPEED parameter and the
+  the `MANUAL_PROBE` command for details on the SPEED parameter and the
   additional commands available while the tool is active. Please note,
-  the PROBE_CALIBRATE command uses the speed variable
+  the `PROBE_CALIBRATE` command uses the speed variable
   to move in XY direction as well as Z.
 - `Z_OFFSET_APPLY_PROBE`: Take the current Z G-Code offset (aka,
   babystepping), and subtract if from the probe's z_offset.
@@ -393,7 +393,7 @@ is enabled (also see the [delta calibrate guide](Delta_Calibrate.md)):
   endstop positions, tower angles, and radius. See the PROBE command
   for details on the optional probe parameters. If METHOD=manual is
   specified then the manual probing tool is activated - see the
-  MANUAL_PROBE command above for details on the additional commands
+  `MANUAL_PROBE` command above for details on the additional commands
   available while this tool is active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
@@ -404,10 +404,10 @@ The following commands are available when the
 [bed_tilt config section](Config_Reference.md#bed_tilt) is enabled:
 - `BED_TILT_CALIBRATE [METHOD=manual] [<probe_parameter>=<value>]`:
   This command will probe the points specified in the config and then
-  recommend updated x and y tilt adjustments. See the PROBE command
-  for details on the optional probe parameters. If METHOD=manual is
+  recommend updated x and y tilt adjustments. See the `PROBE` command
+  for details on the optional probe parameters. If `METHOD=manual` is
   specified then the manual probing tool is activated - see the
-  MANUAL_PROBE command above for details on the additional commands
+  `MANUAL_PROBE` command above for details on the additional commands
   available while this tool is active.
 
 ### Mesh Bed Leveling
@@ -419,8 +419,8 @@ The following commands are available when the
   [<mesh_parameter>=<value>]`:
   This command probes the bed using generated points specified by the
   parameters in the config. After probing, a mesh is generated and
-  z-movement is adjusted according to the mesh. See the PROBE command
-  for details on the optional probe parameters. If METHOD=manual is
+  z-movement is adjusted according to the mesh. See the `PROBE` command
+  for details on the optional probe parameters. If `METHOD=manual` is
   specified then the manual probing tool is activated - see the
   MANUAL_PROBE command above for details on the additional commands
   available while this tool is active.
@@ -428,7 +428,7 @@ The following commands are available when the
   z values and current mesh values to the terminal. If PGP=1 is specified
   the x,y coordinates generated by bed_mesh, along with their associated
   indices, will be output to the terminal.
-- `BED_MESH_MAP`: Like to BED_MESH_OUTPUT, this command prints the current
+- `BED_MESH_MAP`: Like to `BED_MESH_OUTPUT`, this command prints the current
   state of the mesh to the terminal. Instead of printing the values in a
   human readable format, the state is serialized in json format. This allows
   Octoprint plugins to easily capture the data and generate height maps
@@ -438,10 +438,10 @@ The following commands are available when the
 - `BED_MESH_PROFILE LOAD=<name> SAVE=<name> REMOVE=<name>`: This
   command provides profile management for mesh state. LOAD will
   restore the mesh state from the profile matching the supplied name.
-  SAVE will save the current mesh state to a profile matching the
+  `SAVE` will save the current mesh state to a profile matching the
   supplied name. Remove will delete the profile matching the
-  supplied name from persistent memory. Note that after SAVE or
-  REMOVE operations have been run the SAVE_CONFIG G-Code must be run
+  supplied name from persistent memory. Note that after `SAVE` or
+  `REMOVE` operations have been run the SAVE_CONFIG G-Code must be run
   to make the changes to peristent memory permanent.
 - `BED_MESH_OFFSET [X=<value>] [Y=<value>]`:  Applies X and/or Y
   offsets to the mesh lookup. This is useful for printers with
@@ -524,7 +524,7 @@ enabled (also see the [endstop phase guide](Endstop_Phase.md)):
   endstop stepper phases during past homing operations. When a STEPPER
   parameter is provided it arranges for the given endstop phase
   setting to be written to the config file (in conjunction with the
-  SAVE_CONFIG command).
+  `SAVE_CONFIG` command).
 
 ### Force movement
 
@@ -540,17 +540,17 @@ enabled:
   kinematic updates are made; other parallel steppers on an axis will
   not be moved. Use caution as an incorrect command could cause
   damage! Using this command will almost certainly place the low-level
-  kinematics in an incorrect state; issue a G28 afterwards to reset
+  kinematics in an incorrect state; issue a `G28` afterwards to reset
   the kinematics. This command is intended for low-level diagnostics
   and debugging.
 - `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
   the low-level kinematic code to believe the toolhead is at the given
   cartesian position. This is a diagnostic and debugging command; use
-  SET_GCODE_OFFSET and/or G92 for regular axis transformations. If an
+  `SET_GCODE_OFFSET` and/or `G92` for regular axis transformations. If an
   axis is not specified then it will default to the position that the
   head was last commanded to. Setting an incorrect or invalid position
   may lead to internal software errors. This command may invalidate
-  future boundary checks; issue a G28 afterwards to reset the
+  future boundary checks; issue a `G28` afterwards to reset the
   kinematics.
 
 ### SDcard loop
@@ -667,7 +667,7 @@ is enabled (also see the [skew correction guide](skew_correction.md)):
   skew state to a profile matching the supplied name. Remove will
   delete the profile matching the supplied name from persistent
   memory. Note that after SAVE or REMOVE operations have been run the
-  SAVE_CONFIG G-Code must be run to make the changes to peristent
+  `SAVE_CONFIG` G-Code must be run to make the changes to peristent
   memory permanent.
 
 ### Delayed G-Code

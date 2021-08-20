@@ -86,7 +86,9 @@ let it touch the bed as it should.
 Once the BL-Touch is in inconsistent state, it starts blinking red.
 You can force it to leave that state by issuing:
 
+```gcode
  BLTOUCH_DEBUG COMMAND=reset
+```
 
 This may happen if its calibration is interrupted by the probe being
 blocked from being extracted.

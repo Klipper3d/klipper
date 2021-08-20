@@ -106,8 +106,8 @@ it is easily accounted for later in the calibration process.
 
 **Use an automated tool to determine precise Z heights!**
 
-Klipper has several helper scripts available (eg, MANUAL_PROBE,
-Z_ENDSTOP_CALIBRATE, PROBE_CALIBRATE, DELTA_CALIBRATE). See the
+Klipper has several helper scripts available (eg, `MANUAL_PROBE`,
+`Z_ENDSTOP_CALIBRATE`, `PROBE_CALIBRATE`, `DELTA_CALIBRATE`). See the
 documents
 [described above](#choose-the-appropriate-calibration-mechanism) to
 choose one of them.
@@ -134,18 +134,18 @@ down on the bed when moving the paper back and forth.)
 
 ![paper-test](img/paper-test.jpg)
 
-Use the TESTZ command to request the nozzle to move closer to the
+Use the `TESTZ` command to request the nozzle to move closer to the
 paper. For example:
 
 ```gcode
 TESTZ Z=-.1
 ```
 
-The TESTZ command will move the nozzle a relative distance from the
+The `TESTZ` command will move the nozzle a relative distance from the
 nozzle's current position. (So, `Z=-.1` requests the nozzle to move
 closer to the bed by .1mm.) After the nozzle stops moving, push the
 paper back and forth to check if the nozzle is in contact with the
-paper and to feel the amount of friction. Continue issuing TESTZ
+paper and to feel the amount of friction. Continue issuing `TESTZ`
 commands until one feels a small amount of friction when testing with
 the paper.
 
@@ -153,7 +153,7 @@ If too much friction is found then one can use a positive Z value to
 move the nozzle up. It is also possible to use `TESTZ Z=+` or `TESTZ
 Z=-` to "bisect" the last position - that is to move to a position
 half way between two positions. For example, if one received the
-following prompt from a TESTZ command:
+following prompt from a `TESTZ` command:
 
 ```text
 Recv: // Z position: 0.130 --> 0.230 <-- 0.280
@@ -166,7 +166,7 @@ use `Z=++` and `Z=--` to return directly to a past measurement - for
 example, after the above prompt a `TESTZ Z=--` command would move the
 nozzle to a Z position of 0.130.
 
-After finding a small amount of friction run the ACCEPT command:
+After finding a small amount of friction run the `ACCEPT` command:
 
 ```gcode
 ACCEPT
@@ -211,13 +211,13 @@ make further adjustment as needed. Adjustments of this type are
 typically in 10s of microns (.010mm).
 
 If the bottom layer consistently appears narrower than subsequent
-layers then one can use the SET_GCODE_OFFSET command to make a
+layers then one can use the `SET_GCODE_OFFSET` command to make a
 negative Z adjustment. If one is unsure, then one can decrease the Z
 adjustment until the bottom layer of prints exhibit a small bulge, and
 then back-off until it disappears.
 
 The easiest way to apply the desired Z adjustment is to create a
-START_PRINT g-code macro, arrange for the slicer to call that macro
-during the start of each print, and add a SET_GCODE_OFFSET command to
+`START_PRINT` G-Code macro, arrange for the slicer to call that macro
+during the start of each print, and add a `SET_GCODE_OFFSET` command to
 that macro. See the [Slicers](Slicers.md) document for further
 details.

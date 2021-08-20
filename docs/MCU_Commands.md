@@ -12,13 +12,13 @@ the low-level micro-controller commands.
 See the [protocol](Protocol.md) document for more information on the
 format of commands and their transmission. The commands here are
 described using their "printf" style syntax - for those unfamiliar
-with that format, just note that where a '%...' sequence is seen it
+with that format, just note that where a `%...` sequence is seen it
 should be replaced with an actual integer. For example, a description
-with "count=%c" could be replaced with the text "count=10". Note that
+with `count=%c` could be replaced with the text `count=10`. Note that
 parameters that are considered "enumerations" (see the above protocol
 document) take a string value which is automatically converted to an
 integer value for the micro-controller. This is common with parameters
-named "pin" (or that have a suffix of "_pin").
+named "pin" (or that have a suffix of `_pin`).
 
 ## Startup Commands
 

@@ -176,7 +176,7 @@ was renamed to `printer.heaters`.
 20200313: The default lcd layout for multi-extruder printers with a
 16x4 screen has changed. The single extruder screen layout is now the
 default and it will show the currently active extruder. To use the
-previous display layout set "display_group: _multiextruder_16x4" in
+previous display layout set `display_group: _multiextruder_16x4` in
 the [display] section of the printer.cfg file.
 
 20200308: The default `__test` menu item was removed. If the config

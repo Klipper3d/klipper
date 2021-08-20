@@ -54,7 +54,7 @@ The RESP_NEED_NODEID message format is:
 ## Data Packets
 
 A micro-controller that has been assigned a nodeid via the
-CMD_SET_NODEID command can send and receive data packets.
+`CMD_SET_NODEID` command can send and receive data packets.
 
 The packet data in messages using the node's receive CAN bus id
 (`canbus_nodeid * 2 + 256`) are simply appended to a buffer, and when

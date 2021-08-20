@@ -6,23 +6,26 @@ This document describes Filament Width Sensor host module. Hardware used for dev
 Sensor generates analog output based on calculated filament width. Output voltage always equals to detected filament width (Ex. 1.65v, 1.70v, 3.0v). Host module monitors voltage changes and adjusts extrusion multiplier.
 
 ## Configuration
-    [tsl1401cl_filament_width_sensor]
-    pin: analog5
-    # Analog input pin for sensor output on Ramps board
 
-    default_nominal_filament_diameter: 1.75
-    # This parameter is in millimeters (mm)
+```gcode
+[tsl1401cl_filament_width_sensor]
+pin: analog5
+# Analog input pin for sensor output on Ramps board
 
-    max_difference: 0.2
-    #  Maximum allowed filament diameter difference in millimeters (mm)
-    #  If difference between nominal filament diameter and sensor output is more
-    #  than +- max_difference, extrusion multiplier set back to %100
+default_nominal_filament_diameter: 1.75
+# This parameter is in millimeters (mm)
 
-    measurement_delay 100
-    #  The distance from sensor to the melting chamber/hot-end in millimeters (mm).
-    #  The filament between the sensor and the hot-end will be treated as the default_nominal_filament_diameter.
-    #  Host module works with FIFO logic. It keeps each sensor value and position in
-    #  an array and POP them back in correct position.
+max_difference: 0.2
+#  Maximum allowed filament diameter difference in millimeters (mm)
+#  If difference between nominal filament diameter and sensor output is more
+#  than +- max_difference, extrusion multiplier set back to %100
+
+measurement_delay 100
+#  The distance from sensor to the melting chamber/hot-end in millimeters (mm).
+#  The filament between the sensor and the hot-end will be treated as the default_nominal_filament_diameter.
+#  Host module works with FIFO logic. It keeps each sensor value and position in
+#  an array and POP them back in correct position.
+```
 
 Sensor readings done with 10 mm intervals by default. If necessary you are free to change this setting by editing ***MEASUREMENT_INTERVAL_MM*** parameter in **filament_width_sensor.py** file.
 

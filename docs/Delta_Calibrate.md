@@ -99,8 +99,8 @@ This calibration procedure requires printing a test object and
 measuring parts of that test object with digital calipers.
 
 Prior to running an enhanced delta calibration one must run the basic
-delta calibration (via the DELTA_CALIBRATE command) and save the
-results (via the SAVE_CONFIG command).
+delta calibration (via the `DELTA_CALIBRATE` command) and save the
+results (via the `SAVE_CONFIG` command).
 
 Use a slicer to generate G-Code from the
 [docs/prints/calibrate_size.stl](prints/calibrate_size.stl) file.
@@ -115,7 +115,7 @@ print size.
 
 Print the test object and wait for it to fully cool. The commands
 described below must be run with the same printer settings used to
-print the calibration object (don't run DELTA_CALIBRATE between
+print the calibration object (don't run `DELTA_CALIBRATE` between
 printing and measuring, or do something that would otherwise change
 the printer configuration).
 
@@ -213,35 +213,35 @@ DELTA_ANALYZE CALIBRATE=extended
 
 This command can take several minutes to complete. After completion it
 will calculate updated delta parameters (delta radius, tower angles,
-endstop positions, and arm lengths). Use the SAVE_CONFIG command to
+endstop positions, and arm lengths). Use the `SAVE_CONFIG` command to
 save and apply the settings:
 
 ```gcode
 SAVE_CONFIG
 ```
 
-The SAVE_CONFIG command will save both the updated delta parameters
-and information from the distance measurements. Future DELTA_CALIBRATE
+The `SAVE_CONFIG` command will save both the updated delta parameters
+and information from the distance measurements. Future `DELTA_CALIBRATE`
 commands will also utilize this distance information. Do not attempt
-to reenter the raw distance measurements after running SAVE_CONFIG, as
+to reenter the raw distance measurements after running `SAVE_CONFIG`, as
 this command changes the printer configuration and the raw
 measurements no longer apply.
 
 ### Additional notes
 
-* If the delta printer has good dimensional accuracy then the distance
+- If the delta printer has good dimensional accuracy then the distance
   between any two pillars should be around 74mm and the width of every
   pillar should be around 9mm. (Specifically, the goal is for the
   distance between any two pillars minus the width of one of the
   pillars to be exactly 65mm.) Should there be a dimensional
-  inaccuracy in the part then the DELTA_ANALYZE routine will calculate
+  inaccuracy in the part then the `DELTA_ANALYZE` routine will calculate
   new delta parameters using both the distance measurements and the
-  previous height measurements from the last DELTA_CALIBRATE command.
+  previous height measurements from the last `DELTA_CALIBRATE` command.
 
-* DELTA_ANALYZE may produce delta parameters that are surprising. For
+- `DELTA_ANALYZE` may produce delta parameters that are surprising. For
   example, it may suggest arm lengths that do not match the printer's
   actual arm lengths. Despite this, testing has shown that
-  DELTA_ANALYZE often produces superior results. It is believed that
+  `DELTA_ANALYZE` often produces superior results. It is believed that
   the calculated delta parameters are able to account for slight
   errors elsewhere in the hardware. For example, small differences in
   arm length may result in a tilt to the effector and some of that
@@ -256,4 +256,4 @@ confusing and poor results.
 
 Note that performing delta calibration will invalidate any previously
 obtained bed mesh. After performing a new delta calibration be sure to
-rerun BED_MESH_CALIBRATE.
+rerun `BED_MESH_CALIBRATE`.
