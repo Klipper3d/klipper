@@ -12,9 +12,9 @@ limited to 8 data bytes and an 11-bit CAN bus identifier. In order to
 support efficient communication, each micro-controller is assigned at
 run-time a unique 1-byte CAN bus nodeid (`canbus_nodeid`) for general
 Klipper command and response traffic. Klipper command messages going
-from host to micro-controller use the CAN bus id of `canbus_nodeid *
-2 + 256`, while Klipper response messages from micro-controller to
-host use `canbus_nodeid * 2 + 256 + 1`.
+from host to micro-controller use the CAN bus id of $canbus\_nodeid \times
+2 + 256$, while Klipper response messages from micro-controller to
+host use $canbus\_nodeid \times 2 + 256 + 1$.
 
 Each micro-controller has a factory assigned unique chip identifier
 that is used during id assignment. This identifier can exceed the
@@ -57,7 +57,7 @@ A micro-controller that has been assigned a nodeid via the
 `CMD_SET_NODEID` command can send and receive data packets.
 
 The packet data in messages using the node's receive CAN bus id
-(`canbus_nodeid * 2 + 256`) are simply appended to a buffer, and when
+($canbus\_nodeid \times 2 + 256$) are simply appended to a buffer, and when
 a complete [mcu protocol message](Protocol.md) is found its contents
 are parsed and processed. The data is treated as a byte stream - there
 is no requirement for the start of a Klipper message block to align
@@ -65,5 +65,5 @@ with the start of a CAN bus packet.
 
 Similarly, mcu protocol message responses are sent from
 micro-controller to host by copying the message data into one or more
-packets with the node's transmit CAN bus id (`canbus_nodeid * 2 +
-256 + 1`).
+packets with the node's transmit CAN bus id ($canbus\_nodeid \times 2 +
+256 + 1$).

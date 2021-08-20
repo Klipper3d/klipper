@@ -27,5 +27,5 @@ follows: `python2 scripts/make_version.py YOURDISTRONAME > klippy/.version`.
 ## Sample packaging script
 
 klipper-git is packaged for Arch Linux, and has a PKGBUILD (package build
-script) available at
-https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=klipper-git.
+script) available at [Arch Linux User Repository](https://aur.\
+archlinux.org/cgit/aur.git/tree/PKGBUILD?h=klipper-git).
