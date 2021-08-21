@@ -166,6 +166,7 @@ CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
+CONFIG ../../config/generic-bigtreetech-e3-rrf-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-bigtreetech-skr-2.cfg

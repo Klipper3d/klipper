@@ -347,13 +347,17 @@ are identified in green.
 
 ### Calibration
 
-`BED_MESH_CALIBRATE METHOD=[manual | automatic] [<probe_parameter>=<value>]
+`BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>]
  [<mesh_parameter>=<value>]`\
+_Default Profile:  default_\
 _Default Method:  automatic if a probe is detected, otherwise manual_
 
-Initiates the probing procedure for Bed Mesh Calibration.  If `METHOD=manual`
-is selected then manual probing will occur.  When switching between automatic
-and manual probing the generated mesh points will automatically be adjusted.
+Initiates the probing procedure for Bed Mesh Calibration.
+
+The mesh will be saved into a profile specified by the `PROFILE` parameter,
+or `default` if unspecified. If `METHOD=manual` is selected then manual probing
+will occur.  When switching between automatic and manual probing the generated
+mesh points will automatically be adjusted.
 
 It is possible to specify mesh parameters to modify the probed area.  The
 following parameters are available:

@@ -634,6 +634,8 @@ dir_pin:
 enable_pin:
 microsteps:
 rotation_distance:
+#full_steps_per_rotation:
+#gear_ratio:
 #   See the "stepper" section for a description of the above parameters.
 nozzle_diameter:
 #   Diameter of the nozzle orifice (in mm). This parameter must be
