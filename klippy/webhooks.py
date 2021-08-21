@@ -3,8 +3,10 @@
 # Copyright (C) 2020 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license
-import logging, socket, os, sys, errno, json
+import logging, socket, os, sys, errno, json, collections
 import gcode
+
+REQUEST_LOG_SIZE = 20
 
 # Json decodes strings as unicode types in Python 2.x.  This doesn't
 # play well with some parts of Klipper (particuarly displays), so we
@@ -119,6 +121,8 @@ class ServerSocket:
             self.sock.fileno(), self._handle_accept)
         printer.register_event_handler(
             'klippy:disconnect', self._handle_disconnect)
+        printer.register_event_handler(
+            "klippy:shutdown", self._handle_shutdown)
 
     def _handle_accept(self, eventtime):
         try:
@@ -138,6 +142,10 @@ class ServerSocket:
                 self.sock.close()
             except socket.error:
                 pass
+
+    def _handle_shutdown(self):
+        for client in self.clients.values():
+            client.dump_request_log()
 
     def _remove_socket_file(self, file_path):
         try:
@@ -165,6 +173,15 @@ class ClientConnection:
         self.partial_data = self.send_buffer = ""
         self.is_sending_data = False
         self.set_client_info("?", "New connection")
+        self.request_log = collections.deque([], REQUEST_LOG_SIZE)
+
+    def dump_request_log(self):
+        out = []
+        out.append("Dumping %d requests for client %d"
+                   % (len(self.request_log), self.uid,))
+        for eventtime, request in self.request_log:
+            out.append("Received %f: %s" % (eventtime, request))
+        logging.info("\n".join(out))
 
     def set_client_info(self, client_info, state_msg=None):
         if state_msg is None:
@@ -210,6 +227,7 @@ class ClientConnection:
         requests[0] = self.partial_data + requests[0]
         self.partial_data = requests.pop()
         for req in requests:
+            self.request_log.append((eventtime, req))
             try:
                 web_request = WebRequest(self, req)
             except Exception:
