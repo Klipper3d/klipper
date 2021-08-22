@@ -117,9 +117,9 @@ class MCU_stepper:
     def get_past_mcu_position(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         ffi_main, ffi_lib = chelper.get_ffi()
-        return ffi_lib.stepcompress_find_past_position(self._stepqueue, clock)
-    def get_past_commanded_position(self, print_time):
-        mcu_pos = self.get_past_mcu_position(print_time)
+        pos = ffi_lib.stepcompress_find_past_position(self._stepqueue, clock)
+        return int(pos)
+    def mcu_to_commanded_position(self, mcu_pos):
         return mcu_pos * self._step_dist - self._mcu_position_offset
     def dump_steps(self, count, start_clock, end_clock):
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -214,17 +214,11 @@ def PrinterStepper(config, units_in_radians=False):
 
 # Parse stepper gear_ratio config parameter
 def parse_gear_ratio(config, note_valid):
-    gear_ratio = config.get('gear_ratio', None, note_valid=note_valid)
-    if gear_ratio is None:
-        return 1.
+    gear_ratio = config.getlists('gear_ratio', (), seps=(':', ','), count=2,
+                                 parser=float, note_valid=note_valid)
     result = 1.
-    try:
-        gears = gear_ratio.split(',')
-        for gear in gears:
-            g1, g2 = [float(v.strip()) for v in gear.split(':')]
-            result *= g1 / g2
-    except:
-        raise config.error("Unable to parse gear_ratio: %s" % (gear_ratio,))
+    for g1, g2 in gear_ratio:
+        result *= g1 / g2
     return result
 
 # Obtain "step distance" information from a config section

@@ -104,8 +104,8 @@ class ADXL345:
         self.last_tx_time = 0.
         am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
               '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
-        axes_map = config.get('axes_map', 'x,y,z').split(',')
-        if len(axes_map) != 3 or any([a.strip() not in am for a in axes_map]):
+        axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
+        if any([a not in am for a in axes_map]):
             raise config.error("Invalid adxl345 axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
         self.data_rate = config.getint('rate', 3200)

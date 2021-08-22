@@ -82,6 +82,68 @@ actual commands and the above output. The generated data is useful for
 testing and inspection; it is not useful for sending to a real
 micro-controller.
 
+## Motion analysis and data logging
+
+Klipper supports logging its internal motion history, which can be
+later analyzed. To use this feature, Klipper must be started with the
+[API Server](API_Server.md) enabled.
+
+Data logging is enabled with the `data_logger.py` tool. For example:
+```
+~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog
+```
+
+This command will connect to the Klipper API Server, subscribe to
+status and motion information, and log the results. Two files are
+generated - a compressed data file and an index file (eg,
+`mylog.json.gz` and `mylog.index.gz`). After starting the logging, it
+is possible to complete prints and other actions - the logging will
+continue in the background. When done logging, hit `ctrl-c` to exit
+from the `data_logger.py` tool.
+
+The resulting files can be read and graphed using the `motan_graph.py`
+tool. To generate graphs on a Raspberry Pi, a one time step is
+necessary to install the "matplotlib" package:
+```
+sudo apt-get update
+sudo apt-get install python-matplotlib
+```
+However, it may be more convenient to copy the data files to a desktop
+class machine along with the Python code in the `scripts/motan/`
+directory. The motion analysis scripts should run on any machine with
+a recent version of [Python](https://python.org) and
+[Matplotlib](https://matplotlib.org/) installed.
+
+Graphs can be generated with a command like the following:
+```
+~/klipper/scripts/motan/motan_graph.py mylog -o mygraph.png
+```
+
+One can use the `-g` option to specify the datasets to graph (it takes
+a Python literal containing a list of lists). For example:
+```
+~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity"], ["trapq:toolhead:accel"]]'
+```
+
+The list of available datasets can be found using the `-l` option -
+for example:
+```
+~/klipper/scripts/motan/motan_graph.py -l
+```
+
+It is also possible to specify matplotlib plot options for each
+dataset:
+```
+~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity?color=red"]]'
+```
+Many matplotlib options are available; some examples are "color",
+"label", "alpha", and "linestyle".
+
+The `motan_graph.py` tool supports several other command-line
+options - use the `--help` option to see a list. It may also be
+convenient to view/modify the
+[motan_graph.py](../scripts/motan/motan_graph.py) script itself.
+
 ## Generating load graphs
 
 The Klippy log file (/tmp/klippy.log) stores statistics on bandwidth,
