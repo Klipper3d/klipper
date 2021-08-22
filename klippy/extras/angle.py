@@ -3,11 +3,260 @@
 # Copyright (C) 2021,2022  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import logging, math, threading
 from . import bus, motion_report
 
 MIN_MSG_TIME = 0.100
 TCODE_ERROR = 0xff
+
+TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2660", "tmc5160"]
+
+CALIBRATION_BITS = 6 # 64 entries
+ANGLE_BITS = 16 # angles range from 0..65535
+
+class AngleCalibration:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.name = config.get_name()
+        self.stepper_name = config.get('stepper', None)
+        if self.stepper_name is None:
+            # No calibration
+            return
+        try:
+            import numpy
+        except:
+            raise config.error("Angle calibration requires numpy module")
+        sconfig = config.getsection(self.stepper_name)
+        sconfig.getint('microsteps', note_valid=False)
+        self.tmc_module = self.mcu_stepper = None
+        # Current calibration data
+        self.mcu_pos_offset = None
+        self.angle_phase_offset = 0.
+        self.calibration_reversed = False
+        self.calibration = []
+        cal = config.get('calibrate', None)
+        if cal is not None:
+            data = [d.strip() for d in cal.split(',')]
+            angles = [float(d) for d in data if d]
+            self.load_calibration(angles)
+        # Register commands
+        self.printer.register_event_handler("stepper:sync_mcu_position",
+                                            self.handle_sync_mcu_pos)
+        self.printer.register_event_handler("klippy:connect", self.connect)
+        cname = self.name.split()[-1]
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command("ANGLE_CALIBRATE", "CHIP",
+                                   cname, self.cmd_ANGLE_CALIBRATE,
+                                   desc=self.cmd_ANGLE_CALIBRATE_help)
+    def handle_sync_mcu_pos(self, mcu_stepper):
+        if mcu_stepper.get_name() == self.stepper_name:
+            self.mcu_pos_offset = None
+    def calc_mcu_pos_offset(self, sample):
+        # Lookup phase information
+        mcu_phase_offset, phases = self.tmc_module.get_phase_offset()
+        if mcu_phase_offset is None:
+            return
+        # Find mcu position at time of sample
+        angle_time, angle_pos = sample
+        mcu_pos = self.mcu_stepper.get_past_mcu_position(angle_time)
+        # Convert angle_pos to mcu_pos units
+        microsteps, full_steps = self.get_microsteps()
+        angle_to_mcu_pos = full_steps * microsteps / float(1<<ANGLE_BITS)
+        angle_mpos = angle_pos * angle_to_mcu_pos
+        # Calculate adjustment for stepper phases
+        phase_diff = ((angle_mpos + self.angle_phase_offset * angle_to_mcu_pos)
+                      - (mcu_pos + mcu_phase_offset)) % phases
+        if phase_diff > phases//2:
+            phase_diff -= phases
+        # Store final offset
+        self.mcu_pos_offset = mcu_pos - (angle_mpos - phase_diff)
+    def apply_calibration(self, samples):
+        calibration = self.calibration
+        if not calibration:
+            return None
+        calibration_reversed = self.calibration_reversed
+        interp_bits = ANGLE_BITS - CALIBRATION_BITS
+        interp_mask = (1 << interp_bits) - 1
+        interp_round = 1 << (interp_bits - 1)
+        for i, (samp_time, angle) in enumerate(samples):
+            bucket = (angle & 0xffff) >> interp_bits
+            cal1 = calibration[bucket]
+            cal2 = calibration[bucket + 1]
+            adj = (angle & interp_mask) * (cal2 - cal1)
+            adj = cal1 + ((adj + interp_round) >> interp_bits)
+            angle_diff = (angle - adj) & 0xffff
+            angle_diff -= (angle_diff & 0x8000) << 1
+            new_angle = angle - angle_diff
+            if calibration_reversed:
+                new_angle = -new_angle
+            samples[i] = (samp_time, new_angle)
+        if self.mcu_pos_offset is None:
+            self.calc_mcu_pos_offset(samples[0])
+            if self.mcu_pos_offset is None:
+                return None
+        return self.mcu_stepper.mcu_to_commanded_position(self.mcu_pos_offset)
+    def load_calibration(self, angles):
+        # Calculate linear intepolation calibration buckets by solving
+        # linear equations
+        angle_max = 1 << ANGLE_BITS
+        calibration_count = 1 << CALIBRATION_BITS
+        bucket_size = angle_max // calibration_count
+        full_steps = len(angles)
+        nominal_step = float(angle_max) / full_steps
+        self.angle_phase_offset = (angles.index(min(angles)) & 3) * nominal_step
+        self.calibration_reversed = angles[-2] > angles[-1]
+        if self.calibration_reversed:
+            angles = list(reversed(angles))
+        first_step = angles.index(min(angles))
+        angles = angles[first_step:] + angles[:first_step]
+        import numpy
+        eqs = numpy.zeros((full_steps, calibration_count))
+        ans = numpy.zeros((full_steps,))
+        for step, angle in enumerate(angles):
+            int_angle = int(angle + .5) % angle_max
+            bucket = int(int_angle / bucket_size)
+            bucket_start = bucket * bucket_size
+            ang_diff = angle - bucket_start
+            ang_diff_per = ang_diff / bucket_size
+            eq = eqs[step]
+            eq[bucket] = 1. - ang_diff_per
+            eq[(bucket + 1) % calibration_count] = ang_diff_per
+            ans[step] = float(step * nominal_step)
+            if bucket + 1 >= calibration_count:
+                ans[step] -= ang_diff_per * angle_max
+        sol = numpy.linalg.lstsq(eqs, ans, rcond=None)[0]
+        isol = [int(s + .5) for s in sol]
+        self.calibration = isol + [isol[0] + angle_max]
+    def lookup_tmc(self):
+        for driver in TRINAMIC_DRIVERS:
+            driver_name = "%s %s" % (driver, self.stepper_name)
+            module = self.printer.lookup_object(driver_name, None)
+            if module is not None:
+                return module
+        raise self.printer.command_error("Unable to find TMC driver for %s"
+                                         % (self.stepper_name,))
+    def connect(self):
+        self.tmc_module = self.lookup_tmc()
+        fmove = self.printer.lookup_object('force_move')
+        self.mcu_stepper = fmove.lookup_stepper(self.stepper_name)
+    def get_microsteps(self):
+        configfile = self.printer.lookup_object('configfile')
+        sconfig = configfile.get_status(None)['settings']
+        stconfig = sconfig.get(self.stepper_name, {})
+        microsteps = stconfig['microsteps']
+        full_steps = stconfig['full_steps_per_rotation']
+        return microsteps, full_steps
+    def get_stepper_phase(self):
+        mcu_phase_offset, phases = self.tmc_module.get_phase_offset()
+        if mcu_phase_offset is None:
+            raise self.printer.command_error("Driver phase not known for %s"
+                                             % (self.stepper_name,))
+        mcu_pos = self.mcu_stepper.get_mcu_position()
+        return (mcu_pos + mcu_phase_offset) % phases
+    def do_calibration_moves(self):
+        move = self.printer.lookup_object('force_move').manual_move
+        # Start data collection
+        angle_sensor = self.printer.lookup_object(self.name)
+        cconn = angle_sensor.start_internal_client()
+        # Move stepper several turns (to allow internal sensor calibration)
+        microsteps, full_steps = self.get_microsteps()
+        mcu_stepper = self.mcu_stepper
+        step_dist = mcu_stepper.get_step_dist()
+        full_step_dist = step_dist * microsteps
+        rotation_dist = full_steps * full_step_dist
+        align_dist = step_dist * self.get_stepper_phase()
+        move_time = 0.010
+        move_speed = full_step_dist / move_time
+        move(mcu_stepper, -(rotation_dist+align_dist), move_speed)
+        move(mcu_stepper, 2. * rotation_dist, move_speed)
+        move(mcu_stepper, -2. * rotation_dist, move_speed)
+        move(mcu_stepper, .5 * rotation_dist - full_step_dist, move_speed)
+        # Move to each full step position
+        toolhead = self.printer.lookup_object('toolhead')
+        times = []
+        samp_dist = full_step_dist
+        for i in range(2 * full_steps):
+            move(mcu_stepper, samp_dist, move_speed)
+            start_query_time = toolhead.get_last_move_time() + 0.050
+            end_query_time = start_query_time + 0.050
+            times.append((start_query_time, end_query_time))
+            toolhead.dwell(0.150)
+            if i == full_steps-1:
+                # Reverse direction and test each full step again
+                move(mcu_stepper, .5 * rotation_dist, move_speed)
+                move(mcu_stepper, -.5 * rotation_dist + samp_dist, move_speed)
+                samp_dist = -samp_dist
+        move(mcu_stepper, .5*rotation_dist + align_dist, move_speed)
+        toolhead.wait_moves()
+        # Finish data collection
+        cconn.finalize()
+        msgs = cconn.get_messages()
+        # Correlate query responses
+        cal = {}
+        step = 0
+        for msg in msgs:
+            for query_time, pos in msg['params']['data']:
+                # Add to step tracking
+                while step < len(times) and query_time > times[step][1]:
+                    step += 1
+                if step < len(times) and query_time >= times[step][0]:
+                    cal.setdefault(step, []).append(pos)
+        if len(cal) != len(times):
+            raise self.printer.command_error(
+                "Failed calibration - incomplete sensor data")
+        fcal = { i: cal[i] for i in range(full_steps) }
+        rcal = { full_steps-i-1: cal[i+full_steps] for i in range(full_steps) }
+        return fcal, rcal
+    def calc_angles(self, meas):
+        total_count = total_variance = 0
+        angles = {}
+        for step, data in meas.items():
+            count = len(data)
+            angle_avg = float(sum(data)) / count
+            angles[step] = angle_avg
+            total_count += count
+            total_variance += sum([(d - angle_avg)**2 for d in data])
+        return angles, math.sqrt(total_variance / total_count), total_count
+    cmd_ANGLE_CALIBRATE_help = "Calibrate angle sensor to stepper motor"
+    def cmd_ANGLE_CALIBRATE(self, gcmd):
+        # Perform calibration movement and capture
+        old_calibration = self.calibration
+        self.calibration = []
+        try:
+            fcal, rcal = self.do_calibration_moves()
+        finally:
+            self.calibration = old_calibration
+        # Calculate each step position average and variance
+        microsteps, full_steps = self.get_microsteps()
+        fangles, fstd, ftotal = self.calc_angles(fcal)
+        rangles, rstd, rtotal = self.calc_angles(rcal)
+        if (len({a: i for i, a in fangles.items()}) != len(fangles)
+            or len({a: i for i, a in rangles.items()}) != len(rangles)):
+            raise self.printer.command_error(
+                "Failed calibration - sensor not updating for each step")
+        merged = { i: fcal[i] + rcal[i] for i in range(full_steps) }
+        angles, std, total = self.calc_angles(merged)
+        gcmd.respond_info("angle: stddev=%.3f (%.3f forward / %.3f reverse)"
+                          " in %d queries" % (std, fstd, rstd, total))
+        # Order data with lowest/highest magnet position first
+        anglist = [angles[i] % 0xffff for i in range(full_steps)]
+        if angles[0] > angles[1]:
+            first_ang = max(anglist)
+        else:
+            first_ang = min(anglist)
+        first_phase = anglist.index(first_ang) & ~3
+        anglist = anglist[first_phase:] + anglist[:first_phase]
+        # Save results
+        cal_contents = []
+        for i, angle in enumerate(anglist):
+            if not i % 8:
+                cal_contents.append('\n')
+            cal_contents.append("%.1f" % (angle,))
+            cal_contents.append(',')
+        cal_contents.pop()
+        configfile = self.printer.lookup_object('configfile')
+        configfile.remove_section(self.name)
+        configfile.set(self.name, 'calibrate', ''.join(cal_contents))
 
 class HelperA1333:
     SPI_MODE = 3
@@ -51,6 +300,7 @@ class Angle:
         self.printer = config.get_printer()
         self.sample_period = config.getfloat('sample_period', SAMPLE_PERIOD,
                                              above=0.)
+        self.calibration = AngleCalibration(config)
         # Measurement conversion
         self.start_clock = self.time_shift = self.sample_ticks = 0
         self.last_sequence = self.last_angle = 0
@@ -148,7 +398,9 @@ class Angle:
         samples, error_count = self._extract_samples(raw_samples)
         if not samples:
             return {}
-        return {'data': samples, 'errors': error_count}
+        offset = self.calibration.apply_calibration(samples)
+        return {'data': samples, 'errors': error_count,
+                'position_offset': offset}
     def _start_measurements(self):
         if self.is_measuring():
             return
@@ -183,6 +435,8 @@ class Angle:
         self.api_dump.add_client(web_request)
         hdr = ('time', 'angle')
         web_request.send({'header': hdr})
+    def start_internal_client(self):
+        return self.api_dump.add_internal_client()
 
 def load_config_prefix(config):
     return Angle(config)

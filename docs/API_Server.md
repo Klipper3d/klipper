@@ -354,7 +354,8 @@ A request may look like:
 and might return:
 `{"id": 123,"result":{"header":["time","angle"]}}`
 and might later produce asynchronous messages such as:
-`{"params":{"errors":0,"data":[[1290.951905,-5063],[1290.952321,-5065]]}}`
+`{"params":{"position_offset":3.151562,"errors":0,
+"data":[[1290.951905,-5063],[1290.952321,-5065]]}}`
 
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.

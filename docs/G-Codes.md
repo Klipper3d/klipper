@@ -106,6 +106,27 @@ VAL=<value>`: Writes raw "value" into a register "register". Both
 "value" and "register" can be a decimal or a hexadecimal integer. Use
 with care, and refer to ADXL345 data sheet for the reference.
 
+### [angle]
+
+The following commands are available when an
+[angle config section](Config_Reference.md#angle) is enabled.
+
+#### ANGLE_CALIBRATE
+`ANGLE_CALIBRATE CHIP=<chip_name>`: Perform angle calibration on the
+given sensor (there must be an `[angle chip_name]` config section that
+has specified a `stepper` parameter). IMPORTANT - this tool will
+command the stepper motor to move without checking the normal
+kinematic boundary limits. Ideally the motor should be disconnected
+from any printer carriage before performing calibration. If the
+stepper can not be disconnected from the printer, make sure the
+carriage is near the center of its rail before starting calibration.
+(The stepper motor may move forwards or backwards two full rotations
+during this test.) After completing this test use the `SAVE_CONFIG`
+command to save the calibration data to the config file. In order to
+use this tool the Python "numpy" package must be installed (see the
+[measuring resonance document](Measuring_Resonances.md#software-installation)
+for more information).
+
 ### [bed_mesh]
 
 The following commands are available when the
