@@ -18,7 +18,7 @@ struct adxl345 {
     struct spidev_s *spi;
     uint16_t sequence, limit_count;
     uint8_t flags, data_count;
-    uint8_t data[48];
+    uint8_t data[50];
 };
 
 enum {
@@ -85,17 +85,37 @@ adxl_reschedule_timer(struct adxl345 *ax)
 #define AM_READ  0x80
 #define AM_MULTI 0x40
 
+#define SET_FIFO_CTL 0x90
+
 // Query accelerometer data
 static void
 adxl_query(struct adxl345 *ax, uint8_t oid)
 {
+    // Read data
     uint8_t msg[9] = { AR_DATAX0 | AM_READ | AM_MULTI, 0, 0, 0, 0, 0, 0, 0, 0 };
     spidev_transfer(ax->spi, 1, sizeof(msg), msg);
-    memcpy(&ax->data[ax->data_count], &msg[1], 6);
-    ax->data_count += 6;
-    if (ax->data_count + 6 > ARRAY_SIZE(ax->data))
-        adxl_report(ax, oid);
+    // Extract x, y, z measurements
     uint_fast8_t fifo_status = msg[8] & ~0x80; // Ignore trigger bit
+    uint8_t *d = &ax->data[ax->data_count];
+    if (((msg[2] & 0xf0) && (msg[2] & 0xf0) != 0xf0)
+        || ((msg[4] & 0xf0) && (msg[4] & 0xf0) != 0xf0)
+        || ((msg[6] & 0xf0) && (msg[6] & 0xf0) != 0xf0)
+        || (msg[7] != SET_FIFO_CTL) || (fifo_status > 32)) {
+        // Data error - may be a CS, MISO, MOSI, or SCLK glitch
+        d[0] = d[1] = d[2] = d[3] = d[4] = 0xff;
+        fifo_status = 0;
+    } else {
+        // Copy data
+        d[0] = msg[1]; // x low bits
+        d[1] = msg[3]; // y low bits
+        d[2] = msg[5]; // z low bits
+        d[3] = (msg[2] & 0x1f) | (msg[6] << 5); // x high bits and z high bits
+        d[4] = (msg[4] & 0x1f) | ((msg[6] << 2) & 0x60); // y high and z high
+    }
+    ax->data_count += 5;
+    if (ax->data_count + 5 > ARRAY_SIZE(ax->data))
+        adxl_report(ax, oid);
+    // Check fifo status
     if (fifo_status >= 31)
         ax->limit_count++;
     if (fifo_status > 1 && fifo_status <= 32) {

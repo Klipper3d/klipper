@@ -21,6 +21,7 @@ QUERY_RATES = {
 }
 
 ADXL345_DEV_ID = 0xe5
+SET_FIFO_CTL = 0x90
 
 FREEFALL_ACCEL = 9.80665 * 1000.
 SCALE = 0.0039 * FREEFALL_ACCEL # 3.9mg/LSB * Earth gravity in mm/s**2
@@ -205,6 +206,9 @@ class ClockSyncRegression:
 
 MIN_MSG_TIME = 0.100
 
+BYTES_PER_SAMPLE = 5
+SAMPLES_PER_BLOCK = 10
+
 # Printer class that controls ADXL345 chip
 class ADXL345:
     def __init__(self, config):
@@ -236,7 +240,8 @@ class ADXL345:
         mcu.register_config_callback(self._build_config)
         mcu.register_response(self._handle_adxl345_data, "adxl345_data", oid)
         # Clock tracking
-        self.last_sequence = self.last_limit_count = self.max_query_duration = 0
+        self.last_sequence = self.max_query_duration = 0
+        self.last_limit_count = self.last_error_count = 0
         self.clock_sync = ClockSyncRegression(self.mcu, 640)
         # API server endpoints
         self.api_dump = motion_report.APIDumpHelper(
@@ -285,24 +290,31 @@ class ADXL345:
         time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
         # Process every message in raw_samples
         count = seq = 0
-        samples = [None] * (len(raw_samples) * 8)
+        samples = [None] * (len(raw_samples) * SAMPLES_PER_BLOCK)
         for params in raw_samples:
             seq_diff = (last_sequence - params['sequence']) & 0xffff
             seq_diff -= (seq_diff & 0x8000) << 1
             seq = last_sequence - seq_diff
             d = bytearray(params['data'])
-            len_d = len(d)
-            sdata = [(d[i] | ((d[i+1] & 0x1f) << 8)) - ((d[i+1] & 0x10) << 9)
-                     for i in range(0, len_d-1, 2)]
-            msg_cdiff = seq * 8 - chip_base
-            for i in range(len_d // 6):
-                x = round(sdata[i*3 + x_pos] * x_scale, 6)
-                y = round(sdata[i*3 + y_pos] * y_scale, 6)
-                z = round(sdata[i*3 + z_pos] * z_scale, 6)
+            msg_cdiff = seq * SAMPLES_PER_BLOCK - chip_base
+            for i in range(len(d) // BYTES_PER_SAMPLE):
+                d_xyz = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
+                xlow, ylow, zlow, xzhigh, yzhigh = d_xyz
+                if yzhigh & 0x80:
+                    self.last_error_count += 1
+                    continue
+                rx = (xlow | ((xzhigh & 0x1f) << 8)) - ((xzhigh & 0x10) << 9)
+                ry = (ylow | ((yzhigh & 0x1f) << 8)) - ((yzhigh & 0x10) << 9)
+                rz = ((zlow | ((xzhigh & 0xe0) << 3) | ((yzhigh & 0xe0) << 6))
+                      - ((yzhigh & 0x40) << 7))
+                raw_xyz = (rx, ry, rz)
+                x = round(raw_xyz[x_pos] * x_scale, 6)
+                y = round(raw_xyz[y_pos] * y_scale, 6)
+                z = round(raw_xyz[z_pos] * z_scale, 6)
                 ptime = round(time_base + (msg_cdiff + i) * inv_freq, 6)
                 samples[count] = (ptime, x, y, z)
                 count += 1
-        self.clock_sync.set_last_chip_clock(seq * 8 + i)
+        self.clock_sync.set_last_chip_clock(seq * SAMPLES_PER_BLOCK + i)
         del samples[count:]
         return samples
     def _update_clock(self, minclock=0):
@@ -332,7 +344,8 @@ class ADXL345:
                                           self.mcu.seconds_to_clock(.000005))
             return
         self.max_query_duration = 2 * duration
-        msg_count = sequence * 8 + buffered // 6 + fifo
+        msg_count = (sequence * SAMPLES_PER_BLOCK
+                     + buffered // BYTES_PER_SAMPLE + fifo)
         # The "chip clock" is the message counter plus .5 for average
         # inaccuracy of query responses and plus .5 for assumed offset
         # of adxl345 hw processing time.
@@ -352,7 +365,7 @@ class ADXL345:
         self.set_reg(REG_DATA_FORMAT, 0x0B)
         self.set_reg(REG_FIFO_CTL, 0x00)
         self.set_reg(REG_BW_RATE, QUERY_RATES[self.data_rate])
-        self.set_reg(REG_FIFO_CTL, 0x80)
+        self.set_reg(REG_FIFO_CTL, SET_FIFO_CTL)
         # Setup samples
         with self.lock:
             self.raw_samples = []
@@ -367,7 +380,7 @@ class ADXL345:
         logging.info("ADXL345 starting '%s' measurements", self.name)
         # Initialize clock tracking
         self.last_sequence = 0
-        self.last_limit_count = 0
+        self.last_limit_count = self.last_error_count = 0
         self.clock_sync.reset(reqclock, 0)
         self.max_query_duration = 1 << 31
         self._update_clock(minclock=reqclock)
@@ -392,7 +405,8 @@ class ADXL345:
         samples = self._extract_samples(raw_samples)
         if not samples:
             return {}
-        return {'data': samples, 'overflows': self.last_limit_count}
+        return {'data': samples, 'errors': self.last_error_count,
+                'overflows': self.last_limit_count}
     def _api_startstop(self, is_start):
         if is_start:
             self._start_measurements()
