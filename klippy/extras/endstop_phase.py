@@ -67,11 +67,7 @@ class EndstopPhase:
         self.endstop_phase = None
         trigger_phase = config.get('trigger_phase', None)
         if trigger_phase is not None:
-            try:
-                p, ps = [int(v.strip()) for v in trigger_phase.split('/')]
-            except:
-                raise config.error("Unable to parse trigger_phase '%s'"
-                                   % (trigger_phase,))
+            p, ps = config.getintlist('trigger_phase', sep='/', count=2)
             if p >= ps:
                 raise config.error("Invalid trigger_phase '%s'"
                                    % (trigger_phase,))

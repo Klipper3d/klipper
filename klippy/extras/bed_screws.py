@@ -1,16 +1,8 @@
 # Helper script to adjust bed screws
 #
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
-def parse_coord(config, param):
-    pair = config.get(param).strip().split(',', 1)
-    try:
-        return (float(pair[0]), float(pair[1]))
-    except:
-        raise config.error("%s:%s needs to be an x,y coordinate" % (
-            config.get_name(), param))
 
 class BedScrews:
     def __init__(self, config):
@@ -26,12 +18,13 @@ class BedScrews:
             prefix = "screw%d" % (i + 1,)
             if config.get(prefix, None) is None:
                 break
-            screw_coord = parse_coord(config, prefix)
+            screw_coord = config.getfloatlist(prefix, count=2)
             screw_name = "screw at %.3f,%.3f" % screw_coord
             screw_name = config.get(prefix + "_name", screw_name)
             screws.append((screw_coord, screw_name))
-            if config.get(prefix + "_fine_adjust", None) is not None:
-                fine_coord = parse_coord(config, prefix + "_fine_adjust")
+            pfa = prefix + "_fine_adjust"
+            if config.get(pfa, None) is not None:
+                fine_coord = config.getfloatlist(pfa, count=2)
                 fine_adjust.append((fine_coord, screw_name))
         if len(screws) < 3:
             raise config.error("bed_screws: Must have at least three screws")
