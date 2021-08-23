@@ -94,7 +94,8 @@ later analyzed. To use this feature, Klipper must be started with the
 [API Server](API_Server.md) enabled.
 
 Data logging is enabled with the `data_logger.py` tool. For example:
-```
+
+```bash
 ~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog
 ```
 
@@ -109,10 +110,12 @@ from the `data_logger.py` tool.
 The resulting files can be read and graphed using the `motan_graph.py`
 tool. To generate graphs on a Raspberry Pi, a one time step is
 necessary to install the "matplotlib" package:
-```
+
+```bash
 sudo apt-get update
 sudo apt-get install python-matplotlib
 ```
+
 However, it may be more convenient to copy the data files to a desktop
 class machine along with the Python code in the `scripts/motan/`
 directory. The motion analysis scripts should run on any machine with
@@ -120,27 +123,32 @@ a recent version of [Python](https://python.org) and
 [Matplotlib](https://matplotlib.org/) installed.
 
 Graphs can be generated with a command like the following:
-```
+
+```bash
 ~/klipper/scripts/motan/motan_graph.py mylog -o mygraph.png
 ```
 
 One can use the `-g` option to specify the datasets to graph (it takes
 a Python literal containing a list of lists). For example:
-```
+
+```bash
 ~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity"], ["trapq:toolhead:accel"]]'
 ```
 
 The list of available datasets can be found using the `-l` option -
 for example:
-```
+
+```bash
 ~/klipper/scripts/motan/motan_graph.py -l
 ```
 
 It is also possible to specify matplotlib plot options for each
 dataset:
-```
+
+```bash
 ~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity?color=red"]]'
 ```
+
 Many matplotlib options are available; some examples are "color",
 "label", "alpha", and "linestyle".
 
