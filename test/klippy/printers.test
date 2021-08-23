@@ -25,6 +25,7 @@ CONFIG ../../config/generic-ultimaker-ultimainboard-v2.cfg
 CONFIG ../../config/kit-zav3d-2019.cfg
 CONFIG ../../config/printer-adimlab-2018.cfg
 CONFIG ../../config/printer-anycubic-4max-2018.cfg
+CONFIG ../../config/printer-anycubic-4maxpro-2.0-2021.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
