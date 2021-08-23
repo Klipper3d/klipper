@@ -104,13 +104,11 @@ class ADXLCommandHelper:
                                    desc=self.cmd_ADXL345_DEBUG_WRITE_help)
     cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
-        if not self.chip.is_measuring():
+        if self.bg_client is None:
             # Start measurements
             self.bg_client = self.chip.start_internal_client()
             gcmd.respond_info("adxl345 measurements started")
             return
-        if self.bg_client is None:
-            raise gcmd.error("adxl345 measurements in progress")
         # End measurements
         name = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not name.replace('-', '').replace('_', '').isalnum():
@@ -128,8 +126,6 @@ class ADXLCommandHelper:
                           % (filename,))
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
     def cmd_ACCELEROMETER_QUERY(self, gcmd):
-        if self.chip.is_measuring():
-            raise gcmd.error("adxl345 measurements in progress")
         aclient = self.chip.start_internal_client()
         self.printer.lookup_object('toolhead').dwell(1.)
         aclient.finish_measurements()
@@ -141,15 +137,11 @@ class ADXLCommandHelper:
                           % (accel_x, accel_y, accel_z))
     cmd_ADXL345_DEBUG_READ_help = "Query accelerometer register (for debugging)"
     def cmd_ADXL345_DEBUG_READ(self, gcmd):
-        if self.chip.is_measuring():
-            raise gcmd.error("adxl345 measurements in progress")
         reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
         gcmd.respond_info("ADXL345 REG[0x%x] = 0x%x" % (reg, val))
     cmd_ADXL345_DEBUG_WRITE_help = "Set accelerometer register (for debugging)"
     def cmd_ADXL345_DEBUG_WRITE(self, gcmd):
-        if self.chip.is_measuring():
-            raise gcmd.error("adxl345 measurements in progress")
         reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
@@ -413,9 +405,6 @@ class ADXL345:
         hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
         web_request.send({'header': hdr})
     def start_internal_client(self):
-        if self.is_measuring():
-            raise self.printer.command_error(
-                "ADXL345 measurement already in progress")
         cconn = self.api_dump.add_internal_client()
         return ADXL345QueryHelper(self.printer, cconn)
 
