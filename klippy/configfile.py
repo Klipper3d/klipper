@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, glob, re, time, logging, ConfigParser as configparser, StringIO
+import os, glob, re, time, logging, ConfigParser as configparser, StringIO, shutil
 
 error = configparser.Error
 
@@ -360,8 +360,13 @@ class PrinterConfig:
             f = open(temp_name, 'wb')
             f.write(data)
             f.close()
-            os.rename(cfgname, backup_name)
-            os.rename(temp_name, cfgname)
+            if os.path.islink(cfgname):
+                link_target = os.path.realpath(os.path.expanduser(cfgname))
+                shutil.copy(link_target, backup_name)
+                os.rename(temp_name, link_target)
+            else:
+                os.rename(cfgname, backup_name)
+                os.rename(temp_name, cfgname)
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
