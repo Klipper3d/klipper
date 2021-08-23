@@ -224,10 +224,10 @@ The following standard commands are supported:
   FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
   each Z height during a print. The tool will run the given COMMAND
   with the given PARAMETER assigned to the value using the formula
-  $value = start + factor \times z_{height}$. If BAND is provided then the
+  `value = start + factor * z_height`. If BAND is provided then the
   adjustment will only be made every BAND millimeters of z height - in
-  that case the formula used is $value = start + factor \times
-  (\lfloor{\frac{z_{height}}{band}}\rfloor + .5) \times band$.
+  that case the formula used is `value = start + factor *
+  ((floor(z_height / band) + .5) * band)`.
 - `SET_DISPLAY_GROUP [DISPLAY=<display>] GROUP=<group>`: Set the
   active display group of an lcd display. This allows to define
   multiple display data groups in the config,

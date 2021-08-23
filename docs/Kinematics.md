@@ -28,8 +28,9 @@ inverse is not always true).
 
 Klipper implements constant acceleration. The key formula for constant
 acceleration is:
-
-$\vec{v}(time) = \vec{v}_{start} + a \times t$
+```
+velocity(time) = start_velocity + accel*time
+```
 
 ## Trapezoid generator
 
@@ -91,8 +92,9 @@ velocity"), and the junction speeds for other angles are derived from
 that.
 
 Key formula for look-ahead:
-
-$\vec{v}_{end}^2 = \vec{v}_{start}^2 + 2 \times a \times x_{move}$
+```
+end_velocity^2 = start_velocity^2 + 2*accel*move_distance
+```
 
 ### Smoothed look-ahead
 
@@ -146,21 +148,21 @@ these calculated times.
 
 The key formula to determine how far a move should travel under
 constant acceleration is:
-
-$d_{move} = (\vec{v}_{start} + .5 \times a \times t_{move}) \times t_{move}$
-
+```
+move_distance = (start_velocity + .5 * accel * move_time) * move_time
+```
 and the key formula for movement with constant velocity is:
-
-$d_{move} = \vec{v}_{cruise} \times t_{move}$
+```
+move_distance = cruise_velocity * move_time
+```
 
 The key formulas for determining the cartesian coordinate of a move
 given a move distance is:
-
-$x_{cartesian} = x_{start} + \frac{d_{move} \times \sum{x_{movement}}}{\sum{d_{movement}}}$
-
-$y_{cartesian} = y_{start} + \frac{d_{move} \times \sum{y_{movement}}}{\sum{d_{movement}}}$
-
-$z_{cartesian} = z_{start} + \frac{d_{move} \times \sum{z_{movement}}}{\sum{d_{movement}}}$
+```
+cartesian_x_position = start_x + move_distance * total_x_movement / total_movement
+cartesian_y_position = start_y + move_distance * total_y_movement / total_movement
+cartesian_z_position = start_z + move_distance * total_z_movement / total_movement
+```
 
 ### Cartesian Robots
 
@@ -169,28 +171,31 @@ movement on each axis is directly related to the movement in cartesian
 space.
 
 Key formulas:
-
-$x_{stepper} = x_{cartesian}$
-$y_{stepper} = y_{cartesian}$
-$z_{stepper} = z_{cartesian}$
+```
+stepper_x_position = cartesian_x_position
+stepper_y_position = cartesian_y_position
+stepper_z_position = cartesian_z_position
+```
 
 ### CoreXY Robots
 
 Generating steps on a CoreXY machine is only a little more complex
 than basic cartesian robots. The key formulas are:
-
-$a_{stepper} = x_{cartesian} + y_{cartesian}$
-$b_{stepper} = x_{cartesian} - y_{cartesian}$
-$z_{stepper} = z_{cartesian}$
+```
+stepper_a_position = cartesian_x_position + cartesian_y_position
+stepper_b_position = cartesian_x_position - cartesian_y_position
+stepper_z_position = cartesian_z_position
+```
 
 ### Delta Robots
 
 Step generation on a delta robot is based on Pythagoras's theorem:
-
-$x_{stepper} = \sqrt{l_{arm}^2
-                         - (x_{cartesian\ position} - x_{tower\ position})^2
-                         - (y_{cartesian\ position} - y_{tower\ position})^2}
-                     + z_{cartesian\ position}$
+```
+stepper_position = (sqrt(arm_length^2
+                         - (cartesian_x_position - tower_x_position)^2
+                         - (cartesian_y_position - tower_y_position)^2)
+                    + cartesian_z_position)
+```
 
 ### Stepper motor acceleration limits
 
@@ -223,8 +228,9 @@ movement.
 
 Basic extruder movement is simple to calculate. The step time
 generation uses the same formulas that cartesian robots use:
-
-$e_{stepper} = e_{requested}$
+```
+stepper_position = requested_e_position
+```
 
 ### Pressure advance
 
@@ -250,8 +256,9 @@ through the nozzle orifice (as in
 [Poiseuille's law](https://en.wikipedia.org/wiki/Poiseuille_law)). The
 key idea is that the relationship between filament, pressure, and flow
 rate can be modeled using a linear coefficient:
-
-$x_{pa} = x_{nominal} + PA \times \vec{v}_{nominal}$
+```
+pa_position = nominal_position + pressure_advance_coefficient * nominal_velocity
+```
 
 See the [pressure advance](Pressure_Advance.md) document for
 information on how to find this pressure advance coefficient.
@@ -278,8 +285,9 @@ moving prior to the nominal start of the first extrusion move and will
 continue to move after the nominal end of the last extrusion move.
 
 Key formula for "smoothed pressure advance":
-
-$x_{smooth\ pa}(t) =
-    \frac{\int_{t - \frac{t_{smooth}}{2}}^{t + \frac{t_{smooth}}{2}}
-    x_{pa}(x) \times (\frac{t_{smooth}}{2} - |t - x|) \times \Delta x)}
-    {(\frac{t_{smooth}}{2})^2}$
+```
+smooth_pa_position(t) =
+    ( definitive_integral(pa_position(x) * (smooth_time/2 - abs(t - x)) * dx,
+                          from=t-smooth_time/2, to=t+smooth_time/2)
+     / (smooth_time/2)^2 )
+```

@@ -439,7 +439,7 @@ get_uptime
 
 When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
-commands per second is then $\frac{100000 \times mcu\_frequency}{\Delta{f}_{clock}}$.
+commands per second is then `100000 * mcu_frequency / clock_diff`.
 
 Note that this test may saturate the USB/CPU capacity of a Raspberry
 Pi. If running on a Raspberry Pi, Beaglebone, or similar host computer
