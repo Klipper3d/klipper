@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20210830: The default adxl345 name is now "adxl345".  The default CHIP
+parameter for the `ACCELEROMETER_MEASURE` and `ACCELEROMETER_QUERY` is
+now also "adxl345".
+
 20210830: The adxl345 ACCELEROMETER_MEASURE command no longer supports
 a RATE parameter.  To alter the query rate, update the printer.cfg
 file and issue a RESTART command.

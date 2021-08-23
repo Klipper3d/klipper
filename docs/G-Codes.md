@@ -727,7 +727,7 @@ The following commands are available when an
 [adxl345 config section](Config_Reference.md#adxl345) is enabled:
 - `ACCELEROMETER_MEASURE [CHIP=<config_name>] [NAME=<value>]`: Starts
   accelerometer measurements at the requested number of samples per
-  second. If CHIP is not specified it defaults to "default". The
+  second. If CHIP is not specified it defaults to "adxl345". The
   command works in a start-stop mode: when executed for the first
   time, it starts the measurements, next execution stops them. The
   results of measurements are written to a file named
@@ -740,7 +740,7 @@ The following commands are available when an
   generated.
 - `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
   accelerometer for the current value. If CHIP is not specified it
-  defaults to "default". If RATE is not specified, the default value
+  defaults to "adxl345". If RATE is not specified, the default value
   is used. This command is useful to test the connection to the
   ADXL345 accelerometer: one of the returned values should be a
   free-fall acceleration (+/- some noise of the chip).

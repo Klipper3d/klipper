@@ -83,11 +83,9 @@ class ADXLCommandHelper:
         self.printer = config.get_printer()
         self.chip = chip
         self.bg_client = None
-        self.name = "default"
-        if len(config.get_name().split()) > 1:
-            self.name = config.get_name().split()[1]
+        self.name = config.get_name().split()[-1]
         self.register_commands(self.name)
-        if self.name == "default":
+        if self.name == "adxl345":
             self.register_commands(None)
     def register_commands(self, name):
         # Register commands
@@ -121,7 +119,7 @@ class ADXLCommandHelper:
         self.bg_client = None
         bg_client.finish_measurements()
         # Write data to file
-        if self.name == "default":
+        if self.name == "adxl345":
             filename = "/tmp/adxl345-%s.csv" % (name,)
         else:
             filename = "/tmp/adxl345-%s-%s.csv" % (self.name, name,)
@@ -246,9 +244,7 @@ class ADXL345:
         # API server endpoints
         self.api_dump = motion_report.APIDumpHelper(
             self.printer, self._api_update, self._api_startstop, 0.100)
-        self.name = "default"
-        if len(config.get_name().split()) > 1:
-            self.name = config.get_name().split()[1]
+        self.name = config.get_name().split()[-1]
         wh = self.printer.lookup_object('webhooks')
         wh.register_mux_endpoint("adxl345/dump_adxl345", "sensor", self.name,
                                  self._handle_dump_adxl345)
