@@ -34,3 +34,40 @@ certifies that you agree to the
 [developer certificate of origin](developer-certificate-of-origin). It
 must contain your real name (sorry, no pseudonyms or anonymous
 contributions) and contain a current email address.
+
+## Contributing to Klipper Translations
+
+[Klipper-translations Project](https://github.com/KevinOConnor/klipper-translations)
+is a project dedicated to translating Klipper to different languages.
+[Weblate](https://hosted.weblate.org/projects/klipper/) hosts all the
+Gettext strings for translating and reviewing. Locales can merge into
+the Klipper project once they satisfy the following requirements:
+
+- [ ] 75% Total coverage
+- [ ] All titles (H1) are covered
+- [ ] An updated navigation hierarchy PR into klipper-translations.
+
+The navigation hierarchy is in `docs\_klipper3d\mkdocs.yml`.
+
+To reduce the frustration of translating domain-specific terms
+and gain awareness of the ongoing translations, you can submit a PR
+modifying the [Klipper-translations Project](https://github.com/KevinOConnor/klipper-translations)
+'s `readme.md`. Once a translation is ready, we can pull the
+corresponding modification into the Klipper project with some changes.
+
+If a translation already exists in the Klipper repository and no
+longer meets the checklist above, we will mark it out-of-date
+after a month without updating.
+
+Please follow the following format for `mkdocs.yml` navigation
+hierarchy:
+
+```yml
+nav:
+  - existing hierachy
+  - <language>:
+    - locales/<language code>/md file
+```
+
+Note: Currently, there isn't a method for correctly displaying
+photos in the translated documents.
