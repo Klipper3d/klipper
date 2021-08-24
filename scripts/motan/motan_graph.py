@@ -53,8 +53,13 @@ def plot_motion(amanager, graphs):
             pparams = {'label': label['label'], 'alpha': 0.8}
             pparams.update(plot_params)
             ax.plot(times, datasets[dataset], **pparams)
-            ax.legend(loc='best', prop=fontP)
-            ax.grid(True)
+        if twin_ax is not None:
+            li1, la1 = graph_ax.get_legend_handles_labels()
+            li2, la2 = twin_ax.get_legend_handles_labels()
+            twin_ax.legend(li1 + li2, la1 + la2, loc='best', prop=fontP)
+        else:
+            graph_ax.legend(loc='best', prop=fontP)
+        graph_ax.grid(True)
     rows[-1].set_xlabel('Time (s)')
     return fig
 
