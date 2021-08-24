@@ -212,8 +212,6 @@ class PrinterExtruder:
             return
         toolhead.flush_step_generation()
         self.stepper.set_step_dist(dist)
-        gcmd.respond_info("Extruder '%s' step distance set to %0.6f"
-                          % (self.name, dist))
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
