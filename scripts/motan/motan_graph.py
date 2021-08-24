@@ -125,9 +125,9 @@ def main():
 
     # Default graphs to draw
     graph_descs = [
-        ["trapq:toolhead:velocity?color=green"],
-        ["trapq:toolhead:accel?color=green"],
-        ["deviation:stepq:stepper_x-kin:stepper_x?color=blue"],
+        ["trapq(toolhead,velocity)?color=green"],
+        ["trapq(toolhead,accel)?color=green"],
+        ["deviation(stepq(stepper_x),kin(stepper_x))?color=blue"],
     ]
     if options.graph is not None:
         graph_descs = ast.literal_eval(options.graph)

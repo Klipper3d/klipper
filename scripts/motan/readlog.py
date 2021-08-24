@@ -18,20 +18,21 @@ LogHandlers = {}
 
 # Extract requested position, velocity, and accel from a trapq log
 class HandleTrapQ:
-    ParametersSubscriptionId = 2
-    ParametersMin = ParametersMax = 3
+    SubscriptionIdParts = 2
+    ParametersMin = ParametersMax = 2
     DataSets = [
-        ('trapq:<name>:velocity', 'Requested velocity for the given trapq'),
-        ('trapq:<name>:<axis>', 'Requested axis (x, y, or z) position'),
-        ('trapq:<name>:<axis>_velocity', 'Requested axis velocity'),
-        ('trapq:<name>:<axis>_accel', 'Requested axis acceleration'),
+        ('trapq(<name>,velocity)', 'Requested velocity for the given trapq'),
+        ('trapq(<name>,accel)', 'Requested acceleration for the given trapq'),
+        ('trapq(<name>,<axis>)', 'Requested axis (x, y, or z) position'),
+        ('trapq(<name>,<axis>_velocity)', 'Requested axis velocity'),
+        ('trapq(<name>,<axis>_accel)', 'Requested axis acceleration'),
     ]
-    def __init__(self, lmanager, name):
+    def __init__(self, lmanager, name, name_parts):
         self.name = name
         self.jdispatch = lmanager.get_jdispatch()
         self.cur_data = [(0., 0., 0., 0., (0., 0., 0.), (0., 0., 0.))]
         self.data_pos = 0
-        tq, trapq_name, datasel = name.split(':')
+        tq, trapq_name, datasel = name_parts
         ptypes = {}
         ptypes['velocity'] = {
             'label': '%s velocity' % (trapq_name,),
@@ -113,26 +114,27 @@ LogHandlers["trapq"] = HandleTrapQ
 
 # Extract positions from queue_step log
 class HandleStepQ:
-    ParametersSubscriptionId = 2
-    ParametersMin = 2
-    ParametersMax = 3
+    SubscriptionIdParts = 2
+    ParametersMin = 1
+    ParametersMax = 2
     DataSets = [
-        ('stepq:<stepper>', 'Commanded position of the given stepper'),
-        ('stepq:<stepper>:raw', 'Commanded position without smoothing'),
+        ('stepq(<stepper>)', 'Commanded position of the given stepper'),
+        ('stepq(<stepper>,<time>)', 'Commanded position with smooth time'),
     ]
-    def __init__(self, lmanager, name):
+    def __init__(self, lmanager, name, name_parts):
         self.name = name
+        self.stepper_name = name_parts[1]
         self.jdispatch = lmanager.get_jdispatch()
         self.step_data = [(0., 0., 0.), (0., 0., 0.)] # [(time, half_pos, pos)]
         self.data_pos = 0
         self.smooth_time = 0.010
-        name_parts = name.split(':')
         if len(name_parts) == 3:
-            if name_parts[2] != 'raw':
-                raise error("Unknown stepq data selection '%s'" % (name,))
-            self.smooth_time = 0.
+            try:
+                self.smooth_time = float(name_parts[2])
+            except ValueError:
+                raise error("Invalid stepq smooth time '%s'" % (name_parts[2],))
     def get_label(self):
-        label = '%s position' % (self.name.split(':')[1],)
+        label = '%s position' % (self.stepper_name,)
         return {'label': label, 'units': 'Position\n(mm)'}
     def pull_data(self, req_time):
         smooth_time = self.smooth_time
@@ -205,17 +207,6 @@ LogHandlers["stepq"] = HandleStepQ
 
 
 ######################################################################
-# List datasets
-######################################################################
-
-def list_datasets():
-    datasets = []
-    for lh in sorted(LogHandlers.keys()):
-        datasets += LogHandlers[lh].DataSets
-    return datasets
-
-
-######################################################################
 # Log reading
 ######################################################################
 
@@ -279,6 +270,40 @@ class JsonDispatcher:
             for mq in self.queues.get(qid, []):
                 mq.append(json_msg['params'])
 
+
+######################################################################
+# Dataset and log tracking
+######################################################################
+
+# Split a string by commas while keeping parenthesis intact
+def param_split(line):
+    out = []
+    level = prev = 0
+    for i, c in enumerate(line):
+        if not level and c == ',':
+            out.append(line[prev:i])
+            prev = i+1
+        elif c == '(':
+            level += 1
+        elif level and c== ')':
+            level -= 1
+    out.append(line[prev:])
+    return out
+
+# Split a dataset name (eg, "abc(def,ghi)") into parts
+def name_split(name):
+    if '(' not in name or not name.endswith(')'):
+        raise error("Malformed dataset name '%s'" % (name,))
+    aname, aparams = name.split('(', 1)
+    return [aname] + param_split(aparams[:-1])
+
+# Return a description of possible datasets
+def list_datasets():
+    datasets = []
+    for lh in sorted(LogHandlers.keys()):
+        datasets += LogHandlers[lh].DataSets
+    return datasets
+
 # Main log access management
 class LogManager:
     error = error
@@ -325,15 +350,16 @@ class LogManager:
     def setup_dataset(self, name):
         if name in self.datasets:
             return self.datasets[name]
-        parts = name.split(':')
-        cls = LogHandlers.get(parts[0])
+        name_parts = name_split(name)
+        cls = LogHandlers.get(name_parts[0])
         if cls is None:
-            raise error("Unknown dataset '%s'" % (parts[0],))
-        if len(parts) < cls.ParametersMin or len(parts) > cls.ParametersMax:
-            raise error("Invalid number of parameters for %s" % (parts[0],))
-        subscription_id = ":".join(parts[:cls.ParametersSubscriptionId])
+            raise error("Unknown dataset '%s'" % (name_parts[0],))
+        len_pp = len(name_parts) - 1
+        if len_pp < cls.ParametersMin or len_pp > cls.ParametersMax:
+            raise error("Invalid number of parameters for '%s'" % (name,))
+        subscription_id = ":".join(name_parts[:cls.SubscriptionIdParts])
         if subscription_id not in self.log_subscriptions:
             raise error("Dataset '%s' not in capture" % (subscription_id,))
-        self.datasets[name] = hdl = cls(self, name)
+        self.datasets[name] = hdl = cls(self, name, name_parts)
         self.jdispatch.add_handler(name, subscription_id)
         return hdl
