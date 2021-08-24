@@ -215,7 +215,7 @@ compilation.
 To compile Klipper for use in simulavr, run:
 
 ```
-cd /patch/to/klipper
+cd /path/to/klipper
 make menuconfig
 ```
 
