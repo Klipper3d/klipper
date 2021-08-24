@@ -91,6 +91,34 @@ class GenKinematicPosition:
         return self.amanager.get_datasets()[self.source1]
 AHandlers["kin"] = GenKinematicPosition
 
+# Calculate a toolhead x/y position from corexy stepper positions
+class GenCorexyPosition:
+    ParametersMin = ParametersMax = 3
+    DataSets = [
+        ('corexy(x,<stepper>,<stepper>)', 'Toolhead x position from steppers'),
+        ('corexy(y,<stepper>,<stepper>)', 'Toolhead y position from steppers'),
+    ]
+    def __init__(self, amanager, name_parts):
+        self.amanager = amanager
+        self.is_plus = name_parts[1] == 'x'
+        self.source1, self.source2 = name_parts[2:]
+        amanager.setup_dataset(self.source1)
+        amanager.setup_dataset(self.source2)
+    def get_label(self):
+        axis = 'x'
+        if not self.is_plus:
+            axis = 'y'
+        return {'label': 'Derived %s Position' % (axis,),
+                'units': 'Position\n(mm)'}
+    def generate_data(self):
+        datasets = self.amanager.get_datasets()
+        data1 = datasets[self.source1]
+        data2 = datasets[self.source2]
+        if self.is_plus:
+            return [.5 * (d1 + d2) for d1, d2 in zip(data1, data2)]
+        return [.5 * (d1 - d2) for d1, d2 in zip(data1, data2)]
+AHandlers["corexy"] = GenCorexyPosition
+
 # Calculate a position deviation
 class GenDeviation:
     ParametersMin = ParametersMax = 2
