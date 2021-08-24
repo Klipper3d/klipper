@@ -103,12 +103,15 @@ class IdleTimeout:
                                 est_print_time + PIN_MIN_TIME)
     cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
     def cmd_SET_IDLE_TIMEOUT(self, gcmd):
-        timeout = gcmd.get_float('TIMEOUT', self.idle_timeout, above=0.)
-        self.idle_timeout = timeout
-        gcmd.respond_info("idle_timeout: Timeout set to %.2f s" % (timeout,))
-        if self.state == "Ready":
-            checktime = self.reactor.monotonic() + timeout
-            self.reactor.update_timer(self.timeout_timer, checktime)
+        timeout = gcmd.get_float('TIMEOUT', None, above=0.)
+        if timeout is None:
+            gcmd.respond_info("idle_timeout: Timeout %.2f s" %
+                              (self.idle_timeout))
+        else:
+            self.idle_timeout = timeout
+            if self.state == "Ready":
+                checktime = self.reactor.monotonic() + timeout
+                self.reactor.update_timer(self.timeout_timer, checktime)
 
 def load_config(config):
     return IdleTimeout(config)
