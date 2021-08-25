@@ -33,16 +33,10 @@ class QuadGantryLevel:
         if len(self.probe_helper.probe_points) != 4:
             raise config.error(
                 "Need exactly 4 probe points for quad_gantry_level")
+        self.z_status = z_tilt.ZAdjustStatus(self.printer)
         self.z_helper = z_tilt.ZAdjustHelper(config, 4)
-        gantry_corners = config.get('gantry_corners').split('\n')
-        try:
-            gantry_corners = [line.split(',', 1)
-                           for line in gantry_corners if line.strip()]
-            self.gantry_corners = [(float(zp[0].strip()), float(zp[1].strip()))
-                                for zp in gantry_corners]
-        except:
-            raise config.error("Unable to parse gantry_corners in %s" % (
-                config.get_name()))
+        self.gantry_corners = config.getlists('gantry_corners', parser=float,
+                                              seps=(',', '\n'), count=2)
         if len(self.gantry_corners) < 2:
             raise config.error(
                 "quad_gantry_level requires at least two gantry_corners")
@@ -54,6 +48,7 @@ class QuadGantryLevel:
     cmd_QUAD_GANTRY_LEVEL_help = (
         "Conform a moving, twistable gantry to the shape of a stationary bed")
     def cmd_QUAD_GANTRY_LEVEL(self, gcmd):
+        self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
     def probe_finalize(self, offsets, positions):
@@ -114,7 +109,9 @@ class QuadGantryLevel:
 
         speed = self.probe_helper.get_lift_speed()
         self.z_helper.adjust_steppers(z_adjust, speed)
-        return self.retry_helper.check_retry(z_positions)
+        return self.z_status.check_retry_result(
+            self.retry_helper.check_retry(z_positions))
+
     def linefit(self,p1,p2):
         if p1[1] == p2[1]:
             # Straight line
@@ -124,6 +121,8 @@ class QuadGantryLevel:
         return m,b
     def plot(self,f,x):
         return f[0]*x + f[1]
+    def get_status(self, eventtime):
+        return self.z_status.get_status(eventtime)
 
 def load_config(config):
     return QuadGantryLevel(config)

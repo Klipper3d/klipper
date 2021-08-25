@@ -1,15 +1,58 @@
+# Configuration Changes
+
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.
 
 All dates in this document are approximate.
 
-# Changes
+## Changes
+
+20210821: Several config settings in `printer.configfile.settings`
+will now be reported as lists instead of raw strings.  If the actual
+raw string is desired, use `printer.configfile.config` instead.
+
+20210819: In some cases, a `G28` homing move may end in a position
+that is nominally outside the valid movement range.  In rare
+situations this may result in confusing "Move out of range" errors
+after homing.  If this occurs, change your start scripts to move the
+toolhead to a valid position immediately after homing.
+
+20210814: The analog only pseudo-pins on the atmega168 and atmega328
+have been renamed from PE0/PE1 to PE2/PE3.
+
+20210720: A controller_fan section now monitors all stepper motors by
+default (not just the kinematic stepper motors).  If the previous
+behavior is desired, see the `stepper` config option in the
+[config reference](Config_Reference.md#controller_fan).
+
+20210703: A `samd_sercom` config section must now specify the sercom
+bus it is configuring via the `sercom` option.
+
+20210612: The `pid_integral_max` config option in heater and
+temperature_fan sections is deprecated.  The option will be removed in
+the near future.
+
+20210503: The gcode_macro `default_parameter_<name>` config option is
+deprecated.  Use the `params` pseudo-variable to access macro
+parameters.  Other methods for accessing macro parameters will be
+removed in the near future.  See the
+[Command Templates document](Command_Templates.md#macro-parameters)
+for examples.
+
+20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
+velocity, acceleration, and square_corner_velocity larger than the
+specified values in the config file.
+
+20210325: Support for the `pin_map` config option is deprecated. Use
+the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
+translate to the actual micro-controller pin names. The `pin_map`
+config option will be removed in the near future.
 
 20210313: Klipper's support for micro-controllers that communicate
 with CAN bus has changed. If using CAN bus then all micro-controllers
-must be reflashed and the [Klipper configuration must be
-updated](CANBUS.md).
+must be reflashed and the
+[Klipper configuration must be updated](CANBUS.md).
 
 20210310: The TMC2660 default for driver_SFILT has been changed from 1
 to 0.

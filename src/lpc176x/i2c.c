@@ -1,6 +1,6 @@
 // I2C functions on lpc176x
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -54,7 +54,8 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 
         // Set 100Khz frequency
         enable_pclock(info->pclk);
-        uint32_t pclk = SystemCoreClock, pulse = pclk / (100000 * 2);
+        uint32_t pclk = get_pclock_frequency(info->pclk);
+        uint32_t pulse = pclk / (100000 * 2);
         i2c->I2SCLL = pulse;
         i2c->I2SCLH = pulse;
 
@@ -99,6 +100,20 @@ i2c_send_byte(LPC_I2C_TypeDef *i2c, uint8_t b, uint32_t timeout)
     return i2c->I2STAT;
 }
 
+static uint8_t
+i2c_read_byte(LPC_I2C_TypeDef *i2c, uint32_t timeout, uint8_t remaining)
+{
+  if (remaining == 0)
+      i2c->I2CONCLR = IF_ACK | IF_IRQ;
+  else {
+      i2c->I2CONSET = IF_ACK;
+      i2c->I2CONCLR = IF_IRQ;
+  }
+  i2c_wait(i2c, IF_IRQ, timeout);
+  uint8_t b = i2c->I2DAT;
+  return b;
+}
+
 static void
 i2c_stop(LPC_I2C_TypeDef *i2c, uint32_t timeout)
 {
@@ -124,5 +139,24 @@ void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    shutdown("i2c_read not supported on lpc176x");
+    LPC_I2C_TypeDef *i2c = config.i2c;
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint8_t addr = config.addr | 0x01;
+
+    if (reg_len != 0) {
+        // write the register
+        i2c_start(i2c, timeout);
+        i2c_send_byte(i2c, config.addr, timeout);
+        while(reg_len--)
+            i2c_send_byte(i2c, *reg++, timeout);
+        i2c_stop(i2c, timeout);
+    }
+    // start/re-start and read data
+    i2c_start(i2c, timeout);
+    i2c_send_byte(i2c, addr, timeout);
+    while(read_len--) {
+        *read = i2c_read_byte(i2c, timeout, read_len);
+        read++;
+    }
+    i2c_stop(i2c, timeout);
 }

@@ -1,3 +1,5 @@
+# Configuration checks
+
 This document provides a list of steps to help confirm the pin
 settings in the Klipper printer.cfg file.  It is a good idea to run
 through these steps after following the steps in the
@@ -10,7 +12,7 @@ in the Octoprint terminal tab and then click "Send"). It's also a good
 idea to issue a STATUS command after every RESTART to verify that the
 config file is successfully loaded.
 
-### Verify temperature
+## Verify temperature
 
 Start by verifying that temperatures are being properly reported.
 Navigate to the Octoprint temperature tab.
@@ -22,7 +24,7 @@ present and not increasing. If it is increasing, remove power from the
 printer. If the temperatures are not accurate, review the
 "sensor_type" and "sensor_pin" settings for the nozzle and/or bed.
 
-### Verify M112
+## Verify M112
 
 Navigate to the Octoprint terminal tab and issue an M112 command in
 the terminal box. This command requests Klipper to go into a
@@ -37,7 +39,7 @@ The M112 command causes Klipper to go into a "shutdown" state. To
 clear this state, issue a FIRMWARE_RESTART command in the Octoprint
 terminal tab.
 
-### Verify heaters
+## Verify heaters
 
 Navigate to the Octoprint temperature tab and type in 50 followed by
 enter in the "Tool" temperature box. The extruder temperature in the
@@ -50,7 +52,7 @@ verify the "heater_pin" setting in the config.
 If the printer has a heated bed then perform the above test again with
 the bed.
 
-### Verify stepper motor enable pin
+## Verify stepper motor enable pin
 
 Verify that all of the printer axes can manually move freely (the
 stepper motors are disabled). If not, issue an M84 command to disable
@@ -60,7 +62,7 @@ commodity stepper motor drivers, the motor enable pin is "active low"
 and therefore the enable pin should have a "!" before the pin (for
 example, "enable_pin: !ar38").
 
-### Verify endstops
+## Verify endstops
 
 Manually move all the printer axes so that none of them are in contact
 with an endstop. Send a QUERY_ENDSTOPS command via the Octoprint
@@ -81,7 +83,7 @@ require a change to the pullup setting of the pin (the '^' at the
 start of the endstop_pin name - most printers will use a pullup
 resistor and the '^' should be present).
 
-### Verify stepper motors
+## Verify stepper motors
 
 Use the STEPPER_BUZZ command to verify the connectivity of each
 stepper motor. Start by manually positioning the given axis to a
@@ -114,7 +116,7 @@ homing mechanism should be tested. Issue a G28 command to home all
 axes.  Remove power from the printer if it does not home properly.
 Rerun the endstop and stepper motor verification steps if necessary.
 
-### Verify extruder motor
+## Verify extruder motor
 
 To test the extruder motor it will be necessary to heat the extruder
 to a printing temperature. Navigate to the Octoprint temperature tab
@@ -126,7 +128,7 @@ turns in the correct direction. If it does not, see the
 troubleshooting tips in the previous section to confirm the
 "enable_pin", "step_pin", and "dir_pin" settings for the extruder.
 
-### Calibrate PID settings
+## Calibrate PID settings
 
 Klipper supports
 [PID control](https://en.wikipedia.org/wiki/PID_controller) for the
@@ -149,7 +151,7 @@ may turn on and off ten times a second, which may not be suitable for
 heaters using a mechanical switch.) A typical bed PID calibration
 command is: `PID_CALIBRATE HEATER=heater_bed TARGET=60`
 
-### Next steps
+## Next steps
 
 This guide is intended to help with basic verification of pin settings
 in the Klipper configuration file. Be sure to read the

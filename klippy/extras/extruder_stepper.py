@@ -13,7 +13,6 @@ class ExtruderStepper:
         self.extruder_name = config.get('extruder', 'extruder')
         self.synced_extruder = None
         self.stepper = stepper.PrinterStepper(config)
-        self.stepper.set_max_jerk(9999999.9, 9999999.9)
         self.stepper.setup_itersolve('extruder_stepper_alloc')
         stepper_enable = self.printer.load_object(config, 'stepper_enable')
         stepper_enable.register_stepper(self.stepper,

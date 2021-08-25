@@ -1,3 +1,5 @@
+# Bed Mesh
+
 The Bed Mesh module may be used to compensate for bed surface irregularties to
 achieve a better first layer across the entire bed.  It should be noted that
 software based correction will not achieve perfect results, it can only
@@ -291,17 +293,71 @@ to the spot on the bed where Z endstop calibration was done.  Note that
 when looking up the index using the log or BED_MESH_OUTPUT, you should use
 the coordinates listed under the "Probe" header to find the correct index.
 
+### Faulty Regions
+
+It is possible for some areas of a bed to report inaccurate results when
+probing due to a "fault" at specific locations.  The best example of this
+are beds with series of integrated magnets used to retain removable steel
+sheets.  The magnetic field at and around these magnets may cause an inductive
+probe to trigger at a distance higher or lower than it would otherwise,
+resulting in a mesh that does not accurately represent the surface at these
+locations.  **Note: This should not be confused with probe location bias, which
+produces inaccurate results across the entire bed.**
+
+The `faulty_region` options may be configured to compensate for this affect.
+If a generated point lies within a faulty region bed mesh will attempt to
+probe up to 4 points at the boundaries of this region.  These probed values
+will be averaged and inserted in the mesh as the Z value at the generated
+(X, Y) coordinate.
+
+```
+[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35,6
+mesh_max: 240, 198
+probe_count: 5,3
+faulty_region_1_min: 130.0, 0.0
+faulty_region_1_max: 145.0, 40.0
+faulty_region_2_min: 225.0, 0.0
+faulty_region_2_max: 250.0, 25.0
+faulty_region_3_min: 165.0, 95.0
+faulty_region_3_max: 205.0, 110.0
+faulty_region_4_min: 30.0, 170.0
+faulty_region_4_max: 45.0, 210.0
+```
+
+- `faulty_region_{1...99}_min`\
+  `faulty_region_{1..99}_max`\
+  _Default Value: None (disabled)_\
+  Faulty Regions are defined in a way similar to that of mesh itself, where
+  minimum and maximum (X, Y) coordinates must be specified for each region.
+  A faulty region may extend outside of a mesh, however the alternate points
+  generated will always be within the mesh boundary.  No two regions may
+  overlap.
+
+The image below illustrates how replacement points are generated when
+a generated point lies within a faulty region.  The regions shown match those
+in the sample config above.  The replacement points and their coordinates
+are identified in green.
+
+![bedmesh_interpolated](img/bedmesh_faulty_regions.svg)
+
 ## Bed Mesh Gcodes
 
 ### Calibration
 
-`BED_MESH_CALIBRATE METHOD=[manual | automatic] [<probe_parameter>=<value>]
+`BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>]
  [<mesh_parameter>=<value>]`\
+_Default Profile:  default_\
 _Default Method:  automatic if a probe is detected, otherwise manual_
 
-Initiates the probing procedure for Bed Mesh Calibration.  If `METHOD=manual`
-is selected then manual probing will occur.  When switching between automatic
-and manual probing the generated mesh points will automatically be adjusted.
+Initiates the probing procedure for Bed Mesh Calibration.
+
+The mesh will be saved into a profile specified by the `PROFILE` parameter,
+or `default` if unspecified. If `METHOD=manual` is selected then manual probing
+will occur.  When switching between automatic and manual probing the generated
+mesh points will automatically be adjusted.
 
 It is possible to specify mesh parameters to modify the probed area.  The
 following parameters are available:
@@ -380,3 +436,14 @@ probing the "Probe" points will refer to both the tool and nozzle locations.
 `BED_MESH_CLEAR`
 
 This gcode may be used to clear the internal mesh state.
+
+### Apply X/Y offsets
+
+`BED_MESH_OFFSET [X=<value>] [Y=<value>]`
+
+This is useful for printers with multiple independent extruders, as an offset
+is necessary to produce correct Z adjustment after a tool change.  Offsets
+should be specified relative to the primary extruder.  That is, a positive
+X offset should be specified if the secondary extruder is mounted to the
+right of the primary extruder, and a positive Y offset should be specified
+if the secondary extruder is mounted "behind" the primary extruder.

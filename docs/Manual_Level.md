@@ -1,7 +1,9 @@
+# Manual leveling
+
 This document describes tools for calibrating a Z endstop and for
 performing adjustments to bed leveling screws.
 
-# Calibrating a Z endstop
+## Calibrating a Z endstop
 
 An accurate Z endstop position is critical to obtaining high quality
 prints.
@@ -47,7 +49,7 @@ location of the endstop is in a convenient location, one can make any
 further adjustments by running Z_ENDSTOP_CALIBRATE or by manually
 updating the Z position_endstop in the configuration file.
 
-# Adjusting bed leveling screws
+## Adjusting bed leveling screws
 
 The secret to getting good bed leveling with bed leveling screws is to
 utilize the printer's high precision motion system during the bed
@@ -101,7 +103,7 @@ This system works best when the printer has a flat printing surface
 (such as glass) and has straight rails. Upon successful completion of
 the bed leveling tool the bed should be ready for printing.
 
-## Fine grained bed screw adjustments
+### Fine grained bed screw adjustments
 
 If the printer uses three bed screws and all three screws are under
 the bed, then it may be possible to perform a second "high precision"
@@ -138,7 +140,7 @@ once those are accepted, it will prompt for fine adjustments at the
 additional locations. Continue to use `ACCEPT` and `ADJUSTED` at each
 position.
 
-# Adjusting bed leveling screws using the bed probe
+## Adjusting bed leveling screws using the bed probe
 
 This is another way to calibrate the bed level using the bed probe. To
 use it you must have a Z probe (BL Touch, Inductive sensor, etc).
@@ -163,17 +165,18 @@ screw_thread: CW-M3
 ```
 
 The screw1 is always the reference point for the others, so the system
-assumes that screw1 is in the correct height. Always run `G28` first
+assumes that screw1 is at the correct height. Always run `G28` first
 and then run `SCREWS_TILT_CALCULATE` - it should produce output
 similar to:
 ```
 Send: G28
 Recv: ok
 Send: SCREWS_TILT_CALCULATE
-Recv: // front left screw (Base): X -5.0, Y 30.0, Z 2.48750
-Recv: // front right screw : X 155.0, Y 30.0, Z 2.36000 : Adjust -> CW 01:15
-Recv: // rear right screw : X 155.0, Y 190.0, Z 2.71500 : Adjust -> CCW 00:50
-Recv: // read left screw : X -5.0, Y 190.0, Z 2.47250 : Adjust -> CW 00:02
+Recv: // 01:20 means 1 full turn and 20 minutes, CW=clockwise, CCW=counter-clockwise
+Recv: // front left screw (base) : x=-5.0, y=30.0, z=2.48750
+Recv: // front right screw : x=155.0, y=30.0, z=2.36000 : adjust CW 01:15
+Recv: // rear right screw : y=155.0, y=190.0, z=2.71500 : adjust CCW 00:50
+Recv: // read left screw : x=-5.0, y=190.0, z=2.47250 : adjust CW 00:02
 Recv: ok
 ```
 This means that:
@@ -191,3 +194,19 @@ it has an X or Y offset) then note that adjusting the bed tilt will
 invalidate any previous probe calibration that was performed with a
 tilted bed. Be sure to run [probe calibration](Probe_Calibrate.md)
 after the bed screws have been adjusted.
+
+The `MAX_DEVIATION` parameter is useful when a saved bed mesh is used,
+to ensure that the bed level has not drifted too far from where it was when
+the mesh was created. For example, `SCREWS_TILT_CALCULATE MAX_DEVIATION=0.01`
+can be added to the custom start gcode of the slicer before the mesh is loaded.
+It will abort the print if the configured limit is exceeded (0.01mm in this
+example), giving the user a chance to adjust the screws and restart the print.
+
+The `DIRECTION` parameter is useful if you can turn your bed adjustment
+screws in one direction only. For example, you might have screws that start
+tightened in their lowest (or highest) possible position, which can only be
+turned in a single direction, to raise (or lower) the bed. If you can only
+turn the screws clockwise, run `SCREWS_TILT_CALCULATE DIRECTION=CW`. If you can
+only turn them counter-clockwise, run `SCREWS_TILT_CALCULATE DIRECTION=CCW`.
+A suitable reference point will be chosen such that the bed can be leveled
+by turning all the screws in the given direction.
