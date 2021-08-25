@@ -64,7 +64,7 @@ class Fan:
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
         return {
-            'speed': self.last_fan_value,
+            'speed': self.last_fan_value / self.max_power,
             'rpm': tachometer_status['rpm'],
         }
 
