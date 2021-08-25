@@ -295,7 +295,10 @@ class GCodeDispatch:
         # Get Firmware Version and Capabilities
         software_version = self.printer.get_start_args().get('software_version')
         kw = {"FIRMWARE_NAME": "Klipper", "FIRMWARE_VERSION": software_version}
-        gcmd.ack(" ".join(["%s:%s" % (k, v) for k, v in kw.items()]))
+        msg = " ".join(["%s:%s" % (k, v) for k, v in kw.items()])
+        did_ack = gcmd.ack(msg)
+        if not did_ack:
+            gcmd.respond_info(msg)
     def request_restart(self, result):
         if self.is_printer_ready:
             toolhead = self.printer.lookup_object('toolhead')
@@ -322,6 +325,7 @@ class GCodeDispatch:
         msg = self.printer.get_state_message()[0]
         msg = msg.rstrip() + "\nKlipper state: Not ready"
         raise gcmd.error(msg)
+    cmd_HELP_help = "Report the list of available extended G-Code commands"
     def cmd_HELP(self, gcmd):
         cmdhelp = []
         if not self.is_printer_ready:

@@ -1,5 +1,4 @@
-Measuring Resonances
-====================
+# Measuring Resonances
 
 Klipper has built-in support for ADXL345 accelerometer, which can be used to
 measure resonance frequencies of the printer for different axes, and auto-tune
@@ -8,11 +7,16 @@ Note that using ADXL345 requires some soldering and crimping. ADXL345 can be
 connected to a Raspberry Pi directly, or to an SPI interface of an MCU
 board (it needs to be reasonably fast).
 
+When sourcing ADLX345, be aware that there is a variety of different PCB
+board designs and different clones of them. Make sure that the board supports
+SPI mode (small number of boards appear to be hard-configured for I2C by
+pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU,
+that it has a voltage regulator and a level shifter.
 
-Installation instructions
-===========================
 
-## Wiring
+## Installation instructions
+
+### Wiring
 
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
@@ -35,7 +39,7 @@ Fritzing wiring diagrams for some of the ADXL345 boards:
 Double-check your wiring before powering up the Raspberry Pi to prevent
 damaging it or the accelerometer.
 
-## Mounting the accelerometer
+### Mounting the accelerometer
 
 The accelerometer must be attached to the toolhead. One needs to design a proper
 mount that fits their own 3D printer. It is better to align the axes of the
@@ -57,7 +61,7 @@ be designed such as to ensure the electrical isolation of the accelerometer
 from the printer frame. Failing to ensure that can create a ground loop in
 the system that may damage the electronics.
 
-## Software installation
+### Software installation
 
 Note that resonance measurements and shaper auto-calibration require additional
 software dependencies not installed by default. First, you will have to run on
@@ -70,8 +74,9 @@ CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
 for the completion of the installation. On some occasions, if the board has
 too little RAM, the installation may fail and you will need to enable swap.
 
-Next, run the following command to install the additional dependencies:
+Next, run the following commands to install the additional dependencies:
 ```
+sudo apt update
 sudo apt install python-numpy python-matplotlib
 ```
 
@@ -100,10 +105,9 @@ slightly above it.
 
 Restart Klipper via the `RESTART` command.
 
-Measuring the resonances
-===========================
+## Measuring the resonances
 
-## Checking the setup
+### Checking the setup
 
 Now you can test a connection.
 
@@ -131,19 +135,9 @@ somewhere in the range of ~1-100). Too high axes noise (e.g. 1000 and more)
 can be indicative of the sensor issues, problems with its power, or too
 noisy imbalanced fans on a 3D printer.
 
-## Measuring the resonances
+### Measuring the resonances
 
-Now you can run some real-life tests. In `printer.cfg` add or replace the
-following values:
-```
-[printer]
-max_accel: 10000
-max_accel_to_decel: 10000
-```
-(after you are done with the measurements, revert these values to their old,
-or the newly suggested values).
-
-Run the following command:
+Now you can run some real-life tests. Run the following command:
 ```
 TEST_RESONANCES AXIS=X
 ```
@@ -181,12 +175,17 @@ recommended for your setup. For example:
 
 ![Resonances](img/calibrate-y.png)
 ```
-Fitted shaper 'zv' frequency = 37.0 Hz (vibrations = 29.1%, smoothing ~= 0.115)
-Fitted shaper 'mzv' frequency = 35.4 Hz (vibrations = 15.9%, smoothing ~= 0.163)
-Fitted shaper 'ei' frequency = 42.0 Hz (vibrations = 15.1%, smoothing ~= 0.183)
-Fitted shaper '2hump_ei' frequency = 45.6 Hz (vibrations = 9.7%, smoothing ~= 0.260)
-Fitted shaper '3hump_ei' frequency = 59.0 Hz (vibrations = 7.5%, smoothing ~= 0.235)
-Recommended shaper is 3hump_ei @ 59.0 Hz
+Fitted shaper 'zv' frequency = 34.4 Hz (vibrations = 4.0%, smoothing ~= 0.132)
+To avoid too much smoothing with 'zv', suggested max_accel <= 4500 mm/sec^2
+Fitted shaper 'mzv' frequency = 34.6 Hz (vibrations = 0.0%, smoothing ~= 0.170)
+To avoid too much smoothing with 'mzv', suggested max_accel <= 3500 mm/sec^2
+Fitted shaper 'ei' frequency = 41.4 Hz (vibrations = 0.0%, smoothing ~= 0.188)
+To avoid too much smoothing with 'ei', suggested max_accel <= 3200 mm/sec^2
+Fitted shaper '2hump_ei' frequency = 51.8 Hz (vibrations = 0.0%, smoothing ~= 0.201)
+To avoid too much smoothing with '2hump_ei', suggested max_accel <= 3000 mm/sec^2
+Fitted shaper '3hump_ei' frequency = 61.8 Hz (vibrations = 0.0%, smoothing ~= 0.215)
+To avoid too much smoothing with '3hump_ei', suggested max_accel <= 2800 mm/sec^2
+Recommended shaper is mzv @ 34.6 Hz
 ```
 
 The suggested configuration can be added to `[input_shaper]` section of
@@ -195,8 +194,11 @@ The suggested configuration can be added to `[input_shaper]` section of
 [input_shaper]
 shaper_freq_x: ...
 shaper_type_x: ...
-shaper_freq_y: 59.0
-shaper_type_y: 3hump_ei
+shaper_freq_y: 34.6
+shaper_type_y: mzv
+
+[printer]
+max_accel: 3000  # should not exceed the estimated max_accel for X and Y axes
 ```
 or you can choose some other configuration yourself based on the generated
 charts: peaks in the power spectral density on the charts correspond to
@@ -207,7 +209,7 @@ from Klipper [directly](#input-shaper-auto-calibration), which can be
 convenient, for example, for the input shaper
 [re-calibration](#input-shaper-re-calibration).
 
-## Bed-slinger printers
+### Bed-slinger printers
 
 If your printer is a bed slinger printer, you will need to change the location
 of the accelerometer between the measurements for X and Y axes: measure the
@@ -237,7 +239,7 @@ probe_points: ...
 Then the commands `TEST_RESONANCES AXIS=X` and `TEST_RESONANCES AXIS=Y`
 will use the correct accelerometer for each axis.
 
-## Max smoothing
+### Max smoothing
 
 Keep in mind that the input shaper can create some smoothing in parts.
 Automatic tuning of the input shaper performed by `calibrate_shaper.py`
@@ -252,12 +254,17 @@ Let's consider the following results from the automatic tuning:
 
 ![Resonances](img/calibrate-x.png)
 ```
-Fitted shaper 'zv' frequency = 62.2 Hz (vibrations = 36.9%, smoothing ~= 0.046)
-Fitted shaper 'mzv' frequency = 35.6 Hz (vibrations = 18.1%, smoothing ~= 0.161)
-Fitted shaper 'ei' frequency = 54.6 Hz (vibrations = 19.3%, smoothing ~= 0.108)
-Fitted shaper '2hump_ei' frequency = 46.2 Hz (vibrations = 9.2%, smoothing ~= 0.253)
-Fitted shaper '3hump_ei' frequency = 50.0 Hz (vibrations = 7.2%, smoothing ~= 0.328)
-Recommended shaper is 2hump_ei @ 46.2 Hz
+Fitted shaper 'zv' frequency = 57.8 Hz (vibrations = 20.3%, smoothing ~= 0.053)
+To avoid too much smoothing with 'zv', suggested max_accel <= 13000 mm/sec^2
+Fitted shaper 'mzv' frequency = 34.8 Hz (vibrations = 3.6%, smoothing ~= 0.168)
+To avoid too much smoothing with 'mzv', suggested max_accel <= 3600 mm/sec^2
+Fitted shaper 'ei' frequency = 48.8 Hz (vibrations = 4.9%, smoothing ~= 0.135)
+To avoid too much smoothing with 'ei', suggested max_accel <= 4400 mm/sec^2
+Fitted shaper '2hump_ei' frequency = 45.2 Hz (vibrations = 0.1%, smoothing ~= 0.264)
+To avoid too much smoothing with '2hump_ei', suggested max_accel <= 2200 mm/sec^2
+Fitted shaper '3hump_ei' frequency = 48.0 Hz (vibrations = 0.0%, smoothing ~= 0.356)
+To avoid too much smoothing with '3hump_ei', suggested max_accel <= 1500 mm/sec^2
+Recommended shaper is 2hump_ei @ 45.2 Hz
 ```
 Note that the reported `smoothing` values are some abstract projected values.
 These values can be used to compare different configurations: the higher the
@@ -277,16 +284,22 @@ which limits the smoothing to 0.2 score. Now you can get the following result:
 
 ![Resonances](img/calibrate-x-max-smoothing.png)
 ```
-Fitted shaper 'zv' frequency = 55.2 Hz (vibrations = 34.2%, smoothing ~= 0.057)
-Fitted shaper 'mzv' frequency = 33.8 Hz (vibrations = 17.4%, smoothing ~= 0.178)
-Fitted shaper 'ei' frequency = 47.4 Hz (vibrations = 17.6%, smoothing ~= 0.143)
-Fitted shaper '2hump_ei' frequency = 52.0 Hz (vibrations = 11.9%, smoothing ~= 0.200)
-Fitted shaper '3hump_ei' frequency = 75.0 Hz (vibrations = 9.7%, smoothing ~= 0.146)
-Recommended shaper is 3hump_ei @ 75.0 Hz
+Fitted shaper 'zv' frequency = 55.4 Hz (vibrations = 19.7%, smoothing ~= 0.057)
+To avoid too much smoothing with 'zv', suggested max_accel <= 12000 mm/sec^2
+Fitted shaper 'mzv' frequency = 34.6 Hz (vibrations = 3.6%, smoothing ~= 0.170)
+To avoid too much smoothing with 'mzv', suggested max_accel <= 3500 mm/sec^2
+Fitted shaper 'ei' frequency = 48.2 Hz (vibrations = 4.8%, smoothing ~= 0.139)
+To avoid too much smoothing with 'ei', suggested max_accel <= 4300 mm/sec^2
+Fitted shaper '2hump_ei' frequency = 52.0 Hz (vibrations = 2.7%, smoothing ~= 0.200)
+To avoid too much smoothing with '2hump_ei', suggested max_accel <= 3000 mm/sec^2
+Fitted shaper '3hump_ei' frequency = 72.6 Hz (vibrations = 1.4%, smoothing ~= 0.155)
+To avoid too much smoothing with '3hump_ei', suggested max_accel <= 3900 mm/sec^2
+Recommended shaper is 3hump_ei @ 72.6 Hz
 ```
 
 If you compare to the previously suggested parameters, the vibrations are a bit
-larger, but the smoothing is significantly smaller than previously.
+larger, but the smoothing is significantly smaller than previously, allowing
+larger maximum acceleration.
 
 When deciding which `max_smoothing` parameter to choose, you can use a
 trial-and-error approach. Try a few different values and see which results
@@ -311,25 +324,67 @@ Then, if you [rerun](#input-shaper-re-calibration) the input shaper auto-tuning
 using `SHAPER_CALIBRATE` Klipper command in the future, it will use the stored
 `max_smoothing` value as a reference.
 
-## Selecting max_accel
+### Selecting max_accel
 
 Since the input shaper can create some smoothing in parts, especially at high
 accelerations, you will still need to choose the `max_accel` value that
-does not create too much smoothing in the printed parts. Follow
+does not create too much smoothing in the printed parts. A calibration script
+provides an estimate for `max_accel` parameter that should not create too much
+smoothing. Note that the `max_accel` as displayed by the calibration script is
+only a theoretical maximum at which the respective shaper is still able to work
+without producing too much smoothing. It is by no means a recommendation to set
+this acceleration for printing. The maximum acceleration your printer is able to
+sustain depends on its mechanical properties and the maximum torque of the used
+stepper motors. Therefore, it is suggested to set `max_accel` in `[printer]`
+section that does not exceed the estimated values for X and Y axes, likely with
+some conservative safety margin.
+
+Alternatively, follow
 [this](Resonance_Compensation.md#selecting-max_accel) part of
-the input shaper tuning guide and print the test model.
+the input shaper tuning guide and print the test model to choose `max_accel`
+parameter experimentally.
 
 The same notice applies to the input shaper
 [auto-calibration](#input-shaper-auto-calibration) with
 `SHAPER_CALIBRATE` command: it is still necessary to choose the right
-`max_accel` value after the auto-calibration.
+`max_accel` value after the auto-calibration, and the suggested acceleration
+limits will not be applied automatically.
 
 If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
 previous calibration, this step can be skipped.
 
+### Testing custom axes
 
-# Input Shaper auto-calibration
+`TEST_RESONANCES` command supports custom axes. While this is not really
+useful for input shaper calibration, it can be used to study printer
+resonances in-depth and to check, for example, belt tension.
+
+To check the belt tension on CoreXY printers, execute
+```
+TEST_RESONANCES AXIS=1,1 OUTPUT=raw_data
+TEST_RESONANCES AXIS=1,-1 OUTPUT=raw_data
+```
+and use `graph_accelerometer.py` to process the generated files, e.g.
+```
+~/klipper/scripts/graph_accelerometer.py -c /tmp/raw_data_axis*.csv -o /tmp/resonances.png
+```
+which will generate `/tmp/resonances.png` comparing the resonances.
+
+For Delta printers with the default tower placement
+(tower A ~= 210 degrees, B ~= 330 degrees, and C ~= 90 degrees), execute
+```
+TEST_RESONANCES AXIS=0,1 OUTPUT=raw_data
+TEST_RESONANCES AXIS=-0.866025404,-0.5 OUTPUT=raw_data
+TEST_RESONANCES AXIS=0.866025404,-0.5 OUTPUT=raw_data
+```
+and then use the same command
+```
+~/klipper/scripts/graph_accelerometer.py -c /tmp/raw_data_axis*.csv -o /tmp/resonances.png
+```
+to generate `/tmp/resonances.png` comparing the resonances.
+
+## Input Shaper auto-calibration
 
 Besides manually choosing the appropriate parameters for the input shaper
 feature, it is also possible to run the auto-tuning for the input shaper
@@ -345,15 +400,24 @@ frequencies for each input shaper, as well as which input shaper is
 recommended for your setup, on Octoprint console. For example:
 
 ```
-Fitted shaper 'zv' frequency = 56.7 Hz (vibrations = 23.2%)
-Fitted shaper 'mzv' frequency = 52.9 Hz (vibrations = 10.9%)
-Fitted shaper 'ei' frequency = 62.0 Hz (vibrations = 8.9%)
-Fitted shaper '2hump_ei' frequency = 59.0 Hz (vibrations = 4.9%)
-Fitted shaper '3hump_ei' frequency = 65.0 Hz (vibrations = 3.3%)
-Recommended shaper_type_y = 2hump_ei, shaper_freq_y = 59.0 Hz
+Calculating the best input shaper parameters for y axis
+Fitted shaper 'zv' frequency = 39.0 Hz (vibrations = 13.2%, smoothing ~= 0.105)
+To avoid too much smoothing with 'zv', suggested max_accel <= 5900 mm/sec^2
+Fitted shaper 'mzv' frequency = 36.8 Hz (vibrations = 1.7%, smoothing ~= 0.150)
+To avoid too much smoothing with 'mzv', suggested max_accel <= 4000 mm/sec^2
+Fitted shaper 'ei' frequency = 36.6 Hz (vibrations = 2.2%, smoothing ~= 0.240)
+To avoid too much smoothing with 'ei', suggested max_accel <= 2500 mm/sec^2
+Fitted shaper '2hump_ei' frequency = 48.0 Hz (vibrations = 0.0%, smoothing ~= 0.234)
+To avoid too much smoothing with '2hump_ei', suggested max_accel <= 2500 mm/sec^2
+Fitted shaper '3hump_ei' frequency = 59.0 Hz (vibrations = 0.0%, smoothing ~= 0.235)
+To avoid too much smoothing with '3hump_ei', suggested max_accel <= 2500 mm/sec^2
+Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
 ```
 If you agree with the suggested parameters, you can execute `SAVE_CONFIG`
-now to save them and restart the Klipper.
+now to save them and restart the Klipper. Note that this will not update
+`max_accel` value in `[printer]` section. You should update it manually
+following the considerations in [Selecting max_accel](#selecting-max_accel)
+section.
 
 
 If your printer is a bed slinger printer, you can specify which axis
@@ -369,7 +433,7 @@ However, if you connected two accelerometers simultaneously, you simply run
 `SHAPER_CALIBRATE` without specifying an axis to calibrate the input shaper
 for both axes in one go.
 
-## Input Shaper re-calibration
+### Input Shaper re-calibration
 
 `SHAPER_CALIBRATE` command can be also used to re-calibrate the input shaper in
 the future, especially if some changes to the printer that can affect its
@@ -396,7 +460,7 @@ is not expected that the noise will affect the print quality too much.
 However, it is still advised to double-check the suggested parameters, and
 print some test prints before using them to confirm they are good.
 
-# Offline processing of the accelerometer data
+## Offline processing of the accelerometer data
 
 It is possible to generate the raw accelerometer data and process it offline
 (e.g. on a host machine), for example to find resonances. In order to do so,

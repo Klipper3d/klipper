@@ -18,10 +18,22 @@
   #define GPIO_Tx GPIO('A', 9)
   #define USARTx USART1
   #define USARTx_IRQn USART1_IRQn
+#elif CONFIG_STM32_SERIAL_USART1_ALT_PB7_PB6
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB7,PB6");
+  #define GPIO_Rx GPIO('B', 7)
+  #define GPIO_Tx GPIO('B', 6)
+  #define USARTx USART1
+  #define USARTx_IRQn USART1_IRQn
 #elif CONFIG_STM32_SERIAL_USART2
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
   #define GPIO_Rx GPIO('A', 3)
   #define GPIO_Tx GPIO('A', 2)
+  #define USARTx USART2
+  #define USARTx_IRQn USART2_IRQn
+#elif CONFIG_STM32_SERIAL_USART2_ALT_PD6_PD5
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD6,PD5");
+  #define GPIO_Rx GPIO('D', 6)
+  #define GPIO_Tx GPIO('D', 5)
   #define USARTx USART2
   #define USARTx_IRQn USART2_IRQn
 #elif CONFIG_STM32_SERIAL_USART3
@@ -30,7 +42,7 @@
   #define GPIO_Tx GPIO('B', 10)
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
-#elif CONFIG_STM32_SERIAL_USART3_ALT
+#elif CONFIG_STM32_SERIAL_USART3_ALT_PD9_PD8
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD9,PD8");
   #define GPIO_Rx GPIO('D', 9)
   #define GPIO_Tx GPIO('D', 8)
