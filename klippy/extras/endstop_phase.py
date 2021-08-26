@@ -32,8 +32,7 @@ class PhaseCalc:
     def convert_phase(self, driver_phase, driver_phases):
         phases = self.phases
         return (int(float(driver_phase) / driver_phases * phases + .5) % phases)
-    def calc_phase(self, stepper):
-        mcu_pos = stepper.get_mcu_position()
+    def calc_phase(self, stepper, trig_mcu_pos):
         mcu_phase_offset = 0
         if self.tmc_module is not None:
             mcu_phase_offset, phases = self.tmc_module.get_phase_offset()
@@ -42,10 +41,10 @@ class PhaseCalc:
                     raise self.printer.command_error("Stepper %s phase unknown"
                                                      % (self.name,))
                 mcu_phase_offset = 0
-        phase = (mcu_pos + mcu_phase_offset) % self.phases
+        phase = (trig_mcu_pos + mcu_phase_offset) % self.phases
         self.phase_history[phase] += 1
         self.last_phase = phase
-        self.last_mcu_position = mcu_pos
+        self.last_mcu_position = trig_mcu_pos
         return phase
 
 # Adjusted endstop trigger positions
@@ -68,11 +67,7 @@ class EndstopPhase:
         self.endstop_phase = None
         trigger_phase = config.get('trigger_phase', None)
         if trigger_phase is not None:
-            try:
-                p, ps = [int(v.strip()) for v in trigger_phase.split('/')]
-            except:
-                raise config.error("Unable to parse trigger_phase '%s'"
-                                   % (trigger_phase,))
+            p, ps = config.getintlist('trigger_phase', sep='/', count=2)
             if p >= ps:
                 raise config.error("Invalid trigger_phase '%s'"
                                    % (trigger_phase,))
@@ -94,18 +89,19 @@ class EndstopPhase:
                                " stepper phase adjustment" % (self.name,))
         if self.printer.get_start_args().get('debugoutput') is not None:
             self.endstop_phase_accuracy = self.phases
-    def align_endstop(self, pos):
+    def align_endstop(self, rail):
         if not self.endstop_align_zero or self.endstop_phase is None:
-            return pos
+            return 0.
         # Adjust the endstop position so 0.0 is always at a full step
         microsteps = self.phases // 4
         half_microsteps = microsteps // 2
         phase_offset = (((self.endstop_phase + half_microsteps) % microsteps)
                         - half_microsteps) * self.step_dist
         full_step = microsteps * self.step_dist
-        return int(pos / full_step + .5) * full_step + phase_offset
-    def get_homed_offset(self, stepper):
-        phase = self.phase_calc.calc_phase(stepper)
+        pe = rail.get_homing_info().position_endstop
+        return int(pe / full_step + .5) * full_step - pe + phase_offset
+    def get_homed_offset(self, stepper, trig_mcu_pos):
+        phase = self.phase_calc.calc_phase(stepper, trig_mcu_pos)
         if self.endstop_phase is None:
             logging.info("Setting %s endstop phase to %d", self.name, phase)
             self.endstop_phase = phase
@@ -119,15 +115,13 @@ class EndstopPhase:
                     self.name, phase, self.endstop_phase))
         return delta * self.step_dist
     def handle_home_rails_end(self, homing_state, rails):
-        kin_spos = homing_state.get_stepper_trigger_positions()
-        orig_pos = kin_spos.get(self.name)
-        if orig_pos is None:
-            return
         for rail in rails:
             stepper = rail.get_steppers()[0]
             if stepper.get_name() == self.name:
-                offset = self.get_homed_offset(stepper)
-                kin_spos[self.name] = self.align_endstop(orig_pos) + offset
+                trig_mcu_pos = homing_state.get_trigger_position(self.name)
+                align = self.align_endstop(rail)
+                offset = self.get_homed_offset(stepper, trig_mcu_pos)
+                homing_state.set_stepper_adjustment(self.name, align + offset)
                 return
 
 # Support for ENDSTOP_PHASE_CALIBRATE command
@@ -142,7 +136,7 @@ class EndstopPhases:
         self.gcode.register_command("ENDSTOP_PHASE_CALIBRATE",
                                     self.cmd_ENDSTOP_PHASE_CALIBRATE,
                                     desc=self.cmd_ENDSTOP_PHASE_CALIBRATE_help)
-    def update_stepper(self, stepper, is_primary):
+    def update_stepper(self, stepper, trig_mcu_pos, is_primary):
         stepper_name = stepper.get_name()
         phase_calc = self.tracking.get(stepper_name)
         if phase_calc is None:
@@ -162,12 +156,14 @@ class EndstopPhases:
         if is_primary:
             phase_calc.is_primary = True
         if phase_calc.stats_only:
-            phase_calc.calc_phase(stepper)
+            phase_calc.calc_phase(stepper, trig_mcu_pos)
     def handle_home_rails_end(self, homing_state, rails):
         for rail in rails:
             is_primary = True
             for stepper in rail.get_steppers():
-                self.update_stepper(stepper, is_primary)
+                sname = stepper.get_name()
+                trig_mcu_pos = homing_state.get_trigger_position(sname)
+                self.update_stepper(stepper, trig_mcu_pos, is_primary)
                 is_primary = False
     cmd_ENDSTOP_PHASE_CALIBRATE_help = "Calibrate stepper phase"
     def cmd_ENDSTOP_PHASE_CALIBRATE(self, gcmd):

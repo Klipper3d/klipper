@@ -6,15 +6,6 @@
 import logging, math, os, time
 from . import shaper_calibrate
 
-def _parse_probe_points(config):
-    points = config.get('probe_points').split('\n')
-    try:
-        points = [line.split(',', 2) for line in points if line.strip()]
-        return [[float(coord.strip()) for coord in p] for p in points]
-    except:
-        raise config.error("Unable to parse probe_points in %s" % (
-            config.get_name()))
-
 class TestAxis:
     def __init__(self, axis=None, vib_dir=None):
         if axis is None:
@@ -66,7 +57,8 @@ class VibrationPulseTest:
         self.hz_per_sec = config.getfloat('hz_per_sec', 1.,
                                           minval=0.1, maxval=2.)
 
-        self.probe_points = _parse_probe_points(config)
+        self.probe_points = config.getlists('probe_points', seps=(',', '\n'),
+                                            parser=float, count=3)
     def get_start_test_points(self):
         return self.probe_points
     def prepare_test(self, gcmd):
