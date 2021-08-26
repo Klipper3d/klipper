@@ -14,9 +14,6 @@ class ExtruderStepper:
         self.synced_extruder = None
         self.stepper = stepper.PrinterStepper(config)
         self.stepper.setup_itersolve('extruder_stepper_alloc')
-        stepper_enable = self.printer.load_object(config, 'stepper_enable')
-        stepper_enable.register_stepper(self.stepper,
-                                        config.get('enable_pin', None))
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         gcode = self.printer.lookup_object('gcode')
