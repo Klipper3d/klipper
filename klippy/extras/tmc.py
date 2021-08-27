@@ -472,11 +472,8 @@ def TMCMicrostepHelper(config, mcu_tmc):
         and config.get('microsteps', None, note_valid=False) is not None):
         # Older config format with microsteps in tmc config section
         ms_config = config
-    ms = ms_config.getint('microsteps')
-    mres = {256: 0, 128: 1, 64: 2, 32: 3, 16: 4, 8: 5, 4: 6, 2: 7, 1: 8}.get(ms)
-    if mres is None:
-        raise config.error("Invalid '%s' microstep setting (%d)"
-                           % (config.get_name(), ms))
+    steps = {256: 0, 128: 1, 64: 2, 32: 3, 16: 4, 8: 5, 4: 6, 2: 7, 1: 8}
+    mres = ms_config.getchoice('microsteps', steps)
     fields.set_field("mres", mres)
     fields.set_field("intpol", config.getboolean("interpolate", True))
 

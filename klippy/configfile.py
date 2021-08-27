@@ -69,7 +69,10 @@ class ConfigWrapper:
         return self._get_wrapper(self.fileconfig.getboolean, option, default,
                                  note_valid=note_valid)
     def getchoice(self, option, choices, default=sentinel, note_valid=True):
-        c = self.get(option, default, note_valid=note_valid)
+        if choices and type(list(choices.keys())[0]) == int:
+            c = self.getint(option, default, note_valid=note_valid)
+        else:
+            c = self.get(option, default, note_valid=note_valid)
         if c not in choices:
             raise error("Choice '%s' for option '%s' in section '%s'"
                         " is not a valid choice" % (c, option, self.section))
