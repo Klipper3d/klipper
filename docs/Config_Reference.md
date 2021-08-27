@@ -2823,6 +2823,9 @@ run_current:
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
+#ref_resistor: 6800
+#   The resistance (in ohms) of the reference resistor used to calculate
+#   scaling of current in the case of using internal sense resistors
 #stealthchop_threshold: 0
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
@@ -2870,6 +2873,9 @@ run_current:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
 #   chips are connected to the same UART pin. The default is zero.
+#ref_resistor: 6800
+#   The resistance (in ohms) of the reference resistor used to calculate
+#   scaling of current in the case of using internal sense resistors
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2

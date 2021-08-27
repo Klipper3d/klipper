@@ -106,11 +106,15 @@ class TMCCurrentHelper:
         hold_current = config.getfloat('hold_current', run_current,
                                        above=0., maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
+        self.ref_resistor = config.getfloat('ref_resistor', 6800., above=0.)
+        self.internal_r_sense = config.getint('driver_internal_rsense', 0)
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("ihold", ihold)
         self.fields.set_field("irun", irun)
     def _calc_current_bits(self, current, vsense):
+        if self.internal_r_sense:
+            return self._calc_current_bits_internal_rsense(current)
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
         if vsense:
@@ -118,6 +122,14 @@ class TMCCurrentHelper:
         cs = int(32. * current * sense_resistor * math.sqrt(2.) / vref
                  - 1. + .5)
         return max(0, min(31, cs))
+
+    def _calc_current_bits_internal_rsense(self, current):
+        r_ref = self.ref_resistor + 450
+        v_ref = 5
+        rms_current_max = (3000 * v_ref / (r_ref * math.sqrt(2.)))
+        cs = int(32. * current / rms_current_max)
+        return max(0, min(31, cs))
+
     def _calc_current(self, run_current, hold_current):
         vsense = False
         irun = self._calc_current_bits(run_current, vsense)
