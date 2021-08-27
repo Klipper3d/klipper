@@ -2823,6 +2823,9 @@ run_current:
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
+#ref_resistor: 6800
+#   The resistance (in ohms) of the reference resistor used to calculate
+#   scaling of current in the case of using internal sense resistors
 #stealthchop_threshold: 0
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
@@ -2841,6 +2844,7 @@ run_current:
 #driver_PWM_FREQ: 1
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
+#driver_INTERNAL_RSENSE: 0
 #   Set the given register during the configuration of the TMC2208
 #   chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the
@@ -2869,6 +2873,9 @@ run_current:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
 #   chips are connected to the same UART pin. The default is zero.
+#ref_resistor: 6800
+#   The resistance (in ohms) of the reference resistor used to calculate
+#   scaling of current in the case of using internal sense resistors
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2
@@ -2883,6 +2890,7 @@ run_current:
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
 #driver_SGTHRS: 0
+#driver_INTERNAL_RSENSE: 0
 #   Set the given register during the configuration of the TMC2209
 #   chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the
