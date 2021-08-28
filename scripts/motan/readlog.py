@@ -17,6 +17,33 @@ class error(Exception):
 LogHandlers = {}
 
 # Extract requested position, velocity, and accel from a trapq log
+class HandleStatusField:
+    SubscriptionIdParts = 0
+    ParametersMin = ParametersMax = 1
+    DataSets = [
+        ('status(<field>)', 'A get_status field name (separate by periods)'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
+        self.status_tracker = lmanager.get_status_tracker()
+        self.field_name = name_parts[1]
+        self.field_parts = name_parts[1].split('.')
+        self.next_update_time = 0.
+        self.result = None
+    def get_label(self):
+        label = '%s field' % (self.field_name,)
+        return {'label': label, 'units': 'Unknown'}
+    def pull_data(self, req_time):
+        if req_time < self.next_update_time:
+            return self.result
+        db, next_update_time = self.status_tracker.pull_status(req_time)
+        for fp in self.field_parts[:-1]:
+            db = db.get(fp, {})
+        self.result = db.get(self.field_parts[-1], 0.)
+        self.next_update_time = next_update_time
+        return self.result
+LogHandlers["status"] = HandleStatusField
+
+# Extract requested position, velocity, and accel from a trapq log
 class HandleTrapQ:
     SubscriptionIdParts = 2
     ParametersMin = ParametersMax = 2
@@ -275,6 +302,30 @@ class JsonDispatcher:
 # Dataset and log tracking
 ######################################################################
 
+# Tracking of get_status messages
+class TrackStatus:
+    def __init__(self, lmanager, name, start_status):
+        self.name = name
+        self.jdispatch = lmanager.get_jdispatch()
+        self.next_status_time = 0.
+        self.status = dict(start_status)
+        self.next_update = {}
+    def pull_status(self, req_time):
+        status = self.status
+        while 1:
+            if req_time < self.next_status_time:
+                return status, self.next_status_time
+            for k, v in self.next_update.items():
+                status.setdefault(k, {}).update(v)
+            jmsg = self.jdispatch.pull_msg(req_time, self.name)
+            if jmsg is None:
+                self.next_status_time = req_time + 0.100
+                self.next_update = {}
+                return status, self.next_status_time
+            self.next_update = jmsg['status']
+            th = self.next_update.get('toolhead', {})
+            self.next_status_time = th.get('estimated_print_time', 0.)
+
 # Split a string by commas while keeping parenthesis intact
 def param_split(line):
     out = []
@@ -313,12 +364,13 @@ class LogManager:
         self.initial_start_time = self.start_time = 0.
         self.datasets = {}
         self.initial_status = {}
+        self.start_status = {}
         self.log_subscriptions = {}
-        self.status = {}
+        self.status_tracker = None
     def setup_index(self):
         fmsg = self.index_reader.pull_msg()
         self.initial_status = status = fmsg['status']
-        self.status = dict(status)
+        self.start_status = dict(status)
         start_time = status['toolhead']['estimated_print_time']
         self.initial_start_time = self.start_time = start_time
         self.log_subscriptions = fmsg.get('subscriptions', {})
@@ -330,6 +382,7 @@ class LogManager:
         return self.jdispatch
     def seek_time(self, req_time):
         self.start_time = req_start_time = self.initial_start_time + req_time
+        start_status = self.start_status
         seek_time = max(self.initial_start_time, req_start_time - 1.)
         file_position = 0
         while 1:
@@ -340,6 +393,8 @@ class LogManager:
             ptime = max(th['estimated_print_time'], th.get('print_time', 0.))
             if ptime > seek_time:
                 break
+            for k, v in fmsg["status"].items():
+                start_status.setdefault(k, {}).update(v)
             file_position = fmsg['file_position']
         if file_position:
             self.jdispatch.log_reader.seek(file_position)
@@ -347,6 +402,11 @@ class LogManager:
         return self.initial_start_time
     def get_start_time(self):
         return self.start_time
+    def get_status_tracker(self):
+        if self.status_tracker is None:
+            self.status_tracker = TrackStatus(self, "status", self.start_status)
+            self.jdispatch.add_handler("status", "status")
+        return self.status_tracker
     def setup_dataset(self, name):
         if name in self.datasets:
             return self.datasets[name]
@@ -357,9 +417,10 @@ class LogManager:
         len_pp = len(name_parts) - 1
         if len_pp < cls.ParametersMin or len_pp > cls.ParametersMax:
             raise error("Invalid number of parameters for '%s'" % (name,))
-        subscription_id = ":".join(name_parts[:cls.SubscriptionIdParts])
-        if subscription_id not in self.log_subscriptions:
-            raise error("Dataset '%s' not in capture" % (subscription_id,))
+        if cls.SubscriptionIdParts:
+            subscription_id = ":".join(name_parts[:cls.SubscriptionIdParts])
+            if subscription_id not in self.log_subscriptions:
+                raise error("Dataset '%s' not in capture" % (subscription_id,))
+            self.jdispatch.add_handler(name, subscription_id)
         self.datasets[name] = hdl = cls(self, name, name_parts)
-        self.jdispatch.add_handler(name, subscription_id)
         return hdl
