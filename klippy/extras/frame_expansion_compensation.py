@@ -48,6 +48,7 @@ class FrameExpansionCompensator:
 
         # Z offset transformation
         self.z_drift_offset = 0.
+        self.last_z_drift_offset = 0.
         self.comp_enable = True
         self.last_position = [0., 0., 0., 0.]
         self.next_transform = None
@@ -162,6 +163,7 @@ class FrameExpansionCompensator:
 
         # Apply offset
         new_z = pos[2] + self.z_drift_offset
+        self.last_z_drift_offset = self.z_drift_offset
         return [pos[0], pos[1], new_z, pos[3]]
 
     def calc_unoffset(self, pos):
@@ -175,7 +177,9 @@ class FrameExpansionCompensator:
     def move(self, newpos, speed):
         # don't apply to extrude only moves or when disabled
         if (newpos[0:2] == self.last_position[0:2]) or not self.comp_enable:
-            self.next_transform.move(newpos, speed)
+            z = newpos[2] + self.last_z_drift_offset
+            corrected_pos = [newpos[0], newpos[1], z, newpos[3]]
+            self.next_transform.move(corrected_pos, speed)
         else:
             corrected_pos = self.calc_offset(newpos)
             self.next_transform.move(corrected_pos, speed)
