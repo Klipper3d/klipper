@@ -114,7 +114,7 @@ class ScrewsTiltAdjust:
                 self.gcode.respond_info(
                     "%s : x=%.1f, y=%.1f, z=%.5f : adjust %s %02d:%02d" %
                     (name, coord[0], coord[1], z, sign, full_turns, minutes))
-                self.results.append({'name':name, 'x':coord[0], 'y':coord[c1],
+                self.results.append({'name':name, 'x':coord[0], 'y':coord[1],
                     'z':z, 'sign':sign,
                     'adjust':"%02d:%02d" % (full_turns, minutes)})
         if self.max_diff and any((d > self.max_diff) for d in screw_diff):
