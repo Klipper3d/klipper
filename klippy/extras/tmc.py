@@ -371,6 +371,7 @@ class TMCCommandHelper:
             logging.info("TMC %s failed to init: %s", self.name, str(e))
     # get_status information export
     def get_status(self, eventtime=None):
+        cpos = None
         if self.stepper is not None and self.mcu_phase_offset is not None:
             cpos = self.stepper.mcu_to_commanded_position(self.mcu_phase_offset)
         res = {'mcu_phase_offset': self.mcu_phase_offset,
