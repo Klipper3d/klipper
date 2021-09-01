@@ -213,13 +213,17 @@ The following standard commands are supported:
   This acts to take a frequently used babystepping value, and "make
   it permanent".  Requires a `SAVE_CONFIG` to take effect.
 - `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
-  FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
-  each Z height during a print. The tool will run the given COMMAND
-  with the given PARAMETER assigned to the value using the formula
-  `value = start + factor * z_height`. If BAND is provided then the
-  adjustment will only be made every BAND millimeters of z height - in
-  that case the formula used is `value = start + factor *
-  ((floor(z_height / band) + .5) * band)`.
+  FACTOR=<value> [BAND=<value>] [SKIP=<value>]`: A tool for tuning
+  a parameter on each Z height during a print. The tool will run
+  the given COMMAND with the given PARAMETER assigned to the value
+  using the formula `value = start + factor * z_height`. If BAND is
+  provided then the adjustment will only be made every BAND
+  millimeters of z height - in that case the formula used is
+  `value = start + factor * ((floor(z_height / band) + .5) * band)`.
+  If `SKIP=<value>` is specified, the tuning process doesn't begin
+  until Z height `<value>` is reached, and below that the value will
+  be set to `START`; in this case, the `z_height` used in the
+  formulas above is actually `max(z - skip, 0)`.
 - `SET_DISPLAY_GROUP [DISPLAY=<display>] GROUP=<group>`: Set the
   active display group of an lcd display. This allows to define
   multiple display data groups in the config,
