@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20210903: The default [`smooth_time`](Config_Reference.md#extruder)
+for heaters has changed to 1 second (from 2 seconds).  For most
+printers this will result in more stable temperature control.
+
 20210830: The default adxl345 name is now "adxl345".  The default CHIP
 parameter for the `ACCELEROMETER_MEASURE` and `ACCELEROMETER_QUERY` is
 now also "adxl345".
