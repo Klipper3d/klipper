@@ -30,6 +30,7 @@ class TuningTower:
         self.start = gcmd.get_float('START', 0.)
         self.factor = gcmd.get_float('FACTOR')
         self.band = gcmd.get_float('BAND', 0., minval=0.)
+        self.skip = gcmd.get_float('SKIP', 0., minval=0.)
         # Enable test mode
         if self.gcode.is_traditional_gcode(command):
             self.command_fmt = "%s %s%%.9f" % (command, parameter)
@@ -47,6 +48,8 @@ class TuningTower:
         self.last_position = list(pos)
         return pos
     def calc_value(self, z):
+        if self.skip:
+            z = max(0., z - self.skip)
         if self.band:
             z = (math.floor(z / self.band) + .5) * self.band
         return self.start + z * self.factor
