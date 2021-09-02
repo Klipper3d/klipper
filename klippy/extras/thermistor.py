@@ -101,7 +101,8 @@ def PrinterThermistor(config, params):
     vo_ref = config.getfloat('vo_ref', 0)
 
     if vo_ref > 0:
-        thermistor = RecoreThermistor(pullup, inline_resistor, adc_ref, pullup_ref, vo_ref)
+        thermistor = RecoreThermistor(pullup, inline_resistor, adc_ref,
+                                      pullup_ref, vo_ref)
     else:
         thermistor = Thermistor(pullup, inline_resistor)
 
