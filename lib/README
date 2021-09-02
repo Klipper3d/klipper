@@ -53,9 +53,10 @@ The stm32f2 directory contains code from:
 version v1.9.0 (42fc8bf966c04ef814bb0620dcd3e036e038b4a2). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32F2xx/ directory.
 
-The stm32f4 directory contains code from STMicroelectronics:
-  http://www.st.com/en/embedded-software/stm32cubef4.html
-version 1.24.0 (extracted 20190723).
+The stm32f4 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF4
+version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
 
 The rp2040 directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
