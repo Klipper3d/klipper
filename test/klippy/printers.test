@@ -155,6 +155,7 @@ CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-creality-ender6-2020.cfg
+CONFIG ../../config/printer-elegoo-neptune2-v1.2-2021.cfg
 CONFIG ../../config/printer-eryone-er20-2021.cfg
 CONFIG ../../config/printer-flsun-q5-2020.cfg
 CONFIG ../../config/printer-flsun-qqs-2020.cfg
@@ -166,6 +167,7 @@ CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
+CONFIG ../../config/generic-bigtreetech-e3-rrf-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-bigtreetech-skr-2.cfg

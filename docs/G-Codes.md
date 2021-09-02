@@ -725,24 +725,22 @@ is enabled:
 
 The following commands are available when an
 [adxl345 config section](Config_Reference.md#adxl345) is enabled:
-- `ACCELEROMETER_MEASURE [CHIP=<config_name>] [RATE=<value>]
-  [NAME=<value>]`: Starts accelerometer measurements at the requested
-  number of samples per second. If CHIP is not specified it defaults
-  to "default". Valid rates are 25, 50, 100, 200, 400, 800, 1600,
-  and 3200. The command works in a start-stop mode: when executed for
-  the first time, it starts the measurements, next execution stops
-  them. If RATE is not specified, then the default value is used
-  (either from `printer.cfg` or `3200` default value). The results of
-  measurements are written to a file named
+- `ACCELEROMETER_MEASURE [CHIP=<config_name>] [NAME=<value>]`: Starts
+  accelerometer measurements at the requested number of samples per
+  second. If CHIP is not specified it defaults to "adxl345". The
+  command works in a start-stop mode: when executed for the first
+  time, it starts the measurements, next execution stops them. The
+  results of measurements are written to a file named
   `/tmp/adxl345-<chip>-<name>.csv` where `<chip>` is the name of the
-  accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`) and
-  `<name>` is the optional NAME parameter. If NAME is not specified it
-  defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
-  accelerometer does not have a name in its config section (simply
-  `[adxl345]`) <chip> part of the name is not generated.
+  accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`)
+  and `<name>` is the optional NAME parameter. If NAME is not
+  specified it defaults to the current time in "YYYYMMDD_HHMMSS"
+  format. If the accelerometer does not have a name in its config
+  section (simply `[adxl345]`) then `<chip>` part of the name is not
+  generated.
 - `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
   accelerometer for the current value. If CHIP is not specified it
-  defaults to "default". If RATE is not specified, the default value
+  defaults to "adxl345". If RATE is not specified, the default value
   is used. This command is useful to test the connection to the
   ADXL345 accelerometer: one of the returned values should be a
   free-fall acceleration (+/- some noise of the chip).

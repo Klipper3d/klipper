@@ -17,19 +17,19 @@ ReadRegisters = [ "READRSP@RDSEL0", "READRSP@RDSEL1", "READRSP@RDSEL2" ]
 Fields = {}
 
 Fields["DRVCTRL"] = {
-    "MRES": 0x0f,
-    "DEDGE": 0x01 << 8,
+    "mres": 0x0f,
+    "dedge": 0x01 << 8,
     "intpol": 0x01 << 9,
 }
 
 Fields["CHOPCONF"] = {
     "toff": 0x0f,
-    "HSTRT": 0x7 << 4,
-    "HEND": 0x0f << 7,
-    "HDEC": 0x03 << 11,
-    "RNDTF": 0x01 << 13,
-    "CHM": 0x01 << 14,
-    "TBL": 0x03 << 15
+    "hstrt": 0x7 << 4,
+    "hend": 0x0f << 7,
+    "hdec": 0x03 << 11,
+    "rndtf": 0x01 << 13,
+    "chm": 0x01 << 14,
+    "tbl": 0x03 << 15
 }
 
 Fields["SMARTEN"] = {
@@ -41,24 +41,24 @@ Fields["SMARTEN"] = {
 }
 
 Fields["SGCSCONF"] = {
-    "CS": 0x1f,
+    "cs": 0x1f,
     "sgt": 0x7F << 8,
     "sfilt": 0x01 << 16
 }
 
 Fields["DRVCONF"] = {
-    "RDSEL": 0x03 << 4,
-    "VSENSE": 0x01 << 6,
-    "SDOFF": 0x01 << 7,
-    "TS2G": 0x03 << 8,
-    "DISS2G": 0x01 << 10,
-    "SLPL": 0x03 << 12,
-    "SLPH": 0x03 << 14,
-    "TST": 0x01 << 16
+    "rdsel": 0x03 << 4,
+    "vsense": 0x01 << 6,
+    "sdoff": 0x01 << 7,
+    "ts2g": 0x03 << 8,
+    "diss2g": 0x01 << 10,
+    "slpl": 0x03 << 12,
+    "slph": 0x03 << 14,
+    "tst": 0x01 << 16
 }
 
 Fields["READRSP@RDSEL0"] = {
-    "stallGuard": 0x01 << 4,
+    "stallguard": 0x01 << 4,
     "ot": 0x01 << 5,
     "otpw": 0x01 << 6,
     "s2ga": 0x01 << 7,
@@ -66,11 +66,11 @@ Fields["READRSP@RDSEL0"] = {
     "ola": 0x01 << 9,
     "olb": 0x01 << 10,
     "stst": 0x01 << 11,
-    "MSTEP": 0x3ff << 14
+    "mstep": 0x3ff << 14
 }
 
 Fields["READRSP@RDSEL1"] = {
-    "stallGuard": 0x01 << 4,
+    "stallguard": 0x01 << 4,
     "ot": 0x01 << 5,
     "otpw": 0x01 << 6,
     "s2ga": 0x01 << 7,
@@ -78,11 +78,11 @@ Fields["READRSP@RDSEL1"] = {
     "ola": 0x01 << 9,
     "olb": 0x01 << 10,
     "stst": 0x01 << 11,
-    "SG_RESULT": 0x3ff << 14
+    "sg_result": 0x3ff << 14
 }
 
 Fields["READRSP@RDSEL2"] = {
-    "stallGuard": 0x01 << 4,
+    "stallguard": 0x01 << 4,
     "ot": 0x01 << 5,
     "otpw": 0x01 << 6,
     "s2ga": 0x01 << 7,
@@ -90,20 +90,20 @@ Fields["READRSP@RDSEL2"] = {
     "ola": 0x01 << 9,
     "olb": 0x01 << 10,
     "stst": 0x01 << 11,
-    "SE": 0x1f << 14,
-    "SG_RESULT@RDSEL2": 0x1f << 19
+    "se": 0x1f << 14,
+    "sg_result@rdsel2": 0x1f << 19
 }
 
 SignedFields = ["sgt"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
-    "DEDGE": (lambda v: "1(Both Edges Active!)" if v else ""),
-    "CHM": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
-    "VSENSE": (lambda v: "1(165mV)" if v else "0(305mV)"),
-    "SDOFF": (lambda v: "1(Step/Dir disabled!)" if v else ""),
-    "DISS2G": (lambda v: "1(Short to GND disabled!)" if v else ""),
-    "SE": (lambda v: ("%d" % v) if v else "0(Reset?)"),
+    "dedge": (lambda v: "1(Both Edges Active!)" if v else ""),
+    "chm": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
+    "vsense": (lambda v: "1(165mV)" if v else "0(305mV)"),
+    "sdoff": (lambda v: "1(Step/Dir disabled!)" if v else ""),
+    "diss2g": (lambda v: "1(Short to GND disabled!)" if v else ""),
+    "se": (lambda v: ("%d" % v) if v else "0(Reset?)"),
 })
 
 
@@ -123,8 +123,8 @@ class TMC2660CurrentHelper:
                                        maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor')
         vsense, cs = self._calc_current(self.current)
-        self.fields.set_field("CS", cs)
-        self.fields.set_field("VSENSE", vsense)
+        self.fields.set_field("cs", cs)
+        self.fields.set_field("vsense", vsense)
 
         # Register ready/printing handlers
         self.idle_current_percentage = config.getint(
@@ -161,11 +161,11 @@ class TMC2660CurrentHelper:
 
     def _update_current(self, current, print_time):
         vsense, cs = self._calc_current(current)
-        val = self.fields.set_field("CS", cs)
+        val = self.fields.set_field("cs", cs)
         self.mcu_tmc.set_register("SGCSCONF", val, print_time)
         # Only update VSENSE if we need to
-        if vsense != self.fields.get_field("VSENSE"):
-            val = self.fields.set_field("VSENSE", vsense)
+        if vsense != self.fields.get_field("vsense"):
+            val = self.fields.set_field("vsense", vsense)
             self.mcu_tmc.set_register("DRVCONF", val, print_time)
 
     def get_current(self):
@@ -196,8 +196,8 @@ class MCU_TMC2660_SPI:
         if self.printer.get_start_args().get('debugoutput') is not None:
             return 0
         with self.mutex:
-            old_rdsel = self.fields.get_field("RDSEL")
-            val = self.fields.set_field("RDSEL", new_rdsel)
+            old_rdsel = self.fields.get_field("rdsel")
+            val = self.fields.set_field("rdsel", new_rdsel)
             msg = [((val >> 16) | reg) & 0xff, (val >> 8) & 0xff, val & 0xff]
             if new_rdsel != old_rdsel:
                 # Must set RDSEL value first
@@ -223,29 +223,27 @@ class TMC2660:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.fields.set_field("SDOFF", 0) # Access DRVCTRL in step/dir mode
+        self.fields.set_field("sdoff", 0) # Access DRVCTRL in step/dir mode
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
         # Register commands
         current_helper = TMC2660CurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
+        self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_status = cmdhelper.get_status
 
-        # DRVCTRL
-        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
-        self.get_microsteps = mh.get_microsteps
-        self.get_phase = mh.get_phase
         # CHOPCONF
         set_config_field = self.fields.set_config_field
-        set_config_field(config, "TBL", 2)
-        set_config_field(config, "RNDTF", 0)
-        set_config_field(config, "HDEC", 0)
-        set_config_field(config, "CHM", 0)
-        set_config_field(config, "HEND", 3)
-        set_config_field(config, "HSTRT", 3)
+        set_config_field(config, "tbl", 2)
+        set_config_field(config, "rndtf", 0)
+        set_config_field(config, "hdec", 0)
+        set_config_field(config, "chm", 0)
+        set_config_field(config, "hend", 3)
+        set_config_field(config, "hstrt", 3)
         set_config_field(config, "toff", 4)
-        if not self.fields.get_field("CHM"):
-            if (self.fields.get_field("HSTRT") +
-                self.fields.get_field("HEND")) > 15:
+        if not self.fields.get_field("chm"):
+            if (self.fields.get_field("hstrt") +
+                self.fields.get_field("hend")) > 15:
                 raise config.error("driver_HEND + driver_HSTRT must be <= 15")
         # SMARTEN
         set_config_field(config, "seimin", 0)
@@ -259,10 +257,10 @@ class TMC2660:
         set_config_field(config, "sgt", 0)
 
         # DRVCONF
-        set_config_field(config, "SLPH", 0)
-        set_config_field(config, "SLPL", 0)
-        set_config_field(config, "DISS2G", 0)
-        set_config_field(config, "TS2G", 3)
+        set_config_field(config, "slph", 0)
+        set_config_field(config, "slpl", 0)
+        set_config_field(config, "diss2g", 0)
+        set_config_field(config, "ts2g", 3)
 
 def load_config_prefix(config):
     return TMC2660(config)

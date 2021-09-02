@@ -91,7 +91,7 @@ class PrinterOutputPin:
 
         systime = self.reactor.monotonic()
         print_time = self.mcu_pin.get_mcu().estimated_print_time(systime)
-        time_diff = print_time - (self.last_print_time + self.resend_interval)
+        time_diff = (self.last_print_time + self.resend_interval) - print_time
         if time_diff > 0.:
             # Reschedule for resend time
             return systime + time_diff

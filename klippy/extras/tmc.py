@@ -74,6 +74,11 @@ class FieldHelper:
             if sval and sval != "0":
                 fields.append(" %s=%s" % (field_name, sval))
         return "%-11s %08x%s" % (reg_name + ":", reg_value, "".join(fields))
+    def get_reg_fields(self, reg_name, reg_value):
+        # Provide fields found in a register
+        reg_fields = self.all_fields.get(reg_name, {})
+        return {field_name: self.get_field(field_name, reg_value, reg_name)
+                for field_name, mask in reg_fields.items()}
 
 
 ######################################################################
@@ -88,6 +93,7 @@ class TMCErrorCheck:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.check_timer = None
+        self.last_drv_status = self.last_status = None
         # Setup for GSTAT query
         reg_name = self.fields.lookup_register("drv_err")
         if reg_name is not None:
@@ -96,18 +102,18 @@ class TMCErrorCheck:
             self.gstat_reg_info = None
         self.clear_gstat = True
         # Setup for DRV_STATUS query
-        self.irun_field = "IRUN"
+        self.irun_field = "irun"
         reg_name = "DRV_STATUS"
         mask = err_mask = cs_actual_mask = 0
         if name_parts[0] == 'tmc2130':
             # TMC2130 driver quirks
             self.clear_gstat = False
-            cs_actual_mask = self.fields.all_fields[reg_name]["CS_ACTUAL"]
+            cs_actual_mask = self.fields.all_fields[reg_name]["cs_actual"]
         elif name_parts[0] == 'tmc2660':
             # TMC2660 driver quirks
-            self.irun_field = "CS"
+            self.irun_field = "cs"
             reg_name = "READRSP@RDSEL2"
-            cs_actual_mask = self.fields.all_fields[reg_name]["SE"]
+            cs_actual_mask = self.fields.all_fields[reg_name]["se"]
         err_fields = ["ot", "s2ga", "s2gb", "s2vsa", "s2vsb"]
         warn_fields = ["otpw", "t120", "t143", "t150", "t157"]
         for f in err_fields + warn_fields:
@@ -118,6 +124,7 @@ class TMCErrorCheck:
         self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
+        cleared_flags = 0
         count = 0
         while 1:
             try:
@@ -133,15 +140,15 @@ class TMCErrorCheck:
             if val & mask != last_value & mask:
                 fmt = self.fields.pretty_format(reg_name, val)
                 logging.info("TMC '%s' reports %s", self.stepper_name, fmt)
-                reg_info[0] = last_value = val
+            reg_info[0] = last_value = val
             if not val & err_mask:
                 if not cs_actual_mask or val & cs_actual_mask:
                     break
                 irun = self.fields.get_field(self.irun_field)
                 if self.check_timer is None or irun < 4:
                     break
-                if (self.irun_field == "IRUN"
-                    and not self.fields.get_field("IHOLD")):
+                if (self.irun_field == "irun"
+                    and not self.fields.get_field("ihold")):
                     break
                 # CS_ACTUAL field of zero - indicates a driver reset
             count += 1
@@ -151,12 +158,14 @@ class TMCErrorCheck:
                                                  % (self.stepper_name, fmt))
             if try_clear and val & err_mask:
                 try_clear = False
+                cleared_flags |= val & err_mask
                 self.mcu_tmc.set_register(reg_name, val & err_mask)
-    def _do_periodic_check(self, eventtime, try_clear=False):
+        return cleared_flags
+    def _do_periodic_check(self, eventtime):
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
-                self._query_register(self.gstat_reg_info, try_clear=try_clear)
+                self._query_register(self.gstat_reg_info)
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
             return self.printer.get_reactor().NEVER
@@ -169,11 +178,30 @@ class TMCErrorCheck:
     def start_checks(self):
         if self.check_timer is not None:
             self.stop_checks()
-        self._do_periodic_check(0., try_clear=self.clear_gstat)
+        cleared_flags = 0
+        self._query_register(self.drv_status_reg_info)
+        if self.gstat_reg_info is not None:
+            cleared_flags = self._query_register(self.gstat_reg_info,
+                                                 try_clear=self.clear_gstat)
         reactor = self.printer.get_reactor()
         curtime = reactor.monotonic()
         self.check_timer = reactor.register_timer(self._do_periodic_check,
                                                   curtime + 1.)
+        if cleared_flags:
+            reset_mask = self.fields.all_fields["GSTAT"]["reset"]
+            if cleared_flags & reset_mask:
+                return True
+        return False
+    def get_status(self, eventtime=None):
+        if self.check_timer is None:
+            return {'drv_status': None}
+        last_value, reg_name = self.drv_status_reg_info[:2]
+        if last_value != self.last_drv_status:
+            self.last_drv_status = last_value
+            fields = self.fields.get_reg_fields(reg_name, last_value)
+            fields = {n: v for n, v in fields.items() if v}
+            self.last_status = {'drv_status': fields}
+        return self.last_status
 
 
 ######################################################################
@@ -191,8 +219,15 @@ class TMCCommandHelper:
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
         self.toff = None
+        self.mcu_phase_offset = None
+        self.stepper = None
+        self.stepper_enable = self.printer.load_object(config, "stepper_enable")
+        self.printer.register_event_handler("stepper:sync_mcu_position",
+                                            self._handle_sync_mcu_pos)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
+        # Set microstep config options
+        TMCMicrostepHelper(config, mcu_tmc)
         # Register commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_TMC_FIELD", "STEPPER", self.name,
@@ -215,7 +250,7 @@ class TMCCommandHelper:
         self._init_registers(print_time)
     cmd_SET_TMC_FIELD_help = "Set a register field of a TMC driver"
     def cmd_SET_TMC_FIELD(self, gcmd):
-        field_name = gcmd.get('FIELD')
+        field_name = gcmd.get('FIELD').lower()
         reg_name = self.fields.lookup_register(field_name, None)
         if reg_name is None:
             raise gcmd.error("Unknown field name '%s'" % (field_name,))
@@ -246,6 +281,39 @@ class TMCCommandHelper:
         else:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
                               % (prev_run_current, prev_hold_current))
+    # Stepper phase tracking
+    def _get_phases(self):
+        return (256 >> self.fields.get_field("mres")) * 4
+    def get_phase_offset(self):
+        return self.mcu_phase_offset, self._get_phases()
+    def _query_phase(self):
+        field_name = "mscnt"
+        if self.fields.lookup_register(field_name, None) is None:
+            # TMC2660 uses MSTEP
+            field_name = "mstep"
+        reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
+        return self.fields.get_field(field_name, reg)
+    def _handle_sync_mcu_pos(self, stepper):
+        if stepper.get_name() != self.stepper_name:
+            return
+        try:
+            driver_phase = self._query_phase()
+        except self.printer.command_error as e:
+            logging.info("Unable to obtain tmc %s phase", self.stepper_name)
+            self.mcu_phase_offset = None
+            enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
+            if enable_line.is_motor_enabled():
+                raise
+            return
+        if not stepper.is_dir_inverted():
+            driver_phase = 1023 - driver_phase
+        phases = self._get_phases()
+        phase = int(float(driver_phase) / 1024 * phases + .5) % phases
+        moff = (phase - stepper.get_mcu_position()) % phases
+        if self.mcu_phase_offset is not None and self.mcu_phase_offset != moff:
+            logging.warning("Stepper %s phase change (was %d now %d)",
+                            self.mcu_phase_offset, moff)
+        self.mcu_phase_offset = moff
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
         try:
@@ -253,7 +321,20 @@ class TMCCommandHelper:
                 # Shared enable via comms handling
                 self.fields.set_field("toff", self.toff)
             self._init_registers()
-            self.echeck_helper.start_checks()
+            did_reset = self.echeck_helper.start_checks()
+            if did_reset:
+                self.mcu_phase_offset = None
+            # Calculate phase offset
+            if self.mcu_phase_offset is not None:
+                return
+            gcode = self.printer.lookup_object("gcode")
+            with gcode.get_mutex():
+                if self.mcu_phase_offset is not None:
+                    return
+                logging.info("Pausing toolhead to calculate %s phase offset",
+                             self.stepper_name)
+                self.printer.lookup_object('toolhead').wait_moves()
+                self._handle_sync_mcu_pos(self.stepper)
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
     def _do_disable(self, print_time):
@@ -272,9 +353,11 @@ class TMCCommandHelper:
             cb = (lambda ev: self._do_disable(print_time))
         self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
+        # Lookup stepper object
+        force_move = self.printer.lookup_object("force_move")
+        self.stepper = force_move.lookup_stepper(self.stepper_name)
         # Check for soft stepper enable/disable
-        stepper_enable = self.printer.lookup_object('stepper_enable')
-        enable_line = stepper_enable.lookup_enable(self.stepper_name)
+        enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
         enable_line.register_state_callback(self.handle_stepper_enable)
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
@@ -286,6 +369,15 @@ class TMCCommandHelper:
             self._init_registers()
         except self.printer.command_error as e:
             logging.info("TMC %s failed to init: %s", self.name, str(e))
+    # get_status information export
+    def get_status(self, eventtime=None):
+        cpos = None
+        if self.stepper is not None and self.mcu_phase_offset is not None:
+            cpos = self.stepper.mcu_to_commanded_position(self.mcu_phase_offset)
+        res = {'mcu_phase_offset': self.mcu_phase_offset,
+               'phase_offset_position': cpos}
+        res.update(self.echeck_helper.get_status(eventtime))
+        return res
     # DUMP_TMC support
     def setup_register_dump(self, read_registers, read_translate=None):
         self.read_registers = read_registers
@@ -349,8 +441,8 @@ class TMCVirtualPinHelper:
         # Setup for sensorless homing
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
-            self.en_pwm = not self.fields.get_field("en_spreadCycle")
-            self.pwmthrs = self.fields.get_field("TPWMTHRS")
+            self.en_pwm = not self.fields.get_field("en_spreadcycle")
+            self.pwmthrs = self.fields.get_field("tpwmthrs")
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
             self.pwmthrs = 0
@@ -366,29 +458,29 @@ class TMCVirtualPinHelper:
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
-            tp_val = self.fields.set_field("TPWMTHRS", 0)
+            tp_val = self.fields.set_field("tpwmthrs", 0)
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadCycle", 0)
+            val = self.fields.set_field("en_spreadcycle", 0)
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self.fields.set_field("en_pwm_mode", 0)
             val = self.fields.set_field(self.diag_pin_field, 1)
         self.mcu_tmc.set_register("GCONF", val)
-        tc_val = self.fields.set_field("TCOOLTHRS", 0xfffff)
+        tc_val = self.fields.set_field("tcoolthrs", 0xfffff)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
     def handle_homing_move_end(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
-            tp_val = self.fields.set_field("TPWMTHRS", self.pwmthrs)
+            tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadCycle", not self.en_pwm)
+            val = self.fields.set_field("en_spreadcycle", not self.en_pwm)
         else:
             self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
-        tc_val = self.fields.set_field("TCOOLTHRS", 0)
+        tc_val = self.fields.set_field("tcoolthrs", 0)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
 
 
@@ -397,31 +489,18 @@ class TMCVirtualPinHelper:
 ######################################################################
 
 # Helper to configure and query the microstep settings
-class TMCMicrostepHelper:
-    def __init__(self, config, mcu_tmc):
-        self.mcu_tmc = mcu_tmc
-        self.fields = mcu_tmc.get_fields()
-        stepper_name = " ".join(config.get_name().split()[1:])
-        stepper_config = ms_config = config.getsection(stepper_name)
-        if (stepper_config.get('microsteps', None, note_valid=False) is None
-            and config.get('microsteps', None, note_valid=False) is not None):
-            # Older config format with microsteps in tmc config section
-            ms_config = config
-        steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-                 '8': 5, '4': 6, '2': 7, '1': 8}
-        mres = ms_config.getchoice('microsteps', steps)
-        self.fields.set_field("MRES", mres)
-        self.fields.set_field("intpol", config.getboolean("interpolate", True))
-    def get_microsteps(self):
-        return 256 >> self.fields.get_field("MRES")
-    def get_phase(self):
-        field_name = "MSCNT"
-        if self.fields.lookup_register(field_name, None) is None:
-            # TMC2660 uses MSTEP
-            field_name = "MSTEP"
-        reg = self.mcu_tmc.get_register(self.fields.lookup_register(field_name))
-        mscnt = self.fields.get_field(field_name, reg)
-        return 1023 - mscnt, 1024
+def TMCMicrostepHelper(config, mcu_tmc):
+    fields = mcu_tmc.get_fields()
+    stepper_name = " ".join(config.get_name().split()[1:])
+    stepper_config = ms_config = config.getsection(stepper_name)
+    if (stepper_config.get('microsteps', None, note_valid=False) is None
+        and config.get('microsteps', None, note_valid=False) is not None):
+        # Older config format with microsteps in tmc config section
+        ms_config = config
+    steps = {256: 0, 128: 1, 64: 2, 32: 3, 16: 4, 8: 5, 4: 6, 2: 7, 1: 8}
+    mres = ms_config.getchoice('microsteps', steps)
+    fields.set_field("mres", mres)
+    fields.set_field("intpol", config.getboolean("interpolate", True))
 
 # Helper to configure "stealthchop" mode
 def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
@@ -432,13 +511,13 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
         stepper_name = " ".join(config.get_name().split()[1:])
         stepper_config = config.getsection(stepper_name)
         step_dist = stepper.parse_step_distance(stepper_config)
-        step_dist_256 = step_dist / (1 << fields.get_field("MRES"))
+        step_dist_256 = step_dist / (1 << fields.get_field("mres"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
-        fields.set_field("TPWMTHRS", max(0, min(0xfffff, threshold)))
+        fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))
         en_pwm_mode = True
     reg = fields.lookup_register("en_pwm_mode", None)
     if reg is not None:
         fields.set_field("en_pwm_mode", en_pwm_mode)
     else:
         # TMC2208 uses en_spreadCycle
-        fields.set_field("en_spreadCycle", not en_pwm_mode)
+        fields.set_field("en_spreadcycle", not en_pwm_mode)

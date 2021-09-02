@@ -14,7 +14,7 @@ may require users to update their printer config file.
 - [Contact](Contact.md): Information on bug reporting and general
 communication with the Klipper developers.
 
-## Configuration and Tuning Guides
+## Installation and Configuration
 
 - [Installation](Installation.md): Guide to installing Klipper.
 - [Config Reference](Config_Reference.md): Description of config
@@ -41,18 +41,19 @@ communication with the Klipper developers.
     using adxl345 accelerometer hardware to measure resonance.
 - [Pressure advance](Pressure_Advance.md): Calibrate extruder
   pressure.
-- [Slicers](Slicers.md): Configure "slicer" software for Klipper.
+- [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 - [Command Templates](Command_Templates.md): G-Code macros and
   conditional evaluation.
   - [Status Reference](Status_Reference.md): Information available to
     macros (and similar).
 - [TMC Drivers](TMC_Drivers.md): Using Trinamic stepper motor drivers
   with Klipper.
+- [Multi-MCU Homing](Multi_MCU_Homing.md): Homing and probing using multiple micro-controllers.
+- [Slicers](Slicers.md): Configure "slicer" software for Klipper.
 - [Skew correction](skew_correction.md): Adjustments for axes not
   perfectly square.
 - [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
   tools such as lasers or spindles.
-- [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 
 ## Developer Documentation
 
