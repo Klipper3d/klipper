@@ -38,9 +38,10 @@ Contents taken from the targets/TARGET_NXP/TARGET_LPC176X/ directory.
 It has been modified to set the appropriate clock speeds on the
 LPC1768 and LPC1769. See lpc176x.patch for the modifications.
 
-The stm32f0 directory contains code from STMicroelectronics:
-  http://www.st.com/en/embedded-software/stm32cubef1.html
-version 1.10.0 (extracted 20190721).
+The stm32f0 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF0
+version v1.10.1 (d0c380d668c67dcdd4e44f656be27045ce4006a6). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F0xx/ directory.
 
 The stm32f1 directory contains code from STMicroelectronics:
   http://www.st.com/en/embedded-software/stm32cubef1.html
