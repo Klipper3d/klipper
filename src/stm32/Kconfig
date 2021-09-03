@@ -104,6 +104,9 @@ config MCU
     default "stm32h743xx" if MACH_STM32H743
     default "stm32h750xx" if MACH_STM32H750
 
+comment "Add 'PB5,PE5' to GPIO Initial Pins if using a TFT70-BX display"
+    depends on MACH_STM32H743
+
 config CLOCK_FREQ
     int
     default 48000000 if MACH_STM32F0
@@ -318,4 +321,7 @@ config CANBUS_FREQUENCY
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
     default 500000
 
+
 endif
+
+
