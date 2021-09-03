@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/internal.h" // __CORTEX_M
 #include "irq.h" // irqstatus_t
 #include "sched.h" // DECL_SHUTDOWN
 #include "autoconf.h" // CONFIG_MACH_STM32H7
@@ -38,11 +39,11 @@ irq_restore(irqstatus_t flag)
 void
 irq_wait(void)
 {
-#if CONFIG_MACH_STM32H7
-    asm volatile("cpsie i\n    nop\n    cpsid i\n" ::: "memory");
-#else
-    asm volatile("cpsie i\n    wfi\n    cpsid i\n" ::: "memory");
-#endif
+    if (__CORTEX_M >= 7)
+        // Cortex-m7 may disable cpu counter on wfi, so use nop
+        asm volatile("cpsie i\n    nop\n    cpsid i\n" ::: "memory");
+    else
+        asm volatile("cpsie i\n    wfi\n    cpsid i\n" ::: "memory");
 }
 
 void

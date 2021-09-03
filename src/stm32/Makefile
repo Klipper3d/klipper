@@ -19,7 +19,6 @@ CFLAGS-$(CONFIG_MACH_STM32F2) += -mcpu=cortex-m3 -Ilib/stm32f2/include
 CFLAGS-$(CONFIG_MACH_STM32F4) += -mcpu=cortex-m4 -Ilib/stm32f4/include
 CFLAGS-$(CONFIG_MACH_STM32F4) += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS-$(CONFIG_MACH_STM32H7) += -mcpu=cortex-m7 -Ilib/stm32h7/include
-# TODO maybe CFLAGS-$(CONFIG_MACH_STM32H7) += -mfloat-abi=hard
 CFLAGS += $(CFLAGS-y) -D$(MCU_UPPER) -mthumb -Ilib/cmsis-core -Ilib/fast-hash
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
@@ -51,6 +50,7 @@ usb-src-$(CONFIG_HAVE_STM32_USBOTG) := stm32/usbotg.c
 src-$(CONFIG_USBSERIAL) += $(usb-src-y) stm32/chipid.c generic/usb_cdc.c
 serial-src-y := stm32/serial.c
 serial-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial.c
+serial-src-$(CONFIG_MACH_STM32H7) := stm32/stm32h7_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
 src-$(CONFIG_CANSERIAL) += stm32/can.c ../lib/fast-hash/fasthash.c
 src-$(CONFIG_CANSERIAL) += generic/canbus.c

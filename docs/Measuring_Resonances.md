@@ -7,7 +7,7 @@ Note that using ADXL345 requires some soldering and crimping. ADXL345 can be
 connected to a Raspberry Pi directly, or to an SPI interface of an MCU
 board (it needs to be reasonably fast).
 
-When sourcing ADLX345, be aware that there is a variety of different PCB
+When sourcing ADXL345, be aware that there is a variety of different PCB
 board designs and different clones of them. Make sure that the board supports
 SPI mode (small number of boards appear to be hard-configured for I2C by
 pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU,

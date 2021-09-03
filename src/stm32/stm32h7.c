@@ -154,7 +154,7 @@ clock_setup(void)
     // "The software has to program the supply configuration in PWR control
     // register 3" (pg. 259)
     // Only a single write is allowed (pg. 304)
-    PWR->CR3 = (PWR->CR3 | PWR_CR3_LDOEN ) & ~(PWR_CR3_BYPASS | PWR_CR3_SCUEN);
+    PWR->CR3 = (PWR->CR3 | PWR_CR3_LDOEN) & ~(PWR_CR3_BYPASS | PWR_CR3_SCUEN);
     while (!(PWR->CSR1 & PWR_CSR1_ACTVOSRDY))
         ;
     // (HSE 25mhz) /DIVM1(5) (pll_base 5Mhz) *DIVN1(192) (pll_freq 960Mhz)
@@ -248,6 +248,14 @@ clock_setup(void)
         CLEAR_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
         SET_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
     }
+
+    // Enable LTDC GPIO's
+    SET_BIT(RCC->APB3ENR, RCC_APB3ENR_LTDCEN);
+    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOBEN);
+    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOFEN);
+    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOGEN);
+    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOHEN);
+    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOIEN);
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
