@@ -145,8 +145,10 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 
 void init_ltdc_hdmi_display(void)
 {
-    struct gpio_out b = {.regs=digital_regs[GPIO2PORT(GPIO('B',5))], .bit=GPIO2BIT(GPIO('B',5))};
-    struct gpio_out e = {.regs=digital_regs[GPIO2PORT(GPIO('E',5))], .bit=GPIO2BIT(GPIO('E',5))};
+    struct gpio_out b = {.regs=digital_regs[GPIO2PORT(GPIO('B',5))],
+                         .bit=GPIO2BIT(GPIO('B',5))};
+    struct gpio_out e = {.regs=digital_regs[GPIO2PORT(GPIO('E',5))],
+                         .bit=GPIO2BIT(GPIO('E',5))};
 
     // Enable RPI mode for the display
     gpio_peripheral(GPIO('E',5), GPIO_OUTPUT, 1);
