@@ -73,7 +73,7 @@ class PCA9632:
         LEDOUT |= (LED_PWM << PCA9632_GRN if self.led_green else 0)
         LEDOUT |= (LED_PWM << PCA9632_BLU if self.led_blue else 0)
         LEDOUT |= (LED_PWM << PCA9632_WHT if self.led_white else 0)
-        
+
         self.i2c.i2c_write([PCA9632_LEDOUT,LEDOUT])
 
 def load_config_prefix(config):
