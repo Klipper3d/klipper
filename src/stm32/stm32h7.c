@@ -13,6 +13,7 @@
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
+#include "gpio.h"
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 
@@ -142,6 +143,20 @@ usb_request_bootloader(void)
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif
 
+void init_ltdc_hdmi_display(void)
+{
+    struct gpio_out b = {.regs=digital_regs[GPIO2PORT(GPIO('B',5))], .bit=GPIO2BIT(GPIO('B',5))};
+    struct gpio_out e = {.regs=digital_regs[GPIO2PORT(GPIO('E',5))], .bit=GPIO2BIT(GPIO('E',5))};
+
+    // Enable RPI mode for the display
+    gpio_peripheral(GPIO('E',5), GPIO_OUTPUT, 1);
+    gpio_out_write(e, 1);
+
+    // Enable display backlight
+    gpio_peripheral(GPIO('B',5), GPIO_OUTPUT, -1);
+    gpio_out_write(b,1);
+}
+
 // Main clock and power setup called at chip startup
 static void
 clock_setup(void)
@@ -249,13 +264,7 @@ clock_setup(void)
         SET_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
     }
 
-    // Enable LTDC GPIO's
-    SET_BIT(RCC->APB3ENR, RCC_APB3ENR_LTDCEN);
-    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOBEN);
-    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOFEN);
-    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOGEN);
-    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOHEN);
-    SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOIEN);
+    init_ltdc_hdmi_display();
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
