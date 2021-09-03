@@ -17,6 +17,10 @@
 #define IWDG IWDG1
 #endif
 
+#if CONFIG_MACH_STM32H7 // stm32h7 libraries only define IWDG1 and IWDG2
+#define IWDG IWDG1
+#endif
+
 void
 watchdog_reset(void)
 {

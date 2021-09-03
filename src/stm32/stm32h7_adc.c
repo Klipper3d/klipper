@@ -22,7 +22,7 @@
 #define ADC_ISR_LDORDY_Msk                 (0x1UL << ADC_ISR_LDORDY_Pos)
 #define ADC_ISR_LDORDY                     ADC_ISR_LDORDY_Msk
 
-DECL_CONSTANT("ADC_MAX", 65535);
+DECL_CONSTANT("ADC_MAX", 4095);
 
 // GPIOs like A0_C are not covered!
 // This always gives the pin connected to the positive channel
@@ -215,7 +215,7 @@ uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    return adc->DR;
+    return (adc->DR >> 4) & 0x0fff;
 }
 
 // Cancel a sample that may have been started with gpio_adc_sample()

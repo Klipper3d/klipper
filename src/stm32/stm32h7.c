@@ -256,6 +256,8 @@ clock_setup(void)
     SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOGEN);
     SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOHEN);
     SET_BIT(RCC->AHB4ENR, RCC_AHB4ENR_GPIOIEN);
+=======
+>>>>>>> upstream/work-stm32h7-20210902
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
