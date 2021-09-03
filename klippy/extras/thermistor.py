@@ -67,11 +67,45 @@ class Thermistor:
         r = math.exp(ln_r) + self.inline_resistor
         return r / (self.pullup + r)
 
+class RecoreThermistor(Thermistor):
+    def __init__(self, pullup, inline_resistor, adc_ref, pullup_ref, vo_ref):
+         Thermistor.__init__(self, pullup, inline_resistor)
+         self.adc_ref = adc_ref
+         self.pullup_ref = pullup_ref
+         self.vo_ref = vo_ref
+
+    def calc_temp(self, adc):
+        # Calculate temperature from adc
+        adc = max(.00001, min(.99999, adc))
+        Vo = self.adc_ref*adc
+        R2 = 100000
+        R1 = 1000
+
+        I1 = (self.vo_ref-Vo)/R2
+        VR1 = I1*R1
+        V3 = Vo-VR1
+        I5 = (self.pullup_ref-V3)/self.pullup
+        I3 = (I5+I1)
+        r = V3/I3
+
+        ln_r = math.log(r - self.inline_resistor)
+        inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
+        return 1.0/inv_t + KELVIN_TO_CELSIUS
+
 # Create an ADC converter with a thermistor
 def PrinterThermistor(config, params):
     pullup = config.getfloat('pullup_resistor', 4700., above=0.)
     inline_resistor = config.getfloat('inline_resistor', 0., minval=0.)
-    thermistor = Thermistor(pullup, inline_resistor)
+    adc_ref = config.getfloat('adc_ref', 3.3)
+    pullup_ref = config.getfloat('pullup_ref', 3.2)
+    vo_ref = config.getfloat('vo_ref', 0)
+
+    if vo_ref > 0:
+        thermistor = RecoreThermistor(pullup, inline_resistor, adc_ref,
+                                      pullup_ref, vo_ref)
+    else:
+        thermistor = Thermistor(pullup, inline_resistor)
+
     if 'beta' in params:
         thermistor.setup_coefficients_beta(
             params['t1'], params['r1'], params['beta'])

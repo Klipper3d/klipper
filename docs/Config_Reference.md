@@ -701,6 +701,13 @@ sensor_pin:
 #   The resistance (in ohms) of the pullup attached to the thermistor.
 #   This parameter is only valid when the sensor is a thermistor. The
 #   default is 4700 ohms.
+#adc_ref: 3.3
+#   Recore specific. The reference voltage for the ADC in the STM32
+#pullup_ref: 3.2
+#   Recore specific. The reference voltage used for the pull-up resistors.
+#vo_ref: 0
+#   Recore specific. The offset voltage used to in the summing op-amp.
+#   If this is > 0, the Recore specific settings will be applied.
 #smooth_time: 2.0
 #   A time value (in seconds) over which temperature measurements will
 #   be smoothed to reduce the impact of measurement noise. The default
