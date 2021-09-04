@@ -260,7 +260,6 @@ class PrinterConfig:
         autosave_data = self._strip_duplicates(autosave_data, regular_config)
         self.autosave = self._build_config_wrapper(autosave_data, filename)
         cfg = self._build_config_wrapper(regular_data + autosave_data, filename)
-        self._build_status(cfg)
         return cfg
     def check_unused_options(self, config):
         fileconfig = config.fileconfig
@@ -282,10 +281,8 @@ class PrinterConfig:
                 if (section, option) not in access_tracking:
                     raise error("Option '%s' is not valid in section '%s'"
                                 % (option, section))
-        # Setup self.status_settings
-        self.status_settings = {}
-        for (section, option), value in config.access_tracking.items():
-            self.status_settings.setdefault(section, {})[option] = value
+        # Setup get_status()
+        self._build_status(config)
     def log_config(self, config):
         lines = ["===== Config file =====",
                  self._build_config_string(config),
@@ -298,6 +295,9 @@ class PrinterConfig:
             self.status_raw_config[section.get_name()] = section_status = {}
             for option in section.get_prefix_options(''):
                 section_status[option] = section.get(option, note_valid=False)
+        self.status_settings = {}
+        for (section, option), value in config.access_tracking.items():
+            self.status_settings.setdefault(section, {})[option] = value
     def get_status(self, eventtime):
         return {'config': self.status_raw_config,
                 'settings': self.status_settings,
