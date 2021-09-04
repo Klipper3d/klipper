@@ -55,40 +55,14 @@
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
   #define USARTx_FUNCTION GPIO_FUNCTION(7)
-#elif CONFIG_STM32_SERIAL_UART4
-  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA1,PA0");
-  #define GPIO_Rx GPIO('A', 1)
-  #define GPIO_Tx GPIO('A', 0)
-  #define USARTx UART4
-  #define USARTx_IRQn UART4_IRQn
-  #define USARTx_FUNCTION GPIO_FUNCTION(8)
 #endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
                    | USART_CR1_RXNEIE)
 
-#if CONFIG_MACH_STM32H7
-  #define USART_BRR_DIV_Mantissa_Pos USART_BRR_DIV_MANTISSA_Pos
-  #define USART_BRR_DIV_Fraction_Pos USART_BRR_DIV_FRACTION_Pos
-#endif
-
 void
 USARTx_IRQHandler(void)
 {
-#if CONFIG_MACH_STM32H7
-    uint32_t isr = USARTx->ISR;
-    if (isr & (USART_ISR_RXNE_RXFNE | USART_ISR_ORE))
-        serial_rx_byte(USARTx->RDR);
-    //USART_ISR_TXE_TXFNF only works with Fifo mode disabled
-    if (isr & USART_ISR_TXE_TXFNF && USARTx->CR1 & USART_CR1_TXEIE) {
-        uint8_t data;
-        int ret = serial_get_tx_byte(&data);
-        if (ret)
-            USARTx->CR1 = CR1_FLAGS;
-        else
-            USARTx->TDR = data;
-    }
-#else
     uint32_t sr = USARTx->SR;
     if (sr & (USART_SR_RXNE | USART_SR_ORE))
         serial_rx_byte(USARTx->DR);
@@ -100,7 +74,6 @@ USARTx_IRQHandler(void)
         else
             USARTx->DR = data;
     }
-#endif
 }
 
 void
