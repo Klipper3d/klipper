@@ -24,10 +24,10 @@
 #define EPFIFO(EP) ((void*)(USB_OTG_HS_PERIPH_BASE + USB_OTG_FIFO_BASE  \
                                     + ((EP) << 12)))
 #define EPIN(EP) ((USB_OTG_INEndpointTypeDef*)                          \
-                          (USB_OTG_HS_PERIPH_BASE + USB_OTG_IN_ENDPOINT_BASE    \
+                  (USB_OTG_HS_PERIPH_BASE + USB_OTG_IN_ENDPOINT_BASE    \
                            + ((EP) << 5)))
 #define EPOUT(EP) ((USB_OTG_OUTEndpointTypeDef*)                        \
-                           (USB_OTG_HS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
+                   (USB_OTG_HS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
                             + ((EP) << 5)))
 #define OTG_IRQ OTG_HS_IRQn
 #else
