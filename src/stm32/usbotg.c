@@ -14,23 +14,23 @@
 #include "internal.h" // GPIO
 #include "sched.h" // DECL_INIT
 
-static void
-usb_irq_disable(void)
-{
-    NVIC_DisableIRQ(OTG_FS_IRQn);
-}
-
-static void
-usb_irq_enable(void)
-{
-    NVIC_EnableIRQ(OTG_FS_IRQn);
-}
-
-
 /****************************************************************
  * USB transfer memory
  ****************************************************************/
-
+#if CONFIG_STM32_USB_PB14_PB15
+#define OTG ((USB_OTG_GlobalTypeDef*)USB_OTG_HS_PERIPH_BASE)
+#define OTGD ((USB_OTG_DeviceTypeDef*)                          \
+                      (USB_OTG_HS_PERIPH_BASE + USB_OTG_DEVICE_BASE))
+#define EPFIFO(EP) ((void*)(USB_OTG_HS_PERIPH_BASE + USB_OTG_FIFO_BASE  \
+                                    + ((EP) << 12)))
+#define EPIN(EP) ((USB_OTG_INEndpointTypeDef*)                          \
+                          (USB_OTG_HS_PERIPH_BASE + USB_OTG_IN_ENDPOINT_BASE    \
+                           + ((EP) << 5)))
+#define EPOUT(EP) ((USB_OTG_OUTEndpointTypeDef*)                        \
+                           (USB_OTG_HS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
+                            + ((EP) << 5)))
+#define OTG_IRQ OTG_HS_IRQn
+#else
 #define OTG ((USB_OTG_GlobalTypeDef*)USB_OTG_FS_PERIPH_BASE)
 #define OTGD ((USB_OTG_DeviceTypeDef*)                          \
               (USB_OTG_FS_PERIPH_BASE + USB_OTG_DEVICE_BASE))
@@ -42,6 +42,20 @@ usb_irq_enable(void)
 #define EPOUT(EP) ((USB_OTG_OUTEndpointTypeDef*)                        \
                    (USB_OTG_FS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
                     + ((EP) << 5)))
+#define OTG_IRQ OTG_FS_IRQn
+#endif
+
+static void
+usb_irq_disable(void)
+{
+    NVIC_DisableIRQ(OTG_IRQ);
+}
+
+static void
+usb_irq_enable(void)
+{
+    NVIC_EnableIRQ(OTG_IRQ);
+}
 
 // Setup the USB fifos
 static void
@@ -383,6 +397,9 @@ OTG_FS_IRQHandler(void)
 }
 
 DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
+#if !CONFIG_MACH_STM32H7
+DECL_CONSTANT_STR("RESERVE_PINS_USB1", "PB14,PB15");
+#endif
 
 // Initialize the usb controller
 void
@@ -393,7 +410,11 @@ usb_init(void)
     if (READ_BIT(PWR->CR3, PWR_CR3_USB33RDY) != (PWR_CR3_USB33RDY) ? 1 : 0) {
         SET_BIT(PWR->CR3, PWR_CR3_USB33DEN);
     }
+#if CONFIG_STM32_USB_PB14_PB15
+    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB1OTGHSEN);
+#else
     SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSEN);
+#endif
 #else
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 #endif
@@ -409,9 +430,14 @@ usb_init(void)
     OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
 #endif
 
+#if CONFIG_STM32_USB_PB14_PB15
+    gpio_peripheral(GPIO('B', 14), GPIO_FUNCTION(10), 0);
+    gpio_peripheral(GPIO('B', 15), GPIO_FUNCTION(10), 0);
+#else
     // Route pins
     gpio_peripheral(GPIO('A', 11), GPIO_FUNCTION(10), 0);
     gpio_peripheral(GPIO('A', 12), GPIO_FUNCTION(10), 0);
+#endif
 
     // Setup USB packet memory
     fifo_configure();
@@ -429,7 +455,7 @@ usb_init(void)
     OTGD->DIEPMSK = USB_OTG_DIEPMSK_XFRCM;
     OTG->GINTMSK = USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT;
     OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;
-    armcm_enable_irq(OTG_FS_IRQHandler, OTG_FS_IRQn, 1);
+    armcm_enable_irq(OTG_FS_IRQHandler, OTG_IRQ, 1);
 
     // Enable USB
     OTG->GCCFG |= USB_OTG_GCCFG_PWRDWN;

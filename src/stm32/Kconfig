@@ -261,6 +261,10 @@ choice
         bool "USB (on PA9/PA10)" if LOW_LEVEL_OPTIONS
         depends on MACH_STM32F042 && !MACH_STM32H743
         select USBSERIAL
+    config STM32_USB_PB14_PB15
+        bool "USB (on PB14/PB15)" if HAVE_STM32_USBOTG
+        depends on MACH_STM32H7
+        select USBSERIAL
     config STM32_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"
         select SERIAL
