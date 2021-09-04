@@ -15,8 +15,10 @@ struct spi_info {
     uint8_t miso_pin, mosi_pin, sck_pin, function;
 };
 
+#if !CONFIG_STM32_USB_PB14_PB15
 DECL_ENUMERATION("spi_bus", "spi2", 0);
 DECL_CONSTANT_STR("BUS_PINS_spi2", "PB14,PB15,PB13");
+#endif
 DECL_ENUMERATION("spi_bus", "spi1", 1);
 DECL_CONSTANT_STR("BUS_PINS_spi1", "PA6,PA7,PA5");
 DECL_ENUMERATION("spi_bus", "spi1a", 2);

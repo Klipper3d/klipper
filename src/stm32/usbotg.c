@@ -421,8 +421,8 @@ usb_init(void)
     while ((OTG->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0);
 
     // Configure USB in full-speed device mode
-    OTG->GUSBCFG = (USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL
-                    | (6 << USB_OTG_GUSBCFG_TRDT_Pos));
+    OTG->GUSBCFG = (USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL |
+                    USB_OTG_GUSBCFG_PHYLPCS | (6 << USB_OTG_GUSBCFG_TRDT_Pos));
     OTGD->DCFG |= (3 << USB_OTG_DCFG_DSPD_Pos);
 #if CONFIG_MACH_STM32F446 || CONFIG_MACH_STM32H7
     OTG->GOTGCTL = USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL;
@@ -431,8 +431,8 @@ usb_init(void)
 #endif
 
 #if CONFIG_STM32_USB_PB14_PB15
-    gpio_peripheral(GPIO('B', 14), GPIO_FUNCTION(10), 0);
-    gpio_peripheral(GPIO('B', 15), GPIO_FUNCTION(10), 0);
+    gpio_peripheral(GPIO('B', 14), GPIO_FUNCTION(12), 0);
+    gpio_peripheral(GPIO('B', 15), GPIO_FUNCTION(12), 0);
 #else
     // Route pins
     gpio_peripheral(GPIO('A', 11), GPIO_FUNCTION(10), 0);
