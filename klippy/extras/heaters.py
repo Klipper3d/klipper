@@ -180,6 +180,7 @@ class ControlPID:
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = heater.get_smooth_time()
+        config.deprecate('pid_integral_max')
         imax = config.getfloat('pid_integral_max', self.heater_max_power,
                                minval=0.)
         self.temp_integ_max = 0.

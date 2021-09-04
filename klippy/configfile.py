@@ -116,6 +116,17 @@ class ConfigWrapper:
     def get_prefix_options(self, prefix):
         return [o for o in self.fileconfig.options(self.section)
                 if o.startswith(prefix)]
+    def deprecate(self, option, value=None):
+        if not self.fileconfig.has_option(self.section, option):
+            return
+        if value is None:
+            msg = ("Option '%s' in section '%s' is deprecated."
+                   % (option, self.section))
+        else:
+            msg = ("Value '%s' in option '%s' in section '%s' is deprecated."
+                   % (value, option, self.section))
+        pconfig = self.printer.lookup_object("configfile")
+        pconfig.deprecate(self.section, option, value, msg)
 
 AUTOSAVE_HEADER = """
 #*# <---------------------- SAVE_CONFIG ---------------------->
@@ -127,8 +138,10 @@ class PrinterConfig:
     def __init__(self, printer):
         self.printer = printer
         self.autosave = None
+        self.deprecated = {}
         self.status_raw_config = {}
         self.status_settings = {}
+        self.status_warnings = []
         self.save_config_pending = False
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
@@ -289,6 +302,8 @@ class PrinterConfig:
                  "======================="]
         self.printer.set_rollover_info("config", "\n".join(lines))
     # Status reporting
+    def deprecate(self, section, option, value=None, msg=None):
+        self.deprecated[(section, option, value)] = msg
     def _build_status(self, config):
         self.status_raw_config.clear()
         for section in config.get_prefix_sections(''):
@@ -298,9 +313,20 @@ class PrinterConfig:
         self.status_settings = {}
         for (section, option), value in config.access_tracking.items():
             self.status_settings.setdefault(section, {})[option] = value
+        self.status_warnings = []
+        for (section, option, value), msg in self.deprecated.items():
+            if value is None:
+                res = {'type': 'deprecated_option'}
+            else:
+                res = {'type': 'deprecated_value', 'value': value}
+            res['message'] = msg
+            res['section'] = section
+            res['option'] = option
+            self.status_warnings.append(res)
     def get_status(self, eventtime):
         return {'config': self.status_raw_config,
                 'settings': self.status_settings,
+                'warnings': self.status_warnings,
                 'save_config_pending': self.save_config_pending}
     # Autosave functions
     def set(self, section, option, value):
