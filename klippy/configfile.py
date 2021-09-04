@@ -280,8 +280,9 @@ class PrinterConfig:
             for option in fileconfig.options(section_name):
                 option = option.lower()
                 if (section, option) not in access_tracking:
-                    raise error("Option '%s' is not valid in section '%s'"
-                                % (option, section))
+                    if option != 'endstop_max_pin':
+                        raise error("Option '%s' is not valid in section '%s'"
+                                    % (option, section))
         # Setup self.status_settings
         self.status_settings = {}
         for (section, option), value in config.access_tracking.items():

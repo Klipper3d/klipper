@@ -45,6 +45,8 @@ class CartKinematics:
             self.printer.lookup_object('gcode').register_command(
                 'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
                 desc=self.cmd_SET_DUAL_CARRIAGE_help)
+    def get_rails(self):
+        return self.rails
     def get_steppers(self):
         rails = self.rails
         if self.dual_carriage_axis is not None:

@@ -334,16 +334,13 @@ class PrinterRail:
         return list(self.steppers)
     def get_endstops(self):
         return list(self.endstops)
-    def add_extra_stepper(self, config):
-        stepper = PrinterStepper(config, self.stepper_units_in_radians)
-        self.steppers.append(stepper)
-        endstop_pin = config.get('endstop_pin', None)
+    def _do_endstop(self, config_name, config, printer, ppins, stepper):
+        endstop_pin = config.get(config_name, None)
         if self.endstops and endstop_pin is None:
             # No endstop defined - use primary endstop
             self.endstops[0][0].add_stepper(stepper)
-            return
-        printer = config.get_printer()
-        ppins = printer.lookup_object('pins')
+            return False
+
         pin_params = ppins.parse_pin(endstop_pin, True, True)
         # Normalize pin name
         pin_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
@@ -368,6 +365,20 @@ class PrinterRail:
                             "must specify the same pullup/invert settings" % (
                                 self.get_name(), pin_name))
         mcu_endstop.add_stepper(stepper)
+    def add_extra_stepper(self, config):
+        stepper = PrinterStepper(config, self.stepper_units_in_radians)
+        self.steppers.append(stepper)
+
+        endstop_pin = config.get('endstop_pin', None)
+        if self.endstops and endstop_pin is None:
+            # No endstop defined - use primary endstop
+            self.endstops[0][0].add_stepper(stepper)
+            return
+        printer = config.get_printer()
+        ppins = printer.lookup_object('pins')
+        if self._do_endstop('endstop_pin', config, printer, ppins, stepper) is False:
+            return # exit early, like original
+        self._do_endstop('endstop_max_pin', config, printer, ppins, stepper) # dont exit early here
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
             stepper.setup_itersolve(alloc_func, *params)

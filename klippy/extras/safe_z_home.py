@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+from homing import HomingMove
+
 class SafeZHoming:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -19,13 +21,28 @@ class SafeZHoming:
         self.gcode = self.printer.lookup_object('gcode')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
+        self.endstop_max_pin = zconfig.get('endstop_max_pin', None)
 
         if config.has_section("homing_override"):
             raise config.error("homing_override and safe_z_homing cannot"
                                +" be used simultaneously")
 
+    def _safe_z_move(self, toolhead, pos, speed):
+        if self.endstop_max_pin != None:
+            rails = toolhead.get_kinematics().get_rails()
+            endstops = [es for rail in rails for es in rail.get_endstops()]
+            # toolhead.set_position([0, 0, 0])
+            hmove = HomingMove(self.printer, endstops, toolhead=toolhead)
+            tmppos = [pos[0], pos[1], pos[2], 0.0]
+            return hmove.homing_move(tmppos, speed)
+        return toolhead.manual_move(pos, speed)
+
     def cmd_G28(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
+
+        # first check for zmax crash/limit
+        if self.endstop_max_pin != None:
+            pass
 
         # Perform Z Hop if necessary
         if self.z_hop != 0.0:
@@ -38,14 +55,12 @@ class SafeZHoming:
                 # Always perform the z_hop if the Z axis is not homed
                 pos[2] = 0
                 toolhead.set_position(pos, homing_axes=[2])
-                toolhead.manual_move([None, None, self.z_hop],
-                                     self.z_hop_speed)
+                self._safe_z_move(toolhead, [0, 0, self.z_hop], self.z_hop_speed)
                 if hasattr(toolhead.get_kinematics(), "note_z_not_homed"):
                     toolhead.get_kinematics().note_z_not_homed()
             elif pos[2] < self.z_hop:
                 # If the Z axis is homed, and below z_hop, lift it to z_hop
-                toolhead.manual_move([None, None, self.z_hop],
-                                     self.z_hop_speed)
+                self._safe_z_move(toolhead, [None, None, self.z_hop], self.z_hop_speed)
 
         # Determine which axes we need to home
         need_x, need_y, need_z = [gcmd.get(axis, None) is not None

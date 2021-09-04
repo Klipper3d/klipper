@@ -408,6 +408,8 @@ class ToolHead:
         self.kin.set_position(newpos, homing_axes)
         self.printer.send_event("toolhead:set_position")
     def move(self, newpos, speed):
+        logging.info("DEBUG: TEST")
+        logging.info("DEBUG: cp:{} np:{}".format(self.commanded_pos, newpos))
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
