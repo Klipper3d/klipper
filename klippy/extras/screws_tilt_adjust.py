@@ -93,9 +93,9 @@ class ScrewsTiltAdjust:
                 else:
                     adjust = diff / threads_factor.get(self.thread, 0.5)
                 if is_clockwise_thread:
-                    sign = "CW" if adjust >= 0 else "CCW"
-                else:
                     sign = "CCW" if adjust >= 0 else "CW"
+                else:
+                    sign = "CW" if adjust >= 0 else "CCW"
                 adjust = abs(adjust)
                 full_turns = math.trunc(adjust)
                 decimal_part = adjust - full_turns
