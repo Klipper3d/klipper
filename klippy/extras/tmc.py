@@ -74,6 +74,11 @@ class FieldHelper:
             if sval and sval != "0":
                 fields.append(" %s=%s" % (field_name, sval))
         return "%-11s %08x%s" % (reg_name + ":", reg_value, "".join(fields))
+    def get_reg_fields(self, reg_name, reg_value):
+        # Provide fields found in a register
+        reg_fields = self.all_fields.get(reg_name, {})
+        return {field_name: self.get_field(field_name, reg_value, reg_name)
+                for field_name, mask in reg_fields.items()}
 
 
 ######################################################################
@@ -88,6 +93,7 @@ class TMCErrorCheck:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.check_timer = None
+        self.last_drv_status = self.last_status = None
         # Setup for GSTAT query
         reg_name = self.fields.lookup_register("drv_err")
         if reg_name is not None:
@@ -134,7 +140,7 @@ class TMCErrorCheck:
             if val & mask != last_value & mask:
                 fmt = self.fields.pretty_format(reg_name, val)
                 logging.info("TMC '%s' reports %s", self.stepper_name, fmt)
-                reg_info[0] = last_value = val
+            reg_info[0] = last_value = val
             if not val & err_mask:
                 if not cs_actual_mask or val & cs_actual_mask:
                     break
@@ -186,6 +192,16 @@ class TMCErrorCheck:
             if cleared_flags & reset_mask:
                 return True
         return False
+    def get_status(self, eventtime=None):
+        if self.check_timer is None:
+            return {'drv_status': None}
+        last_value, reg_name = self.drv_status_reg_info[:2]
+        if last_value != self.last_drv_status:
+            self.last_drv_status = last_value
+            fields = self.fields.get_reg_fields(reg_name, last_value)
+            fields = {n: v for n, v in fields.items() if v}
+            self.last_status = {'drv_status': fields}
+        return self.last_status
 
 
 ######################################################################
@@ -353,6 +369,15 @@ class TMCCommandHelper:
             self._init_registers()
         except self.printer.command_error as e:
             logging.info("TMC %s failed to init: %s", self.name, str(e))
+    # get_status information export
+    def get_status(self, eventtime=None):
+        cpos = None
+        if self.stepper is not None and self.mcu_phase_offset is not None:
+            cpos = self.stepper.mcu_to_commanded_position(self.mcu_phase_offset)
+        res = {'mcu_phase_offset': self.mcu_phase_offset,
+               'phase_offset_position': cpos}
+        res.update(self.echeck_helper.get_status(eventtime))
+        return res
     # DUMP_TMC support
     def setup_register_dump(self, read_registers, read_translate=None):
         self.read_registers = read_registers

@@ -94,14 +94,15 @@ nav:
       - Resonance_Compensation.md
       - Measuring_Resonances.md
     - Pressure_Advance.md
-    - Slicers.md
+    - G-Codes.md
     - Command templates:
       - Command_Templates.md
       - Status_Reference.md
     - TMC_Drivers.md
+    - Multi_MCU_Homing.md
+    - Slicers.md
     - skew_correction.md
     - Using_PWM_Tools.md
-    - G-Codes.md
   - Developer Documentation:
     - Code_Overview.md
     - Kinematics.md
