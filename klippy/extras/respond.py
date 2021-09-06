@@ -38,17 +38,21 @@ class HostResponder:
     def cmd_RESPOND(self, gcmd):
         respond_type = gcmd.get('TYPE', None)
         prefix = self.default_prefix
-        if(respond_type != None):
-            respond_type = respond_type.lower()
-            if(respond_type in respond_types):
-                prefix = respond_types[respond_type]
-            else:
-                raise gcmd.error(
-                    "RESPOND TYPE '%s' is invalid. Must be one"
-                    " of 'echo', 'command', or 'error'" % (respond_type,))
-        prefix = gcmd.get('PREFIX', prefix)
-        msg = gcmd.get('MSG', '')
-        gcmd.respond_raw("%s %s" % (prefix, msg))
+        raw = gcmd.get('RAW', None)
+        if raw:
+          gcmd.respond_raw(raw)
+        else:
+            if(respond_type != None):
+                respond_type = respond_type.lower()
+                if(respond_type in respond_types):
+                    prefix = respond_types[respond_type]
+                else:
+                    raise gcmd.error(
+                        "RESPOND TYPE '%s' is invalid. Must be one"
+                        " of 'echo', 'command', or 'error'" % (respond_type,))
+            prefix = gcmd.get('PREFIX', prefix)
+            msg = gcmd.get('MSG', '')
+            gcmd.respond_raw("%s %s" % (prefix, msg))
 
 def load_config(config):
     return HostResponder(config)
