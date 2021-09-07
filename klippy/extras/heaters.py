@@ -43,7 +43,7 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 
+        algos = {'watermark': ControlBangBang,
                  'pid': ControlPID,
                  'pid_no_overshoot': ControlPIDNoOvershoot,
                  'pid_ponm': ControlPIDPonM}
@@ -279,7 +279,7 @@ class ControlPIDNoOvershoot:
 
 
 ######################################################################
-# Proportional Integral Derivative (PID) control algo (proportional on measurement [PonM])
+# Proportional Integral Derivative (PID) control algo (PonM)
 ######################################################################
 
 PID_SETTLE_DELTA = 1.
