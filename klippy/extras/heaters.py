@@ -43,7 +43,10 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = {'watermark': ControlBangBang, 
+                 'pid': ControlPID,
+                 'pid_no_overshoot': ControlPIDNoOvershoot,
+                 'pid_ponm': ControlPIDPonM}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         # Setup output heater pin
@@ -166,7 +169,7 @@ class ControlBangBang:
 
 
 ######################################################################
-# Proportional Integral Derivative (PID) control algo
+# Proportional Integral Derivative (PID) control algo (Classic)
 ######################################################################
 
 PID_SETTLE_DELTA = 1.
@@ -204,6 +207,116 @@ class ControlPID:
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
+        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
+        bounded_co = max(0., min(self.heater_max_power, co))
+        self.heater.set_pwm(read_time, bounded_co)
+        # Store state for next measurement
+        self.prev_temp = temp
+        self.prev_temp_time = read_time
+        self.prev_temp_deriv = temp_deriv
+        if co == bounded_co:
+            self.prev_temp_integ = temp_integ
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        temp_diff = target_temp - smoothed_temp
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+
+
+######################################################################
+# Proportional Integral Derivative (PID) control algo (no overshoot)
+######################################################################
+
+PID_SETTLE_DELTA = 1.
+PID_SETTLE_SLOPE = .1
+
+class ControlPIDNoOvershoot:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+        self.Kp = (config.getfloat('pid_Kp') / 3) / PID_PARAM_BASE
+        self.Ki = (config.getfloat('pid_Ki') / 3) / PID_PARAM_BASE
+        self.Kd = (config.getfloat('pid_Kd') / 0.88) / PID_PARAM_BASE
+        self.min_deriv_time = heater.get_smooth_time()
+        imax = config.getfloat('pid_integral_max', self.heater_max_power,
+                               minval=0.)
+        self.temp_integ_max = 0.
+        if self.Ki:
+            self.temp_integ_max = imax / self.Ki
+        self.prev_temp = AMBIENT_TEMP
+        self.prev_temp_time = 0.
+        self.prev_temp_deriv = 0.
+        self.prev_temp_integ = 0.
+    def temperature_update(self, read_time, temp, target_temp):
+        time_diff = read_time - self.prev_temp_time
+        # Calculate change of temperature
+        temp_diff = temp - self.prev_temp
+        if time_diff >= self.min_deriv_time:
+            temp_deriv = temp_diff / time_diff
+        else:
+            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
+                          + temp_diff) / self.min_deriv_time
+        # Calculate accumulated temperature "error"
+        temp_err = target_temp - temp
+        temp_integ = self.prev_temp_integ + temp_err * time_diff
+        temp_integ = max(0., min(self.temp_integ_max, temp_integ))
+        # Calculate output
+        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
+        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
+        bounded_co = max(0., min(self.heater_max_power, co))
+        self.heater.set_pwm(read_time, bounded_co)
+        # Store state for next measurement
+        self.prev_temp = temp
+        self.prev_temp_time = read_time
+        self.prev_temp_deriv = temp_deriv
+        if co == bounded_co:
+            self.prev_temp_integ = temp_integ
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        temp_diff = target_temp - smoothed_temp
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+
+
+######################################################################
+# Proportional Integral Derivative (PID) control algo (proportional on measurement [PonM])
+######################################################################
+
+PID_SETTLE_DELTA = 1.
+PID_SETTLE_SLOPE = .1
+
+class ControlPIDPonM:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
+        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
+        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.min_deriv_time = heater.get_smooth_time()
+        imax = config.getfloat('pid_integral_max', self.heater_max_power,
+                               minval=0.)
+        self.temp_integ_max = 0.
+        if self.Ki:
+            self.temp_integ_max = imax / self.Ki
+        self.prev_temp = AMBIENT_TEMP
+        self.prev_temp_time = 0.
+        self.prev_temp_deriv = 0.
+        self.prev_temp_integ = 0.
+    def temperature_update(self, read_time, temp, target_temp):
+        time_diff = read_time - self.prev_temp_time
+        # Calculate change of temperature
+        temp_diff = temp - self.prev_temp
+        if time_diff >= self.min_deriv_time:
+            temp_deriv = temp_diff / time_diff
+        else:
+            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
+                          + temp_diff) / self.min_deriv_time
+        # Calculate accumulated temperature "error"
+        temp_err = target_temp - temp
+        temp_integ = self.prev_temp_integ + temp_err * time_diff
+        temp_integ = max(0., min(self.temp_integ_max, temp_integ))
+        # Calculate output
+        co = self.Kp*temp + self.Ki*temp_integ - self.Kd*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
