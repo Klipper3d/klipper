@@ -1,4 +1,4 @@
-// STM32 serial
+// STM32H7 serial
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -11,7 +11,6 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
-// USART6 (STM32H7) is not implemented yet
 // Select the configured serial port
 #if CONFIG_STM32_SERIAL_USART1
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
