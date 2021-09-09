@@ -122,7 +122,7 @@ Graphs can be generated with a command like the following:
 One can use the `-g` option to specify the datasets to graph (it takes
 a Python literal containing a list of lists). For example:
 ```
-~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity"], ["trapq:toolhead:accel"]]'
+~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq(toolhead,velocity)"], ["trapq(toolhead,accel)"]]'
 ```
 
 The list of available datasets can be found using the `-l` option -
@@ -134,7 +134,7 @@ for example:
 It is also possible to specify matplotlib plot options for each
 dataset:
 ```
-~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity?color=red"]]'
+~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq(toolhead,velocity)?color=red&alpha=0.4"]]'
 ```
 Many matplotlib options are available; some examples are "color",
 "label", "alpha", and "linestyle".

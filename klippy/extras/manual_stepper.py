@@ -121,6 +121,8 @@ class ManualStepper:
         return self
     def get_steppers(self):
         return self.steppers
+    def calc_position(self, stepper_positions):
+        return [stepper_positions[self.rail.get_name()], 0., 0.]
 
 def load_config_prefix(config):
     return ManualStepper(config)

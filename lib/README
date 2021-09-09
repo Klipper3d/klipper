@@ -38,21 +38,25 @@ Contents taken from the targets/TARGET_NXP/TARGET_LPC176X/ directory.
 It has been modified to set the appropriate clock speeds on the
 LPC1768 and LPC1769. See lpc176x.patch for the modifications.
 
-The stm32f0 directory contains code from STMicroelectronics:
-  http://www.st.com/en/embedded-software/stm32cubef1.html
-version 1.10.0 (extracted 20190721).
+The stm32f0 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF0
+version v1.10.1 (d0c380d668c67dcdd4e44f656be27045ce4006a6). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F0xx/ directory.
 
-The stm32f1 directory contains code from STMicroelectronics:
-  http://www.st.com/en/embedded-software/stm32cubef1.html
-version 1.8.0 (extracted 20190721).
+The stm32f1 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF1
+version v1.8.0 (441b2cbdc25aa50437a59c4bffe22b88e78942c9). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F1xx/ directory.
 
-The stm32f2 directory contains code from STMicroelectronics:
-  https://www.st.com/content/st_com/en/products/embedded-software/mcu-mpu-embedded-software/stm32-embedded-software/stm32cube-mcu-mpu-packages/stm32cubef2.html
-version 1.9.0 (extracted 20200614).
+The stm32f2 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF2
+version v1.9.0 (42fc8bf966c04ef814bb0620dcd3e036e038b4a2). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F2xx/ directory.
 
-The stm32f4 directory contains code from STMicroelectronics:
-  http://www.st.com/en/embedded-software/stm32cubef4.html
-version 1.24.0 (extracted 20190723).
+The stm32f4 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF4
+version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
 
 The rp2040 directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git

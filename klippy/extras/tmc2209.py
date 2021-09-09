@@ -69,6 +69,7 @@ class TMC2209:
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_status = cmdhelper.get_status
         # Setup basic register values
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)

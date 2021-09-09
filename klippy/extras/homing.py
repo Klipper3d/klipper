@@ -174,29 +174,31 @@ class Homing:
         self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
-        forcepos = self._fill_coord(forcepos)
-        movepos = self._fill_coord(movepos)
-        self.toolhead.set_position(forcepos, homing_axes=homing_axes)
+        startpos = self._fill_coord(forcepos)
+        homepos = self._fill_coord(movepos)
+        self.toolhead.set_position(startpos, homing_axes=homing_axes)
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
         hmove = HomingMove(self.printer, endstops)
-        hmove.homing_move(movepos, hi.speed)
+        hmove.homing_move(homepos, hi.speed)
         # Perform second home
         if hi.retract_dist:
             # Retract
-            axes_d = [mp - fp for mp, fp in zip(movepos, forcepos)]
+            startpos = self._fill_coord(forcepos)
+            homepos = self._fill_coord(movepos)
+            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
             move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
             retract_r = min(1., hi.retract_dist / move_d)
-            retractpos = [mp - ad * retract_r
-                          for mp, ad in zip(movepos, axes_d)]
+            retractpos = [hp - ad * retract_r
+                          for hp, ad in zip(homepos, axes_d)]
             self.toolhead.move(retractpos, hi.retract_speed)
             # Home again
-            forcepos = [rp - ad * retract_r
+            startpos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
-            self.toolhead.set_position(forcepos)
+            self.toolhead.set_position(startpos)
             hmove = HomingMove(self.printer, endstops)
-            hmove.homing_move(movepos, hi.second_homing_speed)
+            hmove.homing_move(homepos, hi.second_homing_speed)
             if hmove.check_no_movement() is not None:
                 raise self.printer.command_error(
                     "Endstop %s still triggered after retract"
@@ -210,13 +212,14 @@ class Homing:
         if any(self.adjust_pos.values()):
             # Apply any homing offsets
             kin = self.toolhead.get_kinematics()
+            homepos = self.toolhead.get_position()
             kin_spos = {s.get_name(): (s.get_commanded_position()
                                        + self.adjust_pos.get(s.get_name(), 0.))
                         for s in kin.get_steppers()}
             newpos = kin.calc_position(kin_spos)
             for axis in homing_axes:
-                movepos[axis] = newpos[axis]
-            self.toolhead.set_position(movepos)
+                homepos[axis] = newpos[axis]
+            self.toolhead.set_position(homepos)
 
 class PrinterHoming:
     def __init__(self, config):

@@ -17,21 +17,49 @@ class error(Exception):
 LogHandlers = {}
 
 # Extract requested position, velocity, and accel from a trapq log
-class HandleTrapQ:
-    ParametersSubscriptionId = 2
-    ParametersMin = ParametersMax = 3
+class HandleStatusField:
+    SubscriptionIdParts = 0
+    ParametersMin = ParametersMax = 1
     DataSets = [
-        ('trapq:<name>:velocity', 'Requested velocity for the given trapq'),
-        ('trapq:<name>:<axis>', 'Requested axis (x, y, or z) position'),
-        ('trapq:<name>:<axis>_velocity', 'Requested axis velocity'),
-        ('trapq:<name>:<axis>_accel', 'Requested axis acceleration'),
+        ('status(<field>)', 'A get_status field name (separate by periods)'),
     ]
-    def __init__(self, lmanager, name):
+    def __init__(self, lmanager, name, name_parts):
+        self.status_tracker = lmanager.get_status_tracker()
+        self.field_name = name_parts[1]
+        self.field_parts = name_parts[1].split('.')
+        self.next_update_time = 0.
+        self.result = None
+    def get_label(self):
+        label = '%s field' % (self.field_name,)
+        return {'label': label, 'units': 'Unknown'}
+    def pull_data(self, req_time):
+        if req_time < self.next_update_time:
+            return self.result
+        db, next_update_time = self.status_tracker.pull_status(req_time)
+        for fp in self.field_parts[:-1]:
+            db = db.get(fp, {})
+        self.result = db.get(self.field_parts[-1], 0.)
+        self.next_update_time = next_update_time
+        return self.result
+LogHandlers["status"] = HandleStatusField
+
+# Extract requested position, velocity, and accel from a trapq log
+class HandleTrapQ:
+    SubscriptionIdParts = 2
+    ParametersMin = ParametersMax = 2
+    DataSets = [
+        ('trapq(<name>,velocity)', 'Requested velocity for the given trapq'),
+        ('trapq(<name>,accel)', 'Requested acceleration for the given trapq'),
+        ('trapq(<name>,<axis>)', 'Requested axis (x, y, or z) position'),
+        ('trapq(<name>,<axis>_velocity)', 'Requested axis velocity'),
+        ('trapq(<name>,<axis>_accel)', 'Requested axis acceleration'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
         self.name = name
         self.jdispatch = lmanager.get_jdispatch()
         self.cur_data = [(0., 0., 0., 0., (0., 0., 0.), (0., 0., 0.))]
         self.data_pos = 0
-        tq, trapq_name, datasel = name.split(':')
+        tq, trapq_name, datasel = name_parts
         ptypes = {}
         ptypes['velocity'] = {
             'label': '%s velocity' % (trapq_name,),
@@ -113,26 +141,27 @@ LogHandlers["trapq"] = HandleTrapQ
 
 # Extract positions from queue_step log
 class HandleStepQ:
-    ParametersSubscriptionId = 2
-    ParametersMin = 2
-    ParametersMax = 3
+    SubscriptionIdParts = 2
+    ParametersMin = 1
+    ParametersMax = 2
     DataSets = [
-        ('stepq:<stepper>', 'Commanded position of the given stepper'),
-        ('stepq:<stepper>:raw', 'Commanded position without smoothing'),
+        ('stepq(<stepper>)', 'Commanded position of the given stepper'),
+        ('stepq(<stepper>,<time>)', 'Commanded position with smooth time'),
     ]
-    def __init__(self, lmanager, name):
+    def __init__(self, lmanager, name, name_parts):
         self.name = name
+        self.stepper_name = name_parts[1]
         self.jdispatch = lmanager.get_jdispatch()
         self.step_data = [(0., 0., 0.), (0., 0., 0.)] # [(time, half_pos, pos)]
         self.data_pos = 0
         self.smooth_time = 0.010
-        name_parts = name.split(':')
         if len(name_parts) == 3:
-            if name_parts[2] != 'raw':
-                raise error("Unknown stepq data selection '%s'" % (name,))
-            self.smooth_time = 0.
+            try:
+                self.smooth_time = float(name_parts[2])
+            except ValueError:
+                raise error("Invalid stepq smooth time '%s'" % (name_parts[2],))
     def get_label(self):
-        label = '%s position' % (self.name.split(':')[1],)
+        label = '%s position' % (self.stepper_name,)
         return {'label': label, 'units': 'Position\n(mm)'}
     def pull_data(self, req_time):
         smooth_time = self.smooth_time
@@ -203,16 +232,49 @@ class HandleStepQ:
                 step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
-
-######################################################################
-# List datasets
-######################################################################
-
-def list_datasets():
-    datasets = []
-    for lh in sorted(LogHandlers.keys()):
-        datasets += LogHandlers[lh].DataSets
-    return datasets
+# Extract accelerometer data
+class HandleADXL345:
+    SubscriptionIdParts = 2
+    ParametersMin = ParametersMax = 2
+    DataSets = [
+        ('adxl345(<name>,<axis>)', 'Accelerometer for given axis (x, y, or z)'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
+        self.name = name
+        self.adxl_name = name_parts[1]
+        self.jdispatch = lmanager.get_jdispatch()
+        self.next_accel_time = self.last_accel_time = 0.
+        self.next_accel = self.last_accel = (0., 0., 0.)
+        self.cur_data = []
+        self.data_pos = 0
+        if name_parts[2] not in 'xyz':
+            raise error("Unknown adxl345 data selection '%s'" % (name,))
+        self.axis = 'xyz'.index(name_parts[2])
+    def get_label(self):
+        label = '%s %s acceleration' % (self.adxl_name, 'xyz'[self.axis])
+        return {'label': label, 'units': 'Acceleration\n(mm/s^2)'}
+    def pull_data(self, req_time):
+        axis = self.axis
+        while 1:
+            if req_time <= self.next_accel_time:
+                adiff = self.next_accel[axis] - self.last_accel[axis]
+                tdiff = self.next_accel_time - self.last_accel_time
+                rtdiff = req_time - self.last_accel_time
+                return self.last_accel[axis] + rtdiff * adiff / tdiff
+            if self.data_pos >= len(self.cur_data):
+                # Read next data block
+                jmsg = self.jdispatch.pull_msg(req_time, self.name)
+                if jmsg is None:
+                    return 0.
+                self.cur_data = jmsg['data']
+                self.data_pos = 0
+                continue
+            self.last_accel = self.next_accel
+            self.last_accel_time = self.next_accel_time
+            self.next_accel_time, x, y, z = self.cur_data[self.data_pos]
+            self.next_accel = (x, y, z)
+            self.data_pos += 1
+LogHandlers["adxl345"] = HandleADXL345
 
 
 ######################################################################
@@ -279,6 +341,64 @@ class JsonDispatcher:
             for mq in self.queues.get(qid, []):
                 mq.append(json_msg['params'])
 
+
+######################################################################
+# Dataset and log tracking
+######################################################################
+
+# Tracking of get_status messages
+class TrackStatus:
+    def __init__(self, lmanager, name, start_status):
+        self.name = name
+        self.jdispatch = lmanager.get_jdispatch()
+        self.next_status_time = 0.
+        self.status = dict(start_status)
+        self.next_update = {}
+    def pull_status(self, req_time):
+        status = self.status
+        while 1:
+            if req_time < self.next_status_time:
+                return status, self.next_status_time
+            for k, v in self.next_update.items():
+                status.setdefault(k, {}).update(v)
+            jmsg = self.jdispatch.pull_msg(req_time, self.name)
+            if jmsg is None:
+                self.next_status_time = req_time + 0.100
+                self.next_update = {}
+                return status, self.next_status_time
+            self.next_update = jmsg['status']
+            th = self.next_update.get('toolhead', {})
+            self.next_status_time = th.get('estimated_print_time', 0.)
+
+# Split a string by commas while keeping parenthesis intact
+def param_split(line):
+    out = []
+    level = prev = 0
+    for i, c in enumerate(line):
+        if not level and c == ',':
+            out.append(line[prev:i])
+            prev = i+1
+        elif c == '(':
+            level += 1
+        elif level and c== ')':
+            level -= 1
+    out.append(line[prev:])
+    return out
+
+# Split a dataset name (eg, "abc(def,ghi)") into parts
+def name_split(name):
+    if '(' not in name or not name.endswith(')'):
+        raise error("Malformed dataset name '%s'" % (name,))
+    aname, aparams = name.split('(', 1)
+    return [aname] + param_split(aparams[:-1])
+
+# Return a description of possible datasets
+def list_datasets():
+    datasets = []
+    for lh in sorted(LogHandlers.keys()):
+        datasets += LogHandlers[lh].DataSets
+    return datasets
+
 # Main log access management
 class LogManager:
     error = error
@@ -288,12 +408,13 @@ class LogManager:
         self.initial_start_time = self.start_time = 0.
         self.datasets = {}
         self.initial_status = {}
+        self.start_status = {}
         self.log_subscriptions = {}
-        self.status = {}
+        self.status_tracker = None
     def setup_index(self):
         fmsg = self.index_reader.pull_msg()
         self.initial_status = status = fmsg['status']
-        self.status = dict(status)
+        self.start_status = dict(status)
         start_time = status['toolhead']['estimated_print_time']
         self.initial_start_time = self.start_time = start_time
         self.log_subscriptions = fmsg.get('subscriptions', {})
@@ -305,6 +426,7 @@ class LogManager:
         return self.jdispatch
     def seek_time(self, req_time):
         self.start_time = req_start_time = self.initial_start_time + req_time
+        start_status = self.start_status
         seek_time = max(self.initial_start_time, req_start_time - 1.)
         file_position = 0
         while 1:
@@ -315,6 +437,8 @@ class LogManager:
             ptime = max(th['estimated_print_time'], th.get('print_time', 0.))
             if ptime > seek_time:
                 break
+            for k, v in fmsg["status"].items():
+                start_status.setdefault(k, {}).update(v)
             file_position = fmsg['file_position']
         if file_position:
             self.jdispatch.log_reader.seek(file_position)
@@ -322,18 +446,25 @@ class LogManager:
         return self.initial_start_time
     def get_start_time(self):
         return self.start_time
+    def get_status_tracker(self):
+        if self.status_tracker is None:
+            self.status_tracker = TrackStatus(self, "status", self.start_status)
+            self.jdispatch.add_handler("status", "status")
+        return self.status_tracker
     def setup_dataset(self, name):
         if name in self.datasets:
             return self.datasets[name]
-        parts = name.split(':')
-        cls = LogHandlers.get(parts[0])
+        name_parts = name_split(name)
+        cls = LogHandlers.get(name_parts[0])
         if cls is None:
-            raise error("Unknown dataset '%s'" % (parts[0],))
-        if len(parts) < cls.ParametersMin or len(parts) > cls.ParametersMax:
-            raise error("Invalid number of parameters for %s" % (parts[0],))
-        subscription_id = ":".join(parts[:cls.ParametersSubscriptionId])
-        if subscription_id not in self.log_subscriptions:
-            raise error("Dataset '%s' not in capture" % (subscription_id,))
-        self.datasets[name] = hdl = cls(self, name)
-        self.jdispatch.add_handler(name, subscription_id)
+            raise error("Unknown dataset '%s'" % (name_parts[0],))
+        len_pp = len(name_parts) - 1
+        if len_pp < cls.ParametersMin or len_pp > cls.ParametersMax:
+            raise error("Invalid number of parameters for '%s'" % (name,))
+        if cls.SubscriptionIdParts:
+            subscription_id = ":".join(name_parts[:cls.SubscriptionIdParts])
+            if subscription_id not in self.log_subscriptions:
+                raise error("Dataset '%s' not in capture" % (subscription_id,))
+            self.jdispatch.add_handler(name, subscription_id)
+        self.datasets[name] = hdl = cls(self, name, name_parts)
         return hdl
