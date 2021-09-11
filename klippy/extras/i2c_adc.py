@@ -210,13 +210,6 @@ class i2c_adc:
                 " only supports 12 bit sampling")
         self.rate = config.getint('rate',
                 DEFAULT_RATE[self.devicePrefix])
-        # Register ADC
-        #self.qadc = self.printer.lookup_object('query_adc')
-        #self.qadc = config.get_printer().load_object(config,
-                             #'query_adc')
-        # query_adc = config.get_printer().load_object(config,
-                             # 'query_adc')
-        # query_adc.register_adc(self.name, self)
         #Configure ADC
         self.conf = (self.channel, self.gain, self.resolution,
                     self.rate, self.devicePrefix, self.name,
