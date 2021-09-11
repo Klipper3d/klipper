@@ -267,13 +267,12 @@ class PrinterProbe:
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
     def cmd_Z_OFFSET_APPLY_PROBE(self,gcmd):
-        z_offset = self.probe_calibrate_z
         offset = self.gcode_move.get_status()['homing_origin'].z
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
             self.gcode.respond_info("Nothing to do: Z Offset is 0")
         else:
-            new_calibrate = self.probe_calibrate_z - offset
+            new_calibrate = self.z_offset - offset
             self.gcode.respond_info(
                 "%s: z_offset: %.3f\n"
                 "The SAVE_CONFIG command will update the printer config file\n"
@@ -361,14 +360,8 @@ class ProbePointsHelper:
         self.gcode = self.printer.lookup_object('gcode')
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
-            points = config.get('points').split('\n')
-            try:
-                points = [line.split(',', 1) for line in points if line.strip()]
-                self.probe_points = [(float(p[0].strip()), float(p[1].strip()))
-                                     for p in points]
-            except:
-                raise config.error("Unable to parse probe points in %s" % (
-                    self.name))
+            self.probe_points = config.getlists('points', seps=(',', '\n'),
+                                                parser=float, count=2)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
         self.use_offsets = False

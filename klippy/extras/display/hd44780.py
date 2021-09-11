@@ -7,8 +7,8 @@
 import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
-LINE_LENGTH_DEFAULT="20"
-LINE_LENGTH_OPTIONS={"16":16, "20":20}
+LINE_LENGTH_DEFAULT=20
+LINE_LENGTH_OPTIONS={16:16, 20:20}
 
 TextGlyphs = { 'right_arrow': '\x7e' }
 
@@ -22,9 +22,9 @@ class HD44780:
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
         self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
-            True)
+                                                       True)
         self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
-            LINE_LENGTH_DEFAULT)
+                                            LINE_LENGTH_DEFAULT)
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
@@ -43,9 +43,9 @@ class HD44780:
         self.all_framebuffers = [
             # Text framebuffers
             (self.text_framebuffers[0], bytearray('~'*2*self.line_length),
-              0x80),
+             0x80),
             (self.text_framebuffers[1], bytearray('~'*2*self.line_length),
-              0xc0),
+             0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
     def build_config(self):

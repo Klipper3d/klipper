@@ -1,6 +1,8 @@
+# CANBUS
+
 This document describes Klipper's CAN bus support.
 
-# Device Hardware
+## Device Hardware
 
 Klipper currently only supports CAN on stm32 chips. In addition, the
 micro-controller chip must support CAN and it must be on a board that
@@ -10,7 +12,7 @@ To compile for CAN, run "make menuconfig" and select "CAN bus" as the
 communication interface. Finally, compile the micro-controller code
 and flash it to the target board.
 
-# Host Hardware
+## Host Hardware
 
 In order to use a CAN bus, it is necessary to have a host adapter.
 There are currently two common options:
@@ -40,7 +42,7 @@ iface can0 can static
 Note that the "Raspberry Pi CAN hat" also requires
 [changes to config.txt](https://www.waveshare.com/wiki/RS485_CAN_HAT).
 
-# Terminating Resistors
+## Terminating Resistors
 
 A CAN bus should have two 120 ohm resistors between the CANH and CANL
 wires. Ideally, one resistor located at each the end of the bus.
@@ -58,7 +60,7 @@ printer and use a multi-meter to check the resistance between the CANH
 and CANL wires - it should report ~60 ohms on a correctly wired CAN
 bus.
 
-# Finding the canbus_uuid for new micro-controllers
+## Finding the canbus_uuid for new micro-controllers
 
 Each micro-controller on the CAN bus is assigned a unique id based on
 the factory chip identifier encoded into each micro-controller. To
@@ -81,7 +83,7 @@ Note that the `canbus_query.py` tool will only report uninitialized
 devices - if Klipper (or a similar tool) configures the device then it
 will no longer appear in the list.
 
-# Configuring Klipper
+## Configuring Klipper
 
 Update the Klipper [mcu configuration](Config_Reference.md#mcu) to use
 the CAN bus to communicate with the device - for example:

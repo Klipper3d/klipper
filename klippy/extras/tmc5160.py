@@ -99,20 +99,20 @@ Fields["CHOPCONF"] = {
     "vhighfs":                  0x01 << 18,
     "vhighchm":                 0x01 << 19,
     "tpfd":                     0x0F << 20, # midrange resonances
-    "MRES":                     0x0F << 24,
+    "mres":                     0x0F << 24,
     "intpol":                   0x01 << 28,
     "dedge":                    0x01 << 29,
     "diss2g":                   0x01 << 30,
     "diss2vs":                  0x01 << 31
 }
 Fields["DRV_STATUS"] = {
-    "SG_RESULT":                0x3FF << 0,
+    "sg_result":                0x3FF << 0,
     "s2vsa":                    0x01 << 12,
     "s2vsb":                    0x01 << 13,
     "stealth":                  0x01 << 14,
     "fsactive":                 0x01 << 15,
-    "CSACTUAL":                 0xFF << 16,
-    "stallGuard":               0x01 << 24,
+    "csactual":                 0xFF << 16,
+    "stallguard":               0x01 << 24,
     "ot":                       0x01 << 25,
     "otpw":                     0x01 << 26,
     "s2ga":                     0x01 << 27,
@@ -122,7 +122,7 @@ Fields["DRV_STATUS"] = {
     "stst":                     0x01 << 31
 }
 Fields["FACTORY_CONF"] = {
-    "FACTORY_CONF":             0x1F << 0
+    "factory_conf":             0x1F << 0
 }
 Fields["GCONF"] = {
     "recalibrate":              0x01 << 0,
@@ -150,72 +150,72 @@ Fields["GSTAT"] = {
     "uv_cp":                    0x01 << 2
 }
 Fields["GLOBALSCALER"] = {
-    "GLOBALSCALER":             0xFF << 0
+    "globalscaler":             0xFF << 0
 }
 Fields["IHOLD_IRUN"] = {
-    "IHOLD":                    0x1F << 0,
-    "IRUN":                     0x1F << 8,
-    "IHOLDDELAY":               0x0F << 16
+    "ihold":                    0x1F << 0,
+    "irun":                     0x1F << 8,
+    "iholddelay":               0x0F << 16
 }
 Fields["IOIN"] = {
-    "REFL_STEP":                0x01 << 0,
-    "REFR_DIR":                 0x01 << 1,
-    "ENCB_DCEN_CFG4":           0x01 << 2,
-    "ENCA_DCIN_CFG5":           0x01 << 3,
-    "DRV_ENN":                  0x01 << 4,
-    "ENC_N_DCO_CFG6":           0x01 << 5,
-    "SD_MODE":                  0x01 << 6,
-    "SWCOMP_IN":                0x01 << 7,
-    "VERSION":                  0xFF << 24
+    "refl_step":                0x01 << 0,
+    "refr_dir":                 0x01 << 1,
+    "encb_dcen_cfg4":           0x01 << 2,
+    "enca_dcin_cfg5":           0x01 << 3,
+    "drv_enn":                  0x01 << 4,
+    "enc_n_dco_cfg6":           0x01 << 5,
+    "sd_mode":                  0x01 << 6,
+    "swcomp_in":                0x01 << 7,
+    "version":                  0xFF << 24
 }
 Fields["LOST_STEPS"] = {
-    "LOST_STEPS":               0xfffff << 0
+    "lost_steps":               0xfffff << 0
 }
 Fields["MSCNT"] = {
-    "MSCNT":                    0x3ff << 0
+    "mscnt":                    0x3ff << 0
 }
 Fields["MSCURACT"] = {
-    "CUR_A":                    0x1ff << 0,
-    "CUR_B":                    0x1ff << 16
+    "cur_a":                    0x1ff << 0,
+    "cur_b":                    0x1ff << 16
 }
 Fields["OTP_READ"] = {
-    "OTP_FCLKTRIM":             0x1f << 0,
-    "otp_S2_LEVEL":             0x01 << 5,
-    "otp_BBM":                  0x01 << 6,
-    "otp_TBL":                  0x01 << 7
+    "otp_fclktrim":             0x1f << 0,
+    "otp_s2_level":             0x01 << 5,
+    "otp_bbm":                  0x01 << 6,
+    "otp_tbl":                  0x01 << 7
 }
 Fields["PWM_AUTO"] = {
-    "PWM_OFS_AUTO":             0xff << 0,
-    "PWM_GRAD_AUTO":            0xff << 16
+    "pwm_ofs_auto":             0xff << 0,
+    "pwm_grad_auto":            0xff << 16
 }
 Fields["PWMCONF"] = {
-    "PWM_OFS":                  0xFF << 0,
-    "PWM_GRAD":                 0xFF << 8,
+    "pwm_ofs":                  0xFF << 0,
+    "pwm_grad":                 0xFF << 8,
     "pwm_freq":                 0x03 << 16,
     "pwm_autoscale":            0x01 << 18,
     "pwm_autograd":             0x01 << 19,
     "freewheel":                0x03 << 20,
-    "PWM_REG":                  0x0F << 24,
-    "PWM_LIM":                  0x0F << 28
+    "pwm_reg":                  0x0F << 24,
+    "pwm_lim":                  0x0F << 28
 }
 Fields["PWM_SCALE"] = {
-    "PWM_SCALE_SUM":            0xff << 0,
-    "PWM_SCALE_AUTO":           0x1ff << 16
+    "pwm_scale_sum":            0xff << 0,
+    "pwm_scale_auto":           0x1ff << 16
 }
 Fields["TPOWERDOWN"] = {
-    "TPOWERDOWN":               0xff << 0
+    "tpowerdown":               0xff << 0
 }
 Fields["TPWMTHRS"] = {
-    "TPWMTHRS":                 0xfffff << 0
+    "tpwmthrs":                 0xfffff << 0
 }
 Fields["TCOOLTHRS"] = {
-    "TCOOLTHRS":                0xfffff << 0
+    "tcoolthrs":                0xfffff << 0
 }
 Fields["TSTEP"] = {
-    "TSTEP":                    0xfffff << 0
+    "tstep":                    0xfffff << 0
 }
 
-SignedFields = ["CUR_A", "CUR_B", "sgt", "XACTUAL", "VACTUAL", "PWM_SCALE_AUTO"]
+SignedFields = ["cur_a", "cur_b", "sgt", "xactual", "vactual", "pwm_scale_auto"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
 
@@ -240,17 +240,17 @@ class TMC5160CurrentHelper:
         self.sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
         self._set_globalscaler(run_current)
         irun, ihold = self._calc_current(run_current, hold_current)
-        self.fields.set_field("IHOLD", ihold)
-        self.fields.set_field("IRUN", irun)
+        self.fields.set_field("ihold", ihold)
+        self.fields.set_field("irun", irun)
     def _set_globalscaler(self, current):
         globalscaler = int((current * 256. * math.sqrt(2.)
                             * self.sense_resistor / VREF) + .5)
         globalscaler = max(32, globalscaler)
         if globalscaler >= 256:
             globalscaler = 0
-        self.fields.set_field("GLOBALSCALER", globalscaler)
+        self.fields.set_field("globalscaler", globalscaler)
     def _calc_current_bits(self, current):
-        globalscaler = self.fields.get_field("GLOBALSCALER")
+        globalscaler = self.fields.get_field("globalscaler")
         if not globalscaler:
             globalscaler = 256
         cs = int((current * 256. * 32. * math.sqrt(2.) * self.sense_resistor)
@@ -262,20 +262,20 @@ class TMC5160CurrentHelper:
         ihold = self._calc_current_bits(min(hold_current, run_current))
         return irun, ihold
     def _calc_current_from_field(self, field_name):
-        globalscaler = self.fields.get_field("GLOBALSCALER")
+        globalscaler = self.fields.get_field("globalscaler")
         if not globalscaler:
             globalscaler = 256
         bits = self.fields.get_field(field_name)
         return (globalscaler * (bits + 1) * VREF
                 / (256. * 32. * math.sqrt(2.) * self.sense_resistor))
     def get_current(self):
-        run_current = self._calc_current_from_field("IRUN")
-        hold_current = self._calc_current_from_field("IHOLD")
+        run_current = self._calc_current_from_field("irun")
+        hold_current = self._calc_current_from_field("ihold")
         return run_current, hold_current, MAX_CURRENT
     def set_current(self, run_current, hold_current, print_time):
         irun, ihold = self._calc_current(run_current, hold_current)
-        self.fields.set_field("IHOLD", ihold)
-        val = self.fields.set_field("IRUN", irun)
+        self.fields.set_field("ihold", ihold)
+        val = self.fields.set_field("irun", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
 
 
@@ -294,10 +294,9 @@ class TMC5160:
         current_helper = TMC5160CurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
+        self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_status = cmdhelper.get_status
         # Setup basic register values
-        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
-        self.get_microsteps = mh.get_microsteps
-        self.get_phase = mh.get_phase
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         #   CHOPCONF
         set_config_field = self.fields.set_config_field
@@ -322,18 +321,18 @@ class TMC5160:
         set_config_field(config, "sgt", 0)
         set_config_field(config, "sfilt", 0)
         #   IHOLDIRUN
-        set_config_field(config, "IHOLDDELAY", 6)
+        set_config_field(config, "iholddelay", 6)
         #   PWMCONF
-        set_config_field(config, "PWM_OFS", 30)
-        set_config_field(config, "PWM_GRAD", 0)
+        set_config_field(config, "pwm_ofs", 30)
+        set_config_field(config, "pwm_grad", 0)
         set_config_field(config, "pwm_freq", 0)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "freewheel", 0)
-        set_config_field(config, "PWM_REG", 4)
-        set_config_field(config, "PWM_LIM", 12)
+        set_config_field(config, "pwm_reg", 4)
+        set_config_field(config, "pwm_lim", 12)
         #   TPOWERDOWN
-        set_config_field(config, "TPOWERDOWN", 10)
+        set_config_field(config, "tpowerdown", 10)
 
 def load_config_prefix(config):
     return TMC5160(config)
