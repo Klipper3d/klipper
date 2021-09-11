@@ -31,7 +31,7 @@
 #rate: (default = 1600 for ADS101x, none for MCP342x)
 #report_time: (default 2 readings/second)
 
-# a virtual adc chip is created. 
+# a virtual adc chip is created.
 # The adc pin can be accessed as "external_adc_name:"
 # e.g. pin: external_adc_name:
 
