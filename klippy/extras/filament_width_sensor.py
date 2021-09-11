@@ -35,7 +35,8 @@ class FilamentWidthSensor:
         self.nominal_filament_dia = config.getfloat(
             'default_nominal_filament_diameter', above=1, default=1.75)
         self.measurement_delay = config.getfloat('measurement_delay', above=0.)
-        self.measurement_max_difference = config.getfloat('max_difference', 0.2)
+        self.measurement_max_difference = 
+            config.getfloat('max_difference', 0.2)
         self.measurement_min_difference = config.getfloat('min_difference',
             self.measurement_max_difference)
         self.max_diameter = (self.nominal_filament_dia
@@ -74,7 +75,8 @@ class FilamentWidthSensor:
         if self.pin2 != None:
             self.mcu_adc2 = self.ppins.setup_pin('adc', self.pin2)
             self.mcu_adc2.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
-            self.mcu_adc2.setup_adc_callback(ADC_REPORT_TIME, self.adc2_callback)
+            self.mcu_adc2.setup_adc_callback(ADC_REPORT_TIME, 
+                self.adc2_callback)
         # extrude factor updating
         self.extrude_factor_update_timer = self.reactor.register_timer(
             self.extrude_factor_update_event)
@@ -133,7 +135,8 @@ class FilamentWidthSensor:
             self._diameter=(5.0 * self.diameter + diameter_new)/6
         else:
             self._diameter = self.lastFilamentWidthReading
-        self.diameter = self._diameter * self.measurement_slope1 + self.measurement_offset1
+        self.diameter = self._diameter * self.measurement_slope1 
+            + self.measurement_offset1
 
     def update_filament_array(self, last_epos):
         # Fill array
@@ -195,7 +198,8 @@ class FilamentWidthSensor:
                             and (self.firstExtruderUpdatePosition
                                  == pending_position)):
                             self.filament_width = self.diameter
-                        elif  self.firstExtruderUpdatePosition == pending_position:
+                        elif  self.firstExtruderUpdatePosition == 
+                            pending_position:
                             self.filament_width = self.nominal_filament_dia
                     if ((self.filament_width <= self.max_diameter)
                         and (self.filament_width >= self.min_diameter)):
