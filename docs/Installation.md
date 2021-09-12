@@ -53,6 +53,7 @@ Select the appropriate micro-controller and review any other options
 provided. Once configured, run:
 
 ```
+make clean
 make
 ```
 
