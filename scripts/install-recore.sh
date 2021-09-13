@@ -66,6 +66,7 @@ ExecStartPre=/usr/bin/gpioget 1 145
 ExecStartPre=/usr/bin/gpioget 1 34
 ExecStartPre=${SRCDIR}/scripts/flash-ar100.py ${SRCDIR}/out/ar100.bin
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l ${KLIPPER_LOG}
+ExecStopPost=${SRCDIR}/scripts/flash-ar100.py --halt
 EOF
 # Use systemctl to enable the klipper systemd service script
     sudo systemctl enable klipper.service
