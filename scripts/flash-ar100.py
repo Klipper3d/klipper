@@ -22,20 +22,25 @@ R_CPU_CLK_OFFSET = 0x400
 
 parser = argparse.ArgumentParser(
     description='Write AR100 binary file to SRAM of A64')
+parser.add_argument('filename',
+                    nargs='?',
+                    help='binary file to write to memory')
+parser.add_argument('--reset',
+                    action='store_true',
+                    help='reset the AR100 cpu and exit')
 parser.add_argument(
-    'filename', nargs='?', help='binary file to write to memory')
-parser.add_argument(
-    '--reset', action='store_true', help='reset the AR100 cpu and exit')
-parser.add_argument(
-    '--halt', action='store_true', help='Halt the AR100 by resetting clock and clearing magic word')
+    '--halt',
+    action='store_true',
+    help='Halt the AR100 by resetting clock and clearing magic word')
 args = parser.parse_args()
 
 
 def write_exception_vectors():
     print("Writing exception vectors")
     with open("/dev/mem", "w+b") as f:
-        exc = mmap.mmap(
-            f.fileno(), length=EXCEPTIONS_SIZE, offset=EXCEPTIONS_BASE)
+        exc = mmap.mmap(f.fileno(),
+                        length=EXCEPTIONS_SIZE,
+                        offset=EXCEPTIONS_BASE)
         for i in range(NR_OF_EXCEPTIONS):
             add = i * 0x100
             exc[add:add + 4] = ((EXCEPTIONS_JUMP - add) >> 2).to_bytes(
@@ -45,8 +50,9 @@ def write_exception_vectors():
 
 def assert_deassert_reset(ass):
     with open("/dev/mem", "w+b") as f:
-        r_cpucfg = mmap.mmap(
-            f.fileno(), length=R_CPU_CFG_SIZE, offset=R_CPU_CFG_PAGE_BASE)
+        r_cpucfg = mmap.mmap(f.fileno(),
+                             length=R_CPU_CFG_SIZE,
+                             offset=R_CPU_CFG_PAGE_BASE)
         if ass:
             r_cpucfg[R_CPU_CFG_OFFSET] &= ~0x01
             if r_cpucfg[R_CPU_CFG_OFFSET] & 0x01:
@@ -67,24 +73,29 @@ def write_file(filename):
             sys.exit(1)
         print("Writing file to SRAM A2")
         with open("/dev/mem", "w+b") as f:
-            sram_a2 = mmap.mmap(
-                f.fileno(), length=SRAM_A2_SIZE, offset=SRAM_A2_BASE)
+            sram_a2 = mmap.mmap(f.fileno(),
+                                length=SRAM_A2_SIZE,
+                                offset=SRAM_A2_BASE)
             sram_a2[0:len(data)] = data
             sram_a2.close()
 
+
 def clear_magic_word():
     with open("/dev/mem", "w+b") as f:
-        sram_a2 = mmap.mmap(
-            f.fileno(), length=SRAM_A2_SIZE, offset=SRAM_A2_BASE)
+        sram_a2 = mmap.mmap(f.fileno(),
+                            length=SRAM_A2_SIZE,
+                            offset=SRAM_A2_BASE)
         sram_a2[0] = 0x0
         sram_a2.close()
 
+
 def reset_ar100_clk_source():
     with open("/dev/mem", "w+b") as f:
-        r_cpucfg = mmap.mmap(
-            f.fileno(), length=R_CPU_CFG_SIZE, offset=R_CPU_CFG_PAGE_BASE)
-        r_cpucfg[R_CPU_CLK_OFFSET:R_CPU_CLK_OFFSET+4] = (1<<16 | 1<<8).to_bytes(
-            4, byteorder='little')
+        r_cpucfg = mmap.mmap(f.fileno(),
+                             length=R_CPU_CFG_SIZE,
+                             offset=R_CPU_CFG_PAGE_BASE)
+        r_cpucfg[R_CPU_CLK_OFFSET:R_CPU_CLK_OFFSET +
+                 4] = (1 << 16 | 1 << 8).to_bytes(4, byteorder='little')
         r_cpucfg.close()
 
 
