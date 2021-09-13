@@ -382,3 +382,19 @@ def arduino_reset(serialport, reactor):
     ser.dtr = False
     reactor.pause(reactor.monotonic() + 0.100)
     ser.close()
+
+# Attempt reset by pulsing RTS (should be connected to mcu nRST)
+def rts_reset(serialport, reactor):
+    # First try opening the port at a different baud
+    ser = serial.Serial(None, 2400, timeout=0, exclusive=True)
+    ser.port = serialport
+    ser.rts = False
+    ser.open()
+    ser.read(1)
+    reactor.pause(reactor.monotonic() + 0.100)
+    # Then toggle RTS
+    ser.rts = True
+    reactor.pause(reactor.monotonic() + 0.100)
+    ser.rts = False
+    reactor.pause(reactor.monotonic() + 0.100)
+    ser.close()

@@ -542,7 +542,8 @@ class MCU:
                     or self._serialport.startswith("/tmp/klipper_host_")):
                 self._baud = config.getint('baud', 250000, minval=2400)
         # Restarts
-        restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
+        restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb',
+                           'rts']
         self._restart_method = 'command'
         if self._baud:
             rmethods = {m: m for m in restart_methods}
@@ -758,7 +759,8 @@ class MCU:
                 elif self._baud:
                     # Cheetah boards require RTS to be deasserted
                     # else a reset will trigger the built-in bootloader.
-                    rts = (resmeth != "cheetah")
+                    # Also deassert RTS if using RTS as a reset method.
+                    rts = not ((resmeth == "cheetah") or (resmeth == "rts"))
                     self._serial.connect_uart(self._serialport, self._baud, rts)
                 else:
                     self._serial.connect_pipe(self._serialport)
@@ -867,13 +869,17 @@ class MCU:
             return
         self._emergency_stop_cmd.send()
     def _restart_arduino(self):
-        logging.info("Attempting MCU '%s' reset", self._name)
+        logging.info("Attempting MCU '%s' Arduino-style reset", self._name)
         self._disconnect()
         serialhdl.arduino_reset(self._serialport, self._reactor)
     def _restart_cheetah(self):
         logging.info("Attempting MCU '%s' Cheetah-style reset", self._name)
         self._disconnect()
         serialhdl.cheetah_reset(self._serialport, self._reactor)
+    def _restart_rts(self):
+        logging.info("Attempting MCU '%s' RTS pulse reset", self._name)
+        self._disconnect()
+        serialhdl.rts_reset(self._serialport, self._reactor)
     def _restart_via_command(self):
         if ((self._reset_cmd is None and self._config_reset_cmd is None)
             or not self._clocksync.is_active()):
@@ -906,6 +912,8 @@ class MCU:
             self._restart_via_command()
         elif self._restart_method == 'cheetah':
             self._restart_cheetah()
+        elif self._restart_method == 'rts':
+            self._restart_rts()
         else:
             self._restart_arduino()
     # Misc external commands
