@@ -202,10 +202,12 @@ clock_setup(void)
         ;
 
     // Enable VOS0 (overdrive)
+#if CONFIG_CLOCK_FREQ > 400000000
     RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
     SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
     while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
         ;
+#endif
 
     // Set flash latency according to clock frequency (pg.159)
     uint32_t flash_acr_latency = (CONFIG_CLOCK_FREQ > 450000000) ?
