@@ -115,4 +115,3 @@ if args.halt:
     print("Halting AR100")
     assert_deassert_reset(1)
     clear_magic_word()
-    reset_ar100_clk_source()
