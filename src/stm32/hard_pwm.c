@@ -59,7 +59,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM2,  GPIO('B',  3),  2, GPIO_FUNCTION(1)},
     {TIM2,  GPIO('B', 10),  3, GPIO_FUNCTION(1)},
     {TIM2,  GPIO('B',  2),  4, GPIO_FUNCTION(1)},
-    {TIM2,  GPIO('B', 11),  4, GPIO_FUNCTION(1)}
+    {TIM2,  GPIO('B', 11),  4, GPIO_FUNCTION(1)},
     {TIM3,  GPIO('B',  4),  1, GPIO_FUNCTION(2)}, // Tested - Working
     {TIM3,  GPIO('A',  7),  2, GPIO_FUNCTION(2)},
     {TIM3,  GPIO('B',  5),  2, GPIO_FUNCTION(2)}, // Tested - Working
