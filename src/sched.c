@@ -18,10 +18,10 @@
 static struct timer periodic_timer, sentinel_timer, deleted_timer;
 
 static struct {
-    struct timer *timer_list;
+    struct timer *timer_list, *last_insert;
     int8_t tasks_status;
     uint8_t shutdown_status, shutdown_reason;
-} SchedStatus = { .timer_list = &periodic_timer };
+} SchedStatus = {.timer_list = &periodic_timer, .last_insert = &periodic_timer};
 
 
 /****************************************************************
@@ -65,9 +65,9 @@ static struct timer sentinel_timer = {
 
 // Find position for a timer in timer_list and insert it
 static void __always_inline
-insert_timer(struct timer *t, uint32_t waketime)
+insert_timer(struct timer *pos, struct timer *t, uint32_t waketime)
 {
-    struct timer *prev, *pos = SchedStatus.timer_list;
+    struct timer *prev;
     for (;;) {
         prev = pos;
         if (CONFIG_MACH_AVR)
@@ -87,9 +87,9 @@ sched_add_timer(struct timer *add)
 {
     uint32_t waketime = add->waketime;
     irqstatus_t flag = irq_save();
-    if (unlikely(timer_is_before(waketime, SchedStatus.timer_list->waketime))) {
+    struct timer *tl = SchedStatus.timer_list;
+    if (unlikely(timer_is_before(waketime, tl->waketime))) {
         // This timer is before all other scheduled timers
-        struct timer *tl = SchedStatus.timer_list;
         if (timer_is_before(waketime, timer_read_time()))
             try_shutdown("Timer too close");
         if (tl == &deleted_timer)
@@ -101,7 +101,7 @@ sched_add_timer(struct timer *add)
         SchedStatus.timer_list = &deleted_timer;
         timer_kick();
     } else {
-        insert_timer(add, waketime);
+        insert_timer(tl, add, waketime);
     }
     irq_restore(flag);
 }
@@ -137,6 +137,8 @@ sched_del_timer(struct timer *del)
             }
         }
     }
+    if (SchedStatus.last_insert == del)
+        SchedStatus.last_insert = &periodic_timer;
     irq_restore(flag);
 }
 
@@ -164,7 +166,11 @@ sched_timer_dispatch(void)
     } else if (!timer_is_before(updated_waketime, t->next->waketime)) {
         next_waketime = t->next->waketime;
         SchedStatus.timer_list = t->next;
-        insert_timer(t, updated_waketime);
+        struct timer *pos = SchedStatus.last_insert;
+        if (timer_is_before(updated_waketime, pos->waketime))
+            pos = SchedStatus.timer_list;
+        insert_timer(pos, t, updated_waketime);
+        SchedStatus.last_insert = t;
     }
 
     return next_waketime;
@@ -176,7 +182,7 @@ sched_timer_reset(void)
 {
     SchedStatus.timer_list = &deleted_timer;
     deleted_timer.waketime = periodic_timer.waketime;
-    deleted_timer.next = &periodic_timer;
+    deleted_timer.next = SchedStatus.last_insert = &periodic_timer;
     periodic_timer.next = &sentinel_timer;
     timer_kick();
 }
