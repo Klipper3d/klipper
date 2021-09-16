@@ -63,7 +63,7 @@ class FrameExpansionCompensator:
                                     desc=self.cmd_QUERY_FRAME_COMP_help)
         self.gcode.register_command('SET_FRAME_REF_TEMP',
                                     self.cmd_SET_FRAME_REF_TEMP,
-                                    desc=self.cmd_QUERY_FRAME_COMP_help)
+                                    desc=self.cmd_SET_FRAME_REF_TEMP_help)
 
     def handle_connect(self):
         'Called after all printer objects are instantiated'
@@ -242,7 +242,7 @@ class FrameExpansionCompensator:
         self.last_home_temp = self.smoothed_temp
         self.z_drift_offset = 0.
         msg = ("Frame expansion compensation reference temperature set"
-               "manually to %.3fc" % self.self.last_home_temp)
+               " manually to %.3fc" % self.last_home_temp)
         gcmd.respond_info(msg)
 
     cmd_SET_FRAME_COMP_help = 'Enable/disable Z thermal expansion compensation.'
