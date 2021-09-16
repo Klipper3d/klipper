@@ -46,28 +46,27 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM4, GPIO('B', 8),  3, GPIO_FUNCTION(2)},
     {TIM4, GPIO('B', 9),  4, GPIO_FUNCTION(2)}
 #elif CONFIG_MACH_STM32F446
-    {TIM1,  GPIO('A',  8),  1, GPIO_FUNCTION(1)},
-    {TIM1,  GPIO('E',  9),  1, GPIO_FUNCTION(1)},
-    {TIM1,  GPIO('A',  9),  2, GPIO_FUNCTION(1)},
-    {TIM1,  GPIO('E', 11),  2, GPIO_FUNCTION(1)},
-    {TIM1,  GPIO('A', 10),  3, GPIO_FUNCTION(1)},
-    {TIM1,  GPIO('E', 13),  3, GPIO_FUNCTION(1)},
-    {TIM1,  GPIO('A', 11),  4, GPIO_FUNCTION(1)},
-    {TIM1,  GPIO('E', 14),  4, GPIO_FUNCTION(1)},
-    {TIM2,  GPIO('A',  5),  1, GPIO_FUNCTION(1)},
-    {TIM2,  GPIO('A', 15),  1, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('A',  8),  1, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM1,  GPIO('E',  9),  1, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM1,  GPIO('A',  9),  2, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM1,  GPIO('E', 11),  2, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM1,  GPIO('A', 10),  3, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM1,  GPIO('E', 13),  3, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM1,  GPIO('A', 11),  4, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM1,  GPIO('E', 14),  4, GPIO_FUNCTION(1)}, // Tested - Not Working
+    {TIM2,  GPIO('A',  5),  1, GPIO_FUNCTION(1)}, // Tested - Working
+    {TIM2,  GPIO('A', 15),  1, GPIO_FUNCTION(1)}, // Tested - Working
     {TIM2,  GPIO('B',  3),  2, GPIO_FUNCTION(1)},
     {TIM2,  GPIO('B', 10),  3, GPIO_FUNCTION(1)},
     {TIM2,  GPIO('B',  2),  4, GPIO_FUNCTION(1)},
     {TIM2,  GPIO('B', 11),  4, GPIO_FUNCTION(1)},
-    {TIM3,  GPIO('A',  6),  1, GPIO_FUNCTION(2)},
-    {TIM3,  GPIO('B',  4),  1, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('B',  4),  1, GPIO_FUNCTION(2)}, // Tested - Working
     {TIM3,  GPIO('A',  7),  2, GPIO_FUNCTION(2)},
-    {TIM3,  GPIO('B',  5),  2, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('B',  5),  2, GPIO_FUNCTION(2)}, // Tested - Working
     {TIM3,  GPIO('B',  0),  3, GPIO_FUNCTION(2)},
     {TIM3,  GPIO('B',  1),  4, GPIO_FUNCTION(2)},
     {TIM4,  GPIO('B',  6),  1, GPIO_FUNCTION(2)},
-    {TIM4,  GPIO('D', 12),  1, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('D', 12),  1, GPIO_FUNCTION(2)}, // Tested - Working
     {TIM4,  GPIO('B',  7),  2, GPIO_FUNCTION(2)},
     {TIM4,  GPIO('D', 13),  2, GPIO_FUNCTION(2)},
     {TIM4,  GPIO('D', 14),  3, GPIO_FUNCTION(2)},
@@ -75,7 +74,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM5,  GPIO('A',  0),  1, GPIO_FUNCTION(2)},
     {TIM5,  GPIO('A',  1),  2, GPIO_FUNCTION(2)},
     {TIM5,  GPIO('A',  2),  3, GPIO_FUNCTION(2)},
-    {TIM5,  GPIO('A',  3),  4, GPIO_FUNCTION(2)},
+    {TIM5,  GPIO('A',  3),  4, GPIO_FUNCTION(2)}, // Tested - Working
     {TIM8,  GPIO('C',  6),  1, GPIO_FUNCTION(3)},
     {TIM8,  GPIO('C',  7),  2, GPIO_FUNCTION(3)},
     {TIM8,  GPIO('C',  8),  3, GPIO_FUNCTION(3)},
