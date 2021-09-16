@@ -8,8 +8,8 @@
 import logging
 from .. import bus
 
-LINE_LENGTH_DEFAULT="20"
-LINE_LENGTH_OPTIONS={"16":16, "20":20}
+LINE_LENGTH_DEFAULT=20
+LINE_LENGTH_OPTIONS={16:16, 20:20}
 
 TextGlyphs = { 'right_arrow': '\x7e' }
 
@@ -19,7 +19,7 @@ class hd44780_spi:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
-            True)
+                                                       True)
         # spi config
         self.spi = bus.MCU_SPI_from_config(
             config, 0x00, pin_option="latch_pin")
@@ -31,7 +31,7 @@ class hd44780_spi:
 
         self.icons = {}
         self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
-            LINE_LENGTH_DEFAULT)
+                                            LINE_LENGTH_DEFAULT)
 
         # framebuffers
         self.text_framebuffers = [bytearray(' '*2*self.line_length),
@@ -40,9 +40,9 @@ class hd44780_spi:
         self.all_framebuffers = [
             # Text framebuffers
             (self.text_framebuffers[0], bytearray('~'*2*self.line_length),
-              0x80),
+             0x80),
             (self.text_framebuffers[1], bytearray('~'*2*self.line_length),
-              0xc0),
+             0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
     def send_4_bits(self, cmd, is_data, minclock):

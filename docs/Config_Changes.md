@@ -1,4 +1,4 @@
-# Configuration changes
+# Configuration Changes
 
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this
@@ -7,6 +7,31 @@ document when upgrading the Klipper software.
 All dates in this document are approximate.
 
 ## Changes
+
+20210903: The default [`smooth_time`](Config_Reference.md#extruder)
+for heaters has changed to 1 second (from 2 seconds).  For most
+printers this will result in more stable temperature control.
+
+20210830: The default adxl345 name is now "adxl345".  The default CHIP
+parameter for the `ACCELEROMETER_MEASURE` and `ACCELEROMETER_QUERY` is
+now also "adxl345".
+
+20210830: The adxl345 ACCELEROMETER_MEASURE command no longer supports
+a RATE parameter.  To alter the query rate, update the printer.cfg
+file and issue a RESTART command.
+
+20210821: Several config settings in `printer.configfile.settings`
+will now be reported as lists instead of raw strings.  If the actual
+raw string is desired, use `printer.configfile.config` instead.
+
+20210819: In some cases, a `G28` homing move may end in a position
+that is nominally outside the valid movement range.  In rare
+situations this may result in confusing "Move out of range" errors
+after homing.  If this occurs, change your start scripts to move the
+toolhead to a valid position immediately after homing.
+
+20210814: The analog only pseudo-pins on the atmega168 and atmega328
+have been renamed from PE0/PE1 to PE2/PE3.
 
 20210720: A controller_fan section now monitors all stepper motors by
 default (not just the kinematic stepper motors).  If the previous

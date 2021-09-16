@@ -212,14 +212,33 @@ The following standard commands are supported:
   babystepping), and subtract it from the stepper_z endstop_position.
   This acts to take a frequently used babystepping value, and "make
   it permanent".  Requires a `SAVE_CONFIG` to take effect.
-- `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
-  FACTOR=<value> [BAND=<value>]`: A tool for tuning a parameter on
-  each Z height during a print. The tool will run the given COMMAND
-  with the given PARAMETER assigned to the value using the formula
-  `value = start + factor * z_height`. If BAND is provided then the
-  adjustment will only be made every BAND millimeters of z height - in
-  that case the formula used is `value = start + factor *
-  ((floor(z_height / band) + .5) * band)`.
+- `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value> [SKIP=<value>]
+  [FACTOR=<value> [BAND=<value>]] | [STEP_DELTA=<value> STEP_HEIGHT=<value>]`:
+  A tool for tuning a parameter on each Z height during a print.
+  The tool will run the given `COMMAND` with the given `PARAMETER`
+  assigned to a value that varies with `Z` according to a formula. Use `FACTOR`
+  if you will use a ruler or calipers to measure the Z height of the optimum
+  value, or `STEP_DELTA` and `STEP_HEIGHT` if the tuning tower model has bands
+  of discrete values as is common with temperature towers. If `SKIP=<value>`
+  is specified, the tuning process doesn't begin until Z height `<value>` is
+  reached, and below that the value will be set to `START`; in this case, the
+  `z_height` used in the formulas below is actually `max(z - skip, 0)`.
+  There are three possible combinations of options:
+  - `FACTOR`: The value changes at a rate of `factor` per millimeter.
+    The formula used is
+    `value = start + factor * z_height`.
+    You can plug the optimum Z height directly into the formula to
+    determine the optimum parameter value.
+  - `FACTOR` and `BAND`: The value changes at an average rate of `factor` per
+    millimeter, but in discrete bands where the adjustment will only be made
+    every `BAND` millimeters of Z height.
+    The formula used is
+    `value = start + factor * ((floor(z_height / band) + .5) * band)`.
+  - `STEP_DELTA` and `STEP_HEIGHT`: The value changes by `STEP_DELTA` every
+    `STEP_HEIGHT` millimeters. The formula used is
+    `value = start + step_delta * floor(z_height / step_height)`.
+    You can simply count bands or read tuning tower labels to determine the
+    optimum value.
 - `SET_DISPLAY_GROUP [DISPLAY=<display>] GROUP=<group>`: Set the
   active display group of an lcd display. This allows to define
   multiple display data groups in the config,
@@ -725,24 +744,22 @@ is enabled:
 
 The following commands are available when an
 [adxl345 config section](Config_Reference.md#adxl345) is enabled:
-- `ACCELEROMETER_MEASURE [CHIP=<config_name>] [RATE=<value>]
-  [NAME=<value>]`: Starts accelerometer measurements at the requested
-  number of samples per second. If CHIP is not specified it defaults
-  to "default". Valid rates are 25, 50, 100, 200, 400, 800, 1600,
-  and 3200. The command works in a start-stop mode: when executed for
-  the first time, it starts the measurements, next execution stops
-  them. If RATE is not specified, then the default value is used
-  (either from `printer.cfg` or `3200` default value). The results of
-  measurements are written to a file named
+- `ACCELEROMETER_MEASURE [CHIP=<config_name>] [NAME=<value>]`: Starts
+  accelerometer measurements at the requested number of samples per
+  second. If CHIP is not specified it defaults to "adxl345". The
+  command works in a start-stop mode: when executed for the first
+  time, it starts the measurements, next execution stops them. The
+  results of measurements are written to a file named
   `/tmp/adxl345-<chip>-<name>.csv` where `<chip>` is the name of the
-  accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`) and
-  `<name>` is the optional NAME parameter. If NAME is not specified it
-  defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
-  accelerometer does not have a name in its config section (simply
-  `[adxl345]`) <chip> part of the name is not generated.
+  accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`)
+  and `<name>` is the optional NAME parameter. If NAME is not
+  specified it defaults to the current time in "YYYYMMDD_HHMMSS"
+  format. If the accelerometer does not have a name in its config
+  section (simply `[adxl345]`) then `<chip>` part of the name is not
+  generated.
 - `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
   accelerometer for the current value. If CHIP is not specified it
-  defaults to "default". If RATE is not specified, the default value
+  defaults to "adxl345". If RATE is not specified, the default value
   is used. This command is useful to test the connection to the
   ADXL345 accelerometer: one of the returned values should be a
   free-fall acceleration (+/- some noise of the chip).

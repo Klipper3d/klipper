@@ -30,7 +30,7 @@
  ****************************************************************/
 
 static struct task_wake usb_bulk_in_wake;
-static uint8_t transmit_buf[96], transmit_pos;
+static uint8_t transmit_buf[192], transmit_pos;
 
 void
 usb_notify_bulk_in(void)

@@ -221,9 +221,9 @@ class DeltaCalibration:
                            "%.6f" % (self.endstops[i],))
         gcode = configfile.get_printer().lookup_object("gcode")
         gcode.respond_info(
-            "stepper_a: position_endstop: %.6f angle: %.6f arm: %.6f\n"
-            "stepper_b: position_endstop: %.6f angle: %.6f arm: %.6f\n"
-            "stepper_c: position_endstop: %.6f angle: %.6f arm: %.6f\n"
+            "stepper_a: position_endstop: %.6f angle: %.6f arm_length: %.6f\n"
+            "stepper_b: position_endstop: %.6f angle: %.6f arm_length: %.6f\n"
+            "stepper_c: position_endstop: %.6f angle: %.6f arm_length: %.6f\n"
             "delta_radius: %.6f"
             % (self.endstops[0], self.angles[0], self.arms[0],
                self.endstops[1], self.angles[1], self.arms[1],

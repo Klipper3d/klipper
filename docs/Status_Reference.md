@@ -311,6 +311,21 @@ objects:
   temperature seen by the sensor since the Klipper host software was
   last restarted.
 
+## tmc drivers
+
+The following information is available in
+[TMC stepper driver](Config_Reference.md#tmc-stepper-driver-configuration)
+objects (eg, `[tmc2208 stepper_x]`):
+- `mcu_phase_offset`: The micro-controller stepper position
+  corresponding with the driver's "zero" phase. This field may be null
+  if the phase offset is not known.
+- `phase_offset_position`: The "commanded position" corresponding to
+  the driver's "zero" phase. This field may be null if the phase
+  offset is not known.
+- `drv_status`: The results of the last driver status query. (Only
+  non-zero fields are reported.) This field will be null if the driver
+  is not enabled (and thus is not periodically queried).
+
 ## toolhead
 
 The following information is available in the `toolhead` object
@@ -379,4 +394,4 @@ The following information is available for each `[neopixel led_name]` and
   values for a led in the chain.  Note that not all configurations will contain
   a white value.  Each value is represented as a float from 0 to 1.  For
   example, the blue value of the second neopixel in a chain could be accessed
-  at `printer["neopixel <config_name>"].colordata[1].B`.
+  at `printer["neopixel <config_name>"].color_data[1].B`.
