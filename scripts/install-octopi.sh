@@ -21,7 +21,7 @@ install_packages()
 
     # Update system package info
     report_status "Running apt-get update..."
-    sudo apt-get update
+    sudo apt-get update --allow-releaseinfo-change
 
     # Install desired packages
     report_status "Installing packages..."
