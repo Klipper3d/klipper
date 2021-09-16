@@ -247,8 +247,7 @@ max_z_velocity:
 #   max_velocity for max_z_velocity.
 max_z_accel:
 #   This sets the maximum acceleration (in mm/s^2) of movement along
-#   the z axis. It limits the acceleration of the z stepper motor. The
-#   default is to use max_accel for max_z_accel.
+#   the z axis. The default is to use max_accel for max_z_accel.
 #minimum_z_position: 0
 #   The minimum Z position that the user may command the head to move
 #   to. The default is 0.
