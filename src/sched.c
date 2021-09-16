@@ -58,16 +58,19 @@ static struct timer sentinel_timer = {
     .waketime = 0x80000000,
 };
 
+static struct timer *last_insert = &periodic_timer;
+
 // Find position for a timer in timer_list and insert it
 static void __always_inline
 insert_timer(struct timer *t, uint32_t waketime)
 {
-    struct timer *prev, *pos = timer_list;
+    struct timer *pos = last_insert;
+    if (timer_is_before(waketime, pos->waketime))
+        pos = timer_list;
+    last_insert = t;
+    struct timer *prev;
     for (;;) {
         prev = pos;
-        if (CONFIG_MACH_AVR)
-            // micro optimization for AVR - reduces register pressure
-            asm("" : "+r"(prev));
         pos = pos->next;
         if (timer_is_before(waketime, pos->waketime))
             break;
@@ -132,6 +135,8 @@ sched_del_timer(struct timer *del)
             }
         }
     }
+    if (last_insert == del)
+        last_insert = &periodic_timer;
     irq_restore(flag);
 }
 
@@ -171,7 +176,7 @@ sched_timer_reset(void)
 {
     timer_list = &deleted_timer;
     deleted_timer.waketime = periodic_timer.waketime;
-    deleted_timer.next = &periodic_timer;
+    deleted_timer.next = last_insert = &periodic_timer;
     periodic_timer.next = &sentinel_timer;
     timer_kick();
 }
