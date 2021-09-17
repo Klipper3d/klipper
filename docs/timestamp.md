@@ -41,12 +41,12 @@ This document describes the Timestamp module.  There is no configuration require
     #   where:  S or SS - single or two digit second, 0-59
 
 ## Commands
-**TIMESTAMP** - returns the current timestamp, see variables above for more details
+`TIMESTAMP` returns the current timestamp, see variables above for more details
 
-**TIME** - returns the current time, see variables above for more details
+`TIME` returns the current time, see variables above for more details
 
-**HOUR** - returns the current hour, see variables above for more details
+`HOUR` returns the current hour, see variables above for more details
 
-**MINUTE** - returns the current minute, see variables above for more details
+`MINUTE` returns the current minute, see variables above for more details
 
-**SECOND** - returns the current second, see variables above for more details
+`SECOND` returns the current second, see variables above for more details

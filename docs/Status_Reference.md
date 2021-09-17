@@ -319,9 +319,9 @@ objects:
 - `Time`: The current time, in 24h notation, as a string in the form
   "HH:MM:SS"
 - `Hour`: The current hour as an integer in the form
- "H" or "HH", range from 0-23.
+ "H" or "HH", range from 0-23.\n
 -`Minute`: The current minute as an integer in the form
- "M" or "MM", range from 0-59
+ "M" or "MM", range from 0-59\n
 -`Second`: The current second as an integer in the form
  "S" or "SS", range from 0-59
 
