@@ -311,6 +311,20 @@ objects:
   temperature seen by the sensor since the Klipper host software was
   last restarted.
 
+## timestamp
+The following information is available in [timestamp](Config_Reference.md#timestamp)
+objects:
+- `Timestamp`: The current timestamp, in 24h notation, as s string in the form
+  "YYYY-MM-DD HH:MM:SS.MICROS"
+- `Time`: The current time, in 24h notation, as a string in the form
+  "HH:MM:SS"
+- `Hour`: The current hour as an integer in the form
+ "H" or "HH", range from 0-23.
+-`Minute`: The current minute as an integer in the form
+ "M" or "MM", range from 0-59
+-`Second`: The current second as an integer in the form
+ "S" or "SS", range from 0-59
+
 ## tmc drivers
 
 The following information is available in
