@@ -30,15 +30,15 @@ This document describes the Timestamp module.  There is no configuration require
 
     # printer.timestamp.Hour
     #   returns an integer in the form "H" or "HH"
-    #   where:  H or HH - single or two digit hour, 01-12
+    #   where:  H or HH - single or two digit hour, 1-23
 
     # printer.timestamp.Minute
     #   returns an integer in the form "M" or "MM"
-    #   where:  M or MM - single or two digit minute, 00-59
+    #   where:  M or MM - single or two digit minute, 0-59
 
     # printer.timestamp.Second
     #   returns an integer in the form "S" or "SS"
-    #   where:  S or SS - single or two digit second, 00-59
+    #   where:  S or SS - single or two digit second, 0-59
 
 ## Commands
 **TIMESTAMP** - returns the current timestamp, see variables above for more details
