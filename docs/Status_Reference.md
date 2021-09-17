@@ -28,6 +28,12 @@ The following information is available in the `configfile` object
   setting as read by Klipper during the last software start or
   restart. (Any settings changed at run-time will not be reflected
   here.) All values are returned as strings.
+- `save_config_pending`: Returns true if there are updates that a
+  `SAVE_CONFIG` command may persist to disk.
+- `warnings`: A list of warnings about config options. Each entry in
+  the list will be a dictionary containing a `type` and `message`
+  field (both strings). Additional fields may be available depending
+  on the type of warning.
 
 ## display_status
 
