@@ -65,14 +65,10 @@ DECL_CONSTANT_STR("BUS_PINS_spi6", "PG12,PG14,PG13");
 #define SPI_FUNCTION GPIO_FUNCTION(CONFIG_MACH_STM32F0 ? 0 : 5)
 
 static const struct spi_info spi_bus[] = {
-#if !CONFIG_STM32_USB_PB14_PB15
     { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION },
-#endif
     { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION },
     { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION },
-#if !CONFIG_MACH_STM32F1
     { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION },
-#endif
 #ifdef SPI3
     { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
 #endif
@@ -82,9 +78,7 @@ static const struct spi_info spi_bus[] = {
 #ifdef SPI4
     { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), SPI_FUNCTION },
 #endif
-#ifdef GPIOI
     { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), SPI_FUNCTION },
-#endif
 #ifdef SPI5
     { SPI5, GPIO('F', 8), GPIO('F', 9), GPIO('F', 7), SPI_FUNCTION },
     { SPI5, GPIO('H', 7), GPIO('F', 11), GPIO('H', 6), SPI_FUNCTION },
