@@ -58,6 +58,39 @@ The following information is available in the
   forward direction minus the total number of steps taken in the
   reverse direction since the micro-controller was last restarted.
 
+## exclude_object
+
+The following inforation is avaialbe in the [exclude_object](Exclude_Object.md) object:
+- `objects`:  An array of the known objects as provided by the `DEFINE_OBJECT` command.  This is the same information
+  provided by the `LIST_OBJECTS` command in verbose mode.  The `center` and `polygon` fields will not be present if
+  they weren't provided.  Here is a JSON sample:
+```
+[
+  {
+    "polygon": [
+      [ 156.25, 146.2511675 ],
+      [ 156.25, 153.7488325 ],
+      [ 163.75, 153.7488325 ],
+      [ 163.75, 146.2511675 ]
+    ],
+    "name": "CYLINDER_2_STL_ID_2_COPY_0",
+    "center": [ 160, 150 ]
+  },
+  {
+    "polygon": [
+      [ 146.25, 146.2511675 ],
+      [ 146.25, 153.7488325 ],
+      [ 153.75, 153.7488325 ],
+      [ 153.75, 146.2511675 ]
+    ],
+    "name": "CYLINDER_2_STL_ID_1_COPY_0",
+    "center": [ 150, 150 ]
+  }
+]
+```
+- `excluded_objects`: An array of strings listing the names of excluded objects.
+- `current_object`: The name of the object currently being printed.
+
 ## fan
 
 The following information is available in

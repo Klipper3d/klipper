@@ -9,7 +9,7 @@ VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
 class VirtualSD:
     def __init__(self, config):
-        printer = config.get_printer()
+        self.printer = printer = config.get_printer()
         printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
         # sdcard state
         sd = config.get('path')
@@ -125,6 +125,7 @@ class VirtualSD:
             self.current_file = None
         self.file_position = self.file_size = 0.
         self.print_stats.reset()
+        self.printer.send_event("sdcard:reset_file")
     cmd_SDCARD_RESET_FILE_help = "Clears a loaded SD File. Stops the print "\
         "if necessary"
     def cmd_SDCARD_RESET_FILE(self, gcmd):
