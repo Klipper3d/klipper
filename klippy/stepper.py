@@ -233,6 +233,7 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
         config.get('gear_ratio', note_valid=note_valid)
     else:
         rd = config.get('rotation_distance', None, note_valid=False)
+        config.deprecate('step_distance')
         sd = config.get('step_distance', None, note_valid=False)
         if rd is None and sd is not None:
             # Older config format with step_distance

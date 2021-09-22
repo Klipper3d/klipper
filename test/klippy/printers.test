@@ -25,6 +25,7 @@ CONFIG ../../config/generic-ultimaker-ultimainboard-v2.cfg
 CONFIG ../../config/kit-zav3d-2019.cfg
 CONFIG ../../config/printer-adimlab-2018.cfg
 CONFIG ../../config/printer-anycubic-4max-2018.cfg
+CONFIG ../../config/printer-anycubic-4maxpro-2.0-2021.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
@@ -172,6 +173,7 @@ CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
+CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
 CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
