@@ -28,6 +28,12 @@ The following information is available in the `configfile` object
   setting as read by Klipper during the last software start or
   restart. (Any settings changed at run-time will not be reflected
   here.) All values are returned as strings.
+- `save_config_pending`: Returns true if there are updates that a
+  `SAVE_CONFIG` command may persist to disk.
+- `warnings`: A list of warnings about config options. Each entry in
+  the list will be a dictionary containing a `type` and `message`
+  field (both strings). Additional fields may be available depending
+  on the type of warning.
 
 ## display_status
 
@@ -310,6 +316,21 @@ objects:
 - `measured_min_temp`, `measured_max_temp`: The lowest and highest
   temperature seen by the sensor since the Klipper host software was
   last restarted.
+
+## tmc drivers
+
+The following information is available in
+[TMC stepper driver](Config_Reference.md#tmc-stepper-driver-configuration)
+objects (eg, `[tmc2208 stepper_x]`):
+- `mcu_phase_offset`: The micro-controller stepper position
+  corresponding with the driver's "zero" phase. This field may be null
+  if the phase offset is not known.
+- `phase_offset_position`: The "commanded position" corresponding to
+  the driver's "zero" phase. This field may be null if the phase
+  offset is not known.
+- `drv_status`: The results of the last driver status query. (Only
+  non-zero fields are reported.) This field will be null if the driver
+  is not enabled (and thus is not periodically queried).
 
 ## toolhead
 

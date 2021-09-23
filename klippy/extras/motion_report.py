@@ -50,6 +50,11 @@ class APIDumpHelper:
         template = web_request.get_dict('response_template', {})
         self.clients[cconn] = template
         self._start()
+    def add_internal_client(self):
+        cconn = InternalDumpClient()
+        self.clients[cconn] = {}
+        self._start()
+        return cconn
     def _update(self, eventtime):
         try:
             msg = self.data_cb(eventtime)
@@ -68,6 +73,23 @@ class APIDumpHelper:
             tmp['params'] = msg
             cconn.send(tmp)
         return eventtime + self.update_interval
+
+# An "internal webhooks" wrapper for using APIDumpHelper internally
+class InternalDumpClient:
+    def __init__(self):
+        self.msgs = []
+        self.is_done = False
+    def get_messages(self):
+        return self.msgs
+    def finalize(self):
+        self.is_done = True
+    def is_closed(self):
+        return self.is_done
+    def send(self, msg):
+        self.msgs.append(msg)
+        if len(self.msgs) >= 10000:
+            # Avoid filling up memory with too many samples
+            self.finalize()
 
 # Extract stepper queue_step messages
 class DumpStepper:

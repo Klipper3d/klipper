@@ -233,6 +233,7 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
         config.get('gear_ratio', note_valid=note_valid)
     else:
         rd = config.get('rotation_distance', None, note_valid=False)
+        config.deprecate('step_distance')
         sd = config.get('step_distance', None, note_valid=False)
         if rd is None and sd is not None:
             # Older config format with step_distance
@@ -264,6 +265,7 @@ class PrinterRail:
         self.stepper_units_in_radians = units_in_radians
         self.steppers = []
         self.endstops = []
+        self.endstop_map = {}
         self.add_extra_stepper(config)
         mcu_stepper = self.steppers[0]
         self.get_name = mcu_stepper.get_name
@@ -336,18 +338,37 @@ class PrinterRail:
     def add_extra_stepper(self, config):
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
-        if self.endstops and config.get('endstop_pin', None) is None:
+        endstop_pin = config.get('endstop_pin', None)
+        if self.endstops and endstop_pin is None:
             # No endstop defined - use primary endstop
             self.endstops[0][0].add_stepper(stepper)
             return
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
-        mcu_endstop = ppins.setup_pin('endstop', config.get('endstop_pin'))
+        pin_params = ppins.parse_pin(endstop_pin, True, True)
+        # Normalize pin name
+        pin_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
+        # Look for already-registered endstop
+        endstop = self.endstop_map.get(pin_name, None)
+        if endstop is None:
+            # New endstop, register it
+            mcu_endstop = ppins.setup_pin('endstop', endstop_pin)
+            self.endstop_map[pin_name] = {'endstop': mcu_endstop,
+                                          'invert': pin_params['invert'],
+                                          'pullup': pin_params['pullup']}
+            name = stepper.get_name(short=True)
+            self.endstops.append((mcu_endstop, name))
+            query_endstops = printer.load_object(config, 'query_endstops')
+            query_endstops.register_endstop(mcu_endstop, name)
+        else:
+            mcu_endstop = endstop['endstop']
+            changed_invert = pin_params['invert'] != endstop['invert']
+            changed_pullup = pin_params['pullup'] != endstop['pullup']
+            if changed_invert or changed_pullup:
+                raise error("Pinter rail %s shared endstop pin %s "
+                            "must specify the same pullup/invert settings" % (
+                                self.get_name(), pin_name))
         mcu_endstop.add_stepper(stepper)
-        name = stepper.get_name(short=True)
-        self.endstops.append((mcu_endstop, name))
-        query_endstops = printer.load_object(config, 'query_endstops')
-        query_endstops.register_endstop(mcu_endstop, name)
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
             stepper.setup_itersolve(alloc_func, *params)

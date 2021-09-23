@@ -122,7 +122,7 @@ Graphs can be generated with a command like the following:
 One can use the `-g` option to specify the datasets to graph (it takes
 a Python literal containing a list of lists). For example:
 ```
-~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity"], ["trapq:toolhead:accel"]]'
+~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq(toolhead,velocity)"], ["trapq(toolhead,accel)"]]'
 ```
 
 The list of available datasets can be found using the `-l` option -
@@ -134,7 +134,7 @@ for example:
 It is also possible to specify matplotlib plot options for each
 dataset:
 ```
-~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq:toolhead:velocity?color=red"]]'
+~/klipper/scripts/motan/motan_graph.py mylog -g '[["trapq(toolhead,velocity)?color=red&alpha=0.4"]]'
 ```
 Many matplotlib options are available; some examples are "color",
 "label", "alpha", and "linestyle".
@@ -219,13 +219,12 @@ cd /path/to/klipper
 make menuconfig
 ```
 
-and compile the micro-controller software for an AVR atmega644p, set
-the MCU frequency to 20Mhz, and select SIMULAVR software emulation
-support. Then one can compile Klipper (run `make`) and then start the
-simulation with:
+and compile the micro-controller software for an AVR atmega644p and
+select SIMULAVR software emulation support. Then one can compile
+Klipper (run `make`) and then start the simulation with:
 
 ```
-PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf
+PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py out/klipper.elf
 ```
 
 Then, with simulavr running in another window, one can run the
@@ -246,7 +245,7 @@ the directions above, but run avrsim.py with a command-line like the
 following:
 
 ```
-PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py -m atmega644 -s 20000000 -b 250000 out/klipper.elf -t PORTA.PORT,PORTC.PORT
+PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py out/klipper.elf -t PORTA.PORT,PORTC.PORT
 ```
 
 The above would create a file **avrsim.vcd** with information on each
