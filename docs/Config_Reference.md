@@ -2302,6 +2302,14 @@ Print cooling fan.
 [fan]
 pin:
 #   Output pin controlling the fan. This parameter must be provided.
+#min_power: 0.0
+#   The minimum power (expressed as a value from 0.0 to 1.0) that makes
+#   the fan spin. If this value is more than 0.0 then fan speed requests
+#   will be scaled between min_power and max_power (for example, if
+#   min_power is .1 and max_power is 1 a fan speed of 10% is requested then the fan
+#   power will be set to 19%)
+#   This setting may be used to prevent fan stalls at low speeds.
+#   The default is 0.0.
 #max_power: 1.0
 #   The maximum power (expressed as a value from 0.0 to 1.0) that the
 #   pin may be set to. The value 1.0 allows the pin to be set fully
@@ -2309,8 +2317,8 @@ pin:
 #   pin to be enabled for no more than half the time. This setting may
 #   be used to limit the total power output (over extended periods) to
 #   the fan. If this value is less than 1.0 then fan speed requests
-#   will be scaled between zero and max_power (for example, if
-#   max_power is .9 and a fan speed of 80% is requested then the fan
+#   will be scaled between min_power and max_power (for example, if
+#   max_power is .9 and min_power is 0 a fan speed of 80% is requested then the fan
 #   power will be set to 72%). The default is 1.0.
 #shutdown_speed: 0
 #   The desired fan speed (expressed as a value from 0.0 to 1.0) if
@@ -2369,6 +2377,7 @@ a shutdown_speed equal to max_power.
 ```
 [heater_fan my_nozzle_fan]
 #pin:
+#min_power:
 #max_power:
 #shutdown_speed:
 #cycle_time:
@@ -2405,6 +2414,7 @@ watched component.
 ```
 [controller_fan my_controller_fan]
 #pin:
+#min_power:
 #max_power:
 #shutdown_speed:
 #cycle_time:
@@ -2450,6 +2460,7 @@ additional information.
 ```
 [temperature_fan my_temp_fan]
 #pin:
+#min_power:
 #max_power:
 #shutdown_speed:
 #cycle_time:
@@ -2497,6 +2508,7 @@ with the SET_FAN_SPEED
 ```
 [fan_generic extruder_partfan]
 #pin:
+#min_power:
 #max_power:
 #shutdown_speed:
 #cycle_time:

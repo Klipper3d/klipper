@@ -13,6 +13,7 @@ class Fan:
         self.last_fan_value = 0.
         self.last_fan_time = 0.
         # Read config
+        self.min_power = config.getfloat('min_power', 0., below=1., minval=0.)
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
                                                minval=0.)
@@ -42,7 +43,11 @@ class Fan:
     def set_speed(self, print_time, value):
         if value < self.off_below:
             value = 0.
-        value = max(0., min(self.max_power, value * self.max_power))
+        if value > 0:
+            value = min(self.max_power, max(self.min_power,
+            (self.max_power-self.min_power) * value + self.min_power))
+        # Ensure value is between 0 and 1
+        value = max(0., min(1., value))
         if value == self.last_fan_value:
             return
         print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
