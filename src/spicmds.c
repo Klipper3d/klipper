@@ -23,17 +23,20 @@ struct spidev_s {
 };
 
 enum {
-    SF_HAVE_PIN = 1, SF_SOFTWARE = 2, SF_HARDWARE = 4,
+    SF_HAVE_PIN = 1, SF_SOFTWARE = 2, SF_HARDWARE = 4, SF_INVERT_CS = 8
 };
 
 void
 command_config_spi(uint32_t *args)
 {
     struct spidev_s *spi = oid_alloc(args[0], command_config_spi, sizeof(*spi));
-    spi->pin = gpio_out_setup(args[1], 1);
+    int_fast8_t invert_cs = args[2];
     spi->flags |= SF_HAVE_PIN;
+    if(invert_cs) spi->flags |= SF_INVERT_CS;
+    int_fast8_t pin_inactive_value = invert_cs ? 0 : 1;
+    spi->pin = gpio_out_setup(args[1], pin_inactive_value);
 }
-DECL_COMMAND(command_config_spi, "config_spi oid=%c pin=%u");
+DECL_COMMAND(command_config_spi, "config_spi oid=%c pin=%c invert_cs=%c");
 
 void
 command_config_spi_without_cs(uint32_t *args)
@@ -95,8 +98,10 @@ spidev_transfer(struct spidev_s *spi, uint8_t receive_data
     else
         spi_prepare(spi->spi_config);
 
+    int_fast8_t pin_active_value = (spi->flags & SF_INVERT_CS) ? 1 : 0;
+
     if (spi->flags & SF_HAVE_PIN)
-        gpio_out_write(spi->pin, 0);
+        gpio_out_write(spi->pin, pin_active_value);
 
     if (CONFIG_HAVE_GPIO_BITBANGING && spi->flags & SF_SOFTWARE)
         spi_software_transfer(spi->spi_software, receive_data, data_len, data);
@@ -104,7 +109,7 @@ spidev_transfer(struct spidev_s *spi, uint8_t receive_data
         spi_transfer(spi->spi_config, receive_data, data_len, data);
 
     if (spi->flags & SF_HAVE_PIN)
-        gpio_out_write(spi->pin, 1);
+        gpio_out_write(spi->pin, pin_active_value ^ 1);
 }
 
 void
@@ -162,8 +167,9 @@ spidev_shutdown(void)
     uint8_t oid;
     struct spidev_s *spi;
     foreach_oid(oid, spi, command_config_spi) {
+        int_fast8_t pin_inactive_value = (spi->flags & SF_INVERT_CS) ? 0 : 1;
         if (spi->flags & SF_HAVE_PIN)
-            gpio_out_write(spi->pin, 1);
+            gpio_out_write(spi->pin, pin_inactive_value);
     }
 
     // Send shutdown messages
