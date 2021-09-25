@@ -96,12 +96,12 @@ class ADXLCommandHelper:
         gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", name,
                                    self.cmd_ACCELEROMETER_QUERY,
                                    desc=self.cmd_ACCELEROMETER_QUERY_help)
-        gcode.register_mux_command("ADXL345_DEBUG_READ", "CHIP", name,
-                                   self.cmd_ADXL345_DEBUG_READ,
-                                   desc=self.cmd_ADXL345_DEBUG_READ_help)
-        gcode.register_mux_command("ADXL345_DEBUG_WRITE", "CHIP", name,
-                                   self.cmd_ADXL345_DEBUG_WRITE,
-                                   desc=self.cmd_ADXL345_DEBUG_WRITE_help)
+        gcode.register_mux_command("ACCELEROMETER_DEBUG_READ", "CHIP", name,
+                                   self.cmd_ACCELEROMETER_DEBUG_READ,
+                                   desc=self.cmd_ACCELEROMETER_DEBUG_READ_help)
+        gcode.register_mux_command("ACCELEROMETER_DEBUG_WRITE", "CHIP", name,
+                                   self.cmd_ACCELEROMETER_DEBUG_WRITE,
+                                   desc=self.cmd_ACCELEROMETER_DEBUG_WRITE_help)
     cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
         if self.bg_client is None:
@@ -135,13 +135,13 @@ class ADXLCommandHelper:
         _, accel_x, accel_y, accel_z = values[-1]
         gcmd.respond_info("adxl345 values (x, y, z): %.6f, %.6f, %.6f"
                           % (accel_x, accel_y, accel_z))
-    cmd_ADXL345_DEBUG_READ_help = "Query accelerometer register (for debugging)"
-    def cmd_ADXL345_DEBUG_READ(self, gcmd):
+    cmd_ACCELEROMETER_DEBUG_READ_help = "Query adxl345 register (for debugging)"
+    def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
         reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
         gcmd.respond_info("ADXL345 REG[0x%x] = 0x%x" % (reg, val))
-    cmd_ADXL345_DEBUG_WRITE_help = "Set accelerometer register (for debugging)"
-    def cmd_ADXL345_DEBUG_WRITE(self, gcmd):
+    cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set adxl345 register (for debugging)"
+    def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
         reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
