@@ -346,8 +346,11 @@ class ADXL345:
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_DEVID)
         if dev_id != ADXL345_DEV_ID:
-            raise self.printer.command_error("Invalid adxl345 id (got %x vs %x)"
-                                             % (dev_id, ADXL345_DEV_ID))
+            raise self.printer.command_error(
+                "Invalid adxl345 id (got %x vs %x).\n"
+                "This is generally indicative of connection problems\n"
+                "(e.g. faulty wiring) or a faulty adxl345 chip."
+                % (dev_id, ADXL345_DEV_ID))
         # Setup chip in requested query rate
         self.set_reg(REG_POWER_CTL, 0x00)
         self.set_reg(REG_DATA_FORMAT, 0x0B)
