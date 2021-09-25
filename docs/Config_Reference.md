@@ -1728,6 +1728,92 @@ control_pin:
 #   See the "probe" section for information on these parameters.
 ```
 
+### [load_cell_probe]
+
+Load-cell based probe. One may define this section (instead of a probe
+section) to enable a load-cell based probe. See
+[Load-cell probe guide](LoadCellProbe.md) and
+[command reference](G-Codes.md#load-cell-probe) for further
+information.
+
+```
+[load_cell_probe]
+#
+# general parameters:
+#
+adc:
+#   ADC pin which digitizes the load cell signal.
+speed: 50
+#   Speed used for any moves issued by the probe command. Default is 50.
+max_retry: 5
+#   Maximum number of retries if probe failes to get a stable result. Default
+#   is 5.
+max_abs_force: 5000
+#   Maximum absolute value of measured force (in ADC counts), if exceeded
+#   probing will be aborted for safety reasons. Default is 5000.
+#
+# force measurement parameters:
+#
+adc_n_average: 2
+#   Number of ADC measurement to average for each load cell measurement. Default
+#   is 2.
+adc_n_average_precise: (equal to adc_n_average)
+#   Like adc_n_average, but used when more precision is required (e.g. during
+#   the fit). By default equal to adc_n_average.
+max_variance: 15
+#   Maximum spread of single ADC values measured during the averaging. If
+#   exceeded, the measurement is retried after a delay. Default is 15.
+delay_exceeding_max_variance: 0.1
+#   Delay in seconds if max_variance is exceeded. Default is 0.1.
+max_retry_stable_force: 100
+#   Maximum number of retries if max_variance is exceeded. Default is 100.
+#
+# fast approach parameters:
+#
+threshold: 50
+#   Force threshold to stop fast approach.
+step_size: 0.1
+#   Step size in mm for fast approach.
+threshold_xy: (equal to threshold)
+#   Same as threshold but used when probing in X or Y direction. By default
+#   equal to threshold.
+step_size_xy: (equal to step_size)
+#   Same as step_size but used when probing in X or Y direction. By default
+#   equal to step_size.
+#
+# compensated measurement parameters:
+#
+compensation_z_lift: 0.2
+#   Z distance in mm to move away from bed to perform measurement for zero
+#   compensation. Default is 0.2
+compensation_z_lift_xy: 2.0
+#   Same as compensation_z_lift but used when probing in X or Y direction.
+#   Default is 2.0
+#
+# parameters for fit:
+#
+fit_points: 5
+#   Number of measurement points above fit_threshold used for the fit. Defaults
+#   to 5, must be bigger than 2.
+fit_step_size: 0.005
+#   Step size for the fit measurement in mm. Default is 0.005 (5um)
+fit_min_quality: 0.85
+#   Minimum acceptable fit quality. Higher values are better fit quality.
+#   Default is is 0.85.
+fit_threshold: 6
+#   Minimum (zero-compensated) measured force for a data point to be taken into
+#   account for the fit. Default is 6.
+#
+# parameters for PROBE_ACCURACY command:
+#
+sample_retract_dist: 2
+#   Distance in mm to move away from the bed between probe accuracy
+#   measurements. Default is 2.
+lift_speed: (equal to speed)
+#   Speed for the retraction between probe accuracy measurements. By default
+#   equal to speed.
+```
+
 ## Additional stepper motors and extruders
 
 ### [stepper_z1]
@@ -3221,6 +3307,10 @@ lcd_type:
 #   See the display sections below for information on each type and
 #   additional parameters they provide. This parameter must be
 #   provided.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
 #display_group:
 #   The name of the display_data group to show on the display. This
 #   controls the content of the screen (see the "display_data" section
