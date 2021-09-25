@@ -10,9 +10,9 @@ documents.
 - [FAQ](FAQ.md): Frequently asked questions.
 - [Releases](Releases.md): The history of Klipper releases.
 - [Config changes](Config_Changes.md): Recent software changes that
-may require users to update their printer config file.
+  may require users to update their printer config file.
 - [Contact](Contact.md): Information on bug reporting and general
-communication with the Klipper developers.
+  communication with the Klipper developers.
 
 ## Installation and Configuration
 
@@ -92,3 +92,4 @@ communication with the Klipper developers.
 - [CAN bus](CANBUS.md): Information on using CAN bus with Klipper.
 - [TSL1401CL filament width sensor](TSL1401CL_Filament_Width_Sensor.md)
 - [Hall filament width sensor](HallFilamentWidthSensor.md)
+- [RP2040 microcontroller](RP2040.md)
