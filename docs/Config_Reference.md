@@ -3117,6 +3117,14 @@ pin:
 #   then the 'value' parameter can be specified using the desired
 #   amperage for the stepper. The default is to not scale the 'value'
 #   parameter.
+high_throughput: False
+#   This enables the high throughput mode for using e.g. PWM
+#   controlled tools (see docs/Using_PWM_Tools.md)
+#   Suggested to only use on one output pin, currently.
+#   Warning: Setting a maximum_mcu_duration will _not_ yet
+#   split long running moves.
+#   This will lead to a shutdown if individual moves
+#   do run longer in high throughput mode.
 ```
 
 ### [static_digital_output]

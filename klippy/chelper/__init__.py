@@ -54,11 +54,19 @@ defs_stepcompress = """
         , uint64_t start_clock, uint64_t end_clock);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
-        , struct stepcompress **sc_list, int sc_num, int move_num);
+        , struct stepcompress **sc_list, int sc_num
+        , struct sync_channel **pc_list, int pc_num, int move_num);
     void steppersync_free(struct steppersync *ss);
     void steppersync_set_time(struct steppersync *ss
         , double time_offset, double mcu_freq);
     int steppersync_flush(struct steppersync *ss, uint64_t move_clock);
+"""
+
+defs_sync_channel = """
+    struct sync_channel *sync_channel_alloc();
+    void sync_channel_free(struct sync_channel *pc);
+    int sync_channel_queue_msg(struct sync_channel *pc
+        , uint32_t *data, int len, uint64_t req_clock);
 """
 
 defs_itersolve = """
@@ -215,7 +223,7 @@ defs_std = """
 
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
-    defs_itersolve, defs_trapq, defs_trdispatch,
+    defs_sync_channel, defs_itersolve, defs_trapq, defs_trdispatch,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
     defs_kin_deltesian, defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch,
     defs_kin_extruder, defs_kin_shaper, defs_kin_idex,

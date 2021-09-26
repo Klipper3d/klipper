@@ -390,12 +390,15 @@ class ToolHead:
                                      + 0.100)
     def _flush_handler(self, eventtime):
         try:
+            #print (" - - Flush handler at " + str(eventtime))
             print_time = self.print_time
             buffer_time = print_time - self.mcu.estimated_print_time(eventtime)
             if buffer_time > self.buffer_time_low:
                 # Running normally - reschedule check
+                #print ( "     ... rescheduled")
                 return eventtime + buffer_time - self.buffer_time_low
             # Under ran low buffer mark - flush lookahead queue
+            #print ( "     ... flushing!")
             self.flush_step_generation()
             if print_time != self.print_time:
                 self.idle_flush_print_time = self.print_time
@@ -543,6 +546,28 @@ class ToolHead:
         last_move.timing_callbacks.append(callback)
     def note_kinematic_activity(self, kin_time):
         self.last_kin_move_time = max(self.last_kin_move_time, kin_time)
+    def note_synchronous_command(self, kin_time):
+        """
+        Invalid to be called by background tasks
+        """
+
+        # FIXME: Do a pin-update during long move
+        # (max_pin_duration)
+        # which leads to kin_time smaller than last_kin_move_time
+        if(kin_time >= self.last_kin_move_time):
+            # TODO: When is the best time for that?
+            # Is this even needed with update_move_time?
+            self.note_kinematic_activity(kin_time)
+            # ---
+
+            if self.special_queuing_state == "Drip":
+                self._update_drip_move_time(kin_time)
+            else:
+                self._update_move_time(kin_time)
+
+            if self.print_time > self.need_check_stall:
+                self._check_stall()
+
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def _calc_junction_deviation(self):

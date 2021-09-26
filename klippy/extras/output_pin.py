@@ -4,8 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-PIN_MIN_TIME = 0.100
-RESEND_HOST_TIME = 0.300 + PIN_MIN_TIME
+RESEND_HOST_TIME = 0.300
 MAX_SCHEDULE_TIME = 5.0
 
 class PrinterOutputPin:
@@ -37,6 +36,9 @@ class PrinterOutputPin:
             self.mcu_pin.setup_start_value(
                 self.last_value, self.last_value, True)
         else:
+            if config.getboolean('high_throughput', False):
+                self.mcu_pin.setup_high_throughput_mode()
+
             max_mcu_duration = config.getfloat('maximum_mcu_duration', 0.,
                                                minval=0.500,
                                                maxval=MAX_SCHEDULE_TIME)
@@ -60,7 +62,7 @@ class PrinterOutputPin:
         if value == self.last_value and cycle_time == self.last_cycle_time:
             if not is_resend:
                 return
-        print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
+        print_time = max(print_time, self.last_print_time + cycle_time)
         if self.is_pwm:
             self.mcu_pin.set_pwm(print_time, value, cycle_time)
         else:
@@ -92,11 +94,12 @@ class PrinterOutputPin:
         systime = self.reactor.monotonic()
         print_time = self.mcu_pin.get_mcu().estimated_print_time(systime)
         time_diff = (self.last_print_time + self.resend_interval) - print_time
+
         if time_diff > 0.:
             # Reschedule for resend time
             return systime + time_diff
-        self._set_pin(print_time + PIN_MIN_TIME,
-                      self.last_value, self.last_cycle_time, True)
+        self._set_pin(print_time + RESEND_HOST_TIME/2, self.last_value,
+                      self.last_cycle_time, True)
         return systime + self.resend_interval
 
 def load_config_prefix(config):

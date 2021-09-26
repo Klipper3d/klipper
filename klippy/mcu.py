@@ -378,11 +378,13 @@ class MCU_pwm:
         self._mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
+        self._is_ht = False
         self._start_value = self._shutdown_value = float(self._invert)
         self._is_static = False
         self._last_clock = self._last_cycle_ticks = 0
         self._pwm_max = 0.
         self._set_cmd = self._set_cycle_ticks = None
+
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
@@ -399,11 +401,12 @@ class MCU_pwm:
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
+    def setup_high_throughput_mode(self):
+        self._is_ht = True
     def _build_config(self):
         if self._max_duration and self._start_value != self._shutdown_value:
             raise pins.error("Pin with max duration must have start"
                              " value equal to shutdown value")
-        cmd_queue = self._mcu.alloc_command_queue()
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
@@ -411,6 +414,7 @@ class MCU_pwm:
         mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
         if mdur_ticks >= 1<<31:
             raise pins.error("PWM pin max duration too large")
+        self._min_clock_diff = cycle_ticks
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
@@ -419,8 +423,10 @@ class MCU_pwm:
                     % (self._pin, cycle_ticks,
                        self._start_value * self._pwm_max))
                 return
-            self._mcu.request_move_queue_slot()
             self._oid = self._mcu.create_oid()
+            if not self._is_ht:
+                self._mcu.request_move_queue_slot()
+
             self._mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
                 " default_value=%d max_duration=%d"
@@ -432,7 +438,8 @@ class MCU_pwm:
                                      % (self._oid, self._last_clock, svalue),
                                      on_restart=True)
             self._set_cmd = self._mcu.lookup_command(
-                "queue_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue)
+                "queue_pwm_out oid=%c clock=%u value=%hu",
+                fast_track=self._is_ht) # might be ugly without cq?
             return
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
@@ -443,8 +450,11 @@ class MCU_pwm:
             return
         if cycle_ticks >= 1<<31:
             raise pins.error("PWM pin cycle time too large")
-        self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
+        cmd_queue = None
+        if not self._is_ht:
+            self._mcu.request_move_queue_slot()
+            cmd_queue = self._mcu.alloc_command_queue()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
@@ -459,34 +469,48 @@ class MCU_pwm:
             "queue_digital_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
-            "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
+            "queue_digital_out oid=%c clock=%u on_ticks=%u",
+            fast_track=self._is_ht)
         self._set_cycle_ticks = self._mcu.lookup_command(
-            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=cmd_queue)
+            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=None)
     def set_pwm(self, print_time, value, cycle_time=None):
-        clock = self._mcu.print_time_to_clock(print_time)
+        req_clock = self._mcu.print_time_to_clock(print_time)
+        # FIXME: let sync_channel replace uncommitted values
+        #        so that this is not necessary
         minclock = self._last_clock
-        self._last_clock = clock
+        clock = max(req_clock, self._last_clock + self._min_clock_diff)
         if self._invert:
             value = 1. - value
         if self._hardware_pwm:
             v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-            self._set_cmd.send([self._oid, clock, v],
+            # queue_pwm_out oid=%c clock=%u value=%hu
+            #data = (self._set_cmd, self._oid, clock & 0xFFFFFFFF, v)
+            self._set_cmd.send([self._oid, clock & 0xFFFFFFFF, v],
+                                minclock=minclock, reqclock=clock)
+        else:
+            # Soft pwm update
+            if cycle_time is None:
+                cycle_time = self._cycle_time
+            cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
+            if cycle_ticks != self._last_cycle_ticks:
+                if cycle_ticks >= 1<<31:
+                    raise self._mcu.get_printer().command_error(
+                        "PWM cycle time too large")
+                self._set_cycle_ticks.send([self._oid, cycle_ticks],
+                                           minclock=minclock, reqclock=clock)
+                # FIXME: this makes sure new cycle_ticks is applied
+                # _before_ new on_ticks arrive
+                clock = self._mcu.print_time_to_clock(print_time +
+                                                      self._last_cycle_ticks)
+                self._last_cycle_ticks = cycle_ticks
+                self._min_clock_diff = cycle_ticks
+            on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
+            # queue_digital_out oid=%c clock=%u on_ticks=%u
+            #data = (self._set_cmd, self._oid, clock & 0xFFFFFFFF, on_ticks)
+            self._set_cmd.send([self._oid, clock & 0xFFFFFFFF, on_ticks],
                                minclock=minclock, reqclock=clock)
-            return
-        # Soft pwm update
-        if cycle_time is None:
-            cycle_time = self._cycle_time
-        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
-        if cycle_ticks != self._last_cycle_ticks:
-            if cycle_ticks >= 1<<31:
-                raise self._mcu.get_printer().command_error(
-                    "PWM cycle time too large")
-            self._set_cycle_ticks.send([self._oid, cycle_ticks],
-                                       minclock=minclock, reqclock=clock)
-            self._last_cycle_ticks = cycle_ticks
-        on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
-        self._set_cmd.send([self._oid, clock, on_ticks],
-                           minclock=minclock, reqclock=clock)
+
+        self._last_clock = clock
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):
@@ -551,6 +575,22 @@ class MCU_adc:
 # Main MCU class
 ######################################################################
 
+class FastCommandWrapper:
+    def __init__(self, mcu, cmd_id, sync_channel, queue_msg_fn):
+        self._mcu = mcu
+        self._cmd_id = cmd_id
+        self._sync_channel = sync_channel
+        self._queue_msg_fn = queue_msg_fn
+        self._reactor = mcu.get_printer().get_reactor()
+        self._toolhead = mcu.get_printer().lookup_object('toolhead')
+    def send(self, data, minclock, reqclock):
+        data.insert(0, self._cmd_id)
+        self._queue_msg_fn(self._sync_channel, data, len(data), reqclock)
+        print_time = self._mcu.clock_to_print_time(reqclock)
+        # TODO: Is here actually `_async_` needed?
+        self._reactor.register_async_callback(
+            lambda ev: self._toolhead.note_synchronous_command(print_time))
+
 class MCU:
     error = error
     def __init__(self, config, clocksync):
@@ -598,12 +638,18 @@ class MCU:
         self._init_cmds = []
         self._mcu_freq = 0.
         # Move command queuing
-        ffi_main, self._ffi_lib = chelper.get_ffi()
+        self._ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
                                                   minval=0.)
         self._reserved_move_slots = 0
         self._stepqueues = []
         self._steppersync = None
+
+        #
+        self._sync_channels = []
+        self._active_fasttrack_queues = 0
+        #
+
         # Stats
         self._get_status_info = {}
         self._stats_sumsq_base = 0.
@@ -768,9 +814,12 @@ class MCU:
         ffi_main, ffi_lib = chelper.get_ffi()
         self._steppersync = ffi_main.gc(
             ffi_lib.steppersync_alloc(self._serial.get_serialqueue(),
-                                      self._stepqueues, len(self._stepqueues),
-                                      move_count-self._reserved_move_slots),
-            ffi_lib.steppersync_free)
+                              self._stepqueues, len(self._stepqueues),
+                              self._sync_channels, len(self._sync_channels),
+                              move_count-self._reserved_move_slots),
+            ffi_lib.steppersync_free
+        )
+
         ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
@@ -854,6 +903,8 @@ class MCU:
         return self.print_time_to_clock(t) + slot
     def register_stepqueue(self, stepqueue):
         self._stepqueues.append(stepqueue)
+    def register_sync_channel(self, sync_channel):
+        self._sync_channels.append(sync_channel)
     def request_move_queue_slot(self):
         self._reserved_move_slots += 1
     def seconds_to_clock(self, time):
@@ -869,8 +920,22 @@ class MCU:
         self._serial.register_response(cb, msg, oid)
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
-    def lookup_command(self, msgformat, cq=None):
-        return CommandWrapper(self._serial, msgformat, cq)
+    def lookup_command(self, msgformat, cq=None, fast_track=False):
+        if not fast_track:
+            return CommandWrapper(self._serial, msgformat, cq)
+
+        if self._active_fasttrack_queues > 0:
+            raise error ("Currently, only one high throughput pin is allowed!")
+        self._active_fasttrack_queues = self._active_fasttrack_queues + 1
+        sync_channel = self._ffi_main.gc(
+                self._ffi_lib.sync_channel_alloc(),
+                self._ffi_lib.sync_channel_free)
+        self.register_sync_channel(sync_channel)
+        cmd_tag = self.lookup_command(msgformat).get_command_tag()
+        return FastCommandWrapper(self, cmd_tag,
+                                  sync_channel,
+                                  self._ffi_lib.sync_channel_queue_msg)
+
     def lookup_query_command(self, msgformat, respformat, oid=None,
                              cq=None, is_async=False):
         return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
