@@ -333,7 +333,7 @@ class PrinterHeaters:
         heater.set_temp(temp)
         if wait and temp:
             self._wait_for_temperature(heater)
-    cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
+    cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor for a given time in seconds (timer is off by default)"
     def cmd_TEMPERATURE_WAIT(self, gcmd):
         sensor_name = gcmd.get('SENSOR')
         if sensor_name not in self.available_sensors:
@@ -343,6 +343,7 @@ class PrinterHeaters:
         if min_temp == float('-inf') and max_temp == float('inf'):
             raise gcmd.error(
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
+        timeout = gcmd.get_float('TIMEOUT', float('inf'))
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         if sensor_name in self.heaters:
@@ -352,9 +353,15 @@ class PrinterHeaters:
         toolhead = self.printer.lookup_object("toolhead")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
+        heating_time = self.reactor.monotonic()
+        heating_timeouttime = heating_time + timeout
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
-            if temp >= min_temp and temp <= max_temp:
+            heating_time = self.reactor.monotonic()
+            if temp >= min_temp and temp <= max_temp or heating_time >= heating_timeouttime:
+                if heating_time >= heating_timeouttime:
+                    self.printer.invoke_shutdown(
+                        "Shutdown due to timeout reached in 'TEMPERATURE_WAIT'")
                 return
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
