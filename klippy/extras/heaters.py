@@ -360,7 +360,7 @@ class PrinterHeaters:
             heating_time = self.reactor.monotonic()
             if temp >= min_temp and temp <= max_temp or heating_time >= heating_timeouttime:
                 if heating_time >= heating_timeouttime:
-                    gcmd.respond_info("TEMPERATURE_WAIT: Timeout was reached)
+                    gcmd.respond_info("TEMPERATURE_WAIT: Timeout was reached")
                 return
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
