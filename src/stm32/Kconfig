@@ -284,4 +284,14 @@ config CANBUS_FREQUENCY
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
     default 500000
 
+######################################################################
+# FSMC support 
+######################################################################
+
+config STM32F2_FSMC
+    bool "STM32F2 FSMC enabled" if LOW_LEVEL_OPTIONS && MACH_STM32F2
+    default n
+    help
+        Enable the FSMC on STM32F2
+
 endif
