@@ -424,8 +424,10 @@ class MCU_pwm:
                        self._start_value * self._pwm_max))
                 return
             self._oid = self._mcu.create_oid()
+            cmd_queue = None
             if not self._is_ht:
                 self._mcu.request_move_queue_slot()
+                cmd_queue = self._mcu.alloc_command_queue()
 
             self._mcu.add_config_cmd(
                 "config_pwm_out oid=%d pin=%s cycle_ticks=%d value=%d"
@@ -438,8 +440,8 @@ class MCU_pwm:
                                      % (self._oid, self._last_clock, svalue),
                                      on_restart=True)
             self._set_cmd = self._mcu.lookup_command(
-                "queue_pwm_out oid=%c clock=%u value=%hu",
-                fast_track=self._is_ht) # might be ugly without cq?
+                "queue_pwm_out oid=%c clock=%u value=%hu", cq=cmd_queue,
+                fast_track=self._is_ht)
             return
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
@@ -469,10 +471,10 @@ class MCU_pwm:
             "queue_digital_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
-            "queue_digital_out oid=%c clock=%u on_ticks=%u",
+            "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue,
             fast_track=self._is_ht)
         self._set_cycle_ticks = self._mcu.lookup_command(
-            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=None)
+            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=cmd_queue)
     def set_pwm(self, print_time, value, cycle_time=None):
         req_clock = self._mcu.print_time_to_clock(print_time)
         # FIXME: let sync_channel replace uncommitted values

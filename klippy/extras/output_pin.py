@@ -63,7 +63,7 @@ class PrinterOutputPin:
         return {'value': self.last_value}
     def _set_pin(self, print_time, value, cycle_time, is_resend=False):
         if value == self.last_value and cycle_time == self.last_cycle_time:
-            if not is_resend:
+            if not is_resend or value == self.shutdown_value:
                 return
         print_time = max(print_time, self.last_print_time + self._pin_min_time)
         if self.is_pwm:
