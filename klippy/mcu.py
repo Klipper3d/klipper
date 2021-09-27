@@ -483,8 +483,6 @@ class MCU_pwm:
             value = 1. - value
         if self._hardware_pwm:
             v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-            # queue_pwm_out oid=%c clock=%u value=%hu
-            #data = (self._set_cmd, self._oid, clock & 0xFFFFFFFF, v)
             self._set_cmd.send([self._oid, clock & 0xFFFFFFFF, v],
                                 minclock=minclock, reqclock=clock)
         else:
@@ -505,8 +503,6 @@ class MCU_pwm:
                 self._last_cycle_ticks = cycle_ticks
                 self._min_clock_diff = cycle_ticks
             on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
-            # queue_digital_out oid=%c clock=%u on_ticks=%u
-            #data = (self._set_cmd, self._oid, clock & 0xFFFFFFFF, on_ticks)
             self._set_cmd.send([self._oid, clock & 0xFFFFFFFF, on_ticks],
                                minclock=minclock, reqclock=clock)
 
