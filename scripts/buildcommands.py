@@ -469,8 +469,12 @@ def git_version():
 def build_version(extra, cleanbuild):
     version = git_version()
     if not version:
-        cleanbuild = False
-        version = "?"
+        try:
+            with open(os.path.join('klippy', '.version')) as h:
+                version = h.read().rstrip()
+        except IOError:
+            cleanbuild = False
+            version = "?"
     elif 'dirty' in version:
         cleanbuild = False
     if not cleanbuild:
