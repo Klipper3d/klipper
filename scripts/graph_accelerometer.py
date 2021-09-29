@@ -34,24 +34,31 @@ def parse_log(logname, opts):
 # Raw accelerometer graphing
 ######################################################################
 
-def plot_accel(data, logname):
-    if isinstance(data, shaper_calibrate.CalibrationData):
-        raise error("Cannot plot raw accelerometer data using the processed"
-                    " resonances, raw_data input is required")
-    first_time = data[0, 0]
-    times = data[:,0] - first_time
+def plot_accel(datas, lognames):
     fig, axes = matplotlib.pyplot.subplots(nrows=3, sharex=True)
-    axes[0].set_title("\n".join(wrap("Accelerometer data (%s)" % (logname,),
-                                     MAX_TITLE_LENGTH)))
+    axes[0].set_title("\n".join(wrap(
+        "Accelerometer data (%s)" % (', '.join(lognames)), MAX_TITLE_LENGTH)))
     axis_names = ['x', 'y', 'z']
+    for data, logname in zip(datas, lognames):
+        if isinstance(data, shaper_calibrate.CalibrationData):
+            raise error("Cannot plot raw accelerometer data using the processed"
+                        " resonances, raw_data input is required")
+        first_time = data[0, 0]
+        times = data[:,0] - first_time
+        for i in range(len(axis_names)):
+            avg = data[:,i+1].mean()
+            adata = data[:,i+1] - data[:,i+1].mean()
+            ax = axes[i]
+            label = '\n'.join(wrap(logname, 60)) + ' (%+.3f mm/s^2)' % (-avg,)
+            ax.plot(times, adata, alpha=0.8, label=label)
+    axes[-1].set_xlabel('Time (s)')
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
     for i in range(len(axis_names)):
-        avg = data[:,i+1].mean()
-        adata = data[:,i+1] - data[:,i+1].mean()
         ax = axes[i]
-        ax.plot(times, adata, alpha=0.8)
         ax.grid(True)
-        ax.set_ylabel('%s accel (%+.3f)\n(mm/s^2)' % (axis_names[i], -avg))
-    axes[-1].set_xlabel('Time (%+.3f)\n(s)' % (-first_time,))
+        ax.legend(loc='best', prop=fontP)
+        ax.set_ylabel('%s accel' % (axis_names[i],))
     fig.tight_layout()
     return fig
 
@@ -246,9 +253,7 @@ def main():
 
     # Draw graph
     if options.raw:
-        if len(args) > 1:
-            opts.error("Only 1 input is supported in raw mode")
-        fig = plot_accel(datas[0], args[0])
+        fig = plot_accel(datas, args)
     elif options.specgram:
         if len(args) > 1:
             opts.error("Only 1 input is supported in specgram mode")
