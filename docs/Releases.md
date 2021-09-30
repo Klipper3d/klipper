@@ -14,7 +14,7 @@ Available on 20210929. Major changes in this release:
   and a [Community Discourse Server](https://community.klipper3d.org).
 * The [Klipper website](https://www.klipper3d.org) now uses the
   "mkdocs" infrastructure. There is also a
-  [Klipper Translations](https://github.com/KevinOConnor/klipper-translations)
+  [Klipper Translations](https://github.com/Klipper3d/klipper-translations)
   project.
 * Automated support for flashing firmware via sdcard on many boards.
 * New kinematic support for "Hybrid CoreXY" and "Hybrid CoreXZ"
