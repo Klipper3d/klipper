@@ -4,7 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, idex_modes
+import stepper
+from . import idex_modes
 
 # The hybrid-corexz kinematic is also known as Markforged kinematics
 class HybridCoreXZKinematics:
