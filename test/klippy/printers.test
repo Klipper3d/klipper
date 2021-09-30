@@ -138,6 +138,7 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
 CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
+CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f103-serial.dict
