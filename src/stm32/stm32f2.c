@@ -1,4 +1,4 @@
-// Code to setup clocks and gpio on stm32f4
+// Code to setup clocks and gpio on stm32f2
 //
 // Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -12,7 +12,7 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
-#define FREQ_PERIPH_DIV (CONFIG_MACH_STM32F401 ? 2 : 4)
+#define FREQ_PERIPH_DIV 4
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 #define FREQ_USB 48000000
 
@@ -120,77 +120,23 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 
 // Clock configuration
 static void
-enable_clock_stm32f40x(void)
+enable_clock_stm32f20x(void)
 {
-#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 \
-    || CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F429
-    uint32_t pll_base = (CONFIG_STM32_CLOCK_REF_25M) ? 1000000 : 2000000;
-    uint32_t pllp = (CONFIG_MACH_STM32F401) ? 4 : 2;
-    uint32_t pll_freq = CONFIG_CLOCK_FREQ * pllp, pllcfgr;
+    uint32_t pll_base = 1000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
-        // Configure 168Mhz PLL from external crystal (HSE)
+        // Configure 120Mhz PLL from external crystal (HSE)
         uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
         RCC->CR |= RCC_CR_HSEON;
         pllcfgr = RCC_PLLCFGR_PLLSRC_HSE | (div << RCC_PLLCFGR_PLLM_Pos);
     } else {
-        // Configure 168Mhz PLL from internal 16Mhz oscillator (HSI)
-        uint32_t div = 16000000 / pll_base;
-        pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
-    }
-    RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
-                    | (((pllp >> 1) - 1) << RCC_PLLCFGR_PLLP_Pos)
-                    | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
-    RCC->CR |= RCC_CR_PLLON;
-#endif
-}
-
-static void
-enable_clock_stm32f446(void)
-{
-#if CONFIG_MACH_STM32F446
-    uint32_t pll_base = 2000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
-    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
-        // Configure 180Mhz PLL from external crystal (HSE)
-        uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base;
-        RCC->CR |= RCC_CR_HSEON;
-        pllcfgr = RCC_PLLCFGR_PLLSRC_HSE | (div << RCC_PLLCFGR_PLLM_Pos);
-    } else {
-        // Configure 180Mhz PLL from internal 16Mhz oscillator (HSI)
+        // Configure 120Mhz PLL from internal 16Mhz oscillator (HSI)
         uint32_t div = 16000000 / pll_base;
         pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
     }
     RCC->PLLCFGR = (pllcfgr | ((pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos)
                     | (0 << RCC_PLLCFGR_PLLP_Pos)
-                    | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos)
-                    | (6 << RCC_PLLCFGR_PLLR_Pos));
+                    | ((pll_freq/FREQ_USB) << RCC_PLLCFGR_PLLQ_Pos));
     RCC->CR |= RCC_CR_PLLON;
-
-    // Enable "over drive"
-    enable_pclock(PWR_BASE);
-    PWR->CR = (3 << PWR_CR_VOS_Pos) | PWR_CR_ODEN;
-    while (!(PWR->CSR & PWR_CSR_ODRDY))
-        ;
-    PWR->CR = (3 << PWR_CR_VOS_Pos) | PWR_CR_ODEN | PWR_CR_ODSWEN;
-    while (!(PWR->CSR & PWR_CSR_ODSWRDY))
-        ;
-
-    // Enable 48Mhz USB clock
-    if (CONFIG_USBSERIAL) {
-        uint32_t ref = (CONFIG_STM32_CLOCK_REF_INTERNAL
-                        ? 16000000 : CONFIG_CLOCK_REF_FREQ);
-        uint32_t plls_base = 2000000, plls_freq = FREQ_USB * 4;
-        RCC->PLLSAICFGR = (
-            ((ref/plls_base) << RCC_PLLSAICFGR_PLLSAIM_Pos)
-            | ((plls_freq/plls_base) << RCC_PLLSAICFGR_PLLSAIN_Pos)
-            | (((plls_freq/FREQ_USB)/2 - 1) << RCC_PLLSAICFGR_PLLSAIP_Pos)
-            | ((plls_freq/FREQ_USB) << RCC_PLLSAICFGR_PLLSAIQ_Pos));
-        RCC->CR |= RCC_CR_PLLSAION;
-        while (!(RCC->CR & RCC_CR_PLLSAIRDY))
-            ;
-
-        RCC->DCKCFGR2 = RCC_DCKCFGR2_CK48MSEL;
-    }
-#endif
 }
 
 // Main clock setup called at chip startup
@@ -198,11 +144,7 @@ static void
 clock_setup(void)
 {
     // Configure and enable PLL
-    if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
-            || CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F429)
-        enable_clock_stm32f40x();
-    else
-        enable_clock_stm32f446();
+    enable_clock_stm32f20x();
 
     // Set flash latency
     FLASH->ACR = (FLASH_ACR_LATENCY_5WS | FLASH_ACR_ICEN | FLASH_ACR_DCEN
