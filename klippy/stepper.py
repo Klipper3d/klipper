@@ -338,11 +338,11 @@ class PrinterRail:
     def add_extra_stepper(self, config):
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
-        endstop_pin = config.get('endstop_pin', None)
-        if self.endstops and endstop_pin is None:
+        if self.endstops and config.get('endstop_pin', None) is None:
             # No endstop defined - use primary endstop
             self.endstops[0][0].add_stepper(stepper)
             return
+        endstop_pin = config.get('endstop_pin')
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
         pin_params = ppins.parse_pin(endstop_pin, True, True)
