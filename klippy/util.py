@@ -91,6 +91,27 @@ def dump_mcu_build():
 
 
 ######################################################################
+# Python2 wrapper hacks
+######################################################################
+
+def setup_python2_wrappers():
+    if sys.version_info.major >= 3:
+        return
+    # Add module hacks so that common Python3 module imports work in Python2
+    import Queue, io, StringIO, ConfigParser, time
+    sys.modules["queue"] = Queue
+    io.StringIO = StringIO.StringIO
+    time.process_time = time.clock
+    sys.modules["configparser"] = ConfigParser
+    OrigRawConfigParser = ConfigParser.RawConfigParser
+    def RCP(strict=False, *args, **kwargs):
+        return OrigRawConfigParser(*args, **kwargs)
+    RCP.SECTCRE = OrigRawConfigParser.SECTCRE
+    ConfigParser.RawConfigParser = RCP
+setup_python2_wrappers()
+
+
+######################################################################
 # General system and software information
 ######################################################################
 
