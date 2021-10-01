@@ -1,6 +1,6 @@
 # Helper script to control WLED via JSON API
 #
-# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2021 Richard Mitchell <richardjm+klipper@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import requests
