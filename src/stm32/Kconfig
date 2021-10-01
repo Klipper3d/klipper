@@ -17,7 +17,6 @@ config BOARD_DIRECTORY
     string
     default "stm32"
 
-
 ######################################################################
 # Chip selection
 ######################################################################
@@ -319,6 +318,7 @@ choice
         select CANSERIAL
     config STM32_CANBUS_PB6_PB7
         bool "CAN bus (on PB6/PB7)" if LOW_LEVEL_OPTIONS && MACH_STM32H7
+        select CANSERIAL
 endchoice
 
 config CANBUS_FREQUENCY
