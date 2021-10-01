@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to handle build time requests embedded in C code.
 #
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
