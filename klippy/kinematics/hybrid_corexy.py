@@ -18,9 +18,9 @@ class HybridCoreXYKinematics:
                        stepper.LookupMultiRail(config.getsection('stepper_z'))]
         self.rails[1].get_endstops()[0][0].add_stepper(
             self.rails[0].get_steppers()[0])
-        self.rails[0].setup_itersolve('corexy_stepper_alloc', '-')
-        self.rails[1].setup_itersolve('cartesian_stepper_alloc', 'y')
-        self.rails[2].setup_itersolve('cartesian_stepper_alloc', 'z')
+        self.rails[0].setup_itersolve('corexy_stepper_alloc', b'-')
+        self.rails[1].setup_itersolve('cartesian_stepper_alloc', b'y')
+        self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
         self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
@@ -33,15 +33,15 @@ class HybridCoreXYKinematics:
             self.rails.append(stepper.PrinterRail(dc_config))
             self.rails[1].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
-            self.rails[3].setup_itersolve('cartesian_stepper_alloc', 'y')
+            self.rails[3].setup_itersolve('cartesian_stepper_alloc', b'y')
             dc_rail_0 = idex_modes.DualCarriagesRail(
                 self.printer, self.rails[0], axis=0, active=True,
-                stepper_alloc_active=('corexy_stepper_alloc','-'),
-                stepper_alloc_inactive=('cartesian_reverse_stepper_alloc','y'))
+                stepper_alloc_active=('corexy_stepper_alloc', b'-'),
+                stepper_alloc_inactive=('cartesian_reverse_stepper_alloc',b'y'))
             dc_rail_1 = idex_modes.DualCarriagesRail(
                 self.printer, self.rails[3], axis=0, active=False,
-                stepper_alloc_active=('corexy_stepper_alloc','+'),
-                stepper_alloc_inactive=('cartesian_stepper_alloc','y'))
+                stepper_alloc_active=('corexy_stepper_alloc', b'+'),
+                stepper_alloc_inactive=('cartesian_stepper_alloc', b'y'))
             self.dc_module = idex_modes.DualCarriages(self.printer,
                         dc_rail_0, dc_rail_1, axis=0)
         for s in self.get_steppers():
