@@ -55,7 +55,13 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
-    }
+    },
+    'btt-skr-se-bx': {
+        'mcu': 'stm32h743xx',
+        'spi_bus': 'swspi',
+        'spi_pins': 'PC11,PC12,PC10',
+        'cs_pin': 'PA15'
+    },
 }
 
 ###########################################################
