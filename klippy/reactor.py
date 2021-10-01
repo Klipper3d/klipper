@@ -171,13 +171,13 @@ class SelectReactor:
         self._async_queue.put_nowait(
             (ReactorCallback, (self, callback, waketime)))
         try:
-            os.write(self._pipe_fds[1], '.')
+            os.write(self._pipe_fds[1], b'.')
         except os.error:
             pass
     def async_complete(self, completion, result):
         self._async_queue.put_nowait((completion.complete, (result,)))
         try:
-            os.write(self._pipe_fds[1], '.')
+            os.write(self._pipe_fds[1], b'.')
         except os.error:
             pass
     def _got_pipe_signal(self, eventtime):
