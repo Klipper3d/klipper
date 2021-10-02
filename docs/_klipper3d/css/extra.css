@@ -14,3 +14,10 @@ img {
     margin: 0 auto;
     display: block;
 }
+
+input {
+    color: var(--md-code-fg-color);
+    background-color: var(--md-code-bg-color);
+    border-radius: .1rem;
+    font-size: .85em;
+}

@@ -63,6 +63,27 @@ The pressure_advance value can then be calculated as `pressure_advance
 = <start> + <measured_height> * <factor>`. (For example, `0 + 12.90 *
 .020` would be `.258`.)
 
+<script>
+  function pressureCalc() {
+    var start = parseFloat(document.getElementById("start").value);
+    var measured = parseFloat(document.getElementById("measured").value);
+    var factor = parseFloat(document.getElementById("factor").value);
+    var result = document.getElementById("result");
+    if (!isNaN(start) && !isNaN(measured) && !isNaN(factor)){
+      result.innerHTML = start + measured * factor
+    }
+  }
+</script>
+Calculator  
+<label for="start">Start value</label>  
+<input id="start" size="6" oninput="pressureCalc()">  
+<label for="measured">Measured height</label>  
+<input id="measured" size="6" oninput="pressureCalc()">  
+<label for="factor">Pressure advance factor</label>  
+<input id="factor" size="6" oninput="pressureCalc()">
+
+=
+<div id="result"></div>
 It is possible to choose custom settings for START and FACTOR if that
 helps identify the best pressure advance setting. When doing this, be
 sure to issue the TUNING_TOWER command at the start of each test
