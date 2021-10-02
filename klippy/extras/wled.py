@@ -37,7 +37,8 @@ class WLED:
         self.gcode.register_mux_command('SET_WLED', 'WLED', self.name,
                             self.cmd_SET_WLED, desc=self.cmd_SET_WLED_help)
         self.gcode.register_mux_command('WLED_ON', 'WLED', self.name,
-                                    self.cmd_WLED_ON, desc=self.cmd_WLED_ON_help)
+                                    self.cmd_WLED_ON,
+                                    desc=self.cmd_WLED_ON_help)
         self.gcode.register_mux_command('WLED_OFF', 'WLED', self.name,
                             self.cmd_WLED_OFF, desc=self.cmd_WLED_OFF_help)
 
@@ -71,13 +72,15 @@ class WLED:
             data = response.read()
             response.close()
             if self.verbose:
-                logging.info("WLED: url:%s json:%s code:%d", self.url, data, response.code)
+                logging.info("WLED: url:%s json:%s code:%d",
+                             self.url, data, response.code)
         except urllib2.HTTPError as e:
             logging.error('Failure when setting wled, %d %s', e.code, e.read())
         except urllib2.URLError as e:
             logging.error('Failure when setting wled, %s', e.reason)
         except:
-            logging.error('Failure when setting wled, perhaps incorrect json syntax')
+            logging.error(
+                'Failure when setting wled, perhaps incorrect json syntax')
 
     def _send_consumer(self):
         while True:
@@ -122,7 +125,7 @@ class WLED:
             for i in range(self.chain_count):
                 idx = i * elem_size
                 elem = []
-                for p in self.color_data[idx:idx+elem_size]: 
+                for p in self.color_data[idx:idx+elem_size]:
                     elem.append(p)
                 cdata.append(elem)
             state['seg']['i'] = cdata
