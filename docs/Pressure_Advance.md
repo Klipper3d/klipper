@@ -74,7 +74,8 @@ The pressure_advance value can then be calculated as `pressure_advance
     }
   }
 </script>
-Calculator  
+Calculator
+
 <label for="start">Start value</label>  
 <input id="start" size="6" oninput="pressureCalc()">  
 <label for="measured">Measured height</label>  
