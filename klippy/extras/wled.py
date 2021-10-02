@@ -34,8 +34,8 @@ class WLED:
 
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_mux_command('SET_WLED', 'WLED', self.name,
-                            self.cmd_SET_WLED, desc=self.cmd_SET_WLED_help)
+        self.gcode.register_mux_command('SET_LED', 'LED', self.name,
+                            self.cmd_SET_LED, desc=self.cmd_SET_LED_help)
         self.gcode.register_mux_command('WLED_ON', 'WLED', self.name,
                                     self.cmd_WLED_ON,
                                     desc=self.cmd_WLED_ON_help)
@@ -108,8 +108,8 @@ class WLED:
     def cmd_WLED_OFF(self, gcmd):
         self._send_producer("{'on': false}")
 
-    cmd_SET_WLED_help = 'Neopixel like gcode for WLED'
-    def cmd_SET_WLED(self, gcmd):
+    cmd_SET_LED_help = 'Set the color of an LED'
+    def cmd_SET_LED(self, gcmd):
         # Parse parameters
         red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
         green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
