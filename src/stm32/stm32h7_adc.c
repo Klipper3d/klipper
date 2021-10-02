@@ -175,7 +175,7 @@ gpio_adc_setup(uint32_t pin)
         // Disable Continuous Mode
         MODIFY_REG(adc->CFGR, ADC_CFGR_CONT_Msk, 0);
         // Set to 12 bit
-        MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, ADC_CFGR_RES_1 ||
+        MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, ADC_CFGR_RES_1 |
                    ADC_CFGR_RES_2);
         // Set hardware oversampling
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_ROVSE_Msk, ADC_CFGR2_ROVSE);
