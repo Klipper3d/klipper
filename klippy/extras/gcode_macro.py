@@ -141,8 +141,10 @@ class GCodeMacro:
                                         desc=self.cmd_SET_GCODE_VARIABLE_help)
         self.in_script = False
         prefix = 'default_parameter_'
-        self.kwparams = { o[len(prefix):].upper(): config.get(o)
-                          for o in config.get_prefix_options(prefix) }
+        self.kwparams = {}
+        for option in config.get_prefix_options(prefix):
+            config.deprecate(option)
+            self.kwparams[option[len(prefix):].upper()] = config.get(option)
         self.variables = {}
         prefix = 'variable_'
         for option in config.get_prefix_options(prefix):

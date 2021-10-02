@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 
-// USB and I2C is not supported, SPI is untested!
+// I2C is not supported, SPI is untested!
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
@@ -201,8 +201,8 @@ clock_setup(void)
     while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
         ;
 
-    // Enable VOS0 (overdrive)
 #if CONFIG_CLOCK_FREQ > 400000000
+    // Enable VOS0 (overdrive)
     RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
     SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
     while (!(PWR->D3CR & PWR_D3CR_VOSRDY))

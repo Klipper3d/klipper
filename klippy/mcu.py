@@ -560,6 +560,7 @@ class MCU:
         self._config_cmds = []
         self._restart_cmds = []
         self._init_cmds = []
+        config.deprecate('pin_map')
         self._pin_map = config.get('pin_map', None)
         self._mcu_freq = 0.
         # Move command queuing

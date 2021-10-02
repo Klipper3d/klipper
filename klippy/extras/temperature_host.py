@@ -20,6 +20,7 @@ class Temperature_HOST:
 
         if config.get("sensor_type", "", note_valid=False).startswith('rpi'):
             # Temporary backwards compatibility
+            config.deprecate("sensor_type", "rpi_temperature")
             self.printer.add_object("rpi_temperature " + self.name, self)
         else:
             self.printer.add_object("temperature_host " + self.name, self)
