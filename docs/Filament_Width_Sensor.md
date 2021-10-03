@@ -178,16 +178,18 @@ Repeat with rods of different/same diameters and note values.
 
 Calculate slope and offset via linear regression (e.g. with Excel):
 
-y-values: diameters of the calibration rods.
-x-values: measured values for calibration rods.
+    y-values: diameters of the calibration rods.
+    x-values: measured values for calibration rods.
 
-y = mx + b; m = slope, b = offset.
+    y = mx + b;
+    m = slope 
+    b = offset
 
 Save raw values in config as:
-slope1:
-offset1:
-slope2: # Hall based sensor only
-offset2: # Hall based sensor only
+    slope1:
+    offset1:
+    slope2: # Hall based sensor only
+    offset2: # Hall based sensor only
 
 ## How to enable sensor
 After power on by default sensor disabled.
