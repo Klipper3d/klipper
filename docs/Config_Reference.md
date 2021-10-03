@@ -3729,7 +3729,7 @@ adc2: #Hall based sensor only
 #max_difference: 0.200
 #   Maximum allowed filament diameter difference in millimeters (mm).
 #   If the difference between nominal filament diameter and sensor
-#   output is smaller than the values above, extrusion multiplier is 
+#   output is smaller than the values above, extrusion multiplier is
 #   set back to %100. The default is 0.200.
 #measurement_delay: 70
 #   The distance from sensor to the melting chamber/hot-end in
