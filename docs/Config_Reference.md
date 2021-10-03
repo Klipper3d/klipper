@@ -3698,7 +3698,7 @@ switch_pin:
 #   above parameters.
 ```
 
-### [tsl1401cl_filament_width_sensor]
+### [filament_width_sensor]
 
 Module for Hall Based or TSLl401CL Based Filament Width Sensors. See the
 [guide](Filament_Width_Sensor.md) for more information.
@@ -3728,7 +3728,7 @@ adc2: #Hall based sensor only
 #min_difference: 0.200
 #max_difference: 0.200
 #   Maximum allowed filament diameter difference in millimeters (mm).
-#   If the difference between nominal filament diameter and sensor 
+#   If the difference between nominal filament diameter and sensor
 #   output is smaller than the values above, extrusion multiplier is 
 #   set back to %100. The default is 0.200.
 #measurement_delay: 70
@@ -3958,7 +3958,7 @@ serial:
 
 Module to connect MCP34xx and ADS 1XXX analog-to-digital converters
 via I2C bus (one may define any number of sections with an "i2c_adc"
-prefix, for example [i2c_adc my_adc]). 
+prefix, for example [i2c_adc my_adc]).
 See the [i2c_adc guide](i2c_adc.md) for more information.
 
 ```
