@@ -3961,6 +3961,9 @@ via I2C bus (one may define any number of sections with an "i2c_adc"
 prefix, for example [i2c_adc my_adc]).
 See the [i2c_adc guide](i2c_adc.md) for more information.
 
+The adc pin can be accessed by other modules via suffix.
+e.g. 'adc_pin: my_adc:'
+
 ```
 [i2c_adc my_adc]
 i2c_address: 104
