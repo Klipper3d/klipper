@@ -228,8 +228,10 @@ class ToolHead:
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
-        self.max_accel_x = config.getfloat('max_accel_x', self.max_accel, above=0.)
-        self.max_accel_y = config.getfloat('max_accel_y', self.max_accel, above=0.)
+        self.max_accel_x = config.getfloat(
+            'max_accel_x', self.max_accel, above=0.)
+        self.max_accel_y = config.getfloat(
+            'max_accel_y', self.max_accel, above=0.)
 
         self.requested_accel_to_decel = config.getfloat(
             'max_accel_to_decel', self.max_accel * 0.5, above=0.)
