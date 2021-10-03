@@ -126,6 +126,7 @@ class WLED:
 
     cmd_WLED_ON_help = 'Turn on WLED with preset'
     def cmd_WLED_ON(self, gcmd):
+        self.send_full_color_data = True
         state = {'on': True, 'ps': gcmd.get_int('PS', self.on_ps) }
         self._send_producer(state)
 
