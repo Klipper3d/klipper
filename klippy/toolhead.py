@@ -17,6 +17,8 @@ class Move:
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
+        if toolhead.max_accel_x != toolhead.max_accel_y:
+            self.accel = self.calc_split_x_y_accel()
         self.timing_callbacks = []
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
@@ -104,6 +106,20 @@ class Move:
         self.accel_t = accel_d / ((start_v + cruise_v) * 0.5)
         self.cruise_t = cruise_d / cruise_v
         self.decel_t = decel_d / ((end_v + cruise_v) * 0.5)
+    def calc_split_x_y_accel(self):
+        # get the max acceleration based on the ratio of the direction
+        # between x,y axis
+        if self.start_pos[1] == self.end_pos[1]:
+            ratio_y_x = 0
+        else:
+            angle_rad = abs(math.atan2(self.end_pos[1]-self.start_pos[1],
+                                       self.end_pos[0]-self.start_pos[0]))
+            if angle_rad > math.pi/2:
+                ratio_y_x = (math.pi-angle_rad)/(math.pi/2)
+            else:
+                ratio_y_x = angle_rad/(math.pi/2)
+        return  (self.toolhead.max_accel_y * ratio_y_x
+                 + self.toolhead.max_accel_x * (1-ratio_y_x) )
 
 LOOKAHEAD_FLUSH_TIME = 0.250
 
@@ -212,6 +228,9 @@ class ToolHead:
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
+        self.max_accel_x = config.getfloat('max_accel_x', self.max_accel, above=0.)
+        self.max_accel_y = config.getfloat('max_accel_y', self.max_accel, above=0.)
+
         self.requested_accel_to_decel = config.getfloat(
             'max_accel_to_decel', self.max_accel * 0.5, above=0.)
         self.max_accel_to_decel = self.requested_accel_to_decel

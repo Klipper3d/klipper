@@ -93,6 +93,12 @@ max_velocity:
 max_accel:
 #   Maximum acceleration (in mm/s^2) of the toolhead (relative to the
 #   print). This parameter must be specified.
+max_accel_x:
+#   Maximum acceleration (in mm/s^2) of the toolhead in the direction
+#   of the X axis (relative to the print).  The default is max_accel.
+max_accel_y:
+#   Maximum acceleration (in mm/s^2) of the toolhead in the direction
+#   of the Y axis (relative to the print).  The default is max_accel.
 #max_accel_to_decel:
 #   A pseudo acceleration (in mm/s^2) controlling how fast the
 #   toolhead may go from acceleration to deceleration. It is used to
