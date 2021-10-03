@@ -186,10 +186,12 @@ cycle_time: 0.000001
 ```
 This will add hardware pwm control to gpio12 on the Pi (because the overlay was configured to route pwm0 to pin=12).
 
-PWM0 can be routed to gpio12 and gpio18, PWM1 can be routed to gpio13 and gpio19:
-|PWM|gpio PIN|Func|
-|---|--------|----|
-|  0|      12|   4|
-|  0|      18|   2|
-|  1|      13|   4|
-|  1|      19|   2|
+PWM0 can be routed to gpio12 and gpio18, PWM1 can be routed to gpio13
+and gpio19:
+
+| PWM | gpio PIN | Func |
+| --- | -------- | ---- |
+|   0 |       12 |    4 |
+|   0 |       18 |    2 |
+|   1 |       13 |    4 |
+|   1 |       19 |    2 |
