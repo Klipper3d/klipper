@@ -186,6 +186,7 @@ Calculate slope and offset via linear regression (e.g. with Excel):
     b = offset
 
 Save raw values in config as:
+
     slope1:
     offset1:
     slope2: # Hall based sensor only
