@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 #
-# Version Date: 11.09.2021
+# Version Date: 02.10.2021
 #
 #############################################################
 # Compatible ADCs:
@@ -14,84 +14,8 @@
 #       Tested ADS1015 on Linux MCU
 #############################################################
 
-#add to printer.cfg:
-#
-#[i2c_adc external_adc_name]
-#i2c_address: 104
-##  currently, only rpi works as mcu
-#i2c_mcu: rpi
-##  The i2c address that the chip is using on the i2c bus. This
-##  parameter must be provided.
-#i2c_bus: i2c.1
-#sensor_ID: e.g. ADS1015
-## (Optional config: see device manual)
-#resolution: (default = 12)
-#gain: (default = 1)
-#channel: (default = 1 (channel 0))
-#rate: (default = 1600 for ADS101x, none for MCP342x)
-#report_time: (default 2 readings/second)
-
-# a virtual adc chip is created.
-# The adc pin can be accessed as "external_adc_name:"
-# e.g. pin: external_adc_name:
-
-#Standard Adresses are:
-# MCP3421: 104 (hex: 0x68)
-# ADS1015: 72 (hex: 0x48)
-
-## ADS10XX: ##
-# Second Byte: Address pointer
-# 0 0 0 0 0 0 P1 P2
-#             0  0: Conversion register
-#             0  1: Config register
-#             1  0: Lo_threshold
-#             1  1: Hi_threshold
-
-# Config register
-# 0  0  0  0  0  0  0  0
-# 15 14 13 12 11 10 9  8
-# OS [  MUX ] [ PGA  ] Mode
-# ----------------------
-# 0  0  0  0  0  0  0  0
-# 7  6  5  4  3  2  1  0
-# [  DR ] CM  CP CL [CQ]
-#
-# OS: Operational Status (write 1 for single shot)
-# MUX:                  000: AIN0+AIN1 (def)
-# Input Multiplexer     001: AIN0+AIN3
-# (ADS1015 only)        010: AIN1+AIN3
-#                       011: AIN2+AIN3
-#                       100: AIN0+GND
-#                       101: AIN1+GND
-#                       110: AIN2+GND
-#                       111: AIN3+GND
-# PGA:                  000: FSR = +- 6.144 V (Gain 0.25)
-# No function on        001: FSR = +- 4.096 V (Gain 0.5)
-# ADS1013               010: FSR = +- 2.048 V (def)
-#                       011: FSR = +- 1.024 V (Gain 2)
-#                       100: FSR = +- 0.512 V (Gain 4)
-#                       101: FSR = +- 0.256 V (Gain 8)
-#                       110: FSR = +- 0.256 V
-#                       111: FSR = +- 0.256 V
-# Mode:                 0: continuous conversion
-#                       1: single shot
-# DR:                    000: 128 SPS
-# Data rate             001: 250 SPS
-#                       010: 490 SPS
-#                       011: 920 SPS
-#                       100: 1600 SPS (def)
-#                       101: 2400 SPS
-#                       110: 3300 SPS
-#                       111: 3300 SPS
-## MCP34XX: ##
-# 7th bit: OS (1 start new conversion, no function in continuous)
-# 6+5th bit: address bits (not used in mcp3425)
-# 4th bit: mode (0: one shot mode, 1: continuous)
-# 3rd+2nd bit: sample rate (10: 15 ms, 16 bit)
-# 1st+0th bit: gain selection (00: gain = 1)
-
-
 from . import bus
+from collections import deque
 import pins
 import mcu
 import logging
@@ -181,7 +105,6 @@ class i2c_adc:
         # Register Chip
         ppins = self.printer.lookup_object('pins')
         ppins.register_chip(self.name, self)
-        self.reportTime = config.getfloat('report_time',2)
         self.deviceId = config.get('sensor_ID').upper()
         # Check if device is supported
         if self.deviceId not in SUPP_DEV_18 and \
@@ -194,7 +117,8 @@ class i2c_adc:
                             default=1)-1
         self.gain = config.get('gain',1)
         # Check if gain is supported
-        if self.gain not in eval(self.devicePrefix + "_GAIN"):
+        if self.gain not in MCP_GAIN and \
+            self.gain not in ADC_GAIN:
             raise config.error("Invalid PGA setting")
         self.resolution = config.getint('resolution',12)
         #Check if selected resolution is correct/supported
@@ -212,8 +136,7 @@ class i2c_adc:
                 DEFAULT_RATE[self.devicePrefix])
         #Configure ADC
         self.conf = (self.channel, self.gain, self.resolution,
-                    self.rate, self.devicePrefix, self.name,
-                    self.reportTime)
+                    self.rate, self.devicePrefix, self.name)
 
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'adc':
@@ -232,12 +155,15 @@ class ADC_sample:
         self.rate = conf[3]
         self.devicePrefix = conf[4]
         self.name = conf[5]
-        self.report_time = conf[6]
+        self.report_time = 0
         self.read = 0
-        self.sample_timer = 0
+        self.minval = self.maxval = self.range_check_count = 0
+        self.range_counter = 0
+        self.sample_timer = self.sample_count = 0
         self._last_time = 0
         self._callback = None
         self.rValue = None
+        self.stack = None
         self.LSB = (VREF*2)/(2**self.resolution)
         ppins = self.printer.lookup_object('pins')
         self.adc = ppins.setup_pin('adc', self.name)
@@ -258,13 +184,15 @@ class ADC_sample:
         self._callback(self.rValue[0], self.rValue[1])
         return self._last_time + self.report_time + 0.0001
 
-    def setup_minmax(self, min_temp, max_temp,
-                     minval=0., maxval=1000, range_check_count=0):
-        self.min_temp = min_temp
-        self.max_temp = max_temp
+    def setup_minmax(self, sample_time, sample_count=1,
+                     minval=-100, maxval=100, range_check_count=5):
+        self.sample_count = sample_count
+        self.range_check_count = range_check_count
+        self.minval = minval
+        self.maxval = maxval
 
     def setup_adc_callback(self, report_time, callback):
-        if report_time is not None:
+        if report_time != None:
             self.report_time = report_time
         self._callback = callback
 
@@ -273,16 +201,17 @@ class ADC_sample:
         return (self.rValue[1], self.rValue[0])
 
     def write_config(self):
-        _gain = eval(self.devicePrefix + "_GAIN")[self.gain]
-        _rate = eval(self.devicePrefix + "_RATE")[self.rate]
         # Setup ADC and write ADC configuration
         if self.devicePrefix == "MCP":
-            _rate = MCP_RES[resolution]
+            _gain = MCP_GAIN[self.gain]
+            _rate = MCP_RES[self.resolution]
             self.rate = _rate[0]
             conf = 0b10010000 | self.channel << 5 | _rate[1] << 2 | _gain
             self.i2c.i2c_write([conf])
             self.read = []
         else:
+            _gain = ADS_GAIN[self.gain]
+            _rate = ADS_RATE[self.rate]
             _conf1 = 0b00000000 | int(self.channel) << 4 | _gain << 1
             _conf2 = 0b00000011 | _rate << 5
             conf = [0b00000001, _conf1, _conf2]
@@ -318,6 +247,24 @@ class ADC_sample:
         # calculate Voltage
         rVolt = value * self.LSB / self.gain
         rTime = params['#receive_time']
+        # Check safety condition and raise/reset counter
+        if rVolt < self.minval or rVolt > self.maxval:
+            self.range_counter += 1
+        else:
+            self.range_counter = 0
+        if self.range_counter == self.range_check_count:
+            self.printer.invoke_shutdown(
+                "i2c_adc {} voltage {} outside range of {}:{}" \
+                .format(self.name, rVolt, self.minval, self.maxval))
+        # Calculate running average
+        if self.stack == None:
+            self.stack = deque([])
+            for i in range(self.sample_count):
+                self.stack.append(rVolt)
+        else:
+            self.stack.popleft()
+            self.stack.append(rVolt)
+        rVolt = sum(self.stack)/self.sample_count
         return (rTime, rVolt)
 
 def load_config_prefix(config):
