@@ -182,7 +182,7 @@ Calculate slope and offset via linear regression (e.g. with Excel):
     x-values: measured values for calibration rods.
 
     y = mx + b;
-    m = slope 
+    m = slope
     b = offset
 
 Save raw values in config as:
@@ -201,3 +201,5 @@ After power on by default diameter Logging disabled.
 Data to log added on every measurement interval (10 mm by default)
 
 The log (width.log) is saved in the /tmp folder on your raspberry pi.
+
+/tmp/width.log
