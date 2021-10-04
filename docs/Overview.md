@@ -54,6 +54,8 @@ communication with the Klipper developers.
   perfectly square.
 - [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
   tools such as lasers or spindles.
+- [IDEX printers](Dual_Carriage.md): Guide on setting up and calibrating
+  an IDEX printer.
 
 ## Developer Documentation
 
