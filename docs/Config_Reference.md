@@ -3959,6 +3959,47 @@ serial:
 #   Auto cancel print when ping varation is above this threshold
 ```
 
+### [i2c_adc]
+
+Module to connect MCP34xx and ADS 1XXX analog-to-digital converters
+via I2C bus (one may define any number of sections with an "i2c_adc"
+prefix, for example [i2c_adc my_adc]).
+See the [i2c_adc guide](i2c_adc.md) for more information.
+
+The adc pin can be accessed by other modules via suffix.
+e.g. 'adc_pin: my_adc:'
+
+```
+[i2c_adc my_adc]
+i2c_address: 104
+#   The i2c address that the chip is using on the i2c bus.
+#   This parameter must be provided.
+#   Standard Adresses are for example:
+#   MCP3421: 104 (hex: 0x68)
+#   ADS1015: 72 (hex: 0x48)
+i2c_mcu: rpi
+#   Only raspberry pi was tested as mcu. Must be provided.
+i2c_bus: i2c.1
+#   Must be provided. Working i2c bus on rPi is i2c.1
+sensor_ID: e.g. ADS1015
+#   Type of sensor used. Must be provided.
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#resolution: 12
+#   default: 12. Measured voltage is transmitted as a 12-bit value.
+#gain: 1
+#   Sets the programmable gain amplifier of the adc chip.
+#   Measured voltage is internally amplified by the factor above.
+#channel: 1
+#   Voltage is read from the Multiplexer (MUX) input channel above.
+#   (default = 1 (channel 0))
+#rate: 1600
+#   Sets the sample time of the adc chip in 1/x s.
+#   A rate of 1600 corresponds to a sample time of 1/1600 s.
+#   (default = 1600 for ADS101x, none for MCP342x)
+```
+
 ## Common bus parameters
 
 ### Common SPI settings
