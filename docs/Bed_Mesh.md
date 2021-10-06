@@ -1,3 +1,5 @@
+# Bed Mesh
+
 The Bed Mesh module may be used to compensate for bed surface irregularties to
 achieve a better first layer across the entire bed.  It should be noted that
 software based correction will not achieve perfect results, it can only
@@ -168,10 +170,10 @@ interpolated mesh.
 
 ### Move Splitting
 
-Bed Mesh works by intercepting gcode move commands and applying a transform
-to their Z coordinate. Long moves must be and split into smaller moves
-to correctly follow the shape of the bed. The options below control the
-splitting behavior.
+Bed Mesh works by intercepting gcode move commands and applying a
+transform to their Z coordinate. Long moves must be split into smaller
+moves to correctly follow the shape of the bed. The options below
+control the splitting behavior.
 
 ```
 [bed_mesh]
@@ -345,13 +347,17 @@ are identified in green.
 
 ### Calibration
 
-`BED_MESH_CALIBRATE METHOD=[manual | automatic] [<probe_parameter>=<value>]
+`BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>]
  [<mesh_parameter>=<value>]`\
+_Default Profile:  default_\
 _Default Method:  automatic if a probe is detected, otherwise manual_
 
-Initiates the probing procedure for Bed Mesh Calibration.  If `METHOD=manual`
-is selected then manual probing will occur.  When switching between automatic
-and manual probing the generated mesh points will automatically be adjusted.
+Initiates the probing procedure for Bed Mesh Calibration.
+
+The mesh will be saved into a profile specified by the `PROFILE` parameter,
+or `default` if unspecified. If `METHOD=manual` is selected then manual probing
+will occur.  When switching between automatic and manual probing the generated
+mesh points will automatically be adjusted.
 
 It is possible to specify mesh parameters to modify the probed area.  The
 following parameters are available:

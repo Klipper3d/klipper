@@ -24,7 +24,7 @@ ReadRegisters = [
 
 Fields = {}
 Fields["GCONF"] = {
-    "I_scale_analog": 1<<0, "internal_Rsense": 1<<1, "en_pwm_mode": 1<<2,
+    "i_scale_analog": 1<<0, "internal_rsense": 1<<1, "en_pwm_mode": 1<<2,
     "enc_commutation": 1<<3, "shaft": 1<<4, "diag0_error": 1<<5,
     "diag0_otpw": 1<<6, "diag0_stall": 1<<7, "diag1_stall": 1<<8,
     "diag1_index": 1<<9, "diag1_onstate": 1<<10, "diag1_steps_skipped": 1<<11,
@@ -34,58 +34,58 @@ Fields["GCONF"] = {
 }
 Fields["GSTAT"] = { "reset": 1<<0, "drv_err": 1<<1, "uv_cp": 1<<2 }
 Fields["IOIN"] = {
-    "STEP": 1<<0, "DIR": 1<<1, "DCEN_CFG4": 1<<2, "DCIN_CFG5": 1<<3,
-    "DRV_ENN_CFG6": 1<<4, "DCO": 1<<5, "VERSION": 0xff << 24
+    "step": 1<<0, "dir": 1<<1, "dcen_cfg4": 1<<2, "dcin_cfg5": 1<<3,
+    "drv_enn_cfg6": 1<<4, "dco": 1<<5, "version": 0xff << 24
 }
 Fields["IHOLD_IRUN"] = {
-    "IHOLD": 0x1f << 0, "IRUN": 0x1f << 8, "IHOLDDELAY": 0x0f << 16
+    "ihold": 0x1f << 0, "irun": 0x1f << 8, "iholddelay": 0x0f << 16
 }
-Fields["TPOWERDOWN"] = { "TPOWERDOWN": 0xff }
-Fields["TSTEP"] = { "TSTEP": 0xfffff }
-Fields["TPWMTHRS"] = { "TPWMTHRS": 0xfffff }
-Fields["TCOOLTHRS"] = { "TCOOLTHRS": 0xfffff }
-Fields["THIGH"] = { "THIGH": 0xfffff }
-Fields["MSCNT"] = { "MSCNT": 0x3ff }
-Fields["MSCURACT"] = { "CUR_A": 0x1ff, "CUR_B": 0x1ff << 16 }
+Fields["TPOWERDOWN"] = { "tpowerdown": 0xff }
+Fields["TSTEP"] = { "tstep": 0xfffff }
+Fields["TPWMTHRS"] = { "tpwmthrs": 0xfffff }
+Fields["TCOOLTHRS"] = { "tcoolthrs": 0xfffff }
+Fields["THIGH"] = { "thigh": 0xfffff }
+Fields["MSCNT"] = { "mscnt": 0x3ff }
+Fields["MSCURACT"] = { "cur_a": 0x1ff, "cur_b": 0x1ff << 16 }
 Fields["CHOPCONF"] = {
     "toff": 0x0f, "hstrt": 0x07 << 4, "hend": 0x0f << 7, "fd3": 1<<11,
-    "disfdcc": 1<<12, "rndtf": 1<<13, "chm": 1<<14, "TBL": 0x03 << 15,
+    "disfdcc": 1<<12, "rndtf": 1<<13, "chm": 1<<14, "tbl": 0x03 << 15,
     "vsense": 1<<17, "vhighfs": 1<<18, "vhighchm": 1<<19, "sync": 0x0f << 20,
-    "MRES": 0x0f << 24, "intpol": 1<<28, "dedge": 1<<29, "diss2g": 1<<30
+    "mres": 0x0f << 24, "intpol": 1<<28, "dedge": 1<<29, "diss2g": 1<<30
 }
 Fields["COOLCONF"] = {
     "semin": 0x0f, "seup": 0x03 << 5, "semax": 0x0f << 8, "sedn": 0x03 << 13,
     "seimin": 1<<15, "sgt": 0x7f << 16, "sfilt": 1<<24
 }
 Fields["DRV_STATUS"] = {
-    "SG_RESULT": 0x3ff, "fsactive": 1<<15, "CS_ACTUAL": 0x1f << 16,
-    "stallGuard": 1<<24, "ot": 1<<25, "otpw": 1<<26, "s2ga": 1<<27,
+    "sg_result": 0x3ff, "fsactive": 1<<15, "cs_actual": 0x1f << 16,
+    "stallguard": 1<<24, "ot": 1<<25, "otpw": 1<<26, "s2ga": 1<<27,
     "s2gb": 1<<28, "ola": 1<<29, "olb": 1<<30, "stst": 1<<31
 }
 Fields["PWMCONF"] = {
-    "PWM_AMPL": 0xff, "PWM_GRAD": 0xff << 8, "pwm_freq": 0x03 << 16,
+    "pwm_ampl": 0xff, "pwm_grad": 0xff << 8, "pwm_freq": 0x03 << 16,
     "pwm_autoscale": 1<<18, "pwm_symmetric": 1<<19, "freewheel": 0x03 << 20
 }
-Fields["PWM_SCALE"] = { "PWM_SCALE": 0xff }
-Fields["LOST_STEPS"] = { "LOST_STEPS": 0xfffff }
+Fields["PWM_SCALE"] = { "pwm_scale": 0xff }
+Fields["LOST_STEPS"] = { "lost_steps": 0xfffff }
 
-SignedFields = ["CUR_A", "CUR_B", "sgt"]
+SignedFields = ["cur_a", "cur_b", "sgt"]
 
 FieldFormatters = {
-    "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
+    "i_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
     "shaft":            (lambda v: "1(Reverse)" if v else ""),
     "reset":            (lambda v: "1(Reset)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
     "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
-    "VERSION":          (lambda v: "%#x" % v),
-    "MRES":             (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
+    "version":          (lambda v: "%#x" % v),
+    "mres":             (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
     "otpw":             (lambda v: "1(OvertempWarning!)" if v else ""),
     "ot":               (lambda v: "1(OvertempError!)" if v else ""),
     "s2ga":             (lambda v: "1(ShortToGND_A!)" if v else ""),
     "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
     "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
     "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
-    "CS_ACTUAL":        (lambda v: ("%d" % v) if v else "0(Reset?)"),
+    "cs_actual":        (lambda v: ("%d" % v) if v else "0(Reset?)"),
 }
 
 
@@ -108,8 +108,8 @@ class TMCCurrentHelper:
         self.sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("vsense", vsense)
-        self.fields.set_field("IHOLD", ihold)
-        self.fields.set_field("IRUN", irun)
+        self.fields.set_field("ihold", ihold)
+        self.fields.set_field("irun", irun)
     def _calc_current_bits(self, current, vsense):
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
@@ -137,16 +137,16 @@ class TMCCurrentHelper:
             vref = 0.18
         return (bits + 1) * vref / (32 * sense_resistor * math.sqrt(2.))
     def get_current(self):
-        run_current = self._calc_current_from_field("IRUN")
-        hold_current = self._calc_current_from_field("IHOLD")
+        run_current = self._calc_current_from_field("irun")
+        hold_current = self._calc_current_from_field("ihold")
         return run_current, hold_current, MAX_CURRENT
     def set_current(self, run_current, hold_current, print_time):
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         if vsense != self.fields.get_field("vsense"):
             val = self.fields.set_field("vsense", vsense)
             self.mcu_tmc.set_register("CHOPCONF", val, print_time)
-        self.fields.set_field("IHOLD", ihold)
-        val = self.fields.set_field("IRUN", irun)
+        self.fields.set_field("ihold", ihold)
+        val = self.fields.set_field("irun", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
 
 
@@ -260,21 +260,20 @@ class TMC2130:
         current_helper = TMCCurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
+        self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_status = cmdhelper.get_status
         # Setup basic register values
-        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
-        self.get_microsteps = mh.get_microsteps
-        self.get_phase = mh.get_phase
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 4)
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
-        set_config_field(config, "TBL", 1)
-        set_config_field(config, "IHOLDDELAY", 8)
-        set_config_field(config, "TPOWERDOWN", 0)
-        set_config_field(config, "PWM_AMPL", 128)
-        set_config_field(config, "PWM_GRAD", 4)
+        set_config_field(config, "tbl", 1)
+        set_config_field(config, "iholddelay", 8)
+        set_config_field(config, "tpowerdown", 0)
+        set_config_field(config, "pwm_ampl", 128)
+        set_config_field(config, "pwm_grad", 4)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)

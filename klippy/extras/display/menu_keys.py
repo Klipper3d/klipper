@@ -44,17 +44,13 @@ class MenuKeys:
         if pin is None:
             return
         buttons = self.printer.lookup_object("buttons")
-        analog_range = config.get('analog_range_' + name, None)
-        if analog_range is None:
+        if config.get('analog_range_' + name, None) is None:
             if push_only:
                 buttons.register_button_push(pin, callback)
             else:
                 buttons.register_buttons([pin], callback)
             return
-        try:
-            amin, amax = map(float, analog_range.split(','))
-        except:
-            raise config.error("Unable to parse analog_range_" + name)
+        amin, amax = config.getfloatlist('analog_range_' + name, count=2)
         pullup = config.getfloat('analog_pullup_resistor', 4700., above=0.)
         if push_only:
             buttons.register_adc_button_push(pin, amin, amax, pullup, callback)
