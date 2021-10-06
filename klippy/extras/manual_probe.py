@@ -144,7 +144,7 @@ class ManualProbeHelper:
         self.gcode.register_command('TEST'+self.axis_label, self.cmd_TEST_AXIS,
                                     desc=self.cmd_TEST_AXIS_help)
         self.gcode.respond_info(
-            "Starting manual Z probe. Use TESTZ to adjust position.\n"
+            "Starting manual "+self.axis_label+" probe. Use TEST"+self.axis_label+" to adjust position.\n"
             "Finish with ACCEPT or ABORT command.")
         self.start_position = self.toolhead.get_position()
         self.report_axis_status()
@@ -228,7 +228,7 @@ class ManualProbeHelper:
                 check_axis = self.past_positions[insert_pos + 1]
             if req == '+':
                 check_axis = (check_axis + axis_pos) / 2.
-            next_z_pos = min(check_axis, axis_pos + BISECT_MAX)
+            next_axis_pos = min(check_axis, axis_pos + BISECT_MAX)
         elif req in ('-', '--'):
             check_axis = -9999999999999.9
             if insert_pos > 0:
