@@ -201,7 +201,7 @@ class ManualProbeHelper:
         start_pos = self.start_position
         if pos[:self.axis]+pos[self.axis+1:] != start_pos[:self.axis]+start_pos[self.axis+1:] or pos[self.axis] >= start_pos[self.axis]:
             gcmd.respond_info(
-                f"Manual probe failed! Use TEST{self.axis_label} commands to position the\n"
+                "Manual probe failed! Use TEST"+self.axis_label+" commands to position the\n"
                 "nozzle prior to running ACCEPT.")
             self.finalize(False)
             return
