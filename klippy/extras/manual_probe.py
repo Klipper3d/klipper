@@ -164,11 +164,12 @@ class ManualProbeHelper:
 
     def move_axis(self, axis_pos):
         curpos = self.toolhead.get_position()
+        non_move = [None, None, None]
         try:
             axis_bob_pos = axis_pos + AXIS_BOB_MINIMUM
             if curpos[self.axis] < axis_bob_pos:
-                self.toolhead.manual_move([None, None, axis_bob_pos], self.speed)
-            self.toolhead.manual_move([None, None, axis_pos], self.speed)
+                self.toolhead.manual_move(non_move[:self.axis]+[axis_bob_pos]+non_move[self.axis+1:], self.speed)
+            self.toolhead.manual_move(non_move[:self.axis]+[axis_bob_pos]+non_move[self.axis+1:], self.speed)
         except self.printer.command_error as e:
             self.finalize(False)
             raise
