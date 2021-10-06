@@ -3698,47 +3698,39 @@ switch_pin:
 #   above parameters.
 ```
 
-### [tsl1401cl_filament_width_sensor]
+### [filament_width_sensor]
 
-TSLl401CL Based Filament Width Sensor. See the
-[guide](TSL1401CL_Filament_Width_Sensor.md) for more information.
-
-```
-[tsl1401cl_filament_width_sensor]
-#pin:
-#default_nominal_filament_diameter: 1.75 # (mm)
-#   Maximum allowed filament diameter difference as mm.
-#max_difference: 0.2
-#   The distance from sensor to the melting chamber as mm.
-#measurement_delay: 100
-```
-
-### [hall_filament_width_sensor]
-
-Hall filament width sensor (see
-[Hall Filament Width Sensor](HallFilamentWidthSensor.md)).
+Module for Hall Based or TSLl401CL Based Filament Width Sensors. See the
+[guide](Filament_Width_Sensor.md) for more information.
 
 ```
-[hall_filament_width_sensor]
+[filament_width_sensor]
 adc1:
-adc2:
+adc2: #Hall based sensor only
 #   Analog input pins connected to the sensor. These parameters must
 #   be provided.
-#cal_dia1: 1.50
-#cal_dia2: 2.00
+#cal_dia1: 1.50 #Hall based sensor only
+#cal_dia2: 2.00 #Hall based sensor only
 #   The calibration values (in mm) for the sensors. The default is
 #   1.50 for cal_dia1 and 2.00 for cal_dia2.
-#raw_dia1: 9500
-#raw_dia2: 10500
+#raw_dia1: 9500 #Hall based sensor only
+#raw_dia2: 10500 #Hall based sensor only
 #   The raw calibration values for the sensors. The default is 9500
 #   for raw_dia1 and 10500 for raw_dia2.
+#offset1: 0
+#slope1: 1
+#offset2: 0 #Hall based sensor only
+#slope2: 1 #Hall based sensor only
+# Linear calibration of voltage readings according to y=mx+b,
+# Filament width = slope * adc_value + offset
 #default_nominal_filament_diameter: 1.75
 #   The nominal filament diameter. This parameter must be provided.
+#min_difference: 0.200
 #max_difference: 0.200
 #   Maximum allowed filament diameter difference in millimeters (mm).
-#   If difference between nominal filament diameter and sensor output
-#   is more than +- max_difference, extrusion multiplier is set back
-#   to %100. The default is 0.200.
+#   If the difference between nominal filament diameter and sensor
+#   output is smaller than the values above, extrusion multiplier is
+#   set back to %100. The default is 0.200.
 #measurement_delay: 70
 #   The distance from sensor to the melting chamber/hot-end in
 #   millimeters (mm). The filament between the sensor and the hot-end
@@ -3753,10 +3745,13 @@ adc2:
 #   The approximate distance (in mm) between sensor readings. The
 #   default is 10mm.
 #logging: False
-#   Out diameter to terminal and klipper.log can be turn on|of by
+#   Out diameter to width.log in the /tmp folder. Can be turned on|off by
 #   command.
 #min_diameter: 1.0
-#   Minimal diameter for trigger virtual filament_switch_sensor.
+#max_diameter: 2.0
+#   Minimum/Maximum diameter for trigger virtual filament_switch_sensor.
+#extrude_factor_enable: False
+#   Enable extrusion modifier and/or use sensor as Runout/Clog switch only
 #use_current_dia_while_delay: False
 #   Use the current diameter instead of the nominal diameter while
 #   the measurement delay has not run through.
