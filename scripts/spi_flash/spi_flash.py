@@ -16,6 +16,7 @@ import traceback
 import json
 import board_defs
 import fatfs_lib
+import util
 import reactor
 import serialhdl
 import clocksync
@@ -268,35 +269,43 @@ class FatFS:
         self.disk_status = STA_NO_INIT | STA_NO_DISK
 
     def open_file(self, sd_path, mode="r"):
+        if isinstance(sd_path, bytes):
+            sd_path = sd_path.decode(encoding='utf-8')
         sdf = SDCardFile(self.ffi_main, self.ffi_lib, sd_path, mode)
         sdf.open()
         return sdf
 
     def remove_item(self, sd_path):
+        if isinstance(sd_path, str):
+            sd_path = sd_path.encode(encoding='utf-8')
         # Can be path to directory or file
         ret = self.ffi_lib.fatfs_remove(sd_path)
         if ret != 0:
             raise OSError("flash_sdcard: Error deleting item at path '%s',"
                           " result: %s"
-                          % (sd_path, FRESULT[ret]))
+                          % (sd_path.decode(), FRESULT[ret]))
 
     def get_file_info(self, sd_file_path):
+        if isinstance(sd_file_path, str):
+            sd_file_path = sd_file_path.encode(encoding='utf-8')
         finfo = self.ffi_main.new("struct ff_file_info *")
         ret = self.ffi_lib.fatfs_get_fstats(finfo, sd_file_path)
         if ret != 0:
             raise OSError(
                 "flash_sdcard: Failed to retreive file info for path '%s',"
                 " result: %s"
-                % (sd_file_path, FRESULT[ret],))
+                % (sd_file_path.decode(), FRESULT[ret],))
         return self._parse_ff_info(finfo)
 
     def list_sd_directory(self, sd_dir_path):
+        if isinstance(sd_dir_path, str):
+            sd_dir_path = sd_dir_path.encode(encoding='utf-8')
         flist = self.ffi_main.new("struct ff_file_info[128]")
         ret = self.ffi_lib.fatfs_list_dir(flist, 128, sd_dir_path)
         if ret != 0:
             raise OSError("flash_sdcard: Failed to retreive file list at path"
                           " '%s', result: %s"
-                          % (sd_dir_path, FRESULT[ret],))
+                          % (sd_dir_path.decode(), FRESULT[ret],))
         convlist = []
         for f in flist:
             if f.size == 0 and f.modified_date == 0 and f.modified_time == 0:
@@ -311,8 +320,11 @@ class FatFS:
         dstr = "%d-%d-%d %d:%d:%d" % (
             (fdate >> 5) & 0xF, fdate & 0x1F, ((fdate >> 9) & 0x7F) + 1980,
             (ftime >> 11) & 0x1F, (ftime >> 5) & 0x3F, ftime & 0x1F)
+        name = self.ffi_main.string(finfo.name, 13)
+        if isinstance(name, bytes):
+            name = name.decode(encoding='utf-8')
         return {
-            'name': self.ffi_main.string(finfo.name, 13),
+            'name': name,
             'size': finfo.size,
             'modified': dstr,
             'is_dir': bool(finfo.attrs & 0x10),
@@ -328,8 +340,11 @@ class FatFS:
             logging.info("flash_sdcard: Failed to retreive disk info: %s"
                          % (FRESULT[ret],))
             return {}
+        label = self.ffi_main.string(disk_info.label, 12)
+        if isinstance(label, bytes):
+            label = label.decode(encoding='utf-8')
         return {
-            'volume_label': self.ffi_main.string(disk_info.label, 12),
+            'volume_label': label,
             'volume_serial': disk_info.serial_number,
             'fs_type': FS_TYPES.get(disk_info.fs_type, "UNKNOWN")
         }
@@ -357,7 +372,8 @@ class SDCardFile:
         if self.fhdl is not None:
             # already open
             return
-        self.fhdl = self.ffi_lib.fatfs_open(self.path, self.mode)
+        path_bytes = self.path.encode(encoding='utf-8')
+        self.fhdl = self.ffi_lib.fatfs_open(path_bytes, self.mode)
         self.eof = False
         if self.fhdl == self.ffi_main.NULL:
             self.fhdl = None
@@ -895,7 +911,8 @@ class MCUConnection:
             SPI_CFG_CMD % (SPI_OID, cs_pin),
             bus_cmd,
         ]
-        config_crc = zlib.crc32('\n'.join(cfg_cmds)) & 0xffffffff
+        cmd_bytes = '\n'.join(cfg_cmds).encode(encoding='utf-8')
+        config_crc = zlib.crc32(cmd_bytes) & 0xffffffff
         cfg_cmds.append(FINALIZE_CFG_CMD % (config_crc,))
         for cmd in cfg_cmds:
             self._serial.send(cmd)
