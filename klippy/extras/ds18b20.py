@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import mcu
+import sys
 
 DS18_REPORT_TIME = 3.0
 # Temperature can be sampled at any time but conversion time is ~750ms, so
@@ -30,8 +31,12 @@ class DS18B20:
         self._mcu.register_config_callback(self._build_config)
 
     def _build_config(self):
+        if sys.version_info.major < 3:
+            sensor_id_hex = self.sensor_id.encode("hex")
+        else:
+            sensor_id_hex = self.sensor_id.encode().hex()
         self._mcu.add_config_cmd("config_ds18b20 oid=%d serial=%s" % (self.oid,
-            self.sensor_id.encode("hex")))
+            sensor_id_hex))
 
         clock = self._mcu.get_query_slot(self.oid)
         self._report_clock = self._mcu.seconds_to_clock(self.report_time)
