@@ -136,6 +136,7 @@ class GCodeMacro:
         else:
             self.gcode.register_command(self.alias, self.cmd,
                                         desc=self.cmd_desc)
+            self.gcode.register_command("EXPAND_" + self.alias, self.expand)
         self.gcode.register_mux_command("SET_GCODE_VARIABLE", "MACRO",
                                         name, self.cmd_SET_GCODE_VARIABLE,
                                         desc=self.cmd_SET_GCODE_VARIABLE_help)
@@ -164,6 +165,7 @@ class GCodeMacro:
         pdesc = "Renamed builtin of '%s'" % (self.alias,)
         self.gcode.register_command(self.rename_existing, prev_cmd, desc=pdesc)
         self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
+        self.gcode.register_command("EXPAND_" + self.alias, self.expand)
     def get_status(self, eventtime):
         return self.variables
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"
@@ -180,7 +182,7 @@ class GCodeMacro:
         except ValueError as e:
             raise gcmd.error("Unable to parse '%s' as a literal" % (value,))
         self.variables[variable] = literal
-    def cmd(self, gcmd):
+    def cmd(self, gcmd, statusOnly=False):
         if self.in_script:
             raise gcmd.error("Macro %s called recursively" % (self.alias,))
         params = gcmd.get_command_parameters()
@@ -189,11 +191,16 @@ class GCodeMacro:
         kwparams.update(self.variables)
         kwparams.update(self.template.create_template_context())
         kwparams['params'] = params
-        self.in_script = True
-        try:
-            self.template.run_gcode_from_command(kwparams)
-        finally:
-            self.in_script = False
+        if statusOnly:
+            self.gcode.respond_info(self.template.render(kwparams), log=False)
+        else:
+            self.in_script = True
+            try:
+                self.template.run_gcode_from_command(kwparams)
+            finally:
+                self.in_script = False
+    def expand(self, gcmd):
+        return self.cmd(gcmd, statusOnly=True)
 
 def load_config_prefix(config):
     return GCodeMacro(config)
