@@ -49,10 +49,20 @@ fi
 
 
 ######################################################################
-# Create python virtualenv environment
+# Create python3 virtualenv environment
 ######################################################################
 
-echo -e "\n\n=============== Install python virtualenv\n\n"
+echo -e "\n\n=============== Install python3 virtualenv\n\n"
 cd ${MAIN_DIR}
-virtualenv -p python2 ${BUILD_DIR}/python-env
+virtualenv -p python3 ${BUILD_DIR}/python-env
 ${BUILD_DIR}/python-env/bin/pip install -r ${MAIN_DIR}/scripts/klippy-requirements.txt
+
+
+######################################################################
+# Create python2 virtualenv environment
+######################################################################
+
+echo -e "\n\n=============== Install python2 virtualenv\n\n"
+cd ${MAIN_DIR}
+virtualenv -p python2 ${BUILD_DIR}/python2-env
+${BUILD_DIR}/python2-env/bin/pip install -r ${MAIN_DIR}/scripts/klippy-requirements.txt

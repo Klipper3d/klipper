@@ -187,7 +187,7 @@ class KeyboardReader:
                 return None
         return line
     def process_kbd(self, eventtime):
-        self.data += os.read(self.fd, 4096)
+        self.data += os.read(self.fd, 4096).decode()
 
         kbdlines = self.data.split('\n')
         for line in kbdlines[:-1]:

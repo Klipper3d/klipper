@@ -15,7 +15,7 @@ class DS18B20:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.sensor_id = config.get("serial_no")
+        self.sensor_id = bytearray(config.get("serial_no").encode())
         self.temp = self.min_temp = self.max_temp = 0.0
         self._report_clock = 0
         self.report_time = config.getfloat(
@@ -30,8 +30,9 @@ class DS18B20:
         self._mcu.register_config_callback(self._build_config)
 
     def _build_config(self):
-        self._mcu.add_config_cmd("config_ds18b20 oid=%d serial=%s" % (self.oid,
-            self.sensor_id.encode("hex")))
+        sid = "".join(["%02x" % (x,) for x in self.sensor_id])
+        self._mcu.add_config_cmd("config_ds18b20 oid=%d serial=%s"
+                                 % (self.oid, sid))
 
         clock = self._mcu.get_query_slot(self.oid)
         self._report_clock = self._mcu.seconds_to_clock(self.report_time)
