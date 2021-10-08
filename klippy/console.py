@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, os, re, logging
-import reactor, serialhdl, pins, util, msgproto, clocksync
+import util, reactor, serialhdl, pins, msgproto, clocksync
 
 help_txt = """
   This is a debugging console for the Klipper micro-controller.
@@ -187,7 +187,7 @@ class KeyboardReader:
                 return None
         return line
     def process_kbd(self, eventtime):
-        self.data += os.read(self.fd, 4096)
+        self.data += os.read(self.fd, 4096).decode()
 
         kbdlines = self.data.split('\n')
         for line in kbdlines[:-1]:

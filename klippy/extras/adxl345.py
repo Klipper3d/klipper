@@ -96,12 +96,12 @@ class ADXLCommandHelper:
         gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", name,
                                    self.cmd_ACCELEROMETER_QUERY,
                                    desc=self.cmd_ACCELEROMETER_QUERY_help)
-        gcode.register_mux_command("ADXL345_DEBUG_READ", "CHIP", name,
-                                   self.cmd_ADXL345_DEBUG_READ,
-                                   desc=self.cmd_ADXL345_DEBUG_READ_help)
-        gcode.register_mux_command("ADXL345_DEBUG_WRITE", "CHIP", name,
-                                   self.cmd_ADXL345_DEBUG_WRITE,
-                                   desc=self.cmd_ADXL345_DEBUG_WRITE_help)
+        gcode.register_mux_command("ACCELEROMETER_DEBUG_READ", "CHIP", name,
+                                   self.cmd_ACCELEROMETER_DEBUG_READ,
+                                   desc=self.cmd_ACCELEROMETER_DEBUG_READ_help)
+        gcode.register_mux_command("ACCELEROMETER_DEBUG_WRITE", "CHIP", name,
+                                   self.cmd_ACCELEROMETER_DEBUG_WRITE,
+                                   desc=self.cmd_ACCELEROMETER_DEBUG_WRITE_help)
     cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
         if self.bg_client is None:
@@ -135,13 +135,13 @@ class ADXLCommandHelper:
         _, accel_x, accel_y, accel_z = values[-1]
         gcmd.respond_info("adxl345 values (x, y, z): %.6f, %.6f, %.6f"
                           % (accel_x, accel_y, accel_z))
-    cmd_ADXL345_DEBUG_READ_help = "Query accelerometer register (for debugging)"
-    def cmd_ADXL345_DEBUG_READ(self, gcmd):
+    cmd_ACCELEROMETER_DEBUG_READ_help = "Query adxl345 register (for debugging)"
+    def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
         reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
         gcmd.respond_info("ADXL345 REG[0x%x] = 0x%x" % (reg, val))
-    cmd_ADXL345_DEBUG_WRITE_help = "Set accelerometer register (for debugging)"
-    def cmd_ADXL345_DEBUG_WRITE(self, gcmd):
+    cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set adxl345 register (for debugging)"
+    def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
         reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
@@ -346,8 +346,11 @@ class ADXL345:
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_DEVID)
         if dev_id != ADXL345_DEV_ID:
-            raise self.printer.command_error("Invalid adxl345 id (got %x vs %x)"
-                                             % (dev_id, ADXL345_DEV_ID))
+            raise self.printer.command_error(
+                "Invalid adxl345 id (got %x vs %x).\n"
+                "This is generally indicative of connection problems\n"
+                "(e.g. faulty wiring) or a faulty adxl345 chip."
+                % (dev_id, ADXL345_DEV_ID))
         # Setup chip in requested query rate
         self.set_reg(REG_POWER_CTL, 0x00)
         self.set_reg(REG_DATA_FORMAT, 0x0B)
