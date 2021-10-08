@@ -16,6 +16,7 @@ import traceback
 import json
 import board_defs
 import fatfs_lib
+import util
 import reactor
 import serialhdl
 import clocksync
@@ -274,7 +275,7 @@ class FatFS:
 
     def remove_item(self, sd_path):
         # Can be path to directory or file
-        ret = self.ffi_lib.fatfs_remove(sd_path)
+        ret = self.ffi_lib.fatfs_remove(sd_path.encode())
         if ret != 0:
             raise OSError("flash_sdcard: Error deleting item at path '%s',"
                           " result: %s"
@@ -282,7 +283,7 @@ class FatFS:
 
     def get_file_info(self, sd_file_path):
         finfo = self.ffi_main.new("struct ff_file_info *")
-        ret = self.ffi_lib.fatfs_get_fstats(finfo, sd_file_path)
+        ret = self.ffi_lib.fatfs_get_fstats(finfo, sd_file_path.encode())
         if ret != 0:
             raise OSError(
                 "flash_sdcard: Failed to retreive file info for path '%s',"
@@ -292,7 +293,7 @@ class FatFS:
 
     def list_sd_directory(self, sd_dir_path):
         flist = self.ffi_main.new("struct ff_file_info[128]")
-        ret = self.ffi_lib.fatfs_list_dir(flist, 128, sd_dir_path)
+        ret = self.ffi_lib.fatfs_list_dir(flist, 128, sd_dir_path.encode())
         if ret != 0:
             raise OSError("flash_sdcard: Failed to retreive file list at path"
                           " '%s', result: %s"
@@ -357,7 +358,7 @@ class SDCardFile:
         if self.fhdl is not None:
             # already open
             return
-        self.fhdl = self.ffi_lib.fatfs_open(self.path, self.mode)
+        self.fhdl = self.ffi_lib.fatfs_open(self.path.encode(), self.mode)
         self.eof = False
         if self.fhdl == self.ffi_main.NULL:
             self.fhdl = None
@@ -895,7 +896,7 @@ class MCUConnection:
             SPI_CFG_CMD % (SPI_OID, cs_pin),
             bus_cmd,
         ]
-        config_crc = zlib.crc32('\n'.join(cfg_cmds)) & 0xffffffff
+        config_crc = zlib.crc32('\n'.join(cfg_cmds).encode()) & 0xffffffff
         cfg_cmds.append(FINALIZE_CFG_CMD % (config_crc,))
         for cmd in cfg_cmds:
             self._serial.send(cmd)

@@ -191,7 +191,8 @@ class MCU_stepper:
             raise error("Internal error in stepcompress")
     def is_active_axis(self, axis):
         ffi_main, ffi_lib = chelper.get_ffi()
-        return ffi_lib.itersolve_is_active_axis(self._stepper_kinematics, axis)
+        a = axis.encode()
+        return ffi_lib.itersolve_is_active_axis(self._stepper_kinematics, a)
 
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):
@@ -233,6 +234,7 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
         config.get('gear_ratio', note_valid=note_valid)
     else:
         rd = config.get('rotation_distance', None, note_valid=False)
+        config.deprecate('step_distance')
         sd = config.get('step_distance', None, note_valid=False)
         if rd is None and sd is not None:
             # Older config format with step_distance
@@ -337,11 +339,11 @@ class PrinterRail:
     def add_extra_stepper(self, config):
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.steppers.append(stepper)
-        endstop_pin = config.get('endstop_pin', None)
-        if self.endstops and endstop_pin is None:
+        if self.endstops and config.get('endstop_pin', None) is None:
             # No endstop defined - use primary endstop
             self.endstops[0][0].add_stepper(stepper)
             return
+        endstop_pin = config.get('endstop_pin')
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
         pin_params = ppins.parse_pin(endstop_pin, True, True)

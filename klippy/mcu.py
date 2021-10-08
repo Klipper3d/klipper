@@ -560,6 +560,7 @@ class MCU:
         self._config_cmds = []
         self._restart_cmds = []
         self._init_cmds = []
+        config.deprecate('pin_map')
         self._pin_map = config.get('pin_map', None)
         self._mcu_freq = 0.
         # Move command queuing
@@ -656,7 +657,8 @@ class MCU:
             for i, cmd in enumerate(cmdlist):
                 cmdlist[i] = pin_resolver.update_command(cmd)
         # Calculate config CRC
-        config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
+        encoded_config = '\n'.join(self._config_cmds).encode()
+        config_crc = zlib.crc32(encoded_config) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
         if prev_crc is not None and config_crc != prev_crc:
             self._check_restart("CRC mismatch")
