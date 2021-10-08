@@ -255,8 +255,9 @@ class PrinterConfig:
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)
     def _build_config_wrapper(self, data, filename):
+        cp = (';', '#')
         fileconfig = configparser.RawConfigParser(
-            strict=False, inline_comment_prefixes=(';','#'))
+            strict=False, comment_prefixes=cp, inline_comment_prefixes=cp)
         self._parse_config(data, filename, fileconfig, set())
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):
