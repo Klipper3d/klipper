@@ -3,12 +3,23 @@
 # Copyright (C) 2021 Richard Mitchell <richardjm+klipper@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import json, logging, threading, httplib
+import json, logging, threading
+
+# Python2 or Python3 imports
+try:
+    import urlparse
+except:
+    import urllib.parse as urlparse
 
 try:
     from queue import Queue
 except ImportError:
     from Queue import Queue
+
+try:
+    import httplib
+except ImportError:
+    import http.client
 
 MAX_MCU_SIZE = 500
 
@@ -58,7 +69,7 @@ class WLED:
                             self.cmd_WLED_OFF, desc=self.cmd_WLED_OFF_help)
 
         # Consumer of producer/consumer
-        self.bg_queue = queue.Queue()
+        self.bg_queue = Queue.Queue()
         self.bg_thread = threading.Thread(target=self._send_consumer)
         self.bg_thread.start()
 
