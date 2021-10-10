@@ -39,6 +39,8 @@ For a demo of the LCD, watch [this video](https://youtu.be/PKduopITGcU).
 
 ## Installing Klipper
 
+For an easy to follow tutorial, see [KeenzKustoms' video](https://youtu.be/6KAFPcL1O-4).
+
 ### Jailbreak your Mini
 
 You will need to cut out Prusa's appendix to install custom firmware.
