@@ -3,11 +3,12 @@
 # Copyright (C) 2021 Richard Mitchell <richardjm+klipper@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import json, logging, Queue as queue, threading, httplib
+import json, logging, threading, httplib
+
 try:
-    import urlparse
-except:
-    import urllib.parse as urlparse
+    from queue import Queue
+except ImportError:
+    from Queue import Queue
 
 MAX_MCU_SIZE = 500
 
@@ -78,7 +79,7 @@ class WLED:
         # if self.debug:
         #     logging.info('WLED: color_data:%s self.color_data:%s', color_data,
         #                 self.color_data)
-            
+
     def _wled_send(self, state):
         try:
             state = json.dumps(state)
