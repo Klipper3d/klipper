@@ -62,6 +62,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM16, GPIO('B', 8),  1, GPIO_FUNCTION(1)},
     {TIM17, GPIO('F', 7),  1, GPIO_FUNCTION(1)},
     {TIM17, GPIO('B', 9),  1, GPIO_FUNCTION(1)}
+#endif
 #if CONFIG_MACH_STM32F103
     {TIM2, GPIO('A', 0),  1, GPIO_FUNCTION(2)},
     {TIM2, GPIO('A', 1),  2, GPIO_FUNCTION(2)},
@@ -87,6 +88,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM4, GPIO('B', 7),  2, GPIO_FUNCTION(2)},
     {TIM4, GPIO('B', 8),  3, GPIO_FUNCTION(2)},
     {TIM4, GPIO('B', 9),  4, GPIO_FUNCTION(2)}
+#endif
 #if CONFIG_MACH_STM32F401
     {TIM3,  GPIO('A',  6),  1, GPIO_FUNCTION(2)},
     {TIM3,  GPIO('C',  6),  1, GPIO_FUNCTION(3)},
@@ -98,7 +100,10 @@ static const struct gpio_pwm_info pwm_regs[] = {
 #if CONFIG_MACH_STM32F446
     {TIM2,  GPIO('B',  2),  4, GPIO_FUNCTION(1)},
 #endif
-#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F429 || CONFIG_MACH_STM32F446
+#if CONFIG_MACH_STM32F405 || \
+    CONFIG_MACH_STM32F407 || \
+    CONFIG_MACH_STM32F429 || \
+    CONFIG_MACH_STM32F446
     {TIM8,  GPIO('C',  6),  1, GPIO_FUNCTION(3)},
     {TIM8,  GPIO('C',  7),  2, GPIO_FUNCTION(3)},
     {TIM8,  GPIO('C',  8),  3, GPIO_FUNCTION(3)},
@@ -111,7 +116,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM14, GPIO('A',  7),  1, GPIO_FUNCTION(9)},
     {TIM14, GPIO('F',  9),  1, GPIO_FUNCTION(9)},
 #endif
-#if CONFIG_MACH_STM32F4 // Generic pins that map the same on all 5 STM32F4 processors currently defined in Klipper.
+#if CONFIG_MACH_STM32F4 // Pins that map to all klipper defined STM32F4 procs
     {TIM1,  GPIO('A',  8),  1, GPIO_FUNCTION(1)},
     {TIM1,  GPIO('E',  9),  1, GPIO_FUNCTION(1)},
     {TIM1,  GPIO('A',  9),  2, GPIO_FUNCTION(1)},
