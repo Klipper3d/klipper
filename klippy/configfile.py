@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, glob, re, time, logging, configparser, io
+import sys, os, glob, re, time, logging, configparser, io
 
 error = configparser.Error
 
@@ -255,9 +255,11 @@ class PrinterConfig:
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)
     def _build_config_wrapper(self, data, filename):
-        cp = (';', '#')
-        fileconfig = configparser.RawConfigParser(
-            strict=False, comment_prefixes=cp, inline_comment_prefixes=cp)
+        if sys.version_info.major >= 3:
+            fileconfig = configparser.RawConfigParser(
+                strict=False, inline_comment_prefixes=(';', '#'))
+        else:
+            fileconfig = configparser.RawConfigParser()
         self._parse_config(data, filename, fileconfig, set())
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):
