@@ -236,7 +236,7 @@ class HTU21D:
 
     def get_status(self, eventtime):
         return {
-            'temperature': self.temp,
+            'temperature': round(self.temp, 2),
             'humidity': self.humidity,
         }
 
