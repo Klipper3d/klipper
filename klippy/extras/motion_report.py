@@ -40,7 +40,7 @@ class APIDumpHelper:
         except self.printer.command_error as e:
             logging.exception("API Dump Helper start callback error")
             self._stop()
-            return
+            raise
         reactor = self.printer.get_reactor()
         systime = reactor.monotonic()
         waketime = systime + self.update_interval

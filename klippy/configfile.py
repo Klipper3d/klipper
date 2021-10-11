@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, glob, re, time, logging, ConfigParser as configparser, StringIO
+import sys, os, glob, re, time, logging, configparser, io
 
 error = configparser.Error
 
@@ -150,7 +150,7 @@ class PrinterConfig:
         return self.printer
     def _read_config_file(self, filename):
         try:
-            f = open(filename, 'rb')
+            f = open(filename, 'r')
             data = f.read()
             f.close()
         except:
@@ -211,7 +211,7 @@ class PrinterConfig:
             return
         data = '\n'.join(buffer)
         del buffer[:]
-        sbuffer = StringIO.StringIO(data)
+        sbuffer = io.StringIO(data)
         fileconfig.readfp(sbuffer, filename)
     def _resolve_include(self, source_filename, include_spec, fileconfig,
                          visited):
@@ -255,11 +255,15 @@ class PrinterConfig:
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)
     def _build_config_wrapper(self, data, filename):
-        fileconfig = configparser.RawConfigParser()
+        if sys.version_info.major >= 3:
+            fileconfig = configparser.RawConfigParser(
+                strict=False, inline_comment_prefixes=(';', '#'))
+        else:
+            fileconfig = configparser.RawConfigParser()
         self._parse_config(data, filename, fileconfig, set())
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):
-        sfile = StringIO.StringIO()
+        sfile = io.StringIO()
         config.fileconfig.write(sfile)
         return sfile.getvalue().strip()
     def read_config(self, filename):
@@ -383,7 +387,7 @@ class PrinterConfig:
         logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                      cfgname, backup_name)
         try:
-            f = open(temp_name, 'wb')
+            f = open(temp_name, 'w')
             f.write(data)
             f.close()
             os.rename(cfgname, backup_name)
