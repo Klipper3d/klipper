@@ -5,9 +5,9 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 respond_types = {
-    'echo': 'echo: ',
-    'command': '// ',
-    'error' : '!! ',
+    'echo': 'echo:',
+    'command': '//',
+    'error' : '!!',
 }
 
 class HostResponder:
@@ -48,7 +48,11 @@ class HostResponder:
                     " of 'echo', 'command', or 'error'" % (respond_type,))
         prefix = gcmd.get('PREFIX', prefix)
         msg = gcmd.get('MSG', '')
-        gcmd.respond_raw("%s%s" % (prefix, msg))
+        no_space = gcmd.get('NO_SPACE', False)        
+        if(no_space):
+            gcmd.respond_raw("%s%s" % (prefix, msg))
+        else:
+            gcmd.respond_raw("%s %s" % (prefix, msg))
 
 def load_config(config):
     return HostResponder(config)
