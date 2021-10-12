@@ -46,8 +46,13 @@ reset_handler_stage_two(void)
     SCB->ICSR = SCB_ICSR_PENDSVCLR_Msk | SCB_ICSR_PENDSTCLR_Msk;
 
     // Reset all system interrupt priorities
+#if __CORTEX_M >= 7
+    for (i = 0; i < ARRAY_SIZE(SCB->SHPR); i++)
+        SCB->SHPR[i] = 0;
+#else
     for (i = 0; i < ARRAY_SIZE(SCB->SHP); i++)
         SCB->SHP[i] = 0;
+#endif
 
     __DSB();
     __ISB();
