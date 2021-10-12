@@ -234,7 +234,6 @@ class PrinterHeaters:
         self.available_heaters = []
         self.available_sensors = []
         self.has_started = False
-        self.reactor = self.printer.get_reactor()
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler("gcode:request_restart",
                                             self.turn_off_all_heaters)
@@ -344,7 +343,8 @@ class PrinterHeaters:
         if min_temp == float('-inf') and max_temp == float('inf'):
             raise gcmd.error(
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
-        timeout = gcmd.get_float('TIMEOUT', float(self.reactor.NEVER))
+        reactor = self.printer.get_reactor()
+        timeout = gcmd.get_float('TIMEOUT', float(reactor.NEVER))
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         if sensor_name in self.heaters:
@@ -352,14 +352,14 @@ class PrinterHeaters:
         else:
             sensor = self.printer.lookup_object(sensor_name)
         toolhead = self.printer.lookup_object("toolhead")
-        reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
         timeout_time = eventtime + timeout
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
             if temp >= min_temp and temp <= max_temp or eventtime >= timeout_time:
-                raise gcmd.error(
-                    "Error on 'TEMPERATURE_WAIT': timeout reached.")
+                if eventtime >= timeout_time:
+                    raise gcmd.error(
+                        "Error on 'TEMPERATURE_WAIT': timeout reached.")
                 return
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
