@@ -64,7 +64,7 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHBENR;
 }
 
-#define STM_OSPEED 0x2 // ~2Mhz at 50pF
+#define STM_OSPEED 0x1 // ~10Mhz at 50pF
 
 // Set the mode and extended function of a pin
 void
