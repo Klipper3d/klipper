@@ -26,13 +26,13 @@ static const uint8_t adc_pins[] = {
 
 #if CONFIG_MACH_STM32F1
     ADC_TEMPERATURE_PIN,
-#elif CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
+#elif CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4x5
     ADC_TEMPERATURE_PIN, 0x00, 0x00,
 #elif CONFIG_MACH_STM32F446
     0x00, 0x00, ADC_TEMPERATURE_PIN,
 #endif
 
-#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F446
+#if CONFIG_MACH_STM32F4x5 || CONFIG_MACH_STM32F446
     0x00, 0x00, 0x00, 0x00,
     GPIO('F', 6), GPIO('F', 7), GPIO('F', 8), GPIO('F', 9),
     GPIO('F', 10), GPIO('F', 3), 0x00, 0x00,
@@ -83,7 +83,7 @@ gpio_adc_setup(uint32_t pin)
     // Determine which ADC block to use
     ADC_TypeDef *adc = ADC1;
     uint32_t adc_base = ADC1_BASE;
-#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 || CONFIG_MACH_STM32F446
+#if CONFIG_MACH_STM32F4x5 || CONFIG_MACH_STM32F446
     if (chan >= 19) {
         // On the STM32F4, some ADC channels are only available from ADC3
         adc = ADC3;
