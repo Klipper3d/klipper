@@ -230,6 +230,7 @@ class PrinterHeaters:
         self.printer = config.get_printer()
         self.sensor_factories = {}
         self.heaters = {}
+        self.reactor = self.printer.get_reactor()
         self.gcode_id_to_sensor = {}
         self.available_heaters = []
         self.available_sensors = []
@@ -333,7 +334,7 @@ class PrinterHeaters:
         heater.set_temp(temp)
         if wait and temp:
             self._wait_for_temperature(heater)
-    cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor for a given time in seconds (timer is off by default)"
+    cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
     def cmd_TEMPERATURE_WAIT(self, gcmd):
         sensor_name = gcmd.get('SENSOR')
         if sensor_name not in self.available_sensors:
@@ -343,7 +344,7 @@ class PrinterHeaters:
         if min_temp == float('-inf') and max_temp == float('inf'):
             raise gcmd.error(
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
-        timeout = gcmd.get_float('TIMEOUT', float('inf'))
+        timeout = gcmd.get_float('TIMEOUT', float(self.reactor.NEVER))
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         if sensor_name in self.heaters:
@@ -353,14 +354,13 @@ class PrinterHeaters:
         toolhead = self.printer.lookup_object("toolhead")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
-        heating_time = self.reactor.monotonic()
-        heating_timeouttime = heating_time + timeout
+        timeout_time = eventtime + timeout
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
-            heating_time = self.reactor.monotonic()
-            if temp >= min_temp and temp <= max_temp or heating_time >= heating_timeouttime:
-                if heating_time >= heating_timeouttime:
-                    gcmd.respond_info("TEMPERATURE_WAIT: Timeout was reached")
+            if temp >= min_temp and temp <= max_temp or eventtime >= timeout_time:
+                if eventtime >= timeout_time:
+                    raise gcmd.error(
+                        "Error on 'TEMPERATURE_WAIT': timeout reached.")
                 return
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
