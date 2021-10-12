@@ -230,11 +230,11 @@ class PrinterHeaters:
         self.printer = config.get_printer()
         self.sensor_factories = {}
         self.heaters = {}
-        self.reactor = self.printer.get_reactor()
         self.gcode_id_to_sensor = {}
         self.available_heaters = []
         self.available_sensors = []
         self.has_started = False
+        self.reactor = self.printer.get_reactor()
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler("gcode:request_restart",
                                             self.turn_off_all_heaters)
@@ -358,9 +358,8 @@ class PrinterHeaters:
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
             if temp >= min_temp and temp <= max_temp or eventtime >= timeout_time:
-                if eventtime >= timeout_time:
-                    raise gcmd.error(
-                        "Error on 'TEMPERATURE_WAIT': timeout reached.")
+                raise gcmd.error(
+                    "Error on 'TEMPERATURE_WAIT': timeout reached.")
                 return
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
