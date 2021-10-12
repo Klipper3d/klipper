@@ -158,9 +158,11 @@ The following standard commands are supported:
   /tmp/heattest.txt will be created with a log of all temperature
   samples taken during the test.
 - `TURN_OFF_HEATERS`: Turn off all heaters.
-- `TEMPERATURE_WAIT SENSOR=<config_name> [MINIMUM=<target>] [MAXIMUM=<target>]`:
+- `TEMPERATURE_WAIT SENSOR=<config_name> [MINIMUM=<target>] [MAXIMUM=<target>] [TIMEOUT=<timeout>]`:
   Wait until the given temperature sensor is at or above the supplied
-  MINIMUM and/or at or below the supplied MAXIMUM.
+  MINIMUM and/or at or below the supplied MAXIMUM. If TIMEOUT is
+  supplied, the command will wait at most until the timeout is
+  reached.
 - `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
   [ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: Modify
   the printer's velocity limits.
