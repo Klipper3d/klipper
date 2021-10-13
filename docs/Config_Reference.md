@@ -2296,6 +2296,27 @@ serial_no:
 #   The micro-controller to read from. Must be the host_mcu
 ```
 
+### Thermocouple
+
+Thermocouple connected to an ADC. Requires gain and offset by an op-amp
+and cold junction compensation.
+```
+sensor_type: Type K
+sensor_pin:
+#   Analog input pin connected to the sensor. This parameter must be
+#   provided.
+# gain: 100
+#   Op-amp gain of the input stage.
+# offset: 0.7
+#   Voltage offset to allow for temperatures below the board temperature.
+# vin: 3.3
+#   ADC reference voltage.
+# cj_sensor: temperature_sensor cold_junction
+#   The cold junction compensation thermistor. This is a separate temperature
+#   measuring device located close to the input of the thermocouple.
+#
+```
+
 ## Fans
 
 ### [fan]
