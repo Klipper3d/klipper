@@ -31,6 +31,7 @@ is "raspberry") and run the following commands:
 
 ```
 git clone https://github.com/Klipper3d/klipper
+sudo apt update --allow-releaseinfo-change
 ./klipper/scripts/install-octopi.sh
 ```
 
