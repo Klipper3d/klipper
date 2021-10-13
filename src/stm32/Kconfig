@@ -55,12 +55,14 @@ choice
     config MACH_STM32F042
         bool "STM32F042"
         select MACH_STM32F0
+        select MACH_STM32F0x2
     config MACH_STM32F070
         bool "STM32F070"
         select MACH_STM32F0
     config MACH_STM32F072
         bool "STM32F072"
         select MACH_STM32F0
+        select MACH_STM32F0x2
     config MACH_STM32H750
         bool "STM32H750"
         select MACH_STM32H7
@@ -74,19 +76,21 @@ config MACH_STM32F2
     bool
 config MACH_STM32F4
     bool
-config MACH_STM32F4x5 # F405, F407, F429 series
-    bool
 config MACH_STM32H7
+    bool
+config MACH_STM32F0x2 # F042, F072 series
+    bool
+config MACH_STM32F4x5 # F405, F407, F429 series
     bool
 config HAVE_STM32_USBFS
     bool
-    default y if MACH_STM32F103 || MACH_STM32F042 || MACH_STM32F070
+    default y if MACH_STM32F103 || MACH_STM32F0x2 || MACH_STM32F070
 config HAVE_STM32_USBOTG
     bool
     default y if MACH_STM32F2 || MACH_STM32F4
 config HAVE_STM32_CANBUS
     bool
-    default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F042 || MACH_STM32F072
+    default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F0x2
 
 config MCU
     string
