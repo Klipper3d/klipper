@@ -10,6 +10,10 @@ respond_types = {
     'error' : '!!',
 }
 
+respond_types_no_space = {
+    'echo_no_space': 'echo:',
+}
+
 class HostResponder:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -36,19 +40,22 @@ class HostResponder:
         gcmd.respond_raw("%s %s" % (self.default_prefix, msg))
     cmd_RESPOND_help = ("Echo the message prepended with a prefix")
     def cmd_RESPOND(self, gcmd):
+        no_space = False
         respond_type = gcmd.get('TYPE', None)
         prefix = self.default_prefix
         if(respond_type != None):
             respond_type = respond_type.lower()
             if(respond_type in respond_types):
                 prefix = respond_types[respond_type]
+            elif(respond_type in respond_types_no_space):
+                prefix = respond_types_no_space[respond_type]
+                no_space = True
             else:
                 raise gcmd.error(
                     "RESPOND TYPE '%s' is invalid. Must be one"
                     " of 'echo', 'command', or 'error'" % (respond_type,))
         prefix = gcmd.get('PREFIX', prefix)
         msg = gcmd.get('MSG', '')
-        no_space = gcmd.get('NO_SPACE', False)
         if(no_space):
             gcmd.respond_raw("%s%s" % (prefix, msg))
         else:
