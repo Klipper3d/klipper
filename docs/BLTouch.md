@@ -23,12 +23,12 @@ control_pin: P1.26
 
 If the BL-Touch will be used to home the Z axis then set `endstop_pin:
 probe:z_virtual_endstop` in the `[stepper_z]` config section and add a
-`[safe_z_home]` config section to raise the z axis, home the xy axes,
-move to the center of the bed, and home the z axis. For example:
+`[safe_z_home]` config section to raise the Z axis, home the X and Y axes,
+move to the center of the bed, and home the Z axis. For example:
 
 ```
 [safe_z_home]
-home_xy_position: 100,100 # Change coordinates to the center of your print bed
+home_xy_position: 100, 100 # Change coordinates to the center of your print bed
 speed: 50
 z_hop: 10                 # Move up 10mm
 z_hop_speed: 5
