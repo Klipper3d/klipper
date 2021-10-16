@@ -210,7 +210,7 @@ class ManualProbeHelper:
         pos = self.toolhead.get_position()
         start_pos = self.start_position
         if pos[:self.axis]+pos[self.axis+1:] != \
-                start_pos[:self.axis]+start_pos[self.axis+1:]
+                start_pos[:self.axis]+start_pos[self.axis+1:] \
             or pos[self.axis] >= start_pos[self.axis]:
             gcmd.respond_info(
                 "Manual probe failed! Use TEST%s commands to position the\n"
