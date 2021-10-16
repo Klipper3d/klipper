@@ -479,7 +479,7 @@ class DockableProbe:
             self._align_to_vector(self.dock_angle)
         else:
             self.toolhead.manual_move(
-                [self.detach_position[0], self.detach_position[1], None],
+                [self.approach_position[0], self.approach_position[1], None],
                  self.travel_speed)
         self.toolhead.manual_move(
             [self.dock_position[0], self.dock_position[1], None],
