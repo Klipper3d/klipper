@@ -53,7 +53,7 @@ class ManualProbe:
 
     def manual_probe_finalize(self, kin_pos, axis, axis_label):
         if kin_pos is not None:
-            self.gcode.respond_info("%s position is %.3f" 
+            self.gcode.respond_info("%s position is %.3f"
                 % (axis_label, kin_pos[axis],))
 
     cmd_MANUAL_PROBE_help = "Start manual probe helper script"
@@ -69,21 +69,21 @@ class ManualProbe:
             "The SAVE_CONFIG command will update the printer config file\n"
             "with the above and restart the printer." % (axis_label, pos,))
         configfile = self.printer.lookup_object('configfile')
-        configfile.set('stepper_'+axis_label, 'position_endstop', 
+        configfile.set('stepper_'+axis_label, 'position_endstop',
             "%.3f" % (pos,))
 
     def offset_apply_endstop(self, gcmd, axis, axis_label):
         offset = self.gcode_move.get_status()['homing_origin'][axis]
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
-            self.gcode.respond_info("Nothing to do: %s Offset is 0" 
+            self.gcode.respond_info("Nothing to do: %s Offset is 0"
                 % (axis_label))
         else:
             new_calibrate = self.z_position_endstop - offset
             self.gcode.respond_info(
                 "stepper_%s: position_endstop: %.3f\n"
                 "The SAVE_CONFIG command will update the printer config file\n"
-                "with the above and restart the printer." 
+                "with the above and restart the printer."
                 % (axis_label, new_calibrate))
             configfile.set('stepper_'+axis_label, 'position_endstop',
                 "%.3f" % (new_calibrate,))
@@ -149,7 +149,7 @@ class ManualProbeHelper:
                                     desc=self.cmd_TEST_AXIS_help)
         self.gcode.respond_info(
             "Starting manual %s probe. Use TEST%s to adjust position.\n"
-            "Finish with ACCEPT or ABORT command." 
+            "Finish with ACCEPT or ABORT command."
             % (self.axis_label, self.axis_label))
         self.start_position = self.toolhead.get_position()
         self.report_axis_status()
@@ -174,10 +174,10 @@ class ManualProbeHelper:
             axis_bob_pos = axis_pos + AXIS_BOB_MINIMUM
             if curpos[self.axis] < axis_bob_pos:
                 self.toolhead.manual_move(
-                    non_move[:self.axis]+[axis_bob_pos]+non_move[self.axis+1:], 
+                    non_move[:self.axis]+[axis_bob_pos]+non_move[self.axis+1:],
                     self.speed)
             self.toolhead.manual_move(
-                non_move[:self.axis]+[axis_pos]+non_move[self.axis+1:], 
+                non_move[:self.axis]+[axis_pos]+non_move[self.axis+1:],
                 self.speed)
         except self.printer.command_error as e:
             self.finalize(False)
