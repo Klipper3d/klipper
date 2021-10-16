@@ -57,19 +57,19 @@ leveling process itself. This is done by commanding the nozzle to a
 position near each bed screw and then adjusting that screw until the
 bed is a set distance from the nozzle. Klipper has a tool to assist
 with this. In order to use the tool it is necessary to specify each
-screw XY location.
+screw (X, Y) location.
 
 This is done by creating a `[bed_screws]` config section. For example,
 it might look something similar to:
 ```
 [bed_screws]
-screw1: 100,50
-screw2: 100,150
-screw3: 150,100
+screw1: 100, 50
+screw2: 100, 150
+screw3: 150, 100
 ```
 
-If a bed screw is under the bed, then specify the XY position directly
-above the screw. If the screw is outside the bed then specify an XY
+If a bed screw is under the bed, then specify the (X, Y) position directly
+above the screw. If the screw is outside the bed then specify an (X, Y)
 position closest to the screw that is still within the range of the
 bed.
 
@@ -79,8 +79,8 @@ then one can start the tool by running:
 BED_SCREWS_ADJUST
 ```
 
-This tool will move the printer's nozzle to each screw XY location and
-then move the nozzle to a Z=0 height. At this point one can use the
+This tool will move the printer's nozzle to each screw (X, Y) location
+and then move the nozzle to a Z=0 height. At this point one can use the
 "paper test" to adjust the bed screw directly under the nozzle. See
 the information described in
 ["the paper test"](Bed_Level.md#the-paper-test), but adjust the bed
@@ -126,12 +126,12 @@ coordinates and add them to the config file. For example, it might
 look like:
 ```
 [bed_screws]
-screw1: 100,50
-screw1_fine_adjust: 0,0
-screw2: 100,150
-screw2_fine_adjust: 300,300
-screw3: 150,100
-screw3_fine_adjust: 0,100
+screw1: 100, 50
+screw1_fine_adjust: 0, 0
+screw2: 100, 150
+screw2_fine_adjust: 300, 300
+screw3: 150, 100
+screw3_fine_adjust: 0, 100
 ```
 
 When this feature is enabled, the `BED_SCREWS_ADJUST` tool will first
@@ -151,13 +151,13 @@ config file. For example, it might look like:
 
 ```
 [screws_tilt_adjust]
-screw1: -5,30
+screw1: -5, 30
 screw1_name: front left screw
-screw2: 155,30
+screw2: 155, 30
 screw2_name: front right screw
-screw3: 155,190
+screw3: 155, 190
 screw3_name: rear right screw
-screw4: -5,190
+screw4: -5, 190
 screw4_name: rear left screw
 horizontal_move_z: 10.
 speed: 50.
