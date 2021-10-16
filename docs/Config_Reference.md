@@ -2414,6 +2414,10 @@ watched component.
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
 #   will be set to when a heater or stepper driver was active and
 #   before the idle_timeout is reached. The default is fan_speed.
+#min_speed:
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when no other speed parameter is active.
+#   The default is 0.0
 #heater:
 #stepper:
 #   Name of the config section defining the heater/stepper that this fan
