@@ -167,7 +167,7 @@ class GenCorexyPosition:
         axis = 'x'
         if not self.is_plus:
             axis = 'y'
-        return {'label': 'Derived %s Position' % (axis,),
+        return {'label': 'Derived %s position' % (axis,),
                 'units': 'Position\n(mm)'}
     def generate_data(self):
         datasets = self.amanager.get_datasets()
