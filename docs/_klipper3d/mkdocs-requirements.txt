@@ -1,5 +1,5 @@
 # Python virtualenv module requirements for mkdocs
-mkdocs==1.2.2
+mkdocs==1.2.3
 mkdocs-material==7.2.0
 mkdocs-section-index==0.3.1
 mkdocs-simple-hooks==0.1.3

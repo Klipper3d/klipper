@@ -17,7 +17,7 @@ except:
 # Graphing
 ######################################################################
 
-def plot_motion(amanager, graphs):
+def plot_motion(amanager, graphs, log_prefix):
     # Generate data
     for graph in graphs:
         for dataset, plot_params in graph:
@@ -31,7 +31,7 @@ def plot_motion(amanager, graphs):
     fig, rows = matplotlib.pyplot.subplots(nrows=len(graphs), sharex=True)
     if len(graphs) == 1:
         rows = [rows]
-    rows[0].set_title("Motion Analysis")
+    rows[0].set_title("Motion Analysis (%s)" % (log_prefix,))
     for graph, graph_ax in zip(graphs, rows):
         graph_units = graph_twin_units = twin_ax = None
         for dataset, plot_params in graph:
@@ -136,7 +136,7 @@ def main():
 
     # Draw graph
     setup_matplotlib(options.output is not None)
-    fig = plot_motion(amanager, graphs)
+    fig = plot_motion(amanager, graphs, log_prefix)
 
     # Show graph
     if options.output is None:
