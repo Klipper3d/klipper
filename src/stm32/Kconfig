@@ -9,6 +9,7 @@ config STM32_SELECT
     select HAVE_GPIO_ADC
     select HAVE_GPIO_I2C if !(MACH_STM32F031 || MACH_STM32H7)
     select HAVE_GPIO_SPI if !(MACH_STM32F031 || MACH_STM32H7)
+    select HAVE_GPIO_HARD_PWM if MACH_STM32F1 || MACH_STM32F4 || MACH_STM32H7
     select HAVE_GPIO_BITBANGING if !MACH_STM32F031
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
@@ -27,49 +28,44 @@ choice
     config MACH_STM32F103
         bool "STM32F103"
         select MACH_STM32F1
-        select HAVE_GPIO_HARD_PWM
     config MACH_STM32F207
         bool "STM32F207"
         select MACH_STM32F2
     config MACH_STM32F401
         bool "STM32F401"
         select MACH_STM32F4
-        select HAVE_GPIO_HARD_PWM
     config MACH_STM32F405
         bool "STM32F405"
         select MACH_STM32F4
         select MACH_STM32F4x5
-        select HAVE_GPIO_HARD_PWM
     config MACH_STM32F407
         bool "STM32F407"
         select MACH_STM32F4
         select MACH_STM32F4x5
-        select HAVE_GPIO_HARD_PWM
     config MACH_STM32F429
         bool "STM32F429"
         select MACH_STM32F4
         select MACH_STM32F4x5
-        select HAVE_GPIO_HARD_PWM
     config MACH_STM32F446
         bool "STM32F446"
         select MACH_STM32F4
-        select HAVE_GPIO_HARD_PWM
     config MACH_STM32F031
         bool "STM32F031"
         select MACH_STM32F0
     config MACH_STM32F042
         bool "STM32F042"
         select MACH_STM32F0
+        select MACH_STM32F0x2
     config MACH_STM32F070
         bool "STM32F070"
         select MACH_STM32F0
     config MACH_STM32F072
         bool "STM32F072"
         select MACH_STM32F0
+        select MACH_STM32F0x2
     config MACH_STM32H750
         bool "STM32H750"
         select MACH_STM32H7
-        select HAVE_GPIO_HARD_PWM
 endchoice
 
 config MACH_STM32F0
@@ -80,19 +76,21 @@ config MACH_STM32F2
     bool
 config MACH_STM32F4
     bool
-config MACH_STM32F4x5 # F405, F407, F429 series
-    bool
 config MACH_STM32H7
+    bool
+config MACH_STM32F0x2 # F042, F072 series
+    bool
+config MACH_STM32F4x5 # F405, F407, F429 series
     bool
 config HAVE_STM32_USBFS
     bool
-    default y if MACH_STM32F103 || MACH_STM32F042 || MACH_STM32F070
+    default y if MACH_STM32F103 || MACH_STM32F0x2 || MACH_STM32F070
 config HAVE_STM32_USBOTG
     bool
     default y if MACH_STM32F2 || MACH_STM32F4
 config HAVE_STM32_CANBUS
     bool
-    default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F042 || MACH_STM32F072
+    default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F0x2
 
 config MCU
     string

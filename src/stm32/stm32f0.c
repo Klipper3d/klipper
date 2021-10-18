@@ -162,7 +162,7 @@ pll_setup(void)
 static void
 hsi48_setup(void)
 {
-#if CONFIG_MACH_STM32F042
+#if CONFIG_MACH_STM32F0x2
     // Enable HSI48
     RCC->CR2 |= RCC_CR2_HSI48ON;
     while (!(RCC->CR2 & RCC_CR2_HSI48RDY))
@@ -198,7 +198,7 @@ hsi14_setup(void)
 void
 armcm_main(void)
 {
-    if (CONFIG_USBSERIAL && CONFIG_MACH_STM32F042
+    if (CONFIG_USBSERIAL && CONFIG_MACH_STM32F0x2
         && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
         *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
         uint32_t *sysbase = (uint32_t*)0x1fffc400;
@@ -215,7 +215,7 @@ armcm_main(void)
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL
+    if (CONFIG_MACH_STM32F0x2 && CONFIG_STM32_CLOCK_REF_INTERNAL
         && CONFIG_USBSERIAL)
         hsi48_setup();
     else
