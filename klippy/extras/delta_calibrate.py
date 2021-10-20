@@ -6,6 +6,7 @@
 import math, logging, collections
 import mathutil
 from . import probe
+from kinematics import delta
 
 # A "stable position" is a 3-tuple containing the number of steps
 # taken since hitting the endstop on each delta tower.  Delta
@@ -124,6 +125,10 @@ class DeltaCalibrate:
                                     desc=self.cmd_DELTA_CALIBRATE_help)
         self.gcode.register_command('DELTA_ANALYZE', self.cmd_DELTA_ANALYZE,
                                     desc=self.cmd_DELTA_ANALYZE_help)
+        self.gcode.register_command('DELTA_GET_CALIBRATION', self.cmd_DELTA_GET_CALIBRATION,
+                                    desc=self.cmd_DELTA_GET_CALIBRATION_help)
+        self.gcode.register_command('DELTA_SET_CALIBRATION', self.cmd_DELTA_SET_CALIBRATION,
+                                    desc=self.cmd_DELTA_SET_CALIBRATION_help)
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         if not hasattr(kin, "get_calibration"):
@@ -282,6 +287,59 @@ class DeltaCalibrate:
             if action != 'extended':
                 raise gcmd.error("Unknown calibrate action")
             self.do_extended_calibration()
+    cmd_DELTA_GET_CALIBRATION_help = "Gets the Delta calibration values"
+    def cmd_DELTA_GET_CALIBRATION(self, gcmd):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        delta_params = kin.get_calibration()
+        self.gcode.respond_info(
+            "DELTA_CALIBRATION: RADIUS=%.6f ENDSTOP_HEIGHTS=%s TOWER_ANGLES=%s ARM_LENGTHS=%s STEP_DISTANCES=%s" 
+            % (delta_params.radius,
+                (",".join(("%.6f" % (n)) for n in delta_params.endstops)),
+                (",".join(("%.6f" % (n)) for n in delta_params.angles)),
+                (",".join(("%.6f" % (n)) for n in delta_params.arms)),
+                (",".join(("%.6f" % (n)) for n in delta_params.stepdists))))
+    cmd_DELTA_SET_CALIBRATION_help = "Sets the Delta calibration values"
+    def cmd_DELTA_SET_CALIBRATION(self, gcmd):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        delta_params = kin.get_calibration()
+        new_calibration = {
+            'RADIUS': [delta_params.radius], 
+            'ENDSTOP_HEIGHTS': delta_params.endstops, 
+            'TOWER_ANGLES': delta_params.angles, 
+            'ARM_LENGTHS': delta_params.arms, 
+            'STEP_DISTANCES': delta_params.stepdists}
+
+        args = {'RADIUS': 1, 'ENDSTOP_HEIGHTS': 3, 'TOWER_ANGLES': 3, 'ARM_LENGTHS': 3, 'STEP_DISTANCES': 3}
+        for name, count in args.items():
+            data = gcmd.get(name, None)
+            if data is None:
+                continue
+            try:
+                parts = list(map(float, data.split(',')))
+            except:
+                raise gcmd.error("Unable to parse parameter '%s'" % (name,))
+            if len(parts) != count:
+                raise gcmd.error("Parameter '%s' must have %d values"
+                                 % (name, count))
+            new_calibration[name] = parts
+            logging.info("DELTA_SET_CALIBRATION %s = %s", name, parts)
+
+        logging.info("DELTA_SET_CALIBRATION %s", new_calibration)
+
+        new_delta_params = delta.DeltaCalibration(
+            new_calibration['RADIUS'][0], 
+            new_calibration['TOWER_ANGLES'], 
+            new_calibration['ARM_LENGTHS'], 
+            new_calibration['ENDSTOP_HEIGHTS'], 
+            new_calibration['STEP_DISTANCES'],
+            delta_params.rotation_steps)
+
+        configfile = self.printer.lookup_object('configfile')
+        new_delta_params.save_state(configfile)
+        self.gcode.respond_info(
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with these parameters and restart the printer.")
+
 
 def load_config(config):
     return DeltaCalibrate(config)

@@ -37,6 +37,11 @@ class DeltaKinematics:
         self.arm_lengths = arm_lengths = [
             sconfig.getfloat('arm_length', arm_length_a, above=radius)
             for sconfig in stepper_configs]
+        
+        self.rotation_steps = [
+            (sconfig.getfloat('rotation_distance', above=0.) / rail.get_steppers()[0].get_step_dist())
+            for sconfig, rail in zip(stepper_configs, self.rails)]
+
         self.arm2 = [arm**2 for arm in arm_lengths]
         self.abs_endstops = [(rail.get_homing_info().position_endstop
                               + math.sqrt(arm2 - radius**2))
@@ -156,16 +161,17 @@ class DeltaKinematics:
         stepdists = [rail.get_steppers()[0].get_step_dist()
                      for rail in self.rails]
         return DeltaCalibration(self.radius, self.angles, self.arm_lengths,
-                                endstops, stepdists)
+                                endstops, stepdists, self.rotation_steps)
 
 # Delta parameter calibration for DELTA_CALIBRATE tool
 class DeltaCalibration:
-    def __init__(self, radius, angles, arms, endstops, stepdists):
+    def __init__(self, radius, angles, arms, endstops, stepdists, rotation_steps = None):
         self.radius = radius
         self.angles = angles
         self.arms = arms
         self.endstops = endstops
         self.stepdists = stepdists
+        self.rotation_steps = rotation_steps
         # Calculate the XY cartesian coordinates of the delta towers
         radian_angles = [math.radians(a) for a in angles]
         self.towers = [(math.cos(a) * radius, math.sin(a) * radius)
@@ -219,6 +225,11 @@ class DeltaCalibration:
                            "%.6f" % (self.arms[i],))
             configfile.set('stepper_'+axis, 'position_endstop',
                            "%.6f" % (self.endstops[i],))
+
+            if self.rotation_steps is not None:
+                configfile.set('stepper_'+axis, 'rotation_distance',
+                           "%.6f" % (self.rotation_steps[i] * self.stepdists[i]))
+
         gcode = configfile.get_printer().lookup_object("gcode")
         gcode.respond_info(
             "stepper_a: position_endstop: %.6f angle: %.6f arm_length: %.6f\n"
