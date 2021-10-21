@@ -39,9 +39,13 @@ class DeltaKinematics:
             for sconfig in stepper_configs]
 
         self.rotation_steps = [
-            (sconfig.get('rotation_distance', None, above=0.)
+            (sconfig.getfloat('rotation_distance', 0.)
             / rail.get_steppers()[0].get_step_dist())
             for sconfig, rail in zip(stepper_configs, self.rails)]
+
+        self.rotation_steps = None if any( (value == 0.)
+            for value in self.rotation_steps) else self.rotation_steps
+
 
         self.arm2 = [arm**2 for arm in arm_lengths]
         self.abs_endstops = [(rail.get_homing_info().position_endstop
