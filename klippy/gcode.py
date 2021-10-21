@@ -387,7 +387,7 @@ class GCodeIO:
             return
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
-        lines = data.split('\n')
+        lines = data.decode().split('\n')
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands
@@ -427,7 +427,7 @@ class GCodeIO:
     def _respond_raw(self, msg):
         if self.pipe_is_active:
             try:
-                os.write(self.fd, msg+"\n")
+                os.write(self.fd, (msg+"\n").encode())
             except os.error:
                 logging.exception("Write g-code response")
                 self.pipe_is_active = False

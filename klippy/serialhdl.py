@@ -62,7 +62,7 @@ class SerialReader:
         raise error(self.warn_prefix + (msg % params))
     def _get_identify_data(self, eventtime):
         # Query the "data dictionary" from the micro-controller
-        identify_data = ""
+        identify_data = b""
         while 1:
             msg = "identify offset=%d count=%d" % (len(identify_data), 40)
             try:
@@ -77,7 +77,7 @@ class SerialReader:
                     # Done
                     return identify_data
                 identify_data += msgdata
-    def _start_session(self, serial_dev, serial_fd_type='u', client_id=0):
+    def _start_session(self, serial_dev, serial_fd_type=b'u', client_id=0):
         self.serial_dev = serial_dev
         self.serialqueue = self.ffi_main.gc(
             self.ffi_lib.serialqueue_alloc(serial_dev.fileno(),
@@ -141,7 +141,7 @@ class SerialReader:
                 self.reactor.pause(self.reactor.monotonic() + 5.)
                 continue
             bus.close = bus.shutdown # XXX
-            ret = self._start_session(bus, 'c', txid)
+            ret = self._start_session(bus, b'c', txid)
             if not ret:
                 continue
             # Verify correct canbus_nodeid to canbus_uuid mapping
@@ -198,7 +198,7 @@ class SerialReader:
         self.serial_dev = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
         self.serialqueue = self.ffi_main.gc(
-            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), 'f', 0),
+            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), b'f', 0),
             self.ffi_lib.serialqueue_free)
     def set_clock_est(self, freq, conv_time, conv_clock, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
@@ -220,7 +220,7 @@ class SerialReader:
             return ""
         self.ffi_lib.serialqueue_get_stats(
             self.serialqueue, self.stats_buf, len(self.stats_buf))
-        return self.ffi_main.string(self.stats_buf)
+        return self.ffi_main.string(self.stats_buf).decode()
     def get_reactor(self):
         return self.reactor
     def get_msgparser(self):
@@ -338,7 +338,7 @@ def stk500v2_leave(ser, reactor):
     ser.baudrate = 115200
     reactor.pause(reactor.monotonic() + 0.100)
     ser.read(4096)
-    ser.write('\x1b\x01\x00\x01\x0e\x11\x04')
+    ser.write(b'\x1b\x01\x00\x01\x0e\x11\x04')
     reactor.pause(reactor.monotonic() + 0.050)
     res = ser.read(4096)
     logging.debug("Got %s from stk500v2", repr(res))
