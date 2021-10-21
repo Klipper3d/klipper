@@ -234,6 +234,12 @@ measurements no longer apply.
   arm length may result in a tilt to the effector and some of that
   tilt may be accounted for by adjusting the arm length parameters.
 
+## External Delta Calibration
+
+By leveraging the commands DELTA_GET_CALIBRATION and DELTA_SET_CALIBRATION
+external components such as plugins can execute their own automated
+probing and computing methods to evaluate and improve the delta calibration.
+
 ## Using Bed Mesh on a Delta
 
 It is possible to use [bed mesh](Bed_Mesh.md) on a delta. However, it

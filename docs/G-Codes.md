@@ -416,6 +416,16 @@ is enabled (also see the [delta calibrate guide](Delta_Calibrate.md)):
   available while this tool is active.
 - `DELTA_ANALYZE`: This command is used during enhanced delta
   calibration. See [Delta Calibrate](Delta_Calibrate.md) for details.
+- `DELTA_GET_CALIBRATION`: This commnad will report all the delta geometry
+  parameters, motstly useful for external automated calibrators.
+- `DELTA_SET_CALIBRATION [RADIUS=<value>]
+  [ENDSTOP_HEIGHTS=<X value mm>,<Y value mm>,<Z value mm>]
+  [TOWER_ANGLES=<X degrees>,<Y degrees>, <Z degrees>]
+  [ARM_LENGTHS=<X value mm>,<Y value mm>,<Z value mm>]
+  [STEP_DISTANCES=<X value mm>,<Y value mm>,<Z value mm>]`: This commnad
+  will set one or more of the delta geometry parameters, all values are
+  absolute, motstly useful for external automated calibrators.
+  Requires a `SAVE_CONFIG` to take effect.
 
 ### Bed Tilt
 

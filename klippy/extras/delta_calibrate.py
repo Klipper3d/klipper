@@ -294,8 +294,8 @@ class DeltaCalibrate:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         delta_params = kin.get_calibration()
         self.gcode.respond_info(
-            ("DELTA_CALIBRATION: RADIUS=%.6f ENDSTOP_HEIGHTS=%s"
-            +" TOWER_ANGLES=%s ARM_LENGTHS=%s STEP_DISTANCES=%s")
+            "DELTA_CALIBRATION: RADIUS=%.6f ENDSTOP_HEIGHTS=%s"
+            " TOWER_ANGLES=%s ARM_LENGTHS=%s STEP_DISTANCES=%s"
             % (delta_params.radius,
                 (",".join(("%.6f" % (n)) for n in delta_params.endstops)),
                 (",".join(("%.6f" % (n)) for n in delta_params.angles)),
