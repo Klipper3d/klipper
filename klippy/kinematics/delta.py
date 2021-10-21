@@ -37,9 +37,10 @@ class DeltaKinematics:
         self.arm_lengths = arm_lengths = [
             sconfig.getfloat('arm_length', arm_length_a, above=radius)
             for sconfig in stepper_configs]
-        
+
         self.rotation_steps = [
-            (sconfig.getfloat('rotation_distance', above=0.) / rail.get_steppers()[0].get_step_dist())
+            (sconfig.getfloat('rotation_distance', above=0.)
+            / rail.get_steppers()[0].get_step_dist())
             for sconfig, rail in zip(stepper_configs, self.rails)]
 
         self.arm2 = [arm**2 for arm in arm_lengths]
@@ -165,7 +166,8 @@ class DeltaKinematics:
 
 # Delta parameter calibration for DELTA_CALIBRATE tool
 class DeltaCalibration:
-    def __init__(self, radius, angles, arms, endstops, stepdists, rotation_steps = None):
+    def __init__(self, radius, angles, arms, endstops, stepdists,
+                rotation_steps = None):
         self.radius = radius
         self.angles = angles
         self.arms = arms
@@ -228,7 +230,7 @@ class DeltaCalibration:
 
             if self.rotation_steps is not None:
                 configfile.set('stepper_'+axis, 'rotation_distance',
-                           "%.6f" % (self.rotation_steps[i] * self.stepdists[i]))
+                    "%.6f" % (self.rotation_steps[i] * self.stepdists[i]))
 
         gcode = configfile.get_printer().lookup_object("gcode")
         gcode.respond_info(
