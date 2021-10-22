@@ -88,7 +88,7 @@ static const struct spi_info spi_bus[] = {
     { SPI5, GPIO('H', 7), GPIO('F', 11), GPIO('H', 6), SPI_FUNCTION },
 #endif
 #ifdef SPI6
-    { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), SPI_FUNCTION },
+    { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), GPIO_FUNCTION(5)},
 #endif
 };
 
@@ -119,9 +119,12 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         div++;
 
 #if CONFIG_MACH_STM32H7
-    uint32_t cr1 = (SPI_CR1_SPE | SPI_CR1_SSI);
-    spi->CFG1 |= (div << SPI_CFG1_MBR_Pos);
-    spi->CFG2 |= ((mode << SPI_CFG2_CPHA_Pos) | SPI_CFG2_MASTER | SPI_CFG2_SSM);
+    uint32_t cr1 = SPI_CR1_SPE;
+    spi->CFG1 |= (div << SPI_CFG1_MBR_Pos) | (7 << SPI_CFG1_DSIZE_Pos);
+    CLEAR_BIT(spi->CFG1, SPI_CFG1_CRCSIZE);
+    spi->CFG2 |= ((mode << SPI_CFG2_CPHA_Pos) | SPI_CFG2_MASTER | SPI_CFG2_SSM
+                   | SPI_CFG2_AFCNTR | SPI_CFG2_SSOE);
+    spi->CR1 |= SPI_CR1_SSI;
 #else
     uint32_t cr1 = ((mode << SPI_CR1_CPHA_Pos) | (div << SPI_CR1_BR_Pos)
                     | SPI_CR1_SPE | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI);
@@ -132,29 +135,49 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 void
 spi_prepare(struct spi_config config)
 {
+#if !CONFIG_MACH_STM32H7
     SPI_TypeDef *spi = config.spi;
     spi->CR1 = config.spi_cr1;
+#endif
 }
 
 void
 spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
+    uint8_t rdata = 0;
     SPI_TypeDef *spi = config.spi;
-    while (len--) {
 #if CONFIG_MACH_STM32H7
+    MODIFY_REG(spi->CR2, SPI_CR2_TSIZE, len);
+    // Enable SPI and start transfer, these MUST be set in this sequence
+    SET_BIT(spi->CR1, SPI_CR1_SPE);
+    SET_BIT(spi->CR1, SPI_CR1_CSTART);
+
+    while (len--) {
         writeb((void *)&spi->TXDR, *data);
-        while (!(spi->SR & SPI_SR_RXWNE))
-            ;
-        uint8_t rdata = readb((void *)&spi->RXDR);
+        while((spi->SR & (SPI_SR_RXWNE | SPI_SR_RXPLVL)) == 0);
+        rdata = readb((void *)&spi->RXDR);
+
+        if (receive_data) {
+            *data = rdata;
+        }
+        data++;
+    }
+
+    while ((spi->SR & SPI_SR_EOT) == 0);
+
+    // Clear flags and disable SPI
+    SET_BIT(spi->IFCR, 0xFFFFFFFF);
+    CLEAR_BIT(spi->CR1, SPI_CR1_SPE);
 #else
+    while (len--) {
         writeb((void *)&spi->DR, *data);
         while (!(spi->SR & SPI_SR_RXNE))
             ;
         uint8_t rdata = readb((void *)&spi->DR);
-#endif
         if (receive_data)
             *data = rdata;
         data++;
     }
+#endif
 }

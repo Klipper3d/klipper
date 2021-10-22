@@ -58,8 +58,7 @@ BOARD_DEFS = {
     },
     'btt-skr-se-bx': {
         'mcu': 'stm32h743xx',
-        'spi_bus': 'swspi',
-        'spi_pins': 'PC11,PC12,PC10',
+        'spi_bus': 'spi3a',
         'cs_pin': 'PA15'
     },
 }

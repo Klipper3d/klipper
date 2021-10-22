@@ -186,7 +186,10 @@ clock_setup(void)
     MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_PLL1RGE_Msk, RCC_PLLCFGR_PLL1RGE_2);
     // Disable unused PLL1 outputs
     MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_DIVR1EN_Msk, 0);
-    MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_DIVQ1EN_Msk, 0);
+    // Enable PLL1Q and set to 100MHz for SPI 1,2,3
+    MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_DIVQ1EN, RCC_PLLCFGR_DIVQ1EN);
+    MODIFY_REG(RCC->PLL1DIVR, RCC_PLL1DIVR_Q1,
+        (pll_freq / FREQ_PERIPH - 1) << RCC_PLL1DIVR_Q1_Pos);
     // This is necessary, default is not 1!
     MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_DIVP1EN_Msk, RCC_PLLCFGR_DIVP1EN);
     // Set multiplier DIVN1 and post divider DIVP1
