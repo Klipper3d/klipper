@@ -5,31 +5,30 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import chelper
+from . import shaper_defs
 
 class InputShaper:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect", self.connect)
         self.toolhead = None
+        self.shapers = {s.name : s.init_func for s in shaper_defs.INPUT_SHAPERS}
         self.damping_ratio_x = config.getfloat(
-                'damping_ratio_x', 0.1, minval=0., maxval=1.)
+                'damping_ratio_x', shaper_defs.DEFAULT_DAMPING_RATIO,
+                minval=0., maxval=1.)
         self.damping_ratio_y = config.getfloat(
-                'damping_ratio_y', 0.1, minval=0., maxval=1.)
+                'damping_ratio_y', shaper_defs.DEFAULT_DAMPING_RATIO,
+                minval=0., maxval=1.)
         self.shaper_freq_x = config.getfloat('shaper_freq_x', 0., minval=0.)
         self.shaper_freq_y = config.getfloat('shaper_freq_y', 0., minval=0.)
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.shapers = {None: None
-                , 'zv': ffi_lib.INPUT_SHAPER_ZV
-                , 'zvd': ffi_lib.INPUT_SHAPER_ZVD
-                , 'mzv': ffi_lib.INPUT_SHAPER_MZV
-                , 'ei': ffi_lib.INPUT_SHAPER_EI
-                , '2hump_ei': ffi_lib.INPUT_SHAPER_2HUMP_EI
-                , '3hump_ei': ffi_lib.INPUT_SHAPER_3HUMP_EI}
-        shaper_type = config.get('shaper_type', 'mzv')
-        self.shaper_type_x = config.getchoice(
-                'shaper_type_x', self.shapers, shaper_type)
-        self.shaper_type_y = config.getchoice(
-                'shaper_type_y', self.shapers, shaper_type)
+        self.shaper_type_x = config.get('shaper_type_x', 'mzv').lower()
+        if self.shaper_type_x not in self.shapers:
+            raise config.error(
+                    'Unsupported shaper type: %s' % (self.shaper_type_x,))
+        self.shaper_type_y = config.get('shaper_type_y', 'mzv').lower()
+        if self.shaper_type_y not in self.shapers:
+            raise config.error(
+                    'Unsupported shaper type: %s' % (self.shaper_type_y,))
         self.saved_shaper_freq_x = self.saved_shaper_freq_y = 0.
         self.stepper_kinematics = []
         self.orig_stepper_kinematics = []
@@ -58,18 +57,25 @@ class InputShaper:
         self._set_input_shaper(self.shaper_type_x, self.shaper_type_y,
                                self.shaper_freq_x, self.shaper_freq_y,
                                self.damping_ratio_x, self.damping_ratio_y)
+    def _get_shaper(self, shaper_type, shaper_freq, damping_ratio):
+        if not shaper_freq:
+            return shaper_defs.get_none_shaper()
+        A, T = self.shapers[shaper_type](shaper_freq, damping_ratio)
+        return len(A), A, T
     def _set_input_shaper(self, shaper_type_x, shaper_type_y
                           , shaper_freq_x, shaper_freq_y
                           , damping_ratio_x, damping_ratio_y):
         if (shaper_type_x != self.shaper_type_x
                 or shaper_type_y != self.shaper_type_y):
             self.toolhead.flush_step_generation()
+        n_x, A_x, T_x = self._get_shaper(
+                shaper_type_x, shaper_freq_x, damping_ratio_x)
+        n_y, A_y, T_y = self._get_shaper(
+                shaper_type_y, shaper_freq_y, damping_ratio_y)
         ffi_main, ffi_lib = chelper.get_ffi()
         new_delay = max(
-                ffi_lib.input_shaper_get_step_generation_window(
-                    shaper_type_x, shaper_freq_x, damping_ratio_x),
-                ffi_lib.input_shaper_get_step_generation_window(
-                    shaper_type_y, shaper_freq_y, damping_ratio_y))
+                ffi_lib.input_shaper_get_step_generation_window(n_x, A_x, T_x),
+                ffi_lib.input_shaper_get_step_generation_window(n_y, A_y, T_y))
         self.toolhead.note_step_generation_scan_time(new_delay,
                                                      old_delay=self.old_delay)
         self.old_delay = new_delay
@@ -80,10 +86,8 @@ class InputShaper:
         self.damping_ratio_x = damping_ratio_x
         self.damping_ratio_y = damping_ratio_y
         for sk in self.stepper_kinematics:
-            ffi_lib.input_shaper_set_shaper_params(sk
-                    , shaper_type_x, shaper_type_y
-                    , shaper_freq_x, shaper_freq_y
-                    , damping_ratio_x, damping_ratio_y)
+            ffi_lib.input_shaper_set_shaper_params(
+                    sk, len(A_x), A_x, T_x, len(A_y), A_y, T_y)
     def disable_shaping(self):
         if (self.saved_shaper_freq_x or self.saved_shaper_freq_y) and not (
                 self.shaper_freq_x or self.shaper_freq_y):
@@ -113,35 +117,29 @@ class InputShaper:
         shaper_freq_y = gcmd.get_float(
                 'SHAPER_FREQ_Y', self.shaper_freq_y, minval=0.)
 
-        def parse_shaper(shaper_type_str):
-            shaper_type_str = shaper_type_str.lower()
-            if shaper_type_str not in self.shapers:
-                raise gcmd.error(
-                    "Requested shaper type '%s' is not supported" % (
-                        shaper_type_str))
-            return self.shapers[shaper_type_str]
-
-        shaper_type = gcmd.get('SHAPER_TYPE', None, parser=parse_shaper)
+        shaper_type = gcmd.get('SHAPER_TYPE', None)
         if shaper_type is None:
-            shaper_type_x = gcmd.get('SHAPER_TYPE_X', self.shaper_type_x,
-                                     parser=parse_shaper)
-            shaper_type_y = gcmd.get('SHAPER_TYPE_Y', self.shaper_type_y,
-                                     parser=parse_shaper)
+            shaper_type_x = gcmd.get(
+                    'SHAPER_TYPE_X', self.shaper_type_x).lower()
+            shaper_type_y = gcmd.get(
+                    'SHAPER_TYPE_Y', self.shaper_type_y).lower()
         else:
-            shaper_type_x = shaper_type_y = shaper_type
+            shaper_type_x = shaper_type_y = shaper_type.lower()
+        if shaper_type_x not in self.shapers:
+            raise gcmd.error('Unsupported shaper type: %s' % (shaper_type_x,))
+        if shaper_type_y not in self.shapers:
+            raise gcmd.error('Unsupported shaper type: %s' % (shaper_type_y,))
 
         self._set_input_shaper(shaper_type_x, shaper_type_y,
                                shaper_freq_x, shaper_freq_y,
                                damping_ratio_x, damping_ratio_y)
 
-        id_to_name = {v: n for n, v in self.shapers.items()}
         gcmd.respond_info("shaper_type_x:%s shaper_type_y:%s "
                           "shaper_freq_x:%.3f shaper_freq_y:%.3f "
                           "damping_ratio_x:%.6f damping_ratio_y:%.6f"
-                          % (id_to_name[shaper_type_x],
-                             id_to_name[shaper_type_y],
-                             shaper_freq_x, shaper_freq_y,
-                             damping_ratio_x, damping_ratio_y))
+                          % (self.shaper_type_x, self.shaper_type_y,
+                             self.shaper_freq_x, self.shaper_freq_y,
+                             self.damping_ratio_x, self.damping_ratio_y))
 
 def load_config(config):
     return InputShaper(config)
