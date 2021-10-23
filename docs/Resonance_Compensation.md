@@ -447,7 +447,6 @@ No, `input_shaper` feature has pretty much no impact on the print times by
 itself. However, the value of `max_accel` certainly does (tuning of this
 parameter described in [this section](#selecting-max_accel)).
 
-
 ## Technical details
 
 ### Input shapers

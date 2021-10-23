@@ -396,6 +396,7 @@ object is available if z_tilt is defined):
   successfully.
 
 ## neopixel / dotstar
+
 The following information is available for each `[neopixel led_name]` and
 `[dotstar led_name]` defined in printer.cfg:
 - `color_data`:  An array of objects, with each object containing the RGBW
