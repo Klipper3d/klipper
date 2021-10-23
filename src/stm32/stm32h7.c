@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 
-// I2C is not supported, SPI is untested!
+// I2C is not supported
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
