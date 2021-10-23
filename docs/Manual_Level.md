@@ -181,10 +181,10 @@ Recv: ok
 ```
 This means that:
 
-    - front left screw is the reference point you must not change it.
-    - front right screw must be turned clockwise 1 full turn and a quarter turn
-    - rear right screw must be turned counter-clockwise 50 minutes
-    - read left screw must be turned clockwise 2 minutes (not need it's ok)
+- front left screw is the reference point you must not change it.
+- front right screw must be turned clockwise 1 full turn and a quarter turn
+- rear right screw must be turned counter-clockwise 50 minutes
+- read left screw must be turned clockwise 2 minutes (not need it's ok)
 
 Repeat the process several times until you get a good level bed -
 normally when all adjustments are below 6 minutes.
