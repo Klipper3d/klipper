@@ -48,18 +48,6 @@ DECL_ENUMERATION("spi_bus", "spi2b", __COUNTER__);
 DECL_CONSTANT_STR("BUS_PINS_spi2b", "PI2,PI3,PI1");
 #endif
 
-#ifdef SPI5
-DECL_ENUMERATION("spi_bus", "spi5", __COUNTER__);
-DECL_CONSTANT_STR("BUS_PINS_spi5", "PF8,PF9,PF7");
-DECL_ENUMERATION("spi_bus", "spi5a", __COUNTER__);
-DECL_CONSTANT_STR("BUS_PINS_spi5a", "PH7,PF11,PH6");
-#endif
-
-#ifdef SPI6
-DECL_ENUMERATION("spi_bus", "spi6", __COUNTER__);
-DECL_CONSTANT_STR("BUS_PINS_spi6", "PG12,PG14,PG13");
-#endif
-
 #define SPI_FUNCTION GPIO_FUNCTION(CONFIG_MACH_STM32F0 ? 0 : 5)
 
 static const struct spi_info spi_bus[] = {
@@ -81,13 +69,6 @@ static const struct spi_info spi_bus[] = {
     { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), SPI_FUNCTION },
 #endif
     { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), SPI_FUNCTION },
-#ifdef SPI5
-    { SPI5, GPIO('F', 8), GPIO('F', 9), GPIO('F', 7), SPI_FUNCTION },
-    { SPI5, GPIO('H', 7), GPIO('F', 11), GPIO('H', 6), SPI_FUNCTION },
-#endif
-#ifdef SPI6
-    { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), GPIO_FUNCTION(5)},
-#endif
 };
 
 struct spi_config
