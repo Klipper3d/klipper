@@ -176,7 +176,6 @@ gpio_adc_setup(uint32_t pin)
         MODIFY_REG(adc->CFGR, ADC_CFGR_CONT_Msk, 0);
         // Set to 12 bit
         MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, 0b110 << ADC_CFGR_RES_Pos);
-
         // Set hardware oversampling
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_ROVSE_Msk, ADC_CFGR2_ROVSE);
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSR_Msk,

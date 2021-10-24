@@ -11,7 +11,6 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
-// USART6 (STM32H7) is not implemented yet
 // Select the configured serial port
 #if CONFIG_STM32_SERIAL_USART1
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
@@ -84,7 +83,7 @@ serial_init(void)
     uint32_t pclk = get_pclock_frequency((uint32_t)USARTx);
     uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
     USARTx->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
-                 | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
+                   | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
     USARTx->CR1 = CR1_FLAGS;
     armcm_enable_irq(USARTx_IRQHandler, USARTx_IRQn, 0);
 
