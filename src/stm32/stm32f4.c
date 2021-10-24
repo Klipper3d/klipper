@@ -68,6 +68,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHB1ENR;
 }
 
+#define STM_OSPEED 0x2 // ~50Mhz at 40pF on STM32F4 (~25Mhz at 40pF on STM32F2)
+
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
@@ -88,7 +90,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
     regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
     regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
-    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
+    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (STM_OSPEED << m_shift);
 }
 
 #define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)

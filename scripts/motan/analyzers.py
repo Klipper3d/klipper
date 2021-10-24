@@ -3,7 +3,7 @@
 # Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import collections
+import math, collections
 import readlog
 
 
@@ -45,6 +45,65 @@ class GenDerivative:
                  for i in range(len(data)-1)]
         return [deriv[0]] + deriv
 AHandlers["derivative"] = GenDerivative
+
+# Calculate an integral (accel to velocity, or velocity to position)
+class GenIntegral:
+    ParametersMin = 1
+    ParametersMax = 3
+    DataSets = [
+        ('integral(<dataset>)', 'Integral of the given dataset'),
+        ('integral(<dataset1>,<dataset2>)',
+         'Integral with dataset2 as reference'),
+        ('integral(<dataset1>,<dataset2>,<half_life>)',
+         'Integral with weighted half-life time'),
+    ]
+    def __init__(self, amanager, name_parts):
+        self.amanager = amanager
+        self.source = name_parts[1]
+        amanager.setup_dataset(self.source)
+        self.ref = None
+        self.half_life = 0.015
+        if len(name_parts) >= 3:
+            self.ref = name_parts[2]
+            amanager.setup_dataset(self.ref)
+            if len(name_parts) == 4:
+                self.half_life = float(name_parts[3])
+    def get_label(self):
+        label = self.amanager.get_label(self.source)
+        lname = label['label']
+        units = label['units']
+        if '(mm/s)' in units:
+            rep = [('Velocity', 'Position'), ('(mm/s)', '(mm)')]
+        elif '(mm/s^2)' in units:
+            rep = [('Acceleration', 'Velocity'), ('(mm/s^2)', '(mm/s)')]
+        else:
+            return {'label': 'Integral', 'units': 'Unknown'}
+        for old, new in rep:
+            lname = lname.replace(old, new).replace(old.lower(), new.lower())
+            units = units.replace(old, new).replace(old.lower(), new.lower())
+        return {'label': lname, 'units': units}
+    def generate_data(self):
+        seg_time = self.amanager.get_segment_time()
+        src = self.amanager.get_datasets()[self.source]
+        offset = sum(src) / len(src)
+        total = 0.
+        ref = None
+        if self.ref is not None:
+            ref = self.amanager.get_datasets()[self.ref]
+            offset -= (ref[-1] - ref[0]) / (len(src) * seg_time)
+            total = ref[0]
+            src_weight = 1.
+            if self.half_life:
+                src_weight = math.exp(math.log(.5) * seg_time / self.half_life)
+            ref_weight = 1. - src_weight
+        data = [0.] * len(src)
+        for i, v in enumerate(src):
+            total += (v - offset) * seg_time
+            if ref is not None:
+                total = src_weight * total + ref_weight * ref[i]
+            data[i] = total
+        return data
+AHandlers["integral"] = GenIntegral
 
 # Calculate a kinematic stepper position from the toolhead requested position
 class GenKinematicPosition:
@@ -108,7 +167,7 @@ class GenCorexyPosition:
         axis = 'x'
         if not self.is_plus:
             axis = 'y'
-        return {'label': 'Derived %s Position' % (axis,),
+        return {'label': 'Derived %s position' % (axis,),
                 'units': 'Position\n(mm)'}
     def generate_data(self):
         datasets = self.amanager.get_datasets()
