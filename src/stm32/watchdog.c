@@ -7,23 +7,6 @@
 #include "autoconf.h" // CONFIG_MACH_STM32H7
 #include "internal.h" // IWDG
 #include "sched.h" // DECL_TASK
-#include "autoconf.h" // CONFIG_MACH_STM32H7
-
-#if CONFIG_MACH_STM32H7 // stm32h7 libraries only define IWDG1 and IWDG2
-#define IWDG IWDG1
-#endif
-
-#if CONFIG_MACH_STM32H7 // stm32h7 libraries only define IWDG1 and IWDG2
-#define IWDG IWDG1
-#endif
-
-#if CONFIG_MACH_STM32H7 // stm32h7 libraries only define IWDG1 and IWDG2
-#define IWDG IWDG1
-#endif
-
-#if CONFIG_MACH_STM32H7 // stm32h7 libraries only define IWDG1 and IWDG2
-#define IWDG IWDG1
-#endif
 
 #if CONFIG_MACH_STM32H7 // stm32h7 libraries only define IWDG1 and IWDG2
 #define IWDG IWDG1

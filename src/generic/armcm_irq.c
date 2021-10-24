@@ -7,7 +7,6 @@
 #include "board/internal.h" // __CORTEX_M
 #include "irq.h" // irqstatus_t
 #include "sched.h" // DECL_SHUTDOWN
-#include "autoconf.h" // CONFIG_MACH_STM32H7
 
 void
 irq_disable(void)
