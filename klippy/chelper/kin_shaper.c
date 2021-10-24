@@ -38,12 +38,12 @@ shift_pulses(struct shaper_pulses *sp)
         sp->pulses[i].t -= ts;
 }
 
-static void
+static int
 init_shaper(int n, double a[], double t[], struct shaper_pulses *sp)
 {
     if (n < 0 || n > ARRAY_SIZE(sp->pulses)) {
         sp->num_pulses = 0;
-        return;
+        return -1;
     }
     int i;
     double sum_a = 0.;
@@ -57,6 +57,7 @@ init_shaper(int n, double a[], double t[], struct shaper_pulses *sp)
     }
     sp->num_pulses = n;
     shift_pulses(sp);
+    return 0;
 }
 
 
@@ -192,21 +193,20 @@ shaper_note_generation_time(struct input_shaper *is)
 }
 
 int __visible
-input_shaper_set_shaper_params(struct stepper_kinematics *sk
-                               , int n_x, double a_x[], double t_x[]
-                               , int n_y, double a_y[], double t_y[])
+input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
+                               , int n, double a[], double t[])
 {
+    if (axis != 'x' && axis != 'y')
+        return -1;
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
-    if (is->orig_sk->active_flags & AF_X)
-        init_shaper(n_x, a_x, t_x, &is->sx);
+    struct shaper_pulses *sp = axis == 'x' ? &is->sx : &is->sy;
+    int status = 0;
+    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y))
+        status = init_shaper(n, a, t, sp);
     else
-        is->sx.num_pulses = 0;
-    if (is->orig_sk->active_flags & AF_Y)
-        init_shaper(n_y, a_y, t_y, &is->sy);
-    else
-        is->sy.num_pulses = 0;
+        sp->num_pulses = 0;
     shaper_note_generation_time(is);
-    return 0;
+    return status;
 }
 
 double __visible
