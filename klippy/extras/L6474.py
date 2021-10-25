@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import math, logging
-from . import bus, L647x
+from . import bus, L647x, tmc
 
 
 commands = {"CMD_ENABLE" : 0xB8 , "CMD_DISABLE" : 0xA8 ,\
@@ -252,7 +252,7 @@ class MCU_L647x_SPI:
 class L6474:
     def __init__(self, config):
         # Setup mcu communication
-        self.fields = L647x.FieldHelper(Fields, SignedFields, FieldFormatters)
+        self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_L647x = MCU_L647x_SPI(config, Registers, self.fields)
         # Register commands
         current_helper = L647xCurrentHelper(config, self.mcu_L647x)
