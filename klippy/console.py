@@ -47,7 +47,7 @@ class KeyboardReader:
         reactor.register_fd(self.fd, self.process_kbd)
         reactor.register_callback(self.connect)
         self.local_commands = {
-            "PINS": self.command_PINS, "SET": self.command_SET,
+            "SET": self.command_SET,
             "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
             "SUPPRESS": self.command_SUPPRESS, "STATS": self.command_STATS,
             "LIST": self.command_LIST, "HELP": self.command_HELP,
@@ -91,9 +91,6 @@ class KeyboardReader:
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = self.clocksync.get_clock(eventtime)
-    def command_PINS(self, parts):
-        mcu_type = self.ser.get_msgparser().get_constant('MCU')
-        self.pins.add_pin_mapping(mcu_type, parts[1])
     def command_SET(self, parts):
         val = parts[2]
         try:
