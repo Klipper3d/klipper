@@ -18,6 +18,7 @@
  * USB transfer memory
  ****************************************************************/
 #if CONFIG_STM32_USB_PB14_PB15
+
 #define OTG ((USB_OTG_GlobalTypeDef*)USB_OTG_HS_PERIPH_BASE)
 #define OTGD ((USB_OTG_DeviceTypeDef*)                          \
                       (USB_OTG_HS_PERIPH_BASE + USB_OTG_DEVICE_BASE))
@@ -30,7 +31,14 @@
                    (USB_OTG_HS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
                             + ((EP) << 5)))
 #define OTG_IRQ OTG_HS_IRQn
+#define USBOTGEN RCC_AHB1ENR_USB1OTGHSEN
+#define GPIO_D_NEG GPIO('B', 14)
+#define GPIO_D_POS GPIO('B', 15)
+#define GPIO_FUNC GPIO_FUNCTION(12)
+DECL_CONSTANT_STR("RESERVE_PINS_USB1", "PB14,PB15");
+
 #else
+
 #define OTG ((USB_OTG_GlobalTypeDef*)USB_OTG_FS_PERIPH_BASE)
 #define OTGD ((USB_OTG_DeviceTypeDef*)                          \
               (USB_OTG_FS_PERIPH_BASE + USB_OTG_DEVICE_BASE))
@@ -43,6 +51,12 @@
                    (USB_OTG_FS_PERIPH_BASE + USB_OTG_OUT_ENDPOINT_BASE  \
                     + ((EP) << 5)))
 #define OTG_IRQ OTG_FS_IRQn
+#define USBOTGEN RCC_AHB1ENR_USB2OTGHSEN
+#define GPIO_D_NEG GPIO('A', 11)
+#define GPIO_D_POS GPIO('A', 12)
+#define GPIO_FUNC GPIO_FUNCTION(10)
+DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
+
 #endif
 
 static void
@@ -396,11 +410,6 @@ OTG_FS_IRQHandler(void)
     }
 }
 
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
-#if CONFIG_STM32_USB_PB14_PB15
-DECL_CONSTANT_STR("RESERVE_PINS_USB1", "PB14,PB15");
-#endif
-
 // Initialize the usb controller
 void
 usb_init(void)
@@ -410,11 +419,7 @@ usb_init(void)
     if (READ_BIT(PWR->CR3, PWR_CR3_USB33RDY) != (PWR_CR3_USB33RDY) ? 1 : 0) {
         SET_BIT(PWR->CR3, PWR_CR3_USB33DEN);
     }
-#if CONFIG_STM32_USB_PB14_PB15
-    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB1OTGHSEN);
-#else
-    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSEN);
-#endif
+    SET_BIT(RCC->AHB1ENR, USBOTGEN);
 #else
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 #endif
@@ -430,14 +435,8 @@ usb_init(void)
     OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
 #endif
 
-#if CONFIG_STM32_USB_PB14_PB15
-    gpio_peripheral(GPIO('B', 14), GPIO_FUNCTION(12), 0);
-    gpio_peripheral(GPIO('B', 15), GPIO_FUNCTION(12), 0);
-#else
-    // Route pins
-    gpio_peripheral(GPIO('A', 11), GPIO_FUNCTION(10), 0);
-    gpio_peripheral(GPIO('A', 12), GPIO_FUNCTION(10), 0);
-#endif
+    gpio_peripheral(GPIO_D_NEG, GPIO_FUNC, 0);
+    gpio_peripheral(GPIO_D_POS, GPIO_FUNC, 0);
 
     // Setup USB packet memory
     fifo_configure();
