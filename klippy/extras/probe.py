@@ -112,7 +112,7 @@ class PrinterProbe:
         return self.lift_speed
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
-    def _probe(self, speed):
+    def _probe(self, speed, apply_offset = False):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
         if 'z' not in toolhead.get_status(curtime)['homed_axes']:
@@ -127,6 +127,11 @@ class PrinterProbe:
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
             raise self.printer.command_error(reason)
+        if apply_offset:
+            offsets = self.get_offsets()
+            epos = (epos[0] - offsets[0],
+                epos[1] - offsets[1],
+                epos[2] - offsets[2])
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                 % (epos[0], epos[1], epos[2]))
         return epos[:3]
@@ -155,6 +160,7 @@ class PrinterProbe:
         samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
                                        self.samples_retries, minval=0)
         samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
+        apply_offset = gcmd.get_int("REPORT_PROBE_POSITION", 0)
         must_notify_multi_probe = not self.multi_probe_pending
         if must_notify_multi_probe:
             self.multi_probe_begin()
@@ -163,7 +169,7 @@ class PrinterProbe:
         positions = []
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(speed)
+            pos = self._probe(speed, apply_offset)
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
