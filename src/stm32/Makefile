@@ -76,24 +76,6 @@ flash: $(OUT)klipper.bin lib/hidflash/hid-flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" -s "$(CONFIG_FLASH_START)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
 
-# STM32H7 bootloader needs 115200 baud rate
-ifeq ($(CONFIG_MACH_STM32H7), y)
-BAUD_RATE = 115200
-else
-BAUD_RATE = 57600
-endif
-
-# Use a GPIO Pin reset sequence if both pins are specified. E.g. RST=27 BOOT0=17 when
-# the mcu's RESET is connected to GPIO 27 of the host ...
-RST = ""
-BOOT0 = ""
-ifneq ($(RST), "")
-RESET_SEQUENCE = -R -i $(BOOT0),$(RST),-$(RST),$(RST),,:-$(BOOT0),-$(RST),$(RST)
-# BOOT0 is driven high for entering bootloader (add 300ms delay before attempting a connection)
-else
-RESET_SEQUENCE =
-endif
-
 serialflash: $(OUT)klipper.bin
-	@echo "  Flashing $< to $(FLASH_DEVICE) with $(BAUD_RATE) baud via stm32flash"
-	$(Q)stm32flash -w $< -v -b $(BAUD_RATE) $(RESET_SEQUENCE) -g 0 $(FLASH_DEVICE)
+	@echo "  Flashing $< to $(FLASH_DEVICE) via stm32flash"
+	$(Q)stm32flash -w $< -v -g 0 $(FLASH_DEVICE)
