@@ -50,9 +50,16 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4"
     },
-    'fysetc-spider': {
+    'fysetc-s6': {
         'mcu': "stm32f446xx",
         'spi_bus': "spi1",
+        "cs_pin": "PA4",
+        "current_firmware_path": "OLD.BIN"
+    },
+    'fysetc-spider': {
+        'mcu': "stm32f446xx",
+        'spi_bus': "swspi",
+        "spi_pins": "PA6,PA7,PA5",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
     }
@@ -87,8 +94,8 @@ BOARD_ALIASES = {
     'btt-gtr-v1': BOARD_DEFS['btt-gtr'],
     'mks-robin-e3d': BOARD_DEFS['mks-robin-e3'],
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
-    'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
-    'fysetc-s6-v2': BOARD_DEFS['fysetc-spider']
+    'fysetc-s6-v1.2': BOARD_DEFS['fysetc-s6'],
+    'fysetc-s6-v2': BOARD_DEFS['fysetc-s6']
 }
 
 def list_boards():
