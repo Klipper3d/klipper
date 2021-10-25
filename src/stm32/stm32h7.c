@@ -13,7 +13,6 @@
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
-#include "gpio.h"
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 

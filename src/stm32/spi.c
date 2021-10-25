@@ -96,7 +96,6 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     uint32_t div = 0;
     while ((pclk >> (div + 1)) > rate && div < 7)
         div++;
-
     uint32_t cr1 = ((mode << SPI_CR1_CPHA_Pos) | (div << SPI_CR1_BR_Pos)
                     | SPI_CR1_SPE | SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI);
     return (struct spi_config){ .spi = spi, .spi_cr1 = cr1 };
@@ -113,7 +112,6 @@ void
 spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
-    uint8_t rdata = 0;
     SPI_TypeDef *spi = config.spi;
     while (len--) {
         writeb((void *)&spi->DR, *data);
