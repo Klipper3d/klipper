@@ -10,8 +10,6 @@
 #include "gpio.h" // gpio_pwm_write
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
-#include "autoconf.h" // CONFIG_MACH_STM32H7
-
 
 #define MAX_PWM 255
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
