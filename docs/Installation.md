@@ -30,7 +30,7 @@ ssh utility to connect to the Raspberry Pi (ssh pi@octopi -- password
 is "raspberry") and run the following commands:
 
 ```
-git clone https://github.com/KevinOConnor/klipper
+git clone https://github.com/Klipper3d/klipper
 ./klipper/scripts/install-octopi.sh
 ```
 

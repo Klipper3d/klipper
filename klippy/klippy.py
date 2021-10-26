@@ -256,6 +256,21 @@ class Printer:
 # Startup
 ######################################################################
 
+def import_test():
+    # Import all optional modules (used as a build test)
+    dname = os.path.dirname(__file__)
+    for mname in ['extras', 'kinematics']:
+        for fname in os.listdir(os.path.join(dname, mname)):
+            if fname.endswith('.py') and fname != '__init__.py':
+                module_name = fname[:-3]
+            else:
+                iname = os.path.join(dname, mname, fname, '__init__.py')
+                if not os.path.exists(iname):
+                    continue
+                module_name = fname
+            importlib.import_module(mname + '.' + module_name)
+    sys.exit(0)
+
 def arg_dictionary(option, opt_str, value, parser):
     key, fname = "dictionary", value
     if '=' in value:
@@ -284,7 +299,11 @@ def main():
     opts.add_option("-d", "--dictionary", dest="dictionary", type="string",
                     action="callback", callback=arg_dictionary,
                     help="file to read for mcu protocol dictionary")
+    opts.add_option("--import-test", action="store_true",
+                    help="perform an import module test")
     options, args = opts.parse_args()
+    if options.import_test:
+        import_test()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
     start_args = {'config_file': args[0], 'apiserver': options.apiserver,

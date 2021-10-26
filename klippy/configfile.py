@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, glob, re, time, logging, ConfigParser as configparser, StringIO
+import sys, os, glob, re, time, logging, configparser, io
 
 error = configparser.Error
 
@@ -116,6 +116,17 @@ class ConfigWrapper:
     def get_prefix_options(self, prefix):
         return [o for o in self.fileconfig.options(self.section)
                 if o.startswith(prefix)]
+    def deprecate(self, option, value=None):
+        if not self.fileconfig.has_option(self.section, option):
+            return
+        if value is None:
+            msg = ("Option '%s' in section '%s' is deprecated."
+                   % (option, self.section))
+        else:
+            msg = ("Value '%s' in option '%s' in section '%s' is deprecated."
+                   % (value, option, self.section))
+        pconfig = self.printer.lookup_object("configfile")
+        pconfig.deprecate(self.section, option, value, msg)
 
 AUTOSAVE_HEADER = """
 #*# <---------------------- SAVE_CONFIG ---------------------->
@@ -127,8 +138,10 @@ class PrinterConfig:
     def __init__(self, printer):
         self.printer = printer
         self.autosave = None
+        self.deprecated = {}
         self.status_raw_config = {}
         self.status_settings = {}
+        self.status_warnings = []
         self.save_config_pending = False
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
@@ -137,7 +150,7 @@ class PrinterConfig:
         return self.printer
     def _read_config_file(self, filename):
         try:
-            f = open(filename, 'rb')
+            f = open(filename, 'r')
             data = f.read()
             f.close()
         except:
@@ -198,7 +211,7 @@ class PrinterConfig:
             return
         data = '\n'.join(buffer)
         del buffer[:]
-        sbuffer = StringIO.StringIO(data)
+        sbuffer = io.StringIO(data)
         fileconfig.readfp(sbuffer, filename)
     def _resolve_include(self, source_filename, include_spec, fileconfig,
                          visited):
@@ -242,11 +255,15 @@ class PrinterConfig:
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)
     def _build_config_wrapper(self, data, filename):
-        fileconfig = configparser.RawConfigParser()
+        if sys.version_info.major >= 3:
+            fileconfig = configparser.RawConfigParser(
+                strict=False, inline_comment_prefixes=(';', '#'))
+        else:
+            fileconfig = configparser.RawConfigParser()
         self._parse_config(data, filename, fileconfig, set())
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):
-        sfile = StringIO.StringIO()
+        sfile = io.StringIO()
         config.fileconfig.write(sfile)
         return sfile.getvalue().strip()
     def read_config(self, filename):
@@ -260,7 +277,6 @@ class PrinterConfig:
         autosave_data = self._strip_duplicates(autosave_data, regular_config)
         self.autosave = self._build_config_wrapper(autosave_data, filename)
         cfg = self._build_config_wrapper(regular_data + autosave_data, filename)
-        self._build_status(cfg)
         return cfg
     def check_unused_options(self, config):
         fileconfig = config.fileconfig
@@ -282,25 +298,39 @@ class PrinterConfig:
                 if (section, option) not in access_tracking:
                     raise error("Option '%s' is not valid in section '%s'"
                                 % (option, section))
-        # Setup self.status_settings
-        self.status_settings = {}
-        for (section, option), value in config.access_tracking.items():
-            self.status_settings.setdefault(section, {})[option] = value
+        # Setup get_status()
+        self._build_status(config)
     def log_config(self, config):
         lines = ["===== Config file =====",
                  self._build_config_string(config),
                  "======================="]
         self.printer.set_rollover_info("config", "\n".join(lines))
     # Status reporting
+    def deprecate(self, section, option, value=None, msg=None):
+        self.deprecated[(section, option, value)] = msg
     def _build_status(self, config):
         self.status_raw_config.clear()
         for section in config.get_prefix_sections(''):
             self.status_raw_config[section.get_name()] = section_status = {}
             for option in section.get_prefix_options(''):
                 section_status[option] = section.get(option, note_valid=False)
+        self.status_settings = {}
+        for (section, option), value in config.access_tracking.items():
+            self.status_settings.setdefault(section, {})[option] = value
+        self.status_warnings = []
+        for (section, option, value), msg in self.deprecated.items():
+            if value is None:
+                res = {'type': 'deprecated_option'}
+            else:
+                res = {'type': 'deprecated_value', 'value': value}
+            res['message'] = msg
+            res['section'] = section
+            res['option'] = option
+            self.status_warnings.append(res)
     def get_status(self, eventtime):
         return {'config': self.status_raw_config,
                 'settings': self.status_settings,
+                'warnings': self.status_warnings,
                 'save_config_pending': self.save_config_pending}
     # Autosave functions
     def set(self, section, option, value):
@@ -357,7 +387,7 @@ class PrinterConfig:
         logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                      cfgname, backup_name)
         try:
-            f = open(temp_name, 'wb')
+            f = open(temp_name, 'w')
             f.write(data)
             f.close()
             os.rename(cfgname, backup_name)

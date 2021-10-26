@@ -464,7 +464,7 @@ class BME280:
 
     def get_status(self, eventtime):
         data = {
-            'temperature': self.temp,
+            'temperature': round(self.temp, 2),
             'pressure': self.pressure
         }
         if self.chip_type in ('BME280', 'BME680'):

@@ -69,7 +69,7 @@ class ScrewsTiltAdjust:
                     or (not is_clockwise_thread and self.direction == 'CCW'))
             min_or_max = max if use_max else min
             i_base, z_base = min_or_max(
-                enumerate([pos[2] for pos in positions]), key=lambda (i, z): z)
+                enumerate([pos[2] for pos in positions]), key=lambda v: v[1])
         else:
             # First screw is the base position used for comparison
             i_base, z_base = 0, positions[0][2]

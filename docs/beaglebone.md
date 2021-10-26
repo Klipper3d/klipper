@@ -15,7 +15,7 @@ Then ssh into the beaglebone machine (ssh debian@beaglebone --
 password is "temppwd") and install Klipper by running the following
 commands:
 ```
-git clone https://github.com/KevinOConnor/klipper
+git clone https://github.com/Klipper3d/klipper
 ./klipper/scripts/install-beaglebone.sh
 ```
 

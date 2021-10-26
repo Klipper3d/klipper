@@ -2,8 +2,8 @@
 
 # Site and directory configuration
 site_name: Klipper documentation
-repo_url: https://github.com/KevinOConnor/klipper
-repo_name: KevinOConnor/klipper
+repo_url: https://github.com/Klipper3d/klipper
+repo_name: Klipper3d/klipper
 edit_uri: blob/master/docs/
 use_directory_urls: False
 docs_dir: '../'

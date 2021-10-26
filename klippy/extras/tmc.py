@@ -374,8 +374,11 @@ class TMCCommandHelper:
         cpos = None
         if self.stepper is not None and self.mcu_phase_offset is not None:
             cpos = self.stepper.mcu_to_commanded_position(self.mcu_phase_offset)
+        current = self.current_helper.get_current()
         res = {'mcu_phase_offset': self.mcu_phase_offset,
-               'phase_offset_position': cpos}
+               'phase_offset_position': cpos,
+               'run_current': current[0],
+               'hold_current': current[1]}
         res.update(self.echeck_helper.get_status(eventtime))
         return res
     # DUMP_TMC support

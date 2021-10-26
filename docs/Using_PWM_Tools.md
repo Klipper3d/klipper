@@ -24,7 +24,7 @@ and to disconnect the laser when it is not needed.
 Also, you should configure a safety timeout,
 so that when your host or MCU encounters an error, the tool will stop.
 
-For an example configuration, see `config/sample-pwm-tool-cfg`.
+For an example configuration, see [config/sample-pwm-tool.cfg](/config/sample-pwm-tool.cfg).
 
 ## Current Limitations
 
