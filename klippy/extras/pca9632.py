@@ -3,7 +3,7 @@
 # Copyright (C) 2021  Ricardo Alcantara <ricardo@vulcanolabs.xyz>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-from mcp4018 import SoftwareI2C
+from .mcp4018 import SoftwareI2C
 
 # Register addresses
 PCA9632_MODE1 = 0x00
