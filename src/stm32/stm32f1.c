@@ -68,7 +68,6 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->APB2ENR;
 }
 
-
 static void stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
 {
     // The MAPR register is a mix of write only and r/w bits
@@ -79,6 +78,8 @@ static void stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
     mapr |= mapr_value;
     AFIO->MAPR = mapr;
 }
+
+#define STM_OSPEED 0x1 // ~10Mhz at 50pF
 
 // Set the mode and extended function of a pin
 void
@@ -94,20 +95,20 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     if (mode == GPIO_INPUT) {
         cfg = pullup ? 0x8 : 0x4;
     } else if (mode == GPIO_OUTPUT) {
-        cfg = 0x1;
+        cfg = STM_OSPEED;
     } else if (mode == (GPIO_OUTPUT | GPIO_OPEN_DRAIN)) {
-        cfg = 0x5;
+        cfg = 0x4 | STM_OSPEED;
     } else if (mode == GPIO_ANALOG) {
         cfg = 0x0;
     } else {
         if (mode & GPIO_OPEN_DRAIN)
             // Alternate function with open-drain mode
-            cfg = 0xd;
+            cfg = 0xc | STM_OSPEED;
         else if (pullup > 0)
             // Alternate function input pins use GPIO_INPUT mode on the stm32f1
             cfg = 0x8;
         else
-            cfg = 0x9;
+            cfg = 0x8 | STM_OSPEED;
     }
     if (pos & 0x8)
         regs->CRH = (regs->CRH & ~msk) | (cfg << shift);

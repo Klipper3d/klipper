@@ -75,7 +75,7 @@ class Temperature_HOST:
 
     def get_status(self, eventtime):
         return {
-            'temperature': self.temp,
+            'temperature': round(self.temp, 2),
         }
 
 

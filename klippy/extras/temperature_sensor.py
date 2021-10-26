@@ -33,9 +33,9 @@ class PrinterSensorGeneric:
         return False, '%s: temp=%.1f' % (self.name, self.last_temp)
     def get_status(self, eventtime):
         return {
-            'temperature': self.last_temp,
-            'measured_min_temp': self.measured_min,
-            'measured_max_temp': self.measured_max
+            'temperature': round(self.last_temp, 2),
+            'measured_min_temp': round(self.measured_min, 2),
+            'measured_max_temp': round(self.measured_max, 2)
         }
 
 def load_config_prefix(config):
