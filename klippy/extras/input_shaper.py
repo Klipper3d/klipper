@@ -12,7 +12,8 @@ class InputShaperParams:
     def __init__(self, axis, config):
         self.axis = axis
         self.shapers = {s.name : s.init_func for s in shaper_defs.INPUT_SHAPERS}
-        self.shaper_type = config.get('shaper_type_' + axis, 'mzv').lower()
+        shaper_type = config.get('shaper_type', 'mzv')
+        self.shaper_type = config.get('shaper_type_' + axis, shaper_type)
         if self.shaper_type not in self.shapers:
             raise config.error(
                     'Unsupported shaper type: %s' % (self.shaper_type,))
