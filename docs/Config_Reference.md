@@ -153,6 +153,11 @@ microsteps:
 #   gear_ratio is specified then rotation_distance specifies the
 #   distance the axis travels for one full rotation of the final gear.
 #   The default is to not use a gear ratio.
+#step_pulse_duration:
+#   The minimum time between the step pulse signal edge and the
+#   following "unstep" signal edge. This is also used to set the
+#   minimum time between a step pulse and a direction change signal.
+#   The default is 0.000002 (which is 2us).
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor then it enables "multi-mcu

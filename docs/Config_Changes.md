@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20211104: The "step pulse duration" option in "make menuconfig" has
+been removed. A new `step_pulse_duration` setting in the
+[stepper config section](Config_Reference.md#stepper) should be set
+for all steppers that need a custom pulse duration.
+
 20211102: Several deprecated features have been removed.  The stepper
 `step_distance` option has been removed (deprecated on 20201222).  The
 `rpi_temperature` sensor alias has been removed (deprecated on

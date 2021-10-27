@@ -14,12 +14,11 @@
 #include "stepper.h" // stepper_event
 #include "trsync.h" // trsync_add_signal
 
-DECL_CONSTANT("STEP_DELAY", CONFIG_STEP_DELAY);
-
-
-/****************************************************************
- * Steppers
- ****************************************************************/
+#if CONFIG_INLINE_STEPPER_HACK && CONFIG_MACH_AVR
+ #define HAVE_AVR_OPTIMIZATION 1
+#else
+ #define HAVE_AVR_OPTIMIZATION 0
+#endif
 
 struct stepper_move {
     struct move_node node;
@@ -35,13 +34,8 @@ struct stepper {
     struct timer time;
     uint32_t interval;
     int16_t add;
-#if CONFIG_STEP_DELAY <= 0
-    uint_fast16_t count;
-#define next_step_time time.waketime
-#else
     uint32_t count;
-    uint32_t next_step_time;
-#endif
+    uint32_t next_step_time, step_pulse_ticks;
     struct gpio_out step_pin, dir_pin;
     uint32_t position;
     struct move_queue_head mq;
@@ -53,8 +47,8 @@ struct stepper {
 enum { POSITION_BIAS=0x40000000 };
 
 enum {
-    SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
-    SF_NEED_RESET=1<<4
+    SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_NEED_RESET=1<<3,
+    SF_SINGLE_SCHED=1<<4, SF_HAVE_ADD=1<<5
 };
 
 // Setup a stepper for the next move in its queue
@@ -70,18 +64,17 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     // Load next 'struct stepper_move' into 'struct stepper'
     struct move_node *mn = move_queue_pop(&s->mq);
     struct stepper_move *m = container_of(mn, struct stepper_move, node);
-    s->next_step_time += m->interval;
     s->add = m->add;
     s->interval = m->interval + m->add;
-    if (CONFIG_STEP_DELAY <= 0) {
-        if (CONFIG_MACH_AVR)
-            // On AVR see if the add can be optimized away
-            s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
+    if (HAVE_AVR_OPTIMIZATION && s->flags & SF_SINGLE_SCHED) {
+        s->time.waketime += m->interval;
+        s->flags = m->add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
         s->count = m->count;
     } else {
         // On faster mcus, it is necessary to schedule unstep events
         // and so there are twice as many events.  Also check that the
         // next step event isn't too close to the last unstep.
+        s->next_step_time += m->interval;
         if (unlikely(timer_is_before(s->next_step_time, min_next_time))) {
             if ((int32_t)(s->next_step_time - min_next_time)
                 < (int32_t)(-timer_from_us(1000)))
@@ -104,14 +97,17 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     return SF_RESCHEDULE;
 }
 
+#define AVR_STEP_INSNS 40 // minimum instructions between step gpio pulses
+
 // AVR optimized step function
 static uint_fast8_t
-stepper_event_avr(struct stepper *s)
+stepper_event_avr(struct timer *t)
 {
+    struct stepper *s = container_of(t, struct stepper, time);
     gpio_out_toggle_noirq(s->step_pin);
-    uint_fast16_t count = s->count - 1;
+    uint16_t *pcount = (void*)&s->count, count = *pcount - 1;
     if (likely(count)) {
-        s->count = count;
+        *pcount = count;
         s->time.waketime += s->interval;
         gpio_out_toggle_noirq(s->step_pin);
         if (s->flags & SF_HAVE_ADD)
@@ -123,42 +119,14 @@ stepper_event_avr(struct stepper *s)
     return ret;
 }
 
-// Optimized step function for stepping and unstepping in same function
-static uint_fast8_t
-stepper_event_nodelay(struct stepper *s)
-{
-    gpio_out_toggle_noirq(s->step_pin);
-    uint_fast16_t count = s->count - 1;
-    if (likely(count)) {
-        s->count = count;
-        s->time.waketime += s->interval;
-        s->interval += s->add;
-        gpio_out_toggle_noirq(s->step_pin);
-        return SF_RESCHEDULE;
-    }
-    uint_fast8_t ret = stepper_load_next(s, 0);
-    gpio_out_toggle_noirq(s->step_pin);
-    return ret;
-}
-
-// Timer callback - step the given stepper.
+// Regular "double scheduled" step function
 uint_fast8_t
-stepper_event(struct timer *t)
+stepper_event_full(struct timer *t)
 {
     struct stepper *s = container_of(t, struct stepper, time);
-    if (CONFIG_STEP_DELAY <= 0 && CONFIG_MACH_AVR)
-        return stepper_event_avr(s);
-    if (CONFIG_STEP_DELAY <= 0)
-        return stepper_event_nodelay(s);
-
-    // Normal step code - schedule the unstep event
-    if (!CONFIG_HAVE_STRICT_TIMING)
-        gpio_out_toggle_noirq(s->step_pin);
-    uint32_t step_delay = timer_from_us(CONFIG_STEP_DELAY);
-    uint32_t min_next_time = timer_read_time() + step_delay;
-    if (CONFIG_HAVE_STRICT_TIMING)
-        // Toggling gpio after reading the time is a micro-optimization
-        gpio_out_toggle_noirq(s->step_pin);
+    gpio_out_toggle_noirq(s->step_pin);
+    uint32_t curtime = timer_read_time();
+    uint32_t min_next_time = curtime + s->step_pulse_ticks;
     s->count--;
     if (likely(s->count & 1))
         // Schedule unstep event
@@ -178,20 +146,36 @@ reschedule_min:
     return SF_RESCHEDULE;
 }
 
+// Optimized entry point for step function (may be inlined into sched.c code)
+uint_fast8_t
+stepper_event(struct timer *t)
+{
+    if (HAVE_AVR_OPTIMIZATION)
+        return stepper_event_avr(t);
+    return stepper_event_full(t);
+}
+
 void
 command_config_stepper(uint32_t *args)
 {
     struct stepper *s = oid_alloc(args[0], command_config_stepper, sizeof(*s));
-    if (!CONFIG_INLINE_STEPPER_HACK)
-        s->time.func = stepper_event;
     s->flags = args[3] ? SF_INVERT_STEP : 0;
     s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP);
     s->dir_pin = gpio_out_setup(args[2], 0);
     s->position = -POSITION_BIAS;
+    s->step_pulse_ticks = args[4];
     move_queue_setup(&s->mq, sizeof(struct stepper_move));
+    if (HAVE_AVR_OPTIMIZATION) {
+        if (s->step_pulse_ticks <= AVR_STEP_INSNS)
+            s->flags |= SF_SINGLE_SCHED;
+        else
+            s->time.func = stepper_event_full;
+    } else if (!CONFIG_INLINE_STEPPER_HACK) {
+        s->time.func = stepper_event_full;
+    }
 }
-DECL_COMMAND(command_config_stepper,
-             "config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c");
+DECL_COMMAND(command_config_stepper, "config_stepper oid=%c step_pin=%c"
+             " dir_pin=%c invert_step=%c step_pulse_ticks=%u");
 
 // Return the 'struct stepper' for a given stepper oid
 static struct stepper *
@@ -256,7 +240,7 @@ command_reset_step_clock(uint32_t *args)
     irq_disable();
     if (s->count)
         shutdown("Can't reset time when stepper active");
-    s->next_step_time = waketime;
+    s->next_step_time = s->time.waketime = waketime;
     s->flags &= ~SF_NEED_RESET;
     irq_enable();
 }
@@ -268,7 +252,7 @@ stepper_get_position(struct stepper *s)
 {
     uint32_t position = s->position;
     // If stepper is mid-move, subtract out steps not yet taken
-    if (CONFIG_STEP_DELAY <= 0)
+    if (HAVE_AVR_OPTIMIZATION && s->flags & SF_SINGLE_SCHED)
         position -= s->count;
     else
         position -= s->count / 2;
@@ -297,10 +281,10 @@ stepper_stop(struct trsync_signal *tss, uint8_t reason)
 {
     struct stepper *s = container_of(tss, struct stepper, stop_signal);
     sched_del_timer(&s->time);
-    s->next_step_time = 0;
+    s->next_step_time = s->time.waketime = 0;
     s->position = -stepper_get_position(s);
     s->count = 0;
-    s->flags = (s->flags & SF_INVERT_STEP) | SF_NEED_RESET;
+    s->flags = (s->flags & (SF_INVERT_STEP|SF_SINGLE_SCHED)) | SF_NEED_RESET;
     gpio_out_write(s->dir_pin, 0);
     gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP);
     while (!move_queue_empty(&s->mq)) {
