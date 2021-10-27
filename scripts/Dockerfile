@@ -40,7 +40,7 @@
 #   -v $(pwd)/gcode:/opt/gcode \
 #   -v $(pwd)/run:/opt/run
 #
-# docker run klipper:mcu \
+# docker run moonraker \
 #   --device /dev/ttyUSB0:/dev/ttyUSB0 \
 #   -v $(pwd)/config:/opt/cfg \
 #   -v $(pwd)/gcode:/opt/gcode \
