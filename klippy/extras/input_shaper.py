@@ -65,11 +65,11 @@ class AxisInputShaper:
     def set_shaper_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
         success = ffi_lib.input_shaper_set_shaper_params(
-                sk, bytes(self.axis), self.n, self.A, self.T) == 0
+                sk, self.axis.encode(), self.n, self.A, self.T) == 0
         if not success:
             self.disable_shaping()
             ffi_lib.input_shaper_set_shaper_params(
-                    sk, bytes(self.axis), self.n, self.A, self.T)
+                    sk, self.axis.encode(), self.n, self.A, self.T)
         return success
     def get_step_generation_window(self):
         ffi_main, ffi_lib = chelper.get_ffi()
