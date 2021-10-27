@@ -96,6 +96,7 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
                                      | USB_BUF_CTRL_AVAIL | DPBUF_SIZE);
     usb_hw->sie_status = USB_SIE_STATUS_SETUP_REC_BITS;
     memcpy(data, (void*)usb_dpram->setup_packet, max_len);
+    barrier();
     if (usb_hw->intr & USB_INTR_SETUP_REQ_BITS) {
         // Raced with next setup packet
         usb_notify_ep0();
