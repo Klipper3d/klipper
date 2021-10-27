@@ -54,7 +54,7 @@ enum { POSITION_BIAS=0x40000000 };
 
 enum {
     SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_HAVE_ADD=1<<3,
-    SF_LAST_RESET=1<<4, SF_NEED_RESET=1<<5
+    SF_NEED_RESET=1<<4
 };
 
 // Setup a stepper for the next move in its queue
@@ -219,7 +219,6 @@ command_queue_step(uint32_t *args)
         flags ^= SF_LAST_DIR;
         m->flags |= MF_DIR;
     }
-    flags &= ~SF_LAST_RESET;
     if (s->count) {
         s->flags = flags;
         move_queue_push(&m->node, &s->mq);
@@ -258,7 +257,7 @@ command_reset_step_clock(uint32_t *args)
     if (s->count)
         shutdown("Can't reset time when stepper active");
     s->next_step_time = waketime;
-    s->flags = (s->flags & ~SF_NEED_RESET) | SF_LAST_RESET;
+    s->flags &= ~SF_NEED_RESET;
     irq_enable();
 }
 DECL_COMMAND(command_reset_step_clock, "reset_step_clock oid=%c clock=%u");
