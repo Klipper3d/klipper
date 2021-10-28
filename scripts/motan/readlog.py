@@ -232,6 +232,104 @@ class HandleStepQ:
                 step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
+# Extract stepper motor phase position
+class HandleStepPhase:
+    SubscriptionIdParts = 0
+    ParametersMin = 1
+    ParametersMax = 2
+    DataSets = [
+        ('step_phase(<driver>)', 'Stepper motor phase of the given stepper'),
+        ('step_phase(<driver>,microstep)', 'Microstep position for stepper'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
+        self.name = name
+        self.driver_name = name_parts[1]
+        self.stepper_name = " ".join(self.driver_name.split()[1:])
+        config = lmanager.get_initial_status()['configfile']['settings']
+        if self.driver_name not in config or self.stepper_name not in config:
+            raise error("Unable to find stepper driver '%s' config"
+                        % (self.driver_name,))
+        if len(name_parts) == 3 and name_parts[2] != "microstep":
+            raise error("Unknown step_phase selection '%s'" % (name_parts[2],))
+        self.report_microsteps = len(name_parts) == 3
+        sconfig = config[self.stepper_name]
+        self.phases = sconfig["microsteps"]
+        if not self.report_microsteps:
+            self.phases *= 4
+        self.jdispatch = lmanager.get_jdispatch()
+        self.jdispatch.add_handler(name, "stepq:" + self.stepper_name)
+        # stepq tracking
+        self.step_data = [(0., 0), (0., 0)] # [(time, mcu_pos)]
+        self.data_pos = 0
+        # driver phase tracking
+        self.status_tracker = lmanager.get_status_tracker()
+        self.next_status_time = 0.
+        self.mcu_phase_offset = 0
+    def get_label(self):
+        if self.report_microsteps:
+            return {'label': '%s microstep' % (self.stepper_name,),
+                    'units': 'Microstep'}
+        return {'label': '%s phase' % (self.stepper_name,), 'units': 'Phase'}
+    def _pull_phase_offset(self, req_time):
+        db, self.next_status_time = self.status_tracker.pull_status(req_time)
+        mcu_phase_offset = db.get(self.driver_name, {}).get('mcu_phase_offset')
+        if mcu_phase_offset is None:
+            mcu_phase_offset = 0
+        self.mcu_phase_offset = mcu_phase_offset
+    def pull_data(self, req_time):
+        if req_time >= self.next_status_time:
+            self._pull_phase_offset(req_time)
+        while 1:
+            data_pos = self.data_pos
+            step_data = self.step_data
+            # Find steps before and after req_time
+            next_time, next_pos = step_data[data_pos + 1]
+            if req_time >= next_time:
+                if data_pos + 2 < len(step_data):
+                    self.data_pos = data_pos + 1
+                    continue
+                self._pull_block(req_time)
+                continue
+            step_pos = step_data[data_pos][1]
+            return (step_pos - self.mcu_phase_offset) % self.phases
+    def _pull_block(self, req_time):
+        step_data = self.step_data
+        del step_data[:-1]
+        self.data_pos = 0
+        # Read data block containing requested time frame
+        while 1:
+            jmsg = self.jdispatch.pull_msg(req_time, self.name)
+            if jmsg is None:
+                last_time, last_pos = step_data[0]
+                self.step_data.append((req_time + .1, last_pos))
+                return
+            last_time = jmsg['last_step_time']
+            if req_time <= last_time:
+                break
+        # Process block into (time, position) 2-tuples
+        first_time = step_time = jmsg['first_step_time']
+        first_clock = jmsg['first_clock']
+        step_clock = first_clock - jmsg['data'][0][0]
+        cdiff = jmsg['last_clock'] - first_clock
+        tdiff = last_time - first_time
+        inv_freq = 0.
+        if cdiff:
+            inv_freq = tdiff / cdiff
+        step_pos = jmsg['start_mcu_position']
+        for interval, raw_count, add in jmsg['data']:
+            qs_dist = 1
+            count = raw_count
+            if count < 0:
+                qs_dist = -1
+                count = -count
+            for i in range(count):
+                step_clock += interval
+                interval += add
+                step_time = first_time + (step_clock - first_clock) * inv_freq
+                step_pos += qs_dist
+                step_data.append((step_time, step_pos))
+LogHandlers["step_phase"] = HandleStepPhase
+
 # Extract accelerometer data
 class HandleADXL345:
     SubscriptionIdParts = 2

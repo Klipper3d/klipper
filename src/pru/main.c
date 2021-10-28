@@ -1,6 +1,6 @@
 // Main starting point for PRU code.
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -78,6 +78,8 @@ timer_kick(void)
     CT_INTC.SECR0 = 1 << IEP_EVENT;
 }
 
+static uint32_t in_timer_dispatch;
+
 static void
 _irq_poll(void)
 {
@@ -88,9 +90,11 @@ _irq_poll(void)
     }
     if (secr0 & (1 << IEP_EVENT)) {
         CT_IEP.TMR_CMP_STS = 0xff;
+        in_timer_dispatch = 1;
         uint32_t next = timer_dispatch_many();
         timer_set(next);
         CT_INTC.SECR0 = 1 << IEP_EVENT;
+        in_timer_dispatch = 0;
     }
 }
 void __attribute__((optimize("O2")))
@@ -141,26 +145,23 @@ DECL_TASK(console_task);
 void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
-    // Verify space for message
-    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
-    struct shared_response_buffer *s = &SHARED_MEM->send_data[send_push_pos];
-    if (readl(&s->count))
-        return;
-
-    // Generate message
-    uint32_t msglen = command_encodef(s->data, ce, args);
+    SHARED_MEM->next_encoder_args = args;
+    writel(&SHARED_MEM->next_encoder, (uint32_t)ce);
 
     // Signal PRU0 to transmit message
-    writel(&s->count, msglen);
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
-    SHARED_MEM->send_push_pos = (
-        (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
+    uint32_t itd = in_timer_dispatch;
+    while (readl(&SHARED_MEM->next_encoder))
+        if (!itd)
+            irq_poll();
 }
 
 void
 console_shutdown(void)
 {
     writel(&SHARED_MEM->next_command, 0);
+    writel(&SHARED_MEM->next_encoder, 0);
+    in_timer_dispatch = 0;
 }
 DECL_SHUTDOWN(console_shutdown);
 
