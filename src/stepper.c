@@ -14,9 +14,18 @@
 #include "stepper.h" // stepper_event
 #include "trsync.h" // trsync_add_signal
 
-#if CONFIG_INLINE_STEPPER_HACK && CONFIG_MACH_AVR
+#if CONFIG_INLINE_STEPPER_HACK && CONFIG_HAVE_STEPPER_BOTH_EDGE
+ #define HAVE_SINGLE_SCHEDULE 1
+ #define HAVE_EDGE_OPTIMIZATION 1
+ #define HAVE_AVR_OPTIMIZATION 0
+ DECL_CONSTANT("STEPPER_BOTH_EDGE", 1);
+#elif CONFIG_INLINE_STEPPER_HACK && CONFIG_MACH_AVR
+ #define HAVE_SINGLE_SCHEDULE 1
+ #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 1
 #else
+ #define HAVE_SINGLE_SCHEDULE 0
+ #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 0
 #endif
 
@@ -66,9 +75,10 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
     struct stepper_move *m = container_of(mn, struct stepper_move, node);
     s->add = m->add;
     s->interval = m->interval + m->add;
-    if (HAVE_AVR_OPTIMIZATION && s->flags & SF_SINGLE_SCHED) {
+    if (HAVE_SINGLE_SCHEDULE && s->flags & SF_SINGLE_SCHED) {
         s->time.waketime += m->interval;
-        s->flags = m->add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
+        if (HAVE_AVR_OPTIMIZATION)
+            s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
         s->count = m->count;
     } else {
         // On faster mcus, it is necessary to schedule unstep events
@@ -95,6 +105,22 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
 
     move_free(m);
     return SF_RESCHEDULE;
+}
+
+// Optimized step function to step on each step pin edge
+uint_fast8_t
+stepper_event_edge(struct timer *t)
+{
+    struct stepper *s = container_of(t, struct stepper, time);
+    gpio_out_toggle_noirq(s->step_pin);
+    uint32_t count = s->count - 1;
+    if (likely(count)) {
+        s->count = count;
+        s->time.waketime += s->interval;
+        s->interval += s->add;
+        return SF_RESCHEDULE;
+    }
+    return stepper_load_next(s, 0);
 }
 
 #define AVR_STEP_INSNS 40 // minimum instructions between step gpio pulses
@@ -150,6 +176,8 @@ reschedule_min:
 uint_fast8_t
 stepper_event(struct timer *t)
 {
+    if (HAVE_EDGE_OPTIMIZATION)
+        return stepper_event_edge(t);
     if (HAVE_AVR_OPTIMIZATION)
         return stepper_event_avr(t);
     return stepper_event_full(t);
@@ -159,13 +187,19 @@ void
 command_config_stepper(uint32_t *args)
 {
     struct stepper *s = oid_alloc(args[0], command_config_stepper, sizeof(*s));
-    s->flags = args[3] ? SF_INVERT_STEP : 0;
+    int_fast8_t invert_step = args[3];
+    s->flags = invert_step > 0 ? SF_INVERT_STEP : 0;
     s->step_pin = gpio_out_setup(args[1], s->flags & SF_INVERT_STEP);
     s->dir_pin = gpio_out_setup(args[2], 0);
     s->position = -POSITION_BIAS;
     s->step_pulse_ticks = args[4];
     move_queue_setup(&s->mq, sizeof(struct stepper_move));
-    if (HAVE_AVR_OPTIMIZATION) {
+    if (HAVE_EDGE_OPTIMIZATION) {
+        if (!s->step_pulse_ticks && invert_step < 0)
+            s->flags |= SF_SINGLE_SCHED;
+        else
+            s->time.func = stepper_event_full;
+    } else if (HAVE_AVR_OPTIMIZATION) {
         if (s->step_pulse_ticks <= AVR_STEP_INSNS)
             s->flags |= SF_SINGLE_SCHED;
         else
@@ -252,7 +286,7 @@ stepper_get_position(struct stepper *s)
 {
     uint32_t position = s->position;
     // If stepper is mid-move, subtract out steps not yet taken
-    if (HAVE_AVR_OPTIMIZATION && s->flags & SF_SINGLE_SCHED)
+    if (HAVE_SINGLE_SCHEDULE && s->flags & SF_SINGLE_SCHED)
         position -= s->count;
     else
         position -= s->count / 2;
@@ -286,7 +320,8 @@ stepper_stop(struct trsync_signal *tss, uint8_t reason)
     s->count = 0;
     s->flags = (s->flags & (SF_INVERT_STEP|SF_SINGLE_SCHED)) | SF_NEED_RESET;
     gpio_out_write(s->dir_pin, 0);
-    gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP);
+    if (!(HAVE_EDGE_OPTIMIZATION && s->flags & SF_SINGLE_SCHED))
+        gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP);
     while (!move_queue_empty(&s->mq)) {
         struct move_node *mn = move_queue_pop(&s->mq);
         struct stepper_move *m = container_of(mn, struct stepper_move, node);

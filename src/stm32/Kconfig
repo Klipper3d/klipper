@@ -13,6 +13,7 @@ config STM32_SELECT
     select HAVE_GPIO_BITBANGING if !MACH_STM32F031
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
+    select HAVE_STEPPER_BOTH_EDGE
 
 config BOARD_DIRECTORY
     string
