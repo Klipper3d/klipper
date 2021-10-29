@@ -1407,6 +1407,7 @@ Enable the "M118" and "RESPOND" extended
 #   Sets the default prefix of the "M118" and "RESPOND" output to one
 #   of the following:
 #       echo: "echo: " (This is the default)
+#       echo_no_space: "echo:"
 #       command: "// "
 #       error: "!! "
 #default_prefix: echo:
