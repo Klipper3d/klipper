@@ -345,7 +345,7 @@ class TMCCommandHelper:
             self.echeck_helper.stop_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
-    def handle_stepper_enable(self, print_time, is_enable):
+    def _handle_stepper_enable(self, print_time, is_enable):
         if is_enable:
             cb = (lambda ev: self._do_enable(print_time))
         else:
@@ -357,7 +357,7 @@ class TMCCommandHelper:
         self.stepper = force_move.lookup_stepper(self.stepper_name)
         # Check for soft stepper enable/disable
         enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
-        enable_line.register_state_callback(self.handle_stepper_enable)
+        enable_line.register_state_callback(self._handle_stepper_enable)
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
             self.fields.set_field("toff", 0)
