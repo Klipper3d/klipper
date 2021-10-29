@@ -53,10 +53,6 @@ class MCU_stepper:
     def units_in_radians(self):
         # Returns true if distances are in radians instead of millimeters
         return self._units_in_radians
-    def _dist_to_time(self, dist, start_velocity, accel):
-        # Calculate the time it takes to travel a distance with constant accel
-        time_offset = start_velocity / accel
-        return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
     def setup_itersolve(self, alloc_func, *params):
         ffi_main, ffi_lib = chelper.get_ffi()
         sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
