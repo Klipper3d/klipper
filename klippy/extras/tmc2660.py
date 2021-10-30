@@ -169,7 +169,7 @@ class TMC2660CurrentHelper:
             self.mcu_tmc.set_register("DRVCONF", val, print_time)
 
     def get_current(self):
-        return self.current, None, MAX_CURRENT
+        return self.current, None, None, MAX_CURRENT
 
     def set_current(self, run_current, hold_current, print_time):
         self.current = run_current
