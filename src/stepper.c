@@ -62,7 +62,7 @@ enum {
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t
-stepper_load_next(struct stepper *s, uint32_t min_next_time)
+stepper_load_next(struct stepper *s)
 {
     if (move_queue_empty(&s->mq)) {
         // There is no next move - the queue is empty
@@ -81,18 +81,10 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
             s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
         s->count = m->count;
     } else {
-        // On faster mcus, it is necessary to schedule unstep events
-        // and so there are twice as many events.  Also check that the
-        // next step event isn't too close to the last unstep.
+        // It is necessary to schedule unstep events and so there are
+        // twice as many events.
         s->next_step_time += m->interval;
-        if (unlikely(timer_is_before(s->next_step_time, min_next_time))) {
-            if ((int32_t)(s->next_step_time - min_next_time)
-                < (int32_t)(-timer_from_us(1000)))
-                shutdown("Stepper too far in past");
-            s->time.waketime = min_next_time;
-        } else {
-            s->time.waketime = s->next_step_time;
-        }
+        s->time.waketime = s->next_step_time;
         s->count = (uint32_t)m->count * 2;
     }
     // Add all steps to s->position (stepper_get_position() can calc mid-move)
@@ -120,7 +112,7 @@ stepper_event_edge(struct timer *t)
         s->interval += s->add;
         return SF_RESCHEDULE;
     }
-    return stepper_load_next(s, 0);
+    return stepper_load_next(s);
 }
 
 #define AVR_STEP_INSNS 40 // minimum instructions between step gpio pulses
@@ -140,7 +132,7 @@ stepper_event_avr(struct timer *t)
             s->interval += s->add;
         return SF_RESCHEDULE;
     }
-    uint_fast8_t ret = stepper_load_next(s, 0);
+    uint_fast8_t ret = stepper_load_next(s);
     gpio_out_toggle_noirq(s->step_pin);
     return ret;
 }
@@ -166,7 +158,13 @@ stepper_event_full(struct timer *t)
         s->time.waketime = s->next_step_time;
         return SF_RESCHEDULE;
     }
-    return stepper_load_next(s, min_next_time);
+    uint_fast8_t ret = stepper_load_next(s);
+    if (ret == SF_DONE || !timer_is_before(s->time.waketime, min_next_time))
+        return ret;
+    // Next step event is too close to the last unstep
+    int32_t diff = s->time.waketime - min_next_time;
+    if (diff < (int32_t)-timer_from_us(1000))
+        shutdown("Stepper too far in past");
 reschedule_min:
     s->time.waketime = min_next_time;
     return SF_RESCHEDULE;
@@ -245,7 +243,7 @@ command_queue_step(uint32_t *args)
     } else {
         s->flags = flags;
         move_queue_push(&m->node, &s->mq);
-        stepper_load_next(s, s->next_step_time + m->interval);
+        stepper_load_next(s);
         sched_add_timer(&s->time);
     }
     irq_enable();
