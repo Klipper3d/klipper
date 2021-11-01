@@ -8,6 +8,13 @@ All dates in this document are approximate.
 
 ## Changes
 
+20211110: The "NTC 100K beta 3950" temperature sensor is deprecated.
+This sensor will be removed in the near future.  Most users will find
+the "Generic 3950" temperature sensor more accurate.  To continue to
+use the older (typically less accurate) definition, define a custom
+[thermistor](Config_Reference.md#thermistor) with `temperature1: 25`,
+`resistance1: 100000`, and `beta: 3950`.
+
 20211104: The "step pulse duration" option in "make menuconfig" has
 been removed. A new `step_pulse_duration` setting in the
 [stepper config section](Config_Reference.md#stepper) should be set
