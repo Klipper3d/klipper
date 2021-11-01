@@ -2201,7 +2201,7 @@ have range up to 125 C, so are usable for e.g. chamber temperature
 monitoring. They can also function as simple fan/heater controllers.
 
 ```
-sensor_type: lm75
+sensor_type: LM75
 #i2c_address:
 #   Default is 72 (0x48). Normal range is 72-79 (0x48-0x4F) and the 3
 #   low bits of the address are configured via pins on the chip
