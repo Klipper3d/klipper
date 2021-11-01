@@ -11,7 +11,7 @@ from .. import bus
 LINE_LENGTH_DEFAULT=20
 LINE_LENGTH_OPTIONS={16:16, 20:20}
 
-TextGlyphs = { 'right_arrow': '\x7e' }
+TextGlyphs = { 'right_arrow': b'\x7e' }
 
 
 
@@ -34,17 +34,17 @@ class hd44780_spi:
                                             LINE_LENGTH_DEFAULT)
 
         # framebuffers
-        self.text_framebuffers = [bytearray(' '*2*self.line_length),
-                                  bytearray(' '*2*self.line_length)]
+        self.text_framebuffers = [bytearray(b' '*2*self.line_length),
+                                  bytearray(b' '*2*self.line_length)]
         self.glyph_framebuffer = bytearray(64)
         self.all_framebuffers = [
             # Text framebuffers
-            (self.text_framebuffers[0], bytearray('~'*2*self.line_length),
+            (self.text_framebuffers[0], bytearray(b'~'*2*self.line_length),
              0x80),
-            (self.text_framebuffers[1], bytearray('~'*2*self.line_length),
+            (self.text_framebuffers[1], bytearray(b'~'*2*self.line_length),
              0xc0),
             # Glyph framebuffer
-            (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
+            (self.glyph_framebuffer, bytearray(b'~'*64), 0x40) ]
     def send_4_bits(self, cmd, is_data, minclock):
         if is_data:
             mask = self.data_mask
@@ -118,7 +118,7 @@ class hd44780_spi:
     def write_graphics(self, x, y, data):
         pass
     def clear(self):
-        spaces = ' ' * 2*self.line_length
+        spaces = b' ' * 2*self.line_length
         self.text_framebuffers[0][:] = spaces
         self.text_framebuffers[1][:] = spaces
     def get_dimensions(self):

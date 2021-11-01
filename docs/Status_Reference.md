@@ -331,6 +331,8 @@ objects (eg, `[tmc2208 stepper_x]`):
 - `drv_status`: The results of the last driver status query. (Only
   non-zero fields are reported.) This field will be null if the driver
   is not enabled (and thus is not periodically queried).
+- `run_current`: The currently set run current.
+- `hold_current`: The currently set hold current.
 
 ## toolhead
 

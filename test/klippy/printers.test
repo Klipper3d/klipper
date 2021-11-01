@@ -138,6 +138,7 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
 CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
+CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f103-serial.dict
@@ -164,6 +165,7 @@ CONFIG ../../config/printer-flsun-qqs-2020.cfg
 CONFIG ../../config/printer-fokoos-odin5-f3-2021.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-tronxy-x5sa-pro-2020.cfg
+CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-2020.cfg
 

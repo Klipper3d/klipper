@@ -23,16 +23,12 @@
 #define ALT_PRU_PTR(ptr) ((typeof(ptr))((uint32_t)(ptr) ^ 0x2000))
 
 // Layout of shared memory
-struct shared_response_buffer {
-    uint32_t count;
-    uint8_t data[MESSAGE_MAX];
-};
 struct shared_mem {
     uint32_t signal;
+    void *next_encoder_args;
+    uint32_t next_encoder;
     const struct command_parser *next_command;
     uint32_t next_command_args[16];
-    uint32_t send_push_pos, send_pop_pos;
-    struct shared_response_buffer send_data[4];
     const struct command_parser *command_index;
     uint32_t command_index_size;
     const struct command_parser *shutdown_handler;

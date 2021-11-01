@@ -1,6 +1,6 @@
 // Basic scheduling functions and startup/shutdown code.
 //
-// Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -15,13 +15,18 @@
 #include "sched.h" // sched_check_periodic
 #include "stepper.h" // stepper_event
 
+static struct timer periodic_timer, sentinel_timer, deleted_timer;
+
+static struct {
+    struct timer *timer_list, *last_insert;
+    int8_t tasks_status;
+    uint8_t shutdown_status, shutdown_reason;
+} SchedStatus = {.timer_list = &periodic_timer, .last_insert = &periodic_timer};
+
 
 /****************************************************************
  * Timers
  ****************************************************************/
-
-static struct timer periodic_timer, *timer_list = &periodic_timer;
-static struct timer sentinel_timer, deleted_timer;
 
 // The periodic_timer simplifies the timer code by ensuring there is
 // always a timer on the timer list and that there is always a timer
@@ -60,9 +65,9 @@ static struct timer sentinel_timer = {
 
 // Find position for a timer in timer_list and insert it
 static void __always_inline
-insert_timer(struct timer *t, uint32_t waketime)
+insert_timer(struct timer *pos, struct timer *t, uint32_t waketime)
 {
-    struct timer *prev, *pos = timer_list;
+    struct timer *prev;
     for (;;) {
         prev = pos;
         if (CONFIG_MACH_AVR)
@@ -82,9 +87,9 @@ sched_add_timer(struct timer *add)
 {
     uint32_t waketime = add->waketime;
     irqstatus_t flag = irq_save();
-    if (unlikely(timer_is_before(waketime, timer_list->waketime))) {
+    struct timer *tl = SchedStatus.timer_list;
+    if (unlikely(timer_is_before(waketime, tl->waketime))) {
         // This timer is before all other scheduled timers
-        struct timer *tl = timer_list;
         if (timer_is_before(waketime, timer_read_time()))
             try_shutdown("Timer too close");
         if (tl == &deleted_timer)
@@ -93,10 +98,10 @@ sched_add_timer(struct timer *add)
             add->next = tl;
         deleted_timer.waketime = waketime;
         deleted_timer.next = add;
-        timer_list = &deleted_timer;
+        SchedStatus.timer_list = &deleted_timer;
         timer_kick();
     } else {
-        insert_timer(add, waketime);
+        insert_timer(tl, add, waketime);
     }
     irq_restore(flag);
 }
@@ -117,21 +122,23 @@ void
 sched_del_timer(struct timer *del)
 {
     irqstatus_t flag = irq_save();
-    if (timer_list == del) {
+    if (SchedStatus.timer_list == del) {
         // Deleting the next active timer - replace with deleted_timer
         deleted_timer.waketime = del->waketime;
         deleted_timer.next = del->next;
-        timer_list = &deleted_timer;
+        SchedStatus.timer_list = &deleted_timer;
     } else {
         // Find and remove from timer list (if present)
         struct timer *pos;
-        for (pos = timer_list; pos->next; pos = pos->next) {
+        for (pos = SchedStatus.timer_list; pos->next; pos = pos->next) {
             if (pos->next == del) {
                 pos->next = del->next;
                 break;
             }
         }
     }
+    if (SchedStatus.last_insert == del)
+        SchedStatus.last_insert = &periodic_timer;
     irq_restore(flag);
 }
 
@@ -140,7 +147,7 @@ unsigned int
 sched_timer_dispatch(void)
 {
     // Invoke timer callback
-    struct timer *t = timer_list;
+    struct timer *t = SchedStatus.timer_list;
     uint_fast8_t res;
     uint32_t updated_waketime;
     if (CONFIG_INLINE_STEPPER_HACK && likely(!t->func)) {
@@ -155,11 +162,15 @@ sched_timer_dispatch(void)
     unsigned int next_waketime = updated_waketime;
     if (unlikely(res == SF_DONE)) {
         next_waketime = t->next->waketime;
-        timer_list = t->next;
+        SchedStatus.timer_list = t->next;
     } else if (!timer_is_before(updated_waketime, t->next->waketime)) {
         next_waketime = t->next->waketime;
-        timer_list = t->next;
-        insert_timer(t, updated_waketime);
+        SchedStatus.timer_list = t->next;
+        struct timer *pos = SchedStatus.last_insert;
+        if (timer_is_before(updated_waketime, pos->waketime))
+            pos = SchedStatus.timer_list;
+        insert_timer(pos, t, updated_waketime);
+        SchedStatus.last_insert = t;
     }
 
     return next_waketime;
@@ -169,9 +180,9 @@ sched_timer_dispatch(void)
 void
 sched_timer_reset(void)
 {
-    timer_list = &deleted_timer;
+    SchedStatus.timer_list = &deleted_timer;
     deleted_timer.waketime = periodic_timer.waketime;
-    deleted_timer.next = &periodic_timer;
+    deleted_timer.next = SchedStatus.last_insert = &periodic_timer;
     periodic_timer.next = &sentinel_timer;
     timer_kick();
 }
@@ -181,8 +192,6 @@ sched_timer_reset(void)
  * Tasks
  ****************************************************************/
 
-static int_fast8_t tasks_status;
-
 #define TS_IDLE      -1
 #define TS_REQUESTED 0
 #define TS_RUNNING   1
@@ -191,14 +200,14 @@ static int_fast8_t tasks_status;
 void
 sched_wake_tasks(void)
 {
-    tasks_status = TS_REQUESTED;
+    SchedStatus.tasks_status = TS_REQUESTED;
 }
 
 // Check if tasks need to be run
 uint8_t
 sched_tasks_busy(void)
 {
-    return tasks_status >= TS_REQUESTED;
+    return SchedStatus.tasks_status >= TS_REQUESTED;
 }
 
 // Note that a task is ready to run
@@ -227,20 +236,20 @@ run_tasks(void)
     for (;;) {
         // Check if can sleep
         irq_poll();
-        if (tasks_status != TS_REQUESTED) {
+        if (SchedStatus.tasks_status != TS_REQUESTED) {
             start -= timer_read_time();
             irq_disable();
-            if (tasks_status != TS_REQUESTED) {
+            if (SchedStatus.tasks_status != TS_REQUESTED) {
                 // Sleep processor (only run timers) until tasks woken
-                tasks_status = TS_IDLE;
+                SchedStatus.tasks_status = TS_IDLE;
                 do {
                     irq_wait();
-                } while (tasks_status != TS_REQUESTED);
+                } while (SchedStatus.tasks_status != TS_REQUESTED);
             }
             irq_enable();
             start += timer_read_time();
         }
-        tasks_status = TS_RUNNING;
+        SchedStatus.tasks_status = TS_RUNNING;
 
         // Run all tasks
         extern void ctr_run_taskfuncs(void);
@@ -258,25 +267,23 @@ run_tasks(void)
  * Shutdown processing
  ****************************************************************/
 
-static uint_fast8_t shutdown_status, shutdown_reason;
-
 // Return true if the machine is in an emergency stop state
 uint8_t
 sched_is_shutdown(void)
 {
-    return !!shutdown_status;
+    return !!SchedStatus.shutdown_status;
 }
 
 // Transition out of shutdown state
 void
 sched_clear_shutdown(void)
 {
-    if (!shutdown_status)
+    if (!SchedStatus.shutdown_status)
         shutdown("Shutdown cleared when not shutdown");
-    if (shutdown_status == 2)
+    if (SchedStatus.shutdown_status == 2)
         // Ignore attempt to clear shutdown if still processing shutdown
         return;
-    shutdown_status = 0;
+    SchedStatus.shutdown_status = 0;
 }
 
 // Invoke all shutdown functions (as declared by DECL_SHUTDOWN)
@@ -285,30 +292,31 @@ run_shutdown(int reason)
 {
     irq_disable();
     uint32_t cur = timer_read_time();
-    if (!shutdown_status)
-        shutdown_reason = reason;
-    shutdown_status = 2;
+    if (!SchedStatus.shutdown_status)
+        SchedStatus.shutdown_reason = reason;
+    SchedStatus.shutdown_status = 2;
     sched_timer_reset();
     extern void ctr_run_shutdownfuncs(void);
     ctr_run_shutdownfuncs();
-    shutdown_status = 1;
+    SchedStatus.shutdown_status = 1;
     irq_enable();
 
-    sendf("shutdown clock=%u static_string_id=%hu", cur, shutdown_reason);
+    sendf("shutdown clock=%u static_string_id=%hu", cur
+          , SchedStatus.shutdown_reason);
 }
 
 // Report the last shutdown reason code
 void
 sched_report_shutdown(void)
 {
-    sendf("is_shutdown static_string_id=%hu", shutdown_reason);
+    sendf("is_shutdown static_string_id=%hu", SchedStatus.shutdown_reason);
 }
 
 // Shutdown the machine if not already in the process of shutting down
 void __always_inline
 sched_try_shutdown(uint_fast8_t reason)
 {
-    if (!shutdown_status)
+    if (!SchedStatus.shutdown_status)
         sched_shutdown(reason);
 }
 
