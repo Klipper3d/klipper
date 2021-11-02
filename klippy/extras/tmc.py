@@ -261,26 +261,25 @@ class TMCCommandHelper:
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
     def cmd_SET_TMC_CURRENT(self, gcmd):
         ch = self.current_helper
-        prev_run_current, prev_hold_current, max_current = ch.get_current()
-        run_current = gcmd.get_float('CURRENT', None,
-                                     minval=0., maxval=max_current)
+        prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
+        run_current = gcmd.get_float('CURRENT', None, minval=0., maxval=max_cur)
         hold_current = gcmd.get_float('HOLDCURRENT', None,
-                                      above=0., maxval=max_current)
+                                      above=0., maxval=max_cur)
         if run_current is not None or hold_current is not None:
             if run_current is None:
-                run_current = prev_run_current
+                run_current = prev_cur
             if hold_current is None:
-                hold_current = prev_hold_current
+                hold_current = req_hold_cur
             toolhead = self.printer.lookup_object('toolhead')
             print_time = toolhead.get_last_move_time()
             ch.set_current(run_current, hold_current, print_time)
-            prev_run_current, prev_hold_current, max_current = ch.get_current()
+            prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
         # Report values
-        if prev_hold_current is None:
-            gcmd.respond_info("Run Current: %0.2fA" % (prev_run_current,))
+        if prev_hold_cur is None:
+            gcmd.respond_info("Run Current: %0.2fA" % (prev_cur,))
         else:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                              % (prev_run_current, prev_hold_current))
+                              % (prev_cur, prev_hold_cur))
     # Stepper phase tracking
     def _get_phases(self):
         return (256 >> self.fields.get_field("mres")) * 4
@@ -346,7 +345,7 @@ class TMCCommandHelper:
             self.echeck_helper.stop_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
-    def handle_stepper_enable(self, print_time, is_enable):
+    def _handle_stepper_enable(self, print_time, is_enable):
         if is_enable:
             cb = (lambda ev: self._do_enable(print_time))
         else:
@@ -358,7 +357,7 @@ class TMCCommandHelper:
         self.stepper = force_move.lookup_stepper(self.stepper_name)
         # Check for soft stepper enable/disable
         enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
-        enable_line.register_state_callback(self.handle_stepper_enable)
+        enable_line.register_state_callback(self._handle_stepper_enable)
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
             self.fields.set_field("toff", 0)

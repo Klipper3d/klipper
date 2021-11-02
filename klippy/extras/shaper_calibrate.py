@@ -4,128 +4,16 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections, importlib, logging, math, multiprocessing
+shaper_defs = importlib.import_module('.shaper_defs', 'extras')
 
 MIN_FREQ = 5.
 MAX_FREQ = 200.
 WINDOW_T_SEC = 0.5
 MAX_SHAPER_FREQ = 150.
 
-SHAPER_VIBRATION_REDUCTION=20.
 TEST_DAMPING_RATIOS=[0.075, 0.1, 0.15]
-SHAPER_DAMPING_RATIO = 0.1
 
-######################################################################
-# Input shapers
-######################################################################
-
-InputShaperCfg = collections.namedtuple(
-        'InputShaperCfg', ('name', 'init_func', 'min_freq'))
-
-def get_zv_shaper(shaper_freq, damping_ratio):
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-    A = [1., K]
-    T = [0., .5*t_d]
-    return (A, T)
-
-def get_zvd_shaper(shaper_freq, damping_ratio):
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-    A = [1., 2.*K, K**2]
-    T = [0., .5*t_d, t_d]
-    return (A, T)
-
-def get_mzv_shaper(shaper_freq, damping_ratio):
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-.75 * damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-
-    a1 = 1. - 1. / math.sqrt(2.)
-    a2 = (math.sqrt(2.) - 1.) * K
-    a3 = a1 * K * K
-
-    A = [a1, a2, a3]
-    T = [0., .375*t_d, .75*t_d]
-    return (A, T)
-
-def get_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-
-    a1 = .25 * (1. + v_tol)
-    a2 = .5 * (1. - v_tol) * K
-    a3 = a1 * K * K
-
-    A = [a1, a2, a3]
-    T = [0., .5*t_d, t_d]
-    return (A, T)
-
-def get_2hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-
-    V2 = v_tol**2
-    X = pow(V2 * (math.sqrt(1. - V2) + 1.), 1./3.)
-    a1 = (3.*X*X + 2.*X + 3.*V2) / (16.*X)
-    a2 = (.5 - a1) * K
-    a3 = a2 * K
-    a4 = a1 * K * K * K
-
-    A = [a1, a2, a3, a4]
-    T = [0., .5*t_d, t_d, 1.5*t_d]
-    return (A, T)
-
-def get_3hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-
-    K2 = K*K
-    a1 = 0.0625 * (1. + 3. * v_tol + 2. * math.sqrt(2. * (v_tol + 1.) * v_tol))
-    a2 = 0.25 * (1. - v_tol) * K
-    a3 = (0.5 * (1. + v_tol) - 2. * a1) * K2
-    a4 = a2 * K2
-    a5 = a1 * K2 * K2
-
-    A = [a1, a2, a3, a4, a5]
-    T = [0., .5*t_d, t_d, 1.5*t_d, 2.*t_d]
-    return (A, T)
-
-def get_shaper_smoothing(shaper, accel=5000, scv=5.):
-    half_accel = accel * .5
-
-    A, T = shaper
-    inv_D = 1. / sum(A)
-    n = len(T)
-    # Calculate input shaper shift
-    ts = sum([A[i] * T[i] for i in range(n)]) * inv_D
-
-    # Calculate offset for 90 and 180 degrees turn
-    offset_90 = offset_180 = 0.
-    for i in range(n):
-        if T[i] >= ts:
-            # Calculate offset for one of the axes
-            offset_90 += A[i] * (scv + half_accel * (T[i]-ts)) * (T[i]-ts)
-        offset_180 += A[i] * half_accel * (T[i]-ts)**2
-    offset_90 *= inv_D * math.sqrt(2.)
-    offset_180 *= inv_D
-    return max(offset_90, offset_180)
-
-# min_freq for each shaper is chosen to have projected max_accel ~= 1500
-INPUT_SHAPERS = [
-    InputShaperCfg('zv', get_zv_shaper, min_freq=21.),
-    InputShaperCfg('mzv', get_mzv_shaper, min_freq=23.),
-    InputShaperCfg('ei', get_ei_shaper, min_freq=29.),
-    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=39.),
-    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=48.),
-]
+AUTOTUNE_SHAPERS = ['zv', 'mzv', 'ei', '2hump_ei', '3hump_ei']
 
 ######################################################################
 # Frequency response calculation and shaper auto-tuning
@@ -313,11 +201,31 @@ class ShaperCalibrate:
         # The input shaper can only reduce the amplitude of vibrations by
         # SHAPER_VIBRATION_REDUCTION times, so all vibrations below that
         # threshold can be igonred
-        vibrations_threshold = psd.max() / SHAPER_VIBRATION_REDUCTION
+        vibr_threshold = psd.max() / shaper_defs.SHAPER_VIBRATION_REDUCTION
         remaining_vibrations = self.numpy.maximum(
-                vals * psd - vibrations_threshold, 0).sum()
-        all_vibrations = self.numpy.maximum(psd - vibrations_threshold, 0).sum()
+                vals * psd - vibr_threshold, 0).sum()
+        all_vibrations = self.numpy.maximum(psd - vibr_threshold, 0).sum()
         return (remaining_vibrations / all_vibrations, vals)
+
+    def _get_shaper_smoothing(self, shaper, accel=5000, scv=5.):
+        half_accel = accel * .5
+
+        A, T = shaper
+        inv_D = 1. / sum(A)
+        n = len(T)
+        # Calculate input shaper shift
+        ts = sum([A[i] * T[i] for i in range(n)]) * inv_D
+
+        # Calculate offset for 90 and 180 degrees turn
+        offset_90 = offset_180 = 0.
+        for i in range(n):
+            if T[i] >= ts:
+                # Calculate offset for one of the axes
+                offset_90 += A[i] * (scv + half_accel * (T[i]-ts)) * (T[i]-ts)
+            offset_180 += A[i] * half_accel * (T[i]-ts)**2
+        offset_90 *= inv_D * math.sqrt(2.)
+        offset_180 *= inv_D
+        return max(offset_90, offset_180)
 
     def fit_shaper(self, shaper_cfg, calibration_data, max_smoothing):
         np = self.numpy
@@ -333,8 +241,9 @@ class ShaperCalibrate:
         for test_freq in test_freqs[::-1]:
             shaper_vibrations = 0.
             shaper_vals = np.zeros(shape=freq_bins.shape)
-            shaper = shaper_cfg.init_func(test_freq, SHAPER_DAMPING_RATIO)
-            shaper_smoothing = get_shaper_smoothing(shaper)
+            shaper = shaper_cfg.init_func(
+                    test_freq, shaper_defs.DEFAULT_DAMPING_RATIO)
+            shaper_smoothing = self._get_shaper_smoothing(shaper)
             if max_smoothing and shaper_smoothing > max_smoothing and best_res:
                 return best_res
             # Exact damping ratio of the printer is unknown, pessimizing
@@ -387,14 +296,16 @@ class ShaperCalibrate:
         # Just some empirically chosen value which produces good projections
         # for max_accel without much smoothing
         TARGET_SMOOTHING = 0.12
-        max_accel = self._bisect(lambda test_accel: get_shaper_smoothing(
+        max_accel = self._bisect(lambda test_accel: self._get_shaper_smoothing(
             shaper, test_accel) <= TARGET_SMOOTHING)
         return max_accel
 
     def find_best_shaper(self, calibration_data, max_smoothing, logger=None):
         best_shaper = None
         all_shapers = []
-        for shaper_cfg in INPUT_SHAPERS:
+        for shaper_cfg in shaper_defs.INPUT_SHAPERS:
+            if shaper_cfg.name not in AUTOTUNE_SHAPERS:
+                continue
             shaper = self.background_process_exec(self.fit_shaper, (
                 shaper_cfg, calibration_data, max_smoothing))
             if logger is not None:

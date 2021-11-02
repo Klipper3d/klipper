@@ -53,10 +53,6 @@ class MCU_stepper:
     def units_in_radians(self):
         # Returns true if distances are in radians instead of millimeters
         return self._units_in_radians
-    def _dist_to_time(self, dist, start_velocity, accel):
-        # Calculate the time it takes to travel a distance with constant accel
-        time_offset = start_velocity / accel
-        return math.sqrt(2. * dist / accel + time_offset**2) - time_offset
     def setup_itersolve(self, alloc_func, *params):
         ffi_main, ffi_lib = chelper.get_ffi()
         sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
@@ -233,13 +229,6 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
         rotation_dist = 2. * math.pi
         config.get('gear_ratio', note_valid=note_valid)
     else:
-        rd = config.get('rotation_distance', None, note_valid=False)
-        config.deprecate('step_distance')
-        sd = config.get('step_distance', None, note_valid=False)
-        if rd is None and sd is not None:
-            # Older config format with step_distance
-            return config.getfloat('step_distance', above=0.,
-                                   note_valid=note_valid)
         rotation_dist = config.getfloat('rotation_distance', above=0.,
                                         note_valid=note_valid)
     # Newer config format with rotation_distance
