@@ -82,7 +82,8 @@ void enable_i8080_fsmc(uint32_t cs_pin, uint32_t rs_pin, uint8_t dstime)
         (0x00 /*FSMC_DataLatency*/ << 24) |
         0x00 /*FSMC_AccessMode_A*/;
 
-    /* Bank1 NOR/SRAM timing register for write configuration, if extended mode is used */
+    /* Bank1 NOR/SRAM timing register for write configuration,
+       if extended mode is used */
     FSMC_Bank1E->BWTR[FSMC_Bank1_NORSRAM1] =
         (uint32_t)0x00 /*FSMC_AddressSetupTime*/ |
         (0x00 /*FSMC_AddressHoldTime*/ << 4 )|
