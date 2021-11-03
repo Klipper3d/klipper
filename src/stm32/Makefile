@@ -45,7 +45,6 @@ src-$(CONFIG_MACH_STM32H7) += stm32/stm32h7.c generic/armcm_timer.c
 src-$(CONFIG_MACH_STM32H7) += stm32/stm32h7_adc.c
 src-$(CONFIG_HAVE_GPIO_SPI) += stm32/spi.c
 src-$(CONFIG_STM32F2_FSMC_I8080) += stm32/stm32f2_fsmc.c
-src-$(CONFIG_STM32F2_FSMC_I8080) += ../lib/stm32f2/stm32f2xx_fsmc.c
 usb-src-$(CONFIG_HAVE_STM32_USBFS) := stm32/usbfs.c
 usb-src-$(CONFIG_HAVE_STM32_USBOTG) := stm32/usbotg.c
 src-$(CONFIG_USBSERIAL) += $(usb-src-y) stm32/chipid.c generic/usb_cdc.c

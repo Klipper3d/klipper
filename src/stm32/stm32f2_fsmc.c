@@ -7,7 +7,7 @@
 #include "command.h" // shutdown
 #include "sched.h"
 #include "board/internal.h" // GPIO
-#include "stm32f2xx_fsmc.h"
+#include "stm32f2xx.h"
 
 #define RCC_AHB3Periph_FSMC               ((uint32_t)0x00000001)
 
@@ -26,8 +26,8 @@ DECL_CONSTANT_STR("RESERVE_PINS_FSMC", "PD0,PD1,PD8,PD9,PD10,PD14,PD15,PE7," \
 
 void enable_i8080_fsmc(uint32_t cs_pin, uint32_t rs_pin, uint8_t dstime)
 {
-    FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure;
-    FSMC_NORSRAMTimingInitTypeDef  readWriteTiming,writeTiming;
+    /* FSMC_NORSRAMInitTypeDef  FSMC_NORSRAMInitStructure; */
+    /* FSMC_NORSRAMTimingInitTypeDef  readWriteTiming,writeTiming; */
 
     // Configure STM32F2 FSMC data pins ; D0 - D15
     gpio_peripheral(GPIO('D', 0), FSMC_FUNCTION, 0);
@@ -60,50 +60,38 @@ void enable_i8080_fsmc(uint32_t cs_pin, uint32_t rs_pin, uint8_t dstime)
     // start FSMC clock
     RCC->AHB3ENR |= RCC_AHB3Periph_FSMC;
 
-    // Address setup time (ADDSET) is 2 HCLK 1 / 36M = 27ns
-    readWriteTiming.FSMC_AddressSetupTime = 0x01;
-    readWriteTiming.FSMC_AddressHoldTime = 0x00;
-    readWriteTiming.FSMC_DataSetupTime = 0x0f;
-    readWriteTiming.FSMC_BusTurnAroundDuration = 0x00;
-    readWriteTiming.FSMC_CLKDivision = 0x00;
-    readWriteTiming.FSMC_DataLatency = 0x00;
-    readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;
+#define FSMC_Bank1_NORSRAM1 ((uint32_t)0x00)
 
-    // Address setup time (ADDSET) is 1 HCLK
-    writeTiming.FSMC_AddressSetupTime = 0x00;
-    writeTiming.FSMC_AddressHoldTime = 0x00;
-    // Data save time from parameter
-    writeTiming.FSMC_DataSetupTime = dstime;
-    writeTiming.FSMC_BusTurnAroundDuration = 0x00;
-    writeTiming.FSMC_CLKDivision = 0x00;
-    writeTiming.FSMC_DataLatency = 0x00;
-    writeTiming.FSMC_AccessMode = FSMC_AccessMode_A;
+    /* Bank1 NOR/SRAM control register configuration */
+    FSMC_Bank1->BTCR[FSMC_Bank1_NORSRAM1] =
+        (uint32_t)0x08 /*FSMC_MemoryType_NOR */ |
+        0x10 /*FSMC_MemoryDataWidth_16b*/ |
+        0x1000 /*FSMC_WriteOperation_Enable*/ |
+        0x4000 /*FSMC_ExtendedMode_Enable*/;
 
-    FSMC_NORSRAMInitStructure.FSMC_Bank = FSMC_Bank1_NORSRAM1;
-    FSMC_NORSRAMInitStructure.FSMC_DataAddressMux = FSMC_DataAddressMux_Disable;
-    FSMC_NORSRAMInitStructure.FSMC_MemoryType = FSMC_MemoryType_NOR;
-    FSMC_NORSRAMInitStructure.FSMC_MemoryDataWidth = FSMC_MemoryDataWidth_16b;
+#define BCR_FACCEN_SET         ((uint32_t)0x40)
+    FSMC_Bank1->BTCR[FSMC_Bank1_NORSRAM1] |= (uint32_t)BCR_FACCEN_SET;
 
-    FSMC_NORSRAMInitStructure.FSMC_BurstAccessMode = \
-        FSMC_BurstAccessMode_Disable;
-    FSMC_NORSRAMInitStructure.FSMC_WaitSignalPolarity = \
-        FSMC_WaitSignalPolarity_Low;
-    FSMC_NORSRAMInitStructure.FSMC_WrapMode = FSMC_WrapMode_Disable;
-    FSMC_NORSRAMInitStructure.FSMC_AsynchronousWait = \
-        FSMC_AsynchronousWait_Disable;
-    FSMC_NORSRAMInitStructure.FSMC_WaitSignalActive = \
-        FSMC_WaitSignalActive_BeforeWaitState;
-    FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;
-    FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable;
+    /* Bank1 NOR/SRAM timing register configuration */
+    FSMC_Bank1->BTCR[FSMC_Bank1_NORSRAM1+1] =
+        (uint32_t)0x01 /*FSMC_AddressSetupTime*/ |
+        (0x00 /*FSMC_AddressHoldTime*/ << 4) |
+        (0x0f /*FSMC_DataSetupTime*/ << 8) |
+        (0x00 /*FSMC_BusTurnAroundDuration*/ << 16) |
+        (0x00 /*FSMC_CLKDivision*/ << 20) |
+        (0x00 /*FSMC_DataLatency*/ << 24) |
+        0x00 /*FSMC_AccessMode_A*/;
 
-    FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;
-    FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Enable;
+    /* Bank1 NOR/SRAM timing register for write configuration, if extended mode is used */
+    FSMC_Bank1E->BWTR[FSMC_Bank1_NORSRAM1] =
+        (uint32_t)0x00 /*FSMC_AddressSetupTime*/ |
+        (0x00 /*FSMC_AddressHoldTime*/ << 4 )|
+        (dstime /*FSMC_DataSetupTime*/ << 8) |
+        (0x00 /*FSMC_CLKDivision*/ << 20) |
+        (0x00 /*FSMC_DataLatency*/ << 24) |
+        0x00 /*FSMC_AccessMode_A*/;
 
-    FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &readWriteTiming;
-    FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &writeTiming;
-
-    FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure);
-    FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM1, ENABLE);
+    FSMC_Bank1->BTCR[FSMC_Bank1_NORSRAM1] |= ((uint32_t)0x01) /*BCR_MBKEN_SET*/;
 
     if( (rs_pin == GPIO('E', 2)) && (cs_pin == GPIO('D', 7)) )
         i8080_access =
