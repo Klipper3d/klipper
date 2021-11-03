@@ -229,13 +229,6 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
         rotation_dist = 2. * math.pi
         config.get('gear_ratio', note_valid=note_valid)
     else:
-        rd = config.get('rotation_distance', None, note_valid=False)
-        config.deprecate('step_distance')
-        sd = config.get('step_distance', None, note_valid=False)
-        if rd is None and sd is not None:
-            # Older config format with step_distance
-            return config.getfloat('step_distance', above=0.,
-                                   note_valid=note_valid)
         rotation_dist = config.getfloat('rotation_distance', above=0.,
                                         note_valid=note_valid)
     # Newer config format with rotation_distance

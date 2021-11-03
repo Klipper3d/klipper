@@ -8,6 +8,17 @@ All dates in this document are approximate.
 
 ## Changes
 
+20211102: Several deprecated features have been removed.  The stepper
+`step_distance` option has been removed (deprecated on 20201222).  The
+`rpi_temperature` sensor alias has been removed (deprecated on
+20210219).  The mcu `pin_map` option has been removed (deprecated on
+20210325).  The gcode_macro `default_parameter_<name>` and macro
+access to command parameters other than via the `params`
+pseudo-variable has been removed (deprecated on 20210503).  The heater
+`pid_integral_max` option has been removed (deprecated on 20210612).
+
+20210929: Klipper v0.10.0 released.
+
 20210903: The default [`smooth_time`](Config_Reference.md#extruder)
 for heaters has changed to 1 second (from 2 seconds).  For most
 printers this will result in more stable temperature control.
