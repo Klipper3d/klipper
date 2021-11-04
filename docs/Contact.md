@@ -2,7 +2,7 @@
 
 This document provides contact information for Klipper.
 
-1. [Community Forum](#community-forum)
+1. [GitHub Discussions](#github-discussions)
 2. [Discord Chat](#discord-chat)
 3. [I have a question about Klipper](#i-have-a-question-about-klipper)
 4. [I have a feature request](#i-have-a-feature-request)
@@ -10,11 +10,11 @@ This document provides contact information for Klipper.
 6. [I have diagnosed a defect in the Klipper software](#i-have-diagnosed-a-defect-in-the-klipper-software)
 7. [I am making changes that I'd like to include in Klipper](#i-am-making-changes-that-id-like-to-include-in-klipper)
 
-## Community Forum
+## GitHub Discussions
 
 There is a
-[Klipper Community Discourse server](https://community.klipper3d.org)
-for discussions on Klipper.
+[Klipper Discussion area on GitHub](https://github.com/Klipper3d/klipper/discussions)
+for Klipper topics.
 
 ## Discord Chat
 
@@ -32,11 +32,11 @@ Many questions we receive are already answered in the
 documentation and follow the directions provided there.
 
 It is also possible to search for similar questions in the
-[Klipper Community Forum](#community-forum).
+[Klipper Discussion Forum](#github-discussions).
 
 If you are interested in sharing your knowledge and experience with
 other Klipper users then you can join the
-[Klipper Community Forum](#community-forum) or
+[Klipper Discussion Forum](#github-discussions) or
 [Klipper Discord Chat](#discord-chat). Both are communities where
 Klipper users can discuss Klipper with other users.
 
@@ -46,18 +46,14 @@ experiencing general printing problems, then you will likely get a
 better response by asking in a general 3d-printing forum or a forum
 dedicated to your printer hardware.
 
-Do not open a Klipper github issue to ask a question.
-
 ## I have a feature request
 
 All new features require someone interested and able to implement that
 feature. If you are interested in helping to implement or test a new
 feature, you can search for ongoing developments in the
-[Klipper Community Forum](#community-forum). There is also
+[Klipper Discussion Forum](#github-discussions). There is also
 [Klipper Discord Chat](#discord-chat) for discussions between
 collaborators.
-
-Do not open a Klipper github issue to request a feature.
 
 ## Help! It doesn't work!
 
@@ -80,15 +76,13 @@ searching in a general 3d-printing forum or in a forum dedicated to
 your printer hardware.
 
 It is also possible to search for similar issues in the
-[Klipper Community Forum](#community-forum).
+[Klipper Discussion Forum](#github-discussions).
 
 If you are interested in sharing your knowledge and experience with
 other Klipper users then you can join the
-[Klipper Community Forum](#community-forum) or
+[Klipper Discussion Forum](#github-discussions) or
 [Klipper Discord Chat](#discord-chat). Both are communities where
 Klipper users can discuss Klipper with other users.
-
-Do not open a Klipper github issue to request help.
 
 ## I have diagnosed a defect in the Klipper software
 
@@ -97,26 +91,18 @@ diagnose errors in the software.
 
 There is important information that will be needed in order to fix a
 bug. Please follow these steps:
-1. Be sure the bug is in the Klipper software. If you are thinking
-   "there is a problem, I can't figure out why, and therefore it is a
-   Klipper bug", then **do not** open a github issue. In that case,
-   someone interested and able will need to first research and
-   diagnose the root cause of the problem. If you would like to share
-   the results of your research or check if other users are
-   experiencing similar issues then you can search the
-   [Klipper Community Forum](#community-forum).
-2. Make sure you are running unmodified code from
+1. Make sure you are running unmodified code from
    [https://github.com/Klipper3d/klipper](https://github.com/Klipper3d/klipper).
    If the code has been modified or is obtained from another source,
    then you will need to reproduce the problem on the unmodified code
    from
    [https://github.com/Klipper3d/klipper](https://github.com/Klipper3d/klipper)
    prior to reporting an issue.
-3. If possible, run an `M112` command in the OctoPrint terminal window
+2. If possible, run an `M112` command in the OctoPrint terminal window
    immediately after the undesirable event occurs. This causes Klipper
    to go into a "shutdown state" and it will cause additional
    debugging information to be written to the log file.
-4. Obtain the Klipper log file from the event. The log file has been
+3. Obtain the Klipper log file from the event. The log file has been
    engineered to answer common questions the Klipper developers have
    about the software and its environment (software version, hardware
    type, configuration, event timing, and hundreds of other
@@ -138,12 +124,11 @@ bug. Please follow these steps:
       necessary information.
    5. If the log file is very large (eg, greater than 2MB) then one
       may need to compress the log with zip or gzip.
-5. Open a new github issue at
-   [https://github.com/Klipper3d/klipper/issues](https://github.com/Klipper3d/klipper/issues)
-   and provide a clear description of the problem. The Klipper
-   developers need to understand what steps were taken, what the
-   desired outcome was, and what outcome actually occurred. The
-   Klipper log file **must be attached** to that ticket:
+4. Open a new topic on [GitHub discussions](#github-discussions) and
+   provide a clear description of the problem. The Klipper developers
+   need to understand what steps were taken, what the desired outcome
+   was, and what outcome actually occurred. Be sure to **attach** the
+   Klipper log file to your message.
 
    ![attach-issue](img/attach-issue.png)
 
@@ -158,8 +143,8 @@ for important information.
 There are several
 [documents for developers](Overview.md#developer-documentation). If
 you have questions on the code then you can also ask in the
-[Klipper Community Forum](#community-forum) or on the
-[Klipper Community Discord](#discord-chat). If you would like to
-provide an update on your current progress then you can open a Github
-issue with the location of your code, an overview of the changes, and
-a description of its current status.
+[Klipper Discussion Forum](#github-discussions) or on the
+[Klipper Discord](#discord-chat). If you would like to provide an
+update on your current progress then you can open a topic on Github
+Discussions with the location of your code, an overview of the
+changes, and a description of its current status.
