@@ -12,6 +12,7 @@ config RP2040_SELECT
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_BOTH_EDGE
 
 config BOARD_DIRECTORY
     string

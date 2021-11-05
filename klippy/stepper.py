@@ -17,9 +17,10 @@ class error(Exception):
 # Interface to low-level mcu and chelper code
 class MCU_stepper:
     def __init__(self, name, step_pin_params, dir_pin_params, step_dist,
-                 units_in_radians=False):
+                 step_pulse_duration=None, units_in_radians=False):
         self._name = name
         self._step_dist = step_dist
+        self._step_pulse_duration = step_pulse_duration
         self._units_in_radians = units_in_radians
         self._mcu = step_pin_params['chip']
         self._oid = oid = self._mcu.create_oid()
@@ -31,6 +32,7 @@ class MCU_stepper:
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']
         self._invert_dir = dir_pin_params['invert']
+        self._step_both_edge = self._req_step_both_edge = False
         self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
@@ -53,14 +55,31 @@ class MCU_stepper:
     def units_in_radians(self):
         # Returns true if distances are in radians instead of millimeters
         return self._units_in_radians
+    def get_pulse_duration(self):
+        return self._step_pulse_duration, self._step_both_edge
+    def setup_default_pulse_duration(self, pulse_duration, step_both_edge):
+        if self._step_pulse_duration is None:
+            self._step_pulse_duration = pulse_duration
+        self._req_step_both_edge = step_both_edge
     def setup_itersolve(self, alloc_func, *params):
         ffi_main, ffi_lib = chelper.get_ffi()
         sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
         self.set_stepper_kinematics(sk)
     def _build_config(self):
+        if self._step_pulse_duration is None:
+            self._step_pulse_duration = .000002
+        invert_step = self._invert_step
+        sbe = int(self._mcu.get_constants().get('STEPPER_BOTH_EDGE', '0'))
+        if self._req_step_both_edge and sbe:
+            # Enable stepper optimized step on both edges
+            self._step_both_edge = True
+            self._step_pulse_duration = 0.
+            invert_step = -1
+        step_pulse_ticks = self._mcu.seconds_to_clock(self._step_pulse_duration)
         self._mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d"
-            % (self._oid, self._step_pin, self._dir_pin, self._invert_step))
+            " step_pulse_ticks=%u" % (self._oid, self._step_pin, self._dir_pin,
+                                      invert_step, step_pulse_ticks))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)
         step_cmd_tag = self._mcu.lookup_command_tag(
@@ -73,9 +92,9 @@ class MCU_stepper:
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
         max_error = self._mcu.get_max_stepper_error()
+        max_error_ticks = self._mcu.seconds_to_clock(max_error)
         ffi_main, ffi_lib = chelper.get_ffi()
-        ffi_lib.stepcompress_fill(self._stepqueue,
-                                  self._mcu.seconds_to_clock(max_error),
+        ffi_lib.stepcompress_fill(self._stepqueue, max_error_ticks,
                                   self._invert_dir, step_cmd_tag, dir_cmd_tag)
     def get_oid(self):
         return self._oid
@@ -201,8 +220,10 @@ def PrinterStepper(config, units_in_radians=False):
     dir_pin = config.get('dir_pin')
     dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
     step_dist = parse_step_distance(config, units_in_radians, True)
+    step_pulse_duration = config.getfloat('step_pulse_duration', None,
+                                          minval=0., maxval=.001)
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
-                              units_in_radians)
+                              step_pulse_duration, units_in_radians)
     # Register with helper modules
     for mname in ['stepper_enable', 'force_move', 'motion_report']:
         m = printer.load_object(config, mname)
