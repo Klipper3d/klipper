@@ -8,6 +8,8 @@
 #define PIN(x) (x%32)
 #define CFG_REG(x) ((x/8)*4)
 #define CFG_OFF(x) ((x%8)*4)
+#define PULLUP_REG(x) 0x1C + ((x/16)*4)
+#define PULLUP_OFF(x) ((x%16)*2)
 
 volatile uint32_t data_regs[8];
 
@@ -66,6 +68,16 @@ uint8_t gpio_in_read(struct gpio_in pin){
 // TODO: support for pull-up
 struct gpio_in gpio_in_setup(uint8_t pin, int8_t pull_up){
   struct gpio_mux mux = gpio_mux_setup(pin, PIO_INPUT);
+
+  uint32_t pullup_reg = PIO_BASE + mux.bank*0x24 + PULLUP_REG(mux.pin);
+  uint8_t  pullup_off = PULLUP_OFF(mux.pin);
+
+  if(mux.bank == 0){ // Handle R_PIO
+    pullup_reg = R_PIO_BASE + PULLUP_REG(mux.pin);
+  }
+
+  write_reg(pullup_reg, pull_up<<pullup_off);
+
   struct gpio_in in = {
     .pin = mux.pin,
     .reg = mux.reg,
@@ -74,6 +86,8 @@ struct gpio_in gpio_in_setup(uint8_t pin, int8_t pull_up){
   data_regs[mux.bank] = read_reg(mux.reg);
   return in;
 }
+
 void gpio_in_reset(struct gpio_in pin, int8_t pull_up){
-  gpio_in_setup(pin.pin, pull_up);
+  int8_t p = pin.bank * 32 + pin.pin;
+  gpio_in_setup(p, pull_up);
 }
