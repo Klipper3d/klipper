@@ -61,11 +61,13 @@ class RecoreThermocouple:
         v_adc = self.vin*adc_val
         v_in = 1000.0*(v_adc-self.offset)/self.gain
         cj_temp = self.cj_temp.get_temp(0)[0]
-        temp = cj_temp + self.mv_to_temp(v_in)
+        v_cj = temp_to_mv(cj_temp)
+        temp = self.mv_to_temp(v_in+v_cj)
         return temp
 
     # We do not know the cj temp at the time of setting limits, setting to 35
     def calc_adc(self, temp):
+        # TODO: Add voltages instead of temperatures
         temp -= 35
         v_in = self.temp_to_mv(temp)
         v_adc = (v_in*self.gain/1000.0)+self.offset
