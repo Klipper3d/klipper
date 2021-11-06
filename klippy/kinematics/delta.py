@@ -13,15 +13,10 @@ class DeltaKinematics:
     def __init__(self, toolhead, config):
         # Setup tower rails
         stepper_configs = [config.getsection('stepper_' + a) for a in 'abc']
-        rail_a = stepper.PrinterRail(
-            stepper_configs[0], need_position_minmax = False)
+        rail_a = stepper.LookupMultiRail(config.getsection('stepper_a'), need_position_minmax = False)
         a_endstop = rail_a.get_homing_info().position_endstop
-        rail_b = stepper.PrinterRail(
-            stepper_configs[1], need_position_minmax = False,
-            default_position_endstop=a_endstop)
-        rail_c = stepper.PrinterRail(
-            stepper_configs[2], need_position_minmax = False,
-            default_position_endstop=a_endstop)
+        rail_b = stepper.LookupMultiRail(config.getsection('stepper_b'), need_position_minmax = False, default_position_endstop=a_endstop)
+        rail_c = stepper.LookupMultiRail(config.getsection('stepper_c'), need_position_minmax = False, default_position_endstop=a_endstop)
         self.rails = [rail_a, rail_b, rail_c]
         config.get_printer().register_event_handler("stepper_enable:motor_off",
                                                     self._motor_off)
