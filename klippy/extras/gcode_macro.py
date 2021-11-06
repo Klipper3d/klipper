@@ -178,6 +178,7 @@ class GCodeMacro:
         kwparams = dict(self.variables)
         kwparams.update(self.template.create_template_context())
         kwparams['params'] = gcmd.get_command_parameters()
+        kwparams['commandline'] = gcmd.get_commandline()
         self.in_script = True
         try:
             self.template.run_gcode_from_command(kwparams)
