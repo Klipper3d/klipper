@@ -260,6 +260,12 @@ armcm_main(void)
     SystemInit();
     SCB->VTOR = (uint32_t)VectorTable;
 
+    // Reset peripheral clocks (for some bootloaders that don't)
+    RCC->AHB1ENR = 0x38000;
+    RCC->AHB2ENR = 0;
+    RCC->APB1ENR = 0;
+    RCC->APB2ENR = 0;
+
     clock_setup();
 
     sched_main();
