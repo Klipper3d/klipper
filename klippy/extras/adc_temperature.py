@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
-
+import math
 
 ######################################################################
 # Interface between MCU adc and heater temperature callbacks
@@ -148,10 +148,10 @@ class LinearResistance:
 
 class RecoreLinearResistance(LinearResistance):
     def __init__(self, config, samples):
-        LinearResistance.__init__(self, pullup, samples)
-        self.adc_ref = config.getfloat('adc_ref', 3.3)
-        self.pullup_ref = config.getfloat('pullup_ref', 3.3)
-        self.vo_ref = config.getfloat('vo_ref', 0)
+        LinearResistance.__init__(self, config, samples)
+        self.adc_ref = config.getfloat('adc_voltage', 3.3)
+        self.pullup_ref = config.getfloat('pullup_voltage', 3.3)
+        self.vo_ref = config.getfloat('offset_voltage', 3.2)
 
     def calc_temp(self, adc):
         # Calculate temperature from adc
@@ -166,11 +166,7 @@ class RecoreLinearResistance(LinearResistance):
         I5 = (self.pullup_ref-V3)/self.pullup
         I3 = (I5+I1)
         r = V3/I3
-
-        ln_r = math.log(r - self.inline_resistor)
-        inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
-        return 1.0/inv_t + KELVIN_TO_CELSIUS
-
+        return self.li.interpolate(r)
 
 # Custom defined sensors from the config file
 class CustomLinearResistance:
