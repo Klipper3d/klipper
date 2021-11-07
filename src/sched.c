@@ -161,6 +161,8 @@ sched_timer_dispatch(void)
     // Update timer_list (rescheduling current timer if necessary)
     unsigned int next_waketime = updated_waketime;
     if (unlikely(res == SF_DONE)) {
+        if (SchedStatus.last_insert == t)
+            SchedStatus.last_insert = t->next;
         next_waketime = t->next->waketime;
         SchedStatus.timer_list = t->next;
     } else if (!timer_is_before(updated_waketime, t->next->waketime)) {

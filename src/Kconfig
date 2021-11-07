@@ -73,31 +73,6 @@ config USB_SERIAL_NUMBER
     string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
 
-# Step timing customization
-config CUSTOM_STEP_DELAY
-    bool "Specify a custom step pulse duration"
-    depends on LOW_LEVEL_OPTIONS
-config STEP_DELAY
-    int
-    default 2
-config STEP_DELAY
-    int "Step pulse duration (in microseconds)"
-    depends on CUSTOM_STEP_DELAY
-    help
-        Specify the duration of the stepper step pulse time. This
-        setting applies to all stepper drivers controlled by the
-        micro-controller. If this value is set to zero (or less) then
-        the code will "step" and "unstep" in the same C function.
-
-        A setting of zero (or less) on 8-bit AVR micro-controllers
-        results in a minimum step pulse time a little over 2us.
-
-        A setting of zero on ARM micro-controllers typically results
-        in a minimum step pulse time of 20 cpu cycles.
-
-        The default for AVR is -1, for all other micro-controllers it
-        is 2us.
-
 config INITIAL_PINS
     string "GPIO pins to set at micro-controller startup"
     depends on LOW_LEVEL_OPTIONS
@@ -131,6 +106,9 @@ config HAVE_STRICT_TIMING
     bool
     default n
 config HAVE_CHIPID
+    bool
+    default n
+config HAVE_STEPPER_BOTH_EDGE
     bool
     default n
 
