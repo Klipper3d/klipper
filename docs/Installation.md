@@ -11,7 +11,12 @@ micro-controllers,
 [ARM based micro-controllers](Features.md#step-benchmarks), and
 [Beaglebone PRU](beaglebone.md) based printers.
 
-## Prepping an OS image
+## Use pre-installed ready to use image
+You can download a pre-installed image with OctoPi and Klipper with the correct default settings.
+
+[OctoPi-Klipper can be downloaded here](https://github.com/guysoft/OctoPi-Klipper).
+
+## Prepping an existing OS image
 
 Start by installing [OctoPi](https://github.com/guysoft/OctoPi) on the
 Raspberry Pi computer. Use OctoPi v0.17.0 or later - see the
