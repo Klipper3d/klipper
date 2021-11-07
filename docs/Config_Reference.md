@@ -2315,6 +2315,8 @@ sensor_pin:
 #   The cold junction compensation thermistor. This is a separate temperature
 #   measuring device located close to the input of the thermocouple.
 #
+# adc_voltage: Voltage on the ADC
+
 ```
 
 ## Fans

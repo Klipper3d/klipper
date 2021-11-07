@@ -146,6 +146,32 @@ class LinearResistance:
         r = self.li.reverse_interpolate(temp)
         return r / (self.pullup + r)
 
+class RecoreLinearResistance(LinearResistance):
+    def __init__(self, config, samples):
+        LinearResistance.__init__(self, pullup, samples)
+        self.adc_ref = config.getfloat('adc_ref', 3.3)
+        self.pullup_ref = config.getfloat('pullup_ref', 3.3)
+        self.vo_ref = config.getfloat('vo_ref', 0)
+
+    def calc_temp(self, adc):
+        # Calculate temperature from adc
+        adc = max(.00001, min(.99999, adc))
+        Vo = self.adc_ref*adc
+        R2 = 100000
+        R1 = 1000
+
+        I1 = (self.vo_ref-Vo)/R2
+        VR1 = I1*R1
+        V3 = Vo-VR1
+        I5 = (self.pullup_ref-V3)/self.pullup
+        I3 = (I5+I1)
+        r = V3/I3
+
+        ln_r = math.log(r - self.inline_resistor)
+        inv_t = self.c1 + self.c2 * ln_r + self.c3 * ln_r**3
+        return 1.0/inv_t + KELVIN_TO_CELSIUS
+
+
 # Custom defined sensors from the config file
 class CustomLinearResistance:
     def __init__(self, config):
@@ -158,7 +184,7 @@ class CustomLinearResistance:
             r = config.getfloat("resistance%d" % (i,))
             self.samples.append((t, r))
     def create(self, config):
-        lr = LinearResistance(config, self.samples)
+        lr = RecoreLinearResistance(config, self.samples)
         return PrinterADCtoTemperature(config, lr)
 
 
@@ -290,7 +316,7 @@ def load_config(config):
     for sensor_type, params in DefaultResistanceSensors:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config,
-                                        LinearResistance(config, params)))
+                                        RecoreLinearResistance(config, params)))
         pheaters.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):

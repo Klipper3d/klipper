@@ -59,26 +59,31 @@ class RecoreThermocouple:
     def calc_temp(self, adc):
         adc_val = max(.00001, min(.99999, adc))
         v_adc = self.vin*adc_val
-        v_in = 1000.0*(v_adc-self.offset)/self.gain
+        v_opamp = 1000.0*v_adc/self.gain
+        v_offset = 1000.0*(self.offset/101.1)
+        # TODO: Calculate effect of thermocouple resitance.
+        vin_off = 0.2
+        v_in = (v_opamp - v_offset - vin_off)
         cj_temp = self.cj_temp.get_temp(0)[0]
-        v_cj = temp_to_mv(cj_temp)
+        v_cj = self.temp_to_mv(cj_temp)
         temp = self.mv_to_temp(v_in+v_cj)
         return temp
 
     # We do not know the cj temp at the time of setting limits, setting to 35
     def calc_adc(self, temp):
         # TODO: Add voltages instead of temperatures
-        temp -= 35
+        v_cj = self.temp_to_mv(35)
         v_in = self.temp_to_mv(temp)
-        v_adc = (v_in*self.gain/1000.0)+self.offset
+        v_adc = ((v_in-v_cj)*self.gain/1000.0)+self.offset
         adc_val = v_adc/self.vin
+        adc_val = max(.00001, min(.99999, adc_val))
         return adc_val
 
 # Create an ADC converter with a thermocouple
 def PrinterThermocouple(config):
     gain = config.getfloat('gain', 100)
     offset = config.getfloat('offset', 0.7)
-    vin = config.getfloat('vin_adc', 3.3)
+    vin = config.getfloat('adc_voltage', 3.3)
     cj_sensor = config.get('cj_sensor', 'temperature_sensor cold_junction')
     cj_temp = config.get_printer().load_object(config, cj_sensor)
     thermocouple = RecoreThermocouple(gain, offset, vin, cj_temp)
