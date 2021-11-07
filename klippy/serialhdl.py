@@ -218,9 +218,9 @@ class SerialReader:
     def stats(self, eventtime):
         if self.serialqueue is None:
             return ""
-        self.ffi_lib.serialqueue_get_stats(
-            self.serialqueue, self.stats_buf, len(self.stats_buf))
-        return self.ffi_main.string(self.stats_buf).decode()
+        self.ffi_lib.serialqueue_get_stats(self.serialqueue,
+                                           self.stats_buf, len(self.stats_buf))
+        return str(self.ffi_main.string(self.stats_buf).decode())
     def get_reactor(self):
         return self.reactor
     def get_msgparser(self):

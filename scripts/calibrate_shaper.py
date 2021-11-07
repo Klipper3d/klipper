@@ -6,12 +6,12 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
-import optparse, os, sys
+import importlib, optparse, os, sys
 from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                             '..', 'klippy', 'extras'))
-from shaper_calibrate import CalibrationData, ShaperCalibrate
+                             '..', 'klippy'))
+shaper_calibrate = importlib.import_module('.shaper_calibrate', 'extras')
 
 MAX_TITLE_LENGTH=65
 
@@ -25,7 +25,7 @@ def parse_log(logname):
             return np.loadtxt(logname, comments='#', delimiter=',')
     # Parse power spectral density data
     data = np.loadtxt(logname, skiprows=1, comments='#', delimiter=',')
-    calibration_data = CalibrationData(
+    calibration_data = shaper_calibrate.CalibrationData(
             freq_bins=data[:,0], psd_sum=data[:,4],
             psd_x=data[:,1], psd_y=data[:,2], psd_z=data[:,3])
     calibration_data.set_numpy(np)
@@ -41,8 +41,8 @@ def parse_log(logname):
 
 # Find the best shaper parameters
 def calibrate_shaper(datas, csv_output, max_smoothing):
-    helper = ShaperCalibrate(printer=None)
-    if isinstance(datas[0], CalibrationData):
+    helper = shaper_calibrate.ShaperCalibrate(printer=None)
+    if isinstance(datas[0], shaper_calibrate.CalibrationData):
         calibration_data = datas[0]
         for data in datas[1:]:
             calibration_data.add_data(data)
