@@ -99,7 +99,7 @@ SD_SPI_SPEED = 4000000
 # MCU Command Constants
 RESET_CMD = "reset"
 GET_CFG_CMD = "get_config"
-GET_CFG_RESPONSE = "config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
+GET_CFG_RESPONSE = "config is_config=%c crc=%u is_shutdown=%c move_count=%hu"
 ALLOC_OIDS_CMD = "allocate_oids count=%d"
 SPI_CFG_CMD = "config_spi oid=%d pin=%s"
 SPI_BUS_CMD = "spi_set_bus oid=%d spi_bus=%s mode=%d rate=%d"
