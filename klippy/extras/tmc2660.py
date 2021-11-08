@@ -98,7 +98,6 @@ SignedFields = ["sgt"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
-    "dedge": (lambda v: "1(Both Edges Active!)" if v else ""),
     "chm": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
     "vsense": (lambda v: "1(165mV)" if v else "0(305mV)"),
     "sdoff": (lambda v: "1(Step/Dir disabled!)" if v else ""),

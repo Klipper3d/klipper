@@ -224,6 +224,8 @@ class TMCCommandHelper:
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
+        self.printer.register_event_handler("klippy:mcu_identify",
+                                            self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         # Set microstep config options
@@ -345,6 +347,12 @@ class TMCCommandHelper:
             self.echeck_helper.stop_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
+    def _handle_mcu_identify(self):
+        # Lookup stepper object
+        force_move = self.printer.lookup_object("force_move")
+        self.stepper = force_move.lookup_stepper(self.stepper_name)
+        # Note pulse duration and step_both_edge optimizations available
+        self.stepper.setup_default_pulse_duration(.000000100, True)
     def _handle_stepper_enable(self, print_time, is_enable):
         if is_enable:
             cb = (lambda ev: self._do_enable(print_time))
@@ -352,9 +360,10 @@ class TMCCommandHelper:
             cb = (lambda ev: self._do_disable(print_time))
         self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
-        # Lookup stepper object
-        force_move = self.printer.lookup_object("force_move")
-        self.stepper = force_move.lookup_stepper(self.stepper_name)
+        # Check if using step on both edges optimization
+        pulse_duration, step_both_edge = self.stepper.get_pulse_duration()
+        if step_both_edge:
+            self.fields.set_field("dedge", 1)
         # Check for soft stepper enable/disable
         enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
         enable_line.register_state_callback(self._handle_stepper_enable)

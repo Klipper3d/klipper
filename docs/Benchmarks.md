@@ -91,11 +91,10 @@ of these benchmarks are not reported in the Features.md document.
 
 The following configuration sequence is used on AVR chips:
 ```
-PINS arduino
 allocate_oids count=3
-config_stepper oid=0 step_pin=ar29 dir_pin=ar28 invert_step=0
-config_stepper oid=1 step_pin=ar27 dir_pin=ar26 invert_step=0
-config_stepper oid=2 step_pin=ar23 dir_pin=ar22 invert_step=0
+config_stepper oid=0 step_pin=PA5 dir_pin=PA4 invert_step=0
+config_stepper oid=1 step_pin=PA3 dir_pin=PA2 invert_step=0
+config_stepper oid=2 step_pin=PC7 dir_pin=PC6 invert_step=0
 finalize_config crc=0
 ```
 
@@ -182,11 +181,10 @@ The test was last run on commit `59a60d68` with gcc version
 
 The following configuration sequence is used on the PRU:
 ```
-PINS beaglebone
 allocate_oids count=3
-config_stepper oid=0 step_pin=P8_13 dir_pin=P8_12 invert_step=0
-config_stepper oid=1 step_pin=P8_15 dir_pin=P8_14 invert_step=0
-config_stepper oid=2 step_pin=P8_19 dir_pin=P8_18 invert_step=0
+config_stepper oid=0 step_pin=gpio0_23 dir_pin=gpio1_12 invert_step=0
+config_stepper oid=1 step_pin=gpio1_15 dir_pin=gpio0_26 invert_step=0
+config_stepper oid=2 step_pin=gpio0_22 dir_pin=gpio2_1 invert_step=0
 finalize_config crc=0
 ```
 
