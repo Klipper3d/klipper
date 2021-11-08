@@ -62,7 +62,7 @@ class RecoreThermocouple:
         v_opamp = 1000.0*v_adc/self.gain
         v_offset = 1000.0*(self.offset/101.1)
         # TODO: Calculate effect of thermocouple resitance.
-        vin_off = 0.2
+        vin_off = 0.25
         v_in = (v_opamp - v_offset - vin_off)
         cj_temp = self.cj_temp.get_temp(0)[0]
         v_cj = self.temp_to_mv(cj_temp)
