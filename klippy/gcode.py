@@ -325,6 +325,7 @@ class GCodeDispatch:
         msg = self.printer.get_state_message()[0]
         msg = msg.rstrip() + "\nKlipper state: Not ready"
         raise gcmd.error(msg)
+    cmd_HELP_help = "Report the list of available extended G-Code commands"
     def cmd_HELP(self, gcmd):
         cmdhelp = []
         if not self.is_printer_ready:
@@ -380,8 +381,8 @@ class GCodeIO:
     def _process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
         try:
-            data = os.read(self.fd, 4096)
-        except os.error:
+            data = str(os.read(self.fd, 4096).decode())
+        except (os.error, UnicodeDecodeError):
             logging.exception("Read g-code")
             return
         self.input_log.append((eventtime, data))
@@ -426,7 +427,7 @@ class GCodeIO:
     def _respond_raw(self, msg):
         if self.pipe_is_active:
             try:
-                os.write(self.fd, msg+"\n")
+                os.write(self.fd, (msg+"\n").encode())
             except os.error:
                 logging.exception("Write g-code response")
                 self.pipe_is_active = False

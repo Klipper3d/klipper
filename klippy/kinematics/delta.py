@@ -92,8 +92,8 @@ class DeltaKinematics:
     def _actuator_to_cartesian(self, spos):
         sphere_coords = [(t[0], t[1], sp) for t, sp in zip(self.towers, spos)]
         return mathutil.trilateration(sphere_coords, self.arm2)
-    def calc_tag_position(self):
-        spos = [rail.get_tag_position() for rail in self.rails]
+    def calc_position(self, stepper_positions):
+        spos = [stepper_positions[rail.get_name()] for rail in self.rails]
         return self._actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:
@@ -129,7 +129,8 @@ class DeltaKinematics:
                 raise move.move_error()
             limit_xy2 = -1.
         if move.axes_d[2]:
-            move.limit_speed(self.max_z_velocity, move.accel)
+            z_ratio = move.move_d / abs(move.axes_d[2])
+            move.limit_speed(self.max_z_velocity * z_ratio, move.accel)
             limit_xy2 = -1.
         # Limit the speed/accel of this move if is is at the extreme
         # end of the build envelope
@@ -138,10 +139,7 @@ class DeltaKinematics:
             r = 0.5
             if extreme_xy2 > self.very_slow_xy2:
                 r = 0.25
-            max_velocity = self.max_velocity
-            if move.axes_d[2]:
-                max_velocity = self.max_z_velocity
-            move.limit_speed(max_velocity * r, self.max_accel * r)
+            move.limit_speed(self.max_velocity * r, self.max_accel * r)
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
     def get_status(self, eventtime):
@@ -221,9 +219,9 @@ class DeltaCalibration:
                            "%.6f" % (self.endstops[i],))
         gcode = configfile.get_printer().lookup_object("gcode")
         gcode.respond_info(
-            "stepper_a: position_endstop: %.6f angle: %.6f arm: %.6f\n"
-            "stepper_b: position_endstop: %.6f angle: %.6f arm: %.6f\n"
-            "stepper_c: position_endstop: %.6f angle: %.6f arm: %.6f\n"
+            "stepper_a: position_endstop: %.6f angle: %.6f arm_length: %.6f\n"
+            "stepper_b: position_endstop: %.6f angle: %.6f arm_length: %.6f\n"
+            "stepper_c: position_endstop: %.6f angle: %.6f arm_length: %.6f\n"
             "delta_radius: %.6f"
             % (self.endstops[0], self.angles[0], self.arms[0],
                self.endstops[1], self.angles[1], self.arms[1],

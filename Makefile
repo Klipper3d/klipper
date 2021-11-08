@@ -29,10 +29,10 @@ dirs-y = src
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
     ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD -g \
+CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD \
     -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
     -ffunction-sections -fdata-sections
-CFLAGS += -flto -fwhole-program -fno-use-linker-plugin
+CFLAGS += -flto -fwhole-program -fno-use-linker-plugin -ggdb3
 
 OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
 OBJS_klipper.elf += $(OUT)compile_time_request.o
@@ -91,10 +91,10 @@ $(OUT)board-link: $(KCONFIG_CONFIG)
 	$(Q)echo "#$(CONFIG_BOARD_DIRECTORY)" > $@.temp
 	$(Q)if ! cmp -s $@.temp $@; then rm -f $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y)) ; mv $@.temp $@ ; fi
 	$(Q)rm -f $(OUT)board
-	$(Q)ln -sf $(PWD)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
+	$(Q)ln -sf $(CURDIR)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
 	$(Q)mkdir -p $(OUT)board-generic
 	$(Q)rm -f $(OUT)board-generic/board
-	$(Q)ln -sf $(PWD)/src/generic $(OUT)board-generic/board
+	$(Q)ln -sf $(CURDIR)/src/generic $(OUT)board-generic/board
 
 include $(OUT)board-link
 

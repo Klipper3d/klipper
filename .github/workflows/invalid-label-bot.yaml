@@ -1,5 +1,5 @@
-# Add a comment to github issues marked with the invalid label
-name: "Add comment to issues marked invalid"
+# Add a comment to github issues marked with the "not on github" label
+name: "Add comment to issues marked 'not on github'"
 on:
   issues:
       types: [labeled]
@@ -11,14 +11,13 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            if (context.payload.label.name != "invalid")
+            if (context.payload.label.name != "not on github")
               return;
             msg = "It looks like this ticket is a request for help"
                 + " (or similar)."
                 + " Many helpful people will not see your message here and you"
                 + " are unlikely to get a useful response."
-                + " Please close this ticket and follow the contact directions"
-                + " at:"
+                + " Instead, see the contact directions at:"
                 + " https://www.klipper3d.org/Contact.html"
                 + "\n\n"
                 + "We use github to share the results of work done to"

@@ -23,7 +23,7 @@ class PrinterSysStats:
             self.mem_file = None
     def stats(self, eventtime):
         # Get core usage stats
-        ptime = time.clock()
+        ptime = time.process_time()
         pdiff = ptime - self.last_process_time
         self.last_process_time = ptime
         if pdiff > 0.:

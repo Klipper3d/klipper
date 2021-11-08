@@ -1,3 +1,5 @@
+# Features
+
 Klipper has several compelling features:
 
 * High precision stepper movement. Klipper utilizes an application
@@ -72,8 +74,7 @@ Klipper has several compelling features:
   enables programmers to build external applications with detailed
   control of the printer.
 
-Additional features
-===================
+## Additional features
 
 Klipper supports many standard 3d printer features:
 
@@ -82,14 +83,14 @@ Klipper supports many standard 3d printer features:
   also run Octoprint.
 
 * Standard G-Code support. Common g-code commands that are produced by
-  typical "slicers" are supported. One may continue to use Slic3r,
-  Cura, etc. with Klipper.
+  typical "slicers" (SuperSlicer, Cura, PrusaSlicer, etc.) are
+  supported.
 
 * Support for multiple extruders. Extruders with shared heaters and
   extruders on independent carriages (IDEX) are also supported.
 
-* Support for cartesian, delta, corexy, corexz, rotary delta, polar,
-  and cable winch style printers.
+* Support for cartesian, delta, corexy, corexz, hybrid-corexy,
+  hybrid-corexz, rotary delta, polar, and cable winch style printers.
 
 * Automatic bed leveling support. Klipper can be configured for basic
   bed tilt detection or full mesh bed leveling. If the bed uses
@@ -104,13 +105,16 @@ Klipper supports many standard 3d printer features:
 
 * Support for common temperature sensors (eg, common thermistors,
   AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856,
-  MAX31865, BME280, HTU21D, and LM75). Custom thermistors and custom
-  analog temperature sensors can also be configured.
+  MAX31865, BME280, HTU21D, DS18B20, and LM75). Custom thermistors and
+  custom analog temperature sensors can also be configured. One can
+  monitor the internal micro-controller temperature sensor and the
+  internal temperature sensor of a Raspberry Pi.
 
 * Basic thermal heater protection enabled by default.
 
 * Support for standard fans, nozzle fans, and temperature controlled
-  fans. No need to keep fans running when the printer is idle.
+  fans. No need to keep fans running when the printer is idle. Fan
+  speed can be monitored on fans that have a tachometer.
 
 * Support for run-time configuration of TMC2130, TMC2208/TMC2224,
   TMC2209, TMC2660, and TMC5160 stepper motor drivers. There is also
@@ -132,6 +136,9 @@ Klipper supports many standard 3d printer features:
   improve the accuracy of typical endstop switches. When properly
   tuned it can improve a print's first layer bed adhesion.
 
+* Support for filament presence sensors, filament motion sensors, and
+  filament width sensors.
+
 * Support for measuring and recording acceleration using an adxl345
   accelerometer.
 
@@ -145,8 +152,7 @@ Klipper supports many standard 3d printer features:
 To get started with Klipper, read the [installation](Installation.md)
 guide.
 
-Step Benchmarks
-===============
+## Step Benchmarks
 
 Below are the results of stepper performance tests. The numbers shown
 represent total number of steps per second on the micro-controller.

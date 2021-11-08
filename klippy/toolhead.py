@@ -244,7 +244,7 @@ class ToolHead:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
-        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.step_generators = []
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
@@ -285,7 +285,7 @@ class ToolHead:
             for sg in self.step_generators:
                 sg(sg_flush_time)
             free_time = max(lkft, sg_flush_time - kin_flush_delay)
-            self.trapq_free_moves(self.trapq, free_time)
+            self.trapq_finalize_moves(self.trapq, free_time)
             self.extruder.update_move_time(free_time)
             mcu_flush_time = max(lkft, sg_flush_time - self.move_flush_time)
             for m in self.all_mcus:
@@ -401,7 +401,9 @@ class ToolHead:
         return list(self.commanded_pos)
     def set_position(self, newpos, homing_axes=()):
         self.flush_step_generation()
-        self.trapq_free_moves(self.trapq, self.reactor.NEVER)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.trapq_set_position(self.trapq, self.print_time,
+                                   newpos[0], newpos[1], newpos[2])
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
         self.printer.send_event("toolhead:set_position")
@@ -477,7 +479,7 @@ class ToolHead:
             self.move_queue.flush()
         except DripModeEndSignal as e:
             self.move_queue.reset()
-            self.trapq_free_moves(self.trapq, self.reactor.NEVER)
+            self.trapq_finalize_moves(self.trapq, self.reactor.NEVER)
         # Exit "Drip" state
         self.flush_step_generation()
     # Misc commands
@@ -551,25 +553,34 @@ class ToolHead:
     cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
     def cmd_SET_VELOCITY_LIMIT(self, gcmd):
         print_time = self.get_last_move_time()
-        max_velocity = gcmd.get_float('VELOCITY', self.max_velocity, above=0.)
-        max_accel = gcmd.get_float('ACCEL', self.max_accel, above=0.)
+        max_velocity = gcmd.get_float('VELOCITY', None, above=0.)
+        max_accel = gcmd.get_float('ACCEL', None, above=0.)
         square_corner_velocity = gcmd.get_float(
-            'SQUARE_CORNER_VELOCITY', self.square_corner_velocity, minval=0.)
-        self.requested_accel_to_decel = gcmd.get_float(
-            'ACCEL_TO_DECEL', self.requested_accel_to_decel, above=0.)
-        self.max_velocity = max_velocity
-        self.max_accel = max_accel
-        self.square_corner_velocity = square_corner_velocity
+            'SQUARE_CORNER_VELOCITY', None, minval=0.)
+        requested_accel_to_decel = gcmd.get_float(
+            'ACCEL_TO_DECEL', None, above=0.)
+        if max_velocity is not None:
+            self.max_velocity = max_velocity
+        if max_accel is not None:
+            self.max_accel = max_accel
+        if square_corner_velocity is not None:
+            self.square_corner_velocity = square_corner_velocity
+        if requested_accel_to_decel is not None:
+            self.requested_accel_to_decel = requested_accel_to_decel
         self._calc_junction_deviation()
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"
                "max_accel_to_decel: %.6f\n"
-               "square_corner_velocity: %.6f"% (
+               "square_corner_velocity: %.6f" % (
                    self.max_velocity, self.max_accel,
                    self.requested_accel_to_decel,
                    self.square_corner_velocity))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
-        gcmd.respond_info(msg, log=False)
+        if (max_velocity is None and
+            max_accel is None and
+            square_corner_velocity is None and
+            requested_accel_to_decel is None):
+            gcmd.respond_info(msg, log=False)
     def cmd_M204(self, gcmd):
         # Use S for accel
         accel = gcmd.get_float('S', None, above=0.)

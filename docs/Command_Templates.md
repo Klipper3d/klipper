@@ -1,7 +1,9 @@
+# Commands templates
+
 This document provides information on implementing G-Code command
 sequences in gcode_macro (and similar) config sections.
 
-### G-Code Macro Naming
+## G-Code Macro Naming
 
 Case is not important for the G-Code macro name - MY_MACRO and
 my_macro will evaluate the same and may be called in either upper or
@@ -9,7 +11,7 @@ lower case. If any numbers are used in the macro name then they must
 all be at the end of the name (eg, TEST_MACRO25 is valid, but
 MACRO25_TEST3 is not).
 
-### Formatting of G-Code in the config
+## Formatting of G-Code in the config
 
 Indentation is important when defining a macro in the config file. To
 specify a multi-line G-Code sequence it is important for each line to
@@ -27,7 +29,26 @@ Note how the `gcode:` config option always starts at the beginning of
 the line and subsequent lines in the G-Code macro never start at the
 beginning.
 
-### Save/Restore state for G-Code moves
+## Add a description to your macro
+
+To help identify the functionality a short description can be added.
+Add `description:` with a short text to describe the functionality.
+Default is "G-Code macro" if not specified.
+For example:
+
+```
+[gcode_macro blink_led]
+description: Blink my_led one time
+gcode:
+  SET_PIN PIN=my_led VALUE=1
+  G4 P2000
+  SET_PIN PIN=my_led VALUE=0
+```
+
+This will be showing is you use the `HELP` command or use the autocomplete
+function.
+
+## Save/Restore state for G-Code moves
 
 Unfortunately, the G-Code command language can be challenging to use.
 The standard mechanism to move the toolhead is via the `G1` command
@@ -56,7 +77,7 @@ mode" and the `RESTORE_GCODE_STATE` command restores the state to what
 it was prior to entering the macro. Be sure to specify an explicit
 speed (via the `F` parameter) on the first `G1` command.
 
-### Template expansion
+## Template expansion
 <!-- {% raw %} -->
 
 The gcode_macro `gcode:` config section is evaluated using the Jinja2
@@ -82,7 +103,7 @@ gcode:
   RESTORE_GCODE_STATE NAME=clean_nozzle_state
 ```
 
-#### Macro parameters
+### Macro parameters
 
 It is often useful to inspect parameters passed to the macro when
 it is called. These parameters are available via the `params`
@@ -109,7 +130,7 @@ gcode:
   M140 S{bed_temp}
 ```
 
-#### The "printer" Variable
+### The "printer" Variable
 
 It is possible to inspect (and alter) the current state of the printer
 via the `printer` pseudo-variable. For example:
@@ -120,8 +141,8 @@ gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
 ```
 
-Available fields are defined in the [Status
-Reference](Status_Reference.md) document.
+Available fields are defined in the
+[Status Reference](Status_Reference.md) document.
 
 Important! Macros are first evaluated in entirety and only then are
 the resulting commands executed. If a macro issues a command that
@@ -150,7 +171,7 @@ gcode:
 ```
 <!-- {% endraw %} -->
 
-### Actions
+## Actions
 
 There are some commands available that can alter the state of the
 printer. For example, `{ action_emergency_stop() }` would cause the
@@ -174,7 +195,7 @@ Available "action" commands:
   be provided via keyword arguments, ie:
   `action_call_remote_method("print_stuff", my_arg="hello_world")`
 
-### Variables
+## Variables
 
 The SET_GCODE_VARIABLE command may be useful for saving state between
 macro calls. Variable names may not contain any upper case characters.
@@ -202,7 +223,7 @@ gcode:
 Be sure to take the timing of macro evaluation and command execution
 into account when using SET_GCODE_VARIABLE.
 
-### Delayed Gcodes
+## Delayed Gcodes
 
 The [delayed_gcode] configuration option can be used to execute a delayed
 gcode sequence:
@@ -260,7 +281,31 @@ gcode:
 UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 ```
 
-### Save Variables to disk
+## Menu templates
+
+If a [display config section](Config_Reference.md#display) is enabled,
+then it is possible to customize the menu with
+[menu](Config_Reference.md#menu) config sections.
+
+The following read-only attributes are available in menu templates:
+* `menu.width` - element width (number of display columns)
+* `menu.ns` - element namespace
+* `menu.event` - name of the event that triggered the script
+* `menu.input` - input value, only available in input script context
+
+The following actions are available in menu templates:
+* `menu.back(force, update)`: will execute menu back command, optional
+  boolean parameters `<force>` and `<update>`.
+  * When `<force>` is set True then it will also stop editing. Default
+    value is False.
+  * When `<update>` is set False then parent container items are not
+    updated. Default value is True.
+* `menu.exit(force)` - will execute menu exit command, optional
+  boolean parameter `<force>` default value False.
+  * When `<force>` is set True then it will also stop editing. Default
+    value is False.
+
+## Save Variables to disk
 <!-- {% raw %} -->
 
 If a

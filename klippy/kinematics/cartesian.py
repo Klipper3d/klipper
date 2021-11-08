@@ -15,7 +15,7 @@ class CartKinematics:
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
                       for n in 'xyz']
         for rail, axis in zip(self.rails, 'xyz'):
-            rail.setup_itersolve('cartesian_stepper_alloc', axis)
+            rail.setup_itersolve('cartesian_stepper_alloc', axis.encode())
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
@@ -37,7 +37,7 @@ class CartKinematics:
             dc_axis = dc_config.getchoice('axis', {'x': 'x', 'y': 'y'})
             self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
             dc_rail = stepper.LookupMultiRail(dc_config)
-            dc_rail.setup_itersolve('cartesian_stepper_alloc', dc_axis)
+            dc_rail.setup_itersolve('cartesian_stepper_alloc', dc_axis.encode())
             for s in dc_rail.get_steppers():
                 toolhead.register_step_generator(s.generate_steps)
             self.dual_carriage_rails = [
@@ -51,8 +51,8 @@ class CartKinematics:
             dca = self.dual_carriage_axis
             rails = rails[:dca] + self.dual_carriage_rails + rails[dca+1:]
         return [s for rail in rails for s in rail.get_steppers()]
-    def calc_tag_position(self):
-        return [rail.get_tag_position() for rail in self.rails]
+    def calc_position(self, stepper_positions):
+        return [stepper_positions[rail.get_name()] for rail in self.rails]
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
