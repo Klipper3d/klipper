@@ -81,7 +81,7 @@ class VirtualSD:
     def get_status(self, eventtime):
         return {
             'file_path': self.file_path(),
-            'progress': self.progress(),
+            'progress': round(self.progress(), 2),
             'is_active': self.is_active(),
             'file_position': self.file_position,
             'file_size': self.file_size,
