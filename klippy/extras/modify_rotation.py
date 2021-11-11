@@ -4,37 +4,45 @@ import logging
 class RotationDistanceModifier:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.steppers = {}	
-        gcode.register_mux_command("SET_STEPPER_STEP_DISTANCE", "STEPPER",
-                                   self.name, self.cmd_SET_E_ROT_DISTANCE,
-                                   desc=self.cmd_SET_E_ROT_DISTANCE_help)
-	#gcode.register_command('FORCE_MOVE', self.cmd_FORCE_MOVE,
-        #                          desc=self.cmd_FORCE_MOVE_help)
-        #issue command
-
-    #see if stepper exists
-    def _lookup_stepper(self, gcmd):
-        name = gcmd.get('STEPPER')
-        if name not in self.steppers:
-            raise gcmd.error("Unknown stepper %s" % (name,))
-        return self.steppers[name]
-    
-    
-    cmd_SET_E_ROT_DISTANCE_help = "Set stepper step distance"
-    def cmd_SET_E_ROT_DISTANCE(self, gcmd):
-        #toolhead = self.printer.lookup_object('toolhead')
-        stepper = self._lookup_stepper(gcmd)
-        dist = gcmd.get_float('DISTANCE', None, above=0.) #accept if non zero the terminal command
+        self.steppers = stepper.PrinterStepper(config)	
+	self.gcode = self.printer.lookup.object('gcode')
+        gcode.register_command("SET_STEPPER_ROTATION_DISTANCE", "STEPPER",
+                                   self.name, self.cmd_SET_STEPPER_ROTATION_DISTANCE,
+                                   desc=self.cmd_SET_STEPPER_DISTANCE_help)
+	   
+	
+    cmd_SET_STEPPER_ROTATION_DISTANCE_help = "Change rot dist of individual stepper by name"
+    def cmd_SET_STEPPER_ROTATION_DISTANCE(self, gcmd):
+        toolhead = self.printer.lookup_object('toolhead')
+        stepper_name = gcmd.get('STEPPER', None)
+        dist = gcmd.get_float('DISTANCE', None, above=0.)
+        
+        if stepper_name not in self.steppers:
+            gcmd.respond_info('SET_STEPPER_DISTANCE: Invalid stepper "%s"'
+                              % (stepper_name,))
+            return
+        
         if dist is None:
             step_dist = self.stepper.get_step_dist()
             gcmd.respond_info("stepper '%s' step distance is %0.6f"
-                              % (self.name, step_dist))
+                              % (stepper_name, step_dist)) #self.name,
             return
-        toolhead.flush_step_generation() 
-        self.stepper.set_step_dist(dist)
-        gcmd.respond_info("stepper '%s' step distance set to %0.6f"
-                          % (self.name, dist))
-
+        
+        toolhead.flush_step_generation()
+        
+        configfile = self.printer.lookup_object('configfile')
+        
+        configfile.set(stepper_name, "rotation_distance", dist)
+        self.ad_gcmd.respond_info("stepper '%s' rotation distance set to %0.6f"
+                          % (stepper_name, dist))
+        
+        self.ad_gcmd.respond_info(
+          "The SAVE_CONFIG command will update the printer config\n"
+          "file with these parameters and restart the printer.")
+        
+  	
+	
+    
 
 def load_config(config):
     return RotationDistanceModifier(config)
