@@ -53,8 +53,9 @@ class hd44780_i2c:
             (self.glyph_framebuffer, bytearray('~'*64), 0x40) ]
 
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("HD_IIC_LCD_BACKLIGHT", self.cmd_HD_IIC_LCD_BACKLIGHT,
-                                   desc=self.cmd_HD_IIC_LCD_BACKLIGHT_help)
+        gcode.register_command("HD_IIC_LCD_BACKLIGHT",
+                                    self.cmd_HD_IIC_LCD_BACKLIGHT,
+                                    desc=self.cmd_HD_IIC_LCD_BACKLIGHT_help)
 
     def send_4_bits(self, cmd, is_data, minclock):
         if is_data:
