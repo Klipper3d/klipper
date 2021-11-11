@@ -381,13 +381,13 @@ class GCodeIO:
     def _process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
         try:
-            data = os.read(self.fd, 4096)
-        except os.error:
+            data = str(os.read(self.fd, 4096).decode())
+        except (os.error, UnicodeDecodeError):
             logging.exception("Read g-code")
             return
         self.input_log.append((eventtime, data))
         self.bytes_read += len(data)
-        lines = data.decode().split('\n')
+        lines = data.split('\n')
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
         pending_commands = self.pending_commands
