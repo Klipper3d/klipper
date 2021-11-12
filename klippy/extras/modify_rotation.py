@@ -8,7 +8,6 @@ class RotationDistanceModifier:
 		gcode.register_command("SET_STEPPER_ROTATION_DISTANCE", "STEPPER",
                                    self.name, self.cmd_SET_STEPPER_ROTATION_DISTANCE,
                                    desc=self.cmd_SET_STEPPER_DISTANCE_help)
-	   
 	cmd_SET_STEPPER_ROTATION_DISTANCE_help = "Change rot dist of individual stepper by name"
 	def cmd_SET_STEPPER_ROTATION_DISTANCE(self, gcmd):
 		toolhead = self.printer.lookup_object('toolhead')
