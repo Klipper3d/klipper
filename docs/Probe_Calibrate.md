@@ -100,16 +100,16 @@ to the following:
 ```
 Recv: // probe accuracy: at X:0.000 Y:0.000 Z:10.000
 Recv: // and read 10 times with speed of 5 mm/s
-Recv: // probe at -0.003,0.005 is z=2.506948
-Recv: // probe at -0.003,0.005 is z=2.519448
-Recv: // probe at -0.003,0.005 is z=2.519448
-Recv: // probe at -0.003,0.005 is z=2.506948
-Recv: // probe at -0.003,0.005 is z=2.519448
-Recv: // probe at -0.003,0.005 is z=2.519448
-Recv: // probe at -0.003,0.005 is z=2.506948
-Recv: // probe at -0.003,0.005 is z=2.506948
-Recv: // probe at -0.003,0.005 is z=2.519448
-Recv: // probe at -0.003,0.005 is z=2.506948
+Recv: // nozzle at -0.003,0.005 is z=2.506948
+Recv: // nozzle at -0.003,0.005 is z=2.519448
+Recv: // nozzle at -0.003,0.005 is z=2.519448
+Recv: // nozzle at -0.003,0.005 is z=2.506948
+Recv: // nozzle at -0.003,0.005 is z=2.519448
+Recv: // nozzle at -0.003,0.005 is z=2.519448
+Recv: // nozzle at -0.003,0.005 is z=2.506948
+Recv: // nozzle at -0.003,0.005 is z=2.506948
+Recv: // nozzle at -0.003,0.005 is z=2.519448
+Recv: // nozzle at -0.003,0.005 is z=2.506948
 Recv: // probe accuracy results: maximum 2.519448, minimum 2.506948, range 0.012500, average 2.513198, median 2.513198, standard deviation 0.006250
 ```
 
