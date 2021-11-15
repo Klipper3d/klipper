@@ -44,6 +44,8 @@ class CalibrationData:
         self.data_sets = joined_data_sets
     def set_numpy(self, numpy):
         self.numpy = numpy
+    def get_numpy(self):
+        return self.numpy
     def normalize_to_frequencies(self):
         for psd in self._psd_list:
             # Avoid division by zero errors
@@ -52,6 +54,8 @@ class CalibrationData:
             psd[self.freq_bins < MIN_FREQ] = 0.
     def get_psd(self, axis='all'):
         return self._psd_map[axis]
+    def get_freq_bins(self):
+        return self.freq_bins
 
 
 CalibrationResult = collections.namedtuple(
