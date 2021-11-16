@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, os, time
-from . import shaper_calibrate
+from . import adxl345, shaper_calibrate
 
 class TestAxis:
     def __init__(self, axis=None, vib_dir=None):
@@ -128,6 +128,7 @@ class ResonanceTester:
                 ('y', config.get('accel_chip_y').strip())]
             if self.accel_chip_names[0][1] == self.accel_chip_names[1][1]:
                 self.accel_chip_names = [('xy', self.accel_chip_names[0][1])]
+        self.autocalibrate = config.getboolean('autocalibrate', False)
         self.max_smoothing = config.getfloat('max_smoothing', None, minval=0.05)
 
         self.gcode = self.printer.lookup_object('gcode')
@@ -147,14 +148,28 @@ class ResonanceTester:
                 (chip_axis, self.printer.lookup_object(chip_name))
                 for chip_axis, chip_name in self.accel_chip_names]
 
+    def _calibrate_chips(self, axes, gcmd):
+        calibrate_chips = []
+        for chip_axis, chip in self.accel_chips:
+            for axis in axes:
+                if axis.matches(chip_axis):
+                    calibrate_chips.append(chip)
+                    break
+        for chip in calibrate_chips:
+            gcmd.respond_info('Autocalibrating %s' % (
+                chip.get_config().get_name(),))
+            adxl345.AccelerometerCalibrator(self.printer, chip).calibrate(gcmd)
+
     def _run_test(self, gcmd, axes, helper, raw_name_suffix=None):
         toolhead = self.printer.lookup_object('toolhead')
         calibration_data = {axis: None for axis in axes}
 
         self.test.prepare_test(gcmd)
         test_points = self.test.get_start_test_points()
-        for point in test_points:
+        for ptx_ind, point in enumerate(test_points):
             toolhead.manual_move(point, self.move_speed)
+            if self.autocalibrate and ptx_ind == 0:
+                self._calibrate_chips(axes, gcmd)
             if len(test_points) > 1:
                 gcmd.respond_info(
                         "Probing point (%.3f, %.3f, %.3f)" % tuple(point))
