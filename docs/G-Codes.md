@@ -73,6 +73,13 @@ modules are automatically loaded.
 The following commands are available when an
 [adxl345 config section](Config_Reference.md#adxl345) is enabled.
 
+#### ACCELEROMETER_CALIBRATE
+`ACCELEROMETER_CALIBRATE [CHIP=<config_name>]`: runs an automatic
+calibration test to detect chip orientation and freefall acceleration.
+The results of the calibration are applied to all subsequent measurements,
+and can be persisted in `printer.cfg` by issuing `SAVE_CONFIG` command.
+If CHIP is not specified it defaults to "adxl345".
+
 #### ACCELEROMETER_MEASURE
 `ACCELEROMETER_MEASURE [CHIP=<config_name>] [NAME=<value>]`: Starts
 accelerometer measurements at the requested number of samples per

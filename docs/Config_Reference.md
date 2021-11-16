@@ -1500,12 +1500,30 @@ cs_pin:
 #   example, one could set this to "y, x, z" to swap the X and Y axes.
 #   It is also possible to negate an axis if the accelerometer
 #   direction is reversed (eg, "x, z, -y"). The default is "x, y, z".
+#   Instead of providing this parameter, the user can run a command
+#   `ACCELEROMETER_CALIBRATE` to automatically detect accelerometer
+#   orientation and save it as `axes_transform` and `gravity` options.
 #rate: 3200
 #   Output data rate for ADXL345. ADXL345 supports the following data
 #   rates: 3200, 1600, 800, 400, 200, 100, 50, and 25. Note that it is
 #   not recommended to change this rate from the default 3200, and
 #   rates below 800 will considerably affect the quality of resonance
 #   measurements.
+#offset: 0, 0, 0
+#   Offset that will be subtracted from accelerometer readings. Can be
+#   useful to subtract freefall acceleration or any other accelerometer
+#   readings offsets resulting from the internal stresses of the chip.
+#   Can be automatically detected by running `ACCELEROMETER_CALIBRATE`
+#   command. Default is 0, 0, 0 which means no acceleration adjustments.
+#axes_transform:
+#   A 3x3 matrix indicating the transformation from the accelerometer
+#   into the printer coordinate system. Replaces axes_map option. Can be
+#   automatically detected by running `ACCELEROMETER_CALIBRATE` command.
+#   If unset, defaults to
+#   1, 0, 0
+#   0, 1, 0
+#   0, 0, 1
+#   which means 1:1 mapping between X, Y, Z accelerometer and printer axes.
 ```
 
 ### [resonance_tester]
@@ -1541,6 +1559,11 @@ section of the measuring resonances guide for more information on
 #   and on the toolhead (for X axis). These parameters have the same
 #   format as 'accel_chip' parameter. Only 'accel_chip' or these two
 #   parameters must be provided.
+#autocalibrate: False
+#   If set to True, Klipper will run accelerometer autocalibration before
+#   each resonance testing. Useful if the accelerometer(s) is/are mounted
+#   temporarily for each resonance testing to a new location and in a
+#   new orientation onto the printer. Default is False.
 #max_smoothing:
 #   Maximum input shaper smoothing to allow for each axis during shaper
 #   auto-calibration (with 'SHAPER_CALIBRATE' command). By default no
