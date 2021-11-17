@@ -6,9 +6,9 @@
 
 class PrintStats:
     def __init__(self, config):
-        printer = config.get_printer()
-        self.gcode_move = printer.load_object(config, 'gcode_move')
-        self.reactor = printer.get_reactor()
+        self.printer = config.get_printer()
+        self.gcode_move = self.printer.load_object(config, 'gcode_move')
+        self.reactor = self.printer.get_reactor()
         self.reset()
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
@@ -19,6 +19,7 @@ class PrintStats:
     def set_current_file(self, filename):
         self.reset()
         self.filename = filename
+        self.printer.send_event("print_stats:load")
     def note_start(self):
         curtime = self.reactor.monotonic()
         if self.print_start_time is None:
@@ -33,6 +34,7 @@ class PrintStats:
         self.last_epos = gc_status['position'].e
         self.state = "printing"
         self.error_message = ""
+        self.printer.send_event("print_stats:start")
     def note_pause(self):
         if self.last_pause_time is None:
             curtime = self.reactor.monotonic()
@@ -41,6 +43,7 @@ class PrintStats:
             self._update_filament_usage(curtime)
         if self.state != "error":
             self.state = "paused"
+            self.printer.send_event("print_stats:pause")
     def note_complete(self):
         self._note_finish("complete")
     def note_error(self, message):
@@ -57,6 +60,8 @@ class PrintStats:
             self.init_duration = self.total_duration - \
                 self.prev_pause_duration
         self.print_start_time = None
+        self.printer.send_event("print_stats:finish")
+        self.printer.send_event("print_stats:{}".format(state))
     def reset(self):
         self.filename = self.error_message = ""
         self.state = "standby"
@@ -64,6 +69,7 @@ class PrintStats:
         self.filament_used = self.total_duration = 0.
         self.print_start_time = self.last_pause_time = None
         self.init_duration = 0.
+        self.printer.send_event("print_stats:reset")
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration
         if self.print_start_time is not None:

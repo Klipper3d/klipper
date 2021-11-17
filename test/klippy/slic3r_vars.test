@@ -1,0 +1,14 @@
+; Slic3r vars test
+
+DICTIONARY atmega2560.dict
+CONFIG slic3r_vars.cfg
+
+G28
+SDCARD_PRINT_FILE FILENAME=vars_present.gcode
+TEST_vars_present
+SDCARD_RESET_FILE
+TEST_vars_absent
+G28
+SDCARD_PRINT_FILE FILENAME=vars_absent.gcode
+TEST_vars_absent
+SDCARD_RESET_FILE
