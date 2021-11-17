@@ -311,6 +311,16 @@ The following may also be useful:
 * Avoid accessing the internal member variables (or calling methods
   that start with an underscore) of other printer objects. Observing
   this convention makes it easier to manage future changes.
+* It is recommended to assign a value to all member variables in the
+  Python constructor of Python classes. (And therefore avoid utilizing
+  Python's ability to dynamically create new member variables.)
+* If a Python variable is to store a floating point value then it is
+  recommended to always assign and manipulate that variable with
+  floating point constants (and never use integer constants). For
+  example, prefer `self.speed = 1.` over `self.speed = 1`, and prefer
+  `self.speed *= 2.` over `self.speed *= 2`. Consistent use of
+  floating point values can avoid hard to debug quirks in Python type
+  conversions.
 * If submitting the module for inclusion in the main Klipper code, be
   sure to place a copyright notice at the top of the module. See the
   existing modules for the preferred format.
