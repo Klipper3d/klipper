@@ -286,6 +286,17 @@ The following may also be useful:
   `printer.lookup_object("pins").setup_pin("pwm",
   config.get("my_pin"))`. The returned object can then be commanded at
   run-time.
+* If the printer object defines a `get_status()` method then the
+  module can export [status information](Status_Reference.md) via
+  [macros](Command_Templates.md) and via the
+  [API Server](API_Server.md). The `get_status()` method must return a
+  Python dictionary with keys that are strings and values that are
+  integers, floats, strings, lists, dictionaries, True, False, or
+  None. Tuples (and named tuples) may also be used (these appear as
+  lists when accessed via the API Server). Lists and dictionaries that
+  are exported must be treated as "immutable" - if their contents
+  change then a new object must be returned from `get_status()`,
+  otherwise the API Server will not detect those changes.
 * If the module needs access to system timing or external file
   descriptors then use `printer.get_reactor()` to obtain access to the
   global "event reactor" class. This reactor class allows one to
