@@ -318,7 +318,7 @@ The following may also be useful:
   recommended to always assign and manipulate that variable with
   floating point constants (and never use integer constants). For
   example, prefer `self.speed = 1.` over `self.speed = 1`, and prefer
-  `self.speed *= 2.` over `self.speed *= 2`. Consistent use of
+  `self.speed = 2. * x` over `self.speed = 2 * x`. Consistent use of
   floating point values can avoid hard to debug quirks in Python type
   conversions.
 * If submitting the module for inclusion in the main Klipper code, be
