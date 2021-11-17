@@ -8,6 +8,13 @@ All dates in this document are approximate.
 
 ## Changes
 
+20211110: The "NTC 100K beta 3950" temperature sensor is deprecated.
+This sensor will be removed in the near future.  Most users will find
+the "Generic 3950" temperature sensor more accurate.  To continue to
+use the older (typically less accurate) definition, define a custom
+[thermistor](Config_Reference.md#thermistor) with `temperature1: 25`,
+`resistance1: 100000`, and `beta: 3950`.
+
 20211104: The "step pulse duration" option in "make menuconfig" has
 been removed. A new `step_pulse_duration` setting in the
 [stepper config section](Config_Reference.md#stepper) should be set
@@ -64,9 +71,11 @@ the near future.
 20210503: The gcode_macro `default_parameter_<name>` config option is
 deprecated.  Use the `params` pseudo-variable to access macro
 parameters.  Other methods for accessing macro parameters will be
-removed in the near future.  See the
-[Command Templates document](Command_Templates.md#macro-parameters)
-for examples.
+removed in the near future.  Most users can replace a
+`default_parameter_NAME: VALUE` config option with a line like the
+following in the start of the macro: ` {% set NAME =
+params.NAME|default(VALUE)|float %}`.  See the [Command Templates
+document](Command_Templates.md#macro-parameters) for examples.
 
 20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
 velocity, acceleration, and square_corner_velocity larger than the
