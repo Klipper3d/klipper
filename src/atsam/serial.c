@@ -62,7 +62,6 @@ serial_init(void)
 
     // Reset uart
     enable_pclock(Pmc_id);
-    Port->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
     Port->UART_CR = (UART_CR_RSTRX | UART_CR_RSTTX
                      | UART_CR_RXDIS | UART_CR_TXDIS);
     Port->UART_IDR = 0xFFFFFFFF;
