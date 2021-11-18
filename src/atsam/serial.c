@@ -68,8 +68,7 @@ serial_init(void)
     Port->UART_IDR = 0xFFFFFFFF;
 
     // Enable uart
-    Port->UART_MR = (US_MR_CHRL_8_BIT | US_MR_NBSTOP_1_BIT | UART_MR_PAR_NO
-                     | UART_MR_CHMODE_NORMAL);
+    Port->UART_MR = (UART_MR_PAR_NO | UART_MR_CHMODE_NORMAL);
     Port->UART_BRGR = SystemCoreClock / (16 * CONFIG_SERIAL_BAUD);
     Port->UART_IER = UART_IER_RXRDY;
     armcm_enable_irq(UARTx_Handler, UARTx_IRQn, 0);
