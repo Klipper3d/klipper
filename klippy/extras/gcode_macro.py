@@ -171,7 +171,9 @@ class GCodeMacro:
             literal = ast.literal_eval(value)
         except ValueError as e:
             raise gcmd.error("Unable to parse '%s' as a literal" % (value,))
-        self.variables[variable] = literal
+        v = dict(self.variables)
+        v[variable] = literal
+        self.variables = v
     def cmd(self, gcmd):
         if self.in_script:
             raise gcmd.error("Macro %s called recursively" % (self.alias,))
