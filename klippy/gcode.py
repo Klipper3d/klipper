@@ -26,6 +26,22 @@ class GCodeCommand:
         return self._commandline
     def get_command_parameters(self):
         return self._params
+    def get_raw_command_parameters(self):
+        rawparams = self._commandline
+        command = self._command
+        urawparams = rawparams.upper()
+        if not urawparams.startswith(command):
+            start = urawparams.find(command)
+            end = rawparams.rfind('*')
+            if end >= 0:
+                rawparams = rawparams[:end]
+            rawparams = rawparams[start:]
+        commandlen = len(command) + 1
+        if len(rawparams) > commandlen:
+            rawparams = rawparams[commandlen:]
+        else:
+            rawparams = ''
+        return rawparams
     def ack(self, msg=None):
         if not self._need_ack:
             return False

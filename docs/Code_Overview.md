@@ -286,6 +286,17 @@ The following may also be useful:
   `printer.lookup_object("pins").setup_pin("pwm",
   config.get("my_pin"))`. The returned object can then be commanded at
   run-time.
+* If the printer object defines a `get_status()` method then the
+  module can export [status information](Status_Reference.md) via
+  [macros](Command_Templates.md) and via the
+  [API Server](API_Server.md). The `get_status()` method must return a
+  Python dictionary with keys that are strings and values that are
+  integers, floats, strings, lists, dictionaries, True, False, or
+  None. Tuples (and named tuples) may also be used (these appear as
+  lists when accessed via the API Server). Lists and dictionaries that
+  are exported must be treated as "immutable" - if their contents
+  change then a new object must be returned from `get_status()`,
+  otherwise the API Server will not detect those changes.
 * If the module needs access to system timing or external file
   descriptors then use `printer.get_reactor()` to obtain access to the
   global "event reactor" class. This reactor class allows one to
@@ -300,6 +311,16 @@ The following may also be useful:
 * Avoid accessing the internal member variables (or calling methods
   that start with an underscore) of other printer objects. Observing
   this convention makes it easier to manage future changes.
+* It is recommended to assign a value to all member variables in the
+  Python constructor of Python classes. (And therefore avoid utilizing
+  Python's ability to dynamically create new member variables.)
+* If a Python variable is to store a floating point value then it is
+  recommended to always assign and manipulate that variable with
+  floating point constants (and never use integer constants). For
+  example, prefer `self.speed = 1.` over `self.speed = 1`, and prefer
+  `self.speed = 2. * x` over `self.speed = 2 * x`. Consistent use of
+  floating point values can avoid hard to debug quirks in Python type
+  conversions.
 * If submitting the module for inclusion in the main Klipper code, be
   sure to place a copyright notice at the top of the module. See the
   existing modules for the preferred format.
