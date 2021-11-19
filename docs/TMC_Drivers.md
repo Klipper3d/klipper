@@ -437,15 +437,15 @@ Some common errors and tips for diagnosing them:
 
 #### TMC reports error: `... ot=1(OvertempError!)`
 
-This indicates the motor driver disabled itself because it became too hot. Typical
-solutions are to decrease the stepper motor current, increase cooling
-on the stepper motor driver, and/or increase cooling on the stepper
-motor.
+This indicates the motor driver disabled itself because it became too
+hot. Typical solutions are to decrease the stepper motor current,
+increase cooling on the stepper motor driver, and/or increase cooling
+on the stepper motor.
 
 #### TMC reports error: `... ShortToGND` OR `LowSideShort`
 
-This indicates the driver has disabled itself because it detected very high
-current passing through the driver. This may indicate a loose or
+This indicates the driver has disabled itself because it detected very
+high current passing through the driver. This may indicate a loose or
 shorted wire to the stepper motor or within the stepper motor itself.
 
 This error may also occur if using stealthChop mode and the TMC driver
@@ -455,10 +455,10 @@ current through the motor and trigger its own over-current detection.)
 To test this, disable stealthChop mode and check if the errors
 continue to occur.
 
-#### TMC reports error: `... reset=1(Reset)` OR `CS_ACTUAL=0(Reset?)**OR **SE=0(Reset?)`
+#### TMC reports error: `... reset=1(Reset)` OR `CS_ACTUAL=0(Reset?)` OR `SE=0(Reset?)`
 
-This indicates that the driver has reset itself
-mid-print. This may be due to voltage or wiring issues.
+This indicates that the driver has reset itself mid-print. This may be
+due to voltage or wiring issues.
 
 #### TMC reports error: `... uv_cp=1(Undervoltage!)`
 
