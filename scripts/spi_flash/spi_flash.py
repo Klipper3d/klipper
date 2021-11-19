@@ -16,6 +16,7 @@ import traceback
 import json
 import board_defs
 import fatfs_lib
+import util
 import reactor
 import serialhdl
 import clocksync
@@ -98,7 +99,10 @@ SD_SPI_SPEED = 4000000
 # MCU Command Constants
 RESET_CMD = "reset"
 GET_CFG_CMD = "get_config"
-GET_CFG_RESPONSE = "config is_config=%c crc=%u move_count=%hu is_shutdown=%c"
+GET_CFG_RESPONSES = ( # Supported responses (sorted by newer revisions first).
+    "config is_config=%c crc=%u is_shutdown=%c move_count=%hu", # d4aee4f
+    "config is_config=%c crc=%u move_count=%hu is_shutdown=%c"  # Original
+)
 ALLOC_OIDS_CMD = "allocate_oids count=%d"
 SPI_CFG_CMD = "config_spi oid=%d pin=%s"
 SPI_BUS_CMD = "spi_set_bus oid=%d spi_bus=%s mode=%d rate=%d"
@@ -274,7 +278,7 @@ class FatFS:
 
     def remove_item(self, sd_path):
         # Can be path to directory or file
-        ret = self.ffi_lib.fatfs_remove(sd_path)
+        ret = self.ffi_lib.fatfs_remove(sd_path.encode())
         if ret != 0:
             raise OSError("flash_sdcard: Error deleting item at path '%s',"
                           " result: %s"
@@ -282,7 +286,7 @@ class FatFS:
 
     def get_file_info(self, sd_file_path):
         finfo = self.ffi_main.new("struct ff_file_info *")
-        ret = self.ffi_lib.fatfs_get_fstats(finfo, sd_file_path)
+        ret = self.ffi_lib.fatfs_get_fstats(finfo, sd_file_path.encode())
         if ret != 0:
             raise OSError(
                 "flash_sdcard: Failed to retreive file info for path '%s',"
@@ -292,7 +296,7 @@ class FatFS:
 
     def list_sd_directory(self, sd_dir_path):
         flist = self.ffi_main.new("struct ff_file_info[128]")
-        ret = self.ffi_lib.fatfs_list_dir(flist, 128, sd_dir_path)
+        ret = self.ffi_lib.fatfs_list_dir(flist, 128, sd_dir_path.encode())
         if ret != 0:
             raise OSError("flash_sdcard: Failed to retreive file list at path"
                           " '%s', result: %s"
@@ -357,7 +361,7 @@ class SDCardFile:
         if self.fhdl is not None:
             # already open
             return
-        self.fhdl = self.ffi_lib.fatfs_open(self.path, self.mode)
+        self.fhdl = self.ffi_lib.fatfs_open(self.path.encode(), self.mode)
         self.eof = False
         if self.fhdl == self.ffi_main.NULL:
             self.fhdl = None
@@ -855,8 +859,17 @@ class MCUConnection:
 
     def check_need_restart(self):
         output("Checking Current MCU Configuration...")
-        get_cfg_cmd = mcu.CommandQueryWrapper(
-            self._serial, GET_CFG_CMD, GET_CFG_RESPONSE)
+        # Iterate through backwards compatible response strings
+        for response in GET_CFG_RESPONSES:
+            try:
+                get_cfg_cmd = mcu.CommandQueryWrapper(
+                    self._serial, GET_CFG_CMD, response)
+                break
+            except Exception as err:
+                # Raise an exception if we hit the end of the list.
+                if response == GET_CFG_RESPONSES[-1]:
+                    raise err
+                output("Trying fallback...")
         params = get_cfg_cmd.send()
         output_line("Done")
         if params['is_config'] or params['is_shutdown']:
@@ -895,7 +908,7 @@ class MCUConnection:
             SPI_CFG_CMD % (SPI_OID, cs_pin),
             bus_cmd,
         ]
-        config_crc = zlib.crc32('\n'.join(cfg_cmds)) & 0xffffffff
+        config_crc = zlib.crc32('\n'.join(cfg_cmds).encode()) & 0xffffffff
         cfg_cmds.append(FINALIZE_CFG_CMD % (config_crc,))
         for cmd in cfg_cmds:
             self._serial.send(cmd)

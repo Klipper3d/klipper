@@ -360,14 +360,8 @@ class ProbePointsHelper:
         self.gcode = self.printer.lookup_object('gcode')
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
-            points = config.get('points').split('\n')
-            try:
-                points = [line.split(',', 1) for line in points if line.strip()]
-                self.probe_points = [(float(p[0].strip()), float(p[1].strip()))
-                                     for p in points]
-            except:
-                raise config.error("Unable to parse probe points in %s" % (
-                    self.name))
+            self.probe_points = config.getlists('points', seps=(',', '\n'),
+                                                parser=float, count=2)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
         self.use_offsets = False

@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os
-import pins, mcu, bus
+import pins, mcu
 
 class recore:
   def __init__(self, config):
@@ -20,7 +20,7 @@ class recore:
         'A6': 'A6'}
     config.getchoice('revision', revisions)
     # Setup enable pin
-    enable_pin = config.get('enable_pin', 'ar100:PG1')
+    enable_pin = config.get('enable_pin', 'ar100:OC_RESET ')
     self.mcu_power_enable = ppins.setup_pin('digital_out', enable_pin)
     self.mcu_power_enable.setup_start_value(
         start_value=1., shutdown_value=0., is_static=False)

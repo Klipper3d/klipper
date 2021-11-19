@@ -98,7 +98,6 @@ SignedFields = ["sgt"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
-    "dedge": (lambda v: "1(Both Edges Active!)" if v else ""),
     "chm": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
     "vsense": (lambda v: "1(165mV)" if v else "0(305mV)"),
     "sdoff": (lambda v: "1(Step/Dir disabled!)" if v else ""),
@@ -169,7 +168,7 @@ class TMC2660CurrentHelper:
             self.mcu_tmc.set_register("DRVCONF", val, print_time)
 
     def get_current(self):
-        return self.current, None, MAX_CURRENT
+        return self.current, None, None, MAX_CURRENT
 
     def set_current(self, run_current, hold_current, print_time):
         self.current = run_current
@@ -230,6 +229,7 @@ class TMC2660:
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_status = cmdhelper.get_status
 
         # CHOPCONF
         set_config_field = self.fields.set_config_field

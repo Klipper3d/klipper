@@ -22,8 +22,8 @@ control_pin: P1.26
 ```
 
 If the BL-Touch will be used to home the Z axis then set `endstop_pin:
-probe:z_virtual_endstop` in the `[stepper_z]` config section and add a
-`[safe_z_home]` config section to raise the z axis, home the xy axes,
+probe:z_virtual_endstop` and remove `position_endstop` in the `[stepper_z]` config section,
+then add a `[safe_z_home]` config section to raise the z axis, home the xy axes,
 move to the center of the bed, and home the z axis. For example:
 
 ```

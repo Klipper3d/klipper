@@ -74,6 +74,11 @@ class FieldHelper:
             if sval and sval != "0":
                 fields.append(" %s=%s" % (field_name, sval))
         return "%-11s %08x%s" % (reg_name + ":", reg_value, "".join(fields))
+    def get_reg_fields(self, reg_name, reg_value):
+        # Provide fields found in a register
+        reg_fields = self.all_fields.get(reg_name, {})
+        return {field_name: self.get_field(field_name, reg_value, reg_name)
+                for field_name, mask in reg_fields.items()}
 
 
 ######################################################################
@@ -88,6 +93,7 @@ class TMCErrorCheck:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.check_timer = None
+        self.last_drv_status = self.last_status = None
         # Setup for GSTAT query
         reg_name = self.fields.lookup_register("drv_err")
         if reg_name is not None:
@@ -134,7 +140,7 @@ class TMCErrorCheck:
             if val & mask != last_value & mask:
                 fmt = self.fields.pretty_format(reg_name, val)
                 logging.info("TMC '%s' reports %s", self.stepper_name, fmt)
-                reg_info[0] = last_value = val
+            reg_info[0] = last_value = val
             if not val & err_mask:
                 if not cs_actual_mask or val & cs_actual_mask:
                     break
@@ -186,6 +192,16 @@ class TMCErrorCheck:
             if cleared_flags & reset_mask:
                 return True
         return False
+    def get_status(self, eventtime=None):
+        if self.check_timer is None:
+            return {'drv_status': None}
+        last_value, reg_name = self.drv_status_reg_info[:2]
+        if last_value != self.last_drv_status:
+            self.last_drv_status = last_value
+            fields = self.fields.get_reg_fields(reg_name, last_value)
+            fields = {n: v for n, v in fields.items() if v}
+            self.last_status = {'drv_status': fields}
+        return self.last_status
 
 
 ######################################################################
@@ -208,6 +224,8 @@ class TMCCommandHelper:
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
+        self.printer.register_event_handler("klippy:mcu_identify",
+                                            self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         # Set microstep config options
@@ -245,26 +263,25 @@ class TMCCommandHelper:
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
     def cmd_SET_TMC_CURRENT(self, gcmd):
         ch = self.current_helper
-        prev_run_current, prev_hold_current, max_current = ch.get_current()
-        run_current = gcmd.get_float('CURRENT', None,
-                                     minval=0., maxval=max_current)
+        prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
+        run_current = gcmd.get_float('CURRENT', None, minval=0., maxval=max_cur)
         hold_current = gcmd.get_float('HOLDCURRENT', None,
-                                      above=0., maxval=max_current)
+                                      above=0., maxval=max_cur)
         if run_current is not None or hold_current is not None:
             if run_current is None:
-                run_current = prev_run_current
+                run_current = prev_cur
             if hold_current is None:
-                hold_current = prev_hold_current
+                hold_current = req_hold_cur
             toolhead = self.printer.lookup_object('toolhead')
             print_time = toolhead.get_last_move_time()
             ch.set_current(run_current, hold_current, print_time)
-            prev_run_current, prev_hold_current, max_current = ch.get_current()
+            prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
         # Report values
-        if prev_hold_current is None:
-            gcmd.respond_info("Run Current: %0.2fA" % (prev_run_current,))
+        if prev_hold_cur is None:
+            gcmd.respond_info("Run Current: %0.2fA" % (prev_cur,))
         else:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                              % (prev_run_current, prev_hold_current))
+                              % (prev_cur, prev_hold_cur))
     # Stepper phase tracking
     def _get_phases(self):
         return (256 >> self.fields.get_field("mres")) * 4
@@ -330,19 +347,26 @@ class TMCCommandHelper:
             self.echeck_helper.stop_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
-    def handle_stepper_enable(self, print_time, is_enable):
+    def _handle_mcu_identify(self):
+        # Lookup stepper object
+        force_move = self.printer.lookup_object("force_move")
+        self.stepper = force_move.lookup_stepper(self.stepper_name)
+        # Note pulse duration and step_both_edge optimizations available
+        self.stepper.setup_default_pulse_duration(.000000100, True)
+    def _handle_stepper_enable(self, print_time, is_enable):
         if is_enable:
             cb = (lambda ev: self._do_enable(print_time))
         else:
             cb = (lambda ev: self._do_disable(print_time))
         self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
-        # Lookup stepper object
-        force_move = self.printer.lookup_object("force_move")
-        self.stepper = force_move.lookup_stepper(self.stepper_name)
+        # Check if using step on both edges optimization
+        pulse_duration, step_both_edge = self.stepper.get_pulse_duration()
+        if step_both_edge:
+            self.fields.set_field("dedge", 1)
         # Check for soft stepper enable/disable
         enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
-        enable_line.register_state_callback(self.handle_stepper_enable)
+        enable_line.register_state_callback(self._handle_stepper_enable)
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
             self.fields.set_field("toff", 0)
@@ -353,6 +377,18 @@ class TMCCommandHelper:
             self._init_registers()
         except self.printer.command_error as e:
             logging.info("TMC %s failed to init: %s", self.name, str(e))
+    # get_status information export
+    def get_status(self, eventtime=None):
+        cpos = None
+        if self.stepper is not None and self.mcu_phase_offset is not None:
+            cpos = self.stepper.mcu_to_commanded_position(self.mcu_phase_offset)
+        current = self.current_helper.get_current()
+        res = {'mcu_phase_offset': self.mcu_phase_offset,
+               'phase_offset_position': cpos,
+               'run_current': current[0],
+               'hold_current': current[1]}
+        res.update(self.echeck_helper.get_status(eventtime))
+        return res
     # DUMP_TMC support
     def setup_register_dump(self, read_registers, read_translate=None):
         self.read_registers = read_registers
@@ -472,8 +508,7 @@ def TMCMicrostepHelper(config, mcu_tmc):
         and config.get('microsteps', None, note_valid=False) is not None):
         # Older config format with microsteps in tmc config section
         ms_config = config
-    steps = {'256': 0, '128': 1, '64': 2, '32': 3, '16': 4,
-             '8': 5, '4': 6, '2': 7, '1': 8}
+    steps = {256: 0, 128: 1, 64: 2, 32: 3, 16: 4, 8: 5, 4: 6, 2: 7, 1: 8}
     mres = ms_config.getchoice('microsteps', steps)
     fields.set_field("mres", mres)
     fields.set_field("intpol", config.getboolean("interpolate", True))
