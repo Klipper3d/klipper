@@ -24,10 +24,17 @@ enable_pclock(uint32_t periph_base)
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         RCC->APB1ENR |= (1<<pos);
         RCC->APB1ENR;
+        RCC->APB1RSTR |= (1<<pos);
+        RCC->APB1RSTR &= ~(1<<pos);
     } else if (periph_base < AHB1PERIPH_BASE) {
         uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
         RCC->APB2ENR |= (1<<pos);
         RCC->APB2ENR;
+        // Skip ADC peripheral reset as they share a bit
+        if (pos < 8 || pos > 10) {
+            RCC->APB2RSTR |= (1<<pos);
+            RCC->APB2RSTR &= ~(1<<pos);
+        }
     } else if (periph_base < AHB2PERIPH_BASE) {
         uint32_t pos = (periph_base - AHB1PERIPH_BASE) / 0x400;
         RCC->AHB1ENR |= (1<<pos);
@@ -68,6 +75,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHB1ENR;
 }
 
+#define STM_OSPEED 0x2 // ~50Mhz at 40pF on STM32F4 (~25Mhz at 40pF on STM32F2)
+
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
@@ -88,7 +97,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
     regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
     regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
-    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
+    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (STM_OSPEED << m_shift);
 }
 
 #define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
@@ -144,8 +153,7 @@ enable_clock_stm32f20x(void)
 static void
 enable_clock_stm32f40x(void)
 {
-#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 \
-    || CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F429
+#if CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F4x5
     uint32_t pll_base = (CONFIG_STM32_CLOCK_REF_25M) ? 1000000 : 2000000;
     uint32_t pllp = (CONFIG_MACH_STM32F401) ? 4 : 2;
     uint32_t pll_freq = CONFIG_CLOCK_FREQ * pllp, pllcfgr;
@@ -222,8 +230,7 @@ clock_setup(void)
     // Configure and enable PLL
     if (CONFIG_MACH_STM32F207)
         enable_clock_stm32f20x();
-    else if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
-            || CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F429)
+    else if (CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F4x5)
         enable_clock_stm32f40x();
     else
         enable_clock_stm32f446();
@@ -259,6 +266,12 @@ armcm_main(void)
     // Run SystemInit() and then restore VTOR
     SystemInit();
     SCB->VTOR = (uint32_t)VectorTable;
+
+    // Reset peripheral clocks (for some bootloaders that don't)
+    RCC->AHB1ENR = 0x38000;
+    RCC->AHB2ENR = 0;
+    RCC->APB1ENR = 0;
+    RCC->APB2ENR = 0;
 
     clock_setup();
 

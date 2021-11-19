@@ -26,7 +26,7 @@ class ManualStepper:
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
-        self.rail.setup_itersolve('cartesian_stepper_alloc', 'x')
+        self.rail.setup_itersolve('cartesian_stepper_alloc', b'x')
         self.rail.set_trapq(self.trapq)
         # Register commands
         stepper_name = config.get_name().split()[1]
@@ -121,6 +121,8 @@ class ManualStepper:
         return self
     def get_steppers(self):
         return self.steppers
+    def calc_position(self, stepper_positions):
+        return [stepper_positions[self.rail.get_name()], 0., 0.]
 
 def load_config_prefix(config):
     return ManualStepper(config)

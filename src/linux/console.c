@@ -1,28 +1,27 @@
 // TTY based IO
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#define _GNU_SOURCE
 #include <errno.h> // errno
 #include <fcntl.h> // fcntl
-#include <poll.h> // poll
+#include <poll.h> // ppoll
 #include <pty.h> // openpty
 #include <stdio.h> // fprintf
 #include <string.h> // memmove
 #include <sys/stat.h> // chmod
-#include <sys/timerfd.h> // timerfd_create
 #include <time.h> // struct timespec
 #include <unistd.h> // ttyname
-#include "board/irq.h" // irq_poll
+#include "board/irq.h" // irq_wait
 #include "board/misc.h" // console_sendf
 #include "command.h" // command_find_block
 #include "internal.h" // console_setup
 #include "sched.h" // sched_wake_task
 
-static struct pollfd main_pfd[2];
-#define MP_TIMER_IDX 0
-#define MP_TTY_IDX   1
+static struct pollfd main_pfd[1];
+#define MP_TTY_IDX   0
 
 // Report 'errno' in a message written to stderr
 void
@@ -110,15 +109,6 @@ console_setup(char *name)
     if (ret)
         return -1;
 
-    // Create sleep wakeup timer fd
-    ret = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC|TFD_NONBLOCK);
-    if (ret < 0) {
-        report_errno("timerfd_create", ret);
-        return -1;
-    }
-    main_pfd[MP_TIMER_IDX].fd = ret;
-    main_pfd[MP_TIMER_IDX].events = POLLIN;
-
     return 0;
 }
 
@@ -188,26 +178,16 @@ console_sendf(const struct command_encoder *ce, va_list args)
         report_errno("write", ret);
 }
 
-// Sleep until the specified time (waking early for console input if needed)
+// Sleep until a signal received (waking early for console input if needed)
 void
-console_sleep(struct timespec ts)
+console_sleep(sigset_t *sigset)
 {
-    struct itimerspec its;
-    its.it_interval = (struct timespec){0, 0};
-    its.it_value = ts;
-    int ret = timerfd_settime(main_pfd[MP_TIMER_IDX].fd, TFD_TIMER_ABSTIME
-                              , &its, NULL);
-    if (ret < 0) {
-        report_errno("timerfd_settime", ret);
-        return;
-    }
-    ret = poll(main_pfd, ARRAY_SIZE(main_pfd), -1);
+    int ret = ppoll(main_pfd, ARRAY_SIZE(main_pfd), NULL, sigset);
     if (ret <= 0) {
-        report_errno("poll main_pfd", ret);
+        if (errno != EINTR)
+            report_errno("ppoll main_pfd", ret);
         return;
     }
     if (main_pfd[MP_TTY_IDX].revents)
         sched_wake_task(&console_wake);
-    if (main_pfd[MP_TIMER_IDX].revents)
-        irq_poll();
 }

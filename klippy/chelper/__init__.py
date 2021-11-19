@@ -138,21 +138,10 @@ defs_kin_extruder = """
 """
 
 defs_kin_shaper = """
-    enum INPUT_SHAPER_TYPE {
-        INPUT_SHAPER_ZV = 0,
-        INPUT_SHAPER_ZVD = 1,
-        INPUT_SHAPER_MZV = 2,
-        INPUT_SHAPER_EI = 3,
-        INPUT_SHAPER_2HUMP_EI = 4,
-        INPUT_SHAPER_3HUMP_EI = 5,
-    };
-
-    double input_shaper_get_step_generation_window(int shaper_type
-        , double shaper_freq, double damping_ratio);
-    int input_shaper_set_shaper_params(struct stepper_kinematics *sk
-        , int shaper_type_x, int shaper_type_y
-        , double shaper_freq_x, double shaper_freq_y
-        , double damping_ratio_x, double damping_ratio_y);
+    double input_shaper_get_step_generation_window(int n, double a[]
+        , double t[]);
+    int input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
+        , int n, double a[], double t[]);
     int input_shaper_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * input_shaper_alloc(void);
