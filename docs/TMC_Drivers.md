@@ -435,7 +435,7 @@ driver.
 
 Some common errors and tips for diagnosing them:
 
-#### TMC reports error: `... ot=1(OvertempError!)`"
+#### TMC reports error: `... ot=1(OvertempError!)`
 
 This indicates the motor driver disabled itself because it became too hot. Typical
 solutions are to decrease the stepper motor current, increase cooling
