@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os
-import pins, mcu, bus
+import pins, mcu
 
 class recore:
   def __init__(self, config):
