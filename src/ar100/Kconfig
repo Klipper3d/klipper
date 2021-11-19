@@ -20,6 +20,7 @@ config CLOCK_FREQ
     default 300000000
 
 config STEP_DELAY
+    int
     default 0
 
 config HAVE_DEBUG
