@@ -56,10 +56,12 @@ class RecoreThermocouple:
 
     # We do not know the cj temp at the time of setting limits, setting to 35
     def calc_adc(self, temp):
-        # TODO: Add voltages instead of temperatures
-        v_cj = self.temp_to_mv(35)
-        v_in = self.temp_to_mv(temp)
-        v_adc = ((v_in - v_cj) * self.gain / 1000.0) + self.offset
+        v_in = self.temp_to_mv(temp - 35)
+        v_offset = 1000.0 * (self.offset / 101.1)
+        # TODO: Calculate effect of thermocouple resitance.
+        vin_off = 0.25
+        v_opamp = v_in + v_offset + vin_off
+        v_adc = (v_opamp * self.gain)/1000.0
         adc_val = v_adc / self.vin
         adc_val = max(.00001, min(.99999, adc_val))
         return adc_val
@@ -78,7 +80,6 @@ def PrinterThermocouple(config):
 
 # Default sensors
 Sensors = ["Type K"]
-
 
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
