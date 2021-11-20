@@ -403,3 +403,12 @@ The following information is available for each `[neopixel led_name]` and
   a white value.  Each value is represented as a float from 0 to 1.  For
   example, the blue value of the second neopixel in a chain could be accessed
   at `printer["neopixel <config_name>"].color_data[1].B`.
+
+## slicr_vars
+
+If `[slic3r_vars]` section is dedefined in printer.cfg, variables exported
+into the gcode file by Slic3r and derivatives (Prusa Slicer, SuperSlicer
+etc.) are exposed via the `printer.slic3r_vars` object. Some of these variables
+are listed in the [SuperSlicer wiki](https://github.com/supermerill/SuperSlicer/wiki/Variable-list),
+but check the individual `.gcode` files to see what's made available by
+your slicer.
