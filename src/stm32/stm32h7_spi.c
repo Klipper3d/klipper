@@ -15,10 +15,8 @@ struct spi_info {
     uint8_t miso_pin, mosi_pin, sck_pin, function;
 };
 
-#if !CONFIG_STM32_USB_PB14_PB15
 DECL_ENUMERATION("spi_bus", "spi2", __COUNTER__);
 DECL_CONSTANT_STR("BUS_PINS_spi2", "PB14,PB15,PB13");
-#endif
 
 DECL_ENUMERATION("spi_bus", "spi1", __COUNTER__);
 DECL_CONSTANT_STR("BUS_PINS_spi1", "PA6,PA7,PA5");
@@ -62,9 +60,7 @@ DECL_CONSTANT_STR("BUS_PINS_spi6", "PG12,PG14,PG13");
 
 
 static const struct spi_info spi_bus[] = {
-#if !CONFIG_STM32_USB_PB14_PB15
     { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION(5) },
-#endif
     { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION(5) },
     { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(5) },
 #if !CONFIG_MACH_STM32F1
