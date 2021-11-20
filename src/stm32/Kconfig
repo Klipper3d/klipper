@@ -117,7 +117,7 @@ config CLOCK_FREQ
     default 84000000 if MACH_STM32F401
     default 168000000 if MACH_STM32F4x5
     default 180000000 if MACH_STM32F446
-    default 480000000 if MACH_STM32H750
+    default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
 
 config FLASH_SIZE
     hex
