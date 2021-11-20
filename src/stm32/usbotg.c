@@ -416,7 +416,7 @@ usb_init(void)
 {
     // Enable USB clock
 #if CONFIG_MACH_STM32H7
-    if (READ_BIT(PWR->CR3, PWR_CR3_USB33RDY) != (PWR_CR3_USB33RDY) ? 1 : 0) {
+    if (READ_BIT(PWR->CR3, PWR_CR3_USB33RDY) != (PWR_CR3_USB33RDY)) {
         SET_BIT(PWR->CR3, PWR_CR3_USB33DEN);
     }
     SET_BIT(RCC->AHB1ENR, USBOTGEN);
