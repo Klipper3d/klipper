@@ -6,7 +6,6 @@
 import logging, os
 import pins, mcu
 
-
 class recore:
     def __init__(self, config):
         printer = config.get_printer()
@@ -26,7 +25,7 @@ class recore:
             for idx in range(4):
                 gain = config.get('gain_t' + str(idx), '1')
                 if gain not in ['1', '100']:
-                    raise error("Gain not 1 or 100")
+                    raise Exception("Gain not 1 or 100")
                 pin_name = "ar100:GAIN_ENABLE_T" + str(idx)
                 if gain == '1':
                     pin = ppins.setup_pin('endstop', pin_name)
@@ -38,7 +37,7 @@ class recore:
 
                 pullup = config.get('pullup_t' + str(idx), '1')
                 if pullup not in ['0', '1']:
-                    raise error("Pullup not 0 or 1")
+                    raise Exception("Pullup not 0 or 1")
                 pin_name = "ar100:PU_ENABLE_T" + str(idx)
                 if pullup == '0':
                     pin = ppins.setup_pin('endstop', pin_name)
