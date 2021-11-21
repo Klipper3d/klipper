@@ -3,8 +3,8 @@
 This document describes how to setup a PWM-controlled laser or spindle
 using `output_pin` and some macros.
 
-
 ## How does it work?
+
 With re-purposing the printhead's fan pwm output, you can control
 lasers or spindles.
 This is useful if you use switchable print heads, for example

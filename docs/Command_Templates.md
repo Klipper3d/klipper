@@ -78,7 +78,6 @@ it was prior to entering the macro. Be sure to specify an explicit
 speed (via the `F` parameter) on the first `G1` command.
 
 ## Template expansion
-<!-- {% raw %} -->
 
 The gcode_macro `gcode:` config section is evaluated using the Jinja2
 template language. One can evaluate expressions at run-time by
@@ -130,6 +129,20 @@ gcode:
   M140 S{bed_temp}
 ```
 
+### The "rawparams" variable
+
+The full unparsed parameters for the running macro can be access via the `rawparams` pseudo-variable.
+
+This is quite useful if you want to change the behavior of certain commands like the `M117`. For example:
+
+```
+[gcode_macro M117]
+rename_existing: M117.1
+gcode:
+  M117.1 { rawparams }
+  M118 { rawparams }
+```
+
 ### The "printer" Variable
 
 It is possible to inspect (and alter) the current state of the printer
@@ -169,7 +182,6 @@ gcode:
     {% set sensor = printer["htu21d my_sensor"] %}
     M117 Temp:{sensor.temperature} Humidity:{sensor.humidity}
 ```
-<!-- {% endraw %} -->
 
 ## Actions
 
@@ -306,7 +318,6 @@ The following actions are available in menu templates:
     value is False.
 
 ## Save Variables to disk
-<!-- {% raw %} -->
 
 If a
 [save_variables config section](Config_Reference.md#save_variables)
@@ -340,4 +351,3 @@ gcode:
   {% set svv = printer.save_variables.variables %}
   ACTIVATE_EXTRUDER extruder={svv.currentextruder}
 ```
-<!-- {% endraw %} -->
