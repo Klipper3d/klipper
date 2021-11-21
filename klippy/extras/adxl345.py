@@ -135,17 +135,21 @@ class AccelerometerCalibrator:
         self.freefall_test_sec = 15.
         self.move_test_runs = 25
         self.move_test_len = 8. # Should work well with GT-2 belts
-    def _run_wait_test(self, toolhead):
+    def _run_wait_test(self, toolhead, gcmd):
         aclient = self.chip.start_internal_client()
-        toolhead.dwell(self.freefall_test_sec)
+        freefall_test_sec = gcmd.get_float('FREEFALL_TEST_SEC',
+                                           self.freefall_test_sec,
+                                           minval=1, maxval=100)
+        toolhead.dwell(freefall_test_sec)
         aclient.finish_measurements()
         return aclient
-    def _run_move_test(self, toolhead, axis_dir):
+    def _run_move_test(self, toolhead, axis_dir, gcmd):
         X, Y, Z, E = toolhead.get_position()
         systime = self.printer.get_reactor().monotonic()
         toolhead_info = toolhead.get_status(systime)
-        max_accel = toolhead_info['max_accel']
-        test_runs = self.move_test_runs
+        max_accel = gcmd.get_float('ACCEL', toolhead_info['max_accel'],
+                                   minval=100)
+        test_runs = gcmd.get_int('RUNS', self.move_test_runs, minval=3)
         max_accel_to_decel = toolhead_info['max_accel_to_decel']
         # The test runs as follows:
         # * accelerate for t_seg/2 time
@@ -153,7 +157,7 @@ class AccelerometerCalibrator:
         # * decelerate for t_seg/2 time
         # * accelerate for t_seg/2 time in reverse direction
         # .....
-        L = self.move_test_len
+        L = gcmd.get_float('LENGTH', self.move_test_len, minval=1, maxval=10)
         accel = min(self.max_accel, 6. * max_accel_to_decel, max_accel)
         t_seg = math.sqrt(L / (.75 * accel))
         freq = .25 / t_seg
@@ -262,11 +266,17 @@ class AccelerometerCalibrator:
         gcmd.respond_info(
                 'SAVE_CONFIG command will also update %s configuration with '
                 'axes_transform =\n%s' % (chip_name, str_val))
-    def _calibrate_offset(self, toolhead, gcmd):
+    def _calibrate_offset(self, toolhead, gcmd, debug_output):
         gcmd.respond_info('Measuring freefall acceleration')
-        data = self._run_wait_test(toolhead)
+        data = self._run_wait_test(toolhead, gcmd)
         if not data.has_valid_samples():
             raise gcmd.error('No accelerometer measurements found')
+        if debug_output is not None:
+            filename = "/tmp/%s-%s-g.csv" % (
+                    self._get_chip_name().replace(' ', '-'), debug_output)
+            gcmd.respond_info("Writing raw debug accelerometer data to %s file"
+                              % (filename,))
+            data.write_to_file(filename)
         errors, overflows = data.get_num_errors(), data.get_num_overflows()
         if errors > 0:
             gcmd.respond_info(
@@ -324,12 +334,18 @@ class AccelerometerCalibrator:
                           'in the direction: %s' % (freefall_accel, ', '.join(
                               ['%.6f' % (val,) for val in self.results['g']])))
         self._save_offset(gcmd)
-    def _calibrate_xy_axis(self, axis, axis_dir, toolhead, gcmd):
+    def _calibrate_xy_axis(self, axis, axis_dir, toolhead, gcmd, debug_output):
         gcmd.respond_info('Calibrating %s axis' % (axis,))
         chip_name = self._get_chip_name()
-        accel, time_points, data = self._run_move_test(toolhead, axis_dir)
+        accel, time_points, data = self._run_move_test(toolhead, axis_dir, gcmd)
         if not data.has_valid_samples():
             raise gcmd.error('No accelerometer measurements found')
+        if debug_output is not None:
+            filename = "/tmp/%s-%s-%s.csv" % (
+                    self._get_chip_name().replace(' ', '-'), debug_output, axis)
+            gcmd.respond_info("Writing raw debug accelerometer data to %s file"
+                              % (filename,))
+            data.write_to_file(filename)
         measured_accel, a = self.bgr_exec(self._compute_measured_accel,
                                           (time_points, data))
         if measured_accel > .2 * accel:
@@ -345,7 +361,7 @@ class AccelerometerCalibrator:
         else:
             gcmd.respond_info('%s is not kinematically connected to the '
                               'movement of %s axis' % (chip_name, axis))
-    def calibrate(self, gcmd):
+    def calibrate(self, gcmd, debug_output=None):
         toolhead = self.printer.lookup_object('toolhead')
         reactor = self.printer.get_reactor()
         # Reset adxl345 transformations
@@ -355,11 +371,11 @@ class AccelerometerCalibrator:
         self.offset = [0., 0., 0.]
         self.chip.set_transform(self.axes_transform, self.offset)
         self.results = {}
-        self._calibrate_offset(toolhead, gcmd)
+        self._calibrate_offset(toolhead, gcmd, debug_output)
         reactor.pause(reactor.monotonic() + 0.1)
-        self._calibrate_xy_axis('x', (1., 0.), toolhead, gcmd)
+        self._calibrate_xy_axis('x', (1., 0.), toolhead, gcmd, debug_output)
         reactor.pause(reactor.monotonic() + 0.1)
-        self._calibrate_xy_axis('y', (0., 1.), toolhead, gcmd)
+        self._calibrate_xy_axis('y', (0., 1.), toolhead, gcmd, debug_output)
         reactor.pause(reactor.monotonic() + 0.1)
         if 'x' not in self.results and 'y' not in self.results:
             raise gcmd.error(
@@ -440,7 +456,12 @@ class ADXLCommandHelper:
                           % (accel_x, accel_y, accel_z))
     cmd_ACCELEROMETER_CALIBRATE_help = "Automatically calibrate accelerometer"
     def cmd_ACCELEROMETER_CALIBRATE(self, gcmd):
-        AccelerometerCalibrator(self.printer, self.chip).calibrate(gcmd)
+        debug_output = gcmd.get("DEBUG_OUTPUT", None)
+        if (debug_output is not None and
+                not debug_output.replace('-', '').replace('_', '').isalnum()):
+            raise gcmd.error("Invalid OUTPUT parameter")
+        AccelerometerCalibrator(self.printer, self.chip).calibrate(gcmd,
+                                                                   debug_output)
     cmd_ACCELEROMETER_DEBUG_READ_help = "Query adxl345 register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
         reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
