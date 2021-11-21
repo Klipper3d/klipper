@@ -71,7 +71,7 @@ To obtain the single stepper benchmarks, the same configuration
 sequence is used, but only the first block of the above test is
 cut-and-paste into the console.py window.
 
-To produce the benchmarks found in the Features.md document, the total
+To produce the benchmarks found in the [Features](Features.md) document, the total
 number of steps per second is calculated by multiplying the number of
 active steppers with the nominal mcu frequency and dividing by the
 final ticks parameter. The results are rounded to the nearest K. For
