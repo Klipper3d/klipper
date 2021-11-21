@@ -9,7 +9,7 @@ for other machines).
 Klipper currently supports a number of Atmel ATmega based
 micro-controllers,
 [ARM based micro-controllers](Features.md#step-benchmarks), and
-[Beaglebone PRU](beaglebone.md) based printers.
+[Beaglebone PRU](Beaglebone.md) based printers.
 
 ## Prepping an OS image
 
