@@ -254,13 +254,18 @@ class MCU_digital_out:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
                                      % (self._pin, self._start_value))
             return
+        if self._max_duration and self._start_value != self._shutdown_value:
+            raise pins.error("Pin with max duration must have start"
+                             " value equal to shutdown value")
+        mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
+        if mdur_ticks >= 1<<31:
+            raise pins.error("Digital pin max duration too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d default_value=%d"
-            " max_duration=%d"
-            % (self._oid, self._pin, self._start_value, self._shutdown_value,
-               self._mcu.seconds_to_clock(self._max_duration)))
+            " max_duration=%d" % (self._oid, self._pin, self._start_value,
+                                  self._shutdown_value, mdur_ticks))
         self._mcu.add_config_cmd("update_digital_out oid=%d value=%d"
                                  % (self._oid, self._start_value),
                                  on_restart=True)
@@ -305,11 +310,17 @@ class MCU_pwm:
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
     def _build_config(self):
+        if self._max_duration and self._start_value != self._shutdown_value:
+            raise pins.error("Pin with max duration must have start"
+                             " value equal to shutdown value")
         cmd_queue = self._mcu.alloc_command_queue()
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+        mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
+        if mdur_ticks >= 1<<31:
+            raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
@@ -325,8 +336,7 @@ class MCU_pwm:
                 " default_value=%d max_duration=%d"
                 % (self._oid, self._pin, cycle_ticks,
                    self._start_value * self._pwm_max,
-                   self._shutdown_value * self._pwm_max,
-                   self._mcu.seconds_to_clock(self._max_duration)))
+                   self._shutdown_value * self._pwm_max, mdur_ticks))
             svalue = int(self._start_value * self._pwm_max + 0.5)
             self._mcu.add_config_cmd("queue_pwm_out oid=%d clock=%d value=%d"
                                      % (self._oid, self._last_clock, svalue),
@@ -341,14 +351,15 @@ class MCU_pwm:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
                                      % (self._pin, self._start_value >= 0.5))
             return
+        if cycle_ticks >= 1<<31:
+            raise pins.error("PWM pin cycle time too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
             % (self._oid, self._pin, self._start_value >= 1.0,
-               self._shutdown_value >= 0.5,
-               self._mcu.seconds_to_clock(self._max_duration)))
+               self._shutdown_value >= 0.5, mdur_ticks))
         self._mcu.add_config_cmd(
             "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
             % (self._oid, cycle_ticks))
@@ -377,6 +388,9 @@ class MCU_pwm:
             cycle_time = self._cycle_time
         cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         if cycle_ticks != self._last_cycle_ticks:
+            if cycle_ticks >= 1<<31:
+                raise self._mcu.get_printer().command_error(
+                    "PWM cycle time too large")
             self._set_cycle_ticks.send([self._oid, cycle_ticks],
                                        minclock=minclock, reqclock=clock)
             self._last_cycle_ticks = cycle_ticks
@@ -560,7 +574,6 @@ class MCU:
         self._config_cmds = []
         self._restart_cmds = []
         self._init_cmds = []
-        self._pin_map = config.get('pin_map', None)
         self._mcu_freq = 0.
         # Move command queuing
         ffi_main, self._ffi_lib = chelper.get_ffi()
@@ -650,13 +663,12 @@ class MCU:
         mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
         pin_resolver = ppins.get_pin_resolver(self._name)
-        if self._pin_map is not None:
-            pin_resolver.add_pin_mapping(mcu_type, self._pin_map)
         for cmdlist in (self._config_cmds, self._restart_cmds, self._init_cmds):
             for i, cmd in enumerate(cmdlist):
                 cmdlist[i] = pin_resolver.update_command(cmd)
         # Calculate config CRC
-        config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
+        encoded_config = '\n'.join(self._config_cmds).encode()
+        config_crc = zlib.crc32(encoded_config) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
         if prev_crc is not None and config_crc != prev_crc:
             self._check_restart("CRC mismatch")
@@ -686,7 +698,7 @@ class MCU:
     def _send_get_config(self):
         get_config_cmd = self.lookup_query_command(
             "get_config",
-            "config is_config=%c crc=%u move_count=%hu is_shutdown=%c")
+            "config is_config=%c crc=%u is_shutdown=%c move_count=%hu")
         if self.is_fileoutput():
             return { 'is_config': 0, 'move_count': 500, 'crc': 0 }
         config_params = get_config_cmd.send()

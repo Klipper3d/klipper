@@ -159,6 +159,10 @@ class DataLogger:
                                     {"sensor": aname})
     def handle_dump(self, msg, raw_msg):
         msg_id = msg["id"]
+        if "result" not in msg:
+            self.error("Unable to subscribe to '%s': %s"
+                       % (msg_id, msg.get("error", {}).get("message", "")))
+            return
         self.db.setdefault("subscriptions", {})[msg_id] = msg["result"]
     def flush_index(self):
         self.db['file_position'] = self.logger.flush()

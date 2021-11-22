@@ -26,6 +26,22 @@ class GCodeCommand:
         return self._commandline
     def get_command_parameters(self):
         return self._params
+    def get_raw_command_parameters(self):
+        rawparams = self._commandline
+        command = self._command
+        urawparams = rawparams.upper()
+        if not urawparams.startswith(command):
+            start = urawparams.find(command)
+            end = rawparams.rfind('*')
+            if end >= 0:
+                rawparams = rawparams[:end]
+            rawparams = rawparams[start:]
+        commandlen = len(command) + 1
+        if len(rawparams) > commandlen:
+            rawparams = rawparams[commandlen:]
+        else:
+            rawparams = ''
+        return rawparams
     def ack(self, msg=None):
         if not self._need_ack:
             return False
@@ -126,7 +142,8 @@ class GCodeDispatch:
     def register_mux_command(self, cmd, key, value, func, desc=None):
         prev = self.mux_commands.get(cmd)
         if prev is None:
-            self.register_command(cmd, self._cmd_mux, desc=desc)
+            handler = lambda gcmd: self._cmd_mux(cmd, gcmd)
+            self.register_command(cmd, handler, desc=desc)
             self.mux_commands[cmd] = prev = (key, {})
         prev_key, prev_values = prev
         if prev_key != key:
@@ -274,8 +291,8 @@ class GCodeDispatch:
             # Don't warn about requests to turn off fan when fan not present
             return
         gcmd.respond_info('Unknown command:"%s"' % (cmd,))
-    def _cmd_mux(self, gcmd):
-        key, values = self.mux_commands[gcmd.get_command()]
+    def _cmd_mux(self, command, gcmd):
+        key, values = self.mux_commands[command]
         if None in values:
             key_param = gcmd.get(key, None)
         else:
@@ -381,8 +398,8 @@ class GCodeIO:
     def _process_data(self, eventtime):
         # Read input, separate by newline, and add to pending_commands
         try:
-            data = os.read(self.fd, 4096)
-        except os.error:
+            data = str(os.read(self.fd, 4096).decode())
+        except (os.error, UnicodeDecodeError):
             logging.exception("Read g-code")
             return
         self.input_log.append((eventtime, data))
@@ -427,7 +444,7 @@ class GCodeIO:
     def _respond_raw(self, msg):
         if self.pipe_is_active:
             try:
-                os.write(self.fd, msg+"\n")
+                os.write(self.fd, (msg+"\n").encode())
             except os.error:
                 logging.exception("Write g-code response")
                 self.pipe_is_active = False

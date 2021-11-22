@@ -64,6 +64,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHBENR;
 }
 
+#define STM_OSPEED 0x1 // ~10Mhz at 50pF
+
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
@@ -84,7 +86,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
     regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
     regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
-    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
+    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (STM_OSPEED << m_shift);
 }
 
 #define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
@@ -160,7 +162,7 @@ pll_setup(void)
 static void
 hsi48_setup(void)
 {
-#if CONFIG_MACH_STM32F042
+#if CONFIG_MACH_STM32F0x2
     // Enable HSI48
     RCC->CR2 |= RCC_CR2_HSI48ON;
     while (!(RCC->CR2 & RCC_CR2_HSI48RDY))
@@ -196,7 +198,7 @@ hsi14_setup(void)
 void
 armcm_main(void)
 {
-    if (CONFIG_USBSERIAL && CONFIG_MACH_STM32F042
+    if (CONFIG_USBSERIAL && CONFIG_MACH_STM32F0x2
         && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
         *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
         uint32_t *sysbase = (uint32_t*)0x1fffc400;
@@ -213,7 +215,7 @@ armcm_main(void)
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    if (CONFIG_MACH_STM32F042 && CONFIG_STM32_CLOCK_REF_INTERNAL
+    if (CONFIG_MACH_STM32F0x2 && CONFIG_STM32_CLOCK_REF_INTERNAL
         && CONFIG_USBSERIAL)
         hsi48_setup();
     else

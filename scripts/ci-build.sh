@@ -9,6 +9,7 @@ MAIN_DIR=${PWD}
 BUILD_DIR=${PWD}/ci_build
 export PATH=${BUILD_DIR}/pru-gcc/bin:${PATH}
 PYTHON=${BUILD_DIR}/python-env/bin/python
+PYTHON2=${BUILD_DIR}/python2-env/bin/python
 
 
 ######################################################################
@@ -63,6 +64,18 @@ done
 # Verify klippy host software
 ######################################################################
 
-start_test klippy "Test invoke klippy"
+start_test klippy "Test klippy import (Python3)"
+$PYTHON klippy/klippy.py --import-test
+finish_test klippy "Test klippy import (Python3)"
+
+start_test klippy "Test klippy import (Python2)"
+$PYTHON2 klippy/klippy.py --import-test
+finish_test klippy "Test klippy import (Python2)"
+
+start_test klippy "Test invoke klippy (Python3)"
 $PYTHON scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test
-finish_test klippy "Test invoke klippy"
+finish_test klippy "Test invoke klippy (Python3)"
+
+start_test klippy "Test invoke klippy (Python2)"
+$PYTHON2 scripts/test_klippy.py -d ${DICTDIR} test/klippy/*.test
+finish_test klippy "Test invoke klippy (Python2)"
