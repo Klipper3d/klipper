@@ -485,14 +485,17 @@ The following commands are available when the
 [screws_tilt_adjust config section](Config_Reference.md#screws_tilt_adjust)
 is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)):
-- `SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [<probe_parameter>=<value>]`:
+- `SCREWS_TILT_CALCULATE [ADJUST_TO_Z=<value>] [DIRECTION=CW|CCW] [<probe_parameter>=<value>]`:
   This command will invoke the bed screws adjustment tool. It will command the
   nozzle to different locations (as defined in the config file)
   probing the z height and calculate the number of knob turns to
-  adjust the bed level. If DIRECTION is specified, the knob turns will all
+  adjust the bed level. If ADJUST_TO_Z is specified, the z position
+  to raise or lower the screws will be set to that value of ADJUST_TO_Z.
+  If DIRECTION is specified, the knob turns will all
   be in the same direction, clockwise (CW) or counterclockwise (CCW).
   See the PROBE command for details on the optional probe parameters.
   IMPORTANT: You MUST always do a G28 before using this command.
+  IMPORTANT: ADJUST_TO_Z and DIRECTION can't be used together!
 
 ### Z Tilt
 

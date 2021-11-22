@@ -13,6 +13,7 @@ class ScrewsTiltAdjust:
         self.printer = config.get_printer()
         self.screws = []
         self.max_diff = None
+        self.adjust_to_z = None
         # Read config
         for i in range(99):
             prefix = "screw%d" % (i + 1,)
@@ -45,9 +46,13 @@ class ScrewsTiltAdjust:
                                      "of turns to level it."
 
     def cmd_SCREWS_TILT_CALCULATE(self, gcmd):
+        self.adjust_to_z = gcmd.get_float("ADJUST_TO_Z", None)
         self.max_diff = gcmd.get_float("MAX_DEVIATION", None)
         # Option to force all turns to be in the given direction (CW or CCW)
         direction = gcmd.get("DIRECTION", default=None)
+        if direction is not None and self.adjust_to_z is not None:
+            raise gcmd.error(
+                        "DIRECTION and ADJUST_TO_Z can't be used together!")
         if direction is not None:
             direction = direction.upper()
             if direction not in ('CW', 'CCW'):
@@ -70,9 +75,15 @@ class ScrewsTiltAdjust:
             min_or_max = max if use_max else min
             i_base, z_base = min_or_max(
                 enumerate([pos[2] for pos in positions]), key=lambda v: v[1])
+        elif self.adjust_to_z is not None:
+            # We won't use any screw as the 'base' position, instead just use
+            # the provided Z value
+            z_base = self.adjust_to_z
+            i_base = -1
         else:
             # First screw is the base position used for comparison
             i_base, z_base = 0, positions[0][2]
+
         # Provide the user some information on how to read the results
         self.gcode.respond_info("01:20 means 1 full turn and 20 minutes, "
                                 "CW=clockwise, CCW=counter-clockwise")

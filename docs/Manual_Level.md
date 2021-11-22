@@ -210,3 +210,11 @@ turn the screws clockwise, run `SCREWS_TILT_CALCULATE DIRECTION=CW`. If you can
 only turn them counter-clockwise, run `SCREWS_TILT_CALCULATE DIRECTION=CCW`.
 A suitable reference point will be chosen such that the bed can be leveled
 by turning all the screws in the given direction.
+
+The `ADJUST_TO_Z` parameter is useful when you want your bed at a fixed
+level which can be lost from bad bed adjustment screws at drift away slowly.
+For example, if you want the Z position on all the screw points to be 1.5,
+you can run `SCREWS_TILT_CALCULATE ADJUST_TO_Z=1.5` and adjust every point
+per the fixed given position.
+
+Please note that `DIRECTION` and `ADJUST_TO_Z` can't be used together!
