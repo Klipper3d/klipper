@@ -331,10 +331,11 @@ max_z_velocity:
 #   axis. This setting can be used to restrict the maximum speed of
 #   the z stepper motor. The default is to use max_velocity for
 #   max_z_velocity.
-max_z_accel:
+#max_z_accel:
 #   This sets the maximum acceleration (in mm/s^2) of movement along
-#   the z axis. It limits the acceleration of the z stepper motor. The
-#   default is to use max_accel for max_z_accel.
+#   the z axis. Setting this may be useful if the printer can reach higher acceleration
+#   on XY moves than Z moves (eg, when using input shaper).  The default
+#   is to use max_accel for max_z_accel.
 
 # The stepper_x section is used to describe the X axis as well as the
 # stepper controlling the X+Y movement.
