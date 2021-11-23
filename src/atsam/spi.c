@@ -123,19 +123,18 @@ spihw_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     // Make sure bus is enabled
     spihw_init(bus);
 
-    uint32_t config = 0;
-    uint32_t clockDiv;
-    if (rate < (CHIP_FREQ_CPU_MAX / 255)) {
+    uint32_t clockDiv, pclk = get_pclock_frequency(ID_USART0);
+    if (rate < pclk / 255) {
         clockDiv = 255;
-    } else if (rate >= (CHIP_FREQ_CPU_MAX / 2)) {
+    } else if (rate >= pclk / 2) {
         clockDiv = 2;
     } else {
-        clockDiv = (CHIP_FREQ_CPU_MAX / (rate + 1)) + 1;
+        clockDiv = pclk / (rate + 1) + 1;
     }
 
     /****** Will be written to SPI_CSRx register ******/
     // CSAAT  : Chip Select Active After Transfer
-    config  = SPI_CSR_CSAAT;
+    uint32_t config = SPI_CSR_CSAAT;
     config |= SPI_CSR_BITS_8_BIT; // TODO: support for SPI_CSR_BITS_16_BIT
     // NOTE: NCPHA is inverted, CPHA normal!!
     switch(mode) {
@@ -208,7 +207,8 @@ usart_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 
     p_usart->US_CR = US_CR_RSTTX | US_CR_RSTRX | US_CR_TXDIS | US_CR_RXDIS;
 
-    uint32_t br = DIV_ROUND_UP(CHIP_FREQ_CPU_MAX, rate);
+    uint32_t pclk = get_pclock_frequency(ID_USART0);
+    uint32_t br = DIV_ROUND_UP(pclk, rate);
     p_usart->US_BRGR = br << US_BRGR_CD_Pos;
 
     uint32_t reg = US_MR_CHRL_8_BIT |
