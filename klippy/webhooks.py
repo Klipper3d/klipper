@@ -403,6 +403,7 @@ class GCodeHelper:
         # Register webhooks
         wh = printer.lookup_object('webhooks')
         wh.register_endpoint("gcode/help", self._handle_help)
+        wh.register_endpoint("gcode/groups", self._handle_groups)
         wh.register_endpoint("gcode/script", self._handle_script)
         wh.register_endpoint("gcode/restart", self._handle_restart)
         wh.register_endpoint("gcode/firmware_restart",
@@ -411,6 +412,8 @@ class GCodeHelper:
                              self._handle_subscribe_output)
     def _handle_help(self, web_request):
         web_request.send(self.gcode.get_command_help())
+    def _handle_groups(self, web_request):
+        web_request.send(self.gcode.get_command_groups())
     def _handle_script(self, web_request):
         self.gcode.run_script(web_request.get_str('script'))
     def _handle_restart(self, web_request):

@@ -125,6 +125,7 @@ class GCodeMacro:
         self.gcode = printer.lookup_object('gcode')
         self.rename_existing = config.get("rename_existing", None)
         self.cmd_desc = config.get("description", "G-Code macro")
+        self.cmd_group = config.get("group", "")
         if self.rename_existing is not None:
             if (self.gcode.is_traditional_gcode(self.alias)
                 != self.gcode.is_traditional_gcode(self.rename_existing)):
@@ -135,7 +136,8 @@ class GCodeMacro:
                                            self.handle_connect)
         else:
             self.gcode.register_command(self.alias, self.cmd,
-                                        desc=self.cmd_desc)
+                                        desc=self.cmd_desc,
+                                        group=self.cmd_group)
         self.gcode.register_mux_command("SET_GCODE_VARIABLE", "MACRO",
                                         name, self.cmd_SET_GCODE_VARIABLE,
                                         desc=self.cmd_SET_GCODE_VARIABLE_help)
@@ -158,7 +160,8 @@ class GCodeMacro:
                 % (self.alias,))
         pdesc = "Renamed builtin of '%s'" % (self.alias,)
         self.gcode.register_command(self.rename_existing, prev_cmd, desc=pdesc)
-        self.gcode.register_command(self.alias, self.cmd, desc=self.cmd_desc)
+        self.gcode.register_command(self.alias, self.cmd,
+                                    desc=self.cmd_desc, group=self.cmd_group)
     def get_status(self, eventtime):
         return self.variables
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"

@@ -105,6 +105,7 @@ class GCodeDispatch:
         self.ready_gcode_handlers = {}
         self.mux_commands = {}
         self.gcode_help = {}
+        self.gcode_groups = {}
         # Register commands needed before config file is loaded
         handlers = ['M110', 'M112', 'M115',
                     'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
@@ -120,7 +121,8 @@ class GCodeDispatch:
             return cmd[0].isupper() and cmd[1].isdigit()
         except:
             return False
-    def register_command(self, cmd, func, when_not_ready=False, desc=None):
+    def register_command(self, cmd, func, when_not_ready=False, desc=None,
+                         group=None):
         if func is None:
             old_cmd = self.ready_gcode_handlers.get(cmd)
             if cmd in self.ready_gcode_handlers:
@@ -139,11 +141,14 @@ class GCodeDispatch:
             self.base_gcode_handlers[cmd] = func
         if desc is not None:
             self.gcode_help[cmd] = desc
-    def register_mux_command(self, cmd, key, value, func, desc=None):
+        if group is not None:
+            self.gcode_groups[cmd] = group
+    def register_mux_command(self, cmd, key, value, func, desc=None,
+                             group=None):
         prev = self.mux_commands.get(cmd)
         if prev is None:
             handler = lambda gcmd: self._cmd_mux(cmd, gcmd)
-            self.register_command(cmd, handler, desc=desc)
+            self.register_command(cmd, handler, desc=desc, group=group)
             self.mux_commands[cmd] = prev = (key, {})
         prev_key, prev_values = prev
         if prev_key != key:
@@ -157,6 +162,8 @@ class GCodeDispatch:
         prev_values[value] = func
     def get_command_help(self):
         return dict(self.gcode_help)
+    def get_command_groups(self):
+        return dict(self.gcode_groups)
     def register_output_handler(self, cb):
         self.output_callbacks.append(cb)
     def _handle_shutdown(self):

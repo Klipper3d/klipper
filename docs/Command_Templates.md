@@ -48,6 +48,20 @@ gcode:
 This will be showing is you use the `HELP` command or use the autocomplete
 function.
 
+## Add a group to your macro
+
+You can also define a group for each G-Code macro. These can be used by front-end clients
+in order to group all your G-Codes automatically.
+Add `group:` with a concise group name in order to associate a macro with a group.
+For example:
+
+```
+[gcode_macro turn_on_led]
+group: lights
+gcode:
+  SET_PIN PIN=my_led VALUE=1
+```
+
 ## Save/Restore state for G-Code moves
 
 Unfortunately, the G-Code command language can be challenging to use.

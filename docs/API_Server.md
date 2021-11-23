@@ -230,6 +230,15 @@ might return:
 saved G-Code state", "PID_CALIBRATE": "Run PID calibration test",
 "QUERY_ADC": "Report the last value of an analog pin", ...}}`
 
+### gcode/groups
+
+This endpoint allows one to query the associated group for G-Code commands that have
+one defined. G-Codes delivered by Klipper itself do not have a group defined.
+Example:
+`{"id": 123, "method": "gcode/groups"}`
+might return:
+`{"id": 123, "result": {"MY_CUSTOM_GCODE": "Group1", "MY_CUSTOM_GCODE_2": "Group2", ...}}`
+
 ### gcode/script
 
 This endpoint allows one to run a series of G-Code commands. For example:
