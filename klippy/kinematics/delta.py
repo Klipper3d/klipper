@@ -30,6 +30,8 @@ class DeltaKinematics:
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', self.max_velocity,
             above=0., maxval=self.max_velocity)
+        self.max_z_accel = config.getfloat('max_z_accel', self.max_accel,
+                                          above=0., maxval=self.max_accel)
         # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
         print_radius = config.getfloat('print_radius', radius, above=0.)
