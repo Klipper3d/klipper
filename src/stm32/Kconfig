@@ -155,6 +155,16 @@ config STACK_SIZE
     int
     default 512
 
+config STM32F103GD_DISABLE_SWD
+    bool "Disable SWD at startup (for GigaDevice stm32f103 clones)"
+    depends on MACH_STM32F103 && LOW_LEVEL_OPTIONS
+    default n
+    help
+        The GigaDevice clone of the STM32F103 may not be able to
+        reliably disable SWD at run-time. This can prevent the PA13
+        and PA14 pins from being available. Selecting this option
+        disables SWD at startup and thus makes these pins available.
+
 
 ######################################################################
 # Bootloader
