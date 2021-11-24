@@ -132,7 +132,7 @@ class DeltaKinematics:
             limit_xy2 = -1.
         if move.axes_d[2]:
             z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(self.max_z_velocity * z_ratio, 
+            move.limit_speed(self.max_z_velocity * z_ratio,
                              self.max_z_accel * z_ratio)
             limit_xy2 = -1.
         # Limit the speed/accel of this move if is is at the extreme
