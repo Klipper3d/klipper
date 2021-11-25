@@ -713,7 +713,6 @@ sensor_pin:
 #   The resistance (in ohms) of the pullup attached to the thermistor.
 #   This parameter is only valid when the sensor is a thermistor. The
 #   default is 4700 ohms.
-<<<<<<< HEAD
 #adc_ref: 3.3
 #   Recore specific. The reference voltage for the ADC in the STM32
 #pullup_ref: 3.2
@@ -721,10 +720,7 @@ sensor_pin:
 #vo_ref: 0
 #   Recore specific. The offset voltage used to in the summing op-amp.
 #   If this is > 0, the Recore specific settings will be applied.
-#smooth_time: 2.0
-=======
 #smooth_time: 1.0
->>>>>>> upstream/master
 #   A time value (in seconds) over which temperature measurements will
 #   be smoothed to reduce the impact of measurement noise. The default
 #   is 1 seconds.
@@ -2296,6 +2292,7 @@ serial_no:
 #   The micro-controller to read from. Must be the host_mcu
 ```
 
+=======
 ### Thermocouple
 
 Thermocouple connected to an ADC. Requires gain and offset by an op-amp
@@ -2309,7 +2306,7 @@ sensor_pin:
 #   Op-amp gain of the input stage.
 # offset: 0.7
 #   Voltage offset to allow for temperatures below the board temperature.
-# vin: 3.3
+# adc_voltage: 3.3
 #   ADC reference voltage.
 # cj_sensor: temperature_sensor cold_junction
 #   The cold junction compensation thermistor. This is a separate temperature
