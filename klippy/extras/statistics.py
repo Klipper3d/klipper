@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, time, logging
+import os, time, logging, io
 
 class PrinterSysStats:
     def __init__(self, config):
@@ -13,7 +13,7 @@ class PrinterSysStats:
         self.last_mem_avail = 0
         self.mem_file = None
         try:
-            self.mem_file = open("/proc/meminfo", "rb")
+            self.mem_file = io.open("/proc/meminfo", "r")
         except:
             pass
         printer.register_event_handler("klippy:disconnect", self._disconnect)
