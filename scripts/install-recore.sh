@@ -63,7 +63,7 @@ RemainAfterExit=yes
 PermissionsStartOnly=true
 ExecStartPre=/usr/bin/gpioset 1 196=0
 ExecStartPre=/usr/bin/gpioget 1 196
-ExecStartPre=${SRCDIR}/scripts/flash-ar100.py ${SRCDIR}/out/ar100.bin
+ExecStartPre=${SRCDIR}/scripts/flash-ar100.py /opt/firmware/ar100.bin
 ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l ${KLIPPER_LOG}
 ExecStopPost=${SRCDIR}/scripts/flash-ar100.py --halt
 EOF
