@@ -91,7 +91,7 @@ config HAVE_STM32_USBFS
     default y if MACH_STM32F103 || MACH_STM32F0x2 || MACH_STM32F070
 config HAVE_STM32_USBOTG
     bool
-    default y if MACH_STM32F2 || MACH_STM32F4
+    default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32H7
 config HAVE_STM32_CANBUS
     bool
     default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F0x2
@@ -262,6 +262,10 @@ choice
         select USBSERIAL
     config STM32_USB_PA11_PA12_REMAP
         bool "USB (on PA9/PA10)" if LOW_LEVEL_OPTIONS && MACH_STM32F042
+        select USBSERIAL
+    config STM32_USB_PB14_PB15
+        bool "USB (on PB14/PB15)"
+        depends on MACH_STM32H7
         select USBSERIAL
     config STM32_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"

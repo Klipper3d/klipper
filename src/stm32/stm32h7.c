@@ -127,6 +127,19 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (STM_OSPEED << m_shift);
 }
 
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+    irq_disable();
+    // System DFU Bootloader
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
+}
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif
@@ -135,6 +148,10 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 static void
 clock_setup(void)
 {
+    // Ensure USB OTG ULPI is not enabled
+    CLEAR_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSULPIEN);
+    CLEAR_BIT(RCC->AHB1LPENR, RCC_AHB1LPENR_USB2OTGHSULPILPEN);
+
     // Set this despite correct defaults.
     // "The software has to program the supply configuration in PWR control
     // register 3" (pg. 259)
@@ -205,11 +222,16 @@ clock_setup(void)
         ;
 
     // Set HPRE, D1PPRE, D2PPRE, D2PPRE2, D3PPRE dividers
-    MODIFY_REG(RCC->D1CFGR, RCC_D1CFGR_HPRE_Msk,    RCC_D1CFGR_HPRE_DIV2);
-    MODIFY_REG(RCC->D1CFGR, RCC_D1CFGR_D1PPRE_Msk,  RCC_D1CFGR_D1PPRE_DIV2);
-    MODIFY_REG(RCC->D2CFGR, RCC_D2CFGR_D2PPRE1_Msk, RCC_D2CFGR_D2PPRE1_DIV2);
-    MODIFY_REG(RCC->D2CFGR, RCC_D2CFGR_D2PPRE2_Msk, RCC_D2CFGR_D2PPRE2_DIV2);
-    MODIFY_REG(RCC->D3CFGR, RCC_D3CFGR_D3PPRE_Msk,  RCC_D3CFGR_D3PPRE_DIV2);
+    // 480MHz / 2 = 240MHz rcc_hclk3
+    MODIFY_REG(RCC->D1CFGR, RCC_D1CFGR_HPRE,    RCC_D1CFGR_HPRE_3);
+    // 240MHz / 2 = 120MHz rcc_pclk3
+    MODIFY_REG(RCC->D1CFGR, RCC_D1CFGR_D1PPRE,  RCC_D1CFGR_D1PPRE_DIV2);
+    // 240MHz / 2 = 120MHz rcc_pclk1
+    MODIFY_REG(RCC->D2CFGR, RCC_D2CFGR_D2PPRE1, RCC_D2CFGR_D2PPRE1_DIV2);
+    // 240MHz / 2 = 120MHz rcc_pclk2
+    MODIFY_REG(RCC->D2CFGR, RCC_D2CFGR_D2PPRE2, RCC_D2CFGR_D2PPRE2_DIV2);
+    // 240MHz / 2 = 120MHz rcc_pclk4
+    MODIFY_REG(RCC->D3CFGR, RCC_D3CFGR_D3PPRE,  RCC_D3CFGR_D3PPRE_DIV2);
 
     // Switch on PLL1
     RCC->CR |= RCC_CR_PLL1ON;
@@ -220,6 +242,19 @@ clock_setup(void)
     MODIFY_REG(RCC->CFGR, RCC_CFGR_SW_Msk, RCC_CFGR_SW_PLL1);
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL1)
         ;
+
+    // Configure HSI48 clock for USB
+    if (CONFIG_USBSERIAL) {
+        SET_BIT(RCC->CR, RCC_CR_HSI48ON);
+        while((RCC->CR & RCC_CR_HSI48RDY) == 0);
+        SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
+        SET_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
+        CLEAR_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
+        CLEAR_BIT(CRS->CFGR, CRS_CFGR_SYNCSRC);
+        SET_BIT(CRS->CR, CRS_CR_CEN | CRS_CR_AUTOTRIMEN);
+        CLEAR_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
+        SET_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
+    }
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()

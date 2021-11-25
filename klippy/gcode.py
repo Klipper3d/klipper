@@ -142,7 +142,8 @@ class GCodeDispatch:
     def register_mux_command(self, cmd, key, value, func, desc=None):
         prev = self.mux_commands.get(cmd)
         if prev is None:
-            self.register_command(cmd, self._cmd_mux, desc=desc)
+            handler = lambda gcmd: self._cmd_mux(cmd, gcmd)
+            self.register_command(cmd, handler, desc=desc)
             self.mux_commands[cmd] = prev = (key, {})
         prev_key, prev_values = prev
         if prev_key != key:
@@ -290,8 +291,8 @@ class GCodeDispatch:
             # Don't warn about requests to turn off fan when fan not present
             return
         gcmd.respond_info('Unknown command:"%s"' % (cmd,))
-    def _cmd_mux(self, gcmd):
-        key, values = self.mux_commands[gcmd.get_command()]
+    def _cmd_mux(self, command, gcmd):
+        key, values = self.mux_commands[command]
         if None in values:
             key_param = gcmd.get(key, None)
         else:
