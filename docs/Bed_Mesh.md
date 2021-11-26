@@ -52,7 +52,7 @@ probe_count: 5, 3
 - `probe_count: 5, 3`\
   _Default Value: 3, 3_\
   The number of points to probe on each axis, specified as (X, Y) integer
-  values.  In this example 5 points will be probed along the X axis, with
+  corr.  In this example 5 points will be probed along the X axis, with
   3 points along the Y axis, for a total of 15 probed points.  Note that
   if you wanted a square grid, for example 3x3, this could be specified
   as a single integer value that is used for both axes, ie `probe_count: 3`.
