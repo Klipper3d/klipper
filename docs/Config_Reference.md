@@ -1140,7 +1140,7 @@ home_xy_position:
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
 #   default is 20mm/s.
 #move_to_previous: False
-#   When set to True, the X and Y axes are reset to their previous 
+#   When set to True, the X and Y axes are reset to their previous
 #   positions after Z axis homing. The default is False.
 ```
 
