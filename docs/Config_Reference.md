@@ -450,7 +450,7 @@ Only parameters specific to polar printers are described here - see
 [common kinematic settings](#common-kinematic-settings) for available
 parameters.
 
-POLAR KINEMATICS ARE A WORK IN PROGRESS. Moves around the (0, 0)
+POLAR KINEMATICS ARE A WORK IN PROGRESS. Moves around the 0, 0
 position are known to not work properly.
 
 ```
@@ -585,7 +585,7 @@ available parameters.
 
 CABLE WINCH SUPPORT IS EXPERIMENTAL. Homing is not implemented on
 cable winch kinematics. In order to home the printer, manually send
-movement commands until the toolhead is at (0, 0, 0) and then issue a
+movement commands until the toolhead is at 0, 0, 0 and then issue a
 `G28` command.
 
 ```
@@ -813,26 +813,26 @@ Visual Examples:
 #   mesh_origin option. This parameter must be provided for round beds
 #   and omitted for rectangular beds.
 #mesh_origin:
-#   Defines the center (X, Y) coordinate of the mesh for round beds. This
+#   Defines the center X, Y coordinate of the mesh for round beds. This
 #   coordinate is relative to the probe's location. It may be useful
 #   to adjust the mesh_origin in an effort to maximize the size of the
-#   mesh radius. Default is (0, 0). This parameter must be omitted for
+#   mesh radius. Default is 0, 0. This parameter must be omitted for
 #   rectangular beds.
 #mesh_min:
-#   Defines the minimum (X, Y) coordinate of the mesh for rectangular
+#   Defines the minimum X, Y coordinate of the mesh for rectangular
 #   beds. This coordinate is relative to the probe's location. This
 #   will be the first point probed, nearest to the origin. This
 #   parameter must be provided for rectangular beds.
 #mesh_max:
-#   Defines the maximum (X, Y) coordinate of the mesh for rectangular
+#   Defines the maximum X, Y coordinate of the mesh for rectangular
 #   beds. Adheres to the same principle as mesh_min, however this will
 #   be the furthest point probed from the bed's origin. This parameter
 #   must be provided for rectangular beds.
 #probe_count: 3, 3
 #   For rectangular beds, this is a comma separate pair of integer
-#   values (X, Y) defining the number of points to probe along each
+#   values X, Y defining the number of points to probe along each
 #   axis. A single value is also valid, in which case that value will
-#   be applied to both axes. Default is (3, 3).
+#   be applied to both axes. Default is 3, 3.
 #round_probe_count: 5
 #   For round beds, this integer value defines the maximum number of
 #   points to probe along each axis. This value must be an odd number.
@@ -859,11 +859,11 @@ Visual Examples:
 #   This is also the minimum length that a move can be split. Default
 #   is 5.0.
 #mesh_pps: 2, 2
-#   A comma separated pair of integers (X, Y) defining the number of
+#   A comma separated pair of integers X, Y defining the number of
 #   points per segment to interpolate in the mesh along each axis. A
 #   "segment" can be defined as the space between each probed point.
 #   The user may enter a single value which will be applied to both
-#   axes. Default is (2, 2).
+#   axes. Default is 2, 2.
 #algorithm: lagrange
 #   The interpolation algorithm to use. May be either "lagrange" or
 #   "bicubic". This option will not affect 3x3 grids, which are forced
@@ -903,12 +903,12 @@ information.
 #   axis. The default is 0.
 #z_adjust: 0
 #   The amount to add to the Z height when the nozzle is nominally at
-#   (0, 0). The default is 0.
+#   0, 0. The default is 0.
 # The remaining parameters control a BED_TILT_CALIBRATE extended
 # g-code command that may be used to calibrate appropriate x and y
 # adjustment parameters.
 #points:
-#   A list of (X, Y) coordinates (one per line; subsequent lines
+#   A list of X, Y coordinates (one per line; subsequent lines
 #   indented) that should be probed during a BED_TILT_CALIBRATE
 #   command. Specify coordinates of the nozzle and be sure the probe
 #   is above the bed at the given nozzle coordinates. The default is
@@ -934,7 +934,7 @@ information.
 ```
 [bed_screws]
 #screw1:
-#   The (X, Y) coordinate of the first bed leveling screw. This is a
+#   The X, Y coordinate of the first bed leveling screw. This is a
 #   position to command the nozzle to that is directly above the bed
 #   screw (or as close as possible while still being above the bed).
 #   This parameter must be provided.
@@ -943,7 +943,7 @@ information.
 #   the helper script runs. The default is to use a name based upon
 #   the screw XY location.
 #screw1_fine_adjust:
-#   An (X, Y) coordinate to command the nozzle to so that one can fine
+#   An X, Y coordinate to command the nozzle to so that one can fine
 #   tune the bed leveling screw. The default is to not perform fine
 #   adjustments on the bed screw.
 #screw2:
@@ -1019,15 +1019,15 @@ extended [G-Code command](G-Codes.md#z-tilt) becomes available.
 ```
 [z_tilt]
 #z_positions:
-#   A list of (X, Y) coordinates (one per line; subsequent lines
+#   A list of X, Y coordinates (one per line; subsequent lines
 #   indented) describing the location of each bed "pivot point". The
 #   "pivot point" is the point where the bed attaches to the given Z
-#   stepper. It is described using nozzle coordinates (the (X, Y) position
+#   stepper. It is described using nozzle coordinates (the X, Y position
 #   of the nozzle if it could move directly above the point). The
 #   first entry corresponds to stepper_z, the second to stepper_z1,
 #   the third to stepper_z2, etc. This parameter must be provided.
 #points:
-#   A list of (X, Y) coordinates (one per line; subsequent lines
+#   A list of X, Y coordinates (one per line; subsequent lines
 #   indented) that should be probed during a Z_TILT_ADJUST command.
 #   Specify coordinates of the nozzle and be sure the probe is above
 #   the bed at the given nozzle coordinates. This parameter must be
@@ -1069,16 +1069,16 @@ configuration:
  |Z           Z3|
  ----------------
 ```
-Where x is the (0, 0) point on the bed
+Where x is the 0, 0 point on the bed
 
 ```
 [quad_gantry_level]
 #gantry_corners:
-#   A newline separated list of (X, Y) coordinates describing the two
+#   A newline separated list of X, Y coordinates describing the two
 #   opposing corners of the gantry. The first entry corresponds to Z,
 #   the second to Z2. This parameter must be provided.
 #points:
-#   A newline separated list of four (X, Y) points that should be probed
+#   A newline separated list of four X, Y points that should be probed
 #   during a QUAD_GANTRY_LEVEL command. Order of the locations is
 #   important, and should correspond to Z, Z1, Z2, and Z3 location in
 #   order. This parameter must be provided. For maximum accuracy,
@@ -1118,13 +1118,13 @@ the nature of skew correction these lengths are set via gcode. See
 ### [safe_z_home]
 
 Safe Z homing. One may use this mechanism to home the Z axis at a
-specific (X, Y) coordinate. This is useful if the toolhead, for example
+specific X, Y coordinate. This is useful if the toolhead, for example
 has to move to the center of the bed before Z can be homed.
 
 ```
 [safe_z_home]
 home_xy_position:
-#   A (X, Y) coordinate (e.g. 100, 100) where the Z homing should be
+#   A X, Y coordinate (e.g. 100, 100) where the Z homing should be
 #   performed. This parameter must be provided.
 #speed: 50.0
 #   Speed at which the toolhead is moved to the safe Z home
@@ -1140,7 +1140,7 @@ home_xy_position:
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
 #   default is 20mm/s.
 #move_to_previous: False
-#   When set to True, the X and Y axes are reset to their previous 
+#   When set to True, the X and Y axes are reset to their previous
 #   positions after Z axis homing. The default is False.
 ```
 
@@ -1505,7 +1505,7 @@ section of the measuring resonances guide for more information on
 ```
 [resonance_tester]
 #probe_points:
-#   A list of (X, Y, Z) coordinates of points (one point per line) to test
+#   A list of X, Y, Z coordinates of points (one point per line) to test
 #   resonances at. At least one point is required. Make sure that all
 #   points with some safety margin in XY plane (~a few centimeters)
 #   are reachable by the toolhead.
