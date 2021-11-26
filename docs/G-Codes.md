@@ -337,40 +337,6 @@ enabled.
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
 
-### [firmware_retraction]
-
-The following standard G-Code commands are available when the
-[firmware_retraction config section](Config_Reference.md#firmware_retraction)
-is enabled. These commands allow you to utilize the firmware
-retraction feature available in many slicers, to reduce stringing
-during non-extrusion moves from one part of the print to another.
-Appropriately configuring pressure advance reduces the length of
-retraction required.
-- `G10`: Retracts the extruder using the currently configured
-  parameters.
-- `G11`: Unretracts the extruder using the currently configured
-  parameters.
-
-The following additional commands are also available.
-
-#### SET_RETRACTION
-`SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
-[UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>]`: Adjust the
-parameters used by firmware retraction. RETRACT_LENGTH determines the
-length of filament to retract and unretract. The speed of retraction
-is adjusted via RETRACT_SPEED, and is typically set relatively
-high. The speed of unretraction is adjusted via UNRETRACT_SPEED, and
-is not particularly critical, although often lower than RETRACT_SPEED.
-In some cases it is useful to add a small amount of additional length
-on unretraction, and this is set via UNRETRACT_EXTRA_LENGTH.
-SET_RETRACTION is commonly set as part of slicer per-filament
-configuration, as different filaments require different parameter
-settings.
-
-#### GET_RETRACTION
-`GET_RETRACTION`: Queries the current parameters used by firmware
-retraction and displays them on the terminal.
-
 ### [filament_switch_sensor]
 
 The following command is available when a
@@ -391,11 +357,40 @@ will be disabled, if set to 1 it is enabled.
 
 ### [firmware_retraction]
 
-The following standard G-Code commands are available if a
+The following standard G-Code commands are available when the
 [firmware_retraction config section](Config_Reference.md#firmware_retraction)
-is enabled:
-- Retract: `G10`
-- Unretract: `G11`
+is enabled. These commands allow you to utilize the firmware
+retraction feature available in many slicers, to reduce stringing
+during non-extrusion moves from one part of the print to another.
+Appropriately configuring pressure advance reduces the length of
+retraction required.
+- `G10`: Retracts the extruder using the currently configured
+  parameters.
+- `G11`: Unretracts the extruder using the currently configured
+  parameters.
+
+The following additional commands are also available.
+
+#### SET_RETRACTION
+`SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
+[UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [LIFT_Z=<mm>]`:
+Adjust the parameters used by firmware retraction. RETRACT_LENGTH
+determines the length of filament to retract and unretract. The
+speed of retraction is adjusted via RETRACT_SPEED, and is typically
+set relatively high. The speed of unretraction is adjusted via
+UNRETRACT_SPEED, and is not particularly critical, although often
+lower than RETRACT_SPEED. In some cases it is useful to add a small
+amount of additional length on unretraction, and this is set via
+UNRETRACT_EXTRA_LENGTH. Specifying LIFT_Z enables lifting of the
+toolhead upon every retract (and subsequent dropping upon unretract)
+to prevent the nozzle from dragging across surfaces or catching on
+the print. SET_RETRACTION is commonly set as part of slicer
+per-filament configuration, as different filaments require different
+parameter settings.
+
+#### GET_RETRACTION
+`GET_RETRACTION`: Queries the current parameters used by firmware
+retraction and displays them on the terminal.
 
 ### [force_move]
 

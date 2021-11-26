@@ -1391,6 +1391,9 @@ allowing per-filament settings and runtime tuning.
 #   unretracting.
 #unretract_speed: 10
 #   The speed of unretraction, in mm/s. The default is 10 mm/s.
+#lift_z: 0
+#   The amount (in mm) the toolhead should be lifted upon retract. The
+#   default is 0mm.
 ```
 
 ### [gcode_arcs]
