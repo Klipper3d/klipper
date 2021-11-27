@@ -663,7 +663,7 @@ retraction required.
 
 The following commands are available when the
 [skew_correction config section](Config_Reference.md#skew_correction)
-is enabled (also see the [skew correction guide](skew_correction.md)):
+is enabled (also see the [Skew Correction](Skew_Correction.md) guide):
 - `SET_SKEW [XY=<ac_length,bd_length,ad_length>] [XZ=<ac,bd,ad>]
   [YZ=<ac,bd,ad>] [CLEAR=<0|1>]`: Configures the [skew_correction]
   module with measurements (in mm) taken from a calibration print.
@@ -678,7 +678,7 @@ is enabled (also see the [skew correction guide](skew_correction.md)):
   degrees) based on a measured print. This can be useful for
   determining the printer's current skew after correction has been
   applied. It may also be useful before correction is applied to
-  determine if skew correction is necessary. See skew_correction.md
+  determine if skew correction is necessary. See [Skew Correction](Skew_Correction.md)
   for details on skew calibration objects and measurements.
 - `SKEW_PROFILE [LOAD=<name>] [SAVE=<name>] [REMOVE=<name>]`: Profile
   management for skew_correction. LOAD will restore skew state from

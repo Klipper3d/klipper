@@ -136,7 +136,7 @@ feature when printing (see
 [config reference](Config_Reference.md#virtual_sdcard) for details).
 
 For running on the Beaglebone, see the
-[Beaglebone specific installation instructions](beaglebone.md).
+[Beaglebone specific installation instructions](Beaglebone.md).
 
 Klipper has been run on other machines. The Klipper host software only
 requires Python running on a Linux (or similar) computer. However, if

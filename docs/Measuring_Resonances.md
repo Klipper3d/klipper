@@ -483,18 +483,18 @@ The data can be processed later by the following scripts:
 of them accept one or several raw csv files as the input depending on the
 mode. The graph_accelerometer.py script supports several modes of operation:
 
-  * plotting raw accelerometer data (use `-r` parameter), only 1 input is
-    supported;
-  * plotting a frequency response (no extra parameters required), if multiple
-    inputs are specified, the average frequency response is computed;
-  * comparison of the frequency response between several inputs (use `-c`
-    parameter); you can additionally specify which accelerometer axis to
+* plotting raw accelerometer data (use `-r` parameter), only 1 input is
+  supported;
+* plotting a frequency response (no extra parameters required), if multiple
+  inputs are specified, the average frequency response is computed;
+* comparison of the frequency response between several inputs (use `-c`
+  parameter); you can additionally specify which accelerometer axis to
     consider via `-a x`, `-a y` or `-a z` parameter (if none specified,
     the sum of vibrations for all axes is used);
-  * plotting the spectrogram (use `-s` parameter), only 1 input is supported;
-    you can additionally specify which accelerometer axis to consider via
-    `-a x`, `-a y` or `-a z` parameter (if none specified, the sum of vibrations
-    for all axes is used).
+* plotting the spectrogram (use `-s` parameter), only 1 input is supported;
+  you can additionally specify which accelerometer axis to consider via
+  `-a x`, `-a y` or `-a z` parameter (if none specified, the sum of vibrations
+  for all axes is used).
 
 Note that graph_accelerometer.py script supports only the raw_data\*.csv files
 and not resonances\*.csv or calibration_data\*.csv files.
@@ -515,16 +515,16 @@ the CSV file if `-c output.csv` parameter is specified.
 Providing several inputs to shaper_calibrate.py script can be useful if running
 some advanced tuning of the input shapers, for example:
 
-  * Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
-    axis twice on a bed slinger printer with the accelerometer attached to the
-    toolhead the first time, and the accelerometer attached to the bed the
-    second time in order to detect axes cross-resonances and attempt to cancel
-    them with input shapers.
-  * Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
-    a glass bed and a magnetic surfaces (which is lighter) to find the input
-    shaper parameters that work well for any print surface configuration.
-  * Combining the resonance data from multiple test points.
-  * Combining the resonance data from 2 axis (e.g. on a bed slinger printer
-    to configure X-axis input_shaper from both X and Y axes resonances to
-    cancel vibrations of the *bed* in case the nozzle 'catches' a print when
-    moving in X axis direction).
+* Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
+  axis twice on a bed slinger printer with the accelerometer attached to the
+  toolhead the first time, and the accelerometer attached to the bed the
+  second time in order to detect axes cross-resonances and attempt to cancel
+  them with input shapers.
+* Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
+  a glass bed and a magnetic surfaces (which is lighter) to find the input
+  shaper parameters that work well for any print surface configuration.
+* Combining the resonance data from multiple test points.
+* Combining the resonance data from 2 axis (e.g. on a bed slinger printer
+  to configure X-axis input_shaper from both X and Y axes resonances to
+  cancel vibrations of the *bed* in case the nozzle 'catches' a print when
+  moving in X axis direction).

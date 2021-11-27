@@ -56,6 +56,13 @@ enable_pclock(uint32_t id)
         PMC->PMC_PCER1 = 1 << (id - 32);
 }
 
+// Return the frequency of the given peripheral clock
+uint32_t
+get_pclock_frequency(uint32_t id)
+{
+    return CONFIG_CLOCK_FREQ;
+}
+
 
 /****************************************************************
  * Resets

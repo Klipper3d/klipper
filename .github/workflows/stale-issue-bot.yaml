@@ -194,3 +194,14 @@ jobs:
                 state: 'closed'
               });
             }
+  # Lock closed issues after 6 months of inactivity.
+  lock:
+    name: Lock Closed Issues
+    if: github.repository == 'Klipper3d/klipper'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: dessant/lock-threads@v3
+      with:
+        process-only: 'issues'
+        issue-inactive-days: '180'
+        issue-lock-reason: ''
