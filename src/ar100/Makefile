@@ -16,6 +16,7 @@ CFLAGS_klipper.elf += -Wl,--no-dynamic-linker
 src-y += ar100/main.c ar100/gpio.c ar100/serial.c ar100/prcm.c
 src-y += ar100/util.c ar100/timer.c
 src-y += generic/crc16_ccitt.c generic/alloc.c generic/timer_irq.c
+src-y += ar100/spicmds.c
 
 OBJS_klipper.elf += $(OUT)src/ar100/start.o
 OBJS_klipper.elf += $(OUT)src/ar100/runtime.o
