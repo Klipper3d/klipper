@@ -9,8 +9,8 @@ import stepper
 class CoreXYKinematics:
     def __init__(self, toolhead, config):
         # Setup axis rails
-        self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
-                       stepper.PrinterRail(config.getsection('stepper_y')),
+        self.rails = [ stepper.LookupMultiRail(config.getsection('stepper_x')),
+                       stepper.LookupMultiRail(config.getsection('stepper_y')),
                        stepper.LookupMultiRail(config.getsection('stepper_z')) ]
         self.rails[0].get_endstops()[0][0].add_stepper(
             self.rails[1].get_steppers()[0])
