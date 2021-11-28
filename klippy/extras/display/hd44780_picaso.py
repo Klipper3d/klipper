@@ -13,9 +13,6 @@ LINE_LENGTH_OPTIONS={16:16, 20:20}
 
 TextGlyphs = { 'right_arrow': b'\x7e' }
 
-BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
-
-
 class hd44780_picaso:
     def __init__(self, config):
         # i2c config
@@ -44,11 +41,14 @@ class hd44780_picaso:
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray(b'~'*64), 0x40) ]
 
-        self.clockStep = 0.008
+        # Clocks between sending update to display.
+        # Values lower than 0.008 result to artifacts on display
+        self.clock_step = 0.008
         self.printer = config.get_printer()
-        self.clocks = self.mcu.print_time_to_clock(self.clockStep/2)
+        # One update on display requires 2 packets. This is delay between them
+        self.enable_command_delay = self.mcu.print_time_to_clock(self.clock_step/2)
         curtime = self.printer.get_reactor().monotonic()
-        self.print_time = self.mcu.estimated_print_time(curtime)
+        self.last_send_time = self.mcu.estimated_print_time(curtime)
     def send_8_bits(self, cmd, is_data, minclock):
         if is_data:
             mask = self.data_mask
@@ -57,19 +57,17 @@ class hd44780_picaso:
         # There are 2 i2c chips. We need manually sync them
         self.i2c2.i2c_write([cmd], minclock=minclock)
         self.i2c1.i2c_write([mask | self.enable_mask], minclock)
-        self.i2c1.i2c_write([mask], minclock=minclock+self.clocks)
-
+        self.i2c1.i2c_write([mask], minclock=minclock+self.enable_command_delay)
     def send(self, cmds, is_data=False):
         curtime = self.printer.get_reactor().monotonic()
-        new_print_time = self.mcu.estimated_print_time(curtime)
-        if(new_print_time > self.print_time):
-            self.print_time = new_print_time
+        new_last_send_time = self.mcu.estimated_print_time(curtime)
+        if(new_last_send_time > self.last_send_time):
+            self.last_send_time = new_last_send_time
 
         for data in cmds:
-            minclock = self.mcu.print_time_to_clock(self.print_time)
+            minclock = self.mcu.print_time_to_clock(self.last_send_time)
             self.send_8_bits(data, is_data, minclock)
-            self.print_time = self.print_time + self.clockStep
-
+            self.last_send_time = self.last_send_time + self.clock_step
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for new_data, old_data, fb_id in self.all_framebuffers:
