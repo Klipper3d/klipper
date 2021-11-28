@@ -53,11 +53,14 @@ serial:
 #   Arduino boards and clones. The 'cheetah' method is a special
 #   method needed for some Fysetc Cheetah boards. The 'rpi_usb' method
 #   is useful on Raspberry Pi boards with micro-controllers powered
-#   over USB - it briefly disables power to all USB ports to
+#   over USB - it briefly disables power to _all USB ports_ to
 #   accomplish a micro-controller reset. The 'command' method involves
 #   sending a Klipper command to the micro-controller so that it can
 #   reset itself. The default is 'arduino' if the micro-controller
 #   communicates over a serial port, 'command' otherwise.
+#   NB: On Raspberry Pi, the restart using the 'rpu_usb' method will 
+#   affect _all_ ports and might cause issues if you for example use
+#   booting from USB
 ```
 
 ### [mcu my_extra_mcu]
