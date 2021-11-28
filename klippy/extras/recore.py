@@ -13,13 +13,21 @@ class recore:
         ppins.register_chip('recore', self)
         revisions = {'A' + str(i): 'A' + str(i) for i in range(7)}
         self.revision = config.getchoice('revision', revisions)
+
         # Setup enable pin
         enable_pin = config.get('enable_pin', 'ar100:EN_HP')
-        self.mcu_power_enable = ppins.setup_pin('digital_out', enable_pin)
-        self.mcu_power_enable.setup_start_value(start_value=0.,
+        mcu_power_enable = ppins.setup_pin('digital_out', enable_pin)
+        mcu_power_enable.setup_start_value(start_value=0.,
                                                 shutdown_value=1.,
                                                 is_static=False)
-        self.mcu_power_enable.setup_max_duration(0.)
+
+        # Reset over current alarm
+        oc_reset_pin = config.get('oc_reset_pin', 'ar100:OC_RESET')
+        oc_reset = ppins.setup_pin('digital_out', oc_reset_pin)
+        mcu = oc_reset.get_mcu()
+        pin = oc_reset._pin
+        mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (pin, 0), True)
+        mcu.add_config_cmd("set_digital_out pin=%s value=%d" % (pin, 1), True)
 
         if self.revision in ['A3', 'A4', 'A5', 'A6']:
             for idx in range(4):
@@ -46,7 +54,6 @@ class recore:
                     pin.setup_start_value(start_value=1.,
                                           shutdown_value=1.,
                                           is_static=True)
-
 
 def load_config(config):
     return recore(config)

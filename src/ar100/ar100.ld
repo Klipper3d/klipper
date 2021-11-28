@@ -5,12 +5,12 @@ ENTRY (start)
 STACK_SIZE = 0x200;
 SRAM_A2_SIZE = 64K;
 MEMORY {
-  SRAM_A2 (rwx): ORIGIN = 0x0000F000, LENGTH = SRAM_A2_SIZE
+  SRAM_A2 (rwx): ORIGIN = 0x0000E000, LENGTH = SRAM_A2_SIZE
 }
 
 SECTIONS
 {
-  . = 0x0000F000;
+  . = 0x0000E000;
 
   .text . : ALIGN(4) {
     KEEP(*(.text.start))

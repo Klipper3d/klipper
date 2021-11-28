@@ -51,6 +51,11 @@ gpio_out_toggle_noirq(struct gpio_out pin){
   *((volatile uint32_t *)(pin.reg)) = data_regs[pin.bank];
 }
 
+static inline __attribute__((always_inline)) void
+gpio_out_toggle(struct gpio_out pin){
+  gpio_out_toggle_noirq(pin);
+}
+
 struct gpio_in gpio_in_setup(uint8_t pin, int8_t pull_up);
 void gpio_in_reset(struct gpio_in pin, int8_t pull_up);
 uint8_t gpio_in_read(struct gpio_in pin);

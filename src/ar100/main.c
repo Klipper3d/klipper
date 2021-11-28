@@ -141,7 +141,7 @@ main(uint32_t exception){
     r_prcm_set_cpus_clk_rate(PLL_PERIPH);
 
     r_uart_init();
-    uart_puts("**AR100 v0.1.1**\n");
+    uart_puts("**AR100 v0.1.2**\n");
     sched_main();
     while(1) {}         // Stop complaining about noreturn
 }
