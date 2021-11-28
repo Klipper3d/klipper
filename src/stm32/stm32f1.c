@@ -257,8 +257,13 @@ armcm_main(void)
 
     // Disable JTAG to free PA15, PB3, PB4
     enable_pclock(AFIO_BASE);
-    stm32f1_alternative_remap(AFIO_MAPR_SWJ_CFG_Msk,
-                              AFIO_MAPR_SWJ_CFG_JTAGDISABLE);
+    if (CONFIG_STM32F103GD_DISABLE_SWD)
+        // GigaDevice clone can't enable PA13/PA14 at runtime - enable here
+        stm32f1_alternative_remap(AFIO_MAPR_SWJ_CFG_Msk,
+                                  AFIO_MAPR_SWJ_CFG_DISABLE);
+    else
+        stm32f1_alternative_remap(AFIO_MAPR_SWJ_CFG_Msk,
+                                  AFIO_MAPR_SWJ_CFG_JTAGDISABLE);
 
     sched_main();
 }

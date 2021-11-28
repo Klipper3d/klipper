@@ -163,6 +163,8 @@ sched_timer_dispatch(void)
     if (unlikely(res == SF_DONE)) {
         next_waketime = t->next->waketime;
         SchedStatus.timer_list = t->next;
+        if (SchedStatus.last_insert == t)
+            SchedStatus.last_insert = t->next;
     } else if (!timer_is_before(updated_waketime, t->next->waketime)) {
         next_waketime = t->next->waketime;
         SchedStatus.timer_list = t->next;

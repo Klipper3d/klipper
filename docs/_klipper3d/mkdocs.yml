@@ -101,7 +101,7 @@ nav:
     - TMC_Drivers.md
     - Multi_MCU_Homing.md
     - Slicers.md
-    - skew_correction.md
+    - Skew_Correction.md
     - Using_PWM_Tools.md
   - Developer Documentation:
     - Code_Overview.md
@@ -118,8 +118,8 @@ nav:
     - Example_Configs.md
     - SDCard_Updates.md
     - RPi_microcontroller.md
-    - beaglebone.md
+    - Beaglebone.md
     - Bootloaders.md
     - CANBUS.md
     - TSL1401CL_Filament_Width_Sensor.md
-    - HallFilamentWidthSensor.md
+    - Hall_Filament_Width_Sensor.md

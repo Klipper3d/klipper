@@ -6,6 +6,7 @@ on:
 jobs:
   # Check for stale issues (no updates in 5 weeks)
   stale:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/stale@v3
@@ -32,6 +33,7 @@ jobs:
         days-before-close: 7
   # Close tickets marked with "not on github" label
   close_not_on_github:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v3
@@ -60,6 +62,7 @@ jobs:
             }
   # Close tickets marked with "resolved" label
   close_resolved:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v3
@@ -101,6 +104,7 @@ jobs:
             }
   # Close PRs marked with "not mainline" label
   close_not_mainline:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v3
@@ -143,6 +147,7 @@ jobs:
             }
   # Mark (and close) PRs with "pending feedback" for 3+ weeks
   mark_inactive:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v3
@@ -189,3 +194,14 @@ jobs:
                 state: 'closed'
               });
             }
+  # Lock closed issues after 6 months of inactivity.
+  lock:
+    name: Lock Closed Issues
+    if: github.repository == 'Klipper3d/klipper'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: dessant/lock-threads@v3
+      with:
+        process-only: 'issues'
+        issue-inactive-days: '180'
+        issue-lock-reason: ''

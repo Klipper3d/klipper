@@ -10,8 +10,8 @@ the probing process.
 
 Prior to Mesh Calibration you will need to be sure that your Probe's
 Z-Offset is calibrated.  If using an endstop for Z homing it will need
-to be calibrated as well.  See [Probe_Calibrate](Probe_Calibrate.md)
-and Z_ENDSTOP_CALIBRATE in [Manual_Level](Manual_Level.md) for more
+to be calibrated as well.  See [Probe Calibrate](Probe_Calibrate.md)
+and Z_ENDSTOP_CALIBRATE in [Manual Level](Manual_Level.md) for more
 information.
 
 ## Basic Configuration
@@ -347,7 +347,7 @@ are identified in green.
 
 ### Calibration
 
-`BED_MESH_CALIBRATE PROFILE=name METHOD=[manual | automatic] [<probe_parameter>=<value>]
+`BED_MESH_CALIBRATE PROFILE=<name> METHOD=[manual | automatic] [<probe_parameter>=<value>]
  [<mesh_parameter>=<value>]`\
 _Default Profile:  default_\
 _Default Method:  automatic if a probe is detected, otherwise manual_
@@ -361,6 +361,7 @@ mesh points will automatically be adjusted.
 
 It is possible to specify mesh parameters to modify the probed area.  The
 following parameters are available:
+
 - Rectangular beds (cartesian):
   - `MESH_MIN`
   - `MESH_MAX`
@@ -372,20 +373,21 @@ following parameters are available:
 - All beds:
   - `RELATIVE_REFERNCE_INDEX`
   - `ALGORITHM`
+
 See the configuration documentation above for details on how each parameter
 applies to the mesh.
 
 ### Profiles
 
-`BED_MESH_PROFILE SAVE=name LOAD=name REMOVE=name`
+`BED_MESH_PROFILE SAVE=<name> LOAD=<name> REMOVE=<name>`
 
 After a BED_MESH_CALIBRATE has been performed, it is possible to save the
 current mesh state into a named profile.  This makes it possible to load
 a mesh without re-probing the bed.  After a profile has been saved using
-`BED_MESH_PROFILE SAVE=name` the `SAVE_CONFIG` gcode may be executed
+`BED_MESH_PROFILE SAVE=<name>` the `SAVE_CONFIG` gcode may be executed
 to write the profile to printer.cfg.
 
-Profiles can be loaded by executing `BED_MESH_PROFILE LOAD=name`.
+Profiles can be loaded by executing `BED_MESH_PROFILE LOAD=<name>`.
 
 It should be noted that each time a BED_MESH_CALIBRATE occurs, the current
 state is automatically saved to the _default_ profile.  If this profile
