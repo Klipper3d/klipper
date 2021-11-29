@@ -1,5 +1,9 @@
-// Copyright (C) 2020  Elias Bakken <elias@iagent.no>
+// Power, Reset and Clock Management for ar100
+//
+// Copyright (C) 2020-2021  Elias Bakken <elias@iagent.no>
+//
 // This file may be distributed under the terms of the GNU GPLv3 license.
+
 
 #include "prcm.h"
 #include "util.h"

@@ -1,4 +1,7 @@
-// Copyright (C) 2020  Elias Bakken <elias@iagent.no>
+// Main entry point for ar100
+//
+// Copyright (C) 2020-2021  Elias Bakken <elias@iagent.no>
+//
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h>     // uint32_t
