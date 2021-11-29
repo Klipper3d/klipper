@@ -157,7 +157,9 @@ microsteps:
 #   The minimum time between the step pulse signal edge and the
 #   following "unstep" signal edge. This is also used to set the
 #   minimum time between a step pulse and a direction change signal.
-#   The default is 0.000002 (which is 2us).
+#   The default is 0.000000100 (100ns) for TMC steppers that are
+#   configured in UART or SPI mode, and the default is 0.000002 (which
+#   is 2us) for all other steppers.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor then it enables "multi-mcu
