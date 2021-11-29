@@ -317,9 +317,7 @@ for the driver's internal stall flag to still be set from a previous
 move.
 
 It can also be useful to have that macro set the driver current before
-homing and set a new current after the carriage has moved away. This
-also allows a hold_current to be set during prints (a hold_current
-is not recommended during sensorless homing).
+homing and set a new current after the carriage has moved away.
 
 An example macro might look something like:
 ```
@@ -328,9 +326,8 @@ gcode:
     {% set HOME_CUR = 0.700 %}
     {% set driver_config = printer.configfile.settings['tmc2209 stepper_x'] %}
     {% set RUN_CUR = driver_config.run_current %}
-    {% set HOLD_CUR = driver_config.hold_current %}
     # Set current for sensorless homing
-    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR} HOLDCURRENT={HOME_CUR}
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR}
     # Pause to ensure driver stall flag is clear
     G4 P2000
     # Home
@@ -339,7 +336,7 @@ gcode:
     G90
     G1 X5 F1200
     # Set current during print
-    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR} HOLDCURRENT={HOLD_CUR}
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR}
 ```
 
 The resulting macro can be called from a
@@ -360,7 +357,7 @@ Use the tuning guide described above to find the appropriate "stall
 sensitivity" for each carriage, but be aware of the following
 restrictions:
 1. When using sensorless homing on CoreXY, make sure there is no
-   `hold_current` in effect for either stepper during homing.
+   `hold_current` configured for either stepper.
 2. While tuning, make sure both the X and Y carriages are near the
    center of their rails before each home attempt.
 3. After tuning is complete, when homing both X and Y, use macros to
