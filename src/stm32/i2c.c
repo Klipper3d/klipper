@@ -32,8 +32,8 @@ static const struct i2c_info i2c_bus[] = {
     { I2C1, GPIO('B', 6), GPIO('B', 7) },
     { I2C1, GPIO('B', 8), GPIO('B', 9) },
     { I2C2, GPIO('B', 10), GPIO('B', 11) },
-	{ I2C2, GPIO('H', 4), GPIO('H', 5) },
-	{ I2C3, GPIO('H', 7), GPIO('H', 8) },
+    { I2C2, GPIO('H', 4), GPIO('H', 5) },
+    { I2C3, GPIO('H', 7), GPIO('H', 8) },
 };
 
 // Work around stm32 errata causing busy bit to be stuck
