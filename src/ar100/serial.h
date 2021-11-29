@@ -1,6 +1,3 @@
-// Copyright (C) 2020  Elias Bakken <elias@iagent.no>
-// This file may be distributed under the terms of the GNU GPLv3 license.
-
 #include <stdint.h>
 
 #define R_UART_BASE 0x01F02800

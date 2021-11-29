@@ -1,5 +1,9 @@
-// Copyright (C) 2020  Elias Bakken <elias@iagent.no>
+// Uart and r_uart functions for ar100
+//
+// Copyright (C) 2020-2021  Elias Bakken <elias@iagent.no>
+//
 // This file may be distributed under the terms of the GNU GPLv3 license.
+
 
 #include "serial.h"
 #include "util.h"
