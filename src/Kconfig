@@ -111,9 +111,6 @@ config HAVE_STRICT_TIMING
 config HAVE_CHIPID
     bool
     default n
-config HAVE_TMC_UART
-    bool
-    default y
 config HAVE_STEPPER_BOTH_EDGE
     bool
     default n

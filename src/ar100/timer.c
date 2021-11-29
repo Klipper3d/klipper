@@ -6,6 +6,7 @@
 
 #include "timer.h"
 #include "board/timer_irq.h"
+#include "board/misc.h"
 
 volatile static uint32_t timer_compare;
 static uint8_t interrupt_seen;

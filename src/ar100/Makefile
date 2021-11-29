@@ -15,8 +15,8 @@ CFLAGS_klipper.elf += -Wl,--no-dynamic-linker
 # Add source files
 src-y += ar100/main.c ar100/gpio.c ar100/serial.c ar100/prcm.c
 src-y += ar100/util.c ar100/timer.c ar100/spicmds.c
-src-y += generic/crc16_ccitt.c generic/alloc.c generic/timer_irq.c
-src-y += buttons.c spi_software.c sensor_adxl345.c
+src-y += generic/crc16_ccitt.c generic/timer_irq.c
+src-y += buttons.c spi_software.c sensor_adxl345.c tmcuart.c
 
 OBJS_klipper.elf += $(OUT)src/ar100/start.o
 OBJS_klipper.elf += $(OUT)src/ar100/runtime.o

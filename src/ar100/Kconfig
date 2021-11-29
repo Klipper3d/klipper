@@ -9,7 +9,6 @@ config AR100_SELECT
     select HAVE_ENDSTOPS
     select HAVE_STEPPERS
     select HAVE_GPIO
-    select HAVE_TMC_UART
 
 config BOARD_DIRECTORY
     string
