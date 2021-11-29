@@ -64,6 +64,20 @@ If you are using multiple micro-controllers and they do not have
 unique ids (common on boards with a CH340 USB chip) then follow the
 directions above using the command `ls /dev/serial/by-path/*` instead.
 
+Note that for some CH34x USB chip, the IDs might be totally identical, 
+thus, no `/dev/serial/by-path/` directoy occured and only single
+ `/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0`. In this case,
+ if one of the conflicted boards is for temperory usage, try 'plug&unplug'
+ to identify the `x` of `/dev/ttyUSBx`, then use `/dev/ttyUSBx` instead of 
+ `by-id` or `by-path` for the MCUs' serial paths. The next step is to 
+ comment the serial paths of the MCUs and replace them with the 
+ `/dev/ttyUSBx` responsively. Don't forget to uncomment the origin paths
+  afterward.
+  
+For ones who do not want to apply the dirty method above, an even 
+dirtier method is to edit the rules in `/lib/udev/rules.d/60-serial.rules`(Debian).
+Ones can google it for more details, **use at your own risk**.
+
 ## When the micro-controller restarts the device changes to /dev/ttyUSB1
 
 Follow the directions in the
