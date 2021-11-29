@@ -2767,7 +2767,9 @@ cs_pin:
 #   The default is to not use an SPI daisy chain.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
-#   step at a rate of 256 micro-steps). The default is True.
+#   step at a rate of 256 micro-steps). This interpolation does
+#   introduce a small systemic positional deviation - see
+#   TMC_Drivers.md for details. The default is True.
 run_current:
 #   The amount of current (in amps RMS) to configure the driver to use
 #   during stepper movement. This parameter must be provided.
@@ -2834,7 +2836,9 @@ uart_pin:
 #   UART communication. The default is to not configure any pins.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
-#   step at a rate of 256 micro-steps). The default is True.
+#   step at a rate of 256 micro-steps). This interpolation does
+#   introduce a small systemic positional deviation - see
+#   TMC_Drivers.md for details. The default is True.
 run_current:
 #   The amount of current (in amps RMS) to configure the driver to use
 #   during stepper movement. This parameter must be provided.
@@ -2946,7 +2950,9 @@ cs_pin:
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). This only works if microsteps
-#   is set to 16. The default is True.
+#   is set to 16. Interpolation does introduce a small systemic
+#   positional deviation - see TMC_Drivers.md for details. The default
+#   is True.
 run_current:
 #   The amount of current (in amps RMS) used by the driver during
 #   stepper movement. This parameter must be provided.

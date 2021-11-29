@@ -83,6 +83,33 @@ setting `stealthchop_threshold` to 999999). Unfortunately, the drivers
 often produce poor and confusing results if the mode changes while the
 motor is at a non-zero velocity.
 
+## TMC interpolate setting introduces small position deviation
+
+The TMC driver `interpolate` setting may reduce the audible noise of
+printer movement at the cost of introducing a small systemic
+positional error. This systemic positional error results from the
+driver's delay in executing "steps" that Klipper sends it. During
+constant velocity moves, this delay results in a positional error of
+nearly half a configured microstep (more precisely, the error is half
+a microstep distance minus a 512th of a full step distance). For
+example, on an axis with a 40mm rotation_distance, 200
+steps_per_rotation, and 16 microsteps, the systemic error introduced
+during constant velocity moves is ~0.006mm.
+
+For best positional accuracy consider using spreadCycle mode and
+disable interpolation (set `interpolate: False` in the TMC driver
+config). When configured this way, one may increase the `microstep`
+setting to reduce audible noise during stepper movement. Typically, a
+microstep setting of `64` or `128` will have similar audible noise as
+interpolation, and do so without introducing a systemic positional
+error.
+
+If using stealthChop mode then the positional inaccuracy from
+interpolation is small relative to the positional inaccuracy
+introduced from stealthChop mode. Therefore tuning interpolation is
+not considered useful when in stealthChop mode, and one can leave
+interpolation in its default state.
+
 ## Sensorless Homing
 
 Sensorless homing allows to home an axis without the need for a
