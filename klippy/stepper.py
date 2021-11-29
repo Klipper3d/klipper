@@ -17,10 +17,12 @@ class error(Exception):
 # Interface to low-level mcu and chelper code
 class MCU_stepper:
     def __init__(self, name, step_pin_params, dir_pin_params, step_dist,
-                 step_pulse_duration=None, units_in_radians=False):
+                 step_pulse_duration=None, step_bothedges_optimized=True,
+                 units_in_radians=False):
         self._name = name
         self._step_dist = step_dist
         self._step_pulse_duration = step_pulse_duration
+        self._step_bothedges_optimized = step_bothedges_optimized
         self._units_in_radians = units_in_radians
         self._mcu = step_pin_params['chip']
         self._oid = oid = self._mcu.create_oid()
@@ -68,13 +70,21 @@ class MCU_stepper:
     def _build_config(self):
         if self._step_pulse_duration is None:
             self._step_pulse_duration = .000002
+        if self._step_bothedges_optimized is None:
+            self._step_bothedges_optimized = True
         invert_step = self._invert_step
         sbe = int(self._mcu.get_constants().get('STEPPER_BOTH_EDGE', '0'))
+
+        od_step_pulse_duration = self._step_pulse_duration
         if self._req_step_both_edge and sbe:
             # Enable stepper optimized step on both edges
             self._step_both_edge = True
             self._step_pulse_duration = 0.
             invert_step = -1
+        if not self._step_bothedges_optimized:
+            self._step_both_edge = False
+            self._step_pulse_duration = od_step_pulse_duration
+
         step_pulse_ticks = self._mcu.seconds_to_clock(self._step_pulse_duration)
         self._mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d"
@@ -222,8 +232,11 @@ def PrinterStepper(config, units_in_radians=False):
     step_dist = parse_step_distance(config, units_in_radians, True)
     step_pulse_duration = config.getfloat('step_pulse_duration', None,
                                           minval=0., maxval=.001)
+    step_bothedges_optimized = config.getboolean('step_bothedges_optimized',
+                                                None)
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params, step_dist,
-                              step_pulse_duration, units_in_radians)
+                              step_pulse_duration, step_bothedges_optimized,
+                              units_in_radians)
     # Register with helper modules
     for mname in ['stepper_enable', 'force_move', 'motion_report']:
         m = printer.load_object(config, mname)

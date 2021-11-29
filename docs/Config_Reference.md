@@ -158,6 +158,11 @@ microsteps:
 #   following "unstep" signal edge. This is also used to set the
 #   minimum time between a step pulse and a direction change signal.
 #   The default is 0.000002 (which is 2us).
+#step_bothedges_optimized: True
+#   Enable the optimization of double side stepping pulse of stepping
+#   driver. This function may appear offset on some boards (UART or SPI
+#   mode). If so, please turn off this function.The default is True (Is
+#   enabled)
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor then it enables "multi-mcu
