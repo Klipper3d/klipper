@@ -39,29 +39,35 @@ dynmem_end(void)
 }
 
 void
-irq_disable(void){
+irq_disable(void)
+{
 }
 
 void
-irq_enable(void){
+irq_enable(void)
+{
 }
 
 irqstatus_t
-irq_save(void){
+irq_save(void)
+{
     return 0;
 }
 
 void
-irq_restore(irqstatus_t flag){
+irq_restore(irqstatus_t flag)
+{
 }
 
 void
-irq_wait(void){
+irq_wait(void)
+{
     irq_poll();
 }
 
 void
-irq_poll(void){
+irq_poll(void)
+{
     if(timer_interrupt_pending()) {
         timer_clear_interrupt();
         uint32_t next = timer_dispatch_many();
@@ -105,7 +111,8 @@ DECL_TASK(console_task);
 
 // Encode and transmit a "response" message
 void
-console_sendf(const struct command_encoder *ce, va_list args){
+console_sendf(const struct command_encoder *ce, va_list args)
+{
     uint8_t buf[MESSAGE_MAX];
     uint_fast8_t msglen = command_encode_and_frame(buf, ce, args);
 
@@ -125,7 +132,8 @@ const struct command_parser shutdown_request = {
     .func = shutdown_handler,
 };
 
-void restore_data(void){
+void restore_data(void)
+{
     extern char __data_start, __data_end, __copy_start;
     memcpy (&__data_start, &__copy_start, &__data_end - &__data_start);
 }
@@ -141,7 +149,8 @@ command_reset(uint32_t *args)
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 
 void
-save_data(void){
+save_data(void)
+{
     extern char __data_start, __data_end, __copy_start;
     memcpy (&__copy_start, &__data_start, &__data_end - &__data_start);
 }
@@ -149,15 +158,11 @@ save_data(void){
 __noreturn void
 main(uint32_t exception);
 __noreturn void
-main(uint32_t exception){
-
+main(uint32_t exception)
+{
     save_data();
-
-    /* Swith CPUS to 300 MHz. This should be done in Linux eventually */
-    r_prcm_set_cpus_clk_rate(PLL_PERIPH);
-
     r_uart_init();
-    uart_puts("**AR100 v0.1.2**\n");
+    uart_puts("** AR100 v0.1.3 **\n");
     sched_main();
     while(1) {}         // Stop complaining about noreturn
 }

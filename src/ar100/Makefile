@@ -1,5 +1,5 @@
 CROSS_PREFIX=or1k-linux-musl-
-dirs-y += src/generic src/ar100
+dirs-y += src/generic src/ar100 lib/ar100
 
 CFLAGS		+= -Os
 CFLAGS		+= -fno-builtin
@@ -8,9 +8,13 @@ CFLAGS		+= -fno-pie
 CFLAGS		+= -ggdb
 CFLAGS		+= -ffreestanding
 CFLAGS		+= -msfimm -mshftimm -msoft-div -msoft-mul
+CFLAGS		+= -Ilib/ar100
 CFLAGS_klipper.elf := $(CFLAGS) -Wl,-T,src/ar100/ar100.ld -Wl,-Map,out/klipper.map
 CFLAGS_klipper.elf += -Wl,--no-undefined  -Wl,--gc-sections -static
 CFLAGS_klipper.elf += -Wl,--no-dynamic-linker
+
+SFLAGS		 = -nostdinc -Wa,--fatal-warnings -MMD -Wmissing-prototypes -Wall -Wextra
+SFLAGS		+= -Ilib/ar100
 
 # Add source files
 src-y += ar100/main.c ar100/gpio.c ar100/serial.c ar100/prcm.c
@@ -18,21 +22,19 @@ src-y += ar100/util.c ar100/timer.c ar100/spicmds.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
 src-y += buttons.c spi_software.c sensor_adxl345.c tmcuart.c
 
-OBJS_klipper.elf += $(OUT)src/ar100/start.o
-OBJS_klipper.elf += $(OUT)src/ar100/runtime.o
+OBJS_klipper.elf += $(OUT)lib/ar100/start.o
+OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o
 
 # Build the AR100 binary
 target-y += $(OUT)ar100.bin
 
-SFLAGS = -nostdinc -Wa,--fatal-warnings -MMD -Wmissing-prototypes -Wall -Wextra
-
-$(OUT)src/ar100/start.o:
+$(OUT)lib/ar100/start.o:
 	@echo "  Compiling $@"
-	$(Q)$(CC) $(SFLAGS) -c $(PWD)/src/ar100/start.S -o $@
+	$(Q)$(CC) $(SFLAGS) -c $(PWD)/lib/ar100/start.S -o $@
 
-$(OUT)src/ar100/runtime.o:
+$(OUT)lib/ar100/runtime.o:
 	@echo "  Compiling $@"
-	$(Q)$(CC) $(SFLAGS) -c $(PWD)/src/ar100/runtime.S -o $@
+	$(Q)$(CC) $(SFLAGS) -c $(PWD)/lib/ar100/runtime.S -o $@
 
 
 $(OUT)ar100.bin: $(OUT)klipper.elf
@@ -41,11 +43,10 @@ $(OUT)ar100.bin: $(OUT)klipper.elf
 	truncate -s %8 $@
 
 flash: $(OUT)ar100.bin
-	@echo "  Flashing"
-	$(Q) ./scripts/flash-ar100.py $(OUT)ar100.bin
+	$(Q) cp $(OUT)ar100.bin /opt/firmware
 
 dump:
-	$(CROSS_PREFIX)-objdump -d out/klipper.elf  > out/klipper.dump
+	$(CROSS_PREFIX)objdump -d out/klipper.elf  > out/klipper.dump
 
 size:
 	$(CROSS_PREFIX)size out/klipper.elf
