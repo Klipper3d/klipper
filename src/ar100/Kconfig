@@ -9,6 +9,7 @@ config AR100_SELECT
     select HAVE_ENDSTOPS
     select HAVE_STEPPERS
     select HAVE_GPIO
+    select HAVE_STEPPER_BOTH_EDGE
 
 config BOARD_DIRECTORY
     string
@@ -17,13 +18,5 @@ config BOARD_DIRECTORY
 config CLOCK_FREQ
     int
     default 300000000
-
-config STEP_DELAY
-    int
-    default 0
-
-config HAVE_DEBUG
-    bool
-    default n
 
 endif
