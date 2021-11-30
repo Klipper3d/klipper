@@ -20,6 +20,7 @@ class recore:
         mcu_power_enable.setup_start_value(start_value=0.,
                                                 shutdown_value=1.,
                                                 is_static=False)
+        mcu_power_enable.setup_max_duration(0.)
 
         # Reset over current alarm
         oc_reset_pin = config.get('oc_reset_pin', 'ar100:OC_RESET')
