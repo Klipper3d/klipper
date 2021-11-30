@@ -320,20 +320,20 @@ micro-controller.
 The following configuration sequence is used on AR100 CPU (Allwinner A64):
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=4 dir_pin=136 invert_step=-1 step_pulse_ticks=0
-config_stepper oid=0 step_pin=5 dir_pin=137 invert_step=-1 step_pulse_ticks=0
-config_stepper oid=0 step_pin=6 dir_pin=138 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=0 step_pin=10 dir_pin=136 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=11 dir_pin=137 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=12 dir_pin=138 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-Run on Recore rev A5 using the R_PIO bank to avoid collisions.
+Run on Recore rev A5.
 Frequency is for the ar100 is 300 MHz.
 
 | AR100 R_PIO          | ticks |
 | -------------------- | ----- |
-| 1 stepper (no delay) | 120   |
-| 2 stepper (no delay) | 280   |
-| 3 stepper (no delay) | 458   |
+| 1 stepper            | 93    |
+| 2 stepper            | 254   |
+| 3 stepper            | 458   |
 
 
 ## Command dispatch benchmark ##
@@ -409,8 +409,8 @@ hub.
 | stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
-| ar100 (serial)      |  42K | 2105aba  | or1k-linux-musl-gcc 9.3.0 |
 | at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
+| ar100 (serial)      | 137K | 2105aba  | or1k-linux-musl-gcc 9.3.0 |
 | samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | pru (shared memory) | 260K | c5968a08 | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
 | stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |

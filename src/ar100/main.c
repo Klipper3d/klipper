@@ -21,7 +21,7 @@
 
 DECL_CONSTANT_STR("MCU", "ar100");
 
-#define PROGRAM_START 0xE000
+#define RESET_VECTOR 0x0100
 
 static struct task_wake console_wake;
 static uint8_t receive_buf[1024];
@@ -145,7 +145,7 @@ command_reset(uint32_t *args)
 {
     timer_reset();
     restore_data();
-    void *reset = (void *)PROGRAM_START;
+    void *reset = (void *)RESET_VECTOR;
     goto *reset;
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
@@ -164,7 +164,13 @@ main(uint32_t exception)
 {
     save_data();
     r_uart_init();
-    uart_puts("** AR100 v0.1.3 **\n");
+    uart_puts("** AR100 v0.1.4 ");
+    if(exception == 0){
+      uart_puts("start ** \n");
+    }
+    if(exception == 1){
+      uart_puts("reset ** \n");
+    }
     sched_main();
     while(1) {}         // Stop complaining about noreturn
 }
