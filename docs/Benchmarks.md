@@ -354,6 +354,29 @@ micro-controller.
 | 1 stepper (200Mhz)   | 39    |
 | 3 stepper (200Mhz)   | 181   |
 
+### AR100 step rate benchmark ###
+
+The following configuration sequence is used on AR100 CPU (Allwinner A64):
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=10 dir_pin=136 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=11 dir_pin=137 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=12 dir_pin=138 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+```
+
+Run on Recore rev A5.
+Frequency is for the ar100 is 300 MHz.
+
+| AR100 R_PIO          | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 93    |
+| 2 stepper            | 254   |
+| 3 stepper            | 458   |
+
+
+## Command dispatch benchmark ##
+
 ### RP2040 step rate benchmark
 
 The following configuration sequence is used on the RP2040:
@@ -408,6 +431,7 @@ FLOOD 100000 0.0 debug_nop
 get_uptime
 ```
 
+
 When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
 commands per second is then `100000 * mcu_frequency / clock_diff`.
@@ -425,6 +449,7 @@ hub.
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
+| ar100 (serial)      | 137K | 2105aba  | or1k-linux-musl-gcc 9.3.0 |
 | samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | pru (shared memory) | 260K | c5968a08 | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
 | stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |

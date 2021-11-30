@@ -125,6 +125,10 @@ from the repo's hc-sr04-range-sensor directory. It has been modified
 so that the IEP definitions compile correctly. See pru_rpmsg.patch for
 the modifications.
 
+The ar100 directory contains code from:
+  https://github.com/crust-firmware/crust
+revision 966124af914ce611aadd06fbbcbc4c36c4a0b240
+
 The fast-hash directory contains code from:
   https://github.com/ztanml/fast-hash
 revision ae3bb53c199fe75619e940b5b6a3584ede99c5fc
