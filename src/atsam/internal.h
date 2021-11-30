@@ -20,5 +20,6 @@
 void gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up);
 int is_enabled_pclock(uint32_t id);
 void enable_pclock(uint32_t id);
+uint32_t get_pclock_frequency(uint32_t id);
 
 #endif // internal.h

@@ -129,6 +129,20 @@ gcode:
   M140 S{bed_temp}
 ```
 
+### The "rawparams" variable
+
+The full unparsed parameters for the running macro can be access via the `rawparams` pseudo-variable.
+
+This is quite useful if you want to change the behavior of certain commands like the `M117`. For example:
+
+```
+[gcode_macro M117]
+rename_existing: M117.1
+gcode:
+  M117.1 { rawparams }
+  M118 { rawparams }
+```
+
 ### The "printer" Variable
 
 It is possible to inspect (and alter) the current state of the printer
