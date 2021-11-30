@@ -24,6 +24,19 @@ DECL_CONSTANT_STR("MCU", "ar100");
 static struct task_wake console_wake;
 static uint8_t receive_buf[1024];
 static int receive_pos;
+static char dynmem_pool[2 * 1024];
+
+void *
+dynmem_start(void)
+{
+    return dynmem_pool;
+}
+
+void *
+dynmem_end(void)
+{
+    return &dynmem_pool[sizeof(dynmem_pool)];
+}
 
 void
 irq_disable(void){
