@@ -1,5 +1,5 @@
 CROSS_PREFIX=or1k-linux-musl-
-dirs-y += src/generic src/ar100
+dirs-y += src/generic src/ar100 lib/ar100
 
 CFLAGS		+= -Os
 CFLAGS		+= -fno-builtin
@@ -28,11 +28,11 @@ OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o
 # Build the AR100 binary
 target-y += $(OUT)ar100.bin
 
-$(OUT)src/ar100/start.o:
+$(OUT)lib/ar100/start.o:
 	@echo "  Compiling $@"
 	$(Q)$(CC) $(SFLAGS) -c $(PWD)/lib/ar100/start.S -o $@
 
-$(OUT)src/ar100/runtime.o:
+$(OUT)lib/ar100/runtime.o:
 	@echo "  Compiling $@"
 	$(Q)$(CC) $(SFLAGS) -c $(PWD)/lib/ar100/runtime.S -o $@
 
