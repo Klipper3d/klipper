@@ -21,6 +21,8 @@
 
 DECL_CONSTANT_STR("MCU", "ar100");
 
+#define PROGRAM_START 0xE000
+
 static struct task_wake console_wake;
 static uint8_t receive_buf[1024];
 static int receive_pos;
@@ -143,7 +145,7 @@ command_reset(uint32_t *args)
 {
     timer_reset();
     restore_data();
-    void *reset = (void *)0x9000;
+    void *reset = (void *)PROGRAM_START;
     goto *reset;
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
