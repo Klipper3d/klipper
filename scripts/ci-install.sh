@@ -47,7 +47,19 @@ else
     tar xfz ${PRU_FILE}
 fi
 
+######################################################################
+# Install or1k-linux-musl toolchain
+######################################################################
 
+echo -e "\n\n=============== Install or1k-linux-musl toolchain\n\n"
+TOOLCHAIN=or1k-linux-musl-cross
+TOOLCHAIN_ZIP=${TOOLCHAIN}.tgz
+URL=https://musl.cc/
+if [ ! -f ${CACHE_DIR}/${TOOLCHAIN_ZIP} ]; then
+    curl ${URL}/${TOOLCHAIN_ZIP} -o ${CACHE_DIR}/${TOOLCHAIN_ZIP}
+fi
+cd ${BUILD_DIR}
+tar xf ${CACHE_DIR}/${TOOLCHAIN_ZIP}
 ######################################################################
 # Create python3 virtualenv environment
 ######################################################################
