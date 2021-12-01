@@ -175,8 +175,9 @@ class ControlPID:
         bounded_co = max(0., min(self.temperature_fan.get_max_speed(), co))
         if not self.reverse:
             self.temperature_fan.set_speed(
-                read_time, max(self.temperature_fan.get_min_speed(),
-                               self.temperature_fan.get_max_speed() - bounded_co))
+                read_time, max(
+                    self.temperature_fan.get_min_speed(),
+                    self.temperature_fan.get_max_speed() - bounded_co))
         else:
             self.temperature_fan.set_speed(
                 read_time, max(self.temperature_fan.get_min_speed(),
