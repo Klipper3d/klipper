@@ -2487,7 +2487,7 @@ additional information.
 #   given id. The default is to not report the temperature via M105.
 #reverse: False
 #   If true, the working mode of the fan is reversed. If the temperature
-#   is lower than the target temperature, the fan speed increases; 
+#   is lower than the target temperature, the fan speed increases;
 #   otherwise, the fan speed decreases.
 ```
 
