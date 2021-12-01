@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+from .heaters import TemperatureSensorAdapter
+
 KELVIN_TO_CELSIUS = -273.15
 
 class PrinterSensorGeneric:
@@ -17,23 +19,25 @@ class PrinterSensorGeneric:
         self.max_temp = config.getfloat('max_temp', 99999999.9,
                                         above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
-        self.sensor.setup_callback(self.temperature_callback)
+        self.tempAdapter = TemperatureSensorAdapter(config, self.sensor)
+        self.tempAdapter.setup_callback(self.temperature_callback)
         pheaters.register_sensor(config, self)
-        self.last_temp = 0.
         self.measured_min = 99999999.
         self.measured_max = 0.
     def temperature_callback(self, read_time, temp):
-        self.last_temp = temp
         if temp:
             self.measured_min = min(self.measured_min, temp)
             self.measured_max = max(self.measured_max, temp)
     def get_temp(self, eventtime):
-        return self.last_temp, 0.
+        return self.tempAdapter.get_last_temp(), 0.
+    def get_temperature_sensor_adapter(self):
+        return self.tempAdapter
     def stats(self, eventtime):
-        return False, '%s: temp=%.1f' % (self.name, self.last_temp)
+        return False, '%s: temp=%.1f' % (self.name,
+                self.tempAdapter.get_last_temp())
     def get_status(self, eventtime):
         return {
-            'temperature': round(self.last_temp, 2),
+            'temperature': round(self.tempAdapter.get_last_temp(), 2),
             'measured_min_temp': round(self.measured_min, 2),
             'measured_max_temp': round(self.measured_max, 2)
         }
