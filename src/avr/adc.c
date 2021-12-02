@@ -11,10 +11,14 @@
 #include "pgm.h" // PROGMEM
 #include "sched.h" // sched_shutdown
 
+#if CONFIG_MACH_atmega328p
+    #define ADC_TEMPERATURE_PIN 0x04
+    #define ADMUX_VR1 0x40
+#endif
 static const uint8_t adc_pins[] PROGMEM = {
 #if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
     GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
-    GPIO('C', 4), GPIO('C', 5), GPIO('E', 2), GPIO('E', 3),
+    GPIO('C', 4), GPIO('C', 5), GPIO('E', 2), GPIO('E', 3),GPIO('E', 4),
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
     GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
     GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
@@ -35,7 +39,7 @@ static const uint8_t adc_pins[] PROGMEM = {
 
 // The atmega168/328 have two analog only pins
 #if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
-DECL_ENUMERATION_RANGE("pin", "PE2", GPIO('E', 2), 2);
+DECL_ENUMERATION_RANGE("pin", "PE2", GPIO('E', 2), 3);
 #endif
 
 enum { ADMUX_DEFAULT = 0x40 };
@@ -54,7 +58,6 @@ gpio_adc_setup(uint8_t pin)
         if (READP(adc_pins[chan]) == pin)
             break;
     }
-
     // Enable ADC
     ADCSRA = ADC_ENABLE;
 
@@ -95,8 +98,11 @@ gpio_adc_sample(struct gpio_adc g)
     // channels 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
     ADCSRB = ((g.chan >> 3) & 0x01) << MUX5;
 #endif
-    ADMUX = ADMUX_DEFAULT | (g.chan & 0x07);
-
+    ADMUX = ADMUX_DEFAULT | (g.chan & 0x0F);
+#if defined(ADC_TEMPERATURE_PIN)
+    if (g.chan==ADC_TEMPERATURE_PIN)
+        ADMUX |= ADMUX_VR1;
+#endif
     // Start the sample
     ADCSRA = ADC_ENABLE | (1<<ADSC);
 
