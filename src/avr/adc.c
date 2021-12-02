@@ -11,12 +11,12 @@
 #include "pgm.h" // PROGMEM
 #include "sched.h" // sched_shutdown
 
-#if CONFIG_MACH_atmega328p
-    #define ADC_TEMPERATURE_PIN 0x04
-    #define ADMUX_VR1 0x40
-#endif
+
 static const uint8_t adc_pins[] PROGMEM = {
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
+#if CONFIG_MACH_atmega168
+    GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
+    GPIO('C', 4), GPIO('C', 5), GPIO('E', 2), GPIO('E', 3),
+#elif CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
     GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
     GPIO('C', 4), GPIO('C', 5), GPIO('E', 2), GPIO('E', 3),GPIO('E', 4),
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
@@ -37,10 +37,15 @@ static const uint8_t adc_pins[] PROGMEM = {
 #endif
 };
 
-// The atmega168/328 have two analog only pins
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
+// The atmega168 have two analog only pins
+#if CONFIG_MACH_atmega168
+DECL_ENUMERATION_RANGE("pin", "PE2", GPIO('E', 2), 2);
+#endif
+// The atmega328/p have two analog only pins and internal temperature sensor
+#if CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
 DECL_ENUMERATION_RANGE("pin", "PE2", GPIO('E', 2), 3);
 #endif
+
 
 enum { ADMUX_DEFAULT = 0x40 };
 enum { ADC_ENABLE = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN)|(1<<ADIF) };
@@ -99,10 +104,7 @@ gpio_adc_sample(struct gpio_adc g)
     ADCSRB = ((g.chan >> 3) & 0x01) << MUX5;
 #endif
     ADMUX = ADMUX_DEFAULT | (g.chan & 0x0F);
-#if defined(ADC_TEMPERATURE_PIN)
-    if (g.chan==ADC_TEMPERATURE_PIN)
-        ADMUX |= ADMUX_VR1;
-#endif
+
     // Start the sample
     ADCSRA = ADC_ENABLE | (1<<ADSC);
 
