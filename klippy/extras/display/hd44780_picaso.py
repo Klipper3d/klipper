@@ -16,8 +16,10 @@ TextGlyphs = { 'right_arrow': b'\x7e' }
 class hd44780_picaso:
     def __init__(self, config):
         # i2c config
-        self.i2c1 = bus.MCU_I2C_from_config(config, default_addr=56, default_speed=400000)
-        self.i2c2 = bus.MCU_I2C_from_config(config, default_addr=57, default_speed=400000)
+        self.i2c1 = bus.MCU_I2C_from_config(config,
+            default_addr=56, default_speed=400000)
+        self.i2c2 = bus.MCU_I2C_from_config(config,
+            default_addr=57, default_speed=400000)
         self.mcu = self.i2c1.get_mcu()
 
         self.data_mask    = 0b01000000
@@ -46,7 +48,8 @@ class hd44780_picaso:
         self.clock_step = 0.008
         self.printer = config.get_printer()
         # One update on display requires 2 packets. This is delay between them
-        self.enable_command_delay = self.mcu.print_time_to_clock(self.clock_step/2)
+        self.enable_command_delay = self.mcu.print_time_to_clock(
+            self.clock_step/2)
         curtime = self.printer.get_reactor().monotonic()
         self.last_send_time = self.mcu.estimated_print_time(curtime)
     def send_8_bits(self, cmd, is_data, minclock):
@@ -90,9 +93,10 @@ class hd44780_picaso:
                 self.send(new_data[pos:pos+count], is_data=True)
             old_data[:] = new_data
     def init(self):
-        # Program 8bit / 2-line mode 
+        # Program 8bit / 2-line mode
         # "Home" command
-        # Reset (set positive direction ; enable display and hide cursor)
+        # set positive direction
+        # enable display and hide cursor
         self.send([0x38, 0x02, 0x06, 0x0c])
         self.flush()
     def write_text(self, x, y, data):
