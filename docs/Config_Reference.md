@@ -1817,6 +1817,10 @@ z_offset:
 #   samples. If this tolerance is exceeded then either an error is
 #   reported or the attempt is restarted (see
 #   samples_tolerance_retries). The default is 0.100mm.
+#samples_discard_first: 0
+#   The number of samples to discard when starting to probe. This can
+#   be used if the first probe is often less accurate. The default is
+#   zero.
 #samples_tolerance_retries: 0
 #   The number of times to retry if a sample is found that exceeds
 #   samples_tolerance. On a retry, all current samples are discarded
