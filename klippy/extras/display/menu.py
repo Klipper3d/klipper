@@ -606,7 +606,8 @@ class MenuList(MenuContainer):
 
     def heartbeat(self, eventtime):
         super(MenuList, self).heartbeat(eventtime)
-        self.update_items()
+        if self._allitems:
+            self.update_items()
 
     def draw_container(self, nrows, eventtime):
         display = self.manager.display
