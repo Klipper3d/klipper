@@ -157,7 +157,9 @@ microsteps:
 #   The minimum time between the step pulse signal edge and the
 #   following "unstep" signal edge. This is also used to set the
 #   minimum time between a step pulse and a direction change signal.
-#   The default is 0.000002 (which is 2us).
+#   The default is 0.000000100 (100ns) for TMC steppers that are
+#   configured in UART or SPI mode, and the default is 0.000002 (which
+#   is 2us) for all other steppers.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor then it enables "multi-mcu
@@ -250,6 +252,11 @@ max_z_velocity:
 #   maximum speed of up/down moves (which require a higher step rate
 #   than other moves on a delta printer). The default is to use
 #   max_velocity for max_z_velocity.
+#max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. Setting this may be useful if the printer can reach higher
+#   acceleration on XY moves than Z moves (eg, when using input shaper).
+#   The default is to use max_accel for max_z_accel.
 #minimum_z_position: 0
 #   The minimum Z position that the user may command the head to move
 #   to. The default is 0.
@@ -1112,8 +1119,8 @@ Printer Skew Correction. It is possible to use software to correct
 printer skew across 3 planes, xy, xz, yz. This is done by printing a
 calibration model along a plane and measuring three lengths. Due to
 the nature of skew correction these lengths are set via gcode. See
-[skew correction](skew_correction.md) and
-[command reference](G-Codes.md#skew-correction) for details.
+[Skew Correction](Skew_Correction.md) and
+[Command Reference](G-Codes.md#skew-correction) for details.
 
 ```
 [skew_correction]
@@ -2154,7 +2161,7 @@ sensor_pin:
 ### BMP280/BME280/BME680 temperature sensor
 
 BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
-Note that thoose sensors aee not intended for use with extruders and
+Note that these sensors are not intended for use with extruders and
 heater beds, but rather for monitoring ambient temperature (C),
 pressure (hPa), relative humidity and in case of the BME680 gas level.
 See [sample-macros.cfg](../config/sample-macros.cfg) for a gcode_macro
@@ -3735,7 +3742,7 @@ TSLl401CL Based Filament Width Sensor. See the
 ### [hall_filament_width_sensor]
 
 Hall filament width sensor (see
-[Hall Filament Width Sensor](HallFilamentWidthSensor.md)).
+[Hall Filament Width Sensor](Hall_Filament_Width_Sensor.md)).
 
 ```
 [hall_filament_width_sensor]
@@ -3878,7 +3885,7 @@ vssa_pin:
 
 ### [replicape]
 
-Replicape support - see the [beaglebone guide](beaglebone.md) and the
+Replicape support - see the [beaglebone guide](Beaglebone.md) and the
 [generic-replicape.cfg](../config/generic-replicape.cfg) file for an
 example.
 

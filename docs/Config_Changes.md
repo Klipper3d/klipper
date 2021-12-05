@@ -16,9 +16,10 @@ use the older (typically less accurate) definition, define a custom
 `resistance1: 100000`, and `beta: 3950`.
 
 20211104: The "step pulse duration" option in "make menuconfig" has
-been removed. A new `step_pulse_duration` setting in the
-[stepper config section](Config_Reference.md#stepper) should be set
-for all steppers that need a custom pulse duration.
+been removed. The default step duration for TMC drivers configured in
+UART or SPI mode is now 100ns. A new `step_pulse_duration` setting in
+the [stepper config section](Config_Reference.md#stepper) should be
+set for all steppers that need a custom pulse duration.
 
 20211102: Several deprecated features have been removed.  The stepper
 `step_distance` option has been removed (deprecated on 20201222).  The
@@ -308,7 +309,7 @@ that command.
 
 20190628: All configuration options have been removed from the
 [skew_correction] section.  Configuration for skew_correction
-is now done via the SET_SKEW gcode.  See skew_correction.md
+is now done via the SET_SKEW gcode.  See [Skew Correction](Skew_Correction.md)
 for recommended usage.
 
 20190607: The "variable_X" parameters of gcode_macro (along with the
