@@ -182,6 +182,14 @@ is always available):
   been in the "Printing" state (as tracked by the idle_timeout
   module).
 
+## manual_steppers
+
+The following information is available in the
+[manual_stepper](Config_Reference.md#manual_stepper) object (this object
+is always available):
+- `enabled`: Returns True if the stepper is currently enabled.
+- `position`: The last commanded position of the stepper.
+
 ## mcu
 
 The following information is available in
