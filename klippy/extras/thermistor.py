@@ -72,7 +72,6 @@ def PrinterThermistor(config, params):
     pullup = config.getfloat('pullup_resistor', 4700., above=0.)
     inline_resistor = config.getfloat('inline_resistor', 0., minval=0.)
     thermistor = Thermistor(pullup, inline_resistor)
-
     if 'beta' in params:
         thermistor.setup_coefficients_beta(
             params['t1'], params['r1'], params['beta'])
