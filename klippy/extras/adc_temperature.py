@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
-import math
 
 ######################################################################
 # Interface between MCU adc and heater temperature callbacks
@@ -146,28 +145,6 @@ class LinearResistance:
         r = self.li.reverse_interpolate(temp)
         return r / (self.pullup + r)
 
-class RecoreLinearResistance(LinearResistance):
-    def __init__(self, config, samples):
-        LinearResistance.__init__(self, config, samples)
-        self.adc_ref = config.getfloat('adc_voltage', 3.3)
-        self.pullup_ref = config.getfloat('pullup_voltage', 3.3)
-        self.vo_ref = config.getfloat('offset_voltage', 3.2)
-
-    def calc_temp(self, adc):
-        # Calculate temperature from adc
-        adc = max(.00001, min(.99999, adc))
-        Vo = self.adc_ref*adc
-        R2 = 100000
-        R1 = 1000
-
-        I1 = (self.vo_ref-Vo)/R2
-        VR1 = I1*R1
-        V3 = Vo-VR1
-        I5 = (self.pullup_ref-V3)/self.pullup
-        I3 = (I5+I1)
-        r = V3/I3
-        return self.li.interpolate(r)
-
 # Custom defined sensors from the config file
 class CustomLinearResistance:
     def __init__(self, config):
@@ -180,7 +157,7 @@ class CustomLinearResistance:
             r = config.getfloat("resistance%d" % (i,))
             self.samples.append((t, r))
     def create(self, config):
-        lr = RecoreLinearResistance(config, self.samples)
+        lr = LinearResistance(config, self.samples)
         return PrinterADCtoTemperature(config, lr)
 
 
@@ -312,7 +289,7 @@ def load_config(config):
     for sensor_type, params in DefaultResistanceSensors:
         func = (lambda config, params=params:
                 PrinterADCtoTemperature(config,
-                                        RecoreLinearResistance(config, params)))
+                                        LinearResistance(config, params)))
         pheaters.add_sensor_factory(sensor_type, func)
 
 def load_config_prefix(config):
