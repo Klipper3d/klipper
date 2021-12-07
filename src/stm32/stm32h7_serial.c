@@ -48,6 +48,17 @@
   #define GPIO_Tx GPIO('D', 8)
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
+#elif CONFIG_STM32_SERIAL_UART4
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA1,PA0");
+  #define GPIO_Rx GPIO('A', 1)
+  #define GPIO_Tx GPIO('A', 0)
+  #define USARTx UART4
+  #define USARTx_IRQn UART4_IRQn
+  #define USARTx_FUNCTION GPIO_FUNCTION(8)
+#endif
+
+#ifndef USARTx_FUNCTION
+  #define USARTx_FUNCTION GPIO_FUNCTION(7)
 #endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
@@ -88,7 +99,7 @@ serial_init(void)
     USARTx->CR1 = CR1_FLAGS;
     armcm_enable_irq(USARTx_IRQHandler, USARTx_IRQn, 0);
 
-    gpio_peripheral(GPIO_Rx, GPIO_FUNCTION(7), 1);
-    gpio_peripheral(GPIO_Tx, GPIO_FUNCTION(7), 0);
+    gpio_peripheral(GPIO_Rx, USARTx_FUNCTION, 1);
+    gpio_peripheral(GPIO_Tx, USARTx_FUNCTION, 0);
 }
 DECL_INIT(serial_init);

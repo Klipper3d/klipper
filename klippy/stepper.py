@@ -14,6 +14,8 @@ class error(Exception):
 # Steppers
 ######################################################################
 
+MIN_BOTH_EDGE_DURATION = 0.000000200
+
 # Interface to low-level mcu and chelper code
 class MCU_stepper:
     def __init__(self, name, step_pin_params, dir_pin_params, step_dist,
@@ -70,7 +72,8 @@ class MCU_stepper:
             self._step_pulse_duration = .000002
         invert_step = self._invert_step
         sbe = int(self._mcu.get_constants().get('STEPPER_BOTH_EDGE', '0'))
-        if self._req_step_both_edge and sbe:
+        if (self._req_step_both_edge and sbe
+            and self._step_pulse_duration <= MIN_BOTH_EDGE_DURATION):
             # Enable stepper optimized step on both edges
             self._step_both_edge = True
             self._step_pulse_duration = 0.

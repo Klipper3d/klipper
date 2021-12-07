@@ -72,8 +72,9 @@ init_afec(Afec* afec) {
     afec->AFE_CR = AFE_CR_SWRST;
 
     // Configure afec
+    uint32_t pclk = get_pclock_frequency(afec == AFEC0 ? ID_AFEC0 : ID_AFEC1);
     afec->AFE_MR = AFE_MR_ANACH_ALLOWED | \
-                    AFE_MR_PRESCAL (SystemCoreClock / (2 * ADC_FREQ_MAX) -1) | \
+                    AFE_MR_PRESCAL(pclk / (2 * ADC_FREQ_MAX) - 1) | \
                     AFE_MR_SETTLING_AST3 | \
                     AFE_MR_TRACKTIM(2) | \
                     AFE_MR_TRANSFER(1) | \

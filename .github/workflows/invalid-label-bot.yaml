@@ -5,6 +5,7 @@ on:
       types: [labeled]
 jobs:
   comment:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v3

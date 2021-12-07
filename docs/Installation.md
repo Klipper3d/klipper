@@ -9,13 +9,13 @@ for other machines).
 Klipper currently supports a number of Atmel ATmega based
 micro-controllers,
 [ARM based micro-controllers](Features.md#step-benchmarks), and
-[Beaglebone PRU](beaglebone.md) based printers.
+[Beaglebone PRU](Beaglebone.md) based printers.
 
 ## Prepping an OS image
 
 Start by installing [OctoPi](https://github.com/guysoft/OctoPi) on the
 Raspberry Pi computer. Use OctoPi v0.17.0 or later - see the
-[octopi releases](https://github.com/guysoft/OctoPi/releases) for
+[OctoPi releases](https://github.com/guysoft/OctoPi/releases) for
 release information. One should verify that OctoPi boots and that the
 OctoPrint web server works. After connecting to the OctoPrint web
 page, follow the prompt to upgrade OctoPrint to v1.4.2 or later.
@@ -125,7 +125,7 @@ Klipper. Proceed to the next section.
 The Klipper configuration is stored in a text file on the Raspberry
 Pi. Take a look at the example config files in the
 [config directory](../config/). The
-[config reference](Config_Reference.md) contains documentation on
+[Config Reference](Config_Reference.md) contains documentation on
 config parameters.
 
 Arguably the easiest way to update the Klipper configuration file is
