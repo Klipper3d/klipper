@@ -237,6 +237,8 @@ class PrinterConfig:
         # Buffer lines between includes and parse as a unit so that overrides
         # in includes apply linearly as they do within a single file
         buffer = []
+        conditional_buffer = []
+        gathering_conditionals = False
         for line in lines:
             # Strip trailing comment
             pos = line.find('#')
@@ -245,6 +247,23 @@ class PrinterConfig:
             # Process include or buffer line
             mo = configparser.RawConfigParser.SECTCRE.match(line)
             header = mo and mo.group('header')
+            if header and header.startswith('include_conditionals'):
+                gathering_conditionals = True
+                conditional_buffer.append(line)
+                continue
+            elif gathering_conditionals:
+                if not line or header:
+                    gathering_conditionals = False
+                    self._parse_config_buffer(conditional_buffer, filename, fileconfig)
+                    conditional_config = ConfigWrapper(self.printer, fileconfig, {}, 'include_conditionals')
+                    continue
+                conditional_buffer.append(line)
+
+            if header and header.startswith('include_if '):
+                conditions, include = self._parse_conditional(header)
+                if all([conditional_config.get(variable) == value for variable, value in conditions]):
+                    header = "include {}".format(include)
+
             if header and header.startswith('include '):
                 self._parse_config_buffer(buffer, filename, fileconfig)
                 include_spec = header[8:].strip()
@@ -252,14 +271,24 @@ class PrinterConfig:
                                       visited)
             else:
                 buffer.append(line)
+
         self._parse_config_buffer(buffer, filename, fileconfig)
         visited.remove(path)
-    def _build_config_wrapper(self, data, filename):
+    def _parse_conditional(self, conditional_header):
+        parts = conditional_header.split(" ")
+        conditions = []
+        for condition in parts[1:-1]:
+            variable, value = condition.split("==")
+            conditions.append((variable, value))
+        return conditions, parts[-1]
+    def _get_fileconfig(self):
         if sys.version_info.major >= 3:
-            fileconfig = configparser.RawConfigParser(
+            return configparser.RawConfigParser(
                 strict=False, inline_comment_prefixes=(';', '#'))
         else:
-            fileconfig = configparser.RawConfigParser()
+            return configparser.RawConfigParser()
+    def _build_config_wrapper(self, data, filename):
+        fileconfig = self._get_fileconfig()
         self._parse_config(data, filename, fileconfig, set())
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def _build_config_string(self, config):
