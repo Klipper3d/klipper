@@ -1,6 +1,7 @@
-# Obtain temperature using linear interpolation of ADC values
+# Obtain temperature using linear interpolation of ADC values, custom to Recore
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2021  Elias Bakken <elias@iagent.no>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
@@ -37,7 +38,6 @@ class RecoreLinearResistance(adc_temperature.LinearResistance):
         r = V3/I3
         return self.li.interpolate(r)
 
-# Custom defined sensors from the config file
 class RecoreCustomLinearResistance:
     def __init__(self, config):
         self.name = " ".join(config.get_name().split()[1:])
@@ -50,14 +50,21 @@ class RecoreCustomLinearResistance:
             self.samples.append((t, r))
     def create(self, config):
         lr = RecoreLinearResistance(config, self.samples)
-        return PrinterADCtoTemperature(config, lr)
+        return adc_temperature.PrinterADCtoTemperature(config, lr)
+
+DefaultVoltageSensors = [
+    ("RECORE PT100 INA826", adc_temperature.calc_ina826_pt100())
+]
+
+DefaultResistanceSensors = [
+    ("RECORE PT1000", adc_temperature.calc_pt100(1000.))
+]
 
 def load_config(config):
-    # Register default sensors
     pheaters = config.get_printer().load_object(config, "heaters")
     for sensor_type, params in DefaultResistanceSensors:
         func = (lambda config, params=params:
-                PrinterADCtoTemperature(config,
+                adc_temperature.PrinterADCtoTemperature(config,
                 RecoreLinearResistance(config, params)))
         pheaters.add_sensor_factory(sensor_type, func)
 
