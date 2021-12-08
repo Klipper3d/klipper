@@ -23,7 +23,7 @@ TYPE_K_A = [0.118597600000E+00, -0.118343200000E-03, 0.126968600000E+03]
 
 
 # Analog voltage to temperature converter for thermocouple
-class RecoreThermocouple:
+class RecoreThermocoupleA5:
     def __init__(self, gain, offset, vin, cj_temp):
         self.gain = gain
         self.offset = offset
@@ -74,7 +74,7 @@ def PrinterThermocouple(config):
     vin = config.getfloat('adc_voltage', 3.3)
     cj_sensor = config.get('cj_sensor', 'temperature_sensor cold_junction')
     cj_temp = config.get_printer().load_object(config, cj_sensor)
-    thermocouple = RecoreThermocouple(gain, offset, vin, cj_temp)
+    thermocouple = RecoreThermocoupleA5(gain, offset, vin, cj_temp)
     return adc_temperature.PrinterADCtoTemperature(config, thermocouple)
 
 
