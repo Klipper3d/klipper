@@ -52,10 +52,6 @@ class RecoreCustomLinearResistance:
         lr = RecoreLinearResistance(config, self.samples)
         return adc_temperature.PrinterADCtoTemperature(config, lr)
 
-DefaultVoltageSensors = [
-    ("RECORE PT100 INA826", adc_temperature.calc_ina826_pt100())
-]
-
 DefaultResistanceSensors = [
     ("RECORE PT1000", adc_temperature.calc_pt100(1000.))
 ]
