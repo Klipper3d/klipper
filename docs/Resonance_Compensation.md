@@ -243,7 +243,7 @@ a good idea to check that too.
 
 Choose the minimum out of the two acceleration values (from ringing and
 smoothing), and put it as max_accel into printer.cfg (you can delete
-max_accel_or_decel or revert it to the old value).
+max_accel_to_decel or revert it to the old value).
 
 
 As a note, it may happen - especially at low ringing frequencies - that EI

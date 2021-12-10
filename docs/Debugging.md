@@ -144,6 +144,11 @@ options - use the `--help` option to see a list. It may also be
 convenient to view/modify the
 [motan_graph.py](../scripts/motan/motan_graph.py) script itself.
 
+The raw data logs produced by the `data_logger.py` tool follow the
+format described in the [API Server](API_Server.md). It may be useful
+to inspect the data with a Unix command like the following:
+`gunzip < mylog.json.gz | tr '\03' '\n' | less`
+
 ## Generating load graphs
 
 The Klippy log file (/tmp/klippy.log) stores statistics on bandwidth,

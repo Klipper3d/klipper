@@ -30,6 +30,8 @@ class DeltaKinematics:
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', self.max_velocity,
             above=0., maxval=self.max_velocity)
+        self.max_z_accel = config.getfloat('max_z_accel', self.max_accel,
+                                          above=0., maxval=self.max_accel)
         # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
         print_radius = config.getfloat('print_radius', radius, above=0.)
@@ -130,7 +132,8 @@ class DeltaKinematics:
             limit_xy2 = -1.
         if move.axes_d[2]:
             z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(self.max_z_velocity * z_ratio, move.accel)
+            move.limit_speed(self.max_z_velocity * z_ratio,
+                             self.max_z_accel * z_ratio)
             limit_xy2 = -1.
         # Limit the speed/accel of this move if is is at the extreme
         # end of the build envelope
