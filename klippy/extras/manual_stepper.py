@@ -108,8 +108,13 @@ class ManualStepper:
         se = stepper_enable.lookup_enable(self.rail.get_name())
         return {
             'enabled': se.is_motor_enabled(),
-            'position': self.rail.get_commanded_position()
+            'position': self.get_position()[0],
+            'mcu_position': self.get_mcu_position()
         }
+    def get_mcu_position(self):
+        for stepper in self.steppers:
+            return stepper.get_mcu_position()
+        return 0
     # Toolhead wrappers to support homing
     def flush_step_generation(self):
         self.sync_print_time()

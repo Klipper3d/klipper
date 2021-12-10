@@ -189,6 +189,9 @@ The following information is available in the
 is always available):
 - `enabled`: Returns True if the stepper is currently enabled.
 - `position`: The last commanded position of the stepper.
+- `mcu_position`: The total number of steps the micro-controller
+   has issued in a positive direction minus the number of steps
+  issued in a negative direction since the micro-controller was last reset
 
 ## mcu
 
