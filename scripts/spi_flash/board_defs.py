@@ -52,7 +52,8 @@ BOARD_DEFS = {
     },
     'fysetc-spider': {
         'mcu': "stm32f446xx",
-        'spi_bus': "spi1",
+        'spi_bus': "swspi",
+        'spi_pins': "PA6,PA7,PA5",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
     }
