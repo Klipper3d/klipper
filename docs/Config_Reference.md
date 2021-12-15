@@ -3040,8 +3040,7 @@ run_current:
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
-#   "stealthChop" mode. Try to reexperience this with tmc5160.
-#   Values can be much higher than other tmcs.
+#   "stealthChop" mode.
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2
