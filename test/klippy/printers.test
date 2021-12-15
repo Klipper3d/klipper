@@ -107,6 +107,7 @@ CONFIG ../../config/generic-duet2-maestro.cfg
 DICTIONARY sam4e8e.dict
 CONFIG ../../config/generic-duet2.cfg
 CONFIG ../../config/generic-duet2-duex.cfg
+CONFIG ../../config/printer-modix-big60-2020.cfg
 
 # Printers using the samd51
 DICTIONARY samd51p20.dict
