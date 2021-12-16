@@ -43,6 +43,11 @@ The stm32f0 directory contains code from:
 version v1.10.1 (d0c380d668c67dcdd4e44f656be27045ce4006a6). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32F0xx/ directory.
 
+The stm32g0 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeG0
+version v1.5.0 (03cb8e9ec0cbefad623caebe47359df0bab1d05e). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32G0xx/ directory.
+
 The stm32f1 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeF1
 version v1.8.0 (441b2cbdc25aa50437a59c4bffe22b88e78942c9). Contents
