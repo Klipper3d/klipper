@@ -1,5 +1,5 @@
 # Code to create virtual pins for shift registers
-# Tested with sr595
+# Tested with SN74HC595
 #
 # Copyright (C) 2021  Heino Mortensen <heino@no-mercy.dk>
 #
