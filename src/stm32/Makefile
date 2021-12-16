@@ -5,6 +5,7 @@ CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/stm32 src/generic
 dirs-$(CONFIG_MACH_STM32F0) += lib/stm32f0
+dirs-$(CONFIG_MACH_STM32G0) += lib/stm32g0
 dirs-$(CONFIG_MACH_STM32F1) += lib/stm32f1
 dirs-$(CONFIG_MACH_STM32F2) += lib/stm32f2
 dirs-$(CONFIG_MACH_STM32F4) += lib/stm32f4
@@ -14,6 +15,7 @@ MCU := $(shell echo $(CONFIG_MCU))
 MCU_UPPER := $(shell echo $(CONFIG_MCU) | tr a-z A-Z | tr X x)
 
 CFLAGS-$(CONFIG_MACH_STM32F0) += -mcpu=cortex-m0 -Ilib/stm32f0/include
+CFLAGS-$(CONFIG_MACH_STM32G0) += -mcpu=cortex-m0plus -Ilib/stm32g0/include
 CFLAGS-$(CONFIG_MACH_STM32F1) += -mcpu=cortex-m3 -Ilib/stm32f1/include
 CFLAGS-$(CONFIG_MACH_STM32F2) += -mcpu=cortex-m3 -Ilib/stm32f2/include
 CFLAGS-$(CONFIG_MACH_STM32F4) += -mcpu=cortex-m4 -Ilib/stm32f4/include
@@ -31,6 +33,10 @@ src-$(CONFIG_MACH_STM32F0) += ../lib/stm32f0/system_stm32f0xx.c
 src-$(CONFIG_MACH_STM32F0) += generic/timer_irq.c stm32/stm32f0_timer.c
 src-$(CONFIG_MACH_STM32F0) += stm32/stm32f0.c stm32/stm32f0_adc.c
 src-$(CONFIG_MACH_STM32F0) += stm32/stm32f0_i2c.c
+src-$(CONFIG_MACH_STM32G0) += ../lib/stm32g0/system_stm32g0xx.c
+src-$(CONFIG_MACH_STM32G0) += generic/timer_irq.c stm32/stm32f0_timer.c
+src-$(CONFIG_MACH_STM32G0) += stm32/stm32g0.c stm32/stm32g0_adc.c
+src-$(CONFIG_MACH_STM32G0) += stm32/stm32f0_i2c.c
 src-$(CONFIG_MACH_STM32F1) += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_MACH_STM32F1) += stm32/stm32f1.c generic/armcm_timer.c
 src-$(CONFIG_MACH_STM32F1) += stm32/adc.c stm32/i2c.c
@@ -51,6 +57,7 @@ usb-src-$(CONFIG_HAVE_STM32_USBOTG) := stm32/usbotg.c
 src-$(CONFIG_USBSERIAL) += $(usb-src-y) stm32/chipid.c generic/usb_cdc.c
 serial-src-y := stm32/serial.c
 serial-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial.c
+serial-src-$(CONFIG_MACH_STM32G0) := stm32/stm32f0_serial.c
 serial-src-$(CONFIG_MACH_STM32H7) := stm32/stm32h7_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
 src-$(CONFIG_CANSERIAL) += stm32/can.c ../lib/fast-hash/fasthash.c

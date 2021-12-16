@@ -64,6 +64,9 @@ choice
         bool "STM32F072"
         select MACH_STM32F0
         select MACH_STM32F0x2
+    config MACH_STM32G0B1
+        bool "STM32G0B1"
+        select MACH_STM32G0
     config MACH_STM32H743
         bool "STM32H743"
         select MACH_STM32H7
@@ -73,6 +76,8 @@ choice
 endchoice
 
 config MACH_STM32F0
+    bool
+config MACH_STM32G0
     bool
 config MACH_STM32F1
     bool
@@ -102,6 +107,7 @@ config MCU
     default "stm32f042x6" if MACH_STM32F042
     default "stm32f070xb" if MACH_STM32F070
     default "stm32f072xb" if MACH_STM32F072
+    default "stm32g0b1xx" if MACH_STM32G0B1
     default "stm32f103xe" if MACH_STM32F103
     default "stm32f207xx" if MACH_STM32F207
     default "stm32f401xc" if MACH_STM32F401
@@ -115,7 +121,7 @@ config MCU
 config CLOCK_FREQ
     int
     default 48000000 if MACH_STM32F0
-    default 64000000 if MACH_STM32F103 && STM32_CLOCK_REF_INTERNAL
+    default 64000000 if (MACH_STM32F103 && STM32_CLOCK_REF_INTERNAL) || MACH_STM32G0B1
     default 72000000 if MACH_STM32F103
     default 120000000 if MACH_STM32F207
     default 84000000 if MACH_STM32F401
@@ -130,7 +136,7 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32F070 || MACH_STM32F072
     default 0x10000 if MACH_STM32F103 # Flash size of stm32f103x8 (64KiB)
     default 0x40000 if MACH_STM32F2 || MACH_STM32F401
-    default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446
+    default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32G0B1
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743
 
@@ -147,7 +153,7 @@ config RAM_SIZE
     default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
-    default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
+    default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32G0B1
     default 0x20000 if MACH_STM32H750
     default 0x80000 if MACH_STM32H743
 
@@ -171,9 +177,9 @@ config STM32F103GD_DISABLE_SWD
 ######################################################################
 
 choice
-    prompt "Bootloader offset" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F070 || MACH_STM32H743
+    prompt "Bootloader offset" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F070 || MACH_STM32H743 || MACH_STM32G0B1
     config STM32_FLASH_START_2000
-        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070
+        bool "8KiB bootloader (stm32duino)" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0B1
     config STM32_FLASH_START_5000
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000

@@ -6,6 +6,8 @@
 
 #if CONFIG_MACH_STM32F0
 #include "stm32f0xx.h"
+#elif CONFIG_MACH_STM32G0
+#include "stm32g0xx.h"
 #elif CONFIG_MACH_STM32F1
 #include "stm32f1xx.h"
 #elif CONFIG_MACH_STM32F2
