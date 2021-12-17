@@ -153,11 +153,6 @@ clock_setup(void)
     while (PWR->SR2 & PWR_SR2_VOSF)
         ;
 
-    // Reset clock cfg from bootloader
-    RCC->PLLCFGR = 0x00001000;
-    RCC->CFGR = 0x00000000;
-    RCC->CR = 0x00000500;
-
     // Disable PLL
     RCC->CR &= ~RCC_CR_PLLON;
     while (RCC->CR & RCC_CR_PLLRDY)
@@ -210,6 +205,11 @@ clock_setup(void)
 void
 armcm_main(void)
 {
+    // Reset clock cfg from bootloader
+    RCC->PLLCFGR = 0x00001000;
+    RCC->CFGR = 0x00000000;
+    RCC->CR = 0x00000500;
+
     if (CONFIG_USBSERIAL && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
         *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
         uint32_t *sysbase = (uint32_t*)0x1fff0000;

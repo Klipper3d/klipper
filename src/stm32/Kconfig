@@ -150,10 +150,11 @@ config RAM_SIZE
     default 0x1000 if MACH_STM32F031
     default 0x1800 if MACH_STM32F042
     default 0x4000 if MACH_STM32F070 || MACH_STM32F072
+    default 0x24000 if MACH_STM32G0B1
     default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
-    default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32G0B1
+    default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x20000 if MACH_STM32H750
     default 0x80000 if MACH_STM32H743
 
