@@ -157,7 +157,9 @@ microsteps:
 #   The minimum time between the step pulse signal edge and the
 #   following "unstep" signal edge. This is also used to set the
 #   minimum time between a step pulse and a direction change signal.
-#   The default is 0.000002 (which is 2us).
+#   The default is 0.000000100 (100ns) for TMC steppers that are
+#   configured in UART or SPI mode, and the default is 0.000002 (which
+#   is 2us) for all other steppers.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor then it enables "multi-mcu
@@ -250,6 +252,11 @@ max_z_velocity:
 #   maximum speed of up/down moves (which require a higher step rate
 #   than other moves on a delta printer). The default is to use
 #   max_velocity for max_z_velocity.
+#max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. Setting this may be useful if the printer can reach higher
+#   acceleration on XY moves than Z moves (eg, when using input shaper).
+#   The default is to use max_accel for max_z_accel.
 #minimum_z_position: 0
 #   The minimum Z position that the user may command the head to move
 #   to. The default is 0.
@@ -2796,14 +2803,17 @@ cs_pin:
 #   The default is to not use an SPI daisy chain.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
-#   step at a rate of 256 micro-steps). The default is True.
+#   step at a rate of 256 micro-steps). This interpolation does
+#   introduce a small systemic positional deviation - see
+#   TMC_Drivers.md for details. The default is True.
 run_current:
 #   The amount of current (in amps RMS) to configure the driver to use
 #   during stepper movement. This parameter must be provided.
 #hold_current:
 #   The amount of current (in amps RMS) to configure the driver to use
-#   when the stepper is not moving. The default is to not reduce the
-#   current.
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -2862,14 +2872,17 @@ uart_pin:
 #   UART communication. The default is to not configure any pins.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
-#   step at a rate of 256 micro-steps). The default is True.
+#   step at a rate of 256 micro-steps). This interpolation does
+#   introduce a small systemic positional deviation - see
+#   TMC_Drivers.md for details. The default is True.
 run_current:
 #   The amount of current (in amps RMS) to configure the driver to use
 #   during stepper movement. This parameter must be provided.
 #hold_current:
 #   The amount of current (in amps RMS) to configure the driver to use
-#   when the stepper is not moving. The default is to use the same
-#   value as run_current.
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -2973,7 +2986,9 @@ cs_pin:
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). This only works if microsteps
-#   is set to 16. The default is True.
+#   is set to 16. Interpolation does introduce a small systemic
+#   positional deviation - see TMC_Drivers.md for details. The default
+#   is True.
 run_current:
 #   The amount of current (in amps RMS) used by the driver during
 #   stepper movement. This parameter must be provided.
@@ -3051,8 +3066,9 @@ run_current:
 #   during stepper movement. This parameter must be provided.
 #hold_current:
 #   The amount of current (in amps RMS) to configure the driver to use
-#   when the stepper is not moving. The default is to use the same
-#   value as run_current.
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.075
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.075 ohms.
@@ -3060,8 +3076,7 @@ run_current:
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
-#   "stealthChop" mode. Try to reexperience this with tmc5160.
-#   Values can be much higher than other tmcs.
+#   "stealthChop" mode.
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2
