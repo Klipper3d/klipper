@@ -206,9 +206,11 @@ void
 armcm_main(void)
 {
     // Reset clock cfg from bootloader
-    RCC->PLLCFGR = 0x00001000;
+    RCC->CR = 0x00000100;
     RCC->CFGR = 0x00000000;
-    RCC->CR = 0x00000500;
+    while (!(RCC->CR & RCC_CR_HSIRDY))
+        ;
+    RCC->PLLCFGR = 0x00001000;
     // Disable SPI1 CLK (enabled from bootloader)
     RCC->APBENR2 &= ~(1 << 12);
 
