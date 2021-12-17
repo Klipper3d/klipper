@@ -209,6 +209,8 @@ armcm_main(void)
     RCC->PLLCFGR = 0x00001000;
     RCC->CFGR = 0x00000000;
     RCC->CR = 0x00000500;
+    // Disable SPI1 CLK (enabled from bootloader)
+    RCC->APBENR2 &= ~(1 << 12);
 
     if (CONFIG_USBSERIAL && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
         *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
