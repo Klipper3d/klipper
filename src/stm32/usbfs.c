@@ -16,16 +16,20 @@
 #include "internal.h" // GPIO
 #include "sched.h" // DECL_INIT
 
+#if CONFIG_MACH_STM32F103
+  // Transfer memory is accessed with 32bits, but contains only 16bits of data
+  typedef volatile uint32_t epmword_t;
+  #define USBx_IRQn USB_LP_IRQn
+#elif CONFIG_MACH_STM32F0
+  // Transfer memory is accessed with 16bits and contains 16bits of data
+  typedef volatile uint16_t epmword_t;
+  #define USBx_IRQn USB_IRQn
+#endif
+
 
 /****************************************************************
  * USB transfer memory
  ****************************************************************/
-
-#if CONFIG_MACH_STM32F103
-typedef volatile uint32_t epmword_t;
-#else
-typedef volatile uint16_t epmword_t;
-#endif
 
 struct ep_desc {
     epmword_t addr_tx, count_tx, addr_rx, count_rx;
@@ -293,10 +297,6 @@ usb_init(void)
     USB->DADDR = 0;
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
-#if CONFIG_MACH_STM32F103
-    armcm_enable_irq(USB_IRQHandler, USB_LP_IRQn, 1);
-#elif CONFIG_MACH_STM32F0
-    armcm_enable_irq(USB_IRQHandler, USB_IRQn, 1);
-#endif
+    armcm_enable_irq(USB_IRQHandler, USBx_IRQn, 1);
 }
 DECL_INIT(usb_init);
