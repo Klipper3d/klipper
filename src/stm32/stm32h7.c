@@ -9,7 +9,6 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
-#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
@@ -102,17 +101,10 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     enable_pclock((uint32_t)regs);
 }
 
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
-#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
-
 // Handle USB reboot requests
 void
 usb_request_bootloader(void)
 {
-    irq_disable();
-    // System DFU Bootloader
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
-    NVIC_SystemReset();
 }
 
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
