@@ -1,6 +1,6 @@
 // Code to setup clocks on stm32f0
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -10,6 +10,11 @@
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
+
+
+/****************************************************************
+ * Clock setup
+ ****************************************************************/
 
 #define FREQ_PERIPH 48000000
 
@@ -62,34 +67,6 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     uint32_t rcc_pos = ((uint32_t)regs - AHB2PERIPH_BASE) / 0x400;
     RCC->AHBENR |= 1 << (rcc_pos + 17);
     RCC->AHBENR;
-}
-
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
-#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
-
-// Handle USB reboot requests
-void
-usb_request_bootloader(void)
-{
-    irq_disable();
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
-    NVIC_SystemReset();
-}
-
-// Copy vector table and remap ram so new vector table is used
-static void
-enable_ram_vectortable(void)
-{
-    // Symbols created by armcm_link.lds.S linker script
-    extern uint32_t _ram_vectortable_start, _ram_vectortable_end;
-    extern uint32_t _text_vectortable_start;
-
-    uint32_t count = (&_ram_vectortable_end - &_ram_vectortable_start) * 4;
-    __builtin_memcpy(&_ram_vectortable_start, &_text_vectortable_start, count);
-    barrier();
-
-    enable_pclock(SYSCFG_BASE);
-    SYSCFG->CFGR1 |= 3 << SYSCFG_CFGR1_MEM_MODE_Pos;
 }
 
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
@@ -169,20 +146,70 @@ hsi14_setup(void)
         ;
 }
 
+
+/****************************************************************
+ * USB bootloader
+ ****************************************************************/
+
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
+// Flag that bootloader is desired and reboot
+static void
+usb_reboot_for_dfu_bootloader(void)
+{
+    irq_disable();
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
+}
+
+// Check if rebooting into system DFU Bootloader
+static void
+check_usb_dfu_bootloader(void)
+{
+    if (!CONFIG_USBSERIAL || !CONFIG_MACH_STM32F0x2
+        || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
+        return;
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
+    uint32_t *sysbase = (uint32_t*)0x1fffc400;
+    asm volatile("mov sp, %0\n bx %1"
+                 : : "r"(sysbase[0]), "r"(sysbase[1]));
+}
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+    usb_reboot_for_dfu_bootloader();
+}
+
+
+/****************************************************************
+ * Startup
+ ****************************************************************/
+
+// Copy vector table and remap ram so new vector table is used
+static void
+enable_ram_vectortable(void)
+{
+    // Symbols created by armcm_link.lds.S linker script
+    extern uint32_t _ram_vectortable_start, _ram_vectortable_end;
+    extern uint32_t _text_vectortable_start;
+
+    uint32_t count = (&_ram_vectortable_end - &_ram_vectortable_start) * 4;
+    __builtin_memcpy(&_ram_vectortable_start, &_text_vectortable_start, count);
+    barrier();
+
+    enable_pclock(SYSCFG_BASE);
+    SYSCFG->CFGR1 |= 3 << SYSCFG_CFGR1_MEM_MODE_Pos;
+}
+
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void
 armcm_main(void)
 {
-    if (CONFIG_USBSERIAL && CONFIG_MACH_STM32F0x2
-        && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
-        *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
-        uint32_t *sysbase = (uint32_t*)0x1fffc400;
-        asm volatile("mov sp, %0\n bx %1"
-                     : : "r"(sysbase[0]), "r"(sysbase[1]));
-    }
-
+    check_usb_dfu_bootloader();
     SystemInit();
-
     if (CONFIG_ARMCM_RAM_VECTORTABLE)
         enable_ram_vectortable();
 
