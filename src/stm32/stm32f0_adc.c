@@ -47,7 +47,7 @@ gpio_adc_setup(uint32_t pin)
         enable_pclock(adc_base);
 
         // 100: 41.5 ADC clock cycles
-        adc->SMPR |= (~ADC_SMPR_SMP_Msk | ADC_SMPR_SMP_2 );
+        adc->SMPR |= ~ADC_SMPR_SMP_Msk | ADC_SMPR_SMP_2;
         adc->CFGR2 |= ADC_CFGR2_CKMODE;
         adc->CFGR1 &= ~ADC_CFGR1_AUTOFF;
         adc->CFGR1 |= ADC_CFGR1_EXTSEL;
@@ -64,7 +64,7 @@ gpio_adc_setup(uint32_t pin)
             ;
 
         // if not enabled
-        if (!(adc->CR & ADC_CR_ADEN)){
+        if (!(adc->CR & ADC_CR_ADEN)) {
             adc->ISR |= ADC_ISR_ADRDY;
             adc->CR |= ADC_CR_ADEN;
             while (!(ADC1->ISR & ADC_ISR_ADRDY))
@@ -72,11 +72,10 @@ gpio_adc_setup(uint32_t pin)
         }
     }
 
-    if (pin == ADC_TEMPERATURE_PIN) {
+    if (pin == ADC_TEMPERATURE_PIN)
         ADC1_COMMON->CCR = ADC_CCR_TSEN;
-    } else {
+    else
         gpio_peripheral(pin, GPIO_ANALOG, 0);
-    }
 
     return (struct gpio_adc){ .adc = adc, .chan = 1 << chan };
 }
@@ -88,12 +87,10 @@ uint32_t
 gpio_adc_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    if ((adc->ISR & ADC_ISR_EOC) && (adc->CHSELR == g.chan)){
+    if (adc->ISR & ADC_ISR_EOC && adc->CHSELR == g.chan)
         return 0;
-    }
-    if (adc->CR & ADC_CR_ADSTART){
-       goto need_delay;
-    }
+    if (adc->CR & ADC_CR_ADSTART)
+        goto need_delay;
     adc->CHSELR = g.chan;
     adc->CR |= ADC_CR_ADSTART;
 
@@ -116,8 +113,7 @@ gpio_adc_cancel_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
     irqstatus_t flag = irq_save();
-    if (!(adc->ISR & ADC_ISR_EOC) && (adc->CHSELR == g.chan)){
+    if (!(adc->ISR & ADC_ISR_EOC) && adc->CHSELR == g.chan)
         adc->CR |= ADC_CR_ADSTP;
-    }
     irq_restore(flag);
 }
