@@ -47,7 +47,7 @@ struct ep_mem {
 #define EPM ((struct ep_mem *)USB_PMAADDR)
 
 #define CALC_ADDR(p) (((epmword_t*)(p) - (epmword_t*)EPM) * 2)
-#define CALC_SIZE(s) ((s) > 32 ? (DIV_ROUND_UP((s), 32) << 10) | 0x8000 \
+#define CALC_SIZE(s) ((s) > 30 ? ((DIV_ROUND_UP((s), 32) - 1) << 10) | 0x8000 \
                       : DIV_ROUND_UP((s), 2) << 10)
 
 // Setup the transfer descriptors in dedicated usb memory
