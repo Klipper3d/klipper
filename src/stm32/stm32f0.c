@@ -172,6 +172,8 @@ check_usb_dfu_bootloader(void)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
     uint32_t *sysbase = (uint32_t*)0x1fffc400;
+    if (CONFIG_MACH_STM32F072)
+        sysbase = (uint32_t*)0x1fffc800;
     asm volatile("mov sp, %0\n bx %1"
                  : : "r"(sysbase[0]), "r"(sysbase[1]));
 }
