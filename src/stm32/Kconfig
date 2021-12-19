@@ -93,7 +93,7 @@ config MACH_STM32F4x5 # F405, F407, F429 series
     bool
 config HAVE_STM32_USBFS
     bool
-    default y if MACH_STM32F103 || MACH_STM32F0x2 || MACH_STM32F070
+    default y if MACH_STM32F103 || MACH_STM32F0x2 || MACH_STM32F070 || MACH_STM32G0
 config HAVE_STM32_USBOTG
     bool
     default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32H7

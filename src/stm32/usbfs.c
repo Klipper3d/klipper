@@ -1,4 +1,4 @@
-// Hardware interface to "fullspeed USB controller" on stm32f1
+// Hardware interface to "fullspeed USB controller"
 //
 // Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
@@ -18,11 +18,29 @@
 #if CONFIG_MACH_STM32F103
   // Transfer memory is accessed with 32bits, but contains only 16bits of data
   typedef volatile uint32_t epmword_t;
+  #define WSIZE 2
   #define USBx_IRQn USB_LP_IRQn
 #elif CONFIG_MACH_STM32F0
   // Transfer memory is accessed with 16bits and contains 16bits of data
   typedef volatile uint16_t epmword_t;
+  #define WSIZE 2
   #define USBx_IRQn USB_IRQn
+#elif CONFIG_MACH_STM32G0
+  // Transfer memory is accessed with 32bits and contains 32bits of data
+  typedef volatile uint32_t epmword_t;
+  #define WSIZE 4
+  #define USBx_IRQn USB_UCPD1_2_IRQn
+
+  // The stm32g0 has slightly different register names
+  #define USB USB_DRD_FS
+  #define USB_PMAADDR USB_DRD_PMAADDR
+  #define USB_EPADDR_FIELD USB_CHEP_ADDR
+  #define USB_EP_CTR_RX USB_EP_VTRX
+  #define USB_EP_CTR_TX USB_EP_VTTX
+  #define USB_EPRX_STAT USB_EP_RX_STRX
+  #define USB_EPTX_STAT USB_EP_TX_STTX
+  #define USB_ISTR_EP_ID USB_ISTR_IDN
+  #define USB_CNTR_FRES USB_CNTR_USBRST
 #endif
 
 
@@ -32,9 +50,9 @@
 
 // Layout of the USB transfer memory
 #define EPM ((epmword_t*)USB_PMAADDR)
-#define EPM_EP_DESC(ep) (&EPM[(ep) * 4])
+#define EPM_EP_DESC(ep) (&EPM[(ep) * (8 / WSIZE)])
 #define EPM_BUF_OFFSET 0x10
-#define EPM_EP_BUF_SIZE (64 / 2 + 1)
+#define EPM_EP_BUF_SIZE (64 / WSIZE + 1)
 #define EPM_EP_TX_BUF(ep) (&EPM[EPM_BUF_OFFSET + (ep)*2*EPM_EP_BUF_SIZE])
 #define EPM_EP_RX_BUF(ep) (&EPM[EPM_BUF_OFFSET + (1+(ep)*2)*EPM_EP_BUF_SIZE])
 
@@ -42,15 +60,20 @@
 static void
 epm_ep_desc_setup(int ep, int rx_size)
 {
-    uint32_t addr_tx = (EPM_EP_TX_BUF(ep) - EPM) * 2, count_tx = 0;
-    uint32_t addr_rx = (EPM_EP_RX_BUF(ep) - EPM) * 2;
+    uint32_t addr_tx = (EPM_EP_TX_BUF(ep) - EPM) * WSIZE, count_tx = 0;
+    uint32_t addr_rx = (EPM_EP_RX_BUF(ep) - EPM) * WSIZE;
     uint32_t count_rx = (rx_size <= 30 ? DIV_ROUND_UP(rx_size, 2) << 10
                          : ((DIV_ROUND_UP(rx_size, 32) - 1) << 10) | 0x8000);
     epmword_t *desc = EPM_EP_DESC(ep);
-    desc[0] = addr_tx;
-    desc[1] = count_tx;
-    desc[2] = addr_rx;
-    desc[3] = count_rx;
+    if (WSIZE == 2) {
+        desc[0] = addr_tx;
+        desc[1] = count_tx;
+        desc[2] = addr_rx;
+        desc[3] = count_rx;
+    } else {
+        desc[0] = addr_tx | (count_tx << 16);
+        desc[1] = addr_rx | (count_rx << 16);
+    }
 }
 
 // Return number of read bytes on an rx endpoint
@@ -58,7 +81,9 @@ static uint32_t
 epm_get_ep_count_rx(int ep)
 {
     epmword_t *desc = EPM_EP_DESC(ep);
-    return desc[3] & 0x3ff;
+    if (WSIZE == 2)
+        return desc[3] & 0x3ff;
+    return (desc[1] >> 16) & 0x3ff;
 }
 
 // Set number of bytes ready to be transmitted on a tx endpoint
@@ -66,7 +91,12 @@ static void
 epm_set_ep_count_tx(int ep, uint32_t count)
 {
     epmword_t *desc = EPM_EP_DESC(ep);
-    desc[1] = count;
+    if (WSIZE == 2) {
+        desc[1] = count;
+    } else {
+        uint32_t addr_tx = (EPM_EP_TX_BUF(ep) - EPM) * WSIZE;
+        desc[0] = addr_tx | (count << 16);
+    }
 }
 
 // Setup the transfer descriptors in dedicated usb memory
@@ -88,13 +118,23 @@ btable_read_packet(int ep, uint8_t *dest, int max_len)
     if (count > max_len)
         count = max_len;
     int i;
-    for (i=0; i<(count/2); i++) {
+    for (i=0; i<count/WSIZE; i++) {
         uint32_t d = *src++;
         *dest++ = d;
         *dest++ = d >> 8;
+        if (WSIZE == 4) {
+            *dest++ = d >> 16;
+            *dest++ = d >> 24;
+        }
     }
-    if (count & 1)
-        *dest = *src;
+    if (count & (WSIZE-1)) {
+        uint32_t d = *src;
+        *dest++ = d;
+        if ((count & (WSIZE-1)) > 1)
+            *dest++ = d >> 8;
+        if ((count & (WSIZE-1)) > 2)
+            *dest++ = d >> 16;
+    }
     return count;
 }
 
@@ -104,12 +144,22 @@ btable_write_packet(int ep, const uint8_t *src, int count)
 {
     epmword_t *dest = EPM_EP_TX_BUF(ep);
     int i;
-    for (i=0; i<(count/2); i++) {
-        uint8_t b1 = *src++, b2 = *src++;
-        *dest++ = b1 | (b2 << 8);
+    for (i=0; i<count/WSIZE; i++) {
+        uint8_t b1 = *src++, b2 = *src++, b3 = 0, b4 = 0;
+        if (WSIZE == 4) {
+            b3 = *src++;
+            b4 = *src++;
+        }
+        *dest++ = b1 | (b2 << 8) | (b3 << 16) | (b4 << 24);
     }
-    if (count & 1)
-        *dest = *src;
+    if (count & (WSIZE-1)) {
+        uint32_t d = *src++;
+        if ((count & (WSIZE-1)) > 1)
+            d |= *src++ << 8;
+        if ((count & (WSIZE-1)) > 2)
+            d |= *src++ << 16;
+        *dest = d;
+    }
     epm_set_ep_count_tx(ep, count);
 }
 
@@ -302,7 +352,6 @@ usb_init(void)
 
     // Reset usb controller and enable interrupts
     USB->CNTR = USB_CNTR_FRES;
-    USB->BTABLE = 0;
     USB->DADDR = 0;
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
