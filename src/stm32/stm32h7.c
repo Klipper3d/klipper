@@ -1,4 +1,4 @@
-// Code to setup clocks and gpio on stm32h7
+// Code to setup clocks on stm32h7
 //
 // Copyright (C) 2020 Konstantin Vogel <konstantin.vogel@gmx.net>
 //
@@ -100,31 +100,6 @@ void
 gpio_clock_enable(GPIO_TypeDef *regs)
 {
     enable_pclock((uint32_t)regs);
-}
-
-#define STM_OSPEED 0x2 // ~85Mhz at 50pF
-
-// Set the mode and extended function of a pin
-void
-gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
-{
-    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
-
-    // Enable GPIO clock
-    gpio_clock_enable(regs);
-
-    // Configure GPIO
-    uint32_t mode_bits = mode & 0xf, func = (mode >> 4) & 0xf, od = mode >> 8;
-    uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
-    uint32_t pos = gpio % 16, af_reg = pos / 8;
-    uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
-    uint32_t m_shift = pos * 2, m_msk = 0x03 << m_shift;
-
-    regs->AFR[af_reg] = (regs->AFR[af_reg] & ~af_msk) | (func << af_shift);
-    regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
-    regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
-    regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
-    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (STM_OSPEED << m_shift);
 }
 
 #define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
