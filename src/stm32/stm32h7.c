@@ -4,14 +4,16 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-
-// I2C is not supported
-
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
+
+
+/****************************************************************
+ * Clock setup
+ ****************************************************************/
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 
@@ -99,12 +101,6 @@ void
 gpio_clock_enable(GPIO_TypeDef *regs)
 {
     enable_pclock((uint32_t)regs);
-}
-
-// Handle USB reboot requests
-void
-usb_request_bootloader(void)
-{
 }
 
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
@@ -224,13 +220,28 @@ clock_setup(void)
     }
 }
 
+
+/****************************************************************
+ * USB bootloader
+ ****************************************************************/
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+}
+
+
+/****************************************************************
+ * Startup
+ ****************************************************************/
+
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void
 armcm_main(void)
 {
     // Run SystemInit() and then restore VTOR
     SystemInit();
-
     SCB->VTOR = (uint32_t)VectorTable;
 
     clock_setup();
