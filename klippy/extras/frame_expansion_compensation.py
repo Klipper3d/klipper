@@ -69,7 +69,7 @@ class FrameExpansionCompensator:
         'Called after all printer objects are instantiated'
         self.toolhead = self.printer.lookup_object('toolhead')
         gcode_move = self.printer.lookup_object('gcode_move')
-        
+
         _warn_msg = '''This Klipper branch is deprecated and will no longer be
         maintained.
         Please use the Moonraker plug-in version available at
