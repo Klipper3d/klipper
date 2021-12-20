@@ -49,12 +49,12 @@ class _SrFromConfig:
     def cmd_SET_SR_PIN(self, gcmd):
         value = gcmd.get_int('VALUE', minval=0, maxval=1)
         pin = gcmd.get_int('NUMBER', minval=1, maxval=8 * self.chip_count) - 1
-        self.sr.set_value(value, pin)
+        self.sr.set_pin(pin, value)
 
     cmd_SET_SR_PINS_help = "Set the value of all output pins"
 
     def cmd_SET_SR_PINS(self, gcmd):
-        value = gcmd.get_int('VALUE', minval=0, maxval=255 * self.chip_count)
+        value = gcmd.get_int('VALUE', minval=0, maxval=255 ** self.chip_count)
         self.sr.set_value(value)
 
 
@@ -92,7 +92,7 @@ class Sr:
 
     def _toggle_latch(self, print_time, value):
         self.latch_pin.set_digital(print_time, 0)
-        self.latch_pin.set_digital(print_time + .003, 1)
+        self.latch_pin.set_digital(print_time + .05, 1)
 
     def set_value(self, value):
         if value == self.old_data:
@@ -107,7 +107,7 @@ class Sr:
         toolhead.register_lookahead_callback(
             lambda print_time: self._toggle_latch(print_time, value))
 
-    def set_pin(self, bit_value, pin):
+    def set_pin(self, pin, bit_value):
         self.set_multiple_pins(((pin, bit_value),))
 
     def set_multiple_pins(self, bit_list):
