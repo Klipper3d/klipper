@@ -59,13 +59,12 @@ class _SrFromConfig:
 
 
 class Sr:
-    def __init__(self, printer, chip_count, data_pin, clock_pin, latch_pin, miso_pin='PD3'):
+    def __init__(self, printer, chip_count, data_pin, clock_pin, latch_pin):
         self.printer = printer
         self.chip_count = chip_count
         ppins = self.printer.lookup_object('pins')
         data_pin_params = ppins.lookup_pin(data_pin)
         clock_pin_params = ppins.lookup_pin(clock_pin)
-        miso_pin_params = ppins.lookup_pin(miso_pin)
         self.latch_pin = ppins.setup_pin('digital_out', latch_pin)
 
         mcu = data_pin_params['chip']
@@ -76,7 +75,10 @@ class Sr:
         self.old_data = self.data = 0
 
         sw_spi_pins = (
-            miso_pin_params['pin'], data_pin_params['pin'], clock_pin_params['pin'])
+            data_pin_params['pin'],
+            data_pin_params['pin'],
+            clock_pin_params['pin']
+        )
         self.spi = bus.MCU_SPI(mcu, None, None, 0, 500000, sw_spi_pins)
 
         self.latch_pin.setup_max_duration(0.)
