@@ -2736,7 +2736,7 @@ pins:
 ### [sr595]
 
 Shift register controlled outputs using software SPI (one may define any number of sections with a
-"sr595" prefix). This expose virtual pins for use in other config sections. For example, one could define a "[sr595 my_sr]" object and use the outputs in "[output_pin diode1]" with the pin definition "pin: my_sr:0" for using the first output of the first register (Qa/Q0). Access the third output (Qc/Q0) of the second register using "pin: my_sr:10". See the [command reference](G-Codes.md#shift-register-commands) for more information.
+"sr595" prefix). This expose virtual pins for use in other config sections. For example, one could define a "[sr595 my_sr]" object and use the outputs in "[output_pin diode1]" with the pin definition "pin: my_sr:0" for using the first output of the first register (Qa/Q0). Access the third output (Qc/Q2) of the second register using "pin: my_sr:10". See the [command reference](G-Codes.md#shift-register-commands) for more information.
 
 ```
 [sr595 my_sr]
