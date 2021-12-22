@@ -16,15 +16,7 @@ To use Hall filament width sensor, read
 
 ## How does it work?
 
-Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width . Host module monitors voltage changes and adjusts extrusion multiplier. I use aux2 connector on ramps-like board analog11 and analog12 pins. You can use different pins and differenr boards
-
-## Menu variables
-
-**hall_filament_width_sensor.Diameter** current measured filament width in mm
-
-**hall_filament_width_sensor.Raw** current raw measured filament width in units
-
-**hall_filament_width_sensor.is_active** Sensor on or off
+Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width . Host module monitors voltage changes and adjusts extrusion multiplier. I use aux2 connector on ramps-like board analog11 and analog12 pins. You can use different pins and differenr boards.
 
 ## Template for menu variables
 
