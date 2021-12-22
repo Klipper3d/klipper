@@ -37,7 +37,9 @@ Fritzing wiring diagrams for some of the ADXL345 boards:
 
 
 Double-check your wiring before powering up the Raspberry Pi to prevent
-damaging it or the accelerometer.
+damaging it or the accelerometer. Try to keep the cables as short as possible, 
+or use something shielded/twisted like a network cable to prevent communication
+issues because of signal interference an degradation.
 
 ### Mounting the accelerometer
 
