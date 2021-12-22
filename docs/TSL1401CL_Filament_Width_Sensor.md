@@ -5,7 +5,7 @@ for developing this host module is based on TSL1401CL linear sensor array
 but it can work with any sensor array that has analog output. You can find
 designs at [Thingiverse](https://www.thingiverse.com/search?q=filament%20width%20sensor).
 
-To use a sensor array as a filament width sensor, read 
+To use a sensor array as a filament width sensor, read
 [Config Reference](Config_Reference.md#tsl1401cl_filament_width_sensor) and
 [G-Code documentation](G-Codes.md#Filament_Width_Sensor_Commands).
 

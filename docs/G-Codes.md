@@ -847,7 +847,7 @@ in the GCode file:
 The following command is available when the
 [tsl1401cl filament width sensor config section](Config_Reference.md#tsl1401cl_filament_width_sensor)
 or [hall filament width sensor config section](Config_Reference.md#hall_filament_width_sensor)
-is enabled (also see [TSLl401CL Filament Width Sensor](TSL1401CL_Filament_Width_Sensor.md) 
+is enabled (also see [TSLl401CL Filament Width Sensor](TSL1401CL_Filament_Width_Sensor.md)
 and [Hall Filament Width Sensor](Hall_Filament_Width_Sensor.md)):
 
 - `QUERY_FILAMENT_WIDTH` - Return the current measured filament width
@@ -855,12 +855,12 @@ and [Hall Filament Width Sensor](Hall_Filament_Width_Sensor.md)):
   filament change
 - `DISABLE_FILAMENT_WIDTH_SENSOR` - Turn off the filament width sensor and
   stop using it for flow control
-- `ENABLE_FILAMENT_WIDTH_SENSOR` - Turn on the filament width sensor and 
+- `ENABLE_FILAMENT_WIDTH_SENSOR` - Turn on the filament width sensor and
   start using it for flow control
 
 ### Hall Filament Width Sensor Commands
 
-The following command is available when the 
+The following command is available when the
 [hall filament width sensor config section](Config_Reference.md#hall_filament_width_sensor)
 is enabled:
 
@@ -868,4 +868,3 @@ is enabled:
   RAW sensor value for calibration points
 - `ENABLE_FILAMENT_WIDTH_LOG` - Turn on diameter logging
 - `DISABLE_FILAMENT_WIDTH_LOG` - Turn off diameter logging
-
