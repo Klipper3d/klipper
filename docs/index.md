@@ -6,7 +6,7 @@ title: Welcome
 
 ![](img/klipper-logo.png){ .center-image }
 
-Klipper is a 3D-printer firmware combining the power of a general
+Klipper is 3D-printer firmware combining the power of a general
 purpose computer with one or more micro-controllers.
 Check out the [features](Features.md) document.
 
