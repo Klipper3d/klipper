@@ -2747,7 +2747,7 @@ clock_pin:
 latch_pin:
 #   ST_CP pin. This parameter must be provided.
 #chip_count:
-#   Sets the number of connected shift registers. THe default value is 1.
+#   Sets the number of connected shift registers. The default value is 1.
 ```
 
 ## TMC stepper driver configuration
