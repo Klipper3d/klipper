@@ -841,3 +841,12 @@ Palette prints work by embedding special OCodes (Omega Codes)
 in the GCode file:
 - `O1`...`O32`: These codes are read from the GCode stream and processed
   by this module and passed to the Palette 2 device.
+
+### Shift Register Commands
+
+The following command is available when the
+[sr595 config section](Config_Reference.md#sr595)
+is enabled:
+- `SET_SR_PIN SR=config_name NUMBER=<pin_number> VALUE=<0|1>`: This command set the specified pin number high or low. NUMBER value is the logical pin number 1-8 for the first register, 9-16 for second, and so on.
+- `TOGGLE_SR_PIN SR=config_name NUMBER=<pin_number>`: This command toggle the specified pin number . NUMBER value is the logical pin number 1-8 for the first register, 9-16 for second, and so on.
+- `SET_SR_PINS SR=config_name VALUE=<value>`: This command sets all pins of all connected shift registers. VALUE must be between 0 and 255^[number of connected registers].

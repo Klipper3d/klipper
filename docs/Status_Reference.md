@@ -278,6 +278,13 @@ The following information is available in
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
 
+## sr595
+
+The following information is available in
+[sr595 config_name](Config_Reference.md#sr595) objects:
+- `printer["sr595 <config_name>"].chip_count`: The number of shift registers.
+- `printer["sr595 <config_name>"].registers`: Dict containing registers with their own pin collection. It can be accessed directly like this `printer["sr595 <config_name>"].registers.register0.pin3`
+
 ## system_stats
 
 The following information is available in the `system_stats` object

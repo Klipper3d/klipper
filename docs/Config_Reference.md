@@ -2733,6 +2733,23 @@ pins:
 #   parameter must be provided.
 ```
 
+### [sr595]
+
+Shift register controlled outputs using software SPI (one may define any number of sections with a
+"sr595" prefix). This expose virtual pins for use in other config sections. For example, one could define a "[sr595 my_sr]" object and use the outputs in "[output_pin diode1]" with the pin definition "pin: my_sr:0" for using the first output of the first register (Qa/Q0). Access the third output (Qc/Q0) of the second register using "pin: my_sr:10". See the [command reference](G-Codes.md#shift-register-commands) for more information.
+
+```
+[sr595 my_sr]
+data_pin:
+#   CS pin. This parameter must be provided.
+clock_pin:
+#   SH_CP pin. This parameter must be provided.
+latch_pin:
+#   ST_CP pin. This parameter must be provided.
+#chip_count:
+#   Sets the number of connected shift registers. THe default value is 1.
+```
+
 ## TMC stepper driver configuration
 
 Configuration of Trinamic stepper motor drivers in UART/SPI mode.
