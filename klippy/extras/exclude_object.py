@@ -99,8 +99,9 @@ class ExcludeObject:
         if self.log_next_moves > 0:
             self.log_next_moves -= 1
             logging.debug("EXO: Toolhead commanded pos: %s",
-                        " ".join(str(x) for x in self.toolhead.commanded_pos))
-            logging.debug("EXO: Move position: %s", " ".join(str(x) for x in newpos))
+                          " ".join(str(x) for x in self.toolhead.commanded_pos))
+            logging.debug("EXO: Move position: %s",
+                          " ".join(str(x) for x in newpos))
             logging.debug("EXO: Offset: %s", " ".join(str(x) for x in offset))
 
         self.last_position[:] = newpos
@@ -126,7 +127,8 @@ class ExcludeObject:
         if offset[2] != 0 and newpos[2] != self.last_position_excluded[2]:
             offset[2] = 0
 
-        if self.extruder_adj != 0 and newpos[3] != self.last_position_excluded[3]:
+        if self.extruder_adj != 0 and \
+            newpos[3] != self.last_position_excluded[3]:
             offset[3] += self.extruder_adj
             self.extruder_adj = 0
 
@@ -141,7 +143,7 @@ class ExcludeObject:
             offset[i] = newpos[i] - self.last_position_extruded[i]
         offset[3] = offset[3] + newpos[3] - self.last_position[3]
         self.last_position[:] = newpos
-        self.last_position_excluded[:] =self.last_position 
+        self.last_position_excluded[:] =self.last_position
         self.max_position_excluded = max(self.max_position_excluded, newpos[3])
 
     def _move_into_excluded_region(self, newpos, speed):
@@ -161,17 +163,20 @@ class ExcludeObject:
                       " ".join(str(x) for x in self.last_position))
         logging.debug("EXO: last extruded position: %s",
                       " ".join(str(x) for x in self.last_position_extruded))
-        logging.debug("EXO: Max extruded position: %f", self.max_position_extruded)
+        logging.debug("EXO: Max extruded position: %f",
+                      self.max_position_extruded)
         logging.debug("EXO: last excluded position: %s",
                       " ".join(str(x) for x in self.last_position_excluded))
-        logging.debug("EXO: Max excluded position: %f", self.max_position_excluded)
+        logging.debug("EXO: Max excluded position: %f",
+                      self.max_position_excluded)
         logging.debug("EXO: New position: %s", " ".join(str(x) for x in newpos))
         logging.debug("EXO: Offset: %s", " ".join(str(x) for x in offset))
         self.log_next_moves = 10
 
         # This adjustment value is used to compensate for any retraction
         # differences between the last object printed and excluded one.
-        self.extruder_adj = self.max_position_excluded - self.last_position_excluded[3] \
+        self.extruder_adj = self.max_position_excluded \
+            - self.last_position_excluded[3] \
             - (self.max_position_extruded - self.last_position_extruded[3])
         logging.debug("EXO: Adjustment: %f", self.extruder_adj)
         self._normal_move(newpos, speed)
