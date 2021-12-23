@@ -1,4 +1,9 @@
-# qwiic_dual_ssr_relay i2c based two Solid State Relay
+# module: QWIIC_DUAL_SSR_RELAY, I2C based Dual Solid State Relay board from Sparkfun
+#
+# This module allows the connection of the Sparkfun Dual Solid State Relay
+# to Klipper via the I2C communication protocol.
+#
+# Signed-off-by: Luke Parker <parsko@gmail.com>
 #
 # Copyright (C) 2021 Luke Parker <parsko@gmail.com>
 #
@@ -14,13 +19,57 @@
 #   They get all the credit, I just translated  it  to work with
 #   Klipper.
 #
+'''
+Below is my config settings, as connected to a Raspberry Pi.
+[qwiic_dual_ssr_relay qwiicssr]
+i2c_address: 10
+i2c_mcu: host
+i2c_bus: i2c.1
+initial_RELAY1 : 0
+initial_RELAY2 : 0
+
+[gcode_macro QRELAY_ONE_ON]
+gcode:
+    SET_QRELAY_ONE_ON QRELAY=qwiicssr
+
+[gcode_macro QRELAY_ONE_OFF]
+gcode:
+    SET_QRELAY_ONE_OFF QRELAY=qwiicssr
+
+[gcode_macro QWIIC_ONE_TOGGLE]
+gcode:
+    SET_QRELAY_ONE_TOGGLE QRELAY=qwiicssr
+
+[gcode_macro QWIIC_TWO_ON]
+gcode:
+    SET_QRELAY_TWO_ON QRELAY=qwiicssr
+
+[gcode_macro QWIIC_TWO_OFF]
+gcode:
+    SET_QRELAY_TWO_OFF QRELAY=qwiicssr
+
+[gcode_macro QWIIC_TWO_TOGGLE]
+gcode:
+    SET_QRELAY_TWO_TOGGLE QRELAY=qwiicssr
+
+[gcode_macro QWIIC_ALL_ON]
+gcode:
+    SET_QRELAY_ALL_ON QRELAY=qwiicssr
+
+[gcode_macro QWIIC_ALL_OFF]
+gcode:
+    SET_QRELAY_ALL_OFF QRELAY=qwiicssr
+
+[gcode_macro QWIIC_ALL_TOGGLE]
+gcode:
+    SET_QRELAY_ALL_TOGGLE QRELAY=qwiicssr
+'''
 
 import time
 import logging
 from . import bus
 
-'''
-# This is  all from the sparkfun Library
+# This is from the sparkfun Library
 # public constants
 QWIIC_RELAY_ADDR = 0x0A
 
@@ -48,7 +97,7 @@ _TURN_ALL_ON     = 0x0B
 TOGGLE_ALL      = 0x0C
 SINGLE_OFF = 0x00
 SINGLE_ON = 0x01
-STATUS_OFF      = 0'''
+STATUS_OFF      = 0
 
 # class
 class qwiic_dual_ssr_relay:
