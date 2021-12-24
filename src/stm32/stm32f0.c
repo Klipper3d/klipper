@@ -18,38 +18,19 @@
 
 #define FREQ_PERIPH 48000000
 
-// Enable a peripheral clock
-void
-enable_pclock(uint32_t periph_base)
+// Map a peripheral address to its enable bits
+struct cline
+lookup_clock_line(uint32_t periph_base)
 {
-    if (periph_base < SYSCFG_BASE) {
-        uint32_t pos = (periph_base - APBPERIPH_BASE) / 0x400;
-        RCC->APB1ENR |= 1 << pos;
-        RCC->APB1ENR;
-    } else if (periph_base < AHBPERIPH_BASE) {
-        uint32_t pos = (periph_base - SYSCFG_BASE) / 0x400;
-        RCC->APB2ENR |= 1 << pos;
-        RCC->APB2ENR;
+    if (periph_base >= AHB2PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - AHB2PERIPH_BASE) / 0x400 + 17);
+        return (struct cline){.en=&RCC->AHBENR, .rst=&RCC->AHBRSTR, .bit=bit};
+    } else if (periph_base >= SYSCFG_BASE) {
+        uint32_t bit = 1 << ((periph_base - SYSCFG_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
     } else {
-        uint32_t pos = (periph_base - AHB2PERIPH_BASE) / 0x400;
-        RCC->AHBENR |= 1 << (pos + 17);
-        RCC->AHBENR;
-    }
-}
-
-// Check if a peripheral clock has been enabled
-int
-is_enabled_pclock(uint32_t periph_base)
-{
-    if (periph_base < SYSCFG_BASE) {
-        uint32_t pos = (periph_base - APBPERIPH_BASE) / 0x400;
-        return RCC->APB1ENR & (1 << pos);
-    } else if (periph_base < AHBPERIPH_BASE) {
-        uint32_t pos = (periph_base - SYSCFG_BASE) / 0x400;
-        return RCC->APB2ENR & (1 << pos);
-    } else {
-        uint32_t pos = (periph_base - AHB2PERIPH_BASE) / 0x400;
-        return RCC->AHBENR & (1 << (pos + 17));
+        uint32_t bit = 1 << ((periph_base - APBPERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB1ENR, .rst=&RCC->APB1RSTR, .bit=bit};
     }
 }
 
@@ -202,7 +183,6 @@ enable_ram_vectortable(void)
     __builtin_memcpy(&_ram_vectortable_start, &_text_vectortable_start, count);
     barrier();
 
-    enable_pclock(SYSCFG_BASE);
     SYSCFG->CFGR1 |= 3 << SYSCFG_CFGR1_MEM_MODE_Pos;
 }
 
@@ -212,6 +192,8 @@ armcm_main(void)
 {
     check_usb_dfu_bootloader();
     SystemInit();
+
+    enable_pclock(SYSCFG_BASE);
     if (CONFIG_ARMCM_RAM_VECTORTABLE)
         enable_ram_vectortable();
 
@@ -230,11 +212,8 @@ armcm_main(void)
 
     // Support pin remapping USB/CAN pins on low pinout stm32f042
 #ifdef SYSCFG_CFGR1_PA11_PA12_RMP
-    if (CONFIG_STM32_USB_PA11_PA12_REMAP
-        || CONFIG_STM32_CANBUS_PA11_PA12_REMAP) {
-        enable_pclock(SYSCFG_BASE);
+    if (CONFIG_STM32_USB_PA11_PA12_REMAP || CONFIG_STM32_CANBUS_PA11_PA12_REMAP)
         SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
-    }
 #endif
 
     sched_main();
