@@ -64,7 +64,7 @@ class _SrFromConfig:
     cmd_SET_SR_PINS_help = "Set the value of all output pins"
 
     def cmd_SET_SR_PINS(self, gcmd):
-        value = gcmd.get_int('VALUE', minval=0, maxval=255 ** self.chip_count)
+        value = gcmd.get_int('VALUE', minval=0, maxval=(256 ** self.chip_count) - 1)
         self.sr.set_value(value)
 
     def get_status(self, eventtime):
