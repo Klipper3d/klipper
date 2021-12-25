@@ -1,9 +1,10 @@
+# API server
+
 This document describes Klipper's Application Programmer Interface
 (API). This interface enables external applications to query and
 control the Klipper host software.
 
-Enabling the API socket
-=======================
+## Enabling the API socket
 
 In order to use the API server, the klippy.py host software must be
 started with the `-a` parameter. For example:
@@ -15,8 +16,7 @@ This causes the host software to create a Unix Domain Socket. A client
 can then open a connection on that socket and send commands to
 Klipper.
 
-Request format
-==============
+## Request format
 
 Messages sent and received on the socket are JSON encoded strings
 terminated by an ASCII 0x03 character:
@@ -36,8 +36,7 @@ be on a single line, and it will automatically append the 0x03
 terminator when transmitting a request. (The Klipper API server does
 not have a newline requirement.)
 
-API Protocol
-============
+## API Protocol
 
 The command protocol used on the communication socket is inspired by
 [json-rpc](https://www.jsonrpc.org/).
@@ -90,8 +89,7 @@ which could cause the associated response to be sent out of order with
 respect to responses from other requests. A JSON request will never
 pause the processing of future JSON requests.
 
-Subscriptions
-=============
+## Subscriptions
 
 Some Klipper "endpoint" requests allow one to "subscribe" to future
 asynchronous update messages.
@@ -118,8 +116,7 @@ with "endpoint" specific contents to the response template and then
 send that template. If a "response_template" field is not provided
 then it defaults to an empty dictionary (`{}`).
 
-Available "endpoints"
-=====================
+## Available "endpoints"
 
 By convention, Klipper "endpoints" are of the form
 `<module_name>/<some_name>`. When making a request to an "endpoint",
@@ -280,6 +277,69 @@ This endpoint is intended to support human interaction via a "terminal
 window" interface. Parsing content from the G-Code terminal output is
 discouraged. Use the "objects/subscribe" endpoint to obtain updates on
 Klipper's state.
+
+### motion_report/dump_stepper
+
+This endpoint is used to subscribe to Klipper's internal stepper
+queue_step command stream for a stepper. Obtaining these low-level
+motion updates may be useful for diagnostic and debugging
+purposes. Using this endpoint may increase Klipper's system load.
+
+A request may look like:
+`{"id": 123, "method":"motion_report/dump_stepper",
+"params": {"name": "stepper_x", "response_template": {}}}`
+and might return:
+`{"id": 123, "result": {"header": ["interval", "count", "add"]}}`
+and might later produce asynchronous messages such as:
+`{"params": {"first_clock": 179601081, "first_time": 8.98,
+"first_position": 0, "last_clock": 219686097, "last_time": 10.984,
+"data": [[179601081, 1, 0], [29573, 2, -8685], [16230, 4, -1525],
+[10559, 6, -160], [10000, 976, 0], [10000, 1000, 0], [10000, 1000, 0],
+[10000, 1000, 0], [9855, 5, 187], [11632, 4, 1534], [20756, 2, 9442]]}}`
+
+The "header" field in the initial query response is used to describe
+the fields found in later "data" responses.
+
+### motion_report/dump_trapq
+
+This endpoint is used to subscribe to Klipper's internal "trapezoid
+motion queue". Obtaining these low-level motion updates may be useful
+for diagnostic and debugging purposes. Using this endpoint may
+increase Klipper's system load.
+
+A request may look like:
+`{"id": 123, "method": "motion_report/dump_trapq", "params":
+{"name": "toolhead", "response_template":{}}}`
+and might return:
+`{"id": 1, "result": {"header": ["time", "duration",
+"start_velocity", "acceleration", "start_position", "direction"]}}`
+and might later produce asynchronous messages such as:
+`{"params": {"data": [[4.05, 1.0, 0.0, 0.0, [300.0, 0.0, 0.0],
+[0.0, 0.0, 0.0]], [5.054, 0.001, 0.0, 3000.0, [300.0, 0.0, 0.0],
+[-1.0, 0.0, 0.0]]]}}`
+
+The "header" field in the initial query response is used to describe
+the fields found in later "data" responses.
+
+### adxl345/dump_adxl345
+
+This endpoint is used to subscribe to ADXL345 accelerometer data.
+Obtaining these low-level motion updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.
+
+A request may look like:
+`{"id": 123, "method":"adxl345/dump_adxl345",
+"params": {"sensor": "adxl345", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","x_acceleration","y_acceleration",
+"z_acceleration"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"overflows":0,"data":[[3292.432935,-535.44309,-1529.8374,9561.4],
+[3292.433256,-382.45935,-1606.32927,9561.48375]]}}`
+
+The "header" field in the initial query response is used to describe
+the fields found in later "data" responses.
 
 ### pause_resume/cancel
 

@@ -1,8 +1,10 @@
+# Probe calibration
+
 This document describes the method for calibrating the x, y, and z
 offsets of an "automatic z probe" in Klipper. This is useful for users
 that have a `[probe]` or `[bltouch]` section in their config file.
 
-# Calibrating probe X and Y offsets
+## Calibrating probe X and Y offsets
 
 To calibrate the X and Y offset, navigate to the OctoPrint "Control"
 tab, home the printer, and then use the OctoPrint jogging buttons to
@@ -41,7 +43,7 @@ Update the printer.cfg file with the given values, remove the
 tape/marks from the bed, and then issue a `RESTART` command so that
 the new values take effect.
 
-# Calibrating probe Z offset
+## Calibrating probe Z offset
 
 Providing an accurate probe z_offset is critical to obtaining high
 quality prints. The z_offset is the distance between the nozzle and
@@ -85,7 +87,7 @@ If the results of PROBE_CALIBRATE are invalidated, then any previous
 also invalidated - it will be necessary to rerun BED_MESH_CALIBRATE
 after recalibrating the probe.
 
-# Repeatability check
+## Repeatability check
 
 After calibrating the probe X, Y, and Z offsets it is a good idea to
 verify that the probe provides repeatable results. Start by homing the
@@ -143,7 +145,7 @@ bed leveling. Klipper has several manual probing tools that can be
 used instead - see the [Bed Level document](Bed_Level.md) for further
 details.
 
-# Location Bias Check
+## Location Bias Check
 
 Some probes can have a systemic bias that corrupts the results of the
 probe at certain toolhead locations. For example, if the probe mount
@@ -177,7 +179,7 @@ maximum reported z_offset is greater than 25 microns (.025mm) then the
 probe is not suitable for typical bed leveling procedures. See the
 [Bed Level document](Bed_Level.md) for manual probe alternatives.
 
-# Temperature Bias
+## Temperature Bias
 
 Many probes have a systemic bias when probing at different
 temperatures. For example, the probe may consistently trigger at a

@@ -30,7 +30,7 @@ class BLTouchEndstopWrapper:
                                             self.handle_connect)
         self.printer.register_event_handler('klippy:mcu_identify',
                                             self.handle_mcu_identify)
-        self.position_endstop = config.getfloat('z_offset')
+        self.position_endstop = config.getfloat('z_offset', minval=0.)
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
         self.probe_touch_mode = config.getboolean('probe_with_touch_mode',
@@ -116,7 +116,8 @@ class BLTouchEndstopWrapper:
         self.mcu_endstop.home_start(self.action_end_time, ENDSTOP_SAMPLE_TIME,
                                     ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME,
                                     triggered=triggered)
-        return self.mcu_endstop.home_wait(self.action_end_time + 0.100)
+        trigger_time = self.mcu_endstop.home_wait(self.action_end_time + 0.100)
+        return trigger_time > 0.
     def raise_probe(self):
         self.sync_mcu_print_time()
         if not self.pin_up_not_triggered:

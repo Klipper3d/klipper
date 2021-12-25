@@ -1,6 +1,6 @@
 # Virtual pin that propagates its changes to multiple output pins
 #
-# Copyright (C) 2017,2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -13,7 +13,7 @@ class PrinterMultiPin:
         except ppins.error:
             pass
         self.pin_type = None
-        self.pin_list = [pin.strip() for pin in config.get('pins').split(',')]
+        self.pin_list = config.getlist('pins')
         self.mcu_pins = []
     def setup_pin(self, pin_type, pin_params):
         ppins = self.printer.lookup_object('pins')

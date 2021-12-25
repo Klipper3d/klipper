@@ -1,17 +1,18 @@
-# Add a comment to github issues marked with the invalid label
-name: "Add comment to issues marked invalid"
+# Add a comment to github issues marked with the "not on github" label
+name: "Add comment to issues marked 'not on github'"
 on:
   issues:
       types: [labeled]
 jobs:
   comment:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            if (context.payload.label.name != "invalid")
+            if (context.payload.label.name != "not on github")
               return;
             msg = "It looks like this ticket is a request for help"
                 + " (or similar)."

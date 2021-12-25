@@ -1,6 +1,6 @@
-// Code to setup clocks and gpio on stm32f2/stm32f4
+// Code to setup clocks on stm32f2/stm32f4
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -11,6 +11,11 @@
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
+
+
+/****************************************************************
+ * Clock setup
+ ****************************************************************/
 
 #define FREQ_PERIPH_DIV (CONFIG_MACH_STM32F401 ? 2 : 4)
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
@@ -24,10 +29,17 @@ enable_pclock(uint32_t periph_base)
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         RCC->APB1ENR |= (1<<pos);
         RCC->APB1ENR;
+        RCC->APB1RSTR |= (1<<pos);
+        RCC->APB1RSTR &= ~(1<<pos);
     } else if (periph_base < AHB1PERIPH_BASE) {
         uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
         RCC->APB2ENR |= (1<<pos);
         RCC->APB2ENR;
+        // Skip ADC peripheral reset as they share a bit
+        if (pos < 8 || pos > 10) {
+            RCC->APB2RSTR |= (1<<pos);
+            RCC->APB2RSTR &= ~(1<<pos);
+        }
     } else if (periph_base < AHB2PERIPH_BASE) {
         uint32_t pos = (periph_base - AHB1PERIPH_BASE) / 0x400;
         RCC->AHB1ENR |= (1<<pos);
@@ -68,52 +80,6 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHB1ENR;
 }
 
-// Set the mode and extended function of a pin
-void
-gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
-{
-    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
-
-    // Enable GPIO clock
-    gpio_clock_enable(regs);
-
-    // Configure GPIO
-    uint32_t mode_bits = mode & 0xf, func = (mode >> 4) & 0xf, od = mode >> 8;
-    uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
-    uint32_t pos = gpio % 16, af_reg = pos / 8;
-    uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
-    uint32_t m_shift = pos * 2, m_msk = 0x03 << m_shift;
-
-    regs->AFR[af_reg] = (regs->AFR[af_reg] & ~af_msk) | (func << af_shift);
-    regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
-    regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
-    regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
-    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (0x02 << m_shift);
-}
-
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
-#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
-
-// Handle USB reboot requests
-void
-usb_request_bootloader(void)
-{
-    irq_disable();
-    if (CONFIG_STM32_FLASH_START_4000) {
-        // HID Bootloader
-        RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-        RCC->APB1ENR;
-        PWR->CR |= PWR_CR_DBP;
-        // HID Bootloader magic key
-        RTC->BKP4R = 0x424C;
-        PWR->CR &= ~PWR_CR_DBP;
-    } else {
-        // System DFU Bootloader
-        *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
-    }
-    NVIC_SystemReset();
-}
-
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif
@@ -144,8 +110,7 @@ enable_clock_stm32f20x(void)
 static void
 enable_clock_stm32f40x(void)
 {
-#if CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407 \
-    || CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F429
+#if CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F4x5
     uint32_t pll_base = (CONFIG_STM32_CLOCK_REF_25M) ? 1000000 : 2000000;
     uint32_t pllp = (CONFIG_MACH_STM32F401) ? 4 : 2;
     uint32_t pll_freq = CONFIG_CLOCK_FREQ * pllp, pllcfgr;
@@ -222,8 +187,7 @@ clock_setup(void)
     // Configure and enable PLL
     if (CONFIG_MACH_STM32F207)
         enable_clock_stm32f20x();
-    else if (CONFIG_MACH_STM32F405 || CONFIG_MACH_STM32F407
-            || CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F429)
+    else if (CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F4x5)
         enable_clock_stm32f40x();
     else
         enable_clock_stm32f446();
@@ -245,20 +209,77 @@ clock_setup(void)
         ;
 }
 
+
+/****************************************************************
+ * USB bootloader
+ ****************************************************************/
+
+// Reboot into USB "HID" bootloader
+static void
+usb_hid_bootloader(void)
+{
+    irq_disable();
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    RCC->APB1ENR;
+    PWR->CR |= PWR_CR_DBP;
+    RTC->BKP4R = 0x424C; // HID Bootloader magic key
+    PWR->CR &= ~PWR_CR_DBP;
+    NVIC_SystemReset();
+}
+
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
+// Flag that bootloader is desired and reboot
+static void
+usb_reboot_for_dfu_bootloader(void)
+{
+    irq_disable();
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
+}
+
+// Check if rebooting into system DFU Bootloader
+static void
+check_usb_dfu_bootloader(void)
+{
+    if (!CONFIG_USBSERIAL || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
+        return;
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
+    uint32_t *sysbase = (uint32_t*)0x1fff0000;
+    asm volatile("mov sp, %0\n bx %1"
+                 : : "r"(sysbase[0]), "r"(sysbase[1]));
+}
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+    if (CONFIG_STM32_FLASH_START_4000)
+        usb_hid_bootloader();
+    usb_reboot_for_dfu_bootloader();
+}
+
+
+/****************************************************************
+ * Startup
+ ****************************************************************/
+
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void
 armcm_main(void)
 {
-    if (CONFIG_USBSERIAL && *(uint64_t*)USB_BOOT_FLAG_ADDR == USB_BOOT_FLAG) {
-        *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
-        uint32_t *sysbase = (uint32_t*)0x1fff0000;
-        asm volatile("mov sp, %0\n bx %1"
-                     : : "r"(sysbase[0]), "r"(sysbase[1]));
-    }
+    check_usb_dfu_bootloader();
 
     // Run SystemInit() and then restore VTOR
     SystemInit();
     SCB->VTOR = (uint32_t)VectorTable;
+
+    // Reset peripheral clocks (for some bootloaders that don't)
+    RCC->AHB1ENR = 0x38000;
+    RCC->AHB2ENR = 0;
+    RCC->APB1ENR = 0;
+    RCC->APB2ENR = 0;
 
     clock_setup();
 

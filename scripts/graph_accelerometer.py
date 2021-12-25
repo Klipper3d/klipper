@@ -5,12 +5,12 @@
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import optparse, os, sys
+import importlib, optparse, os, sys
 from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                             '..', 'klippy', 'extras'))
-from shaper_calibrate import ShaperCalibrate
+                             '..', 'klippy'))
+shaper_calibrate = importlib.import_module('.shaper_calibrate', 'extras')
 
 MAX_TITLE_LENGTH=65
 
@@ -56,7 +56,7 @@ def plot_accel(data, logname):
 
 # Calculate estimated "power spectral density"
 def calc_freq_response(data, max_freq):
-    helper = ShaperCalibrate(printer=None)
+    helper = shaper_calibrate.ShaperCalibrate(printer=None)
     return helper.process_accelerometer_data(data)
 
 def calc_specgram(data, axis):
@@ -155,7 +155,7 @@ def plot_specgram(data, logname, max_freq, axis):
 ######################################################################
 
 def write_frequency_response(datas, output):
-    helper = ShaperCalibrate(printer=None)
+    helper = shaper_calibrate.ShaperCalibrate(printer=None)
     calibration_data = helper.process_accelerometer_data(datas[0])
     for data in datas[1:]:
         calibration_data.add_data(helper.process_accelerometer_data(data))

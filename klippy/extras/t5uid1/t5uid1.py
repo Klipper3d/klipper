@@ -134,10 +134,14 @@ class T5UID1:
         self._notification_sound = config.getint('notification_sound',
             firmware_cfg['notification_sound'], minval=-1, maxval=255)
 
-        self._x_min_inset = config.getfloat('x_min_inset', DEFAULT_INSET, minval=0.0)
-        self._x_max_inset = config.getfloat('x_max_inset', DEFAULT_INSET, minval=0.0)
-        self._y_min_inset = config.getfloat('y_min_inset', DEFAULT_INSET, minval=0.0)
-        self._y_max_inset = config.getfloat('y_max_inset', DEFAULT_INSET, minval=0.0)
+        self._x_min_inset = config.getfloat('x_min_inset', DEFAULT_INSET,
+                                            minval=0.0)
+        self._x_max_inset = config.getfloat('x_max_inset', DEFAULT_INSET,
+                                            minval=0.0)
+        self._y_min_inset = config.getfloat('y_min_inset', DEFAULT_INSET,
+                                            minval=0.0)
+        self._y_max_inset = config.getfloat('y_max_inset', DEFAULT_INSET,
+                                            minval=0.0)
         self._x_min = config.getfloat('x_min', None)
         self._x_max = config.getfloat('x_max', None)
         self._y_min = config.getfloat('y_min', None)

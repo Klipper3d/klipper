@@ -79,12 +79,22 @@ class VirtualSD:
                 logging.exception("virtual_sdcard get_file_list")
                 raise self.gcode.error("Unable to get file list")
     def get_status(self, eventtime):
-        progress = 0.
+        return {
+            'file_path': self.file_path(),
+            'progress': self.progress(),
+            'is_active': self.is_active(),
+            'file_position': self.file_position,
+            'file_size': self.file_size,
+        }
+    def file_path(self):
+        if self.current_file:
+            return self.current_file.name
+        return None
+    def progress(self):
         if self.file_size:
-            progress = float(self.file_position) / self.file_size
-        is_active = self.is_active()
-        return {'progress': progress, 'is_active': is_active,
-                'file_position': self.file_position}
+            return float(self.file_position) / self.file_size
+        else:
+            return 0.
     def is_active(self):
         return self.work_timer is not None
     def do_pause(self):
@@ -167,7 +177,7 @@ class VirtualSD:
             if fname not in flist:
                 fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
-            f = open(fname, 'rb')
+            f = open(fname, 'r')
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
