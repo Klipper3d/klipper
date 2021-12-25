@@ -91,6 +91,7 @@ gpio_adc_setup(uint32_t pin)
             ;
         // Enable ADC
         adc->ISR = ADC_ISR_ADRDY;
+        adc->ISR; // Dummy read to make sure write is flushed
         adc->CR = CR_FLAGS | ADC_CR_ADEN;
         while (!(adc->ISR & ADC_ISR_ADRDY))
             ;
