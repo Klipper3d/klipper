@@ -1,18 +1,19 @@
-// Code to setup clocks and gpio on stm32h7
+// Code to setup clocks on stm32h7
 //
 // Copyright (C) 2020 Konstantin Vogel <konstantin.vogel@gmx.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-
-// I2C is not supported
-
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
-#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
+
+
+/****************************************************************
+ * Clock setup
+ ****************************************************************/
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 
@@ -99,45 +100,9 @@ get_pclock_frequency(uint32_t periph_base)
 void
 gpio_clock_enable(GPIO_TypeDef *regs)
 {
-    enable_pclock((uint32_t)regs);
-}
-
-#define STM_OSPEED 0x2 // ~85Mhz at 50pF
-
-// Set the mode and extended function of a pin
-void
-gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
-{
-    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
-
-    // Enable GPIO clock
-    gpio_clock_enable(regs);
-
-    // Configure GPIO
-    uint32_t mode_bits = mode & 0xf, func = (mode >> 4) & 0xf, od = mode >> 8;
-    uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
-    uint32_t pos = gpio % 16, af_reg = pos / 8;
-    uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
-    uint32_t m_shift = pos * 2, m_msk = 0x03 << m_shift;
-
-    regs->AFR[af_reg] = (regs->AFR[af_reg] & ~af_msk) | (func << af_shift);
-    regs->MODER = (regs->MODER & ~m_msk) | (mode_bits << m_shift);
-    regs->PUPDR = (regs->PUPDR & ~m_msk) | (pup << m_shift);
-    regs->OTYPER = (regs->OTYPER & ~(1 << pos)) | (od << pos);
-    regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (STM_OSPEED << m_shift);
-}
-
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
-#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
-
-// Handle USB reboot requests
-void
-usb_request_bootloader(void)
-{
-    irq_disable();
-    // System DFU Bootloader
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
-    NVIC_SystemReset();
+    uint32_t pos = ((uint32_t)regs - D3_APB1PERIPH_BASE) / 0x400;
+    RCC->APB4ENR |= (1<<pos);
+    RCC->APB4ENR;
 }
 
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
@@ -257,13 +222,28 @@ clock_setup(void)
     }
 }
 
+
+/****************************************************************
+ * USB bootloader
+ ****************************************************************/
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+}
+
+
+/****************************************************************
+ * Startup
+ ****************************************************************/
+
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void
 armcm_main(void)
 {
     // Run SystemInit() and then restore VTOR
     SystemInit();
-
     SCB->VTOR = (uint32_t)VectorTable;
 
     clock_setup();
