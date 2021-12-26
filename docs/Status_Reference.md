@@ -100,7 +100,7 @@ The following information is available in the
 
 The following information is available in
 [gcode_macro <config_name>](Config_Reference.md#gcode_macro) objects:
-- `<variable>`: The current value of a
+- `<variable_name>`: The current value of a
   [gcode_macro variable](Command_Templates.md#variables).
 
 ## gcode_move
