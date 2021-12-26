@@ -72,7 +72,7 @@ class FrameExpansionCompensator:
 
         _warn_msg = '''IMPORTANT!
         This Klipper branch is deprecated and will no longer be maintained.
-        
+
         Please use the Moonraker plug-in version available at:
         https://github.com/alchemyEngine/klipper_frame_expansion_comp
         '''
