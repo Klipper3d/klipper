@@ -62,8 +62,8 @@ The following information is available in the
 
 The following information is available in
 [fan](Config_Reference.md#fan),
-[heater_fan some_name](Config_Reference.md#heater_fan) and
-[controller_fan some_name](Config_Reference.md#controller_fan)
+[heater_fan <some name>](Config_Reference.md#heater_fan) and
+[controller_fan <some name>](Config_Reference.md#controller_fan)
 objects:
 - `speed`: The fan speed as a float between 0.0 and 1.0.
 - `rpm`: The measured fan speed in rotations per minute if the fan has
@@ -72,7 +72,7 @@ objects:
 ## filament_switch_sensor
 
 The following information is available in
-[filament_switch_sensor some_name](Config_Reference.md#filament_switch_sensor)
+[filament_switch_sensor <some name>](Config_Reference.md#filament_switch_sensor)
 objects:
 - `enabled`: Returns True if the switch sensor is currently enabled.
 - `filament_detected`: Returns True if the sensor is in a triggered
@@ -81,7 +81,7 @@ objects:
 ## filament_motion_sensor
 
 The following information is available in
-[filament_motion_sensor some_name](Config_Reference.md#filament_motion_sensor)
+[filament_motion_sensor <some name>](Config_Reference.md#filament_motion_sensor)
 objects:
 - `enabled`: Returns True if the motion sensor is currently enabled.
 - `filament_detected`: Returns True if the sensor is in a triggered
@@ -99,7 +99,7 @@ The following information is available in the
 ## gcode_macro
 
 The following information is available in
-[gcode_macro some_name](Config_Reference.md#gcode_macro) objects:
+[gcode_macro <some name>](Config_Reference.md#gcode_macro) objects:
 - `<variable>`: The current value of a
   [gcode_macro variable](Command_Templates.md#variables).
 
@@ -183,7 +183,7 @@ is always available):
 
 The following information is available in
 [mcu](Config_Reference.md#mcu) and
-[mcu some_name](Config_Reference.md#mcu-my_extra_mcu) objects:
+[mcu <some name>](Config_Reference.md#mcu-my_extra_mcu) objects:
 - `mcu_version`: The Klipper code version reported by the
   micro-controller.
 - `mcu_build_versions`: Information on the build tools used to
@@ -210,7 +210,7 @@ is defined):
 ## output_pin
 
 The following information is available in
-[output_pin some_name](Config_Reference.md#output_pin) objects:
+[output_pin <some name>](Config_Reference.md#output_pin) objects:
 - `value`: The "value" of the pin, as set by a `SET_PIN` command.
 
 ## palette2
@@ -274,7 +274,7 @@ The following information is available in the `query_endstops` object
 ## servo
 
 The following information is available in
-[servo some_name](Config_Reference.md#servo) objects:
+[servo <some name>](Config_Reference.md#servo) objects:
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
 
@@ -289,11 +289,11 @@ The following information is available in the `system_stats` object
 
 The following information is available in
 
-[bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
-[htu21d config_section_name](Config_Reference.md#htu21d-sensor),
-[lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
+[bme280 <config section name>](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
+[htu21d <config section name>](Config_Reference.md#htu21d-sensor),
+[lm75 <config section name>](Config_Reference.md#lm75-temperature-sensor),
 and
-[temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
+[temperature_host <config section name>](Config_Reference.md#host-temperature-sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`, `pressure`, `gas`: The last read values from the sensor
@@ -302,7 +302,7 @@ objects:
 ## temperature_fan
 
 The following information is available in
-[temperature_fan some_name](Config_Reference.md#temperature_fan)
+[temperature_fan <some name>](Config_Reference.md#temperature_fan)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `target`: The target temperature for the fan.
@@ -310,7 +310,7 @@ objects:
 ## temperature_sensor
 
 The following information is available in
-[temperature_sensor some_name](Config_Reference.md#temperature_sensor)
+[temperature_sensor <some name>](Config_Reference.md#temperature_sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `measured_min_temp`, `measured_max_temp`: The lowest and highest
@@ -397,8 +397,8 @@ object is available if z_tilt is defined):
 
 ## neopixel / dotstar
 
-The following information is available for each `[neopixel led_name]` and
-`[dotstar led_name]` defined in printer.cfg:
+The following information is available for each `[neopixel <led_name>]` and
+`[dotstar <led_name>]` defined in printer.cfg:
 - `color_data`:  An array of objects, with each object containing the RGBW
   values for a led in the chain.  Note that not all configurations will contain
   a white value.  Each value is represented as a float from 0 to 1.  For
