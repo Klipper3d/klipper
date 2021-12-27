@@ -19,6 +19,7 @@ TYPE_K_INVERSE = [
 ]
 TYPE_K_A = [0.118597600000E+00, -0.118343200000E-03, 0.126968600000E+03]
 
+
 # Analog voltage to temperature converter for thermocouple
 class Thermocouple:
     def __init__(self, gain, offset, vin, cj_temp):
@@ -31,12 +32,15 @@ class Thermocouple:
         return TYPE_K_A[0] * math.exp(TYPE_K_A[1] * (temp - TYPE_K_A[2])**2)
 
     def v_to_temp(self, v):
-        return sum(
-            [coeff * (v*1000.0)**n for n, coeff in enumerate(TYPE_K_COEFFEICIENTS)])
+        return sum([
+            coeff * (v * 1000.0)**n
+            for n, coeff in enumerate(TYPE_K_COEFFEICIENTS)
+        ])
 
     def temp_to_v(self, temp):
-        return 0.001*(sum([(coeff * temp**n) for n, coeff in enumerate(TYPE_K_INVERSE)
-                    ]) + self.get_exp(temp))
+        return 0.001 * (sum([(coeff * temp**n)
+                             for n, coeff in enumerate(TYPE_K_INVERSE)]) +
+                        self.get_exp(temp))
 
     def calc_temp(self, adc):
         adc_val = max(.00001, min(.99999, adc))
@@ -58,6 +62,7 @@ class Thermocouple:
         adc_val = max(.00001, min(.99999, adc_val))
         return adc_val
 
+
 # Create an ADC converter with a thermocouple
 def PrinterThermocouple(config):
     gain = config.getfloat('gain', 101.0)
@@ -68,8 +73,10 @@ def PrinterThermocouple(config):
     thermocouple = Thermocouple(gain, offset, vin, cj_temp)
     return adc_temperature.PrinterADCtoTemperature(config, thermocouple)
 
+
 # Default sensors
 Sensors = ["Type K"]
+
 
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
