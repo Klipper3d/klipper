@@ -288,7 +288,6 @@ The following information is available in the `system_stats` object
 ## temperature sensors
 
 The following information is available in
-
 [bme280 <config_name>](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
 [htu21d <config_name>](Config_Reference.md#htu21d-sensor),
 [lm75 <config_name>](Config_Reference.md#lm75-temperature-sensor),
