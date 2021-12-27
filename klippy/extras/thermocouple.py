@@ -32,11 +32,11 @@ class Thermocouple:
 
     def v_to_temp(self, v):
         return sum(
-            [coeff * (v/1000.0)**n for n, coeff in enumerate(TYPE_K_COEFFEICIENTS)])
+            [coeff * (v*1000.0)**n for n, coeff in enumerate(TYPE_K_COEFFEICIENTS)])
 
     def temp_to_v(self, temp):
-        return 1000.0*sum([(coeff * temp**n) for n, coeff in enumerate(TYPE_K_INVERSE)
-                    ]) + self.get_exp(temp)
+        return 0.001*(sum([(coeff * temp**n) for n, coeff in enumerate(TYPE_K_INVERSE)
+                    ]) + self.get_exp(temp))
 
     def calc_temp(self, adc):
         adc_val = max(.00001, min(.99999, adc))
@@ -48,9 +48,9 @@ class Thermocouple:
         temp = self.v_to_temp(v_in + v_cj)
         return temp
 
-    # We do not know the cj temp at the time of setting limits, setting to 35
+    # We do not know the cj temp at the time of setting limits, setting to 30
     def calc_adc(self, temp):
-        cj_temp = 35
+        cj_temp = 30
         v_in = self.temp_to_v(temp - cj_temp)
         v_opamp = v_in + self.offset
         v_adc = (v_opamp * self.gain)
