@@ -26,6 +26,11 @@ plugins:
   - exclude:
       glob:
         - README.md
+  - i18n:
+      default_language: en
+      languages:
+        en: English
+        zh: 简体中文
 
 # Website layout configuration (using mkdocs-material theme)
 theme:
