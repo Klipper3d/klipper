@@ -40,8 +40,12 @@ class recore:
                     pin = ppins.setup_pin('endstop', pin_name)
                 else:
                     pin = ppins.setup_pin('digital_out', pin_name)
-                    pin.setup_start_value(start_value=0.,
-                                          shutdown_value=0.,
+                    if self.revision == 'A6':
+                        value = 1.0
+                    else:
+                        value = 0.0
+                    pin.setup_start_value(start_value=value,
+                                          shutdown_value=value,
                                           is_static=True)
 
                 pullup = config.get('pullup_t' + str(idx), '1')
@@ -55,6 +59,18 @@ class recore:
                     pin.setup_start_value(start_value=1.,
                                           shutdown_value=1.,
                                           is_static=True)
+                if self.revision == 'A6':
+                    offset = config.get('offset_t' + str(idx), '1')
+                    if offset not in ['0', '1']:
+                        raise Exception("Offset not 0 or 1")
+                    pin_name = "ar100:OFFSET_ENABLE_T" + str(idx)
+                    if offset == '0':
+                        pin = ppins.setup_pin('endstop', pin_name)
+                    else:
+                        pin = ppins.setup_pin('digital_out', pin_name)
+                        pin.setup_start_value(start_value=1.,
+                                              shutdown_value=1.,
+                                              is_static=True)
 
 def load_config(config):
     return recore(config)
