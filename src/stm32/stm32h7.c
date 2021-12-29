@@ -100,9 +100,9 @@ get_pclock_frequency(uint32_t periph_base)
 void
 gpio_clock_enable(GPIO_TypeDef *regs)
 {
-    uint32_t pos = ((uint32_t)regs - D3_APB1PERIPH_BASE) / 0x400;
-    RCC->APB4ENR |= (1<<pos);
-    RCC->APB4ENR;
+    uint32_t pos = ((uint32_t)regs - D3_AHB1PERIPH_BASE) / 0x400;
+    RCC->AHB4ENR |= (1<<pos);
+    RCC->AHB4ENR;
 }
 
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
