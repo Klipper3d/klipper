@@ -2547,7 +2547,8 @@ pin:
 Neopixel (aka WS2812) LED support (one may define any number of
 sections with a "neopixel" prefix). One may set the LED color via
 "SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
+[g-code commands](G-Codes.md#neopixel-and-dotstar-commands). 
+Note: Neopixel is not supported on "linux mcu", aka Rasppberry Pi MCU implementation of Klipper. 
 
 ```
 [neopixel my_neopixel]
