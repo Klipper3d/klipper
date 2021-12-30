@@ -46,8 +46,7 @@ BOARD_DEFS = {
     },
     'btt-skr-pro': {
         'mcu': "stm32f407xx",
-        'spi_bus': "swspi",
-        'spi_pins': "PA6,PB5,PA5",
+        'spi_bus': "spi1b",
         "cs_pin": "PA4"
     },
     'btt-gtr': {
