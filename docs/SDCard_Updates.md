@@ -127,8 +127,7 @@ and the following additional field should be specified:
   the SD Card in the format of `miso,mosi,sclk`.
 
 It should be exceedingly rare that Software SPI is necessary, typically only
-boards with design errors will require it. The `btt-skr-pro` board definition
-provides an example.
+boards with design errors will require it.
 
 Prior to creating a new board definition one should check to see if an
 existing board definition meets the criteria necessary for the new board.
