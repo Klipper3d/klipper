@@ -196,10 +196,12 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
                  || gpio == GPIO('C', 8) || gpio == GPIO('C', 9))
             stm32f1_alternative_remap(AFIO_MAPR_TIM3_REMAP_Msk,
                                       AFIO_MAPR_TIM3_REMAP_FULLREMAP);
+#if !CONFIG_MACH_STM32F103x6
         else if (gpio == GPIO('D', 12) || gpio == GPIO('D', 13)
                  || gpio == GPIO('D', 14) || gpio == GPIO('D', 15))
             stm32f1_alternative_remap(AFIO_MAPR_TIM4_REMAP_Msk,
                                       AFIO_MAPR_TIM4_REMAP);
+#endif
     } else if (func == 4) {
         // I2C
         if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
@@ -219,9 +221,11 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         else if (gpio == GPIO('D', 5) || gpio == GPIO('D', 6))
             stm32f1_alternative_remap(AFIO_MAPR_USART2_REMAP_Msk,
                                       AFIO_MAPR_USART2_REMAP);
+#if !CONFIG_MACH_STM32F103x6
         else if (gpio == GPIO('D', 8) || gpio == GPIO('D', 9))
             stm32f1_alternative_remap(AFIO_MAPR_USART3_REMAP_Msk,
                                       AFIO_MAPR_USART3_REMAP_FULLREMAP);
+#endif
     } else if (func == 9) {
         // CAN
         if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
