@@ -77,7 +77,7 @@ too little RAM, the installation may fail and you will need to enable swap.
 Next, run the following commands to install the additional dependencies:
 ```
 sudo apt update
-sudo apt install python-numpy python-matplotlib
+sudo apt install python3-numpy python3-matplotlib
 ```
 
 Afterwards, check and follow the instructions in the

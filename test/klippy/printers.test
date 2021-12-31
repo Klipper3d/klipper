@@ -194,6 +194,10 @@ CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
 DICTIONARY stm32g0b1.dict
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 
+# Printers using the rp2040
+DICTIONARY rp2040.dict
+CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
+
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
 CONFIG ../../config/generic-cramps.cfg
