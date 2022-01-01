@@ -489,7 +489,7 @@ is enabled (also see the
   This command will invoke the bed screws adjustment tool. It will command the
   nozzle to different locations (as defined in the config file)
   probing the z height and calculate the number of knob turns to
-  adjust the bed level. 
+  adjust the bed level.
   - If DIRECTION is specified, the knob turns will all
   be in the same direction, clockwise (CW) or counterclockwise (CCW).
   See the PROBE command for details on the optional probe parameters.
