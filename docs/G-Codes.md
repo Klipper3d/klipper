@@ -979,7 +979,7 @@ is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)).
 
 #### SCREWS_TILT_CALCULATE
-`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW]
+`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=<value>]
 [<probe_parameter>=<value>]`: This command will invoke the bed screws
 adjustment tool. It will command the nozzle to different locations (as
 defined in the config file) probing the z height and calculate the
@@ -987,7 +987,7 @@ number of knob turns to adjust the bed level. If DIRECTION is
 specified, the knob turns will all be in the same direction, clockwise
 (CW) or counterclockwise (CCW). See the PROBE command for details on
 the optional probe parameters. IMPORTANT: You MUST always do a G28
-before using this command.
+before using this command. If MAX_DEVIATION is specified, the command will raise a gcode error if any difference in the screw height relative to the base screw height is greater than the value provided.
 
 ### [sdcard_loop]
 
