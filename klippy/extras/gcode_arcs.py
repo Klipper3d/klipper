@@ -40,7 +40,7 @@ class ArcSupport:
             raise gcmd.error("G2/G3 neither I nor J given")
         asE = gcmd.get_float("E", None)
         asF = gcmd.get_float("F", None)
-        clockwise = (gcmd.get_command() == 'G2')
+        clockwise = gcmd.get_command().startswith("G2")
 
         # Build list of linear coordinates to move to
         coords = self.planArc(currentPos, [asX, asY, asZ], [asI, asJ],
