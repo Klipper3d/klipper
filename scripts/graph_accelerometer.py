@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Generate adxl345 accelerometer graphs
 #
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>

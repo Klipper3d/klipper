@@ -21,7 +21,7 @@ DECL_ENUMERATION("spi_bus", "spi1", 1);
 DECL_CONSTANT_STR("BUS_PINS_spi1", "PA6,PA7,PA5");
 DECL_ENUMERATION("spi_bus", "spi1a", 2);
 DECL_CONSTANT_STR("BUS_PINS_spi1a", "PB4,PB5,PB3");
-#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4
+#if !CONFIG_MACH_STM32F1
  DECL_ENUMERATION("spi_bus", "spi2a", 3);
  DECL_CONSTANT_STR("BUS_PINS_spi2a", "PC2,PC3,PB10");
 #endif
@@ -41,7 +41,11 @@ DECL_CONSTANT_STR("BUS_PINS_spi1a", "PB4,PB5,PB3");
  #endif
 #endif
 
-#define SPI_FUNCTION GPIO_FUNCTION(CONFIG_MACH_STM32F0 ? 0 : 5)
+#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32G0
+ #define SPI_FUNCTION GPIO_FUNCTION(0)
+#else
+ #define SPI_FUNCTION GPIO_FUNCTION(5)
+#endif
 
 static const struct spi_info spi_bus[] = {
     { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION },
@@ -76,7 +80,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].function, 0);
 
         // Configure CR2 on stm32f0
-#if CONFIG_MACH_STM32F0
+#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32G0
         spi->CR2 = SPI_CR2_FRXTH | (7 << SPI_CR2_DS_Pos);
 #endif
     }

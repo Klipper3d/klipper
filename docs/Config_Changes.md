@@ -8,6 +8,16 @@ All dates in this document are approximate.
 
 ## Changes
 
+20211230: Scripts to tune input shaper (`scripts/calibrate_shaper.py`
+and `scripts/graph_accelerometer.py`) were migrated to use Python3
+by default. As a result, users must install Python3 versions of certain
+packages (e.g. `sudo apt install python3-numpy python3-matplotlib`) to
+continue using these scripts. For more details, refer to
+[Software installation](Measuring_Resonances.md#software-installation).
+Alternatively, users can temporarily force the execution of these scripts
+under Python 2 by explicitly calling Python2 interpretor in the console:
+`python2 ~/klipper/scripts/calibrate_shaper.py ...`
+
 20211110: The "NTC 100K beta 3950" temperature sensor is deprecated.
 This sensor will be removed in the near future.  Most users will find
 the "Generic 3950" temperature sensor more accurate.  To continue to
@@ -16,9 +26,10 @@ use the older (typically less accurate) definition, define a custom
 `resistance1: 100000`, and `beta: 3950`.
 
 20211104: The "step pulse duration" option in "make menuconfig" has
-been removed. A new `step_pulse_duration` setting in the
-[stepper config section](Config_Reference.md#stepper) should be set
-for all steppers that need a custom pulse duration.
+been removed. The default step duration for TMC drivers configured in
+UART or SPI mode is now 100ns. A new `step_pulse_duration` setting in
+the [stepper config section](Config_Reference.md#stepper) should be
+set for all steppers that need a custom pulse duration.
 
 20211102: Several deprecated features have been removed.  The stepper
 `step_distance` option has been removed (deprecated on 20201222).  The
