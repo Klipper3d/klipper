@@ -447,8 +447,8 @@ class MenuInput(MenuCommand):
                 config, 'input_min', str(self._input_min))
             self._input_max_tpl = manager.gcode_macro.load_template(
                 config, 'input_max', str(self._input_max))
-            self._input_step = config.getfloat(
-                'input_step', self._input_step, above=0.)
+            self._input_step = manager.gcode_macro.load_template(
+                config, 'input_step', str(self._input_step))
 
     def init(self):
         super(MenuInput, self).init()
