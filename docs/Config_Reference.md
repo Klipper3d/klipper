@@ -2553,7 +2553,7 @@ sections with a "neopixel" prefix). One may set the LED color via
 [neopixel my_neopixel]
 pin:
 #   The pin connected to the neopixel. This parameter must be
-#   provided.
+#   provided. linux mcu pins are not supported.
 #chain_count:
 #   The number of Neopixel chips that are "daisy chained" to the
 #   provided pin. The default is 1 (which indicates only a single
