@@ -1,4 +1,4 @@
-# SDCard updates
+# SDCard Updates via SSH
 
 Many of today's popular controller boards ship with a bootloader capable of
 updating firmware via SD Card.  While this is convenient in many

@@ -81,7 +81,7 @@ communication with the Klipper developers.
 
 - [Example configs](Example_Configs.md): Information on adding an
   example config file to Klipper.
-- [SDCard Updates](SDCard_Updates.md): Flash a micro-controller by
+- [SDCard Updates via SSH](SDCard_Updates.md): Flash a micro-controller by
   copying a binary to an sdcard in the micro-controller.
 - [Raspberry Pi as Micro-controller](RPi_microcontroller.md): Details
   for controlling devices wired to the GPIO pins of a Raspberry Pi.
