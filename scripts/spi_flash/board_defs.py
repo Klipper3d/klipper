@@ -61,6 +61,11 @@ BOARD_DEFS = {
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
     }
+    'monoprice-select-mini-v2': {
+        'mcu': "stm32f070xb",
+        'spi_bus': "spi1",
+        "cs_pin": "PA4"
+    }
 }
 
 ###########################################################
@@ -94,7 +99,8 @@ BOARD_ALIASES = {
     'mks-robin-e3d': BOARD_DEFS['mks-robin-e3'],
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
-    'fysetc-s6-v2': BOARD_DEFS['fysetc-spider']
+    'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
+    'monoprice-mini-delta': BOARD_DEFS['monoprice-select-mini-v2']
 }
 
 def list_boards():
