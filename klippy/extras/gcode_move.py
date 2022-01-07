@@ -36,6 +36,8 @@ class GCodeMove:
         gcode.register_command('M114', self.cmd_M114, True)
         gcode.register_command('GET_POSITION', self.cmd_GET_POSITION, True,
                                desc=self.cmd_GET_POSITION_help)
+        gcode.register_command('GET_MCU_POSITION', self.cmd_GET_MCU_POSITION, True,
+                               desc=self.cmd_GET_MCU_POSITION_help)
         self.Coord = gcode.Coord
         # G-Code coordinate manipulation
         self.absolute_coord = self.absolute_extrude = True
@@ -271,6 +273,20 @@ class GCodeMove:
                           "gcode homing: %s"
                           % (mcu_pos, stepper_pos, kin_pos, toolhead_pos,
                              gcode_pos, base_pos, homing_pos))
-
+    cmd_GET_MCU_POSITION_help = (
+        "Return information on the current location of the toolhead and MCU")
+    def cmd_GET_MCU_POSITION(self, gcmd):
+        toolhead = self.printer.lookup_object('toolhead', None)
+        if toolhead is None:
+            raise gcmd.error("Printer not ready")
+        kin = toolhead.get_kinematics()
+        steppers = kin.get_steppers()
+        mcu_pos = " ".join(["%s:%d" % (s.get_name(), s.get_mcu_position())
+                            for s in steppers])
+        toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
+            "XYZE", toolhead.get_position())])
+        gcmd.respond_info("mcu: %s\n"
+                          "toolhead: %s\n"
+                          % (mcu_pos, toolhead_pos))
 def load_config(config):
     return GCodeMove(config)
