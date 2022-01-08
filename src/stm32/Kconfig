@@ -99,7 +99,7 @@ config HAVE_STM32_USBOTG
     default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32H7
 config HAVE_STM32_CANBUS
     bool
-    default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F0x2
+    default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32F0x2
 
 config MCU
     string
@@ -314,25 +314,32 @@ choice
         depends on MACH_STM32H7
         select SERIAL
     config STM32_CANBUS_PA11_PA12
-        bool "CAN bus (on PA11/PA12)" if HAVE_STM32_CANBUS
+        bool "CAN bus (on PA11/PA12)"
+        depends on HAVE_STM32_CANBUS
         select CANSERIAL
     config STM32_CANBUS_PA11_PA12_REMAP
-        bool "CAN bus (on PA9/PA10)" if LOW_LEVEL_OPTIONS && MACH_STM32F042
+        bool "CAN bus (on PA9/PA10)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_CANBUS && MACH_STM32F042
         select CANSERIAL
     config STM32_CANBUS_PB8_PB9
-        bool "CAN bus (on PB8/PB9)" if LOW_LEVEL_OPTIONS && HAVE_STM32_CANBUS
+        bool "CAN bus (on PB8/PB9)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_CANBUS
         select CANSERIAL
     config STM32_CANBUS_PI9_PH13
-        bool "CAN bus (on PI9/PH13)" if LOW_LEVEL_OPTIONS && MACH_STM32F4
+        bool "CAN bus (on PI9/PH13)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_CANBUS && MACH_STM32F4
         select CANSERIAL
     config STM32_CANBUS_PB5_PB6
-        bool "CAN bus (on PB5/PB6)" if LOW_LEVEL_OPTIONS && MACH_STM32F4
+        bool "CAN bus (on PB5/PB6)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_CANBUS && MACH_STM32F4
         select CANSERIAL
     config STM32_CANBUS_PB12_PB13
-        bool "CAN bus (on PB12/PB13)" if LOW_LEVEL_OPTIONS && MACH_STM32F4
+        bool "CAN bus (on PB12/PB13)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_CANBUS && MACH_STM32F4
         select CANSERIAL
     config STM32_CANBUS_PD0_PD1
-        bool "CAN bus (on PD0/PD1)" if LOW_LEVEL_OPTIONS && MACH_STM32F4
+        bool "CAN bus (on PD0/PD1)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_CANBUS && MACH_STM32F4
         select CANSERIAL
 endchoice
 
