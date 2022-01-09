@@ -12,11 +12,11 @@ def __init__(self, config):
 	self.spi = bus.MCU_SPI_from_config(
 		config, 1, pin_option="enable_pin", default_speed=10000000)
 
-	channel = [0,3,2,1,0 ]
-
+channel = [0,3,2,1,0 ]
 	for i in range(5):
 		vref = config.getint('motor%d' % (i,), None, 
 				     minval=0., maxval=255)
+		
 		if vref is not None:
 			buff = 0x01 << 12
 			buff |= (channel[i]) << 14
