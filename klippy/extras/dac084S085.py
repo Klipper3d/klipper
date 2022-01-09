@@ -1,4 +1,3 @@
-#return dac084S085(config)
 #
 # SPI DAC DAC084S085 implementation for Alligator Board rev.2
 #
