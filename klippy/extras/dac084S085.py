@@ -16,15 +16,14 @@ class dac084S085:
 
 channel = [0,3,2,1,0 ]
         for i in range(5):
-            vref = config.getint('motor%d' % (i,), None,
+        vref = config.getint('motor%d' % (i,), None,
                                   minval=0., maxval=255)
-
-            if vref is not None:
-                buff = 0x01 << 12
-                buff |= (channel[i]) << 14
-                buff |= vref << 4
-                self.spi.spi_send([buff])
-                time.sleep(0.05)
+        if vref is not None:
+            buff = 0x01 << 12
+            buff |= (channel[i]) << 14
+            buff |= vref << 4
+            self.spi.spi_send([buff])
+            time.sleep(0.05)
 
 def load_config_prefix(config):
     return dac084S085(config)
