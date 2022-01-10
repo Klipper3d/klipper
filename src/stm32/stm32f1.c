@@ -1,6 +1,6 @@
 // Code to setup clocks and gpio on stm32f1
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -11,44 +11,26 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
+
+/****************************************************************
+ * Clock setup
+ ****************************************************************/
+
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 2)
 
-// Enable a peripheral clock
-void
-enable_pclock(uint32_t periph_base)
+// Map a peripheral address to its enable bits
+struct cline
+lookup_clock_line(uint32_t periph_base)
 {
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        RCC->APB1ENR |= (1<<pos);
-        RCC->APB1ENR;
-        RCC->APB1RSTR |= (1<<pos);
-        RCC->APB1RSTR &= ~(1<<pos);
-    } else if (periph_base < AHBPERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        RCC->APB2ENR |= (1<<pos);
-        RCC->APB2ENR;
-        RCC->APB2RSTR |= (1<<pos);
-        RCC->APB2RSTR &= ~(1<<pos);
+    if (periph_base >= AHBPERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - AHBPERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->AHBENR, .bit=bit};
+    } else if (periph_base >= APB2PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - APB2PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
     } else {
-        uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
-        RCC->AHBENR |= (1<<pos);
-        RCC->AHBENR;
-    }
-}
-
-// Check if a peripheral clock has been enabled
-int
-is_enabled_pclock(uint32_t periph_base)
-{
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        return RCC->APB1ENR & (1<<pos);
-    } else if (periph_base < AHBPERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        return RCC->APB2ENR & (1<<pos);
-    } else {
-        uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
-        return RCC->AHBENR & (1<<pos);
+        uint32_t bit = 1 << ((periph_base - APB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB1ENR, .rst=&RCC->APB1RSTR, .bit=bit};
     }
 }
 
@@ -68,7 +50,52 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->APB2ENR;
 }
 
-static void stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
+// Main clock setup called at chip startup
+static void
+clock_setup(void)
+{
+    // Configure and enable PLL
+    uint32_t cfgr;
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        // Configure 72Mhz PLL from external crystal (HSE)
+        RCC->CR |= RCC_CR_HSEON;
+        uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
+        cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
+        if ((div & 1) && div <= 16)
+            cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
+        else
+            div /= 2;
+        cfgr |= (div - 2) << RCC_CFGR_PLLMULL_Pos;
+    } else {
+        // Configure 72Mhz PLL from internal 8Mhz oscillator (HSI)
+        uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
+        cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
+                | ((div2 - 2) << RCC_CFGR_PLLMULL_Pos));
+    }
+    cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV8;
+    RCC->CFGR = cfgr;
+    RCC->CR |= RCC_CR_PLLON;
+
+    // Set flash latency
+    FLASH->ACR = (2 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
+
+    // Wait for PLL lock
+    while (!(RCC->CR & RCC_CR_PLLRDY))
+        ;
+
+    // Switch system clock to PLL
+    RCC->CFGR = cfgr | RCC_CFGR_SW_PLL;
+    while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
+        ;
+}
+
+
+/****************************************************************
+ * GPIO setup
+ ****************************************************************/
+
+static void
+stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
 {
     // The MAPR register is a mix of write only and r/w bits
     // We have to save the written values in a global variable
@@ -180,64 +207,49 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     }
 }
 
-// Handle USB reboot requests
-void
-usb_request_bootloader(void)
+
+/****************************************************************
+ * USB bootloader
+ ****************************************************************/
+
+// Reboot into USB "HID" bootloader
+static void
+usb_hid_bootloader(void)
 {
-    if (!(CONFIG_STM32_FLASH_START_2000 || CONFIG_STM32_FLASH_START_800))
-        return;
-    // Enter "stm32duino" or HID bootloader
     irq_disable();
     RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
     PWR->CR |= PWR_CR_DBP;
-    if (CONFIG_STM32_FLASH_START_800)
-        // HID Bootloader magic key
-        BKP->DR4 = 0x424C;
-    else
-        // stm32duino bootloader magic key
-        BKP->DR10 = 0x01;
+    BKP->DR4 = 0x424C; // HID Bootloader magic key
     PWR->CR &=~ PWR_CR_DBP;
     NVIC_SystemReset();
 }
 
-// Main clock setup called at chip startup
+// Reboot into USB "stm32duino" bootloader
 static void
-clock_setup(void)
+usb_stm32duino_bootloader(void)
 {
-    // Configure and enable PLL
-    uint32_t cfgr;
-    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
-        // Configure 72Mhz PLL from external crystal (HSE)
-        RCC->CR |= RCC_CR_HSEON;
-        uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
-        cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
-        if ((div & 1) && div <= 16)
-            cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
-        else
-            div /= 2;
-        cfgr |= (div - 2) << RCC_CFGR_PLLMULL_Pos;
-    } else {
-        // Configure 72Mhz PLL from internal 8Mhz oscillator (HSI)
-        uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
-        cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
-                | ((div2 - 2) << RCC_CFGR_PLLMULL_Pos));
-    }
-    cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV8;
-    RCC->CFGR = cfgr;
-    RCC->CR |= RCC_CR_PLLON;
-
-    // Set flash latency
-    FLASH->ACR = (2 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
-
-    // Wait for PLL lock
-    while (!(RCC->CR & RCC_CR_PLLRDY))
-        ;
-
-    // Switch system clock to PLL
-    RCC->CFGR = cfgr | RCC_CFGR_SW_PLL;
-    while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
-        ;
+    irq_disable();
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
+    PWR->CR |= PWR_CR_DBP;
+    BKP->DR10 = 0x01; // stm32duino bootloader magic key
+    PWR->CR &=~ PWR_CR_DBP;
+    NVIC_SystemReset();
 }
+
+// Handle USB reboot requests
+void
+usb_request_bootloader(void)
+{
+    if (CONFIG_STM32_FLASH_START_800)
+        usb_hid_bootloader();
+    else if (CONFIG_STM32_FLASH_START_2000)
+        usb_stm32duino_bootloader();
+}
+
+
+/****************************************************************
+ * Startup
+ ****************************************************************/
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void

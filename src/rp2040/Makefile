@@ -43,10 +43,11 @@ $(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/rp2040/elf2uf2/elf2uf2
 	@echo "  Creating uf2 file $@"
 	$(Q)$(OUT)lib/rp2040/elf2uf2/elf2uf2 $< $@
 
+lib/rp2040_flash/rp2040_flash:
+	@echo "  Building rp2040_flash"
+	$(Q)make -C lib/rp2040_flash rp2040_flash
+
 # Flash rules
-flash: $(OUT)klipper.uf2
-	@echo "Error: Flashing not supported on rp2040."
-	@echo "Place target board in bootloader mode (hold bootsel button"
-	@echo "during powerup), mount the device as a usb drive, and copy"
-	@echo "$< to the device."
-	@exit -1
+flash: $(OUT)klipper.uf2 lib/rp2040_flash/rp2040_flash
+	@echo "  Flashing $< to $(FLASH_DEVICE)"
+	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(OUT)klipper.uf2
