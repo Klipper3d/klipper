@@ -95,7 +95,7 @@ gcode:
   G90
   G0 Z15 F300
   {% for wipe in range(wipe_count) %}
-    {% for coordinate in [(275,4),(235,4)] %}
+    {% for coordinate in [(275, 4),(235, 4)] %}
       G0 X{coordinate[0]} Y{coordinate[1] + 0.25 * wipe} Z9.7 F12000
     {% endfor %}
   {% endfor %}
