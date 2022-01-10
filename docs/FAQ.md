@@ -136,7 +136,7 @@ feature when printing (see
 [config reference](Config_Reference.md#virtual_sdcard) for details).
 
 For running on the Beaglebone, see the
-[Beaglebone specific installation instructions](beaglebone.md).
+[Beaglebone specific installation instructions](Beaglebone.md).
 
 Klipper has been run on other machines. The Klipper host software only
 requires Python running on a Linux (or similar) computer. However, if
@@ -264,9 +264,9 @@ between the host machine and the micro-controller. Things to look for:
 - Use a good quality USB cable between the host machine and
   micro-controller. Make sure the plugs are secure.
 - If using a Raspberry Pi, use a
-  [good quality power supply](https://www.raspberrypi.org/documentation/hardware/raspberrypi/power/README.md)
+  [good quality power supply](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#power-supply)
   for the Raspberry Pi and use a
-  [good quality USB cable](https://www.raspberrypi.org/forums/viewtopic.php?p=589877#p589877)
+  [good quality USB cable](https://forums.raspberrypi.com/viewtopic.php?p=589877#p589877)
   to connect that power supply to the Pi. If you get "under voltage"
   warnings from OctoPrint, this is related to the power supply and it
   must be fixed.

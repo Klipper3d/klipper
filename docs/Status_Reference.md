@@ -138,7 +138,8 @@ The following information is available in the
 [hall_filament_width_sensor](Config_Reference.md#hall_filament_width_sensor)
 object:
 - `is_active`: Returns True if the sensor is currently active.
-- `Diameter`, `Raw`: The last read values from the sensor.
+- `Diameter`: The last reading from the sensor in mm.
+- `Raw`: The last raw ADC reading from the sensor.
 
 ## heater
 
@@ -396,6 +397,7 @@ object is available if z_tilt is defined):
   successfully.
 
 ## neopixel / dotstar
+
 The following information is available for each `[neopixel led_name]` and
 `[dotstar led_name]` defined in printer.cfg:
 - `color_data`:  An array of objects, with each object containing the RGBW

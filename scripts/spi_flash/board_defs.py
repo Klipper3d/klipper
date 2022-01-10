@@ -26,6 +26,11 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4"
     },
+    'btt-skr-mini-v3': {
+        'mcu': "stm32g0b1xx",
+        'spi_bus': "spi1",
+        "cs_pin": "PA4"
+    },
     'flyboard-mini': {
         'mcu': "stm32f103xe",
         'spi_bus': "spi2",
@@ -78,6 +83,7 @@ BOARD_ALIASES = {
     'btt-skr-mini-e3-v1': BOARD_DEFS['btt-skr-mini'],
     'btt-skr-mini-e3-v1.2': BOARD_DEFS['btt-skr-mini'],
     'btt-skr-mini-e3-v2': BOARD_DEFS['btt-skr-mini'],
+    'btt-skr-mini-e3-v3': BOARD_DEFS['btt-skr-mini-v3'],
     'btt-skr-mini-mz': BOARD_DEFS['btt-skr-mini'],
     'btt-skr-e3-dip': BOARD_DEFS['btt-skr-mini'],
     'btt002-v1': BOARD_DEFS['btt-skr-mini'],
