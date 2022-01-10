@@ -311,7 +311,6 @@ class PrinterExtruder:
     cmd_SYNC_EXTRUDER_STEPPERS_help = "Synchronize extruders steppers"
     def cmd_SYNC_EXTRUDER_STEPPERS(self, gcmd):
         name_master = gcmd.get('TO', None)
-        heater = self.get_heater()
         if name_master == self.name or name_master is None:
             # unsync
             self.sync_stepper(self.stepper)
