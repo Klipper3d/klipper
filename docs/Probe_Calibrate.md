@@ -1,6 +1,6 @@
 # Probe calibration
 
-This document describes the method for calibrating the x, y, and z
+This document describes the method for calibrating the X, Y, and Z
 offsets of an "automatic z probe" in Klipper. This is useful for users
 that have a `[probe]` or `[bltouch]` section in their config file.
 

@@ -21,47 +21,23 @@
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 #define FREQ_USB 48000000
 
-// Enable a peripheral clock
-void
-enable_pclock(uint32_t periph_base)
+// Map a peripheral address to its enable bits
+struct cline
+lookup_clock_line(uint32_t periph_base)
 {
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        RCC->APB1ENR |= (1<<pos);
-        RCC->APB1ENR;
-        RCC->APB1RSTR |= (1<<pos);
-        RCC->APB1RSTR &= ~(1<<pos);
-    } else if (periph_base < AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        RCC->APB2ENR |= (1<<pos);
-        RCC->APB2ENR;
-        // Skip ADC peripheral reset as they share a bit
-        if (pos < 8 || pos > 10) {
-            RCC->APB2RSTR |= (1<<pos);
-            RCC->APB2RSTR &= ~(1<<pos);
-        }
-    } else if (periph_base < AHB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - AHB1PERIPH_BASE) / 0x400;
-        RCC->AHB1ENR |= (1<<pos);
-        RCC->AHB1ENR;
+    if (periph_base >= AHB1PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - AHB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->AHB1ENR, .rst=&RCC->AHB1RSTR, .bit=bit};
+    } else if (periph_base >= APB2PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - APB2PERIPH_BASE) / 0x400);
+        if (bit & 0x700)
+            // Skip ADC peripheral reset as they share a bit
+            return (struct cline){.en=&RCC->APB2ENR, .bit=bit};
+        return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
+    } else {
+        uint32_t bit = 1 << ((periph_base - APB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB1ENR, .rst=&RCC->APB1RSTR, .bit=bit};
     }
-}
-
-// Check if a peripheral clock has been enabled
-int
-is_enabled_pclock(uint32_t periph_base)
-{
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        return RCC->APB1ENR & (1<<pos);
-    } else if (periph_base < AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        return RCC->APB2ENR & (1<<pos);
-    } else if (periph_base < AHB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - AHB1PERIPH_BASE) / 0x400;
-        return RCC->AHB1ENR & (1<<pos);
-    }
-    return 0;
 }
 
 // Return the frequency of the given peripheral clock
