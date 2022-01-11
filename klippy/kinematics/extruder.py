@@ -150,6 +150,7 @@ class PrinterExtruder:
         if shared_heater is None:
             self.heater = pheaters.setup_heater(config, gcode_id)
         else:
+            config.deprecate('shared_heater')
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
