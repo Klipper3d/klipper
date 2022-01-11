@@ -186,7 +186,9 @@ The following standard commands are supported:
   command will cause the given extruder STEPPER (as specified in an
   [extruder](Config_Reference#extruder) or
   [extruder stepper](Config_Reference#extruder_stepper) config
-  section) to become synchronized to the given EXTRUDER.
+  section) to become synchronized to the given EXTRUDER. If EXTRUDER
+  is an empty string then the stepper will not be synchronized to an
+  extruder.
 - `SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
   disable only the given stepper. This is a diagnostic and debugging
   tool and must be used with care. Disabling an axis motor does not

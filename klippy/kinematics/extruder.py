@@ -44,12 +44,15 @@ class ExtruderStepper:
         mcu_pos = self.stepper.get_past_mcu_position(print_time)
         return self.stepper.mcu_to_commanded_position(mcu_pos)
     def sync_to_extruder(self, extruder_name):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        if not extruder_name:
+            self.stepper.set_trapq(None)
+            return
         extruder = self.printer.lookup_object(extruder_name, None)
         if extruder is None or not isinstance(extruder, PrinterExtruder):
             raise self.printer.command_error("'%s' is not a valid extruder."
                                              % (extruder_name,))
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.flush_step_generation()
         self.stepper.set_position([extruder.last_position, 0., 0.])
         self.stepper.set_trapq(extruder.get_trapq())
     def _set_pressure_advance(self, pressure_advance, smooth_time):
