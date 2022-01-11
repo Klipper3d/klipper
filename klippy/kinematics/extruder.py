@@ -54,7 +54,6 @@ class PrinterExtruder:
         self.stepper.set_stepper_kinematics(self.sk_extruder)
         self.stepper.set_trapq(self.trapq)
         toolhead.register_step_generator(self.stepper.generate_steps)
-        self.extruder_set_smooth_time = ffi_lib.extruder_set_smooth_time
         self._set_pressure_advance(pressure_advance, smooth_time)
         # Register commands
         gcode = self.printer.lookup_object('gcode')
@@ -86,7 +85,9 @@ class PrinterExtruder:
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.note_step_generation_scan_time(new_smooth_time * .5,
                                                 old_delay=old_smooth_time * .5)
-        self.extruder_set_smooth_time(self.sk_extruder, new_smooth_time)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        espa = ffi_lib.extruder_set_pressure_advance
+        espa(self.sk_extruder, pressure_advance, new_smooth_time)
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
     def get_status(self, eventtime):
@@ -145,14 +146,14 @@ class PrinterExtruder:
         accel = move.accel * axis_r
         start_v = move.start_v * axis_r
         cruise_v = move.cruise_v * axis_r
-        pressure_advance = 0.
+        can_pressure_advance = False
         if axis_r > 0. and (move.axes_d[0] or move.axes_d[1]):
-            pressure_advance = self.pressure_advance
-        # Queue movement (x is extruder movement, y is pressure advance)
+            can_pressure_advance = True
+        # Queue movement (x is extruder movement, y is pressure advance flag)
         self.trapq_append(self.trapq, print_time,
                           move.accel_t, move.cruise_t, move.decel_t,
                           move.start_pos[3], 0., 0.,
-                          1., pressure_advance, 0.,
+                          1., can_pressure_advance, 0.,
                           start_v, cruise_v, accel)
     def find_past_position(self, print_time):
         mcu_pos = self.stepper.get_past_mcu_position(print_time)
