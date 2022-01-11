@@ -48,8 +48,9 @@ i2c_init(Twi *p_twi, uint32_t rate)
     p_twi->TWI_CR = TWI_CR_SVDIS;
     p_twi->TWI_CR = TWI_CR_MSEN;
 
+    uint32_t pclk = get_pclock_frequency(p_twi == TWI0 ? ID_TWI0 : ID_TWI1);
     uint32_t cldiv = 0, chdiv = 0, ckdiv = 0;
-    cldiv = SystemCoreClock / ((rate > 384000 ? 384000 : rate) * 4) - 4;
+    cldiv = pclk / ((rate > 384000 ? 384000 : rate) * 2) - 4;
 
     while ((cldiv > 255) && (ckdiv < 7)) {
         ckdiv++;
@@ -57,7 +58,7 @@ i2c_init(Twi *p_twi, uint32_t rate)
     }
 
     if (rate > 348000) {
-        chdiv = SystemCoreClock / ((2 * rate - 384000) * 4) - 4;
+        chdiv = pclk / ((2 * rate - 384000) * 2) - 4;
         while ((chdiv > 255) && (ckdiv < 7)) {
             ckdiv++;
             chdiv /= 2;

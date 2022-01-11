@@ -1,5 +1,6 @@
-Connecting BL-Touch
-===================
+# BL-Touch
+
+## Connecting BL-Touch
 
 A **warning** before you start: Avoid touching the BL-Touch pin with
 your bare fingers, since it is quite sensitive to finger grease. And
@@ -21,13 +22,13 @@ control_pin: P1.26
 ```
 
 If the BL-Touch will be used to home the Z axis then set `endstop_pin:
-probe:z_virtual_endstop` in the `[stepper_z]` config section and add a
-`[safe_z_home]` config section to raise the z axis, home the xy axes,
+probe:z_virtual_endstop` and remove `position_endstop` in the `[stepper_z]` config section,
+then add a `[safe_z_home]` config section to raise the z axis, home the xy axes,
 move to the center of the bed, and home the z axis. For example:
 
 ```
 [safe_z_home]
-home_xy_position: 100,100 # Change coordinates to the center of your print bed
+home_xy_position: 100, 100 # Change coordinates to the center of your print bed
 speed: 50
 z_hop: 10                 # Move up 10mm
 z_hop_speed: 5
@@ -37,8 +38,7 @@ It's important that the z_hop movement in safe_z_home is high enough
 that the probe doesn't hit anything even if the probe pin happens to
 be in its lowest state.
 
-Initial tests
-=============
+## Initial tests
 
 Before moving on, verify that the BL-Touch is mounted at the correct
 height, the pin should be roughly 2 mm above the nozzle when retracted
@@ -64,9 +64,10 @@ run `BLTOUCH_DEBUG COMMAND=touch_mode`, run `QUERY_PROBE`, and verify
 that command reports "probe: open". Then while gently pushing the pin
 up slightly with the nail of your finger run `QUERY_PROBE` again.
 Verify the command reports "probe: TRIGGERED". If either query does
-not report the correct message then check your wiring and
-configuration again. At the completion of this test run `BLTOUCH_DEBUG
-COMMAND=pin_up` and verify that the pin moves up.
+not report the correct message then it usually indicates an incorrect
+wiring or configuration (though some [clones](#bl-touch-clones) may
+require special handling). At the completion of this test run
+`BLTOUCH_DEBUG COMMAND=pin_up` and verify that the pin moves up.
 
 After completing the BL-Touch control pin and sensor pin tests, it is
 now time to test probing, but with a twist. Instead of letting the
@@ -81,8 +82,7 @@ doesn't stop when you touch the pin.
 If that was successful, do another `G28` (or `PROBE`) but this time
 let it touch the bed as it should.
 
-BL-Touch gone bad
-=================
+## BL-Touch gone bad
 
 Once the BL-Touch is in inconsistent state, it starts blinking red.
 You can force it to leave that state by issuing:
@@ -104,11 +104,11 @@ right position so it is able to lower and raise the pin and the red
 light turns on and of. Use the `reset`, `pin_up` and `pin_down`
 commands to achieve this.
 
-BL-Touch "clones"
-=================
+## BL-Touch "clones"
 
 Many BL-Touch "clone" devices work correctly with Klipper using the
-default configuration. However, some "clone" devices may require
+default configuration. However, some "clone" devices may not support
+the `QUERY_PROBE` command and some "clone" devices may require
 configuration of `pin_up_reports_not_triggered` or
 `pin_up_touch_mode_reports_triggered`.
 
@@ -117,6 +117,16 @@ Important! Do not configure `pin_up_reports_not_triggered` or
 these directions. Do not configure either of these to False on a
 genuine BL-Touch. Incorrectly setting these to False can increase
 probing time and can increase the risk of damaging the printer.
+
+Some "clone" devices do not support `touch_mode` and as a result the
+`QUERY_PROBE` command does not work. Despite this, it may still be
+possible to perform probing and homing with these devices. On these
+devices the `QUERY_PROBE` command during the
+[initial tests](#initial-tests) will not succeed, however the
+subsequent `G28` (or `PROBE`) test does succeed. It may be possible to
+use these "clone" devices with Klipper if one does not utilize the
+`QUERY_PROBE` command and one does not enable the
+`probe_with_touch_mode` feature.
 
 Some "clone" devices are unable to perform Klipper's internal sensor
 verification test. On these devices, attempts to home or probe can
@@ -142,8 +152,7 @@ the second query reports "probe: TRIGGERED" then it indicates that
 `pin_up_reports_not_triggered` should be set to False in the Klipper
 config file.
 
-BL-Touch v3
-===========
+## BL-Touch v3
 
 Some BL-Touch v3.0 and BL-Touch 3.1 devices may require configuring
 `probe_with_touch_mode` in the printer config file.
@@ -170,8 +179,7 @@ probe. If configuring this value on a "clone" or older BL-Touch
 device, be sure to test the probe accuracy before and after setting
 this value (use the `PROBE_ACCURACY` command to test).
 
-Multi-probing without stowing
-=============================
+## Multi-probing without stowing
 
 By default, Klipper will deploy the probe at the start of each probe
 attempt and then stow the probe afterwards. This repetitive deploying
@@ -201,8 +209,7 @@ to True. On these devices it is a good idea to test the probe accuracy
 before and after setting `probe_with_touch_mode` (use the
 `PROBE_ACCURACY` command to test).
 
-Calibrating the BL-Touch offsets
-================================
+## Calibrating the BL-Touch offsets
 
 Follow the directions in the [Probe Calibrate](Probe_Calibrate.md)
 guide to set the x_offset, y_offset, and z_offset config parameters.
@@ -216,8 +223,7 @@ far above the nozzle as possible to avoid it touching printed parts.
 If an adjustment is made to the probe position, then rerun the probe
 calibration steps.
 
-BL-Touch output mode
-====================
+## BL-Touch output mode
 
 * A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
   a BL-Touch V3.1 supports this too, but can also store this in its

@@ -48,6 +48,8 @@ class PrintStats:
     def note_cancel(self):
         self._note_finish("cancelled")
     def _note_finish(self, state, error_message = ""):
+        if self.print_start_time is None:
+            return
         self.state = state
         self.error_message = error_message
         eventtime = self.reactor.monotonic()

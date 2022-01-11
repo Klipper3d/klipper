@@ -30,6 +30,12 @@ OTHER_FILES = [
 ]
 
 defs_stepcompress = """
+    struct pull_history_steps {
+        uint64_t first_clock, last_clock;
+        int64_t start_position;
+        int step_count, interval, add;
+    };
+
     struct stepcompress *stepcompress_alloc(uint32_t oid);
     void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
         , uint32_t invert_sdir, int32_t queue_step_msgtag
@@ -37,11 +43,14 @@ defs_stepcompress = """
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
     int stepcompress_set_last_position(struct stepcompress *sc
-        , int64_t last_position);
+        , uint64_t clock, int64_t last_position);
     int64_t stepcompress_find_past_position(struct stepcompress *sc
         , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
+    int stepcompress_extract_old(struct stepcompress *sc
+        , struct pull_history_steps *p, int max
+        , uint64_t start_clock, uint64_t end_clock);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
@@ -68,6 +77,13 @@ defs_itersolve = """
 """
 
 defs_trapq = """
+    struct pull_move {
+        double print_time, move_t;
+        double start_v, accel;
+        double start_x, start_y, start_z;
+        double x_r, y_r, z_r;
+    };
+
     void trapq_append(struct trapq *tq, double print_time
         , double accel_t, double cruise_t, double decel_t
         , double start_pos_x, double start_pos_y, double start_pos_z
@@ -75,7 +91,11 @@ defs_trapq = """
         , double start_v, double cruise_v, double accel);
     struct trapq *trapq_alloc(void);
     void trapq_free(struct trapq *tq);
-    void trapq_free_moves(struct trapq *tq, double print_time);
+    void trapq_finalize_moves(struct trapq *tq, double print_time);
+    void trapq_set_position(struct trapq *tq, double print_time
+        , double pos_x, double pos_y, double pos_z);
+    int trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
+        , double start_time, double end_time);
 """
 
 defs_kin_cartesian = """
@@ -120,21 +140,10 @@ defs_kin_extruder = """
 """
 
 defs_kin_shaper = """
-    enum INPUT_SHAPER_TYPE {
-        INPUT_SHAPER_ZV = 0,
-        INPUT_SHAPER_ZVD = 1,
-        INPUT_SHAPER_MZV = 2,
-        INPUT_SHAPER_EI = 3,
-        INPUT_SHAPER_2HUMP_EI = 4,
-        INPUT_SHAPER_3HUMP_EI = 5,
-    };
-
-    double input_shaper_get_step_generation_window(int shaper_type
-        , double shaper_freq, double damping_ratio);
-    int input_shaper_set_shaper_params(struct stepper_kinematics *sk
-        , int shaper_type_x, int shaper_type_y
-        , double shaper_freq_x, double shaper_freq_y
-        , double damping_ratio_x, double damping_ratio_y);
+    double input_shaper_get_step_generation_window(int n, double a[]
+        , double t[]);
+    int input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
+        , int n, double a[], double t[]);
     int input_shaper_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * input_shaper_alloc(void);

@@ -1,7 +1,9 @@
+# Manual leveling
+
 This document describes tools for calibrating a Z endstop and for
 performing adjustments to bed leveling screws.
 
-# Calibrating a Z endstop
+## Calibrating a Z endstop
 
 An accurate Z endstop position is critical to obtaining high quality
 prints.
@@ -47,7 +49,7 @@ location of the endstop is in a convenient location, one can make any
 further adjustments by running Z_ENDSTOP_CALIBRATE or by manually
 updating the Z position_endstop in the configuration file.
 
-# Adjusting bed leveling screws
+## Adjusting bed leveling screws
 
 The secret to getting good bed leveling with bed leveling screws is to
 utilize the printer's high precision motion system during the bed
@@ -61,9 +63,9 @@ This is done by creating a `[bed_screws]` config section. For example,
 it might look something similar to:
 ```
 [bed_screws]
-screw1: 100,50
-screw2: 100,150
-screw3: 150,100
+screw1: 100, 50
+screw2: 100, 150
+screw3: 150, 100
 ```
 
 If a bed screw is under the bed, then specify the XY position directly
@@ -77,8 +79,8 @@ then one can start the tool by running:
 BED_SCREWS_ADJUST
 ```
 
-This tool will move the printer's nozzle to each screw XY location and
-then move the nozzle to a Z=0 height. At this point one can use the
+This tool will move the printer's nozzle to each screw XY location
+and then move the nozzle to a Z=0 height. At this point one can use the
 "paper test" to adjust the bed screw directly under the nozzle. See
 the information described in
 ["the paper test"](Bed_Level.md#the-paper-test), but adjust the bed
@@ -101,7 +103,7 @@ This system works best when the printer has a flat printing surface
 (such as glass) and has straight rails. Upon successful completion of
 the bed leveling tool the bed should be ready for printing.
 
-## Fine grained bed screw adjustments
+### Fine grained bed screw adjustments
 
 If the printer uses three bed screws and all three screws are under
 the bed, then it may be possible to perform a second "high precision"
@@ -124,12 +126,12 @@ coordinates and add them to the config file. For example, it might
 look like:
 ```
 [bed_screws]
-screw1: 100,50
-screw1_fine_adjust: 0,0
-screw2: 100,150
-screw2_fine_adjust: 300,300
-screw3: 150,100
-screw3_fine_adjust: 0,100
+screw1: 100, 50
+screw1_fine_adjust: 0, 0
+screw2: 100, 150
+screw2_fine_adjust: 300, 300
+screw3: 150, 100
+screw3_fine_adjust: 0, 100
 ```
 
 When this feature is enabled, the `BED_SCREWS_ADJUST` tool will first
@@ -138,7 +140,7 @@ once those are accepted, it will prompt for fine adjustments at the
 additional locations. Continue to use `ACCEPT` and `ADJUSTED` at each
 position.
 
-# Adjusting bed leveling screws using the bed probe
+## Adjusting bed leveling screws using the bed probe
 
 This is another way to calibrate the bed level using the bed probe. To
 use it you must have a Z probe (BL Touch, Inductive sensor, etc).
@@ -149,13 +151,13 @@ config file. For example, it might look like:
 
 ```
 [screws_tilt_adjust]
-screw1: -5,30
+screw1: -5, 30
 screw1_name: front left screw
-screw2: 155,30
+screw2: 155, 30
 screw2_name: front right screw
-screw3: 155,190
+screw3: 155, 190
 screw3_name: rear right screw
-screw4: -5,190
+screw4: -5, 190
 screw4_name: rear left screw
 horizontal_move_z: 10.
 speed: 50.
@@ -179,10 +181,10 @@ Recv: ok
 ```
 This means that:
 
-    - front left screw is the reference point you must not change it.
-    - front right screw must be turned clockwise 1 full turn and a quarter turn
-    - rear right screw must be turned counter-clockwise 50 minutes
-    - read left screw must be turned clockwise 2 minutes (not need it's ok)
+- front left screw is the reference point you must not change it.
+- front right screw must be turned clockwise 1 full turn and a quarter turn
+- rear right screw must be turned counter-clockwise 50 minutes
+- read left screw must be turned clockwise 2 minutes (not need it's ok)
 
 Repeat the process several times until you get a good level bed -
 normally when all adjustments are below 6 minutes.

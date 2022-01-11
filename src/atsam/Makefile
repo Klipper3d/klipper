@@ -12,7 +12,6 @@ MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
 
 CFLAGS-$(CONFIG_MACH_SAM3X) += -mcpu=cortex-m3 -falign-loops=16
 CFLAGS-$(CONFIG_MACH_SAM4) += -mcpu=cortex-m4
-CFLAGS-$(CONFIG_MACH_SAM4E) += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS-$(CONFIG_MACH_SAM3X) += -Ilib/sam3x/include
 CFLAGS-$(CONFIG_MACH_SAM4S) += -Ilib/sam4s/include
 CFLAGS-$(CONFIG_MACH_SAM4E) += -Ilib/sam4e/include
