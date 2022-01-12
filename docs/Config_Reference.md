@@ -2560,7 +2560,7 @@ pin:
 #   Neopixel is connected to the pin).
 #color_order: GRB
 #   Set the pixel order required by the LED hardware. Options are GRB,
-#   RGB, GRBW, or RGBW. The default is GRB.
+#   RGB, BRG, GRBW, or RGBW. The default is GRB.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
