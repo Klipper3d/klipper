@@ -71,7 +71,8 @@ class TemplateWrapper:
 class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.env = jinja2.Environment('{%', '%}', '{', '}', extensions=['jinja2.ext.do'])
+        self.env = jinja2.Environment(
+            '{%', '%}', '{', '}', extensions=['jinja2.ext.do'])
     def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
         if default is None:
