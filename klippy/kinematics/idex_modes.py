@@ -29,7 +29,7 @@ class DualCarriages:
             if i != index:
                 dc.inactivate(pos)
                 kin.override_rail(3, dc_rail)
-            elif dc.is_active() is False:
+            elif not dc.is_active():
                 newpos = pos[:self.axis] + [dc.axis_position] \
                             + pos[self.axis+1:]
                 dc.activate(newpos)
@@ -41,23 +41,23 @@ class DualCarriages:
         dc0_pos = self.dc[0].axis_position
         dc1_pos = self.dc[1].axis_position
         # duplication
-        if (self.dc[0].is_active() == self.dc[1].is_active() == True
-                        and self.dc[1].is_reversed() is False):
+        if (self.dc[0].is_active() and self.dc[1].is_active()
+                        and not self.dc[1].is_reversed()):
             newpos = dc1_pos - dc0_pos + axis_pos
             return (pos[:self.axis] + [axis_pos] + pos[self.axis+1:],
                         pos[:self.axis] + [newpos] + pos[self.axis+1:])
         # mirrored
-        elif (self.dc[0].is_active() == self.dc[1].is_active() == True
-                        and self.dc[1].is_reversed() is True):
+        elif (self.dc[0].is_active() and self.dc[1].is_active()
+                        and self.dc[1].is_reversed()):
             newpos = dc1_pos + dc0_pos - axis_pos
             return (pos[:self.axis] + [axis_pos] + pos[self.axis+1:],
                         pos[:self.axis] + [newpos] + pos[self.axis+1:])
         # full-control: T0 active
-        elif (self.dc[0].is_active() is True):
+        elif self.dc[0].is_active():
             return (pos[:self.axis] + [axis_pos] + pos[self.axis+1:],
                         pos[:self.axis] + [dc1_pos] + pos[self.axis+1:])
         # full-control: T1 active
-        elif (self.dc[1].is_active() is True):
+        elif self.dc[1].is_active():
             return (pos[:self.axis] + [dc0_pos] + pos[self.axis+1:],
                         pos[:self.axis] + [axis_pos] + pos[self.axis+1:])
     def activate_dc_mode(self, mode):
@@ -82,7 +82,7 @@ class DualCarriages:
             toolhead.set_position(dc0_pos)
             dc_rail_min= min(dc0_rail.position_min, dc1_rail.position_min)
             dc_rail_max= max(dc0_rail.position_max, dc1_rail.position_max)
-            if dc0_rail.get_homing_info().positive_dir is False:
+            if not dc0_rail.get_homing_info().positive_dir:
                 axis_limits = (dc_rail_min, math.floor(dc_rail_max
                             - dc1_pos[self.axis] + dc0_pos[self.axis]))
             else:
@@ -97,7 +97,7 @@ class DualCarriages:
             dc_rail_min= min(dc0_rail.position_min, dc1_rail.position_min)
             dc_rail_max= max(dc0_rail.position_max, dc1_rail.position_max)
             dc_rail_diff= abs(dc0_rail.position_min - dc1_rail.position_min)
-            if dc0_rail.get_homing_info().positive_dir is False:
+            if not dc0_rail.get_homing_info().positive_dir:
                 axis_limits =(
                     math.ceil(dc0_pos[self.axis] - min(
                         abs(dc0_pos[self.axis] - dc_rail_min),
@@ -123,19 +123,19 @@ class DualCarriages:
                 "'%s' is not a valid mode." % mode)
     def get_status(self, eventtime=None):
         dc0, dc1 = self.dc
-        if (dc0.is_active() == dc1.is_active() == True):
+        if (dc0.is_active() and dc1.is_active()):
             mode = ('DUPLICATION','MIRRORED')[dc1.is_reversed()]
             return { 'mode': mode, 'active_carriage': 'BOTH' }
-        elif (dc0.is_active() is True):
+        elif dc0.is_active():
             return { 'mode': 'FULL_CONTROL', 'active_carriage': 'CARRIAGE_0' }
         else:
             return { 'mode': 'FULL_CONTROL', 'active_carriage': 'CARRIAGE_1' }
     def save_idex_state(self):
         dc0, dc1 = self.dc
-        if (dc0.is_active() == dc1.is_active() == True):
+        if (dc0.is_active() and dc1.is_active()):
             mode = ('DUPLICATION','MIRRORED')[dc1.is_reversed()]
             active_carriage = 'BOTH'
-        elif (dc0.is_active() is True):
+        elif dc0.is_active():
             mode, active_carriage = ('FULL_CONTROL', 'CARRIAGE_0')
         else:
             mode, active_carriage = ('FULL_CONTROL', 'CARRIAGE_1')
@@ -151,7 +151,7 @@ class DualCarriages:
                 toolhead.flush_step_generation()
                 pos = toolhead.get_position()
                 for i in [1,0]:
-                    if (self.dc[i].is_active() is False):
+                    if not self.dc[i].is_active():
                         self.toggle_active_dc_rail(i)
                     dci_pos = self.saved_state['axis_positions'][i]
                     toolhead.manual_move(
@@ -160,17 +160,16 @@ class DualCarriages:
                 self.activate_dc_mode(self.saved_state['mode'])
             # set carriage 0 active
             elif (self.saved_state['active_carriage'] == 'CARRIAGE_0'
-                        and self.dc[0].is_active() is False):
+                        and not self.dc[0].is_active()):
                 self.toggle_active_dc_rail(0)
             # set carriage 1 active
             elif (self.saved_state['active_carriage'] == 'CARRIAGE_1'
-                        and self.dc[1].is_active() is False):
+                        and not self.dc[1].is_active()):
                 self.toggle_active_dc_rail(1)
     cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         index = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
-        if (not(self.dc[0].is_active() == self.dc[1].is_active() == True)
-                    and self.dc[index].is_active() is False):
+        if not self.dc[index].is_active():
             self.toggle_active_dc_rail(index)
     cmd_SET_DUAL_CARRIAGE_MODE_help = "Set which mode is active"
     def cmd_SET_DUAL_CARRIAGE_MODE(self, gcmd):
@@ -195,13 +194,13 @@ class DualCarriagesRail:
         toolhead = self.printer.lookup_object('toolhead')
         self.axis_position = position[self.axis]
         self.rail.set_trapq(None)
-        if reverse is True:
+        if reverse:
             self.status = self.REVERSED
             if self.stepper_alloc_reverse is not None:
                 self.rail.setup_itersolve(*self.stepper_alloc_reverse)
                 self.rail.set_position(position)
                 self.rail.set_trapq(toolhead.get_trapq())
-        elif active is True:
+        elif active:
             self.status = self.ACTIVE
             if self.stepper_alloc_active is not None:
                 self.rail.setup_itersolve(*self.stepper_alloc_active)

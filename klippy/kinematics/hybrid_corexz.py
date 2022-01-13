@@ -36,7 +36,8 @@ class HybridCoreXZKinematics:
             dc_rail_0 = idex_modes.DualCarriagesRail(
                 self.printer, self.rails[0], axis=0, active=True,
                 stepper_alloc_active=('corexz_stepper_alloc', b'-'),
-                stepper_alloc_inactive=('cartesian_reverse_stepper_alloc',b'z'))
+                stepper_alloc_inactive=('cartesian_reverse_stepper_alloc',b'z')
+                )
             dc_rail_1 = idex_modes.DualCarriagesRail(
                 self.printer, self.rails[3], axis=0, active=False,
                 stepper_alloc_active=('corexz_stepper_alloc', b'+'),
