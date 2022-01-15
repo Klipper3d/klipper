@@ -23,6 +23,8 @@ laser-goggles of the right wavelength if the laser is powered;
 and to disconnect the laser when it is not needed.
 Also, you should consider using a safety timeout,
 so that when your host dies unexpectedly, the tool will stop.
+An additional safety layer would be powering your tool through the hotend-heater pin.
+In the configuration, the additional `[output_pin]` would be activated by `M3/M4` and disabled by `M5`.
 
 For an example configuration, see [config/sample-pwm-tool.cfg](/config/sample-pwm-tool.cfg).
 
