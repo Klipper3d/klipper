@@ -16,7 +16,6 @@
 #include "util.h"
 #include "gpio.h"
 #include "serial.h"
-#include "prcm.h"
 #include "timer.h"
 
 DECL_CONSTANT_STR("MCU", "ar100");
@@ -123,17 +122,6 @@ console_sendf(const struct command_encoder *ce, va_list args)
     }
 }
 
-// Handle shutdown request from ar100
-static void
-shutdown_handler(uint32_t *args)
-{
-    shutdown("Request from ar100");
-}
-
-const struct command_parser shutdown_request = {
-    .func = shutdown_handler,
-};
-
 void restore_data(void)
 {
     extern char __data_start, __data_end, __copy_start;
@@ -163,14 +151,6 @@ __noreturn void
 main(uint32_t exception)
 {
     save_data();
-    r_uart_init();
-    uart_puts("** AR100 v0.1.4 ");
-    if(exception == 0){
-      uart_puts("start ** \n");
-    }
-    if(exception == 1){
-      uart_puts("reset ** \n");
-    }
     sched_main();
     while(1) {}         // Stop complaining about noreturn
 }
