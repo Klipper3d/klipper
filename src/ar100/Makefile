@@ -17,13 +17,10 @@ SFLAGS		 = -nostdinc -Wa,--fatal-warnings -MMD -Wmissing-prototypes -Wall -Wextr
 SFLAGS		+= -Ilib/ar100
 
 # Add source files
-src-y += ar100/main.c ar100/gpio.c ar100/serial.c ar100/prcm.c
-src-y += ar100/util.c ar100/timer.c ar100/spicmds.c
+src-y += ar100/main.c ar100/gpio.c ar100/serial.c
+src-y += ar100/util.c ar100/timer.c spicmds.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
 src-y += buttons.c tmcuart.c spi_software.c
-
-# Disable adxl345, no more space.
-#src-y += sensor_adxl345.c
 
 OBJS_klipper.elf += $(OUT)lib/ar100/start.o
 OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o
@@ -43,16 +40,3 @@ $(OUT)ar100.bin: $(OUT)klipper.elf
 	@echo "  Object copy $@"
 	$(OBJCOPY) -O binary -S --reverse-bytes 4 $(OUT)klipper.elf $@
 	truncate -s %8 $@
-
-
-install: $(OUT)ar100.bin
-	$(Q) cp $(OUT)ar100.bin /opt/firmware
-
-flash: $(OUT)ar100.bin
-	$(Q) ./scripts/flash-ar100.py $(OUT)ar100.bin
-
-dump:
-	$(CROSS_PREFIX)objdump -d out/klipper.elf  > out/klipper.dump
-
-size:
-	$(CROSS_PREFIX)size out/klipper.elf
