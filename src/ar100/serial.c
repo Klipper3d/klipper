@@ -7,7 +7,6 @@
 
 #include "serial.h"
 #include "util.h"
-#include "prcm.h"
 #include "internal.h"
 #include "gpio.h"
 
