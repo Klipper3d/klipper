@@ -8,6 +8,7 @@
 #include "serial.h"
 #include "util.h"
 #include "prcm.h"
+#include "internal.h"
 #include "gpio.h"
 
 void r_uart_init(void){
@@ -16,7 +17,9 @@ void r_uart_init(void){
   gpio_mux_setup(3, PIO_ALT1);
 
   // Enable clock and assert reset
-  r_prcm_uart_enable();
+  clear_bit(APB0_CLK_GATING_REG, 4);
+  set_bit(APB0_SOFT_RST_REG, 4);
+  set_bit(APB0_CLK_GATING_REG, 4);
 
   // Setup baud rate
   set_bit(R_UART_LCR, 7); // Enable setting DLH, DLL
@@ -27,10 +30,6 @@ void r_uart_init(void){
   write_reg(R_UART_FCR, 0<<0); // Disable fifo
   r_uart_getc(); // flush input
   write_reg(R_UART_FCR, 1<<0); // Enable fifo
-}
-
-uint8_t r_uart_dr(void){
-  return (read_reg(R_UART_LSR) & (1<<0));
 }
 
 char r_uart_getc(void){

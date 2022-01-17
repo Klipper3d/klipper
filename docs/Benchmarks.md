@@ -374,9 +374,6 @@ Frequency is for the ar100 is 300 MHz.
 | 2 stepper            | 254   |
 | 3 stepper            | 458   |
 
-
-## Command dispatch benchmark ##
-
 ### RP2040 step rate benchmark
 
 The following configuration sequence is used on the RP2040:
@@ -430,7 +427,6 @@ DELAY {clock + 2*freq} get_uptime
 FLOOD 100000 0.0 debug_nop
 get_uptime
 ```
-
 
 When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of

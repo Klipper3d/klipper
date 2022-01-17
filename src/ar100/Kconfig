@@ -5,7 +5,6 @@ if MACH_AR100
 config AR100_SELECT
     bool
     default y
-    select LOW_LEVEL_OPTIONS
     select HAVE_ENDSTOPS
     select HAVE_STEPPERS
     select HAVE_GPIO
