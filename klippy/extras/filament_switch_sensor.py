@@ -109,9 +109,11 @@ class SwitchSensor:
         self.runout_helper.note_filament_present(state)
     def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
         if self.runout_helper.filament_present:
-            msg = "Filament Sensor %s: filament detected" % (self.runout_helper.name)
+            msg = "Filament Sensor %s: filament detected" % (
+                self.runout_helper.name)
         else:
-            msg = "Filament Sensor %s: filament not detected" % (self.runout_helper.name)
+            msg = "Filament Sensor %s: filament not detected" % (
+                self.runout_helper.name)
         gcmd.respond_info(msg)
 
 def load_config_prefix(config):

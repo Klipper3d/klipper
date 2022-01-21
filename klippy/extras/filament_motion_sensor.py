@@ -77,14 +77,18 @@ class EncoderSensor:
             self._update_filament_runout_pos(eventtime)
             # Check for filament insertion
             # Filament is always assumed to be present on an encoder event
-            self.measured_sensitivity = (self.measured_sensitivity + (self.filament_runout_pos - self.extruder_pos)) / 2
+            self.measured_sensitivity = (
+                self.measured_sensitivity + (self.filament_runout_pos - self.extruder_pos)) / 2
             self.runout_helper.note_filament_present(True)
     def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
         if self.runout_helper.filament_present:
-            msg = "Filament Sensor %s: filament detected" % (self.runout_helper.name)
+            msg = "Filament Sensor %s: filament detected" % (
+                self.runout_helper.name)
         else:
-            msg = "Filament Sensor %s: filament not detected" % (self.runout_helper.name)
-        msg += "\n measured sensitivity %r over %r" %(self.measured_sensitivity, self.extruder_pos)
+            msg = "Filament Sensor %s: filament not detected" % (
+                self.runout_helper.name)
+        msg += "\n measured sensitivity %r over %r" % (
+            self.measured_sensitivity, self.extruder_pos)
         gcmd.respond_info(msg)
 
 def load_config_prefix(config):
