@@ -32,10 +32,6 @@ class RunoutHelper:
         # Register commands and event handlers
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.gcode.register_mux_command(
-            "QUERY_FILAMENT_SENSOR", "SENSOR", self.name,
-            self.cmd_QUERY_FILAMENT_SENSOR,
-            desc=self.cmd_QUERY_FILAMENT_SENSOR_help)
-        self.gcode.register_mux_command(
             "SET_FILAMENT_SENSOR", "SENSOR", self.name,
             self.cmd_SET_FILAMENT_SENSOR,
             desc=self.cmd_SET_FILAMENT_SENSOR_help)
@@ -93,12 +89,6 @@ class RunoutHelper:
             "filament_detected": bool(self.filament_present),
             "enabled": bool(self.sensor_enabled)}
     cmd_QUERY_FILAMENT_SENSOR_help = "Query the status of the Filament Sensor"
-    def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
-        if self.filament_present:
-            msg = "Filament Sensor %s: filament detected" % (self.name)
-        else:
-            msg = "Filament Sensor %s: filament not detected" % (self.name)
-        gcmd.respond_info(msg)
     cmd_SET_FILAMENT_SENSOR_help = "Sets the filament sensor on/off"
     def cmd_SET_FILAMENT_SENSOR(self, gcmd):
         self.sensor_enabled = gcmd.get_int("ENABLE", 1)
@@ -111,8 +101,18 @@ class SwitchSensor:
         buttons.register_buttons([switch_pin], self._button_handler)
         self.runout_helper = RunoutHelper(config)
         self.get_status = self.runout_helper.get_status
+        self.runout_helper.gcode.register_mux_command(
+            "QUERY_FILAMENT_SENSOR", "SENSOR", self.runout_helper.name,
+            self.cmd_QUERY_FILAMENT_SENSOR,
+            desc=self.runout_helper.cmd_QUERY_FILAMENT_SENSOR_help)
     def _button_handler(self, eventtime, state):
         self.runout_helper.note_filament_present(state)
+    def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
+        if self.runout_helper.filament_present:
+            msg = "Filament Sensor %s: filament detected" % (self.runout_helper.name)
+        else:
+            msg = "Filament Sensor %s: filament not detected" % (self.runout_helper.name)
+        gcmd.respond_info(msg)
 
 def load_config_prefix(config):
     return SwitchSensor(config)

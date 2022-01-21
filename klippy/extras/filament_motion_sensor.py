@@ -6,7 +6,7 @@
 import logging
 from . import filament_switch_sensor
 
-CHECK_RUNOUT_TIMEOUT = .250
+CHECK_RUNOUT_TIMEOUT = .050
 
 class EncoderSensor:
     def __init__(self, config):
@@ -27,6 +27,8 @@ class EncoderSensor:
         self.estimated_print_time = None
         # Initialise internal state
         self.filament_runout_pos = None
+        self.measured_sensitivity = self.detection_length
+        self.extruder_pos = 0
         # Register commands and event handlers
         self.printer.register_event_handler('klippy:ready',
                 self._handle_ready)
@@ -36,6 +38,10 @@ class EncoderSensor:
                 self._handle_not_printing)
         self.printer.register_event_handler('idle_timeout:idle',
                 self._handle_not_printing)
+        self.runout_helper.gcode.register_mux_command(
+            "QUERY_FILAMENT_SENSOR", "SENSOR", self.runout_helper.name,
+            self.cmd_QUERY_FILAMENT_SENSOR,
+            desc=self.runout_helper.cmd_QUERY_FILAMENT_SENSOR_help)
     def _update_filament_runout_pos(self, eventtime=None):
         if eventtime is None:
             eventtime = self.reactor.monotonic()
@@ -61,17 +67,25 @@ class EncoderSensor:
         print_time = self.estimated_print_time(eventtime)
         return self.extruder.find_past_position(print_time)
     def _extruder_pos_update_event(self, eventtime):
-        extruder_pos = self._get_extruder_pos(eventtime)
+        self.extruder_pos = self._get_extruder_pos(eventtime)
         # Check for filament runout
         self.runout_helper.note_filament_present(
-                extruder_pos < self.filament_runout_pos)
+                self.extruder_pos < self.filament_runout_pos)
         return eventtime + CHECK_RUNOUT_TIMEOUT
     def encoder_event(self, eventtime, state):
         if self.extruder is not None:
             self._update_filament_runout_pos(eventtime)
             # Check for filament insertion
             # Filament is always assumed to be present on an encoder event
+            self.measured_sensitivity = (self.measured_sensitivity + (self.filament_runout_pos - self.extruder_pos)) / 2
             self.runout_helper.note_filament_present(True)
+    def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
+        if self.runout_helper.filament_present:
+            msg = "Filament Sensor %s: filament detected" % (self.runout_helper.name)
+        else:
+            msg = "Filament Sensor %s: filament not detected" % (self.runout_helper.name)
+        msg += "\n measured sensitivity %r over %r" %(self.measured_sensitivity, self.extruder_pos)
+        gcmd.respond_info(msg)
 
 def load_config_prefix(config):
     return EncoderSensor(config)
