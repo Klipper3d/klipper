@@ -1835,8 +1835,9 @@ more information.
 ```
 [extruder_stepper my_extra_stepper]
 #extruder: extruder
-#   The extruder this stepper is synchronized to. The default is
-#   "extruder".
+#   The extruder this stepper is synchronized to. If this is set to an
+#   empty string then the stepper will not be synchronized to an
+#   extruder. The default is "extruder".
 #step_pin:
 #dir_pin:
 #enable_pin:

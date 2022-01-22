@@ -182,6 +182,13 @@ The following standard commands are supported:
   result in excessive pressure between extruder and hot end. Do proper
   calibration steps with filament before use. If 'DISTANCE' value is
   not included command will return current step distance.
+- `SYNC_STEPPER_TO_EXTRUDER STEPPER=<name> [EXTRUDER=<name>]`: This
+  command will cause the given extruder STEPPER (as specified in an
+  [extruder](Config_Reference#extruder) or
+  [extruder stepper](Config_Reference#extruder_stepper) config
+  section) to become synchronized to the given EXTRUDER. If EXTRUDER
+  is an empty string then the stepper will not be synchronized to an
+  extruder.
 - `SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
   disable only the given stepper. This is a diagnostic and debugging
   tool and must be used with care. Disabling an axis motor does not
@@ -343,16 +350,6 @@ enabled:
   move completes, however if a manual stepper move uses SYNC=0 then
   future G-Code movement commands may run in parallel with the stepper
   movement.
-
-### Extruder stepper Commands
-
-The following command is available when an
-[extruder_stepper config section](Config_Reference.md#extruder_stepper)
-is enabled:
-- `SYNC_STEPPER_TO_EXTRUDER STEPPER=<extruder_stepper config_name>
-  [EXTRUDER=<extruder config_name>]`: This command will cause the given
-  STEPPER to become synchronized to the given EXTRUDER, overriding
-  the extruder defined in the "extruder_stepper" config section.
 
 ### Probe
 
