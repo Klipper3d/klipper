@@ -117,3 +117,8 @@ has been modfied to enable the US code page (437) and enable label
 support.  The file "diskio.c" in the original archive is not included
 as it is only serves as an example for how to implement the media api
 callbacks.
+
+The Huada HC32F460 directory contains code from:
+  https://www.hdsc.com.cn/Category83-1490
+version 2.2 DDL minus the example directory and the empty documents
+directory.
