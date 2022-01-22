@@ -1,0 +1,55 @@
+# Kconfig settings for Huada HC32F460 processor
+
+if MACH_HC32F460
+
+config HC32F460_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_BITBANGING
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_BOTH_EDGE
+
+config BOARD_DIRECTORY
+    string
+    default "hc32f460"
+
+config SERIAL
+    bool
+    default y
+
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
+    default 250000
+
+config FLASH_SIZE
+    hex
+    default 0x40000
+
+config FLASH_START
+    hex
+    default 0xC000
+
+config RAM_SIZE
+    hex
+    default 0x8000
+
+config RAM_START
+    hex
+    default 0x1fff8000
+
+config STACK_SIZE
+    int
+    default 1024
+
+config CLOCK_FREQ
+    int
+    default 168000000
+
+config MCU
+    string
+    default "HC32F460"
+
+endif
