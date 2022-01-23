@@ -91,6 +91,7 @@ gpio_pwm_setup(uint8_t gpio, uint32_t cycle_time, uint8_t val)
 
 
     // select registers - could make it programmatic
+    // All TimerA power control bits are in PWC_FCG2
     M4_TMRA_TypeDef *timerA;
     switch (p->unit)
     {
@@ -125,15 +126,13 @@ gpio_pwm_setup(uint8_t gpio, uint32_t cycle_time, uint8_t val)
     PORT_SetFunc(GPIO2PORT(gpio), GPIO2PIN(gpio), Func_Tima0, Disable);
 
 
-#define TIMERA_COUNT_OVERFLOW   (SystemCoreClock/2U/128U/100U/2)  // 100Hz
-
     /* Configuration timera unit 1 base structure */
     stc_timera_base_init_t stcTimeraInit;
-    stcTimeraInit.enClkDiv = TimeraPclkDiv128;
+    stcTimeraInit.enClkDiv = TimeraPclkDiv128;  // 128 chosen - use below
     stcTimeraInit.enCntMode = TimeraCountModeTriangularWave;
     stcTimeraInit.enCntDir = TimeraCountDirUp;
     stcTimeraInit.enSyncStartupEn = Disable;
-    stcTimeraInit.u16PeriodVal = TIMERA_COUNT_OVERFLOW;
+    stcTimeraInit.u16PeriodVal = cycle_time / 2U / 128U / 2;
     TIMERA_BaseInit(timerA, &stcTimeraInit);
 
     /* Configuration timera unit 1 compare structure */
