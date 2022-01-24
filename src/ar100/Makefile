@@ -21,6 +21,7 @@ src-y += ar100/main.c ar100/gpio.c ar100/serial.c
 src-y += ar100/util.c ar100/timer.c spicmds.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
 src-y += buttons.c tmcuart.c spi_software.c
+src-y += sensor_adxl345.c
 
 OBJS_klipper.elf += $(OUT)lib/ar100/start.o
 OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o
