@@ -151,6 +151,7 @@ __noreturn void
 main(uint32_t exception)
 {
     save_data();
+    uart_puts("ar100\n");
     sched_main();
     while(1) {}         // Stop complaining about noreturn
 }
