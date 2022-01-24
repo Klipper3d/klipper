@@ -45,7 +45,8 @@ class EncoderSensor:
         self.gcode.register_command(
             'FILAMENT_MOTION_SENSOR', self.cmd_FILAMENT_MOTION_SENSOR,
             desc=self.cmd_FILAMENT_MOTION_SENSOR_help)
-    cmd_FILAMENT_MOTION_SENSOR_help = "Enable debug logging for the encoder event"
+    cmd_FILAMENT_MOTION_SENSOR_help = \
+        "Enable debug logging for the encoder event"
     def cmd_FILAMENT_MOTION_SENSOR(self, gcmd):
         options = collections.OrderedDict({
             'VERBOSE': None
@@ -60,7 +61,8 @@ class EncoderSensor:
                 else:
                     self.verbose = False
                     self.verbose_gcmd = None
-            gcmd.respond_info("Filament Motion Verbose is %s" % ("On" if self.verbose else "Off"))
+            gcmd.respond_info("Filament Motion Verbose is %s" %
+                              ("On" if self.verbose else "Off"))
     def _update_filament_runout_pos(self, eventtime=None):
         if eventtime is None:
             eventtime = self.reactor.monotonic()
