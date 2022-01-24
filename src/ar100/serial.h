@@ -37,6 +37,10 @@
 #define UART0_HLT  UART0_BASE + 0xA4 // UART Halt TX Register
 
 
+#define R_PRCM_BASE               0x01F01400
+#define APB0_CLK_GATING_REG       R_PRCM_BASE + 0x0028 // APB0 Clock Gating Reg
+#define APB0_SOFT_RST_REG         R_PRCM_BASE + 0x00B0 // APB0 SW Reset Reg
+
 void r_uart_init(void);
 void r_uart_putc(char c);
 char r_uart_getc(void);
