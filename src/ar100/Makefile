@@ -18,7 +18,7 @@ SFLAGS		+= -Ilib/ar100
 
 # Add source files
 src-y += ar100/main.c ar100/gpio.c ar100/serial.c
-src-y += ar100/util.c ar100/timer.c spicmds.c
+src-y += ar100/util.c ar100/timer.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
 src-y += buttons.c tmcuart.c spi_software.c
 src-y += sensor_adxl345.c
