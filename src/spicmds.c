@@ -78,7 +78,7 @@ spidev_transfer(struct spidev_s *spi, uint8_t receive_data
         // Not yet initialized
         return;
 
-    if (CONFIG_HAVE_GPIO_SPI && spi->flags & SF_SOFTWARE)
+    if ((CONFIG_HAVE_GPIO_BITBANGING  || CONFIG_MACH_AR100) && spi->flags & SF_SOFTWARE)
         spi_software_prepare(spi->spi_software);
     else
         spi_prepare(spi->spi_config);
@@ -86,7 +86,7 @@ spidev_transfer(struct spidev_s *spi, uint8_t receive_data
     if (spi->flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, 0);
 
-    if (CONFIG_HAVE_GPIO_SPI && spi->flags & SF_SOFTWARE)
+    if ((CONFIG_HAVE_GPIO_BITBANGING || CONFIG_MACH_AR100) && spi->flags & SF_SOFTWARE)
         spi_software_transfer(spi->spi_software, receive_data, data_len, data);
     else
         spi_transfer(spi->spi_config, receive_data, data_len, data);
