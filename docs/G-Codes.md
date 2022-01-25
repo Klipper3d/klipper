@@ -633,8 +633,7 @@ The following command is available when the
 is enabled.
 - `SET_FILAMENT_MOTION_SENSOR VERBOSE=[0|1]`: Sets the verbosity of
   the filament motion sensor. If VERBOSE is set to 0, the filament
-  sensor will not report any motion, if set to 1 it will report
-  motion. 
+  sensor will not report any motion, if set to 1 it will report motion. 
 
 ### Firmware Retraction
 
