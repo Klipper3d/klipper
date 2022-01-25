@@ -9,7 +9,6 @@ config AR100_SELECT
     select HAVE_STEPPERS
     select HAVE_GPIO
     select HAVE_STEPPER_BOTH_EDGE
-    select HAVE_GPIO_SPI
 
 config BOARD_DIRECTORY
     string

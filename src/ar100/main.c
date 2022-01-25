@@ -23,7 +23,7 @@ DECL_CONSTANT_STR("MCU", "ar100");
 #define RESET_VECTOR 0x0100
 
 static struct task_wake console_wake;
-static uint8_t receive_buf[1024];
+static uint8_t receive_buf[192];
 static int receive_pos;
 static char dynmem_pool[2 * 1024];
 

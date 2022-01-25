@@ -172,8 +172,8 @@ represent total number of steps per second on the micro-controller.
 | Raspberry Pi Pico (RP2040)      | 2400K             | 1636K             |
 | Duet2 Wifi/Eth (SAM4E8E)        | 2500K             | 1674K             |
 | Adafruit Metro M4 (SAMD51)      | 3077K             | 1885K             |
-| Recore A5 (AR100)               | 3226K             | 2350K             |
 | BigTreeTech SKR Pro (STM32F407) | 3652K             | 2459K             |
+| Recore A6 (AR100)               | 3659K             | 2507K             |
 | Fysetc Spider (STM32F446)       | 3913K             | 2634K             |
 
 Further details on the benchmarks are available in the

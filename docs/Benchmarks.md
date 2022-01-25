@@ -320,20 +320,19 @@ micro-controller.
 The following configuration sequence is used on AR100 CPU (Allwinner A64):
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=10 dir_pin=136 invert_step=-1 step_pulse_ticks=0
-config_stepper oid=1 step_pin=11 dir_pin=137 invert_step=-1 step_pulse_ticks=0
-config_stepper oid=2 step_pin=12 dir_pin=138 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=0 step_pin=PL10 dir_pin=PE14 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PL11 dir_pin=PE15 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PL12 dir_pin=PE16 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-Run on Recore rev A5.
+Run on Recore rev A6.
 Frequency is for the ar100 is 300 MHz.
 
-| AR100 R_PIO          | ticks |
+| AR100                | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 93    |
-| 2 stepper            | 254   |
-| 3 stepper            | 458   |
+| 1 stepper            | 82    |
+| 3 stepper            | 359   |
 
 ### RP2040 step rate benchmark
 
