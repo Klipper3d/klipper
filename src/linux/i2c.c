@@ -14,6 +14,9 @@
 #include "sched.h" // sched_shutdown
 
 DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 2);
+DECL_ENUMERATION_RANGE("i2c_bus", "i2c.1", 1, 2);
+DECL_ENUMERATION_RANGE("i2c_bus", "i2c.2", 2, 2);
+DECL_ENUMERATION_RANGE("i2c_bus", "i2c.3", 3, 2);
 
 struct i2c_s {
     uint32_t bus;
