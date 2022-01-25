@@ -17,7 +17,7 @@ class EncoderSensor:
         self.detection_length = config.getfloat(
                 'detection_length', 7., above=0.)
         self.check_runout_timeout = config.getfloat('check_runout_timeout',
-                                    DEFAULT_CHECK_RUNOUT_TIMEOUT, minval=0.050)
+                            DEFAULT_CHECK_RUNOUT_TIMEOUT, minval=0.050)
         self.consecutive_count = config.getint('consecutive_count', 1, minval=1)
         self.current_count = 0
         # Configure pins
