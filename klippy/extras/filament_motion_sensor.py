@@ -6,7 +6,7 @@
 import logging, collections
 from . import filament_switch_sensor
 
-CHECK_RUNOUT_TIMEOUT = .250
+DEFAULT_CHECK_RUNOUT_TIMEOUT = .250
 
 class EncoderSensor:
     def __init__(self, config):
@@ -16,7 +16,9 @@ class EncoderSensor:
         self.extruder_name = config.get('extruder')
         self.detection_length = config.getfloat(
                 'detection_length', 7., above=0.)
-        self.consecutive_count = config.getint('consecutive_count', 3, minval=1)
+        self.check_runout_timeout = config.getfloat('check_runout_timeout',
+                                                    DEFAULT_CHECK_RUNOUT_TIMEOUT, minval=0.050)
+        self.consecutive_count = config.getint('consecutive_count', 1, minval=1)
         self.current_count = 0
         # Configure pins
         buttons = self.printer.load_object(config, 'buttons')
@@ -43,11 +45,11 @@ class EncoderSensor:
         # Register GCODE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
-            'FILAMENT_MOTION_SENSOR', self.cmd_FILAMENT_MOTION_SENSOR,
-            desc=self.cmd_FILAMENT_MOTION_SENSOR_help)
-    cmd_FILAMENT_MOTION_SENSOR_help = \
+            'SET_FILAMENT_MOTION_SENSOR', self.cmd_SET_FILAMENT_MOTION_SENSOR,
+            desc=self.cmd_SET_FILAMENT_MOTION_SENSOR_help)
+    cmd_SET_FILAMENT_MOTION_SENSOR_help = \
         "Enable debug logging for the encoder event"
-    def cmd_FILAMENT_MOTION_SENSOR(self, gcmd):
+    def cmd_SET_FILAMENT_MOTION_SENSOR(self, gcmd):
         options = collections.OrderedDict({
             'VERBOSE': None
         })
@@ -101,7 +103,7 @@ class EncoderSensor:
             self.verbose_gcmd.respond_info(
                 "Filament Motion: Update Event pos %s present %s" %
                 diff_pos, "true" if is_filament_present else "false")
-        return eventtime + CHECK_RUNOUT_TIMEOUT
+        return eventtime + self.check_runout_timeout
     def encoder_event(self, eventtime, state):
         if self.extruder is not None:
             self._update_filament_runout_pos(eventtime)
