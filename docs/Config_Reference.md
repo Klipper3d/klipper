@@ -3712,6 +3712,12 @@ detection_length: 7.0
 #   The minimum length of filament pulled through the sensor to trigger
 #   a state change on the switch_pin
 #   Default is 7 mm.
+consecutive_count: 1
+#   The number of consecutive times that the trigger don't change
+#   before the filament is considered to have run out.
+#   Default is 1.
+check_runout_timeout: 0.250
+#   The interval of time in seconds to check for runout.
 extruder:
 #   The name of the extruder section this sensor is associated with.
 #   This parameter must be provided.

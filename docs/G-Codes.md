@@ -628,6 +628,14 @@ is enabled.
   filament sensor on/off. If ENABLE is set to 0, the filament sensor
   will be disabled, if set to 1 it is enabled.
 
+The following command is available when the
+[filament_motion_sensor config section](Config_Reference.md#filament_motion_sensor)
+is enabled.
+- `SET_FILAMENT_MOTION_SENSOR VERBOSE=[0|1]`: Sets the verbosity of
+  the filament motion sensor. If VERBOSE is set to 0, the filament
+  sensor will not report any motion, if set to 1 it will report
+  motion. 
+
 ### Firmware Retraction
 
 The following commands are available when the
