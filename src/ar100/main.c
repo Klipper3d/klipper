@@ -151,6 +151,7 @@ __noreturn void
 main(uint32_t exception)
 {
     save_data();
+    r_uart_init();
     sched_main();
     while(1) {}         // Stop complaining about noreturn
 }
