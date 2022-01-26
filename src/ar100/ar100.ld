@@ -4,13 +4,14 @@ ENTRY (start)
 
 STACK_SIZE = 0x200;
 SRAM_A2_SIZE = 64K;
+ORIG = 0x4000;
 MEMORY {
-  SRAM_A2 (rwx): ORIGIN = 0x0000D000, LENGTH = SRAM_A2_SIZE
+  SRAM_A2 (rwx): ORIGIN = ORIG, LENGTH = SRAM_A2_SIZE
 }
 
 SECTIONS
 {
-  . = 0x0000D000;
+  . = ORIG;
 
   .text . : ALIGN(4) {
     KEEP(*(.text.start))
@@ -43,6 +44,8 @@ SECTIONS
       . += STACK_SIZE;
       __stack_end = .;
   } >SRAM_A2
+
+  ASSERT(. <= (SRAM_A2_SIZE), "Klipper image is too large")
 
   /DISCARD/ : {
     *(.comment*)
