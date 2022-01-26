@@ -45,8 +45,9 @@ class EncoderSensor:
                 self._handle_not_printing)
         # Register GCODE commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command(
-            'SET_FILAMENT_MOTION_SENSOR', self.cmd_SET_FILAMENT_MOTION_SENSOR,
+        self.gcode.register_mux_command(
+            'SET_FILAMENT_MOTION_SENSOR', 'SENSOR',
+            self.runout_helper.name, self.cmd_SET_FILAMENT_MOTION_SENSOR,
             desc=self.cmd_SET_FILAMENT_MOTION_SENSOR_help)
     cmd_SET_FILAMENT_MOTION_SENSOR_help = \
         "Enable debug logging for the encoder event"
