@@ -339,7 +339,7 @@ choice
         select CANSERIAL
     config STM32_CANBUS_PD0_PD1
         bool "CAN bus (on PD0/PD1)" if LOW_LEVEL_OPTIONS
-        depends on HAVE_STM32_CANBUS && MACH_STM32F4
+        depends on HAVE_STM32_CANBUS
         select CANSERIAL
 endchoice
 
