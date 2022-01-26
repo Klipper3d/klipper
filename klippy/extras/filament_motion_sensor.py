@@ -51,19 +51,8 @@ class EncoderSensor:
     cmd_SET_FILAMENT_MOTION_SENSOR_help = \
         "Enable debug logging for the encoder event"
     def cmd_SET_FILAMENT_MOTION_SENSOR(self, gcmd):
-        options = collections.OrderedDict({
-            'VERBOSE': None
-        })
-        for key in options:
-            name = gcmd.get(key,None)
-            if name is not None:
-                name = name.lower()
-                if name == "1" or name == "on" or name == "true":
-                    self.verbose = True
-                    self.verbose_gcmd = gcmd
-                else:
-                    self.verbose = False
-                    self.verbose_gcmd = None
+            self.verbose = True if gcmd.getInt('Verbose', 0) == 1 else False
+            self.verbose_gcmd = gcmd if self.verbose else None
             gcmd.respond_info("Filament Motion Verbose is %s" %
                               ("On" if self.verbose else "Off"))
     def _update_filament_runout_pos(self, eventtime=None):
