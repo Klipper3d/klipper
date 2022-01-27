@@ -313,7 +313,7 @@ class TMCCommandHelper:
         moff = (phase - stepper.get_mcu_position()) % phases
         if self.mcu_phase_offset is not None and self.mcu_phase_offset != moff:
             logging.warning("Stepper %s phase change (was %d now %d)",
-                            self.mcu_phase_offset, moff)
+                            self.stepper_name, self.mcu_phase_offset, moff)
         self.mcu_phase_offset = moff
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
