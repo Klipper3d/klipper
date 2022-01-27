@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220116: The tmc2130, tmc2208, tmc2209, and tmc2660 `run_current`
+calculation code has changed. For some `run_current` settings the
+drivers may now be configured differently. This new configuration
+should be more accurate, but it may invalidate previous tmc driver
+tuning.
+
 20211230: Scripts to tune input shaper (`scripts/calibrate_shaper.py`
 and `scripts/graph_accelerometer.py`) were migrated to use Python3
 by default. As a result, users must install Python3 versions of certain

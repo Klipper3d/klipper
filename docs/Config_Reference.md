@@ -1835,8 +1835,9 @@ more information.
 ```
 [extruder_stepper my_extra_stepper]
 #extruder: extruder
-#   The extruder this stepper is synchronized to. The default is
-#   "extruder".
+#   The extruder this stepper is synchronized to. If this is set to an
+#   empty string then the stepper will not be synchronized to an
+#   extruder. The default is "extruder".
 #step_pin:
 #dir_pin:
 #enable_pin:
@@ -2210,7 +2211,7 @@ sensor_type:
 ### LM75 temperature sensor
 
 LM75/LM75A two wire (I2C) connected temperature sensors. These sensors
-have range up to 125 C, so are usable for e.g. chamber temperature
+have a range of -55~125 C, so are usable for e.g. chamber temperature
 monitoring. They can also function as simple fan/heater controllers.
 
 ```
