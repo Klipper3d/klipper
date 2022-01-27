@@ -1,6 +1,6 @@
 // ADC functions on Huada HC32F460
 //
-// Copyright (C) 2022 Steven Gotthardt
+// Copyright (C) 2022  Steven Gotthardt <gotthardt@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -129,8 +129,6 @@ gpio_adc_cancel_sample(struct gpio_adc g)
 {
     ADC_StopConvert(M4_ADC1);
 }
-
-
 
 
 // The clocks are already set by the loader.

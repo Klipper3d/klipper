@@ -1,6 +1,6 @@
 // Hardware PWM support on HC32F460
 //
-// Copyright (C) 2022  Steven Gotthardt
+// Copyright (C) 2022  Steven Gotthardt <gotthardt@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -86,9 +86,6 @@ gpio_pwm_setup(uint8_t gpio, uint32_t cycle_time, uint8_t val)
         if (p->gpio == gpio)
             break;
     }
-
-    // Map cycle_time to pwm clock divisor
-
 
     // select registers - could make it programmatic
     // All TimerA power control bits are in PWC_FCG2

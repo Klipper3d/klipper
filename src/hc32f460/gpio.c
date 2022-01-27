@@ -1,6 +1,6 @@
 // GPIO functions on HC32F460
 //
-// Copyright (C) 2022 Steven Gotthardt
+// Copyright (C) 2022  Steven Gotthardt <gotthardt@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -22,7 +22,7 @@ DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 16);
 
 // HC32F460 ports are in one M4_PORT - offset by 0x10
 // eg toggle: M4_PORT->POTRA + 0x10 => M4_PORT->POTRB
-// 'pin' is port (0-4) * 16 + pinPosition (0-15)
+// 'gpio' is port (0-4) * 16 + pinPosition (0-15)
 #define POTR_OFFSET offsetof(M4_PORT_TypeDef, POTRA)    // output flip
 #define PODR_OFFSET offsetof(M4_PORT_TypeDef, PODRA)    // output data
 #define PIDR_OFFSET offsetof(M4_PORT_TypeDef, PIDRA)    // input data
@@ -55,11 +55,11 @@ gpio_peripheral(uint32_t gpio, int func, int pull_up)
 
 
 struct gpio_out
-gpio_out_setup(uint32_t pin, uint32_t val)
+gpio_out_setup(uint32_t gpio, uint32_t val)
 {
-    uint32_t port = (uint32_t)M4_PORT + GPIO2PORT(pin) * PORT_OFFSET;
+    uint32_t port = (uint32_t)M4_PORT + GPIO2PORT(gpio) * PORT_OFFSET;
     struct gpio_out g =
-        { .pin = pin, .portAddress = port, .bitMask = GPIO2BIT(pin) };
+        { .gpio = gpio, .portAddress = port, .bitMask = GPIO2BIT(gpio) };
     gpio_out_reset(g, val);
 
     return g;
@@ -81,7 +81,7 @@ gpio_out_reset(struct gpio_out g, uint32_t val)
         *PORRx = g.bitMask;
     }
 
-    gpio_peripheral(g.pin, Pin_Mode_Out, 0);
+    gpio_peripheral(g.gpio, Pin_Mode_Out, 0);
     irq_restore(flag);
 }
 
@@ -120,13 +120,12 @@ gpio_out_write(struct gpio_out g, uint32_t val)
 
 
 struct gpio_in
-gpio_in_setup(uint32_t pin, int32_t pull_up)
+gpio_in_setup(uint32_t gpio, int32_t pull_up)
 {
-    uint32_t port = (uint32_t)M4_PORT + GPIO2PORT(pin) * PORT_OFFSET;
+    uint32_t port = (uint32_t)M4_PORT + GPIO2PORT(gpio) * PORT_OFFSET;
 
-    //gpio_clock_enable(reg);
     struct gpio_in g =
-        { .pin=pin, .portAddress = port, .bitMask = GPIO2BIT(pin) };
+        { .gpio = gpio, .portAddress = port, .bitMask = GPIO2BIT(gpio) };
     gpio_in_reset(g, pull_up);
 
     return g;
@@ -137,7 +136,7 @@ void
 gpio_in_reset(struct gpio_in g, int32_t pull_up)
 {
     irqstatus_t flag = irq_save();
-    gpio_peripheral(g.pin, Pin_Mode_In, pull_up);
+    gpio_peripheral(g.gpio, Pin_Mode_In, pull_up);
     irq_restore(flag);
 }
 
@@ -148,5 +147,3 @@ gpio_in_read(struct gpio_in g)
     uint16_t *PIDRx = (uint16_t *)(g.portAddress + PIDR_OFFSET);
     return !!(*PIDRx & g.bitMask);
 }
-
-
