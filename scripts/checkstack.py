@@ -9,6 +9,8 @@
 # Usage:
 #   avr-objdump -d out/klipper.elf | scripts/checkstack.py
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import re
 
@@ -180,7 +182,7 @@ def main():
             elif insn in ('rcall', 'call'):
                 cur.noteCall(insnaddr, calladdr, stackusage + 2)
             else:
-                print("unknown call", ref)
+                print(("unknown call", ref))
                 cur.noteCall(insnaddr, calladdr, stackusage)
         # Reset stack usage to preamble usage
         stackusage = cur.basic_stack_usage
@@ -227,17 +229,17 @@ def main():
         yieldstr = ""
         if info.max_yield_usage >= 0:
             yieldstr = ",%d" % info.max_yield_usage
-        print("\n%s[%d,%d%s]:" % (info.funcname, info.basic_stack_usage
-                                  , info.max_stack_usage, yieldstr))
+        print(("\n%s[%d,%d%s]:" % (info.funcname, info.basic_stack_usage
+                                  , info.max_stack_usage, yieldstr)))
         for insnaddr, calladdr, stackusage in info.called_funcs:
             callinfo = funcs.get(calladdr, unknownfunc)
             yieldstr = ""
             if callinfo.max_yield_usage >= 0:
                 yieldstr = ",%d" % (stackusage + callinfo.max_yield_usage)
-            print("    %04s:%-40s [%d+%d,%d%s]" % (
+            print(("    %04s:%-40s [%d+%d,%d%s]" % (
                 insnaddr, callinfo.funcname, stackusage
                 , callinfo.basic_stack_usage
-                , stackusage+callinfo.max_stack_usage, yieldstr))
+                , stackusage+callinfo.max_stack_usage, yieldstr)))
 
 if __name__ == '__main__':
     main()

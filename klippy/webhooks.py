@@ -3,8 +3,10 @@
 # Copyright (C) 2020 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license
+from __future__ import absolute_import
 import logging, socket, os, sys, errno, json, collections
 import gcode
+import six
 
 REQUEST_LOG_SIZE = 20
 
@@ -14,17 +16,32 @@ REQUEST_LOG_SIZE = 20
 #
 # https://stackoverflow.com/questions/956867/
 #
-json_loads_byteify = None
-if sys.version_info.major < 3:
-    def json_loads_byteify(data, ignore_dicts=False):
-        if isinstance(data, unicode):
-            return data.encode('utf-8')
-        if isinstance(data, list):
-            return [json_loads_byteify(i, True) for i in data]
-        if isinstance(data, dict) and not ignore_dicts:
-            return {json_loads_byteify(k, True): json_loads_byteify(v, True)
-                    for k, v in data.items()}
-        return data
+
+# Latest version commented out for Python2, Python3 version enabled
+#  below -- needs confirmation: KP
+##
+#json_loads_byteify = None
+#if sys.version_info.major < 3:
+#    def json_loads_byteify(data, ignore_dicts=False):
+#        if isinstance(data, unicode):
+#            return data.encode('utf-8')
+#        if isinstance(data, list):
+#            return [json_loads_byteify(i, True) for i in data]
+#        if isinstance(data, dict) and not ignore_dicts:
+#            return {json_loads_byteify(k, True): json_loads_byteify(v, True)
+#                    for k, v in data.items()}
+#        return data
+def byteify(data, ignore_dicts=False):
+    if isinstance(data, six.text_type):
+        return data.encode('utf-8')
+    if isinstance(data, list):
+        return [byteify(i, True) for i in data]
+    if isinstance(data, dict) and not ignore_dicts:
+        return {byteify(k, True): byteify(v, True)
+                for k, v in data.items()}
+    return data
+#
+##
 
 class WebRequestError(gcode.CommandError):
     def __init__(self, message,):
@@ -456,7 +473,7 @@ class QueryStatusHelper:
         query = self.last_query = {}
         msglist = self.pending_queries
         self.pending_queries = []
-        msglist.extend(self.clients.values())
+        msglist.extend(list(self.clients.values()))
         # Generate get_status() info for each client
         for cconn, subscription, send_func, template in msglist:
             is_query = cconn is None

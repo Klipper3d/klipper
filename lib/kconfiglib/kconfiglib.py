@@ -543,6 +543,8 @@ Feedback
 Send bug reports, suggestions, and questions to ulfalizer a.t Google's email
 service, or open a ticket on the GitHub page.
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import errno
 import importlib
 import os
@@ -6263,17 +6265,17 @@ def load_allconfig(kconf, filename):
 
     if allconfig in ("", "1"):
         try:
-            print(kconf.load_config(filename, False))
+            print((kconf.load_config(filename, False)))
         except EnvironmentError as e1:
             try:
-                print(kconf.load_config("all.config", False))
+                print((kconf.load_config("all.config", False)))
             except EnvironmentError as e2:
                 sys.exit("error: KCONFIG_ALLCONFIG is set, but neither {} "
                          "nor all.config could be opened: {}, {}"
                          .format(filename, std_msg(e1), std_msg(e2)))
     else:
         try:
-            print(kconf.load_config(allconfig, False))
+            print((kconf.load_config(allconfig, False)))
         except EnvironmentError as e:
             sys.exit("error: KCONFIG_ALLCONFIG is set to '{}', which "
                      "could not be opened: {}"
@@ -6763,7 +6765,7 @@ def _lineno_fn(kconf, _):
 
 
 def _info_fn(kconf, _, msg):
-    print("{}:{}: {}".format(kconf.filename, kconf.linenr, msg))
+    print(("{}:{}: {}".format(kconf.filename, kconf.linenr, msg)))
 
     return ""
 

@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+from __future__ import absolute_import
 import logging
 import os
 import serial

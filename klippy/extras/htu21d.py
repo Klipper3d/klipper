@@ -3,6 +3,7 @@
 # Copyright (C) 2020  Lucio Tarantino <lucio.tarantino@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 import logging
 from . import bus
 

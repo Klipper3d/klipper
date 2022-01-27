@@ -32,6 +32,7 @@ See https://www.gnu.org/software/make/manual/make.html#Multi_002dLine for a
 handy way to define multi-line variables in makefiles, for use with custom
 headers. Remember to export the variable to the environment.
 """
+from __future__ import absolute_import
 import argparse
 import os
 import sys

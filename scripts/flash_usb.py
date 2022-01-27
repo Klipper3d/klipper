@@ -4,6 +4,7 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 import sys, os, re, subprocess, optparse, time, fcntl, termios, struct
 
 class error(Exception):

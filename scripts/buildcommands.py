@@ -4,6 +4,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
 import json, zlib
 sys.path.append('./klippy')

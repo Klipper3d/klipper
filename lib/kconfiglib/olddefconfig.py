@@ -15,13 +15,15 @@ passed in the KCONFIG_CONFIG environment variable.
 When overwriting a configuration file, the old version is saved to
 <filename>.old (e.g. .config.old).
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import kconfiglib
 
 
 def main():
     kconf = kconfiglib.standard_kconfig(__doc__)
-    print(kconf.load_config())
-    print(kconf.write_config())
+    print((kconf.load_config()))
+    print((kconf.write_config()))
 
 
 if __name__ == "__main__":

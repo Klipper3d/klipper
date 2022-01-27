@@ -5,6 +5,8 @@
 # Copied from Marlin and modified.
 # Licensed under GPL-3.0
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import struct
 import uuid
@@ -90,7 +92,7 @@ def encode_file(input, output_file, file_length):
 
     #TODO - how to enforce that the firmware aligns to block boundaries?
     block_count = int(len(input_file) / block_size)
-    print("Block Count is ", block_count)
+    print(("Block Count is ", block_count))
     for block_number in range(0, block_count):
         block_offset = (block_number * block_size)
         block_end = block_offset + block_size
@@ -118,7 +120,7 @@ def main():
 
     if not os.path.isfile(fw):
         print("Usage: update_chitu <input_file> <output_file>")
-        print("Firmware file", fw, "does not exist")
+        print(("Firmware file", fw, "does not exist"))
         exit(1)
 
     firmware = open(fw, "rb")

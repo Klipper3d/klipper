@@ -3,6 +3,7 @@
 # Copyright (C) 2019  Nils Friedchen <nils.friedchen@googlemail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 from . import fan
 
 PIN_MIN_TIME = 0.100

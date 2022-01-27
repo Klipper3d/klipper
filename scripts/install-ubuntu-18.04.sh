@@ -39,7 +39,7 @@ create_virtualenv()
     [ ! -d ${PYTHONDIR} ] && virtualenv -p python2 ${PYTHONDIR}
 
     # Install/update dependencies
-    ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
+    ${PYTHONDIR}/bin/pip3 install -r ${SRCDIR}/scripts/klippy-requirements.txt
 }
 
 # Step 3: Install startup script

@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000

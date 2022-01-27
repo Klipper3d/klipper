@@ -6,6 +6,7 @@
 # Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 import math
 
 # Coordinates created by this are converted into G1 commands.

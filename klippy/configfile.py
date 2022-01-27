@@ -3,7 +3,9 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, glob, re, time, logging, configparser, io
+from __future__ import absolute_import
+import sys, os, glob, re, time, logging, six.moves.configparser \
+    as configparser, io
 
 error = configparser.Error
 

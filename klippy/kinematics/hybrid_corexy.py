@@ -3,6 +3,7 @@
 # Copyright (C) 2021  Fabrice Gallet <tircown@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 import logging
 import stepper
 from . import idex_modes

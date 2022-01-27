@@ -55,7 +55,7 @@ fi
 echo -e "\n\n=============== Install python3 virtualenv\n\n"
 cd ${MAIN_DIR}
 virtualenv -p python3 ${BUILD_DIR}/python-env
-${BUILD_DIR}/python-env/bin/pip install -r ${MAIN_DIR}/scripts/klippy-requirements.txt
+${BUILD_DIR}/python-env/bin/pip3 install -r ${MAIN_DIR}/scripts/klippy-requirements.txt
 
 
 ######################################################################
@@ -65,4 +65,4 @@ ${BUILD_DIR}/python-env/bin/pip install -r ${MAIN_DIR}/scripts/klippy-requiremen
 echo -e "\n\n=============== Install python2 virtualenv\n\n"
 cd ${MAIN_DIR}
 virtualenv -p python2 ${BUILD_DIR}/python2-env
-${BUILD_DIR}/python2-env/bin/pip install -r ${MAIN_DIR}/scripts/klippy-requirements.txt
+${BUILD_DIR}/python2-env/bin/pip3 install -r ${MAIN_DIR}/scripts/klippy-requirements.txt

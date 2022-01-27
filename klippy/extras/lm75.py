@@ -3,6 +3,7 @@
 # Copyright (C) 2020  Boleslaw Ciesielski <combolek@users.noreply.github.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from __future__ import absolute_import
 import logging
 from . import bus
 
