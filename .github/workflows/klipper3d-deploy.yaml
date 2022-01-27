@@ -7,6 +7,8 @@ on:
       - docs/**
       - mkdocs.yml
       - .github/workflows/klipper3d-deploy.yaml
+  schedule:
+    - cron: "0 0 * * *"
 jobs:
   deploy:
     runs-on: ubuntu-latest
