@@ -1,7 +1,7 @@
 // Interrupt support for HC32F460
 // The library interrupt support is huge and redefines systick
 //
-// Copyright (C) 2022  Steven Gotthardt
+// Copyright (C) 2022  Steven Gotthardt <gotthardt@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 

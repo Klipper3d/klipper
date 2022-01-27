@@ -1,6 +1,6 @@
 // HC32F460 serial
 //
-// Copyright (C) 2022  Steven Gotthardt
+// Copyright (C) 2022  Steven Gotthardt <gotthardt@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -18,23 +18,34 @@
 #define USART_BAUDRATE  (CONFIG_SERIAL_BAUD)
 
 
-// Aquila 1.0.3 pins for TX, RX to CH304
+// Aquila 1.0.3 pins for TX, RX to CH304 on PA15 and PA09
+//    for the LCD connector: TX, RX on PC00 and PC01
+#if CONFIG_HC32F460_SERIAL_PA15_PA9
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA15,PA9");
   #define USART_RX_PORT   (PortA)
   #define USART_RX_PIN    (Pin15)
   #define USART_TX_PORT   (PortA)
   #define USART_TX_PIN    (Pin09)
 
-  #define USARTx          M4_USART1
-  #define USART_ENABLE    PWC_FCG1_PERIPH_USART1 | PWC_FCG1_PERIPH_USART2 | \
-                            PWC_FCG1_PERIPH_USART3 | PWC_FCG1_PERIPH_USART4
+#elif CONFIG_HC32F460_SERIAL_PC0_PC1
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PC0,PC1");
+  #define USART_RX_PORT   (PortC)
+  #define USART_RX_PIN    (Pin00)
+  #define USART_TX_PORT   (PortC)
+  #define USART_TX_PIN    (Pin01)
+#endif
 
-  #define USART_RX_FUNC   Func_Usart1_Rx
-  #define USART_TX_FUNC   Func_Usart1_Tx
-  #define USART_RI_NUM    INT_USART1_RI
-  #define USART_TI_NUM    INT_USART1_TI
-  #define USART_EI_NUM    INT_USART1_EI
-  #define USART_TCI_NUM   INT_USART1_TCI
+// use USART 1 for serial connection
+#define USARTx          M4_USART1
+#define USART_ENABLE    PWC_FCG1_PERIPH_USART1 | PWC_FCG1_PERIPH_USART2 | \
+                        PWC_FCG1_PERIPH_USART3 | PWC_FCG1_PERIPH_USART4
+
+#define USART_RX_FUNC   Func_Usart1_Rx
+#define USART_TX_FUNC   Func_Usart1_Tx
+#define USART_RI_NUM    INT_USART1_RI
+#define USART_TI_NUM    INT_USART1_TI
+#define USART_EI_NUM    INT_USART1_EI
+#define USART_TCI_NUM   INT_USART1_TCI
 
 
 void
