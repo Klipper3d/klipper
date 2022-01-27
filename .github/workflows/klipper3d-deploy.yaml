@@ -24,8 +24,8 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install dependencies
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
-      - name: Fetch Translations
-        run: ./scripts/pre-mkdocs.sh
+      - name: Fetch zh-hans localizaton
+        run: ./scripts/pre-mkdocs.sh zh-hans zh
       - name: Build and deploy klipper3d
         run: |
           mkdocs gh-deploy --config-file docs/_klipper3d/mkdocs.yml --remote-branch gh-pages --force --verbose
