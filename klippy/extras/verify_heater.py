@@ -6,7 +6,7 @@
 import logging
 
 HINT_THERMAL = """
-See the 'verify_heater' section in config/example-extras.cfg
+See the 'verify_heater' section in docs/Config_Reference.md
 for the parameters that control this check.
 """
 
@@ -35,8 +35,8 @@ class HeaterCheck:
         if self.printer.get_start_args().get('debugoutput') is not None:
             # Disable verify_heater if outputting to a debug file
             return
-        pheater = self.printer.lookup_object('heater')
-        self.heater = pheater.lookup_heater(self.heater_name)
+        pheaters = self.printer.lookup_object('heaters')
+        self.heater = pheaters.lookup_heater(self.heater_name)
         logging.info("Starting heater checks for %s", self.heater_name)
         reactor = self.printer.get_reactor()
         self.check_timer = reactor.register_timer(self.check_event, reactor.NOW)
@@ -46,7 +46,7 @@ class HeaterCheck:
             reactor.update_timer(self.check_timer, reactor.NEVER)
     def check_event(self, eventtime):
         temp, target = self.heater.get_temp(eventtime)
-        if temp >= target - self.hysteresis:
+        if temp >= target - self.hysteresis or target <= 0.:
             # Temperature near target - reset checks
             if self.approaching_target and target:
                 logging.info("Heater %s within range of %.3f",

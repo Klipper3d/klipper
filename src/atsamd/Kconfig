@@ -11,6 +11,14 @@ config ATSAMD_SELECT
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM if MACH_SAMD21
     select HAVE_GPIO_BITBANGING
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+    select HAVE_STEPPER_BOTH_EDGE
+
+config HAVE_SERCOM
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    bool
+    default y
 
 config BOARD_DIRECTORY
     string
@@ -23,6 +31,9 @@ choice
         select MACH_SAMD21
     config MACH_SAMD21E18
         bool "SAMD21E18 (Adafruit Trinket M0)"
+        select MACH_SAMD21
+    config MACH_SAMD21E15
+        bool "SAMD21E15"
         select MACH_SAMD21
     config MACH_SAMD51G19
         bool "SAMD51G19 (Adafruit ItsyBitsy M4)"
@@ -47,24 +58,26 @@ config MCU
     string
     default "samd21g18a" if MACH_SAMD21G18
     default "samd21e18a" if MACH_SAMD21E18
+    default "samd21e15a" if MACH_SAMD21E15
     default "samd51g19a" if MACH_SAMD51G19
     default "samd51j19a" if MACH_SAMD51J19
     default "samd51n19a" if MACH_SAMD51N19
     default "samd51p20a" if MACH_SAMD51P20
 
-config CLOCK_FREQ
-    int
-    default 48000000 if MACH_SAMD21
-    default 120000000 if MACH_SAMD51
-
 config FLASH_SIZE
     hex
+    default 0x8000 if MACH_SAMD21E15
     default 0x40000 if MACH_SAMD21G18 || MACH_SAMD21E18
     default 0x80000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19
     default 0x100000 if MACH_SAMD51P20
 
+config RAM_START
+    hex
+    default 0x20000000
+
 config RAM_SIZE
     hex
+    default 0x1000 if MACH_SAMD21E15
     default 0x8000 if MACH_SAMD21G18 || MACH_SAMD21E18
     default 0x30000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19
     default 0x40000 if MACH_SAMD51P20
@@ -77,9 +90,32 @@ choice
     prompt "Clock Reference"
     config CLOCK_REF_X32K
         bool "32.768Khz crystal"
+    config CLOCK_REF_X25M
+        bool "25Mhz crystal" if MACH_SAMD51
     config CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
+
+choice
+    depends on MACH_SAMD51 && LOW_LEVEL_OPTIONS
+    prompt "Processor speed"
+    config SAMD51_FREQ_120
+        bool "120 MHz (standard)"
+    config SAMD51_FREQ_150
+        bool "150 MHz (overclock)"
+    config SAMD51_FREQ_180
+        bool "180 MHz (overclock)"
+    config SAMD51_FREQ_200
+        bool "200 MHz (overclock)"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 48000000 if MACH_SAMD21
+    default 150000000 if SAMD51_FREQ_150
+    default 180000000 if SAMD51_FREQ_180
+    default 200000000 if SAMD51_FREQ_200
+    default 120000000 if MACH_SAMD51
 
 choice
     prompt "Bootloader offset"
@@ -99,15 +135,17 @@ config FLASH_START
     default 0x0000
 
 config USBSERIAL
-    bool "Use USB for communication (instead of serial)" if MACH_SAMD21
-    default y
+    bool
 config SERIAL
-    depends on !USBSERIAL
     bool
-    default y
-config HAVE_SERCOM
-    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
-    bool
-    default y
+choice
+    prompt "Communication interface"
+    config ATSAMD_USB
+        bool "USB"
+        select USBSERIAL
+    config ATSAMD_SERIAL
+        bool "Serial"
+        select SERIAL
+endchoice
 
 endif

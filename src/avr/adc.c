@@ -14,7 +14,7 @@
 static const uint8_t adc_pins[] PROGMEM = {
 #if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
     GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
-    GPIO('C', 4), GPIO('C', 5), GPIO('E', 0), GPIO('E', 1),
+    GPIO('C', 4), GPIO('C', 5), GPIO('E', 2), GPIO('E', 3),
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
     GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
     GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
@@ -32,6 +32,11 @@ static const uint8_t adc_pins[] PROGMEM = {
     GPIO('K', 4), GPIO('K', 5), GPIO('K', 6), GPIO('K', 7),
 #endif
 };
+
+// The atmega168/328 have two analog only pins
+#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328
+DECL_ENUMERATION_RANGE("pin", "PE2", GPIO('E', 2), 2);
+#endif
 
 enum { ADMUX_DEFAULT = 0x40 };
 enum { ADC_ENABLE = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN)|(1<<ADIF) };

@@ -5,7 +5,6 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // ffs
-#include "LPC17xx.h" // LPC_PINCON
 #include "board/irq.h" // irq_save
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_out_setup
@@ -81,10 +80,7 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
     LPC_GPIO_TypeDef *regs = g.regs;
     int pin = regs_to_pin(regs, g.bit);
     irqstatus_t flag = irq_save();
-    if (val)
-        regs->FIOSET = g.bit;
-    else
-        regs->FIOCLR = g.bit;
+    regs->FIOPIN = (regs->FIOSET & ~g.bit) | (val ? g.bit : 0);
     regs->FIODIR |= g.bit;
     gpio_peripheral(pin, 0, 0);
     irq_restore(flag);

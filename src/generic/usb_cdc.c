@@ -15,13 +15,22 @@
 #include "sched.h" // sched_wake_task
 #include "usb_cdc.h" // usb_notify_ep0
 
+// To debug a USB connection over UART, uncomment the two macros
+// below, alter the board KConfig to "select USBSERIAL" on a serial
+// UART build (so both USB and UART are enabled in a single build),
+// compile the code using serial UART, add output() calls to the USB
+// code as needed, deploy the new binary, and then connect via
+// console.py using UART to see those output() messages.
+//#define console_sendf(ce,va) console_sendf_usb(ce,va)
+//#define command_find_and_dispatch(rb, rp, pc) ({*(pc) = rp; 1;})
+
 
 /****************************************************************
  * Message block sending
  ****************************************************************/
 
 static struct task_wake usb_bulk_in_wake;
-static uint8_t transmit_buf[96], transmit_pos;
+static uint8_t transmit_buf[192], transmit_pos;
 
 void
 usb_notify_bulk_in(void)
@@ -124,7 +133,7 @@ DECL_TASK(usb_bulk_out_task);
 #define CONCAT1(a, b) a ## b
 #define CONCAT(a, b) CONCAT1(a, b)
 #define USB_STR_MANUFACTURER u"Klipper"
-#define USB_STR_PRODUCT u"Klipper firmware"
+#define USB_STR_PRODUCT CONCAT(u,CONFIG_MCU)
 #define USB_STR_SERIAL CONCAT(u,CONFIG_USB_SERIAL_NUMBER)
 
 // String descriptors
@@ -280,9 +289,26 @@ static const struct descriptor_s {
       &cdc_string_manufacturer, SIZE_cdc_string_manufacturer },
     { (USB_DT_STRING<<8) | USB_STR_ID_PRODUCT, USB_LANGID_ENGLISH_US,
       &cdc_string_product, SIZE_cdc_string_product },
+#if !CONFIG_USB_SERIAL_NUMBER_CHIPID
     { (USB_DT_STRING<<8) | USB_STR_ID_SERIAL, USB_LANGID_ENGLISH_US,
       &cdc_string_serial, SIZE_cdc_string_serial },
+#endif
 };
+
+// Fill in a USB serial string descriptor from a chip id
+void
+usb_fill_serial(struct usb_string_descriptor *desc, int strlen, void *id)
+{
+    desc->bLength = sizeof(*desc) + strlen * sizeof(desc->data[0]);
+    desc->bDescriptorType = USB_DT_STRING;
+
+    uint8_t *src = id;
+    int i;
+    for (i = 0; i < strlen; i++) {
+        uint8_t c = i & 1 ? src[i/2] & 0x0f : src[i/2] >> 4;
+        desc->data[i] = c < 10 ? c + '0' : c - 10 + 'A';
+    }
+}
 
 
 /****************************************************************
@@ -358,20 +384,33 @@ usb_req_get_descriptor(struct usb_ctrlrequest *req)
 {
     if (req->bRequestType != USB_DIR_IN)
         goto fail;
-    uint_fast8_t i;
+    void *desc = NULL;
+    uint_fast8_t flags, size, i;
     for (i=0; i<ARRAY_SIZE(cdc_descriptors); i++) {
         const struct descriptor_s *d = &cdc_descriptors[i];
         if (READP(d->wValue) == req->wValue
             && READP(d->wIndex) == req->wIndex) {
-            uint_fast8_t size = READP(d->size);
-            uint_fast8_t flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
-            if (size > req->wLength)
-                size = req->wLength;
-            else if (size < req->wLength)
-                flags |= UX_SEND_ZLP;
-            usb_do_xfer((void*)READP(d->desc), size, flags);
-            return;
+            flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
+            size = READP(d->size);
+            desc = (void*)READP(d->desc);
         }
+    }
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID
+        && req->wValue == ((USB_DT_STRING<<8) | USB_STR_ID_SERIAL)
+        && req->wIndex == USB_LANGID_ENGLISH_US) {
+            struct usb_string_descriptor *usbserial_serialid;
+            usbserial_serialid = usbserial_get_serialid();
+            flags = UX_SEND;
+            size = usbserial_serialid->bLength;
+            desc = (void*)usbserial_serialid;
+    }
+    if (desc) {
+        if (size > req->wLength)
+            size = req->wLength;
+        else if (size < req->wLength)
+            flags |= UX_SEND_ZLP;
+        usb_do_xfer(desc, size, flags);
+        return;
     }
 fail:
     usb_do_stall();

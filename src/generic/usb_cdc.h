@@ -22,8 +22,10 @@ void usb_stall_ep0(void);
 void usb_set_address(uint_fast8_t addr);
 void usb_set_configure(void);
 void usb_request_bootloader(void);
+struct usb_string_descriptor *usbserial_get_serialid(void);
 
 // usb_cdc.c
+void usb_fill_serial(struct usb_string_descriptor *desc, int strlen, void *id);
 void usb_notify_bulk_in(void);
 void usb_notify_bulk_out(void);
 void usb_notify_ep0(void);

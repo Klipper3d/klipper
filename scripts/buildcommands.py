@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # Script to handle build time requests embedded in C code.
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
@@ -46,7 +46,9 @@ class HandleCallList:
             func_code = ['    extern void %s(void);\n    %s();' % (f, f)
                          for f in funcs]
             if funcname == 'ctr_run_taskfuncs':
-                func_code = ['    irq_poll();\n' + fc for fc in func_code]
+                add_poll = '    irq_poll();\n'
+                func_code = [add_poll + fc for fc in func_code]
+                func_code.append(add_poll)
             fmt = """
 void
 %s(void)
@@ -73,8 +75,8 @@ class HandleEnumerations:
         self.enumerations = {}
         self.ctr_dispatch = {
             '_DECL_STATIC_STR': self.decl_static_str,
-            '_DECL_ENUMERATION': self.decl_enumeration,
-            '_DECL_ENUMERATION_RANGE': self.decl_enumeration_range
+            'DECL_ENUMERATION': self.decl_enumeration,
+            'DECL_ENUMERATION_RANGE': self.decl_enumeration_range
         }
     def add_enumeration(self, enum, name, value):
         enums = self.enumerations.setdefault(enum, {})
@@ -84,14 +86,10 @@ class HandleEnumerations:
         enums[name] = value
     def decl_enumeration(self, req):
         enum, name, value = req.split()[1:]
-        self.add_enumeration(enum, name, decode_integer(value))
+        self.add_enumeration(enum, name, int(value, 0))
     def decl_enumeration_range(self, req):
-        enum, name, count, value = req.split()[1:]
-        try:
-            count = int(count, 0)
-        except ValueError as e:
-            error("Invalid enumeration count in '%s'" % (req,))
-        self.add_enumeration(enum, name, (decode_integer(value), count))
+        enum, name, value, count = req.split()[1:]
+        self.add_enumeration(enum, name, (int(value, 0), int(count, 0)))
     def decl_static_str(self, req):
         msg = req.split(None, 1)[1]
         if msg not in self.static_strings:
@@ -123,22 +121,13 @@ Handlers.append(HandlerEnumerations)
 # Constants
 ######################################################################
 
-def decode_integer(value):
-    value = value.strip()
-    if len(value) != 7 or value[0] not in '-+':
-        error("Invalid encoded integer '%s'" % (value,))
-    out = sum([(ord(c) - 48) << (i*6) for i, c in enumerate(value[1:])])
-    if value[0] == '-':
-        out -= 1<<32
-    return out
-
 # Allow adding build time constants to the data dictionary
 class HandleConstants:
     def __init__(self):
         self.constants = {}
         self.ctr_dispatch = {
-            '_DECL_CONSTANT': self.decl_constant,
-            '_DECL_CONSTANT_STR': self.decl_constant_str,
+            'DECL_CONSTANT': self.decl_constant,
+            'DECL_CONSTANT_STR': self.decl_constant_str,
         }
     def set_value(self, name, value):
         if name in self.constants and self.constants[name] != value:
@@ -146,7 +135,7 @@ class HandleConstants:
         self.constants[name] = value
     def decl_constant(self, req):
         name, value = req.split()[1:]
-        self.set_value(name, decode_integer(value))
+        self.set_value(name, int(value, 0))
     def decl_constant_str(self, req):
         name, value = req.split(None, 2)[1:]
         value = value.strip()
@@ -185,8 +174,8 @@ class HandleInitialPins:
         if not self.initial_pins:
             return []
         mp = msgproto.MessageParser()
-        mp._fill_enumerations(HandlerEnumerations.enumerations)
-        pinmap = mp.enumerations.get('pin', {})
+        mp.fill_enumerations(HandlerEnumerations.enumerations)
+        pinmap = mp.get_enumerations().get('pin', {})
         out = []
         for p in self.initial_pins:
             flag = "IP_OUT_HIGH"
@@ -210,6 +199,50 @@ Handlers.append(HandleInitialPins())
 
 
 ######################################################################
+# ARM IRQ vector table generation
+######################################################################
+
+# Create ARM IRQ vector table from interrupt handler declarations
+class Handle_arm_irq:
+    def __init__(self):
+        self.irqs = {}
+        self.ctr_dispatch = { 'DECL_ARMCM_IRQ': self.decl_armcm_irq }
+    def decl_armcm_irq(self, req):
+        func, num = req.split()[1:]
+        num = int(num, 0)
+        if num in self.irqs and self.irqs[num] != func:
+            error("Conflicting IRQ definition %d (old %s new %s)"
+                  % (num, self.irqs[num], func))
+        self.irqs[num] = func
+    def update_data_dictionary(self, data):
+        pass
+    def generate_code(self, options):
+        armcm_offset = 16
+        if 1 - armcm_offset not in self.irqs:
+            # The ResetHandler was not defined - don't build VectorTable
+            return ""
+        max_irq = max(self.irqs.keys())
+        table = ["    DefaultHandler,\n"] * (max_irq + armcm_offset + 1)
+        defs = []
+        for num, func in self.irqs.items():
+            if num < 1 - armcm_offset:
+                error("Invalid IRQ %d (%s)" % (num, func))
+            defs.append("extern void %s(void);\n" % (func,))
+            table[num + armcm_offset] = "    %s,\n" % (func,)
+        table[0] = "    &_stack_end,\n"
+        fmt = """
+extern void DefaultHandler(void);
+extern uint32_t _stack_end;
+%s
+const void *VectorTable[] __visible __section(".vector_table") = {
+%s};
+"""
+        return fmt % (''.join(defs), ''.join(table))
+
+Handlers.append(Handle_arm_irq())
+
+
+######################################################################
 # Wire protocol commands and responses
 ######################################################################
 
@@ -222,7 +255,7 @@ class HandleCommandGeneration:
         self.messages_by_name = { m.split()[0]: m for m in self.msg_to_id }
         self.all_param_types = {}
         self.ctr_dispatch = {
-            '_DECL_COMMAND': self.decl_command,
+            'DECL_COMMAND_FLAGS': self.decl_command,
             '_DECL_ENCODER': self.decl_encoder,
             '_DECL_OUTPUT': self.decl_output
         }
@@ -250,36 +283,42 @@ class HandleCommandGeneration:
     def create_message_ids(self):
         # Create unique ids for each message type
         msgid = max(self.msg_to_id.values())
-        for msgname in self.commands.keys() + [m for n, m in self.encoders]:
+        mlist = list(self.commands.keys()) + [m for n, m in self.encoders]
+        for msgname in mlist:
             msg = self.messages_by_name.get(msgname, msgname)
             if msg not in self.msg_to_id:
                 msgid += 1
                 self.msg_to_id[msg] = msgid
-        if msgid >= 96:
+        if msgid >= 128:
             # The mcu currently assumes all message ids encode to one byte
             error("Too many message ids")
     def update_data_dictionary(self, data):
-        command_ids = [self.msg_to_id[msg]
-                       for msgname, msg in self.messages_by_name.items()
-                       if msgname in self.commands]
-        response_ids = [self.msg_to_id[msg]
+        # Handle message ids over 96 (they are decoded as negative numbers)
+        msg_to_tag = {msg: msgid if msgid < 96 else msgid - 128
+                      for msg, msgid in self.msg_to_id.items()}
+        command_tags = [msg_to_tag[msg]
                         for msgname, msg in self.messages_by_name.items()
-                        if msgname not in self.commands]
-        data['commands'] = { msg: msgid for msg, msgid in self.msg_to_id.items()
-                             if msgid in command_ids }
-        data['responses'] = {msg: msgid for msg, msgid in self.msg_to_id.items()
-                             if msgid in response_ids }
-        output = { msg: msgid for msg, msgid in self.msg_to_id.items()
-                   if msgid not in command_ids and msgid not in response_ids }
+                        if msgname in self.commands]
+        response_tags = [msg_to_tag[msg]
+                         for msgname, msg in self.messages_by_name.items()
+                         if msgname not in self.commands]
+        data['commands'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+                             if msgtag in command_tags }
+        data['responses'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+                              if msgtag in response_tags }
+        output = {msg: msgtag for msg, msgtag in msg_to_tag.items()
+                  if msgtag not in command_tags and msgtag not in response_tags}
         if output:
             data['output'] = output
-    def build_parser(self, parser, iscmd):
-        if parser.name == "#output":
-            comment = "Output: " + parser.msgformat
+    def build_parser(self, msgid, msgformat, msgtype):
+        if msgtype == "output":
+            param_types = msgproto.lookup_output_params(msgformat)
+            comment = "Output: " + msgformat
         else:
-            comment = parser.msgformat
+            param_types = [t for name, t in msgproto.lookup_params(msgformat)]
+            comment = msgformat
         params = '0'
-        types = tuple([t.__class__.__name__ for t in parser.param_types])
+        types = tuple([t.__class__.__name__ for t in param_types])
         if types:
             paramid = self.all_param_types.get(types)
             if paramid is None:
@@ -291,15 +330,15 @@ class HandleCommandGeneration:
     .msg_id=%d,
     .num_params=%d,
     .param_types = %s,
-""" % (comment, parser.msgid, len(types), params)
-        if iscmd:
+""" % (comment, msgid, len(types), params)
+        if msgtype == 'response':
             num_args = (len(types) + types.count('PT_progmem_buffer')
                         + types.count('PT_buffer'))
             out += "    .num_args=%d," % (num_args,)
         else:
             max_size = min(msgproto.MESSAGE_MAX,
                            (msgproto.MESSAGE_MIN + 1
-                            + sum([t.max_length for t in parser.param_types])))
+                            + sum([t.max_length for t in param_types])))
             out += "    .max_size=%d," % (max_size,)
         return out
     def generate_responses_code(self):
@@ -311,17 +350,15 @@ class HandleCommandGeneration:
             msgid = self.msg_to_id[msg]
             if msgid in did_output:
                 continue
-            s = msg
             did_output[msgid] = True
             code = ('    if (__builtin_strcmp(str, "%s") == 0)\n'
-                    '        return &command_encoder_%s;\n' % (s, msgid))
+                    '        return &command_encoder_%s;\n' % (msg, msgid))
             if msgname is None:
-                parser = msgproto.OutputFormat(msgid, msg)
+                parsercode = self.build_parser(msgid, msg, 'output')
                 output_code.append(code)
             else:
-                parser = msgproto.MessageFormat(msgid, msg)
+                parsercode = self.build_parser(msgid, msg, 'command')
                 encoder_code.append(code)
-            parsercode = self.build_parser(parser, 0)
             encoder_defs.append(
                 "const struct command_encoder command_encoder_%s PROGMEM = {"
                 "    %s\n};\n" % (
@@ -361,8 +398,7 @@ ctr_lookup_output(const char *str)
             funcname, flags, msgname = cmd_by_id[msgid]
             msg = self.messages_by_name[msgname]
             externs[funcname] = 1
-            parser = msgproto.MessageFormat(msgid, msg)
-            parsercode = self.build_parser(parser, 1)
+            parsercode = self.build_parser(msgid, msg, 'response')
             index.append(" {%s\n    .flags=%s,\n    .func=%s\n}," % (
                 parsercode, flags, funcname))
         index = "".join(index).strip()
@@ -417,7 +453,7 @@ def check_output(prog):
     if retcode:
         return ""
     try:
-        return output.decode()
+        return str(output.decode('utf8'))
     except UnicodeError:
         logging.debug("Exception on decode: %s" % (traceback.format_exc(),))
         return ""
@@ -431,14 +467,18 @@ def git_version():
     logging.debug("Got git version: %s" % (repr(ver),))
     return ver
 
-def build_version(extra):
+def build_version(extra, cleanbuild):
     version = git_version()
     if not version:
+        cleanbuild = False
         version = "?"
-    btime = time.strftime("%Y%m%d_%H%M%S")
-    hostname = socket.gethostname()
-    version = "%s-%s-%s%s" % (version, btime, hostname, extra)
-    return version
+    elif 'dirty' in version:
+        cleanbuild = False
+    if not cleanbuild:
+        btime = time.strftime("%Y%m%d_%H%M%S")
+        hostname = socket.gethostname()
+        version = "%s-%s-%s" % (version, btime, hostname)
+    return version + extra
 
 # Run "tool --version" for each specified tool and extract versions
 def tool_versions(tools):
@@ -480,7 +520,7 @@ class HandleVersions:
         data['build_versions'] = self.toolstr
     def generate_code(self, options):
         cleanbuild, self.toolstr = tool_versions(options.tools)
-        self.version = build_version(options.extra)
+        self.version = build_version(options.extra, cleanbuild)
         sys.stdout.write("Version: %s\n" % (self.version,))
         return "\n// version: %s\n// build_versions: %s\n" % (
             self.version, self.toolstr)
@@ -507,17 +547,17 @@ class HandleIdentify:
 
         # Write data dictionary
         if options.write_dictionary:
-            f = open(options.write_dictionary, 'wb')
+            f = open(options.write_dictionary, 'w')
             f.write(datadict)
             f.close()
 
         # Format compressed info into C code
-        zdatadict = zlib.compress(datadict, 9)
+        zdatadict = bytearray(zlib.compress(datadict.encode(), 9))
         out = []
         for i in range(len(zdatadict)):
             if i % 8 == 0:
                 out.append('\n   ')
-            out.append(" 0x%02x," % (ord(zdatadict[i]),))
+            out.append(" 0x%02x," % (zdatadict[i],))
         fmt = """
 const uint8_t command_identify_data[] PROGMEM = {%s
 };
@@ -556,10 +596,10 @@ def main():
 
     # Parse request file
     ctr_dispatch = { k: v for h in Handlers for k, v in h.ctr_dispatch.items() }
-    f = open(incmdfile, 'rb')
+    f = open(incmdfile, 'r')
     data = f.read()
     f.close()
-    for req in data.split('\0'):
+    for req in data.split('\n'):
         req = req.lstrip()
         if not req:
             continue
@@ -570,7 +610,7 @@ def main():
 
     # Write output
     code = "".join([FILEHEADER] + [h.generate_code(options) for h in Handlers])
-    f = open(outcfile, 'wb')
+    f = open(outcfile, 'w')
     f.write(code)
     f.close()
 

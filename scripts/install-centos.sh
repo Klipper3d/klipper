@@ -31,10 +31,10 @@ create_virtualenv()
     report_status "Updating python virtual environment..."
 
     # Create virtualenv if it doesn't already exist
-    [ ! -d ${PYTHONDIR} ] && virtualenv ${PYTHONDIR}
+    [ ! -d ${PYTHONDIR} ] && virtualenv -p python2 ${PYTHONDIR}
 
     # Install/update dependencies
-    ${PYTHONDIR}/bin/pip install cffi==1.6.0 pyserial==3.2.1 greenlet==0.4.10
+    ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
 }
 
 # Step 3: Install startup script
@@ -70,7 +70,7 @@ KLIPPY_USER=$USER
 start_software()
 {
     report_status "Launching Klipper host software..."
-    sudo systemctl klipper restart
+    sudo systemctl restart klipper
 }
 
 # Helper functions

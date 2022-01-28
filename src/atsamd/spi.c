@@ -6,9 +6,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "internal.h" // enable_pclock
-#include "command.h" // shutdown
 #include "gpio.h" // spi_setup
-#include "sched.h" // sched_shutdown
 
 void
 spi_init(uint32_t bus, SercomSpi *ss, uint32_t ctrla, uint32_t baud)
@@ -28,13 +26,6 @@ spi_init(uint32_t bus, SercomSpi *ss, uint32_t ctrla, uint32_t baud)
 struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-#ifdef SERCOM7
-    if (bus > 7)
-#else
-    if (bus > 5)
-#endif
-        shutdown("Invalid spi bus");
-
     uint32_t dipo_dopo = sercom_spi_pins(bus);
     uint32_t ctrla = (SERCOM_SPI_CTRLA_MODE(3)
                       | (mode << SERCOM_SPI_CTRLA_CPHA_Pos)

@@ -22,6 +22,27 @@ struct spi_info {
     uint8_t miso_pin, mosi_pin, sck_pin, rxtx_periph, sck_periph;
 };
 
+#if CONFIG_MACH_SAM3X
+DECL_ENUMERATION("spi_bus", "spi0", 0);
+DECL_ENUMERATION_RANGE("spi_bus", "usart0", 1, 3);
+DECL_CONSTANT_STR("BUS_PINS_spi0", "PA25,PA26,PA27");
+DECL_CONSTANT_STR("BUS_PINS_usart0", "PA10,PA11,PA17");
+DECL_CONSTANT_STR("BUS_PINS_usart1", "PA12,PA13,PA16");
+DECL_CONSTANT_STR("BUS_PINS_usart2", "PB21,PB20,PB24");
+#elif CONFIG_MACH_SAM4S
+DECL_ENUMERATION("spi_bus", "spi", 0);
+DECL_ENUMERATION_RANGE("spi_bus", "usart0", 1, 2);
+DECL_CONSTANT_STR("BUS_PINS_spi", "PA12,PA13,PA14");
+DECL_CONSTANT_STR("BUS_PINS_usart0", "PA5,PA6,PA2");
+DECL_CONSTANT_STR("BUS_PINS_usart1", "PA21,PA22,PA23");
+#elif CONFIG_MACH_SAM4E
+DECL_ENUMERATION("spi_bus", "spi", 0);
+DECL_ENUMERATION_RANGE("spi_bus", "usart0", 1, 2);
+DECL_CONSTANT_STR("BUS_PINS_spi", "PA12,PA13,PA14");
+DECL_CONSTANT_STR("BUS_PINS_usart0", "PB0,PB1,PB13");
+DECL_CONSTANT_STR("BUS_PINS_usart1", "PA21,PA22,PA23");
+#endif
+
 static const struct spi_info spi_bus[] = {
 #if CONFIG_MACH_SAM3X
     { SPI0, ID_SPI0, GPIO('A', 25), GPIO('A', 26), GPIO('A', 27), 'A', 'A' },
@@ -33,9 +54,9 @@ static const struct spi_info spi_bus[] = {
     { USART0, ID_USART0, GPIO('A', 5), GPIO('A', 6), GPIO('A', 2), 'A', 'B' },
     { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},
 #elif CONFIG_MACH_SAM4E
+    { SPI, ID_SPI, GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A' },
     { USART0, ID_USART0, GPIO('B', 0), GPIO('B', 1), GPIO('B', 13), 'C', 'C' },
     { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},
-    { SPI, ID_SPI, GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A' },
 #endif
 };
 
@@ -102,19 +123,18 @@ spihw_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     // Make sure bus is enabled
     spihw_init(bus);
 
-    uint32_t config = 0;
-    uint32_t clockDiv;
-    if (rate < (CHIP_FREQ_CPU_MAX / 255)) {
+    uint32_t clockDiv, pclk = get_pclock_frequency(ID_USART0);
+    if (rate < pclk / 255) {
         clockDiv = 255;
-    } else if (rate >= (CHIP_FREQ_CPU_MAX / 2)) {
+    } else if (rate >= pclk / 2) {
         clockDiv = 2;
     } else {
-        clockDiv = (CHIP_FREQ_CPU_MAX / (rate + 1)) + 1;
+        clockDiv = pclk / (rate + 1) + 1;
     }
 
     /****** Will be written to SPI_CSRx register ******/
     // CSAAT  : Chip Select Active After Transfer
-    config  = SPI_CSR_CSAAT;
+    uint32_t config = SPI_CSR_CSAAT;
     config |= SPI_CSR_BITS_8_BIT; // TODO: support for SPI_CSR_BITS_16_BIT
     // NOTE: NCPHA is inverted, CPHA normal!!
     switch(mode) {
@@ -187,7 +207,8 @@ usart_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 
     p_usart->US_CR = US_CR_RSTTX | US_CR_RSTRX | US_CR_TXDIS | US_CR_RXDIS;
 
-    uint32_t br = DIV_ROUND_UP(CHIP_FREQ_CPU_MAX, rate);
+    uint32_t pclk = get_pclock_frequency(ID_USART0);
+    uint32_t br = DIV_ROUND_UP(pclk, rate);
     p_usart->US_BRGR = br << US_BRGR_CD_Pos;
 
     uint32_t reg = US_MR_CHRL_8_BIT |

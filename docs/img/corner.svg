@@ -2,20 +2,23 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="54.904114mm"
    height="6.0860338mm"
    viewBox="0 0 194.54213 21.564687"
    id="svg3506"
    version="1.1"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="corner.svg">
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="corner.svg"
+   inkscape:export-filename="/home/kevin/src/reprap/firmware/klipper/docs/img/corner.svg.png"
+   inkscape:export-xdpi="89.734001"
+   inkscape:export-ydpi="89.734001"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs3508">
     <marker
@@ -99,11 +102,11 @@
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:zoom="2.49"
-     inkscape:cx="95.030833"
-     inkscape:cy="-0.17370789"
+     inkscape:cx="94.97992"
+     inkscape:cy="0"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -113,10 +116,11 @@
      fit-margin-bottom="0"
      showborder="false"
      inkscape:window-width="1068"
-     inkscape:window-height="478"
+     inkscape:window-height="487"
      inkscape:window-x="378"
      inkscape:window-y="113"
-     inkscape:window-maximized="0">
+     inkscape:window-maximized="0"
+     inkscape:pagecheckerboard="0">
     <inkscape:grid
        type="xygrid"
        id="grid6021"
@@ -133,7 +137,6 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -156,29 +159,29 @@
        sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.25000095px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="189.09824"
        y="482.48389"
        id="text12656-9"
-       sodipodi:linespacing="125%"
-       transform="matrix(0.98759291,-0.15703579,0.15703579,0.98759291,0,0)"
+       transform="rotate(-9.0348846)"
        inkscape:transform-center-x="1.3563414"
        inkscape:transform-center-y="-5.7099754"><tspan
          sodipodi:role="line"
          id="tspan5552"
          x="189.09824"
-         y="482.48389">move 1</tspan></text>
+         y="482.48389"
+         style="font-size:11.25px;line-height:1.25">move 1</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.25000095px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="427.95532"
        y="379.5321"
        id="text12656-9-8"
-       sodipodi:linespacing="125%"
-       transform="matrix(0.98949457,0.14457001,-0.14457001,0.98949457,0,0)"><tspan
+       transform="rotate(8.3123803)"><tspan
          sodipodi:role="line"
          id="tspan5554"
          x="427.95532"
-         y="379.5321">move 2</tspan></text>
+         y="379.5321"
+         style="font-size:11.25px;line-height:1.25">move 2</tspan></text>
   </g>
 </svg>

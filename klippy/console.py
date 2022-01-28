@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 # Script to implement a test console with firmware over serial port
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, os, re, logging
-import reactor, serialhdl, pins, util, msgproto, clocksync
+import util, reactor, serialhdl, pins, msgproto, clocksync
 
 help_txt = """
   This is a debugging console for the Klipper micro-controller.
@@ -30,20 +30,24 @@ help_txt = """
 re_eval = re.compile(r'\{(?P<eval>[^}]*)\}')
 
 class KeyboardReader:
-    def __init__(self, ser, reactor):
-        self.ser = ser
+    def __init__(self, reactor, serialport, baud, canbus_iface, canbus_nodeid):
+        self.serialport = serialport
+        self.baud = baud
+        self.canbus_iface = canbus_iface
+        self.canbus_nodeid = canbus_nodeid
+        self.ser = serialhdl.SerialReader(reactor)
         self.reactor = reactor
         self.start_time = reactor.monotonic()
         self.clocksync = clocksync.ClockSync(self.reactor)
         self.fd = sys.stdin.fileno()
         util.set_nonblock(self.fd)
         self.mcu_freq = 0
-        self.pins = None
+        self.pins = pins.PinResolver(validate_aliases=False)
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
         reactor.register_callback(self.connect)
         self.local_commands = {
-            "PINS": self.command_PINS, "SET": self.command_SET,
+            "SET": self.command_SET,
             "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
             "SUPPRESS": self.command_SUPPRESS, "STATS": self.command_STATS,
             "LIST": self.command_LIST, "HELP": self.command_HELP,
@@ -52,19 +56,24 @@ class KeyboardReader:
     def connect(self, eventtime):
         self.output(help_txt)
         self.output("="*20 + " attempting to connect " + "="*20)
-        self.ser.connect()
-        msgparser = self.ser.msgparser
-        self.output("Loaded %d commands (%s / %s)" % (
-            len(msgparser.messages_by_id),
-            msgparser.version, msgparser.build_versions))
+        if self.canbus_iface is not None:
+            self.ser.connect_canbus(self.serialport, self.canbus_nodeid,
+                                    self.canbus_iface)
+        elif self.baud:
+            self.ser.connect_uart(self.serialport, self.baud)
+        else:
+            self.ser.connect_pipe(self.serialport)
+        msgparser = self.ser.get_msgparser()
+        message_count = len(msgparser.get_messages())
+        version, build_versions = msgparser.get_version_info()
+        self.output("Loaded %d commands (%s / %s)"
+                    % (message_count, version, build_versions))
         self.output("MCU config: %s" % (" ".join(
-            ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
+            ["%s=%s" % (k, v) for k, v in msgparser.get_constants().items()])))
         self.clocksync.connect(self.ser)
         self.ser.handle_default = self.handle_default
-        self.ser.register_callback(self.handle_output, '#output')
+        self.ser.register_response(self.handle_output, '#output')
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
-        mcu_type = msgparser.get_constant('MCU')
-        self.pins = pins.PinResolver(mcu_type, validate_aliases=False)
         self.output("="*20 + "       connected       " + "="*20)
         return self.reactor.NEVER
     def output(self, msg):
@@ -72,8 +81,8 @@ class KeyboardReader:
         sys.stdout.flush()
     def handle_default(self, params):
         tdiff = params['#receive_time'] - self.start_time
-        self.output("%07.3f: %s" % (
-            tdiff, self.ser.msgparser.format_params(params)))
+        msg = self.ser.get_msgparser().format_params(params)
+        self.output("%07.3f: %s" % (tdiff, msg))
     def handle_output(self, params):
         tdiff = params['#receive_time'] - self.start_time
         self.output("%07.3f: %s: %s" % (tdiff, params['#name'], params['#msg']))
@@ -82,8 +91,6 @@ class KeyboardReader:
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = self.clocksync.get_clock(eventtime)
-    def command_PINS(self, parts):
-        self.pins.update_aliases(parts[1])
     def command_SET(self, parts):
         val = parts[2]
         try:
@@ -130,17 +137,18 @@ class KeyboardReader:
         except ValueError as e:
             self.output("Error: %s" % (str(e),))
             return
-        self.ser.register_callback(self.handle_suppress, name, oid)
+        self.ser.register_response(self.handle_suppress, name, oid)
     def command_STATS(self, parts):
         curtime = self.reactor.monotonic()
         self.output(' '.join([self.ser.stats(curtime),
                               self.clocksync.stats(curtime)]))
     def command_LIST(self, parts):
         self.update_evals(self.reactor.monotonic())
-        mp = self.ser.msgparser
+        mp = self.ser.get_msgparser()
+        cmds = [msgformat for msgtag, msgtype, msgformat in mp.get_messages()
+                if msgtype == 'command']
         out = "Available mcu commands:"
-        out += "\n  ".join([""] + sorted([
-            mp.messages_by_id[i].msgformat for i in mp.command_ids]))
+        out += "\n  ".join([""] + sorted(cmds))
         out += "\nAvailable artificial commands:"
         out += "\n  ".join([""] + [n for n in sorted(self.local_commands)])
         out += "\nAvailable local variables:"
@@ -164,12 +172,11 @@ class KeyboardReader:
                 return None
             line = ''.join(evalparts)
             self.output("Eval: %s" % (line,))
-        if self.pins is not None:
-            try:
-                line = self.pins.update_command(line).strip()
-            except:
-                self.output("Unable to map pin: %s" % (line,))
-                return None
+        try:
+            line = self.pins.update_command(line).strip()
+        except:
+            self.output("Unable to map pin: %s" % (line,))
+            return None
         if line:
             parts = line.split()
             if parts[0] in self.local_commands:
@@ -177,7 +184,7 @@ class KeyboardReader:
                 return None
         return line
     def process_kbd(self, eventtime):
-        self.data += os.read(self.fd, 4096)
+        self.data += str(os.read(self.fd, 4096).decode())
 
         kbdlines = self.data.split('\n')
         for line in kbdlines[:-1]:
@@ -197,16 +204,33 @@ class KeyboardReader:
         self.data = kbdlines[-1]
 
 def main():
-    usage = "%prog [options] <serialdevice> <baud>"
+    usage = "%prog [options] <serialdevice>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-v", action="store_true", dest="verbose",
+                    help="enable debug messages")
+    opts.add_option("-b", "--baud", type="int", dest="baud", help="baud rate")
+    opts.add_option("-c", "--canbus_iface", dest="canbus_iface",
+                    help="Use CAN bus interface; serialdevice is the chip UUID")
+    opts.add_option("-i", "--canbus_nodeid", type="int", dest="canbus_nodeid",
+                    default=64, help="The CAN nodeid to use (default 64)")
     options, args = opts.parse_args()
-    serialport, baud = args
-    baud = int(baud)
+    if len(args) != 1:
+        opts.error("Incorrect number of arguments")
+    serialport = args[0]
 
-    logging.basicConfig(level=logging.DEBUG)
+    baud = options.baud
+    if baud is None and not (serialport.startswith("/dev/rpmsg_")
+                             or serialport.startswith("/tmp/")):
+        baud = 250000
+
+    debuglevel = logging.INFO
+    if options.verbose:
+        debuglevel = logging.DEBUG
+    logging.basicConfig(level=debuglevel)
+
     r = reactor.Reactor()
-    ser = serialhdl.SerialReader(r, serialport, baud)
-    kbd = KeyboardReader(ser, r)
+    kbd = KeyboardReader(r, serialport, baud, options.canbus_iface,
+                         options.canbus_nodeid)
     try:
         r.run()
     except KeyboardInterrupt:

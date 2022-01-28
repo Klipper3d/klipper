@@ -6,7 +6,9 @@
 import logging
 
 DEFAULT_IDLE_GCODE = """
-TURN_OFF_HEATERS
+{% if 'heaters' in printer %}
+   TURN_OFF_HEATERS
+{% endif %}
 M84
 """
 
@@ -20,9 +22,20 @@ class IdleTimeout:
         self.gcode = self.printer.lookup_object('gcode')
         self.toolhead = self.timeout_timer = None
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
-        self.state = "Idle"
         self.idle_timeout = config.getfloat('timeout', 600., above=0.)
-        self.idle_gcode = config.get('gcode', DEFAULT_IDLE_GCODE).split('\n')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
+        self.idle_gcode = gcode_macro.load_template(config, 'gcode',
+                                                    DEFAULT_IDLE_GCODE)
+        self.gcode.register_command('SET_IDLE_TIMEOUT',
+                                    self.cmd_SET_IDLE_TIMEOUT,
+                                    desc=self.cmd_SET_IDLE_TIMEOUT_help)
+        self.state = "Idle"
+        self.last_print_start_systime = 0.
+    def get_status(self, eventtime):
+        printing_time = 0.
+        if self.state == "Printing":
+            printing_time = eventtime - self.last_print_start_systime
+        return { "state": self.state, "printing_time": printing_time }
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         self.timeout_timer = self.reactor.register_timer(self.timeout_handler)
@@ -31,12 +44,11 @@ class IdleTimeout:
     def transition_idle_state(self, eventtime):
         self.state = "Printing"
         try:
-            res = self.gcode.process_batch(self.idle_gcode)
+            script = self.idle_gcode.render()
+            res = self.gcode.run_script(script)
         except:
             logging.exception("idle timeout gcode execution")
-            return eventtime + 1.
-        if not res:
-            # Raced with incoming g-code commands
+            self.state = "Ready"
             return eventtime + 1.
         print_time = self.toolhead.get_last_move_time()
         self.state = "Idle"
@@ -53,12 +65,14 @@ class IdleTimeout:
         if idle_time < self.idle_timeout:
             # Wait for idle timeout
             return eventtime + self.idle_timeout - idle_time
-        if not self.gcode.process_batch([]):
+        if self.gcode.get_mutex().test():
             # Gcode class busy
             return eventtime + 1.
         # Idle timeout has elapsed
         return self.transition_idle_state(eventtime)
     def timeout_handler(self, eventtime):
+        if self.printer.is_shutdown():
+            return self.reactor.NEVER
         if self.state == "Ready":
             return self.check_idle_timeout(eventtime)
         # Check if need to transition to "ready" state
@@ -71,7 +85,7 @@ class IdleTimeout:
         if buffer_time > -READY_TIMEOUT:
             # Wait for ready timeout
             return eventtime + READY_TIMEOUT + buffer_time
-        if not self.gcode.process_batch([]):
+        if self.gcode.get_mutex().test():
             # Gcode class busy
             return eventtime + READY_TIMEOUT
         # Transition to "ready" state
@@ -84,10 +98,19 @@ class IdleTimeout:
             return
         # Transition to "printing" state
         self.state = "Printing"
+        self.last_print_start_systime = curtime
         check_time = READY_TIMEOUT + print_time - est_print_time
         self.reactor.update_timer(self.timeout_timer, curtime + check_time)
         self.printer.send_event("idle_timeout:printing",
                                 est_print_time + PIN_MIN_TIME)
+    cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
+    def cmd_SET_IDLE_TIMEOUT(self, gcmd):
+        timeout = gcmd.get_float('TIMEOUT', self.idle_timeout, above=0.)
+        self.idle_timeout = timeout
+        gcmd.respond_info("idle_timeout: Timeout set to %.2f s" % (timeout,))
+        if self.state == "Ready":
+            checktime = self.reactor.monotonic() + timeout
+            self.reactor.update_timer(self.timeout_timer, checktime)
 
 def load_config(config):
     return IdleTimeout(config)

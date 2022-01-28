@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
 #include "board/timer_irq.h" // timer_dispatch_many
@@ -32,6 +33,16 @@ timer_kick(void)
     timer_set(timer_read_time() + 50);
 }
 
+// IRQ handler
+void __aligned(16) // aligning helps stabilize perf benchmarks
+TC4_Handler(void)
+{
+    irq_disable();
+    uint32_t next = timer_dispatch_many();
+    timer_set(next);
+    irq_enable();
+}
+
 void
 timer_init(void)
 {
@@ -44,8 +55,7 @@ timer_init(void)
     irqstatus_t flag = irq_save();
     tc->CTRLA.reg = 0;
     tc->CTRLA.reg = TC_CTRLA_MODE_COUNT32;
-    NVIC_SetPriority(TC4_IRQn, 2);
-    NVIC_EnableIRQ(TC4_IRQn);
+    armcm_enable_irq(TC4_Handler, TC4_IRQn, 2);
     tc->INTENSET.reg = TC_INTENSET_MC0;
     tc->COUNT.reg = 0;
     timer_kick();
@@ -53,13 +63,3 @@ timer_init(void)
     irq_restore(flag);
 }
 DECL_INIT(timer_init);
-
-// IRQ handler
-void __visible __aligned(16) // aligning helps stabilize perf benchmarks
-TC4_Handler(void)
-{
-    irq_disable();
-    uint32_t next = timer_dispatch_many();
-    timer_set(next);
-    irq_enable();
-}

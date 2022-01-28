@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h" // CONFIG_MACH_AVR
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // gpio_out_write
 #include "board/irq.h" // irq_poll
@@ -21,6 +22,23 @@ struct st7920 {
  * Transmit functions
  ****************************************************************/
 
+static uint32_t
+nsecs_to_ticks(uint32_t ns)
+{
+    return timer_from_us(ns * 1000) / 1000000;
+}
+
+static inline void
+ndelay(uint32_t nsecs)
+{
+    if (CONFIG_MACH_AVR)
+        // Slower MCUs don't require a delay
+        return;
+    uint32_t end = timer_read_time() + nsecs_to_ticks(nsecs);
+    while (timer_is_before(timer_read_time(), end))
+        irq_poll();
+}
+
 #define SYNC_CMD  0xf8
 #define SYNC_DATA 0xfa
 
@@ -35,7 +53,9 @@ st7920_xmit_byte(struct st7920 *s, uint8_t data)
             gpio_out_toggle(sid);
             data = ~data;
         }
+        ndelay(200);
         gpio_out_toggle(sclk);
+        ndelay(200);
         data <<= 1;
         gpio_out_toggle(sclk);
     }
@@ -86,6 +106,12 @@ command_config_st7920(uint32_t *args)
     s->sid = gpio_out_setup(args[3], 0);
     gpio_out_setup(args[1], 1);
 
+    if (!CONFIG_HAVE_STRICT_TIMING) {
+        s->sync_wait_ticks = args[4];
+        s->cmd_wait_ticks = args[5];
+        return;
+    }
+
     // Calibrate cmd_wait_ticks
     st7920_xmit_byte(s, SYNC_CMD);
     st7920_xmit_byte(s, 0x20);
@@ -111,7 +137,7 @@ command_st7920_send_cmds(uint32_t *args)
 {
     struct st7920 *s = oid_lookup(args[0], command_config_st7920);
     st7920_xmit_byte(s, SYNC_CMD);
-    uint8_t len = args[1], *cmds = (void*)(size_t)args[2];
+    uint8_t len = args[1], *cmds = command_decode_ptr(args[2]);
     st7920_xmit(s, len, cmds);
 }
 DECL_COMMAND(command_st7920_send_cmds, "st7920_send_cmds oid=%c cmds=%*s");
@@ -121,7 +147,7 @@ command_st7920_send_data(uint32_t *args)
 {
     struct st7920 *s = oid_lookup(args[0], command_config_st7920);
     st7920_xmit_byte(s, SYNC_DATA);
-    uint8_t len = args[1], *data = (void*)(size_t)args[2];
+    uint8_t len = args[1], *data = command_decode_ptr(args[2]);
     st7920_xmit(s, len, data);
 }
 DECL_COMMAND(command_st7920_send_data, "st7920_send_data oid=%c data=%*s");

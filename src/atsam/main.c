@@ -1,16 +1,15 @@
 // Main starting point for SAM3/SAM4 boards
 //
-// Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/armcm_boot.h" // armcm_main
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_request_bootloader
-#include "command.h" // DECL_CONSTANT
+#include "command.h" // DECL_COMMAND_FLAGS
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
-
-DECL_CONSTANT_STR("MCU", CONFIG_MCU);
 
 
 /****************************************************************
@@ -55,6 +54,13 @@ enable_pclock(uint32_t id)
         PMC->PMC_PCER0 = 1 << id;
     else
         PMC->PMC_PCER1 = 1 << (id - 32);
+}
+
+// Return the frequency of the given peripheral clock
+uint32_t
+get_pclock_frequency(uint32_t id)
+{
+    return CONFIG_CLOCK_FREQ;
 }
 
 
@@ -112,12 +118,11 @@ matrix_init(void)
                               | MATRIX_SCFG_DEFMSTR_TYPE(1));
 }
 
-// Main entry point
-int
-main(void)
+// Main entry point - called from armcm_boot.c:ResetHandler()
+void
+armcm_main(void)
 {
     SystemInit();
     matrix_init();
     sched_main();
-    return 0;
 }

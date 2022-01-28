@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "armcm_boot.h" // DECL_ARMCM_IRQ
 #include "board/internal.h" // SysTick
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
@@ -54,6 +55,41 @@ timer_kick(void)
     SCB->ICSR = SCB_ICSR_PENDSTSET_Msk;
 }
 
+// Implement simple early-boot delay mechanism
+void
+udelay(uint32_t usecs)
+{
+    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)) {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    }
+
+    uint32_t end = timer_read_time() + timer_from_us(usecs);
+    while (timer_is_before(timer_read_time(), end))
+        ;
+}
+
+// Dummy timer to avoid scheduling a SysTick irq greater than 0xffffff
+static uint_fast8_t
+timer_wrap_event(struct timer *t)
+{
+    t->waketime += 0xffffff;
+    return SF_RESCHEDULE;
+}
+static struct timer wrap_timer = {
+    .func = timer_wrap_event,
+    .waketime = 0xffffff,
+};
+void
+timer_reset(void)
+{
+    if (timer_from_us(100000) <= 0xffffff)
+        // Timer in sched.c already ensures SysTick wont overflow
+        return;
+    sched_add_timer(&wrap_timer);
+}
+DECL_SHUTDOWN(timer_reset);
+
 void
 timer_init(void)
 {
@@ -61,6 +97,9 @@ timer_init(void)
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
     DWT->CYCCNT = 0;
+
+    // Schedule a recurring timer on fast cpus
+    timer_reset();
 
     // Enable SysTick
     irqstatus_t flag = irq_save();
@@ -122,6 +161,7 @@ SysTick_Handler(void)
     timer_set_diff(diff);
     irq_enable();
 }
+DECL_ARMCM_IRQ(SysTick_Handler, SysTick_IRQn);
 
 // Make sure timer_repeat_until doesn't wrap 32bit comparisons
 void

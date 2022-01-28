@@ -1,6 +1,6 @@
 # Code for handling the kinematics of cable winch robots
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import stepper, mathutil
@@ -20,20 +20,19 @@ class WinchKinematics:
             a = tuple([stepper_config.getfloat('anchor_' + n) for n in 'xyz'])
             self.anchors.append(a)
             s.setup_itersolve('winch_stepper_alloc', *a)
-        # Setup stepper max halt velocity
-        max_velocity, max_accel = toolhead.get_max_velocity()
-        max_halt_velocity = toolhead.get_max_axis_halt()
-        for s in self.steppers:
-            s.set_max_jerk(max_halt_velocity, max_accel)
+            s.set_trapq(toolhead.get_trapq())
+            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
-        self.need_motor_enable = True
+        acoords = list(zip(*self.anchors))
+        self.axes_min = toolhead.Coord(*[min(a) for a in acoords], e=0.)
+        self.axes_max = toolhead.Coord(*[max(a) for a in acoords], e=0.)
         self.set_position([0., 0., 0.], ())
-    def get_steppers(self, flags=""):
+    def get_steppers(self):
         return list(self.steppers)
-    def calc_position(self):
+    def calc_position(self, stepper_positions):
         # Use only first three steppers to calculate cartesian position
-        spos = [s.get_commanded_position() for s in self.steppers[:3]]
-        return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in spos])
+        pos = [stepper_positions[rail.get_name()] for rail in self.steppers[:3]]
+        return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in pos])
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)
@@ -41,22 +40,16 @@ class WinchKinematics:
         # XXX - homing not implemented
         homing_state.set_axes([0, 1, 2])
         homing_state.set_homed_position([0., 0., 0.])
-    def motor_off(self, print_time):
-        for s in self.steppers:
-            s.motor_enable(print_time, 0)
-        self.need_motor_enable = True
-    def _check_motor_enable(self, print_time):
-        for s in self.steppers:
-            s.motor_enable(print_time, 1)
-        self.need_motor_enable = False
     def check_move(self, move):
         # XXX - boundary checks and speed limits not implemented
         pass
-    def move(self, print_time, move):
-        if self.need_motor_enable:
-            self._check_motor_enable(print_time)
-        for s in self.steppers:
-            s.step_itersolve(move.cmove)
+    def get_status(self, eventtime):
+        # XXX - homed_checks and rail limits not implemented
+        return {
+            'homed_axes': 'xyz',
+            'axis_minimum': self.axes_min,
+            'axis_maximum': self.axes_max,
+        }
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)

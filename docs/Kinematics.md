@@ -1,11 +1,12 @@
+# Kinematics
+
 This document provides an overview of how Klipper implements robot
 motion (its [kinematics](https://en.wikipedia.org/wiki/Kinematics)).
 The contents may be of interest to both developers interested in
 working on the Klipper software as well as users interested in better
 understanding the mechanics of their machines.
 
-Acceleration
-============
+## Acceleration
 
 Klipper implements a constant acceleration scheme whenever the print
 head changes velocity - the velocity is gradually changed to the new
@@ -31,8 +32,7 @@ acceleration is:
 velocity(time) = start_velocity + accel*time
 ```
 
-Trapezoid generator
-===================
+## Trapezoid generator
 
 Klipper uses a traditional "trapezoid generator" to model the motion
 of each move - each move has a start speed, it accelerates to a
@@ -54,8 +54,7 @@ of zero duration (if the end speed is equal to the cruising speed).
 
 ![trapezoids](img/trapezoids.svg.png)
 
-Look-ahead
-==========
+## Look-ahead
 
 The "look-ahead" system is used to determine cornering speeds between
 moves.
@@ -92,17 +91,12 @@ desired speed that a 90° corner should have (the "square corner
 velocity"), and the junction speeds for other angles are derived from
 that.
 
-Klipper implements look-ahead between moves that have similar extruder
-flow rates. Other moves are relatively rare and implementing
-look-ahead between them is unnecessary.
-
 Key formula for look-ahead:
 ```
 end_velocity^2 = start_velocity^2 + 2*accel*move_distance
 ```
 
-Smoothed look-ahead
--------------------
+### Smoothed look-ahead
 
 Klipper also implements a mechanism for smoothing out the motions of
 short "zigzag" moves. Consider the following moves:
@@ -131,8 +125,7 @@ however, this limit reduces the top speed. Note that it does not
 change the actual acceleration within the move - the move continues to
 use the normal acceleration scheme up to its adjusted top-speed.
 
-Generating steps
-================
+## Generating steps
 
 Once the look-ahead process completes, the print head movement for the
 given move is fully known (time, start position, end position,
@@ -171,8 +164,7 @@ cartesian_y_position = start_y + move_distance * total_y_movement / total_moveme
 cartesian_z_position = start_z + move_distance * total_z_movement / total_movement
 ```
 
-Cartesian Robots
-----------------
+### Cartesian Robots
 
 Generating steps for cartesian printers is the simplest case. The
 movement on each axis is directly related to the movement in cartesian
@@ -185,8 +177,7 @@ stepper_y_position = cartesian_y_position
 stepper_z_position = cartesian_z_position
 ```
 
-CoreXY Robots
-----------------
+### CoreXY Robots
 
 Generating steps on a CoreXY machine is only a little more complex
 than basic cartesian robots. The key formulas are:
@@ -196,8 +187,7 @@ stepper_b_position = cartesian_x_position - cartesian_y_position
 stepper_z_position = cartesian_z_position
 ```
 
-Delta Robots
-------------
+### Delta Robots
 
 Step generation on a delta robot is based on Pythagoras's theorem:
 ```
@@ -207,7 +197,7 @@ stepper_position = (sqrt(arm_length^2
                     + cartesian_z_position)
 ```
 
-### Stepper motor acceleration limits ###
+### Stepper motor acceleration limits
 
 With delta kinematics it is possible for a move that is accelerating
 in cartesian space to require an acceleration on a particular stepper
@@ -228,8 +218,7 @@ this limit, moves at the extreme edge of the build envelope (where a
 stepper arm may be nearly horizontal) will have a lower maximum
 acceleration and velocity.
 
-Extruder kinematics
--------------------
+### Extruder kinematics
 
 Klipper implements extruder motion in its own kinematic class. Since
 the timing and speed of each print head movement is fully known for
@@ -243,7 +232,7 @@ generation uses the same formulas that cartesian robots use:
 stepper_position = requested_e_position
 ```
 
-### Pressure advance ###
+### Pressure advance
 
 Experimentation has shown that it's possible to improve the modeling
 of the extruder beyond the basic extruder formula. In the ideal case,
@@ -268,35 +257,37 @@ through the nozzle orifice (as in
 key idea is that the relationship between filament, pressure, and flow
 rate can be modeled using a linear coefficient:
 ```
-stepper_position = requested_e_position + pressure_advance_coefficient * nominal_extruder_velocity
+pa_position = nominal_position + pressure_advance_coefficient * nominal_velocity
 ```
 
 See the [pressure advance](Pressure_Advance.md) document for
 information on how to find this pressure advance coefficient.
 
-Once configured, Klipper will push in an additional amount of filament
-during acceleration. The higher the desired filament flow rate, the
-more filament must be pushed in during acceleration to account for
-pressure. During head deceleration the extra filament is retracted
-(the extruder will have a negative velocity).
+The basic pressure advance formula can cause the extruder motor to
+make sudden velocity changes. Klipper implements "smoothing" of the
+extruder movement to avoid this.
 
-![pressure-advance](img/pressure-advance.svg.png)
+![pressure-advance](img/pressure-velocity.png)
 
-One may notice that the pressure advance algorithm can cause the
-extruder motor to make sudden velocity changes. This is tolerated
-based on the idea that the majority of the inertia in the system is in
-changing the extruder pressure. As long as the extruder pressure does
-not change rapidly the sudden changes in extruder motor velocity are
-tolerated.
+The above graph shows an example of two extrusion moves with a
+non-zero cornering velocity between them. Note that the pressure
+advance system causes additional filament to be pushed into the
+extruder during acceleration. The higher the desired filament flow
+rate, the more filament must be pushed in during acceleration to
+account for pressure. During head deceleration the extra filament is
+retracted (the extruder will have a negative velocity).
 
-One area where sudden velocity changes become problematic is during
-small changes in head speed due to cornering.
+The "smoothing" is implemented using a weighted average of the
+extruder position over a small time period (as specified by the
+`pressure_advance_smooth_time` config parameter). This averaging can
+span multiple g-code moves. Note how the extruder motor will start
+moving prior to the nominal start of the first extrusion move and will
+continue to move after the nominal end of the last extrusion move.
 
-![pressure-cornering](img/pressure-cornering.svg.png)
-
-To prevent this, the Klipper pressure advance code utilizes the move
-look-ahead queue to detect intermittent speed changes. During a
-deceleration event the code finds the maximum upcoming head speed
-within a configurable time window. The pressure is then only adjusted
-to this found maximum. This can greatly reduce (or even completely
-eliminate) pressure changes during cornering.
+Key formula for "smoothed pressure advance":
+```
+smooth_pa_position(t) =
+    ( definitive_integral(pa_position(x) * (smooth_time/2 - abs(t - x)) * dx,
+                          from=t-smooth_time/2, to=t+smooth_time/2)
+     / (smooth_time/2)^2 )
+```

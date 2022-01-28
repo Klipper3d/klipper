@@ -19,8 +19,10 @@ choice
         bool "SAMD21/SAMD51"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
-    config MACH_STM32F1
-        bool "STMicroelectronics STM32F103"
+    config MACH_STM32
+        bool "STMicroelectronics STM32"
+    config MACH_RP2040
+        bool "Raspberry Pi RP2040"
     config MACH_PRU
         bool "Beaglebone PRU"
     config MACH_LINUX
@@ -33,7 +35,8 @@ source "src/avr/Kconfig"
 source "src/atsam/Kconfig"
 source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
-source "src/stm32f1/Kconfig"
+source "src/stm32/Kconfig"
+source "src/rp2040/Kconfig"
 source "src/pru/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
@@ -48,45 +51,27 @@ config SERIAL_BAUD
         to 250000. Read the FAQ before changing this value.
 
 # Generic configuration options for USB
-menu "USB ids"
-    depends on USBSERIAL
-
 config USB_VENDOR_ID
-    hex "USB vendor ID"
-    default 0x2341
+    default 0x1d50
 config USB_DEVICE_ID
-    hex "USB device ID"
-    default 0xabcd
+    default 0x614e
+config USB_SERIAL_NUMBER_CHIPID
+    depends on HAVE_CHIPID
+    default y
 config USB_SERIAL_NUMBER
-    string "USB serial number"
     default "12345"
 
+menu "USB ids"
+    depends on USBSERIAL && LOW_LEVEL_OPTIONS
+config USB_VENDOR_ID
+    hex "USB vendor ID"
+config USB_DEVICE_ID
+    hex "USB device ID"
+config USB_SERIAL_NUMBER_CHIPID
+    bool "USB serial number from CHIPID" if HAVE_CHIPID
+config USB_SERIAL_NUMBER
+    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
-
-# Step timing customization
-config CUSTOM_STEP_DELAY
-    bool "Specify a custom step pulse duration"
-    depends on LOW_LEVEL_OPTIONS
-config STEP_DELAY
-    int
-    default 2
-config STEP_DELAY
-    int "Step pulse duration (in microseconds)"
-    depends on CUSTOM_STEP_DELAY
-    help
-        Specify the duration of the stepper step pulse time. This
-        setting applies to all stepper drivers controlled by the
-        micro-controller. If this value is set to zero (or less) then
-        the code will "step" and "unstep" in the same C function.
-
-        A setting of zero (or less) on 8-bit AVR micro-controllers
-        results in a minimum step pulse time a little over 2us.
-
-        A setting of zero on ARM micro-controllers typically results
-        in a minimum step pulse time of 20 cpu cycles.
-
-        The default for AVR is -1, for all other micro-controllers it
-        is 2us.
 
 config INITIAL_PINS
     string "GPIO pins to set at micro-controller startup"
@@ -97,8 +82,8 @@ config INITIAL_PINS
         pins will be set to output high - preface a pin with a '!'
         character to set that pin to output low.
 
-# The HAVE_GPIO_x options allow boards to disable support for some
-# commands if the hardware does not support the feature.
+# The HAVE_x options allow boards to disable support for some commands
+# if the hardware does not support the feature.
 config HAVE_GPIO
     bool
     default n
@@ -115,6 +100,15 @@ config HAVE_GPIO_HARD_PWM
     bool
     default n
 config HAVE_GPIO_BITBANGING
+    bool
+    default n
+config HAVE_STRICT_TIMING
+    bool
+    default n
+config HAVE_CHIPID
+    bool
+    default n
+config HAVE_STEPPER_BOTH_EDGE
     bool
     default n
 
