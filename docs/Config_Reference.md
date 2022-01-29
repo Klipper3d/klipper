@@ -788,8 +788,7 @@ recommended to define a safe_z_home section in printer.cfg to home
 toward the center of the print area.
 
 See the [bed mesh guide](Bed_Mesh.md) and
-[command reference](G-Codes.md#mesh-bed-leveling) for additional
-information.
+[command reference](G-Codes.md#bed_mesh) for additional information.
 
 Visual Examples:
 ```
@@ -903,7 +902,7 @@ Bed tilt compensation. One may define a bed_tilt config section to
 enable move transformations that account for a tilted bed. Note that
 bed_mesh and bed_tilt are incompatible; both cannot be defined.
 
-See the [command reference](G-Codes.md#bed-tilt) for additional
+See the [command reference](G-Codes.md#bed_tilt) for additional
 information.
 
 ```
@@ -941,8 +940,7 @@ config section to enable a BED_SCREWS_ADJUST g-code command.
 
 See the
 [leveling guide](Manual_Level.md#adjusting-bed-leveling-screws) and
-[command reference](G-Codes.md#bed-screws-helper) for additional
-information.
+[command reference](G-Codes.md#bed_screws) for additional information.
 
 ```
 [bed_screws]
@@ -987,8 +985,8 @@ g-code command.
 
 See the
 [leveling guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)
-and [command reference](G-Codes.md#bed-screws-tilt-adjust-helper) for
-additional information.
+and [command reference](G-Codes.md#screws_tilt_adjust) for additional
+information.
 
 ```
 [screws_tilt_adjust]
@@ -1027,7 +1025,7 @@ additional information.
 Multiple Z stepper tilt adjustment. This feature enables independent
 adjustment of multiple z steppers (see the "stepper_z1" section) to
 adjust for tilt. If this section is present then a Z_TILT_ADJUST
-extended [G-Code command](G-Codes.md#z-tilt) becomes available.
+extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 
 ```
 [z_tilt]
@@ -1120,7 +1118,7 @@ printer skew across 3 planes, xy, xz, yz. This is done by printing a
 calibration model along a plane and measuring three lengths. Due to
 the nature of skew correction these lengths are set via gcode. See
 [Skew Correction](Skew_Correction.md) and
-[Command Reference](G-Codes.md#skew-correction) for details.
+[Command Reference](G-Codes.md#skew_correction) for details.
 
 ```
 [skew_correction]
@@ -1199,8 +1197,8 @@ endstop switches. Add a bare "[endstop_phase]" declaration to enable
 the ENDSTOP_PHASE_CALIBRATE command.
 
 See the [endstop phases guide](Endstop_Phase.md) and
-[command reference](G-Codes.md#endstop-adjustments-by-stepper-phase)
-for additional information.
+[command reference](G-Codes.md#endstop_phase) for additional
+information.
 
 ```
 [endstop_phase stepper_z]
@@ -1265,7 +1263,7 @@ G-Code macros (one may define any number of sections with a
 
 Execute a gcode on a set delay. See the
 [command template guide](Command_Templates.md#delayed-gcodes) and
-[command reference](G-Codes.md#delayed-gcode) for more information.
+[command reference](G-Codes.md#delayed_gcode) for more information.
 
 ```
 [delayed_gcode my_delayed_gcode]
@@ -1287,7 +1285,7 @@ gcode:
 Support saving variables to disk so that they are retained across
 restarts. See
 [command templates](Command_Templates.md#save-variables-to-disk) and
-[G-Code reference](G-Codes.md#save-variables) for further information.
+[G-Code reference](G-Codes.md#save_variables) for further information.
 
 ```
 [save_variables]
@@ -1338,7 +1336,7 @@ a belt printer, can find use in looping sections of the sdcard file.
 (For example, to print the same part over and over, or repeat the
 a section of a part for a chain or other repeated pattern).
 
-See the [command reference](G-Codes.md#sdcard-loop) for supported
+See the [command reference](G-Codes.md#sdcard_loop) for supported
 commands. See the [sample-macros.cfg](../config/sample-macros.cfg)
 file for a Marlin compatible M808 G-Code macro.
 
@@ -1350,7 +1348,7 @@ file for a Marlin compatible M808 G-Code macro.
 
 Support manually moving stepper motors for diagnostic purposes. Note,
 using this feature may place the printer in an invalid state - see the
-[command reference](G-Codes.md#force-movement) for important details.
+[command reference](G-Codes.md#force_move) for important details.
 
 ```
 [force_move]
@@ -1362,7 +1360,7 @@ using this feature may place the printer in an invalid state - see the
 ### [pause_resume]
 
 Pause/Resume functionality with support of position capture and
-restore. See the [command reference](G-Codes.md#pause-resume) for more
+restore. See the [command reference](G-Codes.md#pause_resume) for more
 information.
 
 ```
@@ -1377,7 +1375,7 @@ information.
 Firmware filament retraction. This enables G10 (retract) and G11
 (unretract) GCODE commands issued by many slicers. The parameters
 below provide startup defaults, although the values can be adjusted
-via the SET_RETRACTION [command](G-Codes.md#firmware-retraction)),
+via the SET_RETRACTION [command](G-Codes.md#firmware_retraction)),
 allowing per-filament settings and runtime tuning.
 
 ```
@@ -1412,7 +1410,7 @@ Support for gcode arc (G2/G3) commands.
 ### [respond]
 
 Enable the "M118" and "RESPOND" extended
-[commands](G-Codes.md#send-message-respond-to-host).
+[commands](G-Codes.md#respond).
 
 ```
 [respond]
@@ -1432,7 +1430,7 @@ Enable the "M118" and "RESPOND" extended
 ### [input_shaper]
 
 Enables [resonance compensation](Resonance_Compensation.md). Also see
-the [command reference](G-Codes.md#resonance-compensation).
+the [command reference](G-Codes.md#input_shaper).
 
 ```
 [input_shaper]
@@ -1471,10 +1469,9 @@ the [command reference](G-Codes.md#resonance-compensation).
 
 Support for ADXL345 accelerometers. This support allows one to query
 accelerometer measurements from the sensor. This enables an
-ACCELEROMETER_MEASURE command (see
-[G-Codes](G-Codes.md#adxl345-accelerometer-commands) for more
-information). The default chip name is "default", but one may specify
-an explicit name (eg, [adxl345 my_chip_name]).
+ACCELEROMETER_MEASURE command (see [G-Codes](G-Codes.md#adxl345) for
+more information). The default chip name is "default", but one may
+specify an explicit name (eg, [adxl345 my_chip_name]).
 
 ```
 [adxl345]
@@ -1510,7 +1507,7 @@ Support for resonance testing and automatic input shaper calibration.
 In order to use most of the functionality of this module, additional
 software dependencies must be installed; refer to
 [Measuring Resonances](Measuring_Resonances.md) and the
-[command reference](G-Codes.md#resonance-testing-commands) for more
+[command reference](G-Codes.md#resonance_tester) for more
 information. See the [Max smoothing](Measuring_Resonances.md#max-smoothing)
 section of the measuring resonances guide for more information on
 `max_smoothing` parameter and its use.
@@ -1829,8 +1826,7 @@ Support for additional steppers synchronized to the movement of an
 extruder (one may define any number of sections with an
 "extruder_stepper" prefix).
 
-See the [command reference](G-Codes.md#extruder-stepper-commands) for
-more information.
+See the [command reference](G-Codes.md#extruder) for more information.
 
 ```
 [extruder_stepper my_extra_stepper]
@@ -1853,9 +1849,9 @@ Manual steppers (one may define any number of sections with a
 "manual_stepper" prefix). These are steppers that are controlled by
 the MANUAL_STEPPER g-code command. For example: "MANUAL_STEPPER
 STEPPER=my_stepper MOVE=10 SPEED=5". See
-[G-Codes](G-Codes.md#manual-stepper-commands) file for a description
-of the MANUAL_STEPPER command. The steppers are not connected to the
-normal printer kinematics.
+[G-Codes](G-Codes.md#manual_stepper) file for a description of the
+MANUAL_STEPPER command. The steppers are not connected to the normal
+printer kinematics.
 
 ```
 [manual_stepper my_stepper]
@@ -2010,8 +2006,8 @@ section.
 Generic heaters (one may define any number of sections with a
 "heater_generic" prefix). These heaters behave similarly to standard
 heaters (extruders, heated beds). Use the SET_HEATER_TEMPERATURE
-command (see [G-Codes](G-Codes.md) for details) to set the target
-temperature.
+command (see [G-Codes](G-Codes.md#heaters) for details) to set the
+target temperature.
 
 ```
 [heater_generic my_generic_heater]
@@ -2445,8 +2441,8 @@ fan that will be enabled whenever its associated sensor is above a set
 temperature. By default, a temperature_fan has a shutdown_speed equal
 to max_power.
 
-See the [command reference](G-Codes.md#temperature-fan-commands) for
-additional information.
+See the [command reference](G-Codes.md#temperature_fan) for additional
+information.
 
 ```
 [temperature_fan my_temp_fan]
@@ -2492,8 +2488,7 @@ additional information.
 
 Manually controlled fan (one may define any number of sections with a
 "fan_generic" prefix). The speed of a manually controlled fan is set
-with the SET_FAN_SPEED
-[gcode command](G-Codes.md#manually-controlled-fans-commands).
+with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 
 ```
 [fan_generic extruder_partfan]
@@ -2516,7 +2511,7 @@ with the SET_FAN_SPEED
 
 Servos (one may define any number of sections with a "servo"
 prefix). The servos may be controlled using the SET_SERVO
-[g-code command](G-Codes.md#servo-commands). For example: SET_SERVO
+[g-code command](G-Codes.md#servo). For example: SET_SERVO
 SERVO=my_servo ANGLE=180
 
 ```
@@ -2548,7 +2543,7 @@ pin:
 Neopixel (aka WS2812) LED support (one may define any number of
 sections with a "neopixel" prefix). One may set the LED color via
 "SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
+[g-code commands](G-Codes.md#neopixel).
 
 ```
 [neopixel my_neopixel]
@@ -2576,7 +2571,7 @@ pin:
 Dotstar (aka APA102) LED support (one may define any number of
 sections with a "dotstar" prefix). One may set the LED color via
 "SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
+[g-code commands](G-Codes.md#neopixel).
 
 ```
 [dotstar my_dotstar]
@@ -2651,7 +2646,7 @@ Run-time configurable output pins (one may define any number of
 sections with an "output_pin" prefix). Pins configured here will be
 setup as output pins and one may modify them at run-time using
 "SET_PIN PIN=my_pin VALUE=.1" type extended
-[g-code commands](G-Codes.md#custom-pin-commands).
+[g-code commands](G-Codes.md#output_pin).
 
 ```
 [output_pin my_pin]
@@ -2738,7 +2733,7 @@ pins:
 
 Configuration of Trinamic stepper motor drivers in UART/SPI mode.
 Additional information is in the [TMC Drivers guide](TMC_Drivers.md)
-and in the [command reference](G-Codes.md#tmc-stepper-drivers).
+and in the [command reference](G-Codes.md#tmcxxxx).
 
 ### [tmc2130]
 
@@ -3663,8 +3658,8 @@ information on menu attributes available during template rendering.
 Filament Switch Sensor. Support for filament insert and runout
 detection using a switch sensor, such as an endstop switch.
 
-See the [command reference](G-Codes.md#filament-sensor) for more
-information.
+See the [command reference](G-Codes.md#filament_switch_sensor) for
+more information.
 
 ```
 [filament_switch_sensor my_sensor]
@@ -3703,8 +3698,8 @@ Filament Motion Sensor. Support for filament insert and runout
 detection using an encoder that toggles the output pin during filament
 movement through the sensor.
 
-See the [command reference](G-Codes.md#filament-sensor) for more
-information.
+See the [command reference](G-Codes.md#filament_switch_sensor) for
+more information.
 
 ```
 [filament_motion_sensor my_sensor]
