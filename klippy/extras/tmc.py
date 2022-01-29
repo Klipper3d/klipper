@@ -520,8 +520,9 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
     if velocity:
         stepper_name = " ".join(config.get_name().split()[1:])
-        stepper_config = config.getsection(stepper_name)
-        step_dist = stepper.parse_step_distance(stepper_config)
+        sconfig = config.getsection(stepper_name)
+        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
+        step_dist = rotation_dist / steps_per_rotation
         step_dist_256 = step_dist / (1 << fields.get_field("mres"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
         fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))

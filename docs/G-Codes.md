@@ -300,14 +300,23 @@ extruders this command is used to change the active extruder.
 parameters. If EXTRUDER is not specified, it defaults to the active
 extruder.
 
+#### SET_EXTRUDER_ROTATION_DISTANCE
+`SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
+[DISTANCE=<distance>]`: Set a new value for the provided extruder's
+"rotation distance". Value is not retained on Klipper reset. Use with
+caution as small changes can result in excessive pressure between
+extruder and hot end. Do proper calibration with filament before use.
+If 'DISTANCE' value is not included command will return current
+rotation distance.
+
 #### SET_EXTRUDER_STEP_DISTANCE
-`SET_EXTRUDER_STEP_DISTANCE [EXTRUDER=<config_name>]
+`SET_EXTRUDER_STEP_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder's
 "step distance". The "step distance" is
 `rotation_distance/(full_steps_per_rotation*microsteps)`. Value is not
-retained on Klipper reset. Use with caution, small changes can result
-in excessive pressure between extruder and hot end. Do proper
-calibration steps with filament before use. If 'DISTANCE' value is not
+retained on Klipper reset. Use with caution as small changes can
+result in excessive pressure between extruder and hot end. Do proper
+calibration with filament before use. If 'DISTANCE' value is not
 included command will return current step distance.
 
 #### SYNC_STEPPER_TO_EXTRUDER

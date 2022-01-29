@@ -28,6 +28,9 @@ class ExtruderStepper:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+        gcode.register_mux_command("SET_EXTRUDER_ROTATION_DISTANCE", "EXTRUDER",
+                                   self.name, self.cmd_SET_E_ROTATION_DISTANCE,
+                                   desc=self.cmd_SET_E_ROTATION_DISTANCE_help)
         gcode.register_mux_command("SET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
@@ -86,19 +89,29 @@ class ExtruderStepper:
                % (pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcmd.respond_info(msg, log=False)
+    cmd_SET_E_ROTATION_DISTANCE_help = "Set extruder rotation distance"
+    def cmd_SET_E_ROTATION_DISTANCE(self, gcmd):
+        rotation_dist = gcmd.get_float('DISTANCE', None, above=0.)
+        if rotation_dist is not None:
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.flush_step_generation()
+            self.stepper.set_rotation_distance(rotation_dist)
+        else:
+            rotation_dist, spr = self.stepper.get_rotation_distance()
+        gcmd.respond_info("Extruder '%s' rotation distance set to %0.6f"
+                          % (self.name, rotation_dist))
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
     def cmd_SET_E_STEP_DISTANCE(self, gcmd):
-        toolhead = self.printer.lookup_object('toolhead')
-        dist = gcmd.get_float('DISTANCE', None, above=0.)
-        if dist is None:
+        step_dist = gcmd.get_float('DISTANCE', None, above=0.)
+        if step_dist is not None:
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.flush_step_generation()
+            rd, steps_per_rotation = self.stepper.get_rotation_distance()
+            self.stepper.set_rotation_distance(step_dist * steps_per_rotation)
+        else:
             step_dist = self.stepper.get_step_dist()
-            gcmd.respond_info("Extruder '%s' step distance is %0.6f"
-                              % (self.name, step_dist))
-            return
-        toolhead.flush_step_generation()
-        self.stepper.set_step_dist(dist)
         gcmd.respond_info("Extruder '%s' step distance set to %0.6f"
-                          % (self.name, dist))
+                          % (self.name, step_dist))
     cmd_SYNC_STEPPER_TO_EXTRUDER_help = "Set extruder stepper"
     def cmd_SYNC_STEPPER_TO_EXTRUDER(self, gcmd):
         ename = gcmd.get('EXTRUDER')
