@@ -311,6 +311,16 @@ result in excessive pressure between extruder and hot end. Do proper
 calibration with filament before use. If 'DISTANCE' value is not
 included command will return current rotation distance.
 
+#### SYNC_EXTRUDER_MOTION
+`SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
+command will cause the stepper specified by EXTRUDER (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section)
+to become synchronized to the movement of an extruder specified by
+MOTION_QUEUE (as defined in an [extruder](Config_Reference#extruder)
+config section). If MOTION_QUEUE is an empty string then the stepper
+will be desynchronized from all extruder movement.
+
 #### SET_EXTRUDER_STEP_DISTANCE
 `SET_EXTRUDER_STEP_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder's
@@ -322,7 +332,7 @@ calibration with filament before use. If 'DISTANCE' value is not
 included command will return current step distance.
 
 #### SYNC_STEPPER_TO_EXTRUDER
-`SYNC_STEPPER_TO_EXTRUDER STEPPER=<name> [EXTRUDER=<name>]`: This
+`SYNC_STEPPER_TO_EXTRUDER STEPPER=<name> EXTRUDER=<name>`: This
 command will cause the given extruder STEPPER (as specified in an
 [extruder](Config_Reference#extruder) or
 [extruder stepper](Config_Reference#extruder_stepper) config section)

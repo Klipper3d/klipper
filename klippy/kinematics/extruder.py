@@ -31,6 +31,9 @@ class ExtruderStepper:
         gcode.register_mux_command("SET_EXTRUDER_ROTATION_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_E_ROTATION_DISTANCE,
                                    desc=self.cmd_SET_E_ROTATION_DISTANCE_help)
+        gcode.register_mux_command("SYNC_EXTRUDER_MOTION", "EXTRUDER",
+                                   self.name, self.cmd_SYNC_EXTRUDER_MOTION,
+                                   desc=self.cmd_SYNC_EXTRUDER_MOTION_help)
         gcode.register_mux_command("SET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
@@ -111,6 +114,11 @@ class ExtruderStepper:
             rotation_dist = -rotation_dist
         gcmd.respond_info("Extruder '%s' rotation distance set to %0.6f"
                           % (self.name, rotation_dist))
+    cmd_SYNC_EXTRUDER_MOTION_help = "Set extruder stepper motion queue"
+    def cmd_SYNC_EXTRUDER_MOTION(self, gcmd):
+        ename = gcmd.get('MOTION_QUEUE')
+        self.sync_to_extruder(ename)
+        gcmd.respond_info("Extruder stepper now syncing with '%s'" % (ename,))
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
     def cmd_SET_E_STEP_DISTANCE(self, gcmd):
         step_dist = gcmd.get_float('DISTANCE', None, above=0.)
