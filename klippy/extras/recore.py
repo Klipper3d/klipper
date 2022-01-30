@@ -9,7 +9,7 @@ import pins, mcu
 pins = {
     "A6": {
         'enable_pin': 'ar100:PF5',
-        'oc_reset_pin':'ar100:PF4',
+        'oc_reset_pin': 'ar100:PF4',
         'gain_enable_t0': 'ar100:PD4',
         'gain_enable_t1': 'ar100:PH11',
         'gain_enable_t2': 'ar100:PE17',
@@ -37,6 +37,7 @@ pins = {
     }
 }
 
+
 class recore:
     def __init__(self, config):
         printer = config.get_printer()
@@ -47,15 +48,17 @@ class recore:
 
         pins["A3"] = pins["A4"] = pins["A5"]
         # Setup enable pin
-        enable_pin = config.get('enable_pin', pins[self.revision]['enable_pin'])
+        enable_pin = config.get('enable_pin',
+                                pins[self.revision]['enable_pin'])
         mcu_power_enable = ppins.setup_pin('digital_out', enable_pin)
         mcu_power_enable.setup_start_value(start_value=0.,
-                                                shutdown_value=1.,
-                                                is_static=False)
+                                           shutdown_value=1.,
+                                           is_static=False)
         mcu_power_enable.setup_max_duration(0.)
 
         # Reset over current alarm
-        oc_reset_pin = config.get('oc_reset_pin', pins[self.revision]['oc_reset_pin'] )
+        oc_reset_pin = config.get('oc_reset_pin',
+                                  pins[self.revision]['oc_reset_pin'])
         oc_reset = ppins.setup_pin('digital_out', oc_reset_pin)
         mcu = oc_reset.get_mcu()
         pin = oc_reset._pin
@@ -66,7 +69,7 @@ class recore:
             gain = config.get('gain_t' + str(idx), '1')
             if gain not in ['1', '100']:
                 raise Exception("Gain not 1 or 100")
-            pin_name = pins[self.revision]['gain_enable_t'+str(idx)]
+            pin_name = pins[self.revision]['gain_enable_t' + str(idx)]
             if gain == '1':
                 # Set pin to input
                 pin = ppins.setup_pin('endstop', pin_name)
@@ -83,7 +86,7 @@ class recore:
             pullup = config.get('pullup_t' + str(idx), '1')
             if pullup not in ['0', '1']:
                 raise Exception("Pullup not 0 or 1")
-            pin_name = pins[self.revision]['pullup_t'+str(idx)]
+            pin_name = pins[self.revision]['pullup_t' + str(idx)]
             if pullup == '0':
                 pin = ppins.setup_pin('endstop', pin_name)
             else:
@@ -95,7 +98,7 @@ class recore:
                 offset = config.get('offset_t' + str(idx), '1')
                 if offset not in ['0', '1']:
                     raise Exception("Offset not 0 or 1")
-                pin_name = pins[self.revision]['offset_t'+str(idx)]
+                pin_name = pins[self.revision]['offset_t' + str(idx)]
                 if offset == '0':
                     pin = ppins.setup_pin('endstop', pin_name)
                 else:
@@ -103,6 +106,7 @@ class recore:
                     pin.setup_start_value(start_value=1.,
                                           shutdown_value=1.,
                                           is_static=True)
+
 
 def load_config(config):
     return recore(config)
