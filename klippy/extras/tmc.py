@@ -224,6 +224,8 @@ class TMCCommandHelper:
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
+        self.printer.register_event_handler("stepper:set_sdir_inverted",
+                                            self._handle_sync_mcu_pos)
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
@@ -306,7 +308,7 @@ class TMCCommandHelper:
             if enable_line.is_motor_enabled():
                 raise
             return
-        if not stepper.is_dir_inverted():
+        if not stepper.get_dir_inverted()[0]:
             driver_phase = 1023 - driver_phase
         phases = self._get_phases()
         phase = int(float(driver_phase) / 1024 * phases + .5) % phases

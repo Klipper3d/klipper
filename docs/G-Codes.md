@@ -303,11 +303,13 @@ extruder.
 #### SET_EXTRUDER_ROTATION_DISTANCE
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder's
-"rotation distance". Value is not retained on Klipper reset. Use with
-caution as small changes can result in excessive pressure between
-extruder and hot end. Do proper calibration with filament before use.
-If 'DISTANCE' value is not included command will return current
-rotation distance.
+"rotation distance". If the rotation distance is a negative number
+then the stepper motion will be inverted (relative to the stepper
+direction specified in the config file). Changed settings are not
+retained on Klipper reset. Use with caution as small changes can
+result in excessive pressure between extruder and hot end. Do proper
+calibration with filament before use. If 'DISTANCE' value is not
+included command will return current rotation distance.
 
 #### SET_EXTRUDER_STEP_DISTANCE
 `SET_EXTRUDER_STEP_DISTANCE EXTRUDER=<config_name>

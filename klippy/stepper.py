@@ -36,7 +36,7 @@ class MCU_stepper:
             raise self._mcu.get_printer().config_error(
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']
-        self._invert_dir = dir_pin_params['invert']
+        self._invert_dir = self._orig_invert_dir = dir_pin_params['invert']
         self._step_both_edge = self._req_step_both_edge = False
         self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
@@ -44,6 +44,7 @@ class MCU_stepper:
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(ffi_lib.stepcompress_alloc(oid),
                                       ffi_lib.stepcompress_free)
+        ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, self._invert_dir)
         self._mcu.register_stepqueue(self._stepqueue)
         self._stepper_kinematics = None
         self._itersolve_generate_steps = ffi_lib.itersolve_generate_steps
@@ -101,7 +102,7 @@ class MCU_stepper:
         max_error_ticks = self._mcu.seconds_to_clock(max_error)
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.stepcompress_fill(self._stepqueue, max_error_ticks,
-                                  self._invert_dir, step_cmd_tag, dir_cmd_tag)
+                                  step_cmd_tag, dir_cmd_tag)
     def get_oid(self):
         return self._oid
     def get_step_dist(self):
@@ -114,8 +115,16 @@ class MCU_stepper:
         self._step_dist = rotation_dist / self._steps_per_rotation
         self.set_stepper_kinematics(self._stepper_kinematics)
         self._set_mcu_position(mcu_pos)
-    def is_dir_inverted(self):
-        return self._invert_dir
+    def get_dir_inverted(self):
+        return self._invert_dir, self._orig_invert_dir
+    def set_dir_inverted(self, invert_dir):
+        invert_dir = not not invert_dir
+        if invert_dir == self._invert_dir:
+            return
+        self._invert_dir = invert_dir
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, invert_dir)
+        self._mcu.get_printer().send_event("stepper:set_dir_inverted", self)
     def calc_position_from_coord(self, coord):
         ffi_main, ffi_lib = chelper.get_ffi()
         return ffi_lib.itersolve_calc_position_from_coord(

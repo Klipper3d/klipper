@@ -91,13 +91,24 @@ class ExtruderStepper:
         gcmd.respond_info(msg, log=False)
     cmd_SET_E_ROTATION_DISTANCE_help = "Set extruder rotation distance"
     def cmd_SET_E_ROTATION_DISTANCE(self, gcmd):
-        rotation_dist = gcmd.get_float('DISTANCE', None, above=0.)
+        rotation_dist = gcmd.get_float('DISTANCE', None)
         if rotation_dist is not None:
+            if not rotation_dist:
+                raise gcmd.error("Rotation distance can not be zero")
+            invert_dir, orig_invert_dir = self.stepper.get_dir_inverted()
+            next_invert_dir = orig_invert_dir
+            if rotation_dist < 0.:
+                next_invert_dir = not orig_invert_dir
+                rotation_dist = -rotation_dist
             toolhead = self.printer.lookup_object('toolhead')
             toolhead.flush_step_generation()
             self.stepper.set_rotation_distance(rotation_dist)
+            self.stepper.set_dir_inverted(next_invert_dir)
         else:
             rotation_dist, spr = self.stepper.get_rotation_distance()
+        invert_dir, orig_invert_dir = self.stepper.get_dir_inverted()
+        if invert_dir != orig_invert_dir:
+            rotation_dist = -rotation_dist
         gcmd.respond_info("Extruder '%s' rotation distance set to %0.6f"
                           % (self.name, rotation_dist))
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
