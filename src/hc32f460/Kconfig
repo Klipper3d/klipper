@@ -20,10 +20,10 @@ config SERIAL
 choice
     prompt "Communication interface"
     config HC32F460_SERIAL_PA15_PA9
-        bool "Use uUSB on PA15/PA09"
+        bool "Serial (PA15/PA09 connected to USB)"
         select SERIAL
     config HC32F460_SERIAL_PC0_PC1
-        bool "Use LCD pins 7 and 8"  if LOW_LEVEL_OPTIONS
+        bool "Serial (PC0/PC1 connected to LCD pins 7 and 8)"  if LOW_LEVEL_OPTIONS
         select SERIAL
 endchoice
 
