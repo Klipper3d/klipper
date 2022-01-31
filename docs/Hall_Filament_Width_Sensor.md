@@ -54,7 +54,7 @@ command in terminal.
 By default, the sensor is disabled at power-on.
 
 To enable the sensor, issue **ENABLE_FILAMENT_WIDTH_SENSOR** command or
-set the `enable` parameter to `true.`
+set the `enable` parameter to `true`.
 
 ## Logging
 
