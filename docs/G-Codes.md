@@ -42,7 +42,7 @@ Klipper's goal is to support the G-Code commands produced by common
 3rd party software (eg, OctoPrint, Printrun, Slic3r, Cura, etc.) in
 their standard configurations. It is not a goal to support every
 possible G-Code command. Instead, Klipper prefers human readable
-["extended G-Code commands"](#extended-g-code-commands).
+["extended G-Code commands"](#additional-commands).
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom
