@@ -94,13 +94,13 @@ acceleration (+/- some noise of the chip).
 
 #### ACCELEROMETER_DEBUG_READ
 `ACCELEROMETER_DEBUG_READ [CHIP=<config_name>] REG=<register>`:
-queries ADXL345 register <register> (e.g. 44 or 0x2C). Can be useful
+queries ADXL345 register "register" (e.g. 44 or 0x2C). Can be useful
 for debugging purposes.
 
 #### ACCELEROMETER_DEBUG_WRITE
-`ACCELEROMETER_DEBUG_WRITE [CHIP=<config_name>] REG=<reg>
-VAL=<value>`: Writes raw <value> into a register <register>. Both
-<value> and <register> can be a decimal or a hexadecimal integer. Use
+`ACCELEROMETER_DEBUG_WRITE [CHIP=<config_name>] REG=<register>
+VAL=<value>`: Writes raw "value" into a register "register". Both
+"value" and "register" can be a decimal or a hexadecimal integer. Use
 with care, and refer to ADXL345 data sheet for the reference.
 
 ### [bed_mesh]
@@ -326,7 +326,7 @@ enabled.
 
 #### SET_FAN_SPEED
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
-speed of a fan. <speed> must be between 0.0 and 1.0.
+speed of a fan. "speed" must be between 0.0 and 1.0.
 
 ### [firmware_retraction]
 
@@ -832,9 +832,9 @@ all enabled accelerometer chips.
 `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
 [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
 [HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
-test in all configured probe points for the requested <axis> and
+test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
-the respective axis. <axis> can either be X or Y, or specify an
+the respective axis. "axis" can either be X or Y, or specify an
 arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
 `AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
