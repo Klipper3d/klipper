@@ -13,4 +13,13 @@ cat ./klipper-translations/active_translations | while read dirname langname ; d
     mdfilename="${file/$local_dir\//}"
     mv "$file" "./docs/${mdfilename//.md/.${langname}.md}"
   done
+
+  manual_index="./docs/manual-index.$langname.md"
+
+  if [[ -f "$manual_index" ]];then
+    mv "$manual_index" "./docs/index.${langname}.md"
+    echo "replaced index.${langname}.md with $manual_index"
+  else
+      echo "Manually translated index file for $dirname not found!"
+  fi
 done
