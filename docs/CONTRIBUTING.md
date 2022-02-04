@@ -324,6 +324,9 @@ are met, you need to:
 
 1. update klipper repository [mkdocs.yml](https://github.com/Klipper3d/klipper/blob/master/docs/_klipper3d/mkdocs.yml)
 2. update klipper-tranlations repository [active_translations](https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations)
+3. Optional: add a manual-index.md file in klipper-translations repository's
+`docs\locals\<lang>` folder to replace the language specific index.md (generated
+index.md does not render correctly).
 
 Please follow the format below for `mkdocs.yml` i18n plugin:
 
