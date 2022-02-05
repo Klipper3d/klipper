@@ -6,10 +6,10 @@
 # Licensed under GPL-3.0
 
 import os
-import random
 import struct
 import uuid
 import sys
+import hashlib
 
 def calculate_crc(contents, seed):
     accumulating_xor_value = seed;
@@ -69,7 +69,9 @@ def encode_file(input, output_file, file_length):
     block_size = 0x800
     key_length = 0x18
 
-    uid_value = uuid.uuid4()
+    file_digest = hashlib.md5(input_file).digest()
+    uid_value = uuid.UUID(bytes=file_digest)
+    print("Update UUID ", uid_value)
     file_key = int(uid_value.hex[0:8], 16)
 
     xor_crc = 0xef3d4323;

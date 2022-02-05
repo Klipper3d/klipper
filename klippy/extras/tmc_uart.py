@@ -1,6 +1,6 @@
 # Helper code for communicating with TMC stepper drivers via UART
 #
-# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -16,7 +16,7 @@ class MCU_analog_mux:
         self.cmd_queue = cmd_queue
         ppins = mcu.get_printer().lookup_object("pins")
         select_pin_params = [ppins.lookup_pin(spd, can_invert=True)
-                             for spd in select_pins_desc.split(',')]
+                             for spd in select_pins_desc]
         self.oids = [self.mcu.create_oid() for pp in select_pin_params]
         self.pins = [pp['pin'] for pp in select_pin_params]
         self.pin_values = tuple([-1 for pp in select_pin_params])
@@ -32,7 +32,7 @@ class MCU_analog_mux:
     def get_instance_id(self, select_pins_desc):
         ppins = self.mcu.get_printer().lookup_object("pins")
         select_pin_params = [ppins.parse_pin(spd, can_invert=True)
-                             for spd in select_pins_desc.split(',')]
+                             for spd in select_pins_desc]
         for pin_params in select_pin_params:
             if pin_params['chip'] != self.mcu:
                 raise self.mcu.get_printer().config_error(
@@ -53,11 +53,31 @@ class MCU_analog_mux:
 # TMC uart communication
 ######################################################################
 
+# Share mutexes so only one active tmc_uart command on a single mcu at
+# a time. This helps limit cpu usage on slower micro-controllers.
+class PrinterTMCUartMutexes:
+    def __init__(self):
+        self.mcu_to_mutex = {}
+def lookup_tmc_uart_mutex(mcu):
+    printer = mcu.get_printer()
+    pmutexes = printer.lookup_object('tmc_uart', None)
+    if pmutexes is None:
+        pmutexes = PrinterTMCUartMutexes()
+        printer.add_object('tmc_uart', pmutexes)
+    mutex = pmutexes.mcu_to_mutex.get(mcu)
+    if mutex is None:
+        mutex = printer.get_reactor().mutex()
+        pmutexes.mcu_to_mutex[mcu] = mutex
+    return mutex
+
+TMC_BAUD_RATE = 40000
+TMC_BAUD_RATE_AVR = 9000
+
 # Code for sending messages on a TMC uart
 class MCU_TMC_uart_bitbang:
     def __init__(self, rx_pin_params, tx_pin_params, select_pins_desc):
         self.mcu = rx_pin_params['chip']
-        self.mutex = self.mcu.get_printer().get_reactor().mutex()
+        self.mutex = lookup_tmc_uart_mutex(self.mcu)
         self.pullup = rx_pin_params['pullup']
         self.rx_pin = rx_pin_params['pin']
         self.tx_pin = tx_pin_params['pin']
@@ -71,7 +91,11 @@ class MCU_TMC_uart_bitbang:
         self.tmcuart_send_cmd = None
         self.mcu.register_config_callback(self.build_config)
     def build_config(self):
-        bit_ticks = self.mcu.seconds_to_clock(1. / 9000.)
+        baud = TMC_BAUD_RATE
+        mcu_type = self.mcu.get_constants().get("MCU", "")
+        if mcu_type.startswith("atmega") or mcu_type.startswith("at90usb"):
+            baud = TMC_BAUD_RATE_AVR
+        bit_ticks = self.mcu.seconds_to_clock(1. / baud)
         self.mcu.add_config_cmd(
             "config_tmcuart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
             % (self.oid, self.rx_pin, self.pullup, self.tx_pin, bit_ticks))
@@ -164,8 +188,8 @@ class MCU_TMC_uart_bitbang:
 # Lookup a (possibly shared) tmc uart
 def lookup_tmc_uart_bitbang(config, max_addr):
     ppins = config.get_printer().lookup_object("pins")
-    rx_pin_params = ppins.lookup_pin(
-        config.get('uart_pin'), can_pullup=True, share_type="tmc_uart_rx")
+    rx_pin_params = ppins.lookup_pin(config.get('uart_pin'), can_pullup=True,
+                                     share_type="tmc_uart_rx")
     tx_pin_desc = config.get('tx_pin', None)
     if tx_pin_desc is None:
         tx_pin_params = rx_pin_params
@@ -173,7 +197,7 @@ def lookup_tmc_uart_bitbang(config, max_addr):
         tx_pin_params = ppins.lookup_pin(tx_pin_desc, share_type="tmc_uart_tx")
     if rx_pin_params['chip'] is not tx_pin_params['chip']:
         raise ppins.error("TMC uart rx and tx pins must be on the same mcu")
-    select_pins_desc = config.get('select_pins', None)
+    select_pins_desc = config.getlist('select_pins', None)
     addr = config.getint('uart_address', 0, minval=0, maxval=max_addr)
     mcu_uart = rx_pin_params.get('class')
     if mcu_uart is None:

@@ -12,6 +12,8 @@ config LPC_SELECT
     select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_BOTH_EDGE
 
 config BOARD_DIRECTORY
     string
@@ -61,11 +63,20 @@ config FLASH_START
     default 0x0000
 
 config USBSERIAL
-    bool "Use USB for communication (instead of serial)"
-    default y
-config SERIAL
-    depends on !USBSERIAL
     bool
-    default y
+config SERIAL
+    bool
+choice
+    prompt "Communication interface"
+    config LPC_USB
+        bool "USB"
+        select USBSERIAL
+    config LPC_SERIAL_UART0_P03_P02
+        bool "Serial (on UART0 P0.3/P0.2)"
+        select SERIAL
+    config LPC_SERIAL_UART3_P429_P428
+        bool "Serial (on UART3 P4.29/P4.28)" if LOW_LEVEL_OPTIONS
+        select SERIAL
+endchoice
 
 endif

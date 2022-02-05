@@ -109,6 +109,9 @@ class HTU21D:
     def setup_callback(self, cb):
         self._callback = cb
 
+    def get_report_time_delta(self):
+        return self.report_time
+
     def _init_htu21d(self):
         # Device Soft Reset
         self.i2c.i2c_write([HTU21D_COMMANDS['RESET']])
@@ -196,7 +199,7 @@ class HTU21D:
                 if (self.humidity < 0):
                     #due to RH accuracy, measured value might be
                     # slightly less than 0 or more 100
-                    self.temp = 0
+                    self.humidity = 0
                 elif (self.humidity > 100):
                     self.humidity = 100
                 # Only for HTU21D & SHT21.
@@ -233,7 +236,7 @@ class HTU21D:
 
     def get_status(self, eventtime):
         return {
-            'temperature': self.temp,
+            'temperature': round(self.temp, 2),
             'humidity': self.humidity,
         }
 

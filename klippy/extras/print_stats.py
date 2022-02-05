@@ -41,11 +41,17 @@ class PrintStats:
             self._update_filament_usage(curtime)
         if self.state != "error":
             self.state = "paused"
-    def note_error(self, message):
-        self.state = "error"
-        self.error_message = message
     def note_complete(self):
-        self.state = "complete"
+        self._note_finish("complete")
+    def note_error(self, message):
+        self._note_finish("error", message)
+    def note_cancel(self):
+        self._note_finish("cancelled")
+    def _note_finish(self, state, error_message = ""):
+        if self.print_start_time is None:
+            return
+        self.state = state
+        self.error_message = error_message
         eventtime = self.reactor.monotonic()
         self.total_duration = eventtime - self.print_start_time
         if self.filament_used < 0.0000001:

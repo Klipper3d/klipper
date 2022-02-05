@@ -26,11 +26,10 @@ class PIDCalibrate:
         calibrate = ControlAutoTune(heater, target)
         old_control = heater.set_control(calibrate)
         try:
-            heater.set_temp(target)
+            pheaters.set_temperature(heater, target, True)
         except self.printer.command_error as e:
             heater.set_control(old_control)
             raise
-        pheaters.wait_for_temperature(heater)
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')

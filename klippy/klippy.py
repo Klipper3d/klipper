@@ -22,10 +22,12 @@ command to reload the config and restart the host software.
 Printer is halted
 """
 
-message_protocol_error = """
+message_protocol_error1 = """
 This type of error is frequently caused by running an older
 version of the firmware on the micro-controller (fix by
 recompiling and flashing the firmware).
+"""
+message_protocol_error2 = """
 Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
 Protocol error connecting to printer
@@ -84,7 +86,7 @@ class Printer:
             and self.start_args.get('debuginput') is not None):
             self.request_exit('error_exit')
     def add_object(self, name, obj):
-        if obj in self.objects:
+        if name in self.objects:
             raise self.config_error(
                 "Printer object '%s' already created" % (name,))
         self.objects[name] = obj
@@ -141,6 +143,15 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
+    def _get_versions(self):
+        try:
+            parts = ["%s=%s" % (n.split()[-1], m.get_status()['mcu_version'])
+                     for n, m in self.lookup_objects('mcu')]
+            parts.insert(0, "host=%s" % (self.start_args['software_version'],))
+            return "\nKnown versions: %s\n" % (", ".join(parts),)
+        except:
+            logging.exception("Error in _get_versions()")
+            return ""
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -151,11 +162,13 @@ class Printer:
                 cb()
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
-            self._set_state("%s%s" % (str(e), message_restart))
+            self._set_state("%s\n%s" % (str(e), message_restart))
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
-            self._set_state("%s%s" % (str(e), message_protocol_error))
+            self._set_state("%s\n%s%s%s" % (str(e), message_protocol_error1,
+                                          self._get_versions(),
+                                          message_protocol_error2))
             util.dump_mcu_build()
             return
         except mcu.error as e:
@@ -243,6 +256,21 @@ class Printer:
 # Startup
 ######################################################################
 
+def import_test():
+    # Import all optional modules (used as a build test)
+    dname = os.path.dirname(__file__)
+    for mname in ['extras', 'kinematics']:
+        for fname in os.listdir(os.path.join(dname, mname)):
+            if fname.endswith('.py') and fname != '__init__.py':
+                module_name = fname[:-3]
+            else:
+                iname = os.path.join(dname, mname, fname, '__init__.py')
+                if not os.path.exists(iname):
+                    continue
+                module_name = fname
+            importlib.import_module(mname + '.' + module_name)
+    sys.exit(0)
+
 def arg_dictionary(option, opt_str, value, parser):
     key, fname = "dictionary", value
     if '=' in value:
@@ -271,7 +299,11 @@ def main():
     opts.add_option("-d", "--dictionary", dest="dictionary", type="string",
                     action="callback", callback=arg_dictionary,
                     help="file to read for mcu protocol dictionary")
+    opts.add_option("--import-test", action="store_true",
+                    help="perform an import module test")
     options, args = opts.parse_args()
+    if options.import_test:
+        import_test()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
     start_args = {'config_file': args[0], 'apiserver': options.apiserver,

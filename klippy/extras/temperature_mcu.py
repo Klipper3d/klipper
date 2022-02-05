@@ -62,12 +62,15 @@ class PrinterTemperatureMCU:
         self.mcu_type = mcu.get_constants().get("MCU", "")
         # Run MCU specific configuration
         cfg_funcs = [
+            ('rp2040', self.config_rp2040),
             ('sam3', self.config_sam3), ('sam4', self.config_sam4),
             ('samd21', self.config_samd21), ('samd51', self.config_samd51),
             ('stm32f1', self.config_stm32f1), ('stm32f2', self.config_stm32f2),
             ('stm32f4', self.config_stm32f4),
-            ('stm32f042', self.config_stm32f042),
+            ('stm32f042', self.config_stm32f0x2),
             ('stm32f070', self.config_stm32f070),
+            ('stm32f072', self.config_stm32f0x2),
+            ('stm32g0', self.config_stm32g0),
             ('', self.config_unknown)]
         for name, func in cfg_funcs:
             if self.mcu_type.startswith(name):
@@ -88,6 +91,9 @@ class PrinterTemperatureMCU:
     def config_unknown(self):
         raise self.printer.config_error("MCU temperature not supported on %s"
                                         % (self.mcu_type,))
+    def config_rp2040(self):
+        self.slope = 3.3 / -0.001721
+        self.base_temperature = self.calc_base(27., 0.706 / 3.3)
     def config_sam3(self):
         self.slope = 3.3 / .002650
         self.base_temperature = self.calc_base(27., 0.8 / 3.3)
@@ -122,11 +128,16 @@ class PrinterTemperatureMCU:
         cal_adc_110 = self.read16(addr2) / 4095.
         self.slope = (110. - 30.) / (cal_adc_110 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
-    def config_stm32f042(self):
+    def config_stm32f0x2(self):
         self.config_stm32f4(addr1=0x1FFFF7B8, addr2=0x1FFFF7C2)
     def config_stm32f070(self):
         self.slope = 3.3 / -.004300
         cal_adc_30 = self.read16(0x1FFFF7B8) / 4095.
+        self.base_temperature = self.calc_base(30., cal_adc_30)
+    def config_stm32g0(self):
+        cal_adc_30 = self.read16(0x1FFF75A8) * 3.0 / (3.3 * 4095.)
+        cal_adc_130 = self.read16(0x1FFF75CA) * 3.0 / (3.3 * 4095.)
+        self.slope = (130. - 30.) / (cal_adc_130 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
     def read16(self, addr):
         params = self.debug_read_cmd.send([1, addr])

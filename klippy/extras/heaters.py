@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import os, logging, threading
 
 
 ######################################################################
@@ -34,7 +34,7 @@ class Heater:
                          is not None)
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
-        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
+        self.smooth_time = config.getfloat('smooth_time', 1., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
         self.lock = threading.Lock()
         self.last_temp = self.smoothed_temp = self.target_temp = 0.
@@ -133,12 +133,13 @@ class Heater:
             target_temp = self.target_temp
             smoothed_temp = self.smoothed_temp
             last_pwm_value = self.last_pwm_value
-        return {'temperature': smoothed_temp, 'target': target_temp,
+        return {'temperature': round(smoothed_temp, 2), 'target': target_temp,
                 'power': last_pwm_value}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
-        self.set_temp(temp)
+        pheaters = self.printer.lookup_object('heaters')
+        pheaters.set_temperature(self, temp)
 
 
 ######################################################################
@@ -179,11 +180,9 @@ class ControlPID:
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = heater.get_smooth_time()
-        imax = config.getfloat('pid_integral_max', self.heater_max_power,
-                               minval=0.)
         self.temp_integ_max = 0.
         if self.Ki:
-            self.temp_integ_max = imax / self.Ki
+            self.temp_integ_max = self.heater_max_power / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
@@ -231,7 +230,7 @@ class PrinterHeaters:
         self.gcode_id_to_sensor = {}
         self.available_heaters = []
         self.available_sensors = []
-        self.has_started = False
+        self.has_started = self.have_load_sensors = False
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler("gcode:request_restart",
                                             self.turn_off_all_heaters)
@@ -242,6 +241,18 @@ class PrinterHeaters:
         gcode.register_command("M105", self.cmd_M105, when_not_ready=True)
         gcode.register_command("TEMPERATURE_WAIT", self.cmd_TEMPERATURE_WAIT,
                                desc=self.cmd_TEMPERATURE_WAIT_help)
+    def load_config(self, config):
+        self.have_load_sensors = True
+        # Load default temperature sensors
+        pconfig = self.printer.lookup_object('configfile')
+        dir_name = os.path.dirname(__file__)
+        filename = os.path.join(dir_name, 'temperature_sensors.cfg')
+        try:
+            dconfig = pconfig.read_config(filename)
+        except Exception:
+            raise config.config_error("Cannot load config '%s'" % (filename,))
+        for c in dconfig.get_prefix_sections(''):
+            self.printer.load_object(dconfig, c.get_name())
     def add_sensor_factory(self, sensor_type, sensor_factory):
         self.sensor_factories[sensor_type] = sensor_factory
     def setup_heater(self, config, gcode_id=None):
@@ -263,16 +274,14 @@ class PrinterHeaters:
                 "Unknown heater '%s'" % (heater_name,))
         return self.heaters[heater_name]
     def setup_sensor(self, config):
-        modules = ["thermistor", "adc_temperature", "spi_temperature",
-                   "bme280", "htu21d", "lm75", "temperature_host",
-                   "temperature_mcu", "ds18b20"]
-
-        for module_name in modules:
-            self.printer.load_object(config, module_name)
+        if not self.have_load_sensors:
+            self.load_config(config)
         sensor_type = config.get('sensor_type')
         if sensor_type not in self.sensor_factories:
             raise self.printer.config_error(
                 "Unknown temperature sensor '%s'" % (sensor_type,))
+        if sensor_type == 'NTC 100K beta 3950':
+            config.deprecate('sensor_type', 'NTC 100K beta 3950')
         return self.sensor_factories[sensor_type](config)
     def register_sensor(self, config, psensor, gcode_id=None):
         self.available_sensors.append(config.get_name())
@@ -313,7 +322,7 @@ class PrinterHeaters:
         did_ack = gcmd.ack(msg)
         if not did_ack:
             gcmd.respond_raw(msg)
-    def wait_for_temperature(self, heater):
+    def _wait_for_temperature(self, heater):
         # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
@@ -325,6 +334,12 @@ class PrinterHeaters:
             print_time = toolhead.get_last_move_time()
             gcode.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
+    def set_temperature(self, heater, temp, wait=False):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.register_lookahead_callback((lambda pt: None))
+        heater.set_temp(temp)
+        if wait and temp:
+            self._wait_for_temperature(heater)
     cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
     def cmd_TEMPERATURE_WAIT(self, gcmd):
         sensor_name = gcmd.get('SENSOR')

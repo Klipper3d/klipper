@@ -46,7 +46,9 @@ class HandleCallList:
             func_code = ['    extern void %s(void);\n    %s();' % (f, f)
                          for f in funcs]
             if funcname == 'ctr_run_taskfuncs':
-                func_code = ['    irq_poll();\n' + fc for fc in func_code]
+                add_poll = '    irq_poll();\n'
+                func_code = [add_poll + fc for fc in func_code]
+                func_code.append(add_poll)
             fmt = """
 void
 %s(void)
@@ -281,7 +283,8 @@ class HandleCommandGeneration:
     def create_message_ids(self):
         # Create unique ids for each message type
         msgid = max(self.msg_to_id.values())
-        for msgname in self.commands.keys() + [m for n, m in self.encoders]:
+        mlist = list(self.commands.keys()) + [m for n, m in self.encoders]
+        for msgname in mlist:
             msg = self.messages_by_name.get(msgname, msgname)
             if msg not in self.msg_to_id:
                 msgid += 1
@@ -450,7 +453,7 @@ def check_output(prog):
     if retcode:
         return ""
     try:
-        return output.decode()
+        return str(output.decode('utf8'))
     except UnicodeError:
         logging.debug("Exception on decode: %s" % (traceback.format_exc(),))
         return ""
@@ -464,14 +467,18 @@ def git_version():
     logging.debug("Got git version: %s" % (repr(ver),))
     return ver
 
-def build_version(extra):
+def build_version(extra, cleanbuild):
     version = git_version()
     if not version:
+        cleanbuild = False
         version = "?"
-    btime = time.strftime("%Y%m%d_%H%M%S")
-    hostname = socket.gethostname()
-    version = "%s-%s-%s%s" % (version, btime, hostname, extra)
-    return version
+    elif 'dirty' in version:
+        cleanbuild = False
+    if not cleanbuild:
+        btime = time.strftime("%Y%m%d_%H%M%S")
+        hostname = socket.gethostname()
+        version = "%s-%s-%s" % (version, btime, hostname)
+    return version + extra
 
 # Run "tool --version" for each specified tool and extract versions
 def tool_versions(tools):
@@ -513,7 +520,7 @@ class HandleVersions:
         data['build_versions'] = self.toolstr
     def generate_code(self, options):
         cleanbuild, self.toolstr = tool_versions(options.tools)
-        self.version = build_version(options.extra)
+        self.version = build_version(options.extra, cleanbuild)
         sys.stdout.write("Version: %s\n" % (self.version,))
         return "\n// version: %s\n// build_versions: %s\n" % (
             self.version, self.toolstr)
@@ -540,17 +547,17 @@ class HandleIdentify:
 
         # Write data dictionary
         if options.write_dictionary:
-            f = open(options.write_dictionary, 'wb')
+            f = open(options.write_dictionary, 'w')
             f.write(datadict)
             f.close()
 
         # Format compressed info into C code
-        zdatadict = zlib.compress(datadict, 9)
+        zdatadict = bytearray(zlib.compress(datadict.encode(), 9))
         out = []
         for i in range(len(zdatadict)):
             if i % 8 == 0:
                 out.append('\n   ')
-            out.append(" 0x%02x," % (ord(zdatadict[i]),))
+            out.append(" 0x%02x," % (zdatadict[i],))
         fmt = """
 const uint8_t command_identify_data[] PROGMEM = {%s
 };
@@ -589,7 +596,7 @@ def main():
 
     # Parse request file
     ctr_dispatch = { k: v for h in Handlers for k, v in h.ctr_dispatch.items() }
-    f = open(incmdfile, 'rb')
+    f = open(incmdfile, 'r')
     data = f.read()
     f.close()
     for req in data.split('\n'):
@@ -603,7 +610,7 @@ def main():
 
     # Write output
     code = "".join([FILEHEADER] + [h.generate_code(options) for h in Handlers])
-    f = open(outcfile, 'wb')
+    f = open(outcfile, 'w')
     f.write(code)
     f.close()
 

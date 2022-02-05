@@ -6,7 +6,9 @@
 import logging
 
 DEFAULT_IDLE_GCODE = """
-TURN_OFF_HEATERS
+{% if 'heaters' in printer %}
+   TURN_OFF_HEATERS
+{% endif %}
 M84
 """
 
@@ -69,6 +71,8 @@ class IdleTimeout:
         # Idle timeout has elapsed
         return self.transition_idle_state(eventtime)
     def timeout_handler(self, eventtime):
+        if self.printer.is_shutdown():
+            return self.reactor.NEVER
         if self.state == "Ready":
             return self.check_idle_timeout(eventtime)
         # Check if need to transition to "ready" state

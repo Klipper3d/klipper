@@ -113,6 +113,10 @@ def load_config(config):
 
 class GCodeMacro:
     def __init__(self, config):
+        if len(config.get_name().split()) > 2:
+            raise config.error(
+                    "Name of section '%s' contains illegal whitespace"
+                    % (config.get_name()))
         name = config.get_name().split()[1]
         self.alias = name.upper()
         self.printer = printer = config.get_printer()
@@ -120,6 +124,7 @@ class GCodeMacro:
         self.template = gcode_macro.load_template(config, 'gcode')
         self.gcode = printer.lookup_object('gcode')
         self.rename_existing = config.get("rename_existing", None)
+        self.cmd_desc = config.get("description", "G-Code macro")
         if self.rename_existing is not None:
             if (self.gcode.is_traditional_gcode(self.alias)
                 != self.gcode.is_traditional_gcode(self.rename_existing)):
@@ -135,9 +140,6 @@ class GCodeMacro:
                                         name, self.cmd_SET_GCODE_VARIABLE,
                                         desc=self.cmd_SET_GCODE_VARIABLE_help)
         self.in_script = False
-        prefix = 'default_parameter_'
-        self.kwparams = { o[len(prefix):].upper(): config.get(o)
-                          for o in config.get_prefix_options(prefix) }
         self.variables = {}
         prefix = 'variable_'
         for option in config.get_prefix_options(prefix):
@@ -164,25 +166,21 @@ class GCodeMacro:
         variable = gcmd.get('VARIABLE')
         value = gcmd.get('VALUE')
         if variable not in self.variables:
-            if variable in self.kwparams:
-                self.kwparams[variable] = value
-                return
             raise gcmd.error("Unknown gcode_macro variable '%s'" % (variable,))
         try:
             literal = ast.literal_eval(value)
         except ValueError as e:
             raise gcmd.error("Unable to parse '%s' as a literal" % (value,))
-        self.variables[variable] = literal
-    cmd_desc = "G-Code macro"
+        v = dict(self.variables)
+        v[variable] = literal
+        self.variables = v
     def cmd(self, gcmd):
         if self.in_script:
             raise gcmd.error("Macro %s called recursively" % (self.alias,))
-        params = gcmd.get_command_parameters()
-        kwparams = dict(self.kwparams)
-        kwparams.update(params)
-        kwparams.update(self.variables)
+        kwparams = dict(self.variables)
         kwparams.update(self.template.create_template_context())
-        kwparams['params'] = params
+        kwparams['params'] = gcmd.get_command_parameters()
+        kwparams['rawparams'] = gcmd.get_raw_command_parameters()
         self.in_script = True
         try:
             self.template.run_gcode_from_command(kwparams)

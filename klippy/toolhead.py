@@ -217,9 +217,6 @@ class ToolHead:
         self.max_accel_to_decel = self.requested_accel_to_decel
         self.square_corner_velocity = config.getfloat(
             'square_corner_velocity', 5., minval=0.)
-        self.config_max_velocity = self.max_velocity
-        self.config_max_accel = self.max_accel
-        self.config_square_corner_velocity = self.square_corner_velocity
         self.junction_deviation = 0.
         self._calc_junction_deviation()
         # Print time tracking
@@ -247,7 +244,7 @@ class ToolHead:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
-        self.trapq_free_moves = ffi_lib.trapq_free_moves
+        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.step_generators = []
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
@@ -288,7 +285,7 @@ class ToolHead:
             for sg in self.step_generators:
                 sg(sg_flush_time)
             free_time = max(lkft, sg_flush_time - kin_flush_delay)
-            self.trapq_free_moves(self.trapq, free_time)
+            self.trapq_finalize_moves(self.trapq, free_time)
             self.extruder.update_move_time(free_time)
             mcu_flush_time = max(lkft, sg_flush_time - self.move_flush_time)
             for m in self.all_mcus:
@@ -404,7 +401,9 @@ class ToolHead:
         return list(self.commanded_pos)
     def set_position(self, newpos, homing_axes=()):
         self.flush_step_generation()
-        self.trapq_free_moves(self.trapq, self.reactor.NEVER)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.trapq_set_position(self.trapq, self.print_time,
+                                   newpos[0], newpos[1], newpos[2])
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
         self.printer.send_event("toolhead:set_position")
@@ -460,6 +459,7 @@ class ToolHead:
             npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
             self._update_move_time(npt)
     def drip_move(self, newpos, speed, drip_completion):
+        self.dwell(self.kin_flush_delay)
         # Transition from "Flushed"/"Priming"/main state to "Drip" state
         self.move_queue.flush()
         self.special_queuing_state = "Drip"
@@ -479,7 +479,7 @@ class ToolHead:
             self.move_queue.flush()
         except DripModeEndSignal as e:
             self.move_queue.reset()
-            self.trapq_free_moves(self.trapq, self.reactor.NEVER)
+            self.trapq_finalize_moves(self.trapq, self.reactor.NEVER)
         # Exit "Drip" state
         self.flush_step_generation()
     # Misc commands
@@ -501,6 +501,7 @@ class ToolHead:
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
         res = dict(self.kin.get_status(eventtime))
         res.update({ 'print_time': print_time,
+                     'stalls': self.print_stall,
                      'estimated_print_time': estimated_print_time,
                      'extruder': self.extruder.get_name(),
                      'position': self.Coord(*self.commanded_pos),
@@ -537,12 +538,6 @@ class ToolHead:
         self.last_kin_move_time = max(self.last_kin_move_time, kin_time)
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
-    def get_max_axis_halt(self):
-        # Determine the maximum velocity a cartesian axis could halt
-        # at due to the junction_deviation setting.  The 8.0 was
-        # determined experimentally.
-        return min(self.max_velocity,
-                   math.sqrt(8. * self.junction_deviation * self.max_accel))
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
@@ -557,27 +552,34 @@ class ToolHead:
         self.wait_moves()
     cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
     def cmd_SET_VELOCITY_LIMIT(self, gcmd):
-        print_time = self.get_last_move_time()
-        max_velocity = gcmd.get_float('VELOCITY', self.max_velocity, above=0.)
-        max_accel = gcmd.get_float('ACCEL', self.max_accel, above=0.)
+        max_velocity = gcmd.get_float('VELOCITY', None, above=0.)
+        max_accel = gcmd.get_float('ACCEL', None, above=0.)
         square_corner_velocity = gcmd.get_float(
-            'SQUARE_CORNER_VELOCITY', self.square_corner_velocity, minval=0.)
-        self.requested_accel_to_decel = gcmd.get_float(
-            'ACCEL_TO_DECEL', self.requested_accel_to_decel, above=0.)
-        self.max_velocity = min(max_velocity, self.config_max_velocity)
-        self.max_accel = min(max_accel, self.config_max_accel)
-        self.square_corner_velocity = min(square_corner_velocity,
-                                          self.config_square_corner_velocity)
+            'SQUARE_CORNER_VELOCITY', None, minval=0.)
+        requested_accel_to_decel = gcmd.get_float(
+            'ACCEL_TO_DECEL', None, above=0.)
+        if max_velocity is not None:
+            self.max_velocity = max_velocity
+        if max_accel is not None:
+            self.max_accel = max_accel
+        if square_corner_velocity is not None:
+            self.square_corner_velocity = square_corner_velocity
+        if requested_accel_to_decel is not None:
+            self.requested_accel_to_decel = requested_accel_to_decel
         self._calc_junction_deviation()
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"
                "max_accel_to_decel: %.6f\n"
-               "square_corner_velocity: %.6f"% (
+               "square_corner_velocity: %.6f" % (
                    self.max_velocity, self.max_accel,
                    self.requested_accel_to_decel,
                    self.square_corner_velocity))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
-        gcmd.respond_info(msg, log=False)
+        if (max_velocity is None and
+            max_accel is None and
+            square_corner_velocity is None and
+            requested_accel_to_decel is None):
+            gcmd.respond_info(msg, log=False)
     def cmd_M204(self, gcmd):
         # Use S for accel
         accel = gcmd.get_float('S', None, above=0.)
@@ -590,7 +592,7 @@ class ToolHead:
                                   % (gcmd.get_commandline(),))
                 return
             accel = min(p, t)
-        self.max_accel = min(accel, self.config_max_accel)
+        self.max_accel = accel
         self._calc_junction_deviation()
 
 def add_printer_objects(config):

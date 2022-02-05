@@ -1,36 +1,40 @@
-# Enable the github stale issue bot tracker
-name: "Add comment to issues marked invalid"
+# Add a comment to github issues marked with the "not on github" label
+name: "Add comment to issues marked 'not on github'"
 on:
   issues:
       types: [labeled]
 jobs:
   comment:
+    if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            if (context.payload.label.name != "invalid")
+            if (context.payload.label.name != "not on github")
               return;
-            msg = "Unfortunately, it appears the directions at"
+            msg = "It looks like this ticket is a request for help"
+                + " (or similar)."
+                + " Many helpful people will not see your message here and you"
+                + " are unlikely to get a useful response."
+                + " Instead, see the contact directions at:"
                 + " https://www.klipper3d.org/Contact.html"
-                + " were not followed for this issue.\n"
-                + "\n"
-                + "We choose to use github as a place that people working on"
-                + " improving Klipper can share the results of their work."
-                + " We choose to not use github to help diagnose problems"
-                + " with a user's printer. We choose to not use github to"
-                + " answer user questions. We choose to not use github as"
-                + " a place to make requests.\n"
-                + "\n"
-                + "In the future, please follow the directions at:"
-                + " https://www.klipper3d.org/Contact.html\n"
-                + "This ticket will be automatically closed.\n"
-                + "\n"
+                + "\n\n"
+                + "We use github to share the results of work done to"
+                + " improve Klipper. We don't use github for requests."
+                + " (In particular, we don't use github for feature"
+                + " requests, to answer questions, nor to help diagnose"
+                + " problems with a printer.)"
+                + "\n\n"
+                + "Please follow the directions at:"
+                + " https://www.klipper3d.org/Contact.html"
+                + "\n\n"
+                + "This ticket will be automatically closed."
+                + "\n\n"
                 + "Best regards,\n"
-                + "~ Your friendly GitIssueBot\n"
-                + "\n"
+                + "~ Your friendly GitIssueBot"
+                + "\n\n"
                 + "PS: I'm just an automated script, not a human being.";
             github.issues.createComment({
               issue_number: context.issue.number,

@@ -1,6 +1,6 @@
 // SPI support on lpc176x
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -58,7 +58,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 
     // Setup clock rate and mode
     struct spi_config res = {spi_bus[bus].spi, 0, 0};
-    uint32_t pclk = SystemCoreClock;
+    uint32_t pclk = get_pclock_frequency(spi_bus[bus].pclk);
     uint32_t div = DIV_ROUND_UP(pclk/2, rate) << 1;
     res.cpsr = div < 2 ? 2 : (div > 254 ? 254 : div);
     res.cr0 = 0x07 | ((mode & 2) << 5) | ((mode & 1) << 7);

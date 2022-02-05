@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Shaper auto-calibration script
 #
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
@@ -6,12 +6,12 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
-import optparse, os, sys
+import importlib, optparse, os, sys
 from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                             '..', 'klippy', 'extras'))
-from shaper_calibrate import CalibrationData, ShaperCalibrate
+                             '..', 'klippy'))
+shaper_calibrate = importlib.import_module('.shaper_calibrate', 'extras')
 
 MAX_TITLE_LENGTH=65
 
@@ -25,7 +25,7 @@ def parse_log(logname):
             return np.loadtxt(logname, comments='#', delimiter=',')
     # Parse power spectral density data
     data = np.loadtxt(logname, skiprows=1, comments='#', delimiter=',')
-    calibration_data = CalibrationData(
+    calibration_data = shaper_calibrate.CalibrationData(
             freq_bins=data[:,0], psd_sum=data[:,4],
             psd_x=data[:,1], psd_y=data[:,2], psd_z=data[:,3])
     calibration_data.set_numpy(np)
@@ -41,16 +41,16 @@ def parse_log(logname):
 
 # Find the best shaper parameters
 def calibrate_shaper(datas, csv_output, max_smoothing):
-    helper = ShaperCalibrate(printer=None)
-    if isinstance(datas[0], CalibrationData):
+    helper = shaper_calibrate.ShaperCalibrate(printer=None)
+    if isinstance(datas[0], shaper_calibrate.CalibrationData):
         calibration_data = datas[0]
         for data in datas[1:]:
-            calibration_data.join(data)
+            calibration_data.add_data(data)
     else:
         # Process accelerometer data
         calibration_data = helper.process_accelerometer_data(datas[0])
         for data in datas[1:]:
-            calibration_data.join(helper.process_accelerometer_data(data))
+            calibration_data.add_data(helper.process_accelerometer_data(data))
         calibration_data.normalize_to_frequencies()
     shaper, all_shapers = helper.find_best_shaper(
             calibration_data, max_smoothing, print)
@@ -88,9 +88,7 @@ def plot_freq_response(lognames, calibration_data, shapers,
 
     title = "Frequency response and shapers (%s)" % (', '.join(lognames))
     ax.set_title("\n".join(wrap(title, MAX_TITLE_LENGTH)))
-    ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
-    ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(5))
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.ticklabel_format(axis='y', style='scientific', scilimits=(0,0))
     ax.grid(which='major', color='grey')
@@ -100,9 +98,10 @@ def plot_freq_response(lognames, calibration_data, shapers,
     ax2.set_ylabel('Shaper vibration reduction (ratio)')
     best_shaper_vals = None
     for shaper in shapers:
-        label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f)" % (
+        label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f, accel<=%.f)" % (
                 shaper.name.upper(), shaper.freq,
-                shaper.vibrs * 100., shaper.smoothing)
+                shaper.vibrs * 100., shaper.smoothing,
+                round(shaper.max_accel / 100.) * 100.)
         linestyle = 'dotted'
         if shaper.name == selected_shaper:
             linestyle = 'dashdot'

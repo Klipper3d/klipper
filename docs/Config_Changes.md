@@ -1,10 +1,120 @@
+# Configuration Changes
+
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.
 
 All dates in this document are approximate.
 
-# Changes
+## Changes
+
+20220116: The tmc2130, tmc2208, tmc2209, and tmc2660 `run_current`
+calculation code has changed. For some `run_current` settings the
+drivers may now be configured differently. This new configuration
+should be more accurate, but it may invalidate previous tmc driver
+tuning.
+
+20211230: Scripts to tune input shaper (`scripts/calibrate_shaper.py`
+and `scripts/graph_accelerometer.py`) were migrated to use Python3
+by default. As a result, users must install Python3 versions of certain
+packages (e.g. `sudo apt install python3-numpy python3-matplotlib`) to
+continue using these scripts. For more details, refer to
+[Software installation](Measuring_Resonances.md#software-installation).
+Alternatively, users can temporarily force the execution of these scripts
+under Python 2 by explicitly calling Python2 interpretor in the console:
+`python2 ~/klipper/scripts/calibrate_shaper.py ...`
+
+20211110: The "NTC 100K beta 3950" temperature sensor is deprecated.
+This sensor will be removed in the near future.  Most users will find
+the "Generic 3950" temperature sensor more accurate.  To continue to
+use the older (typically less accurate) definition, define a custom
+[thermistor](Config_Reference.md#thermistor) with `temperature1: 25`,
+`resistance1: 100000`, and `beta: 3950`.
+
+20211104: The "step pulse duration" option in "make menuconfig" has
+been removed. The default step duration for TMC drivers configured in
+UART or SPI mode is now 100ns. A new `step_pulse_duration` setting in
+the [stepper config section](Config_Reference.md#stepper) should be
+set for all steppers that need a custom pulse duration.
+
+20211102: Several deprecated features have been removed.  The stepper
+`step_distance` option has been removed (deprecated on 20201222).  The
+`rpi_temperature` sensor alias has been removed (deprecated on
+20210219).  The mcu `pin_map` option has been removed (deprecated on
+20210325).  The gcode_macro `default_parameter_<name>` and macro
+access to command parameters other than via the `params`
+pseudo-variable has been removed (deprecated on 20210503).  The heater
+`pid_integral_max` option has been removed (deprecated on 20210612).
+
+20210929: Klipper v0.10.0 released.
+
+20210903: The default [`smooth_time`](Config_Reference.md#extruder)
+for heaters has changed to 1 second (from 2 seconds).  For most
+printers this will result in more stable temperature control.
+
+20210830: The default adxl345 name is now "adxl345".  The default CHIP
+parameter for the `ACCELEROMETER_MEASURE` and `ACCELEROMETER_QUERY` is
+now also "adxl345".
+
+20210830: The adxl345 ACCELEROMETER_MEASURE command no longer supports
+a RATE parameter.  To alter the query rate, update the printer.cfg
+file and issue a RESTART command.
+
+20210821: Several config settings in `printer.configfile.settings`
+will now be reported as lists instead of raw strings.  If the actual
+raw string is desired, use `printer.configfile.config` instead.
+
+20210819: In some cases, a `G28` homing move may end in a position
+that is nominally outside the valid movement range.  In rare
+situations this may result in confusing "Move out of range" errors
+after homing.  If this occurs, change your start scripts to move the
+toolhead to a valid position immediately after homing.
+
+20210814: The analog only pseudo-pins on the atmega168 and atmega328
+have been renamed from PE0/PE1 to PE2/PE3.
+
+20210720: A controller_fan section now monitors all stepper motors by
+default (not just the kinematic stepper motors).  If the previous
+behavior is desired, see the `stepper` config option in the
+[config reference](Config_Reference.md#controller_fan).
+
+20210703: A `samd_sercom` config section must now specify the sercom
+bus it is configuring via the `sercom` option.
+
+20210612: The `pid_integral_max` config option in heater and
+temperature_fan sections is deprecated.  The option will be removed in
+the near future.
+
+20210503: The gcode_macro `default_parameter_<name>` config option is
+deprecated.  Use the `params` pseudo-variable to access macro
+parameters.  Other methods for accessing macro parameters will be
+removed in the near future.  Most users can replace a
+`default_parameter_NAME: VALUE` config option with a line like the
+following in the start of the macro: ` {% set NAME =
+params.NAME|default(VALUE)|float %}`.  See the [Command Templates
+document](Command_Templates.md#macro-parameters) for examples.
+
+20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
+velocity, acceleration, and square_corner_velocity larger than the
+specified values in the config file.
+
+20210325: Support for the `pin_map` config option is deprecated. Use
+the [sample-aliases.cfg](../config/sample-aliases.cfg) file to
+translate to the actual micro-controller pin names. The `pin_map`
+config option will be removed in the near future.
+
+20210313: Klipper's support for micro-controllers that communicate
+with CAN bus has changed. If using CAN bus then all micro-controllers
+must be reflashed and the
+[Klipper configuration must be updated](CANBUS.md).
+
+20210310: The TMC2660 default for driver_SFILT has been changed from 1
+to 0.
+
+20210227: TMC stepper motor drivers in UART or SPI mode are now
+queried once per second whenever they are enabled - if the driver can
+not be contacted or if the driver reports an error, then Klipper will
+transition to a shutdown state.
 
 20210219: The `rpi_temperature` module has been renamed to
 `temperature_host`.  Replace any occurrences of `sensor_type:
@@ -215,7 +325,7 @@ that command.
 
 20190628: All configuration options have been removed from the
 [skew_correction] section.  Configuration for skew_correction
-is now done via the SET_SKEW gcode.  See skew_correction.md
+is now done via the SET_SKEW gcode.  See [Skew Correction](Skew_Correction.md)
 for recommended usage.
 
 20190607: The "variable_X" parameters of gcode_macro (along with the

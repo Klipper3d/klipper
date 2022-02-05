@@ -24,7 +24,7 @@ class PrinterNeoPixel:
         self.oid = self.mcu.create_oid()
         self.pin = pin_params['pin']
         self.mcu.register_config_callback(self.build_config)
-        formats = {v: v for v in ["RGB", "GRB", "RGBW", "GRBW"]}
+        formats = {v: v for v in ["RGB", "GRB", "BRG", "RGBW", "GRBW"]}
         self.color_order = config.getchoice("color_order", formats, "GRB")
         elem_size = len(self.color_order)
         self.chain_count = config.getint('chain_count', 1, minval=1,
@@ -67,6 +67,8 @@ class PrinterNeoPixel:
             color_data = [green, red, blue]
         elif self.color_order == "RGB":
             color_data = [red, green, blue]
+        elif self.color_order == "BRG":
+            color_data = [blue, red, green]
         elif self.color_order == "GRBW":
             color_data = [green, red, blue, white]
         else:
@@ -119,6 +121,7 @@ class PrinterNeoPixel:
         white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
         index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
+        sync = gcmd.get_int('SYNC', 1)
         # Update and transmit data
         def reactor_bgfunc(print_time):
             with self.mutex:
@@ -128,8 +131,23 @@ class PrinterNeoPixel:
         def lookahead_bgfunc(print_time):
             reactor = self.printer.get_reactor()
             reactor.register_callback(lambda et: reactor_bgfunc(print_time))
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.register_lookahead_callback(lookahead_bgfunc)
+        if sync:
+            #Sync LED Update with print time and send
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.register_lookahead_callback(lookahead_bgfunc)
+        else:
+            #Send update now (so as not to wake toolhead and reset idle_timeout)
+            lookahead_bgfunc(None)
+    def get_status(self, eventtime):
+        cdata = []
+        elem_size = len(self.color_order)
+        for i in range(self.chain_count):
+            idx = i * elem_size
+            cdata.append(
+                {k: round(v / 255., 4) for k, v in
+                 zip(self.color_order, self.color_data[idx:idx+elem_size])}
+            )
+        return {'color_data': cdata}
 
 def load_config_prefix(config):
     return PrinterNeoPixel(config)

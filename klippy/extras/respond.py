@@ -19,20 +19,12 @@ class HostResponder:
         self.default_prefix = config.get('default_prefix', self.default_prefix)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('M118', self.cmd_M118, True)
-        gcode.register_command('RESPOND', self.cmd_RESPOND, True)
+        gcode.register_command('RESPOND', self.cmd_RESPOND, True,
+                               desc=self.cmd_RESPOND_help)
     def cmd_M118(self, gcmd):
-        msg = gcmd.get_commandline()
-        umsg = msg.upper()
-        if not umsg.startswith('M118'):
-            # Parse out additional info if M118 recd during a print
-            start = umsg.find('M118')
-            end = msg.rfind('*')
-            msg = msg[start:end]
-        if len(msg) > 5:
-            msg = msg[5:]
-        else:
-            msg = ''
+        msg = gcmd.get_raw_command_parameters()
         gcmd.respond_raw("%s %s" % (self.default_prefix, msg))
+    cmd_RESPOND_help = ("Echo the message prepended with a prefix")
     def cmd_RESPOND(self, gcmd):
         respond_type = gcmd.get('TYPE', None)
         prefix = self.default_prefix

@@ -24,7 +24,7 @@ ReadRegisters = [
 
 Fields = {}
 Fields["GCONF"] = {
-    "I_scale_analog": 1<<0, "internal_Rsense": 1<<1, "en_pwm_mode": 1<<2,
+    "i_scale_analog": 1<<0, "internal_rsense": 1<<1, "en_pwm_mode": 1<<2,
     "enc_commutation": 1<<3, "shaft": 1<<4, "diag0_error": 1<<5,
     "diag0_otpw": 1<<6, "diag0_stall": 1<<7, "diag1_stall": 1<<8,
     "diag1_index": 1<<9, "diag1_onstate": 1<<10, "diag1_steps_skipped": 1<<11,
@@ -34,56 +34,58 @@ Fields["GCONF"] = {
 }
 Fields["GSTAT"] = { "reset": 1<<0, "drv_err": 1<<1, "uv_cp": 1<<2 }
 Fields["IOIN"] = {
-    "STEP": 1<<0, "DIR": 1<<1, "DCEN_CFG4": 1<<2, "DCIN_CFG5": 1<<3,
-    "DRV_ENN_CFG6": 1<<4, "DCO": 1<<5, "VERSION": 0xff << 24
+    "step": 1<<0, "dir": 1<<1, "dcen_cfg4": 1<<2, "dcin_cfg5": 1<<3,
+    "drv_enn_cfg6": 1<<4, "dco": 1<<5, "version": 0xff << 24
 }
 Fields["IHOLD_IRUN"] = {
-    "IHOLD": 0x1f << 0, "IRUN": 0x1f << 8, "IHOLDDELAY": 0x0f << 16
+    "ihold": 0x1f << 0, "irun": 0x1f << 8, "iholddelay": 0x0f << 16
 }
-Fields["TPOWERDOWN"] = { "TPOWERDOWN": 0xff }
-Fields["TSTEP"] = { "TSTEP": 0xfffff }
-Fields["TPWMTHRS"] = { "TPWMTHRS": 0xfffff }
-Fields["TCOOLTHRS"] = { "TCOOLTHRS": 0xfffff }
-Fields["THIGH"] = { "THIGH": 0xfffff }
-Fields["MSCNT"] = { "MSCNT": 0x3ff }
-Fields["MSCURACT"] = { "CUR_A": 0x1ff, "CUR_B": 0x1ff << 16 }
+Fields["TPOWERDOWN"] = { "tpowerdown": 0xff }
+Fields["TSTEP"] = { "tstep": 0xfffff }
+Fields["TPWMTHRS"] = { "tpwmthrs": 0xfffff }
+Fields["TCOOLTHRS"] = { "tcoolthrs": 0xfffff }
+Fields["THIGH"] = { "thigh": 0xfffff }
+Fields["MSCNT"] = { "mscnt": 0x3ff }
+Fields["MSCURACT"] = { "cur_a": 0x1ff, "cur_b": 0x1ff << 16 }
 Fields["CHOPCONF"] = {
     "toff": 0x0f, "hstrt": 0x07 << 4, "hend": 0x0f << 7, "fd3": 1<<11,
-    "disfdcc": 1<<12, "rndtf": 1<<13, "chm": 1<<14, "TBL": 0x03 << 15,
+    "disfdcc": 1<<12, "rndtf": 1<<13, "chm": 1<<14, "tbl": 0x03 << 15,
     "vsense": 1<<17, "vhighfs": 1<<18, "vhighchm": 1<<19, "sync": 0x0f << 20,
-    "MRES": 0x0f << 24, "intpol": 1<<28, "dedge": 1<<29, "diss2g": 1<<30
+    "mres": 0x0f << 24, "intpol": 1<<28, "dedge": 1<<29, "diss2g": 1<<30
 }
 Fields["COOLCONF"] = {
     "semin": 0x0f, "seup": 0x03 << 5, "semax": 0x0f << 8, "sedn": 0x03 << 13,
     "seimin": 1<<15, "sgt": 0x7f << 16, "sfilt": 1<<24
 }
 Fields["DRV_STATUS"] = {
-    "SG_RESULT": 0x3ff, "fsactive": 1<<15, "CS_ACTUAL": 0x1f << 16,
-    "stallGuard": 1<<24, "ot": 1<<25, "otpw": 1<<26, "s2ga": 1<<27,
+    "sg_result": 0x3ff, "fsactive": 1<<15, "cs_actual": 0x1f << 16,
+    "stallguard": 1<<24, "ot": 1<<25, "otpw": 1<<26, "s2ga": 1<<27,
     "s2gb": 1<<28, "ola": 1<<29, "olb": 1<<30, "stst": 1<<31
 }
 Fields["PWMCONF"] = {
-    "PWM_AMPL": 0xff, "PWM_GRAD": 0xff << 8, "pwm_freq": 0x03 << 16,
+    "pwm_ampl": 0xff, "pwm_grad": 0xff << 8, "pwm_freq": 0x03 << 16,
     "pwm_autoscale": 1<<18, "pwm_symmetric": 1<<19, "freewheel": 0x03 << 20
 }
-Fields["PWM_SCALE"] = { "PWM_SCALE": 0xff }
-Fields["LOST_STEPS"] = { "LOST_STEPS": 0xfffff }
+Fields["PWM_SCALE"] = { "pwm_scale": 0xff }
+Fields["LOST_STEPS"] = { "lost_steps": 0xfffff }
 
-SignedFields = ["CUR_A", "CUR_B", "sgt"]
+SignedFields = ["cur_a", "cur_b", "sgt"]
 
 FieldFormatters = {
-    "I_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
+    "i_scale_analog":   (lambda v: "1(ExtVREF)" if v else ""),
     "shaft":            (lambda v: "1(Reverse)" if v else ""),
+    "reset":            (lambda v: "1(Reset)" if v else ""),
     "drv_err":          (lambda v: "1(ErrorShutdown!)" if v else ""),
     "uv_cp":            (lambda v: "1(Undervoltage!)" if v else ""),
-    "VERSION":          (lambda v: "%#x" % v),
-    "MRES":             (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
+    "version":          (lambda v: "%#x" % v),
+    "mres":             (lambda v: "%d(%dusteps)" % (v, 0x100 >> v)),
     "otpw":             (lambda v: "1(OvertempWarning!)" if v else ""),
     "ot":               (lambda v: "1(OvertempError!)" if v else ""),
     "s2ga":             (lambda v: "1(ShortToGND_A!)" if v else ""),
     "s2gb":             (lambda v: "1(ShortToGND_B!)" if v else ""),
     "ola":              (lambda v: "1(OpenLoad_A!)" if v else ""),
     "olb":              (lambda v: "1(OpenLoad_B!)" if v else ""),
+    "cs_actual":        (lambda v: ("%d" % v) if v else "0(Reset?)"),
 }
 
 
@@ -101,68 +103,55 @@ class TMCCurrentHelper:
         self.fields = mcu_tmc.get_fields()
         run_current = config.getfloat('run_current',
                                       above=0., maxval=MAX_CURRENT)
-        hold_current = config.getfloat('hold_current', run_current,
+        hold_current = config.getfloat('hold_current', MAX_CURRENT,
                                        above=0., maxval=MAX_CURRENT)
+        self.req_hold_current = hold_current
         self.sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("vsense", vsense)
-        self.fields.set_field("IHOLD", ihold)
-        self.fields.set_field("IRUN", irun)
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
-                                   self.cmd_SET_TMC_CURRENT,
-                                   desc=self.cmd_SET_TMC_CURRENT_help)
+        self.fields.set_field("ihold", ihold)
+        self.fields.set_field("irun", irun)
     def _calc_current_bits(self, current, vsense):
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
         if vsense:
             vref = 0.18
-        cs = int(32. * current * sense_resistor * math.sqrt(2.) / vref
-                 - 1. + .5)
+        cs = int(32. * sense_resistor * current * math.sqrt(2.) / vref + .5) - 1
         return max(0, min(31, cs))
-    def _calc_current(self, run_current, hold_current):
-        vsense = False
-        irun = self._calc_current_bits(run_current, vsense)
-        ihold = self._calc_current_bits(min(hold_current, run_current),
-                                        vsense)
-        if irun < 16 and ihold < 16:
-            vsense = True
-            irun = self._calc_current_bits(run_current, vsense)
-            ihold = self._calc_current_bits(min(hold_current, run_current),
-                                            vsense)
-        return vsense, irun, ihold
-    def _calc_current_from_field(self, field_name):
-        bits = self.fields.get_field(field_name)
+    def _calc_current_from_bits(self, cs, vsense):
         sense_resistor = self.sense_resistor + 0.020
         vref = 0.32
-        if self.fields.get_field("vsense"):
+        if vsense:
             vref = 0.18
-        current = (bits + 1) * vref / (32 * sense_resistor * math.sqrt(2.))
-        return round(current, 2)
-    cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
-    def cmd_SET_TMC_CURRENT(self, gcmd):
-        run_current = gcmd.get_float('CURRENT', None,
-                                     minval=0., maxval=MAX_CURRENT)
-        hold_current = gcmd.get_float('HOLDCURRENT', None,
-                                      above=0., maxval=MAX_CURRENT)
-        if run_current is None and hold_current is None:
-            # Query only
-            run_current = self._calc_current_from_field("IRUN")
-            hold_current = self._calc_current_from_field("IHOLD")
-            gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                              % (run_current, hold_current))
-            return
-        if run_current is None:
-            run_current = self._calc_current_from_field("IRUN")
-        if hold_current is None:
-            hold_current = self._calc_current_from_field("IHOLD")
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        return (cs + 1) * vref / (32. * sense_resistor * math.sqrt(2.))
+    def _calc_current(self, run_current, hold_current):
+        vsense = True
+        irun = self._calc_current_bits(run_current, True)
+        if irun == 31:
+            cur = self._calc_current_from_bits(irun, True)
+            if cur < run_current:
+                irun2 = self._calc_current_bits(run_current, False)
+                cur2 = self._calc_current_from_bits(irun2, False)
+                if abs(run_current - cur2) < abs(run_current - cur):
+                    vsense = False
+                    irun = irun2
+        ihold = self._calc_current_bits(min(hold_current, run_current), vsense)
+        return vsense, irun, ihold
+    def get_current(self):
+        irun = self.fields.get_field("irun")
+        ihold = self.fields.get_field("ihold")
+        vsense = self.fields.get_field("vsense")
+        run_current = self._calc_current_from_bits(irun, vsense)
+        hold_current = self._calc_current_from_bits(ihold, vsense)
+        return run_current, hold_current, self.req_hold_current, MAX_CURRENT
+    def set_current(self, run_current, hold_current, print_time):
+        self.req_hold_current = hold_current
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         if vsense != self.fields.get_field("vsense"):
             val = self.fields.set_field("vsense", vsense)
             self.mcu_tmc.set_register("CHOPCONF", val, print_time)
-        self.fields.set_field("IHOLD", ihold)
-        val = self.fields.set_field("IRUN", irun)
+        self.fields.set_field("ihold", ihold)
+        val = self.fields.set_field("irun", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
 
 
@@ -170,12 +159,77 @@ class TMCCurrentHelper:
 # TMC2130 SPI
 ######################################################################
 
+class MCU_TMC_SPI_chain:
+    def __init__(self, config, chain_len=1):
+        self.printer = config.get_printer()
+        self.chain_len = chain_len
+        self.mutex = self.printer.get_reactor().mutex()
+        share = None
+        if chain_len > 1:
+            share = "tmc_spi_cs"
+        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000,
+                                           share_type=share)
+        self.taken_chain_positions = []
+    def _build_cmd(self, data, chain_pos):
+        return ([0x00] * ((self.chain_len - chain_pos) * 5) +
+                data + [0x00] * ((chain_pos - 1) * 5))
+    def reg_read(self, reg, chain_pos):
+        cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain_pos)
+        self.spi.spi_send(cmd)
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            return 0
+        params = self.spi.spi_transfer(cmd)
+        pr = bytearray(params['response'])
+        pr = pr[(self.chain_len - chain_pos) * 5 :
+                (self.chain_len - chain_pos + 1) * 5]
+        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+    def reg_write(self, reg, val, chain_pos, print_time=None):
+        minclock = 0
+        if print_time is not None:
+            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
+        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
+                (val >> 8) & 0xff, val & 0xff]
+        if self.printer.get_start_args().get('debugoutput') is not None:
+            self.spi.spi_send(self._build_cmd(data, chain_pos), minclock)
+            return val
+        write_cmd = self._build_cmd(data, chain_pos)
+        dummy_read = self._build_cmd([0x00, 0x00, 0x00, 0x00, 0x00], chain_pos)
+        params = self.spi.spi_transfer_with_preface(write_cmd, dummy_read,
+                                                    minclock=minclock)
+        pr = bytearray(params['response'])
+        pr = pr[(self.chain_len - chain_pos) * 5 :
+                (self.chain_len - chain_pos + 1) * 5]
+        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+
+# Helper to setup an spi daisy chain bus from settings in a config section
+def lookup_tmc_spi_chain(config):
+    chain_len = config.getint('chain_length', None, minval=2)
+    if chain_len is None:
+        # Simple, non daisy chained SPI connection
+        return MCU_TMC_SPI_chain(config, 1), 1
+
+    # Shared SPI bus - lookup existing MCU_TMC_SPI_chain
+    ppins = config.get_printer().lookup_object("pins")
+    cs_pin_params = ppins.lookup_pin(config.get('cs_pin'),
+                                     share_type="tmc_spi_cs")
+    tmc_spi = cs_pin_params.get('class')
+    if tmc_spi is None:
+        tmc_spi = cs_pin_params['class'] = MCU_TMC_SPI_chain(config, chain_len)
+    if chain_len != tmc_spi.chain_len:
+        raise config.error("TMC SPI chain must have same length")
+    chain_pos = config.getint('chain_position', minval=1, maxval=chain_len)
+    if chain_pos in tmc_spi.taken_chain_positions:
+        raise config.error("TMC SPI chain can not have duplicate position")
+    tmc_spi.taken_chain_positions.append(chain_pos)
+    return tmc_spi, chain_pos
+
 # Helper code for working with TMC devices via SPI
 class MCU_TMC_SPI:
     def __init__(self, config, name_to_reg, fields):
         self.printer = config.get_printer()
-        self.mutex = self.printer.get_reactor().mutex()
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000)
+        self.name = config.get_name().split()[-1]
+        self.tmc_spi, self.chain_pos = lookup_tmc_spi_chain(config)
+        self.mutex = self.tmc_spi.mutex
         self.name_to_reg = name_to_reg
         self.fields = fields
     def get_fields(self):
@@ -183,21 +237,17 @@ class MCU_TMC_SPI:
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
         with self.mutex:
-            self.spi.spi_send([reg, 0x00, 0x00, 0x00, 0x00])
-            if self.printer.get_start_args().get('debugoutput') is not None:
-                return 0
-            params = self.spi.spi_transfer([reg, 0x00, 0x00, 0x00, 0x00])
-        pr = bytearray(params['response'])
-        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+            read = self.tmc_spi.reg_read(reg, self.chain_pos)
+        return read
     def set_register(self, reg_name, val, print_time=None):
-        minclock = 0
-        if print_time is not None:
-            minclock = self.spi.get_mcu().print_time_to_clock(print_time)
         reg = self.name_to_reg[reg_name]
-        data = [(reg | 0x80) & 0xff, (val >> 24) & 0xff, (val >> 16) & 0xff,
-                (val >> 8) & 0xff, val & 0xff]
         with self.mutex:
-            self.spi.spi_send(data, minclock)
+            for retry in range(5):
+                v = self.tmc_spi.reg_write(reg, val, self.chain_pos, print_time)
+                if v == val:
+                    return
+        raise self.printer.command_error(
+            "Unable to write tmc spi '%s' register %s" % (self.name, reg_name))
 
 
 ######################################################################
@@ -212,24 +262,23 @@ class TMC2130:
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc)
+        current_helper = TMCCurrentHelper(config, self.mcu_tmc)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
+        self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_status = cmdhelper.get_status
         # Setup basic register values
-        TMCCurrentHelper(config, self.mcu_tmc)
-        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
-        self.get_microsteps = mh.get_microsteps
-        self.get_phase = mh.get_phase
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 4)
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
-        set_config_field(config, "TBL", 1)
-        set_config_field(config, "IHOLDDELAY", 8)
-        set_config_field(config, "TPOWERDOWN", 0)
-        set_config_field(config, "PWM_AMPL", 128)
-        set_config_field(config, "PWM_GRAD", 4)
+        set_config_field(config, "tbl", 1)
+        set_config_field(config, "iholddelay", 8)
+        set_config_field(config, "tpowerdown", 0)
+        set_config_field(config, "pwm_ampl", 128)
+        set_config_field(config, "pwm_grad", 4)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "sgt", 0)
