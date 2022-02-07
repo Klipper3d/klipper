@@ -211,7 +211,8 @@ stats_seq_s = r" send_seq=(?P<sseq>[0-9]+) receive_seq=(?P<rseq>[0-9]+) "
 serial_dump_r = re.compile(r"^Dumping serial stats: .*" + stats_seq_s)
 send_dump_r = re.compile(r"^Dumping send queue " + count_s + " messages$")
 receive_dump_r = re.compile(r"^Dumping receive queue " + count_s + " messages$")
-clock_r = re.compile(r"^clocksync state: .* clock_est=\((?P<st>[^ ]+)"
+clock_r = re.compile(r"^clocksync state: mcu_freq=(?P<freq>[0-9]+) .*"
+                     + r" clock_est=\((?P<st>[^ ]+)"
                      + r" (?P<sc>[0-9]+) (?P<f>[^ ]+)\)")
 repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
 repl_clock_r = re.compile(r"clock=(?P<clock>[0-9]+)(?: |$)")
@@ -226,7 +227,8 @@ class MCUStream:
         self.sent_time_to_seq = {}
         self.sent_seq_to_time = {}
         self.receive_seq_to_time = {}
-        self.clock_est = 0., 0., 1.
+        self.mcu_freq = 1
+        self.clock_est = (0., 0., 1.)
         self.shutdown_seq = None
     def trans_clock(self, clock, ts):
         sample_time, sample_clock, freq = self.clock_est
@@ -250,6 +252,7 @@ class MCUStream:
     def parse_line(self, line_num, line):
         m = clock_r.match(line)
         if m is not None:
+            self.mcu_freq = int(m.group('freq'))
             st = float(m.group('st'))
             sc = int(m.group('sc'))
             f = float(m.group('f'))
@@ -266,6 +269,35 @@ class MCUStream:
         return False, None
     def get_lines(self):
         return []
+
+trapq_move_r = re.compile(r"^move " + count_s + r": pt=" + time_s)
+
+# Kinematic "trapq" shutdown message parsing
+class TrapQStream:
+    def __init__(self, mcus):
+        self.trapq_stream = []
+        self.mcu_freq = 1
+        self.clock_est = (0., 0., 1.)
+        mcu = mcus.get("mcu")
+        if mcu is not None:
+            self.mcu_freq = mcu.mcu_freq
+            self.clock_est = mcu.clock_est
+    def parse_line(self, line_num, line):
+        m = trapq_move_r.match(line)
+        if m is not None:
+            # Convert print_time to systime
+            pt = float(m.group('time'))
+            clock = pt * self.mcu_freq
+            sample_time, sample_clock, freq = self.clock_est
+            ts = sample_time + (clock - sample_clock) / freq
+            # Add systime to log
+            parts = line.split(' ', 4)
+            parts[2] += '(%.6f)' % (ts,)
+            self.trapq_stream.append((ts, line_num, ' '.join(parts)))
+            return True, None
+        return False, None
+    def get_lines(self):
+        return self.trapq_stream
 
 gcode_cmd_r = re.compile(r"^Read " + time_s + r": (?P<gcode>['\"].*)$")
 varlist_split_r = re.compile(r"([^ ]+)=")
@@ -342,6 +374,8 @@ class APIStream:
 
 stats_r = re.compile(r"^Stats " + time_s + ": ")
 mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' (is_)?shutdown: (?P<reason>.*)$")
+trapq_r = re.compile(r"^Dumping trapq '(?P<name>[^']*)' " + count_s
+                     + r" moves:$")
 gcode_r = re.compile(r"Dumping gcode input " + count_s + r" blocks$")
 gcode_state_r = re.compile(r"^gcode state: ")
 api_r = re.compile(r"Dumping " + count_s + r" requests for client "
@@ -400,6 +434,9 @@ class StatsStream:
             mcu_stream = MCUStream(mcu_name)
             self.mcus[mcu_name] = mcu_stream
             return True, mcu_stream
+        m = trapq_r.match(line)
+        if m is not None:
+            return True, TrapQStream(self.mcus)
         m = gcode_r.match(line)
         if m is not None:
             return True, self.gcode_stream
