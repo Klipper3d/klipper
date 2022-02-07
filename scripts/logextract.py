@@ -324,10 +324,28 @@ class GCodeStream:
             f.close()
         return self.gcode_stream
 
+api_cmd_r = re.compile(r"^Received " + time_s + r": \{.*\}$")
+
+# API server shutdowm message parsing
+class APIStream:
+    def __init__(self):
+        self.api_stream = []
+    def parse_line(self, line_num, line):
+        m = api_cmd_r.match(line)
+        if m is not None:
+            ts = float(m.group('time'))
+            self.api_stream.append((ts, line_num, line))
+            return True, None
+        return False, None
+    def get_lines(self):
+        return self.api_stream
+
 stats_r = re.compile(r"^Stats " + time_s + ": ")
 mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' (is_)?shutdown: (?P<reason>.*)$")
 gcode_r = re.compile(r"Dumping gcode input " + count_s + r" blocks$")
 gcode_state_r = re.compile(r"^gcode state: ")
+api_r = re.compile(r"Dumping " + count_s + r" requests for client "
+                   + r"(?P<client>[0-9]+)" + r"$")
 
 # Stats message parsing and high-level message dispatch
 class StatsStream:
@@ -389,6 +407,9 @@ class StatsStream:
         if m is not None:
             self.gcode_stream.handle_gcode_state(line)
             return True, None
+        m = api_r.match(line)
+        if m is not None:
+            return True, APIStream()
         return False, None
     def get_lines(self):
         # Ignore old stats
