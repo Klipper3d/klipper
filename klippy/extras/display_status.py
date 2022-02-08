@@ -1,5 +1,6 @@
 # Module to handle M73 and M117 display status commands
 #
+# Copyright (C) 2022  Jeremy Ruhland <jeremy-klipper@goopypanther.org>
 # Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
 #
@@ -30,8 +31,11 @@ class DisplayStatus:
                 progress = sdcard.get_status(eventtime)['progress']
         return { 'progress': progress, 'message': self.message }
     def cmd_M73(self, gcmd):
-        progress = gcmd.get_float('P', 0.) / 100.
-        self.progress = min(1., max(0., progress))
+        if not gcmd.get_raw_command_parameters():
+            self.progress = None
+        else:
+            progress = gcmd.get_float('P', 0.) / 100.
+            self.progress = min(1., max(0., progress))
         curtime = self.printer.get_reactor().monotonic()
         self.expire_progress = curtime + M73_TIMEOUT
     def cmd_M117(self, gcmd):
