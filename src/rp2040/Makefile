@@ -51,4 +51,4 @@ lib/rp2040_flash/rp2040_flash:
 # Flash rules
 flash: $(OUT)klipper.uf2 lib/rp2040_flash/rp2040_flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
-	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(OUT)klipper.uf2
+	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.uf2

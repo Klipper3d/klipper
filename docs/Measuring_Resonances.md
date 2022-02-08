@@ -473,10 +473,11 @@ ignoring any errors for `SET_INPUT_SHAPER` command. For `TEST_RESONANCES`
 command, specify the desired test axis. The raw data will be written into
 `/tmp` directory on the RPi.
 
-The raw data can also be obtained by running the command `ACCELEROMETER_MEASURE`
-command twice during some normal printer activity - first to start the
-measurements, and then to stop them and write the output file. Refer to
-[G-Codes](G-Codes.md#adxl345-accelerometer-commands) for more details.
+The raw data can also be obtained by running the command
+`ACCELEROMETER_MEASURE` command twice during some normal printer
+activity - first to start the measurements, and then to stop them and
+write the output file. Refer to [G-Codes](G-Codes.md#adxl345) for more
+details.
 
 The data can be processed later by the following scripts:
 `scripts/graph_accelerometer.py` and `scripts/calibrate_shaper.py`. Both
