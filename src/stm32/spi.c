@@ -100,6 +100,7 @@ void
 spi_prepare(struct spi_config config)
 {
     SPI_TypeDef *spi = config.spi;
+    spi->CR1 &= ~((uint16_t)SPI_CR1_SPE);
     spi->CR1 = config.spi_cr1;
 }
 
