@@ -109,12 +109,15 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
 {
     SPI_TypeDef *spi = config.spi;
     while (len--) {
-        writeb((void *)&spi->DR, *data);
+        writeb((void*)&spi->DR, *data);
         while (!(spi->SR & SPI_SR_RXNE))
             ;
-        uint8_t rdata = readb((void *)&spi->DR);
+        uint8_t rdata = readb((void*)&spi->DR);
         if (receive_data)
             *data = rdata;
         data++;
     }
+    // Wait for any remaining SCLK updates before returning
+    while ((spi->SR & (SPI_SR_TXE|SPI_SR_BSY)) != SPI_SR_TXE)
+        ;
 }
