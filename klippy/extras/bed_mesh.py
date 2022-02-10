@@ -316,7 +316,7 @@ class BedMeshCalibrate:
         if self.radius is not None:
             # round bed, min/max needs to be recalculated
             y_dist = x_dist
-            new_r = (x_cnt / 2) * x_dist
+            new_r = (x_cnt // 2) * x_dist
             min_x = min_y = -new_r
             max_x = max_y = new_r
         else:
