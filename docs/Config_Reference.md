@@ -1781,12 +1781,7 @@ for an example configuration.
 #   See the "extruder" section for available stepper and heater
 #   parameters.
 #shared_heater:
-#   If this extruder uses the same heater already defined for another
-#   extruder then place the name of that extruder here. For example,
-#   should extruder3 and extruder4 share a heater then the extruder3
-#   config section should define the heater and the extruder4 section
-#   should specify "shared_heater: extruder3". The default is to not
-#   reuse an existing heater.
+#   This option is deprecated and should no longer be specified.
 ```
 
 ### [dual_carriage]

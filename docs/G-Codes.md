@@ -300,23 +300,32 @@ extruders this command is used to change the active extruder.
 parameters. If EXTRUDER is not specified, it defaults to the active
 extruder.
 
-#### SET_EXTRUDER_STEP_DISTANCE
-`SET_EXTRUDER_STEP_DISTANCE [EXTRUDER=<config_name>]
+#### SET_EXTRUDER_ROTATION_DISTANCE
+`SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder's
-"step distance". The "step distance" is
-`rotation_distance/(full_steps_per_rotation*microsteps)`. Value is not
-retained on Klipper reset. Use with caution, small changes can result
-in excessive pressure between extruder and hot end. Do proper
-calibration steps with filament before use. If 'DISTANCE' value is not
-included command will return current step distance.
+"rotation distance". If the rotation distance is a negative number
+then the stepper motion will be inverted (relative to the stepper
+direction specified in the config file). Changed settings are not
+retained on Klipper reset. Use with caution as small changes can
+result in excessive pressure between extruder and hot end. Do proper
+calibration with filament before use. If 'DISTANCE' value is not
+included command will return current rotation distance.
+
+#### SYNC_EXTRUDER_MOTION
+`SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
+command will cause the stepper specified by EXTRUDER (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section)
+to become synchronized to the movement of an extruder specified by
+MOTION_QUEUE (as defined in an [extruder](Config_Reference#extruder)
+config section). If MOTION_QUEUE is an empty string then the stepper
+will be desynchronized from all extruder movement.
+
+#### SET_EXTRUDER_STEP_DISTANCE
+This command is deprecated and will be removed in the near future.
 
 #### SYNC_STEPPER_TO_EXTRUDER
-`SYNC_STEPPER_TO_EXTRUDER STEPPER=<name> [EXTRUDER=<name>]`: This
-command will cause the given extruder STEPPER (as specified in an
-[extruder](Config_Reference#extruder) or
-[extruder stepper](Config_Reference#extruder_stepper) config section)
-to become synchronized to the given EXTRUDER. If EXTRUDER is an empty
-string then the stepper will not be synchronized to an extruder.
+This command is deprecated and will be removed in the near future.
 
 ### [fan_generic]
 
