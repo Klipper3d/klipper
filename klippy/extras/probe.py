@@ -161,21 +161,36 @@ class PrinterProbe:
         probexy = self.printer.lookup_object('toolhead').get_position()[:2]
         retries = 0
         positions = []
-        while len(positions) < sample_count:
-            # Probe position
-            pos = self._probe(speed)
-            positions.append(pos)
-            # Check samples tolerance
-            z_positions = [p[2] for p in positions]
-            if max(z_positions) - min(z_positions) > samples_tolerance:
-                if retries >= samples_retries:
-                    raise gcmd.error("Probe samples exceed samples_tolerance")
-                gcmd.respond_info("Probe samples exceed tolerance. Retrying...")
-                retries += 1
-                positions = []
-            # Retract
-            if len(positions) < sample_count:
-                self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
+        last_retries = -1
+        mean = 0
+        while retries < samples_retries and retries > last_retries:
+            sample_num = 0
+            while sample_num < sample_count:
+                if retries == 0 or max(positions[sample_num][2], mean) - min(positions[sample_num][2], mean) > samples_tolerance / 2:
+                    # Probe position
+                    pos = self._probe(speed)
+                    if (len(positions) < sample_count):
+                        positions.append(pos)
+                    else:
+                        positions[sample_num] = pos
+                sample_num += 1
+                if sample_num >=  sample_count:
+                    last_retries = retries
+                    # Check samples tolerance
+                    mean = 0
+                    for p in positions:
+                        mean += p[2] / sample_count
+                    for p in positions:
+                        if max(p[2], mean) - min(p[2], mean) > samples_tolerance / 2:
+                            if retries >= samples_retries:
+                                raise gcmd.error("Probe samples exceed samples_tolerance")
+                            gcmd.respond_info("Probe samples exceed tolerance. Retrying...")
+                            retries += 1
+                            sample_num = 0
+                            break
+                # Retract
+                if sample_num < sample_count:
+                    self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
         if must_notify_multi_probe:
             self.multi_probe_end()
         # Calculate and return result
