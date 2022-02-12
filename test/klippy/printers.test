@@ -190,6 +190,10 @@ CONFIG ../../config/generic-fysetc-s6-v2.cfg
 CONFIG ../../config/generic-fysetc-spider.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
 
+# Printers using the stm32h743
+DICTIONARY stm32h743.dict
+CONFIG ../../config/printer-biqu-bx-2021.cfg
+
 # Printers using the stm32g0b1
 DICTIONARY stm32g0b1.dict
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
