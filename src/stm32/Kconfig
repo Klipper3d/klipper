@@ -121,7 +121,7 @@ config MCU
     default "stm32f446xx" if MACH_STM32F446
     default "stm32f723xx" if MACH_STM32F723
     default "stm32g0b1xx" if MACH_STM32G0B1
-    default "stm32h743xx" if MACH_STM32H743 
+    default "stm32h743xx" if MACH_STM32H743
     default "stm32h723xx" if MACH_STM32H723
     default "stm32h750xx" if MACH_STM32H750
 
@@ -150,7 +150,6 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743 || MACH_STM32F723 || MACH_STM32H723
     
-
 config RAM_START
     hex
     default 0x24000000 if MACH_STM32H743 || MACH_STE32H723
