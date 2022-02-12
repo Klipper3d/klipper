@@ -4,13 +4,14 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "board/misc.h" // timer_is_before
 #include "gpio.h" // i2c_setup, i2c_read, i2c_write
+#include "board/misc.h" // timer_is_before
 #include "command.h" // shutdown
 #include "sched.h" // sched_shutdown
 #include "internal.h" // pclock, gpio_peripheral
-#include "hardware/regs/resets.h" // RESETS_RESET_I2C*_BITS
+#include "hardware/resets.h" // RESETS_RESET_I2C*_BITS
 #include "hardware/structs/i2c.h"
+#include "hardware/clocks.h" // clock_get_hz
 
 struct i2c_info {
     i2c_hw_t *i2c;
@@ -96,7 +97,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         i2c->tx_tl = 0;
         i2c->rx_tl = 0;
 
-        uint32_t pclk = get_pclock_frequency(info->pclk);
+        uint32_t pclk = clock_get_hz(info->pclk);
 
         // See `i2c_set_baudrate` in the Pico SDK `hardware_i2c/i2c.c` file
         // for details on the calculations here.

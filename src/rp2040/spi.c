@@ -9,7 +9,8 @@
 #include "sched.h" // sched_shutdown"
 #include "internal.h" // pclock, gpio_peripheral
 #include "hardware/structs/spi.h" // spi_hw_t
-#include "hardware/regs/resets.h" // RESETS_RESET_SPI*_BITS
+#include "hardware/resets.h" // RESETS_RESET_SPI*_BITS
+#include "hardware/clocks.h" // clock_get_hz
 
 DECL_ENUMERATION("spi_bus", "spi0a", 0);
 DECL_CONSTANT_STR("BUS_PINS_spi0a", "gpio0,gpio3,gpio2");
@@ -57,7 +58,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     gpio_peripheral(spi_bus[bus].mosi_pin, 1, 0);
     gpio_peripheral(spi_bus[bus].sck_pin, 1, 0);
 
-    uint32_t pclk = get_pclock_frequency(spi_bus[bus].pclk);
+    uint32_t pclk = clock_get_hz(spi_bus[bus].pclk);
 
     struct spi_config res = {spi_bus[bus].spi, 0, 0};
 

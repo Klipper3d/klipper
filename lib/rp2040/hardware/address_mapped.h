@@ -9,7 +9,9 @@
 
 //#include "pico.h"
 #define __force_inline inline
+#ifndef static_assert
 #define static_assert(a,b)
+#endif
 #include "hardware/regs/addressmap.h"
 
 /** \file address_mapped.h

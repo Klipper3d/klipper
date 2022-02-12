@@ -9,8 +9,7 @@
 #include "gpio.h" // gpio_adc_setup
 #include "hardware/structs/adc.h" // adc_hw
 #include "hardware/structs/padsbank0.h" // padsbank0_hw
-#include "hardware/structs/resets.h" // RESETS_RESET_ADC_BITS
-#include "internal.h" // enable_pclock
+#include "hardware/resets.h" // RESETS_RESET_ADC_BITS
 #include "sched.h" // sched_shutdown
 
 DECL_CONSTANT("ADC_MAX", 4095);

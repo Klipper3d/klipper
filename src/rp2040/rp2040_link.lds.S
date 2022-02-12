@@ -30,6 +30,10 @@ SECTIONS
     . = ALIGN(4);
     _data_flash = .;
 
+    .ram_vector_table (COPY): {
+        *(.ram_vector_table)
+    } > ram
+
     .data : AT (_data_flash)
     {
         . = ALIGN(4);
@@ -37,6 +41,38 @@ SECTIONS
         *(.ramfunc .ramfunc.*);
         *(.data .data.*);
         . = ALIGN(4);
+        *(.after_data.*)
+        . = ALIGN(4);
+        /* preinit data */
+        PROVIDE_HIDDEN (__mutex_array_start = .);
+        KEEP(*(SORT(.mutex_array.*)))
+        KEEP(*(.mutex_array))
+        PROVIDE_HIDDEN (__mutex_array_end = .);
+
+        . = ALIGN(4);
+        /* preinit data */
+        PROVIDE_HIDDEN (__preinit_array_start = .);
+        KEEP(*(SORT(.preinit_array.*)))
+        KEEP(*(.preinit_array))
+        PROVIDE_HIDDEN (__preinit_array_end = .);
+
+        . = ALIGN(4);
+        /* init data */
+        PROVIDE_HIDDEN (__init_array_start = .);
+        KEEP(*(SORT(.init_array.*)))
+        KEEP(*(.init_array))
+        PROVIDE_HIDDEN (__init_array_end = .);
+
+        . = ALIGN(4);
+        /* finit data */
+        PROVIDE_HIDDEN (__fini_array_start = .);
+        *(SORT(.fini_array.*))
+        *(.fini_array)
+        PROVIDE_HIDDEN (__fini_array_end = .);
+
+        *(.jcr)
+        . = ALIGN(4);
+        /* All data end */
         _data_end = .;
     } > ram
 
@@ -48,6 +84,14 @@ SECTIONS
         *(COMMON)
         . = ALIGN(4);
         _bss_end = .;
+    } > ram
+
+    .heap (COPY):
+    {
+        __end__ = .;
+        end = __end__;
+        *(.heap*)
+        __HeapLimit = .;
     } > ram
 
     _stack_start = CONFIG_RAM_START + CONFIG_RAM_SIZE - CONFIG_STACK_SIZE ;

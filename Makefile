@@ -20,16 +20,22 @@ OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
 CPP=cpp
 PYTHON=python2
+#CC_OPT=-O
+CC_OPT=-O2
+
+# Additional RP2040 build tools from pico-sdk
+PIOASM_BIN=$(PICO_SDK_PATH)/pioasm/pioasm
 
 # Source files
 src-y =
+gsrc-y =
 dirs-y = src
 
 # Default compiler flags
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
     ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD \
+CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 $(CC_OPT) -MD \
     -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
     -ffunction-sections -fdata-sections
 CFLAGS += -flto -fwhole-program -fno-use-linker-plugin -ggdb3
@@ -59,7 +65,11 @@ include src/Makefile
 
 ################ Main build rules
 
-$(OUT)%.o: %.c $(OUT)autoconf.h
+$(OUT)%.pio.h: %.pio $(OUT)autoconf.h
+	@echo "  Assemble Pre-compile $@"
+	@$(PIOASM_BIN) -o c-sdk $< $@
+
+$(OUT)%.o: %.c $(OUT)autoconf.h $(patsubst %.pio, $(OUT)src/%.pio.h,$(gsrc-y))
 	@echo "  Compiling $@"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
 

@@ -5,152 +5,162 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h> // uint32_t
-#include "hardware/structs/clocks.h" // clock_hw_t
-#include "hardware/structs/pll.h" // pll_hw_t
-#include "hardware/structs/resets.h" // sio_hw
-#include "hardware/structs/watchdog.h" // watchdog_hw
-#include "hardware/structs/xosc.h" // xosc_hw
+#include "pico/types.h" // true/false
+#include "hardware/resets.h" // resets_hw
+#include "hardware/clocks.h" // clock_hw_t
+#include "hardware/watchdog.h" // watchdog_hw
 #include "sched.h" // sched_main
+#include <stdarg.h>
 
+#include "pico/platform.h" // for init of sdk
+#include "hardware/resets.h" 
+#include "hardware/structs/padsbank0.h"
+#include "hardware/clocks.h" 
 
 /****************************************************************
  * watchdog handler
  ****************************************************************/
 
-void
-watchdog_reset(void)
-{
-    watchdog_hw->load = 0x800000; // ~350ms
-}
-DECL_TASK(watchdog_reset);
+DECL_TASK(watchdog_update);
 
 void
 watchdog_init(void)
 {
-    watchdog_reset();
-    watchdog_hw->ctrl = (WATCHDOG_CTRL_PAUSE_DBG0_BITS
-                         | WATCHDOG_CTRL_PAUSE_DBG1_BITS
-                         | WATCHDOG_CTRL_PAUSE_JTAG_BITS
-                         | WATCHDOG_CTRL_ENABLE_BITS);
+    watchdog_enable( 330 /*ms*/, true) ;
 }
 DECL_INIT(watchdog_init);
 
-
 /****************************************************************
- * Clock setup
+ * SDK Runtime
  ****************************************************************/
 
-#define FREQ_XOSC 12000000
-#define FREQ_SYS 125000000
-#define FREQ_USB 48000000
+void tight_loop_contents(void) { if(1==1) {} };
 
-void
-enable_pclock(uint32_t reset_bit)
-{
-    resets_hw->reset |= reset_bit;
-    resets_hw->reset &= ~reset_bit;
-    while (!(resets_hw->reset_done & reset_bit))
-        ;
+void panic(const char *fmt, ...) {
+    __breakpoint();
+    while(1);
 }
+void picosdk_runtime_setup(void) {
+    // pre-init runs really early since we need it even for memcpy and divide!
+    // (basically anything in aeabi that uses bootrom)
 
-int
-is_enabled_pclock(uint32_t reset_bit)
-{
-    return !(resets_hw->reset & reset_bit);
-}
+    // Start and end points of the constructor list,
+    // defined by the linker script.
+    extern void (*__preinit_array_start)(void);
+    extern void (*__preinit_array_end)(void);
 
-uint32_t
-get_pclock_frequency(uint32_t reset_bit)
-{
-    return FREQ_SYS;
-}
+    // Reset all peripherals to put system into a known state,
+    // - except for QSPI pads and the XIP IO bank, as this is fatal if running from flash
+    // - and the PLLs, as this is fatal if clock muxing has not been reset on this boot
+    // - and USB, syscfg, as this disturbs USB-to-SWD on core 1
+    reset_block(~(
+            RESETS_RESET_IO_QSPI_BITS |
+            RESETS_RESET_PADS_QSPI_BITS |
+            RESETS_RESET_PLL_USB_BITS |
+            RESETS_RESET_USBCTRL_BITS |
+            RESETS_RESET_SYSCFG_BITS |
+            RESETS_RESET_PLL_SYS_BITS
+    ));
 
-static void
-xosc_setup(void)
-{
-    xosc_hw->startup = DIV_ROUND_UP(FREQ_XOSC, 1000 * 256); // 1ms
-    xosc_hw->ctrl = (XOSC_CTRL_FREQ_RANGE_VALUE_1_15MHZ
-                     | (XOSC_CTRL_ENABLE_VALUE_ENABLE << XOSC_CTRL_ENABLE_LSB));
-    while(!(xosc_hw->status & XOSC_STATUS_STABLE_BITS))
-        ;
-}
+    // Remove reset from peripherals which are clocked only by clk_sys and
+    // clk_ref. Other peripherals stay in reset until we've configured clocks.
+    unreset_block_wait(RESETS_RESET_BITS & ~(
+            RESETS_RESET_ADC_BITS |
+            RESETS_RESET_RTC_BITS |
+            RESETS_RESET_SPI0_BITS |
+            RESETS_RESET_SPI1_BITS |
+            RESETS_RESET_UART0_BITS |
+            RESETS_RESET_UART1_BITS |
+            RESETS_RESET_USBCTRL_BITS
+    ));
 
-static void
-pll_setup(pll_hw_t *pll, uint32_t mul, uint32_t postdiv)
-{
-    // Setup pll
-    uint32_t refdiv = 1, fbdiv = mul, postdiv2 = 2, postdiv1 = postdiv/postdiv2;
-    pll->cs = refdiv;
-    pll->fbdiv_int = fbdiv;
-    pll->pwr = PLL_PWR_DSMPD_BITS | PLL_PWR_POSTDIVPD_BITS;
-    while (!(pll->cs & PLL_CS_LOCK_BITS))
-        ;
+    // Call each function in the list.
+    // We have to take the address of the symbols, as __preinit_array_start *is*
+    // the first function pointer, not the address of it.
+    for (void (**p)(void) = &__preinit_array_start; p < &__preinit_array_end; ++p) {
+        (*p)();
+    }
 
-    // Setup post divider
-    pll->prim = ((postdiv1 << PLL_PRIM_POSTDIV1_LSB)
-                 | (postdiv2 << PLL_PRIM_POSTDIV2_LSB));
-    pll->pwr = PLL_PWR_DSMPD_BITS;
-}
+    // After calling preinit we have enough runtime to do the exciting maths
+    // in clocks_init
+    clocks_init();
 
-static void
-clk_aux_setup(uint32_t clk_id, uint32_t aux_id)
-{
-    clock_hw_t *clk = &clocks_hw->clk[clk_id];
-    clk->ctrl = 0;
-    clk->ctrl = aux_id | CLOCKS_CLK_PERI_CTRL_ENABLE_BITS;
-}
+    // Peripheral clocks should now all be running
+    unreset_block_wait(RESETS_RESET_BITS);
 
-static void
-clock_setup(void)
-{
-    // Set clk_sys and clk_ref to use internal clock
-    clock_hw_t *csys = &clocks_hw->clk[clk_sys];
-    csys->ctrl &= ~CLOCKS_CLK_SYS_CTRL_SRC_BITS;
-    while (csys->selected != 0x1)
-        ;
-    clock_hw_t *cref = &clocks_hw->clk[clk_ref];
-    cref->ctrl &= ~CLOCKS_CLK_REF_CTRL_SRC_BITS;
-    while (cref->selected != 0x1)
-        ;
+#if !PICO_IE_26_29_UNCHANGED_ON_RESET
+    // after resetting BANK0 we should disable IE on 26-29
+    hw_clear_alias(padsbank0_hw)->io[26] = hw_clear_alias(padsbank0_hw)->io[27] =
+            hw_clear_alias(padsbank0_hw)->io[28] = hw_clear_alias(padsbank0_hw)->io[29] = PADS_BANK0_GPIO0_IE_BITS;
+#endif
 
-    // Reset peripherals (that can be)
-    resets_hw->reset = ~(RESETS_RESET_IO_QSPI_BITS
-                         | RESETS_RESET_PADS_QSPI_BITS);
+    // this is an array of either mutex_t or recursive_mutex_t (i.e. not necessarily the same size)
+    // however each starts with a lock_core_t, and the spin_lock is initialized to address 1 for a recursive
+    // spinlock and 0 for a regular one.
 
-    // Setup xosc, pll_sys, and switch clk_sys
-    xosc_setup();
-    enable_pclock(RESETS_RESET_PLL_SYS_BITS);
-    pll_setup(pll_sys_hw, 125, 125*FREQ_XOSC/FREQ_SYS);
-    csys->ctrl = 0;
-    csys->div = 1<<CLOCKS_CLK_SYS_DIV_INT_LSB;
-    csys->ctrl = CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX;
-    while (!(csys->selected & (1 << 1)))
-        ;
+    static_assert(!(sizeof(mutex_t)&3), "");
+    static_assert(!(sizeof(recursive_mutex_t)&3), "");
+    static_assert(!offsetof(mutex_t, core), "");
+    static_assert(!offsetof(recursive_mutex_t, core), "");
 
-    // Setup pll_usb
-    enable_pclock(RESETS_RESET_PLL_USB_BITS);
-    pll_setup(pll_usb_hw, 40, 40*FREQ_XOSC/FREQ_USB);
+// SDK Multi-core support, memcpy, interrupt handler, and alarm
+#if false    
+    extern lock_core_t __mutex_array_start;
+    extern lock_core_t __mutex_array_end;
 
-    // Setup peripheral clocks
-    clk_aux_setup(clk_peri, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS);
-    clk_aux_setup(clk_adc, CLOCKS_CLK_ADC_CTRL_AUXSRC_VALUE_CLKSRC_PLL_USB);
-    clk_aux_setup(clk_usb, CLOCKS_CLK_USB_CTRL_AUXSRC_VALUE_CLKSRC_PLL_USB);
+    for (lock_core_t *l = &__mutex_array_start; l < &__mutex_array_end; ) {
+        if (l->spin_lock) {
+            assert(1 == (uintptr_t)l->spin_lock); // indicator for a recursive mutex
+            recursive_mutex_t *rm = (recursive_mutex_t *)l;
+            recursive_mutex_init(rm);
+            l = &rm[1].core; // next
+        } else {
+            mutex_t *m = (mutex_t *)l;
+            mutex_init(m);
+            l = &m[1].core; // next
+        }
+    }
 
-    // Enable watchdog tick (at 12Mhz)
-    cref->div = 1<<CLOCKS_CLK_REF_DIV_INT_LSB;
-    cref->ctrl = CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC;
-    while (!(cref->selected & (1 << 2)))
-        ;
-    watchdog_hw->tick = 1 | WATCHDOG_TICK_ENABLE_BITS;
+#if !(PICO_NO_RAM_VECTOR_TABLE || PICO_NO_FLASH)
+    __builtin_memcpy(ram_vector_table, (uint32_t *) scb_hw->vtor, sizeof(ram_vector_table));
+    scb_hw->vtor = (uintptr_t) ram_vector_table;
+#endif
 
-    // Enable GPIO control
-    enable_pclock(RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS);
+#ifndef NDEBUG
+    if (__get_current_exception()) {
+        // crap; started in exception handler
+        __asm ("bkpt #0");
+    }
+#endif
+
+#if PICO_USE_STACK_GUARDS
+    // install core0 stack guard
+    extern char __StackBottom;
+    runtime_install_stack_guard(&__StackBottom);
+#endif
+
+    spin_locks_reset();
+    irq_init_priorities();
+    alarm_pool_init_default();
+#endif
+
+    // Start and end points of the constructor list,
+    // defined by the linker script.
+    extern void (*__init_array_start)(void);
+    extern void (*__init_array_end)(void);
+
+    // Call each function in the list.
+    // We have to take the address of the symbols, as __init_array_start *is*
+    // the first function pointer, not the address of it.
+    for (void (**p)(void) = &__init_array_start; p < &__init_array_end; ++p) {
+        (*p)();
+    }
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
 void
 armcm_main(void)
 {
-    clock_setup();
+    picosdk_runtime_setup();
     sched_main();
 }

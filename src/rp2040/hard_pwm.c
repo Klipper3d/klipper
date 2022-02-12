@@ -8,10 +8,11 @@
 #include "command.h" // DECL_CONSTANT
 #include "gpio.h" // gpio_pwm_write
 #include "sched.h" // sched_shutdown
-#include "internal.h" // get_pclock_frequency
+#include "internal.h" // gpio
+#include "hardware/clocks.h" // clock_get_hz
 #include "hardware/structs/pwm.h" // pwm_hw
 #include "hardware/structs/iobank0.h" // iobank0_hw
-#include "hardware/regs/resets.h" // RESETS_RESET_PWM_BITS
+#include "hardware/resets.h" // RESETS_RESET_PWM_BITS
 
 #define MAX_PWM 255
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
@@ -34,9 +35,9 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val) {
     // For better precision, we introduce a scale factor such that pclk * scale
     // doesn't overflow. We then multiply by this scale factor at the beginning
     // and divide by it at the end.
-    uint32_t pclk = get_pclock_frequency(RESETS_RESET_PWM_BITS);
+    uint32_t pclk = clock_get_hz(clk_sys);
     uint32_t scale = 1 << __builtin_clz(pclk);
-    uint32_t clock_mult = (scale * get_pclock_frequency(RESETS_RESET_PWM_BITS))
+    uint32_t clock_mult = (scale * clock_get_hz(clk_sys))
                           / CONFIG_CLOCK_FREQ;
     uint32_t cycle_clocks = clock_mult * cycle_time;
     uint32_t div_int = cycle_clocks / MAX_PWM / scale;

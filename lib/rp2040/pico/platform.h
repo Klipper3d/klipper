@@ -28,23 +28,21 @@ extern "C" {
 #define __scratch_y(group)
 
 #define __packed_aligned
+#ifndef __packed
 #define __packed
+#endif
 
 #define __time_critical_func(x) x
 #define __after_data(group)
 
 //int running_on_fpga() { return false; }
-extern void tight_loop_contents();
+extern void tight_loop_contents(void);
 
 #ifndef __STRING
 #define __STRING(x) #x
 #endif
 
 #ifndef _MSC_VER
-#ifndef __noreturn
-#define __noreturn __attribute((noreturn))
-#endif
-
 #ifndef __unused
 #define __unused __attribute__((unused))
 #endif
@@ -106,11 +104,15 @@ static __noreturn void __builtin_unreachable() {
 #endif
 
 // abort in our case
-void __noreturn __breakpoint();
 
-void __noreturn panic_unsupported();
+static inline void __breakpoint(void) {
+    __asm__("bkpt #0");
+}
 
-void __noreturn panic(const char *fmt, ...);
+void __attribute__((noreturn)) panic_unsupported(void);
+
+void __attribute__((noreturn)) panic(const char *fmt, ...);
+
 
 // arggggghhhh there is a weak function called sem_init used by SDL
 #define sem_init sem_init_alternative
