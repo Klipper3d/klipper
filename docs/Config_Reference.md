@@ -2583,6 +2583,34 @@ clock_pin:
 #   See the "neopixel" section for information on these parameters.
 ```
 
+### [ledstrip]
+
+LED-Strip support (one may define any number of sections with
+a "ledstrip" prefix). One may set the LED color via
+"SET_LED LED=my_ledstrip RED=0.1 GREEN=0.1 BLUE=0.1" type extended
+[g-code commands](G-Codes.md#ledstrip).
+
+```
+[ledstrip my_ledstrip]
+pin_RED:
+pin_GREEN:
+pin_BLUE:
+pin_WHITE:
+#   The pins connected to the LED-Strip. These parameters must be
+#   provided. The WHITE option is only available on RGBW LED-Strips.
+#cycle_time:
+#hardware_pwm:
+#   See the "output_pin" section for the definition of the above
+#   parameters.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   Sets the initial LED color of the LED-Strip. Each value
+#   should be between 0.0 and 1.0. The WHITE option is only available
+#   on RGBW LED-Strips. The default for each color is 0.
+```
+
 ### [PCA9533]
 
 PCA9533 LED support. The PCA9533 is used on the mightyboard.

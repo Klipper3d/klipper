@@ -677,6 +677,20 @@ printer is not printing as it will reset the idle timeout. If careful
 timing is not needed, the optional SYNC=0 parameter can be specified
 to apply the changes instantly and not reset the idle timeout.
 
+### [ledstrip]
+
+The following command is available when a
+[ledstrip config section](Config_Reference.md#ledstrip) is enabled.
+
+#### SET_LED
+`SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
+WHITE=<value> [CYCLE_TIME=<cycle_time>]`: This sets the LED
+output. Each color `<value>` must be between 0.0 and 1.0. The WHITE
+option is only valid for RGBW strips.
+
+Note: Hardware PWM does not currently support the CYCLE_TIME parameter
+and will use the cycle time defined in the config.
+
 ### [output_pin]
 
 The following command is available when an
