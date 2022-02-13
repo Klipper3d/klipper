@@ -179,6 +179,9 @@ Recv: // rear right screw : y=155.0, y=190.0, z=2.71500 : adjust CCW 00:50
 Recv: // read left screw : x=-5.0, y=190.0, z=2.47250 : adjust CW 00:02
 Recv: ok
 ```
+**Note that** minutes in the output refer to minutes of a clock face (1 minute =
+6 degrees), not minutes of a degree (1 minute = 1/60 degree).
+
 This means that:
 
 - front left screw is the reference point you must not change it.
