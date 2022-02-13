@@ -4,9 +4,10 @@
 # Klipper-translations can be directly utilized by mkdocs
 # Usage: pre-mkdocs.sh <lang_directory_name> <target_lang_name>
 
-git clone --depth 1 https://github.com/Klipper3d/klipper-translations
+#git clone --depth 1 https://github.com/Klipper3d/klipper-translations
 
-cat ./klipper-translations/active_translations | while read dirname langname ; do
+while IFS="," read dirname langname langdesc note; do
+  # move and rename markdown files
   local_dir="klipper-translations/docs/locales/$dirname"
   echo "Moving $dirname to $langname"
   for file in "$local_dir"/*.md; do
@@ -14,6 +15,7 @@ cat ./klipper-translations/active_translations | while read dirname langname ; d
     mv "$file" "./docs/${mdfilename//.md/.${langname}.md}"
   done
 
+  # manually replace index.md if a manual-index.md exist
   manual_index="./docs/manual-index.$langname.md"
 
   if [[ -f "$manual_index" ]];then
@@ -22,4 +24,7 @@ cat ./klipper-translations/active_translations | while read dirname langname ; d
   else
       echo "Manually translated index file for $dirname not found!"
   fi
-done
+
+  # add to translations.yml
+  echo "      ${langname}: ${langdesc}" >> ./docs/_klipper3d/translations.yml
+done <  <(egrep -v '^ *(#|$)' ./klipper-translations/active_translations | tail -n +2)
