@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
       - name: Fetch translations
-        run: ./scripts/fetch-translations.sh
+        run: docs/_klipper3d/fetch-translations.sh
       - name: Build and deploy klipper3d
         run: |
           mkdocs gh-deploy --config-file docs/_klipper3d/mkdocs.yml --remote-branch gh-pages --force --verbose
