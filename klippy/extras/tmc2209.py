@@ -73,7 +73,7 @@ class TMC2209:
         # Setup basic register values
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
-        self.fields.set_field("multistep_filt", True)
+        self.fields.set_field("multistep_filt", False)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
