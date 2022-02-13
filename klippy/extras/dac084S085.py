@@ -13,7 +13,7 @@ class dac084S085:
             config, 1, pin_option="enable_pin", default_speed=10000000)
         channel = [0,3,2,1,0 ]
         for i in range(5):
-            vref = config.getint('motor%d' % (i,), None,
+            vref = config.getint('channel%d' % (i,), None,
                                  minval=0., maxval=255)
             if vref is not None:
                 buff = 0x01 << 12
