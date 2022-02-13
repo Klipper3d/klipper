@@ -305,7 +305,7 @@ Gettext strings for translating and reviewing. Locales can be displayed on
 [klipper3d.org](https://www.klipper3d.org) once they satisfy the following requirements:
 
 - [ ] 75% Total coverage
-- [ ] All titles (H1) are covered
+- [ ] All titles (H1) are translated
 - [ ] An updated navigation hierarchy PR in klipper-translations.
 
 To reduce the frustration of translating domain-specific terms and
@@ -319,23 +319,15 @@ If a translation already exists in the Klipper repository and no
 longer meets the checklist above, it will be marked out-of-date after
 a month without updates.
 
-The navigation hierarchy is in `docs\_klipper3d\mkdocs.yml`. Once the requirements
-are met, you need to:
+Once the requirements are met, you need to:
 
-1. update klipper repository [mkdocs.yml](https://github.com/Klipper3d/klipper/blob/master/docs/_klipper3d/mkdocs.yml)
-2. update klipper-tranlations repository [active_translations](https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations)
-3. Optional: add a manual-index.md file in klipper-translations repository's
+1. update klipper-tranlations repository
+[active_translations](https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations)
+2. Optional: add a manual-index.md file in klipper-translations repository's
 `docs\locals\<lang>` folder to replace the language specific index.md (generated
 index.md does not render correctly).
 
-Please follow the format below for `mkdocs.yml` i18n plugin:
-
-```
- - i18n:
-      default_language: en
-      languages:
-        en: English
-        <lang_code>: <Langguage name>
-```
-Note: Currently, there isn't a method for correctly translating
-pictures in the documentation.
+Known Issues:
+1. Currently, there isn't a method for correctly translating pictures in
+the documentation
+2. It is impossible to translate titles in mkdocs.yml.
