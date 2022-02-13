@@ -1,0 +1,5 @@
+plugins:
+  i18n:
+    default_language: en
+    languages:
+      en: English
