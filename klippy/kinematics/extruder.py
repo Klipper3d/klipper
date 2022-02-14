@@ -28,6 +28,12 @@ class ExtruderStepper:
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+        gcode.register_mux_command("SET_EXTRUDER_ROTATION_DISTANCE", "EXTRUDER",
+                                   self.name, self.cmd_SET_E_ROTATION_DISTANCE,
+                                   desc=self.cmd_SET_E_ROTATION_DISTANCE_help)
+        gcode.register_mux_command("SYNC_EXTRUDER_MOTION", "EXTRUDER",
+                                   self.name, self.cmd_SYNC_EXTRUDER_MOTION,
+                                   desc=self.cmd_SYNC_EXTRUDER_MOTION_help)
         gcode.register_mux_command("SET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
@@ -86,19 +92,45 @@ class ExtruderStepper:
                % (pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcmd.respond_info(msg, log=False)
+    cmd_SET_E_ROTATION_DISTANCE_help = "Set extruder rotation distance"
+    def cmd_SET_E_ROTATION_DISTANCE(self, gcmd):
+        rotation_dist = gcmd.get_float('DISTANCE', None)
+        if rotation_dist is not None:
+            if not rotation_dist:
+                raise gcmd.error("Rotation distance can not be zero")
+            invert_dir, orig_invert_dir = self.stepper.get_dir_inverted()
+            next_invert_dir = orig_invert_dir
+            if rotation_dist < 0.:
+                next_invert_dir = not orig_invert_dir
+                rotation_dist = -rotation_dist
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.flush_step_generation()
+            self.stepper.set_rotation_distance(rotation_dist)
+            self.stepper.set_dir_inverted(next_invert_dir)
+        else:
+            rotation_dist, spr = self.stepper.get_rotation_distance()
+        invert_dir, orig_invert_dir = self.stepper.get_dir_inverted()
+        if invert_dir != orig_invert_dir:
+            rotation_dist = -rotation_dist
+        gcmd.respond_info("Extruder '%s' rotation distance set to %0.6f"
+                          % (self.name, rotation_dist))
+    cmd_SYNC_EXTRUDER_MOTION_help = "Set extruder stepper motion queue"
+    def cmd_SYNC_EXTRUDER_MOTION(self, gcmd):
+        ename = gcmd.get('MOTION_QUEUE')
+        self.sync_to_extruder(ename)
+        gcmd.respond_info("Extruder stepper now syncing with '%s'" % (ename,))
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
     def cmd_SET_E_STEP_DISTANCE(self, gcmd):
-        toolhead = self.printer.lookup_object('toolhead')
-        dist = gcmd.get_float('DISTANCE', None, above=0.)
-        if dist is None:
+        step_dist = gcmd.get_float('DISTANCE', None, above=0.)
+        if step_dist is not None:
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead.flush_step_generation()
+            rd, steps_per_rotation = self.stepper.get_rotation_distance()
+            self.stepper.set_rotation_distance(step_dist * steps_per_rotation)
+        else:
             step_dist = self.stepper.get_step_dist()
-            gcmd.respond_info("Extruder '%s' step distance is %0.6f"
-                              % (self.name, step_dist))
-            return
-        toolhead.flush_step_generation()
-        self.stepper.set_step_dist(dist)
         gcmd.respond_info("Extruder '%s' step distance set to %0.6f"
-                          % (self.name, dist))
+                          % (self.name, step_dist))
     cmd_SYNC_STEPPER_TO_EXTRUDER_help = "Set extruder stepper"
     def cmd_SYNC_STEPPER_TO_EXTRUDER(self, gcmd):
         ename = gcmd.get('EXTRUDER')
@@ -118,6 +150,7 @@ class PrinterExtruder:
         if shared_heater is None:
             self.heater = pheaters.setup_heater(config, gcode_id)
         else:
+            config.deprecate('shared_heater')
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
