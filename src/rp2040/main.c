@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h" // CONFIG_*
 #include <stdint.h> // uint32_t
 #include "pico/types.h" // true/false
 #include "hardware/resets.h" // resets_hw
@@ -17,6 +18,10 @@
 #include "hardware/structs/padsbank0.h"
 #include "hardware/clocks.h" 
 
+#if CONFIG_MACH_RP2040 && CONFIG_HAVE_PIO
+#include "hardware/pio.h"
+#endif
+
 /****************************************************************
  * watchdog handler
  ****************************************************************/
@@ -28,7 +33,7 @@ watchdog_init(void)
 {
     watchdog_enable( 330 /*ms*/, true) ;
 }
-DECL_INIT(watchdog_init);
+//DECL_INIT(watchdog_init);
 
 /****************************************************************
  * SDK Runtime
@@ -80,6 +85,12 @@ void picosdk_runtime_setup(void) {
     for (void (**p)(void) = &__preinit_array_start; p < &__preinit_array_end; ++p) {
         (*p)();
     }
+
+#if CONFIG_MACH_RP2040 && CONFIG_HAVE_PIO
+    // Reset pio programs
+    pio_clear_instruction_memory(pio0);
+    pio_clear_instruction_memory(pio1);
+#endif
 
     // After calling preinit we have enough runtime to do the exciting maths
     // in clocks_init

@@ -11,7 +11,9 @@ CFLAGS_klipper.elf += -T $(OUT)src/rp2040/rp2040_link.ld
 $(OUT)klipper.elf: $(OUT)stage2.o $(OUT)src/rp2040/rp2040_link.ld
 
 # Generated source files
-#gsrc-y += rp2040/stepper_pio.pio 
+ifeq ($(CONFIG_HAVE_PIO),y)
+gsrc-y += rp2040/stepper_pio.pio 
+endif
 
 # Add source files
 src-y += rp2040/main.c rp2040/gpio.c rp2040/adc.c generic/crc16_ccitt.c

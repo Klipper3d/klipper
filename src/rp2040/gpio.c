@@ -25,12 +25,8 @@ DECL_ENUMERATION_RANGE("pin", "gpio0", 0, 30);
 void
 gpio_peripheral(uint32_t gpio, int func, int pull_up)
 {
-    padsbank0_hw->io[gpio] = (
-        PADS_BANK0_GPIO0_IE_BITS
-        | (PADS_BANK0_GPIO0_DRIVE_VALUE_4MA << PADS_BANK0_GPIO0_DRIVE_MSB)
-        | (pull_up > 0 ? PADS_BANK0_GPIO0_PUE_BITS : 0)
-        | (pull_up < 0 ? PADS_BANK0_GPIO0_PDE_BITS : 0));
-    iobank0_hw->io[gpio].ctrl = func << IO_BANK0_GPIO0_CTRL_FUNCSEL_LSB;
+    gpio_set_function(gpio, (enum gpio_function)func);
+    gpio_set_pulls(gpio, (pull_up!=0), (pull_up==0));
 }
 
 // Convert a register and bit location back to an integer pin identifier
@@ -39,7 +35,6 @@ mask_to_pin(uint32_t mask)
 {
     return ffs(mask)-1;
 }
-
 
 /****************************************************************
  * General Purpose Input Output (GPIO) pins
@@ -64,7 +59,7 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
     irqstatus_t flag = irq_save();
     gpio_out_write(g, val);
     sio_hw->gpio_oe_set = g.bit;
-    gpio_peripheral(pin, 5, 0);
+    gpio_peripheral(pin, GPIO_FUNC_SIO, 0);
     irq_restore(flag);
 }
 
@@ -107,7 +102,7 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
 {
     int pin = mask_to_pin(g.bit);
     irqstatus_t flag = irq_save();
-    gpio_peripheral(pin, 5, pull_up);
+    gpio_peripheral(pin, GPIO_FUNC_SIO, pull_up);
     sio_hw->gpio_oe_clr = g.bit;
     irq_restore(flag);
 }
@@ -138,4 +133,15 @@ void gpio_set_function(uint gpio, enum gpio_function fn) {
 enum gpio_function gpio_get_function(uint gpio) {
     invalid_params_if(GPIO, gpio >= NUM_BANK0_GPIOS);
     return (enum gpio_function) ((iobank0_hw->io[gpio].ctrl & IO_BANK0_GPIO0_CTRL_FUNCSEL_BITS) >> IO_BANK0_GPIO0_CTRL_FUNCSEL_LSB);
+}
+
+// Note that, on RP2040, setting both pulls enables a "bus keep" function,
+// i.e. weak pull to whatever is current high/low state of GPIO.
+void gpio_set_pulls(uint gpio, bool up, bool down) {
+    invalid_params_if(GPIO, gpio >= NUM_BANK0_GPIOS);
+    hw_write_masked(
+            &padsbank0_hw->io[gpio],
+            (bool_to_bit(up) << PADS_BANK0_GPIO0_PUE_LSB) | (bool_to_bit(down) << PADS_BANK0_GPIO0_PDE_LSB),
+            PADS_BANK0_GPIO0_PUE_BITS | PADS_BANK0_GPIO0_PDE_BITS
+    );
 }

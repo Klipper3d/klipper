@@ -1,0 +1,83 @@
+; SPI functions on rp2040
+;
+; Copyright (C) 2021  Kevin Peck <kevindpeck@gmail.com>
+;
+; This file may be distributed under the terms of the GNU GPLv3 license.
+;
+; Byte stream carries three values (from MSB to LSB in a 64-bit stream)
+;
+;   63-32: 32 bit number indicating the number of pulses
+;   31- 1: 31 bit number indicating delay by clock cycles
+;       0: 1/0 to Indicate stepper direction
+;
+; System clock and peripherals are expected to be set to 48Mhz 
+; with set_sys_clock_48mhz() and each clock tick at about 20.8 ns
+;
+.program stepper_pio
+.side_set 1
+
+; Time delay from Direction change to a Step pulse - 20ns
+.define public Tdp 1
+; Step signal high pulse width - min. 100ns
+.define public Tpw 13 
+; Delay adjust for 48_000 cycles to equal 1ms
+.define public Td 2
+
+read_fifo:
+    pull block   side 0 ; Pull Tx FIFO into OSR (32 bits)
+    out PINS,1   side 0 ; One LSB of OSR to Set Pin
+    mov x, osr   side 0 [Tdp - 1]; Copy remaining to X for count of pulses
+        ; - stepper direction pin, Need 20 ns delay from here to step pulse 
+    pull block   side 0 ; Pull Tx FIFO into OSR (32 bits) for delay
+pulse_begin:
+    mov y, osr   side 0 ; Copy OSR to Y (OSR is re-used with every pulse)
+    jmp !y read_fifo side 0 ; Delay is zero, there is no pulse, get next command
+    nop          side 1 [Tpw - 1] ; Send step pulse and delay
+        ; - Need min. 100 ns delay here
+pulse_delay:
+    nop           side 0 [Td - 1] ; rough delay adjustment
+    jmp y-- pulse_delay side 0 ; Loop for pulse length
+        ; drops out of loop of if Y zero
+    jmp x-- pulse_begin side 0 ; Perform next count pulse
+
+% c-sdk {
+#define DELAY_ADJUST 0.1321
+#define TICKS_PER_USEC 48
+#define CALC_STEP_DELAY(usec) (((usec)*TICKS_PER_USEC)*(1.0f-DELAY_ADJUST))
+#define CALC_STEP_DIR(steps,dir) (((steps-1) << 1)|(dir & 0x01))
+
+/* Helper function to set up the PIO Stepper port
+ */
+volatile void stepper_pio_program_init(PIO pio, uint sm, uint offset, uint step_pin, uint dir_pin) {
+    pio_sm_config c = stepper_pio_program_get_default_config(offset);
+
+    // Map the state machine's OUT pin group to one pin, namely the `pin`
+    // parameter to this function.
+    sm_config_set_out_pins(&c, dir_pin, 1);
+    sm_config_set_sideset_pins(&c, step_pin);
+
+    // Set this pin's GPIO function (connect PIO to the pad)
+    pio_gpio_init(pio, step_pin);
+    pio_gpio_init(pio, dir_pin);
+
+    // Set the pin direction to output at the PIO
+    pio_sm_set_consecutive_pindirs(pio, sm, step_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, dir_pin, 1, true);
+
+    // Double up FIFO for All output - FIFO Tx is now 64 bits
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+
+    // Set PIO speed to system clock speed 
+    sm_config_set_clkdiv(&c, 1u);
+
+    // Shift Right in OSR so LSB is used for Data Direction Pin
+    // No autopull as we use OSR to hold a value to reset Y
+    // Threashold for autopull set to zero
+    sm_config_set_out_shift(&c, true, false, 32); 
+
+    // Initialize
+    pio_sm_init(pio, sm, offset, &c); 
+    // Enable (it will be waiting for FIFO input)
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
