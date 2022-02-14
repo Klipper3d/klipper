@@ -3,7 +3,7 @@
 # This is a make shift script before the current structure of
 # Klipper-translations can be directly utilized by mkdocs
 
-#git clone --depth 1 https://github.com/Klipper3d/klipper-translations
+git clone --depth 1 https://github.com/Klipper3d/klipper-translations
 
 while IFS="," read dirname langname langdesc note; do
   # move and rename markdown files
@@ -26,4 +26,4 @@ while IFS="," read dirname langname langdesc note; do
 
   # add to translations.yml
   echo "      ${langname}: ${langdesc}" >> ./docs/_klipper3d/translations.yml
-done <  <(egrep -v '^ *(#|$)' ./klipper-translations/active_translations | tail -n +2)
+done <  <(egrep -v '^ *(#|$)' ./klipper-translations/active_translations)
