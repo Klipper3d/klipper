@@ -2,7 +2,6 @@
 # Modify the file structure before running mkdocs
 # This is a make shift script before the current structure of
 # Klipper-translations can be directly utilized by mkdocs
-# Usage: pre-mkdocs.sh <lang_directory_name> <target_lang_name>
 
 #git clone --depth 1 https://github.com/Klipper3d/klipper-translations
 
