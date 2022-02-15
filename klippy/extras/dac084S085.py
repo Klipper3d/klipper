@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 from . import bus
-import time
 
 class dac084S085:
     def __init__(self, config):
@@ -20,7 +19,6 @@ class dac084S085:
                 buff |= (channel[i]) << 14
                 buff |= vref << 4
                 self.spi.spi_send([buff])
-                time.sleep(0.05)
 
 def load_config_prefix(config):
     return dac084S085(config)
