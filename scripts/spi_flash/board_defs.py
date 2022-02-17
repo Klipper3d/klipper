@@ -44,6 +44,14 @@ BOARD_DEFS = {
         "firmware_path": "Robin_e3.bin",
         "current_firmware_path": "Robin_e3.cur"
     },
+      'robin-nano-13': {
+        'mcu': "stm32f407xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        "cs_pin": "PC11",
+        "firmware_path": "robin_nano35.bin",
+        "current_firmware_path": "robin_nano35.cur" 
+    },
     'btt-skr-pro': {
         'mcu': "stm32f407xx",
         'spi_bus': "swspi",
@@ -99,6 +107,7 @@ BOARD_ALIASES = {
     'mks-robin-e3d': BOARD_DEFS['mks-robin-e3'],
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
+    'robin-nano-13': BOARD_DEFS['robin-nano-13'],
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider']
 }
 
