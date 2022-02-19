@@ -49,6 +49,7 @@ theme:
   favicon: img/favicon.ico
   icon:
     repo: fontawesome/brands/github
+    alternate: material/web
   features:
       #- navigation.tabs
       #- navigation.expand
