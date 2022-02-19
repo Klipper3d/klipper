@@ -23,4 +23,3 @@ class dac084S085:
 
 def load_config_prefix(config):
     return dac084S085(config)
-
