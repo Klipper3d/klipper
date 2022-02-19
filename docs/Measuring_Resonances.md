@@ -37,9 +37,15 @@ Fritzing wiring diagrams for some of the ADXL345 boards:
 
 
 Double-check your wiring before powering up the Raspberry Pi to prevent
-damaging it or the accelerometer. Try to keep the cables as short as possible, 
-or use something shielded/twisted like a network cable to prevent communication
+damaging it or the accelerometer. Try to keep the cables as short as possible
+and/or use a **shielded** ethernet wire to prevent communication
 issues because of signal interference an degradation.
+For best singnal transmission we recommend the following pairing of wires:
+
+* GND on Shield on the mainboard side
+* One pair for GND+MISO (SDO)
+* One pair for 3.3V+MOSI (SDA)
+* One pair for SCLK (SCL)+CS
 
 ### Mounting the accelerometer
 
