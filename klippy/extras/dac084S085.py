@@ -13,8 +13,8 @@ class dac084S085:
         scale = config.getfloat('scale', 1., above=0.)
         channel = [0,3,2,1,0]
         for i in range(5):
-            vref = config.getfloat('channel_%d’ % (i,), None,
-                                 minval=0., maxval= scale)
+            vref = config.getfloat('channel_%d' % (i,), None,
+                                 minval=0., maxval=scale)
             if vref is not None:
                 buff = 0x01 << 12
                 buff |= (channel[i]) << 14
