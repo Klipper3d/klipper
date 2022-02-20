@@ -45,8 +45,7 @@ gcode:
   SET_PIN PIN=my_led VALUE=0
 ```
 
-This will be showing is you use the `HELP` command or use the autocomplete
-function.
+The terminal will display the description when you use the `HELP` command or the autocomplete function.
 
 ## Save/Restore state for G-Code moves
 

@@ -16,6 +16,8 @@ The following information is available in the
 [bed_mesh](Config_Reference.md#bed_mesh) object:
 - `profile_name`, `mesh_min`, `mesh_max`, `probed_matrix`,
   `mesh_matrix`: Information on the currently active bed_mesh.
+- `profiles`: The set of currently defined profiles as setup
+   using BED_MESH_PROFILE.
 
 ## configfile
 
