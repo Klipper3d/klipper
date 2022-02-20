@@ -7,7 +7,6 @@
 
 import logging
 import json
-from datetime import datetime
 
 class ExcludeObject:
     def __init__(self, config):
@@ -52,7 +51,11 @@ class ExcludeObject:
             desc=self.cmd_LIST_EXCLUDED_OBJECTS_help)
     def _setup_transform(self):
         if not self.next_transform:
-            logging.debug('Enabling ExcludeObject as a move transform')
+            tuning_tower = self.printer.lookup_object('tuning_tower', None)
+            if self.gcode_move.move_transform == tuning_tower:
+                logging.info('The ExcludeObject move transform is not being loaded due to Tuning tower being Active')
+                return
+
             self.next_transform = self.gcode_move.set_move_transform(self,
                                                                      force=True)
             self.last_position[:] = self.get_position()
@@ -74,7 +77,10 @@ class ExcludeObject:
         self.excluded_objects = []
         self.current_object = None
         if self.next_transform:
-            logging.debug('Disabling ExcludeObject as a move transform')
+            if self.gcode_move.move_transform != self:
+                logging.info("ExcludeObject move transform is not being unregistered because it is not at the head of the transform chain.")
+                return
+
             self.gcode_move.set_move_transform(self.next_transform, force=True)
             self.next_transform = None
             self.gcode_move.reset_last_position()
@@ -98,11 +104,6 @@ class ExcludeObject:
         offset = self.extrusion_offsets[self.extruder_idx]
         if self.log_next_moves > 0:
             self.log_next_moves -= 1
-            logging.debug("EXO: Toolhead commanded pos: %s",
-                          " ".join(str(x) for x in self.toolhead.commanded_pos))
-            logging.debug("EXO: Move position: %s",
-                          " ".join(str(x) for x in newpos))
-            logging.debug("EXO: Offset: %s", " ".join(str(x) for x in offset))
 
         self.last_position[:] = newpos
         self.last_position_extruded[:] = self.last_position
@@ -148,29 +149,11 @@ class ExcludeObject:
 
     def _move_into_excluded_region(self, newpos, speed):
         self.in_excluded_region = True
-        logging.debug("Moving to excluded object: %s",
-                      (self.current_object or "---"))
         self._ignore_move(newpos, speed)
 
     def _move_from_excluded_region(self, newpos, speed):
         self.in_excluded_region = False
         offset = self.extrusion_offsets[self.extruder_idx]
-        logging.debug("EXO: Moving to included object: %s",
-                      (self.current_object or "---"))
-        logging.debug("EXO: Toolhead commanded pos: %s",
-                      " ".join(str(x) for x in self.toolhead.commanded_pos))
-        logging.debug("EXO: last position: %s",
-                      " ".join(str(x) for x in self.last_position))
-        logging.debug("EXO: last extruded position: %s",
-                      " ".join(str(x) for x in self.last_position_extruded))
-        logging.debug("EXO: Max extruded position: %f",
-                      self.max_position_extruded)
-        logging.debug("EXO: last excluded position: %s",
-                      " ".join(str(x) for x in self.last_position_excluded))
-        logging.debug("EXO: Max excluded position: %f",
-                      self.max_position_excluded)
-        logging.debug("EXO: New position: %s", " ".join(str(x) for x in newpos))
-        logging.debug("EXO: Offset: %s", " ".join(str(x) for x in offset))
         self.log_next_moves = 10
 
         # This adjustment value is used to compensate for any retraction
@@ -178,7 +161,6 @@ class ExcludeObject:
         self.extruder_adj = self.max_position_excluded \
             - self.last_position_excluded[3] \
             - (self.max_position_extruded - self.last_position_extruded[3])
-        logging.debug("EXO: Adjustment: %f", self.extruder_adj)
         self._normal_move(newpos, speed)
 
     def _test_in_excluded_region(self):
@@ -216,7 +198,7 @@ class ExcludeObject:
         self.was_excluded_at_start = self._test_in_excluded_region()
     cmd_END_CURRENT_OBJECT_help = "Markes the end the current object"
     def cmd_END_CURRENT_OBJECT(self, gcmd):
-        if self.current_object == None:
+        if self.current_object == None and self.next_transform:
             gcmd.respond_info("END_CURRENT_OBJECT called, but no object is"
                               " currently active")
             return
@@ -252,8 +234,14 @@ class ExcludeObject:
     cmd_DEFINE_OBJECT_help = "Provides a summary of an object"
     def cmd_DEFINE_OBJECT(self, params):
         self._setup_transform()
-
         name = params.get('NAME').upper()
+        if self.next_transform is None:
+            logging.info('The definition for %s was not registered '
+                'since the Exclude Object move transform is not enabled.  This '
+                'is most likely due to an active Tuning Tower command.', name)
+            params.respond_info("The Exclude Object module is active while a Tuning Tower test is in progress.")
+            return
+
         center = params.get('CENTER', default=None)
         polygon = params.get('POLYGON', default=None)
 
@@ -268,9 +256,7 @@ class ExcludeObject:
         if polygon != None:
             obj['polygon'] = json.loads(polygon)
 
-        logging.debug('Object %s defined %r', name, obj)
         self.objects[name] = obj
-
 
 def load_config(config):
     return ExcludeObject(config)
