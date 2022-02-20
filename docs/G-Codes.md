@@ -545,6 +545,33 @@ enabled (also see the [endstop phase guide](Endstop_Phase.md)):
   setting to be written to the config file (in conjunction with the
   SAVE_CONFIG command).
 
+### Exclude Object
+The following commands are available when an
+[exclude_object config section](Config_Reference.md#exclude_object) is
+enabled (also see the [exclude object guide](Exclude_Object.md)):
+
+- `START_CURRENT_OBJECT`: This command takes a `NAME` parameter and denotes the start of
+the gcode for an object on the current layer.
+
+- `END_CURRENT_OBJECT`:  Denotes the end of the object's gcode for the layer.  It is paired with
+- `START_CURRENT_OBJECT`.  A `NAME` parameter is optional.
+
+- `DEFINE_OBJECT`:  Provides a summary of an object in the file.  It takes the following parameters:
+
+  - `NAME`: This parameter is required.  It is the identifier used by other commands in this module.
+  - `CENTER`: An X,Y coordinate for the object.
+  - `POLYGON`: An array of X,Y coordinates that provide an outline for the object.
+
+- `EXCLUDE_OBJECT`: This command takes a `NAME` parameter and instructs Klipper to ignore
+gcode for that object.
+
+- `LIST_OBJECTS`: Lists the objects known to Klipper.  Without parameters, it will return a list of object
+names.  If the `VERBOSE` parameter is given (value doesn't matter), it will return object details.
+
+- `LIST_EXCLUDED_OBJECTS`: Lists the excluded objects.
+
+- `EXCLUDE_OBJECT_RESET`: Clears the current list objects and excluded objects.
+
 ### Force movement
 
 The following commands are available when the
@@ -688,34 +715,6 @@ is enabled (also see the [Skew Correction](Skew_Correction.md) guide):
   memory. Note that after SAVE or REMOVE operations have been run the
   SAVE_CONFIG gcode must be run to make the changes to peristent
   memory permanent.
-
-
-### Exclude Object
-The following commands are available when an
-[exclude_object config section](Config_Reference.md#exclude_object) is
-enabled (also see the [exclude object guide](Exclude_Object.md)):
-
-- `START_CURRENT_OBJECT`: This command takes a `NAME` parameter and denotes the start of
-the gcode for an object on the current layer.
-
-- `END_CURRENT_OBJECT`:  Denotes the end of the object's gcode for the layer.  It is paired with
-- `START_CURRENT_OBJECT`.  A `NAME` parameter is optional.
-
-- `DEFINE_OBJECT`:  Provides a summary of an object in the file.  It takes the following parameters:
-
-  - `NAME`: This parameter is required.  It is the identifier used by other commands in this module.
-  - `CENTER`: An X,Y coordinate for the object.
-  - `POLYGON`: An array of X,Y coordinates that provide an outline for the object.
-
-- `EXCLUDE_OBJECT`: This command takes a `NAME` parameter and instructs Klipper to ignore
-gcode for that object.
-
-- `LIST_OBJECTS`: Lists the objects known to Klipper.  Without parameters, it will return a list of object
-names.  If the `VERBOSE` parameter is given (value doesn't matter), it will return object details.
-
-- `LIST_EXCLUDED_OBJECTS`: Lists the excluded objects.
-
-- `EXCLUDE_OBJECT_RESET`: Clears the current list objects and excluded objects.
 
 ### Delayed GCode
 
