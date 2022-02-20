@@ -53,7 +53,8 @@ class ExcludeObject:
         if not self.next_transform:
             tuning_tower = self.printer.lookup_object('tuning_tower', None)
             if self.gcode_move.move_transform == tuning_tower:
-                logging.info('The ExcludeObject move transform is not being loaded due to Tuning tower being Active')
+                logging.info('The ExcludeObject move transform is not being '
+                    'loaded due to Tuning tower being Active')
                 return
 
             self.next_transform = self.gcode_move.set_move_transform(self,
@@ -78,7 +79,8 @@ class ExcludeObject:
         self.current_object = None
         if self.next_transform:
             if self.gcode_move.move_transform != self:
-                logging.info("ExcludeObject move transform is not being unregistered because it is not at the head of the transform chain.")
+                logging.info('ExcludeObject move transform is not being '
+                    'unregistered because it is not at the head of the transform chain.')
                 return
 
             self.gcode_move.set_move_transform(self.next_transform, force=True)
@@ -239,7 +241,8 @@ class ExcludeObject:
             logging.info('The definition for %s was not registered '
                 'since the Exclude Object move transform is not enabled.  This '
                 'is most likely due to an active Tuning Tower command.', name)
-            params.respond_info("The Exclude Object module is active while a Tuning Tower test is in progress.")
+            params.respond_info("The Exclude Object module is active while a Tuning "
+                "Tower test is in progress.")
             return
 
         center = params.get('CENTER', default=None)
