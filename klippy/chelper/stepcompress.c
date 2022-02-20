@@ -259,23 +259,13 @@ stepcompress_alloc(uint32_t oid)
 // Fill message id information
 void __visible
 stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-                  , int32_t queue_step_msgtag, int32_t set_next_step_dir_msgtag)
+                  , uint32_t invert_sdir, int32_t queue_step_msgtag
+                  , int32_t set_next_step_dir_msgtag)
 {
     sc->max_error = max_error;
+    sc->invert_sdir = !!invert_sdir;
     sc->queue_step_msgtag = queue_step_msgtag;
     sc->set_next_step_dir_msgtag = set_next_step_dir_msgtag;
-}
-
-// Set the inverted stepper direction flag
-void __visible
-stepcompress_set_invert_sdir(struct stepcompress *sc, uint32_t invert_sdir)
-{
-    invert_sdir = !!invert_sdir;
-    if (invert_sdir != sc->invert_sdir) {
-        sc->invert_sdir = invert_sdir;
-        if (sc->sdir >= 0)
-            sc->sdir ^= 1;
-    }
 }
 
 // Helper to free items from the history_list

@@ -7,7 +7,7 @@ designs at [Thingiverse](https://www.thingiverse.com/search?q=filament%20width%2
 
 To use a sensor array as a filament width sensor, read
 [Config Reference](Config_Reference.md#tsl1401cl_filament_width_sensor) and
-[G-Code documentation](G-Codes.md#hall_filament_width_sensor).
+[G-Code documentation](G-Codes.md#Filament_Width_Sensor_Commands).
 
 ## How does it work?
 
