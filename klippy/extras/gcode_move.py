@@ -256,8 +256,11 @@ class GCodeMove:
         kin_pos = " ".join(["%s:%.6f" % (a, v) for a, v in kinfo])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
             "XYZE", toolhead.get_position())])
+        last_pos = self.last_position
+        for pos in range(len(last_pos)):
+            last_pos[pos] = last_pos[pos] - self.base_position[pos]
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)
-                              for a, v in zip("XYZE", self.last_position)])
+                              for a, v in zip("XYZE", last_pos)])
         base_pos = " ".join(["%s:%.6f"  % (a, v)
                              for a, v in zip("XYZE", self.base_position)])
         homing_pos = " ".join(["%s:%.6f"  % (a, v)
