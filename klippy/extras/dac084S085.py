@@ -11,15 +11,15 @@ class dac084S085:
         self.spi = bus.MCU_SPI_from_config(
             config, 1, pin_option="enable_pin", default_speed=10000000)
         scale = config.getfloat('scale', 1., above=0.)
-        channel = [0,3,2,1,0]
-        for i in range(5):
-            vref = config.getfloat('channel_%d' % (i,), None,
-                                 minval=0., maxval=scale)
-            if vref is not None:
-                buff = 0x01 << 12
-                buff |= (channel[i]) << 14
-                buff |= int(val * 255. / scale) << 4
-                self.spi.spi_send([buff])
+        for chan, name in enumerate("ABCD"):
+            val = config.getfloat('channel_%s' % (name,), None,
+                                   minval=0., maxval=scale)
+            if val is not None:
+                self.set_register(chan, int(val * 255. / scale))
+    def set_register(self, chan, value):
+        b1 = (chan << 6) | (1 << 4) | ((value >> 4) & 0x0f)
+        b2 = (value << 4) & 0xf0
+        self.spi.spi_send([b1, b2])
 
 def load_config_prefix(config):
-    return dac084S085(config)
+	return dac084S085(config)
