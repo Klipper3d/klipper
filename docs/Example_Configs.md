@@ -10,35 +10,34 @@ is also a useful resource for finding and sharing config files.
 
 ## Guidelines
 
-1. Use an appropriate config filename:
-   1. Select the appropriate config filename prefix:
-      1. The `printer` prefix is used for stock printers sold by a
-         mainstream manufacturer.
-      2. The `generic` prefix is used for a 3d printer board that may
-         be used in many different types of printers.
-      3. The `kit` prefix is for 3d printers that are assembled
-         according to a widely used specification. These "kit"
-         printers are generally distinct from normal "printers" in
-         that they are not sold by a manufacturer.
-      4. The `sample` prefix is used for config "snippets" that one
-         may copy-and-paste into the main config file.
-      5. The `example` prefix is used to describe printer kinematics.
-         This type of config is typically only added along with code
-         for a new type of printer kinematics.
-   2. All example configuration files must end in a `.cfg` suffix. The
-      `printer` config files must end in a year followed by `.cfg`
-      (eg, `-2019.cfg`). In this case, the year is an approximate year
-      the given printer was sold.
-   3. Do not use spaces or other unusual characters in the config
-      filename. The filename should contain only characters `A-Z`,
-      `a-z`, `0-9`, `-`, and `.`.
-2. Klipper must be able to start `printer`, `generic`, and `kit`
+1. Select the appropriate config filename prefix:
+   1. The `printer` prefix is used for stock printers sold by a
+      mainstream manufacturer.
+   2. The `generic` prefix is used for a 3d printer board that may be
+      used in many different types of printers.
+   3. The `kit` prefix is for 3d printers that are assembled according
+      to a widely used specification. These "kit" printers are
+      generally distinct from normal "printers" in that they are not
+      sold by a manufacturer.
+   4. The `sample` prefix is used for config "snippets" that one may
+      copy-and-paste into the main config file.
+   5. The `example` prefix is used to describe printer kinematics.
+      This type of config is typically only added along with code for
+      a new type of printer kinematics.
+2. All example configuration files must end in a `.cfg` suffix. The
+   `printer` config files must end in a year followed by `.cfg` (eg,
+   `-2019.cfg`). In this case, the year is an approximate year the
+   given printer was sold.
+3. Do not use spaces or other unusual characters in the config
+   filename. The filename should contain only characters `A-Z`, `a-z`,
+   `0-9`, `-`, and `.`.
+4. Klipper must be able to start `printer`, `generic`, and `kit`
    example config file without error. These config files should be
    added to the
    [test/klippy/printers.test](../test/klippy/printers.test)
    regression test case. Add new config files to that test case in the
    appropriate section and in alphabetical order within that section.
-3. The example configuration should be for the "stock" configuration
+5. The example configuration should be for the "stock" configuration
    of the printer. (There are too many "customized" configurations to
    track in the main Klipper repository.) Similarly, we only add
    example config files for printers, kits, and boards that have
@@ -46,7 +45,7 @@ is also a useful resource for finding and sharing config files.
    in active use). Consider using the
    [Klipper Community Discourse server](https://community.klipper3d.org)
    for other configs.
-4. Only specify those devices present on the given printer or board.
+6. Only specify those devices present on the given printer or board.
    Do not specify settings specific to your particular setup.
    1. For `generic` config files, only those devices on the mainboard
       should be described. For example, it would not make sense to add
@@ -65,7 +64,7 @@ is also a useful resource for finding and sharing config files.
    4. Only define macros that utilize functionality specific to the
       given printer or to define g-codes that are commonly emitted by
       slicers configured for the given printer.
-5. Where possible, it is best to use the same wording, phrasing,
+7. Where possible, it is best to use the same wording, phrasing,
    indentation, and section ordering as the existing config files.
    1. The top of each config file should list the type of
       micro-controller the user should select during "make
@@ -95,8 +94,8 @@ is also a useful resource for finding and sharing config files.
       files. (For example, avoid adding lines like "this file was
       created by ...".) Place attribution and change history in the
       git commit message.
-6. Do not use any deprecated features in the example config file.
-7. Do not disable a default safety system in an example config file.
+8. Do not use any deprecated features in the example config file.
+9. Do not disable a default safety system in an example config file.
    For example, a config should not specify a custom
    `max_extrude_cross_section`. Do not enable debugging features. For
    example there should not be a `force_move` config section.
