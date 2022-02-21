@@ -11,8 +11,7 @@ class dac084S085:
         self.spi = bus.MCU_SPI_from_config(
             config, 1, pin_option="enable_pin", default_speed=10000000)
         scale = config.getfloat('scale', 1., above=0.)
-        
-	for chan, name in enumerate("ABCD"):
+        for chan, name in enumerate("ABCD"):
             val = config.getfloat('channel_%s' % (name,), None,
                                    minval=0., maxval=scale)
             if val is not None:
