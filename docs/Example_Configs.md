@@ -24,8 +24,8 @@ is also a useful resource for finding and sharing config files.
    5. The `example` prefix is used to describe printer kinematics.
       This type of config is typically only added along with code for
       a new type of printer kinematics.
-2. All example configuration files must end in a `.cfg` suffix. The
-   `printer` config files must end in a year followed by `.cfg` (eg,
+2. All configuration files must end in a `.cfg` suffix. The `printer`
+   config files must end in a year followed by `.cfg` (eg,
    `-2019.cfg`). In this case, the year is an approximate year the
    given printer was sold.
 3. Do not use spaces or other unusual characters in the config
