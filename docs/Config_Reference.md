@@ -1829,10 +1829,10 @@ See the [command reference](G-Codes.md#extruder) for more information.
 
 ```
 [extruder_stepper my_extra_stepper]
-#extruder: extruder
+extruder:
 #   The extruder this stepper is synchronized to. If this is set to an
 #   empty string then the stepper will not be synchronized to an
-#   extruder. The default is "extruder".
+#   extruder. This parameter must be provided.
 #step_pin:
 #dir_pin:
 #enable_pin:

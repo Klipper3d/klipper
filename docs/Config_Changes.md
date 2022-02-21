@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220304: There is no longer a default for the `extruder` parameter of
+[extruder_stepper](Config_Reference.md#extruder_stepper) config
+sections. If desired, specify `extruder: extruder` explicitly to
+associate the stepper motor with the "extruder" motion queue at
+startup.
+
 20220210: The `SYNC_STEPPER_TO_EXTRUDER` command is deprecated; the
 `SET_EXTRUDER_STEP_DISTANCE` command is deprecated; the
 [extruder](Config_Reference.md#extruder) `shared_heater` config option
