@@ -28,7 +28,7 @@ move to the center of the bed, and home the z axis. For example:
 
 ```
 [safe_z_home]
-home_xy_position: 100,100 # Change coordinates to the center of your print bed
+home_xy_position: 100, 100 # Change coordinates to the center of your print bed
 speed: 50
 z_hop: 10                 # Move up 10mm
 z_hop_speed: 5
@@ -64,9 +64,10 @@ run `BLTOUCH_DEBUG COMMAND=touch_mode`, run `QUERY_PROBE`, and verify
 that command reports "probe: open". Then while gently pushing the pin
 up slightly with the nail of your finger run `QUERY_PROBE` again.
 Verify the command reports "probe: TRIGGERED". If either query does
-not report the correct message then check your wiring and
-configuration again. At the completion of this test run `BLTOUCH_DEBUG
-COMMAND=pin_up` and verify that the pin moves up.
+not report the correct message then it usually indicates an incorrect
+wiring or configuration (though some [clones](#bl-touch-clones) may
+require special handling). At the completion of this test run
+`BLTOUCH_DEBUG COMMAND=pin_up` and verify that the pin moves up.
 
 After completing the BL-Touch control pin and sensor pin tests, it is
 now time to test probing, but with a twist. Instead of letting the
@@ -106,7 +107,8 @@ commands to achieve this.
 ## BL-Touch "clones"
 
 Many BL-Touch "clone" devices work correctly with Klipper using the
-default configuration. However, some "clone" devices may require
+default configuration. However, some "clone" devices may not support
+the `QUERY_PROBE` command and some "clone" devices may require
 configuration of `pin_up_reports_not_triggered` or
 `pin_up_touch_mode_reports_triggered`.
 
@@ -115,6 +117,16 @@ Important! Do not configure `pin_up_reports_not_triggered` or
 these directions. Do not configure either of these to False on a
 genuine BL-Touch. Incorrectly setting these to False can increase
 probing time and can increase the risk of damaging the printer.
+
+Some "clone" devices do not support `touch_mode` and as a result the
+`QUERY_PROBE` command does not work. Despite this, it may still be
+possible to perform probing and homing with these devices. On these
+devices the `QUERY_PROBE` command during the
+[initial tests](#initial-tests) will not succeed, however the
+subsequent `G28` (or `PROBE`) test does succeed. It may be possible to
+use these "clone" devices with Klipper if one does not utilize the
+`QUERY_PROBE` command and one does not enable the
+`probe_with_touch_mode` feature.
 
 Some "clone" devices are unable to perform Klipper's internal sensor
 verification test. On these devices, attempts to home or probe can

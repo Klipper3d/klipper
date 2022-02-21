@@ -58,6 +58,11 @@ The stm32f4 directory contains code from:
 version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
 
+The stm32g0 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeG0
+version v1.4.1 (5cb06333a6a43cefbe145f10a5aa98d3cc4cffee). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32G0xx/ directory.
+
 The stm32h7 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeH7
 version v1.7.0 (79196b09acfb720589f58e93ccf956401b18a191). Contents
@@ -68,6 +73,11 @@ The rp2040 directory contains code from the pico sdk:
 version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). It has been
 modified so that it can build outside of the pico sdk. See
 rp2040.patch for the modifications.
+
+The rp2040_flash directory contains a light-weight bootsel flash tool.
+It uses C part of the the `picoboot_connection` directory found in:
+  https://github.com/raspberrypi/picotool.git
+version v1.1.0 (55fd880c3dc029b961fc1a0967a6cfdc0af02721).
 
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
