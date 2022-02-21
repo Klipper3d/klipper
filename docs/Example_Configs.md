@@ -28,9 +28,9 @@ is also a useful resource for finding and sharing config files.
    config files must end in a year followed by `.cfg` (eg,
    `-2019.cfg`). In this case, the year is an approximate year the
    given printer was sold.
-3. Do not use spaces or other unusual characters in the config
-   filename. The filename should contain only characters `A-Z`, `a-z`,
-   `0-9`, `-`, and `.`.
+3. Do not use spaces or special characters in the config filename. The
+   filename should contain only characters `A-Z`, `a-z`, `0-9`, `-`,
+   and `.`.
 4. Klipper must be able to start `printer`, `generic`, and `kit`
    example config file without error. These config files should be
    added to the
