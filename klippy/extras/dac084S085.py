@@ -1,4 +1,4 @@
-# SPI DAC DAC084S085 implementation for Alligator Board rev.2
+# SPI DAC DAC084S085 implementation
 #
 # Copyright (C) 2021  Lorenzo Franco <lorenzo.franco@lorenzing.com>
 #
