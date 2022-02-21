@@ -301,14 +301,12 @@ contributions) and contain a current email address.
 [Klipper-translations Project](https://github.com/Klipper3d/klipper-translations)
 is a project dedicated to translating Klipper to different languages.
 [Weblate](https://hosted.weblate.org/projects/klipper/) hosts all the
-Gettext strings for translating and reviewing. Locales can merge into
-the Klipper project once they satisfy the following requirements:
+Gettext strings for translating and reviewing. Locales can be displayed on
+[klipper3d.org](https://www.klipper3d.org) once they satisfy the following requirements:
 
 - [ ] 75% Total coverage
-- [ ] All titles (H1) are covered
+- [ ] All titles (H1) are translated
 - [ ] An updated navigation hierarchy PR in klipper-translations.
-
-The navigation hierarchy is in `docs\_klipper3d\mkdocs.yml`.
 
 To reduce the frustration of translating domain-specific terms and
 gain awareness of the ongoing translations, you can submit a PR
@@ -321,15 +319,15 @@ If a translation already exists in the Klipper repository and no
 longer meets the checklist above, it will be marked out-of-date after
 a month without updates.
 
-Please follow the following format for `mkdocs.yml` navigation
-hierarchy:
+Once the requirements are met, you need to:
 
-```yml
-nav:
-  - existing hierachy
-  - <language>:
-    - locales/<language code>/md file
-```
+1. update klipper-tranlations repository
+[active_translations](https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations)
+2. Optional: add a manual-index.md file in klipper-translations repository's
+`docs\locals\<lang>` folder to replace the language specific index.md (generated
+index.md does not render correctly).
 
-Note: Currently, there isn't a method for correctly translating
-pictures in the documentation.
+Known Issues:
+1. Currently, there isn't a method for correctly translating pictures in
+the documentation
+2. It is impossible to translate titles in mkdocs.yml.
