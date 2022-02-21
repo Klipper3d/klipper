@@ -114,9 +114,7 @@ gpio_adc_setup(uint32_t pin)
     ADC_TypeDef *adc;
     if (chan >= 40){
         adc = ADC3;
-        if (!is_enabled_pclock(ADC3_BASE)) {
-            enable_pclock(ADC3_BASE);
-        }
+        enable_pclock(ADC3_BASE);
         MODIFY_REG(ADC3_COMMON->CCR, ADC_CCR_CKMODE_Msk,
             0b11 << ADC_CCR_CKMODE_Pos);
     } else if (chan >= 20){

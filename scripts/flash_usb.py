@@ -163,7 +163,7 @@ def flash_atsamd(options, binfile):
         sys.exit(-1)
 
 # Look for an rp2040 and flash it with rp2040_flash.
-def rp2040_flash(devpath, binfile, sudo):
+def rp2040_flash(devpath, binfile):
     args = ["lib/rp2040_flash/rp2040_flash", binfile]
     if len(devpath) > 0:
         with open(devpath + "/busnum") as f:
@@ -172,8 +172,6 @@ def rp2040_flash(devpath, binfile, sudo):
             addr = f.read().strip()
         args += [bus, addr]
     sys.stderr.write(" ".join(args) + '\n\n')
-    if sudo:
-        args.insert(0, "sudo")
     res = subprocess.call(args)
     if res != 0:
         raise error("Error running rp2040_flash")
@@ -270,7 +268,7 @@ device as a usb drive, and copy klipper.uf2 to the device.
 def flash_rp2040(options, binfile):
     try:
         if options.device.lower() == "first":
-            rp2040_flash("", binfile, options.sudo)
+            rp2040_flash("", binfile)
             return
 
         buspath, devpath = translate_serial_to_usb_path(options.device)
@@ -278,7 +276,7 @@ def flash_rp2040(options, binfile):
         devpath = os.path.dirname(devpath)
         enter_bootloader(options.device)
         wait_path(devpath)
-        rp2040_flash(devpath, binfile, options.sudo)
+        rp2040_flash(devpath, binfile)
 
     except error as e:
         sys.stderr.write(RP2040_HELP % (options.device, str(e)))

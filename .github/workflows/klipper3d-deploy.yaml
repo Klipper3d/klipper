@@ -7,8 +7,6 @@ on:
       - docs/**
       - mkdocs.yml
       - .github/workflows/klipper3d-deploy.yaml
-  schedule:
-    - cron: "0 0 * * *"
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,8 +24,6 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install dependencies
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
-      - name: Fetch translations
-        run: docs/_klipper3d/fetch-translations.sh
       - name: Build and deploy klipper3d
         run: |
           mkdocs gh-deploy --config-file docs/_klipper3d/mkdocs.yml --remote-branch gh-pages --force --verbose
