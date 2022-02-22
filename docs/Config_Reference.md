@@ -1433,6 +1433,10 @@ See the [exclude objects guide](Exclude_Object.md) and
 [command reference](G-Codes.md#exclude-object)
 for additional information.
 
+```
+[exclude_object]
+```
+
 ## Resonance compensation
 
 ### [input_shaper]

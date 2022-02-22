@@ -4,7 +4,7 @@ The `[exclude_object]` module allows Klipper to exclude objects while a print is
 To enable this feature include an [exclude_object config section](Config_Reference.md#exclude_object)
 (also see the [command reference](G-Codes.md#exclude-object).)
 
-Unlike other 3D printer firmware options, a printer running Klipper is utilizing a suite of
+Unlike other 3D printer firmware options, a printer running Klipper utilizes a suite of
 components and users have many options to choose from.  Therefore, in order to provide a
 a consistent user experience, the `[exclude_object]` moudle will establish a contract or API
 of sorts.  The contract covers the contents of the gcode file, how the internal state of the
@@ -89,7 +89,7 @@ The state of this module is provided to clients by the [exclude_object status](S
 
 The status is reset when:
 - The Klipper firmware is restarted.
-- There is a reset of the `[virtual_sdcard]`.  Notable, this is reset by Klipper at the start of a print.
+- There is a reset of the `[virtual_sdcard]`.  Notably, this is reset by Klipper at the start of a print.
 - When an `EXCLUDE_OBJECT_RESET` command is issued.
 
 The list of defined objects is represented in the `exclude_object.objects` status field.  In a well defined

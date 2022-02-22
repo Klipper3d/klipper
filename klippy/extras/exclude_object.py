@@ -18,7 +18,6 @@ class ExcludeObject:
         self.printer.register_event_handler("sdcard:reset_file",
                                             self._reset_file)
         self.next_transform = None
-        self.log_next_moves = 0
         self.objects = {}
         self.excluded_objects = []
         self.current_object = None
@@ -51,7 +50,7 @@ class ExcludeObject:
             desc=self.cmd_LIST_EXCLUDED_OBJECTS_help)
     def _setup_transform(self):
         if not self.next_transform:
-            tuning_tower = self.printer.lookup_object('tuning_tower', None)
+            tuning_tower = self.printer.lookup_object('tuning_tower')
             if tuning_tower.is_testing():
                 logging.info('The ExcludeObject move transform is not being '
                     'loaded due to Tuning tower being Active')
@@ -78,7 +77,7 @@ class ExcludeObject:
         self.excluded_objects = []
         self.current_object = None
         if self.next_transform:
-            tuning_tower = self.printer.lookup_object('tuning_tower', None)
+            tuning_tower = self.printer.lookup_object('tuning_tower')
             if tuning_tower.is_testing():
                 logging.info('The Exclude Object move transform was not '
                     'unregistered because it is not at the head of the '
@@ -106,8 +105,6 @@ class ExcludeObject:
 
     def _normal_move(self, newpos, speed):
         offset = self.extrusion_offsets[self.extruder_idx]
-        if self.log_next_moves > 0:
-            self.log_next_moves -= 1
 
         self.last_position[:] = newpos
         self.last_position_extruded[:] = self.last_position
@@ -158,7 +155,6 @@ class ExcludeObject:
     def _move_from_excluded_region(self, newpos, speed):
         self.in_excluded_region = False
         offset = self.extrusion_offsets[self.extruder_idx]
-        self.log_next_moves = 10
 
         # This adjustment value is used to compensate for any retraction
         # differences between the last object printed and excluded one.
