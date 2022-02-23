@@ -21,6 +21,7 @@ src-$(CONFIG_USBSERIAL) += rp2040/chipid.c
 src-$(CONFIG_SERIAL) += rp2040/serial.c generic/serial_irq.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += rp2040/hard_pwm.c
 src-$(CONFIG_HAVE_GPIO_SPI) += rp2040/spi.c
+src-$(CONFIG_HAVE_GPIO_I2C) += rp2040/i2c.c
 
 # rp2040 stage2 building
 $(OUT)stage2.o: lib/rp2040/boot_stage2/boot2_w25q080.S
@@ -43,10 +44,11 @@ $(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/rp2040/elf2uf2/elf2uf2
 	@echo "  Creating uf2 file $@"
 	$(Q)$(OUT)lib/rp2040/elf2uf2/elf2uf2 $< $@
 
+lib/rp2040_flash/rp2040_flash:
+	@echo "  Building rp2040_flash"
+	$(Q)make -C lib/rp2040_flash rp2040_flash
+
 # Flash rules
-flash: $(OUT)klipper.uf2
-	@echo "Error: Flashing not supported on rp2040."
-	@echo "Place target board in bootloader mode (hold bootsel button"
-	@echo "during powerup), mount the device as a usb drive, and copy"
-	@echo "$< to the device."
-	@exit -1
+flash: $(OUT)klipper.uf2 lib/rp2040_flash/rp2040_flash
+	@echo "  Flashing $< to $(FLASH_DEVICE)"
+	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.uf2

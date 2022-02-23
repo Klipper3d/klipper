@@ -28,7 +28,7 @@ move to the center of the bed, and home the z axis. For example:
 
 ```
 [safe_z_home]
-home_xy_position: 100,100 # Change coordinates to the center of your print bed
+home_xy_position: 100, 100 # Change coordinates to the center of your print bed
 speed: 50
 z_hop: 10                 # Move up 10mm
 z_hop_speed: 5

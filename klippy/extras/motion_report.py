@@ -17,29 +17,37 @@ class APIDumpHelper:
         if startstop_cb is None:
             startstop_cb = (lambda is_start: None)
         self.startstop_cb = startstop_cb
+        self.is_started = False
         self.update_interval = update_interval
         self.update_timer = None
         self.clients = {}
     def _stop(self):
         self.clients.clear()
-        if self.update_timer is None:
-            return
         reactor = self.printer.get_reactor()
         reactor.unregister_timer(self.update_timer)
         self.update_timer = None
+        if not self.is_started:
+            return reactor.NEVER
         try:
             self.startstop_cb(False)
         except self.printer.command_error as e:
             logging.exception("API Dump Helper stop callback error")
+            self.clients.clear()
+        self.is_started = False
+        if self.clients:
+            # New client started while in process of stopping
+            self._start()
         return reactor.NEVER
     def _start(self):
-        if self.update_timer is not None:
+        if self.is_started:
             return
+        self.is_started = True
         try:
             self.startstop_cb(True)
         except self.printer.command_error as e:
             logging.exception("API Dump Helper start callback error")
-            self._stop()
+            self.is_started = False
+            self.clients.clear()
             raise
         reactor = self.printer.get_reactor()
         systime = reactor.monotonic()
@@ -139,7 +147,7 @@ class DumpStepper:
         mcu_pos = first.start_position
         start_position = self.mcu_stepper.mcu_to_commanded_position(mcu_pos)
         step_dist = self.mcu_stepper.get_step_dist()
-        if self.mcu_stepper.is_dir_inverted():
+        if self.mcu_stepper.get_dir_inverted()[0]:
             step_dist = -step_dist
         d = [(s.interval, s.step_count, s.add) for s in data]
         return {"data": d, "start_position": start_position,
