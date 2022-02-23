@@ -95,6 +95,8 @@ CONFIG ../../config/generic-printrboard-g2.cfg
 
 # Printers using the sam3x8e
 DICTIONARY sam3x8e.dict
+CONFIG ../../config/generic-alligator-r2.cfg
+CONFIG ../../config/generic-alligator-r3.cfg
 CONFIG ../../config/generic-archim2.cfg
 CONFIG ../../config/generic-radds.cfg
 CONFIG ../../config/generic-ruramps-v1.3.cfg
