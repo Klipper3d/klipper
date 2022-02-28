@@ -531,8 +531,8 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
         en_pwm_mode = True
         logging.info("TMC step_dist '%s'", step_dist)
         logging.info("TMC step_dist_256 '%s'", step_dist_256)
-        logging.info("TMC threshold '%s'", threshold)
-        logging.info("TMC tpwmthrs '%s'", max(0, min(0xfffff, threshold)))
+        logging.info("TMC threshold '%s'", str(threshold))
+        logging.info("TMC tpwmthrs '%s'", str(max(0, min(0xfffff, threshold))))
     reg = fields.lookup_register("en_pwm_mode", None)
     if reg is not None:
         fields.set_field("en_pwm_mode", en_pwm_mode)
