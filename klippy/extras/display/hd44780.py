@@ -12,8 +12,6 @@ LINE_LENGTH_OPTIONS={16:16, 20:20}
 
 TextGlyphs = { 'right_arrow': b'\x7e' }
 
-HD44780_DELAY = .000040
-
 class HD44780:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -48,13 +46,15 @@ class HD44780:
              0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray(b'~'*64), 0x40) ]
+        self.initialization_delay = config.getfloat("hd44780_initialization_delay_seconds", .100)
+        self.display_pin_delay = config.getfloat("hd44780_delay_seconds", .00004)
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
             " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1],
                 self.pins[2], self.pins[3], self.pins[4], self.pins[5],
-                self.mcu.seconds_to_clock(HD44780_DELAY)))
+                self.mcu.seconds_to_clock(self.display_pin_delay)))
         cmd_queue = self.mcu.alloc_command_queue()
         self.send_cmds_cmd = self.mcu.lookup_command(
             "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
@@ -98,7 +98,7 @@ class HD44780:
         # Reset (set positive direction ; enable display and hide cursor)
         init.append([0x06, 0x0c])
         for i, cmds in enumerate(init):
-            minclock = self.mcu.print_time_to_clock(print_time + i * .100)
+            minclock = self.mcu.print_time_to_clock(print_time + i * self.initialization_delay)
             self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
         self.flush()
     def write_text(self, x, y, data):
