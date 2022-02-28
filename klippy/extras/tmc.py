@@ -529,6 +529,7 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
         fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))
         en_pwm_mode = True
+        logging.info("TMC starting '%s' measurements", velocity)
     reg = fields.lookup_register("en_pwm_mode", None)
     if reg is not None:
         fields.set_field("en_pwm_mode", en_pwm_mode)
