@@ -3330,6 +3330,12 @@ d7_pin:
 #   Set the number of characters per line for an hd44780 type lcd.
 #   Possible values are 20 (default) and 16. The number of lines is
 #   fixed to 4.
+#hd44780_initialization_delay_seconds:
+#   Floating point value of seconds to wait between each step of sending
+#   the display initialization sequence. Default value is 0.100 seconds.
+#hd44780_delay_seconds:
+#   Floating point value of seconds to wait between sending a databyte
+#   to the paralell display interface. Default value is 0.00004 seconds.
 ...
 ```
 
