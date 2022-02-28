@@ -8,6 +8,7 @@ edit_uri: blob/master/docs/
 use_directory_urls: False
 docs_dir: '../'
 site_dir: '../../site/'
+INHERIT: translations.yml
 
 # Markdown document translation settings
 markdown_extensions:
@@ -19,13 +20,12 @@ markdown_extensions:
   - mdx_truly_sane_lists
   - mdx_breakless_lists
 plugins:
-  - search
-  - mkdocs-simple-hooks:
-      hooks:
-        on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
-  - exclude:
-      glob:
-        - README.md
+  search: {}
+  mkdocs-simple-hooks:
+    hooks:
+      on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
+  exclude:
+    glob: "README.md"
 
 # Website layout configuration (using mkdocs-material theme)
 theme:
@@ -49,6 +49,7 @@ theme:
   favicon: img/favicon.ico
   icon:
     repo: fontawesome/brands/github
+    alternate: material/web
   features:
       #- navigation.tabs
       #- navigation.expand

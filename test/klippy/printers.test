@@ -95,6 +95,8 @@ CONFIG ../../config/generic-printrboard-g2.cfg
 
 # Printers using the sam3x8e
 DICTIONARY sam3x8e.dict
+CONFIG ../../config/generic-alligator-r2.cfg
+CONFIG ../../config/generic-alligator-r3.cfg
 CONFIG ../../config/generic-archim2.cfg
 CONFIG ../../config/generic-radds.cfg
 CONFIG ../../config/generic-ruramps-v1.3.cfg
@@ -189,6 +191,10 @@ CONFIG ../../config/generic-fysetc-s6.cfg
 CONFIG ../../config/generic-fysetc-s6-v2.cfg
 CONFIG ../../config/generic-fysetc-spider.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
+
+# Printers using the stm32h743
+DICTIONARY stm32h743.dict
+CONFIG ../../config/printer-biqu-bx-2021.cfg
 
 # Printers using the stm32g0b1
 DICTIONARY stm32g0b1.dict

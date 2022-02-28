@@ -74,6 +74,11 @@ version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). It has been
 modified so that it can build outside of the pico sdk. See
 rp2040.patch for the modifications.
 
+The rp2040_flash directory contains a light-weight bootsel flash tool.
+It uses C part of the the `picoboot_connection` directory found in:
+  https://github.com/raspberrypi/picotool.git
+version v1.1.0 (55fd880c3dc029b961fc1a0967a6cfdc0af02721).
+
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
 revision 42095e522859059e8a5f4ec05c1e3def01a870a9.

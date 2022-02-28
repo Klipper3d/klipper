@@ -204,6 +204,9 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
             stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
                                       AFIO_MAPR_CAN_REMAP_REMAP2);
+        if (gpio == GPIO('D', 0) || gpio == GPIO('D', 1))
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP3);
     }
 }
 
