@@ -370,6 +370,12 @@ If the bootloader is running you can flash with something like:
 ~/klipper/lib/hidflash/hid-flash ~/klipper/out/klipper.bin
 ```
 alternatively, you can use `make flash` to flash klipper directly:
+
+first, check whether `pkg-config` is installed or not by:
+```
+sudo apt-get install pkg-config -y
+```
+then using `make flash`:
 ```
 make flash FLASH_DEVICE=1209:BEBA
 ```
@@ -384,6 +390,11 @@ not available, so it may be done by setting pin PA2 low if you flashed
 "hid_btt_skr_mini_e3.bin".  This pin is labeld "TX0" on the TFT header in
 the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
 which you can use to pull PA2 low.
+
+For STM32F103x6, the flash(36 KiB) is slightly bigger than Klipper(~32 KiB).
+It just fit the 2KiB hid-bootloader. You can find [fork work with STM32F103x6](
+  https://github.com/mirokymac/STM32_HID_Bootloader).
+Or using USB-Serial converter instead.
 
 ## STM32F4 micro-controllers (SKR Pro 1.1)
 

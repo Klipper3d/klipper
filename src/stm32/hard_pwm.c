@@ -37,6 +37,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM3, GPIO('C', 7),  2, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 8),  3, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 9),  4, GPIO_FUNCTION(2)},
+#if !CONFIG_MACH_STM32F103x6 // no timer 4 for f103ld
     {TIM4, GPIO('D', 12), 1, GPIO_FUNCTION(2)},
     {TIM4, GPIO('D', 13), 2, GPIO_FUNCTION(2)},
     {TIM4, GPIO('D', 14), 3, GPIO_FUNCTION(2)},
@@ -45,6 +46,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM4, GPIO('B', 7),  2, GPIO_FUNCTION(2)},
     {TIM4, GPIO('B', 8),  3, GPIO_FUNCTION(2)},
     {TIM4, GPIO('B', 9),  4, GPIO_FUNCTION(2)}
+#endif
 #elif CONFIG_MACH_STM32F4
   #if CONFIG_MACH_STM32F401
     {TIM3,  GPIO('A',  6),  1, GPIO_FUNCTION(2)},
