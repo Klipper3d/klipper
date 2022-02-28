@@ -6,6 +6,7 @@ config HC32F460_SELECT
     bool
     default y
     select HAVE_GPIO
+    select HAVE_GPIO_BITBANGING
     select HAVE_GPIO_ADC
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_BOTH_EDGE
