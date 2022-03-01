@@ -287,6 +287,57 @@ parameter is provided it arranges for the given endstop phase setting
 to be written to the config file (in conjunction with the SAVE_CONFIG
 command).
 
+### [exclude_object]
+
+The following commands are available when an
+[exclude_object config section](Config_Reference.md#exclude_object) is
+enabled (also see the [exclude object guide](Exclude_Object.md)):
+
+#### `EXCLUDE_OBJECT`
+`EXCLUDE_OBJECT [NAME=object_name] [CURRENT=1] [RESET=1]`:
+With no parameters, this will return a list of all currently excluded objects.
+
+When the `NAME` parameter is given, the named object will be excluded from
+printing.
+
+When the `CURRENT` parameter is given, the current object will be excluded from
+printing.
+
+When the `RESET` parameter is given, the list of excluded objects will be
+cleared. Additionally including `NAME` will only reset the named object. This
+**can** cause print failures, if layers were already skipped.
+
+#### `EXCLUDE_OBJECT_DEFINE`
+`EXCLUDE_OBJECT_DEFINE [NAME=object_name [CENTER=X,Y] [POLYGON=[[x,y],...]]
+[RESET=1] [JSON=1]`:
+Provides a summary of an object in the file.
+
+With no parameters provided, this will list the defined objects known to
+Klipper. Returns a list of strings, unless the `JSON` parameter is given,
+when it will return object details in json format.
+
+When the `NAME` parameter is included, this defines an object to be excluded.
+
+  - `NAME`: This parameter is required.  It is the identifier used by other
+    commands in this module.
+  - `CENTER`: An X,Y coordinate for the object.
+  - `POLYGON`: An array of X,Y coordinates that provide an outline for the
+    object.
+
+When the `RESET` parameter is provided, all defined objects will be cleared, and
+the `[exclude_object]` module will be reset.
+
+#### `EXCLUDE_OBJECT_START`
+`EXCLUDE_OBJECT_START NAME=object_name`:
+This command takes a `NAME` parameter and denotes the start of the gcode for an
+object on the current layer.
+
+#### `EXCLUDE_OBJECT_END`
+`EXCLUDE_OBJECT_END [NAME=object_name]`:
+Denotes the end of the object's gcode for the layer. It is paired with
+`EXCLUDE_OBJECT_START`. A `NAME` parameter is optional, and will only warn when
+the provided name does not match the current object.
+
 ### [extruder]
 
 The following commands are available if an
