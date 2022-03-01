@@ -99,6 +99,8 @@ class TuningTower:
         self.gcode.respond_info("Ending tuning test mode")
         self.gcode_move.set_move_transform(self.normal_transform, force=True)
         self.normal_transform = None
+    def is_active(self):
+        return self.normal_transform is not None
 
 def load_config(config):
     return TuningTower(config)
