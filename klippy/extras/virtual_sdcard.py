@@ -9,17 +9,18 @@ VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
 class VirtualSD:
     def __init__(self, config):
-        printer = config.get_printer()
-        printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
+        self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self.handle_shutdown)
         # sdcard state
         sd = config.get('path')
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
         self.file_position = self.file_size = 0
         # Print Stat Tracking
-        self.print_stats = printer.load_object(config, 'print_stats')
+        self.print_stats = self.printer.load_object(config, 'print_stats')
         # Work timer
-        self.reactor = printer.get_reactor()
+        self.reactor = self.printer.get_reactor()
         self.must_pause_work = self.cmd_from_sd = False
         self.next_file_position = 0
         self.work_timer = None
@@ -28,7 +29,7 @@ class VirtualSD:
         self.on_error_gcode = gcode_macro.load_template(
             config, 'on_error_gcode', '')
         # Register commands
-        self.gcode = printer.lookup_object('gcode')
+        self.gcode = self.printer.lookup_object('gcode')
         for cmd in ['M20', 'M21', 'M23', 'M24', 'M25', 'M26', 'M27']:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
@@ -129,6 +130,7 @@ class VirtualSD:
             self.current_file = None
         self.file_position = self.file_size = 0.
         self.print_stats.reset()
+        self.printer.send_event("virtual_sdcard:reset_file")
     cmd_SDCARD_RESET_FILE_help = "Clears a loaded SD File. Stops the print "\
         "if necessary"
     def cmd_SDCARD_RESET_FILE(self, gcmd):
