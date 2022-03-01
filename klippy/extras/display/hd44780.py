@@ -49,7 +49,7 @@ class HD44780:
         self.initialization_delay = config.getfloat("hd44780_init_delay",
             .100, .100, 1.0)
         self.display_pin_delay = config.getfloat("hd44780_pin_delay", .00004,
-            .0001, 1.0)
+            .00004, 1.0)
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
