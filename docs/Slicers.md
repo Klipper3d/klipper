@@ -87,3 +87,34 @@ Klipper's maximum extrusion cross-section check.
 
 In contrast, it is okay (and often helpful) to use a slicer's
 "retract" setting, "wipe" setting, and/or "wipe on retract" setting.
+
+## Set lower resolution or use Arcs / Arc-Welder when you have small blobs/zits on curved/round walls
+
+Especially when printing at higher speeds, one may notice blobs/zits
+on curved/round surfaces. These can occur when the slicer creates a
+lot of small lines to over-accurately reproduce an arc, possibly
+with alternating extrusion amounts. These tiny G-Code lines can cause
+klipper to shutter slightly, causing these blobs. You can tell these
+blobs apart from other issues by the fact that these are
+reproducible on the same spots if you print the same model twice.
+If you print a 3d benchy, you may see them on the front hull lines.
+
+There are two ways to resolve this; first is to lower the resolution
+of the slicer. In Cura, these settings can be found under
+"Mesh Fixes" -> "Maximum Resolution", "Maximum Travel Resolution"
+and "Maximum Devaiation".
+
+The second way is to use arcs instead of lines in the slicer. These
+are G02/G03 G-Code-Commands that may be enabled in your slicer, as
+not all printers support these. There is also a tool available
+called Arc-Welder, which post-processes your G-Code and combines
+linear moves into arcs. Depending on your Slicer, Arc-Welder may
+be available as a Plugin.
+
+Klipper needs to be configured to accept these G02/G03 commands by
+adding a new config section [gcode_arcs](Config_Reference.md#gcode_arcs).
+
+Klipper currently takes the G02/G03 commands and converts them
+back into linear commands, defined by the resolution setting.
+While it may sound a bit pointless, it makes sure that these curved
+walls have a proper resolution without confusing extrusion commands.
