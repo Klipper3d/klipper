@@ -414,8 +414,10 @@ class PrinterRail:
             stepper.set_position(coord)
 
 # Wrapper for dual stepper motor support
-def LookupMultiRail(config):
-    rail = PrinterRail(config)
+def LookupMultiRail(config, need_position_minmax=True,
+                 default_position_endstop=None, units_in_radians=False):
+    rail = PrinterRail(config, need_position_minmax,
+                       default_position_endstop, units_in_radians)
     for i in range(1, 99):
         if not config.has_section(config.get_name() + str(i)):
             break
