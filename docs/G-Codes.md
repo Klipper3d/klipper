@@ -831,7 +831,7 @@ all enabled accelerometer chips.
 #### TEST_RESONANCES
 `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
 [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
-[HZ_PER_SEC=<hz_per_sec>] [CHIP=<adxl345_chip_name>]
+[HZ_PER_SEC=<hz_per_sec>] [CHIPS=<adxl345_chip_name>]
 [POINT=x,y,z] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
@@ -841,7 +841,7 @@ point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
 `AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
 and `AXIS=-dx,-dy` is equivalent. `adxl345_chip_name` can be one or
 more configured adxl345 chip,delimited with comma, for example
-`CHIP="adxl345, adxl345 rpi"`. Note that `adxl345` can be omitted from
+`CHIPS="adxl345, adxl345 rpi"`. Note that `adxl345` can be omitted from
 named adxl345 chips. If POINT is specified it will override the point(s)
 configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
 disables input shaping for the resonance testing, because
