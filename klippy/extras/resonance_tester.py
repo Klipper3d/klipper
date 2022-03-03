@@ -211,7 +211,7 @@ class ResonanceTester:
     def cmd_TEST_RESONANCES(self, gcmd):
         # Parse parameters
         axis = _parse_axis(gcmd, gcmd.get("AXIS").lower())
-        accel_chips = gcmd.get("CHIPS", None)
+        accel_chips = gcmd.get("CHIP", None)
         test_point = gcmd.get("POINT", None)
 
         if test_point:
@@ -340,7 +340,7 @@ class ResonanceTester:
         if axis:
             name += '_' + axis.get_name()
         if chip_name:
-            name += '_' + chip_name
+            name += '_' + chip_name.replace(" ", "_")
         if point:
             name += "_%.3f_%.3f_%.3f" % (point[0], point[1], point[2])
         name += '_' + name_suffix
