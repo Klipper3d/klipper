@@ -81,6 +81,9 @@ class ExtruderStepper:
         extruder = self.printer.lookup_object('toolhead').get_extruder()
         if extruder.extruder_stepper is None:
             raise gcmd.error("Active extruder does not have a stepper")
+        strapq = extruder.extruder_stepper.stepper.get_trapq()
+        if strapq is not extruder.get_trapq():
+            raise gcmd.error("Unable to infer active extruder stepper")
         extruder.extruder_stepper.cmd_SET_PRESSURE_ADVANCE(gcmd)
     def cmd_SET_PRESSURE_ADVANCE(self, gcmd):
         pressure_advance = gcmd.get_float('ADVANCE', self.pressure_advance,
