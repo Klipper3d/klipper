@@ -106,9 +106,8 @@ and "Maximum Devaiation".
 
 Another solution can be using the Arc-Welder Plugin to post-process
 linear moves into G02/G03 moves and let klipper convert them back.
+Klipper needs to be configured to accept these G02/G03 commands by
+adding a new config section [gcode_arcs](Config_Reference.md#gcode_arcs).
 Please note that this aproach may introduce other problems and
 inaccuicies, so setting the slicer to work at a reasonable accuracy
 level should be prefered.
-
-Klipper needs to be configured to accept these G02/G03 commands by
-adding a new config section [gcode_arcs](Config_Reference.md#gcode_arcs).
