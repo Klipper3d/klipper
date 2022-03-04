@@ -471,7 +471,9 @@ The gcode_move module is automatically loaded.
 
 #### GET_POSITION
 `GET_POSITION`: Return information on the current location of the
-toolhead.
+toolhead. See the developer documentation of
+[GET_POSITION output](Code_Overview.md#coordinate-systems) for more
+information.
 
 #### SET_GCODE_OFFSET
 `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
