@@ -61,14 +61,6 @@ class FrameExpansionCompensator:
         self.toolhead = self.printer.lookup_object('toolhead')
         gcode_move = self.printer.lookup_object('gcode_move')
 
-        _warn_msg = '''IMPORTANT!
-        This Klipper branch is deprecated and will no longer be maintained.
-
-        Please use the Moonraker plug-in version available at:
-        https://github.com/alchemyEngine/klipper_frame_expansion_comp
-        '''
-        self.gcode.respond_info(_warn_msg, log=False)
-
         # Temperature sensor config check
         try:
             self.sensor = self.printer.lookup_object(self.temp_sensor_name)
