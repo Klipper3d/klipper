@@ -172,10 +172,15 @@ class FrameExpansionCompensator:
 
     def cmd_SET_FRAME_COMP(self, gcmd):
         new_state = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
-        if new_state:
-            gcmd.respond_info('Z drift compensation ENABLED')
-        else:
-            gcmd.respond_info('Z drift compensation DISABLED')
+        self.temp_coeff = gcmd.get_float('COEFF', self.temp_coeff,
+                                         minval=-1, maxval=1)
+        state = 'ENABLED' if new_state else 'DISABLED'
+        msg = ("state: %s\n"
+               "temp_coeff: %f mm/K"
+               % (state, self.temp_coeff)
+        )
+        gcmd.respond_info(msg)
+
         if new_state != self.comp_enable:
             gcode_move = self.printer.lookup_object('gcode_move')
             gcode_move.reset_last_position()
