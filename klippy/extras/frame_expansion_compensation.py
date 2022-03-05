@@ -1,6 +1,6 @@
 # Frame Expansion Compensation
 #
-# Copyright (C) 2021  Robert Pazdzior <robertp@norbital.com>
+# Copyright (C) 2022  Robert Pazdzior <robertp@norbital.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -194,8 +194,11 @@ class FrameExpansionCompensator:
         gcmd.respond_info(msg)
 
     def cmd_SET_FRAME_REF_TEMP(self, gcmd):
-        self.last_home_temp = self.smoothed_temp
-        self.z_drift_offset = 0.
+        ref_temp = gcmd.get_float('TEMPERATURE', -273.16, minval=-273.15)
+        if ref_temp > -273.16:
+            self.last_home_temp = ref_temp
+        else:
+            self.last_home_temp = self.smoothed_temp
         msg = ("Frame expansion compensation reference temperature set"
                " manually to %.3fc" % self.last_home_temp)
         gcmd.respond_info(msg)
