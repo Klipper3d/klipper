@@ -22,7 +22,6 @@ class FrameExpansionCompensator:
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
 
-        self.z_stepper_name = config.get('z_stepper')
         self.max_comp_z = config.getfloat('max_comp_z', 0.)
         self.max_offset = config.getfloat('max_z_offset', 99999999.)
 
@@ -61,7 +60,7 @@ class FrameExpansionCompensator:
         self.toolhead = self.printer.lookup_object('toolhead')
         gcode_move = self.printer.lookup_object('gcode_move')
 
-        # Temperature sensor config check
+        # Temperature sensor config check and callback registration
         try:
             self.sensor = self.printer.lookup_object(self.temp_sensor_name)
         except Exception as e:
@@ -73,19 +72,13 @@ class FrameExpansionCompensator:
         else:
             self.sensor.sensor.setup_callback(self.comp_temperature_callback)
 
-        # Z stepper config check
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        steppers = [s.get_name() for s in kin.get_steppers()]
-        if not self.z_stepper_name in steppers:
-            msg = "frame_expansion_compensation: "
-            msg += "'%s' is not a valid 'stepper_z'" % self.z_stepper_name
-            raise self.printer.config_error(msg)
-
-        # Transformation
+        # Register move transformation
         self.next_transform = gcode_move.set_move_transform(self, force=True)
 
-        # Get Z step distance
-        z_stepper = kin.get_steppers()[steppers.index(self.z_stepper_name)]
+        # Pull Z step distance for minimum adjustment increment
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        steppers = [s.get_name() for s in kin.get_steppers()]
+        z_stepper = kin.get_steppers()[steppers.index("stepper_z")]
         self.z_step_dist = z_stepper.get_step_dist()
 
     def get_status(self, eventtime):
