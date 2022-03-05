@@ -26,15 +26,6 @@ class FrameExpansionCompensator:
         self.max_comp_z = config.getfloat('max_comp_z', 0.)
         self.max_offset = config.getfloat('max_z_offset', 99999999.)
 
-        # Catch old config parameters (for useful error messages)
-        for param in ['sensor_pin', 'sensor_type', 'min_temp', 'max_temp']:
-            config.get(param, None)
-        self.coeff = config.getfloat('coeff', minval=0., maxval=100.,
-            default=0)/1E6
-        self.frame_z = config.getfloat('frame_z_length', minval=0.,
-            default=0)/1E3
-        self.gantry_factor = config.getfloat('gantry_factor', default=1.0)
-
         # Register printer events
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
@@ -78,38 +69,6 @@ class FrameExpansionCompensator:
         '''
         self.gcode.respond_info(_warn_msg, log=False)
 
-        # Detect old temp sensor config section
-        try:
-            self.config.get('sensor_pin')
-            self.config.get('sensor_type')
-        except:
-            pass
-        else:
-            msg = '''
-            FRAME_EXPANSION_COMPENSATION:
-            The temperature sensor is now defined seperately and configured
-            by passing the section name of the temperature sensor in the
-            "temp_sensor" parameter, e.g.:
-            temp_sensor: temperature_sensor frame
-
-            See Config_Reference.md for details on defining temp sensors and
-            configuring frame expansion compensation.
-            '''
-            raise self.printer.config_error(msg)
-
-        # Deprecated config option check
-        if any([self.coeff > 0, self.gantry_factor != 1, self.frame_z > 0]):
-            msg = '''
-            FRAME_EXPANSION_COMPENSATION:\n
-            Deprecated configuration parameters defined: "coeff", "frame_z", and
-            possibly "gantry_factor".
-
-            Remove these and use "temp_coeff" instead.
-            Based on your current settings, temp_coeff would be %.8f
-            ''' % self.calc_temp_coeff(self.coeff, self.frame_z,
-                self.gantry_factor)
-            raise self.printer.config_error(msg)
-
         # Temperature sensor config check
         try:
             self.sensor = self.printer.lookup_object(self.temp_sensor_name)
@@ -150,10 +109,6 @@ class FrameExpansionCompensator:
         if 2 in homing_state.get_axes():
             self.last_home_temp = self.smoothed_temp
             self.z_drift_offset = 0.
-
-    def calc_temp_coeff(self, coeff, frame_z, gantry_factor):
-        temp_coeff = (coeff * frame_z * gantry_factor) * 1E3
-        return temp_coeff
 
     def calc_offset(self, pos):
         'Calculate total linear thermal expansion relative to last homing.'
