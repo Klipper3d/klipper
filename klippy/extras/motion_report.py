@@ -295,7 +295,9 @@ class PrinterMotionReport:
             return
         pos, velocity = dtrapq.get_trapq_position(shutdown_time)
         if pos is not None:
-            logging.info("Requested toolhead position at shutdown time %.6f: %s", shutdown_time, pos)
+            logging.info(
+                "Requested toolhead position at shutdown time %.6f: %s",
+                shutdown_time, pos)
     def _shutdown(self):
         self.printer.get_reactor().register_callback(self._dump_shutdown)
     # Status reporting

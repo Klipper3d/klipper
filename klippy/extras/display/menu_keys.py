@@ -62,7 +62,9 @@ class MenuKeys:
 
     # Rotary encoder callbacks
     def encoder_cw_callback(self, eventtime):
-        fast_rate = ((eventtime - self.last_encoder_cw_eventtime) <= self.encoder_fast_rate)
+        fast_rate = (
+            (eventtime - self.last_encoder_cw_eventtime)
+            <= self.encoder_fast_rate)
         self.last_encoder_cw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_up', eventtime)
@@ -70,7 +72,9 @@ class MenuKeys:
             self.callback('up', eventtime)
 
     def encoder_ccw_callback(self, eventtime):
-        fast_rate = ((eventtime - self.last_encoder_ccw_eventtime) <= self.encoder_fast_rate)
+        fast_rate = (
+            (eventtime - self.last_encoder_ccw_eventtime)
+            <= self.encoder_fast_rate)
         self.last_encoder_ccw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_down', eventtime)

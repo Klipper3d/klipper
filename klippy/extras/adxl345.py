@@ -193,11 +193,13 @@ class ClockSyncRegression:
         diff_chip_clock = chip_clock - self.chip_clock_avg
         self.chip_clock_avg += decay * diff_chip_clock
         self.chip_clock_covariance = (1. - decay) * (
-            self.chip_clock_covariance + diff_mcu_clock * diff_chip_clock * decay)
+            self.chip_clock_covariance
+            + diff_mcu_clock * diff_chip_clock * decay)
     def set_last_chip_clock(self, chip_clock):
         base_mcu, base_chip, inv_cfreq = self.get_clock_translation()
         self.last_chip_clock = chip_clock
-        self.last_exp_mcu_clock = base_mcu + (chip_clock - base_chip) * inv_cfreq
+        self.last_exp_mcu_clock = base_mcu
+        + (chip_clock - base_chip) * inv_cfreq
     def get_clock_translation(self):
         inv_chip_freq = self.mcu_clock_variance / self.chip_clock_covariance
         if not self.last_chip_clock:
@@ -286,7 +288,8 @@ class ADXL345:
             raise self.printer.command_error(
                 "Failed to set ADXL345 register [0x%x] to 0x%x: got 0x%x. "
                 "This is generally indicative of connection problems "
-                "(e.g. faulty wiring) or a faulty adxl345 chip." % (reg, val, stored_val))
+                "(e.g. faulty wiring) or a faulty adxl345 chip."
+                % (reg, val, stored_val))
     # Measurement collection
     def is_measuring(self):
         return self.query_rate > 0

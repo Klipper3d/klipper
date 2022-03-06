@@ -18,7 +18,8 @@ fix_sigint()
 
 # Set a file-descriptor as non-blocking
 def set_nonblock(fd):
-    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+    fcntl.fcntl(fd, fcntl.F_SETFL,
+                fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
 # Clear HUPCL flag
 def clear_hupcl(fd):
