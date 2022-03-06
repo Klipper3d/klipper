@@ -110,7 +110,6 @@ class FrameExpansionCompensator:
             if abs(offset - self.z_drift_offset) > self.z_step_dist:
                 self.z_drift_offset = min([self.max_offset*sign,
                     offset], key=abs)
-        self.update_state()
 
         # Apply offset
         new_z = pos[2] + self.z_drift_offset
@@ -147,22 +146,6 @@ class FrameExpansionCompensator:
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
 
-    def update_state(self):
-        'String output for g-code and get_status state tracking.'
-        if self.last_home_temp:
-            state = 'Enabled' if self.comp_enable else "Disabled"
-        else:
-            state = 'Not homed'
-            self.z_drift_offset = 0
-
-        if self.max_comp_z and self.last_position[2] > self.max_comp_z:
-            state = 'Inactive(Z>%.2f)' % self.max_comp_z
-
-        if self.z_drift_offset == self.max_offset:
-            state += '(limited)' % self.max_offset
-
-        self.comp_state = state
-
     def cmd_SET_FRAME_COMP(self, gcmd):
         new_state = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
         self.temp_coeff = gcmd.get_float('COEFF', self.temp_coeff,
@@ -180,13 +163,13 @@ class FrameExpansionCompensator:
             self.comp_enable = new_state
 
     def cmd_QUERY_FRAME_COMP(self, gcmd):
-        self.update_state()
-        msg = ("Z Drift / Thermal Expansion Compensation:\n"
-               "STATE: %s\n"
-               "FRAME TEMPERATURE: ref=%.2f; now=%.2f\n"
-               "TOTAL Z COMP: z=%.4f mm" % (self.comp_state,
-                                            self.last_home_temp,
+        state = 'ENABLED' if self.comp_state else 'DISABLED'
+        msg = ("state: %s\n"
+               "current temperature: %.2f degC\n"
+               "reference temperature: %.2f degC\n"
+               "applied Z adjustment: %.4f mm" % (state,
                                             self.smoothed_temp,
+                                            self.last_home_temp,
                                             self.z_drift_offset)
         )
         gcmd.respond_info(msg)
