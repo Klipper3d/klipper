@@ -256,7 +256,8 @@ class MessageParser:
             return 0
         if s[msglen - MESSAGE_TRAILER_SYNC] != MESSAGE_SYNC:
             return -1
-        msgcrc = s[msglen - MESSAGE_TRAILER_CRC:msglen - MESSAGE_TRAILER_CRC + 2]
+        msgcrc = s[msglen - MESSAGE_TRAILER_CRC:msglen
+                   - MESSAGE_TRAILER_CRC + 2]
         crc = crc16_ccitt(s[:msglen - MESSAGE_TRAILER_SIZE])
         if crc != msgcrc:
             #logging.debug("got crc %s vs %s", repr(crc), repr(msgcrc))
