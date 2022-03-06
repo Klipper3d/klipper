@@ -12,9 +12,9 @@
 import math
 
 def calc_skew_factor(ac, bd, ad):
-    side = math.sqrt(2*ac*ac + 2*bd*bd - 4*ad*ad) / 2.
-    return math.tan(math.pi/2 - math.acos(
-        (ac*ac - side*side - ad*ad) / (2*side*ad)))
+    side = math.sqrt(2 * ac * ac + 2 * bd * bd - 4 * ad * ad) / 2.
+    return math.tan(math.pi / 2 - math.acos(
+        (ac * ac - side * side - ad * ad) / (2 * side * ad)))
 
 class PrinterSkew:
     def __init__(self, config):
@@ -143,7 +143,7 @@ class PrinterSkew:
                 "update the printer config file and restart the printer."
                 % (name))
         elif gcmd.get('REMOVE', None) is not None:
-            name = gmcd.get('REMOVE')
+            name = gcmd.get('REMOVE')
             if name in self.skew_profiles:
                 configfile = self.printer.lookup_object('configfile')
                 configfile.remove_section('skew_correction ' + name)
