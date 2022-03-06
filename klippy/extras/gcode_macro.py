@@ -31,7 +31,7 @@ class GetStatusWrapper:
     def __contains__(self, val):
         try:
             self.__getitem__(val)
-        except KeyError as e:
+        except KeyError:
             return False
         return True
     def __iter__(self):
@@ -51,7 +51,7 @@ class TemplateWrapper:
             self.template = env.from_string(script)
         except Exception as e:
             msg = "Error loading template '%s': %s" % (
-                 name, traceback.format_exception_only(type(e), e)[-1])
+                name, traceback.format_exception_only(type(e), e)[-1])
             logging.exception(msg)
             raise printer.config_error(msg)
     def render(self, context=None):
@@ -115,8 +115,8 @@ class GCodeMacro:
     def __init__(self, config):
         if len(config.get_name().split()) > 2:
             raise config.error(
-                    "Name of section '%s' contains illegal whitespace"
-                    % (config.get_name()))
+                "Name of section '%s' contains illegal whitespace"
+                % (config.get_name()))
         name = config.get_name().split()[1]
         self.alias = name.upper()
         self.printer = printer = config.get_printer()
@@ -146,7 +146,7 @@ class GCodeMacro:
             try:
                 self.variables[option[len(prefix):]] = ast.literal_eval(
                     config.get(option))
-            except ValueError as e:
+            except ValueError:
                 raise config.error(
                     "Option '%s' in section '%s' is not a valid literal" % (
                         option, config.get_name()))
@@ -169,7 +169,7 @@ class GCodeMacro:
             raise gcmd.error("Unknown gcode_macro variable '%s'" % (variable,))
         try:
             literal = ast.literal_eval(value)
-        except ValueError as e:
+        except ValueError:
             raise gcmd.error("Unable to parse '%s' as a literal" % (value,))
         v = dict(self.variables)
         v[variable] = literal

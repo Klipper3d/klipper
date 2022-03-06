@@ -55,7 +55,7 @@ class KeyboardReader:
         self.eval_globals = {}
     def connect(self, eventtime):
         self.output(help_txt)
-        self.output("="*20 + " attempting to connect " + "="*20)
+        self.output("=" * 20 + " attempting to connect " + "=" * 20)
         if self.canbus_iface is not None:
             self.ser.connect_canbus(self.serialport, self.canbus_nodeid,
                                     self.canbus_iface)
@@ -74,7 +74,7 @@ class KeyboardReader:
         self.ser.handle_default = self.handle_default
         self.ser.register_response(self.handle_output, '#output')
         self.mcu_freq = msgparser.get_constant_float('CLOCK_FREQ')
-        self.output("="*20 + "       connected       " + "="*20)
+        self.output("=" * 20 + "       connected       " + "=" * 20)
         return self.reactor.NEVER
     def output(self, msg):
         sys.stdout.write("%s\n" % (msg,))
@@ -164,17 +164,17 @@ class KeyboardReader:
             try:
                 for i in range(1, len(evalparts), 2):
                     e = eval(evalparts[i], dict(self.eval_globals))
-                    if type(e) == type(0.):
+                    if isinstance(type(e), type(0.)):
                         e = int(e)
                     evalparts[i] = str(e)
-            except:
+            except Exception:
                 self.output("Unable to evaluate: %s" % (line,))
                 return None
             line = ''.join(evalparts)
             self.output("Eval: %s" % (line,))
         try:
             line = self.pins.update_command(line).strip()
-        except:
+        except Exception:
             self.output("Unable to map pin: %s" % (line,))
             return None
         if line:

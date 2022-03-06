@@ -8,8 +8,7 @@ import sys, os, optparse, socket, fcntl, select, json, errno, time
 
 # Set a file-descriptor as non-blocking
 def set_nonblock(fd):
-    fcntl.fcntl(fd, fcntl.F_SETFL
-                , fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
 def webhook_socket_create(uds_filename):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -60,7 +59,7 @@ class KeyboardReader:
                 continue
             try:
                 m = json.loads(line)
-            except:
+            except Exception:
                 sys.stderr.write("ERROR: Unable to parse line\n")
                 continue
             cm = json.dumps(m, separators=(',', ':'))

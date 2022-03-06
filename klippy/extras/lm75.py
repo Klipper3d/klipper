@@ -62,7 +62,7 @@ class LM75:
         try:
             prodid = self.read_register('PRODID', 1)[0]
             logging.info("lm75: Chip ID %#x" % prodid)
-        except:
+        except Exception:
             pass
 
     def _sample_lm75(self, eventtime):

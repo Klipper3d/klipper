@@ -137,7 +137,7 @@ class GCodeMove:
                     raise gcmd.error("Invalid speed in '%s'"
                                      % (gcmd.get_commandline(),))
                 self.speed = gcode_speed * self.speed_factor
-        except ValueError as e:
+        except ValueError:
             raise gcmd.error("Unable to parse move '%s'"
                              % (gcmd.get_commandline(),))
         self.move_with_transform(self.last_position, self.speed)
@@ -256,11 +256,11 @@ class GCodeMove:
         kin_pos = " ".join(["%s:%.6f" % (a, v) for a, v in kinfo])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
             "XYZE", toolhead.get_position())])
-        gcode_pos = " ".join(["%s:%.6f"  % (a, v)
+        gcode_pos = " ".join(["%s:%.6f" % (a, v)
                               for a, v in zip("XYZE", self.last_position)])
-        base_pos = " ".join(["%s:%.6f"  % (a, v)
+        base_pos = " ".join(["%s:%.6f" % (a, v)
                              for a, v in zip("XYZE", self.base_position)])
-        homing_pos = " ".join(["%s:%.6f"  % (a, v)
+        homing_pos = " ".join(["%s:%.6f" % (a, v)
                                for a, v in zip("XYZ", self.homing_position)])
         gcmd.respond_info("mcu: %s\n"
                           "stepper: %s\n"

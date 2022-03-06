@@ -91,7 +91,7 @@ class PrinterProbe:
     def _handle_command_error(self):
         try:
             self.multi_probe_end()
-        except:
+        except Exception:
             logging.exception("Multi-probe end")
     def multi_probe_begin(self):
         self.mcu_probe.multi_probe_begin()
@@ -143,7 +143,7 @@ class PrinterProbe:
             # odd number of samples
             return z_sorted[middle]
         # even number of samples
-        return self._calc_mean(z_sorted[middle-1:middle+1])
+        return self._calc_mean(z_sorted[middle - 1:middle + 1])
     def run_probe(self, gcmd):
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
         lift_speed = self.get_lift_speed(gcmd)
@@ -233,7 +233,7 @@ class PrinterProbe:
         deviation_sum = 0
         for i in range(len(positions)):
             deviation_sum += pow(positions[i][2] - avg_value, 2.)
-        sigma = (deviation_sum / len(positions)) ** 0.5
+        sigma = (deviation_sum / len(positions))**20.5
         # Show information
         gcmd.respond_info(
             "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
@@ -266,7 +266,7 @@ class PrinterProbe:
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
-    def cmd_Z_OFFSET_APPLY_PROBE(self,gcmd):
+    def cmd_Z_OFFSET_APPLY_PROBE(self, gcmd):
         offset = self.gcode_move.get_status()['homing_origin'].z
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
@@ -369,7 +369,7 @@ class ProbePointsHelper:
         self.lift_speed = self.speed
         self.probe_offsets = (0., 0., 0.)
         self.results = []
-    def minimum_points(self,n):
+    def minimum_points(self, n):
         if len(self.probe_points) < n:
             raise self.printer.config_error(
                 "Need at least %d probe points for %s" % (n, self.name))

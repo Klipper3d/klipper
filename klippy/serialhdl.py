@@ -55,7 +55,7 @@ class SerialReader:
                 with self.lock:
                     hdl = self.handlers.get(hdl, self.handle_default)
                     hdl(params)
-            except:
+            except Exception:
                 logging.exception("%sException in serial callback",
                                   self.warn_prefix)
     def _error(self, msg, *params):
@@ -67,7 +67,7 @@ class SerialReader:
             msg = "identify offset=%d count=%d" % (len(identify_data), 40)
             try:
                 params = self.send_with_response(msg, 'identify_response')
-            except error as e:
+            except error:
                 logging.exception("%sWait for identify_response",
                                   self.warn_prefix)
                 return None
@@ -110,7 +110,7 @@ class SerialReader:
     def connect_canbus(self, canbus_uuid, canbus_nodeid, canbus_iface="can0"):
         import can # XXX
         txid = canbus_nodeid * 2 + 256
-        filters = [{"can_id": txid+1, "can_mask": 0x7ff, "extended": False}]
+        filters = [{"can_id": txid + 1, "can_mask": 0x7ff, "extended": False}]
         # Prep for SET_NODEID command
         try:
             uuid = int(canbus_uuid, 16)
@@ -118,7 +118,7 @@ class SerialReader:
             uuid = -1
         if uuid < 0 or uuid > 0xffffffffffff:
             self._error("Invalid CAN uuid")
-        uuid = [(uuid >> (40 - i*8)) & 0xff for i in range(6)]
+        uuid = [(uuid >> (40 - i * 8)) & 0xff for i in range(6)]
         CANBUS_ID_ADMIN = 0x3f0
         CMD_SET_NODEID = 0x01
         set_id_cmd = [CMD_SET_NODEID] + uuid + [canbus_nodeid]
@@ -150,7 +150,7 @@ class SerialReader:
                 got_uuid = bytearray(params['canbus_uuid'])
                 if got_uuid == bytearray(uuid):
                     break
-            except:
+            except Exception:
                 logging.exception("%sError in canbus_uuid check",
                                   self.warn_prefix)
             logging.info("%sFailed to match canbus_uuid - retrying..",

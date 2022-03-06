@@ -3,7 +3,7 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, bisect
+import bisect
 
 class ManualProbe:
     def __init__(self, config):
@@ -43,7 +43,7 @@ class ManualProbe:
     cmd_Z_ENDSTOP_CALIBRATE_help = "Calibrate a Z endstop"
     def cmd_Z_ENDSTOP_CALIBRATE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.z_endstop_finalize)
-    def cmd_Z_OFFSET_APPLY_ENDSTOP(self,gcmd):
+    def cmd_Z_OFFSET_APPLY_ENDSTOP(self, gcmd):
         offset = self.gcode_move.get_status()['homing_origin'].z
         configfile = self.printer.lookup_object('configfile')
         if offset == 0:
@@ -63,7 +63,7 @@ def verify_no_manual_probe(printer):
     gcode = printer.lookup_object('gcode')
     try:
         gcode.register_command('ACCEPT', 'dummy')
-    except printer.config_error as e:
+    except printer.config_error:
         raise gcode.error(
             "Already in a manual Z probe. Use ABORT to abort it.")
     gcode.register_command('ACCEPT', None)
@@ -114,7 +114,7 @@ class ManualProbeHelper:
             if curpos[2] < z_bob_pos:
                 self.toolhead.manual_move([None, None, z_bob_pos], self.speed)
             self.toolhead.manual_move([None, None, z_pos], self.speed)
-        except self.printer.command_error as e:
+        except self.printer.command_error:
             self.finalize(False)
             raise
     def report_z_status(self, warn_no_change=False, prev_pos=None):

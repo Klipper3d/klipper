@@ -94,7 +94,7 @@ class DataLogger:
         for part in parts:
             try:
                 msg = json.loads(part)
-            except:
+            except Exception:
                 self.error("ERROR: Unable to parse line")
                 continue
             self.logger.add_data(part)
@@ -120,7 +120,7 @@ class DataLogger:
                 for fd, event in res:
                     if fd == self.webhook_socket.fileno():
                         self.process_socket()
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             self.finish("Keyboard Interrupt")
     # Query response handlers
     def send_subscribe(self, msg_id, method, params, cb=None, async_cb=None):
@@ -182,7 +182,7 @@ def nice():
     try:
         # Try to re-nice writing process
         os.nice(10)
-    except:
+    except Exception:
         pass
 
 def main():

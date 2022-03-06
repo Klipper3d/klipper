@@ -43,7 +43,7 @@ class VirtualSD:
                 readcount = self.file_position - readpos
                 self.current_file.seek(readpos)
                 data = self.current_file.read(readcount + 128)
-            except:
+            except Exception:
                 logging.exception("virtual_sdcard shutdown read")
                 return
             logging.info("Virtual sdcard (%d): %s\nUpcoming (%d): %s",
@@ -59,7 +59,7 @@ class VirtualSD:
             for root, dirs, files in os.walk(
                     self.sdcard_dirname, followlinks=True):
                 for name in files:
-                    ext = name[name.rfind('.')+1:]
+                    ext = name[name.rfind('.') + 1:]
                     if ext not in VALID_GCODE_EXTS:
                         continue
                     full_path = os.path.join(root, name)
@@ -75,7 +75,7 @@ class VirtualSD:
                         for fname in sorted(filenames, key=str.lower)
                         if not fname.startswith('.')
                         and os.path.isfile((os.path.join(dname, fname)))]
-            except:
+            except Exception:
                 logging.exception("virtual_sdcard get_file_list")
                 raise self.gcode.error("Unable to get file list")
     def get_status(self, eventtime):
@@ -163,7 +163,7 @@ class VirtualSD:
             filename = orig[orig.find("M23") + 4:].split()[0].strip()
             if '*' in filename:
                 filename = filename[:filename.find('*')].strip()
-        except:
+        except Exception:
             raise gcmd.error("Unable to extract filename")
         if filename.startswith('/'):
             filename = filename[1:]
@@ -181,7 +181,7 @@ class VirtualSD:
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
-        except:
+        except Exception:
             logging.exception("virtual_sdcard file open")
             raise gcmd.error("Unable to open file")
         gcmd.respond_raw("File opened:%s Size:%d" % (filename, fsize))
@@ -221,7 +221,7 @@ class VirtualSD:
         self.reactor.unregister_timer(self.work_timer)
         try:
             self.current_file.seek(self.file_position)
-        except:
+        except Exception:
             logging.exception("virtual_sdcard seek")
             self.work_timer = None
             return self.reactor.NEVER
@@ -235,7 +235,7 @@ class VirtualSD:
                 # Read more data
                 try:
                     data = self.current_file.read(8192)
-                except:
+                except Exception:
                     logging.exception("virtual_sdcard read")
                     break
                 if not data:
@@ -265,7 +265,7 @@ class VirtualSD:
             except self.gcode.error as e:
                 error_message = str(e)
                 break
-            except:
+            except Exception:
                 logging.exception("virtual_sdcard dispatch")
                 break
             self.cmd_from_sd = False
@@ -274,7 +274,7 @@ class VirtualSD:
             if self.next_file_position != next_file_position:
                 try:
                     self.current_file.seek(self.file_position)
-                except:
+                except Exception:
                     logging.exception("virtual_sdcard seek")
                     self.work_timer = None
                     return self.reactor.NEVER

@@ -19,7 +19,7 @@ class BedMeshError(Exception):
 
 # PEP 485 isclose()
 def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 # return true if a coordinate is within the region
 # specified by min_c and max_c
@@ -59,7 +59,7 @@ def parse_config_pair(config, option, default, minval=None, maxval=None):
 def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
     try:
         pair = [int(v.strip()) for v in gcmd.get(name).split(',')]
-    except:
+    except Exception:
         raise gcmd.error("Unable to parse parameter '%s'" % (name,))
     if len(pair) != 2:
         if len(pair) != 1:
@@ -79,7 +79,7 @@ def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
 def parse_gcmd_coord(gcmd, name):
     try:
         v1, v2 = [float(v.strip()) for v in gcmd.get(name).split(',')]
-    except:
+    except Exception:
         raise gcmd.error("Unable to parse parameter '%s'" % (name,))
     return v1, v2
 
@@ -338,7 +338,7 @@ class BedMeshCalibrate:
                     points.append((pos_x, pos_y))
                 else:
                     # round bed, check distance from origin
-                    dist_from_origin = math.sqrt(pos_x*pos_x + pos_y*pos_y)
+                    dist_from_origin = math.sqrt(pos_x * pos_x + pos_y * pos_y)
                     if dist_from_origin <= self.radius:
                         points.append(
                             (self.origin[0] + pos_x, self.origin[1] + pos_y))
@@ -376,7 +376,7 @@ class BedMeshCalibrate:
                     if within(ac, (min_x, min_y), (max_x, max_y), .000001):
                         valid_coords.append(ac)
                 else:
-                    dist_from_origin = math.sqrt(ac[0]*ac[0] + ac[1]*ac[1])
+                    dist_from_origin = math.sqrt(ac[0] * ac[0] + ac[1] * ac[1])
                     if dist_from_origin <= self.radius:
                         valid_coords.append(ac)
             if not valid_coords:
@@ -467,7 +467,7 @@ class BedMeshCalibrate:
                         raise config.error(
                             "bed_mesh: Existing faulty_region_%d %s overlaps "
                             "added faulty_region_%d %s"
-                            % (j+1, repr([prev_c1, prev_c3]),
+                            % (j + 1, repr([prev_c1, prev_c3]),
                                i, repr([c1, c3])))
                 # Validate that no new corner is within an existing region
                 for coord in [c1, c2, c3, c4]:
@@ -476,7 +476,7 @@ class BedMeshCalibrate:
                             "bed_mesh: Added faulty_region_%d %s overlaps "
                             "existing faulty_region_%d %s"
                             % (i, repr([c1, c3]),
-                               j+1, repr([prev_c1, prev_c3])))
+                               j + 1, repr([prev_c1, prev_c3])))
             self.faulty_regions.append((c1, c3))
         self._verify_algorithm(config.error)
     def _verify_algorithm(self, error):
@@ -625,7 +625,7 @@ class BedMeshCalibrate:
                 idx = i + idx_offset
                 # Add "normal" points
                 corrected_pts.extend(positions[start_idx:idx])
-                avg_z = sum([p[2] for p in positions[idx:idx+len(pts)]]) \
+                avg_z = sum([p[2] for p in positions[idx:idx + len(pts)]]) \
                     / len(pts)
                 idx_offset += len(pts) - 1
                 start_idx = idx + len(pts)
@@ -698,7 +698,7 @@ class BedMeshCalibrate:
                 if buf_cnt == 0:
                     continue
                 left_buffer = [row[0]] * buf_cnt
-                right_buffer = [row[row_size-1]] * buf_cnt
+                right_buffer = [row[row_size - 1]] * buf_cnt
                 row[0:0] = left_buffer
                 row.extend(right_buffer)
 
@@ -759,7 +759,7 @@ class MoveSplitter:
         self.traverse_complete = False
         self.distance_checked = 0.
         axes_d = [self.next_pos[i] - self.prev_pos[i] for i in range(4)]
-        self.total_move_length = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        self.total_move_length = math.sqrt(sum([d * d for d in axes_d[:3]]))
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
     def _calc_z_offset(self, pos):
         z = self.z_mesh.calc_z(pos[0], pos[1])
@@ -907,8 +907,8 @@ class ZMesh:
             tbl = self.mesh_matrix
             tx, xidx = self._get_linear_index(x + self.mesh_offsets[0], 0)
             ty, yidx = self._get_linear_index(y + self.mesh_offsets[1], 1)
-            z0 = lerp(tx, tbl[yidx][xidx], tbl[yidx][xidx+1])
-            z1 = lerp(tx, tbl[yidx+1][xidx], tbl[yidx+1][xidx+1])
+            z0 = lerp(tx, tbl[yidx][xidx], tbl[yidx][xidx + 1])
+            z1 = lerp(tx, tbl[yidx + 1][xidx], tbl[yidx + 1][xidx + 1])
             return lerp(ty, z0, z1)
         else:
             # No mesh table generated, no z-adjustment
@@ -945,7 +945,7 @@ class ZMesh:
         y_mult = self.y_mult
         self.mesh_matrix = \
             [[0. if ((i % x_mult) or (j % y_mult))
-             else z_matrix[j//y_mult][i//x_mult]
+             else z_matrix[j // y_mult][i // x_mult]
              for i in range(self.mesh_x_count)]
              for j in range(self.mesh_y_count)]
         xpts, ypts = self._get_lagrange_coords()
@@ -987,10 +987,10 @@ class ZMesh:
                 d *= (lpts[i] - lpts[j])
             if axis == 0:
                 # Calc X-Axis
-                z = self.mesh_matrix[vec][i*self.x_mult]
+                z = self.mesh_matrix[vec][i * self.x_mult]
             else:
                 # Calc Y-Axis
-                z = self.mesh_matrix[i*self.y_mult][vec]
+                z = self.mesh_matrix[i * self.y_mult][vec]
             total += z * n / d
         return total
     def _sample_bicubic(self, z_matrix):
@@ -1000,7 +1000,7 @@ class ZMesh:
         c = self.mesh_params['tension']
         self.mesh_matrix = \
             [[0. if ((i % x_mult) or (j % y_mult))
-             else z_matrix[j//y_mult][i//x_mult]
+             else z_matrix[j // y_mult][i // x_mult]
              for i in range(self.mesh_x_count)]
              for j in range(self.mesh_y_count)]
         # Interpolate X values
@@ -1027,7 +1027,7 @@ class ZMesh:
         if x < x_mult:
             p0 = p1 = x_row[0]
             p2 = x_row[x_mult]
-            p3 = x_row[2*x_mult]
+            p3 = x_row[2 * x_mult]
             t = x / float(x_mult)
         elif x > last_pt:
             p0 = x_row[last_pt - x_mult]
@@ -1041,7 +1041,7 @@ class ZMesh:
                     p0 = x_row[i - x_mult]
                     p1 = x_row[i]
                     p2 = x_row[i + x_mult]
-                    p3 = x_row[i + 2*x_mult]
+                    p3 = x_row[i + 2 * x_mult]
                     t = (x - i) / float(x_mult)
                     found = True
                     break
@@ -1057,7 +1057,7 @@ class ZMesh:
         if y < y_mult:
             p0 = p1 = y_col[0][x]
             p2 = y_col[y_mult][x]
-            p3 = y_col[2*y_mult][x]
+            p3 = y_col[2 * y_mult][x]
             t = y / float(y_mult)
         elif y > last_pt:
             p0 = y_col[last_pt - y_mult][x]
@@ -1071,7 +1071,7 @@ class ZMesh:
                     p0 = y_col[i - y_mult][x]
                     p1 = y_col[i][x]
                     p2 = y_col[i + y_mult][x]
-                    p3 = y_col[i + 2*y_mult][x]
+                    p3 = y_col[i + 2 * y_mult][x]
                     t = (y - i) / float(y_mult)
                     found = True
                     break
@@ -1081,13 +1081,13 @@ class ZMesh:
         return p0, p1, p2, p3, t
     def _cardinal_spline(self, p, tension):
         t = p[4]
-        t2 = t*t
-        t3 = t2*t
+        t2 = t * t
+        t3 = t2 * t
         m1 = tension * (p[2] - p[0])
         m2 = tension * (p[3] - p[1])
-        a = p[1] * (2*t3 - 3*t2 + 1)
-        b = p[2] * (-2*t3 + 3*t2)
-        c = m1 * (t3 - 2*t2 + t)
+        a = p[1] * (2 * t3 - 3 * t2 + 1)
+        b = p[2] * (-2 * t3 + 3 * t2)
+        c = m1 * (t3 - 2 * t2 + t)
         d = m2 * (t3 - t2)
         return a + b + c + d
 

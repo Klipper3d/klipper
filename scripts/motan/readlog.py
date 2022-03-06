@@ -3,7 +3,7 @@
 # Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import json, zlib
+import json, zlib, logging
 
 class error(Exception):
     pass
@@ -111,7 +111,7 @@ class HandleTrapQ:
         move, in_range = self._find_move(req_time)
         print_time, move_t, start_v, accel, start_pos, axes_r = move
         mtime = max(0., min(move_t, req_time - print_time))
-        dist = (start_v + .5 * accel * mtime) * mtime;
+        dist = (start_v + .5 * accel * mtime) * mtime
         return start_pos[self.axis] + axes_r[self.axis] * dist
     def _pull_axis_velocity(self, req_time):
         move, in_range = self._find_move(req_time)
@@ -395,7 +395,7 @@ class JsonLogReader:
                 msg = msgs.pop(0)
                 try:
                     json_msg = json.loads(msg)
-                except:
+                except Exception:
                     logging.exception("Unable to parse line")
                     continue
                 return json_msg
@@ -475,10 +475,10 @@ def param_split(line):
     for i, c in enumerate(line):
         if not level and c == ',':
             out.append(line[prev:i])
-            prev = i+1
+            prev = i + 1
         elif c == '(':
             level += 1
-        elif level and c== ')':
+        elif level and c == ')':
             level -= 1
     out.append(line[prev:])
     return out

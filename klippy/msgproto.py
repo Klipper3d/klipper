@@ -12,11 +12,11 @@ DefaultMessages = {
 
 MESSAGE_MIN = 5
 MESSAGE_MAX = 64
-MESSAGE_HEADER_SIZE  = 2
+MESSAGE_HEADER_SIZE = 2
 MESSAGE_TRAILER_SIZE = 3
 MESSAGE_POS_LEN = 0
 MESSAGE_POS_SEQ = 1
-MESSAGE_TRAILER_CRC  = 3
+MESSAGE_TRAILER_CRC = 3
 MESSAGE_TRAILER_SYNC = 1
 MESSAGE_PAYLOAD_MAX = MESSAGE_MAX - MESSAGE_MIN
 MESSAGE_SEQ_MASK = 0x0f
@@ -56,7 +56,7 @@ class PT_uint32:
         while c & 0x80:
             c = s[pos]
             pos += 1
-            v = (v<<7) | (c & 0x7f)
+            v = (v << 7) | (c & 0x7f)
         if not self.signed:
             v = int(v & 0xffffffff)
         return v, pos
@@ -80,7 +80,7 @@ class PT_string:
         out.extend(bytearray(v))
     def parse(self, s, pos):
         l = s[pos]
-        return bytes(bytearray(s[pos+1:pos+l+1])), pos+l+1
+        return bytes(bytearray(s[pos + 1:pos + l + 1])), pos + l + 1
 class PT_progmem_buffer(PT_string):
     pass
 class PT_buffer(PT_string):
@@ -144,15 +144,15 @@ def lookup_output_params(msgformat):
         pos = args.find('%')
         if pos < 0:
             break
-        if pos+1 >= len(args) or args[pos+1] != '%':
+        if pos + 1 >= len(args) or args[pos + 1] != '%':
             for i in range(4):
-                t = MessageTypes.get(args[pos:pos+1+i])
+                t = MessageTypes.get(args[pos:pos + 1 + i])
                 if t is not None:
                     param_types.append(t)
                     break
             else:
                 raise error("Invalid output format for '%s'" % (msgformat,))
-        args = args[pos+1:]
+        args = args[pos + 1:]
     return param_types
 
 # Update the message format to be compatible with python's % operator
@@ -223,7 +223,7 @@ class UnknownFormat:
     def parse(self, s, pos):
         msgid = s[pos]
         msg = bytes(bytearray(s))
-        return {'#msgid': msgid, '#msg': msg}, len(s)-MESSAGE_TRAILER_SIZE
+        return {'#msgid': msgid, '#msg': msg}, len(s) - MESSAGE_TRAILER_SIZE
     def format_params(self, params):
         return "#unknown %s" % (repr(params['#msg']),)
 
@@ -254,10 +254,10 @@ class MessageParser:
         if len(s) < msglen:
             # Need more data
             return 0
-        if s[msglen-MESSAGE_TRAILER_SYNC] != MESSAGE_SYNC:
+        if s[msglen - MESSAGE_TRAILER_SYNC] != MESSAGE_SYNC:
             return -1
-        msgcrc = s[msglen-MESSAGE_TRAILER_CRC:msglen-MESSAGE_TRAILER_CRC+2]
-        crc = crc16_ccitt(s[:msglen-MESSAGE_TRAILER_SIZE])
+        msgcrc = s[msglen - MESSAGE_TRAILER_CRC:msglen - MESSAGE_TRAILER_CRC + 2]
+        crc = crc16_ccitt(s[:msglen - MESSAGE_TRAILER_SIZE])
         if crc != msgcrc:
             #logging.debug("got crc %s vs %s", repr(crc), repr(msgcrc))
             return -1
@@ -271,7 +271,7 @@ class MessageParser:
             mid = self.messages_by_id.get(msgid, self.unknown)
             params, pos = mid.parse(s, pos)
             out.append(mid.format_params(params))
-            if pos >= len(s)-MESSAGE_TRAILER_SIZE:
+            if pos >= len(s) - MESSAGE_TRAILER_SIZE:
                 break
         return out
     def format_params(self, params):
@@ -287,7 +287,7 @@ class MessageParser:
         msgid = s[MESSAGE_HEADER_SIZE]
         mid = self.messages_by_id.get(msgid, self.unknown)
         params, pos = mid.parse(s, MESSAGE_HEADER_SIZE)
-        if pos != len(s)-MESSAGE_TRAILER_SIZE:
+        if pos != len(s) - MESSAGE_TRAILER_SIZE:
             self._error("Extra data at end of message")
         params['#name'] = mid.name
         return params
@@ -337,16 +337,16 @@ class MessageParser:
                 else:
                     tval = value
                 argparts[name] = tval
-        except error as e:
+        except error:
             raise
-        except:
+        except Exception:
             #logging.exception("Unable to extract params")
             self._error("Unable to extract params from: %s", msgname)
         try:
             cmd = mp.encode_by_name(**argparts)
-        except error as e:
+        except error:
             raise
-        except:
+        except Exception:
             #logging.exception("Unable to encode")
             self._error("Unable to encode: %s", msgname)
         return cmd
@@ -354,7 +354,7 @@ class MessageParser:
         for add_name, add_enums in enumerations.items():
             enums = self.enumerations.setdefault(add_name, {})
             for enum, value in add_enums.items():
-                if type(value) == type(0):
+                if isinstance(type(value), type(0)):
                     # Simple enumeration
                     enums[str(enum)] = value
                     continue
@@ -403,7 +403,7 @@ class MessageParser:
             self.config.update(data.get('config', {}))
             self.version = data.get('version', '')
             self.build_versions = data.get('build_versions', '')
-        except error as e:
+        except error:
             raise
         except Exception as e:
             logging.exception("process_identify error")
@@ -426,7 +426,7 @@ class MessageParser:
             self._error("Firmware constant '%s' not found", name)
         try:
             value = parser(self.config[name])
-        except:
+        except Exception:
             self._error("Unable to parse firmware constant %s: %s",
                         name, self.config[name])
         return value

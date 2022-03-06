@@ -22,7 +22,7 @@ class MenuKeys:
         if encoder_pins is not None:
             try:
                 pin1, pin2 = encoder_pins.split(',')
-            except:
+            except Exception:
                 raise config.error("Unable to parse encoder_pins")
             buttons.register_rotary_encoder(pin1.strip(), pin2.strip(),
                                             self.encoder_cw_callback,
@@ -62,8 +62,7 @@ class MenuKeys:
 
     # Rotary encoder callbacks
     def encoder_cw_callback(self, eventtime):
-        fast_rate = ((eventtime - self.last_encoder_cw_eventtime)
-                     <= self.encoder_fast_rate)
+        fast_rate = ((eventtime - self.last_encoder_cw_eventtime) <= self.encoder_fast_rate)
         self.last_encoder_cw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_up', eventtime)
@@ -71,8 +70,7 @@ class MenuKeys:
             self.callback('up', eventtime)
 
     def encoder_ccw_callback(self, eventtime):
-        fast_rate = ((eventtime - self.last_encoder_ccw_eventtime)
-                     <= self.encoder_fast_rate)
+        fast_rate = ((eventtime - self.last_encoder_ccw_eventtime) <= self.encoder_fast_rate)
         self.last_encoder_ccw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_down', eventtime)

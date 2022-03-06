@@ -26,7 +26,7 @@ class SaveVariables:
             if varfile.has_section('Variables'):
                 for name, val in varfile.items('Variables'):
                     allvars[name] = ast.literal_eval(val)
-        except:
+        except Exception:
             msg = "Unable to parse existing variable file"
             logging.exception(msg)
             raise self.printer.command_error(msg)
@@ -37,7 +37,7 @@ class SaveVariables:
         value = gcmd.get('VALUE')
         try:
             value = ast.literal_eval(value)
-        except ValueError as e:
+        except ValueError:
             raise gcmd.error("Unable to parse '%s' as a literal" % (value,))
         newvars = dict(self.allVariables)
         newvars[varname] = value
@@ -50,7 +50,7 @@ class SaveVariables:
             f = open(self.filename, "w")
             varfile.write(f)
             f.close()
-        except:
+        except Exception:
             msg = "Unable to save variable"
             logging.exception(msg)
             raise gcmd.error(msg)

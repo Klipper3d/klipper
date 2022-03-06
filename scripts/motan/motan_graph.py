@@ -9,7 +9,7 @@ import matplotlib
 import readlog, analyzers
 try:
     import urlparse
-except:
+except Exception:
     import urllib.parse as urlparse
 
 

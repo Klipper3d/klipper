@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, pty, fcntl, termios, signal, logging, json, time
-import subprocess, traceback, shlex
+import subprocess, traceback
 
 
 ######################################################################
@@ -18,8 +18,7 @@ fix_sigint()
 
 # Set a file-descriptor as non-blocking
 def set_nonblock(fd):
-    fcntl.fcntl(fd, fcntl.F_SETFL
-                , fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
 # Clear HUPCL flag
 def clear_hupcl(fd):
@@ -58,7 +57,7 @@ def dump_file_stats(build_dir, filename):
         fsize = os.path.getsize(fname)
         timestr = time.asctime(time.localtime(mtime))
         logging.info("Build file %s(%d): %s", fname, fsize, timestr)
-    except:
+    except Exception:
         logging.info("No build file %s", fname)
 
 # Try to log information on the last mcu build
@@ -68,24 +67,24 @@ def dump_mcu_build():
     dump_file_stats(build_dir, '.config')
     try:
         f = open(os.path.join(build_dir, '.config'), 'r')
-        data = f.read(32*1024)
+        data = f.read(32 * 1024)
         f.close()
         logging.info("========= Last MCU build config =========\n%s"
                      "=======================", data)
-    except:
+    except Exception:
         pass
     # Try to log last mcu build version
     dump_file_stats(build_dir, 'out/klipper.dict')
     try:
         f = open(os.path.join(build_dir, 'out/klipper.dict'), 'r')
-        data = f.read(32*1024)
+        data = f.read(32 * 1024)
         f.close()
         data = json.loads(data)
         logging.info("Last MCU build version: %s", data.get('version', ''))
         logging.info("Last MCU build tools: %s", data.get('build_versions', ''))
         cparts = ["%s=%s" % (k, v) for k, v in data.get('config', {}).items()]
         logging.info("Last MCU build config: %s", " ".join(cparts))
-    except:
+    except Exception:
         pass
     dump_file_stats(build_dir, 'out/klipper.elf')
 
@@ -115,7 +114,7 @@ def get_cpu_info():
         f = open('/proc/cpuinfo', 'r')
         data = f.read()
         f.close()
-    except (IOError, OSError) as e:
+    except (IOError, OSError):
         logging.debug("Exception on read /proc/cpuinfo: %s",
                       traceback.format_exc())
         return "?"
@@ -149,7 +148,7 @@ def get_git_version(from_file=True):
             return str(ver.strip().decode())
         else:
             logging.debug("Error getting git version: %s", err)
-    except:
+    except Exception:
         logging.debug("Exception on run: %s", traceback.format_exc())
 
     if from_file:

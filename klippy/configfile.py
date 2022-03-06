@@ -33,9 +33,9 @@ class ConfigWrapper:
                         % (option, self.section))
         try:
             v = parser(self.section, option)
-        except self.error as e:
+        except self.error:
             raise
-        except:
+        except Exception:
             raise error("Unable to parse option '%s' in section '%s'"
                         % (option, self.section))
         if note_valid:
@@ -153,7 +153,7 @@ class PrinterConfig:
             f = open(filename, 'r')
             data = f.read()
             f.close()
-        except:
+        except Exception:
             msg = "Unable to open config file %s" % (filename,)
             logging.exception(msg)
             raise error(msg)
@@ -173,8 +173,8 @@ class PrinterConfig:
         out = [""]
         for line in autosave_data.split('\n'):
             if ((not line.startswith("#*#")
-                 or (len(line) >= 4 and not line.startswith("#*# ")))
-                and autosave_data):
+               or (len(line) >= 4 and not line.startswith("#*# ")))
+               and autosave_data):
                 logging.warn("Can't read autosave from config file"
                              " - modifications after header")
                 return data, ""
@@ -369,7 +369,7 @@ class PrinterConfig:
             data = self._read_config_file(cfgname)
             regular_data, old_autosave_data = self._find_autosave_data(data)
             config = self._build_config_wrapper(regular_data, cfgname)
-        except error as e:
+        except error:
             msg = "Unable to parse existing config on SAVE_CONFIG"
             logging.exception(msg)
             raise gcode.error(msg)
@@ -392,7 +392,7 @@ class PrinterConfig:
             f.close()
             os.rename(cfgname, backup_name)
             os.rename(temp_name, cfgname)
-        except:
+        except Exception:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
             raise gcode.error(msg)

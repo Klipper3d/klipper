@@ -21,7 +21,7 @@ def enter_bootloader(device):
         termios.tcsetattr(fd, termios.TCSANOW, t)
         fcntl.ioctl(fd, termios.TIOCMBIC, struct.pack('I', termios.TIOCM_DTR))
         f.close()
-    except (IOError, OSError) as e:
+    except (IOError, OSError):
         pass
 
 # Translate a serial device name to a stable serial name in /dev/serial/by-path/
@@ -39,7 +39,7 @@ def translate_serial_to_usb_path(device):
     fname = os.path.basename(realdev)
     try:
         lname = os.readlink("/sys/class/tty/" + fname)
-    except OSError as e:
+    except OSError:
         raise error("Unable to find tty device")
     ttypath_r = re.compile(r".*/usb\d+.*/(?P<path>\d+-[0-9.]+):\d+\.\d+/.*")
     m = ttypath_r.match(lname)
@@ -89,7 +89,7 @@ def flash_bossac(device, binfile, extra_flags=[]):
             if "-b" not in extra_flags:
                 wait_path(pathname)
                 subprocess.check_output(args, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             pass
 
 # Invoke the dfu-util program
@@ -106,7 +106,7 @@ def call_dfuutil(flags, binfile, sudo):
 def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
     hexfmt_r = re.compile(r"^[a-fA-F0-9]{4}:[a-fA-F0-9]{4}$")
     if hexfmt_r.match(device.strip()):
-        call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile, sudo)
+        call_dfuutil(["-d", "," + device.strip()] + extra_flags, binfile, sudo)
         return
     buspath, devpath = translate_serial_to_usb_path(device)
     enter_bootloader(device)

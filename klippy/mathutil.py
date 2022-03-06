@@ -55,7 +55,7 @@ def background_coordinate_descent(printer, adj_params, params, error_func):
         queuelogger.clear_bg_logging()
         try:
             res = coordinate_descent(adj_params, params, error_func)
-        except:
+        except Exception:
             child_conn.send((True, traceback.format_exc()))
             child_conn.close()
             return
@@ -103,7 +103,7 @@ def trilateration(sphere_coords, radius2):
     j = matrix_dot(ey, s31)
 
     x = (radius2[0] - radius2[1] + d**2) / (2. * d)
-    y = (radius2[0] - radius2[2] - x**2 + (x-i)**2 + j**2) / (2. * j)
+    y = (radius2[0] - radius2[2] - x**2 + (x - i)**2 + j**2) / (2. * j)
     z = -math.sqrt(radius2[0] - x**2 - y**2)
 
     ex_x = matrix_mul(ex, x)
@@ -134,4 +134,4 @@ def matrix_sub(m1, m2):
     return [m1[0] - m2[0], m1[1] - m2[1], m1[2] - m2[2]]
 
 def matrix_mul(m1, s):
-    return [m1[0]*s, m1[1]*s, m1[2]*s]
+    return [m1[0] * s, m1[1] * s, m1[2] * s]

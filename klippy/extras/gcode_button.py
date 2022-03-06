@@ -39,7 +39,7 @@ class GCodeButton:
             template = self.release_template
         try:
             self.gcode.run_script(template.render())
-        except:
+        except Exception:
             logging.exception("Script running error")
 
     def get_status(self, eventtime=None):

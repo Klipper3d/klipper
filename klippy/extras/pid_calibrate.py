@@ -27,7 +27,7 @@ class PIDCalibrate:
         old_control = heater.set_control(calibrate)
         try:
             pheaters.set_temperature(heater, target, True)
-        except self.printer.command_error as e:
+        except self.printer.command_error:
             heater.set_control(old_control)
             raise
         heater.set_control(old_control)
@@ -109,10 +109,10 @@ class ControlAutoTune:
             self.peak = -9999999.
         if len(self.peaks) < 4:
             return
-        self.calc_pid(len(self.peaks)-1)
+        self.calc_pid(len(self.peaks) - 1)
     def calc_pid(self, pos):
-        temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
-        time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
+        temp_diff = self.peaks[pos][0] - self.peaks[pos - 1][0]
+        time_diff = self.peaks[pos][1] - self.peaks[pos - 2][1]
         # Use Astrom-Hagglund method to estimate Ku and Tu
         amplitude = .5 * abs(temp_diff)
         Ku = 4. * self.heater_max_power / (math.pi * amplitude)
@@ -127,9 +127,9 @@ class ControlAutoTune:
                      temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
     def calc_final_pid(self):
-        cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
+        cycle_times = [(self.peaks[pos][1] - self.peaks[pos - 2][1], pos)
                        for pos in range(4, len(self.peaks))]
-        midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
+        midpoint_pos = sorted(cycle_times)[len(cycle_times) // 2][1]
         return self.calc_pid(midpoint_pos)
     # Offline analysis helper
     def write_file(self, filename):

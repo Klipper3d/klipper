@@ -7,6 +7,10 @@ import math, collections
 import readlog
 
 
+class error(Exception):
+    pass
+
+
 ######################################################################
 # Analysis code
 ######################################################################
@@ -41,8 +45,8 @@ class GenDerivative:
     def generate_data(self):
         inv_seg_time = 1. / self.amanager.get_segment_time()
         data = self.amanager.get_datasets()[self.source]
-        deriv = [(data[i+1] - data[i]) * inv_seg_time
-                 for i in range(len(data)-1)]
+        deriv = [(data[i + 1] - data[i]) * inv_seg_time
+                 for i in range(len(data) - 1)]
         return [deriv[0]] + deriv
 AHandlers["derivative"] = GenDerivative
 

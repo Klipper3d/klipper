@@ -3,7 +3,7 @@
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math, os, time
+import math, os, time
 from . import shaper_calibrate
 
 class TestAxis:
@@ -15,7 +15,7 @@ class TestAxis:
         if vib_dir is None:
             self._vib_dir = (1., 0.) if axis == 'x' else (0., 1.)
         else:
-            s = math.sqrt(sum([d*d for d in vib_dir]))
+            s = math.sqrt(sum([d * d for d in vib_dir]))
             self._vib_dir = [d / s for d in vib_dir]
     def matches(self, chip_axis):
         if self._vib_dir[0] and 'x' in chip_axis:
@@ -40,7 +40,7 @@ def _parse_axis(gcmd, raw_axis):
     try:
         dir_x = float(dirs[0].strip())
         dir_y = float(dirs[1].strip())
-    except:
+    except Exception:
         raise gcmd.error(
                 "Unable to parse axis direction '%s'" % (raw_axis,))
     return TestAxis(vib_dir=(dir_x, dir_y))

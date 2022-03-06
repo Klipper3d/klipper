@@ -62,7 +62,7 @@ class GCodeCommand:
             return default
         try:
             value = parser(value)
-        except:
+        except Exception:
             raise self.error("Error on '%s': unable to parse %s"
                              % (self._commandline, value))
         if minval is not None and value < minval:
@@ -117,7 +117,7 @@ class GCodeDispatch:
             cmd = cmd.upper().split()[0]
             val = float(cmd[1:])
             return cmd[0].isupper() and cmd[1].isdigit()
-        except:
+        except Exception:
             return False
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if func is None:
@@ -201,7 +201,7 @@ class GCodeDispatch:
                 self.printer.send_event("gcode:command_error")
                 if not need_ack:
                     raise
-            except:
+            except Exception:
                 msg = 'Internal error on command:"%s"' % (cmd,)
                 logging.exception(msg)
                 self.printer.invoke_shutdown(msg)

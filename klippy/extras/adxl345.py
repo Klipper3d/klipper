@@ -87,7 +87,7 @@ class ADXL345QueryHelper:
             try:
                 # Try to re-nice writing process
                 os.nice(20)
-            except:
+            except Exception:
                 pass
             f = open(filename, "w")
             f.write("#time,accel_x,accel_y,accel_z\n")
@@ -171,7 +171,7 @@ class ADXLCommandHelper:
 
 # Helper class for chip clock synchronization via linear regression
 class ClockSyncRegression:
-    def __init__(self, mcu, chip_clock_smooth, decay = 1. / 20.):
+    def __init__(self, mcu, chip_clock_smooth, decay=1. / 20.):
         self.mcu = mcu
         self.chip_clock_smooth = chip_clock_smooth
         self.decay = decay
@@ -193,11 +193,11 @@ class ClockSyncRegression:
         diff_chip_clock = chip_clock - self.chip_clock_avg
         self.chip_clock_avg += decay * diff_chip_clock
         self.chip_clock_covariance = (1. - decay) * (
-            self.chip_clock_covariance + diff_mcu_clock*diff_chip_clock*decay)
+            self.chip_clock_covariance + diff_mcu_clock * diff_chip_clock * decay)
     def set_last_chip_clock(self, chip_clock):
         base_mcu, base_chip, inv_cfreq = self.get_clock_translation()
         self.last_chip_clock = chip_clock
-        self.last_exp_mcu_clock = base_mcu + (chip_clock-base_chip) * inv_cfreq
+        self.last_exp_mcu_clock = base_mcu + (chip_clock - base_chip) * inv_cfreq
     def get_clock_translation(self):
         inv_chip_freq = self.mcu_clock_variance / self.chip_clock_covariance
         if not self.last_chip_clock:
@@ -230,7 +230,7 @@ class ADXL345:
         self.query_rate = 0
         am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
               '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
-        axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
+        axes_map = config.getlist('axes_map', ('x', 'y', 'z'), count=3)
         if any([a not in am for a in axes_map]):
             raise config.error("Invalid adxl345 axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
@@ -284,10 +284,9 @@ class ADXL345:
         stored_val = self.read_reg(reg)
         if stored_val != val:
             raise self.printer.command_error(
-                    "Failed to set ADXL345 register [0x%x] to 0x%x: got 0x%x. "
-                    "This is generally indicative of connection problems "
-                    "(e.g. faulty wiring) or a faulty adxl345 chip." % (
-                        reg, val, stored_val))
+                "Failed to set ADXL345 register [0x%x] to 0x%x: got 0x%x. "
+                "This is generally indicative of connection problems "
+                "(e.g. faulty wiring) or a faulty adxl345 chip." % (reg, val, stored_val))
     # Measurement collection
     def is_measuring(self):
         return self.query_rate > 0
@@ -309,7 +308,7 @@ class ADXL345:
             d = bytearray(params['data'])
             msg_cdiff = seq * SAMPLES_PER_BLOCK - chip_base
             for i in range(len(d) // BYTES_PER_SAMPLE):
-                d_xyz = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
+                d_xyz = d[i * BYTES_PER_SAMPLE:(i + 1) * BYTES_PER_SAMPLE]
                 xlow, ylow, zlow, xzhigh, yzhigh = d_xyz
                 if yzhigh & 0x80:
                     self.last_error_count += 1

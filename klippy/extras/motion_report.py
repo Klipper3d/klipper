@@ -30,7 +30,7 @@ class APIDumpHelper:
             return reactor.NEVER
         try:
             self.startstop_cb(False)
-        except self.printer.command_error as e:
+        except self.printer.command_error:
             logging.exception("API Dump Helper stop callback error")
             self.clients.clear()
         self.is_started = False
@@ -44,7 +44,7 @@ class APIDumpHelper:
         self.is_started = True
         try:
             self.startstop_cb(True)
-        except self.printer.command_error as e:
+        except self.printer.command_error:
             logging.exception("API Dump Helper start callback error")
             self.is_started = False
             self.clients.clear()
@@ -66,7 +66,7 @@ class APIDumpHelper:
     def _update(self, eventtime):
         try:
             msg = self.data_cb(eventtime)
-        except self.printer.command_error as e:
+        except self.printer.command_error:
             logging.exception("API Dump Helper data callback error")
             return self._stop()
         if not msg:
@@ -119,9 +119,9 @@ class DumpStepper:
             res.append((data, count))
             if count < len(data):
                 break
-            end_clock = data[count-1].first_clock
+            end_clock = data[count - 1].first_clock
         res.reverse()
-        return ([d[i] for d, cnt in res for i in range(cnt-1, -1, -1)], res)
+        return ([d[i] for d, cnt in res for i in range(cnt - 1, -1, -1)], res)
     def log_steps(self, data):
         if not data:
             return
@@ -135,7 +135,7 @@ class DumpStepper:
                           s.step_count, s.add))
         logging.info('\n'.join(out))
     def _api_update(self, eventtime):
-        data, cdata = self.get_step_queue(self.last_api_clock, 1<<63)
+        data, cdata = self.get_step_queue(self.last_api_clock, 1 << 63)
         if not data:
             return {}
         clock_to_print_time = self.mcu_stepper.get_mcu().clock_to_print_time
@@ -184,9 +184,9 @@ class DumpTrapQ:
             res.append((data, count))
             if count < len(data):
                 break
-            end_time = data[count-1].print_time
+            end_time = data[count - 1].print_time
         res.reverse()
-        return ([d[i] for d, cnt in res for i in range(cnt-1, -1, -1)], res)
+        return ([d[i] for d, cnt in res for i in range(cnt - 1, -1, -1)], res)
     def log_trapq(self, data):
         if not data:
             return
@@ -205,7 +205,7 @@ class DumpTrapQ:
             return None, None
         move = data[0]
         move_time = max(0., min(move.move_t, print_time - move.print_time))
-        dist = (move.start_v + .5 * move.accel * move_time) * move_time;
+        dist = (move.start_v + .5 * move.accel * move_time) * move_time
         pos = (move.start_x + move.x_r * dist, move.start_y + move.y_r * dist,
                move.start_z + move.z_r * dist)
         velocity = move.start_v + move.accel * move_time
@@ -295,8 +295,7 @@ class PrinterMotionReport:
             return
         pos, velocity = dtrapq.get_trapq_position(shutdown_time)
         if pos is not None:
-            logging.info("Requested toolhead position at shutdown time %.6f: %s"
-                         , shutdown_time, pos)
+            logging.info("Requested toolhead position at shutdown time %.6f: %s", shutdown_time, pos)
     def _shutdown(self):
         self.printer.get_reactor().register_callback(self._dump_shutdown)
     # Status reporting
