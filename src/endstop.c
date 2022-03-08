@@ -19,7 +19,9 @@ struct endstop {
     uint8_t flags, sample_count, trigger_count, trigger_reason;
 };
 
-enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1 };
+enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1, ESF_HIT_REPORT_PENDING=1<<2 };
+
+static struct task_wake endstops_wake;
 
 static uint_fast8_t endstop_oversample_event(struct timer *t);
 
@@ -60,6 +62,23 @@ endstop_oversample_event(struct timer *t)
     }
     e->trigger_count = count;
     e->time.waketime += e->sample_time;
+    return SF_RESCHEDULE;
+}
+
+static uint_fast8_t
+endstop_continous_event(struct timer *t)
+{
+    struct endstop *e = container_of(t, struct endstop, time);
+    uint8_t val = gpio_in_read(e->pin);
+    if ((val ? ~e->flags : e->flags) & ESF_PIN_HIGH) {
+      // Endstop hit
+      e->flags = e->flags | ESF_HIT_REPORT_PENDING;
+      // We might need to continue,
+      //    but it will be used to stop printing so no need for that
+      sched_wake_task(&endstops_wake);
+      return SF_DONE;
+    }
+    e->time.waketime += e->rest_time;
     return SF_RESCHEDULE;
 }
 
@@ -113,3 +132,33 @@ command_endstop_query_state(uint32_t *args)
           , oid, !!(eflags & ESF_HOMING), nextwake, gpio_in_read(e->pin));
 }
 DECL_COMMAND(command_endstop_query_state, "endstop_query_state oid=%c");
+
+void
+command_endstop_continously_check(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    struct endstop *e = oid_lookup(oid, command_config_endstop);
+    sched_del_timer(&e->time);
+
+    e->flags = args[3] ? ESF_PIN_HIGH : 0;
+    e->time.waketime = args[1];
+    e->time.func = endstop_continous_event;
+    e->rest_time = args[2];
+    sched_add_timer(&e->time);
+}
+DECL_COMMAND(command_endstop_continously_check, "endstop_continously_check oid=%c clock=%u rest_ticks=%u pin_value=%c");
+
+void
+task_endstop_hit_report(void)
+{
+  if(!sched_check_wake(&endstops_wake)) return;
+  uint8_t oid;
+  struct endstop *e;
+  foreach_oid(oid, e, command_config_endstop) {
+    if (e->flags & ESF_HIT_REPORT_PENDING) {
+      e->flags = e->flags ^ ESF_HIT_REPORT_PENDING;
+      sendf("endstop_hit oid=%c", oid);
+    }
+  }
+}
+DECL_TASK(task_endstop_hit_report);

@@ -136,7 +136,7 @@ class MCU_endstop:
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
         self._oid = self._mcu.create_oid()
-        self._home_cmd = self._query_cmd = None
+        self._home_cmd = self._query_cmd = self._monitoring_cmd = None
         self._mcu.register_config_callback(self._build_config)
         self._trigger_completion = None
         self._rest_ticks = 0
@@ -181,6 +181,23 @@ class MCU_endstop:
             "endstop_query_state oid=%c",
             "endstop_state oid=%c homing=%c next_clock=%u pin_value=%c",
             oid=self._oid, cq=cmd_queue)
+        self._monitoring_cmd = self._mcu.lookup_command(
+                "endstop_continously_check oid=%c clock=%u rest_ticks=%u pin_value=%c",
+                cq=cmd_queue)
+        self._mcu.register_response(self._endstop_hit_response,
+                                    "endstop_hit", self._oid)
+    def _endstop_hit_response(self, params):
+        reactor = self._mcu.get_printer().get_reactor()
+        reactor.register_async_callback(self.handle_endstop_hit)
+
+    def handle_endstop_hit(self, params):
+        printer = self._mcu.get_printer()
+        name = self.get_steppers()[0].get_name(short=True)
+        printer.invoke_shutdown("Endstop %s was hit - shutdown!" %(name))
+    def start_monitoring(self, print_time, rest_time):
+        clock = self._mcu.print_time_to_clock(print_time)
+        rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
+        self._monitoring_cmd.send([self._oid, clock, rest_ticks, self._invert])
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         clock = self._mcu.print_time_to_clock(print_time)

@@ -17,6 +17,8 @@ class QueryEndstops:
         gcode.register_command("QUERY_ENDSTOPS", self.cmd_QUERY_ENDSTOPS,
                                desc=self.cmd_QUERY_ENDSTOPS_help)
         gcode.register_command("M119", self.cmd_QUERY_ENDSTOPS)
+        gcode.register_command("MONITOR_ENDSTOPS", self.cmd_MONITOR_ENDSTOPS,
+                                desc=self.cmd_MONITOR_ENDSTOPS_help)
     def register_endstop(self, mcu_endstop, name):
         self.endstops.append((mcu_endstop, name))
     def get_status(self, eventtime):
@@ -40,6 +42,19 @@ class QueryEndstops:
         msg = " ".join(["%s:%s" % (name, ["open", "TRIGGERED"][not not t])
                         for name, t in self.last_state])
         gcmd.respond_raw(msg)
+    cmd_MONITOR_ENDSTOPS_help = "Continously monitor status of endstops"
+    def cmd_MONITOR_ENDSTOPS(self, gcmd):
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        params = gcmd.get_command_parameters().setdefault('DELAY', "0.005")
+        delay = gcmd.get_float('DELAY')
+        params = [e for e in gcmd.get("ENDSTOPS", "").split(",") if e != ""]
+        if len(params) > 0:
+            for endstop, name in self.endstops:
+                if name in params:
+                    endstop.start_monitoring(print_time, delay)
+        else:
+            for endstop, name in self.endstops:
+                endstop.start_monitoring(print_time, delay)
 
 def load_config(config):
     return QueryEndstops(config)

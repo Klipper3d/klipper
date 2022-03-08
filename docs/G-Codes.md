@@ -818,6 +818,15 @@ not recommended:
 "triggered" or in an "open" state. This command is typically used to
 verify that an endstop is working correctly.
 
+#### MONITOR_ENDSTOPS
+`MONITOR_ENDSTOPS [ENDSTOPS=<endstops>] [DELAY=<value>]`: Continously
+monitor endstops and invoke shutdown, if any of monitored endstops
+are hit. ENDSTOPS is accepted as name of single endstop or comma
+seperated list of endstop names. If ommited, defaults to all endstops.
+DELAY is interval in seconds, at which endstop pin is read. If
+ommited, defaults to 0.005. Homing specific axis disables endstop
+monitoring for that axis endstop.
+
 ### [resonance_tester]
 
 The following commands are available when a
@@ -1110,7 +1119,6 @@ print.
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
 
 ### [z_tilt]
-
 The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
