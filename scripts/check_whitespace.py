@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Check files for whitespace problems
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
@@ -29,7 +29,7 @@ def check_file(filename):
     # Do checks
     is_source_code = any([filename.endswith(s) for s in ['.c', '.h', '.py']])
     lineno = 0
-    for lineno, line in enumerate(data.split('\n')):
+    for lineno, line in enumerate(data.split(b'\n')):
         # Verify line is valid utf-8
         try:
             line = line.decode('utf-8')
@@ -53,9 +53,9 @@ def check_file(filename):
         # Check for more than 80 characters
         if is_source_code and len(line) > 80:
             report_error(filename, lineno, "Line longer than 80 characters")
-    if not data.endswith('\n'):
+    if not data.endswith(b'\n'):
         report_error(filename, lineno, "No newline at end of file")
-    if data.endswith('\n\n'):
+    if data.endswith(b'\n\n'):
         report_error(filename, lineno, "Extra newlines at end of file")
 
 def main():
