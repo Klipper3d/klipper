@@ -81,7 +81,8 @@ clock_setup(void)
     }
     pllcfgr |= (pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos;
     pllcfgr |= (pll_freq/CONFIG_CLOCK_FREQ - 1) << RCC_PLLCFGR_PLLR_Pos;
-    RCC->PLLCFGR = pllcfgr | RCC_PLLCFGR_PLLREN;
+    pllcfgr |= (pll_freq/FREQ_USB - 1) << RCC_PLLCFGR_PLLQ_Pos;
+    RCC->PLLCFGR = pllcfgr | RCC_PLLCFGR_PLLREN | RCC_PLLCFGR_PLLQEN;
     RCC->CR |= RCC_CR_PLLON;
 
     // Wait for PLL lock
@@ -95,11 +96,8 @@ clock_setup(void)
 
     // Enable USB clock
     if (CONFIG_USBSERIAL) {
-        RCC->CR |= RCC_CR_HSI48ON;
-        while (!(RCC->CR & RCC_CR_HSI48RDY))
-            ;
-        enable_pclock(CRS_BASE);
-        CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
+        // PLLQCLK
+        RCC->CCIPR2 |= RCC_CCIPR2_USBSEL_1;
     }
 }
 
