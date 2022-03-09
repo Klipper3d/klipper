@@ -1734,6 +1734,7 @@ control_pin:
 #y_offset:
 #z_offset:
 #speed:
+#lift_speed:
 #samples:
 #sample_retract_dist:
 #samples_result:
