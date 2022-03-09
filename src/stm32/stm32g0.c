@@ -94,11 +94,8 @@ clock_setup(void)
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != (2 << RCC_CFGR_SWS_Pos))
         ;
 
-    // Enable USB clock
-    if (CONFIG_USBSERIAL) {
-        // PLLQCLK
-        RCC->CCIPR2 |= RCC_CCIPR2_USBSEL_1;
-    }
+    // Use PLLQCLK for USB (setting USBSEL=2 works in practice)
+    RCC->CCIPR2 = RCC_CCIPR2_USBSEL_1;
 }
 
 
