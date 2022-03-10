@@ -8,6 +8,8 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220307: `M73` will no longer set print progress to 0 if `P` is missing.
+
 20220304: There is no longer a default for the `extruder` parameter of
 [extruder_stepper](Config_Reference.md#extruder_stepper) config
 sections. If desired, specify `extruder: extruder` explicitly to

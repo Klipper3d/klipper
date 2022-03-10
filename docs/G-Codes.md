@@ -294,25 +294,32 @@ The following commands are available if an
 
 #### ACTIVATE_EXTRUDER
 `ACTIVATE_EXTRUDER EXTRUDER=<config_name>`: In a printer with multiple
-extruders this command is used to change the active extruder.
+[extruder](Config_Reference.md#extruder) config sections, this command
+changes the active hotend.
 
 #### SET_PRESSURE_ADVANCE
 `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>]
 [ADVANCE=<pressure_advance>]
 [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
-parameters. If EXTRUDER is not specified, it defaults to the active
-extruder.
+parameters of an extruder stepper (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section).
+If EXTRUDER is not specified, it defaults to the stepper defined in
+the active hotend.
 
 #### SET_EXTRUDER_ROTATION_DISTANCE
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
-[DISTANCE=<distance>]`: Set a new value for the provided extruder's
-"rotation distance". If the rotation distance is a negative number
-then the stepper motion will be inverted (relative to the stepper
-direction specified in the config file). Changed settings are not
-retained on Klipper reset. Use with caution as small changes can
-result in excessive pressure between extruder and hot end. Do proper
-calibration with filament before use. If 'DISTANCE' value is not
-included command will return current rotation distance.
+[DISTANCE=<distance>]`: Set a new value for the provided extruder
+stepper's "rotation distance" (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section).
+If the rotation distance is a negative number then the stepper motion
+will be inverted (relative to the stepper direction specified in the
+config file). Changed settings are not retained on Klipper reset. Use
+with caution as small changes can result in excessive pressure between
+extruder and hotend. Do proper calibration with filament before use.
+If 'DISTANCE' value is not provided then this command will return the
+current rotation distance.
 
 #### SYNC_EXTRUDER_MOTION
 `SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
