@@ -95,7 +95,7 @@ clock_setup(void)
         ;
 
     // Use PLLQCLK for USB (setting USBSEL=2 works in practice)
-    RCC->CCIPR2 = RCC_CCIPR2_USBSEL_1;
+    RCC->CCIPR2 = 2 << RCC_CCIPR2_USBSEL_Pos;
 }
 
 
