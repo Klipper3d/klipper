@@ -37,7 +37,8 @@ void _watchdog_enable(uint32_t delay_ms, bool pause_on_debug) {
     hw_clear_bits(&watchdog_hw->ctrl, WATCHDOG_CTRL_ENABLE_BITS);
 
     // Reset everything apart from ROSC and XOSC
-    hw_set_bits(&psm_hw->wdsel, PSM_WDSEL_BITS & ~(PSM_WDSEL_ROSC_BITS | PSM_WDSEL_XOSC_BITS));
+    hw_set_bits(&psm_hw->wdsel, PSM_WDSEL_BITS & ~(PSM_WDSEL_ROSC_BITS
+        | PSM_WDSEL_XOSC_BITS));
 
     uint32_t dbg_bits = WATCHDOG_CTRL_PAUSE_DBG0_BITS |
                         WATCHDOG_CTRL_PAUSE_DBG1_BITS |
@@ -52,7 +53,8 @@ void _watchdog_enable(uint32_t delay_ms, bool pause_on_debug) {
     if (!delay_ms) {
         hw_set_bits(&watchdog_hw->ctrl, WATCHDOG_CTRL_TRIGGER_BITS);
     } else {
-        // Note, we have x2 here as the watchdog HW currently decrements twice per tick
+        // Note, we have x2 here as the watchdog HW currently
+        // decrements twice per tick
         load_value = delay_ms * 1000 * 2;
 
         if (load_value > 0xffffffu)
@@ -68,7 +70,8 @@ void _watchdog_enable(uint32_t delay_ms, bool pause_on_debug) {
 #define WATCHDOG_NON_REBOOT_MAGIC 0x6ab73121
 
 void watchdog_enable(uint32_t delay_ms, bool pause_on_debug) {
-    // update scratch[4] to distinguish from magic used for reboot to specific address, or 0 used to reboot
+    // update scratch[4] to distinguish from magic used for reboot
+    // to specific address, or 0 used to reboot
     // into regular flash path
     watchdog_hw->scratch[4] = WATCHDOG_NON_REBOOT_MAGIC;
     _watchdog_enable(delay_ms, pause_on_debug);
@@ -86,7 +89,8 @@ void watchdog_reboot(uint32_t pc, uint32_t sp, uint32_t delay_ms) {
         watchdog_hw->scratch[5] = pc ^ -0xb007c0d3;
         watchdog_hw->scratch[6] = sp;
         watchdog_hw->scratch[7] = pc;
-//        printf("rebooting %08x/%08x in %dms...\n", (uint) pc, (uint) sp, (uint) delay_ms);
+//        printf("rebooting %08x/%08x in %dms...\n", (uint) pc,
+// (uint) sp, (uint) delay_ms);
     } else {
         watchdog_hw->scratch[4] = 0;
 //        printf("rebooting (regular)) in %dms...\n", (uint) delay_ms);
@@ -102,5 +106,6 @@ bool watchdog_caused_reboot(void) {
 }
 
 bool watchdog_enable_caused_reboot(void) {
-    return watchdog_hw->reason && watchdog_hw->scratch[4] == WATCHDOG_NON_REBOOT_MAGIC;
+    return watchdog_hw->reason && watchdog_hw->scratch[4]
+        == WATCHDOG_NON_REBOOT_MAGIC;
 }

@@ -12,15 +12,14 @@ $(OUT)klipper.elf: $(OUT)stage2.o $(OUT)src/rp2040/rp2040_link.ld
 
 # Generated source files
 ifeq ($(CONFIG_HAVE_PIO),y)
-gsrc-y += rp2040/stepper_pio.pio 
+gsrc-y += rp2040/stepper_pio.pio
 endif
 
 # Add source files
 src-y += rp2040/main.c rp2040/gpio.c rp2040/adc.c generic/crc16_ccitt.c
-src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c 
+src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
 src-y += generic/timer_irq.c rp2040/timer.c rp2040/bootrom.c rp2040/watchdog.c
-src-y += rp2040/clocks.c rp2040/pio.c 
-#src-y += rp2040/stepper_pio.c 
+src-y += rp2040/clocks.c rp2040/pio.c
 src-y += rp2040/claim.c rp2040/dma.c rp2040/xosc.c rp2040/pll.c
 src-$(CONFIG_USBSERIAL) += rp2040/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_USBSERIAL) += rp2040/chipid.c
@@ -30,7 +29,7 @@ src-$(CONFIG_HAVE_GPIO_SPI) += rp2040/spi.c
 src-$(CONFIG_HAVE_GPIO_I2C) += rp2040/i2c.c
 
 # rp2040 stage2 building
-$(OUT)stage2.o: lib/rp2040/boot_stage2/boot2_w25q080.S 
+$(OUT)stage2.o: lib/rp2040/boot_stage2/boot2_w25q080.S
 	@echo "  Building rp2040 stage2 $@"
 	$(Q)$(CC) $(CFLAGS) -Ilib/rp2040/boot_stage2 -Ilib/rp2040/boot_stage2/asminclude -DPICO_FLASH_SPI_CLKDIV=2 -c $< -o $(OUT)stage2raw1.o
 	$(Q)$(LD) $(OUT)stage2raw1.o --script=lib/rp2040/boot_stage2/boot_stage2.ld -o $(OUT)stage2raw.o

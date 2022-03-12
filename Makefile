@@ -24,7 +24,7 @@ PYTHON=python2
 CC_OPT=-O2
 
 # Additional RP2040 build tools from pico-sdk
-PIOASM_BIN=$(PICO_SDK_PATH)/pioasm/pioasm
+PIOASM_BIN=$(OUT)/pioasm/pioasm
 
 # Source files
 src-y =
@@ -65,7 +65,11 @@ include src/Makefile
 
 ################ Main build rules
 
-$(OUT)%.pio.h: %.pio $(OUT)autoconf.h
+$(OUT)/pioasm: $(CURDIR)/lib/pioasm
+	$(Q)mkdir -p $@
+	$(Q)cd $@ && cmake $< && $(MAKE) 
+
+$(OUT)%.pio.h: %.pio $(OUT)autoconf.h $(OUT)/pioasm
 	@echo "  Assemble Pre-compile $@"
 	@$(PIOASM_BIN) -o c-sdk $< $@
 

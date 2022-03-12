@@ -14,9 +14,9 @@
 #include <stdarg.h>
 
 #include "pico/platform.h" // for init of sdk
-#include "hardware/resets.h" 
+#include "hardware/resets.h"
 #include "hardware/structs/padsbank0.h"
-#include "hardware/clocks.h" 
+#include "hardware/clocks.h"
 
 #if CONFIG_MACH_RP2040 && CONFIG_HAVE_PIO
 #include "hardware/pio.h"
@@ -55,8 +55,10 @@ void picosdk_runtime_setup(void) {
     extern void (*__preinit_array_end)(void);
 
     // Reset all peripherals to put system into a known state,
-    // - except for QSPI pads and the XIP IO bank, as this is fatal if running from flash
-    // - and the PLLs, as this is fatal if clock muxing has not been reset on this boot
+    // - except for QSPI pads and the XIP IO bank, as this is fatal if
+    //      running from flash
+    // - and the PLLs, as this is fatal if clock muxing has not been
+    //      reset on this boot
     // - and USB, syscfg, as this disturbs USB-to-SWD on core 1
     reset_block(~(
             RESETS_RESET_IO_QSPI_BITS |
@@ -80,9 +82,10 @@ void picosdk_runtime_setup(void) {
     ));
 
     // Call each function in the list.
-    // We have to take the address of the symbols, as __preinit_array_start *is*
-    // the first function pointer, not the address of it.
-    for (void (**p)(void) = &__preinit_array_start; p < &__preinit_array_end; ++p) {
+    // We have to take the address of the symbols, as __preinit_array_start
+    //  *is* the first function pointer, not the address of it.
+    for (void (**p)(void) = &__preinit_array_start; p
+        < &__preinit_array_end; ++p) {
         (*p)();
     }
 
@@ -101,12 +104,17 @@ void picosdk_runtime_setup(void) {
 
 #if !PICO_IE_26_29_UNCHANGED_ON_RESET
     // after resetting BANK0 we should disable IE on 26-29
-    hw_clear_alias(padsbank0_hw)->io[26] = hw_clear_alias(padsbank0_hw)->io[27] =
-            hw_clear_alias(padsbank0_hw)->io[28] = hw_clear_alias(padsbank0_hw)->io[29] = PADS_BANK0_GPIO0_IE_BITS;
+    hw_clear_alias(padsbank0_hw)->io[26]
+        = hw_clear_alias(padsbank0_hw)->io[27]
+            = hw_clear_alias(padsbank0_hw)->io[28]
+                = hw_clear_alias(padsbank0_hw)->io[29]
+                    = PADS_BANK0_GPIO0_IE_BITS;
 #endif
 
-    // this is an array of either mutex_t or recursive_mutex_t (i.e. not necessarily the same size)
-    // however each starts with a lock_core_t, and the spin_lock is initialized to address 1 for a recursive
+    // this is an array of either mutex_t or recursive_mutex_t
+    //  (i.e. not necessarily the same size)
+    // however each starts with a lock_core_t, and the spin_lock
+    // is initialized to address 1 for a recursive
     // spinlock and 0 for a regular one.
 
     static_assert(!(sizeof(mutex_t)&3), "");
@@ -115,13 +123,14 @@ void picosdk_runtime_setup(void) {
     static_assert(!offsetof(recursive_mutex_t, core), "");
 
 // SDK Multi-core support, memcpy, interrupt handler, and alarm
-#if false    
+#if false
     extern lock_core_t __mutex_array_start;
     extern lock_core_t __mutex_array_end;
 
     for (lock_core_t *l = &__mutex_array_start; l < &__mutex_array_end; ) {
         if (l->spin_lock) {
-            assert(1 == (uintptr_t)l->spin_lock); // indicator for a recursive mutex
+            // indicator for a recursive mutex
+            assert(1 == (uintptr_t)l->spin_lock);
             recursive_mutex_t *rm = (recursive_mutex_t *)l;
             recursive_mutex_init(rm);
             l = &rm[1].core; // next
@@ -133,7 +142,8 @@ void picosdk_runtime_setup(void) {
     }
 
 #if !(PICO_NO_RAM_VECTOR_TABLE || PICO_NO_FLASH)
-    __builtin_memcpy(ram_vector_table, (uint32_t *) scb_hw->vtor, sizeof(ram_vector_table));
+    __builtin_memcpy(ram_vector_table, (uint32_t *) scb_hw->vtor
+        , sizeof(ram_vector_table));
     scb_hw->vtor = (uintptr_t) ram_vector_table;
 #endif
 

@@ -9,7 +9,8 @@
 #include "hardware/claim.h"
 
 uint32_t hw_claim_lock(void) {
-    return spin_lock_blocking(spin_lock_instance(PICO_SPINLOCK_ID_HARDWARE_CLAIM));
+    return spin_lock_blocking(
+            spin_lock_instance(PICO_SPINLOCK_ID_HARDWARE_CLAIM));
 }
 
 void hw_claim_unlock(uint32_t save) {
@@ -30,7 +31,8 @@ void hw_claim_or_assert(uint8_t *bits, uint bit_index, const char *message) {
     hw_claim_unlock(save);
 }
 
-int hw_claim_unused_from_range(uint8_t *bits, bool required, uint bit_lsb, uint bit_msb, const char *message) {
+int hw_claim_unused_from_range(uint8_t *bits, bool required
+    , uint bit_lsb, uint bit_msb, const char *message) {
     // don't bother check lsb / msb order as if wrong, then it'll fail anyway
     uint32_t save = hw_claim_lock();
     int found_bit = -1;
@@ -54,5 +56,3 @@ void hw_claim_clear(uint8_t *bits, uint bit_index) {
     bits[bit_index >> 3u] &= (uint8_t) ~(1u << (bit_index & 7u));
     hw_claim_unlock(save);
 }
-
-

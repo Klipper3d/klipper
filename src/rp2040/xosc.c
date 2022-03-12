@@ -20,11 +20,13 @@
 #error XOSC_MHZ must be in the range 1-50
 #endif
 
-#define STARTUP_DELAY (((((XOSC_MHZ * MHZ) / 1000) + 128) / 256) * PICO_XOSC_STARTUP_DELAY_MULTIPLIER)
+#define STARTUP_DELAY (((((XOSC_MHZ * MHZ) / 1000) + 128) / 256) \
+    * PICO_XOSC_STARTUP_DELAY_MULTIPLIER)
 
 // The DELAY field in xosc_hw->startup is 14 bits wide.
 #if STARTUP_DELAY >= (1 << 13)
-#error PICO_XOSC_STARTUP_DELAY_MULTIPLIER is too large: XOSC STARTUP.DELAY must be < 8192
+#error PICO_XOSC_STARTUP_DELAY_MULTIPLIER is too large: \
+    XOSC STARTUP.DELAY must be < 8192
 #endif
 
 void xosc_init(void) {
@@ -35,7 +37,8 @@ void xosc_init(void) {
     xosc_hw->startup = STARTUP_DELAY;
 
     // Set the enable bit now that we have set freq range and startup delay
-    hw_set_bits(&xosc_hw->ctrl, XOSC_CTRL_ENABLE_VALUE_ENABLE << XOSC_CTRL_ENABLE_LSB);
+    hw_set_bits(&xosc_hw->ctrl, XOSC_CTRL_ENABLE_VALUE_ENABLE
+        << XOSC_CTRL_ENABLE_LSB);
 
     // Wait for XOSC to be stable
     while(!(xosc_hw->status & XOSC_STATUS_STABLE_BITS));

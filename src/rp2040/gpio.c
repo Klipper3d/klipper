@@ -114,17 +114,21 @@ gpio_in_read(struct gpio_in g)
 }
 
 /// \tag::gpio_set_function[]
-// Select function for this GPIO, and ensure input/output are enabled at the pad.
+// Select function for this GPIO, and ensure input/output are enabled
+// at the pad.
 // This also clears the input/output/irq override bits.
 void gpio_set_function(uint gpio, enum gpio_function fn) {
     invalid_params_if(GPIO, gpio >= NUM_BANK0_GPIOS);
-    invalid_params_if(GPIO, ((uint32_t)fn << IO_BANK0_GPIO0_CTRL_FUNCSEL_LSB) & ~IO_BANK0_GPIO0_CTRL_FUNCSEL_BITS);
+    invalid_params_if(GPIO, ((uint32_t)fn
+        << IO_BANK0_GPIO0_CTRL_FUNCSEL_LSB)
+            & ~IO_BANK0_GPIO0_CTRL_FUNCSEL_BITS);
     // Set input enable on, output disable off
     hw_write_masked(&padsbank0_hw->io[gpio],
                    PADS_BANK0_GPIO0_IE_BITS,
                    PADS_BANK0_GPIO0_IE_BITS | PADS_BANK0_GPIO0_OD_BITS
     );
-    // Zero all fields apart from fsel; we want this IO to do what the peripheral tells it.
+    // Zero all fields apart from fsel; we want this IO to do what the
+    // peripheral tells it.
     // This doesn't affect e.g. pullup/pulldown, as these are in pad controls.
     iobank0_hw->io[gpio].ctrl = fn << IO_BANK0_GPIO0_CTRL_FUNCSEL_LSB;
 }
@@ -132,7 +136,8 @@ void gpio_set_function(uint gpio, enum gpio_function fn) {
 
 enum gpio_function gpio_get_function(uint gpio) {
     invalid_params_if(GPIO, gpio >= NUM_BANK0_GPIOS);
-    return (enum gpio_function) ((iobank0_hw->io[gpio].ctrl & IO_BANK0_GPIO0_CTRL_FUNCSEL_BITS) >> IO_BANK0_GPIO0_CTRL_FUNCSEL_LSB);
+    return (enum gpio_function) ((iobank0_hw->io[gpio].ctrl
+    & IO_BANK0_GPIO0_CTRL_FUNCSEL_BITS) >> IO_BANK0_GPIO0_CTRL_FUNCSEL_LSB);
 }
 
 // Note that, on RP2040, setting both pulls enables a "bus keep" function,
@@ -141,7 +146,8 @@ void gpio_set_pulls(uint gpio, bool up, bool down) {
     invalid_params_if(GPIO, gpio >= NUM_BANK0_GPIOS);
     hw_write_masked(
             &padsbank0_hw->io[gpio],
-            (bool_to_bit(up) << PADS_BANK0_GPIO0_PUE_LSB) | (bool_to_bit(down) << PADS_BANK0_GPIO0_PDE_LSB),
+            (bool_to_bit(up) << PADS_BANK0_GPIO0_PUE_LSB)
+                | (bool_to_bit(down) << PADS_BANK0_GPIO0_PDE_LSB),
             PADS_BANK0_GPIO0_PUE_BITS | PADS_BANK0_GPIO0_PDE_BITS
     );
 }

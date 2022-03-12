@@ -1,4 +1,4 @@
-; SPI functions on rp2040
+; Stepper pulse generator on rp2040
 ;
 ; Copyright (C) 2021  Kevin Peck <kevindpeck@gmail.com>
 ;
@@ -6,8 +6,8 @@
 ;
 ; Byte stream carries three values (from MSB to LSB in a 64-bit stream)
 ;
-;   63-32: 32 bit number indicating the number of pulses
-;   31- 1: 31 bit number indicating delay by clock cycles
+;   63-32: 32 bit number indicating delay by clock cycles
+;   31- 1: 31 bit number indicating the number of pulses
 ;       0: 1/0 to Indicate stepper direction
 ;
 ; System clock and peripherals are expected to be set to 48Mhz 
@@ -48,7 +48,8 @@ pulse_delay:
 
 /* Helper function to set up the PIO Stepper port
  */
-volatile void stepper_pio_program_init(PIO pio, uint sm, uint offset, uint step_pin, uint dir_pin) {
+volatile void stepper_pio_program_init(PIO pio, uint32_t sm
+    , uint32_t offset, uint32_t step_pin, uint32_t dir_pin) {
     pio_sm_config c = stepper_pio_program_get_default_config(offset);
 
     // Map the state machine's OUT pin group to one pin, namely the `pin`

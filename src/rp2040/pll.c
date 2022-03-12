@@ -14,11 +14,13 @@
 #include "hardware/resets.h"
 
 /// \tag::pll_init_calculations[]
-void pll_init(PLL pll, uint refdiv, uint vco_freq, uint post_div1, uint post_div2) {
+void pll_init(PLL pll, uint refdiv, uint vco_freq, uint post_div1
+    , uint post_div2) {
     uint32_t ref_mhz = XOSC_MHZ / refdiv;
 
     // What are we multiplying the reference clock by to get the vco freq
-    // (The regs are called div, because you divide the vco output and compare it to the refclk)
+    // (The regs are called div, because you divide the vco output
+    // and compare it to the refclk)
     uint32_t fbdiv = vco_freq / (ref_mhz * MHZ);
 /// \end::pll_init_calculations[]
 
@@ -26,7 +28,8 @@ void pll_init(PLL pll, uint refdiv, uint vco_freq, uint post_div1, uint post_div
     assert(fbdiv >= 16 && fbdiv <= 320);
 
     // Check divider ranges
-    assert((post_div1 >= 1 && post_div1 <= 7) && (post_div2 >= 1 && post_div2 <= 7));
+    assert((post_div1 >= 1 && post_div1 <= 7) && (post_div2 >= 1
+        && post_div2 <= 7));
 
     // post_div1 should be >= post_div2
     // from appnote page 11
@@ -37,7 +40,8 @@ void pll_init(PLL pll, uint refdiv, uint vco_freq, uint post_div1, uint post_div
     // Check that reference frequency is no greater than vco / 16
     assert(ref_mhz <= (vco_freq / 16));
 
-    // div1 feeds into div2 so if div1 is 5 and div2 is 2 then you get a divide by 10
+    // div1 feeds into div2 so if div1 is 5 and div2 is 2 then you get
+    // a divide by 10
     uint32_t pdiv = (post_div1 << PLL_PRIM_POSTDIV1_LSB) |
                     (post_div2 << PLL_PRIM_POSTDIV2_LSB);
 
@@ -45,12 +49,15 @@ void pll_init(PLL pll, uint refdiv, uint vco_freq, uint post_div1, uint post_div
     if ((pll->cs & PLL_CS_LOCK_BITS) &&
         (refdiv == (pll->cs & PLL_CS_REFDIV_BITS)) &&
         (fbdiv  == (pll->fbdiv_int & PLL_FBDIV_INT_BITS)) &&
-        (pdiv   == (pll->prim & (PLL_PRIM_POSTDIV1_BITS & PLL_PRIM_POSTDIV2_BITS)))) {
-        // do not disrupt PLL that is already correctly configured and operating
+        (pdiv   == (pll->prim & (PLL_PRIM_POSTDIV1_BITS
+            & PLL_PRIM_POSTDIV2_BITS)))) {
+        // do not disrupt PLL that is already correctly configured
+        // and operating
         return;
     }
 
-    uint32_t pll_reset = (pll_usb_hw == pll) ? RESETS_RESET_PLL_USB_BITS : RESETS_RESET_PLL_SYS_BITS;
+    uint32_t pll_reset = (pll_usb_hw == pll) ? RESETS_RESET_PLL_USB_BITS
+        : RESETS_RESET_PLL_SYS_BITS;
     reset_block(pll_reset);
     unreset_block_wait(pll_reset);
 
