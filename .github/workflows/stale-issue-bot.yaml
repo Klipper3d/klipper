@@ -108,6 +108,41 @@ jobs:
                 state: 'closed'
               });
             }
+  # Mark unassigned PRs that are idle for 2 weeks
+  mark_reviewer_needed:
+    if: github.repository == 'Klipper3d/klipper'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const create_check = new Date("2022-03-01T00:00:00Z").getTime();
+            const expireMillis = 1000 * 60 * 60 * 24 * 14;
+            const curtime = new Date().getTime();
+            const pulls_req = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+              page: 1
+            });
+            for (const pr of pulls_req.data.values()) {
+              const createtime = new Date(pr.created_at).getTime();
+              if (createtime < create_check)
+                continue;
+              const updatetime = new Date(pr.updated_at).getTime();
+              if (curtime < updatetime + expireMillis)
+                continue;
+              if (pr.labels.length > 0)
+                continue;
+              if (pr.assignees.length > 0)
+                continue;
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: ['reviewer needed']
+              });
+            }
   # Close tickets marked with "resolved" label
   close_resolved:
     if: github.repository == 'Klipper3d/klipper'
