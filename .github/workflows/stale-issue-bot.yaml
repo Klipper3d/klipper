@@ -36,10 +36,12 @@ jobs:
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v3
+      - uses: actions/github-script@v6
         with:
           script: |
-            const issues = await github.issues.listForRepo({
+            const expireMillis = 1000 * 60 * 60 * 36;
+            const curtime = new Date().getTime();
+            const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
@@ -47,13 +49,11 @@ jobs:
               per_page: 100,
               page: 1
             });
-            const expireMillis = 1000 * 60 * 60 * 36;
-            const curtime = new Date().getTime();
-            for (var issue of issues.data.values()) {
+            for (const issue of issues.data.values()) {
               const updatetime = new Date(issue.updated_at).getTime();
               if (curtime < updatetime + expireMillis)
                 continue;
-              await github.issues.update({
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
@@ -148,10 +148,19 @@ jobs:
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v3
+      - uses: actions/github-script@v6
         with:
           script: |
-            const issues = await github.issues.listForRepo({
+            msg = "This ticket is being closed because the underlying issue"
+                + " is now thought to be resolved."
+                + "\n\n"
+                + "Best regards,\n"
+                + "~ Your friendly GitIssueBot"
+                + "\n\n"
+                + "PS: I'm just an automated script, not a human being.";
+            const expireMillis = 1000 * 60 * 60 * 24 * 7;
+            const curtime = new Date().getTime();
+            const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
@@ -159,26 +168,17 @@ jobs:
               per_page: 100,
               page: 1
             });
-            const expireMillis = 1000 * 60 * 60 * 24 * 7;
-            const curtime = new Date().getTime();
-            for (var issue of issues.data.values()) {
+            for (const issue of issues.data.values()) {
               const updatetime = new Date(issue.updated_at).getTime();
               if (curtime < updatetime + expireMillis)
                 continue;
-              msg = "This ticket is being closed because the underlying issue"
-                  + " is now thought to be resolved."
-                  + "\n\n"
-                  + "Best regards,\n"
-                  + "~ Your friendly GitIssueBot"
-                  + "\n\n"
-                  + "PS: I'm just an automated script, not a human being.";
-              await github.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 body: msg
               });
-              await github.issues.update({
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
@@ -190,10 +190,20 @@ jobs:
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v3
+      - uses: actions/github-script@v6
         with:
           script: |
-            const issues = await github.issues.listForRepo({
+            msg = "This PR is being closed because it is currently not"
+                + " considered a good match for the master Klipper"
+                + " repository."
+                + "\n\n"
+                + "Best regards,\n"
+                + "~ Your friendly GitIssueBot"
+                + "\n\n"
+                + "PS: I'm just an automated script, not a human being.";
+            const expireMillis = 1000 * 60 * 60 * 24 * 7;
+            const curtime = new Date().getTime();
+            const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
@@ -201,27 +211,17 @@ jobs:
               per_page: 100,
               page: 1
             });
-            const expireMillis = 1000 * 60 * 60 * 24 * 7;
-            const curtime = new Date().getTime();
-            for (var issue of issues.data.values()) {
+            for (const issue of issues.data.values()) {
               const updatetime = new Date(issue.updated_at).getTime();
               if (curtime < updatetime + expireMillis)
                 continue;
-              msg = "This PR is being closed because it is currently not"
-                  + " considered a good match for the master Klipper"
-                  + " repository."
-                  + "\n\n"
-                  + "Best regards,\n"
-                  + "~ Your friendly GitIssueBot"
-                  + "\n\n"
-                  + "PS: I'm just an automated script, not a human being.";
-              await github.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 body: msg
               });
-              await github.issues.update({
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
@@ -233,10 +233,20 @@ jobs:
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v3
+      - uses: actions/github-script@v6
         with:
           script: |
-            const issues = await github.issues.listForRepo({
+            msg = "It looks like this GitHub Pull Request has become"
+                + " inactive.  If there are any further updates, you can"
+                + " add a comment here or open a new ticket."
+                + "\n\n"
+                + "Best regards,\n"
+                + "~ Your friendly GitIssueBot"
+                + "\n\n"
+                + "PS: I'm just an automated script, not a human being.";
+            const expireMillis = 1000 * 60 * 60 * 24 * 21;
+            const curtime = new Date().getTime();
+            const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
@@ -244,33 +254,23 @@ jobs:
               per_page: 100,
               page: 1
             });
-            const expireMillis = 1000 * 60 * 60 * 24 * 21;
-            const curtime = new Date().getTime();
-            for (var issue of issues.data.values()) {
+            for (const issue of issues.data.values()) {
               const updatetime = new Date(issue.updated_at).getTime();
               if (curtime < updatetime + expireMillis)
                 continue;
-              msg = "It looks like this GitHub Pull Request has become"
-                  + " inactive.  If there are any further updates, you can"
-                  + " add a comment here or open a new ticket."
-                  + "\n\n"
-                  + "Best regards,\n"
-                  + "~ Your friendly GitIssueBot"
-                  + "\n\n"
-                  + "PS: I'm just an automated script, not a human being.";
-              await github.issues.addLabels({
+              await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 labels: ['inactive']
               });
-              await github.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 body: msg
               });
-              await github.issues.update({
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
