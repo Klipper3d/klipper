@@ -75,8 +75,8 @@ void
 serial_init(void)
 {
     // Setup baud
-    LPC_UARTx->LCR = (1<<7); // set DLAB bit
     enable_pclock(PCLK_UARTx);
+    LPC_UARTx->LCR = (1<<7); // set DLAB bit
     uint32_t pclk = get_pclock_frequency(PCLK_UARTx);
     uint32_t div = pclk / (CONFIG_SERIAL_BAUD * 16);
     LPC_UARTx->DLL = div & 0xff;
