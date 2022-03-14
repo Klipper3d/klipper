@@ -2611,6 +2611,26 @@ PCA9533 LED support. The PCA9533 is used on the mightyboard.
 #   Use GCODE to modify led values after startup.
 #   set_led led=my_pca9533 red=1 green=1 blue=1
 ```
+### [PCA9632]
+
+PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
+
+```
+[pca9632 my_pca9632]
+scl_pin:
+# The SCL "clock" pin. This parameter must be provided.
+sda_pin:
+# The SDA "data" pin. This parameter must be provided.
+#initial_RED: 0
+#initial_GREEN: 0
+#initial_BLUE: 0
+#initial_WHITE: 0
+# PCA9632 supports individual LED PWM.
+# Values range from 0.0 to 1.0. The default is 0.0.
+# On the FlashForge Dreamer, the white led is not populated.
+# Use GCODE to modify led values after startup.
+# set_led led=my_pca9632 red=1.0 green=1.0 blue=1.0 white=0.0
+```
 
 ### [gcode_button]
 
