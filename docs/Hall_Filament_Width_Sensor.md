@@ -11,7 +11,7 @@ an assembly video is also available on [Youtube](https://www.youtube.com/watch?v
 
 To use Hall filament width sensor, read
 [Config Reference](Config_Reference.md#hall_filament_width_sensor) and
-[G-Code documentation](G-Codes.md#Hall_Filament_Width_Sensor_Commands).
+[G-Code documentation](G-Codes.md#hall_filament_width_sensor).
 
 
 ## How does it work?
@@ -54,7 +54,7 @@ command in terminal.
 By default, the sensor is disabled at power-on.
 
 To enable the sensor, issue **ENABLE_FILAMENT_WIDTH_SENSOR** command or
-set the `enable` parameter to `true.`
+set the `enable` parameter to `true`.
 
 ## Logging
 

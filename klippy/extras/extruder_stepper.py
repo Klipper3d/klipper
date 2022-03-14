@@ -10,7 +10,7 @@ class PrinterExtruderStepper:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.extruder_stepper = extruder.ExtruderStepper(config)
-        self.extruder_name = config.get('extruder', 'extruder')
+        self.extruder_name = config.get('extruder')
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
     def handle_connect(self):
