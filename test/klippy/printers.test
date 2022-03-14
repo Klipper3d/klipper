@@ -122,10 +122,10 @@ CONFIG ../../config/generic-bigtreetech-skr-e3-turbo.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
 CONFIG ../../config/generic-bigtreetech-skr-v1.4.cfg
-CONFIG ../../config/generic-th3d-ezboard-lite-v1.2.cfg
 CONFIG ../../config/generic-mks-sgenl.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
+CONFIG ../../config/generic-th3d-ezboard-lite-v1.2.cfg
 
 # Printers using the stm32f070
 DICTIONARY stm32f070.dict
@@ -183,8 +183,8 @@ CONFIG ../../config/generic-flyboard.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
-CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
 CONFIG ../../config/generic-th3d-ezboard-lite-v2.0.cfg
+CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
 
 # Printers using the stm32f446
 DICTIONARY stm32f446.dict
