@@ -3330,7 +3330,7 @@ lcd_type:
 #   button.
 ```
 
-### hd44780 display
+#### hd44780 display
 
 Information on configuring hd44780 displays (which is used in
 "RepRapDiscount 2004 Smart Controller" type displays).
@@ -3358,7 +3358,7 @@ d7_pin:
 ...
 ```
 
-### hd44780_spi display
+#### hd44780_spi display
 
 Information on configuring an hd44780_spi display - a 20x04 display
 controlled via a hardware "shift register" (which is used in
@@ -3388,7 +3388,7 @@ spi_software_miso_pin:
 ...
 ```
 
-### st7920 display
+#### st7920 display
 
 Information on configuring st7920 displays (which is used in
 "RepRapDiscount 12864 Full Graphic Smart Controller" type displays).
@@ -3405,7 +3405,7 @@ sid_pin:
 ...
 ```
 
-### emulated_st7920 display
+#### emulated_st7920 display
 
 Information on configuring an emulated st7920 display - found in some
 "2.4 inch touchscreen devices" and similar.
@@ -3428,7 +3428,7 @@ spi_software_miso_pin:
 ...
 ```
 
-### uc1701 display
+#### uc1701 display
 
 Information on configuring uc1701 displays (which is used in "MKS Mini
 12864" type displays).
@@ -3451,7 +3451,7 @@ a0_pin:
 ...
 ```
 
-### ssd1306 and sh1106 displays
+#### ssd1306 and sh1106 displays
 
 Information on configuring ssd1306 and sh1106 displays.
 
@@ -3496,7 +3496,7 @@ lcd_type:
 ...
 ```
 
-## [display_data]
+### [display_data]
 
 Support for displaying custom data on an lcd screen. One may create
 any number of display groups and any number of data items under those
@@ -3522,7 +3522,7 @@ text:
 #   parameter must be provided.
 ```
 
-## [display_template]
+### [display_template]
 
 Display data text "macros" (one may define any number of sections with
 a display_template prefix). This feature allows one to reduce
@@ -3549,7 +3549,7 @@ display_data section.
 #   docs/Command_Templates.md). This parameter must be provided.
 ```
 
-## [display_glyph]
+### [display_glyph]
 
 Display a custom glyph on displays that support it. The given name
 will be assigned the given display data which can then be referenced
@@ -3579,7 +3579,7 @@ examples.
 #   required if hd44780_data is specified.
 ```
 
-## [display my_extra_display]
+### [display my_extra_display]
 
 If a primary [display] section has been defined in printer.cfg as
 shown above it is possible to define multiple auxiliary displays. Note
@@ -3591,7 +3591,7 @@ thus they do not support the "menu" options or button configuration.
 # See the "display" section for available parameters.
 ```
 
-## [menu]
+### [menu]
 
 Customizable lcd display menus.
 
