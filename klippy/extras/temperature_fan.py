@@ -35,7 +35,11 @@ class TemperatureFan:
             'target_temp', 40. if self.max_temp > 40. else self.max_temp,
             minval=self.min_temp, maxval=self.max_temp)
         self.target_temp = self.target_temp_conf
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = {
+            'watermark': ControlBangBang,
+            'pid': ControlPID,
+            'linear': ControlLinear
+        }
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         self.next_speed_time = 0.
@@ -132,6 +136,31 @@ class ControlBangBang:
         else:
             self.temperature_fan.set_speed(read_time,
                                            self.temperature_fan.get_max_speed())
+
+######################################################################
+# Linear control algo
+# controls the fan speed based on a linear temperature range between
+# the fans min and max speeds
+######################################################################
+
+class ControlLinear:
+    def __init__(self, temperature_fan, config):
+        self.temperature_fan = temperature_fan
+        self.linear_offset = config.getfloat('linear_offset', 10, above=0.)
+        self.min_speed = self.temperature_fan.get_min_speed()
+        self.max_speed = self.temperature_fan.get_max_speed()
+    def temperature_callback(self, read_time, temp):
+        current_temp, target_temp = self.temperature_fan.get_temp(read_time)
+        temp_diff = target_temp - current_temp
+        # calculate linear speed range between 0.0 and 1.0
+        speed = 1 - (temp_diff / self.linear_offset)
+        # convert it to respect min/max speed
+        speed = self.min_speed + (speed * (self.max_speed - self.min_speed))
+        if speed > self.max_speed:
+            speed = self.max_speed
+        elif speed < self.min_speed:
+            speed = self.min_speed
+        self.temperature_fan.set_speed(read_time, speed)
 
 ######################################################################
 # Proportional Integral Derivative (PID) control algo

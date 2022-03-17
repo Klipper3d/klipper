@@ -2435,7 +2435,7 @@ watched component.
 
 ### [temperature_fan]
 
-Temperature-triggered cooling fans (one may define any number of
+Temperature-controlled cooling fans (one may define any number of
 sections with a "temperature_fan" prefix). A "temperature fan" is a
 fan that will be enabled whenever its associated sensor is above a set
 temperature. By default, a temperature_fan has a shutdown_speed equal
@@ -2457,14 +2457,20 @@ information.
 #tachometer_ppr:
 #tachometer_poll_interval:
 #   See the "fan" section for a description of the above parameters.
-#sensor_type:
-#sensor_pin:
 #control:
+#   In addition to "watermark" and "pid", temperature_fan has an additional
+#   "linear" control that sets the fan speed to a value between min_speed
+#   and max_speed, starting from a temperature offset below the target_temp.
+#linear_offset: 10.0
+#   on "linear" control, this sets the temperature offset below the
+#   target_temp where the linear scaling starts
 #pid_Kp:
 #pid_Ki:
 #pid_Kd:
 #pid_deriv_time:
 #max_delta:
+#sensor_type:
+#sensor_pin:
 #min_temp:
 #max_temp:
 #   See the "extruder" section for a description of the above parameters.
