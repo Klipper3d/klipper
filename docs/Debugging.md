@@ -144,6 +144,11 @@ options - use the `--help` option to see a list. It may also be
 convenient to view/modify the
 [motan_graph.py](../scripts/motan/motan_graph.py) script itself.
 
+The raw data logs produced by the `data_logger.py` tool follow the
+format described in the [API Server](API_Server.md). It may be useful
+to inspect the data with a Unix command like the following:
+`gunzip < mylog.json.gz | tr '\03' '\n' | less`
+
 ## Generating load graphs
 
 The Klippy log file (/tmp/klippy.log) stores statistics on bandwidth,
@@ -197,20 +202,33 @@ run this on a desktop class machine (not a Raspberry Pi) as it does
 require significant cpu to run efficiently.
 
 To use simulavr, download the simulavr package and compile with python
-support:
+support. Note that the build system may need to have some packages (such as
+swig) installed in order to build the python module.
 
 ```
 git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr
-./bootstrap
-./configure --enable-python
-make
+make python
+make build
 ```
+Make sure a file like **./build/pysimulavr/_pysimulavr.*.so** is present
+after the above compilation:
+```
+ls ./build/pysimulavr/_pysimulavr.*.so
+```
+This commmand should report a specific file (e.g.
+**./build/pysimulavr/_pysimulavr.cpython-39-x86_64-linux-gnu.so**) and
+not an error.
 
-Note that the build system may need to have some packages (such as
-swig) installed in order to build the python module. Make sure the
-file **src/python/_pysimulavr.so** is present after the above
-compilation.
+If you are on a Debian-based system (Debian, Ubuntu, etc.) you can
+install the following packages and generate *.deb files for system-wide
+installation of simulavr:
+```
+sudo apt update
+sudo apt install g++ make cmake swig rst2pdf help2man texinfo
+make cfgclean python debian
+sudo dpkg -i build/debian/python3-simulavr*.deb
+```
 
 To compile Klipper for use in simulavr, run:
 
@@ -224,7 +242,12 @@ select SIMULAVR software emulation support. Then one can compile
 Klipper (run `make`) and then start the simulation with:
 
 ```
-PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py out/klipper.elf
+PYTHONPATH=/path/to/simulavr/build/pysimulavr/ ./scripts/avrsim.py out/klipper.elf
+```
+Note that if you have installed python3-simulavr system-wide, you do
+not need to set `PYTHONPATH`, and can simply run the simulator as
+```
+./scripts/avrsim.py out/klipper.elf
 ```
 
 Then, with simulavr running in another window, one can run the

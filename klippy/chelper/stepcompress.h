@@ -13,8 +13,10 @@ struct pull_history_steps {
 
 struct stepcompress *stepcompress_alloc(uint32_t oid);
 void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-                       , uint32_t invert_sdir, int32_t queue_step_msgtag
+                       , int32_t queue_step_msgtag
                        , int32_t set_next_step_dir_msgtag);
+void stepcompress_set_invert_sdir(struct stepcompress *sc
+                                  , uint32_t invert_sdir);
 void stepcompress_free(struct stepcompress *sc);
 uint32_t stepcompress_get_oid(struct stepcompress *sc);
 int stepcompress_get_step_dir(struct stepcompress *sc);

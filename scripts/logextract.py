@@ -148,71 +148,199 @@ class TMCUartHelper:
 # Shutdown extraction
 ######################################################################
 
-stats_seq_s = r" send_seq=(?P<sseq>[0-9]+) receive_seq=(?P<rseq>[0-9]+) "
-count_s = r"(?P<count>[0-9]+)"
-time_s = r"(?P<time>[0-9]+[.][0-9]+)"
-esttime_s = r"(?P<esttime>[0-9]+[.][0-9]+)"
-shortseq_s = r"(?P<shortseq>[0-9a-f])"
-stats_r = re.compile(r"^Stats " + time_s + ": ")
-serial_dump_r = re.compile(r"^Dumping serial stats: .*" + stats_seq_s)
-send_dump_r = re.compile(r"^Dumping send queue " + count_s + " messages$")
-sent_r = re.compile(r"^Sent " + count_s + " " + esttime_s + " " + time_s
-                    + " [0-9]+: seq: 1" + shortseq_s + ",")
-receive_dump_r = re.compile(r"^Dumping receive queue " + count_s + " messages$")
-receive_r = re.compile(r"^Receive: " + count_s + " " + time_s + " " + esttime_s
-                    + " [0-9]+: seq: 1" + shortseq_s + ",")
-gcode_r = re.compile(r"^Read " + time_s + r": (?P<gcode>['\"].*)$")
-gcode_state_r = re.compile(r"^gcode state: ")
-varlist_split_r = re.compile(r"([^ ]+)=")
-clock_r = re.compile(r"^clocksync state: .* clock_est=\((?P<st>[^ ]+)"
-                     + r" (?P<sc>[0-9]+) (?P<f>[^ ]+)\)")
-repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
-repl_clock_r = re.compile(r"clock=(?P<clock>[0-9]+)(?: |$)")
-repl_uart_r = re.compile(r"tmcuart_(?:response|send) oid=[0-9]+"
-                         + r" (?:read|write)=(?P<msg>(?:'[^']*'"
-                         + r'|"[^"]*"))(?: |$)')
-mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' (is_)?shutdown: (?P<reason>.*)$")
-
 def add_high_bits(val, ref, mask):
     half = (mask + 1) // 2
     return ref + ((val - (ref & mask) + half) & mask) - half
 
-class GatherShutdown:
-    class mcu_info:
-        def __init__(self, name):
-            self.name = name
-            self.sent_stream = []
-            self.receive_stream = []
-            self.sent_stream = []
-            self.receive_stream = []
-            self.sent_time_to_seq = {}
-            self.sent_seq_to_time = {}
-            self.receive_seq_to_time = {}
-            self.clock_est = 0., 0., 1.
-            self.shutdown_seq = None
-            self.send_count = self.receive_count = 0
-    def __init__(self, configs, line_num, recent_lines, logname):
-        self.shutdown_line_num = line_num
-        self.filename = "%s.shutdown%05d" % (logname, line_num)
-        self.gcode_filename = "%s.gcode%05d" % (logname, line_num)
-        self.comments = []
-        if configs:
-            configs_by_id = {c.config_num: c for c in configs.values()}
-            config = configs_by_id[max(configs_by_id.keys())]
-            config.add_comment(format_comment(line_num, recent_lines[-1][1]))
-            self.comments.append("# config %s" % (config.filename,))
-        self.stats_stream = []
+count_s = r"(?P<count>[0-9]+)"
+time_s = r"(?P<time>[0-9]+[.][0-9]+)"
+esttime_s = r"(?P<esttime>[0-9]+[.][0-9]+)"
+shortseq_s = r"(?P<shortseq>[0-9a-f])"
+sent_r = re.compile(r"^Sent " + count_s + " " + esttime_s + " " + time_s
+                    + " [0-9]+: seq: 1" + shortseq_s + ",")
+
+# MCU "Sent" shutdown message parsing
+class MCUSentStream:
+    def __init__(self, mcu, count):
+        self.mcu = mcu
+        self.sent_stream = []
+        self.send_count = count
+    def parse_line(self, line_num, line):
+        m = sent_r.match(line)
+        if m is not None:
+            shortseq = int(m.group('shortseq'), 16)
+            seq = (self.mcu.shutdown_seq + int(m.group('count'))
+                   - self.send_count)
+            seq = add_high_bits(shortseq, seq, 0xf)
+            ts = float(m.group('time'))
+            esttime = float(m.group('esttime'))
+            self.mcu.sent_time_to_seq[(esttime, seq & 0xf)] = seq
+            self.mcu.sent_seq_to_time[seq] = ts
+            line = self.mcu.annotate(line, seq, ts)
+            self.sent_stream.append((ts, line_num, line))
+            return True, None
+        return self.mcu.parse_line(line_num, line)
+    def get_lines(self):
+        return self.sent_stream
+
+receive_r = re.compile(r"^Receive: " + count_s + " " + time_s + " " + esttime_s
+                       + " [0-9]+: seq: 1" + shortseq_s + ",")
+
+# MCU "Receive" shutdown message parsing
+class MCUReceiveStream:
+    def __init__(self, mcu):
+        self.mcu = mcu
+        self.receive_stream = []
+    def parse_line(self, line_num, line):
+        m = receive_r.match(line)
+        if m is not None:
+            shortseq = int(m.group('shortseq'), 16)
+            ts = float(m.group('time'))
+            esttime = float(m.group('esttime'))
+            seq = self.mcu.sent_time_to_seq.get((esttime, (shortseq - 1) & 0xf))
+            if seq is not None:
+                self.mcu.receive_seq_to_time[seq + 1] = ts
+            line = self.mcu.annotate(line, seq, ts)
+            self.receive_stream.append((ts, line_num, line))
+            return True, None
+        return self.mcu.parse_line(line_num, line)
+    def get_lines(self):
+        return self.receive_stream
+
+stats_seq_s = r" send_seq=(?P<sseq>[0-9]+) receive_seq=(?P<rseq>[0-9]+) "
+serial_dump_r = re.compile(r"^Dumping serial stats: .*" + stats_seq_s)
+send_dump_r = re.compile(r"^Dumping send queue " + count_s + " messages$")
+receive_dump_r = re.compile(r"^Dumping receive queue " + count_s + " messages$")
+clock_r = re.compile(r"^clocksync state: mcu_freq=(?P<freq>[0-9]+) .*"
+                     + r" clock_est=\((?P<st>[^ ]+)"
+                     + r" (?P<sc>[0-9]+) (?P<f>[^ ]+)\)")
+repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
+clock_s = r"(?P<clock>[0-9]+)"
+repl_clock_r = re.compile(r"clock=" + clock_s + r"(?: |$)")
+repl_uart_r = re.compile(r"tmcuart_(?:response|send) oid=[0-9]+"
+                         + r" (?:read|write)=(?P<msg>(?:'[^']*'"
+                         + r'|"[^"]*"))(?: |$)')
+
+# MCU shutdown message parsing
+class MCUStream:
+    def __init__(self, name):
+        self.name = name
+        self.sent_time_to_seq = {}
+        self.sent_seq_to_time = {}
+        self.receive_seq_to_time = {}
+        self.mcu_freq = 1
+        self.clock_est = (0., 0., 1.)
+        self.shutdown_seq = None
+    def trans_clock(self, clock, ts):
+        sample_time, sample_clock, freq = self.clock_est
+        exp_clock = int(sample_clock + (ts - sample_time) * freq)
+        ext_clock = add_high_bits(clock, exp_clock, 0xffffffff)
+        return sample_time + (ext_clock - sample_clock) / freq
+    def annotate(self, line, seq, ts):
+        if seq is not None:
+            line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
+        def clock_update(m):
+            return m.group(0).rstrip() + "(%.6f) " % (
+                self.trans_clock(int(m.group('clock')), ts),)
+        line = repl_clock_r.sub(clock_update, line)
+        def uart_update(m):
+            msg = TMCUartHelper().parse_msg(ast.literal_eval(m.group('msg')))
+            return m.group(0).rstrip() + "%s " % (msg,)
+        line = repl_uart_r.sub(uart_update, line)
+        if self.name != 'mcu':
+            line = "mcu '%s': %s" % (self.name, line)
+        return line
+    def parse_line(self, line_num, line):
+        m = clock_r.match(line)
+        if m is not None:
+            self.mcu_freq = int(m.group('freq'))
+            st = float(m.group('st'))
+            sc = int(m.group('sc'))
+            f = float(m.group('f'))
+            self.clock_est = (st, sc, f)
+        m = serial_dump_r.match(line)
+        if m is not None:
+            self.shutdown_seq = int(m.group('rseq'))
+        m = send_dump_r.match(line)
+        if m is not None:
+            return True, MCUSentStream(self, int(m.group('count')))
+        m = receive_dump_r.match(line)
+        if m is not None:
+            return True, MCUReceiveStream(self)
+        return False, None
+    def get_lines(self):
+        return []
+
+stepper_move_r = re.compile(r"^queue_step " + count_s + r": t=" + clock_s
+                            + r" ")
+
+# Kinematic "trapq" shutdown message parsing
+class StepperStream:
+    def __init__(self, name, mcu_name, mcus):
+        self.name = name
+        self.stepper_stream = []
+        self.clock_est = (0., 0., 1.)
+        mcu = mcus.get(mcu_name)
+        if mcu is not None:
+            self.clock_est = mcu.clock_est
+    def parse_line(self, line_num, line):
+        m = stepper_move_r.match(line)
+        if m is not None:
+            # Convert clock to systime
+            clock = int(m.group('clock'))
+            sample_time, sample_clock, freq = self.clock_est
+            ts = sample_time + (clock - sample_clock) / freq
+            # Add systime to log
+            parts = line.split(' ', 4)
+            parts[0] = "%s queue_step" % (self.name,)
+            parts[2] += '(%.6f)' % (ts,)
+            self.stepper_stream.append((ts, line_num, ' '.join(parts)))
+            return True, None
+        return False, None
+    def get_lines(self):
+        return self.stepper_stream
+
+trapq_move_r = re.compile(r"^move " + count_s + r": pt=" + time_s)
+
+# Kinematic "trapq" shutdown message parsing
+class TrapQStream:
+    def __init__(self, name, mcus):
+        self.name = name
+        self.trapq_stream = []
+        self.mcu_freq = 1
+        self.clock_est = (0., 0., 1.)
+        mcu = mcus.get("mcu")
+        if mcu is not None:
+            self.mcu_freq = mcu.mcu_freq
+            self.clock_est = mcu.clock_est
+    def parse_line(self, line_num, line):
+        m = trapq_move_r.match(line)
+        if m is not None:
+            # Convert print_time to systime
+            pt = float(m.group('time'))
+            clock = pt * self.mcu_freq
+            sample_time, sample_clock, freq = self.clock_est
+            ts = sample_time + (clock - sample_clock) / freq
+            # Add systime to log
+            parts = line.split(' ', 4)
+            parts[0] = "%s move" % (self.name,)
+            parts[2] += '(%.6f)' % (ts,)
+            self.trapq_stream.append((ts, line_num, ' '.join(parts)))
+            return True, None
+        return False, None
+    def get_lines(self):
+        return self.trapq_stream
+
+gcode_cmd_r = re.compile(r"^Read " + time_s + r": (?P<gcode>['\"].*)$")
+varlist_split_r = re.compile(r"([^ ]+)=")
+
+# G-Code shutdown message parsing
+class GCodeStream:
+    def __init__(self, shutdown_line_num, logname):
         self.gcode_stream = []
+        self.gcode_commands = []
         self.gcode_state = ''
-        self.mcus = {}
-        self.mcu = None
-        self.first_stat_time = self.last_stat_time = None
-        for line_num, line in recent_lines:
-            self.parse_line(line_num, line)
-        self.first_stat_time = self.last_stat_time
-    def add_comment(self, comment):
-        if comment is not None:
-            self.comments.append(comment)
+        self.gcode_filename = "%s.gcode%05d" % (logname, shutdown_line_num)
     def extract_params(self, line):
         parts = varlist_split_r.split(line)
         try:
@@ -243,6 +371,62 @@ class GatherShutdown:
             out.append('M221 S%f' % (kv['extrude_factor'] * 100.,))
         out.extend(['; End of state restore', '', ''])
         self.gcode_state = '\n'.join(out)
+    def parse_line(self, line_num, line):
+        m = gcode_cmd_r.match(line)
+        if m is not None:
+            ts = float(m.group('time'))
+            self.gcode_stream.append((ts, line_num, line))
+            self.gcode_commands.append(m.group('gcode'))
+            return True, None
+        return False, None
+    def get_lines(self):
+        # Produce output gcode stream
+        if self.gcode_stream:
+            data = [ast.literal_eval(gc) for gc in self.gcode_commands]
+            f = open(self.gcode_filename, 'wb')
+            f.write(self.gcode_state + ''.join(data))
+            f.close()
+        return self.gcode_stream
+
+api_cmd_r = re.compile(r"^Received " + time_s + r": \{.*\}$")
+
+# API server shutdowm message parsing
+class APIStream:
+    def __init__(self):
+        self.api_stream = []
+    def parse_line(self, line_num, line):
+        m = api_cmd_r.match(line)
+        if m is not None:
+            ts = float(m.group('time'))
+            self.api_stream.append((ts, line_num, line))
+            return True, None
+        return False, None
+    def get_lines(self):
+        return self.api_stream
+
+stats_r = re.compile(r"^Stats " + time_s + ": ")
+mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' (is_)?shutdown: (?P<reason>.*)$")
+stepper_r = re.compile(r"^Dumping stepper '(?P<name>[^']*)' \((?P<mcu>[^)]+)\) "
+                       + count_s + r" queue_step:$")
+trapq_r = re.compile(r"^Dumping trapq '(?P<name>[^']*)' " + count_s
+                     + r" moves:$")
+gcode_r = re.compile(r"Dumping gcode input " + count_s + r" blocks$")
+gcode_state_r = re.compile(r"^gcode state: ")
+api_r = re.compile(r"Dumping " + count_s + r" requests for client "
+                   + r"(?P<client>[0-9]+)" + r"$")
+
+# Stats message parsing and high-level message dispatch
+class StatsStream:
+    def __init__(self, shutdown_line_num, logname):
+        self.shutdown_line_num = shutdown_line_num
+        self.gcode_stream = GCodeStream(shutdown_line_num, logname)
+        self.mcus = {}
+        self.first_stat_time = self.last_stat_time = None
+        self.stats_stream = []
+    def reset_first_stat_time(self):
+        self.first_stat_time = self.last_stat_time
+    def get_stat_times(self):
+        return self.first_stat_time, self.last_stat_time
     def check_stats_seq(self, ts, line):
         # Parse stats
         parts = line.split()
@@ -256,83 +440,19 @@ class GatherShutdown:
             keyparts[mcu + name] = val
         min_ts = 0
         max_ts = 999999999999
-        for mcu, info in self.mcus.items():
-            sname = '%s:send_seq' % (mcu,)
-            rname = '%s:receive_seq' % (mcu,)
+        for mcu_name, mcu in self.mcus.items():
+            sname = '%s:send_seq' % (mcu_name,)
+            rname = '%s:receive_seq' % (mcu_name,)
             if sname not in keyparts:
                 continue
             sseq = int(keyparts[sname])
             rseq = int(keyparts[rname])
-            min_ts = max(min_ts, info.sent_seq_to_time.get(sseq-1, 0),
-                         info.receive_seq_to_time.get(rseq, 0))
-            max_ts = min(max_ts, info.sent_seq_to_time.get(sseq, 999999999999),
-                         info.receive_seq_to_time.get(rseq+1, 999999999999))
+            min_ts = max(min_ts, mcu.sent_seq_to_time.get(sseq-1, 0),
+                         mcu.receive_seq_to_time.get(rseq, 0))
+            max_ts = min(max_ts, mcu.sent_seq_to_time.get(sseq, 999999999999),
+                         mcu.receive_seq_to_time.get(rseq+1, 999999999999))
         return min(max(ts, min_ts + 0.00000001), max_ts - 0.00000001)
-    def trans_clock(self, clock, ts):
-        sample_time, sample_clock, freq = self.mcu.clock_est
-        exp_clock = int(sample_clock + (ts - sample_time) * freq)
-        ext_clock = add_high_bits(clock, exp_clock, 0xffffffff)
-        return sample_time + (ext_clock - sample_clock) / freq
-    def annotate(self, line, mcu_name, seq, ts):
-        if seq is not None:
-            line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
-        def clock_update(m):
-            return m.group(0).rstrip() + "(%.6f) " % (
-                self.trans_clock(int(m.group('clock')), ts),)
-        line = repl_clock_r.sub(clock_update, line)
-        def uart_update(m):
-            msg = TMCUartHelper().parse_msg(ast.literal_eval(m.group('msg')))
-            return m.group(0).rstrip() + "%s " % (msg,)
-        line = repl_uart_r.sub(uart_update, line)
-        if mcu_name != 'mcu':
-            line = "mcu '%s': %s" % (mcu_name, line)
-        return line
-    def add_line(self, line_num, line):
-        self.parse_line(line_num, line)
-        if (self.first_stat_time is not None
-            and self.last_stat_time > self.first_stat_time + 5.):
-            self.finalize()
-            return False
-        if (line.startswith('Git version')
-            or line.startswith('Start printer at')
-            or line == '===== Config file ====='):
-            self.finalize()
-            return False
-        return True
     def parse_line(self, line_num, line):
-        m = sent_r.match(line)
-        if m is not None:
-            shortseq = int(m.group('shortseq'), 16)
-            seq = (self.mcu.shutdown_seq + int(m.group('count'))
-                   - self.mcu.send_count)
-            seq = add_high_bits(shortseq, seq, 0xf)
-            ts = float(m.group('time'))
-            esttime = float(m.group('esttime'))
-            self.mcu.sent_time_to_seq[(esttime, seq & 0xf)] = seq
-            self.mcu.sent_seq_to_time[seq] = ts
-            line = self.annotate(line, self.mcu.name, seq, ts)
-            self.mcu.sent_stream.append((ts, line_num, line))
-            return
-        m = receive_r.match(line)
-        if m is not None:
-            shortseq = int(m.group('shortseq'), 16)
-            ts = float(m.group('time'))
-            esttime = float(m.group('esttime'))
-            seq = self.mcu.sent_time_to_seq.get((esttime, (shortseq - 1) & 0xf))
-            if seq is not None:
-                self.mcu.receive_seq_to_time[seq + 1] = ts
-            line = self.annotate(line, self.mcu.name, seq, ts)
-            self.mcu.receive_stream.append((ts, line_num, line))
-            return
-        m = gcode_r.match(line)
-        if m is not None:
-            ts = float(m.group('time'))
-            self.gcode_stream.append((ts, line_num, line, m.group('gcode')))
-            return
-        m = gcode_state_r.match(line)
-        if m is not None:
-            self.handle_gcode_state(line)
-            return
         m = stats_r.match(line)
         if m is not None:
             ts = float(m.group('time'))
@@ -340,35 +460,42 @@ class GatherShutdown:
             if self.first_stat_time is None:
                 self.first_stat_time = ts
             self.stats_stream.append((ts, line_num, line))
-            return
+            return True, None
+        self.stats_stream.append((None, line_num, line))
         m = mcu_r.match(line)
         if m is not None:
-            mcu = m.group('mcu')
-            self.mcu = self.mcus.setdefault(mcu, self.mcu_info(mcu))
-        m = clock_r.match(line)
+            mcu_name = m.group('mcu')
+            mcu_stream = MCUStream(mcu_name)
+            self.mcus[mcu_name] = mcu_stream
+            return True, mcu_stream
+        m = stepper_r.match(line)
         if m is not None:
-            st = float(m.group('st'))
-            sc = int(m.group('sc'))
-            f = float(m.group('f'))
-            self.mcu.clock_est = (st, sc, f)
-        m = serial_dump_r.match(line)
+            return True, StepperStream(m.group('name'), m.group('mcu'),
+                                       self.mcus)
+        m = trapq_r.match(line)
         if m is not None:
-            self.mcu.shutdown_seq = int(m.group('rseq'))
-        m = send_dump_r.match(line)
+            return True, TrapQStream(m.group('name'), self.mcus)
+        m = gcode_r.match(line)
         if m is not None:
-            self.mcu.send_count = int(m.group('count'))
-        m = receive_dump_r.match(line)
+            return True, self.gcode_stream
+        m = gcode_state_r.match(line)
         if m is not None:
-            self.mcu.receive_count = int(m.group('count'))
-        self.stats_stream.append((None, line_num, line))
-    def finalize(self):
+            self.gcode_stream.handle_gcode_state(line)
+            return True, None
+        m = api_r.match(line)
+        if m is not None:
+            return True, APIStream()
+        return False, None
+    def get_lines(self):
         # Ignore old stats
-        stream_ts = [i[0] for mcu in self.mcus.values()
-                     for i in mcu.sent_stream + mcu.receive_stream]
-        if not stream_ts:
-            return
-        min_stream_ts = min(stream_ts)
-        max_stream_ts = max(stream_ts)
+        all_ts = []
+        for mcu_name, mcu in self.mcus.items():
+            all_ts.extend(mcu.sent_seq_to_time.values())
+            all_ts.extend(mcu.receive_seq_to_time.values())
+        if not all_ts:
+            return []
+        min_stream_ts = min(all_ts)
+        max_stream_ts = max(all_ts)
         for i, info in enumerate(self.stats_stream):
             if info[0] is not None and info[0] >= min_stream_ts - 5.:
                 del self.stats_stream[:i]
@@ -382,10 +509,50 @@ class GatherShutdown:
                   and last_ts <= max_stream_ts):
                 last_ts = max_stream_ts + 0.00000001
             self.stats_stream[i] = (last_ts, line_num, line)
+        return self.stats_stream
+
+# Main handler for creating shutdown diagnostics file
+class GatherShutdown:
+    def __init__(self, configs, line_num, recent_lines, logname):
+        self.filename = "%s.shutdown%05d" % (logname, line_num)
+        self.comments = []
+        if configs:
+            configs_by_id = {c.config_num: c for c in configs.values()}
+            config = configs_by_id[max(configs_by_id.keys())]
+            config.add_comment(format_comment(line_num, recent_lines[-1][1]))
+            self.comments.append("# config %s" % (config.filename,))
+        self.stats_stream = StatsStream(line_num, logname)
+        self.active_streams = [self.stats_stream]
+        self.all_streams = list(self.active_streams)
+        for line_num, line in recent_lines:
+            self.parse_line(line_num, line)
+        self.stats_stream.reset_first_stat_time()
+    def add_comment(self, comment):
+        if comment is not None:
+            self.comments.append(comment)
+    def add_line(self, line_num, line):
+        self.parse_line(line_num, line)
+        first, last = self.stats_stream.get_stat_times()
+        if first is not None and last > first + 5.:
+            self.finalize()
+            return False
+        if (line.startswith('Git version')
+            or line.startswith('Start printer at')
+            or line == '===== Config file ====='):
+            self.finalize()
+            return False
+        return True
+    def parse_line(self, line_num, line):
+        for s in self.active_streams:
+            did_parse, new_stream = s.parse_line(line_num, line)
+            if did_parse:
+                if new_stream is not None:
+                    self.all_streams.append(new_stream)
+                    self.active_streams = [new_stream, self.stats_stream]
+                break
+    def finalize(self):
         # Make sure no timestamp goes backwards
-        streams = ([self.stats_stream, self.gcode_stream] +
-                   [mcu.sent_stream for mcu in self.mcus.values()] +
-                   [mcu.receive_stream for mcu in self.mcus.values()])
+        streams = [p.get_lines() for p in self.all_streams]
         for s in streams:
             for i in range(1, len(s)):
                 if s[i-1][0] > s[i][0]:
@@ -397,12 +564,6 @@ class GatherShutdown:
         f = open(self.filename, 'wb')
         f.write('\n'.join(self.comments + out))
         f.close()
-        # Produce output gcode stream
-        if self.gcode_stream:
-            data = [ast.literal_eval(gc[3]) for gc in self.gcode_stream]
-            f = open(self.gcode_filename, 'wb')
-            f.write(self.gcode_state + ''.join(data))
-            f.close()
 
 
 ######################################################################
