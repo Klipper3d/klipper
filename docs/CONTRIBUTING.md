@@ -73,74 +73,7 @@ Common things a reviewer will look for:
    Updates to documentation should not declare that they are a "work
    in progress".
 
-2. Is the copyright of the submission clear, non-gratuitous, and
-   compatible?
-
-   New C files and Python files should have an unambiguous copyright
-   statement. See the existing files for the preferred format.
-   Declaring a copyright on an existing file when making minor changes
-   to that file is discouraged.
-
-   Code taken from 3rd party sources must be compatible with the
-   Klipper license (GNU GPLv3). Large 3rd party code additions should
-   be added to the `lib/` directory (and follow the format described
-   in [lib/README](../lib/README)).
-
-   Submitters must provide a
-   [Signed-off-by line](#format-of-commit-messages) using their full
-   real name. It indicates the submitter agrees with the
-   [developer certificate of origin](developer-certificate-of-origin).
-
-3. Does the submission follow guidelines specified in the Klipper
-   documentation?
-
-   In particular, code should follow the guidelines in
-   [Code_Overview.md](Code_Overview.md) and config files should follow
-   the guidelines in [Example_Configs.md](Example_Configs.md).
-
-4. Is the Klipper documentation updated to reflect new changes?
-
-   At a minimum, the reference documentation must be updated with
-   corresponding changes to the code:
-   * All commands and command parameters must be documented in
-     [G-Codes.md](G-Codes.md).
-   * All user facing modules and their config parameters must be
-     documented in [Config_Reference.md](Config_Reference.md).
-   * All exported "status variables" must be documented in
-     [Status_Reference.md](Status_Reference.md).
-   * All new "webhooks" and their parameters must be documented in
-     [API_Server.md](API_Server.md).
-   * Any change that makes a non-backwards compatible change to a
-     command or config file setting must be documented in
-     [Config_Changes.md](Config_Changes.md).
-
-   New documents should be added to [Overview.md](Overview.md) and be
-   added to the website index
-   [docs/_klipper3d/mkdocs.yml](../docs/_klipper3d/mkdocs.yml).
-
-5. Are commits well formed, address a single topic per commit, and
-   independent?
-
-   Commit messages should follow the
-   [preferred format](#format-of-commit-messages).
-
-   Commits must not have a merge conflict. New additions to the
-   Klipper master branch are always done via a "rebase" or "squash and
-   rebase". It is generally not necessary for submitters to re-merge
-   their submission on every update to the Klipper master repository.
-   However, if there is a merge conflict, then submitters are
-   recommended to use `git rebase` to address the conflict.
-
-   Each commit should address a single high-level change. Large
-   changes should be broken up into multiple independent commits. Each
-   commit should "stand on its own" so that tools like `git bisect`
-   and `git revert` work reliably.
-
-   Whitespace changes should not be mixed with functional changes. In
-   general, gratuitous whitespace changes are not accepted unless they
-   are from the established "owner" of the code being modified.
-
-6. Does the submission provide a "high impact" benefit to real-world
+2. Does the submission provide a "high impact" benefit to real-world
    users performing real-world tasks?
 
    Reviewers need to identify, at least in their own minds, roughly
@@ -194,6 +127,73 @@ Common things a reviewer will look for:
    similar functionality to existing modules - if the differences are
    arbitrary than it's preferable to utilize the existing system or
    refactor the existing code.
+
+3. Is the copyright of the submission clear, non-gratuitous, and
+   compatible?
+
+   New C files and Python files should have an unambiguous copyright
+   statement. See the existing files for the preferred format.
+   Declaring a copyright on an existing file when making minor changes
+   to that file is discouraged.
+
+   Code taken from 3rd party sources must be compatible with the
+   Klipper license (GNU GPLv3). Large 3rd party code additions should
+   be added to the `lib/` directory (and follow the format described
+   in [lib/README](../lib/README)).
+
+   Submitters must provide a
+   [Signed-off-by line](#format-of-commit-messages) using their full
+   real name. It indicates the submitter agrees with the
+   [developer certificate of origin](developer-certificate-of-origin).
+
+4. Does the submission follow guidelines specified in the Klipper
+   documentation?
+
+   In particular, code should follow the guidelines in
+   [Code_Overview.md](Code_Overview.md) and config files should follow
+   the guidelines in [Example_Configs.md](Example_Configs.md).
+
+5. Is the Klipper documentation updated to reflect new changes?
+
+   At a minimum, the reference documentation must be updated with
+   corresponding changes to the code:
+   * All commands and command parameters must be documented in
+     [G-Codes.md](G-Codes.md).
+   * All user facing modules and their config parameters must be
+     documented in [Config_Reference.md](Config_Reference.md).
+   * All exported "status variables" must be documented in
+     [Status_Reference.md](Status_Reference.md).
+   * All new "webhooks" and their parameters must be documented in
+     [API_Server.md](API_Server.md).
+   * Any change that makes a non-backwards compatible change to a
+     command or config file setting must be documented in
+     [Config_Changes.md](Config_Changes.md).
+
+   New documents should be added to [Overview.md](Overview.md) and be
+   added to the website index
+   [docs/_klipper3d/mkdocs.yml](../docs/_klipper3d/mkdocs.yml).
+
+6. Are commits well formed, address a single topic per commit, and
+   independent?
+
+   Commit messages should follow the
+   [preferred format](#format-of-commit-messages).
+
+   Commits must not have a merge conflict. New additions to the
+   Klipper master branch are always done via a "rebase" or "squash and
+   rebase". It is generally not necessary for submitters to re-merge
+   their submission on every update to the Klipper master repository.
+   However, if there is a merge conflict, then submitters are
+   recommended to use `git rebase` to address the conflict.
+
+   Each commit should address a single high-level change. Large
+   changes should be broken up into multiple independent commits. Each
+   commit should "stand on its own" so that tools like `git bisect`
+   and `git revert` work reliably.
+
+   Whitespace changes should not be mixed with functional changes. In
+   general, gratuitous whitespace changes are not accepted unless they
+   are from the established "owner" of the code being modified.
 
 Klipper does not implement a strict "coding style guide", but
 modifications to existing code should follow the high-level code flow,

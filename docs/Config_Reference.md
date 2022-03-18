@@ -1734,6 +1734,7 @@ control_pin:
 #y_offset:
 #z_offset:
 #speed:
+#lift_speed:
 #samples:
 #sample_retract_dist:
 #samples_result:
@@ -2555,7 +2556,7 @@ pin:
 #   Neopixel is connected to the pin).
 #color_order: GRB
 #   Set the pixel order required by the LED hardware. Options are GRB,
-#   RGB, BRG, GRBW, or RGBW. The default is GRB.
+#   RGB, BRG, BGR, GRBW, or RGBW. The default is GRB.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
@@ -2609,6 +2610,26 @@ PCA9533 LED support. The PCA9533 is used on the mightyboard.
 #   mightyboard, the white led is not populated.
 #   Use GCODE to modify led values after startup.
 #   set_led led=my_pca9533 red=1 green=1 blue=1
+```
+### [PCA9632]
+
+PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
+
+```
+[pca9632 my_pca9632]
+scl_pin:
+# The SCL "clock" pin. This parameter must be provided.
+sda_pin:
+# The SDA "data" pin. This parameter must be provided.
+#initial_RED: 0
+#initial_GREEN: 0
+#initial_BLUE: 0
+#initial_WHITE: 0
+# PCA9632 supports individual LED PWM.
+# Values range from 0.0 to 1.0. The default is 0.0.
+# On the FlashForge Dreamer, the white led is not populated.
+# Use GCODE to modify led values after startup.
+# set_led led=my_pca9632 red=1.0 green=1.0 blue=1.0 white=0.0
 ```
 
 ### [gcode_button]
@@ -3309,7 +3330,7 @@ lcd_type:
 #   button.
 ```
 
-### hd44780 display
+#### hd44780 display
 
 Information on configuring hd44780 displays (which is used in
 "RepRapDiscount 2004 Smart Controller" type displays).
@@ -3337,7 +3358,7 @@ d7_pin:
 ...
 ```
 
-### hd44780_spi display
+#### hd44780_spi display
 
 Information on configuring an hd44780_spi display - a 20x04 display
 controlled via a hardware "shift register" (which is used in
@@ -3367,7 +3388,7 @@ spi_software_miso_pin:
 ...
 ```
 
-### st7920 display
+#### st7920 display
 
 Information on configuring st7920 displays (which is used in
 "RepRapDiscount 12864 Full Graphic Smart Controller" type displays).
@@ -3384,7 +3405,7 @@ sid_pin:
 ...
 ```
 
-### emulated_st7920 display
+#### emulated_st7920 display
 
 Information on configuring an emulated st7920 display - found in some
 "2.4 inch touchscreen devices" and similar.
@@ -3407,7 +3428,7 @@ spi_software_miso_pin:
 ...
 ```
 
-### uc1701 display
+#### uc1701 display
 
 Information on configuring uc1701 displays (which is used in "MKS Mini
 12864" type displays).
@@ -3430,7 +3451,7 @@ a0_pin:
 ...
 ```
 
-### ssd1306 and sh1106 displays
+#### ssd1306 and sh1106 displays
 
 Information on configuring ssd1306 and sh1106 displays.
 
@@ -3475,7 +3496,7 @@ lcd_type:
 ...
 ```
 
-## [display_data]
+### [display_data]
 
 Support for displaying custom data on an lcd screen. One may create
 any number of display groups and any number of data items under those
@@ -3501,7 +3522,7 @@ text:
 #   parameter must be provided.
 ```
 
-## [display_template]
+### [display_template]
 
 Display data text "macros" (one may define any number of sections with
 a display_template prefix). This feature allows one to reduce
@@ -3528,7 +3549,7 @@ display_data section.
 #   docs/Command_Templates.md). This parameter must be provided.
 ```
 
-## [display_glyph]
+### [display_glyph]
 
 Display a custom glyph on displays that support it. The given name
 will be assigned the given display data which can then be referenced
@@ -3558,7 +3579,7 @@ examples.
 #   required if hd44780_data is specified.
 ```
 
-## [display my_extra_display]
+### [display my_extra_display]
 
 If a primary [display] section has been defined in printer.cfg as
 shown above it is possible to define multiple auxiliary displays. Note
@@ -3570,7 +3591,7 @@ thus they do not support the "menu" options or button configuration.
 # See the "display" section for available parameters.
 ```
 
-## [menu]
+### [menu]
 
 Customizable lcd display menus.
 
