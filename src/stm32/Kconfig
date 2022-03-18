@@ -188,7 +188,7 @@ choice
     config STM32_FLASH_START_7000
         bool "28KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_8000
-        bool "32KiB bootloader" if MACH_STM32F103 || MACH_STM32F207 || MACH_STM32F4x5 || MACH_STM32F446
+        bool "32KiB bootloader" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4
     config STM32_FLASH_START_8800
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_20200

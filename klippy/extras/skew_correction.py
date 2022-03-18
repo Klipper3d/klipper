@@ -143,7 +143,7 @@ class PrinterSkew:
                 "update the printer config file and restart the printer."
                 % (name))
         elif gcmd.get('REMOVE', None) is not None:
-            name = gmcd.get('REMOVE')
+            name = gcmd.get('REMOVE')
             if name in self.skew_profiles:
                 configfile = self.printer.lookup_object('configfile')
                 configfile.remove_section('skew_correction ' + name)

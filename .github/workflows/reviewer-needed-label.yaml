@@ -1,0 +1,66 @@
+# Add a comment to github PRs marked with the "reviewer needed" label
+name: "Add comment to PRs marked 'reviewer needed'"
+on:
+  pull_request_target:
+      types: [labeled]
+jobs:
+  add_comment:
+    if: github.repository == 'Klipper3d/klipper'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            if (context.payload.label.name != "reviewer needed")
+              return;
+            if (context.payload.pull_request.assignees.length > 0)
+              return;
+            msg = "Thank you for your contribution to Klipper."
+                + " Unfortunately, a reviewer has not assigned themselves to"
+                + " this GitHub Pull Request. All Pull Requests are reviewed"
+                + " before merging, and a reviewer will need to volunteer."
+                + " Further information is available at:"
+                + " https://www.klipper3d.org/CONTRIBUTING.html"
+                + "\n\n"
+                + "There are some steps that you can take now:"
+                + "\n"
+                + "1. Perform a self-review of your Pull Request by following"
+                + " the steps at:"
+                + " https://www.klipper3d.org/CONTRIBUTING.html#what-to-expect-in-a-review"
+                + "\n"
+                + "  If you have completed a self-review, be sure to state the"
+                + " results of that self-review explicitly in the Pull Request"
+                + " comments. A reviewer is more likely to participate if the"
+                + " bulk of a review has already been completed."
+                + "\n"
+                + "2. Consider opening a topic on the [Klipper Discourse]"
+                + "(https://www.klipper3d.org/Contact.html#community-forum)"
+                + " server to discuss this work. The Discourse server is a good"
+                + " place to discuss development ideas and to engage users"
+                + " interested in testing. Reviewers are more likely to"
+                + " prioritize Pull Requests with an active community of users."
+                + "\n"
+                + "3. Consider helping out reviewers by reviewing other Klipper"
+                + " Pull Requests. Taking the time to perform a careful and"
+                + " detailed review of others work is appreciated. Regular"
+                + " contributors are more likely to prioritize the"
+                + " contributions of other regular contributors."
+                + "\n\n"
+                + "Unfortunately, if a reviewer does not assign themselves to"
+                + " this GitHub Pull Request then it will be automatically"
+                + " closed. If this happens, then it is a good idea to move"
+                + " further discussion to the [Klipper Discourse]"
+                + "(https://www.klipper3d.org/Contact.html#community-forum)"
+                + " server. Reviewers can reach out on that forum to let you"
+                + " know if they are interested and when they are available."
+                + "\n\n"
+                + "Best regards,\n"
+                + "~ Your friendly GitIssueBot"
+                + "\n\n"
+                + "PS: I'm just an automated script, not a human being.";
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: msg
+            })
