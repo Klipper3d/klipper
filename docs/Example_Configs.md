@@ -85,7 +85,9 @@ is also a useful resource for finding and sharing config files.
       extruder - it is normally in the range of 20 to 35mm. When
       specifying a `gear_ratio` it is preferable to specify the actual
       gears on the mechanism (eg, prefer `gear_ratio: 80:20` over
-      `gear_ratio: 4:1`).
+      `gear_ratio: 4:1`). See the
+      [rotation distance document](Rotation_Distance.md#using-a-gear_ratio)
+      for more information.
    6. Avoid defining field values that are set to their default
       value. For example, one should not specify `min_extrude_temp:
       170` as that is already the default value.
