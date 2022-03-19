@@ -329,6 +329,28 @@ class HelperTLE5012B:
             if crc == resp[-1]:
                 return params
         raise self.printer.command_error("Unable to query tle5012b chip")
+    def _read_reg(self, reg):
+        cw = 0x8000 | ((reg & 0x3f) << 4) | 0x01
+        if reg >= 0x05 and reg <= 0x11:
+            cw |= 0x5000
+        msg = [cw >> 8, cw & 0xff, 0, 0, 0, 0]
+        params = self._send_spi(msg)
+        resp = bytearray(params['response'])
+        return (resp[2] << 8) | resp[3]
+    def _write_reg(self, reg, val):
+        cw = ((reg & 0x3f) << 4) | 0x01
+        if reg >= 0x05 and reg <= 0x11:
+            cw |= 0x5000
+        msg = [cw >> 8, cw & 0xff, (val >> 8) & 0xff, val & 0xff, 0, 0]
+        for retry in range(5):
+            self._send_spi(msg)
+            rval = self._read_reg(reg)
+            if rval == val:
+                return
+        raise self.printer.command_error("Unable to write to tle5012b chip")
+    def _mask_reg(self, reg, off, on):
+        rval = self._read_reg(reg)
+        self._write_reg(reg, (rval & ~off) | on)
     def _query_clock(self):
         # Read frame counter (and normalize to a 16bit counter)
         msg = [0x84, 0x42, 0, 0, 0, 0, 0, 0] # Read with latch, AREV and FSYNC
@@ -352,7 +374,11 @@ class HelperTLE5012B:
         self.last_chip_mcu_clock = mcu_clock
     def start(self):
         # Clear any errors from device
-        self._send_spi([0x80, 0x01, 0x00, 0x00, 0x00, 0x00]) # Read STAT
+        self._read_reg(0x00) # Read STAT
+        # Initialize chip (so different chip variants work the same way)
+        self._mask_reg(0x06, 0xc003, 0x4000) # MOD1: 42.7us, IIF disable
+        self._mask_reg(0x08, 0x0007, 0x0001) # MOD2: Predict off, autocal=1
+        self._mask_reg(0x0e, 0x0003, 0x0000) # MOD4: IIF mode
         # Setup starting clock values
         mcu_clock, chip_clock = self._query_clock()
         self.last_chip_clock = chip_clock
