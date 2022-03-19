@@ -264,6 +264,7 @@ class HelperA1333:
     def __init__(self, config, spi, oid):
         self.spi = spi
         self.is_tcode_absolute = False
+        self.last_temperature = None
     def get_static_delay(self):
         return .000001
     def start(self):
@@ -276,6 +277,7 @@ class HelperAS5047D:
     def __init__(self, config, spi, oid):
         self.spi = spi
         self.is_tcode_absolute = False
+        self.last_temperature = None
     def get_static_delay(self):
         return .000100
     def start(self):
@@ -292,6 +294,7 @@ class HelperTLE5012B:
         self.spi = spi
         self.oid = oid
         self.is_tcode_absolute = True
+        self.last_temperature = None
         self.mcu = spi.get_mcu()
         self.mcu.register_config_callback(self._build_config)
         self.spi_angle_transfer_cmd = None
@@ -333,6 +336,9 @@ class HelperTLE5012B:
         resp = bytearray(params['response'])
         mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
         chip_clock = ((resp[2] & 0x7e) << 9) | ((resp[4] & 0x3e) << 4)
+        # Calculate temperature
+        temper = resp[5] - ((resp[4] & 0x01) << 8)
+        self.last_temperature = (temper + 152) / 2.776
         return mcu_clock, chip_clock
     def update_clock(self):
         mcu_clock, chip_clock = self._query_clock()
@@ -407,6 +413,8 @@ class Angle:
         self.query_spi_angle_end_cmd = self.mcu.lookup_query_command(
             "query_spi_angle oid=%c clock=%u rest_ticks=%u time_shift=%c",
             "spi_angle_end oid=%c sequence=%hu", oid=self.oid, cq=cmdqueue)
+    def get_status(self, eventtime=None):
+        return {'temperature': self.sensor_helper.last_temperature}
     # Measurement collection
     def is_measuring(self):
         return self.start_clock != 0
@@ -507,6 +515,7 @@ class Angle:
         self.start_clock = 0
         with self.lock:
             self.raw_samples = []
+        self.sensor_helper.last_temperature = None
         logging.info("Stopped angle '%s' measurements", self.name)
     def _api_startstop(self, is_start):
         if is_start:

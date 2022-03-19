@@ -10,6 +10,15 @@ attribute be sure to review the
 [Config Changes document](Config_Changes.md) when upgrading the
 Klipper software.
 
+## angle
+
+The following information is available in
+[angle some_name](Config_Reference.md#angle) objects:
+- `temperature`: The last temperature reading (in Celsius) from a
+  tle5012b magnetic hall sensor. This value is only available if the
+  angle sensor is a tle5012b chip and if measurements are in progress
+  (otherwise it reports `None`).
+
 ## bed_mesh
 
 The following information is available in the
