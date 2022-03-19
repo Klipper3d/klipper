@@ -15,7 +15,7 @@ git clone --depth 1 https://github.com/Klipper3d/klipper-translations ${TRANS_DI
 # Create new mkdocs-main.yml with language links
 cp ${MKDOCS_DIR}mkdocs.yml ${MKDOCS_MAIN}
 while IFS="," read dirname langsite langdesc langsearch; do
-  sed -i "s%^.*# Alternate language links automatically added here$%    - name: ${langdesc}\n      link: /${langsite}/\n\0%" ${MKDOCS_MAIN}
+  sed -i "s%^.*# Alternate language links automatically added here$%    - name: ${langdesc}\n      link: /${langsite}/\n      lang: ${langsite}\n\0%" ${MKDOCS_MAIN}
 done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})
 
 # Build main English website
@@ -49,6 +49,12 @@ while IFS="," read dirname langsite langdesc langsearch; do
   echo "create language specific mkdocs configurations for ${langsite}"
   new_mkdocs_file="${new_docs_dir}_klipper3d/mkdocs-lang-${langsite}.yml"
   cp "${MKDOCS_MAIN}" "${new_mkdocs_file}"
+
+  echo "replace search language"
+  sed -i "s%^    lang: en$%    lang: ${langsearch}%" "${new_mkdocs_file}"
+
+  echo "replace site language"
+  sed -i "s%^  language: en$%  language: ${langsite}%" "${new_mkdocs_file}"
 
   # Build site
   echo "building site for ${langsite}"
