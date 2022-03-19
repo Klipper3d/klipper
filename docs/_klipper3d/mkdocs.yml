@@ -9,7 +9,7 @@ use_directory_urls: False
 docs_dir: '../'
 site_dir: '../../site/'
 
-# Markdown document translation settings
+# Custom markdown dialect settings
 markdown_extensions:
   - toc:
       permalink: True
@@ -67,6 +67,11 @@ extra:
   analytics:
     provider: google
     property: UA-138371409-1
+  # Language Selection
+  alternate:
+    - name: English
+      link: /
+    # Alternate language links automatically added here
 
 # Navigation hierarchy (this should mimic the layout of Overview.md)
 nav:
