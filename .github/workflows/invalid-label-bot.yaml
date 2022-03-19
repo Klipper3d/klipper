@@ -8,9 +8,8 @@ jobs:
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v3
+      - uses: actions/github-script@v6
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             if (context.payload.label.name != "not on github")
               return;
@@ -36,7 +35,7 @@ jobs:
                 + "~ Your friendly GitIssueBot"
                 + "\n\n"
                 + "PS: I'm just an automated script, not a human being.";
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
