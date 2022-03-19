@@ -1,7 +1,0 @@
-# Klipper3d.org language translation template file.
-# Actual language definitions are appended by the fetch-translations.sh script.
-plugins:
-  i18n:
-    default_language: en
-    languages:
-      en: English

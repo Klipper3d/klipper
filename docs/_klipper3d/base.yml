@@ -1,0 +1,65 @@
+# Base configuration file for building Klipper. It needs to be
+# Combined with extra.yml, nav_<lang>.yml in order to produce a full
+# configuration. Use build_fallback.sh to build English only script.
+
+# Site and directory configuration
+repo_url: https://github.com/Klipper3d/klipper
+repo_name: Klipper3d/klipper
+edit_uri: blob/master/docs/
+use_directory_urls: False
+
+docs_dir: '../en' #*# Markdown File Directory
+site_dir: '../../site/en' #*# Site Directory
+
+markdown_extensions:
+  - toc:
+      permalink: True
+      toc_depth: 6
+  - attr_list
+  - mdx_partial_gfm
+  - mdx_truly_sane_lists
+  - mdx_breakless_lists
+
+# Website layout configuration (using mkdocs-material theme)
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: blue
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: grey
+      accent: light blue
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+  logo: img/klipper.svg
+  favicon: img/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+    alternate: material/web
+  features:
+      #- navigation.tabs
+      #- navigation.expand
+      - navigation.top
+      # if enabled, the TOC doesn't work for some pages
+      # - toc.integrate
+      - search.suggest
+      - search.highlight
+      - search.share
+  language: en #*# Site Language
+extra_css:
+  - _klipper3d/css/extra.css
+plugins:
+  mkdocs-simple-hooks:
+    hooks:
+      on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
+  exclude:
+    glob: "README.md"
+  search:
+      lang: en #*# Search Language

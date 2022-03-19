@@ -1,0 +1,14 @@
+# File containing analytics and site switching plugin, site switching only work
+# with build.sh and deployed site.
+
+extra:
+  # Site usage statistics
+  # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
+  analytics:
+    provider: google
+    property: UA-138371409-1
+  # Language Selection
+  alternate:
+    - name: English
+      link: /
+      lang: en
