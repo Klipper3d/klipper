@@ -263,6 +263,7 @@ class HelperA1333:
     SPI_SPEED = 10000000
     def __init__(self, config, spi, oid):
         self.spi = spi
+        self.is_tcode_absolute = False
     def get_static_delay(self):
         return .000001
     def start(self):
@@ -274,6 +275,7 @@ class HelperAS5047D:
     SPI_SPEED = int(1. / .000000350)
     def __init__(self, config, spi, oid):
         self.spi = spi
+        self.is_tcode_absolute = False
     def get_static_delay(self):
         return .000100
     def start(self):
@@ -286,12 +288,71 @@ class HelperTLE5012B:
     SPI_MODE = 1
     SPI_SPEED = 4000000
     def __init__(self, config, spi, oid):
+        self.printer = config.get_printer()
         self.spi = spi
-    def get_static_delay(self):
-        return .000042700 * 2.5
+        self.oid = oid
+        self.is_tcode_absolute = True
+        self.mcu = spi.get_mcu()
+        self.mcu.register_config_callback(self._build_config)
+        self.spi_angle_transfer_cmd = None
+        self.last_chip_mcu_clock = self.last_chip_clock = 0
+        self.chip_freq = 0.
+    def _build_config(self):
+        cmdqueue = self.spi.get_command_queue()
+        self.spi_angle_transfer_cmd = self.mcu.lookup_query_command(
+            "spi_angle_transfer oid=%c data=%*s",
+            "spi_angle_transfer_response oid=%c clock=%u response=%*s",
+            oid=self.oid, cq=cmdqueue)
+    def get_tcode_params(self):
+        return self.last_chip_mcu_clock, self.last_chip_clock, self.chip_freq
+    def _calc_crc(self, data):
+        crc = 0xff
+        for d in data:
+            crc ^= d
+            for i in range(8):
+                if crc & 0x80:
+                    crc = (crc << 1) ^ 0x1d
+                else:
+                    crc <<= 1
+        return (~crc) & 0xff
+    def _send_spi(self, msg):
+        for retry in range(5):
+            if msg[0] & 0x04:
+                params = self.spi_angle_transfer_cmd.send([self.oid, msg])
+            else:
+                params = self.spi.spi_transfer(msg)
+            resp = bytearray(params['response'])
+            crc = self._calc_crc(bytearray(msg[:2]) + resp[2:-2])
+            if crc == resp[-1]:
+                return params
+        raise self.printer.command_error("Unable to query tle5012b chip")
+    def _query_clock(self):
+        # Read frame counter (and normalize to a 16bit counter)
+        msg = [0x84, 0x42, 0, 0, 0, 0, 0, 0] # Read with latch, AREV and FSYNC
+        params = self._send_spi(msg)
+        resp = bytearray(params['response'])
+        mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
+        chip_clock = ((resp[2] & 0x7e) << 9) | ((resp[4] & 0x3e) << 4)
+        return mcu_clock, chip_clock
+    def update_clock(self):
+        mcu_clock, chip_clock = self._query_clock()
+        mdiff = mcu_clock - self.last_chip_mcu_clock
+        chip_mclock = self.last_chip_clock + int(mdiff * self.chip_freq + .5)
+        cdiff = (chip_mclock - chip_clock) & 0xffff
+        cdiff -= (cdiff & 0x8000) << 1
+        new_chip_clock = chip_mclock - cdiff
+        self.chip_freq = float(new_chip_clock - self.last_chip_clock) / mdiff
+        self.last_chip_clock = new_chip_clock
+        self.last_chip_mcu_clock = mcu_clock
     def start(self):
         # Clear any errors from device
-        self.spi.spi_transfer([0x80, 0x01, 0x00, 0x00, 0x00, 0x00]) # Read STAT
+        self._send_spi([0x80, 0x01, 0x00, 0x00, 0x00, 0x00]) # Read STAT
+        # Setup starting clock values
+        mcu_clock, chip_clock = self._query_clock()
+        self.last_chip_clock = chip_clock
+        self.last_chip_mcu_clock = mcu_clock
+        self.chip_freq = float(1<<5) / self.mcu.seconds_to_clock(1. / 750000.)
+        self.update_clock()
 
 SAMPLE_PERIOD = 0.000400
 
@@ -359,8 +420,17 @@ class Angle:
         clock_to_print_time = self.mcu.clock_to_print_time
         last_sequence = self.last_sequence
         last_angle = self.last_angle
-        time_shift = self.time_shift
-        static_delay = self.sensor_helper.get_static_delay()
+        time_shift = 0
+        static_delay = 0.
+        last_chip_mcu_clock = last_chip_clock = chip_freq = inv_chip_freq = 0.
+        is_tcode_absolute = self.sensor_helper.is_tcode_absolute
+        if is_tcode_absolute:
+            tparams = self.sensor_helper.get_tcode_params()
+            last_chip_mcu_clock, last_chip_clock, chip_freq = tparams
+            inv_chip_freq = 1. / chip_freq
+        else:
+            time_shift = self.time_shift
+            static_delay = self.sensor_helper.get_static_delay()
         # Process every message in raw_samples
         count = error_count = 0
         samples = [None] * (len(raw_samples) * 16)
@@ -380,8 +450,18 @@ class Angle:
                 angle_diff = (last_angle - raw_angle) & 0xffff
                 angle_diff -= (angle_diff & 0x8000) << 1
                 last_angle -= angle_diff
-                mclock = msg_mclock + i*sample_ticks + (tcode<<time_shift)
-                ptime = round(clock_to_print_time(mclock) - static_delay, 6)
+                mclock = msg_mclock + i*sample_ticks
+                if is_tcode_absolute:
+                    # tcode is tle5012b frame counter
+                    mdiff = mclock - last_chip_mcu_clock
+                    chip_mclock = last_chip_clock + int(mdiff * chip_freq + .5)
+                    cdiff = ((tcode << 10) - chip_mclock) & 0xffff
+                    cdiff -= (cdiff & 0x8000) << 1
+                    sclock = mclock + (cdiff - 0x800) * inv_chip_freq
+                else:
+                    # tcode is mcu clock offset shifted by time_shift
+                    sclock = mclock + (tcode<<time_shift)
+                ptime = round(clock_to_print_time(sclock) - static_delay, 6)
                 samples[count] = (ptime, last_angle)
                 count += 1
         self.last_sequence = last_sequence
@@ -390,6 +470,8 @@ class Angle:
         return samples, error_count
     # API interface
     def _api_update(self, eventtime):
+        if self.sensor_helper.is_tcode_absolute:
+            self.sensor_helper.update_clock()
         with self.lock:
             raw_samples = self.raw_samples
             self.raw_samples = []
