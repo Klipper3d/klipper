@@ -127,6 +127,18 @@ use this tool the Python "numpy" package must be installed (see the
 [measuring resonance document](Measuring_Resonances.md#software-installation)
 for more information).
 
+#### ANGLE_DEBUG_READ
+`ANGLE_DEBUG_READ CHIP=<config_name> REG=<register>`: Queries sensor
+register "register" (e.g. 44 or 0x2C). Can be useful for debugging
+purposes. This is only available for tle5012b chips.
+
+#### ANGLE_DEBUG_WRITE
+`ANGLE_DEBUG_WRITE CHIP=<config_name> REG=<register> VAL=<value>`:
+Writes raw "value" into register "register". Both "value" and
+"register" can be a decimal or a hexadecimal integer. Use with care,
+and refer to sensor data sheet for the reference. This is only
+available for tle5012b chips.
+
 ### [bed_mesh]
 
 The following commands are available when the

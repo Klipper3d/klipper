@@ -300,6 +300,14 @@ class HelperTLE5012B:
         self.spi_angle_transfer_cmd = None
         self.last_chip_mcu_clock = self.last_chip_clock = 0
         self.chip_freq = 0.
+        name = config.get_name().split()[-1]
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command("ANGLE_DEBUG_READ", "CHIP", name,
+                                   self.cmd_ANGLE_DEBUG_READ,
+                                   desc=self.cmd_ANGLE_DEBUG_READ_help)
+        gcode.register_mux_command("ANGLE_DEBUG_WRITE", "CHIP", name,
+                                   self.cmd_ANGLE_DEBUG_WRITE,
+                                   desc=self.cmd_ANGLE_DEBUG_WRITE_help)
     def _build_config(self):
         cmdqueue = self.spi.get_command_queue()
         self.spi_angle_transfer_cmd = self.mcu.lookup_query_command(
@@ -385,6 +393,17 @@ class HelperTLE5012B:
         self.last_chip_mcu_clock = mcu_clock
         self.chip_freq = float(1<<5) / self.mcu.seconds_to_clock(1. / 750000.)
         self.update_clock()
+    cmd_ANGLE_DEBUG_READ_help = "Query low-level angle sensor register"
+    def cmd_ANGLE_DEBUG_READ(self, gcmd):
+        reg = gcmd.get("REG", minval=0, maxval=0x30, parser=lambda x: int(x, 0))
+        val = self._read_reg(reg)
+        gcmd.respond_info("ANGLE REG[0x%02x] = 0x%04x" % (reg, val))
+    cmd_ANGLE_DEBUG_WRITE_help = "Set low-level angle sensor register"
+    def cmd_ANGLE_DEBUG_WRITE(self, gcmd):
+        reg = gcmd.get("REG", minval=0, maxval=0x30, parser=lambda x: int(x, 0))
+        val = gcmd.get("VAL", minval=0, maxval=0xffff,
+                       parser=lambda x: int(x, 0))
+        self._write_reg(reg, val)
 
 SAMPLE_PERIOD = 0.000400
 
