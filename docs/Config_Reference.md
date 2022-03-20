@@ -2489,6 +2489,7 @@ additional information.
 #   If true, the working mode of the fan is reversed. If the temperature
 #   is lower than the target temperature, the fan speed increases;
 #   otherwise, the fan speed decreases.
+#   The default is False.
 ```
 
 ### [fan_generic]
