@@ -1,14 +1,15 @@
-# Frame Expansion Compensation
+# Z Thermal Adjust
 #
 # Copyright (C) 2022  Robert Pazdzior <robertp@norbital.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-# Compensates for thermal expansion induced toolhead Z movement in real-time
-# using a frame-coupled temperature probe.
+# Adjusts Z position in real-time using a thermal probe to e.g. compensate
+# for thermal expansion of the printer frame.
+
 import threading
 
-class FrameExpansionCompensator:
+class ZThermalAdjuster:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
@@ -22,8 +23,8 @@ class FrameExpansionCompensator:
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
 
-        self.max_comp_z = config.getfloat('max_comp_z', 0.)
-        self.max_offset = config.getfloat('max_z_offset', 99999999.)
+        self.off_above_z = config.getfloat('z_adjust_off_above', 99999999.)
+        self.max_z_adjust_mm = config.getfloat('max_z_adjustment', 99999999.)
 
         # Register printer events
         self.printer.register_event_handler("klippy:connect",
@@ -34,26 +35,25 @@ class FrameExpansionCompensator:
         # Setup temperature sensor
         self.last_temp = self.smoothed_temp = 0.
         self.last_temp_time = 0.
-        self.last_home_temp = 0.
+        self.ref_temperature = 0.
 
-        # Z offset transformation
-        self.z_drift_offset = 0.
-        self.last_z_drift_offset = 0.
-        self.comp_enable = True
+        # Z transformation
+        self.z_adjust_mm = 0.
+        self.last_z_adjust_mm = 0.
+        self.adjust_enable = True
         self.last_position = [0., 0., 0., 0.]
         self.next_transform = None
-        self.comp_state = 'not homed'
 
         # Register gcode commands
-        self.gcode.register_command('SET_FRAME_COMP',
-                                    self.cmd_SET_FRAME_COMP,
-                                    desc=self.cmd_SET_FRAME_COMP_help)
-        self.gcode.register_command('QUERY_FRAME_COMP',
-                                    self.cmd_QUERY_FRAME_COMP,
-                                    desc=self.cmd_QUERY_FRAME_COMP_help)
-        self.gcode.register_command('SET_FRAME_REF_TEMP',
-                                    self.cmd_SET_FRAME_REF_TEMP,
-                                    desc=self.cmd_SET_FRAME_REF_TEMP_help)
+        self.gcode.register_command('SET_Z_THERMAL_ADJUST',
+                                    self.cmd_SET_Z_THERMAL_ADJUST,
+                                    desc=self.cmd_SET_Z_THERMAL_ADJUST_help)
+        self.gcode.register_command('QUERY_Z_THERMAL_ADJUST',
+                                    self.cmd_QUERY_Z_THERMAL_ADJUST,
+                                    desc=self.cmd_QUERY_Z_THERMAL_ADJUST_help)
+        self.gcode.register_command('SET_Z_THERMAL_ADJUST_REF',
+                                    self.cmd_SET_Z_THERMAL_ADJUST_REF,
+                                    desc=self.cmd_SET_Z_THERMAL_ADJUST_REF_help)
 
     def handle_connect(self):
         'Called after all printer objects are instantiated'
@@ -70,7 +70,7 @@ class FrameExpansionCompensator:
             ''' % e
             raise self.printer.config_error(msg)
         else:
-            self.sensor.sensor.setup_callback(self.comp_temperature_callback)
+            self.sensor.sensor.setup_callback(self.z_adj_temperature_callback)
 
         # Register move transformation
         self.next_transform = gcode_move.set_move_transform(self, force=True)
@@ -84,59 +84,59 @@ class FrameExpansionCompensator:
     def get_status(self, eventtime):
         return {
             'temperature': self.smoothed_temp,
-            'current_z_comp': self.z_drift_offset,
-            'frame_ref_temp': self.last_home_temp,
-            'state': self.comp_state
+            'current_z_adjust': self.z_adjust_mm,
+            'z_adjust_ref_temperature': self.ref_temperature,
+            'enabled': self.adjust_enable
         }
 
     def handle_homing_move_end(self, homing_state, rails):
-        'Triggered when Z axis is homed.'
+        'Set reference temperature after Z homing.'
         if 2 in homing_state.get_axes():
-            self.last_home_temp = self.smoothed_temp
-            self.z_drift_offset = 0.
+            self.ref_temperature = self.smoothed_temp
+            self.z_adjust_mm = 0.
 
-    def calc_offset(self, pos):
-        'Calculate total linear thermal expansion relative to last homing.'
-        if not self.max_comp_z or pos[2] < self.max_comp_z:
-            delta_t = self.smoothed_temp - self.last_home_temp
+    def calc_adjust(self, pos):
+        'Z adjustment calculation'
+        if pos[2] < self.off_above_z:
+            delta_t = self.smoothed_temp - self.ref_temperature
 
-            # Calculate Z offset, compensates for thermal expansion since homing
-            offset = -1 * self.temp_coeff * delta_t
+            # Calculate Z adjustment
+            adjust = -1 * self.temp_coeff * delta_t
 
             # compute sign (+1 or -1) for maximum offset setting
-            sign = 1 - (offset <= 0)*2
+            sign = 1 - (adjust <= 0)*2
 
-            # Don't apply offsets smaller than step distance
-            if abs(offset - self.z_drift_offset) > self.z_step_dist:
-                self.z_drift_offset = min([self.max_offset*sign,
-                    offset], key=abs)
+            # Don't apply adjustments smaller than step distance
+            if abs(adjust - self.z_adjust_mm) > self.z_step_dist:
+                self.z_adjust_mm = min([self.max_z_adjust_mm*sign,
+                    adjust], key=abs)
 
-        # Apply offset
-        new_z = pos[2] + self.z_drift_offset
-        self.last_z_drift_offset = self.z_drift_offset
+        # Apply Z adjustment
+        new_z = pos[2] + self.z_adjust_mm
+        self.last_z_adjust_mm = self.z_adjust_mm
         return [pos[0], pos[1], new_z, pos[3]]
 
-    def calc_unoffset(self, pos):
-        'Remove Z-drift offset'
-        unoffset_z = pos[2] - self.z_drift_offset
-        return [pos[0], pos[1], unoffset_z, pos[3]]
+    def calc_unadjust(self, pos):
+        'Remove Z adjustment'
+        unadjusted_z = pos[2] - self.z_adjust_mm
+        return [pos[0], pos[1], unadjusted_z, pos[3]]
 
     def get_position(self):
-        return self.calc_unoffset(self.next_transform.get_position())
+        return self.calc_unadjust(self.next_transform.get_position())
 
     def move(self, newpos, speed):
         # don't apply to extrude only moves or when disabled
-        if (newpos[0:2] == self.last_position[0:2]) or not self.comp_enable:
-            z = newpos[2] + self.last_z_drift_offset
-            corrected_pos = [newpos[0], newpos[1], z, newpos[3]]
-            self.next_transform.move(corrected_pos, speed)
+        if (newpos[0:2] == self.last_position[0:2]) or not self.adjust_enable:
+            z = newpos[2] + self.last_z_adjust_mm
+            adjusted_pos = [newpos[0], newpos[1], z, newpos[3]]
+            self.next_transform.move(adjusted_pos, speed)
         else:
-            corrected_pos = self.calc_offset(newpos)
-            self.next_transform.move(corrected_pos, speed)
+            adjusted_pos = self.calc_adjust(newpos)
+            self.next_transform.move(adjusted_pos, speed)
         self.last_position[:] = newpos
 
-    def comp_temperature_callback(self, read_time, temp):
-        'Called everytime the thermistor is read'
+    def z_adj_temperature_callback(self, read_time, temp):
+        'Called everytime the thermistor is read, used for smoothing'
         self.sensor.temperature_callback(read_time, temp)
         with self.lock:
             time_diff = read_time - self.last_temp_time
@@ -146,7 +146,7 @@ class FrameExpansionCompensator:
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
 
-    def cmd_SET_FRAME_COMP(self, gcmd):
+    def cmd_SET_Z_THERMAL_ADJUST(self, gcmd):
         new_state = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
         self.temp_coeff = gcmd.get_float('COEFF', self.temp_coeff,
                                          minval=-1, maxval=1)
@@ -157,36 +157,39 @@ class FrameExpansionCompensator:
         )
         gcmd.respond_info(msg)
 
-        if new_state != self.comp_enable:
+        if new_state != self.adjust_enable:
             gcode_move = self.printer.lookup_object('gcode_move')
             gcode_move.reset_last_position()
-            self.comp_enable = new_state
+            self.adjust_enable = new_state
 
-    def cmd_QUERY_FRAME_COMP(self, gcmd):
-        state = 'ENABLED' if self.comp_state else 'DISABLED'
+    def cmd_QUERY_Z_THERMAL_ADJUST(self, gcmd):
+        state = 'ENABLED' if self.adjust_enable else 'DISABLED'
         msg = ("state: %s\n"
                "current temperature: %.2f degC\n"
                "reference temperature: %.2f degC\n"
                "applied Z adjustment: %.4f mm" % (state,
                                             self.smoothed_temp,
-                                            self.last_home_temp,
-                                            self.z_drift_offset)
+                                            self.ref_temperature,
+                                            self.z_adjust_mm)
         )
         gcmd.respond_info(msg)
 
-    def cmd_SET_FRAME_REF_TEMP(self, gcmd):
+    def cmd_SET_Z_THERMAL_ADJUST_REF(self, gcmd):
         ref_temp = gcmd.get_float('TEMPERATURE', -273.16, minval=-273.15)
         if ref_temp > -273.16:
-            self.last_home_temp = ref_temp
+            self.ref_temperature = ref_temp
         else:
-            self.last_home_temp = self.smoothed_temp
-        msg = ("Frame expansion compensation reference temperature set"
-               " manually to %.3fc" % self.last_home_temp)
+            self.ref_temperature = self.smoothed_temp
+        msg = ("Z thermal adjust reference temperature set"
+               " manually to %.3fc" % self.ref_temperature)
         gcmd.respond_info(msg)
 
-    cmd_SET_FRAME_COMP_help = 'Enable/disable Z thermal expansion compensation.'
-    cmd_QUERY_FRAME_COMP_help = 'Report current compensation parameters.'
-    cmd_SET_FRAME_REF_TEMP_help = 'Use current frame temp. as comp. reference.'
+    cmd_SET_Z_THERMAL_ADJUST_help = 'Set Z Thermal Adjust parameters.'
+    cmd_QUERY_Z_THERMAL_ADJUST_help = ('Report current Z Thermal Adjust'
+                                       'parameters.')
+    cmd_SET_Z_THERMAL_ADJUST_REF_help = ('Use current probe temperature as Z '
+                                         'Thermal Adjust reference '
+                                         'temperature')
 
 def load_config(config):
-    return FrameExpansionCompensator(config)
+    return ZThermalAdjuster(config)
