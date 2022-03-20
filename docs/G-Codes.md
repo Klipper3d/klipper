@@ -434,20 +434,6 @@ may lead to internal software errors. This command may invalidate
 future boundary checks; issue a G28 afterwards to reset the
 kinematics.
 
-### [frame_expansion_compensation]
-
-The following commands are available when the [frame_expansion_compensation
-config section](Config_Reference.md#frame_expansion_compensation) is enabled:
-
-#### SET_FRAME_COMP
-`SET_FRAME_COMP ENABLE=[<0:1>]`: enable or disable frame expansion
-compensation. When disabled, the last computed compensation value will remain
-applied until next homing.
-
-#### QUERY_FRAME_COMP
-`QUERY_FRAME_COMP`: report current state and key parameters of the frame
-expansion compensation.
-
 ### [gcode]
 
 The gcode module is automatically loaded.
@@ -1134,6 +1120,30 @@ print.
 
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
+
+### [z_thermal_adjust]
+
+The following commands are available when the
+[z_thermal_adjust config section](Config_Reference.md#z_thermal_adjust)
+is enabled.
+
+#### QUERY_Z_THERMAL_ADJUST
+`QUERY_FRAME_COMP`: reports current state and key parameters of the Z Thermal
+Adjust module.
+
+#### SET_Z_THERMAL_ADJUST
+`SET_Z_THERMAL_ADJUST [ENABLE=<0:1>] [COEFF=<value>]`: Enable or disable the
+Z thermal adjustment with `ENABLE`. Disabling does not remove any adjustment
+already applied, but will freeze the current adjustment value - this prevents
+potentially unsafe downward Z movement. Re-enabling can potentially cause upward
+tool movement as the adjustment is updated and applied. `COEFF` allows run-time
+tuning of the adjustment temperature coefficient (i.e. the `TEMP_COEFF` config
+parameter). `COEFF` values are not saved to the config.
+
+#### SET_Z_THERMAL_ADJUST_REF
+`SET_Z_THERMAL_ADJUST_REF [TEMPERATURE=<value>]`: Set the thermal adjustment
+reference temperature to the current reading, or to the value supplied with
+`TEMPERATURE`.
 
 ### [z_tilt]
 
