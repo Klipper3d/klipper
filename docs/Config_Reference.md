@@ -1128,40 +1128,37 @@ the nature of skew correction these lengths are set via gcode. See
 [skew_correction]
 ```
 
-## [frame_expansion_compensation]
+### [z_thermal_adjust]
 
-Compensate for vertical toolhead movement caused by thermal expansion of the
-frame in real-time using a temperature probe coupled to a vertical member.
-E.g. A glass bead thermistor suspended halfway down the central channel of an
-2020 aluminum extrusion.
+Temperature-dependant toolhead Z position adjustment. Compensate for vertical
+toolhead movement caused by thermal expansion of the printer's frame in
+real-time using a temperature sensor (typically coupled to a vertical section
+of frame).
 
-See also: [extended g-code commands](G-Codes.md#Frame-Expansion-Compensation).
+See also: [extended g-code commands](G-Codes.md#z_thermal_adjust).
 
 ```
-[frame_expansion_compensation]
+[z_thermal_adjust]
 #temp_coeff:
 #   The temperature coefficient of expansion, in mm/K. For example, a
 #   temp_coeff of 0.01 mm/K will move the Z axis downwards by 0.01 mm for every
-#   Kelvin/degree celcius that the frame temperature increases. Defaults to 0.0,
-#   no offset.
-#temp_sensor:
-#   Temperature sensor to use for frame temp measurement. Use full config
-#   section name without quoutes. E.g. temperature_sensor frame
+#   Kelvin/degree Celsius that the temperature sensor increases. Defaults to
+#   0.0, which applies no adjustment.
+temp_sensor:
+#   Temperature sensor to use for Z adjustment. Use full config section name
+#   without quoutes. E.g. temperature_sensor frame. Also compatible with
+#   temperature_fan sensors. This parameter must be provided.
 #smooth_time:
-#   Smoothing window applied to the temp_sensor, in seconds. Can reduce motor
-#   noise from excessive small corrections in response to sensor noise. The
-#   default is 2.0 seconds.
-#max_comp_z:
-#   Disables compensation above this Z height [mm]. The last computed correction
-#   will remain applied until the toolhead moves below the specified Z position
-#   again. The default is 0.0mm (always on).
-#max_z_offset:
-#   Maximum absolute compensation that can be applied to the Z axis [mm]. The
-#   default is 99999999.0mm (unlimited).
-z_stepper:
-#   The Z stepper motor linked with the Z endstop, as written in printer.cfg.
-#   Used for triggering reference temperature measurement. Usually 'stepper_z'
-#   unless otherwise defined.
+#   Smoothing window applied to the temperature sensor, in seconds. Can reduce
+#   motor noise from excessive small corrections in response to sensor noise.
+#   The default is 2.0 seconds.
+#z_adjust_off_above:
+#   Disables adjustments above this Z height [mm]. The last computed correction
+#   will remain applied until the toolhead moves below the specified Z height
+#   again. The default is 99999999.0 mm (always on).
+#max_z_adjustment:
+#   Maximum absolute adjustment that can be applied to the Z axis [mm]. The
+#   default is 99999999.0 mm (unlimited).
 ```
 
 # Customized homing
