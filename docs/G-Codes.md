@@ -42,7 +42,10 @@ Klipper's goal is to support the G-Code commands produced by common
 3rd party software (eg, OctoPrint, Printrun, Slic3r, Cura, etc.) in
 their standard configurations. It is not a goal to support every
 possible G-Code command. Instead, Klipper prefers human readable
-["extended G-Code commands"](#additional-commands).
+["extended G-Code commands"](#additional-commands). Similarly, the
+G-Code terminal output is only intended to be human readable - see the
+[API Server document](API_Server.md) if controlling Klipper from
+external software.
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom
@@ -291,25 +294,32 @@ The following commands are available if an
 
 #### ACTIVATE_EXTRUDER
 `ACTIVATE_EXTRUDER EXTRUDER=<config_name>`: In a printer with multiple
-extruders this command is used to change the active extruder.
+[extruder](Config_Reference.md#extruder) config sections, this command
+changes the active hotend.
 
 #### SET_PRESSURE_ADVANCE
 `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>]
 [ADVANCE=<pressure_advance>]
 [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
-parameters. If EXTRUDER is not specified, it defaults to the active
-extruder.
+parameters of an extruder stepper (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section).
+If EXTRUDER is not specified, it defaults to the stepper defined in
+the active hotend.
 
 #### SET_EXTRUDER_ROTATION_DISTANCE
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
-[DISTANCE=<distance>]`: Set a new value for the provided extruder's
-"rotation distance". If the rotation distance is a negative number
-then the stepper motion will be inverted (relative to the stepper
-direction specified in the config file). Changed settings are not
-retained on Klipper reset. Use with caution as small changes can
-result in excessive pressure between extruder and hot end. Do proper
-calibration with filament before use. If 'DISTANCE' value is not
-included command will return current rotation distance.
+[DISTANCE=<distance>]`: Set a new value for the provided extruder
+stepper's "rotation distance" (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section).
+If the rotation distance is a negative number then the stepper motion
+will be inverted (relative to the stepper direction specified in the
+config file). Changed settings are not retained on Klipper reset. Use
+with caution as small changes can result in excessive pressure between
+extruder and hotend. Do proper calibration with filament before use.
+If 'DISTANCE' value is not provided then this command will return the
+current rotation distance.
 
 #### SYNC_EXTRUDER_MOTION
 `SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
@@ -471,7 +481,9 @@ The gcode_move module is automatically loaded.
 
 #### GET_POSITION
 `GET_POSITION`: Return information on the current location of the
-toolhead.
+toolhead. See the developer documentation of
+[GET_POSITION output](Code_Overview.md#coordinate-systems) for more
+information.
 
 #### SET_GCODE_OFFSET
 `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
