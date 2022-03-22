@@ -42,8 +42,25 @@ static const uint8_t afec_pins[] = {
 
 #if CONFIG_MACH_SAM4E
 #define AFEC1_START 16 // The first 16 pins are on afec0
+#define CFG_AFE_MR (AFE_MR_ANACH_ALLOWED | \
+                    AFE_MR_PRESCAL(pclk / (2 * ADC_FREQ_MAX) - 1) | \
+                    AFE_MR_SETTLING_AST3 | \
+                    AFE_MR_TRACKTIM(2) | \
+                    AFE_MR_TRANSFER(1) | \
+                    AFE_MR_STARTUP_SUT64)
+#define CFG_AFE_ACR AFE_ACR_IBCTL(1)
+#define CFG_AFE_IDR 0xDF00FFFF
+#define CFG_AFE_COCR (0x800 & AFE_COCR_AOFF_Msk)
+
 #elif CONFIG_MACH_SAME70
 #define AFEC1_START 12 // The first 12 pins are on afec0
+#define CFG_AFE_MR (AFEC_MR_ONE | \
+                    AFE_MR_PRESCAL (pclk / (ADC_FREQ_MAX) -1) | \
+                    AFE_MR_TRANSFER(2) | \
+                    AFE_MR_STARTUP_SUT64)
+#define CFG_AFE_ACR (AFE_ACR_IBCTL(1) | AFEC_ACR_PGA0EN | AFEC_ACR_PGA1EN)
+#define CFG_AFE_IDR 0x47000FFF
+#define CFG_AFE_COCR (0x200 & AFE_COCR_AOFF_Msk)
 #endif
 
 static inline struct gpio_adc
@@ -91,34 +108,14 @@ init_afec(Afec* afec) {
 
     // Configure afec
     uint32_t pclk = get_pclock_frequency(afec == AFEC0 ? ID_AFEC0 : ID_AFEC1);
-    #if CONFIG_MACH_SAM4E
-    afec->AFE_MR = AFE_MR_ANACH_ALLOWED | \
-                    AFE_MR_PRESCAL(pclk / (2 * ADC_FREQ_MAX) - 1) | \
-                    AFE_MR_SETTLING_AST3 | \
-                    AFE_MR_TRACKTIM(2) | \
-                    AFE_MR_TRANSFER(1) | \
-                    AFE_MR_STARTUP_SUT64;
-    #elif CONFIG_MACH_SAME70
-    afec->AFE_MR = AFEC_MR_ONE | \
-                    AFE_MR_PRESCAL (pclk / (ADC_FREQ_MAX) -1) | \
-                    AFE_MR_TRANSFER(2) | \
-                    AFE_MR_STARTUP_SUT64;
-    #endif
+    afec->AFE_MR = CFG_AFE_MR;
     afec->AFE_EMR = AFE_EMR_TAG | \
                      AFE_EMR_RES_NO_AVERAGE | \
                      AFE_EMR_STM;
-    #if CONFIG_MACH_SAME70
-    afec->AFE_ACR = AFE_ACR_IBCTL(1) | AFEC_ACR_PGA0EN | AFEC_ACR_PGA1EN;
-    #else
-    afec->AFE_ACR = AFE_ACR_IBCTL(1);
-    #endif
+    afec->AFE_ACR = CFG_AFE_MR;
 
     // Disable interrupts
-    #if CONFIG_MACH_SAM4E
-    afec->AFE_IDR = 0xDF00FFFF;
-    #elif CONFIG_MACH_SAME70
-    afec->AFE_IDR = 0x47000FFF;
-    #endif
+    afec->AFE_IDR = CFG_AFE_IDR;
 
     // Disable SW triggering
     uint32_t mr = afec->AFE_MR;
@@ -156,9 +153,6 @@ gpio_adc_setup(uint8_t pin)
     afec->AFE_DIFFR = reg;
     reg = afec->AFE_CGR;
     reg &= ~(0x03u << (2 * afec_chan));
-    #if CONFIG_MACH_SAM4E
-    reg |= 1 << (2 * afec_chan);
-    #endif
     afec->AFE_CGR = reg;
 
     // Configure channel
@@ -168,11 +162,7 @@ gpio_adc_setup(uint8_t pin)
     // See Atmel Appnote AT03078 Section 1.5 for SAM4E,
     // datasheet section 52.6.11 for SAME70
     afec->AFE_CSELR = afec_chan;
-    #if CONFIG_MACH_SAM4E
-    afec->AFE_COCR = (0x800 & AFE_COCR_AOFF_Msk);
-    #elif CONFIG_MACH_SAME70
-    afec->AFE_COCR = (0x200 & AFE_COCR_AOFF_Msk);
-    #endif
+    afec->AFE_COCR = CFG_AFE_COCR;
 
     // Enable and calibrate Channel
     afec->AFE_CHER = 1 << afec_chan;
