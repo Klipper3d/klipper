@@ -13,6 +13,10 @@
 
 #if CONFIG_MACH_SAME70
 #include "same70_compat.h" // Header compatibility
+#define CFG_UOTGHS_CTRL (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_USBE)
+#else
+#define CFG_UOTGHS_CTRL (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE | \
+                         UOTGHS_CTRL_USBE)
 #endif
 
 #define EP_SIZE(s) ((s)==64 ? UOTGHS_DEVEPTCFG_EPSIZE_64_BYTE :         \
@@ -220,12 +224,7 @@ usbserial_init(void)
         ;
 
     // Enable USB
-    #if CONFIG_MACH_SAM3
-    UOTGHS->UOTGHS_CTRL = (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE
-                           | UOTGHS_CTRL_USBE);
-    #elif CONFIG_MACH_SAME70
-    UOTGHS->UOTGHS_CTRL = (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_USBE);
-    #endif
+    UOTGHS->UOTGHS_CTRL = CFG_UOTGHS_CTRL;
     UOTGHS->UOTGHS_DEVCTRL = UOTGHS_DEVCTRL_SPDCONF_FORCED_FS;
 
     // Enable interrupts
