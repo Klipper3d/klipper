@@ -12,7 +12,7 @@
 #include "sched.h" // DECL_INIT
 
 #if CONFIG_MACH_SAME70
-#include "same70_compat.h" // Header compatibility
+#include "same70_usb.h" // Fixes for upstream header changes
 #define CFG_UOTGHS_CTRL (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_USBE)
 #else
 #define CFG_UOTGHS_CTRL (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE | \

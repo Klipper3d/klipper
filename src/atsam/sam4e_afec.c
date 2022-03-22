@@ -11,7 +11,7 @@
 #include "sched.h" // sched_shutdown
 
 #if CONFIG_MACH_SAME70
-#include "same70_compat.h" // Header compatibility
+#include "same70_afec.h" // Fixes for upstream header changes
 #endif
 
 #define ADC_TEMPERATURE_PIN 0xfe

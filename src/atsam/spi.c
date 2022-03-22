@@ -11,8 +11,10 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
-#if CONFIG_MACH_SAME70
-#include "same70_compat.h" // Header compatibility
+#if CONFIG_MACH_SAME70 // Fixes for upstream header changes
+#define US_MR_CHMODE_NORMAL US_MR_USART_CHMODE_NORMAL
+#define US_MR_CPHA US_MR_SPI_CPHA
+#define US_MR_CPOL US_MR_SPI_CPOL
 #endif
 
 /****************************************************************
