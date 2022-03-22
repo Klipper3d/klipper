@@ -11,7 +11,7 @@
 #include "internal.h" // UOTGHS
 #include "sched.h" // DECL_INIT
 
-#if CONFIG_MACH_SAME70Q
+#if CONFIG_MACH_SAME70
 #include "same70_compat.h" // Header compatibility
 #endif
 
@@ -223,7 +223,7 @@ usbserial_init(void)
     #if CONFIG_MACH_SAM3
     UOTGHS->UOTGHS_CTRL = (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE
                            | UOTGHS_CTRL_USBE);
-    #elif CONFIG_MACH_SAME70Q
+    #elif CONFIG_MACH_SAME70
     UOTGHS->UOTGHS_CTRL = (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_USBE);
     #endif
     UOTGHS->UOTGHS_DEVCTRL = UOTGHS_DEVCTRL_SPDCONF_FORCED_FS;

@@ -11,7 +11,7 @@
 #include "sam4s.h"
 #elif CONFIG_MACH_SAM4E
 #include "sam4e.h"
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
 #include "sam.h"
 #endif
 

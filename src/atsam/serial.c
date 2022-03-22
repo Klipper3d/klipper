@@ -33,7 +33,7 @@ static const uint32_t Pmc_id = ID_UART0;
 static const uint32_t rx_pin = GPIO('A', 9), tx_pin = GPIO('A', 10);
 static const char uart_periph = 'A';
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA9,PA10");
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
 #define UARTx_IRQn UART2_IRQn
 static Uart * const Port = UART2;
 static const uint32_t Pmc_id = ID_UART2;

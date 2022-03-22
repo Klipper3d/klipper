@@ -11,7 +11,7 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
-#if CONFIG_MACH_SAME70Q
+#if CONFIG_MACH_SAME70
 #include "same70_compat.h" // Header compatibility
 #endif
 
@@ -44,7 +44,7 @@ DECL_ENUMERATION_RANGE("spi_bus", "usart0", 1, 2);
 DECL_CONSTANT_STR("BUS_PINS_spi", "PA12,PA13,PA14");
 DECL_CONSTANT_STR("BUS_PINS_usart0", "PB0,PB1,PB13");
 DECL_CONSTANT_STR("BUS_PINS_usart1", "PA21,PA22,PA23");
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
 DECL_ENUMERATION_RANGE("spi_bus", "spi0", 0, 2);
 DECL_ENUMERATION_RANGE("spi_bus", "usart0", 2, 3);
 DECL_CONSTANT_STR("BUS_PINS_spi0", "PD20,PD21,PD22");
@@ -77,7 +77,7 @@ static const struct spi_info spi_bus[] = {
         GPIO('B', 0),  GPIO('B', 1),  GPIO('B', 13), 'C', 'C', 'C'},
     { USART1, ID_USART1,
         GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A', 'A'},
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
     { SPI0, ID_SPI0,
         GPIO('D', 20), GPIO('D', 21), GPIO('D', 22), 'B', 'B', 'B'},
     { SPI1, ID_SPI1,
@@ -96,7 +96,7 @@ is_spihw(void *dev)
 {
 #if CONFIG_MACH_SAM3X
     return dev == SPI0;
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
     return (dev == SPI0) || (dev == SPI1);
 #else
     return dev == SPI;

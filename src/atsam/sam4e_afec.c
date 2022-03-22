@@ -10,7 +10,7 @@
 #include "internal.h" // GPIO, AFEC0
 #include "sched.h" // sched_shutdown
 
-#if CONFIG_MACH_SAME70Q
+#if CONFIG_MACH_SAME70
 #include "same70_compat.h" // Header compatibility
 #endif
 
@@ -28,7 +28,7 @@ static const uint8_t afec_pins[] = {
     // AFEC1
     GPIO('B', 2), GPIO('B', 3), GPIO('A', 21), GPIO('A', 22),
     GPIO('C', 1), GPIO('C', 2), GPIO('C', 3), GPIO('C', 4),
-    #elif CONFIG_MACH_SAME70Q
+    #elif CONFIG_MACH_SAME70
     GPIO('D', 30), GPIO('A', 21), GPIO('B', 3),  GPIO('E', 5),
     GPIO('E', 4),  GPIO('B', 2),  GPIO('A', 17), GPIO('A', 18),
     GPIO('A', 19), GPIO('A', 20), GPIO('B', 0),
@@ -42,7 +42,7 @@ static const uint8_t afec_pins[] = {
 
 #if CONFIG_MACH_SAM4E
 #define AFEC1_START 16 // The first 16 pins are on afec0
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
 #define AFEC1_START 12 // The first 12 pins are on afec0
 #endif
 
@@ -98,7 +98,7 @@ init_afec(Afec* afec) {
                     AFE_MR_TRACKTIM(2) | \
                     AFE_MR_TRANSFER(1) | \
                     AFE_MR_STARTUP_SUT64;
-    #elif CONFIG_MACH_SAME70Q
+    #elif CONFIG_MACH_SAME70
     afec->AFE_MR = AFEC_MR_ONE | \
                     AFE_MR_PRESCAL (pclk / (ADC_FREQ_MAX) -1) | \
                     AFE_MR_TRANSFER(2) | \
@@ -107,7 +107,7 @@ init_afec(Afec* afec) {
     afec->AFE_EMR = AFE_EMR_TAG | \
                      AFE_EMR_RES_NO_AVERAGE | \
                      AFE_EMR_STM;
-    #if CONFIG_MACH_SAME70Q
+    #if CONFIG_MACH_SAME70
     afec->AFE_ACR = AFE_ACR_IBCTL(1) | AFEC_ACR_PGA0EN | AFEC_ACR_PGA1EN;
     #else
     afec->AFE_ACR = AFE_ACR_IBCTL(1);
@@ -116,7 +116,7 @@ init_afec(Afec* afec) {
     // Disable interrupts
     #if CONFIG_MACH_SAM4E
     afec->AFE_IDR = 0xDF00FFFF;
-    #elif CONFIG_MACH_SAME70Q
+    #elif CONFIG_MACH_SAME70
     afec->AFE_IDR = 0x47000FFF;
     #endif
 
@@ -170,7 +170,7 @@ gpio_adc_setup(uint8_t pin)
     afec->AFE_CSELR = afec_chan;
     #if CONFIG_MACH_SAM4E
     afec->AFE_COCR = (0x800 & AFE_COCR_AOFF_Msk);
-    #elif CONFIG_MACH_SAME70Q
+    #elif CONFIG_MACH_SAME70
     afec->AFE_COCR = (0x200 & AFE_COCR_AOFF_Msk);
     #endif
 

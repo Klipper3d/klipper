@@ -71,7 +71,7 @@ set_pull_up(Pio *regs, uint32_t bit, int32_t pull_up)
     // Check if this pin is a "system IO pin" and disable if so
     if (regs == PIOB && (bit & 0x1cf0))
         MATRIX->CCFG_SYSIO |= bit;
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
     if (regs == PIOB && (bit & 0x10f0))
         MATRIX->CCFG_SYSIO |= bit;
 #endif

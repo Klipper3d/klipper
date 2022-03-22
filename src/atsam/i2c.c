@@ -11,7 +11,7 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
-#if CONFIG_MACH_SAME70Q
+#if CONFIG_MACH_SAME70
 #include "same70_compat.h" // Header compatibility
 #endif
 
@@ -32,7 +32,7 @@ DECL_ENUMERATION_RANGE("i2c_bus", "twi0", 0, 2);
 DECL_CONSTANT_STR("BUS_PINS_twi0", "PA4,PA3");
 DECL_CONSTANT_STR("BUS_PINS_twi1", "PB5,PB4");
 #define PRD_CALC_NUM 4
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
 DECL_ENUMERATION_RANGE("i2c_bus", "twihs0", 0,3);
 DECL_CONSTANT_STR("BUS_PINS_twihs0", "PA4,PA3");
 DECL_CONSTANT_STR("BUS_PINS_twihs1", "PB5,PB4");
@@ -47,7 +47,7 @@ static const struct twi_info twi_bus[] = {
 #elif CONFIG_MACH_SAM4
     { TWI0, ID_TWI0, GPIO('A', 4), GPIO('A', 3), 'A'},
     { TWI1, ID_TWI1, GPIO('B', 5), GPIO('B', 4), 'A'},
-#elif CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAME70
     { TWIHS0, ID_TWIHS0, GPIO('A', 4), GPIO('A', 3), 'A'},
     { TWIHS1, ID_TWIHS1, GPIO('B', 5), GPIO('B', 4), 'A'},
     { TWIHS2, ID_TWIHS2, GPIO('D', 28), GPIO('D', 27), 'C'},

@@ -11,7 +11,7 @@
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
 
-#define FREQ_PERIPH_DIV (CONFIG_MACH_SAME70Q ? 2 : 1)
+#define FREQ_PERIPH_DIV (CONFIG_MACH_SAME70 ? 2 : 1)
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 
 /****************************************************************
@@ -70,7 +70,7 @@ get_pclock_frequency(uint32_t id)
  * Resets
  ****************************************************************/
 
-#if CONFIG_MACH_SAME70Q
+#if CONFIG_MACH_SAME70
 #define RST_PARAMS ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST)
 #else
 #define RST_PARAMS ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST \
@@ -89,7 +89,7 @@ DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 
 #if CONFIG_MACH_SAM3X || CONFIG_MACH_SAM4S
 #define EFC_HW EFC0
-#elif CONFIG_MACH_SAM4E || CONFIG_MACH_SAME70Q
+#elif CONFIG_MACH_SAM4E || CONFIG_MACH_SAME70
 #define EFC_HW EFC
 #endif
 
