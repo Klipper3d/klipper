@@ -8,6 +8,8 @@ from . import bus
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
+PCA9533_PWM0=0b010
+PCA9533_PWM1=0b100
 PCA9533_PLS0=0b101
 
 class PCA9533:
@@ -16,9 +18,12 @@ class PCA9533:
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
         pled = self.printer.load_object(config, "led")
         self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)
+        self.i2c.i2c_write([PCA9533_PWM0, 85])
+        self.i2c.i2c_write([PCA9533_PWM1, 170])
         self.update_leds(self.led_helper.get_status()['color_data'], None)
     def update_leds(self, led_state, print_time):
-        red, green, blue, white = [int(v + .5) for v in led_state[0]]
+        rmap = [0, 2, 3, 1, 1]
+        red, green, blue, white = [rmap[int(v * 4.)] for v in led_state[0]]
         ls0 = (white<<6) | (blue<<4) | (green<<2) | red
         minclock = 0
         if print_time is not None:
