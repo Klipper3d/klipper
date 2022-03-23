@@ -4,6 +4,10 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+from .display import display
+
+# Time between each led template update
+RENDER_TIME = 0.500
 
 # Helper code for common LED initialization and control
 class LEDHelper:
@@ -66,8 +70,97 @@ class LEDHelper:
 class PrinterLED:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.led_helpers = {}
+        self.active_templates = {}
+        self.render_timer = None
+        # Load templates
+        dtemplates = display.lookup_display_templates(config)
+        self.templates = dtemplates.get_display_templates()
+        gcode_macro = self.printer.lookup_object("gcode_macro")
+        self.create_template_context = gcode_macro.create_template_context
+        # Register handlers
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command("SET_LED_TEMPLATE", self.cmd_SET_LED_TEMPLATE,
+                               desc=self.cmd_SET_LED_TEMPLATE_help)
     def setup_helper(self, config, update_func, led_count=1, has_white=False):
-        return LEDHelper(config, update_func, led_count, has_white)
+        led_helper = LEDHelper(config, update_func, led_count, has_white)
+        name = config.get_name().split()[-1]
+        self.led_helpers[name] = led_helper
+        return led_helper
+    def _activate_timer(self):
+        if self.render_timer is not None or not self.active_templates:
+            return
+        reactor = self.printer.get_reactor()
+        self.render_timer = reactor.register_timer(self._render, reactor.NOW)
+    def _activate_template(self, led_helper, index, template):
+        key = (led_helper, index)
+        if template is not None:
+            self.active_templates[key] = template
+            return
+        if key in self.active_templates:
+            del self.active_templates[key]
+    def _render(self, eventtime):
+        if not self.active_templates:
+            # Nothing to do - unregister timer
+            reactor = self.printer.get_reactor()
+            reactor.register_timer(self.render_timer)
+            self.render_timer = None
+            return reactor.NEVER
+        # Setup gcode_macro template context
+        context = self.create_template_context(eventtime)
+        def render(name, **kwargs):
+            return self.templates[name].render(context, **kwargs)
+        context['render'] = render
+        # Render all templates
+        need_transmit = {}
+        rendered = {}
+        for (led_helper, index), template in self.active_templates.items():
+            color = rendered.get(template)
+            if color is None:
+                try:
+                    text = template.render(context)
+                    parts = [max(0., min(1., float(f)))
+                             for f in text.split(',', 4)]
+                except Exception as e:
+                    logging.exception("led template render error")
+                    parts = []
+                if len(parts) < 4:
+                    parts += [0.] * (4 - len(parts))
+                rendered[template] = color = tuple(parts)
+            prev_color = led_helper.led_state[index-1]
+            if color != prev_color:
+                if led_helper not in need_transmit:
+                    need_transmit[led_helper] = 1
+                    led_helper.led_state = list(led_helper.led_state)
+                led_helper.led_state[index-1] = color
+        context.clear() # Remove circular references for better gc
+        # Transmit pending changes
+        for led_helper in need_transmit.keys():
+            try:
+                led_helper.update_func(led_helper.led_state, None)
+            except Exception as e:
+                logging.exception("led template transmit error")
+        return eventtime + RENDER_TIME
+    cmd_SET_LED_TEMPLATE_help = "Assign a display_template to an LED"
+    def cmd_SET_LED_TEMPLATE(self, gcmd):
+        led_name = gcmd.get("LED")
+        led_helper = self.led_helpers.get(led_name)
+        if led_helper is None:
+            raise gcmd.error("Unknown LED '%s'" % (led_name,))
+        led_count = led_helper.led_count
+        index = gcmd.get_int("INDEX", None, minval=1, maxval=led_count)
+        template = None
+        tpl_name = gcmd.get("TEMPLATE")
+        if tpl_name:
+            template = self.templates.get(tpl_name)
+            if template is None:
+                raise gcmd.error("Unknown display_template '%s'" % (tpl_name,))
+        if index is not None:
+            self._activate_template(led_helper, index, template)
+        else:
+            for i in range(led_count):
+                self._activate_template(led_helper, i+1, template)
+        self._activate_timer()
 
 PIN_MIN_TIME = 0.100
 MAX_SCHEDULE_TIME = 5.0
