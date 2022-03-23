@@ -2505,7 +2505,125 @@ with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 #   See the "fan" section for a description of the above parameters.
 ```
 
-## Additional servos, LEDs, buttons, and other pins
+## LEDs
+
+### [led]
+
+Support for LEDs (and LED strips) controlled via micro-controller PWM
+pins (one may define any number of sections with an "led" prefix). See
+the [command reference](G-Codes.md#led) for more information.
+
+```
+[led my_led]
+#red_pin:
+#green_pin:
+#blue_pin:
+#white_pin:
+#   The pin controlling the given LED color. At least one of the above
+#   parameters must be provided.
+#cycle_time: 0.010
+#   The amount of time (in seconds) per PWM cycle. It is recommended
+#   this be 10 milliseconds or greater when using software based PWM.
+#   The default is 0.010 seconds.
+#hardware_pwm: False
+#   Enable this to use hardware PWM instead of software PWM. When
+#   using hardware PWM the actual cycle time is constrained by the
+#   implementation and may be significantly different than the
+#   requested cycle_time. The default is False.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   Sets the initial LED color. Each value should be between 0.0 and
+#   1.0. The default for each color is 0.
+```
+
+### [neopixel]
+
+Neopixel (aka WS2812) LED support (one may define any number of
+sections with a "neopixel" prefix). See the
+[command reference](G-Codes.md#led) for more information.
+
+```
+[neopixel my_neopixel]
+pin:
+#   The pin connected to the neopixel. This parameter must be
+#   provided.
+#chain_count:
+#   The number of Neopixel chips that are "daisy chained" to the
+#   provided pin. The default is 1 (which indicates only a single
+#   Neopixel is connected to the pin).
+#color_order: GRB
+#   Set the pixel order required by the LED hardware. Options are GRB,
+#   RGB, BRG, BGR, GRBW, or RGBW. The default is GRB.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+### [dotstar]
+
+Dotstar (aka APA102) LED support (one may define any number of
+sections with a "dotstar" prefix). See the
+[command reference](G-Codes.md#led) for more information.
+
+```
+[dotstar my_dotstar]
+data_pin:
+#   The pin connected to the data line of the dotstar. This parameter
+#   must be provided.
+clock_pin:
+#   The pin connected to the clock line of the dotstar. This parameter
+#   must be provided.
+#chain_count:
+#   See the "neopixel" section for information on this parameter.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+### [pca9533]
+
+PCA9533 LED support. The PCA9533 is used on the mightyboard.
+
+```
+[pca9533 my_pca9533]
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. Use 98 for
+#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+### [pca9632]
+
+PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
+
+```
+[pca9632 my_pca9632]
+scl_pin:
+#   The SCL "clock" pin. This parameter must be provided.
+sda_pin:
+#   The SDA "data" pin. This parameter must be provided.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+## Additional servos, buttons, and other pins
 
 ### [servo]
 
@@ -2536,100 +2654,6 @@ pin:
 #   Initial pulse width time (in seconds) to set the servo to. (This
 #   is only valid if initial_angle is not set.) The default is to not
 #   send any signal at startup.
-```
-
-### [neopixel]
-
-Neopixel (aka WS2812) LED support (one may define any number of
-sections with a "neopixel" prefix). One may set the LED color via
-"SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel).
-
-```
-[neopixel my_neopixel]
-pin:
-#   The pin connected to the neopixel. This parameter must be
-#   provided.
-#chain_count:
-#   The number of Neopixel chips that are "daisy chained" to the
-#   provided pin. The default is 1 (which indicates only a single
-#   Neopixel is connected to the pin).
-#color_order: GRB
-#   Set the pixel order required by the LED hardware. Options are GRB,
-#   RGB, BRG, BGR, GRBW, or RGBW. The default is GRB.
-#initial_RED: 0.0
-#initial_GREEN: 0.0
-#initial_BLUE: 0.0
-#initial_WHITE: 0.0
-#   Sets the initial LED color of the Neopixel. Each value should be
-#   between 0.0 and 1.0. The WHITE option is only available on RGBW
-#   LEDs. The default for each color is 0.
-```
-
-### [dotstar]
-
-Dotstar (aka APA102) LED support (one may define any number of
-sections with a "dotstar" prefix). One may set the LED color via
-"SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel).
-
-```
-[dotstar my_dotstar]
-data_pin:
-#   The pin connected to the data line of the dotstar. This parameter
-#   must be provided.
-clock_pin:
-#   The pin connected to the clock line of the dotstar. This parameter
-#   must be provided.
-#chain_count:
-#initial_RED: 0.0
-#initial_GREEN: 0.0
-#initial_BLUE: 0.0
-#   See the "neopixel" section for information on these parameters.
-```
-
-### [PCA9533]
-
-PCA9533 LED support. The PCA9533 is used on the mightyboard.
-
-```
-[pca9533 my_pca9533]
-#i2c_address: 98
-#   The i2c address that the chip is using on the i2c bus. Use 98 for
-#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
-#i2c_mcu:
-#i2c_bus:
-#i2c_speed:
-#   See the "common I2C settings" section for a description of the
-#   above parameters.
-#initial_RED: 0
-#initial_GREEN: 0
-#initial_BLUE: 0
-#initial_WHITE: 0
-#   The PCA9533 only supports 1 or 0. The default is 0. On the
-#   mightyboard, the white led is not populated.
-#   Use GCODE to modify led values after startup.
-#   set_led led=my_pca9533 red=1 green=1 blue=1
-```
-### [PCA9632]
-
-PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
-
-```
-[pca9632 my_pca9632]
-scl_pin:
-# The SCL "clock" pin. This parameter must be provided.
-sda_pin:
-# The SDA "data" pin. This parameter must be provided.
-#initial_RED: 0
-#initial_GREEN: 0
-#initial_BLUE: 0
-#initial_WHITE: 0
-# PCA9632 supports individual LED PWM.
-# Values range from 0.0 to 1.0. The default is 0.0.
-# On the FlashForge Dreamer, the white led is not populated.
-# Use GCODE to modify led values after startup.
-# set_led led=my_pca9632 red=1.0 green=1.0 blue=1.0 white=0.0
 ```
 
 ### [gcode_button]

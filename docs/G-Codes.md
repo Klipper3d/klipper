@@ -690,29 +690,29 @@ scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
 
-### [neopixel]
+### [led]
 
-The following command is available when a
-[neopixel config section](Config_Reference.md#neopixel) or
-[dotstar config section](Config_Reference.md#dotstar) is enabled.
+The following command is available when any of the
+[led config sections](Config_Reference.md#leds) are enabled.
 
 #### SET_LED
 `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
 WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
 LED output. Each color `<value>` must be between 0.0 and 1.0. The
-WHITE option is only valid on RGBW LEDs. If multiple LED chips are
-daisy-chained then one may specify INDEX to alter the color of just
-the given chip (1 for the first chip, 2 for the second, etc.). If
-INDEX is not provided then all LEDs in the daisy-chain will be set to
-the provided color. If TRANSMIT=0 is specified then the color change
-will only be made on the next SET_LED command that does not specify
-TRANSMIT=0; this may be useful in combination with the INDEX parameter
-to batch multiple updates in a daisy-chain. By default, the SET_LED
-command will sync it's changes with other ongoing gcode commands.
-This can lead to undesirable behavior if LEDs are being set while the
-printer is not printing as it will reset the idle timeout. If careful
-timing is not needed, the optional SYNC=0 parameter can be specified
-to apply the changes instantly and not reset the idle timeout.
+WHITE option is only valid on RGBW LEDs. If the LED supports multiple
+chips in a daisy-chain then one may specify INDEX to alter the color
+of just the given chip (1 for the first chip, 2 for the second,
+etc.). If INDEX is not provided then all LEDs in the daisy-chain will
+be set to the provided color. If TRANSMIT=0 is specified then the
+color change will only be made on the next SET_LED command that does
+not specify TRANSMIT=0; this may be useful in combination with the
+INDEX parameter to batch multiple updates in a daisy-chain. By
+default, the SET_LED command will sync it's changes with other ongoing
+gcode commands.  This can lead to undesirable behavior if LEDs are
+being set while the printer is not printing as it will reset the idle
+timeout. If careful timing is not needed, the optional SYNC=0
+parameter can be specified to apply the changes without resetting the
+idle timeout.
 
 ### [output_pin]
 
