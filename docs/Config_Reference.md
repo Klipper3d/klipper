@@ -2544,6 +2544,9 @@ Neopixel (aka WS2812) LED support (one may define any number of
 sections with a "neopixel" prefix). See the
 [command reference](G-Codes.md#led) for more information.
 
+Note that the [linux mcu](RPi_microcontroller.md) implementation does
+not currently support directly connected neopixels.
+
 ```
 [neopixel my_neopixel]
 pin:
