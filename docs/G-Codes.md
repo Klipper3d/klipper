@@ -716,7 +716,7 @@ idle timeout.
 
 #### SET_LED_TEMPLATE
 `SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
-[INDEX=<index>]`: Assign a
+[<param_x>=<literal>] [INDEX=<index>]`: Assign a
 [display_template](Config_Reference.md#display_template) to a given
 [LED](Config_Reference.md#leds). For example, if one defined a
 `[display_template my_led_template]` config section then one could
@@ -724,12 +724,14 @@ assign `TEMPLATE=my_led_template` here. The display_template should
 produce a comma separated string containing four floating point
 numbers corresponding to red, green, blue, and white color settings.
 The template will be continuously evaluated and the LED will be
-automatically set to the resulting colors. If INDEX is not specified
-then all chips in the LED's daisy-chain will be set to the template,
-otherwise only the chip with the given index will be updated. If
-TEMPLATE is an empty string then this command will clear any previous
-template assigned to the LED (one can then use `SET_LED` commands to
-manage the LED's color settings).
+automatically set to the resulting colors. One may set
+display_template parameters to use during template evaluation
+(parameters will be parsed as Python literals). If INDEX is not
+specified then all chips in the LED's daisy-chain will be set to the
+template, otherwise only the chip with the given index will be
+updated. If TEMPLATE is an empty string then this command will clear
+any previous template assigned to the LED (one can then use `SET_LED`
+commands to manage the LED's color settings).
 
 ### [output_pin]
 

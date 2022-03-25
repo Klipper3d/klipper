@@ -3,7 +3,7 @@
 # Copyright (C) 2019-2022  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import logging, ast
 from .display import display
 
 # Time between each led template update
@@ -92,10 +92,11 @@ class PrinterLED:
             return
         reactor = self.printer.get_reactor()
         self.render_timer = reactor.register_timer(self._render, reactor.NOW)
-    def _activate_template(self, led_helper, index, template):
+    def _activate_template(self, led_helper, index, template, lparams):
         key = (led_helper, index)
         if template is not None:
-            self.active_templates[key] = template
+            uid = (template,) + tuple(sorted(lparams.items()))
+            self.active_templates[key] = (uid, template, lparams)
             return
         if key in self.active_templates:
             del self.active_templates[key]
@@ -114,11 +115,12 @@ class PrinterLED:
         # Render all templates
         need_transmit = {}
         rendered = {}
-        for (led_helper, index), template in self.active_templates.items():
-            color = rendered.get(template)
+        template_info = self.active_templates.items()
+        for (led_helper, index), (uid, template, lparams) in template_info:
+            color = rendered.get(uid)
             if color is None:
                 try:
-                    text = template.render(context)
+                    text = template.render(context, **lparams)
                     parts = [max(0., min(1., float(f)))
                              for f in text.split(',', 4)]
                 except Exception as e:
@@ -126,7 +128,7 @@ class PrinterLED:
                     parts = []
                 if len(parts) < 4:
                     parts += [0.] * (4 - len(parts))
-                rendered[template] = color = tuple(parts)
+                rendered[uid] = color = tuple(parts)
             prev_color = led_helper.led_state[index-1]
             if color != prev_color:
                 if led_helper not in need_transmit:
@@ -150,16 +152,29 @@ class PrinterLED:
         led_count = led_helper.led_count
         index = gcmd.get_int("INDEX", None, minval=1, maxval=led_count)
         template = None
+        lparams = {}
         tpl_name = gcmd.get("TEMPLATE")
         if tpl_name:
             template = self.templates.get(tpl_name)
             if template is None:
                 raise gcmd.error("Unknown display_template '%s'" % (tpl_name,))
+            tparams = template.get_params()
+            for p, v in gcmd.get_command_parameters().items():
+                if not p.startswith("PARAM_"):
+                    continue
+                p = p.lower()
+                if p not in tparams:
+                    raise gcmd.error("Invalid display_template parameter: %s"
+                                     % (p,))
+                try:
+                    lparams[p] = ast.literal_eval(v)
+                except ValueError as e:
+                    raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
         if index is not None:
-            self._activate_template(led_helper, index, template)
+            self._activate_template(led_helper, index, template, lparams)
         else:
             for i in range(led_count):
-                self._activate_template(led_helper, i+1, template)
+                self._activate_template(led_helper, i+1, template, lparams)
         self._activate_timer()
 
 PIN_MIN_TIME = 0.100

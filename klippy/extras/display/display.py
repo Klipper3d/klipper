@@ -39,6 +39,8 @@ class DisplayTemplate:
                         option, config.get_name()))
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'text')
+    def get_params(self):
+        return self.params
     def render(self, context, **kwargs):
         params = dict(self.params)
         params.update(**kwargs)
