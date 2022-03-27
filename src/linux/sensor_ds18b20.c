@@ -163,7 +163,9 @@ command_config_ds18b20(uint32_t *args)
         goto fail4;
 
     pthread_t reader_tid; // Not used
+    timer_disable_signals();
     ret = pthread_create(&reader_tid, NULL, reader_start_routine, d);
+    timer_enable_signals();
     if (ret)
         goto fail5;
 

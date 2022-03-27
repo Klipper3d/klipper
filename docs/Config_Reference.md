@@ -84,7 +84,7 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, hybrid-corexy, hybrid-corexz, rotary_delta, delta,
+#   corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta, delta,
 #   polar, winch, or none. This
 #   parameter must be specified.
 max_velocity:
@@ -153,6 +153,13 @@ microsteps:
 #   gear_ratio is specified then rotation_distance specifies the
 #   distance the axis travels for one full rotation of the final gear.
 #   The default is to not use a gear ratio.
+#step_pulse_duration:
+#   The minimum time between the step pulse signal edge and the
+#   following "unstep" signal edge. This is also used to set the
+#   minimum time between a step pulse and a direction change signal.
+#   The default is 0.000000100 (100ns) for TMC steppers that are
+#   configured in UART or SPI mode, and the default is 0.000002 (which
+#   is 2us) for all other steppers.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor then it enables "multi-mcu
@@ -245,6 +252,11 @@ max_z_velocity:
 #   maximum speed of up/down moves (which require a higher step rate
 #   than other moves on a delta printer). The default is to use
 #   max_velocity for max_z_velocity.
+#max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. Setting this may be useful if the printer can reach higher
+#   acceleration on XY moves than Z moves (eg, when using input shaper).
+#   The default is to use max_accel for max_z_accel.
 #minimum_z_position: 0
 #   The minimum Z position that the user may command the head to move
 #   to. The default is 0.
@@ -450,21 +462,12 @@ Only parameters specific to polar printers are described here - see
 [common kinematic settings](#common-kinematic-settings) for available
 parameters.
 
-POLAR KINEMATICS ARE A WORK IN PROGRESS. Moves around the `0,0`
+POLAR KINEMATICS ARE A WORK IN PROGRESS. Moves around the 0, 0
 position are known to not work properly.
 
 ```
 [printer]
 kinematics: polar
-
-# The stepper_bed section is used to describe the stepper controlling
-# the bed.
-[stepper_bed]
-gear_ratio:
-#   A gear_ratio must be specified and rotation_distance may not be
-#   specified. For example, if the bed has an 80 toothed pulley driven
-#   by a stepper with a 16 toothed pulley then one would specify a
-#   gear ratio of "80:16". This parameter must be provided.
 max_z_velocity:
 #   This sets the maximum velocity (in mm/s) of movement along the z
 #   axis. This setting can be used to restrict the maximum speed of
@@ -474,6 +477,15 @@ max_z_accel:
 #   This sets the maximum acceleration (in mm/s^2) of movement along
 #   the z axis. It limits the acceleration of the z stepper motor. The
 #   default is to use max_accel for max_z_accel.
+
+# The stepper_bed section is used to describe the stepper controlling
+# the bed.
+[stepper_bed]
+gear_ratio:
+#   A gear_ratio must be specified and rotation_distance may not be
+#   specified. For example, if the bed has an 80 toothed pulley driven
+#   by a stepper with a 16 toothed pulley then one would specify a
+#   gear ratio of "80:16". This parameter must be provided.
 
 # The stepper_arm section is used to describe the stepper controlling
 # the carriage on the arm.
@@ -585,7 +597,7 @@ available parameters.
 
 CABLE WINCH SUPPORT IS EXPERIMENTAL. Homing is not implemented on
 cable winch kinematics. In order to home the printer, manually send
-movement commands until the toolhead is at 0,0,0 and then issue a
+movement commands until the toolhead is at 0, 0, 0 and then issue a
 `G28` command.
 
 ```
@@ -603,7 +615,7 @@ rotation_distance:
 anchor_x:
 anchor_y:
 anchor_z:
-#   The x, y, and z position of the cable winch in cartesian space.
+#   The X, Y, and Z position of the cable winch in cartesian space.
 #   These parameters must be provided.
 ```
 
@@ -626,10 +638,11 @@ max_accel: 1
 
 ### [extruder]
 
-The extruder section is used to describe both the stepper controlling
-the printer extruder and the heater parameters for the nozzle. See the
-[pressure advance guide](Pressure_Advance.md) for information on
-tuning pressure advance.
+The extruder section is used to describe the heater parameters for the
+nozzle hotend along with the stepper controlling the extruder. See the
+[command reference](G-Codes.md#extruder) for additional information.
+See the [pressure advance guide](Pressure_Advance.md) for information
+on tuning pressure advance.
 
 ```
 [extruder]
@@ -640,7 +653,10 @@ microsteps:
 rotation_distance:
 #full_steps_per_rotation:
 #gear_ratio:
-#   See the "stepper" section for a description of the above parameters.
+#   See the "stepper" section for a description of the above
+#   parameters. If none of the above parameters are specified then no
+#   stepper will be associated with the nozzle hotend (though a
+#   SYNC_EXTRUDER_MOTION command may associate one at run-time).
 nozzle_diameter:
 #   Diameter of the nozzle orifice (in mm). This parameter must be
 #   provided.
@@ -696,10 +712,11 @@ heater_pin:
 #   periods) to the heater. The default is 1.0.
 sensor_type:
 #   Type of sensor - common thermistors are "EPCOS 100K B57560G104F",
-#   "ATC Semitec 104GT-2", "NTC 100K beta 3950", "Honeywell 100K
-#   135-104LAG-J01", "NTC 100K MGB18-104F39050L32", "SliceEngineering
-#   450", and "TDK NTCG104LH104JT1". See the "Temperature sensors"
-#   section for other sensors. This parameter must be provided.
+#   "ATC Semitec 104GT-2", "ATC Semitec 104NT-4-R025H42G", "Generic
+#   3950","Honeywell 100K 135-104LAG-J01", "NTC 100K MGB18-104F39050L32",
+#   "SliceEngineering 450", and "TDK NTCG104LH104JT1". See the
+#   "Temperature sensors" section for other sensors. This parameter
+#   must be provided.
 sensor_pin:
 #   Analog input pin connected to the sensor. This parameter must be
 #   provided.
@@ -775,12 +792,11 @@ recommended to define a safe_z_home section in printer.cfg to home
 toward the center of the print area.
 
 See the [bed mesh guide](Bed_Mesh.md) and
-[command reference](G-Codes.md#mesh-bed-leveling) for additional
-information.
+[command reference](G-Codes.md#bed_mesh) for additional information.
 
 Visual Examples:
 ```
- rectangular bed, probe_count = 3,3:
+ rectangular bed, probe_count = 3, 3:
              x---x---x (max_point)
              |
              x---x---x
@@ -788,15 +804,15 @@ Visual Examples:
  (min_point) x---x---x
 
  round bed, round_probe_count = 5, bed_radius = r:
-                x (0,r) end
-              /
-            x---x---x
-                      \
- (-r,0) x---x---x---x---x (r,0)
-          \
-            x---x---x
-                  /
-                x  (0,-r) start
+                 x (0, r) end
+               /
+             x---x---x
+                       \
+ (-r, 0) x---x---x---x---x (r, 0)
+           \
+             x---x---x
+                   /
+                 x  (0, -r) start
 ```
 
 ```
@@ -813,26 +829,26 @@ Visual Examples:
 #   mesh_origin option. This parameter must be provided for round beds
 #   and omitted for rectangular beds.
 #mesh_origin:
-#   Defines the center x,y coordinate of the mesh for round beds. This
+#   Defines the center X, Y coordinate of the mesh for round beds. This
 #   coordinate is relative to the probe's location. It may be useful
 #   to adjust the mesh_origin in an effort to maximize the size of the
-#   mesh radius. Default is 0,0. This parameter must be omitted for
+#   mesh radius. Default is 0, 0. This parameter must be omitted for
 #   rectangular beds.
 #mesh_min:
-#   Defines the minimum x,y coordinate of the mesh for rectangular
+#   Defines the minimum X, Y coordinate of the mesh for rectangular
 #   beds. This coordinate is relative to the probe's location. This
 #   will be the first point probed, nearest to the origin. This
 #   parameter must be provided for rectangular beds.
 #mesh_max:
-#   Defines the maximum x,y coordinate of the mesh for rectangular
+#   Defines the maximum X, Y coordinate of the mesh for rectangular
 #   beds. Adheres to the same principle as mesh_min, however this will
 #   be the furthest point probed from the bed's origin. This parameter
 #   must be provided for rectangular beds.
-#probe_count: 3,3
+#probe_count: 3, 3
 #   For rectangular beds, this is a comma separate pair of integer
-#   values (X,Y) defining the number of points to probe along each
+#   values X, Y defining the number of points to probe along each
 #   axis. A single value is also valid, in which case that value will
-#   be applied to both axes. Default is 3,3.
+#   be applied to both axes. Default is 3, 3.
 #round_probe_count: 5
 #   For round beds, this integer value defines the maximum number of
 #   points to probe along each axis. This value must be an odd number.
@@ -858,12 +874,12 @@ Visual Examples:
 #   The distance (in mm) along a move to check for split_delta_z.
 #   This is also the minimum length that a move can be split. Default
 #   is 5.0.
-#mesh_pps: 2,2
-#   A comma separated pair of integers (X,Y) defining the number of
+#mesh_pps: 2, 2
+#   A comma separated pair of integers X, Y defining the number of
 #   points per segment to interpolate in the mesh along each axis. A
 #   "segment" can be defined as the space between each probed point.
 #   The user may enter a single value which will be applied to both
-#   axes. Default is 2,2.
+#   axes. Default is 2, 2.
 #algorithm: lagrange
 #   The interpolation algorithm to use. May be either "lagrange" or
 #   "bicubic". This option will not affect 3x3 grids, which are forced
@@ -890,7 +906,7 @@ Bed tilt compensation. One may define a bed_tilt config section to
 enable move transformations that account for a tilted bed. Note that
 bed_mesh and bed_tilt are incompatible; both cannot be defined.
 
-See the [command reference](G-Codes.md#bed-tilt) for additional
+See the [command reference](G-Codes.md#bed_tilt) for additional
 information.
 
 ```
@@ -903,12 +919,12 @@ information.
 #   axis. The default is 0.
 #z_adjust: 0
 #   The amount to add to the Z height when the nozzle is nominally at
-#   0,0. The default is 0.
+#   0, 0. The default is 0.
 # The remaining parameters control a BED_TILT_CALIBRATE extended
 # g-code command that may be used to calibrate appropriate x and y
 # adjustment parameters.
 #points:
-#   A list of X,Y coordinates (one per line; subsequent lines
+#   A list of X, Y coordinates (one per line; subsequent lines
 #   indented) that should be probed during a BED_TILT_CALIBRATE
 #   command. Specify coordinates of the nozzle and be sure the probe
 #   is above the bed at the given nozzle coordinates. The default is
@@ -928,13 +944,12 @@ config section to enable a BED_SCREWS_ADJUST g-code command.
 
 See the
 [leveling guide](Manual_Level.md#adjusting-bed-leveling-screws) and
-[command reference](G-Codes.md#bed-screws-helper) for additional
-information.
+[command reference](G-Codes.md#bed_screws) for additional information.
 
 ```
 [bed_screws]
 #screw1:
-#   The X,Y coordinate of the first bed leveling screw. This is a
+#   The X, Y coordinate of the first bed leveling screw. This is a
 #   position to command the nozzle to that is directly above the bed
 #   screw (or as close as possible while still being above the bed).
 #   This parameter must be provided.
@@ -943,7 +958,7 @@ information.
 #   the helper script runs. The default is to use a name based upon
 #   the screw XY location.
 #screw1_fine_adjust:
-#   An X,Y coordinate to command the nozzle to so that one can fine
+#   An X, Y coordinate to command the nozzle to so that one can fine
 #   tune the bed leveling screw. The default is to not perform fine
 #   adjustments on the bed screw.
 #screw2:
@@ -974,13 +989,13 @@ g-code command.
 
 See the
 [leveling guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)
-and [command reference](G-Codes.md#bed-screws-tilt-adjust-helper) for
-additional information.
+and [command reference](G-Codes.md#screws_tilt_adjust) for additional
+information.
 
 ```
 [screws_tilt_adjust]
 #screw1:
-#   The X,Y coordinate of the first bed leveling screw. This is a
+#   The (X, Y) coordinate of the first bed leveling screw. This is a
 #   position to command the nozzle to that is directly above the bed
 #   screw (or as close as possible while still being above the bed).
 #   This is the base screw used in calculations. This parameter must
@@ -1014,20 +1029,20 @@ additional information.
 Multiple Z stepper tilt adjustment. This feature enables independent
 adjustment of multiple z steppers (see the "stepper_z1" section) to
 adjust for tilt. If this section is present then a Z_TILT_ADJUST
-extended [G-Code command](G-Codes.md#z-tilt) becomes available.
+extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 
 ```
 [z_tilt]
 #z_positions:
-#   A list of X,Y coordinates (one per line; subsequent lines
+#   A list of X, Y coordinates (one per line; subsequent lines
 #   indented) describing the location of each bed "pivot point". The
 #   "pivot point" is the point where the bed attaches to the given Z
-#   stepper. It is described using nozzle coordinates (the XY position
+#   stepper. It is described using nozzle coordinates (the X, Y position
 #   of the nozzle if it could move directly above the point). The
 #   first entry corresponds to stepper_z, the second to stepper_z1,
 #   the third to stepper_z2, etc. This parameter must be provided.
 #points:
-#   A list of X,Y coordinates (one per line; subsequent lines
+#   A list of X, Y coordinates (one per line; subsequent lines
 #   indented) that should be probed during a Z_TILT_ADJUST command.
 #   Specify coordinates of the nozzle and be sure the probe is above
 #   the bed at the given nozzle coordinates. This parameter must be
@@ -1069,16 +1084,16 @@ configuration:
  |Z           Z3|
  ----------------
 ```
-Where x is the (0,0) point on the bed
+Where x is the 0, 0 point on the bed
 
 ```
 [quad_gantry_level]
 #gantry_corners:
-#   A newline separated list of X,Y coordinates describing the two
+#   A newline separated list of X, Y coordinates describing the two
 #   opposing corners of the gantry. The first entry corresponds to Z,
 #   the second to Z2. This parameter must be provided.
 #points:
-#   A newline separated list of four X,Y points that should be probed
+#   A newline separated list of four X, Y points that should be probed
 #   during a QUAD_GANTRY_LEVEL command. Order of the locations is
 #   important, and should correspond to Z, Z1, Z2, and Z3 location in
 #   order. This parameter must be provided. For maximum accuracy,
@@ -1106,8 +1121,8 @@ Printer Skew Correction. It is possible to use software to correct
 printer skew across 3 planes, xy, xz, yz. This is done by printing a
 calibration model along a plane and measuring three lengths. Due to
 the nature of skew correction these lengths are set via gcode. See
-[skew correction](skew_correction.md) and
-[command reference](G-Codes.md#skew-correction) for details.
+[Skew Correction](Skew_Correction.md) and
+[Command Reference](G-Codes.md#skew_correction) for details.
 
 ```
 [skew_correction]
@@ -1118,13 +1133,13 @@ the nature of skew correction these lengths are set via gcode. See
 ### [safe_z_home]
 
 Safe Z homing. One may use this mechanism to home the Z axis at a
-specific XY coordinate. This is useful if the toolhead, for example
+specific X, Y coordinate. This is useful if the toolhead, for example
 has to move to the center of the bed before Z can be homed.
 
 ```
 [safe_z_home]
 home_xy_position:
-#   A X,Y coordinate (e.g. 100,100) where the Z homing should be
+#   A X, Y coordinate (e.g. 100, 100) where the Z homing should be
 #   performed. This parameter must be provided.
 #speed: 50.0
 #   Speed at which the toolhead is moved to the safe Z home
@@ -1140,8 +1155,8 @@ home_xy_position:
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
 #   default is 20mm/s.
 #move_to_previous: False
-#   When set to True, xy are reset to their previous positions after z
-#   homing. The default is False.
+#   When set to True, the X and Y axes are reset to their previous
+#   positions after Z axis homing. The default is False.
 ```
 
 ### [homing_override]
@@ -1186,8 +1201,8 @@ endstop switches. Add a bare "[endstop_phase]" declaration to enable
 the ENDSTOP_PHASE_CALIBRATE command.
 
 See the [endstop phases guide](Endstop_Phase.md) and
-[command reference](G-Codes.md#endstop-adjustments-by-stepper-phase)
-for additional information.
+[command reference](G-Codes.md#endstop_phase) for additional
+information.
 
 ```
 [endstop_phase stepper_z]
@@ -1252,7 +1267,7 @@ G-Code macros (one may define any number of sections with a
 
 Execute a gcode on a set delay. See the
 [command template guide](Command_Templates.md#delayed-gcodes) and
-[command reference](G-Codes.md#delayed-gcode) for more information.
+[command reference](G-Codes.md#delayed_gcode) for more information.
 
 ```
 [delayed_gcode my_delayed_gcode]
@@ -1274,7 +1289,7 @@ gcode:
 Support saving variables to disk so that they are retained across
 restarts. See
 [command templates](Command_Templates.md#save-variables-to-disk) and
-[G-Code reference](G-Codes.md#save-variables) for further information.
+[G-Code reference](G-Codes.md#save_variables) for further information.
 
 ```
 [save_variables]
@@ -1325,7 +1340,7 @@ a belt printer, can find use in looping sections of the sdcard file.
 (For example, to print the same part over and over, or repeat the
 a section of a part for a chain or other repeated pattern).
 
-See the [command reference](G-Codes.md#sdcard-loop) for supported
+See the [command reference](G-Codes.md#sdcard_loop) for supported
 commands. See the [sample-macros.cfg](../config/sample-macros.cfg)
 file for a Marlin compatible M808 G-Code macro.
 
@@ -1337,7 +1352,7 @@ file for a Marlin compatible M808 G-Code macro.
 
 Support manually moving stepper motors for diagnostic purposes. Note,
 using this feature may place the printer in an invalid state - see the
-[command reference](G-Codes.md#force-movement) for important details.
+[command reference](G-Codes.md#force_move) for important details.
 
 ```
 [force_move]
@@ -1349,7 +1364,7 @@ using this feature may place the printer in an invalid state - see the
 ### [pause_resume]
 
 Pause/Resume functionality with support of position capture and
-restore. See the [command reference](G-Codes.md#pause-resume) for more
+restore. See the [command reference](G-Codes.md#pause_resume) for more
 information.
 
 ```
@@ -1364,7 +1379,7 @@ information.
 Firmware filament retraction. This enables G10 (retract) and G11
 (unretract) GCODE commands issued by many slicers. The parameters
 below provide startup defaults, although the values can be adjusted
-via the SET_RETRACTION [command](G-Codes.md#firmware-retraction)),
+via the SET_RETRACTION [command](G-Codes.md#firmware_retraction)),
 allowing per-filament settings and runtime tuning.
 
 ```
@@ -1399,7 +1414,7 @@ Support for gcode arc (G2/G3) commands.
 ### [respond]
 
 Enable the "M118" and "RESPOND" extended
-[commands](G-Codes.md#send-message-respond-to-host).
+[commands](G-Codes.md#respond).
 
 ```
 [respond]
@@ -1419,7 +1434,7 @@ Enable the "M118" and "RESPOND" extended
 ### [input_shaper]
 
 Enables [resonance compensation](Resonance_Compensation.md). Also see
-the [command reference](G-Codes.md#resonance-compensation).
+the [command reference](G-Codes.md#input_shaper).
 
 ```
 [input_shaper]
@@ -1458,10 +1473,9 @@ the [command reference](G-Codes.md#resonance-compensation).
 
 Support for ADXL345 accelerometers. This support allows one to query
 accelerometer measurements from the sensor. This enables an
-ACCELEROMETER_MEASURE command (see
-[G-Codes](G-Codes.md#adxl345-accelerometer-commands) for more
-information). The default chip name is "default", but one may specify
-an explicit name (eg, [adxl345 my_chip_name]).
+ACCELEROMETER_MEASURE command (see [G-Codes](G-Codes.md#adxl345) for
+more information). The default chip name is "default", but one may
+specify an explicit name (eg, [adxl345 my_chip_name]).
 
 ```
 [adxl345]
@@ -1476,13 +1490,13 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
-#axes_map: x,y,z
-#   The accelerometer axis for each of the printer's x, y, and z axes.
+#axes_map: x, y, z
+#   The accelerometer axis for each of the printer's X, Y, and Z axes.
 #   This may be useful if the accelerometer is mounted in an
 #   orientation that does not match the printer orientation. For
-#   example, one could set this to "y,x,z" to swap the x and y axes.
+#   example, one could set this to "y, x, z" to swap the X and Y axes.
 #   It is also possible to negate an axis if the accelerometer
-#   direction is reversed (eg, "x,z,-y"). The default is "x,y,z".
+#   direction is reversed (eg, "x, z, -y"). The default is "x, y, z".
 #rate: 3200
 #   Output data rate for ADXL345. ADXL345 supports the following data
 #   rates: 3200, 1600, 800, 400, 200, 100, 50, and 25. Note that it is
@@ -1497,7 +1511,7 @@ Support for resonance testing and automatic input shaper calibration.
 In order to use most of the functionality of this module, additional
 software dependencies must be installed; refer to
 [Measuring Resonances](Measuring_Resonances.md) and the
-[command reference](G-Codes.md#resonance-testing-commands) for more
+[command reference](G-Codes.md#resonance_tester) for more
 information. See the [Max smoothing](Measuring_Resonances.md#max-smoothing)
 section of the measuring resonances guide for more information on
 `max_smoothing` parameter and its use.
@@ -1505,7 +1519,7 @@ section of the measuring resonances guide for more information on
 ```
 [resonance_tester]
 #probe_points:
-#   A list of X,Y,Z coordinates of points (one point per line) to test
+#   A list of X, Y, Z coordinates of points (one point per line) to test
 #   resonances at. At least one point is required. Make sure that all
 #   points with some safety margin in XY plane (~a few centimeters)
 #   are reachable by the toolhead.
@@ -1720,6 +1734,7 @@ control_pin:
 #y_offset:
 #z_offset:
 #speed:
+#lift_speed:
 #samples:
 #sample_retract_dist:
 #samples_result:
@@ -1771,12 +1786,7 @@ for an example configuration.
 #   See the "extruder" section for available stepper and heater
 #   parameters.
 #shared_heater:
-#   If this extruder uses the same heater already defined for another
-#   extruder then place the name of that extruder here. For example,
-#   should extruder3 and extruder4 share a heater then the extruder3
-#   config section should define the heater and the extruder4 section
-#   should specify "shared_heater: extruder3". The default is to not
-#   reuse an existing heater.
+#   This option is deprecated and should no longer be specified.
 ```
 
 ### [dual_carriage]
@@ -1816,14 +1826,14 @@ Support for additional steppers synchronized to the movement of an
 extruder (one may define any number of sections with an
 "extruder_stepper" prefix).
 
-See the [command reference](G-Codes.md#extruder-stepper-commands) for
-more information.
+See the [command reference](G-Codes.md#extruder) for more information.
 
 ```
 [extruder_stepper my_extra_stepper]
-#extruder: extruder
-#   The extruder this stepper is synchronized to. The default is
-#   "extruder".
+extruder:
+#   The extruder this stepper is synchronized to. If this is set to an
+#   empty string then the stepper will not be synchronized to an
+#   extruder. This parameter must be provided.
 #step_pin:
 #dir_pin:
 #enable_pin:
@@ -1839,9 +1849,9 @@ Manual steppers (one may define any number of sections with a
 "manual_stepper" prefix). These are steppers that are controlled by
 the MANUAL_STEPPER g-code command. For example: "MANUAL_STEPPER
 STEPPER=my_stepper MOVE=10 SPEED=5". See
-[G-Codes](G-Codes.md#manual-stepper-commands) file for a description
-of the MANUAL_STEPPER command. The steppers are not connected to the
-normal printer kinematics.
+[G-Codes](G-Codes.md#manual_stepper) file for a description of the
+MANUAL_STEPPER command. The steppers are not connected to the normal
+printer kinematics.
 
 ```
 [manual_stepper my_stepper]
@@ -1996,8 +2006,8 @@ section.
 Generic heaters (one may define any number of sections with a
 "heater_generic" prefix). These heaters behave similarly to standard
 heaters (extruders, heated beds). Use the SET_HEATER_TEMPERATURE
-command (see [G-Codes](G-Codes.md) for details) to set the target
-temperature.
+command (see [G-Codes](G-Codes.md#heaters) for details) to set the
+target temperature.
 
 ```
 [heater_generic my_generic_heater]
@@ -2053,9 +2063,9 @@ sections that use one of these sensors.
 ```
 sensor_type:
 #   One of "EPCOS 100K B57560G104F", "ATC Semitec 104GT-2",
-#   "NTC 100K beta 3950", "Honeywell 100K 135-104LAG-J01",
-#   "NTC 100K MGB18-104F39050L32", "SliceEngineering 450", or
-#   "TDK NTCG104LH104JT1"
+#   "ATC Semitec 104NT-4-R025H42G", "Generic 3950",
+#   "Honeywell 100K 135-104LAG-J01", "NTC 100K MGB18-104F39050L32",
+#   "SliceEngineering 450", or "TDK NTCG104LH104JT1"
 sensor_pin:
 #   Analog input pin connected to the thermistor. This parameter must
 #   be provided.
@@ -2140,7 +2150,7 @@ sensor_pin:
 ### BMP280/BME280/BME680 temperature sensor
 
 BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
-Note that thoose sensors aee not intended for use with extruders and
+Note that these sensors are not intended for use with extruders and
 heater beds, but rather for monitoring ambient temperature (C),
 pressure (hPa), relative humidity and in case of the BME680 gas level.
 See [sample-macros.cfg](../config/sample-macros.cfg) for a gcode_macro
@@ -2197,11 +2207,11 @@ sensor_type:
 ### LM75 temperature sensor
 
 LM75/LM75A two wire (I2C) connected temperature sensors. These sensors
-have range up to 125 C, so are usable for e.g. chamber temperature
+have a range of -55~125 C, so are usable for e.g. chamber temperature
 monitoring. They can also function as simple fan/heater controllers.
 
 ```
-sensor_type: lm75
+sensor_type: LM75
 #i2c_address:
 #   Default is 72 (0x48). Normal range is 72-79 (0x48-0x4F) and the 3
 #   low bits of the address are configured via pins on the chip
@@ -2431,8 +2441,8 @@ fan that will be enabled whenever its associated sensor is above a set
 temperature. By default, a temperature_fan has a shutdown_speed equal
 to max_power.
 
-See the [command reference](G-Codes.md#temperature-fan-commands) for
-additional information.
+See the [command reference](G-Codes.md#temperature_fan) for additional
+information.
 
 ```
 [temperature_fan my_temp_fan]
@@ -2478,8 +2488,7 @@ additional information.
 
 Manually controlled fan (one may define any number of sections with a
 "fan_generic" prefix). The speed of a manually controlled fan is set
-with the SET_FAN_SPEED
-[gcode command](G-Codes.md#manually-controlled-fans-commands).
+with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 
 ```
 [fan_generic extruder_partfan]
@@ -2502,7 +2511,7 @@ with the SET_FAN_SPEED
 
 Servos (one may define any number of sections with a "servo"
 prefix). The servos may be controlled using the SET_SERVO
-[g-code command](G-Codes.md#servo-commands). For example: SET_SERVO
+[g-code command](G-Codes.md#servo). For example: SET_SERVO
 SERVO=my_servo ANGLE=180
 
 ```
@@ -2534,7 +2543,7 @@ pin:
 Neopixel (aka WS2812) LED support (one may define any number of
 sections with a "neopixel" prefix). One may set the LED color via
 "SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
+[g-code commands](G-Codes.md#neopixel).
 
 ```
 [neopixel my_neopixel]
@@ -2547,7 +2556,7 @@ pin:
 #   Neopixel is connected to the pin).
 #color_order: GRB
 #   Set the pixel order required by the LED hardware. Options are GRB,
-#   RGB, GRBW, or RGBW. The default is GRB.
+#   RGB, BRG, BGR, GRBW, or RGBW. The default is GRB.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
@@ -2562,7 +2571,7 @@ pin:
 Dotstar (aka APA102) LED support (one may define any number of
 sections with a "dotstar" prefix). One may set the LED color via
 "SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1" type extended
-[g-code commands](G-Codes.md#neopixel-and-dotstar-commands).
+[g-code commands](G-Codes.md#neopixel).
 
 ```
 [dotstar my_dotstar]
@@ -2657,7 +2666,7 @@ Run-time configurable output pins (one may define any number of
 sections with an "output_pin" prefix). Pins configured here will be
 setup as output pins and one may modify them at run-time using
 "SET_PIN PIN=my_pin VALUE=.1" type extended
-[g-code commands](G-Codes.md#custom-pin-commands).
+[g-code commands](G-Codes.md#output_pin).
 
 ```
 [output_pin my_pin]
@@ -2744,7 +2753,7 @@ pins:
 
 Configuration of Trinamic stepper motor drivers in UART/SPI mode.
 Additional information is in the [TMC Drivers guide](TMC_Drivers.md)
-and in the [command reference](G-Codes.md#tmc-stepper-drivers).
+and in the [command reference](G-Codes.md#tmcxxxx).
 
 ### [tmc2130]
 
@@ -2774,14 +2783,17 @@ cs_pin:
 #   The default is to not use an SPI daisy chain.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
-#   step at a rate of 256 micro-steps). The default is True.
+#   step at a rate of 256 micro-steps). This interpolation does
+#   introduce a small systemic positional deviation - see
+#   TMC_Drivers.md for details. The default is True.
 run_current:
 #   The amount of current (in amps RMS) to configure the driver to use
 #   during stepper movement. This parameter must be provided.
 #hold_current:
 #   The amount of current (in amps RMS) to configure the driver to use
-#   when the stepper is not moving. The default is to use the same
-#   value as run_current.
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -2840,14 +2852,17 @@ uart_pin:
 #   UART communication. The default is to not configure any pins.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
-#   step at a rate of 256 micro-steps). The default is True.
+#   step at a rate of 256 micro-steps). This interpolation does
+#   introduce a small systemic positional deviation - see
+#   TMC_Drivers.md for details. The default is True.
 run_current:
 #   The amount of current (in amps RMS) to configure the driver to use
 #   during stepper movement. This parameter must be provided.
 #hold_current:
 #   The amount of current (in amps RMS) to configure the driver to use
-#   when the stepper is not moving. The default is to use the same
-#   value as run_current.
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -2951,7 +2966,9 @@ cs_pin:
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). This only works if microsteps
-#   is set to 16. The default is True.
+#   is set to 16. Interpolation does introduce a small systemic
+#   positional deviation - see TMC_Drivers.md for details. The default
+#   is True.
 run_current:
 #   The amount of current (in amps RMS) used by the driver during
 #   stepper movement. This parameter must be provided.
@@ -3029,8 +3046,9 @@ run_current:
 #   during stepper movement. This parameter must be provided.
 #hold_current:
 #   The amount of current (in amps RMS) to configure the driver to use
-#   when the stepper is not moving. The default is to use the same
-#   value as run_current.
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.075
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.075 ohms.
@@ -3038,8 +3056,7 @@ run_current:
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
-#   "stealthChop" mode. Try to reexperience this with tmc5160.
-#   Values can be much higher than other tmcs.
+#   "stealthChop" mode.
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2
@@ -3313,7 +3330,7 @@ lcd_type:
 #   button.
 ```
 
-### hd44780 display
+#### hd44780 display
 
 Information on configuring hd44780 displays (which is used in
 "RepRapDiscount 2004 Smart Controller" type displays).
@@ -3341,7 +3358,7 @@ d7_pin:
 ...
 ```
 
-### hd44780_spi display
+#### hd44780_spi display
 
 Information on configuring an hd44780_spi display - a 20x04 display
 controlled via a hardware "shift register" (which is used in
@@ -3371,7 +3388,7 @@ spi_software_miso_pin:
 ...
 ```
 
-### st7920 display
+#### st7920 display
 
 Information on configuring st7920 displays (which is used in
 "RepRapDiscount 12864 Full Graphic Smart Controller" type displays).
@@ -3388,7 +3405,7 @@ sid_pin:
 ...
 ```
 
-### emulated_st7920 display
+#### emulated_st7920 display
 
 Information on configuring an emulated st7920 display - found in some
 "2.4 inch touchscreen devices" and similar.
@@ -3411,7 +3428,7 @@ spi_software_miso_pin:
 ...
 ```
 
-### uc1701 display
+#### uc1701 display
 
 Information on configuring uc1701 displays (which is used in "MKS Mini
 12864" type displays).
@@ -3434,7 +3451,7 @@ a0_pin:
 ...
 ```
 
-### ssd1306 and sh1106 displays
+#### ssd1306 and sh1106 displays
 
 Information on configuring ssd1306 and sh1106 displays.
 
@@ -3479,7 +3496,7 @@ lcd_type:
 ...
 ```
 
-## [display_data]
+### [display_data]
 
 Support for displaying custom data on an lcd screen. One may create
 any number of display groups and any number of data items under those
@@ -3505,7 +3522,7 @@ text:
 #   parameter must be provided.
 ```
 
-## [display_template]
+### [display_template]
 
 Display data text "macros" (one may define any number of sections with
 a display_template prefix). This feature allows one to reduce
@@ -3532,7 +3549,7 @@ display_data section.
 #   docs/Command_Templates.md). This parameter must be provided.
 ```
 
-## [display_glyph]
+### [display_glyph]
 
 Display a custom glyph on displays that support it. The given name
 will be assigned the given display data which can then be referenced
@@ -3562,7 +3579,7 @@ examples.
 #   required if hd44780_data is specified.
 ```
 
-## [display my_extra_display]
+### [display my_extra_display]
 
 If a primary [display] section has been defined in printer.cfg as
 shown above it is possible to define multiple auxiliary displays. Note
@@ -3574,7 +3591,7 @@ thus they do not support the "menu" options or button configuration.
 # See the "display" section for available parameters.
 ```
 
-## [menu]
+### [menu]
 
 Customizable lcd display menus.
 
@@ -3661,8 +3678,8 @@ information on menu attributes available during template rendering.
 Filament Switch Sensor. Support for filament insert and runout
 detection using a switch sensor, such as an endstop switch.
 
-See the [command reference](G-Codes.md#filament-sensor) for more
-information.
+See the [command reference](G-Codes.md#filament_switch_sensor) for
+more information.
 
 ```
 [filament_switch_sensor my_sensor]
@@ -3701,8 +3718,8 @@ Filament Motion Sensor. Support for filament insert and runout
 detection using an encoder that toggles the output pin during filament
 movement through the sensor.
 
-See the [command reference](G-Codes.md#filament-sensor) for more
-information.
+See the [command reference](G-Codes.md#filament_switch_sensor) for
+more information.
 
 ```
 [filament_motion_sensor my_sensor]
@@ -3741,7 +3758,7 @@ TSLl401CL Based Filament Width Sensor. See the
 ### [hall_filament_width_sensor]
 
 Hall filament width sensor (see
-[Hall Filament Width Sensor](HallFilamentWidthSensor.md)).
+[Hall Filament Width Sensor](Hall_Filament_Width_Sensor.md)).
 
 ```
 [hall_filament_width_sensor]
@@ -3884,13 +3901,13 @@ vssa_pin:
 
 ### [replicape]
 
-Replicape support - see the [beaglebone guide](beaglebone.md) and the
+Replicape support - see the [beaglebone guide](Beaglebone.md) and the
 [generic-replicape.cfg](../config/generic-replicape.cfg) file for an
 example.
 
 ```
 # The "replicape" config section adds "replicape:stepper_x_enable"
-# virtual stepper enable pins (for steppers x, y, z, e, and h) and
+# virtual stepper enable pins (for steppers X, Y, Z, E, and H) and
 # "replicape:power_x" PWM output pins (for hotbed, e, h, fan0, fan1,
 # fan2, and fan3) that may then be used elsewhere in the config file.
 [replicape]

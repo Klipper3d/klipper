@@ -264,8 +264,8 @@ stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 
 Note that if one is using a Raspberry Pi for the 3.3V serial, the
 stm32flash protocol uses a serial parity mode which the Raspberry Pi's
-"miniuart" does not support. See
-[https://www.raspberrypi.org/documentation/configuration/uart.md](https://www.raspberrypi.org/documentation/configuration/uart.md)
+"mini UART" does not support. See
+[https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts](https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts)
 for details on enabling the full uart on the Raspberry Pi GPIO pins.
 
 After flashing, set both "boot 0" and "boot 1" back to low so that
@@ -301,7 +301,7 @@ while it is running). Alternatively, set the "boot 0" pin to low and
 The [HID bootloader](https://github.com/Serasidis/STM32_HID_Bootloader) is a
 compact, driverless bootloader capable of flashing over USB. Also available
 is a [fork with builds specific to the SKR Mini E3 1.2](
-  https://github.com/Arksine/STM32_HID_Bootloader/releases/tag/v0.5-beta).
+  https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
 
 For generic STM32F103 boards such as the blue pill it is possible to flash
 the bootloader via 3.3v serial using stm32flash as noted in the stm32duino
@@ -395,7 +395,7 @@ bootloader.  The HID bootloader is available for STM32F405/407
 based boards should the user prefer flashing over USB over using the sdcard.
 Note that you may need to configure and build a version specific to your
 board, a [build for the SKR Pro 1.1 is available here](
-  https://github.com/Arksine/STM32_HID_Bootloader/releases/tag/v0.5-beta).
+  https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
 
 Unless your board is DFU capable the most accessable flashing method
 is likely via 3.3v serial, which follows the same procedure as

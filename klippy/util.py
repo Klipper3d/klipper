@@ -146,7 +146,7 @@ def get_git_version(from_file=True):
         ver, err = process.communicate()
         retcode = process.wait()
         if retcode == 0:
-            return ver.strip().decode()
+            return str(ver.strip().decode())
         else:
             logging.debug("Error getting git version: %s", err)
     except:

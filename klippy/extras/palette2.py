@@ -174,7 +174,7 @@ class Palette2:
 
     cmd_Disconnect_Help = ("Disconnect from the Palette 2")
 
-    def cmd_Disconnect(self, gmcd=None):
+    def cmd_Disconnect(self, gcmd=None):
         self.gcode.respond_info("Disconnecting from Palette 2")
         if self.serial:
             self.serial.close()
@@ -305,7 +305,7 @@ class Palette2:
             param_drive = gcmd.get_commandline()[5:6]
             param_distance = gcmd.get_commandline()[8:]
         except IndexError:
-            gmcd.respond_info(
+            gcmd.respond_info(
                 "Incorrect number of arguments for splice command")
         try:
             self.omega_splices.append((int(param_drive), param_distance))
@@ -544,7 +544,7 @@ class Palette2:
                 self.cmd_Disconnect()
                 return self.reactor.NEVER
             if len(raw_bytes):
-                text_buffer = self.read_buffer + raw_bytes.decode()
+                text_buffer = self.read_buffer + str(raw_bytes.decode())
                 while True:
                     i = text_buffer.find("\n")
                     if i >= 0:

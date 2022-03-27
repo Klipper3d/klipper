@@ -16,7 +16,7 @@ class error(Exception):
 # Log data handlers: {name: class, ...}
 LogHandlers = {}
 
-# Extract requested position, velocity, and accel from a trapq log
+# Extract status fields from log
 class HandleStatusField:
     SubscriptionIdParts = 0
     ParametersMin = ParametersMax = 1

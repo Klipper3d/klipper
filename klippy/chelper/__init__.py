@@ -38,8 +38,9 @@ defs_stepcompress = """
 
     struct stepcompress *stepcompress_alloc(uint32_t oid);
     void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-        , uint32_t invert_sdir, int32_t queue_step_msgtag
-        , int32_t set_next_step_dir_msgtag);
+        , int32_t queue_step_msgtag, int32_t set_next_step_dir_msgtag);
+    void stepcompress_set_invert_sdir(struct stepcompress *sc
+        , uint32_t invert_sdir);
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
     int stepcompress_set_last_position(struct stepcompress *sc
@@ -133,26 +134,15 @@ defs_kin_winch = """
 
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
-    void extruder_set_smooth_time(struct stepper_kinematics *sk
-        , double smooth_time);
+    void extruder_set_pressure_advance(struct stepper_kinematics *sk
+        , double pressure_advance, double smooth_time);
 """
 
 defs_kin_shaper = """
-    enum INPUT_SHAPER_TYPE {
-        INPUT_SHAPER_ZV = 0,
-        INPUT_SHAPER_ZVD = 1,
-        INPUT_SHAPER_MZV = 2,
-        INPUT_SHAPER_EI = 3,
-        INPUT_SHAPER_2HUMP_EI = 4,
-        INPUT_SHAPER_3HUMP_EI = 5,
-    };
-
-    double input_shaper_get_step_generation_window(int shaper_type
-        , double shaper_freq, double damping_ratio);
-    int input_shaper_set_shaper_params(struct stepper_kinematics *sk
-        , int shaper_type_x, int shaper_type_y
-        , double shaper_freq_x, double shaper_freq_y
-        , double damping_ratio_x, double damping_ratio_y);
+    double input_shaper_get_step_generation_window(int n, double a[]
+        , double t[]);
+    int input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
+        , int n, double a[], double t[]);
     int input_shaper_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * input_shaper_alloc(void);

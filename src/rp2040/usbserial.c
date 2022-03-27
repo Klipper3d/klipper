@@ -40,7 +40,9 @@ usb_write_packet(uint32_t ep, const void *data, uint_fast8_t len)
     usb_dpram->ep_buf_ctrl[ep].in = new_epb;
     // Copy the packet to the hw buffer
     void *addr = (void*)usb_dpram + usb_buf_offset(ep);
+    barrier();
     memcpy(addr, data, len);
+    barrier();
     // Inform the USB hardware of the available packet
     usb_dpram->ep_buf_ctrl[ep].in = new_epb | USB_BUF_CTRL_AVAIL;
     return len;
@@ -61,7 +63,9 @@ usb_read_packet(uint32_t ep, void *data, uint_fast8_t max_len)
     if (c > max_len)
         c = max_len;
     void *addr = (void*)usb_dpram + usb_buf_offset(ep);
+    barrier();
     memcpy(data, addr, c);
+    barrier();
     // Notify the USB hardware that the space is now available
     usb_dpram->ep_buf_ctrl[ep].out = new_epb | USB_BUF_CTRL_AVAIL;
     return c;
@@ -95,7 +99,9 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
     usb_dpram->ep_buf_ctrl[0].out = (USB_BUF_CTRL_DATA1_PID | USB_BUF_CTRL_LAST
                                      | USB_BUF_CTRL_AVAIL | DPBUF_SIZE);
     usb_hw->sie_status = USB_SIE_STATUS_SETUP_REC_BITS;
+    barrier();
     memcpy(data, (void*)usb_dpram->setup_packet, max_len);
+    barrier();
     if (usb_hw->intr & USB_INTR_SETUP_REQ_BITS) {
         // Raced with next setup packet
         usb_notify_ep0();

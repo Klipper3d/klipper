@@ -221,7 +221,8 @@ class BedMesh:
             "mesh_min": (0., 0.),
             "mesh_max": (0., 0.),
             "probed_matrix": [[]],
-            "mesh_matrix": [[]]
+            "mesh_matrix": [[]],
+            "profiles": self.pmgr.get_profiles()
         }
         if self.z_mesh is not None:
             params = self.z_mesh.get_mesh_params()
@@ -316,7 +317,7 @@ class BedMeshCalibrate:
         if self.radius is not None:
             # round bed, min/max needs to be recalculated
             y_dist = x_dist
-            new_r = (x_cnt / 2) * x_dist
+            new_r = (x_cnt // 2) * x_dist
             min_x = min_y = -new_r
             max_x = max_y = new_r
         else:
@@ -1134,6 +1135,8 @@ class ProfileManager:
         self._check_incompatible_profiles()
         if "default" in self.profiles:
             self.load_profile("default")
+    def get_profiles(self):
+        return self.profiles
     def get_current_profile(self):
         return self.current_profile
     def _check_incompatible_profiles(self):
@@ -1170,9 +1173,12 @@ class ProfileManager:
         for key, value in mesh_params.items():
             configfile.set(cfg_name, key, value)
         # save copy in local storage
-        self.profiles[prof_name] = profile = {}
+        # ensure any self.profiles returned as status remains immutable
+        profiles = dict(self.profiles)
+        profiles[prof_name] = profile = {}
         profile['points'] = probed_matrix
         profile['mesh_params'] = collections.OrderedDict(mesh_params)
+        self.profiles = profiles
         self.current_profile = prof_name
         self.gcode.respond_info(
             "Bed Mesh state has been saved to profile [%s]\n"
@@ -1197,7 +1203,9 @@ class ProfileManager:
         if prof_name in self.profiles:
             configfile = self.printer.lookup_object('configfile')
             configfile.remove_section('bed_mesh ' + prof_name)
-            del self.profiles[prof_name]
+            profiles = dict(self.profiles)
+            del profiles[prof_name]
+            self.profiles = profiles
             self.gcode.respond_info(
                 "Profile [%s] removed from storage for this session.\n"
                 "The SAVE_CONFIG command will update the printer\n"
