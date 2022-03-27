@@ -211,11 +211,11 @@ convenient, for example, for the input shaper
 
 ### i3 style printers
 
-If your printer is an i3 style printer(usually with a fast moving print bed on y-axis),
-you will need to change the location of the accelerometer between the measurements
-for X and Y axes: measure the resonances of X axis with the accelerometer
-attached to the toolhead and the resonances of Y axis - to the bed (the usual
-i3 style setup).
+If your printer is an i3 style printer (a bed-slinger) with a print bed moving on
+y-axis, you will need to change the location of the accelerometer between the
+measurements for X and Y axes: measure the resonances of X axis with the
+accelerometer attached to the toolhead and the resonances of Y axis - to the bed
+(the usual i3 style setup).
 
 However, you can also connect two accelerometers simultaneously, though they
 must be connected to different boards (say, to an RPi and printer MCU board), or
