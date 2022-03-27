@@ -6,13 +6,16 @@
 
 MKDOCS_DIR="docs/_klipper3d/"
 
-#fetch translations
+# fetch translations
 git clone --depth 1 https://github.com/Klipper3d/klipper-translations
 
-#Move English Markdown Files
+# move English Markdown Files
 mkdir docs/en
-mv docs/*.md docs/en/
+cp docs/*.md docs/en/
+cp -r docs/img docs/en/img
+cp -r docs/prints docs/en/prints
 
+# Move translation markdown files
 while IFS="," read dirname langsite langdesc langsearch; do
   new_local_dir="docs/${langsite}"
   local_dir="klipper-translations/docs/locales/$dirname"
@@ -39,6 +42,7 @@ while IFS="," read dirname langsite langdesc langsearch; do
 done <  <(egrep -v '^ *(#|$)' ./klipper-translations/active_translations)
 
 # Build English
+echo "building site for en"
 mkdocs build -f "docs/_klipper3d/mkdocs.yml"
 
 while IFS="," read dirname langsite langdesc langsearch; do
@@ -55,6 +59,6 @@ while IFS="," read dirname langsite langdesc langsearch; do
   sed -i "s/.*#\\*# Markdown File Directory/docs_dir: \'..\/$langsite\'/" "${MKDOCS_DIR}${langsite}.yml"
   sed -i "s/.*#\\*# Site Directory/site_dir: '..\\/..\\/site\\/$langsite'/" "${MKDOCS_DIR}${langsite}.yml"
 
-  echo "build site for ${langsite}"
+  echo "building site for ${langsite}"
   mkdocs build -f "docs/_klipper3d/${langsite}.yml"
 done <  <(egrep -v '^ *(#|$)' ./klipper-translations/active_translations)
