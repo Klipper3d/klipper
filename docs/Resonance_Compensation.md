@@ -182,7 +182,7 @@ shaper_type: mzv
 
 A few notes on shaper selection:
 
-* EI shaper may be more suited for bed slinger printers (if the resonance
+* EI shaper may be more suited for i3 style printers (if the resonance
  frequency and resulting smoothing allows): as more filament is deposited
  on the moving bed, the mass of the bed increases and the resonance frequency
  will decrease. Since EI shaper is more robust to resonance frequency

@@ -1533,7 +1533,7 @@ section of the measuring resonances guide for more information on
 #accel_chip_x:
 #accel_chip_y:
 #   Names of the accelerometer chips to use for measurements for each
-#   of the axis. Can be useful, for instance, on bed slinger printer,
+#   of the axis. Can be useful, for instance, on i3 style printer,
 #   if two separate accelerometers are mounted on the bed (for Y axis)
 #   and on the toolhead (for X axis). These parameters have the same
 #   format as 'accel_chip' parameter. Only 'accel_chip' or these two

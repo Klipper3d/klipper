@@ -51,9 +51,9 @@ An example of mounting ADXL345 on the SmartEffector:
 
 ![ADXL345 on SmartEffector](img/adxl345-mount.jpg)
 
-Note that on a bed slinger printer one must design 2 mounts: one for the
+Note that on an i3 style printer one must design 2 mounts: one for the
 toolhead and one for the bed, and run the measurements twice. See the
-corresponding [section](#bed-slinger-printers) for more details.
+corresponding [section](#i3-style-printers) for more details.
 
 **Attention:** make sure the accelerometer and any screws that hold it in
 place do not touch any metal parts of the printer. Basically, the mount must
@@ -111,11 +111,11 @@ Restart Klipper via the `RESTART` command.
 
 Now you can test a connection.
 
-- For "non bed-slingers" (e.g. one accelerometer), in Octoprint,
-  enter `ACCELEROMETER_QUERY`
-- For "bed-slingers" (e.g. more than one accelerometer), enter
+- For most printers (with one accelerometer), in Octoprint, enter
+  `ACCELEROMETER_QUERY`.
+- For i3 style printers (or need more than one accelerometer), enter
   `ACCELEROMETER_QUERY CHIP=<chip>` where `<chip>` is the name of the chip
-  as-entered, e.g. `CHIP=bed` (see: [bed-slinger](#bed-slinger-printers))
+  as-entered, e.g. `CHIP=bed` (see: [i3 style](#i3-style-printers))
   for all installed accelerometer chips.
 
 You should see the current measurements from the accelerometer, including the
@@ -209,12 +209,13 @@ from Klipper [directly](#input-shaper-auto-calibration), which can be
 convenient, for example, for the input shaper
 [re-calibration](#input-shaper-re-calibration).
 
-### Bed-slinger printers
+### i3 style printers
 
-If your printer is a bed slinger printer, you will need to change the location
-of the accelerometer between the measurements for X and Y axes: measure the
-resonances of X axis with the accelerometer attached to the toolhead and the
-resonances of Y axis - to the bed (the usual bed slinger setup).
+If your printer is an i3 style printer(usually with a fast moving print bed on y-axis),
+you will need to change the location of the accelerometer between the measurements
+for X and Y axes: measure the resonances of X axis with the accelerometer
+attached to the toolhead and the resonances of Y axis - to the bed (the usual
+i3 style setup).
 
 However, you can also connect two accelerometers simultaneously, though they
 must be connected to different boards (say, to an RPi and printer MCU board), or
@@ -230,7 +231,7 @@ cs_pin: rpi:None
 cs_pin: ...  # Printer board SPI chip select (CS) pin
 
 [resonance_tester]
-# Assuming the typical setup of the bed slinger printer
+# Assuming the typical setup of the i3 style printer
 accel_chip_x: adxl345 hotend
 accel_chip_y: adxl345 bed
 probe_points: ...
@@ -420,7 +421,7 @@ following the considerations in [Selecting max_accel](#selecting-max_accel)
 section.
 
 
-If your printer is a bed slinger printer, you can specify which axis
+If your printer is an i3 style printer, you can specify which axis
 to test, so that you can change the accelerometer mounting point between
 the tests (by default the test is performed for both axes):
 ```
@@ -517,15 +518,15 @@ Providing several inputs to shaper_calibrate.py script can be useful if running
 some advanced tuning of the input shapers, for example:
 
 * Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
-  axis twice on a bed slinger printer with the accelerometer attached to the
+  axis twice on an i3 style printer with the accelerometer attached to the
   toolhead the first time, and the accelerometer attached to the bed the
   second time in order to detect axes cross-resonances and attempt to cancel
   them with input shapers.
-* Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
-  a glass bed and a magnetic surfaces (which is lighter) to find the input
+* Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on an i3 style printer
+  with a glass bed and a magnetic surfaces (which is lighter) to find the input
   shaper parameters that work well for any print surface configuration.
 * Combining the resonance data from multiple test points.
-* Combining the resonance data from 2 axis (e.g. on a bed slinger printer
+* Combining the resonance data from 2 axis (e.g. on an i3 style printer
   to configure X-axis input_shaper from both X and Y axes resonances to
   cancel vibrations of the *bed* in case the nozzle 'catches' a print when
   moving in X axis direction).
