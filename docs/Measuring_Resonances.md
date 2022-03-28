@@ -67,9 +67,9 @@ Note that resonance measurements and shaper auto-calibration require additional
 software dependencies not installed by default. First, you will have to run on
 your Raspberry Pi the following command:
 ```
-~/klippy-env/bin/pip install -v numpy
+~/klippy-env/bin/pip install -v numpy matplotlib
 ```
-to install `numpy` package. Note that, depending on the performance of the
+to install `numpy` and 'matplotlib' packages. Note that, depending on the performance of the
 CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
 for the completion of the installation. On some occasions, if the board has
 too little RAM, the installation may fail and you will need to enable swap.
