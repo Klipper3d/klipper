@@ -112,7 +112,7 @@ init_afec(Afec* afec) {
     afec->AFE_EMR = AFE_EMR_TAG | \
                      AFE_EMR_RES_NO_AVERAGE | \
                      AFE_EMR_STM;
-    afec->AFE_ACR = CFG_AFE_MR;
+    afec->AFE_ACR = CFG_AFE_ACR;
 
     // Disable interrupts
     afec->AFE_IDR = CFG_AFE_IDR;
