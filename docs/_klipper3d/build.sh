@@ -38,7 +38,10 @@ while IFS="," read dirname langsite langdesc langsearch; do
   fi
 
   # Insert entries to extra.yml for language switching
-  sed -i "s/.*#*# Alternate Entries For Translations/#*# Alternate Entries For Translations\n    - name: ${langdesc}\n      link: \/${langsite}\/\\n      lang: ${langsite}\\n/" "${MKDOCS_DIR}mkdocs.yml"
+  sed -i "s/.*#-# Alternate Entries For Translations/\
+#-# Alternate Entries For Translations\n    - name: ${langdesc}\n      \
+link: \/${langsite}\/\\n      lang: ${langsite}\\n/" "${MKDOCS_DIR}mkdocs.yml"
+
 done <  <(egrep -v '^ *(#|$)' ./klipper-translations/active_translations)
 
 # Build English
@@ -50,14 +53,14 @@ while IFS="," read dirname langsite langdesc langsearch; do
   cp "${MKDOCS_DIR}mkdocs.yml" "${MKDOCS_DIR}${langsite}.yml"
 
   echo "replace search language"
-  sed -i "s/.*#\\*# Search Language/      lang: $langsearch/" "${MKDOCS_DIR}${langsite}.yml"
+  sed -i "s/.*#-# Search Language/      lang: $langsearch/" "${MKDOCS_DIR}${langsite}.yml"
 
   echo "replace site language"
-  sed -i "s/.*#\\*# Site Language/  language: $langsite/" "${MKDOCS_DIR}${langsite}.yml"
+  sed -i "s/.*#-# Site Language/  language: $langsite/" "${MKDOCS_DIR}${langsite}.yml"
 
   echo "set directories"
-  sed -i "s/.*#\\*# Markdown File Directory/docs_dir: \'..\/$langsite\'/" "${MKDOCS_DIR}${langsite}.yml"
-  sed -i "s/.*#\\*# Site Directory/site_dir: '..\\/..\\/site\\/$langsite'/" "${MKDOCS_DIR}${langsite}.yml"
+  sed -i "s/.*#-# Markdown File Directory/docs_dir: \'..\/$langsite\'/" "${MKDOCS_DIR}${langsite}.yml"
+  sed -i "s/.*#-# Site Directory/site_dir: '..\\/..\\/site\\/$langsite'/" "${MKDOCS_DIR}${langsite}.yml"
 
   echo "building site for ${langsite}"
   mkdocs build -f "docs/_klipper3d/${langsite}.yml"

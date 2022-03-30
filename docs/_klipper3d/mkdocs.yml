@@ -1,5 +1,5 @@
 # mkDocs configuration file for building Klipper documentation.
-# WARNING: DO NOT MODIFY LINES WITH #*# OR CHANGE THEIR LOCATION
+# WARNING: DO NOT MODIFY LINES WITH #-# OR CHANGE THEIR LOCATION
 # WITHOUT READING build.sh.
 #
 # Run mkdocs serve --config-file docs/_klipper3d/mkdocs.yml to
@@ -11,11 +11,11 @@
 repo_url: https://github.com/Klipper3d/klipper
 repo_name: Klipper3d/klipper
 edit_uri: blob/master/docs/
-site_name: Klipper documentation #*# Site name
+site_name: Klipper documentation #-# Site name
 use_directory_urls: False
 
-docs_dir: '../en' #*# Markdown File Directory
-site_dir: '../../site' #*# Site Directory
+docs_dir: '../en' #-# Markdown File Directory
+site_dir: '../../site' #-# Site Directory
 
 markdown_extensions:
   - toc:
@@ -58,7 +58,7 @@ theme:
       - search.suggest
       - search.highlight
       - search.share
-  language: en #*# Site Language
+  language: en #-# Site Language
 extra_css:
   - _klipper3d/css/extra.css
 plugins:
@@ -68,7 +68,7 @@ plugins:
   exclude:
     glob: "README.md"
   search:
-      lang: en #*# Search Language
+      lang: en #-# Search Language
 extra:
   # Site usage statistics
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
@@ -80,7 +80,7 @@ extra:
     - name: English
       link: /
       lang: en
-#*# Alternate Entries For Translations
+#-# Alternate Entries For Translations
 
 # Navigation hierarchy (this should mimic the layout of Overview.md)
 nav:
