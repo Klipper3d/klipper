@@ -77,7 +77,7 @@ too little RAM, the installation may fail and you will need to enable swap.
 Next, run the following commands to install the additional dependencies:
 ```
 sudo apt update
-sudo apt install python-numpy python-matplotlib
+sudo apt install python3-numpy python3-matplotlib
 ```
 
 Afterwards, check and follow the instructions in the
@@ -98,7 +98,7 @@ cs_pin: rpi:None
 [resonance_tester]
 accel_chip: adxl345
 probe_points:
-    100,100,20  # an example
+    100, 100, 20  # an example
 ```
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
@@ -163,7 +163,7 @@ TEST_RESONANCES AXIS=Y
 ```
 This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
 `/tmp/resonances_y_*.csv`). These files can be processed with the stand-alone
-script on a Raspberry Pi. To do that, run running the following commands:
+script on a Raspberry Pi. To do that, run the following commands:
 ```
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
@@ -473,10 +473,11 @@ ignoring any errors for `SET_INPUT_SHAPER` command. For `TEST_RESONANCES`
 command, specify the desired test axis. The raw data will be written into
 `/tmp` directory on the RPi.
 
-The raw data can also be obtained by running the command `ACCELEROMETER_MEASURE`
-command twice during some normal printer activity - first to start the
-measurements, and then to stop them and write the output file. Refer to
-[G-Codes](G-Codes.md#adxl345-accelerometer-commands) for more details.
+The raw data can also be obtained by running the command
+`ACCELEROMETER_MEASURE` command twice during some normal printer
+activity - first to start the measurements, and then to stop them and
+write the output file. Refer to [G-Codes](G-Codes.md#adxl345) for more
+details.
 
 The data can be processed later by the following scripts:
 `scripts/graph_accelerometer.py` and `scripts/calibrate_shaper.py`. Both

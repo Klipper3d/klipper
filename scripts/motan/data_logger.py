@@ -157,6 +157,10 @@ class DataLogger:
                 aname = cfgname.split()[-1]
                 self.send_subscribe("adxl345:" + aname, "adxl345/dump_adxl345",
                                     {"sensor": aname})
+            if cfgname.startswith("angle "):
+                aname = cfgname.split()[1]
+                self.send_subscribe("angle:" + aname, "angle/dump_angle",
+                                    {"sensor": aname})
     def handle_dump(self, msg, raw_msg):
         msg_id = msg["id"]
         if "result" not in msg:

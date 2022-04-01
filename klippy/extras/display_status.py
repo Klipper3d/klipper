@@ -30,10 +30,12 @@ class DisplayStatus:
                 progress = sdcard.get_status(eventtime)['progress']
         return { 'progress': progress, 'message': self.message }
     def cmd_M73(self, gcmd):
-        progress = gcmd.get_float('P', 0.) / 100.
-        self.progress = min(1., max(0., progress))
-        curtime = self.printer.get_reactor().monotonic()
-        self.expire_progress = curtime + M73_TIMEOUT
+        progress = gcmd.get_float('P', None)
+        if progress is not None:
+            progress = progress / 100.
+            self.progress = min(1., max(0., progress))
+            curtime = self.printer.get_reactor().monotonic()
+            self.expire_progress = curtime + M73_TIMEOUT
     def cmd_M117(self, gcmd):
         msg = gcmd.get_raw_command_parameters() or None
         self.message = msg

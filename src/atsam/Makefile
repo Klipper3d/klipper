@@ -7,14 +7,17 @@ dirs-y += src/atsam src/generic
 dirs-$(CONFIG_MACH_SAM3X) += lib/sam3x/gcc
 dirs-$(CONFIG_MACH_SAM4S) += lib/sam4s/gcc
 dirs-$(CONFIG_MACH_SAM4E) += lib/sam4e/gcc
+dirs-$(CONFIG_MACH_SAME70) += lib/same70b/gcc
 
 MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
 
 CFLAGS-$(CONFIG_MACH_SAM3X) += -mcpu=cortex-m3 -falign-loops=16
 CFLAGS-$(CONFIG_MACH_SAM4) += -mcpu=cortex-m4
+CFLAGS-$(CONFIG_MACH_SAME70) += -mcpu=cortex-m7
 CFLAGS-$(CONFIG_MACH_SAM3X) += -Ilib/sam3x/include
 CFLAGS-$(CONFIG_MACH_SAM4S) += -Ilib/sam4s/include
 CFLAGS-$(CONFIG_MACH_SAM4E) += -Ilib/sam4e/include
+CFLAGS-$(CONFIG_MACH_SAME70) += -Ilib/same70b/include
 CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
@@ -22,19 +25,22 @@ CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
 $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 
 # Add source files
-src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c atsam/hard_pwm.c
+src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c
 src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_timer.c
 src-y += generic/crc16_ccitt.c
 usb-src-$(CONFIG_MACH_SAM3X) := atsam/sam3_usb.c
 usb-src-$(CONFIG_MACH_SAM4) := atsam/sam4_usb.c
+usb-src-$(CONFIG_MACH_SAME70) := atsam/sam3_usb.c
 src-$(CONFIG_USBSERIAL) += $(usb-src-y) atsam/chipid.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += atsam/serial.c generic/serial_irq.c
-src-$(CONFIG_MACH_SAM3X) += atsam/adc.c
+src-$(CONFIG_MACH_SAM3X) += atsam/adc.c atsam/hard_pwm.c
+src-$(CONFIG_MACH_SAM4)  += atsam/hard_pwm.c
 src-$(CONFIG_MACH_SAM4S) += atsam/adc.c
 src-$(CONFIG_MACH_SAM4E) += atsam/sam4e_afec.c atsam/sam4_cache.c
 src-$(CONFIG_MACH_SAM3X) += ../lib/sam3x/gcc/system_sam3xa.c
 src-$(CONFIG_MACH_SAM4S) += atsam/sam4s_sysinit.c
 src-$(CONFIG_MACH_SAM4E) += ../lib/sam4e/gcc/system_sam4e.c
+src-$(CONFIG_MACH_SAME70) += atsam/same70_sysinit.c atsam/sam4e_afec.c
 
 # Build the additional bin output file
 target-y += $(OUT)klipper.bin

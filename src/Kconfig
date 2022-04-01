@@ -14,7 +14,7 @@ choice
     config MACH_AVR
         bool "Atmega AVR"
     config MACH_ATSAM
-        bool "SAM3/SAM4 (Due and Duet)"
+        bool "SAM3/SAM4/SAM E70 (Due and Duet)"
     config MACH_ATSAMD
         bool "SAMD21/SAMD51"
     config MACH_LPC176X

@@ -162,6 +162,22 @@ def flash_atsamd(options, binfile):
             options.device, str(e)))
         sys.exit(-1)
 
+# Look for an rp2040 and flash it with rp2040_flash.
+def rp2040_flash(devpath, binfile, sudo):
+    args = ["lib/rp2040_flash/rp2040_flash", binfile]
+    if len(devpath) > 0:
+        with open(devpath + "/busnum") as f:
+            bus = f.read().strip()
+        with open(devpath + "/devnum") as f:
+            addr = f.read().strip()
+        args += [bus, addr]
+    sys.stderr.write(" ".join(args) + '\n\n')
+    if sudo:
+        args.insert(0, "sudo")
+    res = subprocess.call(args)
+    if res != 0:
+        raise error("Error running rp2040_flash")
+
 SMOOTHIE_HELP = """
 Failed to flash to %s: %s
 
@@ -240,11 +256,39 @@ def flash_stm32f4(options, binfile):
             options.device, str(e), options.device))
         sys.exit(-1)
 
+RP2040_HELP = """
+Failed to flash to %s: %s
+
+If the device is already in bootloader mode, use 'first' as FLASH_DEVICE.
+This will use rp2040_flash to flash the first available rp2040.
+
+Alternatively, one can flash rp2040 boards like the Pico by manually
+entering bootloader mode(hold bootsel button during powerup), mount the
+device as a usb drive, and copy klipper.uf2 to the device.
+"""
+
+def flash_rp2040(options, binfile):
+    try:
+        if options.device.lower() == "first":
+            rp2040_flash("", binfile, options.sudo)
+            return
+
+        buspath, devpath = translate_serial_to_usb_path(options.device)
+        # We need one level up to get access to busnum/devnum files
+        devpath = os.path.dirname(devpath)
+        enter_bootloader(options.device)
+        wait_path(devpath)
+        rp2040_flash(devpath, binfile, options.sudo)
+
+    except error as e:
+        sys.stderr.write(RP2040_HELP % (options.device, str(e)))
+        sys.exit(-1)
+
 MCUTYPES = {
     'sam3': flash_atsam3, 'sam4': flash_atsam4, 'samd': flash_atsamd,
-    'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
+    'same70': flash_atsam4, 'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
     'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
-    'stm32f072': flash_stm32f4
+    'stm32f072': flash_stm32f4, 'rp2040': flash_rp2040
 }
 
 
