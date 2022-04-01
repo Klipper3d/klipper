@@ -23,10 +23,12 @@ class PrinterProbe:
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
+        self.drop_first_result = config.getboolean('drop_first_result', False)
         self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
         self.last_state = False
         self.last_z_result = 0.
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -70,6 +72,9 @@ class PrinterProbe:
                                     desc=self.cmd_PROBE_CALIBRATE_help)
         self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
                                     desc=self.cmd_PROBE_ACCURACY_help)
+        self.gcode.register_command('Z_OFFSET_APPLY_PROBE',
+                                    self.cmd_Z_OFFSET_APPLY_PROBE,
+                                    desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
     def _handle_homing_move_begin(self, hmove):
         if self.mcu_probe in hmove.get_mcu_endstops():
             self.mcu_probe.probe_prepare(hmove)
@@ -157,9 +162,16 @@ class PrinterProbe:
         probexy = self.printer.lookup_object('toolhead').get_position()[:2]
         retries = 0
         positions = []
+
+        first_probe = True
         while len(positions) < sample_count:
             # Probe position
             pos = self._probe(speed)
+            if self.drop_first_result and first_probe:
+                first_probe = False
+                liftpos = [None, None, pos[2] + sample_retract_dist]
+                self._move(liftpos, lift_speed)
+                continue
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
@@ -174,6 +186,7 @@ class PrinterProbe:
                 self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
         if must_notify_multi_probe:
             self.multi_probe_end()
+
         # Calculate and return result
         if samples_result == 'median':
             return self._calc_median(positions)
@@ -262,6 +275,20 @@ class PrinterProbe:
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
+    def cmd_Z_OFFSET_APPLY_PROBE(self,gcmd):
+        offset = self.gcode_move.get_status()['homing_origin'].z
+        configfile = self.printer.lookup_object('configfile')
+        if offset == 0:
+            self.gcode.respond_info("Nothing to do: Z Offset is 0")
+        else:
+            new_calibrate = self.z_offset - offset
+            self.gcode.respond_info(
+                "%s: z_offset: %.3f\n"
+                "The SAVE_CONFIG command will update the printer config file\n"
+                "with the above and restart the printer."
+                % (self.name, new_calibrate))
+            configfile.set(self.name, 'z_offset', "%.3f" % (new_calibrate,))
+    cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
 
 # Endstop wrapper that enables probe specific features
 class ProbeEndstopWrapper:
@@ -280,8 +307,9 @@ class ProbeEndstopWrapper:
         pin = config.get('pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         mcu = pin_params['chip']
-        mcu.register_config_callback(self._build_config)
         self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        self.printer.register_event_handler('klippy:mcu_identify',
+                                            self._handle_mcu_identify)
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -291,7 +319,7 @@ class ProbeEndstopWrapper:
         self.query_endstop = self.mcu_endstop.query_endstop
         # multi probes state
         self.multi = 'OFF'
-    def _build_config(self):
+    def _handle_mcu_identify(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
             if stepper.is_active_axis('z'):
@@ -341,14 +369,8 @@ class ProbePointsHelper:
         self.gcode = self.printer.lookup_object('gcode')
         # Read config settings
         if default_points is None or config.get('points', None) is not None:
-            points = config.get('points').split('\n')
-            try:
-                points = [line.split(',', 1) for line in points if line.strip()]
-                self.probe_points = [(float(p[0].strip()), float(p[1].strip()))
-                                     for p in points]
-            except:
-                raise config.error("Unable to parse probe points in %s" % (
-                    self.name))
+            self.probe_points = config.getlists('points', seps=(',', '\n'),
+                                                parser=float, count=2)
         self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.speed = config.getfloat('speed', 50., above=0.)
         self.use_offsets = False

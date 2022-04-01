@@ -25,9 +25,9 @@ ReadRegisters = [
 Fields = {}
 
 Fields["GCONF"] = {
-    "I_scale_analog":      0x01,
-    "internal_Rsense":     0x01 << 1,
-    "en_spreadCycle":      0x01 << 2,
+    "i_scale_analog":      0x01,
+    "internal_rsense":     0x01 << 1,
+    "en_spreadcycle":      0x01 << 2,
     "shaft":               0x01 << 3,
     "index_otpw":          0x01 << 4,
     "index_step":          0x01 << 5,
@@ -42,91 +42,91 @@ Fields["GSTAT"] = {
     "uv_cp":               0x01 << 2
 }
 Fields["IFCNT"] = {
-    "IFCNT":               0xff
+    "ifcnt":               0xff
 }
 Fields["SLAVECONF"] = {
-    "SENDDELAY":           0x0f << 8
+    "senddelay":           0x0f << 8
 }
 Fields["OTP_PROG"] = {
-    "OTPBIT":              0x07,
-    "OTPBYTE":             0x03 << 4,
-    "OTPMAGIC":            0xff << 8
+    "otpbit":              0x07,
+    "otpbyte":             0x03 << 4,
+    "otpmagic":            0xff << 8
 }
 Fields["OTP_READ"] = {
-    "OTP_FCLKTRIM":        0x1f,
-    "otp_OTTRIM":          0x01 << 5,
-    "otp_internalRsense":  0x01 << 6,
-    "otp_TBL":             0x01 << 7,
-    "OTP_PWM_GRAD":        0x0f << 8,
+    "otp_fclktrim":        0x1f,
+    "otp_ottrim":          0x01 << 5,
+    "otp_internalrsense":  0x01 << 6,
+    "otp_tbl":             0x01 << 7,
+    "otp_pwm_grad":        0x0f << 8,
     "otp_pwm_autograd":    0x01 << 12,
-    "OTP_TPWMTHRS":        0x07 << 13,
-    "otp_PWM_OFS":         0x01 << 16,
-    "otp_PWM_REG":         0x01 << 17,
-    "otp_PWM_FREQ":        0x01 << 18,
-    "OTP_IHOLDDELAY":      0x03 << 19,
-    "OTP_IHOLD":           0x03 << 21,
-    "otp_en_spreadCycle":  0x01 << 23
+    "otp_tpwmthrs":        0x07 << 13,
+    "otp_pwm_ofs":         0x01 << 16,
+    "otp_pwm_reg":         0x01 << 17,
+    "otp_pwm_freq":        0x01 << 18,
+    "otp_iholddelay":      0x03 << 19,
+    "otp_ihold":           0x03 << 21,
+    "otp_en_spreadcycle":  0x01 << 23
 }
 # IOIN mapping depends on the driver type (SEL_A field)
 # TMC222x (SEL_A == 0)
 Fields["IOIN@TMC222x"] = {
-    "PDN_UART":            0x01 << 1,
-    "SPREAD":              0x01 << 2,
-    "DIR":                 0x01 << 3,
-    "ENN":                 0x01 << 4,
-    "STEP":                0x01 << 5,
-    "MS1":                 0x01 << 6,
-    "MS2":                 0x01 << 7,
-    "SEL_A":               0x01 << 8,
-    "VERSION":             0xff << 24
+    "pdn_uart":            0x01 << 1,
+    "spread":              0x01 << 2,
+    "dir":                 0x01 << 3,
+    "enn":                 0x01 << 4,
+    "step":                0x01 << 5,
+    "ms1":                 0x01 << 6,
+    "ms2":                 0x01 << 7,
+    "sel_a":               0x01 << 8,
+    "version":             0xff << 24
 }
 # TMC220x (SEL_A == 1)
 Fields["IOIN@TMC220x"] = {
-    "ENN":                 0x01,
-    "MS1":                 0x01 << 2,
-    "MS2":                 0x01 << 3,
-    "DIAG":                0x01 << 4,
-    "PDN_UART":            0x01 << 6,
-    "STEP":                0x01 << 7,
-    "SEL_A":               0x01 << 8,
-    "DIR":                 0x01 << 9,
-    "VERSION":             0xff << 24,
+    "enn":                 0x01,
+    "ms1":                 0x01 << 2,
+    "ms2":                 0x01 << 3,
+    "diag":                0x01 << 4,
+    "pdn_uart":            0x01 << 6,
+    "step":                0x01 << 7,
+    "sel_a":               0x01 << 8,
+    "dir":                 0x01 << 9,
+    "version":             0xff << 24,
 }
 Fields["FACTORY_CONF"] = {
-    "FCLKTRIM":            0x1f,
-    "OTTRIM":              0x03 << 8
+    "fclktrim":            0x1f,
+    "ottrim":              0x03 << 8
 }
 Fields["IHOLD_IRUN"] = {
-    "IHOLD":               0x1f,
-    "IRUN":                0x1f << 8,
-    "IHOLDDELAY":          0x0f << 16
+    "ihold":               0x1f,
+    "irun":                0x1f << 8,
+    "iholddelay":          0x0f << 16
 }
 Fields["TPOWERDOWN"] = {
-    "TPOWERDOWN":          0xff
+    "tpowerdown":          0xff
 }
 Fields["TSTEP"] = {
-    "TSTEP":               0xfffff
+    "tstep":               0xfffff
 }
 Fields["TPWMTHRS"] = {
-    "TPWMTHRS":            0xfffff
+    "tpwmthrs":            0xfffff
 }
 Fields["VACTUAL"] = {
-    "VACTUAL":             0xffffff
+    "vactual":             0xffffff
 }
 Fields["MSCNT"] = {
-    "MSCNT":               0x3ff
+    "mscnt":               0x3ff
 }
 Fields["MSCURACT"] = {
-    "CUR_A":               0x1ff,
-    "CUR_B":               0x1ff << 16
+    "cur_a":               0x1ff,
+    "cur_b":               0x1ff << 16
 }
 Fields["CHOPCONF"] = {
     "toff":                0x0f,
     "hstrt":               0x07 << 4,
     "hend":                0x0f << 7,
-    "TBL":                 0x03 << 15,
+    "tbl":                 0x03 << 15,
     "vsense":              0x01 << 17,
-    "MRES":                0x0f << 24,
+    "mres":                0x0f << 24,
     "intpol":              0x01 << 28,
     "dedge":               0x01 << 29,
     "diss2g":              0x01 << 30,
@@ -145,34 +145,34 @@ Fields["DRV_STATUS"] = {
     "t143":                0x01 << 9,
     "t150":                0x01 << 10,
     "t157":                0x01 << 11,
-    "CS_ACTUAL":           0x1f << 16,
+    "cs_actual":           0x1f << 16,
     "stealth":             0x01 << 30,
     "stst":                0x01 << 31
 }
 Fields["PWMCONF"] = {
-    "PWM_OFS":             0xff,
-    "PWM_GRAD":            0xff << 8,
+    "pwm_ofs":             0xff,
+    "pwm_grad":            0xff << 8,
     "pwm_freq":            0x03 << 16,
     "pwm_autoscale":       0x01 << 18,
     "pwm_autograd":        0x01 << 19,
     "freewheel":           0x03 << 20,
-    "PWM_REG":             0xf << 24,
-    "PWM_LIM":             0xf << 28
+    "pwm_reg":             0xf << 24,
+    "pwm_lim":             0xf << 28
 }
 Fields["PWM_SCALE"] = {
-    "PWM_SCALE_SUM":       0xff,
-    "PWM_SCALE_AUTO":      0x1ff << 16
+    "pwm_scale_sum":       0xff,
+    "pwm_scale_auto":      0x1ff << 16
 }
 Fields["PWM_AUTO"] = {
-    "PWM_OFS_AUTO":        0xff,
-    "PWM_GRAD_AUTO":       0xff << 16
+    "pwm_ofs_auto":        0xff,
+    "pwm_grad_auto":       0xff << 16
 }
 
-SignedFields = ["CUR_A", "CUR_B", "PWM_SCALE_AUTO"]
+SignedFields = ["cur_a", "cur_b", "pwm_scale_auto"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
-    "SEL_A":            (lambda v: "%d(%s)" % (v, ["TMC222x", "TMC220x"][v])),
+    "sel_a":            (lambda v: "%d(%s)" % (v, ["TMC222x", "TMC220x"][v])),
     "s2vsa":            (lambda v: "1(LowSideShort_A!)" if v else ""),
     "s2vsb":            (lambda v: "1(LowSideShort_B!)" if v else ""),
 })
@@ -187,36 +187,35 @@ class TMC2208:
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
+        self.fields.set_field("pdn_disable", True)
         # Register commands
         current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters, self.read_translate)
+        self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_status = cmdhelper.get_status
         # Setup basic register values
-        self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
-        mh = tmc.TMCMicrostepHelper(config, self.mcu_tmc)
-        self.get_microsteps = mh.get_microsteps
-        self.get_phase = mh.get_phase
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
-        set_config_field(config, "TBL", 2)
-        set_config_field(config, "IHOLDDELAY", 8)
-        set_config_field(config, "TPOWERDOWN", 20)
-        set_config_field(config, "PWM_OFS", 36)
-        set_config_field(config, "PWM_GRAD", 14)
+        set_config_field(config, "tbl", 2)
+        set_config_field(config, "iholddelay", 8)
+        set_config_field(config, "tpowerdown", 20)
+        set_config_field(config, "pwm_ofs", 36)
+        set_config_field(config, "pwm_grad", 14)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "pwm_autograd", True)
-        set_config_field(config, "PWM_REG", 8)
-        set_config_field(config, "PWM_LIM", 12)
+        set_config_field(config, "pwm_reg", 8)
+        set_config_field(config, "pwm_lim", 12)
     def read_translate(self, reg_name, val):
         if reg_name == "IOIN":
-            drv_type = self.fields.get_field("SEL_A", val)
+            drv_type = self.fields.get_field("sel_a", val)
             reg_name = "IOIN@TMC220x" if drv_type else "IOIN@TMC222x"
         return reg_name, val
 

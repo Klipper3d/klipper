@@ -79,12 +79,22 @@ class VirtualSD:
                 logging.exception("virtual_sdcard get_file_list")
                 raise self.gcode.error("Unable to get file list")
     def get_status(self, eventtime):
-        progress = 0.
+        return {
+            'file_path': self.file_path(),
+            'progress': self.progress(),
+            'is_active': self.is_active(),
+            'file_position': self.file_position,
+            'file_size': self.file_size,
+        }
+    def file_path(self):
+        if self.current_file:
+            return self.current_file.name
+        return None
+    def progress(self):
         if self.file_size:
-            progress = float(self.file_position) / self.file_size
-        is_active = self.is_active()
-        return {'progress': progress, 'is_active': is_active,
-                'file_position': self.file_position}
+            return float(self.file_position) / self.file_size
+        else:
+            return 0.
     def is_active(self):
         return self.work_timer is not None
     def do_pause(self):
@@ -98,6 +108,13 @@ class VirtualSD:
         self.must_pause_work = False
         self.work_timer = self.reactor.register_timer(
             self.work_handler, self.reactor.NOW)
+    def do_cancel(self):
+        if self.current_file is not None:
+            self.do_pause()
+            self.current_file.close()
+            self.current_file = None
+            self.print_stats.note_cancel()
+        self.file_position = self.file_size = 0.
     # G-Code commands
     def cmd_error(self, gcmd):
         raise gcmd.error("SD write not supported")
@@ -141,13 +158,7 @@ class VirtualSD:
         if self.work_timer is not None:
             raise gcmd.error("SD busy")
         self._reset_file()
-        try:
-            orig = gcmd.get_commandline()
-            filename = orig[orig.find("M23") + 4:].split()[0].strip()
-            if '*' in filename:
-                filename = filename[:filename.find('*')].strip()
-        except:
-            raise gcmd.error("Unable to extract filename")
+        filename = gcmd.get_raw_command_parameters().strip()
         if filename.startswith('/'):
             filename = filename[1:]
         self._load_file(gcmd, filename)
@@ -160,7 +171,7 @@ class VirtualSD:
             if fname not in flist:
                 fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
-            f = open(fname, 'rb')
+            f = open(fname, 'r')
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
@@ -212,6 +223,7 @@ class VirtualSD:
         gcode_mutex = self.gcode.get_mutex()
         partial_input = ""
         lines = []
+        error_message = None
         while not self.must_pause_work:
             if not lines:
                 # Read more data
@@ -245,7 +257,7 @@ class VirtualSD:
             try:
                 self.gcode.run_script(line)
             except self.gcode.error as e:
-                self.print_stats.note_error(str(e))
+                error_message = str(e)
                 break
             except:
                 logging.exception("virtual_sdcard dispatch")
@@ -265,7 +277,9 @@ class VirtualSD:
         logging.info("Exiting SD card print (position %d)", self.file_position)
         self.work_timer = None
         self.cmd_from_sd = False
-        if self.current_file is not None:
+        if error_message is not None:
+            self.print_stats.note_error(error_message)
+        elif self.current_file is not None:
             self.print_stats.note_pause()
         else:
             self.print_stats.note_complete()

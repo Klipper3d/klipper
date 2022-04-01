@@ -1,6 +1,6 @@
 // Code to handle IO on PRU0 and pass the messages to PRU1
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -14,7 +14,7 @@
 #include <pru_virtio_ids.h> // VIRTIO_ID_RPMSG
 #include <rsc_types.h> // resource_table
 #include "board/io.h" // readl
-#include "command.h" // command_add_frame
+#include "command.h" // command_encode_add_frame
 #include "compiler.h" // __section
 #include "internal.h" // SHARED_MEM
 #include "sched.h" // sched_shutdown
@@ -46,14 +46,19 @@ flush_messages(void)
     transmit_pos = 0;
 }
 
-// Generate a message block and queue it for transmission
-static void
-build_message(uint8_t *msg, int msglen)
+// Verify space for a message block
+static uint8_t *
+get_transmit_ptr(const struct command_encoder *ce)
 {
-    if (transmit_pos + msglen > sizeof(transmit_buf))
+    if (transmit_pos + ce->max_size > sizeof(transmit_buf))
         flush_messages();
-    memcpy(&transmit_buf[transmit_pos], msg, msglen);
-    command_add_frame(&transmit_buf[transmit_pos], msglen);
+    return &transmit_buf[transmit_pos];
+}
+
+// Finalize a message block and queue it for transmission
+static void
+finalize_transmit(int msglen)
+{
     transmit_pos += msglen;
 }
 
@@ -62,16 +67,42 @@ static void
 check_can_send(void)
 {
     for (;;) {
-        uint32_t send_pop_pos = SHARED_MEM->send_pop_pos;
-        struct shared_response_buffer *s = &SHARED_MEM->send_data[send_pop_pos];
-        uint32_t count = readl(&s->count);
-        if (!count)
-            // Queue empty
+        uint32_t rce = readl(&SHARED_MEM->next_encoder);
+        if (!rce)
             break;
-        build_message(s->data, count);
-        writel(&s->count, 0);
-        SHARED_MEM->send_pop_pos = (
-            (send_pop_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
+        // Copy va_args on pru1 for use on pru0
+        void *pru1_args = ALT_PRU_PTR(SHARED_MEM->next_encoder_args);
+        uint32_t local_args[16];
+        memcpy(local_args, pru1_args, sizeof(local_args));
+        const struct command_encoder *pru1_ce = ALT_PRU_PTR((void*)rce);
+        struct command_encoder ce;
+        memcpy(&ce, pru1_ce, sizeof(ce));
+        if (readl(&SHARED_MEM->next_encoder) != rce)
+            continue;
+        // Fixup any pointers in va_args
+        ce.param_types = ALT_PRU_PTR(ce.param_types);
+        uint32_t pos=0, v, i, count = ce.num_params;
+        for (i=0; i<count; i++) {
+            switch (ce.param_types[i]) {
+            case PT_progmem_buffer:
+            case PT_buffer:
+                pos++;
+                // NO BREAK
+            case PT_string:
+                v = local_args[pos];
+                if (v < 0x2000)
+                    // Translate pointer
+                    local_args[pos] = (uint32_t)ALT_PRU_PTR((void*)v);
+            }
+            pos++;
+        }
+        // Encode and build message
+        uint8_t *data = get_transmit_ptr(&ce);
+        int msglen = command_encode_and_frame(data, &ce, (void*)local_args);
+        if (readl(&SHARED_MEM->next_encoder) != rce)
+            continue;
+        writel(&SHARED_MEM->next_encoder, 0);
+        finalize_transmit(msglen);
     }
 }
 
@@ -213,8 +244,9 @@ sched_shutdown(uint_fast8_t reason)
 void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
-    uint8_t buf[MESSAGE_MIN];
-    build_message(buf, sizeof(buf));
+    uint8_t *data = get_transmit_ptr(ce);
+    int msglen = command_encode_and_frame(data, ce, args);
+    finalize_transmit(msglen);
 }
 
 

@@ -1,0 +1,29 @@
+name: klipper3d deploy
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - .github/workflows/klipper3d-deploy.yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('docs/_klipper3d/mkdocs-requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
+      - name: Build and deploy klipper3d
+        run: |
+          mkdocs gh-deploy --config-file docs/_klipper3d/mkdocs.yml --remote-branch gh-pages --force --verbose

@@ -1,3 +1,5 @@
+# Delta calibration
+
 This document describes Klipper's automatic calibration system for
 "delta" style printers.
 
@@ -14,8 +16,7 @@ tower endstop switches. If one is using Trinamic stepper motor drivers
 then consider enabling [endstop phase](Endstop_Phase.md) detection to
 improve the accuracy of those switches.
 
-Automatic vs manual probing
-===========================
+## Automatic vs manual probing
 
 Klipper supports calibrating the delta parameters via a manual probing
 method or via an automatic Z probe.
@@ -37,8 +38,7 @@ probes are rarely suitable for use on a delta (because minor effector
 tilt will result in a probe location bias). If using the probe anyway,
 then be sure to rerun probe calibration after any delta calibration.
 
-Basic delta calibration
-=======================
+## Basic delta calibration
 
 Klipper has a DELTA_CALIBRATE command that can perform basic delta
 calibration. This command probes seven different points on the bed and
@@ -84,8 +84,7 @@ accurate enough for basic printing. If this is a new printer, this is
 a good time to print some basic objects and verify general
 functionality.
 
-Enhanced delta calibration
-==========================
+## Enhanced delta calibration
 
 The basic delta calibration generally does a good job of calculating
 delta parameters such that the nozzle is the correct distance from the
@@ -215,8 +214,7 @@ to reenter the raw distance measurements after running SAVE_CONFIG, as
 this command changes the printer configuration and the raw
 measurements no longer apply.
 
-Additional notes
-----------------
+### Additional notes
 
 * If the delta printer has good dimensional accuracy then the distance
   between any two pillars should be around 74mm and the width of every
@@ -236,8 +234,7 @@ Additional notes
   arm length may result in a tilt to the effector and some of that
   tilt may be accounted for by adjusting the arm length parameters.
 
-Using Bed Mesh on a Delta
-=========================
+## Using Bed Mesh on a Delta
 
 It is possible to use [bed mesh](Bed_Mesh.md) on a delta. However, it
 is important to obtain good delta calibration prior to enabling a bed

@@ -6,6 +6,7 @@
 
 #include <time.h> // struct timespec
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
+#include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_from_us
 #include "command.h" // DECL_CONSTANT
@@ -18,23 +19,20 @@ static struct {
     uint32_t last_read_time;
     // Fields for converting from a systime to ticks
     time_t start_sec;
+    // Flags for tracking irq_enable()/irq_disable()
+    uint32_t must_wake_timers;
     // Time of next software timer (also used to convert from ticks to systime)
     uint32_t next_wake_counter;
     struct timespec next_wake;
+    // Unix signal tracking
+    timer_t t_alarm;
+    sigset_t ss_alarm, ss_sleep;
 } TimerInfo;
 
 
 /****************************************************************
  * Timespec helpers
  ****************************************************************/
-
-// Compare two 'struct timespec' times
-static inline uint8_t
-timespec_is_before(struct timespec ts1, struct timespec ts2)
-{
-    return (ts1.tv_sec < ts2.tv_sec
-            || (ts1.tv_sec == ts2.tv_sec && ts1.tv_nsec < ts2.tv_nsec));
-}
 
 // Convert a 'struct timespec' to a counter value
 static inline uint32_t
@@ -120,8 +118,8 @@ timer_read_time(void)
 void
 timer_kick(void)
 {
-    TimerInfo.next_wake = timespec_read();
-    TimerInfo.next_wake_counter = timespec_to_time(TimerInfo.next_wake);
+    struct itimerspec it = { .it_interval = {0, 0}, .it_value = {0, 1} };
+    timer_settime(TimerInfo.t_alarm, TIMER_ABSTIME, &it, NULL);
 }
 
 #define TIMER_IDLE_REPEAT_COUNT 100
@@ -130,13 +128,13 @@ timer_kick(void)
 #define TIMER_MIN_TRY_TICKS timer_from_us(2)
 
 // Invoke timers
-static uint32_t
-timer_dispatch_many(void)
+static void
+timer_dispatch(void)
 {
-    uint32_t repeat_count = TIMER_REPEAT_COUNT;
+    uint32_t repeat_count = TIMER_REPEAT_COUNT, next;
     for (;;) {
         // Run the next software timer
-        uint32_t next = sched_timer_dispatch();
+        next = sched_timer_dispatch();
 
         repeat_count--;
         uint32_t lrt = TimerInfo.last_read_time;
@@ -148,14 +146,14 @@ timer_dispatch_many(void)
         int32_t diff = next - now;
         if (diff > (int32_t)TIMER_MIN_TRY_TICKS)
             // Schedule next timer normally.
-            return next;
+            break;
 
         if (unlikely(!repeat_count)) {
             // Check if there are too many repeat timers
             if (diff < (int32_t)(-timer_from_us(100000)))
                 try_shutdown("Rescheduled timer in the past");
             if (sched_tasks_busy())
-                return now;
+                return;
             repeat_count = TIMER_IDLE_REPEAT_COUNT;
         }
 
@@ -163,23 +161,82 @@ timer_dispatch_many(void)
         while (unlikely(diff > 0))
             diff = next - timer_read_time();
     }
+
+    // Schedule SIGALRM signal
+    struct itimerspec it;
+    it.it_interval = (struct timespec){0, 0};
+    TimerInfo.next_wake = it.it_value = timespec_from_time(next);
+    TimerInfo.next_wake_counter = next;
+    TimerInfo.must_wake_timers = 0;
+    timer_settime(TimerInfo.t_alarm, TIMER_ABSTIME, &it, NULL);
 }
 
+// OS signal handler
 static void
-timer_dispatch(void)
+timer_signal(int signal)
 {
-    uint32_t next = timer_dispatch_many();
-    TimerInfo.next_wake = timespec_from_time(next);
-    TimerInfo.next_wake_counter = next;
+    TimerInfo.must_wake_timers = 1;
 }
 
 void
 timer_init(void)
 {
-    TimerInfo.start_sec = timespec_read().tv_sec + 1;
+    // Initialize ss_alarm signal set
+    int ret = sigemptyset(&TimerInfo.ss_alarm);
+    if (ret < 0) {
+        report_errno("sigemptyset", ret);
+        return;
+    }
+    ret = sigaddset(&TimerInfo.ss_alarm, SIGALRM);
+    if (ret < 0) {
+        report_errno("sigaddset", ret);
+        return;
+    }
+    // Initialize ss_sleep signal set
+    ret = sigprocmask(0, NULL, &TimerInfo.ss_sleep);
+    if (ret < 0) {
+        report_errno("sigprocmask ss_sleep", ret);
+        return;
+    }
+    ret = sigdelset(&TimerInfo.ss_sleep, SIGALRM);
+    if (ret < 0) {
+        report_errno("sigdelset", ret);
+        return;
+    }
+    // Initialize timespec_to_time() and timespec_from_time()
+    struct timespec curtime = timespec_read();
+    TimerInfo.start_sec = curtime.tv_sec + 1;
+    TimerInfo.next_wake = curtime;
+    TimerInfo.next_wake_counter = timespec_to_time(curtime);
+    // Initialize t_alarm signal based timer
+    ret = timer_create(CLOCK_MONOTONIC, NULL, &TimerInfo.t_alarm);
+    if (ret < 0) {
+        report_errno("timer_create", ret);
+        return;
+    }
+    struct sigaction act = {.sa_handler = timer_signal, .sa_flags = SA_RESTART};
+    ret = sigaction(SIGALRM, &act, NULL);
+    if (ret < 0) {
+        report_errno("sigaction", ret);
+        return;
+    }
     timer_kick();
 }
 DECL_INIT(timer_init);
+
+// Block SIGALRM signal
+void
+timer_disable_signals(void)
+{
+    sigprocmask(SIG_BLOCK, &TimerInfo.ss_alarm, NULL);
+}
+
+// Restore reception of SIGALRM signal
+void
+timer_enable_signals(void)
+{
+    sigprocmask(SIG_UNBLOCK, &TimerInfo.ss_alarm, NULL);
+}
 
 
 /****************************************************************
@@ -210,12 +267,19 @@ irq_restore(irqstatus_t flag)
 void
 irq_wait(void)
 {
-    console_sleep(TimerInfo.next_wake);
+    // Must atomically sleep until signaled
+    if (!readl(&TimerInfo.must_wake_timers)) {
+        timer_disable_signals();
+        if (!TimerInfo.must_wake_timers)
+            console_sleep(&TimerInfo.ss_sleep);
+        timer_enable_signals();
+    }
+    irq_poll();
 }
 
 void
 irq_poll(void)
 {
-    if (!timespec_is_before(timespec_read(), TimerInfo.next_wake))
+    if (readl(&TimerInfo.must_wake_timers))
         timer_dispatch();
 }

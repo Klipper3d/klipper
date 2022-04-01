@@ -13,7 +13,7 @@ class PrinterSysStats:
         self.last_mem_avail = 0
         self.mem_file = None
         try:
-            self.mem_file = open("/proc/meminfo", "rb")
+            self.mem_file = open("/proc/meminfo", "r")
         except:
             pass
         printer.register_event_handler("klippy:disconnect", self._disconnect)
@@ -23,7 +23,7 @@ class PrinterSysStats:
             self.mem_file = None
     def stats(self, eventtime):
         # Get core usage stats
-        ptime = time.clock()
+        ptime = time.process_time()
         pdiff = ptime - self.last_process_time
         self.last_process_time = ptime
         if pdiff > 0.:

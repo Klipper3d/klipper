@@ -15,13 +15,22 @@
 #include "sched.h" // sched_wake_task
 #include "usb_cdc.h" // usb_notify_ep0
 
+// To debug a USB connection over UART, uncomment the two macros
+// below, alter the board KConfig to "select USBSERIAL" on a serial
+// UART build (so both USB and UART are enabled in a single build),
+// compile the code using serial UART, add output() calls to the USB
+// code as needed, deploy the new binary, and then connect via
+// console.py using UART to see those output() messages.
+//#define console_sendf(ce,va) console_sendf_usb(ce,va)
+//#define command_find_and_dispatch(rb, rp, pc) ({*(pc) = rp; 1;})
+
 
 /****************************************************************
  * Message block sending
  ****************************************************************/
 
 static struct task_wake usb_bulk_in_wake;
-static uint8_t transmit_buf[96], transmit_pos;
+static uint8_t transmit_buf[192], transmit_pos;
 
 void
 usb_notify_bulk_in(void)

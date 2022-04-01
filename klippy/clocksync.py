@@ -54,7 +54,7 @@ class ClockSync:
         freq = 1000000000000.
         if pace:
             freq = self.mcu_freq
-        serial.set_clock_est(freq, self.reactor.monotonic(), 0)
+        serial.set_clock_est(freq, self.reactor.monotonic(), 0, 0)
     # MCU clock querying (_handle_clock is invoked from background thread)
     def _get_clock_event(self, eventtime):
         self.serial.raw_send(self.get_clock_cmd, 0, 0, self.cmd_queue)
@@ -116,7 +116,7 @@ class ClockSync:
         new_freq = self.clock_covariance / self.time_variance
         pred_stddev = math.sqrt(self.prediction_variance)
         self.serial.set_clock_est(new_freq, self.time_avg + TRANSMIT_EXTRA,
-                                  int(self.clock_avg - 3. * pred_stddev))
+                                  int(self.clock_avg - 3. * pred_stddev), clock)
         self.clock_est = (self.time_avg + self.min_half_rtt,
                           self.clock_avg, new_freq)
         #logging.debug("regr %.3f: freq=%.3f d=%d(%.3f)",

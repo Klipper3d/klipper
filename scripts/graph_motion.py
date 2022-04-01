@@ -1,7 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Script to graph motion results
 #
-# Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.

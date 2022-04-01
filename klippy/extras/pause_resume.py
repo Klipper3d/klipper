@@ -42,12 +42,14 @@ class PauseResume:
         return {
             'is_paused': self.is_paused
         }
+    def is_sd_active(self):
+        return self.v_sd is not None and self.v_sd.is_active()
     def send_pause_command(self):
         # This sends the appropriate pause command from an event.  Note
         # the difference between pause_command_sent and is_paused, the
         # module isn't officially paused until the PAUSE gcode executes.
         if not self.pause_command_sent:
-            if self.v_sd is not None and self.v_sd.is_active():
+            if self.is_sd_active():
                 # Printing from virtual sd, run pause command
                 self.sd_paused = True
                 self.v_sd.do_pause()
@@ -61,7 +63,7 @@ class PauseResume:
             gcmd.respond_info("Print already paused")
             return
         self.send_pause_command()
-        self.gcode.run_script_from_command("SAVE_GCODE_STATE STATE=PAUSE_STATE")
+        self.gcode.run_script_from_command("SAVE_GCODE_STATE NAME=PAUSE_STATE")
         self.is_paused = True
     def send_resume_command(self):
         if self.sd_paused:
@@ -78,7 +80,7 @@ class PauseResume:
             return
         velocity = gcmd.get_float('VELOCITY', self.recover_velocity)
         self.gcode.run_script_from_command(
-            "RESTORE_GCODE_STATE STATE=PAUSE_STATE MOVE=1 MOVE_SPEED=%.4f"
+            "RESTORE_GCODE_STATE NAME=PAUSE_STATE MOVE=1 MOVE_SPEED=%.4f"
             % (velocity))
         self.send_resume_command()
         self.is_paused = False
@@ -88,8 +90,9 @@ class PauseResume:
         self.is_paused = self.pause_command_sent = False
     cmd_CANCEL_PRINT_help = ("Cancel the current print")
     def cmd_CANCEL_PRINT(self, gcmd):
-        self.cmd_PAUSE(gcmd)
-        if not self.sd_paused:
+        if self.is_sd_active() or self.sd_paused:
+            self.v_sd.do_cancel()
+        else:
             gcmd.respond_info("action:cancel")
         self.cmd_CLEAR_PAUSE(gcmd)
 

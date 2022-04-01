@@ -1,3 +1,5 @@
+# Status reference
+
 This document is a reference of printer status information available
 in Klipper [macros](Command_Templates.md),
 [display fields](Config_Reference.md#display), and via the
@@ -8,14 +10,25 @@ attribute be sure to review the
 [Config Changes document](Config_Changes.md) when upgrading the
 Klipper software.
 
-# bed_mesh
+## angle
+
+The following information is available in
+[angle some_name](Config_Reference.md#angle) objects:
+- `temperature`: The last temperature reading (in Celsius) from a
+  tle5012b magnetic hall sensor. This value is only available if the
+  angle sensor is a tle5012b chip and if measurements are in progress
+  (otherwise it reports `None`).
+
+## bed_mesh
 
 The following information is available in the
 [bed_mesh](Config_Reference.md#bed_mesh) object:
 - `profile_name`, `mesh_min`, `mesh_max`, `probed_matrix`,
   `mesh_matrix`: Information on the currently active bed_mesh.
+- `profiles`: The set of currently defined profiles as setup
+   using BED_MESH_PROFILE.
 
-# configfile
+## configfile
 
 The following information is available in the `configfile` object
 (this object is always available):
@@ -26,8 +39,14 @@ The following information is available in the `configfile` object
   setting as read by Klipper during the last software start or
   restart. (Any settings changed at run-time will not be reflected
   here.) All values are returned as strings.
+- `save_config_pending`: Returns true if there are updates that a
+  `SAVE_CONFIG` command may persist to disk.
+- `warnings`: A list of warnings about config options. Each entry in
+  the list will be a dictionary containing a `type` and `message`
+  field (both strings). Additional fields may be available depending
+  on the type of warning.
 
-# display_status
+## display_status
 
 The following information is available in the `display_status` object
 (this object is automatically available if a
@@ -36,7 +55,7 @@ The following information is available in the `display_status` object
   `virtual_sdcard.progress` if no recent `M73` received).
 - `message`: The message contained in the last `M117` G-Code command.
 
-# endstop_phase
+## endstop_phase
 
 The following information is available in the
 [endstop_phase](Config_Reference.md#endstop_phase) object:
@@ -50,7 +69,7 @@ The following information is available in the
   forward direction minus the total number of steps taken in the
   reverse direction since the micro-controller was last restarted.
 
-# fan
+## fan
 
 The following information is available in
 [fan](Config_Reference.md#fan),
@@ -61,7 +80,7 @@ objects:
 - `rpm`: The measured fan speed in rotations per minute if the fan has
   a tachometer_pin defined.
 
-# filament_switch_sensor
+## filament_switch_sensor
 
 The following information is available in
 [filament_switch_sensor some_name](Config_Reference.md#filament_switch_sensor)
@@ -70,7 +89,7 @@ objects:
 - `filament_detected`: Returns True if the sensor is in a triggered
   state.
 
-# filament_motion_sensor
+## filament_motion_sensor
 
 The following information is available in
 [filament_motion_sensor some_name](Config_Reference.md#filament_motion_sensor)
@@ -79,7 +98,7 @@ objects:
 - `filament_detected`: Returns True if the sensor is in a triggered
   state.
 
-# firmware_retraction
+## firmware_retraction
 
 The following information is available in the
 [firmware_retraction](Config_Reference.md#firmware_retraction) object:
@@ -88,14 +107,14 @@ The following information is available in the
   module. These settings may differ from the config file if a
   `SET_RETRACTION` command alters them.
 
-# gcode_macro
+## gcode_macro
 
 The following information is available in
 [gcode_macro some_name](Config_Reference.md#gcode_macro) objects:
 - `<variable>`: The current value of a
   [gcode_macro variable](Command_Templates.md#variables).
 
-# gcode_move
+## gcode_move
 
 The following information is available in the `gcode_move` object
 (this object is always available):
@@ -124,15 +143,16 @@ The following information is available in the `gcode_move` object
 - `absolute_extrude`: This returns True if in `M82` absolute extrude
   mode or False if in `M83` relative mode.
 
-# hall_filament_width_sensor
+## hall_filament_width_sensor
 
 The following information is available in the
 [hall_filament_width_sensor](Config_Reference.md#hall_filament_width_sensor)
 object:
 - `is_active`: Returns True if the sensor is currently active.
-- `Diameter`, `Raw`: The last read values from the sensor.
+- `Diameter`: The last reading from the sensor in mm.
+- `Raw`: The last raw ADC reading from the sensor.
 
-# heater
+## heater
 
 The following information is available for heater objects such as
 [extruder](Config_Reference.md#extruder),
@@ -144,8 +164,10 @@ The following information is available for heater objects such as
   the given heater.
 - `power`: The last setting of the PWM pin (a value between 0.0 and
   1.0) associated with the heater.
+- `can_extrude`: If extruder can extrude (defined by `min_extrude_temp`),
+  available only for [extruder](Config_Reference.md#extruder)
 
-# heaters
+## heaters
 
 The following information is available in the `heaters` object (this
 object is available if any heater is defined):
@@ -157,7 +179,7 @@ object is available if any heater is defined):
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater",
   "temperature_sensor electronics_temp"]`.
 
-# idle_timeout
+## idle_timeout
 
 The following information is available in the
 [idle_timeout](Config_Reference.md#idle_timeout) object (this object
@@ -169,7 +191,20 @@ is always available):
   been in the "Printing" state (as tracked by the idle_timeout
   module).
 
-# mcu
+## led
+
+The following information is available for each `[led led_name]`,
+`[neopixel led_name]`, `[dotstar led_name]`, `[pca9533 led_name]`, and
+`[pca9632 led_name]` config section defined in printer.cfg:
+- `color_data`: A list of color lists containing the RGBW values for a
+  led in the chain. Each value is represented as a float from 0.0 to
+  1.0. Each color list contains 4 items (red, green, blue, white) even
+  if the underyling LED supports fewer color channels. For example,
+  the blue value (3rd item in color list) of the second neopixel in a
+  chain could be accessed at
+  `printer["neopixel <config_name>"].color_data[1][2]`.
+
+## mcu
 
 The following information is available in
 [mcu](Config_Reference.md#mcu) and
@@ -185,13 +220,25 @@ The following information is available in
 - `last_stats.<statistics_name>`: Statistics information on the
   micro-controller connection.
 
-# output_pin
+## motion_report
+
+The following information is available in the `motion_report` object
+(this object is automatically available if any stepper config section
+is defined):
+- `live_position`: The requested toolhead position interpolated to the
+  current time.
+- `live_velocity`: The requested toolhead velocity (in mm/s) at the
+  current time.
+- `live_extruder_velocity`: The requested extruder velocity (in mm/s)
+  at the current time.
+
+## output_pin
 
 The following information is available in
 [output_pin some_name](Config_Reference.md#output_pin) objects:
 - `value`: The "value" of the pin, as set by a `SET_PIN` command.
 
-# palette2
+## palette2
 
 The following information is available in the
 [palette2](Config_Reference.md#palette2) object:
@@ -200,14 +247,14 @@ The following information is available in the
   be the amount of filament to load into the extruder.
 - `is_splicing`: True when the Palette 2 is splicing filament.
 
-# pause_resume
+## pause_resume
 
 The following information is available in the
 [pause_resume](Config_Reference.md#pause_resume) object:
 - `is_paused`: Returns true if a PAUSE command has been executed
   without a corresponding RESUME.
 
-# print_stats
+## print_stats
 
 The following information is available in the `print_stats` object
 (this object is automatically available if a
@@ -217,7 +264,7 @@ defined):
   `state`, `message`: Estimated information about the current print
   when a virtual_sdcard print is active.
 
-# probe
+## probe
 
 The following information is available in the
 [probe](Config_Reference.md#probe) object (this object is also
@@ -232,14 +279,14 @@ is defined):
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
 
-# quad_gantry_level
+## quad_gantry_level
 
 The following information is available in the `quad_gantry_level` object
 (this object is available if quad_gantry_level is defined):
 - `applied`: True if the gantry leveling process has been run and completed
   successfully.
 
-# query_endstops
+## query_endstops
 
 The following information is available in the `query_endstops` object
 (this object is available if any endstop is defined):
@@ -249,21 +296,21 @@ The following information is available in the `query_endstops` object
   the QUERY_ENDSTOP command must be run prior to the macro containing
   this reference.
 
-# servo
+## servo
 
 The following information is available in
 [servo some_name](Config_Reference.md#servo) objects:
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
 
-# system_stats
+## system_stats
 
 The following information is available in the `system_stats` object
 (this object is always available):
 - `sysload`, `cputime`, `memavail`: Information on the host operating
   system and process load.
 
-# temperature sensors
+## temperature sensors
 
 The following information is available in
 
@@ -277,7 +324,7 @@ objects:
 - `humidity`, `pressure`, `gas`: The last read values from the sensor
   (only on bme280, htu21d, and lm75 sensors).
 
-# temperature_fan
+## temperature_fan
 
 The following information is available in
 [temperature_fan some_name](Config_Reference.md#temperature_fan)
@@ -285,7 +332,7 @@ objects:
 - `temperature`: The last read temperature from the sensor.
 - `target`: The target temperature for the fan.
 
-# temperature_sensor
+## temperature_sensor
 
 The following information is available in
 [temperature_sensor some_name](Config_Reference.md#temperature_sensor)
@@ -295,7 +342,24 @@ objects:
   temperature seen by the sensor since the Klipper host software was
   last restarted.
 
-# toolhead
+## tmc drivers
+
+The following information is available in
+[TMC stepper driver](Config_Reference.md#tmc-stepper-driver-configuration)
+objects (eg, `[tmc2208 stepper_x]`):
+- `mcu_phase_offset`: The micro-controller stepper position
+  corresponding with the driver's "zero" phase. This field may be null
+  if the phase offset is not known.
+- `phase_offset_position`: The "commanded position" corresponding to
+  the driver's "zero" phase. This field may be null if the phase
+  offset is not known.
+- `drv_status`: The results of the last driver status query. (Only
+  non-zero fields are reported.) This field will be null if the driver
+  is not enabled (and thus is not periodically queried).
+- `run_current`: The currently set run current.
+- `hold_current`: The currently set hold current.
+
+## toolhead
 
 The following information is available in the `toolhead` object
 (this object is always available):
@@ -320,16 +384,27 @@ The following information is available in the `toolhead` object
   the printer had to be paused because the toolhead moved faster than
   moves could be read from the G-Code input.
 
-# virtual_sdcard
+## dual_carriage
+
+The following information is available in
+[dual_carriage](Config_Reference.md#dual_carriage)
+on a hybrid_corexy or hybrid_corexz robot
+- `mode`: The current mode. Possible values are: "FULL_CONTROL"
+- `active_carriage`: The current active carriage.
+Possible values are: "CARRIAGE_0", "CARRIAGE_1"
+
+## virtual_sdcard
 
 The following information is available in the
 [virtual_sdcard](Config_Reference.md#virtual_sdcard) object:
 - `is_active`: Returns True if a print from file is currently active.
 - `progress`: An estimate of the current print progress (based of file
   size and file position).
+- `file_path`: A full path to the file of currently loaded file.
 - `file_position`: The current position (in bytes) of an active print.
+- `file_size`: The file size (in bytes) of currently loaded file.
 
-# webhooks
+## webhooks
 
 The following information is available in the `webhooks` object (this
 object is always available):
@@ -338,7 +413,7 @@ object is always available):
 - `state_message`: A human readable string giving additional context
   on the current Klipper state.
 
-# z_tilt
+## z_tilt
 
 The following information is available in the `z_tilt` object (this
 object is available if z_tilt is defined):

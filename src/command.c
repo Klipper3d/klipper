@@ -108,7 +108,7 @@ error:
 }
 
 // Encode a message
-uint_fast8_t
+static uint_fast8_t
 command_encodef(uint8_t *buf, const struct command_encoder *ce, va_list args)
 {
     uint_fast8_t max_size = READP(ce->max_size);
@@ -172,7 +172,7 @@ error:
 }
 
 // Add header and trailer bytes to a message block
-void
+static void
 command_add_frame(uint8_t *buf, uint_fast8_t msglen)
 {
     buf[MESSAGE_POS_LEN] = msglen;

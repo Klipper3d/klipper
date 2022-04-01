@@ -18,6 +18,7 @@ COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
 SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
+    'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c', 'kin_extruder.c',
     'kin_shaper.c',
@@ -25,22 +26,32 @@ SOURCE_FILES = [
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
-    'trapq.h',
+    'trapq.h', 'pollreactor.h', 'msgblock.h'
 ]
 
 defs_stepcompress = """
+    struct pull_history_steps {
+        uint64_t first_clock, last_clock;
+        int64_t start_position;
+        int step_count, interval, add;
+    };
+
     struct stepcompress *stepcompress_alloc(uint32_t oid);
     void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-        , uint32_t invert_sdir, int32_t queue_step_msgtag
-        , int32_t set_next_step_dir_msgtag);
+        , int32_t queue_step_msgtag, int32_t set_next_step_dir_msgtag);
+    void stepcompress_set_invert_sdir(struct stepcompress *sc
+        , uint32_t invert_sdir);
     void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
     int stepcompress_set_last_position(struct stepcompress *sc
-        , int64_t last_position);
+        , uint64_t clock, int64_t last_position);
     int64_t stepcompress_find_past_position(struct stepcompress *sc
         , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
+    int stepcompress_extract_old(struct stepcompress *sc
+        , struct pull_history_steps *p, int max
+        , uint64_t start_clock, uint64_t end_clock);
 
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
@@ -67,6 +78,13 @@ defs_itersolve = """
 """
 
 defs_trapq = """
+    struct pull_move {
+        double print_time, move_t;
+        double start_v, accel;
+        double start_x, start_y, start_z;
+        double x_r, y_r, z_r;
+    };
+
     void trapq_append(struct trapq *tq, double print_time
         , double accel_t, double cruise_t, double decel_t
         , double start_pos_x, double start_pos_y, double start_pos_z
@@ -74,11 +92,16 @@ defs_trapq = """
         , double start_v, double cruise_v, double accel);
     struct trapq *trapq_alloc(void);
     void trapq_free(struct trapq *tq);
-    void trapq_free_moves(struct trapq *tq, double print_time);
+    void trapq_finalize_moves(struct trapq *tq, double print_time);
+    void trapq_set_position(struct trapq *tq, double print_time
+        , double pos_x, double pos_y, double pos_z);
+    int trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
+        , double start_time, double end_time);
 """
 
 defs_kin_cartesian = """
     struct stepper_kinematics *cartesian_stepper_alloc(char axis);
+    struct stepper_kinematics *cartesian_reverse_stepper_alloc(char axis);
 """
 
 defs_kin_corexy = """
@@ -111,26 +134,15 @@ defs_kin_winch = """
 
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
-    void extruder_set_smooth_time(struct stepper_kinematics *sk
-        , double smooth_time);
+    void extruder_set_pressure_advance(struct stepper_kinematics *sk
+        , double pressure_advance, double smooth_time);
 """
 
 defs_kin_shaper = """
-    enum INPUT_SHAPER_TYPE {
-        INPUT_SHAPER_ZV = 0,
-        INPUT_SHAPER_ZVD = 1,
-        INPUT_SHAPER_MZV = 2,
-        INPUT_SHAPER_EI = 3,
-        INPUT_SHAPER_2HUMP_EI = 4,
-        INPUT_SHAPER_3HUMP_EI = 5,
-    };
-
-    double input_shaper_get_step_generation_window(int shaper_type
-        , double shaper_freq, double damping_ratio);
-    int input_shaper_set_shaper_params(struct stepper_kinematics *sk
-        , int shaper_type_x, int shaper_type_y
-        , double shaper_freq_x, double shaper_freq_y
-        , double damping_ratio_x, double damping_ratio_y);
+    double input_shaper_get_step_generation_window(int n, double a[]
+        , double t[]);
+    int input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
+        , int n, double a[], double t[]);
     int input_shaper_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * input_shaper_alloc(void);
@@ -161,10 +173,23 @@ defs_serialqueue = """
     void serialqueue_set_receive_window(struct serialqueue *sq
         , int receive_window);
     void serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
-        , double last_clock_time, uint64_t last_clock);
+        , double conv_time, uint64_t conv_clock, uint64_t last_clock);
     void serialqueue_get_stats(struct serialqueue *sq, char *buf, int len);
     int serialqueue_extract_old(struct serialqueue *sq, int sentq
         , struct pull_queue_message *q, int max);
+"""
+
+defs_trdispatch = """
+    void trdispatch_start(struct trdispatch *td, uint32_t dispatch_reason);
+    void trdispatch_stop(struct trdispatch *td);
+    struct trdispatch *trdispatch_alloc(void);
+    struct trdispatch_mcu *trdispatch_mcu_alloc(struct trdispatch *td
+        , struct serialqueue *sq, struct command_queue *cq, uint32_t trsync_oid
+        , uint32_t set_timeout_msgtag, uint32_t trigger_msgtag
+        , uint32_t state_msgtag);
+    void trdispatch_mcu_setup(struct trdispatch_mcu *tdm
+        , uint64_t last_status_clock, uint64_t expire_clock
+        , uint64_t expire_ticks, uint64_t min_extend_ticks);
 """
 
 defs_pyhelper = """
@@ -178,9 +203,10 @@ defs_std = """
 
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
-    defs_itersolve, defs_trapq, defs_kin_cartesian, defs_kin_corexy,
-    defs_kin_corexz, defs_kin_delta, defs_kin_polar, defs_kin_rotary_delta,
-    defs_kin_winch, defs_kin_extruder, defs_kin_shaper,
+    defs_itersolve, defs_trapq, defs_trdispatch,
+    defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
+    defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch, defs_kin_extruder,
+    defs_kin_shaper,
 ]
 
 # Update filenames to an absolute path

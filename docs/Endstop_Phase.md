@@ -1,3 +1,5 @@
+# Endstop phase
+
 This document describes Klipper's stepper phase adjusted endstop
 system. This functionality can improve the accuracy of traditional
 endstop switches. It is most useful when using a Trinamic stepper
@@ -32,8 +34,7 @@ phase from the driver. (It is also possible to use this system on
 traditional stepper drivers if one can reliably reset the stepper
 drivers - see below for details.)
 
-Calibrating endstop phases
-==========================
+## Calibrating endstop phases
 
 If using Trinamic stepper motor drivers with run-time configuration
 then one can calibrate the endstop phases using the
@@ -70,8 +71,7 @@ the following to update the configuration file with the data:
 SAVE_CONFIG
 ```
 
-Additional notes
-----------------
+### Additional notes
 
 * This feature is most useful on delta printers and on the Z endstop
   of cartesian/corexy printers. It is possible to use this feature on

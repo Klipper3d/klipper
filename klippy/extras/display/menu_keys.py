@@ -17,6 +17,8 @@ class MenuKeys:
         buttons = self.printer.load_object(config, "buttons")
         # Register rotary encoder
         encoder_pins = config.get('encoder_pins', None)
+        encoder_steps_per_detent = config.getchoice('encoder_steps_per_detent',
+                                                    {2: 2, 4: 4}, 4)
         if encoder_pins is not None:
             try:
                 pin1, pin2 = encoder_pins.split(',')
@@ -24,7 +26,8 @@ class MenuKeys:
                 raise config.error("Unable to parse encoder_pins")
             buttons.register_rotary_encoder(pin1.strip(), pin2.strip(),
                                             self.encoder_cw_callback,
-                                            self.encoder_ccw_callback)
+                                            self.encoder_ccw_callback,
+                                            encoder_steps_per_detent)
         self.encoder_fast_rate = config.getfloat('encoder_fast_rate',
                                                  .030, above=0.)
         self.last_encoder_cw_eventtime = 0
@@ -44,17 +47,13 @@ class MenuKeys:
         if pin is None:
             return
         buttons = self.printer.lookup_object("buttons")
-        analog_range = config.get('analog_range_' + name, None)
-        if analog_range is None:
+        if config.get('analog_range_' + name, None) is None:
             if push_only:
                 buttons.register_button_push(pin, callback)
             else:
                 buttons.register_buttons([pin], callback)
             return
-        try:
-            amin, amax = map(float, analog_range.split(','))
-        except:
-            raise config.error("Unable to parse analog_range_" + name)
+        amin, amax = config.getfloatlist('analog_range_' + name, count=2)
         pullup = config.getfloat('analog_pullup_resistor', 4700., above=0.)
         if push_only:
             buttons.register_adc_button_push(pin, amin, amax, pullup, callback)
