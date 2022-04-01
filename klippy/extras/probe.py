@@ -23,6 +23,7 @@ class PrinterProbe:
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
+        self.drop_first_result = config.getboolean('drop_first_result', False)
         self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
         self.last_state = False
@@ -161,9 +162,16 @@ class PrinterProbe:
         probexy = self.printer.lookup_object('toolhead').get_position()[:2]
         retries = 0
         positions = []
+
+        first_probe = True
         while len(positions) < sample_count:
             # Probe position
             pos = self._probe(speed)
+            if self.drop_first_result and first_probe:
+                first_probe = False
+                liftpos = [None, None, pos[2] + sample_retract_dist]
+                self._move(liftpos, lift_speed)
+                continue
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
@@ -178,6 +186,7 @@ class PrinterProbe:
                 self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
         if must_notify_multi_probe:
             self.multi_probe_end()
+
         # Calculate and return result
         if samples_result == 'median':
             return self._calc_median(positions)
