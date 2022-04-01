@@ -21,45 +21,7 @@
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 #define FREQ_USB 48000000
 
-// Enable a peripheral clock
-void
-enable_pclock(uint32_t periph_base)
-{
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        RCC->APB1ENR |= (1<<pos);
-        RCC->APB1ENR;
-        RCC->APB1RSTR |= (1<<pos);
-        RCC->APB1RSTR &= ~(1<<pos);
-    } else if (periph_base < AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        RCC->APB2ENR |= (1<<pos);
-        RCC->APB2ENR;
-        RCC->APB2RSTR |= (1<<pos);
-        RCC->APB2RSTR &= ~(1<<pos);
-    } else if (periph_base < AHB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - AHB1PERIPH_BASE) / 0x400;
-        RCC->AHB1ENR |= (1<<pos);
-        RCC->AHB1ENR;
-    }
-}
 
-// Check if a peripheral clock has been enabled
-int
-is_enabled_pclock(uint32_t periph_base)
-{
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        return RCC->APB1ENR & (1<<pos);
-    } else if (periph_base < AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        return RCC->APB2ENR & (1<<pos);
-    } else if (periph_base < AHB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - AHB1PERIPH_BASE) / 0x400;
-        return RCC->AHB1ENR & (1<<pos);
-    }
-    return 0;
-}
 // Map a peripheral address to its enable bits
 struct cline
 lookup_clock_line(uint32_t periph_base)
