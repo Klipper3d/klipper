@@ -8,6 +8,48 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220330: The format of the `printer.neopixel.color_data` status
+information for neopixel and dotstar modules has changed. The
+information is now stored as a list of color lists (instead of a list
+of dictionaries). See the [status reference](Status_Reference.md#led)
+for details.
+
+20220307: `M73` will no longer set print progress to 0 if `P` is missing.
+
+20220304: There is no longer a default for the `extruder` parameter of
+[extruder_stepper](Config_Reference.md#extruder_stepper) config
+sections. If desired, specify `extruder: extruder` explicitly to
+associate the stepper motor with the "extruder" motion queue at
+startup.
+
+20220210: The `SYNC_STEPPER_TO_EXTRUDER` command is deprecated; the
+`SET_EXTRUDER_STEP_DISTANCE` command is deprecated; the
+[extruder](Config_Reference.md#extruder) `shared_heater` config option
+is deprecated. These features will be removed in the near future.
+Replace `SET_EXTRUDER_STEP_DISTANCE` with
+`SET_EXTRUDER_ROTATION_DISTANCE`. Replace `SYNC_STEPPER_TO_EXTRUDER`
+with `SYNC_EXTRUDER_MOTION`. Replace extruder config sections using
+`shared_heater` with
+[extruder_stepper](Config_Reference.md#extruder_stepper) config
+sections and update any activation macros to use
+[SYNC_EXTRUDER_MOTION](G-Codes.md#sync_extruder_motion).
+
+20220116: The tmc2130, tmc2208, tmc2209, and tmc2660 `run_current`
+calculation code has changed. For some `run_current` settings the
+drivers may now be configured differently. This new configuration
+should be more accurate, but it may invalidate previous tmc driver
+tuning.
+
+20211230: Scripts to tune input shaper (`scripts/calibrate_shaper.py`
+and `scripts/graph_accelerometer.py`) were migrated to use Python3
+by default. As a result, users must install Python3 versions of certain
+packages (e.g. `sudo apt install python3-numpy python3-matplotlib`) to
+continue using these scripts. For more details, refer to
+[Software installation](Measuring_Resonances.md#software-installation).
+Alternatively, users can temporarily force the execution of these scripts
+under Python 2 by explicitly calling Python2 interpretor in the console:
+`python2 ~/klipper/scripts/calibrate_shaper.py ...`
+
 20211110: The "NTC 100K beta 3950" temperature sensor is deprecated.
 This sensor will be removed in the near future.  Most users will find
 the "Generic 3950" temperature sensor more accurate.  To continue to

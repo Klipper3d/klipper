@@ -45,7 +45,7 @@ leave a stepper idle sufficiently long.
 
 If one wishes to reduce current to motors during print start routines,
 then consider issuing
-[SET_TMC_CURRENT](G-Codes.md#tmc-stepper-drivers) commands in a
+[SET_TMC_CURRENT](G-Codes.md#set_tmc_current) commands in a
 [START_PRINT macro](Slicers.md#klipper-gcode_macro) to adjust the
 current before and after normal printing moves.
 
@@ -410,10 +410,10 @@ restrictions:
 
 ## Querying and diagnosing driver settings
 
-The `[DUMP_TMC command](G-Codes.md#tmc-stepper-drivers) is a useful
-tool when configuring and diagnosing the drivers. It will report all
-fields configured by Klipper as well as all fields that can be queried
-from the driver.
+The `[DUMP_TMC command](G-Codes.md#dump_tmc) is a useful tool when
+configuring and diagnosing the drivers. It will report all fields
+configured by Klipper as well as all fields that can be queried from
+the driver.
 
 All of the reported fields are defined in the Trinamic datasheet for
 each driver. These datasheets can be found on the
@@ -429,7 +429,7 @@ Klipper supports configuring many low-level driver fields using
 has the full list of fields available for each type of driver.
 
 In addition, almost all fields can be modified at run-time using the
-[SET_TMC_FIELD command](G-Codes.md#tmc-stepper-drivers).
+[SET_TMC_FIELD command](G-Codes.md#set_tmc_field).
 
 Each of these fields is defined in the Trinamic datasheet for each
 driver. These datasheets can be found on the

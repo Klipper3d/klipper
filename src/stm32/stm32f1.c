@@ -18,42 +18,19 @@
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 2)
 
-// Enable a peripheral clock
-void
-enable_pclock(uint32_t periph_base)
+// Map a peripheral address to its enable bits
+struct cline
+lookup_clock_line(uint32_t periph_base)
 {
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        RCC->APB1ENR |= (1<<pos);
-        RCC->APB1ENR;
-        RCC->APB1RSTR |= (1<<pos);
-        RCC->APB1RSTR &= ~(1<<pos);
-    } else if (periph_base < AHBPERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        RCC->APB2ENR |= (1<<pos);
-        RCC->APB2ENR;
-        RCC->APB2RSTR |= (1<<pos);
-        RCC->APB2RSTR &= ~(1<<pos);
+    if (periph_base >= AHBPERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - AHBPERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->AHBENR, .bit=bit};
+    } else if (periph_base >= APB2PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - APB2PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
     } else {
-        uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
-        RCC->AHBENR |= (1<<pos);
-        RCC->AHBENR;
-    }
-}
-
-// Check if a peripheral clock has been enabled
-int
-is_enabled_pclock(uint32_t periph_base)
-{
-    if (periph_base < APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
-        return RCC->APB1ENR & (1<<pos);
-    } else if (periph_base < AHBPERIPH_BASE) {
-        uint32_t pos = (periph_base - APB2PERIPH_BASE) / 0x400;
-        return RCC->APB2ENR & (1<<pos);
-    } else {
-        uint32_t pos = (periph_base - AHBPERIPH_BASE) / 0x400;
-        return RCC->AHBENR & (1<<pos);
+        uint32_t bit = 1 << ((periph_base - APB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB1ENR, .rst=&RCC->APB1RSTR, .bit=bit};
     }
 }
 
@@ -227,6 +204,9 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
         if (gpio == GPIO('B', 8) || gpio == GPIO('B', 9))
             stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
                                       AFIO_MAPR_CAN_REMAP_REMAP2);
+        if (gpio == GPIO('D', 0) || gpio == GPIO('D', 1))
+            stm32f1_alternative_remap(AFIO_MAPR_CAN_REMAP_Msk,
+                                      AFIO_MAPR_CAN_REMAP_REMAP3);
     }
 }
 

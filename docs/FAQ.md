@@ -15,7 +15,7 @@
 13. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
 14. [I keep getting random "Lost communication with MCU" errors](#i-keep-getting-random-lost-communication-with-mcu-errors)
 15. [My Raspberry Pi keeps rebooting during prints](#my-raspberry-pi-keeps-rebooting-during-prints)
-16. [When I set "restart_method=command" my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
+16. [When I set `restart_method=command` my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
 17. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
 18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
 19. [Do I have to wire my device to a specific type of micro-controller pin?](#do-i-have-to-wire-my-device-to-a-specific-type-of-micro-controller-pin)
@@ -293,7 +293,7 @@ troubleshooting steps for a
 ["Lost communication with MCU"](#i-keep-getting-random-lost-communication-with-mcu-errors)
 error.
 
-## When I set "restart_method=command" my AVR device just hangs on a restart
+## When I set `restart_method=command` my AVR device just hangs on a restart
 
 Some old versions of the AVR bootloader have a known bug in watchdog
 event handling. This typically manifests when the printer.cfg file has
