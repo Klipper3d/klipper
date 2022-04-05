@@ -8,7 +8,6 @@ edit_uri: blob/master/docs/
 use_directory_urls: False
 docs_dir: '../'
 site_dir: '../../site/'
-INHERIT: translations.yml
 
 # Markdown document translation settings
 markdown_extensions:
