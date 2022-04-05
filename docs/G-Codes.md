@@ -1163,38 +1163,6 @@ enabled:
 - Set SD position: `M26 S<offset>`
 - Report SD print status: `M27`
 
-<<<<<<< HEAD
-The following command is available when the
-[palette2 config section](Config_Reference.md#palette2)
-is enabled:
-- `PALETTE_CONNECT`: This command initializes the connection with
-  the Palette 2.
-- `PALETTE_DISCONNECT`: This command disconnects from the Palette 2.
-- `PALETTE_CLEAR`: This command instructs the Palette 2 to clear all of the
-  input and output paths of filament.
-- `PALETTE_CUT`: This command instructs the Palette 2 to cut the filament
-  currently loaded in the splice core.
-- `PALETTE_SMART_LOAD`: This command start the smart load sequence on the
-  Palette 2. Filament is loaded automatically by extruding it the distance
-  calibrated on the device for the printer, and instructs the Palette 2
-  once the loading has been completed. This command is the same as pressing
-  **Smart Load** directly on the Palette 2 screen after the filament load
-  is complete.
-
-Palette prints work by embedding special OCodes (Omega Codes)
-in the GCode file:
-- `O1`...`O32`: These codes are read from the GCode stream and processed
-  by this module and passed to the Palette 2 device.
-
-### Shift Register Commands
-
-The following command is available when the
-[sr595 config section](Config_Reference.md#sr595)
-is enabled:
-- `SET_SR_PIN SR=config_name NUMBER=<pin_number> VALUE=<0|1>`: This command set the specified pin number high or low. NUMBER value is the logical pin number 1-8 for the first register, 9-16 for second, and so on.
-- `TOGGLE_SR_PIN SR=config_name NUMBER=<pin_number>`: This command toggle the specified pin number . NUMBER value is the logical pin number 1-8 for the first register, 9-16 for second, and so on.
-- `SET_SR_PINS SR=config_name VALUE=<value>`: This command sets all pins of all connected shift registers. VALUE must be between 0 and 255^[number of connected registers].
-=======
 In addition, the following extended commands are available when the
 "virtual_sdcard" config section is enabled.
 
@@ -1215,4 +1183,3 @@ The following commands are available when the
 the points specified in the config and then make independent
 adjustments to each Z stepper to compensate for tilt. See the PROBE
 command for details on the optional probe parameters.
->>>>>>> b1ae50cfc72fd23c099ffda73f1f2b14c341bdb2

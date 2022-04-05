@@ -17,43 +17,6 @@ class _SrFromConfig:
         self.chip_count = config.getint('chip_count', 1, minval=1, maxval=4)
         self.sr = Sr(printer, self.chip_count, config.get(
             'data_pin'), config.get('clock_pin'), config.get('latch_pin'))
-        gcode = printer.lookup_object('gcode')
-
-        name = config.get_name().split()[1]
-        gcode.register_mux_command("SET_SR_PIN", "SR", name,
-                                   self.cmd_SET_SR_PIN,
-                                   desc=self.cmd_SET_SR_PIN_help)
-        gcode.register_mux_command("TOGGLE_SR_PIN", "SR", name,
-                                   self.cmd_TOGGLE_SR_PIN,
-                                   desc=self.cmd_TOGGLE_SR_PIN_help)
-
-        gcode.register_mux_command("SET_SR_PINS", "SR", name,
-                                   self.cmd_SET_SR_PINS,
-                                   desc=self.cmd_SET_SR_PINS_help)
-
-    cmd_SET_SR_PIN_help = "Set the value of an output pin"
-
-    def cmd_SET_SR_PIN(self, gcmd):
-        value = gcmd.get_int('VALUE', minval=0, maxval=1)
-        pin = gcmd.get_int('NUMBER', minval=1, maxval=8 * self.chip_count) - 1
-        self.sr.set_pin(pin, value)
-
-    cmd_TOGGLE_SR_PIN_help = "Toggle the value of an output pin"
-
-    def cmd_TOGGLE_SR_PIN(self, gcmd):
-        pin = gcmd.get_int('NUMBER', minval=1, maxval=8 * self.chip_count) - 1
-        self.sr.toggle_pin(pin)
-
-    cmd_SET_SR_PINS_help = "Set the value of all output pins"
-
-    def cmd_SET_SR_PINS(self, gcmd):
-        value = gcmd.get_int('VALUE', minval=0,
-                             maxval=(256 ** self.chip_count) - 1)
-        self.sr.set_value(value)
-
-    def get_status(self, eventtime):
-        return self.sr.get_status(eventtime)
-
 
 class Sr:
     def __init__(self, printer, chip_count, data_pin, clock_pin, latch_pin):
