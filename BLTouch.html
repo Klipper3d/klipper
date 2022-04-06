@@ -1,0 +1,1616 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>BL-Touch - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#bl-touch" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              BL-Touch
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Features
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Frequently Asked Questions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Releases
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Configuration Changes
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contact
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Configuration reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotation distance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Configuration checks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bed leveling
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Delta calibration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Probe calibration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          BL-Touch
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="BLTouch.html" class="md-nav__link md-nav__link--active">
+        BL-Touch
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#connecting-bl-touch" class="md-nav__link">
+    Connecting BL-Touch
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initial-tests" class="md-nav__link">
+    Initial tests
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-gone-bad" class="md-nav__link">
+    BL-Touch gone bad
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-clones" class="md-nav__link">
+    BL-Touch "clones"
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-v3" class="md-nav__link">
+    BL-Touch v3
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-probing-without-stowing" class="md-nav__link">
+    Multi-probing without stowing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calibrating-the-bl-touch-offsets" class="md-nav__link">
+    Calibrating the BL-Touch offsets
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-output-mode" class="md-nav__link">
+    BL-Touch output mode
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manual leveling
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bed Mesh
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop phase
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Resonance Compensation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Measuring Resonances
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Pressure advance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Commands templates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Status reference
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC drivers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Multiple Micro-controller Homing and Probing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Skew correction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Using PWM tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Code overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematics
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocol
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS protocol
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contributing to Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Packaging Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Example configurations
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SDCard updates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi microcontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloaders
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL filament width sensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Hall filament width sensor
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#connecting-bl-touch" class="md-nav__link">
+    Connecting BL-Touch
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initial-tests" class="md-nav__link">
+    Initial tests
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-gone-bad" class="md-nav__link">
+    BL-Touch gone bad
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-clones" class="md-nav__link">
+    BL-Touch "clones"
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-v3" class="md-nav__link">
+    BL-Touch v3
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-probing-without-stowing" class="md-nav__link">
+    Multi-probing without stowing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calibrating-the-bl-touch-offsets" class="md-nav__link">
+    Calibrating the BL-Touch offsets
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bl-touch-output-mode" class="md-nav__link">
+    BL-Touch output mode
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/BLTouch.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="bl-touch">BL-Touch<a class="headerlink" href="#bl-touch" title="Permanent link">&para;</a></h1>
+<h2 id="connecting-bl-touch">Connecting BL-Touch<a class="headerlink" href="#connecting-bl-touch" title="Permanent link">&para;</a></h2>
+<p>A <strong>warning</strong> before you start: Avoid touching the BL-Touch pin with
+your bare fingers, since it is quite sensitive to finger grease. And
+if you do touch it, be very gentle, in order to not bend or push
+anything.</p>
+<p>Hook up the BL-Touch "servo" connector to a <code>control_pin</code> according to
+the BL-Touch documentation or your MCU documentation. Using the
+original wiring, the yellow wire from the triple is the <code>control_pin</code>
+and the white wire from the pair is the <code>sensor_pin</code>. You need to
+configure these pins according to your wiring. Most BL-Touch devices
+require a pullup on the sensor pin (prefix the pin name with "^"). For
+example:</p>
+<div class="highlight"><pre><span></span><code>[bltouch]
+sensor_pin: ^P1.24
+control_pin: P1.26
+</code></pre></div>
+
+<p>If the BL-Touch will be used to home the Z axis then set <code>endstop_pin:
+probe:z_virtual_endstop</code> and remove <code>position_endstop</code> in the <code>[stepper_z]</code> config section,
+then add a <code>[safe_z_home]</code> config section to raise the z axis, home the xy axes,
+move to the center of the bed, and home the z axis. For example:</p>
+<div class="highlight"><pre><span></span><code>[safe_z_home]
+home_xy_position: 100, 100 # Change coordinates to the center of your print bed
+speed: 50
+z_hop: 10                 # Move up 10mm
+z_hop_speed: 5
+</code></pre></div>
+
+<p>It's important that the z_hop movement in safe_z_home is high enough
+that the probe doesn't hit anything even if the probe pin happens to
+be in its lowest state.</p>
+<h2 id="initial-tests">Initial tests<a class="headerlink" href="#initial-tests" title="Permanent link">&para;</a></h2>
+<p>Before moving on, verify that the BL-Touch is mounted at the correct
+height, the pin should be roughly 2 mm above the nozzle when retracted</p>
+<p>When you turn on the printer, the BL-Touch probe should perform a
+self-test and move the pin up and down a couple of times. Once the
+self-test is completed, the pin should be retracted and the red LED on
+the probe should be lit. If there are any errors, for example the
+probe is flashing red or the pin is down instead of up, please turn
+off the printer and check the wiring and configuration.</p>
+<p>If the above is looking good, it's time to test that the control pin
+is working correctly. First run <code>BLTOUCH_DEBUG COMMAND=pin_down</code> in
+your printer terminal. Verify that the pin moves down and that the red
+LED on the probe turns off. If not, check your wiring and
+configuration again. Next issue a <code>BLTOUCH_DEBUG COMMAND=pin_up</code>,
+verify that the pin moves up, and that the red light turns on
+again. If it's flashing then there's some problem.</p>
+<p>The next step is to confirm that the sensor pin is working correctly.
+Run <code>BLTOUCH_DEBUG COMMAND=pin_down</code>, verify that the pin moves down,
+run <code>BLTOUCH_DEBUG COMMAND=touch_mode</code>, run <code>QUERY_PROBE</code>, and verify
+that command reports "probe: open". Then while gently pushing the pin
+up slightly with the nail of your finger run <code>QUERY_PROBE</code> again.
+Verify the command reports "probe: TRIGGERED". If either query does
+not report the correct message then it usually indicates an incorrect
+wiring or configuration (though some <a href="#bl-touch-clones">clones</a> may
+require special handling). At the completion of this test run
+<code>BLTOUCH_DEBUG COMMAND=pin_up</code> and verify that the pin moves up.</p>
+<p>After completing the BL-Touch control pin and sensor pin tests, it is
+now time to test probing, but with a twist. Instead of letting the
+probe pin touch the print bed, let it touch the nail on your finger.
+Position the toolhead far from the bed, issue a <code>G28</code> (or <code>PROBE</code> if
+not using probe:z_virtual_endstop), wait until the toolhead starts to
+move down, and stop the movement by very gently touching the pin with
+your nail. You may have to do it twice, since the default homing
+configuration probes twice. Be prepared to turn off the printer if it
+doesn't stop when you touch the pin.</p>
+<p>If that was successful, do another <code>G28</code> (or <code>PROBE</code>) but this time
+let it touch the bed as it should.</p>
+<h2 id="bl-touch-gone-bad">BL-Touch gone bad<a class="headerlink" href="#bl-touch-gone-bad" title="Permanent link">&para;</a></h2>
+<p>Once the BL-Touch is in inconsistent state, it starts blinking red.
+You can force it to leave that state by issuing:</p>
+<p>BLTOUCH_DEBUG COMMAND=reset</p>
+<p>This may happen if its calibration is interrupted by the probe being
+blocked from being extracted.</p>
+<p>However, the BL-Touch may also not be able to calibrate itself
+anymore. This happens if the screw on its top is in the wrong position
+or the magnetic core inside the probe pin has moved. If it has moved
+up so that it sticks to the screw, it may not be able to lower its pin
+anymore. With this behavior you need to open the screw and use a
+ball-point pen to push it gently back into place. Re-Insert the pin
+into the BL-Touch so that it falls into the extracted position.
+Carefully readjust the headless screw into place. You need to find the
+right position so it is able to lower and raise the pin and the red
+light turns on and of. Use the <code>reset</code>, <code>pin_up</code> and <code>pin_down</code>
+commands to achieve this.</p>
+<h2 id="bl-touch-clones">BL-Touch "clones"<a class="headerlink" href="#bl-touch-clones" title="Permanent link">&para;</a></h2>
+<p>Many BL-Touch "clone" devices work correctly with Klipper using the
+default configuration. However, some "clone" devices may not support
+the <code>QUERY_PROBE</code> command and some "clone" devices may require
+configuration of <code>pin_up_reports_not_triggered</code> or
+<code>pin_up_touch_mode_reports_triggered</code>.</p>
+<p>Important! Do not configure <code>pin_up_reports_not_triggered</code> or
+<code>pin_up_touch_mode_reports_triggered</code> to False without first following
+these directions. Do not configure either of these to False on a
+genuine BL-Touch. Incorrectly setting these to False can increase
+probing time and can increase the risk of damaging the printer.</p>
+<p>Some "clone" devices do not support <code>touch_mode</code> and as a result the
+<code>QUERY_PROBE</code> command does not work. Despite this, it may still be
+possible to perform probing and homing with these devices. On these
+devices the <code>QUERY_PROBE</code> command during the
+<a href="#initial-tests">initial tests</a> will not succeed, however the
+subsequent <code>G28</code> (or <code>PROBE</code>) test does succeed. It may be possible to
+use these "clone" devices with Klipper if one does not utilize the
+<code>QUERY_PROBE</code> command and one does not enable the
+<code>probe_with_touch_mode</code> feature.</p>
+<p>Some "clone" devices are unable to perform Klipper's internal sensor
+verification test. On these devices, attempts to home or probe can
+result in Klipper reporting a "BLTouch failed to verify sensor state"
+error. If this occurs, then manually run the steps to confirm the
+sensor pin is working as described in the
+<a href="#initial-tests">initial tests section</a>. If the <code>QUERY_PROBE</code> commands
+in that test always produce the expected results and "BLTouch failed
+to verify sensor state" errors still occur, then it may be necessary
+to set <code>pin_up_touch_mode_reports_triggered</code> to False in the Klipper
+config file.</p>
+<p>A rare number of old "clone" devices are unable to report when they
+have successfully raised their probe. On these devices Klipper will
+report a "BLTouch failed to raise probe" error after every home or
+probe attempt. One can test for these devices - move the head far from
+the bed, run <code>BLTOUCH_DEBUG COMMAND=pin_down</code>, verify the pin has
+moved down, run <code>QUERY_PROBE</code>, verify that command reports "probe:
+open", run <code>BLTOUCH_DEBUG COMMAND=pin_up</code>, verify the pin has moved
+up, and run <code>QUERY_PROBE</code>. If the pin remains up, the device does not
+enter an error state, and the first query reports "probe: open" while
+the second query reports "probe: TRIGGERED" then it indicates that
+<code>pin_up_reports_not_triggered</code> should be set to False in the Klipper
+config file.</p>
+<h2 id="bl-touch-v3">BL-Touch v3<a class="headerlink" href="#bl-touch-v3" title="Permanent link">&para;</a></h2>
+<p>Some BL-Touch v3.0 and BL-Touch 3.1 devices may require configuring
+<code>probe_with_touch_mode</code> in the printer config file.</p>
+<p>If the BL-Touch v3.0 has its signal wire connected to an endstop pin
+(with a noise filtering capacitor), then the BL-Touch v3.0 may not be
+able to consistently send a signal during homing and probing. If the
+<code>QUERY_PROBE</code> commands in the <a href="#initial-tests">initial tests section</a>
+always produce the expected results, but the toolhead does not always
+stop during G28/PROBE commands, then it is indicative of this issue. A
+workaround is to set <code>probe_with_touch_mode: True</code> in the config file.</p>
+<p>The BL-Touch v3.1 may incorrectly enter an error state after a
+successful probe attempt. The symptoms are an occasional flashing
+light on the BL-Touch v3.1 that lasts for a couple of seconds after it
+successfully contacts the bed. Klipper should clear this error
+automatically and it is generally harmless. However, one may set
+<code>probe_with_touch_mode</code> in the config file to avoid this issue.</p>
+<p>Important! Some "clone" devices and the BL-Touch v2.0 (and earlier)
+may have reduced accuracy when <code>probe_with_touch_mode</code> is set to True.
+Setting this to True also increases the time it takes to deploy the
+probe. If configuring this value on a "clone" or older BL-Touch
+device, be sure to test the probe accuracy before and after setting
+this value (use the <code>PROBE_ACCURACY</code> command to test).</p>
+<h2 id="multi-probing-without-stowing">Multi-probing without stowing<a class="headerlink" href="#multi-probing-without-stowing" title="Permanent link">&para;</a></h2>
+<p>By default, Klipper will deploy the probe at the start of each probe
+attempt and then stow the probe afterwards. This repetitive deploying
+and stowing of the probe may increase the total time of calibration
+sequences that involve many probe measurements. Klipper supports
+leaving the probe deployed between consecutive probes, which can
+reduce the total time of probing. This mode is enabled by configuring
+<code>stow_on_each_sample</code> to False in the config file.</p>
+<p>Important! Setting <code>stow_on_each_sample</code> to False can lead to Klipper
+making horizontal toolhead movements while the probe is deployed. Be
+sure to verify all probing operations have sufficient Z clearance
+prior to setting this value to False. If there is insufficient
+clearance then a horizontal move may cause the pin to catch on an
+obstruction and result in damage to the printer.</p>
+<p>Important! It is recommended to use <code>probe_with_touch_mode</code> configured
+to True when using <code>stow_on_each_sample</code> configured to False. Some
+"clone" devices may not detect a subsequent bed contact if
+<code>probe_with_touch_mode</code> is not set. On all devices, using the
+combination of these two settings simplifies the device signaling,
+which can improve overall stability.</p>
+<p>Note, however, that some "clone" devices and the BL-Touch v2.0 (and
+earlier) may have reduced accuracy when <code>probe_with_touch_mode</code> is set
+to True. On these devices it is a good idea to test the probe accuracy
+before and after setting <code>probe_with_touch_mode</code> (use the
+<code>PROBE_ACCURACY</code> command to test).</p>
+<h2 id="calibrating-the-bl-touch-offsets">Calibrating the BL-Touch offsets<a class="headerlink" href="#calibrating-the-bl-touch-offsets" title="Permanent link">&para;</a></h2>
+<p>Follow the directions in the <a href="Probe_Calibrate.html">Probe Calibrate</a>
+guide to set the x_offset, y_offset, and z_offset config parameters.</p>
+<p>It's a good idea to verify that the Z offset is close to 1mm. If not,
+then you probably want to move the probe up or down to fix this. You
+want it to trigger well before the nozzle hits the bed, so that
+possible stuck filament or a warped bed doesn't affect any probing
+action. But at the same time, you want the retracted position to be as
+far above the nozzle as possible to avoid it touching printed parts.
+If an adjustment is made to the probe position, then rerun the probe
+calibration steps.</p>
+<h2 id="bl-touch-output-mode">BL-Touch output mode<a class="headerlink" href="#bl-touch-output-mode" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,
+  a BL-Touch V3.1 supports this too, but can also store this in its
+  internal EEPROM. If your controller board needs the fixed 5V high
+  logic level of the 5V mode you may set the 'set_output_mode'
+  parameter in the [bltouch] section of the printer config file to
+  "5V".</p>
+<p><strong><em> Only use the 5V mode if your controller boards input line is
+5V tolerant. This is why the default configuration of these BL-Touch
+versions is OPEN-DRAIN mode. You could potentially damage your
+controller boards CPU </em></strong></p>
+<p>So therefore:
+If a controller board NEEDs 5V mode AND it is 5V tolerant on its
+input signal line AND if</p>
+<ul>
+<li>you have a BL-Touch Smart V3.0, you need the use 'set_output_mode: 5V'
+  parameter to ensure this setting at each startup, since the probe
+  cannot remember the needed setting.</li>
+<li>you have a BL-Touch Smart V3.1, you have the choice of using
+  'set_output_mode: 5V' or storing the mode once by use of a
+  'BLTOUCH_STORE MODE=5V' command manually and NOT using the parameter
+  'set_output_mode:'.</li>
+<li>you have some other probe: Some probes have a trace on the circuit board
+  to cut or a jumper to set in order to (permanently) set the output mode.
+  In that case, omit the 'set_output_mode' parameter completely.</li>
+</ul>
+<p>If you have a V3.1, do not automate or repeat storing the output mode to
+avoid wearing out the EEPROM of the probe.The BLTouch EEPROM is good for
+about 100.000 updates. 100 stores per day would add up to about 3 years
+of operation prior to wearing it out. Thus, storing the output mode in a
+V3.1 is designed by the vendor to be a complicated operation (the factory
+default being a safe OPEN DRAIN mode) and is not suited to be repeatedly
+issued by any slicer, macro or anything else, it is preferably only to be
+used when first integrating the probe into a printers electronics.</p>
+</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Probe_Calibrate.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Probe calibration" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Probe calibration
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Manual_Level.html" class="md-footer__link md-footer__link--next" aria-label="Next: Manual leveling" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Manual leveling
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

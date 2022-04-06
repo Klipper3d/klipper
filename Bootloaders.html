@@ -1,0 +1,2046 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Bootloaders - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#bootloaders" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Bootloaders
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Features
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Frequently Asked Questions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Releases
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Configuration Changes
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contact
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Configuration reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotation distance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Configuration checks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bed leveling
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Delta calibration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Probe calibration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manual leveling
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bed Mesh
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop phase
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Resonance Compensation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Measuring Resonances
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Pressure advance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Commands templates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Status reference
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC drivers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Multiple Micro-controller Homing and Probing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Skew correction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Using PWM tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Code overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematics
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocol
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU commands
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS protocol
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contributing to Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Packaging Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Example configurations
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SDCard updates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi microcontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Bootloaders
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Bootloaders.html" class="md-nav__link md-nav__link--active">
+        Bootloaders
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#avr-micro-controllers" class="md-nav__link">
+    AVR micro-controllers
+  </a>
+  
+    <nav class="md-nav" aria-label="AVR micro-controllers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#atmega2560" class="md-nav__link">
+    Atmega2560
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1280" class="md-nav__link">
+    Atmega1280
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1284p" class="md-nav__link">
+    Atmega1284p
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#at90usb1286" class="md-nav__link">
+    At90usb1286
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega168" class="md-nav__link">
+    Atmega168
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam3-micro-controllers-arduino-due" class="md-nav__link">
+    SAM3 micro-controllers (Arduino Due)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam4-micro-controllers-duet-wifi" class="md-nav__link">
+    SAM4 micro-controllers (Duet Wifi)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd21-micro-controllers-arduino-zero" class="md-nav__link">
+    SAMD21 micro-controllers (Arduino Zero)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd51-micro-controllers-adafruit-metro-m4-and-similar" class="md-nav__link">
+    SAMD51 micro-controllers (Adafruit Metro-M4 and similar)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f103-micro-controllers-blue-pill-devices" class="md-nav__link">
+    STM32F103 micro-controllers (Blue Pill devices)
+  </a>
+  
+    <nav class="md-nav" aria-label="STM32F103 micro-controllers (Blue Pill devices)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103-with-stm32duino-bootloader" class="md-nav__link">
+    STM32F103 with stm32duino bootloader
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103-with-hid-bootloader" class="md-nav__link">
+    STM32F103 with HID bootloader
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f4-micro-controllers-skr-pro-11" class="md-nav__link">
+    STM32F4 micro-controllers (SKR Pro 1.1)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lpc176x-micro-controllers-smoothieboards" class="md-nav__link">
+    LPC176x micro-controllers (Smoothieboards)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-openocd-on-the-raspberry-pi" class="md-nav__link">
+    Running OpenOCD on the Raspberry PI
+  </a>
+  
+    <nav class="md-nav" aria-label="Running OpenOCD on the Raspberry PI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-openocd" class="md-nav__link">
+    Configure OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wire-the-raspberry-pi-to-the-target-chip" class="md-nav__link">
+    Wire the Raspberry Pi to the target chip
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-openocd" class="md-nav__link">
+    Run OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openocd-and-gdb" class="md-nav__link">
+    OpenOCD and gdb
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL filament width sensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Hall filament width sensor
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#avr-micro-controllers" class="md-nav__link">
+    AVR micro-controllers
+  </a>
+  
+    <nav class="md-nav" aria-label="AVR micro-controllers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#atmega2560" class="md-nav__link">
+    Atmega2560
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1280" class="md-nav__link">
+    Atmega1280
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1284p" class="md-nav__link">
+    Atmega1284p
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#at90usb1286" class="md-nav__link">
+    At90usb1286
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega168" class="md-nav__link">
+    Atmega168
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam3-micro-controllers-arduino-due" class="md-nav__link">
+    SAM3 micro-controllers (Arduino Due)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam4-micro-controllers-duet-wifi" class="md-nav__link">
+    SAM4 micro-controllers (Duet Wifi)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd21-micro-controllers-arduino-zero" class="md-nav__link">
+    SAMD21 micro-controllers (Arduino Zero)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd51-micro-controllers-adafruit-metro-m4-and-similar" class="md-nav__link">
+    SAMD51 micro-controllers (Adafruit Metro-M4 and similar)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f103-micro-controllers-blue-pill-devices" class="md-nav__link">
+    STM32F103 micro-controllers (Blue Pill devices)
+  </a>
+  
+    <nav class="md-nav" aria-label="STM32F103 micro-controllers (Blue Pill devices)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103-with-stm32duino-bootloader" class="md-nav__link">
+    STM32F103 with stm32duino bootloader
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103-with-hid-bootloader" class="md-nav__link">
+    STM32F103 with HID bootloader
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f4-micro-controllers-skr-pro-11" class="md-nav__link">
+    STM32F4 micro-controllers (SKR Pro 1.1)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lpc176x-micro-controllers-smoothieboards" class="md-nav__link">
+    LPC176x micro-controllers (Smoothieboards)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-openocd-on-the-raspberry-pi" class="md-nav__link">
+    Running OpenOCD on the Raspberry PI
+  </a>
+  
+    <nav class="md-nav" aria-label="Running OpenOCD on the Raspberry PI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-openocd" class="md-nav__link">
+    Configure OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wire-the-raspberry-pi-to-the-target-chip" class="md-nav__link">
+    Wire the Raspberry Pi to the target chip
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-openocd" class="md-nav__link">
+    Run OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openocd-and-gdb" class="md-nav__link">
+    OpenOCD and gdb
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Bootloaders.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="bootloaders">Bootloaders<a class="headerlink" href="#bootloaders" title="Permanent link">&para;</a></h1>
+<p>This document provides information on common bootloaders found on
+micro-controllers that Klipper supports.</p>
+<p>The bootloader is 3rd-party software that runs on the micro-controller
+when it is first powered on. It is typically used to flash a new
+application (eg, Klipper) to the micro-controller without requiring
+specialized hardware. Unfortunately, there is no industry wide
+standard for flashing a micro-controller, nor is there a standard
+bootloader that works across all micro-controllers. Worse, it is
+common for each bootloader to require a different set of steps to
+flash an application.</p>
+<p>If one can flash a bootloader to a micro-controller then one can
+generally also use that mechanism to flash an application, but care
+should be taken when doing this as one may inadvertently remove the
+bootloader. In contrast, a bootloader will generally only permit a
+user to flash an application. It is therefore recommended to use a
+bootloader to flash an application where possible.</p>
+<p>This document attempts to describe common bootloaders, the steps
+needed to flash a bootloader, and the steps needed to flash an
+application.  This document is not an authoritative reference; it is
+intended as a collection of useful information that the Klipper
+developers have accumulated.</p>
+<h2 id="avr-micro-controllers">AVR micro-controllers<a class="headerlink" href="#avr-micro-controllers" title="Permanent link">&para;</a></h2>
+<p>In general, the Arduino project is a good reference for bootloaders
+and flashing procedures on the 8-bit Atmel Atmega micro-controllers.
+In particular, the "boards.txt" file:
+<a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt"><a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt">https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt</a></a>
+is a useful reference.</p>
+<p>To flash a bootloader itself, the AVR chips require an external
+hardware flashing tool (which communicates with the chip using
+SPI). This tool can be purchased (for example, do a web search for
+"avr isp", "arduino isp", or "usb tiny isp"). It is also possible to
+use another Arduino or Raspberry Pi to flash an AVR bootloader (for
+example, do a web search for "program an avr using raspberry pi"). The
+examples below are written assuming an "AVR ISP Mk2" type device is in
+use.</p>
+<p>The "avrdude" program is the most common tool used to flash atmega
+chips (both bootloader flashing and application flashing).</p>
+<h3 id="atmega2560">Atmega2560<a class="headerlink" href="#atmega2560" title="Permanent link">&para;</a></h3>
+<p>This chip is typically found in the "Arduino Mega" and is very common
+in 3d printer boards.</p>
+<p>To flash the bootloader itself use something like:</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex&#39;
+
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U flash:w:stk500boot_v2_mega2560.hex
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>To flash an application use something like:</p>
+<div class="highlight"><pre><span></span><code>avrdude -cwiring -patmega2560 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h3 id="atmega1280">Atmega1280<a class="headerlink" href="#atmega1280" title="Permanent link">&para;</a></h3>
+<p>This chip is typically found in earlier versions of the "Arduino
+Mega".</p>
+<p>To flash the bootloader itself use something like:</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex&#39;
+
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U flash:w:ATmegaBOOT_168_atmega1280.hex
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>To flash an application use something like:</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1280 -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h3 id="atmega1284p">Atmega1284p<a class="headerlink" href="#atmega1284p" title="Permanent link">&para;</a></h3>
+<p>This chip is commonly found in "Melzi" style 3d printer boards.</p>
+<p>To flash the bootloader itself use something like:</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex&#39;
+
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega1284p.hex
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>To flash an application use something like:</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<p>Note that a number of "Melzi" style boards come preloaded with a
+bootloader that uses a baud rate of 57600. In this case, to flash an
+application use something like this instead:</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h3 id="at90usb1286">At90usb1286<a class="headerlink" href="#at90usb1286" title="Permanent link">&para;</a></h3>
+<p>This document does not cover the method to flash a bootloader to the
+At90usb1286 nor does it cover general application flashing to this
+device.</p>
+<p>The Teensy++ device from pjrc.com comes with a proprietary bootloader.
+It requires a custom flashing tool from
+<a href="https://github.com/PaulStoffregen/teensy_loader_cli"><a href="https://github.com/PaulStoffregen/teensy_loader_cli">https://github.com/PaulStoffregen/teensy_loader_cli</a></a>.
+One can flash an application with it using something like:</p>
+<div class="highlight"><pre><span></span><code>teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
+</code></pre></div>
+
+<h3 id="atmega168">Atmega168<a class="headerlink" href="#atmega168" title="Permanent link">&para;</a></h3>
+<p>The atmega168 has limited flash space. If using a bootloader, it is
+recommended to use the Optiboot bootloader. To flash that bootloader
+use something like:</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega168.hex&#39;
+
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0x04:m -U hfuse:w:0xDD:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega168.hex
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>To flash an application via the Optiboot bootloader use something
+like:</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h2 id="sam3-micro-controllers-arduino-due">SAM3 micro-controllers (Arduino Due)<a class="headerlink" href="#sam3-micro-controllers-arduino-due" title="Permanent link">&para;</a></h2>
+<p>It is not common to use a bootloader with the SAM3 mcu. The chip
+itself has a ROM that allows the flash to be programmed from 3.3V
+serial port or from USB.</p>
+<p>To enable the ROM, the "erase" pin is held high during a reset, which
+erases the flash contents, and causes the ROM to run. On an Arduino
+Due, this sequence can be accomplished by setting a baud rate of 1200
+on the "programming usb port" (the USB port closest to the power
+supply).</p>
+<p>The code at
+<a href="https://github.com/shumatech/BOSSA"><a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a></a>
+can be used to program the SAM3. It is recommended to use version 1.9
+or later.</p>
+<p>To flash an application use something like:</p>
+<div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
+bossac -U -p /dev/ttyACM0 -R
+</code></pre></div>
+
+<h2 id="sam4-micro-controllers-duet-wifi">SAM4 micro-controllers (Duet Wifi)<a class="headerlink" href="#sam4-micro-controllers-duet-wifi" title="Permanent link">&para;</a></h2>
+<p>It is not common to use a bootloader with the SAM4 mcu. The chip
+itself has a ROM that allows the flash to be programmed from 3.3V
+serial port or from USB.</p>
+<p>To enable the ROM, the "erase" pin is held high during a reset, which
+erases the flash contents, and causes the ROM to run.</p>
+<p>The code at
+<a href="https://github.com/shumatech/BOSSA"><a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a></a>
+can be used to program the SAM4. It is necessary to use version
+<code>1.8.0</code> or higher.</p>
+<p>To flash an application use something like:</p>
+<div class="highlight"><pre><span></span><code>bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
+</code></pre></div>
+
+<h2 id="samd21-micro-controllers-arduino-zero">SAMD21 micro-controllers (Arduino Zero)<a class="headerlink" href="#samd21-micro-controllers-arduino-zero" title="Permanent link">&para;</a></h2>
+<p>The SAMD21 bootloader is flashed via the ARM Serial Wire Debug (SWD)
+interface. This is commonly done with a dedicated SWD hardware dongle.
+Alternatively, one can use a
+<a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi with OpenOCD</a>.</p>
+<p>To flash a bootloader with OpenOCD use the following chip config:</p>
+<div class="highlight"><pre><span></span><code>source [find target/at91samdXX.cfg]
+</code></pre></div>
+
+<p>Obtain a bootloader - for example:</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/ArduinoCore-samd/raw/1.8.3/bootloaders/zero/samd21_sam_ba.bin&#39;
+</code></pre></div>
+
+<p>Flash with OpenOCD commands similar to:</p>
+<div class="highlight"><pre><span></span><code>at91samd bootloader 0
+program samd21_sam_ba.bin verify
+</code></pre></div>
+
+<p>The most common bootloader on the SAMD21 is the one found on the
+"Arduino Zero". It uses an 8KiB bootloader (the application must be
+compiled with a start address of 8KiB). One can enter this bootloader
+by double clicking the reset button. To flash an application use
+something like:</p>
+<div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 --offset=0x2000 -w out/klipper.bin -v -b -R
+</code></pre></div>
+
+<p>In contrast, the "Arduino M0" uses a 16KiB bootloader (the application
+must be compiled with a start address of 16KiB). To flash an
+application on this bootloader, reset the micro-controller and run the
+flash command within the first few seconds of boot - something like:</p>
+<div class="highlight"><pre><span></span><code>avrdude -c stk500v2 -p atmega2560 -P /dev/ttyACM0 -u -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h2 id="samd51-micro-controllers-adafruit-metro-m4-and-similar">SAMD51 micro-controllers (Adafruit Metro-M4 and similar)<a class="headerlink" href="#samd51-micro-controllers-adafruit-metro-m4-and-similar" title="Permanent link">&para;</a></h2>
+<p>Like the SAMD21, the SAMD51 bootloader is flashed via the ARM Serial
+Wire Debug (SWD) interface. To flash a bootloader with
+<a href="#running-openocd-on-the-raspberry-pi">OpenOCD on a Raspberry Pi</a> use
+the following chip config:</p>
+<div class="highlight"><pre><span></span><code>source [find target/atsame5x.cfg]
+</code></pre></div>
+
+<p>Obtain a bootloader - several bootloaders are available from
+<a href="https://github.com/adafruit/uf2-samdx1/releases/latest"><a href="https://github.com/adafruit/uf2-samdx1/releases/latest">https://github.com/adafruit/uf2-samdx1/releases/latest</a></a>. For example:</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/adafruit/uf2-samdx1/releases/download/v3.7.0/bootloader-itsybitsy_m4-v3.7.0.bin&#39;
+</code></pre></div>
+
+<p>Flash with OpenOCD commands similar to:</p>
+<div class="highlight"><pre><span></span><code>at91samd bootloader 0
+program bootloader-itsybitsy_m4-v3.7.0.bin verify
+at91samd bootloader 16384
+</code></pre></div>
+
+<p>The SAMD51 uses a 16KiB bootloader (the application must be compiled
+with a start address of 16KiB). To flash an application use something
+like:</p>
+<div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
+</code></pre></div>
+
+<h2 id="stm32f103-micro-controllers-blue-pill-devices">STM32F103 micro-controllers (Blue Pill devices)<a class="headerlink" href="#stm32f103-micro-controllers-blue-pill-devices" title="Permanent link">&para;</a></h2>
+<p>The STM32F103 devices have a ROM that can flash a bootloader or
+application via 3.3V serial. To access this ROM, one should connect
+the "boot 0" pin to high and "boot 1" pin to low, and then reset the
+device. The "stm32flash" package can then be used to flash the device
+using something like:</p>
+<div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
+</code></pre></div>
+
+<p>Note that if one is using a Raspberry Pi for the 3.3V serial, the
+stm32flash protocol uses a serial parity mode which the Raspberry Pi's
+"mini UART" does not support. See
+<a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts"><a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a></a>
+for details on enabling the full uart on the Raspberry Pi GPIO pins.</p>
+<p>After flashing, set both "boot 0" and "boot 1" back to low so that
+future resets boot from flash.</p>
+<h3 id="stm32f103-with-stm32duino-bootloader">STM32F103 with stm32duino bootloader<a class="headerlink" href="#stm32f103-with-stm32duino-bootloader" title="Permanent link">&para;</a></h3>
+<p>The "stm32duino" project has a USB capable bootloader - see:
+<a href="https://github.com/rogerclarkmelbourne/STM32duino-bootloader"><a href="https://github.com/rogerclarkmelbourne/STM32duino-bootloader">https://github.com/rogerclarkmelbourne/STM32duino-bootloader</a></a></p>
+<p>This bootloader can be flashed via 3.3V serial with something like:</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/rogerclarkmelbourne/STM32duino-bootloader/raw/master/binaries/generic_boot20_pc13.bin&#39;
+
+stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
+</code></pre></div>
+
+<p>This bootloader uses 8KiB of flash space (the application must be
+compiled with a start address of 8KiB). Flash an application with
+something like:</p>
+<div class="highlight"><pre><span></span><code>dfu-util -d 1eaf:0003 -a 2 -R -D out/klipper.bin
+</code></pre></div>
+
+<p>The bootloader typically runs for only a short period after boot. It
+may be necessary to time the above command so that it runs while the
+bootloader is still active (the bootloader will flash a board led
+while it is running). Alternatively, set the "boot 0" pin to low and
+"boot 1" pin to high to stay in the bootloader after a reset.</p>
+<h3 id="stm32f103-with-hid-bootloader">STM32F103 with HID bootloader<a class="headerlink" href="#stm32f103-with-hid-bootloader" title="Permanent link">&para;</a></h3>
+<p>The <a href="https://github.com/Serasidis/STM32_HID_Bootloader">HID bootloader</a> is a
+compact, driverless bootloader capable of flashing over USB. Also available
+is a <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">fork with builds specific to the SKR Mini E3 1.2</a>.</p>
+<p>For generic STM32F103 boards such as the blue pill it is possible to flash
+the bootloader via 3.3v serial using stm32flash as noted in the stm32duino
+section above, substituting the file name for the desired hid bootloader binary
+(ie: hid_generic_pc13.bin for the blue pill).</p>
+<p>It is not possible to use stm32flash for the SKR Mini E3 as the boot0 pin is
+tied directly to ground and not broken out via header pins.  It is recommended
+to use a STLink V2 with STM32Cubeprogrammer to flash the bootloader.   If you
+don't have access to a STLink it is also possible to use a
+<a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi and OpenOCD</a> with
+the following chip config:</p>
+<div class="highlight"><pre><span></span><code>source [find target/stm32f1x.cfg]
+</code></pre></div>
+
+<p>If you wish you can make a backup of the current flash with the following
+command.  Note that it may take some time to complete:</p>
+<div class="highlight"><pre><span></span><code>flash read_bank 0 btt_skr_mini_e3_backup.bin
+</code></pre></div>
+
+<p>finally, you can flash with commands similar to:</p>
+<div class="highlight"><pre><span></span><code>stm32f1x mass_erase 0
+program hid_btt_skr_mini_e3.bin verify 0x08000000
+</code></pre></div>
+
+<p>NOTES:</p>
+<ul>
+<li>The example above erases the chip then programs the bootloader.  Regardless
+  of the method chosen to flash it is recommended to erase the chip prior to
+  flashing.</li>
+<li>Prior flashing the SKR Mini E3 with this bootloader you should be aware
+  that you will no longer be able to update firmware via the sdcard.</li>
+<li>You may need to hold down the reset button on the board while launching
+  OpenOCD.  It should display something like:
+  <code>Open On-Chip Debugger 0.10.0+dev-01204-gc60252ac-dirty (2020-04-27-16:00)
+  Licensed under GNU GPL v2
+  For bug reports, read
+          http://openocd.org/doc/doxygen/bugs.html
+  DEPRECATED! use 'adapter speed' not 'adapter_khz'
+  Info : BCM2835 GPIO JTAG/SWD bitbang driver
+  Info : JTAG and SWD modes enabled
+  Info : clock speed 40 kHz
+  Info : SWD DPIDR 0x1ba01477
+  Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
+  Info : stm32f1x.cpu: external reset detected
+  Info : starting gdb server for stm32f1x.cpu on 3333
+  Info : Listening on port 3333 for gdb connections</code>
+  After which you can release the reset button.</li>
+</ul>
+<p>This bootloader requires 2KiB of flash space (the application
+must be compiled with a start address of 2KiB).</p>
+<p>The hid-flash program is used to upload a binary to the bootloader. You
+can install this software with the following commands:</p>
+<div class="highlight"><pre><span></span><code>sudo apt install libusb-1.0
+cd ~/klipper/lib/hidflash
+make
+</code></pre></div>
+
+<p>If the bootloader is running you can flash with something like:</p>
+<div class="highlight"><pre><span></span><code>~/klipper/lib/hidflash/hid-flash ~/klipper/out/klipper.bin
+</code></pre></div>
+
+<p>alternatively, you can use <code>make flash</code> to flash klipper directly:</p>
+<div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=1209:BEBA
+</code></pre></div>
+
+<p>OR if klipper has been previously flashed:</p>
+<div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=/dev/ttyACM0
+</code></pre></div>
+
+<p>It may be necessary to manually enter the bootloader, this can be done by
+setting "boot 0" low and "boot 1" high.  On the SKR Mini E3 "Boot 1" is
+not available, so it may be done by setting pin PA2 low if you flashed
+"hid_btt_skr_mini_e3.bin".  This pin is labeld "TX0" on the TFT header in
+the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
+which you can use to pull PA2 low.</p>
+<h2 id="stm32f4-micro-controllers-skr-pro-11">STM32F4 micro-controllers (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-micro-controllers-skr-pro-11" title="Permanent link">&para;</a></h2>
+<p>STM32F4 microcontrollers come equipped with a built-in system bootloader
+capable of flashing over USB (via DFU), 3.3v Serial, and various other
+methods (see STM Document AN2606 for more information).  Some
+STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
+bootloader.  The HID bootloader is available for STM32F405/407
+based boards should the user prefer flashing over USB over using the sdcard.
+Note that you may need to configure and build a version specific to your
+board, a <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">build for the SKR Pro 1.1 is available here</a>.</p>
+<p>Unless your board is DFU capable the most accessable flashing method
+is likely via 3.3v serial, which follows the same procedure as
+<a href="#stm32f103-micro-controllers-blue-pill-devices">flashing the STM32F103 using stm32flash</a>.
+For example:</p>
+<div class="highlight"><pre><span></span><code>wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta/hid_bootloader_SKR_PRO.bin
+
+stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
+</code></pre></div>
+
+<p>This bootloader requires 16Kib of flash space on the STM32F4 (the application
+must be compiled with a start address of 16KiB).</p>
+<p>As with the STM32F1, the STM32F4 uses the hid-flash tool to upload binaries to
+the MCU. See the instructions above for details on how to build and use
+hid-flash.</p>
+<p>It may be necessary to manually enter the bootloader, this can be done by
+setting "boot 0" low, "boot 1" high and plugging in the device.  After
+programming is complete unplug the device and set "boot 1" back to low
+so the application will be loaded.</p>
+<h2 id="lpc176x-micro-controllers-smoothieboards">LPC176x micro-controllers (Smoothieboards)<a class="headerlink" href="#lpc176x-micro-controllers-smoothieboards" title="Permanent link">&para;</a></h2>
+<p>This document does not describe the method to flash a bootloader
+itself - see:
+<a href="http://smoothieware.org/flashing-the-bootloader"><a href="http://smoothieware.org/flashing-the-bootloader">http://smoothieware.org/flashing-the-bootloader</a></a>
+for further information on that topic.</p>
+<p>It is common for Smoothieboards to come with a bootloader from:
+<a href="https://github.com/triffid/LPC17xx-DFU-Bootloader"><a href="https://github.com/triffid/LPC17xx-DFU-Bootloader">https://github.com/triffid/LPC17xx-DFU-Bootloader</a></a>.
+When using this bootloader the application must be compiled with a
+start address of 16KiB. The easiest way to flash an application with
+this bootloader is to copy the application file (eg,
+<code>out/klipper.bin</code>) to a file named <code>firmware.bin</code> on an SD card, and
+then to reboot the micro-controller with that SD card.</p>
+<h2 id="running-openocd-on-the-raspberry-pi">Running OpenOCD on the Raspberry PI<a class="headerlink" href="#running-openocd-on-the-raspberry-pi" title="Permanent link">&para;</a></h2>
+<p>OpenOCD is a software package that can perform low-level chip flashing
+and debugging. It can use the GPIO pins on a Raspberry Pi to
+communicate with a variety of ARM chips.</p>
+<p>This section describes how one can install and launch OpenOCD. It is
+derived from the instructions at:
+<a href="https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi"><a href="https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi">https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi</a></a></p>
+<p>Begin by downloading and compiling the software (each step may take
+several minutes and the "make" step may take 30+ minutes):</p>
+<div class="highlight"><pre><span></span><code>sudo apt-get update
+sudo apt-get install autoconf libtool telnet
+mkdir ~/openocd
+cd ~/openocd/
+git clone http://openocd.zylin.com/openocd
+cd openocd
+./bootstrap
+./configure --enable-sysfsgpio --enable-bcm2835gpio --prefix=/home/pi/openocd/install
+make
+make install
+</code></pre></div>
+
+<h3 id="configure-openocd">Configure OpenOCD<a class="headerlink" href="#configure-openocd" title="Permanent link">&para;</a></h3>
+<p>Create an OpenOCD config file:</p>
+<div class="highlight"><pre><span></span><code>nano ~/openocd/openocd.cfg
+</code></pre></div>
+
+<p>Use a config similar to the following:</p>
+<div class="highlight"><pre><span></span><code># Uses RPi pins: GPIO25 for SWDCLK, GPIO24 for SWDIO, GPIO18 for nRST
+source [find interface/raspberrypi2-native.cfg]
+bcm2835gpio_swd_nums 25 24
+bcm2835gpio_srst_num 18
+transport select swd
+
+# Use hardware reset wire for chip resets
+reset_config srst_only
+adapter_nsrst_delay 100
+adapter_nsrst_assert_width 100
+
+# Specify the chip type
+source [find target/atsame5x.cfg]
+
+# Set the adapter speed
+adapter_khz 40
+
+# Connect to chip
+init
+targets
+reset halt
+</code></pre></div>
+
+<h3 id="wire-the-raspberry-pi-to-the-target-chip">Wire the Raspberry Pi to the target chip<a class="headerlink" href="#wire-the-raspberry-pi-to-the-target-chip" title="Permanent link">&para;</a></h3>
+<p>Poweroff both the the Raspberry Pi and the target chip before wiring!
+Verify the target chip uses 3.3V prior to connecting to a Raspberry
+Pi!</p>
+<p>Connect GND, SWDCLK, SWDIO, and RST on the target chip to GND, GPIO25,
+GPIO24, and GPIO18 respectively on the Raspberry Pi.</p>
+<p>Then power up the Raspberry Pi and provide power to the target chip.</p>
+<h3 id="run-openocd">Run OpenOCD<a class="headerlink" href="#run-openocd" title="Permanent link">&para;</a></h3>
+<p>Run OpenOCD:</p>
+<div class="highlight"><pre><span></span><code>cd ~/openocd/
+sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
+</code></pre></div>
+
+<p>The above should cause OpenOCD to emit some text messages and then
+wait (it should not immediately return to the Unix shell prompt). If
+OpenOCD exits on its own or if it continues to emit text messages then
+double check the wiring.</p>
+<p>Once OpenOCD is running and is stable, one can send it commands via
+telnet. Open another ssh session and run the following:</p>
+<div class="highlight"><pre><span></span><code>telnet 127.0.0.1 4444
+</code></pre></div>
+
+<p>(One can exit telnet by pressing ctrl+] and then running the "quit"
+command.)</p>
+<h3 id="openocd-and-gdb">OpenOCD and gdb<a class="headerlink" href="#openocd-and-gdb" title="Permanent link">&para;</a></h3>
+<p>It is possible to use OpenOCD with gdb to debug Klipper. The following
+commands assume one is running gdb on a desktop class machine.</p>
+<p>Add the following to the OpenOCD config file:</p>
+<div class="highlight"><pre><span></span><code>bindto 0.0.0.0
+gdb_port 44444
+</code></pre></div>
+
+<p>Restart OpenOCD on the Raspberry Pi and then run the following Unix
+command on the desktop machine:</p>
+<div class="highlight"><pre><span></span><code>cd /path/to/klipper/
+gdb out/klipper.elf
+</code></pre></div>
+
+<p>Within gdb run:</p>
+<div class="highlight"><pre><span></span><code>target remote octopi:44444
+</code></pre></div>
+
+<p>(Replace "octopi" with the host name of the Raspberry Pi.) Once gdb is
+running it is possible to set breakpoints and to inspect registers.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Beaglebone.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Beaglebone" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Beaglebone
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="CANBUS.html" class="md-footer__link md-footer__link--next" aria-label="Next: CANBUS" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              CANBUS
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

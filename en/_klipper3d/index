@@ -1,0 +1,6 @@
+This directory defines the https://www.klipper3d.org/ website. The
+site is hosted using "github pages". The
+.github/workflows/klipper3d-deploy.yaml tool uses mkdocs (
+https://www.mkdocs.org/ ) to automatically convert the markdown files
+in the docs/ directory to html. In addition to the files in this
+directory, the docs/CNAME file also controls the website generation.
