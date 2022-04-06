@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220330: The format of the `printer.neopixel.color_data` status
+information for neopixel and dotstar modules has changed. The
+information is now stored as a list of color lists (instead of a list
+of dictionaries). See the [status reference](Status_Reference.md#led)
+for details.
+
 20220307: `M73` will no longer set print progress to 0 if `P` is missing.
 
 20220304: There is no longer a default for the `extruder` parameter of

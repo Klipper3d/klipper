@@ -11,6 +11,11 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
+#if CONFIG_MACH_SAME70 // Fixes for upstream header changes
+#define US_MR_CHMODE_NORMAL US_MR_USART_CHMODE_NORMAL
+#define US_MR_CPHA US_MR_SPI_CPHA
+#define US_MR_CPOL US_MR_SPI_CPOL
+#endif
 
 /****************************************************************
  * SPI/USART buses and pins
@@ -19,7 +24,7 @@
 struct spi_info {
     void *dev;
     uint32_t dev_id;
-    uint8_t miso_pin, mosi_pin, sck_pin, rxtx_periph, sck_periph;
+    uint8_t miso_pin, mosi_pin, sck_pin, rx_periph, tx_periph, sck_periph;
 };
 
 #if CONFIG_MACH_SAM3X
@@ -41,22 +46,50 @@ DECL_ENUMERATION_RANGE("spi_bus", "usart0", 1, 2);
 DECL_CONSTANT_STR("BUS_PINS_spi", "PA12,PA13,PA14");
 DECL_CONSTANT_STR("BUS_PINS_usart0", "PB0,PB1,PB13");
 DECL_CONSTANT_STR("BUS_PINS_usart1", "PA21,PA22,PA23");
+#elif CONFIG_MACH_SAME70
+DECL_ENUMERATION_RANGE("spi_bus", "spi0", 0, 2);
+DECL_ENUMERATION_RANGE("spi_bus", "usart0", 2, 3);
+DECL_CONSTANT_STR("BUS_PINS_spi0", "PD20,PD21,PD22");
+DECL_CONSTANT_STR("BUS_PINS_usart0", "PB0,PB1,PB13");
+DECL_CONSTANT_STR("BUS_PINS_usart1", "PA21,PB4,PA23");
+DECL_CONSTANT_STR("BUS_PINS_usart2", "PD15,PD16,PD17");
 #endif
 
 static const struct spi_info spi_bus[] = {
 #if CONFIG_MACH_SAM3X
-    { SPI0, ID_SPI0, GPIO('A', 25), GPIO('A', 26), GPIO('A', 27), 'A', 'A' },
-    { USART0, ID_USART0, GPIO('A', 10), GPIO('A', 11), GPIO('A', 17), 'A', 'B'},
-    { USART1, ID_USART1, GPIO('A', 12), GPIO('A', 13), GPIO('A', 16), 'A', 'A'},
-    { USART2, ID_USART2, GPIO('B', 21), GPIO('B', 20), GPIO('B', 24), 'A', 'A'},
+    { SPI0, ID_SPI0,
+        GPIO('A', 25), GPIO('A', 26), GPIO('A', 27), 'A', 'A', 'A'},
+    { USART0, ID_USART0,
+        GPIO('A', 10), GPIO('A', 11), GPIO('A', 17), 'A', 'A', 'B'},
+    { USART1, ID_USART1,
+        GPIO('A', 12), GPIO('A', 13), GPIO('A', 16), 'A', 'A', 'A'},
+    { USART2, ID_USART2,
+        GPIO('B', 21), GPIO('B', 20), GPIO('B', 24), 'A', 'A', 'A'},
 #elif CONFIG_MACH_SAM4S
-    { SPI, ID_SPI, GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A' },
-    { USART0, ID_USART0, GPIO('A', 5), GPIO('A', 6), GPIO('A', 2), 'A', 'B' },
-    { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},
+    { SPI, ID_SPI,
+        GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A', 'A'},
+    { USART0, ID_USART0,
+        GPIO('A', 5),  GPIO('A', 6),  GPIO('A', 2),  'A', 'A', 'B'},
+    { USART1, ID_USART1,
+        GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A', 'A'},
 #elif CONFIG_MACH_SAM4E
-    { SPI, ID_SPI, GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A' },
-    { USART0, ID_USART0, GPIO('B', 0), GPIO('B', 1), GPIO('B', 13), 'C', 'C' },
-    { USART1, ID_USART1, GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A'},
+    { SPI, ID_SPI,
+        GPIO('A', 12), GPIO('A', 13), GPIO('A', 14), 'A', 'A', 'A'},
+    { USART0, ID_USART0,
+        GPIO('B', 0),  GPIO('B', 1),  GPIO('B', 13), 'C', 'C', 'C'},
+    { USART1, ID_USART1,
+        GPIO('A', 21), GPIO('A', 22), GPIO('A', 23), 'A', 'A', 'A'},
+#elif CONFIG_MACH_SAME70
+    { SPI0, ID_SPI0,
+        GPIO('D', 20), GPIO('D', 21), GPIO('D', 22), 'B', 'B', 'B'},
+    { SPI1, ID_SPI1,
+        GPIO('C', 26), GPIO('C', 27), GPIO('C', 24), 'C', 'C', 'C'},
+    { USART0, ID_USART0,
+        GPIO('B', 0),  GPIO('B', 1),  GPIO('B', 13), 'C', 'C', 'C'},
+    { USART1, ID_USART1,
+        GPIO('A', 21), GPIO('B', 4),  GPIO('A', 23), 'A', 'D', 'A'},
+    { USART2, ID_USART2,
+        GPIO('D', 15), GPIO('D', 16), GPIO('D', 17), 'B', 'B', 'B'},
 #endif
 };
 
@@ -65,6 +98,8 @@ is_spihw(void *dev)
 {
 #if CONFIG_MACH_SAM3X
     return dev == SPI0;
+#elif CONFIG_MACH_SAME70
+    return (dev == SPI0) || (dev == SPI1);
 #else
     return dev == SPI;
 #endif
@@ -75,8 +110,8 @@ init_pins(uint32_t bus)
 {
     const struct spi_info *si = &spi_bus[bus];
     gpio_peripheral(si->sck_pin, si->sck_periph, 0);
-    gpio_peripheral(si->miso_pin, si->rxtx_periph, 1);
-    gpio_peripheral(si->mosi_pin, si->rxtx_periph, 0);
+    gpio_peripheral(si->miso_pin, si->rx_periph, 1);
+    gpio_peripheral(si->mosi_pin, si->tx_periph, 0);
     enable_pclock(si->dev_id);
 }
 
