@@ -1,0 +1,1927 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>底层引导程序 - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              底层引导程序
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="选择当前语言">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="清空当前内容" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        功能
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        常见问题
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        版本发布
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        配置变更
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        联系方式
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        安装
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        配置参考
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        旋转距离
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        配置检查
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        打印床调平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        三角校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        探针校准
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        手动调平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        床网
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        限位相位
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        共振补偿
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        共振值测量
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        压力提前
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        命令模板
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        状态参考
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC 驱动器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        复数微控制器归零与探高
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        切片软件
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        偏斜校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        使用 PWM 工具
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        代码总览
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        运动学
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        协议
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API 服务器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU命令
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS 协议
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        调试
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        基准测试
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        为 Klipper 做贡献
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        打包 Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        配置示例
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        通过SD卡更新
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi 微控制器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          底层引导程序
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Bootloaders.html" class="md-nav__link md-nav__link--active">
+        底层引导程序
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#avr" class="md-nav__link">
+    AVR 微控制器
+  </a>
+  
+    <nav class="md-nav" aria-label="AVR 微控制器">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#atmega2560" class="md-nav__link">
+    Atmega2560
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1280" class="md-nav__link">
+    Atmega1280
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1284p" class="md-nav__link">
+    Atmega1284p
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#at90usb1286" class="md-nav__link">
+    At90usb1286
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega168" class="md-nav__link">
+    Atmega168
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam3-arduino-due" class="md-nav__link">
+    SAM3 微控制器 (Arduino Due)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam4-duet-wifi" class="md-nav__link">
+    SAM4 微控制器 (Duet Wifi)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd21arduino-zero" class="md-nav__link">
+    SAMD21微控制器（Arduino Zero）
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd51-adafruit-metro-m4" class="md-nav__link">
+    SAMD51 微控制器(Adafruit Metro-M4及类似的开发板)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f103-blue-pill" class="md-nav__link">
+    STM32F103 微控制器（Blue Pill 开发板）
+  </a>
+  
+    <nav class="md-nav" aria-label="STM32F103 微控制器（Blue Pill 开发板）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stm32duino-stm32f103" class="md-nav__link">
+    带有 stm32duino 引导加载程序的 STM32F103
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hid-stm32f103" class="md-nav__link">
+    带有 HID 引导程序的STM32F103
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f4-skr-pro-11" class="md-nav__link">
+    STM32F4 微控制器 (SKR Pro 1.1)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lpc176xsmoothieboards" class="md-nav__link">
+    LPC176x微控制器（Smoothieboards）
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openocd" class="md-nav__link">
+    在树莓派上运行OpenOCD
+  </a>
+  
+    <nav class="md-nav" aria-label="在树莓派上运行OpenOCD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#openocd_1" class="md-nav__link">
+    配置OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    将树莓派与目标芯片相连
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openocd_2" class="md-nav__link">
+    运行OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openocdgdb" class="md-nav__link">
+    OpenOCD和gdb
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CAN 总线
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL 耗材宽度传感器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        霍尔耗材线径传感器
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#avr" class="md-nav__link">
+    AVR 微控制器
+  </a>
+  
+    <nav class="md-nav" aria-label="AVR 微控制器">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#atmega2560" class="md-nav__link">
+    Atmega2560
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1280" class="md-nav__link">
+    Atmega1280
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega1284p" class="md-nav__link">
+    Atmega1284p
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#at90usb1286" class="md-nav__link">
+    At90usb1286
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmega168" class="md-nav__link">
+    Atmega168
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam3-arduino-due" class="md-nav__link">
+    SAM3 微控制器 (Arduino Due)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sam4-duet-wifi" class="md-nav__link">
+    SAM4 微控制器 (Duet Wifi)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd21arduino-zero" class="md-nav__link">
+    SAMD21微控制器（Arduino Zero）
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samd51-adafruit-metro-m4" class="md-nav__link">
+    SAMD51 微控制器(Adafruit Metro-M4及类似的开发板)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f103-blue-pill" class="md-nav__link">
+    STM32F103 微控制器（Blue Pill 开发板）
+  </a>
+  
+    <nav class="md-nav" aria-label="STM32F103 微控制器（Blue Pill 开发板）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stm32duino-stm32f103" class="md-nav__link">
+    带有 stm32duino 引导加载程序的 STM32F103
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hid-stm32f103" class="md-nav__link">
+    带有 HID 引导程序的STM32F103
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stm32f4-skr-pro-11" class="md-nav__link">
+    STM32F4 微控制器 (SKR Pro 1.1)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lpc176xsmoothieboards" class="md-nav__link">
+    LPC176x微控制器（Smoothieboards）
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#openocd" class="md-nav__link">
+    在树莓派上运行OpenOCD
+  </a>
+  
+    <nav class="md-nav" aria-label="在树莓派上运行OpenOCD">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#openocd_1" class="md-nav__link">
+    配置OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    将树莓派与目标芯片相连
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openocd_2" class="md-nav__link">
+    运行OpenOCD
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openocdgdb" class="md-nav__link">
+    OpenOCD和gdb
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Bootloaders.md" title="编辑此页" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="_1">底层引导程序<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>本文档介绍Klipper支持的用于微控制器的底层引导程序（bootloader）。</p>
+<p>引导程序是第三方软件，在微控制器上电后优先运行。该程序可以在不需要特殊硬件（如烧录器）下对微控制器的程序进行刷写（如写入Klipper程序）。然而，目前还没有一刷写微控制器的工业标准，也没有一个适用于所有微控制器的标准引导程序。更麻烦的是，每种引导加载程序需要不同的步骤以触发刷写功能。</p>
+<p>如果能用某种方式将 bootloader 刷写到微控制器，使用该方式通常也能完成程序刷写操作，但是，这种直接刷写可能会将 bootloader 覆盖掉。相对地，bootloader 只允许用户刷写应用程序区域。因此，尽可能使用 bootloader 完成程序的刷写。</p>
+<p>该文档将尽可能介绍常见的bootloaders，刷入bootloader所需的步骤和触发bootloader进行程序刷写的流程。该文档亦非官方指引，这只是在Klipper开发人员使用过程中收集到的有用信息。</p>
+<h2 id="avr">AVR 微控制器<a class="headerlink" href="#avr" title="Permanent link">&para;</a></h2>
+<p>总体上来说，Arduino项目是8位Atmel Atmega微控制器的引导程序和刷写程序的好的参考。特别是" boards.txt "文件。 <a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt">https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt</a>是一个有用的参考。</p>
+<p>要刷写引导程序本身，AVR 芯片需要一个外部硬件刷写工具（它使用 SPI 与芯片进行通信）。这个工具可以购买（例如，在网上搜索 "avr isp"、"arduino isp "或 "usb tiny isp"）。也可以使用另一个Arduino或Raspberry Pi来闪存AVR引导程序（例如，在网上搜索 "用raspberry pi编程AVR"）。下面的例子是在假设使用 "AVR ISP Mk2 "类型的设备的情况下编写的。</p>
+<p>"avrdude "程序是最常用的工具，用于刷写atmega芯片（包括引导程序刷写和应用程序刷写）。</p>
+<h3 id="atmega2560">Atmega2560<a class="headerlink" href="#atmega2560" title="Permanent link">&para;</a></h3>
+<p>这个芯片通常出现在 "Arduino Mega" 中，在3D打印机主板中也十分普遍。</p>
+<p>要刷写引导程序本身，请使用类似以下的方法：</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex&#39;
+
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U flash:w:stk500boot_v2_mega2560.hex
+avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>要刷写一个应用程序使用：</p>
+<div class="highlight"><pre><span></span><code>avrdude -cwiring -patmega2560 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h3 id="atmega1280">Atmega1280<a class="headerlink" href="#atmega1280" title="Permanent link">&para;</a></h3>
+<p>这个芯片通常出现在早期版本的 "Arduino Mega "中。</p>
+<p>要刷写引导程序本身，请使用类似以下的方法：</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex&#39;
+
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U flash:w:ATmegaBOOT_168_atmega1280.hex
+avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>要刷写一个应用程序使用：</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1280 -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h3 id="atmega1284p">Atmega1284p<a class="headerlink" href="#atmega1284p" title="Permanent link">&para;</a></h3>
+<p>这种芯片通常出现在 "Melzi "式的3D打印机主板上。</p>
+<p>要刷写引导程序本身，请使用类似以下的方法：</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex&#39;
+
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega1284p.hex
+avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>要刷写一个应用程序使用：</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<p>注意，一些 "Melzi "风格的板子预载了一个使用57600波特率的引导程序。在这种情况下，要刷写一个应用程序，请使用类似这样的东西来代替：</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h3 id="at90usb1286">At90usb1286<a class="headerlink" href="#at90usb1286" title="Permanent link">&para;</a></h3>
+<p>本文件不包括向At90usb1286刷写引导程序的方法，也不包括向该设备刷写一般应用。</p>
+<p>来自pjrc.com的Teensy++设备带有一个专用的引导程序。它需要一个来自 <a href="https://github.com/PaulStoffregen/teensy_loader_cli">https://github.com/PaulStoffregen/teensy_loader_cli</a>的定制刷写工具。可以用这个工具来刷写一个应用程序，例如：</p>
+<div class="highlight"><pre><span></span><code>teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
+</code></pre></div>
+
+<h3 id="atmega168">Atmega168<a class="headerlink" href="#atmega168" title="Permanent link">&para;</a></h3>
+<p>atmega168的闪存空间有限。如果使用引导程序，建议使用Optiboot bootloader。要刷写该引导程序，请使用这个的方法：</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega168.hex&#39;
+
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0x04:m -U hfuse:w:0xDD:m -U lfuse:w:0xFF:m
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmega168.hex
+avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
+</code></pre></div>
+
+<p>要通过Optiboot bootloader 刷写一个应用程序，请使用以下方法：</p>
+<div class="highlight"><pre><span></span><code>avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h2 id="sam3-arduino-due">SAM3 微控制器 (Arduino Due)<a class="headerlink" href="#sam3-arduino-due" title="Permanent link">&para;</a></h2>
+<p>通常在 SAM 3 微控制器上不使用引导程序。芯片自带一个允许从3.3V 串口或从USB进行编程的ROM。</p>
+<p>为了启用ROM，将"erase"引脚在复位过程中保持高电平，这将擦除闪存的内容，并使ROM运行。在Arduino Due上，这个程序可以通过在 "programming usb port"（编程USB口，最靠近电源的USB端口）上设置1200的波特率来完成。</p>
+<p><a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a>中的代码可以用来为SAM3编程。建议使用1.9或更高版本。</p>
+<p>要刷写一个应用程序使用：</p>
+<div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
+bossac -U -p /dev/ttyACM0 -R
+</code></pre></div>
+
+<h2 id="sam4-duet-wifi">SAM4 微控制器 (Duet Wifi)<a class="headerlink" href="#sam4-duet-wifi" title="Permanent link">&para;</a></h2>
+<p>通常在 SAM4 微控制器中不使用引导程序。芯片自带一个可以从 3.3V 串口或 USB 进行编程的ROM。</p>
+<p>为了启用ROM，在复位过程中要将"erase"引脚保持为高电平，这将擦除闪存内容，并使ROM运行。</p>
+<p><a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a>中的代码可以用来为SAM4编程。需要使用<code>1.8.0</code>或更高的版本。</p>
+<p>要刷写一个应用程序使用：</p>
+<div class="highlight"><pre><span></span><code>bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
+</code></pre></div>
+
+<h2 id="samd21arduino-zero">SAMD21微控制器（Arduino Zero）<a class="headerlink" href="#samd21arduino-zero" title="Permanent link">&para;</a></h2>
+<p>SAMD21 引导加载程序通过 ARM 串行线调试 （SWD） 接口进行刷写，通常需要一个专用的 SWD 硬件转换器或者使用<a href="#running-openocd-on-the-raspberry-pi">安装了 OpenOCD 的 Raspberry Pi</a>来完成。</p>
+<p>要使用 OpenOCD 刷写引导加载程序，请使用以下芯片配置：</p>
+<div class="highlight"><pre><span></span><code>来源 [查找目标/at91samdXX.cfg]
+</code></pre></div>
+
+<p>获取引导加载程序 - 例如：</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/ArduinoCore-samd/raw/1.8.3/bootloaders/zero/samd21_sam_ba.bin&#39;
+</code></pre></div>
+
+<p>使用类似下面的 OpenOCD 命令来刷写：</p>
+<div class="highlight"><pre><span></span><code>at91samd bootloader 0
+program samd21_sam_ba.bin verify
+</code></pre></div>
+
+<p>SAMD21上最常见的启动引导程序可以在 "Arduino Zero "上找到。它使用一个 8KiB 的引导程序（应用程序必须以 8KiB 的起始地址进行编译），按下复位按钮两次就可以进入。要刷写一个程序，请使用类似以下的方法：</p>
+<div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 --offset=0x2000 -w out/klipper.bin -v -b -R
+</code></pre></div>
+
+<p>相比之下，"Arduino M0 "使用一个 16KiB 的启动引导程序（程序必须用 16KiB 的起始地址进行编译）。使用这个启动引导程序来刷写一个程序，请重置微控制器，并在启动的头几秒钟内运行刷写命令--类似如下命令：</p>
+<div class="highlight"><pre><span></span><code>avrdude -c stk500v2 -p atmega2560 -P /dev/ttyACM0 -u -Uflash:w:out/klipper.elf.hex:i
+</code></pre></div>
+
+<h2 id="samd51-adafruit-metro-m4">SAMD51 微控制器(Adafruit Metro-M4及类似的开发板)<a class="headerlink" href="#samd51-adafruit-metro-m4" title="Permanent link">&para;</a></h2>
+<p>和 SAMD21 一样，SAMD51 的启动引导程序也是通过 ARM 串行线调试（SWD）接口刷写的。要用<a href="#running-openocd-on-the-raspberry-pi">运行 OpenOCD的 Raspberry Pi</a>刷写引导程序，请使用以下芯片配置：</p>
+<div class="highlight"><pre><span></span><code>来源 [查找目标/atsame5x.cfg]
+</code></pre></div>
+
+<p>获得一个引导程序--很多引导程序可以从 <a href="https://github.com/adafruit/uf2-samdx1/releases/latest">https://github.com/adafruit/uf2-samdx1/releases/latest</a>获得。例如：</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/adafruit/uf2-samdx1/releases/download/v3.7.0/bootloader-itsybitsy_m4-v3.7.0.bin&#39;
+</code></pre></div>
+
+<p>使用类似下面的 OpenOCD 命令来刷写：</p>
+<div class="highlight"><pre><span></span><code>at91samd bootloader 0
+program bootloader-itsybitsy_m4-v3.7.0.bin verify
+at91samd bootloader 16384
+</code></pre></div>
+
+<p>SAMD51 使用 16KiB 的启动引导程序（应用程序必须以16KiB的起始地址进行编译）。要刷写一个应用程序，请使用类似以下的方法：</p>
+<div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
+</code></pre></div>
+
+<h2 id="stm32f103-blue-pill">STM32F103 微控制器（Blue Pill 开发板）<a class="headerlink" href="#stm32f103-blue-pill" title="Permanent link">&para;</a></h2>
+<p>STM32F103 产品线的芯片包含一个可以通过 3.3V 串口刷写引导程序或应用程序的ROM。要访问这个ROM，在"boot 0 "引脚接到高电平"boot 1 " 引脚接到低电平后重置芯片。然后，可以使用 "stm32flash "软件包，使用类似以下的命令刷写：</p>
+<div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
+</code></pre></div>
+
+<p>注意，如果使用树莓派的3.3V串口，stm32flash协议使用的串行奇偶校验模式，树莓派的 "mini UART "并不支持。关于在树莓派的GPIO引脚上启用完整的UART的细节，见 <a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a>。</p>
+<p>刷写后，将 "boot 0 "和 "boot 1 "都恢复设为低电平，以便在复位后从闪存启动。</p>
+<h3 id="stm32duino-stm32f103">带有 stm32duino 引导加载程序的 STM32F103<a class="headerlink" href="#stm32duino-stm32f103" title="Permanent link">&para;</a></h3>
+<p>"stm32duino "项目有一个USB功能的引导程序-参见： <a href="https://github.com/rogerclarkmelbourne/STM32duino-bootloader">https://github.com/rogerclarkmelbourne/STM32duino-bootloader</a></p>
+<p>这个引导程序可以通过3.3V的串口用类似以下的命令来刷写：</p>
+<div class="highlight"><pre><span></span><code>wget &#39;https://github.com/rogerclarkmelbourne/STM32duino-bootloader/raw/master/binaries/generic_boot20_pc13.bin&#39;
+
+stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
+</code></pre></div>
+
+<p>这个引导程序使用 8KiB 的闪存空间（应用程序必须以 8KiB 的起始地址编译）。刷写应用程序需要使用类似以下的命令：</p>
+<div class="highlight"><pre><span></span><code>dfu-util -d 1eaf:0003 -a 2 -R -D out/klipper.bin
+</code></pre></div>
+
+<p>启动引导程序通常只在启动后的一小段时间运行。在输入以上命令的时候，需要确保启动引导程序还在运行（启动引导程序运行的时候会控制板上的led闪烁）。此外，启动后如果设置“boot 0”引脚为低，设置“boot 1”引脚为高则可以一直停留在启动引导程序。</p>
+<h3 id="hid-stm32f103">带有 HID 引导程序的STM32F103<a class="headerlink" href="#hid-stm32f103" title="Permanent link">&para;</a></h3>
+<p><a href="https://github.com/Serasidis/STM32_HID_Bootloader">HID bootloader</a>是一个紧凑的、不包含驱动的启动引导程序，能够通过USB进行刷写。此外，还有一个<a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">针对SKR Mini E3 1.2构建的分支</a>。</p>
+<p>对于常见的STM32F103板，如Blue Pill，和 stm32duino 章节中一样，可以通过 3.3v 串行用stm32flash 刷写启动引导程序，将文件名替换为所需的 hid引导程序二进制文件（例如Blue Pill 使用的 hid_generic_pc13.bin）。</p>
+<p>SKR Mini E3无法使用stm32flash ，因为boot 0引脚被直接接到GND且没有跳线断开。推荐使用STLink V2通过STM32Cubeprogrammer刷写启动引导程序。如果你没有STLink ，也可以按照以下芯片配置使用<a href="#running-openocd-on-the-raspberry-pi">树莓派和OpenOCD</a> 刷写：</p>
+<div class="highlight"><pre><span></span><code>来源 [查找目标/stm32f1x.cfg]
+</code></pre></div>
+
+<p>如果你愿意，可以使用下面的命令备份当前闪存上的程序。请注意，这可能需要一些时间来完成备份：</p>
+<div class="highlight"><pre><span></span><code>flash read_bank 0 btt_skr_mini_e3_backup.bin
+</code></pre></div>
+
+<p>最后，你可以用类似以下的命令刷写固件：</p>
+<div class="highlight"><pre><span></span><code>stm32f1x mass_erase 0
+program hid_btt_skr_mini_e3.bin verify 0x08000000
+</code></pre></div>
+
+<p>注意：</p>
+<ul>
+<li>上面的例子是先擦除芯片，然后再写入引导程序。无论选择哪种方法刷写，都建议在刷写前擦除芯片。</li>
+<li>在用这个引导程序刷写SKR Mini E3之前，你需要知道之后你将不能再通过SD卡更新固件。</li>
+<li>You may need to hold down the reset button on the board while launching OpenOCD. It should display something like:
+   <code>Open On-Chip Debugger 0.10.0+dev-01204-gc60252ac-dirty (2020-04-27-16:00)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.org/doc/doxygen/bugs.html
+DEPRECATED! use 'adapter speed' not 'adapter_khz'
+Info : BCM2835 GPIO JTAG/SWD bitbang driver
+Info : JTAG and SWD modes enabled
+Info : clock speed 40 kHz
+Info : SWD DPIDR 0x1ba01477
+Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
+Info : stm32f1x.cpu: external reset detected
+Info : starting gdb server for stm32f1x.cpu on 3333
+Info : Listening on port 3333 for gdb connections</code>
+之后可以松开复位按钮。</li>
+</ul>
+<p>这个引导程序需要2KiB的闪存空间（应用程序必须以2KiB的起始地址进行编译）。</p>
+<p>hid-flash程序是用来上传二进制文件到启动引导程序的。你可以用以下命令安装这个软件：</p>
+<div class="highlight"><pre><span></span><code>sudo apt install libusb-1.0
+cd ~/klipper/lib/hidflash
+make
+</code></pre></div>
+
+<p>如果bootloader正在运行，你可以用这个来刷写：</p>
+<div class="highlight"><pre><span></span><code>~/klipper/lib/hidflash/hid-flash ~/klipper/out/klipper.bin
+</code></pre></div>
+
+<p>或者，你可以使用<code>make flash</code>来直接刷写klipper：</p>
+<div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=1209:BEBA
+</code></pre></div>
+
+<p>或者，如果klipper之前已经被写入过：</p>
+<div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=/dev/ttyACM0
+</code></pre></div>
+
+<p>可能需要手动进入引导程序，这可以通过设置 "boot 0 "的低电平和 "boot 1 "的高电平来完成。在SKR Mini E3上，"Boot 1 "是不可用的，所以如果你写入过"hid_btt_skr_mini_e3.bin"，可以通过设置PA2的低电平来完成。在SKR Mini E3的 "PIN "文件中，这个引脚在TFT插座上被标记为 "TX0"。在PA2旁边有一个接地引脚，你可以用它来把PA2拉低。</p>
+<h2 id="stm32f4-skr-pro-11">STM32F4 微控制器 (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-skr-pro-11" title="Permanent link">&para;</a></h2>
+<p>STM32F4微控制器配备了一个内置的系统引导程序，能够通过USB（通过DFU）、3.3v串口和其他各种方法进行刷写（更多信息见STM文件AN2606）。一些STM32F4板，如SKR Pro 1.1，不能进入DFU引导程序。基于STM32F405/407的板子可以使用HID引导程序，如果用户愿意通过USB刷写而不是使用SD卡。请注意，你可能需针对你的板子配置和构建一个特定的版本，<a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">针对SKR Pro 1.1的构建可以在这里找到</a>。</p>
+<p>除非你的板子有DFU功能，否则最容易的写入方法可能是通过3.3v的串口，这与<a href="#stm32f103-micro-controllers-blue-pill-devices">使用stm32flash刷写STM32F103</a>的步骤相同。例如：</p>
+<div class="highlight"><pre><span></span><code>wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta/hid_bootloader_SKR_PRO.bin
+
+stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
+</code></pre></div>
+
+<p>这个引导程序在STM32F4上需要16Kib的闪存空间（应用程序必须以16KiB的起始地址进行编译）。</p>
+<p>与STM32F1一样，STM32F4使用hid-flash工具来上传二进制文件到MCU。关于如何构建和使用hid-flash的细节，请参见上面的说明。</p>
+<p>可能需要手动进入引导程序，这可以通过设置 "boot 0 "为低电平，"boot 1 "为高电平并上电来完成。编程完成后，设备断电，将 "boot 1 "重设为低电平，这样应用程序就会被加载。</p>
+<h2 id="lpc176xsmoothieboards">LPC176x微控制器（Smoothieboards）<a class="headerlink" href="#lpc176xsmoothieboards" title="Permanent link">&para;</a></h2>
+<p>本文件没有描述刷写引导程序本身的方法--见： <a href="http://smoothieware.org/flashing-the-bootloader">http://smoothieware.org/flashing-the-bootloader</a>以获得关于该主题的进一步信息。</p>
+<p>Smoothieboards通常带有一个来自 <a href="https://github.com/triffid/LPC17xx-DFU-Bootloader">https://github.com/triffid/LPC17xx-DFU-Bootloader</a>的bootloader。当使用这个引导程序时，应用程序必须以16KiB的起始地址进行编译。用这个引导程序刷写应用程序的最简单方法是将应用程序文件（例如<code>out/klipper.bin</code>）复制到SD卡上一个名为<code>firmware.bin</code>的文件，然后用该SD卡重新启动微控制器。</p>
+<h2 id="openocd">在树莓派上运行OpenOCD<a class="headerlink" href="#openocd" title="Permanent link">&para;</a></h2>
+<p>OpenOCD是一个软件包，可以进行底层的芯片编程和调试。它可以使用树莓派上的GPIO引脚与各种ARM芯片通信。</p>
+<p>本节描述了如何安装和启动OpenOCD。它来自于以下的说明： <a href="https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi">https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi</a></p>
+<p>开始下载和编译软件（每个步骤可能需要数分钟，"make "步骤可能需要30分钟以上）：</p>
+<div class="highlight"><pre><span></span><code>sudo apt-get update
+sudo apt-get install autoconf libtool telnet
+mkdir ~/openocd
+cd ~/openocd/
+git clone http://openocd.zylin.com/openocd
+cd openocd
+./bootstrap
+./configure --enable-sysfsgpio --enable-bcm2835gpio --prefix=/home/pi/openocd/install
+make
+make install
+</code></pre></div>
+
+<h3 id="openocd_1">配置OpenOCD<a class="headerlink" href="#openocd_1" title="Permanent link">&para;</a></h3>
+<p>创建一个OpenOCD配置文件：</p>
+<div class="highlight"><pre><span></span><code>nano ~/openocd/openocd.cfg
+</code></pre></div>
+
+<p>使用类似于以下的配置：</p>
+<div class="highlight"><pre><span></span><code># Uses RPi pins: GPIO25 for SWDCLK, GPIO24 for SWDIO, GPIO18 for nRST
+source [find interface/raspberrypi2-native.cfg]
+bcm2835gpio_swd_nums 25 24
+bcm2835gpio_srst_num 18
+transport select swd
+
+# Use hardware reset wire for chip resets
+reset_config srst_only
+adapter_nsrst_delay 100
+adapter_nsrst_assert_width 100
+
+# Specify the chip type
+source [find target/atsame5x.cfg]
+
+# Set the adapter speed
+adapter_khz 40
+
+# Connect to chip
+init
+targets
+reset halt
+</code></pre></div>
+
+<h3 id="_2">将树莓派与目标芯片相连<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>在接线之前，请关闭树莓派和目标芯片的电源! 在连接到树莓派之前，请确认目标芯片使用3.3V电压!</p>
+<p>将目标芯片上的GND、SWDCLK、SWDIO和RST分别连接到树莓派上的GND、GPIO25、GPIO24和GPIO18。</p>
+<p>然后给树莓派上电，再给目标芯片供电。</p>
+<h3 id="openocd_2">运行OpenOCD<a class="headerlink" href="#openocd_2" title="Permanent link">&para;</a></h3>
+<p>运行OpenOCD：</p>
+<div class="highlight"><pre><span></span><code>cd ~/openocd/
+sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
+</code></pre></div>
+
+<p>上述操作应该使OpenOCD输出一些文本信息，然后等待（它不会立即返回到Unix shell提示符）。如果OpenOCD自己退出或继续输出文本信息，那么请仔细检查接线。</p>
+<p>一旦OpenOCD运行稳定，就可以通过telnet向它发送命令。打开另一个ssh会话，运行下面的命令：</p>
+<div class="highlight"><pre><span></span><code>telnet 127.0.0.1 4444
+</code></pre></div>
+
+<p>(可以按ctrl+]退出telnet，然后运行 "quit "命令。)</p>
+<h3 id="openocdgdb">OpenOCD和gdb<a class="headerlink" href="#openocdgdb" title="Permanent link">&para;</a></h3>
+<p>可以使用OpenOCD和gdb来调试Klipper。下面的命令假设是在台式机上运行gdb。</p>
+<p>在OpenOCD的配置文件中加入以下内容：</p>
+<div class="highlight"><pre><span></span><code>bindto 0.0.0.0
+gdb_port 44444
+</code></pre></div>
+
+<p>在树莓派上重新启动OpenOCD，然后在台式机上运行以下Unix命令：</p>
+<div class="highlight"><pre><span></span><code>cd /path/to/klipper/
+gdb out/klipper.elf
+</code></pre></div>
+
+<p>在gdb中运行：</p>
+<div class="highlight"><pre><span></span><code>target remote octopi:44444
+</code></pre></div>
+
+<p>(用树莓派的主机名替换 "octopi"）一旦gdb运行，就可以设置断点并检查寄存器。</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            回到页面顶部
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="页脚">
+      
+        
+        <a href="Beaglebone.html" class="md-footer__link md-footer__link--prev" aria-label="上一页: Beaglebone" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              Beaglebone
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="CANBUS.html" class="md-footer__link md-footer__link--next" aria-label="下一页: CAN 总线" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                下一页
+              </span>
+              CAN 总线
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.term.missing": "\u7f3a\u5c11", "select.version.title": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

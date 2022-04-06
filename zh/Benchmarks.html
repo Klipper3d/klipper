@@ -1,0 +1,2161 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>基准测试 - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              基准测试
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="选择当前语言">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="清空当前内容" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        功能
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        常见问题
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        版本发布
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        配置变更
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        联系方式
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        安装
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        配置参考
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        旋转距离
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        配置检查
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        打印床调平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        三角校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        探针校准
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        手动调平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        床网
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        限位相位
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        共振补偿
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        共振值测量
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        压力提前
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        命令模板
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        状态参考
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC 驱动器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        复数微控制器归零与探高
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        切片软件
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        偏斜校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        使用 PWM 工具
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        代码总览
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        运动学
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        协议
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API 服务器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU命令
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS 协议
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        调试
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          基准测试
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Benchmarks.html" class="md-nav__link md-nav__link--active">
+        基准测试
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#micro-controller" class="md-nav__link">
+    微控制器（Micro-controller）基准测试
+  </a>
+  
+    <nav class="md-nav" aria-label="微控制器（Micro-controller）基准测试">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avr" class="md-nav__link">
+    AVR步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arduino-due" class="md-nav__link">
+    Arduino Due 的步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duet-maestro" class="md-nav__link">
+    Duet Maestro 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duet-wifi" class="md-nav__link">
+    Duet Wifi 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#beaglebone-pru" class="md-nav__link">
+    Beaglebone PRU 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f042" class="md-nav__link">
+    STM32F042 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103" class="md-nav__link">
+    STM32F103 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f4" class="md-nav__link">
+    STM32F4 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32g0b1" class="md-nav__link">
+    STM32G0B1 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lpc176x" class="md-nav__link">
+    LPC176x 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#samd21" class="md-nav__link">
+    SAMD21 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#samd51" class="md-nav__link">
+    SAMD51 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rp2040" class="md-nav__link">
+    RP2040 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-mcu" class="md-nav__link">
+    Linux MCU 步速率基准测试
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-dispatch" class="md-nav__link">
+    Command dispatch 基准测试
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#host" class="md-nav__link">
+    Host 基准测试
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        为 Klipper 做贡献
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        打包 Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        配置示例
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        通过SD卡更新
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi 微控制器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        底层引导程序
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CAN 总线
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL 耗材宽度传感器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        霍尔耗材线径传感器
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#micro-controller" class="md-nav__link">
+    微控制器（Micro-controller）基准测试
+  </a>
+  
+    <nav class="md-nav" aria-label="微控制器（Micro-controller）基准测试">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avr" class="md-nav__link">
+    AVR步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arduino-due" class="md-nav__link">
+    Arduino Due 的步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duet-maestro" class="md-nav__link">
+    Duet Maestro 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duet-wifi" class="md-nav__link">
+    Duet Wifi 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#beaglebone-pru" class="md-nav__link">
+    Beaglebone PRU 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f042" class="md-nav__link">
+    STM32F042 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103" class="md-nav__link">
+    STM32F103 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f4" class="md-nav__link">
+    STM32F4 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32g0b1" class="md-nav__link">
+    STM32G0B1 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lpc176x" class="md-nav__link">
+    LPC176x 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#samd21" class="md-nav__link">
+    SAMD21 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#samd51" class="md-nav__link">
+    SAMD51 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rp2040" class="md-nav__link">
+    RP2040 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-mcu" class="md-nav__link">
+    Linux MCU 步速率基准测试
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-dispatch" class="md-nav__link">
+    Command dispatch 基准测试
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#host" class="md-nav__link">
+    Host 基准测试
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Benchmarks.md" title="编辑此页" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="_1">基准测试<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>这个文档解释了Klipper的基准测试。</p>
+<h2 id="micro-controller">微控制器（Micro-controller）基准测试<a class="headerlink" href="#micro-controller" title="Permanent link">&para;</a></h2>
+<p>本节描述了用于生成 Klipper 微控制器步进率（step rate）基准的机制。</p>
+<p>基准的主要目标是提供一个一致的机制，用于测量软件中编码更改的影响。次要目标是提供高级别指标，用于比较芯片和软件平台之间的性能。</p>
+<p>步进率(stepping rate)基准是为了找到硬件和软件可以达到的最大步进率。这个基准步进率在日常使用中是无法实现的，因为Klipper在任何实际使用中都需要执行其他任务（例如，MCU/主机通信、温度读取、限位检查）。</p>
+<p>一般而言，基准测试的引脚被选择用于闪烁 LED 或其他安全引脚。 <strong> 在运行基准测试之前，始终验证驱动配置的引脚是安全的。</strong> 不建议在基准测试期间驱动实际的步进器。</p>
+<h3 id="_2">步进率基准测试<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>测试是使用console.py工具进行的（在<Debugging.md>中描述）。为特定的硬件平台配置微控制器（见下文），然后将以下内容剪切并粘贴到console.py终端窗口:</p>
+<div class="highlight"><pre><span></span><code>SET start_clock {clock+freq}
+SET ticks 1000
+
+reset_step_clock oid=0 clock={start_clock}
+set_next_step_dir oid=0 dir=0
+queue_step oid=0 interval={ticks} count=60000 add=0
+set_next_step_dir oid=0 dir=1
+queue_step oid=0 interval=3000 count=1 add=0
+
+reset_step_clock oid=1 clock={start_clock}
+set_next_step_dir oid=1 dir=0
+queue_step oid=1 interval={ticks} count=60000 add=0
+set_next_step_dir oid=1 dir=1
+queue_step oid=1 interval=3000 count=1 add=0
+
+reset_step_clock oid=2 clock={start_clock}
+set_next_step_dir oid=2 dir=0
+queue_step oid=2 interval={ticks} count=60000 add=0
+set_next_step_dir oid=2 dir=1
+queue_step oid=2 interval=3000 count=1 add=0
+</code></pre></div>
+
+<p>以上测试三个步进器同时步进。如果运行上述程序的结果是 "重新安排定时器在过去 "或 "步进器在过去太远 "的错误，则表明<code>ticks</code>参数太低（它导致步进速度太快）。我们的目标是找到能够可靠地导致成功完成测试的最低的ticks参数设置。应该可以将ticks参数一分为二，直到找到一个稳定的值。</p>
+<p>在失败的情况下，可以复制和粘贴以下内容来清除错误，为下一次测试做准备：</p>
+<div class="highlight"><pre><span></span><code>clear_shutdown
+</code></pre></div>
+
+<p>为了获得单一步进电机的基准测试，使用了相同的配置序列，但只将上述测试的第一块剪切并粘贴到 console.py 窗口。</p>
+<p>为了生成 <a href="Features.html">功能</a> 文档中的基准测试结果，每秒总步数的计算方法是将活动步进器的数量与标称 mcu 频率相乘，然后除以最终的 ticks 参数。结果四舍五入到最接近的 K。例如，使用三个活动步进器：</p>
+<div class="highlight"><pre><span></span><code>ECHO Test result is: {&quot;%.0fK&quot; % (3. * freq / ticks / 1000.)}
+</code></pre></div>
+
+<p>基准的运行参数必须和 TMC 驱动相匹配。对于支持 <code>STEPPER_BOTH_EDGE=1</code> 的微控制器（控制台启动时<code>MCU config</code>行中会报告）使用 <code>step_pulse_duration=0</code> 和 <code>invert_step=-1</code> 来启用步进脉冲的两边上的优化。对于其他微控制器，使用对应 100ns 的 <code>step_pulse_duration</code>。</p>
+<h3 id="avr">AVR步进率基准测试<a class="headerlink" href="#avr" title="Permanent link">&para;</a></h3>
+<p>在AVR芯片上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PA5 dir_pin=PA4 invert_step=0 step_pulse_ticks=32
+config_stepper oid=1 step_pin=PA3 dir_pin=PA2 invert_step=0 step_pulse_ticks=32
+config_stepper oid=2 step_pin=PC7 dir_pin=PC6 invert_step=0 step_pulse_ticks=32
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次运行使用了提交 <code>59314d99</code> 与 gcc 版本 <code>avr-gcc （GCC） 5.4.0</code>。16Mhz 和 20Mhz 测试都使用了按 atmega644p 配置的 simulavr 运行（以前的测试已经确认了16Mhz at90usb 和16Mhz atmega2560 的实际性能与 simulavr 结果相似）。</p>
+<table>
+<thead>
+<tr>
+<th>avr</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>102</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>486</td>
+</tr>
+</tbody>
+</table>
+<h3 id="arduino-due">Arduino Due 的步速率基准测试<a class="headerlink" href="#arduino-due" title="Permanent link">&para;</a></h3>
+<p>以下是在Due上使用的配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PB27 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB26 dir_pin=PC30 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA21 dir_pin=PC30 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本为 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>。</p>
+<table>
+<thead>
+<tr>
+<th>sam3x8e</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>66</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>257</td>
+</tr>
+</tbody>
+</table>
+<h3 id="duet-maestro">Duet Maestro 步进率基准测试<a class="headerlink" href="#duet-maestro" title="Permanent link">&para;</a></h3>
+<p>在Duet Maestro上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PC26 dir_pin=PC18 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PC26 dir_pin=PA8 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PC26 dir_pin=PB4 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本为 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>。</p>
+<table>
+<thead>
+<tr>
+<th>sam4s8c</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>71</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>260</td>
+</tr>
+</tbody>
+</table>
+<h3 id="duet-wifi">Duet Wifi 步进率基准测试<a class="headerlink" href="#duet-wifi" title="Permanent link">&para;</a></h3>
+<p>在Duet Wifi上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PD6 dir_pin=PD11 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PD7 dir_pin=PD12 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PD8 dir_pin=PD13 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本 <code>gcc 版本 10.3.1 20210621（发布版） (GNU Arm Embedded Toolchain 10.3-2021.07)</code>。</p>
+<table>
+<thead>
+<tr>
+<th>sam4e8e</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>48</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>215</td>
+</tr>
+</tbody>
+</table>
+<h3 id="beaglebone-pru">Beaglebone PRU 步进率基准测试<a class="headerlink" href="#beaglebone-pru" title="Permanent link">&para;</a></h3>
+<p>在PRU上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=gpio0_23 dir_pin=gpio1_12 invert_step=0 step_pulse_ticks=20
+config_stepper oid=1 step_pin=gpio1_15 dir_pin=gpio0_26 invert_step=0 step_pulse_ticks=20
+config_stepper oid=2 step_pin=gpio0_22 dir_pin=gpio2_1 invert_step=0 step_pulse_ticks=20
+finalize_config crc=0
+</code></pre></div>
+
+<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本为 <code>pru-gcc (GCC) 8.0.0 20170530（实验版）</code>。</p>
+<table>
+<thead>
+<tr>
+<th>可编程实时单元</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>231</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>847</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stm32f042">STM32F042 步进率基准测试<a class="headerlink" href="#stm32f042" title="Permanent link">&para;</a></h3>
+<p>在STM32F042上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PA1 dir_pin=PA2 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PA3 dir_pin=PA2 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PB8 dir_pin=PA2 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本为 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>。</p>
+<table>
+<thead>
+<tr>
+<th>stm32f042</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>59</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>249</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stm32f103">STM32F103 步速率基准测试<a class="headerlink" href="#stm32f103" title="Permanent link">&para;</a></h3>
+<p>在STM32F103上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PC13 dir_pin=PB5 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB3 dir_pin=PB6 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA4 dir_pin=PB7 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本为 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>。</p>
+<table>
+<thead>
+<tr>
+<th>stm32f103</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>61</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>264</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stm32f4">STM32F4 步进率基准测试<a class="headerlink" href="#stm32f4" title="Permanent link">&para;</a></h3>
+<p>在STM32F4上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PA5 dir_pin=PB5 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次运行使用了提交<code>59314d99</code>，gcc版本<code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>。STM32F407 的结果是通过在 STM32F446 上运行 STM32F407 二进制文件得到的（因此时钟是 168Mhz ）。</p>
+<table>
+<thead>
+<tr>
+<th>stm32f446</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>46</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>205</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>stm32f407</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>46</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>205</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stm32g0b1">STM32G0B1 步速率基准测试<a class="headerlink" href="#stm32g0b1" title="Permanent link">&para;</a></h3>
+<p>在 STM32G0B1 上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PB13 dir_pin=PB12 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB10 dir_pin=PB2 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PB0 dir_pin=PC5 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>测试最后在提交 <code>247cd753</code> 上运行，gcc 版本为 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>。</p>
+<table>
+<thead>
+<tr>
+<th>stm32f042</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>58</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>243</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lpc176x">LPC176x 步进率基准测试<a class="headerlink" href="#lpc176x" title="Permanent link">&para;</a></h3>
+<p>在LPC176x上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=P1.20 dir_pin=P1.18 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=P1.21 dir_pin=P1.18 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次运行使用了提交 <code>59314d99</code>，gcc 版本 <code>arm-none-eabi-gcc （Fedora 10.2.0-4.fc34） 10.2.0</code>。120Mhz LPC1769 的结果是通过将 LPC1768 超频到 120Mhz 而获得的。</p>
+<table>
+<thead>
+<tr>
+<th>lpc1768</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>52</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>222</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>lpc1769</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>51</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>222</td>
+</tr>
+</tbody>
+</table>
+<h3 id="samd21">SAMD21 步速率基准测试<a class="headerlink" href="#samd21" title="Permanent link">&para;</a></h3>
+<p>在SAMD21上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PA27 dir_pin=PA20 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB3 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA17 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次运行使用了提交 <code>59314d99</code>，gcc 版本 <code>arm-none-eabi-gcc （Fedora 10.2.0-4.fc34） 10.2.0</code> 在 SAMD21G18 微控制器上。</p>
+<table>
+<thead>
+<tr>
+<th>SAMD21</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>70</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>306</td>
+</tr>
+</tbody>
+</table>
+<h3 id="samd51">SAMD51 步速率基准测试<a class="headerlink" href="#samd51" title="Permanent link">&para;</a></h3>
+<p>在SAMD51上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PA22 dir_pin=PA20 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PA22 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA22 dir_pin=PA19 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次运行使用了提交 <code>59314d99</code> 与 gcc 版本 <code>arm-none-eabi-gcc （Fedora 10.2.0-4.fc34） 10.2.0</code> 在 SAMD51J19A 微控制器上运行的。</p>
+<table>
+<thead>
+<tr>
+<th>SAMD51</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>39</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>191</td>
+</tr>
+<tr>
+<td>1 stepper (200Mhz)</td>
+<td>39</td>
+</tr>
+<tr>
+<td>3 stepper (200Mhz)</td>
+<td>181</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rp2040">RP2040 步速率基准测试<a class="headerlink" href="#rp2040" title="Permanent link">&para;</a></h3>
+<p>RP2040 上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=gpio25 dir_pin=gpio3 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=gpio26 dir_pin=gpio4 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=gpio27 dir_pin=gpio5 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次在 Raspberry Pi Pico 板上使用 gcc 版本 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>和提交 <code>59314d99</code> 运行。</p>
+<table>
+<thead>
+<tr>
+<th>rp2040</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>5</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>22</td>
+</tr>
+</tbody>
+</table>
+<h3 id="linux-mcu">Linux MCU 步速率基准测试<a class="headerlink" href="#linux-mcu" title="Permanent link">&para;</a></h3>
+<p>树莓派上使用以下配置序列：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=gpio2 dir_pin=gpio3 invert_step=0 step_pulse_ticks=5
+config_stepper oid=1 step_pin=gpio4 dir_pin=gpio5 invert_step=0 step_pulse_ticks=5
+config_stepper oid=2 step_pin=gpio6 dir_pin=gpio17 invert_step=0 step_pulse_ticks=5
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次运行使用了提交 <code>59314d99</code> 与 gcc 版本 <code>gcc （Raspbian 8.3.0-6+rpi1） 8.3.0</code> 在 Raspberry Pi 3 （修订版 a02082） 上运行。在这个基准测试中很难获得稳定的结果。</p>
+<table>
+<thead>
+<tr>
+<th>Linux (RPi3)</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>160</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>380</td>
+</tr>
+</tbody>
+</table>
+<h2 id="command-dispatch">Command dispatch 基准测试<a class="headerlink" href="#command-dispatch" title="Permanent link">&para;</a></h2>
+<p>命令调度基准测试微控制器可以处理多少个 "dummy"命令。它主要是对硬件通信机制的测试。该测试使用console.py工具（在<Debugging.md>中描述）运行。以下是剪切并粘贴到console.py终端窗口的内容:</p>
+<div class="highlight"><pre><span></span><code>DELAY {clock + 2*freq} get_uptime
+FLOOD 100000 0.0 debug_nop
+get_uptime
+</code></pre></div>
+
+<p>当测试完成后，确定两个 "正常运行时间 "响应信息中报告的时钟之间的差异。然后，每秒钟的总命令数是<code>100000 * mcu_frequency / clock_diff</code>。</p>
+<p>注意，这个测试可能会使Raspberry Pi的USB/CPU容量达到饱和。如果在Raspberry Pi、Beaglebone或类似的主机上运行，那么要增加延迟（例如，<code>DELAY {clock + 20*freq} get_uptime</code>）。在适用的情况下，下面的基准是用控制台.py在桌面类机器上运行，设备通过高速集线器连接。</p>
+<table>
+<thead>
+<tr>
+<th>MCU</th>
+<th>Rate</th>
+<th>Build</th>
+<th>Build compiler</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>stm32f042 (CAN)</td>
+<td>18K</td>
+<td>c105adc8</td>
+<td>arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1</td>
+</tr>
+<tr>
+<td>atmega2560 (串行总线)</td>
+<td>23K</td>
+<td>b161a69e</td>
+<td>avr-gcc (GCC) 4.8.1</td>
+</tr>
+<tr>
+<td>sam3x8e (串行总线)</td>
+<td>23K</td>
+<td>b161a69e</td>
+<td>arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0</td>
+</tr>
+<tr>
+<td>at90usb1286 (USB)</td>
+<td>75K</td>
+<td>01d2183f</td>
+<td>avr-gcc (GCC) 5.4.0</td>
+</tr>
+<tr>
+<td>samd21 (USB)</td>
+<td>223K</td>
+<td>01d2183f</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>PRU（共享内存）</td>
+<td>260K</td>
+<td>c5968a08</td>
+<td>pru-gcc (GCC) 8.0.0 20170530 (experimental)</td>
+</tr>
+<tr>
+<td>stm32f103 (USB)</td>
+<td>355K</td>
+<td>01d2183f</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>sam3x8e (USB)</td>
+<td>418K</td>
+<td>01d2183f</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>lpc1768 (USB)</td>
+<td>534K</td>
+<td>01d2183f</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>lpc1769 (USB)</td>
+<td>628K</td>
+<td>01d2183f</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>sam4s8c (USB)</td>
+<td>650K</td>
+<td>8d4a5c16</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>samd51 (USB)</td>
+<td>864K</td>
+<td>01d2183f</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>stm32f446 (USB)</td>
+<td>870K</td>
+<td>01d2183f</td>
+<td>arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0</td>
+</tr>
+<tr>
+<td>rp2040 (USB)</td>
+<td>873K</td>
+<td>c5667193</td>
+<td>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="host">Host 基准测试<a class="headerlink" href="#host" title="Permanent link">&para;</a></h2>
+<p>可以使用“批处理模式”处理机制（在 <Debugging.md> 中描述）在主机软件上运行时序测试。这通常是通过选择一个大而复杂的 G 代码文件并计时主机软件处理它所需的时间来完成的。例如：</p>
+<div class="highlight"><pre><span></span><code>time ~/klippy-env/bin/python ./klippy/klippy.py config/example-cartesian.cfg -i something_complex.gcode -o /dev/null -d out/klipper.dict
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            回到页面顶部
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="页脚">
+      
+        
+        <a href="Debugging.html" class="md-footer__link md-footer__link--prev" aria-label="上一页: 调试" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              调试
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="CONTRIBUTING.html" class="md-footer__link md-footer__link--next" aria-label="下一页: 为 Klipper 做贡献" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                下一页
+              </span>
+              为 Klipper 做贡献
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.term.missing": "\u7f3a\u5c11", "select.version.title": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

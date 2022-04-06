@@ -1,0 +1,1923 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>TMC 驱动器 - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tmc" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              TMC 驱动器
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="选择当前语言">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="清空当前内容" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        功能
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        常见问题
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        版本发布
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        配置变更
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        联系方式
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        安装
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        配置参考
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        旋转距离
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        配置检查
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        打印床调平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        三角校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        探针校准
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        手动调平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        床网
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        限位相位
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        共振补偿
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        共振值测量
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        压力提前
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        命令模板
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        状态参考
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          TMC 驱动器
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="TMC_Drivers.html" class="md-nav__link md-nav__link--active">
+        TMC 驱动器
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    调整电机电流
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hold_current" class="md-nav__link">
+    倾向于不指定保持电流（hold_current）
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spreadcycle-stealthchop" class="md-nav__link">
+    设置 "spreadCycle "与 "stealthChop "模式
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tmc_1" class="md-nav__link">
+    TMC插值设置引入了微小的位置偏差
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    无限位归零
+  </a>
+  
+    <nav class="md-nav" aria-label="无限位归零">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    限制
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    前提条件
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    调整
+  </a>
+  
+    <nav class="md-nav" aria-label="调整">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    选择归位速度
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#printercfg" class="md-nav__link">
+    为无传感器归位配置printer.cfg
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    找到能成功归位的最高的敏感度设定
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    找到最低的灵敏度，只需一次接触就能归位
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#printercfg_1" class="md-nav__link">
+    更新printer.cfg中的灵敏度值
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    归位时使用宏
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corexy" class="md-nav__link">
+    在CoreXY上进行无传感器归位的技巧
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    查询和诊断驱动程序设置
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driver_xxx" class="md-nav__link">
+    配置driver_XXX设置
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    常见问题
+  </a>
+  
+    <nav class="md-nav" aria-label="常见问题">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pressure-advancestealthchop" class="md-nav__link">
+    我可以在有压力推进（pressure advance）的挤出机上使用stealthChop 模式吗？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-read-tmc-uart-stepper_x-register-ifcnt" class="md-nav__link">
+    我一直得到 "Unable to read tmc uart 'stepper_x' register IFCNT "的错误？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-write-tmc-spi-stepper_x-register" class="md-nav__link">
+    我一直得到 "Unable to write tmc spi 'stepper_x' register ..."的错误？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-reports-error" class="md-nav__link">
+    为什么我得到一个 "TMC reports error: ..."错误？
+  </a>
+  
+    <nav class="md-nav" aria-label="为什么我得到一个 "TMC reports error: ..."错误？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tmc-ot1overtemperror" class="md-nav__link">
+    TMC 报告错误： ... ot=1(OvertempError!)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-shorttognd-lowsideshort" class="md-nav__link">
+    TMC 报告错误: ... ShortToGND 或着 LowSideShort
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-reset1reset-cs_actual0reset-se0reset" class="md-nav__link">
+    TMC报告错误：... reset=1(Reset) 或CS_ACTUAL=0(Reset?) 或SE=0(Reset?)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-uv_cp1undervoltage" class="md-nav__link">
+    TMC 报告错误： ... uv_cp=1(Undervoltage!)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spreadcyclecoolstep" class="md-nav__link">
+    我如何在我的驱动器上调整 spreadCycle/coolStep等模式？
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        复数微控制器归零与探高
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        切片软件
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        偏斜校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        使用 PWM 工具
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        代码总览
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        运动学
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        协议
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API 服务器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU命令
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS 协议
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        调试
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        基准测试
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        为 Klipper 做贡献
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        打包 Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        配置示例
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        通过SD卡更新
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi 微控制器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        底层引导程序
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CAN 总线
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL 耗材宽度传感器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        霍尔耗材线径传感器
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    调整电机电流
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hold_current" class="md-nav__link">
+    倾向于不指定保持电流（hold_current）
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spreadcycle-stealthchop" class="md-nav__link">
+    设置 "spreadCycle "与 "stealthChop "模式
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tmc_1" class="md-nav__link">
+    TMC插值设置引入了微小的位置偏差
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    无限位归零
+  </a>
+  
+    <nav class="md-nav" aria-label="无限位归零">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    限制
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    前提条件
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    调整
+  </a>
+  
+    <nav class="md-nav" aria-label="调整">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    选择归位速度
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#printercfg" class="md-nav__link">
+    为无传感器归位配置printer.cfg
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    找到能成功归位的最高的敏感度设定
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    找到最低的灵敏度，只需一次接触就能归位
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#printercfg_1" class="md-nav__link">
+    更新printer.cfg中的灵敏度值
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    归位时使用宏
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corexy" class="md-nav__link">
+    在CoreXY上进行无传感器归位的技巧
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    查询和诊断驱动程序设置
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#driver_xxx" class="md-nav__link">
+    配置driver_XXX设置
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    常见问题
+  </a>
+  
+    <nav class="md-nav" aria-label="常见问题">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pressure-advancestealthchop" class="md-nav__link">
+    我可以在有压力推进（pressure advance）的挤出机上使用stealthChop 模式吗？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-read-tmc-uart-stepper_x-register-ifcnt" class="md-nav__link">
+    我一直得到 "Unable to read tmc uart 'stepper_x' register IFCNT "的错误？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unable-to-write-tmc-spi-stepper_x-register" class="md-nav__link">
+    我一直得到 "Unable to write tmc spi 'stepper_x' register ..."的错误？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-reports-error" class="md-nav__link">
+    为什么我得到一个 "TMC reports error: ..."错误？
+  </a>
+  
+    <nav class="md-nav" aria-label="为什么我得到一个 "TMC reports error: ..."错误？">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tmc-ot1overtemperror" class="md-nav__link">
+    TMC 报告错误： ... ot=1(OvertempError!)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-shorttognd-lowsideshort" class="md-nav__link">
+    TMC 报告错误: ... ShortToGND 或着 LowSideShort
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-reset1reset-cs_actual0reset-se0reset" class="md-nav__link">
+    TMC报告错误：... reset=1(Reset) 或CS_ACTUAL=0(Reset?) 或SE=0(Reset?)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-uv_cp1undervoltage" class="md-nav__link">
+    TMC 报告错误： ... uv_cp=1(Undervoltage!)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spreadcyclecoolstep" class="md-nav__link">
+    我如何在我的驱动器上调整 spreadCycle/coolStep等模式？
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/TMC_Drivers.md" title="编辑此页" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="tmc">TMC 驱动器<a class="headerlink" href="#tmc" title="Permanent link">&para;</a></h1>
+<p>这个文档提供了在Klipper上以SPI/UART模式使用Trinamic步进电机驱动器的信息。</p>
+<p>Klipper也可以在其 "standalone mode"下使用Trinamic驱动。然而，当驱动处于这种模式时，不需要特殊的Klipper配置，本文件中讨论的高级Klipper功能也无法使用。</p>
+<p>除了这份文档，请务必查看<a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC驱动配置参考</a>.</p>
+<h2 id="_1">调整电机电流<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>较高的驱动电流可以提高定位精度和扭矩。然而，较高的电流也会增加步进电机和步进电机驱动器产生的热量。如果步进电机驱动器太热，它就会自行失效，Klipper会报告错误。如果步进电机太热，它将失去扭矩和位置精度。(如果它变得非常热，还可能融化连接在它身上或附近的塑料部件。）</p>
+<p>作为一般的调整建议，只要步进电机不会太热，并且步进电机驱动器不会报告警告或错误，就可以选择更高的电流值。一般来说，步进电机感到温热是可以接受的，但不应该热到触摸起来很烫手。</p>
+<h2 id="hold_current">倾向于不指定保持电流（hold_current）<a class="headerlink" href="#hold_current" title="Permanent link">&para;</a></h2>
+<p>如果配置了 <code>hold_current</code> ，那么TMC驱动器可以在检测到步进电机没有移动时会减少步进电机的电流。然而，改变电机电流本身可能会引起电机转动。这可能是由于步进电机内部的 "阻滞力"（转子中的永久磁铁拉向定子中的铁齿）或轴滑车上的外力造成的。</p>
+<p>对于大多数步进电机，在正常的打印过程中减少电流不会带来显著的好处，因为很少有打印动作会让步进电机空闲足够长的时间来激活 <code>hold_current</code>（保持电流）功能。而且，你也不会希望在少数使步进电机空闲足够长的时间的打印动作中引入小的打印瑕疵。</p>
+<p>如果希望在打印预热时减少电机的电流，那么可以考虑在<a href="Slicers.html#klipper-gcode_macro">START_PRINT宏</a>中写入<a href="G-Code.md#set_tmc_current">SET_TMC_CURRENT</a>命令，在正常打印开始前后调整电流。</p>
+<p>一些打印机的专用Z轴电机在正常的打印动作中是空闲的（没有床网（bed_mesh），没有床面倾斜（bed_tilt），没有Z轴倾斜校正（skew_correction），没有 "花瓶模式 （vase mode）"打印，等等），可能会发现Z轴电机在 <code>hold_current</code>的情况下确实运行得比较冷。如果实现了这一点，那么一定要考虑到在床面调平、床面探测、探针校准等过程中这种非指令性的Z轴运动。 <code>driver_TPOWERDOWN</code>和 <code>driver_IHOLDDELAY</code>也应该进行相应的校准。如果不确定，最好不要指定 <code>hold_current</code>。</p>
+<h2 id="spreadcycle-stealthchop">设置 "spreadCycle "与 "stealthChop "模式<a class="headerlink" href="#spreadcycle-stealthchop" title="Permanent link">&para;</a></h2>
+<p>默认情况下，Klipper将TMC驱动置于 "spreadCycle "模式。如果驱动程序支持 "stealthChop"，那么可以通过添加<code>stealthchop_threshold: 999999</code>到TMC的配置部分。</p>
+<p>一般来说，spreadCycle模式比stealthChop模式提供更大的扭矩和更高的定位精度。然而，在某些打印机上，stealthChop 模式显著降低可听到的噪音。</p>
+<p>比较模式的测试表明，在使用stealthChop模式时，在恒速移动过程中，"位置滞后 "增加了约为整步的75%（例如，在一台旋转距离（rotation_distance ）为40mm、每圈200步（steps_per_rotation）的打印机上，恒速移动的位置偏差增加了约0.150mm）。然而，这种 "获得所需位置的延迟 "可能不会表现为明显的打印缺陷，人们可能更喜欢stealthChop模式带来的更安静的打印。</p>
+<p>建议总是使用 "spreadCycle "模式（通过不指定<code>stealthchop_threshold</code>）或总是使用 "stealthChop "模式（通过设置<code>stealthchop_threshold</code>为99999）。不幸的是，如果在电机处于非零速度时改变模式，驱动器往往会产生糟糕和混乱的结果。</p>
+<h2 id="tmc_1">TMC插值设置引入了微小的位置偏差<a class="headerlink" href="#tmc_1" title="Permanent link">&para;</a></h2>
+<p>TMC驱动程序的 <code>interpolate</code> 设置可以减少打印机运动的噪音，但代价是引入一个小的系统位置误差。这个系统性的位置误差是由驱动器在执行Klipper发送的 "步骤 "时的延迟造成的。在恒速移动过程中，这种延迟导致了将近一半的配置微步的位置误差（更准确地说，误差是一半的微步距离减去512分之一的整步距离）。例如，在一个旋转距离（rotation_distance）为40毫米、每圈200步（steps_per_rotation）、16微步的轴上，在恒速移动过程中引入的系统误差是~0.006毫米。</p>
+<p>为了获得最佳的定位精度，可以考虑使用spreadCycle模式，并禁用插值（在TMC驱动配置中设置<code>interpolate: False</code> ）。当以这种方式配置时，可以增加<code>microstep</code>设置，以减少步进运动中的噪音。通常情况下，微步设置为<code>64</code>或<code>128</code>会有类似于插值的噪音水平，而且不会引入系统性的位置误差。</p>
+<p>如果使用stealthChop模式，那么相对于从stealthChop模式引入的位置不精确性，插值的位置不精确性很小。因此，在stealthChop 模式下，调整插值是没有用的，可以将插值设置再其默认状态。</p>
+<h2 id="_2">无限位归零<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>无传感器归位允许在不需要物理限位开关的情况下将一个轴归位。相反，轴上的滑车接触机械限位后，使步进电机失去步长。步进驱动器感应到失去的步数，并通过切换一个引脚向控制的微控制器（Klipper）告知这一点。该信息可被 Klipper 用作轴的限位。</p>
+<p>本指南介绍了如何设置（笛卡尔）打印机的X轴无传感器归位。这个方法也适合其他轴（需要一个限位）。每次应该只对一个轴进行配置和调整。</p>
+<h3 id="_3">限制<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>要确保你的机械部件能够承受滑车反复撞向轴的限位的负载。特别是丝杠可能会产生很大的力。通过将喷嘴撞向打印表面来确定Z轴的位置可能不是一个好主意。为了获得最佳效果，请确认轴滑车将与轴的限位紧密接触。</p>
+<p>此外，无传感器归位对你的打印机来说可能不够精确。虽然笛卡尔机器上的X和Y轴归位可以很好地工作，但Z轴的归位通常不够准确，可能会导致第一层高度不一致。由于精度低，不建议在delta 打印机上使用无传感器的归位。</p>
+<p>此外，步进驱动器的失速检测取决于电机的机械负载、电机电流和电机温度（线圈电阻）。</p>
+<p>无传感器归位在电机中速时效果最好。对于非常慢的速度（小于10RPM），电机不会产生明显的反电磁场，TMC芯片不能可靠地检测到电机停顿。此外，在非常高的速度下，电机的反向电动势接近电机的电源电压，所以TMC芯片也检测不到停顿。建议你看看一下对应的TMC芯片数据手册。在手册中还可以找到更多关于这种设置的限制的细节。</p>
+<h3 id="_4">前提条件<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>使用无传感器归位，需要一些前提条件：</p>
+<ol>
+<li>一个具有stallGuard功能的TMC步进驱动器（TMC2130、TMC2209、TMC2660或TMC5160）。</li>
+<li>需要TMC驱动器的SPI / UART接口与微控制器连接（stand-alone 模式不行）。</li>
+<li>需要把TMC驱动器的 "DIAG "或 "SG_TST "引脚连接到微控制器。</li>
+<li>必须按照<a href="Config_checks.html">配置检查</a>文件中的步骤来确认步进电机的配置和运转正常。</li>
+</ol>
+<h3 id="_5">调整<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>调整过程有六个主要步骤：</p>
+<ol>
+<li>选择一个归位速度。</li>
+<li>配置<code>printer.cfg</code>文件以启用无传感器归位。</li>
+<li>找到有最高灵敏度的stallguard设置，确保其成功找到零点位置。</li>
+<li>找到有最低灵敏度的stallguard 设置，确保只需轻轻一碰就能成功归零。</li>
+<li>更新<code>printer.cfg</code>，加入所需的stallguard设置。</li>
+<li>创建或更新 <code>printer.cfg</code>宏确保稳定归位（home）。</li>
+</ol>
+<h4 id="_6">选择归位速度<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<p>执行无传感器归位时，归位速度是一个重要参数。最好使用较慢的归位速度，以便滑车在与轨道限位接触时不会对框架施加过多的力。然而，TMC驱动器在非常慢的速度下并不能可靠地检测到失速。</p>
+<p>归位速度的最佳调整起点是步进电机每两秒转一圈。对于许多轴，这就是将是 <code>rotation_distance</code> 除以2。例如：</p>
+<div class="highlight"><pre><span></span><code>[stepper_x]
+rotation_distance: 40
+homing_speed: 20
+...
+</code></pre></div>
+
+<h4 id="printercfg">为无传感器归位配置printer.cfg<a class="headerlink" href="#printercfg" title="Permanent link">&para;</a></h4>
+<p>在<code>stepper_x</code> 配置部分， <code>homing_retract_dist</code> 设置必须被设为零，以禁用第二次归位动作。在使用无传感器归位时，第二次归位尝试不会提高精度，也不会可靠地工作，而且会扰乱调整过程。</p>
+<p>确保在配置的TMC驱动部分没有指定 <code>hold_current</code>的设置。（如果设置了hold_current，那么在接触后，当滑车撞到轨道末端时，电机就会停止，在这个位置上减少电流可能会导致滑车移动--这将导致归位性能不佳，并会扰乱调整过程。）</p>
+<p>需要配置无传感器归位引脚，并配置初始 "stallguard "设置。一个用于X轴的tmc2209示例配置如下：</p>
+<div class="highlight"><pre><span></span><code>[tmc2209 stepper_x]
+diag_pin: ^PA1      # 设置MCU引脚连接到TMC的DIAG引脚
+driver_SGTHRS: 255  # 255是最敏感的值，0是最不敏感的值
+...
+
+[stepper_x]
+endstop_pin: tmc2209_stepper_x:virtual_endstop
+homing_retract_dist: 0
+...
+</code></pre></div>
+
+<p>用于tmc2130或tmc5160配置的例子如下：</p>
+<div class="highlight"><pre><span></span><code>[tmc2130 stepper_x]
+diag1_pin: ^!PA1 #  连接到TMC的DIAG1引脚(或使用diag0_pin / DIAG0引脚)
+driver_SGT: -64  # -64是最敏感的值，63是最不敏感的值
+...
+
+[stepper_x]
+endstop_pin: tmc2130_stepper_x:virtual_endstop
+homing_retract_dist: 0
+...
+</code></pre></div>
+
+<p>用于tmc2660配置的例子如下：</p>
+<div class="highlight"><pre><span></span><code>[tmc2660 stepper_x]
+driver_SGT: -64     # -64是最敏感的值，63是最不敏感的值
+...
+
+[stepper_x]
+endstop_pin: ^PA1   # 与TMC SG_TST引脚相连的引脚
+homing_retract_dist: 0
+...
+</code></pre></div>
+
+<p>上面的例子只显示了针对无传感器归位的设置。所有可用选项请参见<a href="Config_Reference.html#tmc-stepper-driver-configuration">配置参考</a>。</p>
+<h4 id="_7">找到能成功归位的最高的敏感度设定<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
+<p>将滑车放在靠近轨道中心的位置。使用SET_TMC_FIELD命令来设置最高灵敏度。对于tmc2209：</p>
+<div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=SGTHRS VALUE=255
+</code></pre></div>
+
+<p>对于tmc2130, tmc5160, and tmc2660:</p>
+<div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
+</code></pre></div>
+
+<p>然后发一个 <code>G28 X0</code>命令，确保轴完全不动。如果轴移动了，立即一个<code>M112</code>命令停止打印机-可能是diag/sg_tst引脚的接线或配置有问题，必须在继续之前修正。</p>
+<p>接下来，不断降低 <code>VALUE</code> 设置的灵敏度，并再次运行 <code>SET_TMC_FIELD</code>和<code>G28 X0</code> 命令，找到能使使滑车成功地一直移动到端点并停止的最高的灵敏度。(对于TMC2209驱动，调整是减少 SGTHRS，对于其他驱动，调整是增加 sgt)。确保每次尝试都在轨道中心附近开始（如果需要，发出<code>M84</code>，然后手动将滑车移到中心）。该方法应该可以找到可靠归位的最高灵敏度（更高的灵敏度设置会导致滑车只动一小段或完全不动）。注意找到的值为<em>maximum_sensitivity</em>。(如果在最低灵敏度（SGTHRS=0或sgt=63）下滑车也不动，那么diag/sg_tst 引脚的接线或配置可能有问题，必须在继续后面操作前予以修正。）</p>
+<p>在寻找最大灵敏度时，更方便的是跳到不同的VALUE设置（比如将VALUE参数的一半）。如果这样做，请准备好发出 <code>M112</code>命令以停止打印机，因为灵敏度很低的设置可能会导致轴反复 "撞 "到导轨的末端。</p>
+<p>请确保在每次归位尝试之间等待几秒钟。在TMC驱动程序检测到失速后，它可能需要一点时间来清除其内部指示器，才能够检测到下一次失速。</p>
+<p>在调整测试中，如果<code>G28 X0</code>命令不能完全移动到轴的极限位置，那么在发出任何常规移动命令（例如，<code>G1</code>）时要小心。Klipper将不能正确定位滑块的位置，移动命令可能会导致非预期和混乱的结果。</p>
+<h4 id="_8">找到最低的灵敏度，只需一次接触就能归位<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h4>
+<p>当用找到的<em>最大灵敏度</em>值归位时，轴应该移动到轨道的末端并 "single touch（一触即停）"--也就是说，不应该有 "咔嚓 "或 "砰 "的声音。(如果在最大灵敏度下有撞击或点击声，那么归位速度可能太低，驱动电流可能太低，或者该轴可能不适合用无传感器归位。）</p>
+<p>下一步是再次持续移动滑块到靠近轨道中心的位置，降低灵敏度，并运行<code>SET_TMC_FIELD</code>和<code>G28 X0</code>命令 - 这次的目标是找到最低的灵敏度，仍能使滑块成功地 "一触即停"归位。也就是说，当接触到轨道的末端时，它不会发出"砰 "或 "咔"的声音。注意找到的值是<em>minimum_sensitivity</em>。</p>
+<h4 id="printercfg_1">更新printer.cfg中的灵敏度值<a class="headerlink" href="#printercfg_1" title="Permanent link">&para;</a></h4>
+<p>在找到<em>maximum_sensitivity</em>和<em>minimum_sensitivity</em>后，计算得到推荐的灵敏度为 <em>minimum_sensitivity +(maximum_sensitivity-minimum_sensitivity)/3</em>。推荐的灵敏度应该在最小值和最大值之间，但略微接近最小值。将最终值四舍五入到最近的整数值。</p>
+<p>对于TMC2209，在配置中设置<code>driver_SGTHRS</code>，对于其他TMC驱动，在配置中设置<code>driver_SGT</code>。</p>
+<p>如果<em>maximum_sensitivity</em>和<em>minimum_sensitivity</em>之间的范围很小（例如，小于5），那么可能导致不稳定的归位。更快的归位速度可以扩大范围，使操作更加稳定。</p>
+<p>请注意，如果对驱动电流、归位速度做了任何改变，或者对打印机硬件做了明显的改变，那么就需要再次运行这个调整过程。</p>
+<h4 id="_9">归位时使用宏<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h4>
+<p>在无传感器归位完成后，滑车将顶到导轨的末端，步进器将持续对框架施加力，直到滑车移开。最好创建一个宏来使轴归位，并立即将小车从轨道的末端移开。</p>
+<p>在开始无传感器归位之前，宏最好暂停至少2秒（或确保步进在2秒内没有移动）。如果没有延迟，驱动器的内部失速标志有可能在之前的移动中被设置了。</p>
+<p>使用宏在归位前设置驱动电流，并在滑车移开后设置新的电流，也会很有用。</p>
+<p>一个宏的例子如下：</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro SENSORLESS_HOME_X]
+gcode:
+    {% set HOME_CUR = 0.700 %}
+    {% set driver_config = printer.configfile.settings[&#39;tmc2209 stepper_x&#39;] %}
+    {% set RUN_CUR = driver_config.run_current %}
+    # 为无传感器归位设置电流
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR}
+    # 暂停，以确保驱动器失速标志被清除
+    G4 P2000
+    # 归位
+    G28 X0
+    # 移开
+    G90
+    G1 X5 F1200
+    # 打印过程中设置电流
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR}
+</code></pre></div>
+
+<p>产生的宏可以从<a href="Config_Reference.html#homing_override">homing_override配置部分</a>或<a href="Slicers.html#klipper-gcode_macro">START_PRINT宏</a>中调用。</p>
+<p>请注意，如果归位期间的驱动电流发生变化，则应重新运行调整过程。</p>
+<h3 id="corexy">在CoreXY上进行无传感器归位的技巧<a class="headerlink" href="#corexy" title="Permanent link">&para;</a></h3>
+<p>可以在CoreXY打印机的X和Y行车上使用无传感器归位。Klipper使用<code>[stepper_x]</code>步进器来检测X滑车归位时的失速，使用<code>[stepper_y]</code>步进器来检测Y滑车归位时的失速。</p>
+<p>使用上述的调谐指南，为每个滑车找到合适的 "失速灵敏度"，但要注意以下限制：</p>
+<ol>
+<li>当在CoreXY上使用无传感器归位时，确保没有为任何一个步进电机配置<code>hold_current</code>。</li>
+<li>在调整时，确保X和Y车架在每次归位尝试前都接近其轨道的中心。</li>
+<li>调整完成后，当X和Y轴归位时，使用宏来确保一个轴首先被归位，然后将该滑车远离轴的极限，停顿至少2秒，然后开始另一个滑车的归位。远离轴端点的移动可以避免一个轴被归位，而另一个轴顶在轴的极限上（这可能使失速检测发生偏差）。暂停是必要的，以确保驱动器的失速标志在再次归位之前被清除。</li>
+</ol>
+<h2 id="_10">查询和诊断驱动程序设置<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<p>`<a href="G-Code.md#dump_tmc">DUMP_TMC 命令</a>是配置和诊断驱动程序的有效工具。它将报告所有由Klipper配置的字段，以及所有可以从驱动中查询到的字段。</p>
+<p>所有报告的字段都定义在驱动器的Trinamic数据手册中。这些数据表可以在<a href="https://www.trinamic.com/">Trinamic网站</a>上找到。请获取并查看驱动器的Trinamic数据手册来解释DUMP_TMC的结果。</p>
+<h2 id="driver_xxx">配置driver_XXX设置<a class="headerlink" href="#driver_xxx" title="Permanent link">&para;</a></h2>
+<p>Klipper支持使用<code>driver_XXX</code>设置来配置许多底层驱动程序字段。<a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC驱动配置参考</a>有每种类型的驱动可用字段的完整列表。</p>
+<p>此外，几乎所有的字段都可以在运行时使用<a href="G-Codes.html#set_tmc_field">SET_TMC_FIELD命令</a>进行修改。</p>
+<p>每一个字段都在驱动器的Trinamic数据手册中有定义。这些数据表可以在<a href="https://www.trinamic.com/">Trinamic网站</a>上找到。</p>
+<p>请注意，Trinamic的数据表中，有时一些词可能导致在高层设置（如 "hysteresis end"）和底层字段值（如 "HEND"）的混乱。在Klipper中，<code>driver_XXX</code>和SET_TMC_FIELD总是设置实际写入驱动器的底层次字段值。例如，如果Trinamic的数据表指出，需要将3的值写入HEND字段，以使得 "hysteresis end"等于0，那么设置<code>driver_HEND=3</code>使得高层获得0的值。</p>
+<h2 id="_11">常见问题<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h3 id="pressure-advancestealthchop">我可以在有压力推进（pressure advance）的挤出机上使用stealthChop 模式吗？<a class="headerlink" href="#pressure-advancestealthchop" title="Permanent link">&para;</a></h3>
+<p>许多人成功地在 "stealthChop "模式下使用了Klipper的压力推进。Klipper实现了<a href="Kinematics.html#pressure-advance">平滑压力推进</a>，它不会引入任何瞬时速度变化。</p>
+<p>然而，"stealthChop "模式可能导致较低的电机扭矩和/或产生较高的电机热量。对于你的特定打印机来说，它可能是也可能不是一个合适的模式。</p>
+<h3 id="unable-to-read-tmc-uart-stepper_x-register-ifcnt">我一直得到 "Unable to read tmc uart 'stepper_x' register IFCNT "的错误？<a class="headerlink" href="#unable-to-read-tmc-uart-stepper_x-register-ifcnt" title="Permanent link">&para;</a></h3>
+<p>这种情况发生在Klipper无法与tmc2208或tmc2209驱动通信时。</p>
+<p>确保电机电源启用，因为步进电机驱动器在与微控制器通信之前一般需要确保电机先上电。</p>
+<p>如果这个错误是在第一次刷写Klipper后发生的，那么步进驱动器可能处在一个状态，此状态与刚刚写入的Klipper不兼容。要重置该状态，请将打印机的所有电源拔掉几秒钟（物理上拔掉USB插头和电源插头）。</p>
+<p>否则，这种错误通常是由于UART引脚接线不正确或Klipper配置的UART引脚设置不正确造成的。</p>
+<h3 id="unable-to-write-tmc-spi-stepper_x-register">我一直得到 "Unable to write tmc spi 'stepper_x' register ..."的错误？<a class="headerlink" href="#unable-to-write-tmc-spi-stepper_x-register" title="Permanent link">&para;</a></h3>
+<p>当Klipper无法与tmc2130或tmc5160驱动通信时就会出现这种情况。</p>
+<p>确保电机电源启用，因为步进电机驱动器在与微控制器通信之前一般需要确保电机先上电。</p>
+<p>否则，这种错误通常是由于SPI接线不正确、Klipper对SPI设置的配置不正确或SPI总线上的设备配置不完整造成的。</p>
+<p>请注意，如果驱动器是在挂多个设备共享的SPI总线上，那么一定要在Klipper中完全配置该共享SPI总线上的每个设备。如果共享SPI总线上的一个设备没有被配置，那么它可能会错误地响应不是为它准备的命令，并破坏与目标设备的通信。如果在共享的SPI总线上有不能在Klipper中配置的设备，那么使用<a href="Config_Reference.html#static_digital_output">static_digital_output config section</a>将未使用的设备的CS引脚设置为高电平（这样它就不会试图使用SPI总线）。电路板的原理图通常是一个有用的参考，原理图上可以找到哪些设备挂在SPI总线上以及它们的相关引脚。</p>
+<h3 id="tmc-reports-error">为什么我得到一个 "TMC reports error: ..."错误？<a class="headerlink" href="#tmc-reports-error" title="Permanent link">&para;</a></h3>
+<p>这类型的错误表明TMC驱动器检测到了一个问题，并且已经自我禁用。也就是说，驱动器已经停止了保持位置，并忽略了移动命令。如果Klipper检测到一个激活的驱动器已经自我禁用，它就会把打印机切换到 "关闭 "状态。</p>
+<p>也有可能由于SPI错误导致无法与驱动器通信而发生<strong>TMC reports error</strong>导致的关机（在tmc2130、tmc5160或tmc2660上）。如果发生这种情况，报告的驱动器状态通常会显示 "00000000 "或 "ffffff"--例如：<code>TMC reports error: DRV_STATUS: ffffffff ...</code>或者<code>TMC reports error: READRSP@RDSEL2: 00000000 ...</code>。这样的故障可能是由于SPI的接线问题，也可能是由于TMC驱动器的自复位或故障导致的。</p>
+<p>一些常见的错误和诊断的技巧：</p>
+<h4 id="tmc-ot1overtemperror">TMC 报告错误： <code>... ot=1(OvertempError!)</code><a class="headerlink" href="#tmc-ot1overtemperror" title="Permanent link">&para;</a></h4>
+<p>这表明电机驱动器因温度过高而自我禁用。典型的解决方案是降低步进电机的电流，增加步进电机驱动器的冷却，和/或增加步进电机的冷却。</p>
+<h4 id="tmc-shorttognd-lowsideshort">TMC 报告错误: <code>... ShortToGND</code> 或着 <code>LowSideShort</code><a class="headerlink" href="#tmc-shorttognd-lowsideshort" title="Permanent link">&para;</a></h4>
+<p>这表明驱动器已自行禁用，因为它检测到通过驱动器的电流非常高。这可能表明连接到步进电机或者部件电机内部的电线松动或短路了。</p>
+<p>如果使用stealthChop模式，并且TMC驱动器不能准确地预测电机的机械负载，也可能发生这种错误。(如果驱动器预测不准确，那么它可能输出过高电流到电机，并触发自己的过电流检测)。要测试这个，请禁用stealthChop模式，再检查错误是否继续发生。</p>
+<h4 id="tmc-reset1reset-cs_actual0reset-se0reset">TMC报告错误：<code>... reset=1(Reset)</code> 或<code>CS_ACTUAL=0(Reset?)</code> 或<code>SE=0(Reset?)</code><a class="headerlink" href="#tmc-reset1reset-cs_actual0reset-se0reset" title="Permanent link">&para;</a></h4>
+<p>这表明驱动器在打印过程中自我复位。这可能是由于电压或接线问题导致的。</p>
+<h4 id="tmc-uv_cp1undervoltage">TMC 报告错误： <code>... uv_cp=1(Undervoltage!)</code><a class="headerlink" href="#tmc-uv_cp1undervoltage" title="Permanent link">&para;</a></h4>
+<p>这表明驱动器检测到了一个电压低事件，并已自行禁用。这可能是由于接线或电源问题导致的。</p>
+<h3 id="spreadcyclecoolstep">我如何在我的驱动器上调整 spreadCycle/coolStep等模式？<a class="headerlink" href="#spreadcyclecoolstep" title="Permanent link">&para;</a></h3>
+<p><a href="https://www.trinamic.com/">Trinamic网站</a>有关于配置驱动程序的指南。这些指南通常是专业、底层且可能需要专用的硬件。不管怎么说，它们是最好的信息来源。</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            回到页面顶部
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="页脚">
+      
+        
+        <a href="Status_Reference.html" class="md-footer__link md-footer__link--prev" aria-label="上一页: 状态参考" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              状态参考
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Multi_MCU_Homing.html" class="md-footer__link md-footer__link--next" aria-label="下一页: 复数微控制器归零与探高" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                下一页
+              </span>
+              复数微控制器归零与探高
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.term.missing": "\u7f3a\u5c11", "select.version.title": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

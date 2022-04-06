@@ -1,0 +1,1807 @@
+
+<!doctype html>
+<html lang="zh-Hant" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>共振補償 - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳轉至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              共振補償
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜尋" placeholder="搜尋" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜尋引擎
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        功能
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        常見問題
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        版本發佈
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        配置變更
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        聯繫方式
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        安裝
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        配置參考
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        旋轉距離
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        配置檢查
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        列印床調平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        三角校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        探針校準
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        手動調平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        床網
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        限位相位
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          共振補償
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Resonance_Compensation.html" class="md-nav__link md-nav__link--active">
+        共振補償
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目錄">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目錄
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    調整
+  </a>
+  
+    <nav class="md-nav" aria-label="調整">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    振紋頻率
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper" class="md-nav__link">
+    Input shaper配置
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper_1" class="md-nav__link">
+    選擇 input shaper
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max_accel" class="md-nav__link">
+    選擇 max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    微調共振頻率
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pressure-advance" class="md-nav__link">
+    Pressure Advance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    環紋頻率測量不可靠
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    故障排除和常見問題解答
+  </a>
+  
+    <nav class="md-nav" aria-label="故障排除和常見問題解答">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    我無法可靠地測量共振頻率
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper" class="md-nav__link">
+    啟用 [input_shaper] 後，打印部分過於平滑，細節丟失
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    成功打印一段時間後沒有環紋，它似乎又回來了
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper_2" class="md-nav__link">
+    input shaper是否支持雙步進匣設置？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper_1" class="md-nav__link">
+    input_shaper 會影響打印時間嗎？
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    技術細節
+  </a>
+  
+    <nav class="md-nav" aria-label="技術細節">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shapers" class="md-nav__link">
+    input shapers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        共振值測量
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Pressure advance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        命令模板
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        狀態參考
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC 驅動器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        複數微控制器歸零與探高
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        切片軟體
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        偏斜校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        使用 PWM 工具
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        程式碼總覽
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        運動學
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        協議
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API 伺服器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU命令
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS 協議
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        除錯
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        基準測試
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        為 Klipper 做貢獻
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        打包 Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        配置示例
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        通過SD卡更新
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi 微控制器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        底層載入程式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CAN 匯流排
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL 耗材寬度感測器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        霍爾耗材線徑感測器
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目錄">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目錄
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    調整
+  </a>
+  
+    <nav class="md-nav" aria-label="調整">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    振紋頻率
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper" class="md-nav__link">
+    Input shaper配置
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper_1" class="md-nav__link">
+    選擇 input shaper
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max_accel" class="md-nav__link">
+    選擇 max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    微調共振頻率
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pressure-advance" class="md-nav__link">
+    Pressure Advance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    環紋頻率測量不可靠
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    故障排除和常見問題解答
+  </a>
+  
+    <nav class="md-nav" aria-label="故障排除和常見問題解答">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    我無法可靠地測量共振頻率
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper" class="md-nav__link">
+    啟用 [input_shaper] 後，打印部分過於平滑，細節丟失
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    成功打印一段時間後沒有環紋，它似乎又回來了
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper_2" class="md-nav__link">
+    input shaper是否支持雙步進匣設置？
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper_1" class="md-nav__link">
+    input_shaper 會影響打印時間嗎？
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    技術細節
+  </a>
+  
+    <nav class="md-nav" aria-label="技術細節">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shapers" class="md-nav__link">
+    input shapers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Resonance_Compensation.md" title="編輯此頁" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="_1">共振補償<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>Klipper支援Input Shaper技術 -一種可以用來減少列印件上環紋（也被稱為echo、ghosting或ripping）的技術。振紋是一種表面打印缺陷，通常在邊角的位置表面重複出現，成為一種微妙的水波狀紋路：</p>
+<p>|<img alt="振紋測試" src="img/ringing-test.jpg" />|<img alt="3D Benchy" src="img/ringing-3dbenchy.jpg" />|</p>
+<p>振紋是由印表機在快速改變列印方向時機械振動引起的。請注意，振紋通常源於機械方面的問題：印表機框架強度不足，皮帶不夠緊或太有彈性，機械部件的對準問題，移動質量大等。如果可能的話，應首先檢查和解決這些問題。</p>
+<p><a href="https://en.wikipedia.org/wiki/Input_shaping">Input Shaping</a>是一種開環控制技術，它通過產生一個控制訊號來抵消自身的振動。Input Shaper在啟用之前需要進行一些調整和測量。除了振紋之外，input shaper通常可以減少印表機的振動和搖晃，也可以提高 Trinamic 步進驅動器的StealthChop模式的可靠性。</p>
+<h2 id="_2">調整<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>基本調試需要通過打印測試模型來測量打印機的環紋頻率。</p>
+<p>將環紋測試模型切片，該模型可以在<a href="prints/ringing_tower.stl">docs/prints/ringing_tower.stl</a>中找到，在切片軟體中：</p>
+<ul>
+<li>建議的層高為 0.2 或 0.25 毫米。</li>
+<li>填充和頂層層數可以被設定為0。</li>
+<li>使用 1-2 周長，或者使用 1-2 毫米底座的光滑花瓶模式更好。</li>
+<li><strong>外部</strong>周邊使用足夠高的速度，大約 80-100 毫米/秒。</li>
+<li>確保最短的層耗時<strong>最多是</strong>3秒。</li>
+<li>確保切片軟體中禁用任何"動態加速度控制"功能。</li>
+<li>不要轉動模型。模型的背面標記了X和Y。注意這些標記與印表機軸線方向不相同--這不是一個錯誤。這些標記可以在以後的調整過程中作為參考，因為它們顯示了測量結果對應的軸。</li>
+</ul>
+<h3 id="_3">振紋頻率<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>首先，測量<strong>振紋頻率</strong>。</p>
+<ol>
+<li>如果 <code>square_corner_velocity</code> 參數已更改，請將其恢復為 5.0。使用input shaper時不建議增加它，因為它會導致零件更平滑 - 最好使用更高的加速度值。</li>
+<li>通過發出以下命令增加 <code>max_accel_to_decel</code>：<code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>禁用Pressure Advance：<code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>如果你已經將<code>[input_shaper]</code>分段新增到print.cfg中，執行<code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>命令。如果你得到"未知命令"錯誤，此時你可以安全地忽略它，繼續進行測量。</li>
+<li>執行命令： <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> 基本上，我們嘗試通過設置不同的大加速度值來使環紋更加明顯。此命令將從 1500 mm/sec^2 開始每 5 mm 增加加速度：1500 mm/sec^2、2000 mm/sec^2、2500 mm/sec^2 等等，直到 7000 mm/sec^2最後一個區域。</li>
+<li>列印用建議的參數切片的測試模型。</li>
+<li>
+<p>如果振紋清晰可見，並且發現加速度對你的印表機來說太高了（如印表機抖動太厲害或開始丟步），你可以提前停止列印。</p>
+<ol>
+<li>使用模型背面的 X 和 Y 標記作為參考。帶有 X 標記的一側的測量值應用於 X 軸<em>配置</em>，而 Y 標記 - 用於 Y 軸配置。在帶有 X 標記的零件上，在槽口附近測量幾次振動之間的距離 <em>D</em>（以毫米為單位），最好跳過第一次或兩次振動。為了更容易地測量振蕩之間的距離，請先標記振盪，然後用尺子或卡尺測量標記之間的距離：|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</li>
+<li>計算測量距離 <em>D</em> 對應的振盪次數 <em>N</em>。如果您不確定如何計算振盪次數，請參考上圖，其中顯示 <em>N</em> = 6 次振盪。</li>
+<li>計算X軸環紋頻率為<em>V</em> &middot; <em>N</em> / <em>D</em> (Hz)，其中 <em>V</em> 是外周的速度 (mm/sec)。對於上面的示例，我們標記了 6 個振盪，並且測試以 100 毫米/秒的速度打印，因此頻率為 100 * 6 / 12.14 ≈ 49.4 Hz。</li>
+<li>對 Y 標記也執行 (8) - (10)。</li>
+</ol>
+</li>
+</ol>
+<p>請注意，測試打印上的環紋應遵循彎曲凹槽的圖案，如上圖所示。如果不是，那麼這個缺陷並不是真正的環紋，而是有不同的起源——機械問題或擠出機問題。在啟用和input shapers之前，應該先修復它。</p>
+<p>如果測量結果不可靠，例如，振蕩之間的距離不穩定，則可能意味著打印機在同一軸上有多個共振頻率。可以嘗試遵循 <a href="#unreliable-measurements-of-ringing-frequencies">不可靠的環紋頻率測量</a> 部分中描述的調整過程，但仍然可以從input shaper技術中獲得一些東西。</p>
+<p>環紋頻率可能取決於模型在構建板內的位置和 Z 高度，<em>尤其是在 三角洲打印機上</em>；您可以檢查是否在測試模型兩側的不同位置和不同高度看到頻率差異。如果是這種情況，您可以計算 X 軸和 Y 軸上的平均環紋頻率。</p>
+<p>如果測得的環紋頻率非常低（低於大約 20-25 Hz），那麼在進行進一步的input shaper之前，最好投資於加強打印機或減少移動質量（取決於您的情況適用的情況）調整，然後重新測量頻率。對於許多流行的打印機型號，通常已經有一些可用的解決方案。</p>
+<p>請注意，如果對打印機進行了影響移動質量或改變系統剛度的更改，則環紋頻率可能會發生變化，例如：</p>
+<ul>
+<li>在改變其質量的工具頭上安裝、移除或更換了一些工具，例如安裝了用於直接擠出機或新熱端的新（更重或更輕）步進電機，添加了帶管道的重型風扇等。</li>
+<li>皮帶收緊了。</li>
+<li>安裝了一些增加框架剛度的插件。</li>
+<li>在拋床打印機上安裝不同的床，或添加玻璃等。</li>
+</ul>
+<p>如果進行了此類更改，最好至少測量環紋頻率以查看它們是否已更改。</p>
+<h3 id="input-shaper">Input shaper配置<a class="headerlink" href="#input-shaper" title="Permanent link">&para;</a></h3>
+<p>在測量 X 和 Y 軸的環紋頻率後，您可以將以下部分添加到您的 <code>printer.cfg</code> 中：</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: ...  # frequency for the X mark of the test model
+shaper_freq_y: ...  # frequency for the Y mark of the test model
+</code></pre></div>
+
+<p>對於上面的示例，我們得到 shaper_freq_x/y = 49.4。</p>
+<h3 id="input-shaper_1">選擇 input shaper<a class="headerlink" href="#input-shaper_1" title="Permanent link">&para;</a></h3>
+<p>Klipper 支持多種 input shaper。它們對確定共振頻率的誤差的敏感性以及它們在打印部件中引起的平滑程度不同。此外，像 2HUMP_EI 和 3HUMP_EI 這樣的一些整形器通常不應該與 shaper_freq = 共振頻率一起使用——它們是從不同的考慮來配置的，以一次減少多個共振。</p>
+<p>對於大多數打印機，可以推薦 MZV 或 EI 整形器。本節描述了在它們之間進行選擇的測試過程，並確定了一些其他相關參數。</p>
+<p>打印環形測試模型如下：</p>
+<ol>
+<li>重啟固件：<code>RESTART</code></li>
+<li>準備測試：<code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>禁用Pressure Advance：<code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>執行：<code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
+<li>執行命令：<code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+<li>列印用建議的參數切片的測試模型。</li>
+</ol>
+<p>如果此時您沒有看到環紋，則可以推薦使用 MZV 整形器。</p>
+<p>如果您確實看到一些環紋，請使用 <a href="#ringing-frequency">環紋頻率</a> 部分中描述的步驟 (8)-(10) 重新測量頻率。如果頻率與您之前獲得的值顯著不同，則需要更複雜的input shaper配置。您可以參考 <a href="#input-shapers">Choosing input shaper</a> 部分的技術細節。否則，繼續下一步。</p>
+<p>現在嘗試 EI input shaper。要嘗試它，請從上面重複步驟 (1)-(6)，但在步驟 4 中執行以下命令：<code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>。</p>
+<p>使用 MZV 和 EI input shaper比較兩個打印。如果 EI 顯示出明顯優於 MZV 的結果，請使用 EI 整形器，否則更喜歡 MZV。請注意，EI shaper 將使打印部件更加平滑（有關詳細信息，請參閱下一節）。將 <code>shaper_type: mzv</code>（或 ei）參數添加到 [input_shaper] 部分，例如：</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: ...
+shaper_freq_y: ...
+shaper_type: mzv
+</code></pre></div>
+
+<p>關於整形器選擇的一些注意事項：</p>
+<ul>
+<li>EI shaper 可能更適合於拋床打印機（如果共振頻率和由此產生的平滑允許）：隨著更多的細絲沉積在移動床上，床的質量會增加，共振頻率會降低。由於 EI 整形器對共振頻率變化更加穩健，因此在打印大型零件時可能會更好地工作。</li>
+<li>由於三角洲機型的性質，共振頻率在構建體積的不同部分可能會有很大差異。因此，EI shaper 可能比 MZV 或 ZV 更適合 delta 打印機，應考慮使用。如果共振頻率足夠大（超過 50-60 Hz），那麼甚至可以嘗試測試 2HUMP_EI 整形器（通過使用 <code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI</code> 運行上面建議的測試），但請檢查 <a href="#selecting-max_accel">下面的部分</a> 在啟用它之前。</li>
+</ul>
+<h3 id="max_accel">選擇 max_accel<a class="headerlink" href="#max_accel" title="Permanent link">&para;</a></h3>
+<p>您應該對從上一步中選擇的整形器進行打印測試（如果沒有，請打印使用 <a href="#tuning">建議參數</a> 切片的測試模型，禁用壓力提前 <code>SET_PRESSURE_ADVANCE ADVANCE=0</code> 並使用調諧塔啟用為 <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code>）。請注意，在非常高的加速度下，取決於共振頻率和您選擇的 input shaper（例如，EI 整形器比 MZV 產生更多的平滑）， input shaper可能會導致零件過度平滑和圓化。因此，應該選擇 max_accel 以防止這種情況發生。另一個可能影響平滑的參數是“square_corner_velocity”，因此不建議將其增加到默認的 5 毫米/秒以上，以防止增加平滑。</p>
+<p>為了選擇合適的 max_accel 值，請檢查所選 input shaper 的模型。首先，記下加速度環紋仍然很小的情況——您對此感到滿意。</p>
+<p>接下來，檢查平滑。為了解決這個問題，測試模型在牆上有一個小間隙（0.15 毫米）：</p>
+<p><img alt="Test gap" src="img/smoothing-test.png" /></p>
+<p>隨著加速度的增加，平滑度也會增加，打印中的實際間隙也會擴大：</p>
+<p><img alt="Shaper smoothing" src="img/shaper-smoothing.jpg" /></p>
+<p>在這張圖片中，加速度從左到右增加，間隙從 3500 mm/sec^2（左起第 5 個波段）開始增加。因此，在這種情況下，max_accel = 3000 (mm/sec^2) 的良好值可以避免過度平滑。</p>
+<p>請注意在您的測試打印中間隙仍然非常小時的加速度。如果您看到凸起，但壁上根本沒有間隙，即使在高加速度下，也可能是由於禁用了壓力推進，尤其是在鮑登擠出機上。如果是這種情況，您可能需要在啟用 PA 的情況下重複打印。這也可能是由於燈絲流量校準錯誤（過高）造成的，因此最好也檢查一下。</p>
+<p>從兩個加速度值（來自環紋和平滑）中選擇最小值，並將其作為<code>max_accel</code>放入printer.cfg。</p>
+<p>需要注意的是，即使在較低的加速度下，EI 整形器也可能會導致過度平滑——尤其是在低環紋頻率下。在這種情況下，MZV 可能是更好的選擇，因為它可能允許更高的加速度值。</p>
+<p>在非常低的環紋頻率（~25 Hz 及以下）下，即使是 MZV 整形器也可能會產生過多的平滑。如果是這種情況，您也可以嘗試使用 ZV 整形器重複 <a href="#choosing-input-shaper">Choosing input shaper</a> 部分中的步驟，改用 <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code> 命令。 ZV 整形器應該比 MZV 顯示更少的平滑，但對測量環紋頻率的誤差更敏感。</p>
+<p>另一個考慮因素是，如果共振頻率太低（低於 20-25 Hz），增加打印機剛度或減少移動質量可能是個好主意。否則，加速度和打印速度可能會由於現在過於平滑而不是環紋而受到限制。</p>
+<h3 id="_4">微調共振頻率<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>請注意，使用環紋測試模型的諧振頻率測量精度足以滿足大多數目的，因此不建議進一步調整。如果您仍想嘗試仔細檢查您的結果（例如，如果您在使用您選擇的input shaper打印一個測試模型後仍然看到一些環紋，您選擇的input shaper與您之前測量的頻率相同），您可以按照本文中的步驟操作部分。請注意，如果您在啟用 [input_shaper] 後看到不同頻率的環紋，則本節將無濟於事。</p>
+<p>假設您已使用建議的參數對環紋模型進行切片，請針對 X 軸和 Y 軸中的每一個完成以下步驟：</p>
+<ol>
+<li>準備測試：<code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>確保Pressure Advance被禁用：<code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>執行：<code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
+<li>從具有您選擇的 input shaper的現有環紋測試模型中選擇顯示環紋足夠好的加速度，並將其設置為：<code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
+<li>計算 <code>TUNING_TOWER</code> 命令調整 <code>shaper_freq_x</code> 參數的必要參數如下： start = shaper_freq_x * 83 / 132 和 factor = shaper_freq_x / 66，其中 <code>shaper_freq_x</code> 這裡是 <code>printer.cfg</code> 中的當前值。</li>
+<li>使用在步驟 (5) 計算的 <code>start</code> 和 <code>factor</code> 值執行命令：<code>TUNING_TOWER COMMAND=SET_INPUT_SHAPER PARAMETER=SHAPER_FREQ_X START=start FACTOR=factor BAND=5</code>。</li>
+<li>打印測試模型。</li>
+<li>重置原始頻率值：<code>SET_INPUT_SHAPER SHAPER_FREQ_X=...</code>。</li>
+<li>找到環紋最少的區間，從 1 開始從底部開始計數。</li>
+<li>通過舊的 shaper_freq_x * (39 + 5 * #band-number) / 66 計算新的 shaper_freq_x 值。</li>
+</ol>
+<p>以相同的方式對 Y 軸重複這些步驟，將 X 軸的引用替換為 Y 軸（例如，在公式和<code>TUNING_TOWER</code>命令中將<code>shaper_freq_x</code>替換為<code>shaper_freq_y</code>）。</p>
+<p>例如，假設您已經測量了一個軸的環紋頻率等於 45 Hz。這給出了“TUNING_TOWER”命令的 start = 45 * 83 / 132 = 28.30 和 factor = 45 / 66 = 0.6818 值。現在讓我們假設在打印測試模型後，從底部開始的第四個波段的環紋最少。這給出了更新的 shaper_freq_?值等於 45 * (39 + 5 * 4) / 66 ≈ 40.23。</p>
+<p>在計算出新的 <code>shaper_freq_x</code> 和 <code>shaper_freq_y</code> 參數後，您可以使用新的 <code>shaper_freq_x</code> 和 <code>shaper_freq_y</code> 值更新 <code>printer.cfg</code> 中的 <code>[input_shaper]</code> 部分。</p>
+<h3 id="pressure-advance">Pressure Advance<a class="headerlink" href="#pressure-advance" title="Permanent link">&para;</a></h3>
+<p>如果您使用 Pressure Advance，則可能需要重新調整。按照 <a href="Pressure_Advance.html#tuning-pressure-advance">instructions</a> 找到新值，如果它與前一個不同。確保在調整 Pressure Advance 之前重新啟動 Klipper。</p>
+<h3 id="_5">環紋頻率測量不可靠<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>如果您無法測量環紋頻率，例如如果振蕩之間的距離不穩定，您仍然可以利用Input Shaper技術，但結果可能不如正確測量頻率那樣好，並且需要更多的調整和打印測試模型。請注意，另一種可能性是購買並安裝加速度計並用它測量共振（請參閱描述所需硬件和設置過程的 <a href="Measuring_Resonances.html">docs</a>） - 但此選項需要一些壓接和焊接。</p>
+<p>要進行調整，請將空的 <code>[input_shaper]</code> 部分添加到您的 <code>printer.cfg</code>。然後，假設您已使用建議的參數對環紋模型進行切片，按如下方式打印測試模型 3 次。第一次，在打印之前，運行</p>
+<ol>
+<li><code>RESTART</code></li>
+<li><code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>並打印模型。然後再次打印模型，但在打印之前運行</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=50 SHAPER_FREQ_Y=50</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>然後第三次打印模型，但現在運行</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=40 SHAPER_FREQ_Y=40</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>本質上，我們使用 2HUMP_EI shaper 和 shaper_freq = 60 Hz、50 Hz 和 40 Hz 打印帶有 TUNING_TOWER 的環紋測試模型。</p>
+<p>如果沒有一個模型顯示環紋的改進，那麼很遺憾，input shaper技術似乎對您的情況沒有幫助。</p>
+<p>否則，可能是所有型號都沒有響鈴，或者有些型號有響鈴，有些型號沒有響鈴。選擇頻率最高的測試模型，在環紋方面仍顯示出良好的改進。例如，如果 40 Hz 和 50 Hz 型號幾乎沒有環紋，而 60 Hz 型號已經顯示更多環紋，則堅持使用 50 Hz。</p>
+<p>現在檢查 EI 整形器在您的情況下是否足夠好。根據您選擇的 2HUMP_EI 整形器的頻率選擇 EI 整形器頻率：</p>
+<ul>
+<li>對於 2HUMP_EI 60 Hz 整形器，使用 shaper_freq = 50 Hz 的 EI 整形器。</li>
+<li>對於 2HUMP_EI 50 Hz 整形器，使用 shaper_freq = 40 Hz 的 EI 整形器。</li>
+<li>對於 2HUMP_EI 40 Hz 整形器，使用 shaper_freq = 33 Hz 的 EI 整形器。</li>
+</ul>
+<p>現在再打印一次測試模型，運行</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=EI SHAPER_FREQ_X=... SHAPER_FREQ_Y=...</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>提供之前確定的 shaper_freq_x=... 和 shaper_freq_y=...。</p>
+<p>如果 EI shaper 顯示出與 2HUMP_EI shaper 非常相似的良好結果，則堅持使用 EI shaper 和之前確定的頻率，否則使用具有相應頻率的 2HUMP_EI shaper。將結果添加到 <code>printer.cfg</code> 中，例如</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: 50
+shaper_freq_y: 50
+shaper_type: 2hump_ei
+</code></pre></div>
+
+<p>使用 <a href="#selecting-max_accel">Selecting max_accel</a> 分區繼續調整。</p>
+<h2 id="_6">故障排除和常見問題解答<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<h3 id="_7">我無法可靠地測量共振頻率<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p>首先，確保打印機不是響鈴而不是其他問題。如果測量結果不可靠，例如，振蕩之間的距離不穩定，則可能意味著打印機在同一軸上有多個共振頻率。可以嘗試遵循 <a href="#unreliable-measurements-of-ringing-frequencies">Unreliable measurements of ringing frequencies</a> 部分中描述的調整過程，仍然可以從input shaper技術中獲得一些東西。另一種可能性是安裝加速度計，[測量]</p>
+<h3 id="input_shaper">啟用 [input_shaper] 後，打印部分過於平滑，細節丟失<a class="headerlink" href="#input_shaper" title="Permanent link">&para;</a></h3>
+<p>檢查 <a href="#selecting-max_accel">選擇 max_accel</a> 部分中的注意事項。如果諧振頻率較低，則不應設置過高的 max_accel 或增加 square_corner_velocity 參數。最好選擇 MZV 甚至 ZV input shaper 而不是 EI（或 2HUMP_EI 和 3HUMP_EI 整形器）。</p>
+<h3 id="_8">成功打印一段時間後沒有環紋，它似乎又回來了<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>有可能在一段時間後共振頻率發生了變化。例如。可能是皮帶張力發生了變化（皮帶變得更鬆了）等。最好按照 <a href="#ringing-frequency">Ringing frequency</a> 部分中的說明檢查並重新測量環紋頻率，並在必要時更新配置文件.</p>
+<h3 id="input-shaper_2">input shaper是否支持雙步進匣設置？<a class="headerlink" href="#input-shaper_2" title="Permanent link">&para;</a></h3>
+<p>沒有對帶有input shaper的雙筆架的專門支持，但這並不意味著此設置不起作用。應該對每個托架運行兩次調諧，並獨立計算每個托架的 X 軸和 Y 軸的環紋頻率。然後將托架 0 的值放入 [input_shaper] 部分，並在更改托架時即時更改值，例如作為一些宏的一部分：</p>
+<div class="highlight"><pre><span></span><code>SET_DUAL_CARRIAGE CARRIAGE=1
+SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
+</code></pre></div>
+
+<p>同樣當切換回步進匣 0 時。</p>
+<h3 id="input_shaper_1">input_shaper 會影響打印時間嗎？<a class="headerlink" href="#input_shaper_1" title="Permanent link">&para;</a></h3>
+<p>不，<code>input_shaper</code> 功能本身對打印時間幾乎沒有影響。但是，<code>max_accel</code> 的值肯定會起作用（在 <a href="#selecting-max_accel">this section</a> 中描述了此參數的調整）。</p>
+<h2 id="_9">技術細節<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<h3 id="input-shapers">input shapers<a class="headerlink" href="#input-shapers" title="Permanent link">&para;</a></h3>
+<p>Klipper 中使用的 input shaper相當標準，可以在描述相應整形器的文章中找到更深入的概述。本節簡要概述了受支持的input shaper的一些技術方面。下表顯示了每個整形器的一些（通常是近似的）參數。</p>
+<table>
+<thead>
+<tr>
+<th align="center">Input <br> shaper</th>
+<th align="center">Shaper <br> 時段</th>
+<th align="center">減振 20 倍 <br>（5% 振動容限）</th>
+<th align="center">減振 10 倍 <br>（10% 振動容限）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">ZV</td>
+<td align="center">0.5 / shaper_freq</td>
+<td align="center">N/A</td>
+<td align="center">± 5% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">MZV</td>
+<td align="center">0.75 / shaper_freq</td>
+<td align="center">± 4% shaper_freq</td>
+<td align="center">-10%...+15% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">ZVD</td>
+<td align="center">1 / shaper_freq</td>
+<td align="center">± 15% shaper_freq</td>
+<td align="center">± 22% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">EI</td>
+<td align="center">1 / shaper_freq</td>
+<td align="center">± 20% shaper_freq</td>
+<td align="center">± 25% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">2HUMP_EI</td>
+<td align="center">1.5 / shaper_freq</td>
+<td align="center">± 35% shaper_freq</td>
+<td align="center">± 40 shaper_freq</td>
+</tr>
+<tr>
+<td align="center">3HUMP_EI</td>
+<td align="center">2 / shaper_freq</td>
+<td align="center">-45...+50% shaper_freq</td>
+<td align="center">-50%...+55% shaper_freq</td>
+</tr>
+</tbody>
+</table>
+<p>關於減振的說明：上表中的值是近似值。如果打印機的阻尼比對於每個軸都是已知的，那麼整形器可以更精確地配置，然後它將在更寬的頻率範圍內減少共振。但是阻尼比通常是未知的，如果沒有特殊的設備很難估計，所以 Klipper 默認使用 0.1 值，這是一個很好的綜合值。表中的頻率範圍涵蓋了該值附近的許多不同可能的阻尼比（大約從 0.05 到 0.2）。</p>
+<p>另請注意，EI、2HUMP_EI 和 3HUMP_EI 已調整為將振動降低到 5%，因此 10% 振動容限的值僅供參考。</p>
+<p><strong>如何使用此表：</strong></p>
+<ul>
+<li>Shaper 持續時間會影響零件的平滑度 - 它越大，零件越平滑。這種依賴性不是線性的，但可以讓您了解對於相同頻率哪些整形器更“平滑”。平滑排序是這樣的：ZV &lt; MZV &lt; ZVD ≈ EI &lt; 2HUMP_EI &lt; 3HUMP_EI。此外，為整形器 2HUMP_EI 和 3HUMP_EI 設置 shaper_freq = 共振頻率很少實用（它們應該用於減少多個頻率的振動）。</li>
+<li>人們可以估計整形器減少振動的頻率範圍。例如，shaper_freq = 35 Hz 的 MZV 將頻率 [33.6, 36.4] Hz 的振動降低到 5%。 shaper_freq = 50 Hz 的 3HUMP_EI 在 [27.5, 75] Hz 範圍內將振動降低到 5%。</li>
+<li>如果他們需要減少多個頻率的振動，可以使用此表來檢查他們應該使用哪個整形器。例如，如果在同一軸上有 35 Hz 和 60 Hz 的共振： a) EI 整形器需要 shaper_freq = 35 / (1 - 0.2) = 43.75 Hz，它將減少共振直到 43.75 * (1 + 0.2 ) = 52.5 Hz，因此還不夠； b) 2HUMP_EI shaper 需要 shaper_freq = 35 / (1 - 0.35) = 53.85 Hz 並且會減少振動直到 53.85 * (1 + 0.35) = 72.7 Hz - 所以這是一個可接受的配置。對於給定的整形器，始終嘗試使用盡可能高的 shaper_freq（可能有一些安全餘量，因此在本例中 shaper_freq ≈ 50-52 Hz 效果最佳），並嘗試使用整形器持續時間盡可能短的整形器。</li>
+<li>如果需要減少幾個非常不同的頻率（例如 30 Hz 和 100 Hz）的振動，他們可能會發現上表沒有提供足夠的信息。在這種情況下，使用更靈活的 <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/graph_shaper.py">scripts/graph_shaper.py</a> 腳本可能會更幸運。</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--prev" aria-label="上一頁: 限位相位" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                上一頁
+              </span>
+              限位相位
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Measuring_Resonances.html" class="md-footer__link md-footer__link--next" aria-label="下一頁: 共振值測量" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                下一頁
+              </span>
+              共振值測量
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u62f7\u8c9d", "clipboard.copied": "\u5df2\u62f7\u8c9d", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u5c0b", "search.result.placeholder": "\u9375\u5165\u4ee5\u958b\u59cb\u6aa2\u7d22", "search.result.none": "\u6c92\u6709\u627e\u5230\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.other": "# \u500b\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

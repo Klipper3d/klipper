@@ -1,0 +1,2031 @@
+
+<!doctype html>
+<html lang="zh-Hant" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>狀態參考 - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳轉至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              狀態參考
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜尋" placeholder="搜尋" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜尋引擎
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        功能
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        常見問題
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        版本發佈
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        配置變更
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        聯繫方式
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        安裝
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        配置參考
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        旋轉距離
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        配置檢查
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        列印床調平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        三角校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        探針校準
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        手動調平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        床網
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        限位相位
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        共振補償
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        共振值測量
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Pressure advance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        命令模板
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          狀態參考
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Status_Reference.html" class="md-nav__link md-nav__link--active">
+        狀態參考
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目錄">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目錄
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bed_mesh" class="md-nav__link">
+    bed_mesh
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configfile" class="md-nav__link">
+    configfile
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display_status" class="md-nav__link">
+    display_status
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endstop_phase" class="md-nav__link">
+    endstop_phase
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fan" class="md-nav__link">
+    fan
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filament_switch_sensor" class="md-nav__link">
+    filament_switch_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filament_motion_sensor" class="md-nav__link">
+    filament_motion_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#firmware_retraction" class="md-nav__link">
+    firmware_retraction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcode_macro" class="md-nav__link">
+    gcode_macro
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcode_move" class="md-nav__link">
+    gcode_move
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hall_filament_width_sensor" class="md-nav__link">
+    hall_filament_width_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#heater" class="md-nav__link">
+    heater
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#heaters" class="md-nav__link">
+    heaters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#idle_timeout" class="md-nav__link">
+    idle_timeout
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcu" class="md-nav__link">
+    mcu
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#motion_report" class="md-nav__link">
+    motion_report
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output_pin" class="md-nav__link">
+    output_pin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#palette2" class="md-nav__link">
+    palette2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pause_resume" class="md-nav__link">
+    pause_resume
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    print_stats
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#probe" class="md-nav__link">
+    probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quad_gantry_level" class="md-nav__link">
+    quad_gantry_level
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query_endstops" class="md-nav__link">
+    query_endstops
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#servo" class="md-nav__link">
+    servo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system_stats" class="md-nav__link">
+    system_stats
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    溫度感測器
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temperature_fan" class="md-nav__link">
+    temperature_fan
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temperature_sensor" class="md-nav__link">
+    temperature_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tmc" class="md-nav__link">
+    tmc 驅動
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolhead" class="md-nav__link">
+    toolhead
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dual_carriage" class="md-nav__link">
+    dual_carriage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual_sdcard" class="md-nav__link">
+    virtual_sdcard
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    webhooks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z_tilt" class="md-nav__link">
+    z_tilt
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#neopixel-dotstar" class="md-nav__link">
+    neopixel / dotstar
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC 驅動器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        複數微控制器歸零與探高
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        切片軟體
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        偏斜校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        使用 PWM 工具
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        程式碼總覽
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        運動學
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        協議
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API 伺服器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU命令
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS 協議
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        除錯
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        基準測試
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        為 Klipper 做貢獻
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        打包 Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        配置示例
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        通過SD卡更新
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi 微控制器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        底層載入程式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CAN 匯流排
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL 耗材寬度感測器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        霍爾耗材線徑感測器
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目錄">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目錄
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#bed_mesh" class="md-nav__link">
+    bed_mesh
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configfile" class="md-nav__link">
+    configfile
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#display_status" class="md-nav__link">
+    display_status
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endstop_phase" class="md-nav__link">
+    endstop_phase
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fan" class="md-nav__link">
+    fan
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filament_switch_sensor" class="md-nav__link">
+    filament_switch_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filament_motion_sensor" class="md-nav__link">
+    filament_motion_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#firmware_retraction" class="md-nav__link">
+    firmware_retraction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcode_macro" class="md-nav__link">
+    gcode_macro
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcode_move" class="md-nav__link">
+    gcode_move
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hall_filament_width_sensor" class="md-nav__link">
+    hall_filament_width_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#heater" class="md-nav__link">
+    heater
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#heaters" class="md-nav__link">
+    heaters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#idle_timeout" class="md-nav__link">
+    idle_timeout
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcu" class="md-nav__link">
+    mcu
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#motion_report" class="md-nav__link">
+    motion_report
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output_pin" class="md-nav__link">
+    output_pin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#palette2" class="md-nav__link">
+    palette2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pause_resume" class="md-nav__link">
+    pause_resume
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    print_stats
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#probe" class="md-nav__link">
+    probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quad_gantry_level" class="md-nav__link">
+    quad_gantry_level
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query_endstops" class="md-nav__link">
+    query_endstops
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#servo" class="md-nav__link">
+    servo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system_stats" class="md-nav__link">
+    system_stats
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    溫度感測器
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temperature_fan" class="md-nav__link">
+    temperature_fan
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temperature_sensor" class="md-nav__link">
+    temperature_sensor
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tmc" class="md-nav__link">
+    tmc 驅動
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolhead" class="md-nav__link">
+    toolhead
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dual_carriage" class="md-nav__link">
+    dual_carriage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#virtual_sdcard" class="md-nav__link">
+    virtual_sdcard
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webhooks" class="md-nav__link">
+    webhooks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z_tilt" class="md-nav__link">
+    z_tilt
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#neopixel-dotstar" class="md-nav__link">
+    neopixel / dotstar
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Status_Reference.md" title="編輯此頁" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="_1">狀態參考<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>本文件是可用於 Klipper <a href="Command_Templates.html">宏</a>、<a href="Config_Reference.html#display">顯示欄位</a>以及<a href="API_Server.html">API伺服器</a> 的印表機狀態資訊的參考。</p>
+<p>本文件中的欄位可能會發生變化 - 如果使用了任何欄位，在更新 Klipper 時，請務必檢視<a href="Config_Changes.html">配置變化文件</a>。</p>
+<h2 id="bed_mesh">bed_mesh<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#bed_mesh">bed_mesh</a> 對像中提供了以下資訊：</p>
+<ul>
+<li><code>profile_name</code>、<code>mesh_min</code>、<code>mesh_max</code>、<code>probed_matrix</code>、<code>mesh_matrix</code>：關於目前活躍的 bed_mesh 配置資訊。</li>
+<li><code>profiles</code>: The set of currently defined profiles as setup using BED_MESH_PROFILE.</li>
+</ul>
+<h2 id="configfile">configfile<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h2>
+<p><code>configfile</code> 對像中提供了以下資訊（該對像始終可用）：</p>
+<ul>
+<li><code>settings.&lt;分段&gt;.&lt;選項&gt;</code>：返回最後一次軟體啟動或重啟時給定的配置檔案設定（或預設值）。(不會反映執行時的修改。）</li>
+<li><code>config.&lt;分段&gt;.&lt;選項&gt;</code>：返回Klipper在上次軟體啟動或重啟時讀取的原始配置檔案設定。(不會反映執行時的修改。)所有值都以字串形式返回。</li>
+<li><code>save_config_pending</code>：如果存在可以通過 <code>SAVE_CONFIG</code> 命令儲存到配置檔案的更新，則返回 True。</li>
+<li><code>warnings</code>：有關配置選項的警告列表。列表中的每個條目都將是一個 dictionary，其中包含 <code>type</code> 和 <code>message</code> 欄位（都是字串）。根據警告型別，可能還有其他可用欄位。</li>
+</ul>
+<h2 id="display_status">display_status<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h2>
+<p><code>display_status</code> 對像中提供以下資訊（如果定義了 <a href="Config_Reference.html#display">display</a> 配置分段，則該對像自動可用）：</p>
+<ul>
+<li><code>progress</code>：最後一個 <code>M73</code> G程式碼命令報告的進度（如果沒有收到<code>M73</code>，則會用<code>virtual_sdcard.progress</code>替代）。</li>
+<li><code>message</code>：最後一條 <code>M117</code> G程式碼命令中包含的訊息。</li>
+</ul>
+<h2 id="endstop_phase">endstop_phase<a class="headerlink" href="#endstop_phase" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#endstop_phase">endstop_phase</a> 對像中提供了以下資訊：</p>
+<ul>
+<li><code>last_home.&lt;步進電機名&gt;.phase</code>：最後一次歸為嘗試結束時步進電機的相位。</li>
+<li><code>last_home.&lt;步進電機名稱&gt;.phase</code>：步進電機上可用的總相數。</li>
+<li><code>last_home.&lt;步進電機名稱&gt;.mcu_position</code>：步進電機在上次歸位嘗試結束時的位置（由微控制器跟蹤）。該位置是自微控制器最後一次重啟以來，向前走的總步數減去反向走的總步數。</li>
+</ul>
+<h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#fan">fan</a>、<a href="Config_Reference.html#heater_fan">heater_fan some_name</a>和<a href="Config_Reference.html#controller_fan">controller_fan some_name</a>對像提供了以下資訊：</p>
+<ul>
+<li><code>speed</code>：風扇速度，0.0和1.0之間的浮點數。</li>
+<li><code>rpm</code>：如果風扇有一個 tachometer_pin，則測量的風扇速度，單位是每分鐘轉數。</li>
+</ul>
+<h2 id="filament_switch_sensor">filament_switch_sensor<a class="headerlink" href="#filament_switch_sensor" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#filament_switch_sensor">filament_switch_sensor some_name</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>enabled</code>：如果開關感測器目前已啟用，則返回True。</li>
+<li><code>filament_detected</code>：如果感測器處於觸發狀態，則返回 True。</li>
+</ul>
+<h2 id="filament_motion_sensor">filament_motion_sensor<a class="headerlink" href="#filament_motion_sensor" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#filament_motion_sensor">filament_motion_sensor 感測器名</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>enabled</code>：如果目前啟用了運動感測器，則返回 True。</li>
+<li><code>filament_detected</code>：如果感測器處於觸發狀態，則返回 True。</li>
+</ul>
+<h2 id="firmware_retraction">firmware_retraction<a class="headerlink" href="#firmware_retraction" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#firmware_retraction">firmware_retraction</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>retract_length</code>、<code>retract_speed</code>、<code>unretract_extra_length</code>、<code>unretract_speed</code>：firmware_retraction 模組的當前設定。如果 <code>SET_RETRACTION</code> 命令改變它們，這些設定可能與配置檔案不同。</li>
+</ul>
+<h2 id="gcode_macro">gcode_macro<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h2>
+<p>[gcode_macro &lt;名稱&gt; 對像提供了以下資訊：</p>
+<ul>
+<li><code>&lt;變數名&gt;</code>：<a href="Command_Templates.html#variables">gcode_macro 變數</a> 的當前值。</li>
+</ul>
+<h2 id="gcode_move">gcode_move<a class="headerlink" href="#gcode_move" title="Permanent link">&para;</a></h2>
+<p><code>gcode_move</code> 對像中提供了以下資訊（該對像始終可用）：</p>
+<ul>
+<li><code>gcode_position</code>：工具頭相對於目前 G 程式碼原點的當前位置。也就是可以直接被髮送到<code>G1</code>命令的位置。可以分別訪問這個位置的x、y、z和e份量（例如，<code>gcode_position.x</code>）。</li>
+<li><code>position</code>：列印頭在配置檔案中定義的座標系中的最後指令位置。可以訪問這個位置的x、y、z和e份量（例如，<code>position.x</code>）。</li>
+<li><code>homing_origin</code>：在<code>G28</code>命令之後要使用的 G-Code 座標系的原點（相對於配置檔案中定義的座標系）。<code>SET_GCODE_OFFSET</code> 命令可以改變這個位置。可以分別訪問這個位置的x、y和z份量（例如，<code>homing_origin.x</code>）。</li>
+<li><code>speed</code>：在<code>G1</code>命令中最後一次設定的速度（單位：mm/s）。</li>
+<li><code>speed_factor</code>：通過 <code>M220</code> 命令設定的"速度因子覆蓋"。這是一個浮點值，1.0 意味著沒有覆蓋，例如，2.0 將請求的速度翻倍。</li>
+<li><code>extrude_factor</code>：由<code>M221</code>命令設定的"擠出倍率覆蓋" 。這是一個浮點值，1.0意味著沒有覆蓋，例如，2.0將使要求的擠出量翻倍。</li>
+<li><code>absolute_coordinates</code>：如果在 <code>G90</code> 絕對座標模式下，則返回 True；如果在 <code>G91</code> 相對模式下，則返回 False。</li>
+<li><code>absolute_extrude</code>：如果在<code>M82</code>絕對擠出模式，則返回True；如果在<code>M83</code>相對模式，則返回False。</li>
+</ul>
+<h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#hall_filament_width_sensor">hall_filament_width_sensor</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>is_active</code>：如果感測器目前處於活動狀態，返回True。</li>
+<li><code>Diameter</code>：上一次感測器讀數，單位為 mm。</li>
+<li><code>Raw</code>：上一次感測器原始 ADC 讀數。</li>
+</ul>
+<h2 id="heater">heater<a class="headerlink" href="#heater" title="Permanent link">&para;</a></h2>
+<p>加熱器對象，如<a href="Config_Reference.html#extruder">extruder</a>、<a href="Config_Reference.html#heater_bed">heater_bed</a>和<a href="Config_Reference.html#heater_generic">heater_generic</a>，提供了以下資訊：</p>
+<ul>
+<li><code>temperature</code>：給定加熱器最後報告的溫度（以攝氏度為單位的浮點數）。</li>
+<li><code>target</code>：給定加熱器的當前目標溫度（以攝氏度為單位的浮點數）。</li>
+<li><code>power</code>：與加熱器相關的 PWM 引腳的最後設定（0.0和1.0之間的數值）。</li>
+<li><code>can_extrude</code>：擠出機是否可以擠出（由<code>min_extrude_temp</code>定義），僅可用於<a href="Config_Reference.html#extruder">extruder</a></li>
+</ul>
+<h2 id="heaters">heaters<a class="headerlink" href="#heaters" title="Permanent link">&para;</a></h2>
+<p><code>heaters</code> 對像中提供以下資訊（如果定義了任何加熱器，則該對象可用）：</p>
+<ul>
+<li><code>available_heaters</code>：返回所有當前可用加熱器的完整配置分段名稱，例如 <code>["extruder"、"heater_bed"、"heater_generic my_custom_heater"]</code>。</li>
+<li><code>available_sensors</code>：返回所有當前可用的溫度感測器的完整配置分段名稱列表，例如：<code>["extruder", "heater_bed", "heater_generic my_custom_heater", "temperature_sensor electronics_temp"]</code>。</li>
+</ul>
+<h2 id="idle_timeout">idle_timeout<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#idle_timeout">idle_timeout</a> 對像中提供了以下資訊（該對像始終可用）：</p>
+<ul>
+<li><code>state</code>：由 idle_timeout 模組跟蹤的印表機的當前狀態。它可以是以下字串之一："Idle", "Printing", "Ready"。</li>
+<li><code>printing_time</code>：印表機處於「Printing」狀態的時間（以秒為單位）（由 idle_timeout 模組跟蹤）。</li>
+</ul>
+<h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#mcu">mcu</a>和<a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a>對像提供了以下資訊：</p>
+<ul>
+<li><code>mcu_version</code>：由微控制器報告的 Klipper 程式碼版本。</li>
+<li><code>mcu_build_versions</code>：有關用於產生微控制器程式碼的構建工具的資訊（由微控制器報告）。</li>
+<li><code>mcu_constants.&lt;常量名&gt;</code>：由微控制器報告編譯時使用的常量。可用的常量在不同的微控制器架構和每個程式碼修訂版中可能有所不同。</li>
+<li><code>last_stats.&lt;統計資訊名&gt;</code>：關於微控制器連線的統計資訊。</li>
+</ul>
+<h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
+<p><code>motion_report</code> 對像提供了以下資訊（如果定義了任何步進器配置分段，則該對像自動可用）：</p>
+<ul>
+<li><code>live_position</code>：請求的列印頭位置插值到目前時間后的位置。</li>
+<li><code>live_velocity</code>：目前請求的列印頭速度（以毫米/秒為單位）。</li>
+<li><code>live_extruder_velocity</code>：目前請求的擠出機速度（單位：mm/s）。</li>
+</ul>
+<h2 id="output_pin">output_pin<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h2>
+<p>[output_pin &lt;配置名稱&gt; 對像提供以下資訊：</p>
+<ul>
+<li><code>value</code>：由<code>SET_PIN</code>指令設定的引腳「值」。</li>
+</ul>
+<h2 id="palette2">palette2<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#palette2">palette2</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>ping</code>。最後一次報告的Palette 2 ping值（百分比）。</li>
+<li><code>remaining_load_length</code>：當開始一個使用 Palette 2 的列印時，這是需要載入到擠出機中的耗材長度。</li>
+<li><code>is_splicing</code>：當Palette 2正在拼接耗材時為 True。</li>
+</ul>
+<h2 id="pause_resume">pause_resume<a class="headerlink" href="#pause_resume" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#palette2">palette2</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>is_paused</code>：如果執行了 PAUSE 命令而沒有執行 RESUME，則返回 True。</li>
+</ul>
+<h2 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h2>
+<p><code>print_stats</code> 對像提供了以下資訊（如果定義了 <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> 配置分段，則此對像自動可用）：</p>
+<ul>
+<li><code>filename</code>、<code>total_duration</code>、<code>print_duration</code>、<code>filament_used</code>、<code>state</code>、<code>message</code>：virtual_sdcard 列印處於活動狀態時有關目前列印的估測。</li>
+</ul>
+<h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#probe">probe</a> 對像中提供了以下資訊（如果定義了 <a href="Config_Reference.html#bltouch">bltouch</a> 配置分段，則此對象也可用）：</p>
+<ul>
+<li><code>last_query</code>：如果探針在上一個 QUERY_PROBE 命令期間報告為"已觸發"，則返回 True。請注意，如果在宏中使用它，根據模板展開的順序，必須在包含此引用的宏之前執行 QUERY_PROBE 命令。</li>
+<li><code>last_z_result</code>：返回上一次 PROBE 命令的結果 Z 值。請注意，由於模板展開的順序，在宏中使用時必須在包含此引用的宏之前執行 PROBE（或類似）命令。</li>
+</ul>
+<h2 id="quad_gantry_level">quad_gantry_level<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h2>
+<p><code>quad_gantry_level</code> 對像提供了以下資訊（如果定義了 quad_gantry_level，則該對象可用）：</p>
+<ul>
+<li><code>applied</code>：如果龍門調平已執行併成功完成，則為 True。</li>
+</ul>
+<h2 id="query_endstops">query_endstops<a class="headerlink" href="#query_endstops" title="Permanent link">&para;</a></h2>
+<p><code>query_endstops</code> 對像提供以下資訊（如果定義了任何限位，則該對象可用）：</p>
+<ul>
+<li><code>last_query["&lt;限位&gt;"]</code>：如果在最後一次 QUERY_ENDSTOP 命令中，給定的 endstop 處於「觸發」狀態，則返回 True。注意，如果在宏中使用，由於模板擴充套件的順序，QUERY_ENDSTOP 命令必須在包含這個引用的宏之前執行。</li>
+</ul>
+<h2 id="servo">servo<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#servo">servo some_name</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>printer["servo &lt;配置名&gt;"].value</code>：與指定伺服相關 PWM 引腳的上一次設定的值（0.0 和 1.0 之間的值）。</li>
+</ul>
+<h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
+<p><code>system_stats</code> 對像提供了以下資訊（該對像始終可用）：</p>
+<ul>
+<li><code>sysload</code>、<code>cputime</code>、<code>memavail</code>：關於主機操作系統和程序負載的資訊。</li>
+</ul>
+<h2 id="_2">溫度感測器<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>以下資訊可在</p>
+<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>、<a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>、<a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>和<a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> 對像：</p>
+<ul>
+<li><code>temperature</code>：上一次從感測器讀取的溫度。</li>
+<li><code>hemidity</code>、<code>pressure</code>和<code>gas</code>：感測器上一次讀取的值（僅在bme280、htu21d和lm75感測器上）。</li>
+</ul>
+<h2 id="temperature_fan">temperature_fan<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#temperature_fan">temperature_fan some_name</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>temperature</code>：上一次從感測器讀取的溫度。</li>
+<li><code>target</code>：風扇目標溫度。</li>
+</ul>
+<h2 id="temperature_sensor">temperature_sensor<a class="headerlink" href="#temperature_sensor" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#temperature_sensor">temperature_sensor some_name</a> 對像提供了以下資訊：</p>
+<ul>
+<li><code>temperature</code>：上一次從感測器讀取的溫度。</li>
+<li><code>measured_min_temp</code>和<code>measured_max_temp</code>：自Klipper主機軟體上次重新啟動以來，感測器測量的最低和最高溫度。</li>
+</ul>
+<h2 id="tmc">tmc 驅動<a class="headerlink" href="#tmc" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC 步進驅動</a>對像（例如，<code>[tmc2208 stepper_x]</code>）提供了以下資訊：</p>
+<ul>
+<li><code>mcu_phase_offset</code>：微控制器步進位置與驅動器的"零"相位的相對位置。如果相位偏移未知，則此欄位可能為空。</li>
+<li><code>phase_offset_position</code>：對應電機「零」相位的「指令位置」。如果相位偏移未知，則該欄位可以為空。</li>
+<li><code>drv_status</code>：上次驅動狀態查詢結果。（僅報告非零欄位。如果驅動沒有被啟用（因此沒有輪詢），則此欄位將為 null。</li>
+<li><code>run_current</code>：目前設定的執行電流。</li>
+<li><code>hold_current</code>：目前設定的保持電流。</li>
+</ul>
+<h2 id="toolhead">toolhead<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h2>
+<p><code>toolhead</code> 對像提供了以下資訊（該對像始終可用）：</p>
+<ul>
+<li><code>position</code>：列印頭相對於配置檔案中指定的座標系的最後命令位置。可以訪問該位置的 x、y、z 和 e 份量（例如，<code>position.x</code>）。</li>
+<li><code>extruder</code>：目前活躍的擠出機的名稱。例如，在宏中可以使用<code>printer[printer.toolhead.extruder].target</code>來獲取目前擠出機的目標溫度。</li>
+<li><code>homed_axes</code>：目前被認為處於「已歸位」狀態的車軸。這是一個包含一個或多個"x"、"y"、"z"的字串。</li>
+<li><code>axis_minimum</code>、<code>axis_maximum</code>：歸位后的軸的行程限制（毫米）。可以訪問此極限值的 x、y、z 份量（例如，<code>axis_minimum.x</code>、<code>axis_maximum.z</code>）。</li>
+<li><code>max_velocity</code>、<code>max_accel</code>、<code>max_accel_to_decel</code>和<code>square_corner_velocity</code>：目前生效的印表機限制。如果 <code>SET_VELOCITY_LIMIT</code>（或 <code>M204</code>）命令在執行時改變它們，這些值可能與配置檔案設定不同。</li>
+<li><code>stalls</code>：由於工具頭移動速度快于從 G 程式碼輸入讀取的移動速度，因此印表機必須暫停的總次數（自上次重新啟動以來）。</li>
+</ul>
+<h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
+<p>使用了 hybrid_corexy 或 hybrid_corexz 運動學的 <a href="Config_Reference.html#dual_carriage">dual_carriage</a> 對像提供了以下資訊</p>
+<ul>
+<li><code>mode</code>：目前模式。可能的值："FULL_CONTROL"</li>
+<li><code>active_carriage</code>：目前的活躍的滑車。可能的值是"CARRIAGE_0"和"CARRIAGE_1"</li>
+</ul>
+<h2 id="virtual_sdcard">virtual_sdcard<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a>對像提供了以下資訊：</p>
+<ul>
+<li><code>is_active</code>：如果正在從檔案進行列印，則返回 True。</li>
+<li><code>progress</code>：對當前列印進度的估計（基於檔案大小和檔案位置）。</li>
+<li><code>file_path</code>：目前載入的檔案的完整路徑。</li>
+<li><code>file_position</code>：目前列印的位置（以位元組為單位）。</li>
+<li><code>file_size</code>：目前載入的檔案的大小（以位元組為單位）。</li>
+</ul>
+<h2 id="webhooks">webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
+<p><code>system_stats</code> 對像提供了以下資訊（該對像始終可用）：</p>
+<ul>
+<li><code>state</code>：返回一個表示目前 Klipper 狀態的字串。可能的值為："ready"、"startup"、"shutdown"和"error"。</li>
+<li><code>state_message</code>：提供了一個包含目前 Klipper 狀態和上下文的可讀字串。</li>
+</ul>
+<h2 id="z_tilt">z_tilt<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h2>
+<p><code>z_tilt</code> 對像提供了以下資訊（如果定義了 z_tilt，則該對象可用）：</p>
+<ul>
+<li><code>applied</code>：如果 z 傾斜調平過程已執行併成功完成，則為 True。</li>
+</ul>
+<h2 id="neopixel-dotstar">neopixel / dotstar<a class="headerlink" href="#neopixel-dotstar" title="Permanent link">&para;</a></h2>
+<p>以下資訊適用於每個在 printer.cfg 中定義的 <code>[neopixel led_name]</code> 和 <code>[dotstar led_name]</code>：</p>
+<ul>
+<li><code>color_data</code>：對像陣列，每個對像包含鏈中一個 LED 的 RGBW 值。請注意，並非所有配置都包含白色值。每個值都是從 0 到 1 的浮點數。例如，鏈中第二個 neopixel 的藍色值可以通過<code>printer["neopixel &lt;config_name&gt;"].color_data[1].B</code>訪問。</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Command_Templates.html" class="md-footer__link md-footer__link--prev" aria-label="上一頁: 命令模板" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                上一頁
+              </span>
+              命令模板
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="TMC_Drivers.html" class="md-footer__link md-footer__link--next" aria-label="下一頁: TMC 驅動器" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                下一頁
+              </span>
+              TMC 驅動器
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u62f7\u8c9d", "clipboard.copied": "\u5df2\u62f7\u8c9d", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u5c0b", "search.result.placeholder": "\u9375\u5165\u4ee5\u958b\u59cb\u6aa2\u7d22", "search.result.none": "\u6c92\u6709\u627e\u5230\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.other": "# \u500b\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

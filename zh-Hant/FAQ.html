@@ -1,0 +1,1816 @@
+
+<!doctype html>
+<html lang="zh-Hant" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>常見問題 - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳轉至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              常見問題
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜尋" placeholder="搜尋" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜尋引擎
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        功能
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          常見問題
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="FAQ.html" class="md-nav__link md-nav__link--active">
+        常見問題
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目錄">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目錄
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    我如何向專案捐款？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rotation_distance" class="md-nav__link">
+    如何計算 rotation_distance 配置參數？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    我的串列埠在哪裡找？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devttyusb1" class="md-nav__link">
+    當微控制器重新啟動裝置更改為/dev/ttyUSB1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-flash" class="md-nav__link">
+    「make flash」命令不起作用
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    如何更改序列波特率？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#raspberry-pi-3-klipper" class="md-nav__link">
+    我可以在 Raspberry Pi 3 以外的其他裝置上執行 Klipper 嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper" class="md-nav__link">
+    我可以在同一臺主機上執行多個 Klipper 實例嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#octoprint" class="md-nav__link">
+    我必須使用 OctoPrint 嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    為什麼在歸位印表機之前我不能移動步進器？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z-position_endstop-05" class="md-nav__link">
+    為什麼 Z position_endstop 在預設配置中設定為 0.5？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marlin-xy-z" class="md-nav__link">
+    我從 Marlin 轉換了我的配置並且 X/Y 軸工作正常，但是在歸位 Z 軸時我只聽到刺耳的噪音且印表機不動
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tmc" class="md-nav__link">
+    我的 TMC 電機驅動在列印過程中關閉了
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcu" class="md-nav__link">
+    我不斷收到隨機的"與MCU失去通訊"錯誤
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    我的樹莓派在列印時不斷重啟
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restart_methodcommand-avr" class="md-nav__link">
+    當設定restart_method=command時， AVR 裝置在重啟時就會宕機
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#raspberry-pi" class="md-nav__link">
+    如果 Raspberry Pi 崩潰了，加熱器會一直加熱嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marlin-klipper" class="md-nav__link">
+    如何將 Marlin 引腳編號轉換為 Klipper 引腳名稱？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    我必須將裝置連線到特定型別的微控制器引腳嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#m109m190" class="md-nav__link">
+    如何取消 M109/M190 "等待達到目標溫度"的請求？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    怎麼檢查印表機是否發生了丟步?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper_1" class="md-nav__link">
+    為什麼 Klipper 會報錯？我收了一盤面條（我又打廢了）！
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    我怎樣才能升級到最新的軟體？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper_2" class="md-nav__link">
+    如何解除安裝Klipper？
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        版本發佈
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        配置變更
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        聯繫方式
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        安裝
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        配置參考
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        旋轉距離
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        配置檢查
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        列印床調平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        三角校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        探針校準
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        手動調平
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        床網
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        限位相位
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        共振補償
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        共振值測量
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Pressure advance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        命令模板
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        狀態參考
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC 驅動器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        複數微控制器歸零與探高
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        切片軟體
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        偏斜校正
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        使用 PWM 工具
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        程式碼總覽
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        運動學
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        協議
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API 伺服器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU命令
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS 協議
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        除錯
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        基準測試
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        為 Klipper 做貢獻
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        打包 Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        配置示例
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        通過SD卡更新
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi 微控制器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        底層載入程式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CAN 匯流排
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL 耗材寬度感測器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        霍爾耗材線徑感測器
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目錄">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目錄
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    我如何向專案捐款？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rotation_distance" class="md-nav__link">
+    如何計算 rotation_distance 配置參數？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    我的串列埠在哪裡找？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devttyusb1" class="md-nav__link">
+    當微控制器重新啟動裝置更改為/dev/ttyUSB1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-flash" class="md-nav__link">
+    「make flash」命令不起作用
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    如何更改序列波特率？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#raspberry-pi-3-klipper" class="md-nav__link">
+    我可以在 Raspberry Pi 3 以外的其他裝置上執行 Klipper 嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper" class="md-nav__link">
+    我可以在同一臺主機上執行多個 Klipper 實例嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#octoprint" class="md-nav__link">
+    我必須使用 OctoPrint 嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    為什麼在歸位印表機之前我不能移動步進器？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z-position_endstop-05" class="md-nav__link">
+    為什麼 Z position_endstop 在預設配置中設定為 0.5？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marlin-xy-z" class="md-nav__link">
+    我從 Marlin 轉換了我的配置並且 X/Y 軸工作正常，但是在歸位 Z 軸時我只聽到刺耳的噪音且印表機不動
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tmc" class="md-nav__link">
+    我的 TMC 電機驅動在列印過程中關閉了
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcu" class="md-nav__link">
+    我不斷收到隨機的"與MCU失去通訊"錯誤
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    我的樹莓派在列印時不斷重啟
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restart_methodcommand-avr" class="md-nav__link">
+    當設定restart_method=command時， AVR 裝置在重啟時就會宕機
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#raspberry-pi" class="md-nav__link">
+    如果 Raspberry Pi 崩潰了，加熱器會一直加熱嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#marlin-klipper" class="md-nav__link">
+    如何將 Marlin 引腳編號轉換為 Klipper 引腳名稱？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    我必須將裝置連線到特定型別的微控制器引腳嗎？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#m109m190" class="md-nav__link">
+    如何取消 M109/M190 "等待達到目標溫度"的請求？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    怎麼檢查印表機是否發生了丟步?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper_1" class="md-nav__link">
+    為什麼 Klipper 會報錯？我收了一盤面條（我又打廢了）！
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    我怎樣才能升級到最新的軟體？
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper_2" class="md-nav__link">
+    如何解除安裝Klipper？
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/FAQ.md" title="編輯此頁" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="_1">常見問題<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<ol>
+<li><a href="#how-can-i-donate-to-the-project">我怎樣才能支援專案？</a></li>
+<li><a href="#how-do-i-calculate-the-rotation_distance-config-parameter">如何計算rotation_distance配置參數？</a></li>
+<li><a href="#wheres-my-serial-port">我的串列埠在哪裡找？</a></li>
+<li><a href="#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1">當微控制器重啟裝置更改為/dev/ttyUSB1</a></li>
+<li><a href="#the-make-flash-command-doesnt-work">「make flash」命令不起作用</a></li>
+<li><a href="#how-do-i-change-the-serial-baud-rate">如何更改串列埠波特率？</a></li>
+<li><a href="#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3">我可以在 Raspberry Pi 3 以外的其他裝置上執行 Klipper 嗎？</a></li>
+<li><a href="#can-i-run-multiple-instances-of-klipper-on-the-same-host-machine">我可以在同一臺主機上執行多個 Klipper 實例嗎？</a></li>
+<li><a href="#do-i-have-to-use-octoprint">我必須使用 OctoPrint 嗎？</a></li>
+<li><a href="#why-cant-i-move-the-stepper-before-homing-the-printer">為什麼我不能在歸位印表機之前移動步進器？</a></li>
+<li><a href="#why-is-the-z-position_endstop-set-to-05-in-the-default-configs">為什麼預設配置中的 Z position_endstop 設定為 0.5？</a></li>
+<li><a href="#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis">我從 Marlin 轉換了我的配置，X/Y 軸工作正常，但在 Z 軸歸位時我只會聽到刺耳的噪音</a></li>
+<li><a href="#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print">我的 TMC 電機驅動程式在列印過程中關閉</a></li>
+<li><a href="#i-keep-getting-random-lost-communication-with-mcu-errors">我不斷收到隨機的「與 MCU 失去通訊」錯誤</a></li>
+<li><a href="#my-raspberry-pi-keeps-rebooting-during-prints">我的樹莓派在列印過程中不斷重啟</a></li>
+<li><a href="#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart">當我設定<code>restart_method=command</code>時，我的 AVR 裝置在重啟時掛起</a></li>
+<li><a href="#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes">如果 Raspberry Pi 崩潰，加熱器會繼續打開嗎？</a></li>
+<li><a href="#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name">如何將 Marlin 引腳編號轉換為 Klipper 引腳名稱？</a></li>
+<li><a href="#do-i-have-to-wire-my-device-to-a-specific-type-of-micro-controller-pin">我必須將我的裝置連線到特定型別的微控制器引腳嗎？</a></li>
+<li><a href="#how-do-i-cancel-an-m109m190-wait-for-temperature-request">我如何取消 M109/M190「等待溫度」請求？</a></li>
+<li><a href="#can-i-find-out-whether-the-printer-has-lost-steps">可以查一下印表機是否丟步嗎？</a></li>
+<li><a href="#why-does-klipper-report-errors-i-lost-my-print">為什麼Klipper會報錯？ 我列印的檔案丟了！</a></li>
+<li><a href="#how-do-i-upgrade-to-the-latest-software">如何升級到最新軟體？</a></li>
+<li><a href="#how-do-i-uninstall-klipper">如何解除安裝 klipper？</a></li>
+</ol>
+<h2 id="_2">我如何向專案捐款？<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>謝謝。Kevin有一個PATREON頁面，地址是： <a href="https://www.patreon.com/koconnor">https://www.patreon.com/koconnor</a></p>
+<h2 id="rotation_distance">如何計算 rotation_distance 配置參數？<a class="headerlink" href="#rotation_distance" title="Permanent link">&para;</a></h2>
+<p>參見<a href="Rotation_Distance.html">旋轉距離文件</a>。</p>
+<h2 id="_3">我的串列埠在哪裡找？<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>查詢 USB 串列埠的一般方法是從主機上的 ssh 終端執行 <code>ls /dev/serial/by-id/*</code>。 它可能會產生類似於以下內容的輸出：</p>
+<div class="highlight"><pre><span></span><code>/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+</code></pre></div>
+
+<p>在上述命令中找到的名稱是穩定的，可以在配置檔案中使用它，同時可用於刷寫微控制器的程式碼。 例如，一個 flash 命令：</p>
+<div class="highlight"><pre><span></span><code>sudo service klipper stop
+make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+sudo service klipper start
+</code></pre></div>
+
+<p>更新后的配置可能如下所示：</p>
+<div class="highlight"><pre><span></span><code>[mcu]
+serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+</code></pre></div>
+
+<p>請務必從上面執行的「ls」命令中複製並貼上名稱，因為每個印表機的名稱都不同。</p>
+<p>如果您使用多個微控制器並且它們沒有唯一的 ID（在帶有 CH340 USB 晶片的板上很常見），那麼請按照上面的說明使用命令 <code>ls /dev/serial/by-path/*</code> 代替。</p>
+<h2 id="devttyusb1">當微控制器重新啟動裝置更改為/dev/ttyUSB1<a class="headerlink" href="#devttyusb1" title="Permanent link">&para;</a></h2>
+<p>按照「<a href="#wheres-my-serial-port">我的串列埠在哪裡找？</a>」部分中的說明來防止這種情況發生。</p>
+<h2 id="make-flash">「make flash」命令不起作用<a class="headerlink" href="#make-flash" title="Permanent link">&para;</a></h2>
+<p>該程式碼嘗試使用每個平臺最常用的方法來刷寫裝置。 不幸的是，刷寫方法存在很多差異，因此「make flash」命令可能不適用于所有主板。</p>
+<p>如果您遇到間歇性故障或您確實有標準設定，請仔細檢查刷寫時 Klipper 是否未執行（sudo service klipper stop），確保 OctoPrint 未嘗試直接連線到裝置（打開 網頁中的連線選項卡，如果串列埠設定為裝置，則單擊斷開連線），並確保為您的電路板正確設定了 FLASH_DEVICE（請參閱<a href="#wheres-my-serial-port">上面的問題</a>）。</p>
+<p>但是，如果「make flash」對您的電路板不起作用，那麼您將需要手動刷寫。 檢視 <a href="https://github.com/Klipper3d/klipper/blob/master/config">config directory</a> 中是否有一個配置檔案，裡面有刷機的具體說明。 此外，請檢視電路板製造商的文件，看看它是否描述瞭如何刷寫裝置。 最後，可以使用諸如「avrdude」或「bossac」之類的工具手動刷寫裝置——有關更多資訊，請參閱<a href="Bootloaders.html">引導載入程式文件</a>。</p>
+<h2 id="_4">如何更改序列波特率？<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>Klipper的推薦波特率是 250000。這個波特率在 Klipper 支援的所有微控制器板上都很好用。如果你發現網上的指南推薦了一個不同的波特率，那麼請忽略這部分指南，繼續使用預設值 250000。</p>
+<p>如果你還是想改變波特率，那麼需要重新配置微控制器為新的波特率（在<strong>make menuconfig</strong>過程中），然後將更新的程式碼編譯並刷寫到微控制器中。Klipper 的 printer.cfg 檔案也需要更新以匹配該波特率（詳見<a href="Config_Reference.html#mcu）">配置參考</a>。例如：</p>
+<div class="highlight"><pre><span></span><code>[mcu]
+baud: 250000
+</code></pre></div>
+
+<p>OctoPrint 網頁上顯示的波特率對內部 Klipper 微控制器的波特率沒有影響。使用 Klipper 時，始終將 OctoPrint 的波特率設定為250000。</p>
+<p>Klipper 微控制器的波特率與微控制器啟動載入程式的波特率無關。有關啟動載入程式的額外資訊請參閱<a href="Bootloaders.html">啟動載入程式文件</a>。</p>
+<h2 id="raspberry-pi-3-klipper">我可以在 Raspberry Pi 3 以外的其他裝置上執行 Klipper 嗎？<a class="headerlink" href="#raspberry-pi-3-klipper" title="Permanent link">&para;</a></h2>
+<p>推薦的硬體是 Raspberry Pi 2、Raspberry Pi 3 或 Raspberry Pi 4。</p>
+<p>Klipper 可以在 Raspberry Pi 1和Raspberry Pi Zero上執行，但這些板子沒有足夠的處理能力來執行 OctoPrint。在這些較慢的機器上直接從 OctoPrint 列印時，經常會出現列印停滯。(印表機的移動速度可能比 OctoPrint 發送移動命令的速度快。)如果你希望在這些較慢的板子上執行，請考慮在列印時使用 "virtual_sdcard "功能(詳情請參見<a href="Config_Reference.html#virtual_sdcard">配置參考</a>)。</p>
+<p>要在Beaglebone上執行，請參閱<a href="Beaglebone.html">Beaglebone特別安裝說明</a>。</p>
+<p>Klipper 可以在其他計算機上執行。Klipper 主機軟體只需要在Linux（或類似）系統的計算機上執行 Python。然而，如果你想在其他計算機上執行它，你將需要一些 Linux 管理知識來安裝該計算機上系統的依賴包。參見 <a href="..../scripts/install-octopi.sh">install-octopi.sh</a> 指令碼，以進一步瞭解必要的 Linux 安裝方法。</p>
+<p>如果你想在低端處理器上執行 Klipper 主機軟體，請注意，你至少需要一臺具有 "雙精度浮點 "運算硬體的計算機。</p>
+<p>如果你想在共享的通用計算機或伺服器上執行 Klipper 主機程式，請注意 Klipper 有一些實時排程要求。如果在列印過程中，主機也在執行密集型的通用計算任務（如硬碟碎片整理、3D渲染、大量swapping （虛擬記憶體交換）等），可能會導致 Klipper 報告列印錯誤。</p>
+<p>注意：如果你沒有使用 OctoPi 映象，一些Linux發行版啟用了一個 "ModemManager"（或類似的）軟體包，它干擾序列通訊。(這可能導致 Klipper 報告看似隨機的 "與MCU失去通訊 "錯誤）。如果你在這些發行版上安裝Klipper，你可能需要禁用該軟體包。</p>
+<h2 id="klipper">我可以在同一臺主機上執行多個 Klipper 實例嗎？<a class="headerlink" href="#klipper" title="Permanent link">&para;</a></h2>
+<p>可以執行 Klipper 主機軟體的多個實例，但這樣做需要一定的 Linux 知識。 Klipper 安裝指令碼最終會導致執行以下 Unix 命令：</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log
+</code></pre></div>
+
+<p>只要每個實例都有自己的印表機配置檔案、自己的日誌檔案和自己的偽 tty，就可以執行上述命令的多個實例。 例如：</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
+</code></pre></div>
+
+<p>如果你選擇這樣做，你將需要實現必要的啟動、停止和安裝指令碼。<a href="..../scripts/install-octopi.sh">install-octopi.sh</a>和<a href="..../scripts/klipper-start.sh">klipper-start.sh</a>指令碼提供了一些例子。</p>
+<h2 id="octoprint">我必須使用 OctoPrint 嗎？<a class="headerlink" href="#octoprint" title="Permanent link">&para;</a></h2>
+<p>Klipper 不依賴 OctoPrint。其他軟體也可以向 Klipper 發送命令，但這樣做可能需要一些 Linux 管理知識。</p>
+<p>Klipper 通過 「/tmp/printer」 檔案建立了一個「虛擬串列埠」，該檔案模擬了一個標準的3D印表機串列埠。理論上任何能配置並使用 「/tmp/printer」 作為印表機串列埠的軟體都可以與Klipper一起工作。</p>
+<h2 id="_5">為什麼在歸位印表機之前我不能移動步進器？<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>程式碼這樣做是爲了減少意外將頭撞到床或墻壁的機會。 印表機歸位后，軟體會嘗試驗證每個移動是否在配置檔案中定義的 position_min/max 範圍內。 如果電機被禁用（通過 M84 或 M18 命令），那麼電機將需要在運動前再次歸位。</p>
+<p>如果您想在通過 OctoPrint 取消列印后移動列印頭，請考慮更改 OctoPrint 取消順序來為您執行此操作。 它是通過 Web 瀏覽器在 OctoPrint 中配置的：設定-&gt; GCODE 指令碼</p>
+<p>如果您想在列印完成後移動頭部，請考慮將所需的移動新增到切片機的「自定義 g 程式碼」部分。</p>
+<p>如果印表機歸位過程中需要一些額外的移動（或者根本上沒有歸位運動），那麼可以在配置檔案中定義safe_z_home或 homing_override分段。如果你需要為診斷或除錯目的移動一個步進，可以在配置檔案中新增一個 force_move 分段。參見<a href="Config_Reference.html#customized_homing">配置參考</a>以瞭解關於這些選項的詳情。</p>
+<h2 id="z-position_endstop-05">為什麼 Z position_endstop 在預設配置中設定為 0.5？<a class="headerlink" href="#z-position_endstop-05" title="Permanent link">&para;</a></h2>
+<p>對於笛卡爾式印表機，Z position_endstop 定義了當限位觸發時噴嘴離床的距離。如果可能的話，建議使用 Z-max 限位使歸位時列印頭遠離床（因為這可以減少碰撞的發生）。如果必須朝向床歸位，那麼建議將限位固定在噴嘴距離床還有一小段距離時觸發。這樣，當歸位 Z 軸時，噴嘴會在接觸床之前停止。有關詳細資訊，請參閱 <a href="Bed_Level.html">列印床調平文件</a>。</p>
+<h2 id="marlin-xy-z">我從 Marlin 轉換了我的配置並且 X/Y 軸工作正常，但是在歸位 Z 軸時我只聽到刺耳的噪音且印表機不動<a class="headerlink" href="#marlin-xy-z" title="Permanent link">&para;</a></h2>
+<p>長話短說：首先，請確保您已按照 <a href="Config_checks.html">配置檢查文件</a> 中描述的步驟驗證了步進驅動配置。如果問題仍然存在，請嘗試降低印表機配置中的 max_z_velocity 設定。</p>
+<p>具體原理：在實踐中，Marlin 通常只能以每秒 10000 步左右的速度發送步進。如果要求它以需要更高的步進率的速度移動，那麼 Marlin 會盡可能快地步進。Klipper 能夠實現更高的步進率，但步進電機可能沒有足夠的扭矩以更高的速度移動。因此，對於一個具有高傳動比或高微步設定的 Z 軸，實際的最大速度可能小於 Marlin 中配置的值。</p>
+<h2 id="tmc">我的 TMC 電機驅動在列印過程中關閉了<a class="headerlink" href="#tmc" title="Permanent link">&para;</a></h2>
+<p>如果在「獨立模式」中使用 TMC2208（或 TMC2224）驅動，那麼請確保您正在使用<a href="#how-do-i-upgrade-to-the-latest-software">最新版本的 Klipper</a>。2020年3月中旬，Klipper 中修復了 TMC2208 「StealthChop」 驅動的問題。</p>
+<h2 id="mcu">我不斷收到隨機的"與MCU失去通訊"錯誤<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
+<p>這通常是由主機和微控制器之間的 USB 連線中硬體錯誤引起的。注意這些問題：</p>
+<ul>
+<li>在主機和微控制器之間應該使用高質量USB線，並確保插頭牢固。</li>
+<li>如果使用樹莓派，請為樹莓派使用<a href="https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#power-supply">優質電源</a>，並使用<a href="https://forums.raspberrypi.com/viewtopic.php?p=589877#p589877">優質USB電纜</a>將該電源與Pi連線。如果你從OctoPrint得到 "電壓不足 "的警告，這也與電源有關，必須解決。</li>
+<li>請確保印表機的電源沒有過載。(微控制器 USB 晶片的電壓波動可能會導致該晶片欠壓復位。)</li>
+<li>確認步進電機、加熱器和其他印表機電線沒有被壓壞或磨損。（印表機移動時可能對故障的電線施加壓力，導致其失去接觸、短暫短路或產生過多的噪音。）</li>
+<li>有報告稱，當印表機的電源和主機的5V電源混合時，USB噪音很大。(如果你發現當印表機的電源打開或USB電纜插入時，微控制器會通電，那麼這表明5V電源被混用了）。配置微控制器，使其只使用一個電源可能會有幫助。(另外，如果微控制器主板不能配置其供電來源，也可以修改USB電纜，使其主機和微控制器之間不共享5V電源。）</li>
+</ul>
+<h2 id="_6">我的樹莓派在列印時不斷重啟<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<p>這很可能是由於電壓波動引起的。請遵循<a href="#i-keep-getting-random-lost-communication-with-mcu-errors">"與MCU失去通訊"</a>錯誤同樣的故障排除步驟。</p>
+<h2 id="restart_methodcommand-avr">當設定<code>restart_method=command</code>時， AVR 裝置在重啟時就會宕機<a class="headerlink" href="#restart_methodcommand-avr" title="Permanent link">&para;</a></h2>
+<p>一些舊版本的AVR載入程式在看門狗事件處理方面有一個已知的錯誤。這通常表現在printer.cfg檔案中的restart_method設定為 "command"的時候。當這個錯誤發生時，AVR裝置會宕機直到電源被移除並重新上電（電源或狀態LED也可能不停的閃爍直到斷電）。</p>
+<p>解決辦法是使用 "command "以外的重啟方法，或者在AVR裝置上刷寫一個新的載入程式。刷寫一個新的載入程式是一個一次性的步驟，通常需要一個外部程式設計器--更多細節請參見<a href="Bootloaders.html">Bootloaders</a>。</p>
+<h2 id="raspberry-pi">如果 Raspberry Pi 崩潰了，加熱器會一直加熱嗎？<a class="headerlink" href="#raspberry-pi" title="Permanent link">&para;</a></h2>
+<p>Klipper 的設計防止了這種情況。一旦主機啟用了一個加熱器，主機軟體需要每 5 秒鐘確認一次啟用狀態。如果微控制器沒有收到每 5 秒的確認，它就會進入"關閉"狀態，該狀態會關閉所有加熱器和步進電機。</p>
+<p>詳情請見<a href="MCU_Commands.html">MCU 命令</a>文件中的 "config_digital_out" 命令。</p>
+<p>此外，微控制器軟體在啟動時為每個加熱器配置了最低和最高溫度範圍（詳見<a href="Config_Reference.html#extruder">配置參考</a>中的min_temp和max_temp參數）。如果微控制器檢測到溫度超出了該範圍，那麼它也將進入 "關機 "狀態。</p>
+<p>另外，主機軟體還實現了檢查加熱器和溫度感測器是否正常工作的程式碼。詳情見<a href="Config_Reference.html#verify_heater">配置參考</a> 。</p>
+<h2 id="marlin-klipper">如何將 Marlin 引腳編號轉換為 Klipper 引腳名稱？<a class="headerlink" href="#marlin-klipper" title="Permanent link">&para;</a></h2>
+<p>簡要回答：在<a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a>檔案中有一個對映。使用該檔案作為指引來尋找實際的微控制器引腳名稱。(也可以將相關的<a href="Config_Reference.html#board_pins">board_pins</a>配置部分複製到你的配置檔案中，在你的配置中使用別名，但最好是翻譯並使用實際的微控制器引腳名稱。) 請注意，sample-aliases.cfg檔案使用以 "ar "開頭的引腳名稱替換 "D"（例如，Arduino引腳<code>D23</code>是Klipper別名<code>ar23</code>）和以 "analog "開頭的引腳名稱替換 "A"（例如，Arduino引腳<code>A14</code>是Klipper別名<code>analog14</code>）。</p>
+<p>詳細答案：Klipper使用微控制器定義的標準引腳名稱。在 Atmega 晶片上，這些硬體引腳的名稱類似於<code>PA4</code>、<code>PC7</code>或<code>PD2</code>。</p>
+<p>很久以前，Arduino專案決定避免使用標準的硬體名稱，而採用他們自己的基於遞增數字的引腳名稱--這些Arduino名稱一般看起來像<code>D23</code>或<code>A14</code>。這是一個不幸的選擇，導致了大量的混亂。特別是Arduino的引腳號碼經常不能轉換為相同的硬體名稱。例如，<code>D21</code>在一個常見的Arduino板上是<code>PD0</code>，但在另一個常見的Arduino板上是<code>PC7</code>。</p>
+<p>爲了避免這種混淆，Klipper 核心程式碼使用微控制器定義的標準引腳名稱。</p>
+<h2 id="_7">我必須將裝置連線到特定型別的微控制器引腳嗎？<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<p>這取決於裝置和引腳的型別：</p>
+<p>ADC 引腳（或模擬引腳）：熱敏電阻和類似的「模擬」感測器必須連線到微控制器上具有「模擬」或「ADC」功能的引腳。如果您在 Klipper 上為一個模擬感測器配置為使用不具備模擬功能的引腳，Klipper 將報告「Not a valid ADC pin」錯誤。</p>
+<p>PWM引腳（或定時器引腳）。Klipper預設不在任何裝置上使用硬體PWM。因此，一般來說，可以將熱端、風扇和類似的裝置連線到任何的通用IO引腳。然而，風扇和output_pin裝置可以選擇配置為使用<code>hardware_pwm: True</code>，在這種情況下，微控制器在這個引腳上必須支援硬體PWM（否則，Klipper將報告 "不是有效的PWM引腳 "錯誤）。</p>
+<p>IRQ引腳（或中斷引腳）。Klipper不使用IO引腳上的硬體中斷，所以沒有必要將裝置連線到這些微控制器引腳上。</p>
+<p>SPI 引腳：使用硬體 SPI 時，需要將引腳連線到微控制器的 SPI 引腳。但是，大多數裝置都可以配置為使用「軟體 SPI」，在這種情況下，可以使用任何通用 IO 引腳。</p>
+<p>I2C 引腳：使用 I2C 時，必須將引腳連線到微控制器支援 I2C 的引腳。</p>
+<p>其他裝置可以連線到任何通用的IO引腳。例如，步進電機、加熱器、風扇、Z探頭、舵機、LED、通用的hd44780/st7920液晶顯示器和Trinamic UART控制線都可以連線到任何通用的IO引腳。</p>
+<h2 id="m109m190">如何取消 M109/M190 "等待達到目標溫度"的請求？<a class="headerlink" href="#m109m190" title="Permanent link">&para;</a></h2>
+<p>導航到OctoPrint終端標籤頁，在終端框中輸入M112命令。M112命令將使Klipper進入 "關機 "狀態，它將使OctoPrint從Klipper斷開。導航到OctoPrint連線區，點選 "連線"，使OctoPrint重新連線。導航回到終端標籤頁，輸入FIRMWARE_RESTART命令以清除Klipper的錯誤狀態。完成這一系列操作將取消先前的加熱請求，可以開始新的列印。</p>
+<h2 id="_8">怎麼檢查印表機是否發生了丟步?<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<p>在某種程度上，是的。將印表機歸位，發出 <code>GET_POSITION</code>命令，執行列印，再次歸位，再發出 <code>GET_POSITION</code>。然後比較 <code>mcu:</code>行中的值。</p>
+<p>這可能有助於調整步進電機電流、加速度和速度等設定，而不需要實際列印東西和浪費材料：只要在 <code>GET_POSITION</code>命令之間執行一些高速移動。</p>
+<p>請注意，限位開關本身的觸發位置略有不同，所以導致限位開關觸發結果可能有幾個微步的誤差。步進電機本身只能以4個整步為增量損失步數。(因此，如果使用16個微步，那麼步進器電機上的失步將導致 "MCU: "步進計數器偏離64微步的倍數。）</p>
+<h2 id="klipper_1">為什麼 Klipper 會報錯？我收了一盤面條（我又打廢了）！<a class="headerlink" href="#klipper_1" title="Permanent link">&para;</a></h2>
+<p>簡短的回答：我們想知道印表機是否檢測到問題，這樣就可以解決潛在的問題，就可以獲得高質量的列印件。我們絕對不希望印表機默默地生產低質量的列印件。</p>
+<p>詳細答案：Klipper被設計成能夠自動解決許多瞬時問題。例如，它自動檢測到通訊錯誤，並會重新傳輸；它提前安排行動，並在多層緩衝命令，以便即使有間歇性干擾也能精確控制時序。然而，如果軟體檢測到它無法恢復的錯誤，或者它被命令採取無效的行動，或者它檢測到它無法執行其被命令的任務，那麼Klipper將報告錯誤。在這些情況下，產生低質量印刷件（或更糟）的風險很大。我們希望通過提醒使用者，使他們有能力解決潛在的問題，提高列印的整體質量。</p>
+<p>有一些相關的問題。為什麼Klipper不暫停列印？為什麼不先警告？為什麼不在列印前檢查錯誤？為什麼不忽略使用者輸入的命令中的錯誤？等等？目前，Klipper使用G-Code協議讀取命令，不幸的是，G-Code命令協議不夠靈活，導致現在並不能使用這些替代方案。開發者對改善異常事件中的使用者體驗很感興趣，但預計這將需要大量的底層工作（包括從G-Code的遷移到別的方式）。</p>
+<h2 id="_9">我怎樣才能升級到最新的軟體？<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<p>升級軟體的第一步是檢視最新的<a href="Config_Changes.html">配置變更</a>檔案。作為軟體升級的一部分，偶爾有時候軟體會有一些變化需要使用者更新他們的設定。在升級前最好檢視該檔案。</p>
+<p>當準備升級時，一般的方法是ssh進入樹莓派並執行：</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+git pull
+~/klipper/scripts/install-octopi.sh
+</code></pre></div>
+
+<p>然後可以重新編譯和刷寫微控制器的程式碼。例如：</p>
+<div class="highlight"><pre><span></span><code>make menuconfig
+make clean
+make
+
+sudo service klipper stop
+make flash FLASH_DEVICE=/dev/ttyACM0
+sudo service klipper start
+</code></pre></div>
+
+<p>然而，通常是隻有主機軟體發生變化。這時可以只更新和重新啟動主機軟體：</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+git pull
+sudo service klipper restart
+</code></pre></div>
+
+<p>如果在使用這個快速方式后，軟體警告說需要重新刷寫微控制器或出現其他不常見的錯誤，那麼請按照上面所述的完整升級步驟進行。</p>
+<p>如果任何錯誤持續存在，那麼請仔細檢查<a href="Config_Changes.html">config changes</a>檔案，因為可能需要修改印表機配置。</p>
+<p>請注意，RESTART和FIRMWARE_RESTART g-code命令不會載入新的軟體--需要使用上述 "sudo service klipper restart "和 "make flash "命令才能使軟體變化生效。</p>
+<h2 id="klipper_2">如何解除安裝Klipper？<a class="headerlink" href="#klipper_2" title="Permanent link">&para;</a></h2>
+<p>在韌體端，沒有什麼特別需要做的。只要刷寫新韌體就可以了。</p>
+<p>在樹莓派上，解除安裝指令碼在這裡<a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-uninstall.sh">scripts/klipper-uninstall.sh</a>。例如：</p>
+<div class="highlight"><pre><span></span><code>sudo ~/klipper/scripts/klipper-uninstall.sh
+rm -rf ~/klippy-env ~/klipper
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Features.html" class="md-footer__link md-footer__link--prev" aria-label="上一頁: 功能" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                上一頁
+              </span>
+              功能
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Releases.html" class="md-footer__link md-footer__link--next" aria-label="下一頁: 版本發佈" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                下一頁
+              </span>
+              版本發佈
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u62f7\u8c9d", "clipboard.copied": "\u5df2\u62f7\u8c9d", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u5c0b", "search.result.placeholder": "\u9375\u5165\u4ee5\u958b\u59cb\u6aa2\u7d22", "search.result.none": "\u6c92\u6709\u627e\u5230\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.other": "# \u500b\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>
