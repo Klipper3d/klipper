@@ -3,7 +3,7 @@
 # Copyright (C) 2022  Ricardo Alcantara <ricardo@vulcanolabs.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-from . import mcp4018
+from . import bus, mcp4018
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -25,7 +25,10 @@ PCA9632_WHT = 0x06
 class PCA9632:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
-        self.i2c = mcp4018.SoftwareI2C(config, 98)
+        if config.get("scl_pin", None) is not None:
+            self.i2c = mcp4018.SoftwareI2C(config, 98)
+        else:
+            self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
         self.prev_regs = {}
         pled = printer.load_object(config, "led")
         self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)

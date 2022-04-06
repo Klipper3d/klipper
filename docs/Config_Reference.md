@@ -2616,10 +2616,19 @@ PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
 
 ```
 [pca9632 my_pca9632]
-scl_pin:
-#   The SCL "clock" pin. This parameter must be provided.
-sda_pin:
-#   The SDA "data" pin. This parameter must be provided.
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. This may be
+#   96, 97, 98, or 99.  The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#scl_pin:
+#sda_pin:
+#   Alternatively, if the pca9632 is not connected to a hardware I2C
+#   bus, then one may specify the "clock" (scl_pin) and "data"
+#   (sda_pin) pins. The default is to use hardware I2C.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
