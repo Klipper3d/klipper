@@ -17,10 +17,10 @@ PCA9632_PWM3 = 0x05
 PCA9632_LEDOUT = 0x08
 
 LED_PWM = 0x02
-PCA9632_RED = 0x00
-PCA9632_GRN = 0x04
-PCA9632_BLU = 0x02
-PCA9632_WHT = 0x06
+PCA9632_LED0 = 0x00
+PCA9632_LED1 = 0x02
+PCA9632_LED2 = 0x04
+PCA9632_LED3 = 0x06
 
 class PCA9632:
     def __init__(self, config):
@@ -29,6 +29,10 @@ class PCA9632:
             self.i2c = mcp4018.SoftwareI2C(config, 98)
         else:
             self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
+        color_order = config.get("color_order", "RGBW")
+        if sorted(color_order) != sorted("RGBW"):
+            raise config.error("Invalid color_order '%s'" % (color_order,))
+        self.color_map = [color_order.index(c) for c in "RGBW"]
         self.prev_regs = {}
         pled = printer.load_object(config, "led")
         self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)
@@ -51,16 +55,17 @@ class PCA9632:
         if print_time is not None:
             minclock = self.i2c.get_mcu().print_time_to_clock(print_time)
 
-        red, green, blue, white = [int(v * 255. + .5) for v in led_state[0]]
-        self.reg_write(PCA9632_PWM0, red, minclock=minclock)
-        self.reg_write(PCA9632_PWM1, blue, minclock=minclock)
-        self.reg_write(PCA9632_PWM2, green, minclock=minclock)
-        self.reg_write(PCA9632_PWM3, white, minclock=minclock)
+        color = [int(v * 255. + .5) for v in led_state[0]]
+        led0, led1, led2, led3 = [color[idx] for idx in self.color_map]
+        self.reg_write(PCA9632_PWM0, led0, minclock=minclock)
+        self.reg_write(PCA9632_PWM1, led1, minclock=minclock)
+        self.reg_write(PCA9632_PWM2, led2, minclock=minclock)
+        self.reg_write(PCA9632_PWM3, led3, minclock=minclock)
 
-        LEDOUT = (LED_PWM << PCA9632_RED if red else 0)
-        LEDOUT |= (LED_PWM << PCA9632_GRN if green else 0)
-        LEDOUT |= (LED_PWM << PCA9632_BLU if blue else 0)
-        LEDOUT |= (LED_PWM << PCA9632_WHT if white else 0)
+        LEDOUT = (LED_PWM << PCA9632_LED0 if led0 else 0)
+        LEDOUT |= (LED_PWM << PCA9632_LED1 if led1 else 0)
+        LEDOUT |= (LED_PWM << PCA9632_LED2 if led2 else 0)
+        LEDOUT |= (LED_PWM << PCA9632_LED3 if led3 else 0)
         self.reg_write(PCA9632_LEDOUT, LEDOUT, minclock=minclock)
     def get_status(self, eventtime):
         return self.led_helper.get_status(eventtime)
