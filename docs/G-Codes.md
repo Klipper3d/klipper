@@ -1173,6 +1173,24 @@ print.
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
 
+
+### [weight_scale]
+
+The following commands are available when the
+[weight_scale config section](Config_Reference.md#weight_scale) is enabled.
+- READ_SCALE SCALE=<name>: Print current load cell measurement, in
+the calibrated unit of measurement, adjusted by the last tare.  Calibration
+must be performed to use this gcode.
+- READ_SCALE_RAW SCALE=<name>: Print current scale measurement adc value
+- TARE_SCALE SCALE=<name> [WEIGHT=<weight>]: Set current scale reading to zero
+at the current reading or the provided weight.  Tare weight can be saved using
+the SAVE_CONFIG command.
+- CALIBRATE_SCALE SCALE=<name> VALUE=1|2 [WEIGHT=<weight>]:
+Using an object of known weight, calibrate the scale.  Must be performed two
+times, with two different weights. It is suggested to have one of the
+calibration weights be zero and the other near the maximum weight for your
+load cell.  SAVE_CONFIG must be used to save the calibration.
+
 ### [z_tilt]
 
 The following commands are available when the

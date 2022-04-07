@@ -413,6 +413,15 @@ object is always available):
 - `state_message`: A human readable string giving additional context
   on the current Klipper state.
 
+## weigh_scale
+
+The following information is available in the `weigh_scale` object
+- `calibrated`: Returns a boolean (False) only if the load cell is not
+calibrated.
+- `weight`: Returns a float that represents the calibrated weight
+measurement, adjusted for tare.  Absent if calibration has not been
+performed.
+
 ## z_tilt
 
 The following information is available in the `z_tilt` object (this

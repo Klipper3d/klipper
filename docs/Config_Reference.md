@@ -4069,6 +4069,41 @@ cs_pin:
 #   above parameters.
 ```
 
+### [arduino_adc]
+
+Configure klipper to receive readings over i2c from an arduino
+that is not configured as a Klipper MCU.  This is useful to get
+readings from sensors and chips that are difficult to integrate
+into klipper. One example is the HX711 load cell amplifier.
+```
+[arduino_adc my_adc_device]
+i2c_address:
+#   I2C address used by this arduino. The address can be set in
+#   the arduino sketch.  Default is 0x08.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#i2c_bus:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+```
+
+### [weight_scale]
+
+Configure a load cell adc as a weight scale. Filament or other
+objects can be weighed and reported.  This interface can not be
+used for load cell based homing.
+```
+[weight_scale my_scale]
+adc: my_adc_device:pin
+#   The adc device that is connected to the load cell amplifier
+#   Pin can be "None" and should be if using the [arduino-adc]
+max_weight:
+#   The maximum weight capacity of the load cell. Units of
+#   measurement should be the same as used in the CALIBRATE_SCALE
+#   gcode.
+```
+
 ## Common bus parameters
 
 ### Common SPI settings
