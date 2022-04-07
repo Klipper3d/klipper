@@ -8,6 +8,9 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220407: The temperature_fan `pid_integral_max` config option has
+been removed (it was deprecated on 20210612).
+
 20220407: The default color order for pca9632 LEDs is now "RGBW". Add
 an explicit `color_order: RBGW` setting to the pca9632 config section
 to obtain the previous behavior.
