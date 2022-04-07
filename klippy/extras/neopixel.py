@@ -12,8 +12,6 @@ RESET_MIN_TIME=.000050
 
 MAX_MCU_SIZE = 500  # Sanity check on LED chain length
 
-COLOR_FORMATS = ["RGB", "GRB", "BRG", "BGR", "RGBW", "GRBW"]
-
 class PrinterNeoPixel:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
@@ -25,8 +23,9 @@ class PrinterNeoPixel:
         self.oid = self.mcu.create_oid()
         self.pin = pin_params['pin']
         self.mcu.register_config_callback(self.build_config)
-        formats = {v: v for v in COLOR_FORMATS}
-        color_order = config.getchoice("color_order", formats, "GRB")
+        color_order = config.get("color_order", "GRB")
+        if sorted(color_order) not in (sorted("RGB"), sorted("RGBW")):
+            raise config.error("Invalid color_order '%s'" % (color_order,))
         if 'W' in color_order:
             color_index = [color_order.index(c) for c in "RGBW"]
         else:
