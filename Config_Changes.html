@@ -1248,6 +1248,9 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20220407: The default color order for pca9632 LEDs is now "RGBW". Add
+an explicit <code>color_order: RBGW</code> setting to the pca9632 config section
+to obtain the previous behavior.</p>
 <p>20220330: The format of the <code>printer.neopixel.color_data</code> status
 information for neopixel and dotstar modules has changed. The
 information is now stored as a list of color lists (instead of a list
