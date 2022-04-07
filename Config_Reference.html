@@ -4115,14 +4115,17 @@ control:
 #   Control algorithm (either pid or watermark). This parameter must
 #   be provided.
 pid_Kp:
-#   Kp is the &quot;proportional&quot; constant for the pid. This parameter must
-#   be provided for PID heaters.
 pid_Ki:
-#   Ki is the &quot;integral&quot; constant for the pid. This parameter must be
-#   provided for PID heaters.
 pid_Kd:
-#   Kd is the &quot;derivative&quot; constant for the pid. This parameter must
-#   be provided for PID heaters.
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
+#     heater_pwm = (Kp*error + Ki*integral(error) - Kd*derivative(error)) / 255
+#   Where &quot;error&quot; is &quot;requested_temperature - measured_temperature&quot;
+#   and &quot;heater_pwm&quot; is the requested heating rate with 0.0 being full
+#   off and 1.0 being full on. Consider using the PID_CALIBRATE
+#   command to obtain these parameters. The pid_Kp, pid_Ki, and pid_Kd
+#   parameters must be provided for PID heaters.
 #max_delta: 2.0
 #   On &#39;watermark&#39; controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater

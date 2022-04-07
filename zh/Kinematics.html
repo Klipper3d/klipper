@@ -950,15 +950,15 @@
       
         <li class="md-nav__item">
   <a href="#generating-steps" class="md-nav__link">
-    Generating steps
+    生成步数（Generating steps）
   </a>
   
-    <nav class="md-nav" aria-label="Generating steps">
+    <nav class="md-nav" aria-label="生成步数（Generating steps）">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#cartesian-robots" class="md-nav__link">
-    Cartesian Robots
+  <a href="#_5" class="md-nav__link">
+    笛卡尔机器
   </a>
   
 </li>
@@ -971,8 +971,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#delta-robots" class="md-nav__link">
-    Delta Robots
+  <a href="#_6" class="md-nav__link">
+    三角洲机器
   </a>
   
 </li>
@@ -992,7 +992,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_7" class="md-nav__link">
     压力提前
   </a>
   
@@ -1338,15 +1338,15 @@
       
         <li class="md-nav__item">
   <a href="#generating-steps" class="md-nav__link">
-    Generating steps
+    生成步数（Generating steps）
   </a>
   
-    <nav class="md-nav" aria-label="Generating steps">
+    <nav class="md-nav" aria-label="生成步数（Generating steps）">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#cartesian-robots" class="md-nav__link">
-    Cartesian Robots
+  <a href="#_5" class="md-nav__link">
+    笛卡尔机器
   </a>
   
 </li>
@@ -1359,8 +1359,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#delta-robots" class="md-nav__link">
-    Delta Robots
+  <a href="#_6" class="md-nav__link">
+    三角洲机器
   </a>
   
 </li>
@@ -1380,7 +1380,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_7" class="md-nav__link">
     压力提前
   </a>
   
@@ -1443,24 +1443,24 @@
 <p>在上述情况下，从加速到减速的频繁变化会导致机器振动并且会对机器造成压力和加噪音。为了减少这种情况，Klipper既跟踪常规的移动加速度并且也跟踪虚拟的"加减速率"。利用这个系统，这些短的"zigzag"移动的最高速度被限制以使得打印机的运动可以更加平滑：</p>
 <p><img alt="smoothed" src="img/smoothed.svg.png" /></p>
 <p>Specifically, the code calculates what the velocity of each move would be if it were limited to this virtual "acceleration to deceleration" rate (half the normal acceleration rate by default). In the above picture the dashed gray lines represent this virtual acceleration rate for the first move. If a move can not reach its full cruising speed using this virtual acceleration rate then its top speed is reduced to the maximum speed it could obtain at this virtual acceleration rate. For most moves the limit will be at or above the move's existing limits and no change in behavior is induced. For short zigzag moves, however, this limit reduces the top speed. Note that it does not change the actual acceleration within the move - the move continues to use the normal acceleration scheme up to its adjusted top-speed.</p>
-<h2 id="generating-steps">Generating steps<a class="headerlink" href="#generating-steps" title="Permanent link">&para;</a></h2>
+<h2 id="generating-steps">生成步数（Generating steps）<a class="headerlink" href="#generating-steps" title="Permanent link">&para;</a></h2>
 <p>Once the look-ahead process completes, the print head movement for the given move is fully known (time, start position, end position, velocity at each point) and it is possible to generate the step times for the move. This process is done within "kinematic classes" in the Klipper code. Outside of these kinematic classes, everything is tracked in millimeters, seconds, and in cartesian coordinate space. It's the task of the kinematic classes to convert from this generic coordinate system to the hardware specifics of the particular printer.</p>
 <p>Klipper uses an <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">iterative solver</a> to generate the step times for each stepper. The code contains the formulas to calculate the ideal cartesian coordinates of the head at each moment in time, and it has the kinematic formulas to calculate the ideal stepper positions based on those cartesian coordinates. With these formulas, Klipper can determine the ideal time that the stepper should be at each step position. The given steps are then scheduled at these calculated times.</p>
 <p>The key formula to determine how far a move should travel under constant acceleration is:</p>
 <div class="highlight"><pre><span></span><code>move_distance = (start_velocity + .5 * accel * move_time) * move_time
 </code></pre></div>
 
-<p>and the key formula for movement with constant velocity is:</p>
+<p>并且匀速运动的关键公式是：</p>
 <div class="highlight"><pre><span></span><code>move_distance = cruise_velocity * move_time
 </code></pre></div>
 
-<p>The key formulas for determining the cartesian coordinate of a move given a move distance is:</p>
+<p>在给定移动距离的情况下用于确定移动的笛卡尔坐标的关键公式为：</p>
 <div class="highlight"><pre><span></span><code>cartesian_x_position = start_x + move_distance * total_x_movement / total_movement
 cartesian_y_position = start_y + move_distance * total_y_movement / total_movement
 cartesian_z_position = start_z + move_distance * total_z_movement / total_movement
 </code></pre></div>
 
-<h3 id="cartesian-robots">Cartesian Robots<a class="headerlink" href="#cartesian-robots" title="Permanent link">&para;</a></h3>
+<h3 id="_5">笛卡尔机器<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>Generating steps for cartesian printers is the simplest case. The movement on each axis is directly related to the movement in cartesian space.</p>
 <p>Key formulas:</p>
 <div class="highlight"><pre><span></span><code>stepper_x_position = cartesian_x_position
@@ -1475,7 +1475,7 @@ stepper_b_position = cartesian_x_position - cartesian_y_position
 stepper_z_position = cartesian_z_position
 </code></pre></div>
 
-<h3 id="delta-robots">Delta Robots<a class="headerlink" href="#delta-robots" title="Permanent link">&para;</a></h3>
+<h3 id="_6">三角洲机器<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <p>Step generation on a delta robot is based on Pythagoras's theorem:</p>
 <div class="highlight"><pre><span></span><code>stepper_position = (sqrt(arm_length^2
 
@@ -1493,7 +1493,7 @@ stepper_z_position = cartesian_z_position
 <div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
 </code></pre></div>
 
-<h3 id="_5">压力提前<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<h3 id="_7">压力提前<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>Experimentation has shown that it's possible to improve the modeling of the extruder beyond the basic extruder formula. In the ideal case, as an extrusion move progresses, the same volume of filament should be deposited at each point along the move and there should be no volume extruded after the move. Unfortunately, it's common to find that the basic extrusion formulas cause too little filament to exit the extruder at the start of extrusion moves and for excess filament to extrude after extrusion ends. This is often referred to as "ooze".</p>
 <p><img alt="ooze" src="img/ooze.svg.png" /></p>
 <p>The "pressure advance" system attempts to account for this by using a different model for the extruder. Instead of naively believing that each mm^3 of filament fed into the extruder will result in that amount of mm^3 immediately exiting the extruder, it uses a model based on pressure. Pressure increases when filament is pushed into the extruder (as in <a href="https://en.wikipedia.org/wiki/Hooke%27s_law">Hooke's law</a>) and the pressure necessary to extrude is dominated by the flow rate through the nozzle orifice (as in <a href="https://en.wikipedia.org/wiki/Poiseuille_law">Poiseuille's law</a>). The key idea is that the relationship between filament, pressure, and flow rate can be modeled using a linear coefficient:</p>
@@ -1505,7 +1505,7 @@ stepper_z_position = cartesian_z_position
 <p><img alt="pressure-advance" src="img/pressure-velocity.png" /></p>
 <p>The above graph shows an example of two extrusion moves with a non-zero cornering velocity between them. Note that the pressure advance system causes additional filament to be pushed into the extruder during acceleration. The higher the desired filament flow rate, the more filament must be pushed in during acceleration to account for pressure. During head deceleration the extra filament is retracted (the extruder will have a negative velocity).</p>
 <p>The "smoothing" is implemented using a weighted average of the extruder position over a small time period (as specified by the <code>pressure_advance_smooth_time</code> config parameter). This averaging can span multiple g-code moves. Note how the extruder motor will start moving prior to the nominal start of the first extrusion move and will continue to move after the nominal end of the last extrusion move.</p>
-<p>Key formula for "smoothed pressure advance":</p>
+<p>"平滑压力提前"的关键公式：</p>
 <div class="highlight"><pre><span></span><code>smooth_pa_position(t) =
     ( definitive_integral(pa_position(x) * (smooth_time/2 - abs(t - x)) * dx,
                           from=t-smooth_time/2, to=t+smooth_time/2)
