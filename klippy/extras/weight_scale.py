@@ -193,9 +193,9 @@ class WeighScale:
 
     def get_status(self, eventtime):
         if not self.calibrated:
-            return { 'calibrated': False }
+            return { 'calibrated': False, 'weight': 0. }
         else:
-            return { 'weight': self._get_tare_weight() }
+            return { 'calibrated': True, 'weight': self._get_tare_weight() }
 
 
 class PrinterWeighScale:
