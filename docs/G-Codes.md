@@ -106,6 +106,39 @@ VAL=<value>`: Writes raw "value" into a register "register". Both
 "value" and "register" can be a decimal or a hexadecimal integer. Use
 with care, and refer to ADXL345 data sheet for the reference.
 
+### [angle]
+
+The following commands are available when an
+[angle config section](Config_Reference.md#angle) is enabled.
+
+#### ANGLE_CALIBRATE
+`ANGLE_CALIBRATE CHIP=<chip_name>`: Perform angle calibration on the
+given sensor (there must be an `[angle chip_name]` config section that
+has specified a `stepper` parameter). IMPORTANT - this tool will
+command the stepper motor to move without checking the normal
+kinematic boundary limits. Ideally the motor should be disconnected
+from any printer carriage before performing calibration. If the
+stepper can not be disconnected from the printer, make sure the
+carriage is near the center of its rail before starting calibration.
+(The stepper motor may move forwards or backwards two full rotations
+during this test.) After completing this test use the `SAVE_CONFIG`
+command to save the calibration data to the config file. In order to
+use this tool the Python "numpy" package must be installed (see the
+[measuring resonance document](Measuring_Resonances.md#software-installation)
+for more information).
+
+#### ANGLE_DEBUG_READ
+`ANGLE_DEBUG_READ CHIP=<config_name> REG=<register>`: Queries sensor
+register "register" (e.g. 44 or 0x2C). Can be useful for debugging
+purposes. This is only available for tle5012b chips.
+
+#### ANGLE_DEBUG_WRITE
+`ANGLE_DEBUG_WRITE CHIP=<config_name> REG=<register> VAL=<value>`:
+Writes raw "value" into register "register". Both "value" and
+"register" can be a decimal or a hexadecimal integer. Use with care,
+and refer to sensor data sheet for the reference. This is only
+available for tle5012b chips.
+
 ### [bed_mesh]
 
 The following commands are available when the
@@ -657,29 +690,48 @@ scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
 
-### [neopixel]
+### [led]
 
-The following command is available when a
-[neopixel config section](Config_Reference.md#neopixel) or
-[dotstar config section](Config_Reference.md#dotstar) is enabled.
+The following command is available when any of the
+[led config sections](Config_Reference.md#leds) are enabled.
 
 #### SET_LED
 `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
 WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
 LED output. Each color `<value>` must be between 0.0 and 1.0. The
-WHITE option is only valid on RGBW LEDs. If multiple LED chips are
-daisy-chained then one may specify INDEX to alter the color of just
-the given chip (1 for the first chip, 2 for the second, etc.). If
-INDEX is not provided then all LEDs in the daisy-chain will be set to
-the provided color. If TRANSMIT=0 is specified then the color change
-will only be made on the next SET_LED command that does not specify
-TRANSMIT=0; this may be useful in combination with the INDEX parameter
-to batch multiple updates in a daisy-chain. By default, the SET_LED
-command will sync it's changes with other ongoing gcode commands.
-This can lead to undesirable behavior if LEDs are being set while the
-printer is not printing as it will reset the idle timeout. If careful
-timing is not needed, the optional SYNC=0 parameter can be specified
-to apply the changes instantly and not reset the idle timeout.
+WHITE option is only valid on RGBW LEDs. If the LED supports multiple
+chips in a daisy-chain then one may specify INDEX to alter the color
+of just the given chip (1 for the first chip, 2 for the second,
+etc.). If INDEX is not provided then all LEDs in the daisy-chain will
+be set to the provided color. If TRANSMIT=0 is specified then the
+color change will only be made on the next SET_LED command that does
+not specify TRANSMIT=0; this may be useful in combination with the
+INDEX parameter to batch multiple updates in a daisy-chain. By
+default, the SET_LED command will sync it's changes with other ongoing
+gcode commands.  This can lead to undesirable behavior if LEDs are
+being set while the printer is not printing as it will reset the idle
+timeout. If careful timing is not needed, the optional SYNC=0
+parameter can be specified to apply the changes without resetting the
+idle timeout.
+
+#### SET_LED_TEMPLATE
+`SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
+[<param_x>=<literal>] [INDEX=<index>]`: Assign a
+[display_template](Config_Reference.md#display_template) to a given
+[LED](Config_Reference.md#leds). For example, if one defined a
+`[display_template my_led_template]` config section then one could
+assign `TEMPLATE=my_led_template` here. The display_template should
+produce a comma separated string containing four floating point
+numbers corresponding to red, green, blue, and white color settings.
+The template will be continuously evaluated and the LED will be
+automatically set to the resulting colors. One may set
+display_template parameters to use during template evaluation
+(parameters will be parsed as Python literals). If INDEX is not
+specified then all chips in the LED's daisy-chain will be set to the
+template, otherwise only the chip with the given index will be
+updated. If TEMPLATE is an empty string then this command will clear
+any previous template assigned to the LED (one can then use `SET_LED`
+commands to manage the LED's color settings).
 
 ### [output_pin]
 

@@ -341,6 +341,25 @@ and might later produce asynchronous messages such as:
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.
 
+### angle/dump_angle
+
+This endpoint is used to subscribe to
+[angle sensor data](Config_Reference.md#angle). Obtaining these
+low-level motion updates may be useful for diagnostic and debugging
+purposes. Using this endpoint may increase Klipper's system load.
+
+A request may look like:
+`{"id": 123, "method":"angle/dump_angle",
+"params": {"sensor": "my_angle_sensor", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","angle"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"position_offset":3.151562,"errors":0,
+"data":[[1290.951905,-5063],[1290.952321,-5065]]}}`
+
+The "header" field in the initial query response is used to describe
+the fields found in later "data" responses.
+
 ### pause_resume/cancel
 
 This endpoint is similar to running the "PRINT_CANCEL" G-Code command.
