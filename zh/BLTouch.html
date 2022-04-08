@@ -601,7 +601,7 @@
       
         <li class="md-nav__item">
   <a href="#bl-touch_2" class="md-nav__link">
-    BL-Touch 坏了
+    BL-Touch 出现故障
   </a>
   
 </li>
@@ -870,7 +870,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        复数微控制器归零与探高
+        多微控制器复位与探测
       </a>
     </li>
   
@@ -1030,7 +1030,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_protocol.html" class="md-nav__link">
-        CANBUS 协议
+        CANBUS 协议 (CANBUS protocol)
       </a>
     </li>
   
@@ -1287,7 +1287,7 @@
       
         <li class="md-nav__item">
   <a href="#bl-touch_2" class="md-nav__link">
-    BL-Touch 坏了
+    BL-Touch 出现故障
   </a>
   
 </li>
@@ -1369,7 +1369,7 @@ z_hop_speed: 5
 <p>下一步是确认传感器的探针是否正常工作。运行<code>BLTOUCH_DEBUG COMMAND=pin_down</code>，检查探针是否向下移动。运行<code>BLTOUCH_DEBUG COMMAND=touch_mode</code>，再运行<code>QUERY_PROBE</code>，并验证命令报告"probe: open"。然后，在用指甲轻轻推起针头的同时，再次运行<code>QUERY_PROBE</code>。验证命令是否报告"probe: TRIGGERED"。如果任何一个查询都没有报告正确的信息，那么它通常表明接线或配置不正确（尽管一些<a href="#bl-touch-clones">盗版设备</a>需要特殊处理）。在这个测试完成后，运行<code>BLTOUCH_DEBUG COMMAND=pin_up</code>并检查引脚是否向上移动。</p>
 <p>在完成 BL-TOUCH contro 引脚和 sensor 引脚的测试后，现在是测试探针的时候了，但有一个技巧。不要让探针接触打印床，而是让它接触你手指甲。将打印头移动到离床面较远的位置，发送<code>G28</code>（如果不使用probe:z_virtual_endstop，发送<code>PROBE</code>），等待工具头开始向下移动，然后用手指甲轻轻地触摸针脚来停止移动。你可能要做两次，因为默认的归位配置会探测两次。如果你触摸探针时它没有停止，请立即关闭打印机电源。</p>
 <p>如果成功了，再做一次<code>G28</code>（或<code>PROBE</code>），但是这次让它触碰到热床。</p>
-<h2 id="bl-touch_2">BL-Touch 坏了<a class="headerlink" href="#bl-touch_2" title="Permanent link">&para;</a></h2>
+<h2 id="bl-touch_2">BL-Touch 出现故障<a class="headerlink" href="#bl-touch_2" title="Permanent link">&para;</a></h2>
 <p>当 BL-Touch 在不一致状态时，它就会开始闪烁红色。可以通过以下命令强制它离开此状态：</p>
 <p>BLTOUCH_DEBUG COMMAND=reset</p>
 <p>这种情况可能会在校准中被阻止伸出的探针中断时出现。</p>

@@ -848,7 +848,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        复数微控制器归零与探高
+        多微控制器复位与探测
       </a>
     </li>
   
@@ -1008,7 +1008,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_protocol.html" class="md-nav__link">
-        CANBUS 协议
+        CANBUS 协议 (CANBUS protocol)
       </a>
     </li>
   
@@ -1305,15 +1305,15 @@
 <h2 id="z">校准 Z 限位<a class="headerlink" href="#z" title="Permanent link">&para;</a></h2>
 <p>准确的 Z 轴限位位置对于获得高质量打印至关重要。</p>
 <p>请注意，Z 限位开关本身的精度限制了调平的精度。如果使用 Trinamic 步进电机驱动，那么可以考虑启用<a href="Endstop_Phase.html">限位相位</a>检测以提高开关的精度。</p>
-<p>To perform a Z endstop calibration, home the printer, command the head to move to a Z position that is at least five millimeters above the bed (if it is not already), command the head to move to an XY position near the center of the bed, then navigate to the OctoPrint terminal tab and run:</p>
+<p>要进行Z轴限位校准，请复位打印机，命令打印头移动到离床身至少5毫米的Z轴位置（如果还没有），命令打印头移动到靠近床身中心的XY位置，然后到OctoPrint终端中并且运行：</p>
 <div class="highlight"><pre><span></span><code>Z_ENDSTOP_CALIBRATE
 </code></pre></div>
 
-<p>Then follow the steps described at <a href="Bed_Level.html#the-paper-test">"the paper test"</a> to determine the actual distance between the nozzle and bed at the given location. Once those steps are complete one can <code>ACCEPT</code> the position and save the results to the config file with:</p>
+<p>塞纸测试然后按照<a href="Bed_Level.html#the-paper-test">"塞纸测试"</a>描述的步骤，确定喷嘴和床身在给定位置的实际距离。一旦这些步骤完成，就可以<code>ACCEPT</code>该位置，并将结果保存到配置文件中：</p>
 <div class="highlight"><pre><span></span><code>SAVE_CONFIG
 </code></pre></div>
 
-<p>It's preferable to use a Z endstop switch on the opposite end of the Z axis from the bed. (Homing away from the bed is more robust as then it is generally always safe to home the Z.) However, if one must home towards the bed it is recommended to adjust the endstop so that it triggers a small distance (eg, .5mm) above the bed. Almost all endstop switches can safely be depressed a small distance beyond their trigger point. When this is done, one should find that the <code>Z_ENDSTOP_CALIBRATE</code> command reports a small positive value (eg, .5mm) for the Z position_endstop. Triggering the endstop while it is still some distance from the bed reduces the risk of inadvertent bed crashes.</p>
+<p>最好是在Z轴与床面相对的一端使用Z轴止动器开关（远离床面的止动器更加坚固，因为这样的话，Z轴的原点通常是安全的）。然而，如果必须向床头归位，建议调整逆止器，使其在床头上方一小段距离（例如0.5毫米）触发。几乎所有的止动器开关都可以在触发点以外的一小段距离安全地压下。当这样做时，你会发现<code>Z_ENDSTOP_CALIBRATE</code>命令报告了一个小的正值（比如0.5毫米）的Z限位位置。在</p>
 <p>Some printers have the ability to manually adjust the location of the physical endstop switch. However, it's recommended to perform Z endstop positioning in software with Klipper - once the physical location of the endstop is in a convenient location, one can make any further adjustments by running Z_ENDSTOP_CALIBRATE or by manually updating the Z position_endstop in the configuration file.</p>
 <h2 id="_2">调整打印调平螺丝<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>The secret to getting good bed leveling with bed leveling screws is to utilize the printer's high precision motion system during the bed leveling process itself. This is done by commanding the nozzle to a position near each bed screw and then adjusting that screw until the bed is a set distance from the nozzle. Klipper has a tool to assist with this. In order to use the tool it is necessary to specify each screw XY location.</p>

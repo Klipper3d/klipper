@@ -13,7 +13,7 @@
     
     
       
-        <title>CANBUS 协议 - Klipper documentation</title>
+        <title>CANBUS 协议 (CANBUS protocol) - Klipper documentation</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#canbus" class="md-skip">
+        <a href="#canbus-canbus-protocol" class="md-skip">
           跳转至
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CANBUS 协议
+              CANBUS 协议 (CANBUS protocol)
             
           </span>
         </div>
@@ -776,7 +776,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        复数微控制器归零与探高
+        多微控制器复位与探测
       </a>
     </li>
   
@@ -947,12 +947,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          CANBUS 协议
+          CANBUS 协议 (CANBUS protocol)
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="CANBUS_protocol.html" class="md-nav__link md-nav__link--active">
-        CANBUS 协议
+        CANBUS 协议 (CANBUS protocol)
       </a>
       
         
@@ -971,8 +971,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#id" class="md-nav__link">
-    微控制器 ID 分配
+  <a href="#id-micro-controller-id-assignment" class="md-nav__link">
+    分配微控制器 ID (Micro-controller id assignment)
   </a>
   
 </li>
@@ -1262,8 +1262,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#id" class="md-nav__link">
-    微控制器 ID 分配
+  <a href="#id-micro-controller-id-assignment" class="md-nav__link">
+    分配微控制器 ID (Micro-controller id assignment)
   </a>
   
 </li>
@@ -1326,10 +1326,10 @@
 </a>
 
 
-<h1 id="canbus">CANBUS 协议<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
+<h1 id="canbus-canbus-protocol">CANBUS 协议 (CANBUS protocol)<a class="headerlink" href="#canbus-canbus-protocol" title="Permanent link">&para;</a></h1>
 <p>本文档描述了 Klipper 通过<a href="https://en.wikipedia.org/wiki/CAN_bus">CAN总线</a>进行通信的协议。参见<CANBUS.md>了解如何在 Klipper 中配置 CAN 总线。</p>
-<h2 id="id">微控制器 ID 分配<a class="headerlink" href="#id" title="Permanent link">&para;</a></h2>
-<p>Klipper使用 CAN 2.0A 标准尺寸的 CAN 总线数据包，它被限制在8个数据字节和一个11位的CAN总线标识。为了保证高效的通信，每个微控制器在运行时被分配一个唯一的 1 字节的CAN总线节点 ID（<code>canbus_nodeid</code>）用于一般的 Klipper 命令和响应通信。从主机到微控制器的 Klipper 命令信息使用<code>canbus_nodeid * 2 + 256</code> 的CAN总线 ID，而从微控制器到主机的 Klipper 响应信息使用<code>canbus_nodeid * 2 + 256 + 1</code>。</p>
+<h2 id="id-micro-controller-id-assignment">分配微控制器 ID (Micro-controller id assignment)<a class="headerlink" href="#id-micro-controller-id-assignment" title="Permanent link">&para;</a></h2>
+<p>Klipper使用 CAN 2.0A 标准大小的 CAN Bus 包，是一个被限制在8 data bytes 和 11-bit CAN Bus 标识符。为了支持更高效的传输，每个微控制器 (micro-controller) 在运行时候去分配一个 1-byte 的CAN Bus nodeid (<code>canbus_nodeid</code>) 通常来说用于Klipper 的命令和响应通信。主机到微控制器的Klipper命令信息使用<code>canbus_nodeid * 2 + 256</code>的CAN总线ID，而从微控制器到主机的Klipper响应信息使用<code>canbus_nodeid * 2 + 256 + 1</code>。</p>
 <p>每个微控制器出厂时都有一个用于ID分配的唯一的芯片标识符。这个标识符可以超过一个 CAN 数据包的长度，一个哈希函数会用出厂标识符生成一个唯一的 6 字节标识（<code>canbus_uuid</code>）。</p>
 <h2 id="_1">管理消息<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>管理信息用于 ID 分配。从主机发送到微控制器的管理消息使用CAN总线的 ID <code>0x3f0</code>，而从微控制器发送到主机的消息使用CAN总线的 ID <code>0x3f1</code>。所有的微控制器都听从ID <code>0x3f0</code>上的消息；这个 ID 可以被认为是一个"广播地址"。</p>
@@ -1338,12 +1338,12 @@
 <p>CMD_QUERY_UNASSIGNED 消息格式是：<code>&lt;1-byte message_id = 0x00&gt;</code></p>
 <h3 id="cmd_set_nodeid">CMD_SET_NODEID 消息<a class="headerlink" href="#cmd_set_nodeid" title="Permanent link">&para;</a></h3>
 <p>这个命令根据微处理器给定的 <code>canbus_uuid</code> 给相应的微处理器分配一个 <code>canbus_nodeid</code>。</p>
-<p>CMD_SET_NODEID消息格式是：<code>&lt;1字节message_id = 0x01&gt;&lt;6字节canbus_uuid&gt;&lt;1字节canbus_nodeid&gt;</code></p>
+<p>CMD_SET_NODEID 的消息格式是：<code>&lt;1-byte message_id = 0x01&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte canbus_nodeid&gt;</code></p>
 <h3 id="resp_need_nodeid">RESP_NEED_NODEID 消息<a class="headerlink" href="#resp_need_nodeid" title="Permanent link">&para;</a></h3>
 <p>RESP_NEED_NODEID消息格式为：<code>&lt;1字节message_id = 0x20&gt;&lt;6字节canbus_uuid&gt;</code></p>
 <h2 id="_2">数据包<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>通过 CMD_SET_NODEID 命令分配了节点 ID 的微控制器可以发送和接收数据包。</p>
-<p>带有节点接收 CAN 总线ID（<code>canbus_nodeid * 2 + 256</code>）的消息中的数据包被简单地添加到一个缓冲区，当一个完整的<a href="Protocol.html">mcu 协议消息</a>被找到时，其内容会被解析和处理。数据被视为一个字节流-- Klipper 消息块的开始位置与CAN总线数据包的开始位置不需要对齐。</p>
+<p>带有节点接收 CAN 总线ID（<code>canbus_nodeid * 2 + 256</code>）的消息中的数据包被简单地添加到一个缓冲区，当一个完整的<a href="Protocol.html">mcu 协议消息</a>被找到时，其内容会被解析和处理。数据被视为比特流（byte stream）- Klipper信息块的开头不需要与CAN bus的数据包开头对齐。</p>
 <p>类似地，mcu 协议消息响应通过将消息数据插入到具有节点发送 CAN 总线 ID 的一个或多个数据包（<code>canbus_nodeid * 2 + 256 + 1</code>）并从微控制器发送到主机。</p>
 
               

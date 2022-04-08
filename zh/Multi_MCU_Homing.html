@@ -13,7 +13,7 @@
     
     
       
-        <title>复数微控制器归零与探高 - Klipper documentation</title>
+        <title>多微控制器复位与探测 - Klipper documentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              复数微控制器归零与探高
+              多微控制器复位与探测
             
           </span>
         </div>
@@ -787,7 +787,7 @@
       
       
       <a href="Multi_MCU_Homing.html" class="md-nav__link md-nav__link--active">
-        复数微控制器归零与探高
+        多微控制器复位与探测
       </a>
       
     </li>
@@ -948,7 +948,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_protocol.html" class="md-nav__link">
-        CANBUS 协议
+        CANBUS 协议 (CANBUS protocol)
       </a>
     </li>
   
@@ -1198,14 +1198,14 @@
 </a>
 
 
-<h1 id="_1">复数微控制器归零与探高<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>Klipper支持归零限位开关和动作的步进电机连接到不同的微控制器上。该功能被称为“复数微控制器归零”。该功能也支持将探针连接到不同的微控制器上。</p>
+<h1 id="_1">多微控制器复位与探测<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>Klipper支持归零限位开关和动作的步进电机连接到不同的微控制器上。该功能被称为“多mcu 复位”。该功能也支持将探针连接到不同的微控制器上。</p>
 <p>该功能可以简化接线，因为限位开关或探针可以连接到距离最短的微控制器上。然而，该功能也会带来问题，因为运动控制器和限位控制器并非同一控制器，可能造成归零或探高时的“过度运动”。</p>
-<p>过度运动的可能成因是，控制步进电机运动的微控制器 和 监控限位开关的微控制器之间的信息传递存在延时。Klipper在设计上将延时压缩到25ms以下。（在使用复数微控制器时，各个微控制器会通过周期性发送状态信息确定与上位机的延时不超过25ms。）</p>
-<p>例如，如果归零速度为10 mm/s则可能的过运动的量为0.25mm（10mm/s * .025s == 0.250mm）。在进行复数微控制器的归零配置时应充分考虑过运动的影响。使用低速归零可以有效减少过运动。</p>
+<p>过度运动的可能成因是，控制步进电机运动的微控制器 和 监控限位开关的微控制器之间的信息传递存在延时。Klipper在设计上将延时压缩到25ms以下。（在使用多mcu时，各个微控制器会通过周期性发送状态信息确定与上位机的延时不超过25ms。）</p>
+<p>例如，如果归零速度为10 mm/s则可能的过运动的量为0.25mm（10mm/s * .025s == 0.250mm）。在进行多mcu的归零配置时应充分考虑过运动的影响。使用低速归零可以有效减少过运动。</p>
 <p>步进电机的过运动不太可能对归零和探高的精度产生很大的影响。Klippe代码上会考虑通讯延时校正归零的结果。但是，过运动对硬件稳固性有要求，因为过运动发生时有可能会损坏硬件。</p>
-<p>对配置有复数微控制器归零的Klipper，如在进行归零时遭遇通讯错误，软件将会抛出"Communication timeout during homing"（归零时，控制器通讯超时）错误信息。</p>
-<p>要注意，当一个轴由多个步进电机控制（如<code>stepper_z</code>和<code>stepper_z1</code>），这些电机必须连接到同一微控制器上以实现复数微控制器归零。详细来说，即Z限位开关位于微控制器1， <code>stepper_z</code>连接到微控制器2，则<code>stepper_z1</code>必须连接到微控制器2。</p>
+<p>对配置有多mcu归零的Klipper，如在进行归零时遭遇通讯错误，软件会出现"Communication timeout during homing"（归零时，控制器通讯超时）的错误信息。</p>
+<p>需要注意的是当一个轴由多个步进电机控制（比如<code>stepper_z</code>和<code>stepper_z1</code>），这些电机必须连接到同一微控制器上以实现复数微控制器归零。详细来说，即Z限位开关位于微控制器1， <code>stepper_z</code>连接到微控制器2，则<code>stepper_z1</code>必须连接到微控制器2。</p>
 
               
             </article>
