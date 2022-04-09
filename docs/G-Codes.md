@@ -1056,7 +1056,7 @@ must be run to make the changes to persistent memory permanent.
 ### [smart_effector]
 
 Several commands are available when a
-[smart_effector config section](Config_Reference.md#smart-effector) is enabled.
+[smart_effector config section](Config_Reference.md#smart_effector) is enabled.
 Be sure to check the official documentation for the Smart Effector on the
 [Duet3D Wiki](https://duet3d.dozuki.com/Wiki/Smart_effector_and_carriage_adapters_for_delta_printer)
 before changing the Smart Effector parameters. Also check the
