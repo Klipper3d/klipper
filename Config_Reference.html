@@ -5040,10 +5040,11 @@ control_pin:
 </code></pre></div>
 
 <h3 id="smart_effector">[smart_effector]<a class="headerlink" href="#smart_effector" title="Permanent link">&para;</a></h3>
-<p>Smart Effector. One may define this section instead of <code>[probe]</code> to enable
-the SmartEffector-specific features. This also enables
-<a href="G-Codes.html#smart-effector">runtime commands</a> to adjust the parameters of
-the Smart Effector at run time.</p>
+<p>The "Smart Effector" from Duet3d implements a Z probe using a force
+sensor. One may define this section instead of <code>[probe]</code> to enable the
+Smart Effector specific features. This also enables
+<a href="G-Codes.html#smart_effector">runtime commands</a> to adjust the parameters
+of the Smart Effector at run time.</p>
 <div class="highlight"><pre><span></span><code>[smart_effector]
 pin:
 #   Pin connected to the Smart Effector Z Probe output pin (pin 5). Note that
@@ -5053,16 +5054,16 @@ pin:
 #   value pullup resistor on the Z probe input, which will likely result in an
 #   always-triggered probe state. In this case, connect the Smart Effector to
 #   a different pin on the board. This parameter is required.
-# control_pin:
+#control_pin:
 #   Pin connected to the Smart Effector control input pin (pin 7). If provided,
 #   Smart Effector sensitivity programming commands become available.
-# probe_accel:
+#probe_accel:
 #   If set, limits the acceleration of the probing moves (in mm/sec^2).
 #   A sudden large acceleration at the beginning of the probing move may
 #   cause spurious probe triggering, especially if the hotend is heavy.
 #   To prevent that, it may be necessary to reduce the acceleration of
 #   the probing moves via this parameter.
-# recovery_time: 0.4
+#recovery_time: 0.4
 #   A delay between the travel moves and the probing moves in seconds. A fast
 #   travel move prior to probing may result in a spurious probe triggering.
 #   This may cause &#39;Probe triggered prior to movement&#39; errors if no delay

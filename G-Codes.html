@@ -5003,18 +5003,19 @@ before changing the Smart Effector parameters. Also check the
 <a href="Probe_Calibrate.html">probe calibration guide</a>.</p>
 <h4 id="set_smart_effector">SET_SMART_EFFECTOR<a class="headerlink" href="#set_smart_effector" title="Permanent link">&para;</a></h4>
 <p><code>SET_SMART_EFFECTOR [SENSITIVITY=&lt;sensitivity&gt;] [ACCEL=&lt;accel&gt;]
-[RECOVERY_TIME=&lt;time&gt;]</code>: Set the Smart Effector parameters. When <code>SENSITIVITY</code>
-is specified, the respective value is written to the SmartEffector EEPROM
-(requires <code>control_pin</code> to be provided). Acceptable <sensitivity> values are
-0..255, the default is 50. Lower values require less nozzle contact force to
-trigger (but there is a higher risk of false triggering due to vibrations
-during probing), and higher values reduce false triggering (but require larger
-contact force to trigger). Since the sensitivity is written to EEPROM, it is
-preserved after the shutdown, and so it does not need to be configured on
-every printer startup. <code>ACCEL</code> and <code>RECOVERY_TIME</code> allow to override the
-corresponding parameters at run-time, see the
-<a href="Config_Reference.html#smart-effector">config section</a> of Smart Effector for
-more info on those parameters.</p>
+[RECOVERY_TIME=&lt;time&gt;]</code>: Set the Smart Effector parameters. When
+<code>SENSITIVITY</code> is specified, the respective value is written to the
+SmartEffector EEPROM (requires <code>control_pin</code> to be provided).
+Acceptable <code>&lt;sensitivity&gt;</code> values are 0..255, the default is 50. Lower
+values require less nozzle contact force to trigger (but there is a
+higher risk of false triggering due to vibrations during probing), and
+higher values reduce false triggering (but require larger contact
+force to trigger). Since the sensitivity is written to EEPROM, it is
+preserved after the shutdown, and so it does not need to be configured
+on every printer startup. <code>ACCEL</code> and <code>RECOVERY_TIME</code> allow to
+override the corresponding parameters at run-time, see the
+<a href="Config_Reference.html#smart_effector">config section</a> of Smart Effector
+for more info on those parameters.</p>
 <h4 id="reset_smart_effector">RESET_SMART_EFFECTOR<a class="headerlink" href="#reset_smart_effector" title="Permanent link">&para;</a></h4>
 <p><code>RESET_SMART_EFFECTOR</code>: Resets Smart Effector sensitivity to its factory
 settings. Requires <code>control_pin</code> to be provided in the config section.</p>
