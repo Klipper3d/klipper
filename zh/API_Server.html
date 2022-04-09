@@ -1077,6 +1077,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angledump_angle" class="md-nav__link">
+    angle/dump_angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pause_resumecancel" class="md-nav__link">
     pause_resume/cancel
   </a>
@@ -1515,6 +1522,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angledump_angle" class="md-nav__link">
+    angle/dump_angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pause_resumecancel" class="md-nav__link">
     pause_resume/cancel
   </a>
@@ -1655,6 +1669,10 @@ gcode:
 <h3 id="adxl345dump_adxl345">adxl345/dump_adxl345<a class="headerlink" href="#adxl345dump_adxl345" title="Permanent link">&para;</a></h3>
 <p>This endpoint is used to subscribe to ADXL345 accelerometer data. Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
 <p>A request may look like: <code>{"id": 123, "method":"adxl345/dump_adxl345", "params": {"sensor": "adxl345", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","x_acceleration","y_acceleration", "z_acceleration"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"overflows":0,"data":[[3292.432935,-535.44309,-1529.8374,9561.4], [3292.433256,-382.45935,-1606.32927,9561.48375]]}}</code></p>
+<p>The "header" field in the initial query response is used to describe the fields found in later "data" responses.</p>
+<h3 id="angledump_angle">angle/dump_angle<a class="headerlink" href="#angledump_angle" title="Permanent link">&para;</a></h3>
+<p>This endpoint is used to subscribe to <a href="Config_Reference.html#angle">angle sensor data</a>. Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
+<p>A request may look like: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","angle"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"position_offset":3.151562,"errors":0, "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
 <p>The "header" field in the initial query response is used to describe the fields found in later "data" responses.</p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
 <p>This endpoint is similar to running the "PRINT_CANCEL" G-Code command. For example: <code>{"id": 123, "method": "pause_resume/cancel"}</code></p>

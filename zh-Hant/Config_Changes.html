@@ -1246,6 +1246,9 @@
 <p>本文件涵蓋了軟體更新中對配置檔案不向后相容的部分。在升級 Klipper 時，最好也檢視一下這份文件。</p>
 <p>本文件中的所有日期都是不精確的。</p>
 <h2 id="_2">變更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>20220407: The temperature_fan <code>pid_integral_max</code> config option has been removed (it was deprecated on 20210612).</p>
+<p>20220407: The default color order for pca9632 LEDs is now "RGBW". Add an explicit <code>color_order: RBGW</code> setting to the pca9632 config section to obtain the previous behavior.</p>
+<p>20220330: The format of the <code>printer.neopixel.color_data</code> status information for neopixel and dotstar modules has changed. The information is now stored as a list of color lists (instead of a list of dictionaries). See the <a href="Status_Reference.html#led">status reference</a> for details.</p>
 <p>20220307: <code>M73</code> will no longer set print progress to 0 if <code>P</code> is missing.</p>
 <p>20220304: There is no longer a default for the <code>extruder</code> parameter of <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config sections. If desired, specify <code>extruder: extruder</code> explicitly to associate the stepper motor with the "extruder" motion queue at startup.</p>
 <p>20220210：<code>SYNC_STEPPER_TO_EXTRUDER</code>、<code>SET_EXTRUDER_STEP_DISTANCE</code>、<a href="Config_Reference.html#extruder">extruder</a>的 <code>shared_heater</code> 配置選項已棄用。這些功能將在不久的將來被刪除。將<code>SET_EXTRUDER_STEP_DISTANCE</code>替換為<code>SET_EXTRUDER_ROTATION_DISTANCE</code>，<code>SYNC_STEPPER_TO_EXTRUDER</code>替換為<code>SYNC_EXTRUDER_MOTION</code>，使用 <code>shared_heater</code> 與 <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a>配置分段替換 extruder 配置分段，並更新所有啟用宏以使用 <a href="G-Codes.html#sync_extruder_motion">SYNC_EXTRUDER_MOTION</a>。</p>

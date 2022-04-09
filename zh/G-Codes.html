@@ -778,6 +778,40 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angle" class="md-nav__link">
+    [angle]
+  </a>
+  
+    <nav class="md-nav" aria-label="[angle]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#angle_calibrate" class="md-nav__link">
+    ANGLE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_read" class="md-nav__link">
+    ANGLE_DEBUG_READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_write" class="md-nav__link">
+    ANGLE_DEBUG_WRITE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bed_mesh" class="md-nav__link">
     [bed_mesh]
   </a>
@@ -1496,16 +1530,23 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#neopixel" class="md-nav__link">
-    [neopixel]
+  <a href="#led" class="md-nav__link">
+    [led]
   </a>
   
-    <nav class="md-nav" aria-label="[neopixel]">
+    <nav class="md-nav" aria-label="[led]">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#set_led" class="md-nav__link">
     SET_LED
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_led_template" class="md-nav__link">
+    SET_LED_TEMPLATE
   </a>
   
 </li>
@@ -2643,6 +2684,40 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angle" class="md-nav__link">
+    [angle]
+  </a>
+  
+    <nav class="md-nav" aria-label="[angle]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#angle_calibrate" class="md-nav__link">
+    ANGLE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_read" class="md-nav__link">
+    ANGLE_DEBUG_READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_write" class="md-nav__link">
+    ANGLE_DEBUG_WRITE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bed_mesh" class="md-nav__link">
     [bed_mesh]
   </a>
@@ -3361,16 +3436,23 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#neopixel" class="md-nav__link">
-    [neopixel]
+  <a href="#led" class="md-nav__link">
+    [led]
   </a>
   
-    <nav class="md-nav" aria-label="[neopixel]">
+    <nav class="md-nav" aria-label="[led]">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#set_led" class="md-nav__link">
     SET_LED
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_led_template" class="md-nav__link">
+    SET_LED_TEMPLATE
   </a>
   
 </li>
@@ -4028,6 +4110,14 @@
 <p><code>ACCELEROMETER_DEBUG_READ [CHIP=&lt;配置名&gt;] REG=&lt;寄存器&gt;</code>：查询ADXL345的寄存器"REG"（例如44或0x2C）。可以用于debug。</p>
 <h4 id="accelerometer_debug_write">ACCELEROMETER_DEBUG_WRITE<a class="headerlink" href="#accelerometer_debug_write" title="Permanent link">&para;</a></h4>
 <p><code>ACCELEROMETER_DEBUG_WRITE [CHIP=&lt;配置名&gt;] REG=&lt;寄存器&gt; VAL=&lt;值&gt;</code>：将原始的"值"写进寄存器"寄存器"。"值"和"寄存器"都可以是一个十进制或十六进制的整数。请谨慎使用，并参考 ADXL345 数据手册。</p>
+<h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when an <a href="Config_Reference.html#angle">angle config section</a> is enabled.</p>
+<h4 id="angle_calibrate">ANGLE_CALIBRATE<a class="headerlink" href="#angle_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_CALIBRATE CHIP=&lt;chip_name&gt;</code>: Perform angle calibration on the given sensor (there must be an <code>[angle chip_name]</code> config section that has specified a <code>stepper</code> parameter). IMPORTANT - this tool will command the stepper motor to move without checking the normal kinematic boundary limits. Ideally the motor should be disconnected from any printer carriage before performing calibration. If the stepper can not be disconnected from the printer, make sure the carriage is near the center of its rail before starting calibration. (The stepper motor may move forwards or backwards two full rotations during this test.) After completing this test use the <code>SAVE_CONFIG</code> command to save the calibration data to the config file. In order to use this tool the Python "numpy" package must be installed (see the <a href="Measuring_Resonances.html#software-installation">measuring resonance document</a> for more information).</p>
+<h4 id="angle_debug_read">ANGLE_DEBUG_READ<a class="headerlink" href="#angle_debug_read" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_DEBUG_READ CHIP=&lt;config_name&gt; REG=&lt;register&gt;</code>: Queries sensor register "register" (e.g. 44 or 0x2C). Can be useful for debugging purposes. This is only available for tle5012b chips.</p>
+<h4 id="angle_debug_write">ANGLE_DEBUG_WRITE<a class="headerlink" href="#angle_debug_write" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_DEBUG_WRITE CHIP=&lt;config_name&gt; REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Writes raw "value" into register "register". Both "value" and "register" can be a decimal or a hexadecimal integer. Use with care, and refer to sensor data sheet for the reference. This is only available for tle5012b chips.</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> is enabled (also see the <a href="Bed_Mesh.html">bed mesh guide</a>).</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
@@ -4209,10 +4299,12 @@
 <p>当<a href="Config_Reference.html#manual_stepper">manual_stepper 配置分段</a>被启用时，以下命令可用。</p>
 <h4 id="manual_stepper_1">MANUAL_STEPPER<a class="headerlink" href="#manual_stepper_1" title="Permanent link">&para;</a></h4>
 <p><code>MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]] [SET_POSITION=&lt;pos&gt;] [SPEED=&lt;speed&gt;] [ACCEL=&lt;accel&gt;] [MOVE=&lt;pos&gt; [STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=0]]</code>：该命令将改变步进器的状态。使用ENABLE参数来启用/禁用步进。使用SET_POSITION参数，迫使步进认为它处于给定的位置。使用MOVE参数，要求移动到给定位置。如果指定了SPEED或者ACCEL，那么将使用给定的值而不是配置文件中指定的默认值。如果指定ACCEL为0，那么将不执行加速。如果STOP_ON_ENDSTOP=1被指定，那么如果止动器报告被触发，动作将提前结束（使用STOP_ON_ENDSTOP=2来完成动作，即使止动器没有被触发也不会出错，使用-1或-2来在止动器报告没有被触发时停止）。通常情况下，未来的G-Code命令将被安排在步进运动完成后运行，但是如果手动步进运动使用SYNC=0，那么未来的G-Code运动命令可能与步进运动平行运行。</p>
-<h3 id="neopixel">[neopixel]<a class="headerlink" href="#neopixel" title="Permanent link">&para;</a></h3>
-<p>当使用了<a href="Config_Reference.html#neopixel">neopixel</a>或<a href="Config_Reference.html#dotstar">dotstar</a>配置分段时，以下命令可用：</p>
+<h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
+<p>The following command is available when any of the <a href="Config_Reference.html#leds">led config sections</a> are enabled.</p>
 <h4 id="set_led">SET_LED<a class="headerlink" href="#set_led" title="Permanent link">&para;</a></h4>
-<p><code>SET_LED LED=&lt;配置中的名称&gt; RED=&lt;值&gt; GREEN=&lt;值&gt; BLUE=&lt;值&gt; WHITE=&lt;值&gt; [INDEX=&lt;索引&gt;] [TRANSMIT=0] [SYNC=1]</code>：这条指令设置LED的输出。每个颜色的 <code>&lt;值&gt;</code> 必须在0.0和1.0之间。WHITE（白色）参数仅在 RGBW LED上有效果。如果多个 LED 芯片是通过菊链连接的，可以用INDEX参数来指定改变指定芯片的颜色（1是第一颗芯片，2是第二颗芯片…）。如果不提供 INDEX 则全部菊链中的 LED 将被设置为给定的颜色。如果指定了 TRANSMIT=0 ，色彩变化只会在下一条不是 TRANSMIT=0 的 SET_LED命令发送后发生。这个特性和 INDEX 参数一起使用可以在菊链中批量改变LED的颜色。默认情况下，SET_LED命令将与其他正在进行的G代码命令同步其变化。 因为修改LED状态会重置空闲超时，这可能在不打印时造成不期望的行为。 如果精确的时序不重要，可选的 SYNC=0 参数可以立刻应用LED变化而不重置LED超时。</p>
+<p><code>SET_LED LED=&lt;config_name&gt; RED=&lt;value&gt; GREEN=&lt;value&gt; BLUE=&lt;value&gt; WHITE=&lt;value&gt; [INDEX=&lt;index&gt;] [TRANSMIT=0] [SYNC=1]</code>: This sets the LED output. Each color <code>&lt;value&gt;</code> must be between 0.0 and 1.0. The WHITE option is only valid on RGBW LEDs. If the LED supports multiple chips in a daisy-chain then one may specify INDEX to alter the color of just the given chip (1 for the first chip, 2 for the second, etc.). If INDEX is not provided then all LEDs in the daisy-chain will be set to the provided color. If TRANSMIT=0 is specified then the color change will only be made on the next SET_LED command that does not specify TRANSMIT=0; this may be useful in combination with the INDEX parameter to batch multiple updates in a daisy-chain. By default, the SET_LED command will sync it's changes with other ongoing gcode commands. This can lead to undesirable behavior if LEDs are being set while the printer is not printing as it will reset the idle timeout. If careful timing is not needed, the optional SYNC=0 parameter can be specified to apply the changes without resetting the idle timeout.</p>
+<h4 id="set_led_template">SET_LED_TEMPLATE<a class="headerlink" href="#set_led_template" title="Permanent link">&para;</a></h4>
+<p><code>SET_LED_TEMPLATE LED=&lt;led_name&gt; TEMPLATE=&lt;template_name&gt; [&lt;param_x&gt;=&lt;literal&gt;] [INDEX=&lt;index&gt;]</code>: Assign a <a href="Config_Reference.html#display_template">display_template</a> to a given <a href="Config_Reference.html#leds">LED</a>. For example, if one defined a <code>[display_template my_led_template]</code> config section then one could assign <code>TEMPLATE=my_led_template</code> here. The display_template should produce a comma separated string containing four floating point numbers corresponding to red, green, blue, and white color settings. The template will be continuously evaluated and the LED will be automatically set to the resulting colors. One may set display_template parameters to use during template evaluation (parameters will be parsed as Python literals). If INDEX is not specified then all chips in the LED's daisy-chain will be set to the template, otherwise only the chip with the given index will be updated. If TEMPLATE is an empty string then this command will clear any previous template assigned to the LED (one can then use <code>SET_LED</code> commands to manage the LED's color settings).</p>
 <h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
 <p>使用<a href="Config_Reference.html#output_pin">output_pin 配置分段</a>时，以下命令可用：</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>

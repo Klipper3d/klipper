@@ -1077,6 +1077,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angledump_angle" class="md-nav__link">
+    angle/dump_angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pause_resumecancel" class="md-nav__link">
     pause_resume/cancel
   </a>
@@ -1515,6 +1522,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angledump_angle" class="md-nav__link">
+    angle/dump_angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pause_resumecancel" class="md-nav__link">
     pause_resume/cancel
   </a>
@@ -1655,6 +1669,10 @@ gcode:
 <h3 id="adxl345dump_adxl345">adxl345/dump_adxl345<a class="headerlink" href="#adxl345dump_adxl345" title="Permanent link">&para;</a></h3>
 <p>該端點用於訂閱 ADXL345 加速度計數據。獲取這些低級運動更新可能對診斷和調試有用。使用此端點可能會增加 Klipper 的系統負載。</p>
 <p>請求可能類似於：<code>{"id": 123, "method":"adxl345/dump_adxl345", "params": {"sensor": "adxl345", "response_template": {}}}</code> 並且可能返回： <code>{"id": 123,"result":{"header":["time","x_acceleration","y_acceleration", "z_acceleration"]}}</code> 並且可能稍後會產生異步消息，例如：<code>{"params ":{"溢出":0,"數據":[[3292.432935,-535.44309,-1529.8374,9561.4], [3292.433256,-382.45935,-1606.32927,9561.48375]}}</code></p>
+<p>初始查詢響應中的“header”字段用於描述在以後的“data”響應中找到的字段。</p>
+<h3 id="angledump_angle">angle/dump_angle<a class="headerlink" href="#angledump_angle" title="Permanent link">&para;</a></h3>
+<p>This endpoint is used to subscribe to <a href="Config_Reference.html#angle">angle sensor data</a>. Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
+<p>A request may look like: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","angle"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"position_offset":3.151562,"errors":0, "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
 <p>初始查詢響應中的“header”字段用於描述在以後的“data”響應中找到的字段。</p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
 <p>此端點類似於運行“PRINT_CANCEL”G 代碼命令。例如：<code>{"id": 123, "method": "pause_resume/cancel"}</code></p>

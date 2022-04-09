@@ -1155,16 +1155,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#led" class="md-nav__link">
-    額外的舵機，LED，按鍵，和其他引腳
+  <a href="#leds" class="md-nav__link">
+    LEDs
   </a>
   
-    <nav class="md-nav" aria-label="額外的舵機，LED，按鍵，和其他引腳">
+    <nav class="md-nav" aria-label="LEDs">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#servo" class="md-nav__link">
-    [servo]
+  <a href="#led" class="md-nav__link">
+    [led]
   </a>
   
 </li>
@@ -1185,14 +1185,34 @@
         
           <li class="md-nav__item">
   <a href="#pca9533" class="md-nav__link">
-    [PCA9533]
+    [pca9533]
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#pca9632" class="md-nav__link">
-    [PCA9632]
+    [pca9632]
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-servos-buttons-and-other-pins" class="md-nav__link">
+    Additional servos, buttons, and other pins
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional servos, buttons, and other pins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#servo" class="md-nav__link">
+    [servo]
   </a>
   
 </li>
@@ -1515,6 +1535,13 @@
           <li class="md-nav__item">
   <a href="#palette2" class="md-nav__link">
     [palette2]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle" class="md-nav__link">
+    [angle]
   </a>
   
 </li>
@@ -2985,16 +3012,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#led" class="md-nav__link">
-    額外的舵機，LED，按鍵，和其他引腳
+  <a href="#leds" class="md-nav__link">
+    LEDs
   </a>
   
-    <nav class="md-nav" aria-label="額外的舵機，LED，按鍵，和其他引腳">
+    <nav class="md-nav" aria-label="LEDs">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#servo" class="md-nav__link">
-    [servo]
+  <a href="#led" class="md-nav__link">
+    [led]
   </a>
   
 </li>
@@ -3015,14 +3042,34 @@
         
           <li class="md-nav__item">
   <a href="#pca9533" class="md-nav__link">
-    [PCA9533]
+    [pca9533]
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#pca9632" class="md-nav__link">
-    [PCA9632]
+    [pca9632]
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-servos-buttons-and-other-pins" class="md-nav__link">
+    Additional servos, buttons, and other pins
+  </a>
+  
+    <nav class="md-nav" aria-label="Additional servos, buttons, and other pins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#servo" class="md-nav__link">
+    [servo]
   </a>
   
 </li>
@@ -3345,6 +3392,13 @@
           <li class="md-nav__item">
   <a href="#palette2" class="md-nav__link">
     [palette2]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle" class="md-nav__link">
+    [angle]
   </a>
   
 </li>
@@ -3999,14 +4053,17 @@ control:
 #   Control algorithm (either pid or watermark). This parameter must
 #   be provided.
 pid_Kp:
-#   Kp is the &quot;proportional&quot; constant for the pid. This parameter must
-#   be provided for PID heaters.
 pid_Ki:
-#   Ki is the &quot;integral&quot; constant for the pid. This parameter must be
-#   provided for PID heaters.
 pid_Kd:
-#   Kd is the &quot;derivative&quot; constant for the pid. This parameter must
-#   be provided for PID heaters.
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
+#     heater_pwm = (Kp*error + Ki*integral(error) - Kd*derivative(error)) / 255
+#   Where &quot;error&quot; is &quot;requested_temperature - measured_temperature&quot;
+#   and &quot;heater_pwm&quot; is the requested heating rate with 0.0 being full
+#   off and 1.0 being full on. Consider using the PID_CALIBRATE
+#   command to obtain these parameters. The pid_Kp, pid_Ki, and pid_Kd
+#   parameters must be provided for PID heaters.
 #max_delta: 2.0
 #   On &#39;watermark&#39; controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater
@@ -5371,7 +5428,117 @@ pin:
 #   以上參數介紹請見「fan」（風扇）章節。
 </code></pre></div>
 
-<h2 id="led">額外的舵機，LED，按鍵，和其他引腳<a class="headerlink" href="#led" title="Permanent link">&para;</a></h2>
+<h2 id="leds">LEDs<a class="headerlink" href="#leds" title="Permanent link">&para;</a></h2>
+<h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
+<p>Support for LEDs (and LED strips) controlled via micro-controller PWM pins (one may define any number of sections with an "led" prefix). See the <a href="G-Codes.html#led">command reference</a> for more information.</p>
+<div class="highlight"><pre><span></span><code>[led my_led]
+#red_pin:
+#green_pin:
+#blue_pin:
+#white_pin:
+#   The pin controlling the given LED color. At least one of the above
+#   parameters must be provided.
+#cycle_time: 0.010
+#   The amount of time (in seconds) per PWM cycle. It is recommended
+#   this be 10 milliseconds or greater when using software based PWM.
+#   The default is 0.010 seconds.
+#hardware_pwm: False
+#   Enable this to use hardware PWM instead of software PWM. When
+#   using hardware PWM the actual cycle time is constrained by the
+#   implementation and may be significantly different than the
+#   requested cycle_time. The default is False.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   Sets the initial LED color. Each value should be between 0.0 and
+#   1.0. The default for each color is 0.
+</code></pre></div>
+
+<h3 id="neopixel">[neopixel]<a class="headerlink" href="#neopixel" title="Permanent link">&para;</a></h3>
+<p>Neopixel (aka WS2812) LED support (one may define any number of sections with a "neopixel" prefix). See the <a href="G-Codes.html#led">command reference</a> for more information.</p>
+<p>Note that the <a href="RPi_microcontroller.html">linux mcu</a> implementation does not currently support directly connected neopixels.</p>
+<div class="highlight"><pre><span></span><code>[neopixel my_neopixel]
+pin:
+#   The pin connected to the neopixel. This parameter must be
+#   provided.
+#chain_count:
+#   The number of Neopixel chips that are &quot;daisy chained&quot; to the
+#   provided pin. The default is 1 (which indicates only a single
+#   Neopixel is connected to the pin).
+#color_order: GRB
+#   Set the pixel order required by the LED hardware (using a string
+#   containing the letters R, G, B, W with W optional). The default is
+#   GRB.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the &quot;led&quot; section for information on these parameters.
+</code></pre></div>
+
+<h3 id="dotstar">[dotstar]<a class="headerlink" href="#dotstar" title="Permanent link">&para;</a></h3>
+<p>Dotstar (aka APA102) LED support (one may define any number of sections with a "dotstar" prefix). See the <a href="G-Codes.html#led">command reference</a> for more information.</p>
+<div class="highlight"><pre><span></span><code>[dotstar my_dotstar]
+data_pin:
+#   The pin connected to the data line of the dotstar. This parameter
+#   must be provided.
+clock_pin:
+#   The pin connected to the clock line of the dotstar. This parameter
+#   must be provided.
+#chain_count:
+#   See the &quot;neopixel&quot; section for information on this parameter.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#   See the &quot;led&quot; section for information on these parameters.
+</code></pre></div>
+
+<h3 id="pca9533">[pca9533]<a class="headerlink" href="#pca9533" title="Permanent link">&para;</a></h3>
+<p>PCA9533 LED支援。PCA9533 在 mightyboard上出現。</p>
+<div class="highlight"><pre><span></span><code>[pca9533 my_pca9533]
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. Use 98 for
+#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the &quot;led&quot; section for information on these parameters.
+</code></pre></div>
+
+<h3 id="pca9632">[pca9632]<a class="headerlink" href="#pca9632" title="Permanent link">&para;</a></h3>
+<p>PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.</p>
+<div class="highlight"><pre><span></span><code>[pca9632 my_pca9632]
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. This may be
+#   96, 97, 98, or 99.  The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters.
+#scl_pin:
+#sda_pin:
+#   Alternatively, if the pca9632 is not connected to a hardware I2C
+#   bus, then one may specify the &quot;clock&quot; (scl_pin) and &quot;data&quot;
+#   (sda_pin) pins. The default is to use hardware I2C.
+#color_order: RGBW
+#   Set the pixel order of the LED (using a string containing the
+#   letters R, G, B, W). The default is RGBW.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#initial_WHITE: 0.0
+#   See the &quot;led&quot; section for information on these parameters.
+</code></pre></div>
+
+<h2 id="additional-servos-buttons-and-other-pins">Additional servos, buttons, and other pins<a class="headerlink" href="#additional-servos-buttons-and-other-pins" title="Permanent link">&para;</a></h2>
 <h3 id="servo">[servo]<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h3>
 <p>伺服（可以定義任意數量的帶有“伺服”前綴的部分）。可以使用 SET_SERVO <a href="G-Codes.html#servo">g-code command</a> 控制舵機。例如：SET_SERVO SERVO=my_servo ANGLE=180</p>
 <div class="highlight"><pre><span></span><code>[servo my_servo]
@@ -5395,81 +5562,6 @@ pin:
 #   Initial pulse width time (in seconds) to set the servo to. (This
 #   is only valid if initial_angle is not set.) The default is to not
 #   send any signal at startup.
-</code></pre></div>
-
-<h3 id="neopixel">[neopixel]<a class="headerlink" href="#neopixel" title="Permanent link">&para;</a></h3>
-<p>Neopixel（又名 WS2812）LED 支持（可以定義任意數量的帶有“neopixel”前綴的部分）。可以通過“SET_LED LED=my_neopixel RED=0.1 GREEN=0.1 BLUE=0.1”類型擴展 <a href="G-Codes.html#neopixel">g-code commands</a> 設置 LED 顏色。</p>
-<div class="highlight"><pre><span></span><code>[neopixel my_neopixel]
-pin:
-#   The pin connected to the neopixel. This parameter must be
-#   provided.
-#chain_count:
-#   The number of Neopixel chips that are &quot;daisy chained&quot; to the
-#   provided pin. The default is 1 (which indicates only a single
-#   Neopixel is connected to the pin).
-#color_order: GRB
-#   Set the pixel order required by the LED hardware. Options are GRB,
-#   RGB, BRG, BGR, GRBW, or RGBW. The default is GRB.
-#initial_RED: 0.0
-#initial_GREEN: 0.0
-#initial_BLUE: 0.0
-#initial_WHITE: 0.0
-#   Sets the initial LED color of the Neopixel. Each value should be
-#   between 0.0 and 1.0. The WHITE option is only available on RGBW
-#   LEDs. The default for each color is 0.
-</code></pre></div>
-
-<h3 id="dotstar">[dotstar]<a class="headerlink" href="#dotstar" title="Permanent link">&para;</a></h3>
-<p>Dotstar（又名 APA102）LED 支持（可以使用“dotstar”前綴定義任意數量的部分）。可以通過“SET_LED LED=my_dotstar RED=0.1 GREEN=0.1 BLUE=0.1”類型擴展 <a href="G-Codes.html#neopixel">g-code commands</a> 設置 LED 顏色。</p>
-<div class="highlight"><pre><span></span><code>[dotstar my_dotstar]
-data_pin:
-#   連線到dotstar data（數據）線的引腳。必須提供這個參數。
-clock_pin:
-# 連線到dotstar clock（時鐘）線的引腳。必須提供這個參數。
-#chain_count:
-#initial_RED:0.0
-#initial_GREEN: 0.0
-#initial_BLUE: 0.0
-#   有關這些參數的資訊，請參見 &quot;Neopixel &quot; 章節。
-</code></pre></div>
-
-<h3 id="pca9533">[PCA9533]<a class="headerlink" href="#pca9533" title="Permanent link">&para;</a></h3>
-<p>PCA9533 LED支援。PCA9533 在 mightyboard上出現。</p>
-<div class="highlight"><pre><span></span><code>[pca9533 my_pca9533]
-#i2c_address: 98
-#   The i2c address that the chip is using on the i2c bus. Use 98 for
-#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
-#i2c_mcu:
-#i2c_bus:
-#i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
-#initial_RED: 0
-#initial_GREEN: 0
-#initial_BLUE: 0
-#initial_WHITE: 0
-#   The PCA9533 only supports 1 or 0. The default is 0. On the
-#   mightyboard, the white led is not populated.
-#   Use GCODE to modify led values after startup.
-#   set_led led=my_pca9533 red=1 green=1 blue=1
-</code></pre></div>
-
-<h3 id="pca9632">[PCA9632]<a class="headerlink" href="#pca9632" title="Permanent link">&para;</a></h3>
-<p>PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.</p>
-<div class="highlight"><pre><span></span><code>[pca9632 my_pca9632]
-scl_pin:
-# The SCL &quot;clock&quot; pin. This parameter must be provided.
-sda_pin:
-# The SDA &quot;data&quot; pin. This parameter must be provided.
-#initial_RED: 0
-#initial_GREEN: 0
-#initial_BLUE: 0
-#initial_WHITE: 0
-# PCA9632 supports individual LED PWM.
-# Values range from 0.0 to 1.0. The default is 0.0.
-# On the FlashForge Dreamer, the white led is not populated.
-# Use GCODE to modify led values after startup.
-# set_led led=my_pca9632 red=1.0 green=1.0 blue=1.0 white=0.0
 </code></pre></div>
 
 <h3 id="gcode_button">[gcode_button]<a class="headerlink" href="#gcode_button" title="Permanent link">&para;</a></h3>
@@ -6221,19 +6313,23 @@ text:
 </code></pre></div>
 
 <h3 id="display_template">[display_template]<a class="headerlink" href="#display_template" title="Permanent link">&para;</a></h3>
-<p>顯示數據文字「宏」（可以使用 display_template 字首定義任意數量的部分）。此功能可以幫助減少 display_data 部分中重複的定義。可以使用 display_data 部分中的內建 render() 函式來預覽模板。例如，如果要定義 <code>[display_template my_template]</code> 則可以在 display_data 部分使用 <code>{ render('my_template') }</code> 。</p>
-<div class="highlight"><pre><span></span><code>[display_template 模版名稱]
-#param_&lt;名稱&gt;:
-#   可以使用&quot;param_&quot;字首定義任意數量的選項。定義的名稱將被
-#   關聯到給定的值（被解析為Python literal）並在macro解釋時可
-#   以被使用。如果參數被render()的呼叫傳入，則這個值會被用於
-#   宏擴充套件。例如，配置 &quot;param_speed = 75&quot; 允許呼叫
-#   &quot;render(&#39;my_template_name&#39;, param_speed=80)&quot;。
-#   參數名不能包含大寫字元。
-#text:
-#   當 render() 函式因為這個模板被呼叫時會顯示的文字。這個
-#   欄位使用命令模板（請見docs/Command_Templates.md）。
-#   必須提供此參數。
+<p>Display data text "macros" (one may define any number of sections with a display_template prefix). See the <a href="Command_Templates.html">command templates</a> document for information on template evaluation.</p>
+<p>This feature allows one to reduce repetitive definitions in display_data sections. One may use the builtin <code>render()</code> function in display_data sections to evaluate a template. For example, if one were to define <code>[display_template my_template]</code> then one could use <code>{ render('my_template') }</code> in a display_data section.</p>
+<p>This feature can also be used for continuous LED updates using the <a href="G-Codes.html#set_led_template">SET_LED_TEMPLATE</a> command.</p>
+<div class="highlight"><pre><span></span><code>[display_template my_template_name]
+#param_&lt;name&gt;:
+#   One may specify any number of options with a &quot;param_&quot; prefix. The
+#   given name will be assigned the given value (parsed as a Python
+#   literal) and will be available during macro expansion. If the
+#   parameter is passed in the call to render() then that value will
+#   be used during macro expansion. For example, a config with
+#   &quot;param_speed = 75&quot; might have a caller with
+#   &quot;render(&#39;my_template_name&#39;, param_speed=80)&quot;. Parameter names may
+#   not use upper case characters.
+text:
+#   The text to return when the this template is rendered. This field
+#   is evaluated using command templates (see
+#   docs/Command_Templates.md). This parameter must be provided.
 </code></pre></div>
 
 <h3 id="display_glyph">[display_glyph]<a class="headerlink" href="#display_glyph" title="Permanent link">&para;</a></h3>
@@ -6583,6 +6679,33 @@ serial:
 #   預設 2 (mm/s)
 #auto_cancel_variation: 0.1
 #   # 當 ping 值變化高於此閾值時自動取消列印
+</code></pre></div>
+
+<h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
+<p>Magnetic hall angle sensor support for reading stepper motor angle shaft measurements using a1333, as5047d, or tle5012b SPI chips. The measurements are available via the <a href="API_Server.html">API Server</a> and <a href="Debugging.html#motion-analysis-and-data-logging">motion analysis tool</a>. See the <a href="G-Codes.html#angle">G-Code reference</a> for available commands.</p>
+<div class="highlight"><pre><span></span><code>[angle my_angle_sensor]
+sensor_type:
+#   The type of the magnetic hall sensor chip. Available choices are
+#   &quot;a1333&quot;, &quot;as5047d&quot;, and &quot;tle5012b&quot;. This parameter must be
+#   specified.
+#sample_period: 0.000400
+#   The query period (in seconds) to use during measurements. The
+#   default is 0.000400 (which is 2500 samples per second).
+#stepper:
+#   The name of the stepper that the angle sensor is attached to (eg,
+#   &quot;stepper_x&quot;). Setting this value enables an angle calibration
+#   tool. To use this feature, the Python &quot;numpy&quot; package must be
+#   installed. The default is to not enable angle calibration for the
+#   angle sensor.
+cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided.
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters.
 </code></pre></div>
 
 <h2 id="_29">通用匯流排參數<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h2>
