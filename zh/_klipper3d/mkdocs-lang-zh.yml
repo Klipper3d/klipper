@@ -23,7 +23,7 @@ markdown_extensions:
   - mdx_breakless_lists
 plugins:
   search:
-    lang: zh
+    lang: ja
   mkdocs-simple-hooks:
     hooks:
       on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"

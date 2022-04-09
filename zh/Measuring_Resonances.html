@@ -1533,7 +1533,7 @@ sudo apt install python3-numpy python3-matplotlib
 
 <p>之后，参考<a href="RPi_microcontroller.html">树莓派作为微控制器文档</a>的指引完成“LINUX微处理器”的设置。</p>
 <p>通过运行<code>sudo raspi-config</code> 后的 "Interfacing options"菜单中启用 SPI 以确保Linux SPI 驱动已启用。</p>
-<p>在printer.cfg附上下面的内容：</p>
+<p>在printer.cfg中添加以下内容：</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
