@@ -1963,6 +1963,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#smart_effector" class="md-nav__link">
+    [smart_effector]
+  </a>
+  
+    <nav class="md-nav" aria-label="[smart_effector]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_smart_effector" class="md-nav__link">
+    SET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_smart_effector" class="md-nav__link">
+    RESET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#stepper_enable" class="md-nav__link">
     [stepper_enable]
   </a>
@@ -3869,6 +3896,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#smart_effector" class="md-nav__link">
+    [smart_effector]
+  </a>
+  
+    <nav class="md-nav" aria-label="[smart_effector]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_smart_effector" class="md-nav__link">
+    SET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_smart_effector" class="md-nav__link">
+    RESET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#stepper_enable" class="md-nav__link">
     [stepper_enable]
   </a>
@@ -4940,6 +4994,30 @@ state to a profile matching the supplied name. Remove will delete the
 profile matching the supplied name from persistent memory. Note that
 after SAVE or REMOVE operations have been run the SAVE_CONFIG gcode
 must be run to make the changes to persistent memory permanent.</p>
+<h3 id="smart_effector">[smart_effector]<a class="headerlink" href="#smart_effector" title="Permanent link">&para;</a></h3>
+<p>Several commands are available when a
+<a href="Config_Reference.html#smart-effector">smart_effector config section</a> is enabled.
+Be sure to check the official documentation for the Smart Effector on the
+<a href="https://duet3d.dozuki.com/Wiki/Smart_effector_and_carriage_adapters_for_delta_printer">Duet3D Wiki</a>
+before changing the Smart Effector parameters. Also check the
+<a href="Probe_Calibrate.html">probe calibration guide</a>.</p>
+<h4 id="set_smart_effector">SET_SMART_EFFECTOR<a class="headerlink" href="#set_smart_effector" title="Permanent link">&para;</a></h4>
+<p><code>SET_SMART_EFFECTOR [SENSITIVITY=&lt;sensitivity&gt;] [ACCEL=&lt;accel&gt;]
+[RECOVERY_TIME=&lt;time&gt;]</code>: Set the Smart Effector parameters. When <code>SENSITIVITY</code>
+is specified, the respective value is written to the SmartEffector EEPROM
+(requires <code>control_pin</code> to be provided). Acceptable <sensitivity> values are
+0..255, the default is 50. Lower values require less nozzle contact force to
+trigger (but there is a higher risk of false triggering due to vibrations
+during probing), and higher values reduce false triggering (but require larger
+contact force to trigger). Since the sensitivity is written to EEPROM, it is
+preserved after the shutdown, and so it does not need to be configured on
+every printer startup. <code>ACCEL</code> and <code>RECOVERY_TIME</code> allow to override the
+corresponding parameters at run-time, see the
+<a href="Config_Reference.html#smart-effector">config section</a> of Smart Effector for
+more info on those parameters.</p>
+<h4 id="reset_smart_effector">RESET_SMART_EFFECTOR<a class="headerlink" href="#reset_smart_effector" title="Permanent link">&para;</a></h4>
+<p><code>RESET_SMART_EFFECTOR</code>: Resets Smart Effector sensitivity to its factory
+settings. Requires <code>control_pin</code> to be provided in the config section.</p>
 <h3 id="stepper_enable">[stepper_enable]<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h3>
 <p>The stepper_enable module is automatically loaded.</p>
 <h4 id="set_stepper_enable">SET_STEPPER_ENABLE<a class="headerlink" href="#set_stepper_enable" title="Permanent link">&para;</a></h4>
