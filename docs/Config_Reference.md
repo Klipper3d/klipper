@@ -2548,7 +2548,10 @@ sections with a "neopixel" prefix). See the
 [command reference](G-Codes.md#led) for more information.
 
 Note that the [linux mcu](RPi_microcontroller.md) implementation does
-not currently support directly connected neopixels.
+not currently support directly connected neopixels. The current design
+using the Linux kernel interface does not allow this scenario because
+the kernel GPIO interface is not fast enough to provide the required
+pulse rates.
 
 ```
 [neopixel my_neopixel]
