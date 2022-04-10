@@ -2525,6 +2525,8 @@ information.
 #min_temp:
 #max_temp:
 #   See the "extruder" section for a description of the above parameters.
+#   For temperature_fan the PID algorithm is applied in reverse:
+#   fan_speed = fan_max_speed - (Kp*error + Ki*integral(error) - Kd*derivative(error)) / 255
 #target_temp: 40.0
 #   A temperature (in Celsius) that will be the target temperature.
 #   The default is 40 degrees.
