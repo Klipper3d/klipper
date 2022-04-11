@@ -22,26 +22,47 @@ class PrinterNeoPixel:
         self.mcu = pin_params['chip']
         self.oid = self.mcu.create_oid()
         self.pin = pin_params['pin']
+        
         self.mcu.register_config_callback(self.build_config)
-        color_order = config.get("color_order", "GRB")
-        if sorted(color_order) not in (sorted("RGB"), sorted("RGBW")):
-            raise config.error("Invalid color_order '%s'" % (color_order,))
-        if 'W' in color_order:
-            color_index = [color_order.index(c) for c in "RGBW"]
-        else:
-            color_index = [color_order.index(c) for c in "RGB"]
-        self.color_map = list(enumerate(color_index))
-        elem_size = len(self.color_map)
-        self.chain_count = config.getint('chain_count', 1, minval=1,
-                                         maxval=MAX_MCU_SIZE//elem_size)
+
+        self.color_maps = []
+        color_order_list = config.get("color_order", "GRB").split(',')
+        for color_order_item in color_order_list:
+            if '*' in color_order_item:
+                count, color_order = color_order_item.split('*',1)
+                count=int(count)
+            else:
+                count = 1
+                color_order = color_order_item
+            color_order=color_order.strip()
+            if sorted(color_order) not in (sorted("RGB"), sorted("RGBW")):
+                raise config.error("Invalid color_order '%s'" % (color_order,))
+            if 'W' in color_order:
+                color_index = [color_order.index(c) for c in "RGBW"]
+            else:
+                color_index = [color_order.index(c) for c in "RGB"]
+            for _ in range(count-1):
+                self.color_maps.append(color_index)
+        
+        self.chain_count = config.getint('chain_count', 1, minval=1)
+
+        missing_color_maps = self.chain_count - len(self.color_maps)
+        if missing_color_maps > 0:
+            self.color_maps += [color_index]*missing_color_maps
+            
         self.neopixel_update_cmd = self.neopixel_send_cmd = None
+
         # Initialize color data
         pled = printer.load_object(config, "led")
         self.led_helper = pled.setup_helper(config, self.update_leds,
-                                            self.chain_count, elem_size==4)
-        self.color_data = bytearray(self.chain_count * elem_size)
-        self.update_color_data(self.led_helper.get_status()['color_data'])
-        self.old_color_data = bytearray([d ^ 1 for d in self.color_data])
+                                            self.chain_count)
+        self.led_state = self.led_helper.get_status()['color_data']
+        self.data_length=len(self.calc_color_data())
+        self.old_color_data = [None] * self.data_length
+        # check again for maximum chain length
+        avg_length = float(self.data_length) / self.chain_count
+        self.chain_count = config.getint('chain_count', 1, minval=1,
+                                    maxval=int(MAX_MCU_SIZE/avg_length))
         # Register callbacks
         printer.register_event_handler("klippy:connect", self.send_data)
     def build_config(self):
@@ -49,7 +70,7 @@ class PrinterNeoPixel:
         rmt = self.mcu.seconds_to_clock(RESET_MIN_TIME)
         self.mcu.add_config_cmd("config_neopixel oid=%d pin=%s data_size=%d"
                                 " bit_max_ticks=%d reset_min_ticks=%d"
-                                % (self.oid, self.pin, len(self.color_data),
+                                % (self.oid, self.pin, self.data_length,
                                    bmt, rmt))
         cmd_queue = self.mcu.alloc_command_queue()
         self.neopixel_update_cmd = self.mcu.lookup_command(
@@ -57,15 +78,17 @@ class PrinterNeoPixel:
         self.neopixel_send_cmd = self.mcu.lookup_query_command(
             "neopixel_send oid=%c", "neopixel_result oid=%c success=%c",
             oid=self.oid, cq=cmd_queue)
-    def update_color_data(self, led_state):
-        color_map = self.color_map
-        elem_size = len(color_map)
-        color_data = self.color_data
-        for i, color in enumerate(led_state):
-            for lidx, cidx in color_map:
-                color_data[i * elem_size + cidx] = int(color[lidx] * 255. + .5)
+
+    def calc_color_data(self):
+        # color order and size
+        colors = [ tuple([color[i] for i in color_map])\
+                 for color, color_map in zip(self.led_state, self.color_maps) ]
+        # convert to bytearray
+        color_data=[int(round(item * 255.)) for t in colors for item in t]
+        return color_data
+
     def send_data(self, print_time=None):
-        old_data, new_data = self.old_color_data, self.color_data
+        old_data, new_data = self.old_color_data, self.calc_color_data()
         if new_data == old_data:
             return
         # Find the position of all changed bytes in this framebuffer
@@ -101,7 +124,7 @@ class PrinterNeoPixel:
     def update_leds(self, led_state, print_time):
         def reactor_bgfunc(eventtime):
             with self.mutex:
-                self.update_color_data(led_state)
+                self.led_state=led_state
                 self.send_data(print_time)
         self.printer.get_reactor().register_callback(reactor_bgfunc)
     def get_status(self, eventtime=None):

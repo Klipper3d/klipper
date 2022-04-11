@@ -2629,8 +2629,11 @@ pin:
 #   Neopixel is connected to the pin).
 #color_order: GRB
 #   Set the pixel order required by the LED hardware (using a string
-#   containing the letters R, G, B, W with W optional). The default is
-#   GRB.
+#   containing the letters R, G, B, W with W optional). Can also be 
+#   set to a comma separated list of color orders for different LEDs 
+#   in one chain. Segments can be defined by "<n> * color_order", e.g. 
+#   "8 * GRB, 2 * GRBW". If chain_count is greater than the color order 
+#   list, it is filled with the last value. The default is GRB. 
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
