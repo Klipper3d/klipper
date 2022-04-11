@@ -64,7 +64,7 @@ PermissionsStartOnly=true
 ExecStartPre=/usr/bin/gpioset 1 196=0
 ExecStartPre=/usr/bin/gpioget 1 196
 ExecStartPre=${SRCDIR}/scripts/flash-ar100.py /opt/firmware/ar100.bin
-ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer.cfg -l ${KLIPPER_LOG}
+ExecStart=${PYTHONDIR}/bin/python ${SRCDIR}/klippy/klippy.py ${HOME}/printer_config/printer.cfg -l ${KLIPPER_LOG}
 ExecStopPost=${SRCDIR}/scripts/flash-ar100.py --bl31 --halt /opt/firmware/bl31.bin
 EOF
 # Use systemctl to enable the klipper systemd service script
