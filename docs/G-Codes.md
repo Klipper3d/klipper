@@ -714,6 +714,14 @@ timeout. If careful timing is not needed, the optional SYNC=0
 parameter can be specified to apply the changes without resetting the
 idle timeout.
 
+#### SET_LED_HSI
+`SET_LED_HSI LED=<config_name> HUE=<value> SATURATION=<value>
+INTENSITY=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
+LED output, converting the provided HSI to RGB(W). This will use the
+white leds to provide more clean and brighter colors, instead of
+needing to mix a third color channel to get a "white" light. INDEX,
+TRANSMIT, and SYNC function identically to SET_LED.
+
 #### SET_LED_TEMPLATE
 `SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
 [<param_x>=<literal>] [INDEX=<index>]`: Assign a

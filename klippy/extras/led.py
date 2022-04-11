@@ -3,7 +3,10 @@
 # Copyright (C) 2019-2022  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, ast
+import ast
+import logging
+import math
+
 from .display import display
 
 # Time between each led template update
@@ -28,17 +31,10 @@ class LEDHelper:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
                                    desc=self.cmd_SET_LED_help)
-    cmd_SET_LED_help = "Set the color of an LED"
-    def cmd_SET_LED(self, gcmd):
-        # Parse parameters
-        red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
-        green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
-        blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
-        white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
-        index = gcmd.get_int('INDEX', None, minval=1, maxval=self.led_count)
-        transmit = gcmd.get_int('TRANSMIT', 1)
-        sync = gcmd.get_int('SYNC', 1)
-        color = (red, green, blue, white)
+        gcode.register_mux_command("SET_LED_HSI", "LED", name,
+                                   self.cmd_SET_LED_HSI,
+                                   desc=self.cmd_SET_LED_HSI_help)
+    def _set_leds(self, index, color, transmit, sync):
         # Update and transmit data
         def lookahead_bgfunc(print_time):
             if index is None:
@@ -63,6 +59,45 @@ class LEDHelper:
         else:
             #Send update now (so as not to wake toolhead and reset idle_timeout)
             lookahead_bgfunc(None)
+    cmd_SET_LED_help = "Set the color of an LED"
+    def cmd_SET_LED(self, gcmd):
+        # Parse parameters
+        red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
+        green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
+        blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
+        white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
+        index = gcmd.get_int('INDEX', None, minval=1, maxval=self.led_count)
+        transmit = gcmd.get_int('TRANSMIT', 1)
+        sync = gcmd.get_int('SYNC', 1)
+        color = (red, green, blue, white)
+        return self._set_leds(index, color, transmit, sync)
+    cmd_SET_LED_HSI_help = "Set the color of an LED using HSV "
+    def cmd_SET_LED_HSI(self, gcmd):
+        # Parse parameters
+        hue = gcmd.get_float('HUE', 0.) % 360
+        saturation = gcmd.get_float('SATURATION', 0., minval=0., maxval=1.)
+        intensity = gcmd.get_float('INTENSITY', 0., minval=0., maxval=1.)
+        index = gcmd.get_int('INDEX', None, minval=1, maxval=self.led_count)
+        transmit = gcmd.get_int('TRANSMIT', 1)
+        sync = gcmd.get_int('SYNC', 1)
+
+        # Convert HSI to RGBW tuple
+        white = (1 - saturation) * intensity
+
+        hue = math.pi * hue / 180.
+        color_multiplier = saturation * intensity / 3
+
+        shift = int(hue // 2.0943951)
+        cos_hue = math.cos(hue)
+        cos_1047_hue = math.cos(1.047196667 - hue)
+        rgb = (
+            color_multiplier * (1 + cos_hue / cos_1047_hue),
+            color_multiplier * (1 + (1 - cos_hue / cos_1047_hue)),
+            0,
+        )
+        rgb = rgb[shift:] + rgb[0:shift] + (white,)
+
+        self._set_leds(index, tuple(rgb), transmit, sync)
     def get_status(self, eventtime=None):
         return {'color_data': self.led_state}
 
