@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -978,7 +984,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1566,10 +1572,10 @@
 
 <h1 id="_1">常见问题<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <ol>
-<li><a href="#how-can-i-donate-to-the-project">我怎样才能支持项目？</a></li>
+<li><a href="#how-can-i-donate-to-the-project">如何对项目捐款？</a></li>
 <li><a href="#how-do-i-calculate-the-rotation_distance-config-parameter">如何计算rotation_distance配置参数？</a></li>
-<li><a href="#wheres-my-serial-port">我的串口在哪里找？</a></li>
-<li><a href="#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1">当微控制器重启设备更改为/dev/ttyUSB1</a></li>
+<li><a href="#wheres-my-serial-port">在哪里找串口号？</a></li>
+<li><a href="#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1">当微控制器重启时串口变成了/dev/ttyUSB1</a></li>
 <li><a href="#the-make-flash-command-doesnt-work">“make flash”命令不起作用</a></li>
 <li><a href="#how-do-i-change-the-serial-baud-rate">如何更改串口波特率？</a></li>
 <li><a href="#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3">我可以在 Raspberry Pi 3 以外的其他设备上运行 Klipper 吗？</a></li>
@@ -1632,7 +1638,7 @@ baud: 250000
 <p>推荐的硬件是 Raspberry Pi 2、Raspberry Pi 3 或 Raspberry Pi 4。</p>
 <p>Klipper 可以在 Raspberry Pi 1和Raspberry Pi Zero上运行，但这些板子没有足够的处理能力来运行 OctoPrint。在这些较慢的机器上直接从 OctoPrint 打印时，经常会出现打印停滞。(打印机的移动速度可能比 OctoPrint 发送移动命令的速度快。)如果你希望在这些较慢的板子上运行，请考虑在打印时使用 "virtual_sdcard "功能(详情请参见<a href="Config_Reference.html#virtual_sdcard">配置参考</a>)。</p>
 <p>要在Beaglebone上运行，请参阅<a href="Beaglebone.html">Beaglebone特别安装说明</a>。</p>
-<p>Klipper 可以在其他计算机上运行。Klipper 主机软件只需要在Linux（或类似）系统的计算机上运行 Python。然而，如果你想在其他计算机上运行它，你将需要一些 Linux 管理知识来安装该计算机上系统的依赖包。参见 <a href="..../scripts/install-octopi.sh">install-octopi.sh</a> 脚本，以进一步了解必要的 Linux 安装方法。</p>
+<p>Klipper 可以在其他计算机上运行。Klipper 主机软件只需要在Linux（或类似）系统的计算机上运行 Python。然而，如果你想在其他计算机上运行它，你将需要一些 Linux 管理知识来安装该计算机上系统的依赖包。参见 <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> 脚本，以进一步了解必要的 Linux 安装方法。</p>
 <p>如果你想在低端处理器上运行 Klipper 主机软件，请注意，你至少需要一台具有 "双精度浮点 "运算硬件的计算机。</p>
 <p>如果你想在共享的通用计算机或服务器上运行 Klipper 主机程序，请注意 Klipper 有一些实时调度要求。如果在打印过程中，主机也在执行密集型的通用计算任务（如硬盘碎片整理、3D渲染、大量swapping （虚拟内存交换）等），可能会导致 Klipper 报告打印错误。</p>
 <p>注意：如果你没有使用 OctoPi 镜像，一些Linux发行版启用了一个 "ModemManager"（或类似的）软件包，它干扰串行通信。(这可能导致 Klipper 报告看似随机的 "与MCU失去通信 "错误）。如果你在这些发行版上安装Klipper，你可能需要禁用该软件包。</p>
@@ -1645,7 +1651,7 @@ baud: 250000
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
 </code></pre></div>
 
-<p>如果你选择这样做，你将需要实现必要的启动、停止和安装脚本。<a href="..../scripts/install-octopi.sh">install-octopi.sh</a>和<a href="..../scripts/klipper-start.sh">klipper-start.sh</a>脚本提供了一些例子。</p>
+<p>如果你选择这样做，你将需要实现必要的启动、停止和安装脚本。<a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a>和<a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-start.sh">klipper-start.sh</a>脚本提供了一些例子。</p>
 <h2 id="octoprint">我必须使用 OctoPrint 吗？<a class="headerlink" href="#octoprint" title="Permanent link">&para;</a></h2>
 <p>Klipper 不依赖 OctoPrint。其他软件也可以向 Klipper 发送命令，但这样做可能需要一些 Linux 管理知识。</p>
 <p>Klipper 通过 “/tmp/printer” 文件创建了一个“虚拟串口”，该文件模拟了一个标准的3D打印机串口。理论上任何能配置并使用 “/tmp/printer” 作为打印机串口的软件都可以与Klipper一起工作。</p>

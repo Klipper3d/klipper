@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -1632,7 +1638,7 @@ baud: 250000
 <p>推薦的硬體是 Raspberry Pi 2、Raspberry Pi 3 或 Raspberry Pi 4。</p>
 <p>Klipper 可以在 Raspberry Pi 1和Raspberry Pi Zero上執行，但這些板子沒有足夠的處理能力來執行 OctoPrint。在這些較慢的機器上直接從 OctoPrint 列印時，經常會出現列印停滯。(印表機的移動速度可能比 OctoPrint 發送移動命令的速度快。)如果你希望在這些較慢的板子上執行，請考慮在列印時使用 "virtual_sdcard "功能(詳情請參見<a href="Config_Reference.html#virtual_sdcard">配置參考</a>)。</p>
 <p>要在Beaglebone上執行，請參閱<a href="Beaglebone.html">Beaglebone特別安裝說明</a>。</p>
-<p>Klipper 可以在其他計算機上執行。Klipper 主機軟體只需要在Linux（或類似）系統的計算機上執行 Python。然而，如果你想在其他計算機上執行它，你將需要一些 Linux 管理知識來安裝該計算機上系統的依賴包。參見 <a href="..../scripts/install-octopi.sh">install-octopi.sh</a> 指令碼，以進一步瞭解必要的 Linux 安裝方法。</p>
+<p>Klipper 可以在其他計算機上執行。Klipper 主機軟體只需要在Linux（或類似）系統的計算機上執行 Python。然而，如果你想在其他計算機上執行它，你將需要一些 Linux 管理知識來安裝該計算機上系統的依賴包。參見 <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> 指令碼，以進一步瞭解必要的 Linux 安裝方法。</p>
 <p>如果你想在低端處理器上執行 Klipper 主機軟體，請注意，你至少需要一臺具有 "雙精度浮點 "運算硬體的計算機。</p>
 <p>如果你想在共享的通用計算機或伺服器上執行 Klipper 主機程式，請注意 Klipper 有一些實時排程要求。如果在列印過程中，主機也在執行密集型的通用計算任務（如硬碟碎片整理、3D渲染、大量swapping （虛擬記憶體交換）等），可能會導致 Klipper 報告列印錯誤。</p>
 <p>注意：如果你沒有使用 OctoPi 映象，一些Linux發行版啟用了一個 "ModemManager"（或類似的）軟體包，它干擾序列通訊。(這可能導致 Klipper 報告看似隨機的 "與MCU失去通訊 "錯誤）。如果你在這些發行版上安裝Klipper，你可能需要禁用該軟體包。</p>
@@ -1645,7 +1651,7 @@ baud: 250000
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
 </code></pre></div>
 
-<p>如果你選擇這樣做，你將需要實現必要的啟動、停止和安裝指令碼。<a href="..../scripts/install-octopi.sh">install-octopi.sh</a>和<a href="..../scripts/klipper-start.sh">klipper-start.sh</a>指令碼提供了一些例子。</p>
+<p>如果你選擇這樣做，你將需要實現必要的啟動、停止和安裝指令碼。<a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a>和<a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-start.sh">klipper-start.sh</a>指令碼提供了一些例子。</p>
 <h2 id="octoprint">我必須使用 OctoPrint 嗎？<a class="headerlink" href="#octoprint" title="Permanent link">&para;</a></h2>
 <p>Klipper 不依賴 OctoPrint。其他軟體也可以向 Klipper 發送命令，但這樣做可能需要一些 Linux 管理知識。</p>
 <p>Klipper 通過 「/tmp/printer」 檔案建立了一個「虛擬串列埠」，該檔案模擬了一個標準的3D印表機串列埠。理論上任何能配置並使用 「/tmp/printer」 作為印表機串列埠的軟體都可以與Klipper一起工作。</p>

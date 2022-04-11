@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -875,7 +881,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1388,7 +1394,7 @@
 <p>调整测试完成后，运行 <code>SAVE_CONFIG</code> 以保存新PID设置到printer.cfg文件。</p>
 <p>如果打印机有加热床，并且支持PWM（脉宽调制）驱动，那么建议对加热床使用PID控制。 （当使用 PID 算法控制床加热器时，它可能每秒打开和关闭十次，这可能不适用于使用机械开关的加热器。）一般的热床 PID 校准命令是：<code>PID_CALIBRATE HEATER=heater_bed TARGET= 60</code></p>
 <h2 id="_7">下一步<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<p>本指南旨在帮助对 Klipper 配置文件中的引脚设置进行基本验证。 请务必阅读 <a href="Bed_Level.html">床位调平</a> 指南。 另请参阅 <a href="Slicers.html">Slicers</a> 文档，了解有关使用 Klipper 配置切片器的信息。</p>
+<p>本指南旨在帮助对 Klipper 配置文件中的引脚设置进行基本验证。 请务必阅读 <a href="Bed_Level.html">床位调平</a> 指南。 另请参阅 <a href="Slicers.html">切片软件</a> 文档，了解有关使用 Klipper 配置切片软件的信息。</p>
 <p>在验证基本打印工作后，最好考虑校准 <a href="Pressure_Advance.html">压力提前</a>。</p>
 <p>可能需要执行其他类型的详细打印机校准 - 网络上提供了许多指南来帮助解决此问题（例如，在网络上搜索“3d 打印机校准”）。 例如，如果您遇到称为振铃的效果，您可以尝试遵循 <a href="Resonance_Compensation.html">共振补偿</a> 调谐指南。</p>
 

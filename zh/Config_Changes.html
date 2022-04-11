@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -817,7 +823,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1246,9 +1252,9 @@
 <p>本文档涵盖了软件更新中对配置文件不向后兼容的部分。在升级 Klipper 时，最好也查看一下这份文档。</p>
 <p>文档的所有日期都是大概时间。</p>
 <h2 id="_2">变更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>20220407: The temperature_fan <code>pid_integral_max</code> config option has been removed (it was deprecated on 20210612).</p>
-<p>20220407: The default color order for pca9632 LEDs is now "RGBW". Add an explicit <code>color_order: RBGW</code> setting to the pca9632 config section to obtain the previous behavior.</p>
-<p>20220330: The format of the <code>printer.neopixel.color_data</code> status information for neopixel and dotstar modules has changed. The information is now stored as a list of color lists (instead of a list of dictionaries). See the <a href="Status_Reference.html#led">status reference</a> for details.</p>
+<p>20220407：temperature_fan 配置分段中的 <code>pid_integral_max</code> 选项已被删除（在 20210612 时已弃用）。</p>
+<p>20220407: pca9632 LED的默认色序现在是"RGBW"。在pca9632配置分段中显式加入<code>color_order:RBGW</code>设置以获得以和原来一样的行为。</p>
+<p>20220330：neopixel和dotstar模块的<code>printer.neopixel.color_data</code>状态信息的格式已经改变。这些信息现在被存储为一个列表中的颜色列表（而不是字典列表）。详情见<a href="Status_Reference.html#led">状态参考</a>。</p>
 <p>20220307:<code>M73</code>如果不给定<code>P</code>，则不再将打印进度设置为0。</p>
 <p>20220304：<a href="Config_Reference.html#extruder_stepper">extruder_stepper</a>配置分段的<code>extruder</code>参数不再有默认设置。如果需要，可以明确指定<code>extruder: extruder</code>，以便在启动时关联步进电机和"extruder"运动序列。</p>
 <p>20220210：<code>SYNC_STEPPER_TO_EXTRUDER</code>、<code>SET_EXTRUDER_STEP_DISTANCE</code>、<a href="Config_Reference.html#extruder">extruder</a>的 <code>shared_heater</code> 配置选项已弃用。这些功能将在不久的将来被删除。将<code>SET_EXTRUDER_STEP_DISTANCE</code>替换为<code>SET_EXTRUDER_ROTATION_DISTANCE</code>，<code>SYNC_STEPPER_TO_EXTRUDER</code>替换为<code>SYNC_EXTRUDER_MOTION</code>，使用 <code>shared_heater</code> 与 <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a>配置分段替换 extruder 配置分段，并更新所有激活宏以使用 <a href="G-Codes.html#sync_extruder_motion">SYNC_EXTRUDER_MOTION</a>。</p>

@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -835,7 +841,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1280,7 +1286,7 @@
 <p>为了获得良好的打印质量，打印机应进行校准，使Z轴距离的精度在约25微米（0.025毫米）。这是一个很小的距离，远小于典型人类头发的宽度。这个尺度是不能 "用眼睛 "来测量的。微妙的影响（如热膨胀）会影响这个尺度的测量。获得高精度的秘诀是使用一个可重复，高精度，并能够利用打印机自身运动系统的调平方法。</p>
 <h2 id="_2">选择适当的校准机制<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>不同类型的打印机使用不同的方法来进行调平，但是所有这些方法最终都取决于“纸张测试“（如下所述）。特定类型打印机的实际调平过程在其他文档中有所描述。</p>
-<p>在运行任何校准工具前，一定要执行在 <a href="Config_checks.html">检查配置文档</a> 中 描述的检查步骤。在打印床调平前有必要验证打印机的基本运动。</p>
+<p>在运行任何校准工具前，一定要执行在 <a href="Config_checks.html">配置检查文档</a> 中 描述的检查步骤。在打印床调平前有必要验证打印机的基本运动。</p>
 <p>对于带有“自动 Z 探针”的打印机，请务必按照 <a href="Probe_Calibrate.html">探针校准</a> 文档中的说明先校准探针。对于三角洲结构的打印机，请参阅 <a href="Delta_Calibrate.html">三角洲校准</a> 文档。对于带有打印床调平螺丝和传统 Z 限位的打印机，请参阅 <a href="Manual_Level.html">手动调平</a> 文档。</p>
 <p>在校准过程中，可能需要将打印机的Z <code>position_min</code>设置为一个负数（例如，<code>position_min = -2</code>）。即使在校准程序中，打印机也会执行边界检查。设置一个负数允许打印机在打印床的标称位置以下移动，这可以帮助确定实际床面位置。</p>
 <h2 id="a4">“A4纸测试法”<a class="headerlink" href="#a4" title="Permanent link">&para;</a></h2>

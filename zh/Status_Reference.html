@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -1066,7 +1072,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1740,9 +1746,9 @@
 <p>本文档是可用于 Klipper <a href="Command_Templates.html">宏</a>、<a href="Config_Reference.html#display">显示字段</a>以及<a href="API_Server.html">API服务器</a> 的打印机状态信息的参考。</p>
 <p>本文档中的字段可能会发生变化 - 如果使用了任何字段，在更新 Klipper 时，请务必查看<a href="Config_Changes.html">配置变化文档</a>。</p>
 <h2 id="angle">angle<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#angle">angle some_name</a> objects:</p>
+<p><a href="Config_Reference.html#angle">angle some_name</a> 对象提供了以下信息：</p>
 <ul>
-<li><code>temperature</code>: The last temperature reading (in Celsius) from a tle5012b magnetic hall sensor. This value is only available if the angle sensor is a tle5012b chip and if measurements are in progress (otherwise it reports <code>None</code>).</li>
+<li><code>temperature</code>：tle5012b 磁性霍尔传感器的最后一次温度读数（以摄氏度为单位）。该值仅在角度传感器是 tle5012b 芯片并且正在进行测量时可用（否则它会报告 <code>None</code>）。</li>
 </ul>
 <h2 id="bed_mesh">bed_mesh<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#bed_mesh">bed_mesh</a> 对象中提供了以下信息：</p>
@@ -1839,7 +1845,7 @@
 <li><code>printing_time</code>：打印机处于“Printing”状态的时间（以秒为单位）（由 idle_timeout 模块跟踪）。</li>
 </ul>
 <h2 id="led">led<a class="headerlink" href="#led" title="Permanent link">&para;</a></h2>
-<p>The following information is available for each <code>[led led_name]</code>, <code>[neopixel led_name]</code>, <code>[dotstar led_name]</code>, <code>[pca9533 led_name]</code>, and <code>[pca9632 led_name]</code> config section defined in printer.cfg:</p>
+<p>以下信息适用于每个在printer.cfg中定义了的 <code>[led led_name]</code>、<code>[neopixel led_name]</code>、<code>[dotstar led_name]</code>、<code>[pca9533 led_name]</code> , 和 <code>[pca9632 led_name]</code> 配置分段：</p>
 <ul>
 <li><code>color_data</code>: A list of color lists containing the RGBW values for a led in the chain. Each value is represented as a float from 0.0 to 1.0. Each color list contains 4 items (red, green, blue, white) even if the underyling LED supports fewer color channels. For example, the blue value (3rd item in color list) of the second neopixel in a chain could be accessed at <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
 </ul>

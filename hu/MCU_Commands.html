@@ -1,0 +1,1494 @@
+
+<!doctype html>
+<html lang="hu" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>MCU parancsok - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mcu-parancsok" class="md-skip">
+          Kihagyás
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Élőfej">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MCU parancsok
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Keresés" placeholder="Keresés" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Törlés" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Keresés inicializálása
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigáció" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Áttekintés
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funkciók
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Gyakran ismételt kérdések
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Kiadás
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurációs változások
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kapcsolat
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Telepítés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Configuration reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Forgatási távolság
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Konfigurációs ellenőrzések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Ágyszintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Delta kalibrálás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Szonda kalibrálása
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Kézi szintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Ágyháló
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Végállás szakasz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Rezonancia kompenzáció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Rezonanciák mérése
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Nyomás előrehaladás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Parancssablonok
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Állapot referencia
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC meghajtók
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Több mikrovezélős kezdőpnt és szondázás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Szeletelők
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Ferdeség korrekció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        PWM eszközök használata
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Kód áttekintése
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematika
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API szerver
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          MCU parancsok
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="MCU_Commands.html" class="md-nav__link md-nav__link--active">
+        MCU parancsok
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inditasi-parancsok" class="md-nav__link">
+    Indítási parancsok
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alacsony-szintu-mikrokontroller-konfiguracio" class="md-nav__link">
+    Alacsony szintű mikrokontroller konfiguráció
+  </a>
+  
+    <nav class="md-nav" aria-label="Alacsony szintű mikrokontroller konfiguráció">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gyakori-mikrokontroller-objektumok" class="md-nav__link">
+    Gyakori mikrokontroller objektumok
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gyakori-parancsok" class="md-nav__link">
+    Gyakori parancsok
+  </a>
+  
+    <nav class="md-nav" aria-label="Gyakori parancsok">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lepteto-parancsok" class="md-nav__link">
+    Léptető parancsok
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sor-athelyezese" class="md-nav__link">
+    Sor áthelyezése
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spi-parancsok" class="md-nav__link">
+    SPI parancsok
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Hibakeresés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Referenciaértékek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Hozzájárulás a Klipperhez
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper Csomagolás
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Példa konfigurációk
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-kártya frissítések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi mikrokontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloaderek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Hall nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inditasi-parancsok" class="md-nav__link">
+    Indítási parancsok
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alacsony-szintu-mikrokontroller-konfiguracio" class="md-nav__link">
+    Alacsony szintű mikrokontroller konfiguráció
+  </a>
+  
+    <nav class="md-nav" aria-label="Alacsony szintű mikrokontroller konfiguráció">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gyakori-mikrokontroller-objektumok" class="md-nav__link">
+    Gyakori mikrokontroller objektumok
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gyakori-parancsok" class="md-nav__link">
+    Gyakori parancsok
+  </a>
+  
+    <nav class="md-nav" aria-label="Gyakori parancsok">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lepteto-parancsok" class="md-nav__link">
+    Léptető parancsok
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sor-athelyezese" class="md-nav__link">
+    Sor áthelyezése
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spi-parancsok" class="md-nav__link">
+    SPI parancsok
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/MCU_Commands.md" title="Oldal szerkesztése" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="mcu-parancsok">MCU parancsok<a class="headerlink" href="#mcu-parancsok" title="Permanent link">&para;</a></h1>
+<p>Ez a dokumentum a Klipper "gazdagép" szoftvere által küldött és a Klipper mikrokontroller szoftvere által feldolgozott alacsony szintű mikrokontroller-parancsokról nyújt információt. Ez a dokumentum nem hiteles hivatkozás ezekre a parancsokra, és nem is az összes rendelkezésre álló parancs kizárólagos listája.</p>
+<p>Ez a dokumentum hasznos lehet az alacsony szintű mikrokontroller-parancsok megértése iránt érdeklődő fejlesztők számára.</p>
+<p>A parancsok formátumával és továbbításával kapcsolatos további információkért lásd a <a href="Protocol.html">protocol</a> dokumentumot. A parancsok itt a "printf" stílusú szintaxisukkal vannak leírva - azok számára, akik nem ismerik ezt a formátumot, csak azt kell megjegyezni, hogy ahol egy '%...' szekvencia látható, azt egy tényleges egész számmal kell helyettesíteni. Például a "count=%c" leírást a "count=10" szöveggel lehet helyettesíteni. Vegyük figyelembe, hogy a "felsorolásnak" tekintett paraméterek (lásd a fenti protokolldokumentumot) string értéket vesznek fel, amelyet a mikrokontroller automatikusan egész értékké konvertál. Ez a "pin" nevű (vagy "_pin" utótaggal rendelkező) paramétereknél gyakori.</p>
+<h2 id="inditasi-parancsok">Indítási parancsok<a class="headerlink" href="#inditasi-parancsok" title="Permanent link">&para;</a></h2>
+<p>A mikrokontroller és perifériái konfigurálásához szükség lehet bizonyos egyszeri műveletek elvégzésére. Ez a szakasz erre a célra rendelkezésre álló általános parancsokat sorolja fel. A mikrokontroller legtöbb parancsától eltérően ezek a parancsok a fogadásuk után azonnal lefutnak, és nem igényelnek különösebb beállításokat.</p>
+<p>Gyakori indítási parancsok:</p>
+<ul>
+<li><code>set_digital_out pin=%u value=%c</code> : Ez a parancs az adott pin-t azonnal digitális kimeneti GPIO-ként konfigurálja, és vagy alacsony (value=0) vagy magas (value=1) szintre állítja. Ez a parancs hasznos lehet a LED-ek kezdeti értékének konfigurálásához és a léptető vezérlő mikrolépés pinek kezdeti értékének konfigurálásához.</li>
+<li><code>set_pwm_out pin=%u cycle_ticks=%u value=%hu</code> : Ez a parancs azonnal beállítja az adott pin-t, hogy hardveres impulzusszélesség-modulációt (PWM) használjon a megadott számú cycle_tickkel. A "cycle_ticks" az MCU órajelének a száma, ameddig az egyes bekapcsolási és kikapcsolási ciklusoknak tartaniuk kell. Az 1-es cycle_ticks értékkel a lehető leggyorsabb ciklusidő kérhető. A "value" paraméter 0 és 255 között van, 0 a teljesen kikapcsolt állapotot, 255 pedig a teljesen bekapcsolt állapotot jelenti. Ez a parancs hasznos lehet a CPU és a nyomtatófej hűtő ventilátorok engedélyezéséhez.</li>
+</ul>
+<h2 id="alacsony-szintu-mikrokontroller-konfiguracio">Alacsony szintű mikrokontroller konfiguráció<a class="headerlink" href="#alacsony-szintu-mikrokontroller-konfiguracio" title="Permanent link">&para;</a></h2>
+<p>A mikrokontroller legtöbb parancsa a sikeres indítás előtt kezdeti beállítást igényel. Ez a szakasz áttekintést nyújt a konfigurációs folyamatról. Ez és a következő szakaszok valószínűleg csak a Klipper belső részletei iránt érdeklődő fejlesztők számára érdekesek.</p>
+<p>Amikor a gazdagép először csatlakozik a mikrokontrollerhez, mindig egy adatszótár lekérésével kezdi (további információkért lásd <a href="Protocol.html">protocol</a>). Az adatszótár lekérése után a gazdagép ellenőrzi, hogy a mikrokontroller "konfigurált" állapotban van-e, és ha nem, akkor konfigurálja. A konfigurálás a következő fázisokat foglalja magában:</p>
+<ul>
+<li><code>get_config</code> : A gazdagép ellenőrzi, hogy a mikrokontroller már konfigurálva van-e. A mikrokontroller erre a parancsra egy "config" válaszüzenettel válaszol. A mikrokontroller szoftvere bekapcsoláskor mindig konfigurálatlan állapotban indul. Ebben az állapotban marad mindaddig, amíg a gazdagép be nem fejezi a konfigurációs folyamatokat (a finalize_config parancs kiadásával). Ha a mikrokontroller már konfigurálva van egy korábbi munkamenetből (és a kívánt beállításokkal van konfigurálva), akkor a gazdagépnek nincs szüksége további lépésekre, és a konfigurációs folyamat sikeresen befejeződik.</li>
+<li><code>allocate_oids count=%c</code> : Ezt a parancsot azért adjuk ki, hogy tájékoztassuk a mikrokontrollert az objektum-id-k (oid) maximális számáról, amelyre a gazdagépnek szüksége van. Ezt a parancsot csak egyszer lehet kiadni. Az oid egy egész számú azonosító, amely minden egyes léptetőhöz, minden végálláshoz és minden ütemezhető gpio pinhez hozzárendelt. A gazdagép előre meghatározza a hardver működtetéséhez szükséges oid-ek számát, és ezt átadja a mikrokontrollernek, hogy az elegendő memóriát rendelhessen az oid-ről a belső objektumra való leképezés tárolásához.</li>
+<li><code>config_XXX oid=%c ...</code> : A konvenció szerint minden "config_" előtaggal kezdődő parancs létrehoz egy új mikrokontroller objektumot, és hozzárendeli a megadott oid-et. Például a config_digital_out parancs a megadott pin-t digitális kimeneti GPIO-ként konfigurálja, és létrehoz egy belső objektumot, amelyet a gazdagép használhat az adott GPIO módosításainak ütemezésére. A config parancsba átadott oid paramétert a gazdagép választja ki, és annak nulla és az allocate_oids parancsban megadott maximális szám között kell lennie. A config parancsok csak akkor futtathatók, ha a mikrokontroller nincs konfigurált állapotban (azaz a gazdagép által elküldött finalize_config parancs előtt) és az allocate_oids parancs elküldése után.</li>
+<li><code>finalize_config crc=%u</code> : A finalize_config parancs a mikrokontrollert egy konfigurálatlan állapotból egy konfigurált állapotba helyezi át. A mikrokontrollernek átadott crc paraméter tárolásra kerül, és a "config" válaszüzenetekben visszaküldésre kerül a gazdagépnek. A konvenció szerint az állomás 32 bites CRC-t vesz az általa kért konfigurációról, és a későbbi kommunikációs munkamenetek kezdetén ellenőrzi, hogy a mikrokontrollerben tárolt CRC pontosan megegyezik-e a kívánt CRC-vel. Ha a CRC nem egyezik, akkor a gazdagép tudja, hogy a mikrokontroller nem az általa kívánt állapotba lett konfigurálva.</li>
+</ul>
+<h3 id="gyakori-mikrokontroller-objektumok">Gyakori mikrokontroller objektumok<a class="headerlink" href="#gyakori-mikrokontroller-objektumok" title="Permanent link">&para;</a></h3>
+<p>Ez a szakasz néhány gyakran használt konfigurációs parancsot sorol fel.</p>
+<ul>
+<li><code>config_digital_out oid=%c pin=%u value=%c default_value=%c max_duration=%u</code> : Ez a parancs létrehoz egy belső mikrokontroller objektumot a megadott GPIO 'pin' számára. A pin digitális kimeneti módban lesz konfigurálva, és a 'value' által megadott kezdeti értékre lesz beállítva (0 az alacsony, 1 a magas). A digital_out objektum létrehozása lehetővé teszi a gazdagép számára, hogy az adott pin GPIO frissítéseit meghatározott időpontokban ütemezze (lásd az alább ismertetett queue_digital_out parancsot). Ha a mikrokontroller szoftvere kikapcsolási módba kerül, akkor az összes konfigurált digital_out objektum 'default_value' értékre kerül. A 'max_duration' paraméter egy biztonsági ellenőrzés megvalósítására szolgál. Ha nem nulla, akkor ez a maximális órajelek száma, amelyet a gazdagép további frissítés nélkül az adott GPIO-t nem alapértelmezett értékre állíthatja. Például, ha az alapértelmezett érték nulla, a max_duration pedig 16000, akkor ha egy értékre állítja a GPIO-t, akkor 16000 órajelen belül újabb frissítést kell ütemeznie a GPIO-n (nullára vagy egyre). Ez a biztonsági funkció használható a fűtési kimenetek biztosítására, hogy a gazdagép ne kapcsolja be a fűtést, majd ne kapcsoljon ki.</li>
+<li><code>config_pwm_out oid=%c pin=%u cycle_ticks=%u value=%hu default_value=%hu max_duration=%u</code> : Ez a parancs létrehoz egy belső objektumot a hardveralapú PWM-tűkhöz, amelyek frissítését a gazdagép be tudja ütemezni. Használata analóg a config_digital_out paranccsal. A paraméterek leírását lásd a 'set_pwm_out' és a 'config_digital_out' parancsok leírásában.</li>
+<li><code>config_analog_in oid=%c pin=%u</code> : Ez a parancs egy pin analóg bemeneti mintavételezési módban történő konfigurálására szolgál. A konfigurálás után a pin rendszeres időközönként mintavételezhető a query_analog_in paranccsal (lásd alább).</li>
+<li><code>config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c step_pulse_ticks=%u</code> : Ez a parancs létrehoz egy belső léptető objektumot. A 'step_pin' és 'dir_pin' paraméterek megadják a lépést és irányokat; ez a parancs digitális kimeneti módban konfigurálja őket. Az 'invert_step' paraméter meghatározza, hogy a lépés emelkedő élre (invert_step=0) vagy csökkenő élre (invert_step=1) történjen. A 'step_pulse_ticks' paraméter a lépésimpulzus minimális időtartamát határozza meg. Ha az MCU a 'STEPPER_BOTH_EDGE=1' konstansot exportálja, akkor a step_pulse_ticks=0 és az invert_step=-1 beállítása a step_pin emelkedő és csökkenő éleire történő lépést is beállítja.</li>
+<li><code>config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c</code> : Ez a parancs létrehoz egy belső "endstop" objektumot. Ez a végállási tűk megadására és a "kezdőpont" műveletek engedélyezésére szolgál (lásd alább az endstop_home parancsot). A parancs a megadott tűt digitális bemeneti módban konfigurálja. A 'pull_up' paraméter határozza meg, hogy a hardver által biztosított pullup ellenállások a pinhez (ha vannak) engedélyezve lesznek-e. A 'stepper_count' paraméter meghatározza a maximális számú steppert, amelyet ennek a végállásnak meg kell állítania egy kezdőpont művelet során (lásd az endstop_home parancsot alább).</li>
+<li><code>config_spi oid=%c bus=%u pin=%u mode=%u rate=%u shutdown_msg=%*s</code> : Ez a parancs létrehoz egy belső SPI objektumot. A spi_transfer és spi_send parancsokkal együtt használható (lásd alább). A "bus" azonosítja a használni kívánt SPI-buszt (ha a mikrokontroller egynél több SPI-busszal rendelkezik). A "pin" az eszköz chipkiválasztó (CS) tűjét határozza meg. A "mode" az SPI módot jelöli (0 és 3 között kell lennie). A "rate" paraméter az SPI-busz sebességét adja meg (másodpercenkénti ciklusokban). Végül a "shutdown_msg" egy SPI-parancs, amelyet az adott eszköznek kell küldeni, ha a mikrokontroller leállási állapotba kerül.</li>
+<li><code>config_spi_without_cs oid=%c bus=%u mode=%u rate=%u shutdown_msg=%*s</code> : Ez a parancs hasonló a config_spi parancshoz, de CS pin definíció nélkül. Hasznos olyan SPI eszközöknél, amelyek nem rendelkeznek Chip Select vonallal.</li>
+</ul>
+<h2 id="gyakori-parancsok">Gyakori parancsok<a class="headerlink" href="#gyakori-parancsok" title="Permanent link">&para;</a></h2>
+<p>Ez a szakasz néhány gyakran használt futásidejű parancsot sorol fel. Valószínűleg csak a Klipperbe betekintést nyerni kívánó fejlesztők számára érdekes.</p>
+<ul>
+<li><code>set_digital_out_pwm_cycle oid=%c cycle_ticks=%u</code> : Ez a parancs egy (config_digital_out által létrehozott) digitális kimeneti pin-t úgy konfigurál, hogy "szoftveres PWM"-et használjon. A 'cycle_ticks' a PWM-ciklushoz tartozó órajelek száma. Mivel a kimeneti kapcsolás a mikrokontroller szoftverében valósul meg, ajánlott, hogy a 'cycle_ticks' 10 ms vagy annál nagyobb időnek feleljen meg.</li>
+<li><code>queue_digital_out oid=%c clock=%u on_ticks=%u</code> : Ez a parancs egy digitális kimeneti GPIO pin váltását ütemezi a megadott órajelen. A parancs használatához a mikrokontroller konfigurálása során ki kell adni egy 'config_digital_out' parancsot ugyanazzal a 'oid' paraméterrel. Ha a 'set_digital_out_pwm_cycle' parancsot hívták, akkor az 'on_ticks' a pwm-ciklus bekapcsolási időtartama (órajelekben). Ellenkező esetben az 'on_ticks' értékének vagy 0-nak (alacsony feszültség esetén) vagy 1-nek (magas feszültség esetén) kell lennie.</li>
+<li><code>queue_pwm_out oid=%c clock=%u value=%hu</code> : Beütemezi a hardveres PWM kimeneti pin változását. Lásd a 'queue_digital_out' és a 'config_pwm_out' parancsokat további információkért.</li>
+<li><code>query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c rest_ticks=%u min_value=%hu max_value=%hu</code> : Ez a parancs beállítja az analóg bemeneti minták ismétlődő ütemezését. A parancs használatához a mikrokontroller konfigurálása során ki kell adni egy 'config_analog_in' parancsot ugyanazzal az 'oid' paraméterrel. A minták a 'clock' időponttól kezdődnek, a kapott értékről minden 'rest_ticks' óraütemenként jelentést készít, a 'sample_count' számú alkalommal túlmintázza a mintát, és a túlmintázott minták között 'sample_ticks' számú óraütemnyi szünetet tart. A 'min_value' és 'max_value' paraméterek egy biztonsági funkciót valósítanak meg. A mikrokontroller szoftvere ellenőrizni fogja, hogy a mintavételezett érték (az esetleges túlmintavételezés után) mindig a megadott tartományon belül van-e. Ezt a fűtőtesteket vezérlő hőszenzorokhoz csatlakoztatott tűkkel való használatra szánják. Ezzel ellenőrizhető, hogy a fűtőtest egy hőmérséklettartományon belül van-e.</li>
+<li><code>get_clock</code> : E parancs hatására a mikrokontroller egy "órajel" válaszüzenetet generál. A gazdagép másodpercenként egyszer küldi el ezt a parancsot, hogy megkapja a mikrokontroller órajel értékét, és megbecsülje a gazdagép és a mikrokontroller órajelei közötti eltérést. Ez lehetővé teszi a gazdagép számára a mikrokontroller órajelének pontos becslését.</li>
+</ul>
+<h3 id="lepteto-parancsok">Léptető parancsok<a class="headerlink" href="#lepteto-parancsok" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>queue_step oid=%c interval=%u count=%hu add=%hi</code> : Ez a parancs ütemezi a 'count' számú lépést az adott léptetőhöz, az 'interval' számú lépés közötti órajellel. Az első lépés az 'intervallum' órajelek száma lesz az adott léptető utolsó ütemezett lépése óta. Ha az 'add' nem nulla, akkor az intervallum minden lépés után az 'add' értékkel módosul. Ez a parancs a megadott intervallum/count/add szekvenciát egy léptetőkénti sorba illeszti. A normál működés során több száz ilyen szekvencia állhat a sorban. Az új szekvenciák a sor végére kerülnek, és amint minden szekvencia teljesíti a 'szám' lépések számát, a sor elejére kerülnek. Ez a rendszer lehetővé teszi a mikrokontroller számára, hogy több százezer lépést állítson sorba. Mindezt megbízható és kiszámítható ütemezési idővel.</li>
+<li><code>set_next_step_dir oid=%c dir=%c</code> : Ez a parancs adja meg a következő queue_step parancs által használt dir_pin értékét.</li>
+<li><code>reset_step_clock oid=%c clock=%u</code> : Normális esetben a lépés időzítése az adott léptető utolsó lépéséhez viszonyítva történik. Ez a parancs visszaállítja az órajelet, így a következő lépés a megadott 'órajel' időponthoz képest történik. A gazdagép általában csak a nyomtatás kezdetén küldi ezt a parancsot.</li>
+<li><code>stepper_get_position oid=%c</code> : E parancs hatására a mikrokontroller egy "stepper_position" válaszüzenetet generál a léptető aktuális pozíciójával. A pozíció a dir=1-gyel generált lépések teljes száma mínusz a dir=0-val generált lépések teljes száma.</li>
+<li><code>endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c rest_ticks=%u pin_value=%c</code> : Ezt a parancsot a léptető "kezdőpont" műveletek során használják. A parancs használatához a mikrokontroller konfigurálása során ki kell adni egy 'config_endstop' parancsot ugyanazzal az 'oid' paraméterrel. Amikor ez a parancs meghívásra kerül, a mikrokontroller minden 'rest_ticks' órajelenként mintavételezi az endstop-tűt, és ellenőrzi, hogy annak értéke megegyezik-e a 'pin_value' értékkel. Ha az érték megegyezik (és továbbra is megegyezik a 'sample_count' további 'sample_ticks' távolságra elosztott mintákon keresztül), akkor a kapcsolódó léptető mozgási sora törlődik, és a léptető azonnal megáll. A gazdagép ezt a parancsot a kezdőpont megvalósítására használja. A gazdagép utasítja a végállást, hogy mintavételezzen a végállási triggerre, majd egy sor queue_step parancsot ad ki a léptető mozgatására a végállás felé. Amint a léptető eléri a végállást, a kapcsoló érzékeli, a mozgás megáll, és a gazdagépet értesíti.</li>
+</ul>
+<h3 id="sor-athelyezese">Sor áthelyezése<a class="headerlink" href="#sor-athelyezese" title="Permanent link">&para;</a></h3>
+<p>Minden queue_step parancs a mikrovezérlő "move queue" sorában lévő bejegyzést használja. Ez a várólista a "finalize_config" parancs fogadásakor kerül kiosztásra, és a "config" válaszüzenetekben jelenti a rendelkezésre álló várólista-bejegyzések számát.</p>
+<p>A gazdagép felelőssége, hogy a queue_step parancs elküldése előtt megbizonyosodjon arról, hogy van-e szabad hely a várólistán. A gazdagép ezt úgy teszi, hogy kiszámítja az egyes queue_step parancsok mikor fejeződnek be, és ennek megfelelően ütemezi az új queue_step parancsokat.</p>
+<h3 id="spi-parancsok">SPI parancsok<a class="headerlink" href="#spi-parancsok" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>spi_transfer oid=%c data=%*s</code> : Ez a parancs arra készteti a mikrokontrollert, hogy a 'data'-t a 'oid' által megadott SPI eszközre küldje, és egy "spi_transfer_response" válaszüzenetet generál az átvitel során visszaküldött adatokkal.</li>
+<li><code>spi_send oid=%c data=%*s</code> : Ez a parancs hasonló az "spi_transfer" parancshoz, de nem generál "spi_transfer_response" üzenetet.</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Élőláb">
+      
+        
+        <a href="API_Server.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: API szerver" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Előző
+              </span>
+              API szerver
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="CANBUS_protocol.html" class="md-footer__link md-footer__link--next" aria-label="Következő: CANBUS protokoll" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Következő
+              </span>
+              CANBUS protokoll
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "M\u00e1sol\u00e1s v\u00e1g\u00f3lapra", "clipboard.copied": "V\u00e1g\u00f3lapra m\u00e1solva", "search.config.lang": "hu", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Keres\u00e9s", "search.result.placeholder": "Keres\u00e9shez \u00edrj ide valamit", "search.result.none": "Nincs tal\u00e1lat", "search.result.one": "1 egyez\u0151 dokumentum", "search.result.other": "# egyez\u0151 dokumentum", "search.result.more.one": "1 tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.more.other": "# tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.term.missing": "\u00dcres", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1822 @@
+
+<!doctype html>
+<html lang="hu" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Gyakran ismételt kérdések - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gyakran-ismetelt-kerdesek" class="md-skip">
+          Kihagyás
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Élőfej">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Gyakran ismételt kérdések
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Keresés" placeholder="Keresés" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Törlés" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Keresés inicializálása
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigáció" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Áttekintés
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funkciók
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Gyakran ismételt kérdések
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="FAQ.html" class="md-nav__link md-nav__link--active">
+        Gyakran ismételt kérdések
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-adomanyozhatok-a-projektnek" class="md-nav__link">
+    Hogyan adományozhatok a projektnek?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-szamitom-ki-a-rotation_distance-konfiguracios-parametert" class="md-nav__link">
+    Hogyan számítom ki a rotation_distance konfigurációs paramétert?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hol-van-a-soros-portom" class="md-nav__link">
+    Hol van a soros portom?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-mikrokontroller-ujrainditasakor-az-eszkoz-devttyusb1-re-valtozik" class="md-nav__link">
+    A mikrokontroller újraindításakor az eszköz /dev/ttyUSB1-re változik
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-make-flash-parancs-nem-mukodik" class="md-nav__link">
+    A "make flash" parancs nem működik
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-valtoztathatom-meg-a-soros-port-sebesseget" class="md-nav__link">
+    Hogyan változtathatom meg a soros port sebességét?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#futtathatom-a-klippert-a-raspberry-pi-3-on-kivul-mason-is" class="md-nav__link">
+    Futtathatom a Klippert a Raspberry Pi 3-on kívül máson is?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#futtathatom-a-klipper-tobb-peldanyat-ugyanazon-a-gepen" class="md-nav__link">
+    Futtathatom a Klipper több példányát ugyanazon a gépen?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#muszaj-az-octoprintet-hasznalnom" class="md-nav__link">
+    Muszáj az OctoPrintet használnom?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#miert-nem-tudom-mozgatni-a-leptetomotort-a-nyomtato-beallitasa-elott" class="md-nav__link">
+    Miért nem tudom mozgatni a léptetőmotort a nyomtató beállítása előtt?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#miert-van-a-z-position_endstop-05-re-allitva-az-alapertelmezett-konfiguracioban" class="md-nav__link">
+    Miért van a Z position_endstop 0,5-re állítva az alapértelmezett konfigurációban?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atkonvertaltam-a-marlinbol-szarmazo-konfiguraciomat-es-az-xy-tengelyek-jol-mukodnek-de-a-z-tengely-kezdopont-filvetelekor-csikorgo-hangot-hallok" class="md-nav__link">
+    Átkonvertáltam a Marlinból származó konfigurációmat, és az X/Y tengelyek jól működnek, de a Z tengely kezdőpont fílvételekor csikorgó hangot hallok
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-tmc-motorvezerlo-kikapcsol-a-nyomtatas-kozben" class="md-nav__link">
+    A TMC motorvezérlő kikapcsol a nyomtatás közben
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#folyamatosan-kapok-elveszett-a-kommunikacio-az-mcu-val-hibakat" class="md-nav__link">
+    Folyamatosan kapok "Elveszett a kommunikáció az MCU-val" hibákat
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-raspberry-pi-folyamatosan-ujraindul-nyomtatas-kozben" class="md-nav__link">
+    A Raspberry Pi folyamatosan újraindul nyomtatás közben
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#amikor-beallitom-a-restart_methodcommand-az-avr-keszulekem-ujrainditaskor-egyszeruen-lefagy" class="md-nav__link">
+    Amikor beállítom a restart_method=command az AVR készülékem újraindításkor egyszerűen lefagy
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-futoelemek-bekapcsolva-maradnak-ha-a-raspberry-pi-osszeomlik" class="md-nav__link">
+    A fűtőelemek bekapcsolva maradnak, ha a Raspberry Pi összeomlik?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-alakithatok-at-egy-marlin-tu-szamot-klipper-tu-nevre" class="md-nav__link">
+    Hogyan alakíthatok át egy Marlin tű számot Klipper tű névre?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#az-eszkozomet-egy-adott-tipusu-mikrokontroller-tuhoz-kell-csatlakoztatnom" class="md-nav__link">
+    Az eszközömet egy adott típusú mikrokontroller tűhöz kell csatlakoztatnom?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-tudom-torolni-az-m109m190-homersekletre-varni-kerest" class="md-nav__link">
+    Hogyan tudom törölni az M109/M190 "hőmérsékletre várni" kérést?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meg-tudom-allapitani-hogy-a-nyomtato-vesztett-e-lepeseket" class="md-nav__link">
+    Meg tudom állapítani, hogy a nyomtató vesztett-e lépéseket?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat" class="md-nav__link">
+    Miért jelent hibát a Klipper? Elrontotta a nyomtatásomat!
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-frissithetek-a-legujabb-szoftverre" class="md-nav__link">
+    Hogyan frissíthetek a legújabb szoftverre?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-tudom-eltavolitani-a-klippert" class="md-nav__link">
+    Hogyan tudom eltávolítani a Klippert?
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Kiadás
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurációs változások
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kapcsolat
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Telepítés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Configuration reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Forgatási távolság
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Konfigurációs ellenőrzések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Ágyszintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Delta kalibrálás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Szonda kalibrálása
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Kézi szintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Ágyháló
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Végállás szakasz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Rezonancia kompenzáció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Rezonanciák mérése
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Nyomás előrehaladás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Parancssablonok
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Állapot referencia
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC meghajtók
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Több mikrovezélős kezdőpnt és szondázás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Szeletelők
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Ferdeség korrekció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        PWM eszközök használata
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Kód áttekintése
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematika
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API szerver
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU parancsok
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Hibakeresés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Referenciaértékek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Hozzájárulás a Klipperhez
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper Csomagolás
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Példa konfigurációk
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-kártya frissítések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi mikrokontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloaderek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Hall nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-adomanyozhatok-a-projektnek" class="md-nav__link">
+    Hogyan adományozhatok a projektnek?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-szamitom-ki-a-rotation_distance-konfiguracios-parametert" class="md-nav__link">
+    Hogyan számítom ki a rotation_distance konfigurációs paramétert?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hol-van-a-soros-portom" class="md-nav__link">
+    Hol van a soros portom?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-mikrokontroller-ujrainditasakor-az-eszkoz-devttyusb1-re-valtozik" class="md-nav__link">
+    A mikrokontroller újraindításakor az eszköz /dev/ttyUSB1-re változik
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-make-flash-parancs-nem-mukodik" class="md-nav__link">
+    A "make flash" parancs nem működik
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-valtoztathatom-meg-a-soros-port-sebesseget" class="md-nav__link">
+    Hogyan változtathatom meg a soros port sebességét?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#futtathatom-a-klippert-a-raspberry-pi-3-on-kivul-mason-is" class="md-nav__link">
+    Futtathatom a Klippert a Raspberry Pi 3-on kívül máson is?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#futtathatom-a-klipper-tobb-peldanyat-ugyanazon-a-gepen" class="md-nav__link">
+    Futtathatom a Klipper több példányát ugyanazon a gépen?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#muszaj-az-octoprintet-hasznalnom" class="md-nav__link">
+    Muszáj az OctoPrintet használnom?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#miert-nem-tudom-mozgatni-a-leptetomotort-a-nyomtato-beallitasa-elott" class="md-nav__link">
+    Miért nem tudom mozgatni a léptetőmotort a nyomtató beállítása előtt?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#miert-van-a-z-position_endstop-05-re-allitva-az-alapertelmezett-konfiguracioban" class="md-nav__link">
+    Miért van a Z position_endstop 0,5-re állítva az alapértelmezett konfigurációban?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atkonvertaltam-a-marlinbol-szarmazo-konfiguraciomat-es-az-xy-tengelyek-jol-mukodnek-de-a-z-tengely-kezdopont-filvetelekor-csikorgo-hangot-hallok" class="md-nav__link">
+    Átkonvertáltam a Marlinból származó konfigurációmat, és az X/Y tengelyek jól működnek, de a Z tengely kezdőpont fílvételekor csikorgó hangot hallok
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-tmc-motorvezerlo-kikapcsol-a-nyomtatas-kozben" class="md-nav__link">
+    A TMC motorvezérlő kikapcsol a nyomtatás közben
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#folyamatosan-kapok-elveszett-a-kommunikacio-az-mcu-val-hibakat" class="md-nav__link">
+    Folyamatosan kapok "Elveszett a kommunikáció az MCU-val" hibákat
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-raspberry-pi-folyamatosan-ujraindul-nyomtatas-kozben" class="md-nav__link">
+    A Raspberry Pi folyamatosan újraindul nyomtatás közben
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#amikor-beallitom-a-restart_methodcommand-az-avr-keszulekem-ujrainditaskor-egyszeruen-lefagy" class="md-nav__link">
+    Amikor beállítom a restart_method=command az AVR készülékem újraindításkor egyszerűen lefagy
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-futoelemek-bekapcsolva-maradnak-ha-a-raspberry-pi-osszeomlik" class="md-nav__link">
+    A fűtőelemek bekapcsolva maradnak, ha a Raspberry Pi összeomlik?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-alakithatok-at-egy-marlin-tu-szamot-klipper-tu-nevre" class="md-nav__link">
+    Hogyan alakíthatok át egy Marlin tű számot Klipper tű névre?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#az-eszkozomet-egy-adott-tipusu-mikrokontroller-tuhoz-kell-csatlakoztatnom" class="md-nav__link">
+    Az eszközömet egy adott típusú mikrokontroller tűhöz kell csatlakoztatnom?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-tudom-torolni-az-m109m190-homersekletre-varni-kerest" class="md-nav__link">
+    Hogyan tudom törölni az M109/M190 "hőmérsékletre várni" kérést?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meg-tudom-allapitani-hogy-a-nyomtato-vesztett-e-lepeseket" class="md-nav__link">
+    Meg tudom állapítani, hogy a nyomtató vesztett-e lépéseket?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat" class="md-nav__link">
+    Miért jelent hibát a Klipper? Elrontotta a nyomtatásomat!
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-frissithetek-a-legujabb-szoftverre" class="md-nav__link">
+    Hogyan frissíthetek a legújabb szoftverre?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hogyan-tudom-eltavolitani-a-klippert" class="md-nav__link">
+    Hogyan tudom eltávolítani a Klippert?
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/FAQ.md" title="Oldal szerkesztése" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="gyakran-ismetelt-kerdesek">Gyakran ismételt kérdések<a class="headerlink" href="#gyakran-ismetelt-kerdesek" title="Permanent link">&para;</a></h1>
+<ol>
+<li><a href="#how-can-i-donate-to-the-project">Hogyan adományozhatok a projektnek?</a></li>
+<li><a href="#how-do-i-calculate-the-rotation_distance-config-parameter">Hogyan számíthatom ki a rotation_distance konfigurációs paramétert?</a></li>
+<li><a href="#wheres-my-serial-port">Hol van a soros portom?</a></li>
+<li><a href="#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1">Amikor a mikrokontroller újraindítja az eszközt /dev/ttyUSB1-re változik</a></li>
+<li><a href="#the-make-flash-command-doesnt-work">A "make flash" parancs nem működik</a></li>
+<li><a href="#how-do-i-change-the-serial-baud-rate">Hogyan változtathatom meg a soros port átviteli sebességét?</a></li>
+<li><a href="#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3">Futtathatom a Klippert máson is, mint egy Raspberry Pi 3?</a></li>
+<li><a href="#can-i-run-multiple-instances-of-klipper-on-the-same-host-machine">Futtathatom a Klipper több példányát ugyanazon a gépen?</a></li>
+<li><a href="#do-i-have-to-use-octoprint">Muszáj az OctoPrintet használnom?</a></li>
+<li><a href="#why-cant-i-move-the-stepper-before-homing-the-printer">Miért nem tudom mozgatni a léptetőt a nyomtató indítása előtt?</a></li>
+<li><a href="#why-is-the-z-position_endstop-set-to-05-in-the-default-configs">Miért van a Z position_endstop 0.5-re állítva az alapértelmezett konfigurációban?</a></li>
+<li><a href="#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis">Átkonvertáltam a konfigurációmat Marlinból, és az X/Y tengelyek jól működnek, de a Z tengely kezdőpont felvételekor csak egy csikorgó zajt hallok</a></li>
+<li><a href="#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print">A TMC motorvezérlő kikapcsol a nyomtatás közepén</a></li>
+<li><a href="#i-keep-getting-random-lost-communication-with-mcu-errors">Véletlenszerű "Elveszett a kommunikáció az MCU-val" hibák</a></li>
+<li><a href="#my-raspberry-pi-keeps-rebooting-during-prints">A Raspberry Pi újraindul nyomtatás közben</a></li>
+<li><a href="#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart">Amikor beállítom <code>restart_method=command</code> az AVR készülékem újraindításkor csak lefagy</a></li>
+<li><a href="#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes">A fűtőelemek bekapcsolva maradnak, ha a Raspberry Pi összeomlik?</a></li>
+<li><a href="#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name">Hogyan konvertálhatok egy Marlin tűszámot egy Klipper tűnévre?</a></li>
+<li><a href="#do-i-have-to-wire-my-device-to-a-specific-type-of-micro-controller-pin">Az eszközömet egy adott típusú mikrokontroller tűhöz kell csatlakoztatnom?</a></li>
+<li><a href="#how-do-i-cancel-an-m109m190-wait-for-temperature-request">Hogyan tudom törölni az M109/M190 "várakozás a hőmérsékletre" kérést?</a></li>
+<li><a href="#can-i-find-out-whether-the-printer-has-lost-steps">Megtudhatom, hogy a nyomtató vesztett-e lépéseket?</a></li>
+<li><a href="#why-does-klipper-report-errors-i-lost-my-print">Miért jelent hibát a Klipper? Elrontotta a nyomtatásomat!</a></li>
+<li><a href="#how-do-i-upgrade-to-the-latest-software">Hogyan frissíthetek a legújabb szoftverre?</a></li>
+<li><a href="#how-do-i-uninstall-klipper">Hogyan távolítsam el a klippert?</a></li>
+</ol>
+<h2 id="hogyan-adomanyozhatok-a-projektnek">Hogyan adományozhatok a projektnek?<a class="headerlink" href="#hogyan-adomanyozhatok-a-projektnek" title="Permanent link">&para;</a></h2>
+<p>Köszönöm. Kevinnek van egy Patreon oldala: <a href="https://www.patreon.com/koconnor">https://www.patreon.com/koconnor</a></p>
+<h2 id="hogyan-szamitom-ki-a-rotation_distance-konfiguracios-parametert">Hogyan számítom ki a rotation_distance konfigurációs paramétert?<a class="headerlink" href="#hogyan-szamitom-ki-a-rotation_distance-konfiguracios-parametert" title="Permanent link">&para;</a></h2>
+<p>Lásd a <a href="Rotation_Distance.html">forgási távolság dokumentumot</a>.</p>
+<h2 id="hol-van-a-soros-portom">Hol van a soros portom?<a class="headerlink" href="#hol-van-a-soros-portom" title="Permanent link">&para;</a></h2>
+<p>Az USB soros port megtalálásának általános módja az <code>ls /dev/serial/by-id/*</code> futtatása a gazdaszámítógép SSH termináljáról. Valószínűleg a következőhöz hasonló kimenetet fog eredményezni:</p>
+<div class="highlight"><pre><span></span><code>/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+</code></pre></div>
+
+<p>A fenti parancsban található név stabil, és használható a konfigurációs fájlban és a mikrokontroller kódjának égetése során. Egy égetés parancs például így nézhet ki:</p>
+<div class="highlight"><pre><span></span><code>sudo service klipper stop
+make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+sudo service klipper start
+</code></pre></div>
+
+<p>és a frissített konfiguráció így nézhet ki:</p>
+<div class="highlight"><pre><span></span><code>[mcu]
+serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+</code></pre></div>
+
+<p>Ügyeljen arra, hogy a fent lefuttatott "ls" parancsból másolja be a nevet, mivel a név minden nyomtatónál más lesz.</p>
+<p>Ha több mikrovezérlőt használsz, és ezek nem rendelkeznek egyedi azonosítóval (ez gyakori a CH340 USB-chippel ellátott lapokon), akkor kövesd a fenti utasításokat a <code>ls /dev/serial/by-path/*</code> parancs használatával.</p>
+<h2 id="a-mikrokontroller-ujrainditasakor-az-eszkoz-devttyusb1-re-valtozik">A mikrokontroller újraindításakor az eszköz /dev/ttyUSB1-re változik<a class="headerlink" href="#a-mikrokontroller-ujrainditasakor-az-eszkoz-devttyusb1-re-valtozik" title="Permanent link">&para;</a></h2>
+<p>Kövesse a "<a href="#wheres-my-serial-port">Hol van a soros portom?</a>" szakaszban található utasításokat, hogy ezt megakadályozza.</p>
+<h2 id="a-make-flash-parancs-nem-mukodik">A "make flash" parancs nem működik<a class="headerlink" href="#a-make-flash-parancs-nem-mukodik" title="Permanent link">&para;</a></h2>
+<p>A kód megpróbálja az eszközt az egyes platformok esetében legelterjedtebb módszerrel égetni. Sajnos az égetési módszerek között nagy eltérések vannak, így a "make flash" parancs nem biztos, hogy minden lapon működik.</p>
+<p>Ha időszakos hiba van, vagy szabványos beállításod van, akkor ellenőrizd, hogy a Klipper nem fut-e égetés közben (sudo service klipper stop), győződj meg róla, hogy az OctoPrint nem próbál közvetlenül az eszközhöz csatlakozni (nyisd meg a weblapon a Kapcsolat lapot, és kattints a Kapcsolat megszakítása gombra, ha a soros port az eszközhöz van beállítva), és győződj meg róla, hogy a FLASH_DEVICE helyesen van beállítva a lapodhoz (lásd a fenti <a href="#wheres-my-serial-port">kérdést</a>).</p>
+<p>Ha azonban a "make flash" egyszerűen nem működik az alaplapján, akkor manuálisan kell égetnie. Nézze meg, hogy van-e a <a href="https://github.com/Klipper3d/klipper/blob/master/config">config könyvtárban</a> egy config fájl, amely konkrét utasításokat tartalmaz az eszköz égetésére. Ellenőrizze a kártya gyártójának dokumentációját is, hogy leírja-e, hogyan kell égetni az eszközt. Végül, lehetséges lehet, hogy manuálisan égessük az eszközt olyan eszközökkel, mint az "avrdude" vagy a "bossac" - további információkért lásd a <a href="Bootloaders.html">bootloader dokumentumot</a>.</p>
+<h2 id="hogyan-valtoztathatom-meg-a-soros-port-sebesseget">Hogyan változtathatom meg a soros port sebességét?<a class="headerlink" href="#hogyan-valtoztathatom-meg-a-soros-port-sebesseget" title="Permanent link">&para;</a></h2>
+<p>A Klipper ajánlott átviteli sebessége 250000. Ez az átviteli ráta jól működik minden olyan mikrokontroller kártyán, amelyet a Klipper támogat. Ha talált egy online útmutatót, amely más átviteli sebességet javasol, akkor hagyja figyelmen kívül az útmutatónak ezt a részét, és folytassa az alapértelmezett 250000 értékkel.</p>
+<p>Ha mindenképpen meg akarja változtatni az átviteli sebességet, akkor az új sebességet a mikrokontrollerben kell beállítani (a <strong>make menuconfig</strong> alatt), és a frissített kódot le kell fordítani és be kell égetni a mikrokontrollerbe. A Klipper printer.cfg fájlt is frissíteni kell, hogy megfeleljen ennek az átviteli sebességnek (lásd a <a href="Config_Reference.html#mcu">konfigurációs hivatkozást</a> a részleteket). Például:</p>
+<div class="highlight"><pre><span></span><code>[mcu]
+baud: 250000
+</code></pre></div>
+
+<p>Az OctoPrint weboldalon feltüntetett átviteli sebesség nincs hatással a Klipper mikrokontroller belső átviteli sebességére. Klipper használatakor az OctoPrint átviteli sebességét mindig 250000-re állítsa be.</p>
+<p>A Klipper mikrovezérlő átviteli sebessége nem függ a mikrovezérlő bootloader átviteli sebességétől. A <a href="Bootloaders.html">bootloader dokumentum</a> további információkat tartalmaz a bootloaderekkel kapcsolatban.</p>
+<h2 id="futtathatom-a-klippert-a-raspberry-pi-3-on-kivul-mason-is">Futtathatom a Klippert a Raspberry Pi 3-on kívül máson is?<a class="headerlink" href="#futtathatom-a-klippert-a-raspberry-pi-3-on-kivul-mason-is" title="Permanent link">&para;</a></h2>
+<p>Az ajánlott hardver egy Raspberry Pi 2, Raspberry Pi 3 vagy Raspberry Pi 4.</p>
+<p>A Klipper fut a Raspberry Pi 1-en és a Raspberry Pi Zero-n, de ezek a lapok nem tartalmaznak elegendő feldolgozási teljesítményt az OctoPrint jó futtatásához. Gyakori, hogy ezeken a lassabb gépeken a nyomtatás akadozik, amikor közvetlenül az OctoPrintből nyomtat. (Előfordulhat, hogy a nyomtató gyorsabban mozog, mint ahogy az OctoPrint a mozgásparancsokat el tudja küldeni.) Ha mindenképpen ezek közül a lassabb lapok közül valamelyiken szeretne futni, fontolja meg a "virtual_sdcard" funkció használatát nyomtatáskor (a részletekért lásd <a href="Config_Reference.html#virtual_sdcard">konfigurációs hivatkozást</a>).</p>
+<p>A Beaglebone-on való futtatáshoz lásd a <a href="Beaglebone.html">Beaglebone-specifikus telepítési utasításokat</a>.</p>
+<p>A Klipper más gépeken is futott. A Klipper gazdagép szoftverhez csak Python szükséges, amely Linux (vagy hasonló) számítógépen fut. Ha azonban más gépen szeretné futtatni, akkor Linux adminisztrátori ismeretekre lesz szüksége az adott gép rendszerkövetelményeinek telepítéséhez. A szükséges Linux-adminisztrátori lépésekről további információt az <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> szkriptben talál.</p>
+<p>Ha a Klipper gazdagép szoftvert egy low-end chipen szeretné futtatni, akkor vegye figyelembe, hogy legalább egy "dupla pontosságú lebegőpontos" hardverrel rendelkező gépre van szükség.</p>
+<p>Ha a Klipper gazdagép szoftvert egy megosztott általános célú asztali vagy szerver osztályú gépen szeretné futtatni, akkor vegye figyelembe, hogy a Klippernek vannak bizonyos valós idejű ütemezési követelményei. Ha a nyomtatás során a gazdaszámítógép egyidejűleg intenzív általános célú számítási feladatot is végez (például merevlemez defragmentálása, 3D renderelés, nagymértékű swapolás stb.), akkor a Klipper nyomtatási hibákat jelenthet.</p>
+<p>Megjegyzés: Ha nem OctoPi-képet használsz, vedd figyelembe, hogy számos Linux-disztribúció engedélyez egy "ModemManager" (vagy hasonló) csomagot, amely megzavarhatja a soros kommunikációt. (Ami miatt a Klipper véletlenszerűnek tűnő "Elveszett a kommunikáció az MCU-val" hibákat jelenthet.) Ha a Klippert ilyen disztribúcióra telepíti, akkor lehet, hogy le kell tiltania ezt a csomagot.</p>
+<h2 id="futtathatom-a-klipper-tobb-peldanyat-ugyanazon-a-gepen">Futtathatom a Klipper több példányát ugyanazon a gépen?<a class="headerlink" href="#futtathatom-a-klipper-tobb-peldanyat-ugyanazon-a-gepen" title="Permanent link">&para;</a></h2>
+<p>Lehetséges a Klipper gazdagép szoftver több példányának futtatása, de ehhez Linux adminisztrátori ismeretekre van szükség. A Klipper telepítési szkriptek végül a következő Unix parancs futtatását eredményezik:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log
+</code></pre></div>
+
+<p>A fenti parancs több példányban is futtatható, amennyiben minden példánynak saját nyomtató-konfigurációs fájlja, saját naplófájlja és saját pszeudo-tty-je van. Például:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
+</code></pre></div>
+
+<p>Ha ezt választja, akkor a szükséges indítási, leállítási és telepítési parancsfájlokat (ha vannak ilyenek) kell végrehajtania. Az <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> szkript és a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-start.sh">klipper-start.sh</a> szkript hasznos lehet példaként.</p>
+<h2 id="muszaj-az-octoprintet-hasznalnom">Muszáj az OctoPrintet használnom?<a class="headerlink" href="#muszaj-az-octoprintet-hasznalnom" title="Permanent link">&para;</a></h2>
+<p>A Klipper szoftver nem függ az OctoPrint-től. Lehetséges alternatív szoftvereket használni a Klipper parancsok küldésére, de ehhez Linux adminisztrátori ismeretekre van szükség.</p>
+<p>A Klipper létrehoz egy "virtuális soros portot" a "/tmp/printer" fájlon keresztül, és ezen keresztül emulál egy klasszikus 3D-nyomtató soros interfészt. Általánosságban elmondható, hogy alternatív szoftverek is működhetnek a Klipperrel, amennyiben konfigurálhatóak úgy, hogy a "/tmp/printer" -t használják a nyomtató soros portjaként.</p>
+<h2 id="miert-nem-tudom-mozgatni-a-leptetomotort-a-nyomtato-beallitasa-elott">Miért nem tudom mozgatni a léptetőmotort a nyomtató beállítása előtt?<a class="headerlink" href="#miert-nem-tudom-mozgatni-a-leptetomotort-a-nyomtato-beallitasa-elott" title="Permanent link">&para;</a></h2>
+<p>A kód ezt azért teszi, hogy csökkentse annak esélyét, hogy a fejet véletlenül az ágyba vagy a falba ütköztesse. Miután a nyomtató kezdőponthoz ért, a szoftver megpróbálja ellenőrizni, hogy minden egyes mozgás a konfigurációs fájlban meghatározott position_min/max értéken belül van-e. Ha a motorok ki vannak kapcsolva (M84 vagy M18 parancs segítségével), akkor a motorokat a mozgás előtt újra be kell állítani.</p>
+<p>Ha a fejet az OctoPrint segítségével történő nyomtatás törlése után szeretné elmozdítani, fontolja meg az OctoPrint törlési sorrendjének módosítását, hogy ezt megtegye Ön helyett. Ez az OctoPrintben a webböngészőn keresztül konfigurálható a következő menüpont alatt: Beállítások-&gt;GCODE szkriptek</p>
+<p>Ha a nyomtatás befejezése után szeretné mozgatni a fejet, fontolja meg a kívánt mozgás hozzáadását a szeletelő "custom g-code" szakaszához.</p>
+<p>Ha a nyomtatónak szüksége van további mozgatásra a kezdőpont felvételi folyamat részeként (vagy alapvetően nincs kezdőpont felvételi folyamat), akkor fontolja meg a safe_z_home vagy homing_override szakasz használatát a konfigurációs fájlban. Ha diagnosztikai vagy hibakeresési célokra kell mozgatni egy léptetőmotort, akkor fontolja meg egy force_move szakasz hozzáadását a konfigurációs fájlhoz. Lásd <a href="Config_Reference.html#customized_homing">konfigurációs hivatkozást</a> az ezen opciókkal kapcsolatos további részletekért.</p>
+<h2 id="miert-van-a-z-position_endstop-05-re-allitva-az-alapertelmezett-konfiguracioban">Miért van a Z position_endstop 0,5-re állítva az alapértelmezett konfigurációban?<a class="headerlink" href="#miert-van-a-z-position_endstop-05-re-allitva-az-alapertelmezett-konfiguracioban" title="Permanent link">&para;</a></h2>
+<p>A cartesian stílusú nyomtatók esetében a Z position_endstop megadja, hogy a fúvóka milyen messze van az ágytól, amikor a végállás működésbe lép. Ha lehetséges, ajánlott Z-max végállást használni, és az ágytól távolabb elhelyezni (mivel ez csökkenti az ágy ütközés lehetőségét). Ha azonban az ágy felé kell elindulni, akkor a végállást úgy kell beállítani, hogy akkor lépjen működésbe, amikor a fúvóka még mindig kis távolságra van az ágytól. Így a tengely homingolásakor a fúvóka még azelőtt megáll, hogy a fúvóka hozzáérne az ágyhoz. További információért lásd az <a href="Bed_Level.html">ágy szintezés dokumentumot</a>.</p>
+<h2 id="atkonvertaltam-a-marlinbol-szarmazo-konfiguraciomat-es-az-xy-tengelyek-jol-mukodnek-de-a-z-tengely-kezdopont-filvetelekor-csikorgo-hangot-hallok">Átkonvertáltam a Marlinból származó konfigurációmat, és az X/Y tengelyek jól működnek, de a Z tengely kezdőpont fílvételekor csikorgó hangot hallok<a class="headerlink" href="#atkonvertaltam-a-marlinbol-szarmazo-konfiguraciomat-es-az-xy-tengelyek-jol-mukodnek-de-a-z-tengely-kezdopont-filvetelekor-csikorgo-hangot-hallok" title="Permanent link">&para;</a></h2>
+<p>Rövid válasz: Először is ellenőrizze, hogy a <a href="Config_checks.html">config check dokumentumban</a> leírtak szerint ellenőrizte-e a léptető konfigurációját. Ha a probléma továbbra is fennáll, próbálja meg csökkenteni a max_z_velocity értéket a nyomtató konfigurációjában.</p>
+<p>Hosszú válasz: A gyakorlatban a Marlin jellemzően csak körülbelül 10000 lépés/másodperc sebességgel tud lépni. Ha olyan sebességgel kell mozognia, amely nagyobb lépésszámot igényel, akkor a Marlin általában csak olyan gyorsan lép, amilyen gyorsan csak tud. A Klipper sokkal nagyobb lépésszámot képes elérni, de a léptetőmotornak nem biztos, hogy elegendő nyomatéka van a nagyobb sebességű mozgáshoz. Tehát egy nagy áttételszámú vagy nagy mikrolépésszámú Z tengely esetében a ténylegesen elérhető max_z_sebesség kisebb lehet, mint ami a Marlinban be van állítva.</p>
+<h2 id="a-tmc-motorvezerlo-kikapcsol-a-nyomtatas-kozben">A TMC motorvezérlő kikapcsol a nyomtatás közben<a class="headerlink" href="#a-tmc-motorvezerlo-kikapcsol-a-nyomtatas-kozben" title="Permanent link">&para;</a></h2>
+<p>Ha a TMC2208 (vagy TMC2224) motorvezérlőt "standalone módban" használja, akkor győződjön meg róla, hogy a <a href="#how-do-i-upgrade-to-the-latest-software">Klipper legújabb verzióját</a> használja. A TMC2208 "stealthchop" motorvezérlő problémájának megoldása 2020 március közepén került hozzá a Klipperhez.</p>
+<h2 id="folyamatosan-kapok-elveszett-a-kommunikacio-az-mcu-val-hibakat">Folyamatosan kapok "Elveszett a kommunikáció az MCU-val" hibákat<a class="headerlink" href="#folyamatosan-kapok-elveszett-a-kommunikacio-az-mcu-val-hibakat" title="Permanent link">&para;</a></h2>
+<p>Ezt általában a gazdagép és a mikrokontroller közötti USB-kapcsolat hardverhibái okozzák. Amit keresni kell:</p>
+<ul>
+<li>Használjon jó minőségű USB-kábelt a gazdagép és a mikrokontroller között. Győződjön meg róla, hogy a csatlakozók biztonságosan csatlakoznak.</li>
+<li>Ha Raspberry Pi-t használ, használjon <a href="https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#power-supply">jó minőségű tápegységet</a> a Raspberry Pi számára, és egy <a href="https://forums.raspberrypi.com/viewtopic.php?p=589877#p589877">jó minőségű USB-kábellel</a> csatlakoztassa a tápegységet a Pihez. Ha az OctoPrint "feszültség alatt" figyelmeztetéseket kap, az a tápegységgel függ össze, és ezt meg kell javítani.</li>
+<li>Győződjön meg róla, hogy a nyomtató áramellátása nincs túlterhelve. (A mikrovezérlő USB-chip áramellátásának ingadozása a chip újraindítását eredményezheti.)</li>
+<li>Ellenőrizze, hogy a léptető, fűtő és egyéb nyomtatóvezetékek nem szakadtak vagy rongálódtak. (A nyomtató mozgása megterhelheti a hibás vezetéket, ami érintkezési hibákhoz, rövidzárlathoz vagy túlzott zajkeltéshez vezethet.)</li>
+<li>Jelentéseket kaptunk magas USB-zajról, amikor a nyomtató, és a gazdagép 5V-os tápellátása keveredik. (Ha azt tapasztalja, hogy a mikrokontroller bekapcsol, amikor a gazdagép tápellátása be van kapcsolva, vagy az USB-kábel be van dugva, akkor ez azt jelzi, hogy az 5V-os tápegységek keverednek.) Segíthet, ha úgy konfigurálja a mikrokontrollert, hogy csak az egyik forrásból származó áramot használja. (Alternatív megoldásként, ha a mikrokontroller lapja nem tudja konfigurálni az áramforrását, módosíthatunk egy USB-kábelt úgy, hogy az ne szállítson 5V-os áramot a gazdagép és a mikrokontroller között.)</li>
+</ul>
+<h2 id="a-raspberry-pi-folyamatosan-ujraindul-nyomtatas-kozben">A Raspberry Pi folyamatosan újraindul nyomtatás közben<a class="headerlink" href="#a-raspberry-pi-folyamatosan-ujraindul-nyomtatas-kozben" title="Permanent link">&para;</a></h2>
+<p>Ez valószínűleg a feszültségingadozások miatt van. Kövesse ugyanazokat a hibaelhárítási lépéseket az <a href="#i-keep-getting-random-lost-communication-with-mcu-errors">"Elveszett kommunikáció az MCU-val"</a> hiba esetén.</p>
+<h2 id="amikor-beallitom-a-restart_methodcommand-az-avr-keszulekem-ujrainditaskor-egyszeruen-lefagy">Amikor beállítom a <code>restart_method=command</code> az AVR készülékem újraindításkor egyszerűen lefagy<a class="headerlink" href="#amikor-beallitom-a-restart_methodcommand-az-avr-keszulekem-ujrainditaskor-egyszeruen-lefagy" title="Permanent link">&para;</a></h2>
+<p>Az AVR bootloader néhány régi verziójának ismert hibája van a watchdog esemény kezelésében. Ez általában akkor jelentkezik, ha a printer.cfg fájlban a restart_method beállítása "command". Amikor a hiba előfordul, az AVR eszköz nem reagál, amíg a tápellátást el nem veszik és újra be nem kapcsolják az eszközbe (a tápellátás vagy az állapotjelző LED-ek is többször villoghatnak, amíg a tápellátást el nem veszik).</p>
+<p>A megoldás a "command" -tól eltérő restart_method használata, vagy egy frissített bootloader égetése az AVR eszközre. Egy új bootloader égetése egy egyszeri lépés, amelyhez általában külső programozóra van szükség - további részletekért lásd <a href="Bootloaders.html">Bootloaderek</a> dokumentumot.</p>
+<h2 id="a-futoelemek-bekapcsolva-maradnak-ha-a-raspberry-pi-osszeomlik">A fűtőelemek bekapcsolva maradnak, ha a Raspberry Pi összeomlik?<a class="headerlink" href="#a-futoelemek-bekapcsolva-maradnak-ha-a-raspberry-pi-osszeomlik" title="Permanent link">&para;</a></h2>
+<p>A szoftvert úgy tervezték, hogy ezt megakadályozza. Ha a gazdagép egyszer engedélyezi a fűtőberendezést, a szoftverének 5 másodpercenként meg kell erősítenie az engedélyezést. Ha a mikrokontroller nem kap 5 másodpercenként megerősítést, akkor "leállítás" állapotba kerül, amelynek célja, hogy kikapcsolja az összes fűtőberendezést és léptetőmotort.</p>
+<p>További részletekért lásd az <a href="MCU_Commands.html">MCU-parancsok</a> dokumentumban található "config_digital_out" parancsot.</p>
+<p>Ezenkívül a mikrovezérlő szoftver indításkor minden fűtőberendezéshez be van állítva egy minimális és maximális hőmérséklettartomány (a részletekért lásd a <a href="Config_Reference.html#extruder">konfigurációs hivatkozásban</a> található min_temp és max_temp paramétereket). Ha a mikrokontroller azt érzékeli, hogy a hőmérséklet e tartományon kívül esik, akkor szintén "leállítás" állapotba lép.</p>
+<p>A gazdaszoftver külön kódot is tartalmaz a fűtőelemek és a hőmérséklet-érzékelők helyes működésének ellenőrzésére. További részletekért lásd a <a href="Config_Reference.html#verify_heater">konfigurációs hivatkozás</a> dokumentumot.</p>
+<h2 id="hogyan-alakithatok-at-egy-marlin-tu-szamot-klipper-tu-nevre">Hogyan alakíthatok át egy Marlin tű számot Klipper tű névre?<a class="headerlink" href="#hogyan-alakithatok-at-egy-marlin-tu-szamot-klipper-tu-nevre" title="Permanent link">&para;</a></h2>
+<p>Rövid válasz: <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a> fájlban található leképezés. Használja ezt a fájlt útmutatóként a tényleges mikrokontroller tű nevek megtalálásához. (Az is lehetséges, hogy a vonatkozó <a href="Config_Reference.html#board_pins">board_pins</a> config szakaszt átmásolja a config fájljába, és használja az álneveket a configban, de előnyösebb a tényleges mikrokontroller tű nevek lefordítása és használata.) Vegye figyelembe, hogy a sample-aliases.cfg fájl olyan tű neveket használ, amelyek "ar" előtaggal kezdődnek "D" helyett (pl. az Arduino pin <code>D23</code> a Klipper álnév <code>ar23</code>) és az "analog" helyett "A" (pl. az Arduino pin <code>A14</code> a Klipper álnév <code>analog14</code>).</p>
+<p>Hosszú válasz: Klipper a mikrokontroller által meghatározott szabványos tű neveket használja. Az Atmega chipeken ezek a hardveres tűk olyan neveket viselnek, mint <code>PA4</code>, <code>PC7</code>, vagy <code>PD2</code>.</p>
+<p>Régen az Arduino projekt úgy döntött, hogy nem használja a szabványos hardverneveket, hanem saját, növekvő számokon alapuló tű neveket használ. Ezek az Arduino nevek általában úgy néznek ki, mint <code>D23</code> vagy <code>A14</code>. Ez egy szerencsétlen választás volt, amely sok zavart okozott. Különösen az Arduino tű-számok gyakran nem fordítják le ugyanazokat a hardveres neveket. Például a <code>D21</code> az <code>PD0</code> egy közös Arduino lapon, de <code>PC7</code> egy másik közös Arduino lapon.</p>
+<p>A zavar elkerülése érdekében a Klipper alapkódja a mikrokontroller által meghatározott szabványos tű neveket használja.</p>
+<h2 id="az-eszkozomet-egy-adott-tipusu-mikrokontroller-tuhoz-kell-csatlakoztatnom">Az eszközömet egy adott típusú mikrokontroller tűhöz kell csatlakoztatnom?<a class="headerlink" href="#az-eszkozomet-egy-adott-tipusu-mikrokontroller-tuhoz-kell-csatlakoztatnom" title="Permanent link">&para;</a></h2>
+<p>Ez az eszköz típusától és a tű típusától függ:</p>
+<p>ADC tűk (vagy analóg tűk): Termisztorok és hasonló "analóg" érzékelők esetén az eszközt a mikrokontroller egy "analóg" vagy "ADC" -képes tűjére kell csatlakoztatni. Ha a Klippert olyan tű használatára konfigurálja, amely nem analóg képes, a Klipper egy "Nem érvényes ADC tű" hibát fog jelenteni.</p>
+<p>PWM tűk (vagy időzítő tűk): A Klipper alapértelmezés szerint nem használ hardveres PWM-et egyetlen eszköz esetében sem. Tehát általában a fűtőtesteket, ventilátorokat és hasonló eszközöket bármelyik általános célú IO tűre lehet vezetékezni. A ventilátorok és az output_pin eszközök azonban opcionálisan úgy konfigurálhatók, hogy <code>hardware_pwm: True</code> értéket használnak, amely esetben a mikrokontrollernek támogatnia kell a hardveres PWM-et a tűn (ellenkező esetben a Klipper egy "Not a valid PWM pin" hibát fog jelezni).</p>
+<p>IRQ-tűk (vagy megszakítási tűk): A Klipper nem használ hardveres megszakításokat az IO tűkön, ezért soha nem szükséges egy eszközt ezen mikrokontroller tűk egyikére vezetni.</p>
+<p>SPI-tűk: A hardveres SPI használatakor a tűket a mikrokontroller SPI-képes tűihez kell csatlakoztatni. A legtöbb eszköz azonban konfigurálható a "szoftveres SPI" használatára, amely esetben bármely általános célú IO-tű használható.</p>
+<p>I2C tűk: I2C használatakor a tűket a mikrokontroller I2C-képes tűihez kell csatlakoztatni.</p>
+<p>Más eszközök bármelyik általános célú IO tűre csatlakoztathatók. Például léptetők, fűtők, ventilátorok, Z-szondák, szervók, LED-ek, közös hd44780/st7920 LCD-kijelzők, a Trinamic UART vezérlővonal bármely általános célú IO-tűhöz csatlakoztatható.</p>
+<h2 id="hogyan-tudom-torolni-az-m109m190-homersekletre-varni-kerest">Hogyan tudom törölni az M109/M190 "hőmérsékletre várni" kérést?<a class="headerlink" href="#hogyan-tudom-torolni-az-m109m190-homersekletre-varni-kerest" title="Permanent link">&para;</a></h2>
+<p>Navigáljon az OctoPrint terminál fülre, és adjon ki egy M112 parancsot a terminálmezőben. Az M112 parancs hatására a Klipper "leállítás" állapotba kerül, és az OctoPrint megszakítja a kapcsolatot a Klipperrel. Navigáljon az OctoPrint csatlakozási területére, és kattintson a "Connect" gombra, hogy az OctoPrint újra csatlakozzon. Navigáljon vissza a terminál fülre, és adjon ki egy FIRMWARE_RESTART parancsot a Klipper hibaállapotának törléséhez. E műveletsor befejezése után az előző fűtéskérés törlődik, és új nyomtatás indítható.</p>
+<h2 id="meg-tudom-allapitani-hogy-a-nyomtato-vesztett-e-lepeseket">Meg tudom állapítani, hogy a nyomtató vesztett-e lépéseket?<a class="headerlink" href="#meg-tudom-allapitani-hogy-a-nyomtato-vesztett-e-lepeseket" title="Permanent link">&para;</a></h2>
+<p>Bizonyos értelemben igen. Indítsa el a nyomtatót, adjon ki egy <code>GET_POSITION</code> parancsot, indítsa el a nyomtatást, indítsa el újra, és adjon ki egy újabb <code>GET_POSITION</code> parancsot. Ezután hasonlítsa össze az <code>mcu:</code> sorban szereplő értékeket.</p>
+<p>Ez hasznos lehet a beállítások, például a léptetőmotorok áramának, gyorsulásának és sebességének beállításához anélkül, hogy ténylegesen nyomtatnod kellene valamit és pazarolnod kellene a szálakat: csak futtass néhány nagy sebességű mozgást a <code>GET_POSITION</code> parancsok között.</p>
+<p>Vegye figyelembe, hogy a végálláskapcsolók maguk is hajlamosak kissé eltérő pozícióban kioldani, így a néhány mikrolépésnyi különbség valószínűleg a végállás pontatlanságának eredménye. Maga a léptetőmotor csak 4 teljes lépésenként képes lépéseket veszíteni. (Tehát, ha 16 mikrolépést használunk, akkor a léptető egy elvesztett lépése azt eredményezi, hogy az "mcu:" lépésszámláló 64 mikrolépés többszörösével téved.)</p>
+<h2 id="miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat">Miért jelent hibát a Klipper? Elrontotta a nyomtatásomat!<a class="headerlink" href="#miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat" title="Permanent link">&para;</a></h2>
+<p>Rövid válasz: A nyomtatóink problémákat észlelnek, hogy a mögöttes problémát orvosolni lehessen, és kiváló minőségű nyomatokat kaphassunk. Semmiképpen sem szeretnénk, ha a nyomtatóink csendben rossz minőségű nyomatokat készítenének.</p>
+<p>Hosszú válasz: A Klipper úgy lett megtervezve, hogy automatikusan megoldjon számos átmeneti problémát. Például automatikusan észleli a kommunikációs hibákat, és újratovábbítja azokat; előre ütemezi a műveleteket, és több rétegben puffereli a parancsokat, hogy még időszakos interferencia esetén is pontos időzítést tegyen lehetővé. Ha azonban a szoftver olyan hibát észlel, amelyből nem tud helyreállni, ha érvénytelen műveletre kap parancsot, vagy ha azt észleli, hogy reménytelenül képtelen végrehajtani a parancsolt feladatot, akkor a Klipper hibát jelent. Ezekben a helyzetekben nagy a kockázata annak, hogy rossz minőségű nyomtatás készül (vagy rosszabb). Reméljük, hogy a felhasználó figyelmeztetése lehetővé teszi számára, hogy megoldja a kiváltó problémát, és javítsa a nyomatok általános minőségét.</p>
+<p>Van néhány kapcsolódó kérdés: Miért nem szünetelteti a Klipper a nyomtatást? Nem jelent figyelmeztetést helyette? A nyomtatás előtt nem ellenőrzi a hibákat? Figyelmen kívül hagyja a hibákat a felhasználó által begépelt parancsokban? stb. Jelenleg a Klipper a G-kód protokollt használva olvassa a parancsokat, és sajnos a G-kód parancsprotokoll nem elég rugalmas ahhoz, hogy ezek az alternatívák ma már praktikusak legyenek. A fejlesztők érdeklődnek a felhasználói élmény javítása iránt a rendellenes események során, de ez várhatóan jelentős infrastrukturális munkát igényel (beleértve a G-kódtól való eltávolodást).</p>
+<h2 id="hogyan-frissithetek-a-legujabb-szoftverre">Hogyan frissíthetek a legújabb szoftverre?<a class="headerlink" href="#hogyan-frissithetek-a-legujabb-szoftverre" title="Permanent link">&para;</a></h2>
+<p>A szoftver frissítésének első lépése a legfrissebb <a href="Config_Changes.html">konfigurációs változások</a> dokumentum áttekintése. Alkalmanként olyan változások történnek a szoftverben, amelyek miatt a felhasználóknak frissíteniük kell a beállításaikat a szoftverfrissítés részeként. A frissítés előtt érdemes átnézni ezt a dokumentumot.</p>
+<p>Ha készen áll a frissítésre, az általános módszer az, hogy SSH-t használunk a Raspberry Pi-n, és futtatjuk:</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+git pull
+~/klipper/scripts/install-octopi.sh
+</code></pre></div>
+
+<p>Ezután újrafordíthatjuk és égethetjük a mikrokontroller kódját. Például:</p>
+<div class="highlight"><pre><span></span><code>make menuconfig
+make clean
+make
+
+sudo service klipper stop
+make flash FLASH_DEVICE=/dev/ttyACM0
+sudo service klipper start
+</code></pre></div>
+
+<p>Azonban gyakran előfordul, hogy csak a gazdaszoftver változik. Ebben az esetben csak a gazdaszoftvert frissíthetjük és indíthatjuk újra:</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+git pull
+sudo service klipper restart
+</code></pre></div>
+
+<p>Ha e parancs használata után a szoftver arra figyelmeztet, hogy a mikrokontrollert újra kell égetni, vagy más szokatlan hiba lép fel, akkor kövesse a fent leírt teljes frissítési lépéseket.</p>
+<p>Ha továbbra is fennállnak a hibák, akkor ellenőrizze a <a href="Config_Changes.html">konfigurációs változások</a> dokumentumot, mivel lehet, hogy módosítani kell a nyomtató konfigurációját.</p>
+<p>Ne feledje, hogy a RESTART és FIRMWARE_RESTART G-kód parancsok nem töltenek be új szoftvert a fenti "sudo service klipper restart" és "make flash" parancsok szükségesek a szoftverváltás érvénybe lépéséhez.</p>
+<h2 id="hogyan-tudom-eltavolitani-a-klippert">Hogyan tudom eltávolítani a Klippert?<a class="headerlink" href="#hogyan-tudom-eltavolitani-a-klippert" title="Permanent link">&para;</a></h2>
+<p>A firmware oldalon semmi különösnek nem kell történnie. Csak kövesse az új firmware égetési utasításait.</p>
+<p>A Raspberry Pi oldalon egy eltávolító szkript elérhető a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-uninstall.sh">scripts/klipper-uninstall.sh</a> alatt. Például:</p>
+<div class="highlight"><pre><span></span><code>sudo ~/klipper/scripts/klipper-uninstall.sh
+rm -rf ~/klippy-env ~/klipper
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Élőláb">
+      
+        
+        <a href="Features.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Funkciók" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Előző
+              </span>
+              Funkciók
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Releases.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Kiadás" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Következő
+              </span>
+              Kiadás
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "M\u00e1sol\u00e1s v\u00e1g\u00f3lapra", "clipboard.copied": "V\u00e1g\u00f3lapra m\u00e1solva", "search.config.lang": "hu", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Keres\u00e9s", "search.result.placeholder": "Keres\u00e9shez \u00edrj ide valamit", "search.result.none": "Nincs tal\u00e1lat", "search.result.one": "1 egyez\u0151 dokumentum", "search.result.other": "# egyez\u0151 dokumentum", "search.result.more.one": "1 tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.more.other": "# tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.term.missing": "\u00dcres", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

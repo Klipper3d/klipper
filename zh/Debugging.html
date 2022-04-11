@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -776,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1446,7 +1452,7 @@ cp /tmp/klippy.log .
 
 <p>该脚本将提取打印机的配置文件，并提取 MCU 的关闭信息。来自 MCU 关闭的信息转储（如果存在的话）将按时间戳重新排序，以协助诊断因果关系的情况。</p>
 <h2 id="simulavr">用 simulavr 测试<a class="headerlink" href="#simulavr" title="Permanent link">&para;</a></h2>
-<p><a href="http://www.nongnu.org/simulavr/">simulavr</a>工具使人们可以模拟Atmel ATmega微控制器。本节描述了如何通过simulavr运行测试gcode文件。建议在台式机（而不是Raspberry Pi）上运行这个工具，因为它需要大量的cpu来有效运行。</p>
+<p><a href="http://www.nongnu.org/simulavr/">simulavr</a>工具可以模拟 Atmel ATmega 微控制器。本章描述了如何通过simulavr运行测试gcode文件。由于该工具需要大量cpu资源，建议在台式机（而不是树莓派）上运行。</p>
 <p>To use simulavr, download the simulavr package and compile with python support. Note that the build system may need to have some packages (such as swig) installed in order to build the python module.</p>
 <div class="highlight"><pre><span></span><code>git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr

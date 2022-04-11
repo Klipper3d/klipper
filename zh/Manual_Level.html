@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -848,7 +854,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1305,7 +1311,7 @@
 <h2 id="z">校准 Z 限位<a class="headerlink" href="#z" title="Permanent link">&para;</a></h2>
 <p>准确的 Z 轴限位位置对于获得高质量打印至关重要。</p>
 <p>请注意，Z 限位开关本身的精度限制了调平的精度。如果使用 Trinamic 步进电机驱动，那么可以考虑启用<a href="Endstop_Phase.html">限位相位</a>检测以提高开关的精度。</p>
-<p>要进行Z轴限位校准，请复位打印机，命令打印头移动到离床身至少5毫米的Z轴位置（如果还没有），命令打印头移动到靠近床身中心的XY位置，然后到OctoPrint终端中并且运行：</p>
+<p>要进行Z轴限位校准，请归位打印机，命令打印头移动到离床身至少5毫米的Z轴位置（如果还没有），命令打印头移动到靠近床身中心的XY位置，然后到OctoPrint终端中并且运行：</p>
 <div class="highlight"><pre><span></span><code>Z_ENDSTOP_CALIBRATE
 </code></pre></div>
 
@@ -1314,7 +1320,7 @@
 </code></pre></div>
 
 <p>最好是在Z轴与床面相对的一端使用Z轴止动器开关（远离床面的止动器更加坚固，因为这样的话，Z轴的原点通常是安全的）。然而，如果必须向床头归位，建议调整逆止器，使其在床头上方一小段距离（例如0.5毫米）触发。几乎所有的止动器开关都可以在触发点以外的一小段距离安全地压下。当这样做时，你会发现<code>Z_ENDSTOP_CALIBRATE</code>命令报告了一个小的正值（比如0.5毫米）的Z限位位置。在</p>
-<p>Some printers have the ability to manually adjust the location of the physical endstop switch. However, it's recommended to perform Z endstop positioning in software with Klipper - once the physical location of the endstop is in a convenient location, one can make any further adjustments by running Z_ENDSTOP_CALIBRATE or by manually updating the Z position_endstop in the configuration file.</p>
+<p>某些打印机能够手动调整限位开关的物理位置，但是建议使用 Klipper 在软件中执行 Z 限位定位-在将限位的物理位置固定于方便微调的位置，就可以通过运行 Z_ENDSTOP_CALIBRATE 或通过手动更新配置文件中的 Z position_endstop 来进行进一步的调整。</p>
 <h2 id="_2">调整打印调平螺丝<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>The secret to getting good bed leveling with bed leveling screws is to utilize the printer's high precision motion system during the bed leveling process itself. This is done by commanding the nozzle to a position near each bed screw and then adjusting that screw until the bed is a set distance from the nozzle. Klipper has a tool to assist with this. In order to use the tool it is necessary to specify each screw XY location.</p>
 <p>This is done by creating a <code>[bed_screws]</code> config section. For example, it might look something similar to:</p>

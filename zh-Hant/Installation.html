@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -1346,7 +1352,7 @@ sudo service klipper start
 <p>在主頁上，在 "連線 "部分（在頁面的左上方），確保 "串列埠 "被設定為"/tmp/printer"，然後點選 "連線"。(如果"/tmp/printer "不是一個可用的選擇，那麼試著重新載入頁面)</p>
 <p>連線后，導航到 "終端 "選項卡，在命令輸入框中輸入 "status"（不帶引號），然後點選 "發送"。終端視窗可能會報告在打開配置檔案時出現了錯誤--這意味著 OctoPrint 與 Klipper 成功地進行了通訊。繼續下一部分。</p>
 <h2 id="klipper">配置 Klipper<a class="headerlink" href="#klipper" title="Permanent link">&para;</a></h2>
-<p>Klipper 配置儲存在樹莓派上的一個文字檔案中。請檢視在<a href="..../config/">config資料夾</a>中的配置示例。<a href="Config_Reference.html">配置參考</a>中有配置參數的文件。</p>
+<p>Klipper 配置儲存在樹莓派上的一個文字檔案中。請檢視在<a href="https://github.com/Klipper3d/klipper/blob/master/config/">config資料夾</a>中的配置示例。<a href="Config_Reference.html">配置參考</a>中有配置參數的文件。</p>
 <p>可以說，更新Klipper configuration 檔案的最簡單方法是使用一個支援通過 "scp "或 "sftp "協議編輯檔案的桌面編輯器。有一些免費的工具支援這個功能（例如，Notepad++、WinSCP和Cyberduck）。使用其中一個配置檔案的例子作為起點，並將其儲存為pi使用者的主目錄中名為 "printer.cfg "的檔案（例如，/home/pi/printer.cfg）。</p>
 <p>另外，也可以通過ssh在Raspberry Pi上直接複製和編輯該檔案。比如說：</p>
 <div class="highlight"><pre><span></span><code>cp ~/klipper/config/example-cartesian.cfg ~/printer.cfg

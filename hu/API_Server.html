@@ -1,0 +1,1772 @@
+
+<!doctype html>
+<html lang="hu" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>API szerver - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-szerver" class="md-skip">
+          Kihagyás
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Élőfej">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API szerver
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Keresés" placeholder="Keresés" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Törlés" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Keresés inicializálása
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigáció" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Áttekintés
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funkciók
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Gyakran ismételt kérdések
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Kiadás
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurációs változások
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kapcsolat
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Telepítés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Configuration reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Forgatási távolság
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Konfigurációs ellenőrzések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Ágyszintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Delta kalibrálás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Szonda kalibrálása
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Kézi szintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Ágyháló
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Végállás szakasz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Rezonancia kompenzáció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Rezonanciák mérése
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Nyomás előrehaladás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Parancssablonok
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Állapot referencia
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC meghajtók
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Több mikrovezélős kezdőpnt és szondázás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Szeletelők
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Ferdeség korrekció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        PWM eszközök használata
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Kód áttekintése
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematika
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          API szerver
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="API_Server.html" class="md-nav__link md-nav__link--active">
+        API szerver
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#az-api-foglalat-engedelyezese" class="md-nav__link">
+    Az API foglalat engedélyezése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kerelem-formatuma" class="md-nav__link">
+    Kérelem formátuma
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-protokoll" class="md-nav__link">
+    API Protokoll
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feliratkozasok" class="md-nav__link">
+    Feliratkozások
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#elerheto-vegpontok" class="md-nav__link">
+    Elérhető "végpontok"
+  </a>
+  
+    <nav class="md-nav" aria-label="Elérhető "végpontok"">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#info" class="md-nav__link">
+    infó
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emergency_stop" class="md-nav__link">
+    emergency_stop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register_remote_method" class="md-nav__link">
+    register_remote_method
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#objectslist" class="md-nav__link">
+    objects/list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#objectsquery" class="md-nav__link">
+    objects/query
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#objectssubscribe" class="md-nav__link">
+    objects/subscribe
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodehelp" class="md-nav__link">
+    gcode/help
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodescript" class="md-nav__link">
+    gcode/script
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcoderestart" class="md-nav__link">
+    gcode/restart
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodefirmware_restart" class="md-nav__link">
+    gcode/firmware_restart
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodesubscribe_output" class="md-nav__link">
+    gcode/subscribe_output
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#motion_reportdump_stepper" class="md-nav__link">
+    motion_report/dump_stepper
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#motion_reportdump_trapq" class="md-nav__link">
+    motion_report/dump_trapq
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adxl345dump_adxl345" class="md-nav__link">
+    adxl345/dump_adxl345
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angledump_angle" class="md-nav__link">
+    angle/dump_angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resumecancel" class="md-nav__link">
+    pause_resume/cancel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resumepause" class="md-nav__link">
+    pause_resume/pause
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resumeresume" class="md-nav__link">
+    pause_resume/resume
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_endstopsstatus" class="md-nav__link">
+    query_endstops/status
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU parancsok
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Hibakeresés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Referenciaértékek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Hozzájárulás a Klipperhez
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper Csomagolás
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Példa konfigurációk
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-kártya frissítések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi mikrokontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloaderek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Hall nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#az-api-foglalat-engedelyezese" class="md-nav__link">
+    Az API foglalat engedélyezése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kerelem-formatuma" class="md-nav__link">
+    Kérelem formátuma
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-protokoll" class="md-nav__link">
+    API Protokoll
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feliratkozasok" class="md-nav__link">
+    Feliratkozások
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#elerheto-vegpontok" class="md-nav__link">
+    Elérhető "végpontok"
+  </a>
+  
+    <nav class="md-nav" aria-label="Elérhető "végpontok"">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#info" class="md-nav__link">
+    infó
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emergency_stop" class="md-nav__link">
+    emergency_stop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register_remote_method" class="md-nav__link">
+    register_remote_method
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#objectslist" class="md-nav__link">
+    objects/list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#objectsquery" class="md-nav__link">
+    objects/query
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#objectssubscribe" class="md-nav__link">
+    objects/subscribe
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodehelp" class="md-nav__link">
+    gcode/help
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodescript" class="md-nav__link">
+    gcode/script
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcoderestart" class="md-nav__link">
+    gcode/restart
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodefirmware_restart" class="md-nav__link">
+    gcode/firmware_restart
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcodesubscribe_output" class="md-nav__link">
+    gcode/subscribe_output
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#motion_reportdump_stepper" class="md-nav__link">
+    motion_report/dump_stepper
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#motion_reportdump_trapq" class="md-nav__link">
+    motion_report/dump_trapq
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adxl345dump_adxl345" class="md-nav__link">
+    adxl345/dump_adxl345
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angledump_angle" class="md-nav__link">
+    angle/dump_angle
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resumecancel" class="md-nav__link">
+    pause_resume/cancel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resumepause" class="md-nav__link">
+    pause_resume/pause
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resumeresume" class="md-nav__link">
+    pause_resume/resume
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_endstopsstatus" class="md-nav__link">
+    query_endstops/status
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/API_Server.md" title="Oldal szerkesztése" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="api-szerver">API szerver<a class="headerlink" href="#api-szerver" title="Permanent link">&para;</a></h1>
+<p>Ez a dokumentum leírja a Klipper Alkalmazás Programozói Interfészt (API). Ez az interfész lehetővé teszi külső alkalmazások számára a Klipper gazdaszoftver lekérdezését és vezérlését.</p>
+<h2 id="az-api-foglalat-engedelyezese">Az API foglalat engedélyezése<a class="headerlink" href="#az-api-foglalat-engedelyezese" title="Permanent link">&para;</a></h2>
+<p>Az API-kiszolgáló használatához a klippy.py host szoftvert a <code>-a</code> paraméterrel kell elindítani. Például:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -a /tmp/klippy_uds -l /tmp/klippy.log
+</code></pre></div>
+
+<p>Ennek hatására a gazdaszoftver létrehoz egy Unix Domain Socketet. Az ügyfél ezután kapcsolatot nyithat ezen keresztül, és parancsokat küldhet a Klippernek.</p>
+<h2 id="kerelem-formatuma">Kérelem formátuma<a class="headerlink" href="#kerelem-formatuma" title="Permanent link">&para;</a></h2>
+<p>A socket-en küldött és fogadott üzenetek JSON kódolású karakterláncok, amelyeket egy ASCII 0x03 karakter zár le:</p>
+<div class="highlight"><pre><span></span><code>&lt;json_object_1&gt;&lt;0x03&gt;&lt;json_object_2&gt;&lt;0x03&gt;...
+</code></pre></div>
+
+<p>A Klipper tartalmaz egy <code>scripts/whconsole.py</code> eszközt, amely képes a fenti üzenetkeretezést elvégezni. Például:</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/whconsole.py /tmp/klippy_uds
+</code></pre></div>
+
+<p>Ez az eszköz képes beolvasni egy sor JSON parancsot az stdin-ből, elküldeni őket a Klippernek, és jelenteni az eredményeket. Az eszköz elvárja, hogy minden JSON parancs egyetlen sorban legyen, és a kérés elküldésekor automatikusan hozzáadja a 0x03 végrehajtót. (A Klipper API szervernek nincs újsor követelménye.)</p>
+<h2 id="api-protokoll">API Protokoll<a class="headerlink" href="#api-protokoll" title="Permanent link">&para;</a></h2>
+<p>A kommunikációs foglalat által használt parancsprotokollt a <a href="https://www.jsonrpc.org/">json-rpc</a> ihlette.</p>
+<p>Egy kérés így nézhet ki:</p>
+<p><code>{"id": 123, "method": "info", "params": {}}</code></p>
+<p>és a válasz így nézhet ki:</p>
+<p><code>{"id": 123, "result": {"state_message": "Printer is ready", "klipper_path": "/home/pi/klipper", "config_file": "/home/pi/printer.cfg", "software_version": "v0.8.0-823-g883b1cb6", "hostname": "octopi", "cpu_info": "4 core ARMv7 Processor rev 4 (v7l)", "state": "ready", "python_path": "/home/pi/klippy-env/bin/python", "log_file": "/tmp/klippy.log"}}</code></p>
+<p>Minden egyes kérésnek egy JSON szótárnak kell lennie. (Ez a dokumentum a Pythonban a "szótár" kifejezést használja a "JSON objektum" - a <code>&lt;/x&gt;{}</code>-ban található kulcs/érték párok leképezése, leírására.)</p>
+<p>A kérési szótárnak tartalmaznia kell egy "method" paramétert, amely egy elérhető Klipper "végpont" húr neve.</p>
+<p>A kérési szótár tartalmazhat egy "params" paramétert, amelynek szótár típusúnak kell lennie. A "params" további paraméterinformációkat biztosít a kérést kezelő Klipper "végpont" számára. Tartalma a "végpontra" jellemző.</p>
+<p>A kérési szótár tartalmazhat egy "id" paramétert, amely bármilyen JSON típusú lehet. Ha az "id" paraméter jelen van, akkor a Klipper egy válaszüzenettel válaszol a kérésre, amely tartalmazza ezt az "id" paramétert. Ha az "id" nincs megadva (vagy egy JSON "null" értékre van beállítva), akkor a Klipper nem ad választ a kérésre. A válaszüzenet egy JSON szótár, amely tartalmazza az "id" és az "eredmény" értékeket. A "result" mindig egy szótár melynek tartalma a kérést kezelő "végpontra" jellemző.</p>
+<p>Ha egy kérés feldolgozása hibát eredményez, akkor a válaszüzenet egy "hiba" mezőt fog tartalmazni az "eredmény" mező helyett. Például a kérés: <code>{"id": 123, "method": "gcode/script", "params": {"script": "G1 X200"}}}</code> egy olyan hibás választ eredményezhet, mint például: <code>{"id": 123, "error": {"message": "Must home axis first: 200.000 0.000 0.000 0.000 [0.000]", "error": "WebRequestError"}}</code></p>
+<p>A Klipper mindig a beérkezésük sorrendjében kezdi meg a kérések feldolgozását. Előfordulhat azonban, hogy egyes kérések nem fejeződnek be azonnal, ami azt eredményezheti, hogy a kapcsolódó válasz más kérések válaszaihoz képest nem a megfelelő sorrendben kerül elküldésre. Egy JSON-kérés soha nem fogja szüneteltetni a jövőbeli JSON-kérések feldolgozását.</p>
+<h2 id="feliratkozasok">Feliratkozások<a class="headerlink" href="#feliratkozasok" title="Permanent link">&para;</a></h2>
+<p>Néhány Klipper "végpont" kérés lehetővé teszi a "feliratkozást" a jövőbeli aszinkron frissítési üzenetekre.</p>
+<p>Például:</p>
+<p><code>{"id": 123, "method": "gcode/subscribe_output", "params": {"response_template":{"key": 345}}}</code></p>
+<p>kezdetben válaszolhat:</p>
+<p><code>{"id": 123, "result": {}}</code></p>
+<p>és a Klipper a következőhöz hasonló üzeneteket fog küldeni a jövőben:</p>
+<p><code>{"params": {"response": "ok B:22.8 /0.0 T0:22.4 /0.0"}, "key": 345}</code></p>
+<p>Az előfizetési kérés elfogad egy "response_template" szótárat a kérés "params" mezőjében. Ez a "response_template" szótár sablonként szolgál a jövőbeli aszinkron üzenetekhez. Tetszőleges kulcs/érték párokat tartalmazhat. Ezen jövőbeli aszinkron üzenetek küldésekor a Klipper hozzáad egy "params" mezőt, amely egy "endpoint" specifikus tartalmú szótárat tartalmaz a válaszsablonnak, majd elküldi ezt a sablont. Ha nem adunk meg egy "response_template" mezőt, akkor az alapértelmezés szerint egy üres szótár lesz (<code>{}</code>).</p>
+<h2 id="elerheto-vegpontok">Elérhető "végpontok"<a class="headerlink" href="#elerheto-vegpontok" title="Permanent link">&para;</a></h2>
+<p>A Klipper "végpontok" a konvenció szerint a <code>&lt;module_name&gt;/&lt;some_name&gt;</code> formájúak. Ha egy "végponthoz" intézünk kérést, a teljes nevet a kérési szótár "method" paraméterében kell megadni (pl. <code>{"method"="gcode/restart"}</code>).</p>
+<h3 id="info">infó<a class="headerlink" href="#info" title="Permanent link">&para;</a></h3>
+<p>Az "info" végpontot a Klipper rendszert és verzióinformációinak lekérdezésére használjuk. Arra is szolgál, hogy a kliens'verziót a Klipper számára megadja. Például: <code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}}</code></p>
+<p>Ha jelen van a "client_info" paraméter egy szótárnak kell lennie, de a szótár tetszőleges tartalmú lehet. A felhasználóknak ajánlott megadniuk az ügyfél nevét és a szoftver verzióját, amikor először csatlakoznak a Klipper API kiszolgálóhoz.</p>
+<h3 id="emergency_stop">emergency_stop<a class="headerlink" href="#emergency_stop" title="Permanent link">&para;</a></h3>
+<p>Az "emergency_stop" végpont arra szolgál, hogy utasítsa a Klippert a "shutdown" állapotba való átmenetre. Hasonlóan viselkedik, mint a G-kód <code>M112</code> parancs. Például: <code>{"id": 123, "method": "emergency_stop"}</code></p>
+<h3 id="register_remote_method">register_remote_method<a class="headerlink" href="#register_remote_method" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lehetővé teszi az ügyfelek számára, hogy regisztrálják a klipperből hívható metódusokat. Siker esetén egy üres objektumot ad vissza.</p>
+<p>Például: <code>{"id": 123, "method": "register_remote_method", "params": {"response_template": {"action": "run_paneldue_beep"}, "remote_method": "paneldue_beep"}}}</code> fog visszatérni: <code>{"id": 123, "result": {}}</code></p>
+<p>A távoli <code>paneldue_beep</code> metódus mostantól hívható a Klipperből. Vegyük figyelembe, hogy ha a metódus paramétereket vesz fel, akkor azokat kulcsszavas argumentumként kell megadni. Az alábbiakban egy példa látható arra, hogyan hívható meg egy gcode_macro-ból:</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro PANELDUE_BEEP]
+gcode:
+  {action_call_remote_method(&quot;paneldue_beep&quot;, frequency=300, duration=1.0)}
+</code></pre></div>
+
+<p>Amikor a PANELDUE_BEEP G-kód makró végrehajtódik, a Klipper valami ilyesmit küld a kapcsolaton keresztül: <code>{"action": "run_paneldue_beep", "params": {"frequency": 300, "duration": 1.0}}</code></p>
+<h3 id="objectslist">objects/list<a class="headerlink" href="#objectslist" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lekérdezi az elérhető nyomtató objektumok listáját, amelyeket lekérdezhetünk (az "objects/query" végponton keresztül). Például: <code>{"id": 123, "method": "objects/list"}</code> visszatérhet: <code>{"id": 123, "result": {"objects": ["webhooks", "configfile", "heaters", "gcode_move", "query_endstops", "idle_timeout", "toolhead", "extruder"]}}</code></p>
+<h3 id="objectsquery">objects/query<a class="headerlink" href="#objectsquery" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lehetővé teszi a nyomtató objektumokból származó információk lekérdezését. Például: <code>{"id": 123, "method": "objects/query", "params": {"objects": {"toolhead": ["position"], "webhooks": null}}}}</code> might return: <code>{"id": 123, "result": {"status": {"webhooks": {"state": "ready", "state_message": "Printer is ready"}, "toolhead": {"position": [0.0, 0.0, 0.0, 0.0, 0.0]}}, "eventtime": 3051555.377933684}}</code></p>
+<p>A kérés "objects" paraméterének egy szótárnak kell lennie, amely a lekérdezendő nyomtató objektumokat tartalmazza. A kulcs a nyomtató objektum nevét tartalmazza, az érték pedig vagy "null" (az összes mező lekérdezése), vagy a mezőnevek listája.</p>
+<p>A válaszüzenet tartalmaz egy "status" mezőt, amely egy szótárat tartalmaz a lekérdezett információkkal. A kulcs a nyomtató objektum nevét tartalmazza, az érték pedig a mezőit tartalmazó szótár. A válaszüzenet tartalmaz egy "eventtime" mezőt is, amely a lekérdezés időpontjának időbélyegét tartalmazza.</p>
+<p>A rendelkezésre álló mezők a <a href="Status_Reference.html">Állapothivatkozás</a> dokumentumban vannak dokumentálva.</p>
+<h3 id="objectssubscribe">objects/subscribe<a class="headerlink" href="#objectssubscribe" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lehetővé teszi a nyomtató objektumokból származó információk lekérdezését, majd előjegyzését. A végpont kérése és válasza megegyezik a "objects/query" végponttal. Például: <code>{"id": 123, "method": "objects/subscribe", "params": {"objects":{"toolhead": ["position"], "webhooks": ["state"]}, "response_template":{}}}</code> might return: <code>{"id": 123, "result": {"status": {"webhooks": {"state": "ready"}, "toolhead": {"position": [0.0, 0.0, 0.0, 0.0, 0.0]}}, "eventtime": 3052153.382083195}}</code> és az ezt követő aszinkron üzeneteket eredményez, mint például: <code>{"params": {"status": {"webhooks": {"state": "shutdown"}}, "eventtime": 3052165.418815847}}</code></p>
+<h3 id="gcodehelp">gcode/help<a class="headerlink" href="#gcodehelp" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lehetővé teszi a rendelkezésre álló G-kód parancsok lekérdezését, amelyekhez súgószöveg van definiálva. Például: <code>{"id": 123, "method": "gcode/help"}</code> visszatérhet: <code>{"id": 123, "result": {"RESTORE_GCODE_STATE": "Egy korábban elmentett G-kód állapot visszaállítása", "PID_CALIBRATE": "PID kalibrációs teszt futtatása", "QUERY_ADC": "Egy analóg tű utolsó értékének jelentése", ...}}</code></p>
+<h3 id="gcodescript">gcode/script<a class="headerlink" href="#gcodescript" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lehetővé teszi egy sor G-kód parancs futtatását. Például: <code>{"id": 123, "method": "gcode/script", "params": {"script": "G90"}}}</code></p>
+<p>Ha a megadott G-kód szkript hibát okoz, akkor a rendszer hibaválaszt generál. Ha azonban a G-kód parancs terminál kimenetet eredményez, a terminál kimenete nem szerepel a válaszban. (A "gcode/subscribe_output" végpontot használja a G-kód terminálkimenethez.)</p>
+<p>Ha a kérés beérkezésekor éppen egy G-kód parancsot dolgoznak fel, akkor a megadott szkript sorba kerül. Ez a késedelem jelentős lehet (pl. ha egy G-kódos hőmérsékleti várakozás parancs fut). A JSON válaszüzenet akkor kerül elküldésre, amikor a parancsfájl feldolgozása teljesen befejeződött.</p>
+<h3 id="gcoderestart">gcode/restart<a class="headerlink" href="#gcoderestart" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lehetővé teszi az újraindítás kérését, hasonlóan a G-kód "RESTART" parancs futtatásához. Például: <code>{"id": }</code>&lt;x id="123, "method": "gcode/restart"}`</p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
+<h3 id="gcodefirmware_restart">gcode/firmware_restart<a class="headerlink" href="#gcodefirmware_restart" title="Permanent link">&para;</a></h3>
+<p>Ez hasonló a "gcode/restart" végponthoz. A G-kód "FIRMWARE_RESTART" parancsot valósítja meg. Például: <code>{"id": 123, "method": "gcode/firmware_restart"}</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
+<h3 id="gcodesubscribe_output">gcode/subscribe_output<a class="headerlink" href="#gcodesubscribe_output" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont a Klipper által generált G-kódos terminálüzenetekre való feliratkozásra szolgál. Például: <code>{"id": 123, "method": "gcode/subscribe_output", "params": {"response_template":{}}}}</code> később olyan aszinkron üzeneteket eredményezhet, mint például: <code>{"params": {"response": "// Klipper state: Shutdown"}}</code></p>
+<p>Ez a végpont az emberi interakciót hivatott támogatni egy "terminálablak" interfészen keresztül. A G-kód terminál kimenetéből származó tartalom elemzése nem javasolt. A Klipper'állapotának frissítéséhez használja az "objects/subscribe" végpontot.</p>
+<h3 id="motion_reportdump_stepper">motion_report/dump_stepper<a class="headerlink" href="#motion_reportdump_stepper" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont a Klipper belső léptető queue_step parancsfolyamra való feliratkozásra szolgál egy léptető számára. Ezeknek az alacsony szintű mozgásfrissítéseknek a lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszer terhelését.</p>
+<p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"motion_report/dump_stepper", "params": {"name": "stepper_x", "response_template": {}}}</code> és esetleg visszatér: <code>{"id": 123, "result": {"header": }}}</code>, és később aszinkron üzeneteket produkálhat, mint például: ["intervallum", "count", "add"]}}<code -1525_="-1525]," -160_="-160]," -8685_="-8685]," 0_="0]," 10.984_="10.984," 1000_="1000," 1534_="1534]," 179601081_="179601081," 187_="187]," 1_="1," 219686097_="219686097," 2_="2," 4_="4," 5_="5," 6_="6," 8.98_="8.98," 9442_="9442]]" 976_="976," _10000_="[10000," _10559_="[10559," _11632_="[11632," _16230_="[16230," _179601081_="[[179601081," _20756_="[20756," _29573_="[29573," _9855_="[9855," _data_:="&quot;data&quot;:" _first_clock_:="{&quot;first_clock&quot;:" _first_position_:="&quot;first_position&quot;:" _first_time_:="&quot;first_time&quot;:" _last_clock_:="&quot;last_clock&quot;:" _last_time_:="&quot;last_time&quot;:" _params_:="&quot;params&quot;:">:</code>}`</p>
+<p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
+<h3 id="motion_reportdump_trapq">motion_report/dump_trapq<a class="headerlink" href="#motion_reportdump_trapq" title="Permanent link">&para;</a></h3>
+<p>Ezt a végpontot a Klipper belső "trapézmozgás-várólistára" való feliratkozásra használják. Ezeknek az alacsony szintű mozgásfrissítéseknek a lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszer terhelését.</p>
+<p>Egy kérés így nézhet ki: <code>{"id": 123, "method": "motion_report/dump_trapq", "params": {"name": "toolhead", "response_template":{}}}</code> és esetleg visszatér: <code>{"id": 1, "result": {"header": ["time", "duration", "start_velocity", "acceleration", "start_position", "direction"]}}}</code> és később aszinkron üzeneteket produkálhat, mint például: <code>{"params": {"data": [[4.05, 1.0, 0.0, 0.0, 0.0, [300.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], [5.054, 0.001, 0.0, 3000.0, [300.0, 0.0, 0.0, 0.0], [-1.0, 0.0, 0.0, 0.0]]}}</code></p>
+<p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
+<h3 id="adxl345dump_adxl345">adxl345/dump_adxl345<a class="headerlink" href="#adxl345dump_adxl345" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont az ADXL345 gyorsulásmérő adataira való feliratkozásra szolgál. Ezeknek az alacsony szintű mozgásfrissítéseknek a lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszer terhelését.</p>
+<p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"adxl345/dump_adxl345", "params": {"sensor": "adxl345", "response_template": {}}}</code> és esetleg visszatér: <code>{"id": 123,"result":{"header":["time","x_acceleration","y_acceleration", "z_acceleration"]}}}</code> és később olyan aszinkron üzeneteket produkálhat, mint például: <code>{"params":{"overflows":0,"data":[[3292.432935,-535.44309,-1529.8374,9561.4], [3292.433256,-382.45935,-1606.32927,9561.48375]]}}</code></p>
+<p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
+<h3 id="angledump_angle">angle/dump_angle<a class="headerlink" href="#angledump_angle" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont a <a href="Config_Reference.html#angle">szögérzékelő adatainak</a> feliratkozására szolgál. Ezeknek az alacsony szintű mozgásfrissítéseknek a lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszer terhelését.</p>
+<p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> és esetleg visszatér: <code>{"id": 123,"result":{"header":["time","angle"]}}}</code> és később olyan aszinkron üzeneteket produkálhat, mint például: <code>{"params":{"position_offset":3.151562,"errors":0, "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
+<p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
+<h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont hasonló a "PRINT_CANCEL" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
+<h3 id="pause_resumepause">pause_resume/pause<a class="headerlink" href="#pause_resumepause" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont hasonló a "PAUSE" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
+<h3 id="pause_resumeresume">pause_resume/resume<a class="headerlink" href="#pause_resumeresume" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont hasonló a "RESUME" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
+<h3 id="query_endstopsstatus">query_endstops/status<a class="headerlink" href="#query_endstopsstatus" title="Permanent link">&para;</a></h3>
+<p>Ez a végpont lekérdezi az aktív végpontokat és visszaadja azok állapotát. Például: <code>{"id": 123, "method": "query_endstops/status"}</code> visszatérhet: <code>{"id": 123, "result": {"y": "open", "x": "open", "z": "TRIGGERED"}}</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Élőláb">
+      
+        
+        <a href="Protocol.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Protokoll" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Előző
+              </span>
+              Protokoll
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="MCU_Commands.html" class="md-footer__link md-footer__link--next" aria-label="Következő: MCU parancsok" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Következő
+              </span>
+              MCU parancsok
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "M\u00e1sol\u00e1s v\u00e1g\u00f3lapra", "clipboard.copied": "V\u00e1g\u00f3lapra m\u00e1solva", "search.config.lang": "hu", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Keres\u00e9s", "search.result.placeholder": "Keres\u00e9shez \u00edrj ide valamit", "search.result.none": "Nincs tal\u00e1lat", "search.result.one": "1 egyez\u0151 dokumentum", "search.result.other": "# egyez\u0151 dokumentum", "search.result.more.one": "1 tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.more.other": "# tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.term.missing": "\u00dcres", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

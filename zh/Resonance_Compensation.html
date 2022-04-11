@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -944,7 +950,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1493,10 +1499,10 @@
 
 
 <h1 id="_1">共振补偿<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>Klipper支持Input Shaping -一种可以用来减少打印件上振纹（也被称为echo、ghosting或ripping）的技术。振纹是一种表面打印缺陷，通常在边角的位置表面重复出现，成为一种微妙的水波状纹路：</p>
+<p>Klipper支持输入整形 -一种可以用来减少打印件上振纹（也被称为echo、ghosting或ripping）的技术。振纹是一种表面打印缺陷，通常在边角的位置表面重复出现，成为一种微妙的水波状纹路：</p>
 <p>|<img alt="振纹测试" src="img/ringing-test.jpg" />|<img alt="3D Benchy" src="img/ringing-3dbenchy.jpg" />|</p>
 <p>振纹是由打印机在快速改变打印方向时机械振动引起的。请注意，振纹通常源于机械方面的问题：打印机框架强度不足，皮带不够紧或太有弹性，机械部件的对准问题，移动质量大等。如果可能的话，应首先检查和解决这些问题。</p>
-<p><a href="https://en.wikipedia.org/wiki/Input_shaping">Input Shaping</a>是一种开环控制技术，它通过生成一个控制信号来抵消自身的振动。输入整形在启用之前需要进行一些调整和测量。除了振纹之外，输入整形通常可以减少打印机的振动和摇晃，也可以提高 Trinamic 步进驱动器的StealthChop模式的可靠性。</p>
+<p><a href="https://en.wikipedia.org/wiki/Input_shaping">输入整形</a>是一种开环控制技术，它通过生成一个控制信号来抵消自身的振动。输入整形在启用之前需要进行一些调整和测量。除了振纹之外，输入整形通常可以减少打印机的振动和摇晃，也可以提高 Trinamic 步进驱动器的StealthChop模式的可靠性。</p>
 <h2 id="_2">调整<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>Basic tuning requires measuring the ringing frequencies of the printer by printing a test model.</p>
 <p>将振纹测试模型切片，该模型可以在<a href="prints/ringing_tower.stl">docs/prints/ringing_tower.stl</a>中找到，在切片软件中：</p>
@@ -1561,7 +1567,7 @@ shaper_freq_y: ...  # frequency for the Y mark of the test model
 <li>打印用建议的参数切片的测试模型。</li>
 </ol>
 <p>如果你在这个位置没有看到振铃，那么推荐使用 MZV 整形器。</p>
-<p>If you do see some ringing, re-measure the frequencies using steps (8)-(10) described in <a href="#ringing-frequency">Ringing frequency</a> section. If the frequencies differ significantly from the values you obtained earlier, a more complex input shaper configuration is needed. You can refer to Technical details of <a href="#input-shapers">Input shapers</a> section. Otherwise, proceed to the next step.</p>
+<p>如果你确实看到一些振纹，使用<a href="#共振频率">频率</a>部分描述的步骤(8)-(10)重新测量频率。如果频率与你之前得到的值有很大的不同，就需要一个更复杂的输入整形器配置。你可以参考<a href="#input-shapers">输入整形器</a>部分的技术细节。否则，进入下一步：</p>
 <p>Now try EI input shaper. To try it, repeat steps (1)-(6) from above, but executing at step 4 the following command instead: <code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>.</p>
 <p>Compare two prints with MZV and EI input shaper. If EI shows noticeably better results than MZV, use EI shaper, otherwise prefer MZV. Note that EI shaper will cause more smoothing in printed parts (see the next section for further details). Add <code>shaper_type: mzv</code> (or ei) parameter to [input_shaper] section, e.g.:</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]

@@ -1,0 +1,1570 @@
+
+<!doctype html>
+<html lang="hu" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Kód áttekintése - Klipper documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kod-attekintese" class="md-skip">
+          Kihagyás
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Élőfej">
+    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Kód áttekintése
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Select language">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Keresés" placeholder="Keresés" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Törlés" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Keresés inicializálása
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigáció" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Áttekintés
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funkciók
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Gyakran ismételt kérdések
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Kiadás
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurációs változások
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kapcsolat
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation and Configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation and Configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Telepítés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Configuration Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Configuration Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Configuration reference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Forgatási távolság
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Konfigurációs ellenőrzések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bed Level
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bed Level
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Ágyszintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Delta kalibrálás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Szonda kalibrálása
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Kézi szintezés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Ágyháló
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Végállás szakasz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonance Compensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonance Compensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonance Compensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Rezonancia kompenzáció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Rezonanciák mérése
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Nyomás előrehaladás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Command templates
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Command templates
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Parancssablonok
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Állapot referencia
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC meghajtók
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Több mikrovezélős kezdőpnt és szondázás
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Szeletelők
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Ferdeség korrekció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        PWM eszközök használata
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Developer Documentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Developer Documentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Kód áttekintése
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Code_Overview.html" class="md-nav__link md-nav__link--active">
+        Kód áttekintése
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#konyvtar-elrendezese" class="md-nav__link">
+    Könyvtár elrendezése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mikrokontroller-kodfolyamat" class="md-nav__link">
+    Mikrokontroller kódfolyamat
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klippy-kod-attekintese" class="md-nav__link">
+    Klippy kód áttekintése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mozgasparancs-kodfolyama" class="md-nav__link">
+    Mozgásparancs kódfolyama
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gazdamodul-hozzaadasa" class="md-nav__link">
+    Gazdamodul hozzáadása
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uj-kinematika-hozzaadasa" class="md-nav__link">
+    Új kinematika hozzáadása
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#portolas-uj-mikrokontrollerre" class="md-nav__link">
+    Portolás új mikrokontrollerre
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koordinata-rendszerek" class="md-nav__link">
+    Koordináta-rendszerek
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ido" class="md-nav__link">
+    Idő
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematika
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API szerver
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU parancsok
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Hibakeresés
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Referenciaértékek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Hozzájárulás a Klipperhez
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper Csomagolás
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Device Specific Documents
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Device Specific Documents
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Példa konfigurációk
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-kártya frissítések
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi mikrokontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloaderek
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Hall nyomtatószál szélesség érzékelő
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tartalomjegyzék
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#konyvtar-elrendezese" class="md-nav__link">
+    Könyvtár elrendezése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mikrokontroller-kodfolyamat" class="md-nav__link">
+    Mikrokontroller kódfolyamat
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klippy-kod-attekintese" class="md-nav__link">
+    Klippy kód áttekintése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mozgasparancs-kodfolyama" class="md-nav__link">
+    Mozgásparancs kódfolyama
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gazdamodul-hozzaadasa" class="md-nav__link">
+    Gazdamodul hozzáadása
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uj-kinematika-hozzaadasa" class="md-nav__link">
+    Új kinematika hozzáadása
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#portolas-uj-mikrokontrollerre" class="md-nav__link">
+    Portolás új mikrokontrollerre
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koordinata-rendszerek" class="md-nav__link">
+    Koordináta-rendszerek
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ido" class="md-nav__link">
+    Idő
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Code_Overview.md" title="Oldal szerkesztése" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="kod-attekintese">Kód áttekintése<a class="headerlink" href="#kod-attekintese" title="Permanent link">&para;</a></h1>
+<p>Ez a dokumentum a Klipper általános kódelrendezését és főbb kódfolyamát írja le.</p>
+<h2 id="konyvtar-elrendezese">Könyvtár elrendezése<a class="headerlink" href="#konyvtar-elrendezese" title="Permanent link">&para;</a></h2>
+<p>Az <strong>src/</strong> könyvtár tartalmazza a mikrovezérlő kódjának C forrását. Az <strong>src/atsam/</strong>, <strong>src/atsamd/</strong>, <strong>src/avr/</strong>, <strong>src/linux/</strong>, <strong>src/lpc176x/</strong>, <strong>src/ A pru/</strong> és <strong>src/stm32/</strong> könyvtárak architektúra-specifikus mikrovezérlő kódot tartalmaznak. Az <strong>src/simulator/</strong> kódcsonkokat tartalmaz, amelyek lehetővé teszik a mikrokontroller tesztelését más architektúrákon. Az <strong>src/generic/</strong> könyvtár segédkódot tartalmaz, amely hasznos lehet a különböző architektúrákban. A build gondoskodik arról, hogy az include "board/somefile.h" először az aktuális architektúra könyvtárban (pl. src/avr/somefile.h), majd az általános könyvtárban (pl. src/generic/somefile.h) keressen.</p>
+<p>A <strong>klippy/</strong> könyvtár tartalmazza a gazdaszoftvert. A gazdaszoftver nagy része Python nyelven íródott, azonban a <strong>klippy/chelper/</strong> könyvtár tartalmaz néhány C kódú segédprogramot. A <strong>klippy/kinematics/</strong> könyvtár tartalmazza a robot kinematikai kódját. A <strong>klippy/extras/</strong> könyvtár tartalmazza a gazdakód bővíthető "moduljait".</p>
+<p>A <strong>lib/</strong> könyvtár külső, harmadik féltől származó könyvtári kódot tartalmaz, amely néhány célprogram elkészítéséhez szükséges.</p>
+<p>A <strong>config/</strong> könyvtár a nyomtató konfigurációs példafájljait tartalmazza.</p>
+<p>Az <strong>scripts/</strong> könyvtár felépítési idejű szkripteket tartalmaz, amelyek hasznosak a mikrovezérlő kódjának fordításához.</p>
+<p>A <strong>test/</strong> könyvtár automatikus teszteseteket tartalmaz.</p>
+<p>Fordítás során a build létrehozhat egy <strong>out/</strong> könyvtárat. Ez ideiglenes építési idejű objektumokat tartalmaz. A végső mikrokontroller objektum, amely felépül, AVR esetén <strong>out/klipper.elf.hex</strong>, ARM esetén <strong>out/klipper.bin</strong>.</p>
+<h2 id="mikrokontroller-kodfolyamat">Mikrokontroller kódfolyamat<a class="headerlink" href="#mikrokontroller-kodfolyamat" title="Permanent link">&para;</a></h2>
+<p>A mikrokontroller kódjának végrehajtása az architektúra-specifikus kódban kezdődik (pl. <strong>src/avr/main.c</strong>), amely végül a <strong>src/sched.c</strong>-ban található sched_main() parancsot hívja meg. A sched_main() kód a DECL_INIT() makróval jelölt összes függvény futtatásával kezdődik. Ezután a DECL_TASK() makróval megjelölt függvények ismételt futtatására kerül sor.</p>
+<p>Az egyik fő feladatfüggvény a command_dispatch(), amely a <strong>src/command.c</strong> fájlban található. Ezt a függvényt a kártyaspecifikus bemeneti/kimeneti kódból (pl. <strong>src/avr/serial.c</strong>, <strong>src/generic/serial_irq.c</strong>) hívjuk meg, és a bemeneti folyamban található parancsokhoz tartozó parancsfüggvényeket futtatja. A parancsfüggvények deklarálása a DECL_COMMAND() makróval történik (további információkért lásd a <a href="Protocol.html">protokol</a> dokumentumot).</p>
+<p>A feladat-, init- és parancsfüggvények mindig engedélyezett megszakításokkal futnak (szükség esetén azonban ideiglenesen letilthatják a megszakításokat). Ezek a függvények soha nem tarthatnak szünetet, nem késleltethetnek, és nem végezhetnek olyan munkát, amely néhány mikroszekundumnál tovább tart. Ezek a függvények a munkát meghatározott időpontokra ütemezik időzítők segítségével.</p>
+<p>Az időzítő függvények ütemezése a sched_add_timer() meghívásával történik (a <strong>src/sched.c</strong> fájlban található). Az ütemező kód gondoskodik arról, hogy az adott függvényt a kért időben hívja meg. Az időzítő megszakítások kezelése kezdetben egy architektúra-specifikus megszakításkezelőben történik (pl. <strong>src/avr/timer.c</strong>), amely a <strong>src/sched.c</strong>-ban található sched_timer_dispatch() funkciót hívja. Az időzítő megszakítása az ütemező időzítő függvények végrehajtásához vezet. Az időzítő függvények mindig megszakítások kikapcsolásával futnak. Az időzítőfüggvényeknek mindig néhány mikroszekundumon belül kell befejeződniük. Az időzítő esemény befejezésekor a függvény dönthet úgy, hogy átütemezi magát.</p>
+<p>Hiba észlelése esetén a kód meghívhatja a shutdown() funkciót (egy makró, amely a <strong>src/sched.c</strong>-ben található sched_shutdown() funkciót hívja). A shutdown() meghívása a DECL_SHUTDOWN() makróval jelölt összes függvény futtatását eredményezi. A leállítási függvények mindig megszakítások letiltásával futnak.</p>
+<p>A mikrokontroller funkcióinak nagy része az általános célú bemeneti/kimeneti érintkezőkkel (GPIO) való munkát foglalja magában. Annak érdekében, hogy az alacsony szintű architektúra-specifikus kódot elvonatkoztassuk a magas szintű feladatkódtól, minden GPIO eseményt architektúra-specifikus burkolatokban valósítunk meg (pl. <strong>src/avr/gpio.c</strong>). A kódot a gcc's "-flto -fwhole-program" optimalizálással fordítottuk, amely kiváló munkát végez a függvények inline-olásában a fordítási egységeken keresztül, így a legtöbb ilyen apró GPIO függvény inline-olva van a hívóikban, és nincs futásidejű költsége a használatuknak.</p>
+<h2 id="klippy-kod-attekintese">Klippy kód áttekintése<a class="headerlink" href="#klippy-kod-attekintese" title="Permanent link">&para;</a></h2>
+<p>A gazdakódot (Klippy) egy olcsó számítógépen (például egy Raspberry Pi) kell futtatni a mikrokontrollerrel párosítva. A kód elsősorban Pythonban íródott, azonban a CFFI-t használja néhány funkció C kódban történő megvalósításához.</p>
+<p>A kezdeti végrehajtás a <strong>klippy/klippy.py</strong> fájlban kezdődik. Ez beolvassa a parancssori argumentumokat, megnyitja a nyomtató konfigurációs fájlját, példányosítja a fő nyomtatóobjektumokat, és elindítja a soros kapcsolatot. A G-kód parancsok fő végrehajtása a process_commands() metódusban történik az <strong>klippy/gcode.py</strong> fájlban. Ez a kód a G-kód parancsokat nyomtatóobjektum-hívásokká fordítja le, amelyek gyakran a műveleteket a mikrovezérlőn végrehajtandó parancsokká alakítják (a mikrovezérlő kódjában a DECL_COMMAND makrón keresztül).</p>
+<p>A Klippy gazdagép kódjában négy szál van. A fő szál kezeli a bejövő G-kód parancsokat. Egy második szál (amely teljes egészében a <strong>klippy/chelper/serialqueue.c</strong> C kódban található) az alacsony szintű IO-t kezeli a soros porttal. A harmadik szál a Python kódban (lásd <strong>klippy/serialhdl.py</strong>) a mikrokontroller válaszüzeneteinek feldolgozására szolgál. A negyedik szál hibakeresési üzeneteket ír a naplóba (lásd <strong>klippy/queuelogger.py</strong>), hogy a többi szál soha ne blokkoljon a naplóíráskor.</p>
+<h2 id="mozgasparancs-kodfolyama">Mozgásparancs kódfolyama<a class="headerlink" href="#mozgasparancs-kodfolyama" title="Permanent link">&para;</a></h2>
+<p>Egy tipikus nyomtatómozgás akkor kezdődik, amikor egy "G1" parancsot küldünk a Klippy gazdagépnek, és akkor fejeződik be, amikor a megfelelő lépésimpulzusok megjelennek a mikrokontrolleren. Ez a szakasz egy tipikus mozgatási parancs kódfolyamatát vázolja fel. A <a href="Kinematics.html">kinematika</a> dokumentum további információkat tartalmaz a mozgások mechanikájáról.</p>
+<ul>
+<li>A mozgás parancs feldolgozása a gcode.py fájlban kezdődik. A gcode.py célja a G-kód lefordítása belső hívásokká. Egy G1 parancs a klippy/extras/gcode_move.py állományban lévő cmd_G1() parancsot hívja meg. A gcode_move.py kód kezeli az eredetváltozásokat (pl. G92), a relatív és abszolút pozíciók közötti változásokat (pl. G90) és az egységváltozásokat (pl. F6000=100mm/s). A kód útvonala a mozgatáshoz a következő: <code>_process_data() -&gt; _process_commands() -&gt; cmd_G1()</code>. Végül a ToolHead osztályt hívjuk meg a tényleges kérés végrehajtásához: <code>cmd_G1() -&gt; ToolHead.move()</code></li>
+<li>A ToolHead osztály (a toolhead.py állományban) kezeli a "look-ahead" és követi a nyomtatási műveletek időzítését. A fő kódútvonal egy mozdulathoz a következő: <code>ToolHead.move() -&gt; MoveQueue.add_move() -&gt; MoveQueue.flush() -&gt; Move.set_junction() -&gt; ToolHead._process_moves()</code>.<ul>
+<li>A ToolHead.move() létrehoz egy Move() objektumot a mozgás paramétereivel (cartesian térben, másodperc és milliméter egységekben).</li>
+<li>A kinematikai osztály lehetőséget kap az egyes mozgások ellenőrzésére (<code>ToolHead.move() -&gt; kin.check_move()</code>). A kinematikai osztályok a klippy/kinematics/ könyvtárban találhatók. A check_move() kód hibát adhat ki, ha a mozgás nem érvényes. Ha a check_move() sikeresen befejeződik, akkor az alapul szolgáló kinematikának képesnek kell lennie a mozgás kezelésére.</li>
+<li>A MoveQueue.add_move() elhelyezi a move objektumot a "look-ahead" várólistán.</li>
+<li>A MoveQueue.flush() meghatározza az egyes mozgások kezdő és végsebességét.</li>
+<li>A Move.set_junction() a "trapézgenerátort" valósítja meg egy mozgásban. A "trapézgenerátor" minden mozgást három részre bont: egy állandó gyorsulási fázisra, majd egy állandó sebesség fázisra, majd egy állandó lassulási fázisra. Minden mozgás ebben a sorrendben tartalmazza ezt a három fázist, de egyes fázisok időtartama lehet nulla is.</li>
+<li>Amikor a ToolHead._process_moves() meghívásra kerül, a mozgással kapcsolatban minden ismert - a kezdőhelye, a véghelye, a gyorsulása, a kezdő/körözési/végsebessége és a gyorsulás/körözési/végsebesség alatt megtett távolság. Minden információ a Move() osztályban tárolódik, és cartesian térben, milliméter és másodperc egységekben van megadva.</li>
+</ul>
+</li>
+<li>A Klipper egy <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">iteratív megoldót</a> használ az egyes léptetők lépésidejének létrehozásához. Hatékonysági okokból a léptető impulzusidőket C kódban generálja. A mozgásokat először egy "trapézmozgás-várólistára" helyezzük: <code>ToolHead._process_moves() -&gt; trapq_append()</code> (a klippy/chelper/trapq.c-ben). A lépésidők ezután generálódnak: <code>ToolHead._process_moves() -&gt; ToolHead._update_move_time() -&gt; MCU_Stepper.generate_steps() -&gt; itersolve_generate_steps() -&gt; itersolve_gen_steps_range()</code> (a klippy/chelper/itersolve.c-ben). Az iteratív megoldó célja, hogy lépésidőket találjon egy olyan függvényt adva, amely egy időből kiszámítja a lépéshelyzetet. Ez úgy történik, hogy többször "kitaláljuk" a különböző időket, amíg a léptető pozíció képlet vissza nem adja a léptető következő lépésének kívánt pozícióját. Az egyes találgatásokból származó visszajelzéseket a jövőbeli találgatások javítására használjuk, hogy a folyamat gyorsan konvergáljon a kívánt időhöz. A kinematikus stepper pozíció képletek a klippy/chelper/ könyvtárban találhatók (pl. kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).</li>
+<li>Vegye figyelembe, hogy az extruder saját kinematikai osztályban van kezelve: <code>ToolHead._process_moves() -&gt; PrinterExtruder.move()</code>. Mivel a Move() osztály pontosan megadja a mozgás idejét, és mivel a lépésimpulzusokat meghatározott időzítéssel küldi a mikrokontrollerhez, az extruder osztály által előállított léptetőmozgások szinkronban lesznek a fejmozgással, annak ellenére, hogy a kódot elkülönítve tartjuk.</li>
+<li>Miután az iteratív megoldó kiszámítja a lépésidőket, azok egy tömbhöz kerülnek hozzáadásra: <code>itersolve_gen_steps_range() -&gt; stepcompress_append()</code> (in klippy/chelper/stepcompress.c). A tömb (struct stepcompress.queue) minden lépéshez tárolja a mikrokontroller megfelelő óraszámláló idejét. Itt a "mikrokontroller óra számláló" értéke közvetlenül megfelel a mikrokontroller hardveres számlálójának, a mikrokontroller utolsó bekapcsolásának időpontjához viszonyítva.</li>
+<li>A következő fontos lépés a lépések tömörítése: <code>stepcompress_flush() -&gt; compress_bisect_add()</code> (in klippy/chelper/stepcompress.c). Ez a kód generálja és kódolja a mikrokontroller "queue_step" parancsainak sorozatát, amelyek megfelelnek az előző szakaszban felépített léptető lépésidők listájának. Ezek a "queue_step" parancsok ezután sorba kerülnek, prioritást kapnak, és elküldésre kerülnek a mikrokontrollernek (a stepcompress.c:steppersync és a serialqueue.c:serialqueue kódokon keresztül).</li>
+<li>A queue_step parancsok feldolgozása a mikrokontrollerben az src/command.c állományban kezdődik, amely elemzi a parancsot és meghívja a <code>command_queue_step()</code> parancsot. A command_queue_step() kód (az src/stepper.c-ben) csak az egyes queue_step parancsok paramétereit csatolja egy-egy stepper sorba. Normál működés esetén a queue_step parancsot legalább 100ms-mal az első lépés időpontja előtt elemzi és beállítja a sorba. Végül a stepper események generálása a <code>stepper_event()</code>-ban történik. Ezt a hardveres időzítő megszakításából hívjuk meg az első lépés tervezett időpontjában. A stepper_event() kód generál egy lépésimpulzust, majd átütemezi magát a következő lépésimpulzus idejére a megadott queue_step paraméterekhez. Az egyes queue_step parancsok paraméterei a következők: "interval", "count" és "add". Magas szinten a stepper_event() a következőket hajtja végre, 'count' times: <code>do_step(); next_wake_time = last_wake_time + interval; interval += add;</code></li>
+</ul>
+<p>A fentiek soknak tűnhetnek egy mozdulat végrehajtásához. Az egyetlen igazán érdekes rész azonban a ToolHead és a kinematikai osztályokban található. Ez a kódnak azon része, amely meghatározza a mozgásokat és azok időzítését. A feldolgozás többi része többnyire csak kommunikáció és munka.</p>
+<h2 id="gazdamodul-hozzaadasa">Gazdamodul hozzáadása<a class="headerlink" href="#gazdamodul-hozzaadasa" title="Permanent link">&para;</a></h2>
+<p>A Klippy host kódja dinamikus modulbetöltési képességgel rendelkezik. Ha a nyomtató konfigurációs fájljában található egy "[my_module]" nevű konfigurációs szakasz, akkor a szoftver automatikusan megpróbálja betölteni a klippy/extras/my_module.py . modult. Ez a modulrendszer a Klipper új funkciók hozzáadásának előnyben részesített módszere.</p>
+<p>Egy új modul hozzáadásának legegyszerűbb módja, ha egy meglévő modult használunk hivatkozásként - lásd <strong>klippy/extras/servo.py</strong> példaként.</p>
+<p>A következők is hasznosak lehetnek:</p>
+<ul>
+<li>A modul végrehajtása a modulszintű <code>load_config()</code> függvényben kezdődik (a [my_module] formájú config szakaszok esetén) vagy a <code>load_config_prefix()</code> függvényben (a [my_module my_name] formájú config szakaszok esetén). Ennek a függvénynek egy "config" objektumot kell átadni, és egy új "printer objektumot" kell visszaadnia, amely az adott config szakaszhoz kapcsolódik.</li>
+<li>Egy új nyomtatóobjektum példányosítása során a config objektum segítségével paramétereket olvashat be az adott config szakaszból. Erre a <code>config.get()</code>, <code>config.getfloat()</code>, <code>config.getint()</code> stb. metódusok szolgálnak. Ügyeljen arra, hogy a nyomtató objektum felépítése során minden értéket beolvasson a configból. Ha a felhasználó olyan config paramétert ad meg, amelyet ebben a fázisban nem olvas be, akkor azt feltételezi, hogy elírás történt a configban, és hibaüzenetet ad.</li>
+<li>A <code>config.get_printer()</code> metódus segítségével megkapjuk a fő "printer" osztályra való hivatkozást. Ez a "nyomtató" osztály tárolja a hivatkozásokat az összes "nyomtatóobjektumra", amelyet már példányosítottak. A <code>printer.lookup_object()</code> metódus segítségével megkereshetjük a többi nyomtatóobjektumra mutató hivatkozásokat. Szinte minden funkció (még az alapvető kinematikai modulok is) egy ilyen nyomtatóobjektumba vannak kapszulázva. Vegyük azonban figyelembe, hogy egy új modul példányosításakor nem minden más nyomtatóobjektumot példányosítottunk. A "gcode" és a "pins" modulok mindig elérhetőek lesznek, de a többi modul esetében érdemes elhalasztani a keresést.</li>
+<li>Az eseménykezelőket a <code>printer.register_event_handler()</code> módszerrel regisztrálhatja, ha a kódot más nyomtatóobjektumok által kiváltott "események" során kell meghívni. Minden esemény neve egy karakterlánc, és a konvenció szerint az eseményt kiváltó fő forrásmodul neve, valamint az eseményt kiváltó művelet rövid neve (pl. "klippy:connect"). Az egyes eseménykezelőknek átadott paraméterek az adott eseményre jellemzőek (ahogy a kivételkezelés és a végrehajtási kontextus is). Két gyakori indítási esemény a következő:<ul>
+<li>klippy:connect - Ez az esemény az összes nyomtatóobjektum példányosítása után generálódik. Általában más nyomtatóobjektumok keresésére, a konfigurációs beállítások ellenőrzésére és a kezdeti "kézfogás" végrehajtására használják a nyomtató hardverével.</li>
+<li>klippy:ready - Ez az esemény az összes csatlakozási kezelő sikeres befejezése után generálódik. Jelzi, hogy a nyomtató átvált a normál műveletek kezelésére kész állapotba. Ebben a visszahívásban ne jelezzen hibát.</li>
+</ul>
+</li>
+<li>Ha hiba van a felhasználó konfigurációjában, mindenképpen hívja fel a figyelmet a <code>load_config()</code> vagy a "connect event" fázisokban. Használja a <code>raise config.error("my error")</code> vagy <code>raise printer.config_error("my error")</code> hibajelzést.</li>
+<li>A "pins" modul segítségével konfigurálhat egy csatlakozót a mikrokontrollerben. Ez általában a <code>printer.lookup_object("pins").setup_pin("pwm", config.get("my_pin"))</code>-hoz hasonló módon történik. A visszakapott objektumot ezután futásidőben lehet utasítani.</li>
+<li>Ha a nyomtató objektum definiál egy <code>get_status()</code> metódust, akkor a modul <a href="Status_Reference.html">állapotinformációt</a> exportálhat a <a href="Command_Templates.html">makrókon</a> és az <a href="API_Server.html">API Szerveren</a> keresztül. A <code>get_status()</code> metódusnak egy Python szótárat kell visszaadnia, amelynek kulcsai karakterláncok, értékei pedig egész számok, lebegő számok, karakterláncok, listák, szótárak, True, False vagy None. Használhatók tuplik (és nevesített tuplik) is (ezek az API-kiszolgálón keresztül történő eléréskor listaként jelennek meg). Az exportált listákat és szótárakat "megváltoztathatatlanok". Ha tartalmuk megváltozik, akkor egy új objektumot kell visszaküldeni a <code>get_status()</code> parancsból, különben az API-kiszolgáló nem fogja észlelni a változásokat.</li>
+<li>Ha a modulnak hozzáférésre van szüksége a rendszer időzítéséhez vagy külső fájlleírókhoz, akkor a <code>printer.get_reactor()</code> segítségével hozzáférhetünk a globális "event reactor" osztályhoz. Ez a reactor osztály lehetővé teszi az időzítők ütemezését, a fájlleírók bemenetének várakozását, valamint a gazdakód "alvó" használatát.</li>
+<li>Ne használjon globális változókat. Minden állapotot a <code>load_config()</code> függvény által visszaadott nyomtató objektumban kell tárolni. Ez azért fontos, mert ellenkező esetben a RESTART parancs nem az elvártaknak megfelelően fog működni. Szintén hasonló okokból, ha bármilyen külső fájl (vagy foglalat) megnyílt, akkor mindenképpen regisztráljunk egy "klippy:disconnect" eseménykezelőt, és zárjuk be őket ebből a visszahívásból.</li>
+<li>Kerülje a más nyomtatóobjektumok belső tagváltozóinak elérését (vagy az aláhúzással kezdődő metódusok hívását). Ennek a konvenciónak a betartása megkönnyíti a jövőbeli változások kezelését.</li>
+<li>Javasoljuk, hogy a Python osztályok Python konstruktorában minden tagváltozóhoz értéket rendeljen. (És ezért kerülje a Python azon képességének kihasználását, hogy dinamikusan hozzon létre új tagváltozókat.)</li>
+<li>Ha egy Python változónak lebegőpontos értéket kell tárolnia, akkor ajánlott mindig lebegőpontos konstansokkal hozzárendelni és kezelni a változót (és soha ne használjunk egészértékű konstansokat). Például részesítsük előnyben a <code>self.speed = 1.</code> értéket a <code>self.speed = 1</code> értékkel szemben, és részesítsük előnyben a <code>self.speed = 2 értéket. * x</code> a <code>self.speed = 2 * x</code> helyett. A lebegőpontos értékek következetes használatával elkerülhetők a Python-típuskonverziók nehezen hibakereshető furcsaságai.</li>
+<li>Ha a modult a Klipper főkódjába való beépítésre küldöd, mindenképpen helyezz el egy szerzői jogi megjegyzést a modul tetején. Az előnyben részesített formátumot lásd a meglévő moduloknál.</li>
+</ul>
+<h2 id="uj-kinematika-hozzaadasa">Új kinematika hozzáadása<a class="headerlink" href="#uj-kinematika-hozzaadasa" title="Permanent link">&para;</a></h2>
+<p>Ez a szakasz néhány tippet ad a Klipper további nyomtató kinematikai típusok támogatásának hozzáadásához. Az ilyen típusú tevékenységhez a cél kinematikához tartozó matematikai képletek kiváló ismerete szükséges. Szoftverfejlesztési ismereteket is igényel, bár csak a gazdaszoftvert kell frissíteni.</p>
+<p>Hasznos lépések:</p>
+<ol>
+<li>Kezdd a "<a href="#code-flow-of-a-move-command">Egy mozgás kódfolyamata</a>" szakasz és a <a href="Kinematics.html">Kinematika dokumentum</a> tanulmányozásával.</li>
+<li>Tekintse át a klippy/kinematics/ könyvtárban található kinematikai osztályokat. A kinematikai osztályok feladata egy cartesian koordinátákban megadott mozgás átalakítása az egyes steppereken történő mozgássá. Kiindulópontként le kell tudni másolni az egyik ilyen fájlt.</li>
+<li>Implementáljuk a C stepperek kinematikai pozíciófüggvényeit minden stepperhez, ha azok még nem állnak rendelkezésre (lásd a kin_cart.c, kin_corexy.c és kin_delta.c fájlokat a klippy/chelper/ állományban). A függvénynek meg kell hívnia <code>move_get_coord()</code>, hogy egy adott mozgási időt (másodpercben) kartéziánus koordinátává (milliméterben) konvertáljon, majd ebből a cartesian koordinátából kiszámítsa a kívánt stepper pozíciót (milliméterben).</li>
+<li>Az új kinematikai osztályban implementáljuk a <code>calc_position()</code> módszert. Ez a metódus kiszámítja a nyomtatófej pozícióját cartesian koordinátákban az egyes léptetőmotorok pozíciójából. Nem kell, hogy hatékony legyen, mivel jellemzően csak a kezdőpont és az érintési műveletek során hívjuk meg.</li>
+<li>Egyéb módszerek. Implementálja a <code>check_move()</code>, <code>get_status()</code> metódusokat, <code>get_steppers()</code>, <code>home()</code> és <code>set_position()</code> módszereket. Ezeket a függvényeket általában kinematikai specifikus ellenőrzések biztosítására használják. A fejlesztés kezdetén azonban használhatunk itt kazánszerű kódot.</li>
+<li>Tesztelési esetek végrehajtása. Készítsen egy G-kódfájlt egy sor olyan mozgással, amelyekkel az adott kinematika fontos eseteit tesztelheti. Kövesse a <a href="Debugging.html">Hibakeresési dokumentációt</a>, hogy ezt a G-kódfájlt mikrokontroller-parancsokká alakítsa át. Ez hasznos a sarokesetek gyakorlására és a regressziók ellenőrzésére.</li>
+</ol>
+<h2 id="portolas-uj-mikrokontrollerre">Portolás új mikrokontrollerre<a class="headerlink" href="#portolas-uj-mikrokontrollerre" title="Permanent link">&para;</a></h2>
+<p>Ez a szakasz néhány tippet ad a Klipper mikrokontroller kódjának új architektúrára történő átviteléhez. Ez a fajta tevékenység jó beágyazott fejlesztési ismereteket és gyakorlati hozzáférést igényel a célmikrokontrollerhez.</p>
+<p>Hasznos lépések:</p>
+<ol>
+<li>Kezdje a portolás során használni kívánt harmadik féltől származó könyvtárak azonosításával. Gyakori példa erre a "CMSIS" csomagolások és a gyártó "HAL" könyvtárak. Minden harmadik féltől származó kódnak GNU GPLv3 kompatibilisnek kell lennie. A harmadik féltől származó kódot a Klipper lib/ könyvtárba kell átvinni. Frissítse a lib/README fájlt azzal az információval, hogy hol és mikor szerezte meg a könyvtárat. A kódot lehetőleg változatlanul másolja be a Klipper tárolóba, de ha bármilyen változtatásra van szükség, akkor ezeket a változtatásokat kifejezetten fel kell tüntetni a lib/README fájlban.</li>
+<li>Hozzon létre egy új architektúra alkönyvtárat az src/ könyvtárban, és adjon hozzá kezdeti Kconfig és Makefile támogatást. Használja a meglévő architektúrákat útmutatóként. Az src/simulator egy alapvető példát nyújt egy minimális kiindulási pontra.</li>
+<li>Az első fő kódolási feladat a kommunikációs támogatás felállítása az alaplapnak. Ez a legnehezebb lépés egy új port esetében. Ha az alapvető kommunikáció már működik, a további lépések általában sokkal könnyebbek. A kezdeti fejlesztés során jellemzően UART típusú soros eszközt használunk, mivel az ilyen típusú hardvereszközöket általában könnyebb engedélyezni és vezérelni. Ebben a fázisban bőkezűen használja az src/generic/ könyvtárban található segédkódot (ellenőrizze, hogy az src/simulator/Makefile hogyan tartalmazza a generikus C kódot a felépítésben). Ebben a fázisban szükséges definiálni a timer_read_time() funkciót is (amely visszaadja az aktuális rendszerórát), de nem szükséges a timer irq kezelésének teljes támogatása.</li>
+<li>Ismerkedjen meg a console.py eszközzel (a <a href="Debugging.html">Hibakeresési dokumentumban</a> leírtak szerint), és ellenőrizze vele a mikrokontrollerrel való kapcsolatot. Ez az eszköz lefordítja az alacsony szintű mikrokontroller kommunikációs protokollt ember által olvasható formára.</li>
+<li>A hardveres megszakításokból történő időzítő-küldés támogatásának hozzáadása. Lásd a Klipper <a href="https://github.com/Klipper3d/klipper/commit/970831ee0d3b91897196e92270d98b2a3067427f">commit 970831ee</a> példáját az LPC176x architektúra 1-5. lépéseire.</li>
+<li>Alapvető GPIO bemeneti és kimeneti támogatás megjelenítése. Lásd a Klipper <a href="https://github.com/Klipper3d/klipper/commit/c78b90767f19c9e8510c3155b89fb7ad64ca3c54">commit c78b9076</a> példáját erre.</li>
+<li>További perifériák felhozása - lásd például a Klipper megbízásokat <a href="https://github.com/Klipper3d/klipper/commit/65613aeddfb9ef86905cb1dade9e773a02ef3c27">65613aed</a>, <a href="https://github.com/Klipper3d/klipper/commit/c812a40a3782415e454b04bf7bd2158a6f0ec8b5">c812a40a</a> és <a href="https://github.com/Klipper3d/klipper/commit/c381d03aad5c3ee761169b7c7bced519cc14da29">c381d03a</a>.</li>
+<li>Hozzon létre egy minta Klipper konfigurációs fájlt a config/ könyvtárban. Teszteljük a mikrokontrollert a klippy.py főprogrammal.</li>
+<li>Fontolja meg a test/ könyvtárban lévő build tesztesetek hozzáadását.</li>
+</ol>
+<p>További kódolási tippek:</p>
+<ol>
+<li>Kerülje a "C bitmezők" használatát az IO regiszterek eléréséhez; részesítse előnyben a 32 bites, 16 bites vagy 8 bites egész számok közvetlen olvasási és írási műveleteit. A C nyelvi specifikációk nem határozzák meg egyértelműen, hogy a fordítónak hogyan kell megvalósítania a C bitmezőket (pl. endianness és bitkiosztás), és nehéz meghatározni, hogy milyen IO műveletek történnek egy C bitmező olvasásakor vagy írásakor.</li>
+<li>Inkább írjon explicit értékeket az IO regiszterekbe, minthogy olvasás-módosítás-írás műveleteket használjon. Azaz, ha egy olyan IO-regiszterben frissítünk egy mezőt, ahol a többi mező értékei ismertek, akkor előnyösebb a regiszter teljes tartalmát explicit módon kiírni. Az explicit írások kisebb, gyorsabb és könnyebben hibakereshető kódot eredményeznek.</li>
+</ol>
+<h2 id="koordinata-rendszerek">Koordináta-rendszerek<a class="headerlink" href="#koordinata-rendszerek" title="Permanent link">&para;</a></h2>
+<p>A Klipper belsőleg elsősorban a nyomtatófej helyzetét követi cartesian koordinátákban, amelyek a konfigurációs fájlban megadott koordináta rendszerhez viszonyítva vannak. Ez azt jelenti, hogy a Klipper kód nagy része soha nem tapasztal koordináta rendszer-változást. Ha a felhasználó az origó megváltoztatását kéri (pl. egy <code>G92</code> parancsal), akkor ezt a hatást a jövőbeli parancsok elsődleges koordináta rendszerre történő átváltásával érjük el.</p>
+<p>Bizonyos esetekben azonban hasznos, ha a nyomtatófej helyzetét más koordináta rendszerben szeretnénk megkapni, és a Klipper több eszközzel is megkönnyíti ezt. Ez a GET_POSITION parancs futtatásával látható. Például:</p>
+<div class="highlight"><pre><span></span><code>Send: GET_POSITION
+Recv: // mcu: stepper_a:-2060 stepper_b:-1169 stepper_c:-1613
+Recv: // stepper: stepper_a:457.254159 stepper_b:466.085669 stepper_c:465.382132
+Recv: // kinematic: X:8.339144 Y:-3.131558 Z:233.347121
+Recv: // toolhead: X:8.338078 Y:-3.123175 Z:233.347878 E:0.000000
+Recv: // gcode: X:8.338078 Y:-3.123175 Z:233.347878 E:0.000000
+Recv: // gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+Recv: // gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+</code></pre></div>
+
+<p>Az "MCU" pozíció (<code>stepper.get_mcu_position()</code> a kódban) a mikrokontroller által pozitív irányban kiadott lépések száma mínusz a mikrokontroller utolsó resetelése óta negatív irányban kiadott lépések száma. Ha a gép a lekérdezéskor mozgásban van, akkor a jelentett érték tartalmazza a mikrokontrollerben pufferelt lépéseket, de nem tartalmazza a look-ahead sorban lévő lépéseket.</p>
+<p>A "stepper" pozíció (<code>stepper.get_commanded_position()</code>) az adott léptető pozíciója, ahogyan azt a kinematikai kód követi. Ez általában megfelel a kocsinak a sín mentén a konfigurációs fájlban megadott position_endstop-hoz viszonyított pozíciójának (mm-ben). (Egyes kinematikák a léptetők pozícióját milliméter helyett radiánban követik.) Ha a gép a lekérdezéskor mozgásban van, akkor a jelentett érték tartalmazza a mikrokontrollerben pufferelt mozgásokat, de nem tartalmazza a look-ahead sorban lévő mozgásokat. Használhatjuk a <code>toolhead.flush_step_generation()</code> vagy <code>toolhead.wait_moves()</code> hívásokat a look-ahead és a lépésgeneráló kód teljes kiürítéséhez.</p>
+<p>A "kinematikai" pozíció (<code>kin.calc_position()</code>) a szerszámfej "stepper" pozíciókból származtatott cartesian pozíciója, és a konfigurációs fájlban megadott koordinátarendszerhez képest relatív. Ez eltérhet a kért cartesian pozíciótól a léptetőmotorok szaggatottsága miatt. Ha a gép a "stepper" pozíciók felvételekor mozgásban van, akkor a jelentett érték tartalmazza a mikrokontrollerben pufferelt mozgásokat, de nem tartalmazza a look-ahead várólistán lévő mozgásokat. Használhatjuk a <code>toolhead.flush_step_generation()</code> vagy <code>toolhead.wait_moves()</code> hívásokat a look-ahead és a lépésgeneráló kód teljes kiürítéséhez.</p>
+<p>A "toolhead" pozíció (<code>toolhead.get_position()</code>) az eszközfej utolsó kért pozíciója cartesian koordinátákban a konfigurációs fájlban megadott koordinátarendszerhez képest. Ha a gép a lekérdezés kiadásakor mozgásban van, akkor a jelentett érték tartalmazza az összes kért mozgást (még azokat is, amelyek a pufferben vannak és a léptetőmotor-meghajtóknak való kiadásra várnak).</p>
+<p>A "gcode" pozíció a <code>G1</code> (vagy <code>G0</code>) parancs utolsó kért pozíciója cartesian koordinátákban, a konfigurációs fájlban megadott koordinátarendszerhez képest. Ez eltérhet a "toolhead" pozíciótól, ha egy G-kód transzformáció (pl. bed_mesh, bed_tilt, skew_correction) van érvényben. Ez eltérhet az utolsó <code>G1</code> parancsban megadott tényleges koordinátáktól, ha a G-kód origója megváltozott (pl, <code>G92</code>, <code>SET_GCODE_OFFSET</code>, <code>M221</code>). A <code>M114</code> parancs (<code>gcode_move.get_status()['gcode_position']</code>) az aktuális G-kód koordinátarendszerhez viszonyított utolsó G-kód pozíciót jelenti.</p>
+<p>A "gcode base" a G-kód origójának helye cartesian koordinátákban a konfigurációs fájlban megadott koordinátarendszerhez képest. Az olyan parancsok, mint a <code>G92</code>, <code>SET_GCODE_OFFSET</code> és <code>M221</code> módosítják ezt az értéket.</p>
+<p>A "gcode homing" az a hely, amelyet a G-kód origójaként (a konfigurációs fájlban megadott koordinátarendszerhez viszonyított cartesian koordinátákban) a <code>G28</code> home parancs után használni kell. A <code>SET_GCODE_OFFSET</code> parancs megváltoztathatja ezt az értéket.</p>
+<h2 id="ido">Idő<a class="headerlink" href="#ido" title="Permanent link">&para;</a></h2>
+<p>A Klipper működésének alapvető eleme az órák, időpontok és időbélyegek kezelése. A Klipper a nyomtatón végrehajtott műveleteket a közeljövőben bekövetkező események ütemezésével hajtja végre. Például egy ventilátor bekapcsolásához a kód ütemezheti egy GPIO-tű változását 100 ms alatt. Ritkán fordul elő, hogy a kód azonnali műveletet próbál végrehajtani. Ezért az idő kezelése a Klipperben kritikus fontosságú a helyes működés szempontjából.</p>
+<p>A Klipper gazdaszoftverben háromféle időtípust követhetünk nyomon:</p>
+<ul>
+<li>Rendszeridő. A rendszeridő a rendszer monoton óráját használja. Ez egy lebegőpontos szám, amelyet másodpercként tárolnak, és (általában) a gazdaszámítógép utolsó indításakor. A rendszeridők korlátozottan használhatók a szoftverben. Elsősorban az operációs rendszerrel való interakció során használják őket. Az állomáskódon belül a rendszeridőket gyakran az <em>eventtime</em> vagy <em>curtime</em> nevű változók tárolják.</li>
+<li>Nyomtatási idő. A nyomtatási idő a mikrokontroller fő órájához szinkronizálódik az ("[mcu]" config szakaszban meghatározott mikrokontrollerhez). Ez egy másodpercben tárolt lebegőpontos szám, és a fő MCU utolsó újraindításának időpontjához viszonyítva van. Lehetőség van a "nyomtatási idő"-ről a fő mikrokontroller hardveres órájára való átváltásra. A nyomtatási időnek az MCU-val való megszorzásával a statikusan konfigurált frekvenciával. A magas szintű gazdakód szinte minden fizikai művelet (pl. fejmozgás, fűtésváltás stb.) kiszámításához nyomtatási időt használ. A gazdakódon belül a nyomtatási időket általában a <em>print_time</em> vagy <em>move_time</em> nevű változókban tárolják.</li>
+<li>MCU óra. Ez az egyes mikrovezérlők hardveres óraszámlálója. Egész számként van tárolva, frissítési gyakorisága az adott mikrovezérlő frekvenciájához viszonyított. A gazdaszoftver belső idejét lefordítja órákra, mielőtt továbbítaná az MCU-nak. Az MCU kód mindig csak az óra ketyegésében követi az időt. A gazdagép kódon belül az óraértékeket 64 bites egész számként követi nyomon, míg az MCU kód 32 bites egész számokat használ. A gazdagép kódon belül az órák általában <em>clock</em> vagy <em>tick</em> nevet tartalmazó változókban tárolódnak.</li>
+</ul>
+<p>A különböző időformátumok közötti konverzió elsősorban a <strong>klippy/clocksync.py</strong> kódban valósul meg.</p>
+<p>Néhány dolog, amire figyelni kell a kód áttekintésekor:</p>
+<ul>
+<li>32 bites és 64 bites órajelek: A sávszélesség csökkentése és a mikrokontroller hatékonyságának javítása érdekében a mikrokontroller órajeleit 32 bites egész számokként követik. Két órajel összehasonlításakor az MCU kódban mindig a <code>timer_is_before()</code> függvényt kell használni, hogy az egész számok átfordítását megfelelően kezeljük. A gazdaszoftver a 32 bites órajeleket 64 bites órajelekké alakítja át azáltal, hogy hozzáadja az utolsó kapott MCU időbélyegző magasrendű bitjeit. Egyetlen MCU-tól érkező üzenet sem lehet 2^31 órajelnél több a jövőben vagy a múltban, így ez az átalakítás soha nem félreérthető. A gazdagép a 64 bites órajelekről 32 bites órajelekre konvertál a magasrendű bitek egyszerű lefaragásával. Annak érdekében, hogy ez az átalakítás ne legyen kétértelmű, a <strong>klippy/chelper/serialqueue.c</strong> kód addig puffereli az üzeneteket, amíg azok 2^31 órajelen belül vannak a célidőhöz képest.</li>
+<li>Több mikrovezérlő: A gazdaszoftver támogatja több mikrovezérlő használatát egyetlen nyomtatón. Ebben az esetben minden mikrokontroller "MCU órajelét" külön-külön követi. A clocksync.py kód kezeli a mikrovezérlők közötti óraeltolódást a "nyomtatási időről" az "MCU órára" történő átalakítás módjának módosításával. A másodlagos MCU-nál az ebben az átalakításban használt MCU frekvencia rendszeresen frissül, hogy figyelembe vegye a mért csúszást.</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Élőláb">
+      
+        
+        <a href="Using_PWM_Tools.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: PWM eszközök használata" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Előző
+              </span>
+              PWM eszközök használata
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Kinematics.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Kinematika" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Következő
+              </span>
+              Kinematika
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "M\u00e1sol\u00e1s v\u00e1g\u00f3lapra", "clipboard.copied": "V\u00e1g\u00f3lapra m\u00e1solva", "search.config.lang": "hu", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Keres\u00e9s", "search.result.placeholder": "Keres\u00e9shez \u00edrj ide valamit", "search.result.none": "Nincs tal\u00e1lat", "search.result.one": "1 egyez\u0151 dokumentum", "search.result.other": "# egyez\u0151 dokumentum", "search.result.more.one": "1 tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.more.other": "# tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.term.missing": "\u00dcres", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

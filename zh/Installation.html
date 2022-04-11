@@ -163,6 +163,12 @@
                   </a>
                 </li>
                 
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
             </ul>
           </div>
         </div>
@@ -847,7 +853,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        多微控制器复位与探测
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -1301,18 +1307,18 @@
 
 
 <h1 id="_1">安装<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>本教程假定软件将会在树莓派上和 Octoprint 一起运行。推荐使用树莓派2/3/4作为主机（关于其他设备，请见<a href="FAQ.html#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3">常见问题</a>）。</p>
+<p>本教程假定软件将会在树莓派上和 Octoprint 一起运行。推荐使用树莓派2/3/4作为主机（关于其他设备，请见<a href="FAQ.html#我可以在-Raspberry-Pi-3-以外的其他设备上运行-Klipper-吗？">常见问题</a>）。</p>
 <p>Klipper 目前支持多种基于 Atmel ATmega 微控制器、<a href="Features.html#step-benchmarks">基于 ARM 微控制器</a> 和基于 <a href="Beaglebone.html">Beaglebone 可编程实时单元</a> 的打印机。</p>
 <h2 id="_2">准备操作系统镜像<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>先在树莓派上安装 <a href="https://github.com/guysoft/OctoPi">OctoPi</a>。请使用OctoPi v0.17.0或更高版本，查看 <a href="https://github.com/guysoft/OctoPi/releases">Octopi 发行版</a>来获取最新发布版本。安装完系统后，请先验证 OctoPi 能正常启动，并且 OctoPrint 网络服务器正常运行。连接到 OctoPrint 网页后，按照提示将 OctoPrint 更新到v1.4.2或更高版本。</p>
-<p>在安装 OctoPi 和升级 OctoPrint后，用 ssh 进入目标设备，以运行少量的系统命令。如果使用Linux或MacOS系统，那么 "ssh"软件应该已经预装在系统上。有一些免费的ssh客户端可用于其他操作系统（例如，<a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a>）。使用ssh工具连接到Raspberry Pi（ssh pi@octopi --密码是 "raspberry"），并运行以下命令：</p>
+<p>在安装 OctoPi 和升级 OctoPrint 后，用 ssh 连接目标设备，以运行少量的系统命令。如果使用Linux或MacOS系统，那么 "ssh"软件应该已经预装在系统上。有一些免费的ssh客户端可用于其他操作系统（例如，<a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a>）。使用ssh工具连接到Raspberry Pi（ssh pi@octopi --密码是 "raspberry"），并运行以下命令：</p>
 <div class="highlight"><pre><span></span><code>git clone https://github.com/Klipper3d/klipper
 ./klipper/scripts/install-octopi.sh
 </code></pre></div>
 
 <p>以上将会下载 Klipper 、安装一些系统依赖、设置 Klipper 在系统启动时运行并启动Klipper 主机程序。这将需要互联网连接以及可能需要几分钟时间才能完成。</p>
 <h2 id="_3">构建和刷写微控制器<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p>在编译微控制器代码之前，首先在树莓派上运行这些命令：</p>
+<p>在编译微控制器代码之前，先在树莓派上运行这些命令：</p>
 <div class="highlight"><pre><span></span><code>cd ~/klipper/
 make menuconfig
 </code></pre></div>
@@ -1346,7 +1352,7 @@ sudo service klipper start
 <p>在主页上，在 "连接 "部分（在页面的左上方），确保 "串行端口 "被设置为"/tmp/printer"，然后点击 "连接"。(如果"/tmp/printer "不是一个可用的选择，那么试着重新加载页面)</p>
 <p>连接后，导航到 "终端 "选项卡，在命令输入框中输入 "status"（不带引号），然后点击 "发送"。终端窗口可能会报告在打开配置文件时出现了错误--这意味着 OctoPrint 与 Klipper 成功地进行了通信。继续下一部分。</p>
 <h2 id="klipper">配置 Klipper<a class="headerlink" href="#klipper" title="Permanent link">&para;</a></h2>
-<p>Klipper 配置保存在树莓派上的一个文本文件中。请查看在<a href="..../config/">config文件夹</a>中的配置示例。<a href="Config_Reference.html">配置参考</a>中有配置参数的文档。</p>
+<p>Klipper 配置保存在树莓派上的一个文本文件中。请查看在<a href="https://github.com/Klipper3d/klipper/blob/master/config/">config文件夹</a>中的配置示例。<a href="Config_Reference.html">配置参考</a>中有配置参数的文档。</p>
 <p>可以说，更新Klipper configuration 文件的最简单方法是使用一个支持通过 "scp "或 "sftp "协议编辑文件的桌面编辑器。有一些免费的工具支持这个功能（例如，Notepad++、WinSCP和Cyberduck）。使用其中一个配置文件的例子作为起点，并将其保存为pi用户的主目录中名为 "printer.cfg "的文件（例如，/home/pi/printer.cfg）。</p>
 <p>另外，也可以通过ssh在Raspberry Pi上直接复制和编辑该文件。比如说：</p>
 <div class="highlight"><pre><span></span><code>cp ~/klipper/config/example-cartesian.cfg ~/printer.cfg
@@ -1362,7 +1368,7 @@ serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 <p>在创建和编辑该文件后，有必要在OctoPrint网络终端发出 "restart"命令去重新加载config。"status" 命令将报告打印机已准备就绪。在初始设置期间出现配置错误是很正常的。更新打印机配置文件并发出 "restart"命令，直到 "状态 "报告打印机已准备就绪。</p>
 <p>Klipper通过OctoPrint终端标签报告错误信息。可以使用 "status "命令来重新报告错误信息。默认的Klipper启动脚本也在<strong>/tmp/klippy.log</strong>中放置一个日志，提供更详细的信息。</p>
 <p>除此之外常见的g-code命令之外，Klipper还支持一些扩展命令"status "和 "restart "就是这些命令的例子。使用 "help "命令可以获得其他扩展命令的列表。</p>
-<p>在Klipper反馈打印机已经准备好后，进入<a href="Config_checks.html">config check document</a>对配置文件中的引脚定义进行一些基本检查。</p>
+<p>在Klipper反馈打印机已经准备好后，进入<a href="Config_checks.html">配置检查文档</a>对配置文件中的引脚定义进行一些基本检查。</p>
 <h2 id="_4">联系开发者<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>请务必查看<a href="FAQ.html">FAQ</a>，了解一些常见问题的答案。请参阅<a href="Contact.html">联系页面</a>来报告一个错误或联系开发者。</p>
 

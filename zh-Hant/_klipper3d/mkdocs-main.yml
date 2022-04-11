@@ -83,6 +83,9 @@ extra:
     - name: 繁體中文
       link: /zh-Hant/
       lang: zh-Hant
+    - name: Magyar
+      link: /hu/
+      lang: hu
     # Alternate language links automatically added here
 
 # Navigation hierarchy (this should mimic the layout of Overview.md)
