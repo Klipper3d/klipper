@@ -21,7 +21,14 @@ class RecoreLinearResistance(adc_temperature.LinearResistance):
         adc_temperature.LinearResistance.__init__(self, config, samples)
         self.adc_ref = config.getfloat('adc_voltage', 3.3)
         self.pullup_ref = config.getfloat('pullup_voltage', 3.3)
-        self.vo_ref = config.getfloat('offset_voltage', 3.2)
+        self.vo_ref = config.getfloat('offset_voltage', 0.050)
+        self.a = 1.84633422e-07
+        self.b = -3.15418589e-07
+        self.c = 3.16706799e-07
+        self.d = -5.08889891e-08
+
+    def smf5a_iv_curve(self, v):
+        return self.a*v**3 + self.b*v**2 + self.c*v + self.d
 
     def calc_temp(self, adc):
         # Calculate temperature from adc
@@ -30,12 +37,14 @@ class RecoreLinearResistance(adc_temperature.LinearResistance):
         R2 = 100000
         R1 = 1000
 
-        I1 = (self.vo_ref-Vo)/R2
+        I1 = (Vo-self.vo_ref)/R2 # current through offset resistor
         VR1 = I1*R1
-        V3 = Vo-VR1
+        V3 = Vo+VR1 # Voltage at the divider.
+
+        ID = self.smf5a_iv_curve(V3) # TVS diode current
         I5 = (self.pullup_ref-V3)/self.pullup
-        I3 = (I5+I1)
-        r = V3/I3
+        I3 = (I5-I1-ID)
+        r = V3/(I3)
         return self.li.interpolate(r)
 
 class RecoreCustomLinearResistance:
