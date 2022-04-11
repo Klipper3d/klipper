@@ -5805,7 +5805,10 @@ the <a href="G-Codes.html#led">command reference</a> for more information.</p>
 sections with a "neopixel" prefix). See the
 <a href="G-Codes.html#led">command reference</a> for more information.</p>
 <p>Note that the <a href="RPi_microcontroller.html">linux mcu</a> implementation does
-not currently support directly connected neopixels.</p>
+not currently support directly connected neopixels. The current design
+using the Linux kernel interface does not allow this scenario because
+the kernel GPIO interface is not fast enough to provide the required
+pulse rates.</p>
 <div class="highlight"><pre><span></span><code>[neopixel my_neopixel]
 pin:
 #   The pin connected to the neopixel. This parameter must be
