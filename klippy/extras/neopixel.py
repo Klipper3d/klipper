@@ -22,7 +22,7 @@ class PrinterNeoPixel:
         self.mcu = pin_params['chip']
         self.oid = self.mcu.create_oid()
         self.pin = pin_params['pin']
-        
+
         self.mcu.register_config_callback(self.build_config)
 
         self.color_maps = []
@@ -43,13 +43,13 @@ class PrinterNeoPixel:
                 color_index = [color_order.index(c) for c in "RGB"]
             for _ in range(count-1):
                 self.color_maps.append(color_index)
-        
+
         self.chain_count = config.getint('chain_count', 1, minval=1)
 
         missing_color_maps = self.chain_count - len(self.color_maps)
         if missing_color_maps > 0:
             self.color_maps += [color_index]*missing_color_maps
-            
+
         self.neopixel_update_cmd = self.neopixel_send_cmd = None
 
         # Initialize color data
