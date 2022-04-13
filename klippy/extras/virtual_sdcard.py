@@ -221,39 +221,28 @@ class VirtualSD:
             return self.reactor.NEVER
         self.print_stats.note_start()
         gcode_mutex = self.gcode.get_mutex()
-        partial_input = ""
-        lines = []
         error_message = None
         while not self.must_pause_work:
-            if not lines:
-                # Read more data
-                try:
-                    data = self.current_file.read(8192)
-                except:
-                    logging.exception("virtual_sdcard read")
-                    break
-                if not data:
-                    # End of file
-                    self.current_file.close()
-                    self.current_file = None
-                    logging.info("Finished SD card print")
-                    self.gcode.respond_raw("Done printing file")
-                    break
-                lines = data.split('\n')
-                lines[0] = partial_input + lines[0]
-                partial_input = lines.pop()
-                lines.reverse()
-                self.reactor.pause(self.reactor.NOW)
-                continue
+            try:
+                line = self.current_file.readline()
+            except:
+                logging.exception("virtual_sdcard read")
+
+            self.next_file_position = self.current_file.tell()
+            if not line:
+                # End of file
+                self.current_file.close()
+                self.current_file = None
+                logging.info("Finished SD card print")
+                self.gcode.respond_raw("Done printing file")
+                break
+            self.reactor.pause(self.reactor.NOW)
             # Pause if any other request is pending in the gcode class
             if gcode_mutex.test():
                 self.reactor.pause(self.reactor.monotonic() + 0.100)
                 continue
             # Dispatch command
             self.cmd_from_sd = True
-            line = lines.pop()
-            next_file_position = self.file_position + len(line) + 1
-            self.next_file_position = next_file_position
             try:
                 self.gcode.run_script(line)
             except self.gcode.error as e:
@@ -264,16 +253,6 @@ class VirtualSD:
                 break
             self.cmd_from_sd = False
             self.file_position = self.next_file_position
-            # Do we need to skip around?
-            if self.next_file_position != next_file_position:
-                try:
-                    self.current_file.seek(self.file_position)
-                except:
-                    logging.exception("virtual_sdcard seek")
-                    self.work_timer = None
-                    return self.reactor.NEVER
-                lines = []
-                partial_input = ""
         logging.info("Exiting SD card print (position %d)", self.file_position)
         self.work_timer = None
         self.cmd_from_sd = False
