@@ -196,13 +196,12 @@ is always available):
 The following information is available for each `[led led_name]`,
 `[neopixel led_name]`, `[dotstar led_name]`, `[pca9533 led_name]`, and
 `[pca9632 led_name]` config section defined in printer.cfg:
-- `color_data`: A list of color lists containing the RGBW values for a
+- `color_data`: A list of colors containing the RGBW values for a
   led in the chain. Each value is represented as a float from 0.0 to
-  1.0. Each color list contains 4 items (red, green, blue, white) even
+  1.0. Each color contains 4 values (red: `R`, green: `G`, blue: `B`, white: `W`) even
   if the underyling LED supports fewer color channels. For example,
-  the blue value (3rd item in color list) of the second neopixel in a
-  chain could be accessed at
-  `printer["neopixel <config_name>"].color_data[1][2]`.
+  the blue value of the second neopixel in a chain could be accessed at
+  `printer["neopixel <config_name>"].color_data[1].B`.
 
 ## mcu
 
