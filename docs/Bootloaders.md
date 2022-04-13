@@ -385,6 +385,28 @@ not available, so it may be done by setting pin PA2 low if you flashed
 the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
 which you can use to pull PA2 low.
 
+### STM32F103/STM32F072 with MSC bootloader
+
+The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader) is a driverless bootloader capable of flashing over USB.
+
+It is possible to flash the bootloader via 3.3v serial using stm32flash as noted
+in the stm32duino section above, substituting the file name for the desired
+MSC bootloader binary (ie: MSCboot-Bluepill.bin for the blue pill).
+
+For STM32F072 boards it is also possible to flash the bootloader over USB (via DFU)
+with something like:
+
+```
+ dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s0x08000000:leave
+```
+
+This bootloader uses 8KiB or 16KiB of flash space, see description of the bootloader
+(the application must be compiled with with the corresponding starting address).
+
+The bootloader can be activated by pressing the reset button of the board twice.
+As soon as the bootloader is activated, the board appears as a USB flash drive
+onto which the klipper.bin file can be copied.
+
 ## STM32F4 micro-controllers (SKR Pro 1.1)
 
 STM32F4 microcontrollers come equipped with a built-in system bootloader
