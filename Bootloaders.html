@@ -1234,6 +1234,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f072-with-msc-bootloader" class="md-nav__link">
+    STM32F103/STM32F072 with MSC bootloader
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1471,6 +1478,13 @@
           <li class="md-nav__item">
   <a href="#stm32f103-with-hid-bootloader" class="md-nav__link">
     STM32F103 with HID bootloader
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f072-with-msc-bootloader" class="md-nav__link">
+    STM32F103/STM32F072 with MSC bootloader
   </a>
   
 </li>
@@ -1871,6 +1885,21 @@ not available, so it may be done by setting pin PA2 low if you flashed
 "hid_btt_skr_mini_e3.bin".  This pin is labeld "TX0" on the TFT header in
 the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
 which you can use to pull PA2 low.</p>
+<h3 id="stm32f103stm32f072-with-msc-bootloader">STM32F103/STM32F072 with MSC bootloader<a class="headerlink" href="#stm32f103stm32f072-with-msc-bootloader" title="Permanent link">&para;</a></h3>
+<p>The <a href="https://github.com/Telekatz/MSC-stm32f103-bootloader">MSC bootloader</a> is a driverless bootloader capable of flashing over USB.</p>
+<p>It is possible to flash the bootloader via 3.3v serial using stm32flash as noted
+in the stm32duino section above, substituting the file name for the desired
+MSC bootloader binary (ie: MSCboot-Bluepill.bin for the blue pill).</p>
+<p>For STM32F072 boards it is also possible to flash the bootloader over USB (via DFU)
+with something like:</p>
+<div class="highlight"><pre><span></span><code> dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s0x08000000:leave
+</code></pre></div>
+
+<p>This bootloader uses 8KiB or 16KiB of flash space, see description of the bootloader
+(the application must be compiled with with the corresponding starting address).</p>
+<p>The bootloader can be activated by pressing the reset button of the board twice.
+As soon as the bootloader is activated, the board appears as a USB flash drive
+onto which the klipper.bin file can be copied.</p>
 <h2 id="stm32f4-micro-controllers-skr-pro-11">STM32F4 micro-controllers (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-micro-controllers-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>STM32F4 microcontrollers come equipped with a built-in system bootloader
 capable of flashing over USB (via DFU), 3.3v Serial, and various other
