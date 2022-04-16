@@ -83,6 +83,8 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
 
 #define AR_PWR_MGMT_1  0x6B
 #define AR_FIFO_EN     0x23
+#define AR_ACCEL_OUT_XH 0x3B
+#define AR_FIFO_COUNT_H  0x72
 
 #define SET_ENABLE_FIFO 0x80
 #define SET_DISABLE_FIFO 0x00
@@ -96,14 +98,14 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
 {
     // Read data
     // Regs are: [Xh, Xl, Yh, Yl, Zh, Zl] and [FIFO_CNTh, FIFO_CNTl]
-    uint8_t regs[] = {0x3B, 0x72};
+    uint8_t regs[] = {AR_ACCEL_OUT_XH, AR_FIFO_COUNT_H};
     uint8_t data_lens[] = {6, 2};
     uint8_t fifo_count[2];
 
     // Extract x, y, z measurements into data holder
     uint8_t *d = &mp->data[mp->data_count];
-    i2c_read(mp->i2c->i2c_config, 1, regs[0], data_lens[0], d);
-    i2c_read(mp->i2c->i2c_config, 1, regs[1], data_lens[1], fifo_count);
+    i2c_read(mp->i2c->i2c_config, 1, &regs[0], data_lens[0], d);
+    i2c_read(mp->i2c->i2c_config, 1, &regs[1], data_lens[1], fifo_count);
 
     // Get FIFO size
     fifo_count[0] = 0x1F & fifo_count[0]; // discard 3 MSB of fifo size
@@ -135,7 +137,7 @@ mp9250_start(struct mpu9250 *mp, uint8_t oid)
     mp->flags = AX_RUNNING;
     uint8_t msg[2] = { AR_PWR_MGMT_1, 0x00 }; // wake up
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-    uint8_t msg[2] = { AR_FIFO_EN, SET_ENABLE_FIFO }; // enable accel FIFO
+    msg = { AR_FIFO_EN, SET_ENABLE_FIFO }; // enable accel FIFO
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
     mp9250_reschedule_timer(mp);
 }
@@ -159,8 +161,9 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     // Drain any measurements still in fifo
     uint16_t fifo_status;
     uint_fast8_t i;
+    uint8_t regs[] = {AR_FIFO_COUNT_H};
     for (i=0; i<33; i++) {
-        i2c_read(mp->i2c->i2c_config, 2, {0x72, 0x73}, 2, msg);
+        i2c_read(mp->i2c->i2c_config, 1, regs, 2, msg);
         msg[0] = 0x1F & msg[0]; // discard 3 MSB
         fifo_status = (((uint16_t)data[6]) << 8) | data[7];
 
@@ -204,10 +207,11 @@ command_query_mpu9250_status(uint32_t *args)
     struct mpu9250 *mp = oid_lookup(args[0], command_config_mpu9250);
     uint8_t msg[2];
     uint32_t time1 = timer_read_time();
-    i2c_read(mp->i2c->i2c_config, 2, {0x72, 0x73}, 2, msg);
+    uint8_t regs[] = {AR_FIFO_COUNT_H};
+    i2c_read(mp->i2c->i2c_config, 1, regs, 2, msg);
     uint32_t time2 = timer_read_time();
     msg[0] = 0x1F & msg[0]; // discard 3 MSB
-    uint16_t fifo_status = (((uint16_t)data[6]) << 8) | data[7];
+    uint16_t fifo_status = (((uint16_t)msg[0]) << 8) | msg[1];
     mp9250_status(mp, args[0], time1, time2, fifo_status);
 }
 DECL_COMMAND(command_query_mpu9250_status, "query_mpu9250_status oid=%c");
@@ -220,7 +224,7 @@ mpu9250_task(void)
     uint8_t oid;
     struct mpu9250 *mp;
     foreach_oid(oid, mp, command_config_mpu9250) {
-        uint_fast8_t flags = ax->flags;
+        uint_fast8_t flags = mp->flags;
         if (!(flags & AX_PENDING))
             continue;
         if (flags & AX_HAVE_START)
