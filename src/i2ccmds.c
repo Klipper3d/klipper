@@ -25,6 +25,12 @@ command_config_i2c(uint32_t *args)
 DECL_COMMAND(command_config_i2c,
              "config_i2c oid=%c i2c_bus=%u rate=%u address=%u");
 
+struct i2cdev_s *
+i2cdev_oid_lookup(uint8_t oid);
+{
+    return oid_lookup(oid, command_config_i2c);
+}
+
 void
 command_i2c_write(uint32_t *args)
 {

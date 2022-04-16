@@ -11,6 +11,7 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
 #include "board/gpio.h" // i2c_read
+#include "i2ccmds.h" // i2cdev_oid_lookup
 
 struct mpu9250 {
     struct timer timer;
@@ -43,7 +44,7 @@ command_config_mpu9250(uint32_t *args)
     struct mpu9250 *mp = oid_alloc(args[0], command_config_mpu9250
                                    , sizeof(*mp));
     mp->timer.func = mpu9250_event;
-    mp->i2c = oid_lookup(args[1], command_config_i2c);
+    mp->i2c = i2cdev_oid_lookup(args[1]);
 }
 DECL_COMMAND(command_config_mpu9250, "config_mpu9250 oid=%c i2c_oid=%c");
 
