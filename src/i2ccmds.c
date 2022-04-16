@@ -11,10 +11,6 @@
 #include "board/gpio.h" //i2c_write/read/setup
 #include "i2ccmds.h"
 
-struct i2cdev_s {
-    struct i2c_config i2c_config;
-};
-
 void
 command_config_i2c(uint32_t *args)
 {
