@@ -278,11 +278,11 @@ class MPU9250:
         self.query_mpu9250_end_cmd = self.mcu.lookup_query_command(
             "query_mpu9250 oid=%c clock=%u rest_ticks=%u",
             "mpu9250_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-            " buffered=%c fifo=%c limit_count=%hu", oid=self.oid, cq=cmdqueue)
+            " buffered=%c fifo=%u limit_count=%hu", oid=self.oid, cq=cmdqueue)
         self.query_mpu9250_status_cmd = self.mcu.lookup_query_command(
             "query_mpu9250_status oid=%c",
             "mpu9250_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-            " buffered=%c fifo=%c limit_count=%hu", oid=self.oid, cq=cmdqueue)
+            " buffered=%c fifo=%u limit_count=%hu", oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
         params = self.i2c.i2c_read([reg], 1)
         return bytearray(params['response'])[0]
