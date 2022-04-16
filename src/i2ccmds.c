@@ -9,6 +9,7 @@
 #include "command.h"  //sendf
 #include "sched.h" //DECL_COMMAND
 #include "board/gpio.h" //i2c_write/read/setup
+#include "i2ccmds.h"
 
 struct i2cdev_s {
     struct i2c_config i2c_config;
@@ -26,7 +27,7 @@ DECL_COMMAND(command_config_i2c,
              "config_i2c oid=%c i2c_bus=%u rate=%u address=%u");
 
 struct i2cdev_s *
-i2cdev_oid_lookup(uint8_t oid);
+i2cdev_oid_lookup(uint8_t oid)
 {
     return oid_lookup(oid, command_config_i2c);
 }
