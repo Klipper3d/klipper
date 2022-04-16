@@ -5,8 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "generic/irq.h" // irq_disable
-#include "generic/misc.h" // timer_read_time
+#include "board/irq.h" // irq_disable
+#include "board/misc.h" // timer_read_time
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
