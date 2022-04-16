@@ -10,7 +10,7 @@
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
-#include "i2ccmds.c" // i2c_read
+#include "board/gpio.h" // i2c_read
 
 struct mpu9250 {
     struct timer timer;
