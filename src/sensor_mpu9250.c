@@ -137,8 +137,8 @@ mp9250_start(struct mpu9250 *mp, uint8_t oid)
     mp->flags = AX_RUNNING;
     uint8_t msg[2] = { AR_PWR_MGMT_1, 0x00 }; // wake up
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-    msg = { AR_FIFO_EN, SET_ENABLE_FIFO }; // enable accel FIFO
-    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+    uint8_t msg2[2] = { AR_FIFO_EN, SET_ENABLE_FIFO }; // enable accel FIFO
+    i2c_write(mp->i2c->i2c_config, sizeof(msg2), msg2);
     mp9250_reschedule_timer(mp);
 }
 
@@ -165,7 +165,7 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     for (i=0; i<33; i++) {
         i2c_read(mp->i2c->i2c_config, 1, regs, 2, msg);
         msg[0] = 0x1F & msg[0]; // discard 3 MSB
-        fifo_status = (((uint16_t)data[6]) << 8) | data[7];
+        fifo_status = (((uint16_t)msg[0]) << 8) | msg[1];
 
         if (!fifo_status)
             break;
@@ -186,7 +186,7 @@ command_query_mpu9250(uint32_t *args)
 
     if (!args[2]) {
         // End measurements
-        mp9250_stop(ax, args[0]);
+        mp9250_stop(mp, args[0]);
         return;
     }
     // Start new measurements query
