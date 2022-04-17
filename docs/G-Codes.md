@@ -42,7 +42,10 @@ Klipper's goal is to support the G-Code commands produced by common
 3rd party software (eg, OctoPrint, Printrun, Slic3r, Cura, etc.) in
 their standard configurations. It is not a goal to support every
 possible G-Code command. Instead, Klipper prefers human readable
-["extended G-Code commands"](#additional-commands).
+["extended G-Code commands"](#additional-commands). Similarly, the
+G-Code terminal output is only intended to be human readable - see the
+[API Server document](API_Server.md) if controlling Klipper from
+external software.
 
 If one requires a less common G-Code command then it may be possible
 to implement it with a custom
@@ -102,6 +105,39 @@ for debugging purposes.
 VAL=<value>`: Writes raw "value" into a register "register". Both
 "value" and "register" can be a decimal or a hexadecimal integer. Use
 with care, and refer to ADXL345 data sheet for the reference.
+
+### [angle]
+
+The following commands are available when an
+[angle config section](Config_Reference.md#angle) is enabled.
+
+#### ANGLE_CALIBRATE
+`ANGLE_CALIBRATE CHIP=<chip_name>`: Perform angle calibration on the
+given sensor (there must be an `[angle chip_name]` config section that
+has specified a `stepper` parameter). IMPORTANT - this tool will
+command the stepper motor to move without checking the normal
+kinematic boundary limits. Ideally the motor should be disconnected
+from any printer carriage before performing calibration. If the
+stepper can not be disconnected from the printer, make sure the
+carriage is near the center of its rail before starting calibration.
+(The stepper motor may move forwards or backwards two full rotations
+during this test.) After completing this test use the `SAVE_CONFIG`
+command to save the calibration data to the config file. In order to
+use this tool the Python "numpy" package must be installed (see the
+[measuring resonance document](Measuring_Resonances.md#software-installation)
+for more information).
+
+#### ANGLE_DEBUG_READ
+`ANGLE_DEBUG_READ CHIP=<config_name> REG=<register>`: Queries sensor
+register "register" (e.g. 44 or 0x2C). Can be useful for debugging
+purposes. This is only available for tle5012b chips.
+
+#### ANGLE_DEBUG_WRITE
+`ANGLE_DEBUG_WRITE CHIP=<config_name> REG=<register> VAL=<value>`:
+Writes raw "value" into register "register". Both "value" and
+"register" can be a decimal or a hexadecimal integer. Use with care,
+and refer to sensor data sheet for the reference. This is only
+available for tle5012b chips.
 
 ### [bed_mesh]
 
@@ -291,25 +327,32 @@ The following commands are available if an
 
 #### ACTIVATE_EXTRUDER
 `ACTIVATE_EXTRUDER EXTRUDER=<config_name>`: In a printer with multiple
-extruders this command is used to change the active extruder.
+[extruder](Config_Reference.md#extruder) config sections, this command
+changes the active hotend.
 
 #### SET_PRESSURE_ADVANCE
 `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>]
 [ADVANCE=<pressure_advance>]
 [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
-parameters. If EXTRUDER is not specified, it defaults to the active
-extruder.
+parameters of an extruder stepper (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section).
+If EXTRUDER is not specified, it defaults to the stepper defined in
+the active hotend.
 
 #### SET_EXTRUDER_ROTATION_DISTANCE
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
-[DISTANCE=<distance>]`: Set a new value for the provided extruder's
-"rotation distance". If the rotation distance is a negative number
-then the stepper motion will be inverted (relative to the stepper
-direction specified in the config file). Changed settings are not
-retained on Klipper reset. Use with caution as small changes can
-result in excessive pressure between extruder and hot end. Do proper
-calibration with filament before use. If 'DISTANCE' value is not
-included command will return current rotation distance.
+[DISTANCE=<distance>]`: Set a new value for the provided extruder
+stepper's "rotation distance" (as defined in an
+[extruder](Config_Reference#extruder) or
+[extruder_stepper](Config_Reference#extruder_stepper) config section).
+If the rotation distance is a negative number then the stepper motion
+will be inverted (relative to the stepper direction specified in the
+config file). Changed settings are not retained on Klipper reset. Use
+with caution as small changes can result in excessive pressure between
+extruder and hotend. Do proper calibration with filament before use.
+If 'DISTANCE' value is not provided then this command will return the
+current rotation distance.
 
 #### SYNC_EXTRUDER_MOTION
 `SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
@@ -471,7 +514,9 @@ The gcode_move module is automatically loaded.
 
 #### GET_POSITION
 `GET_POSITION`: Return information on the current location of the
-toolhead.
+toolhead. See the developer documentation of
+[GET_POSITION output](Code_Overview.md#coordinate-systems) for more
+information.
 
 #### SET_GCODE_OFFSET
 `SET_GCODE_OFFSET [X=<pos>|X_ADJUST=<adjust>]
@@ -645,29 +690,48 @@ scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
 
-### [neopixel]
+### [led]
 
-The following command is available when a
-[neopixel config section](Config_Reference.md#neopixel) or
-[dotstar config section](Config_Reference.md#dotstar) is enabled.
+The following command is available when any of the
+[led config sections](Config_Reference.md#leds) are enabled.
 
 #### SET_LED
 `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
 WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
 LED output. Each color `<value>` must be between 0.0 and 1.0. The
-WHITE option is only valid on RGBW LEDs. If multiple LED chips are
-daisy-chained then one may specify INDEX to alter the color of just
-the given chip (1 for the first chip, 2 for the second, etc.). If
-INDEX is not provided then all LEDs in the daisy-chain will be set to
-the provided color. If TRANSMIT=0 is specified then the color change
-will only be made on the next SET_LED command that does not specify
-TRANSMIT=0; this may be useful in combination with the INDEX parameter
-to batch multiple updates in a daisy-chain. By default, the SET_LED
-command will sync it's changes with other ongoing gcode commands.
-This can lead to undesirable behavior if LEDs are being set while the
-printer is not printing as it will reset the idle timeout. If careful
-timing is not needed, the optional SYNC=0 parameter can be specified
-to apply the changes instantly and not reset the idle timeout.
+WHITE option is only valid on RGBW LEDs. If the LED supports multiple
+chips in a daisy-chain then one may specify INDEX to alter the color
+of just the given chip (1 for the first chip, 2 for the second,
+etc.). If INDEX is not provided then all LEDs in the daisy-chain will
+be set to the provided color. If TRANSMIT=0 is specified then the
+color change will only be made on the next SET_LED command that does
+not specify TRANSMIT=0; this may be useful in combination with the
+INDEX parameter to batch multiple updates in a daisy-chain. By
+default, the SET_LED command will sync it's changes with other ongoing
+gcode commands.  This can lead to undesirable behavior if LEDs are
+being set while the printer is not printing as it will reset the idle
+timeout. If careful timing is not needed, the optional SYNC=0
+parameter can be specified to apply the changes without resetting the
+idle timeout.
+
+#### SET_LED_TEMPLATE
+`SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
+[<param_x>=<literal>] [INDEX=<index>]`: Assign a
+[display_template](Config_Reference.md#display_template) to a given
+[LED](Config_Reference.md#leds). For example, if one defined a
+`[display_template my_led_template]` config section then one could
+assign `TEMPLATE=my_led_template` here. The display_template should
+produce a comma separated string containing four floating point
+numbers corresponding to red, green, blue, and white color settings.
+The template will be continuously evaluated and the LED will be
+automatically set to the resulting colors. One may set
+display_template parameters to use during template evaluation
+(parameters will be parsed as Python literals). If INDEX is not
+specified then all chips in the LED's daisy-chain will be set to the
+template, otherwise only the chip with the given index will be
+updated. If TEMPLATE is an empty string then this command will clear
+any previous template assigned to the LED (one can then use `SET_LED`
+commands to manage the LED's color settings).
 
 ### [output_pin]
 
@@ -988,6 +1052,35 @@ state to a profile matching the supplied name. Remove will delete the
 profile matching the supplied name from persistent memory. Note that
 after SAVE or REMOVE operations have been run the SAVE_CONFIG gcode
 must be run to make the changes to persistent memory permanent.
+
+### [smart_effector]
+
+Several commands are available when a
+[smart_effector config section](Config_Reference.md#smart_effector) is enabled.
+Be sure to check the official documentation for the Smart Effector on the
+[Duet3D Wiki](https://duet3d.dozuki.com/Wiki/Smart_effector_and_carriage_adapters_for_delta_printer)
+before changing the Smart Effector parameters. Also check the
+[probe calibration guide](Probe_Calibrate.md).
+
+#### SET_SMART_EFFECTOR
+`SET_SMART_EFFECTOR [SENSITIVITY=<sensitivity>] [ACCEL=<accel>]
+[RECOVERY_TIME=<time>]`: Set the Smart Effector parameters. When
+`SENSITIVITY` is specified, the respective value is written to the
+SmartEffector EEPROM (requires `control_pin` to be provided).
+Acceptable `<sensitivity>` values are 0..255, the default is 50. Lower
+values require less nozzle contact force to trigger (but there is a
+higher risk of false triggering due to vibrations during probing), and
+higher values reduce false triggering (but require larger contact
+force to trigger). Since the sensitivity is written to EEPROM, it is
+preserved after the shutdown, and so it does not need to be configured
+on every printer startup. `ACCEL` and `RECOVERY_TIME` allow to
+override the corresponding parameters at run-time, see the
+[config section](Config_Reference.md#smart_effector) of Smart Effector
+for more info on those parameters.
+
+#### RESET_SMART_EFFECTOR
+`RESET_SMART_EFFECTOR`: Resets Smart Effector sensitivity to its factory
+settings. Requires `control_pin` to be provided in the config section.
 
 ### [stepper_enable]
 
