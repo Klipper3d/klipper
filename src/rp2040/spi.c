@@ -13,7 +13,7 @@
 
 DECL_ENUMERATION("spi_bus", "spi0a", 0);
 DECL_CONSTANT_STR("BUS_PINS_spi0a", "gpio0,gpio3,gpio2");
-// DFRobot Pico Expansion Board SPI0 (https://www.dfrobot.com/product-2393.html)
+// DFRobot Pico Expansion Board SPI0 is spi0b (https://www.dfrobot.com/product-2393.html)
 DECL_ENUMERATION("spi_bus", "spi0b", 1);
 DECL_CONSTANT_STR("BUS_PINS_spi0b", "gpio4,gpio7,gpio6");
 DECL_ENUMERATION("spi_bus", "spi0c", 2);
@@ -21,7 +21,7 @@ DECL_CONSTANT_STR("BUS_PINS_spi0c", "gpio16,gpio19,gpio18");
 DECL_ENUMERATION("spi_bus", "spi0d", 3);
 DECL_CONSTANT_STR("BUS_PINS_spi0d", "gpio20,gpio23,gpio22");
 
-// DFRobot Pico Expansion Board SPI1
+// DFRobot Pico Expansion Board SPI1 is spi1a
 DECL_ENUMERATION("spi_bus", "spi1a", 4);
 DECL_CONSTANT_STR("BUS_PINS_spi1a", "gpio8,gpio11,gpio10");
 DECL_ENUMERATION("spi_bus", "spi1b", 5);
