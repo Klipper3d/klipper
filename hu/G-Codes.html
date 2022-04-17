@@ -440,7 +440,7 @@
   
     <li class="md-nav__item">
       <a href="Config_Reference.html" class="md-nav__link">
-        Configuration reference
+        Konfigurációs hivatkozás
       </a>
     </li>
   
@@ -1266,8 +1266,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#help" class="md-nav__link">
-    HELP
+  <a href="#sugo" class="md-nav__link">
+    SÚGÓ
   </a>
   
 </li>
@@ -3172,8 +3172,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#help" class="md-nav__link">
-    HELP
+  <a href="#sugo" class="md-nav__link">
+    SÚGÓ
   </a>
   
 </li>
@@ -4101,13 +4101,13 @@
 <li>A firmware verziójának lekérdezése: <code>M115</code></li>
 </ul>
 <p>A fenti parancsokkal kapcsolatos további részletekért lásd a <a href="http://reprap.org/wiki/G-code">RepRap G-kód dokumentáció</a> fájlt.</p>
-<p>Klipper's goal is to support the G-Code commands produced by common 3rd party software (eg, OctoPrint, Printrun, Slic3r, Cura, etc.) in their standard configurations. It is not a goal to support every possible G-Code command. Instead, Klipper prefers human readable <a href="#additional-commands">"extended G-Code commands"</a>. Similarly, the G-Code terminal output is only intended to be human readable - see the <a href="API_Server.html">API Server document</a> if controlling Klipper from external software.</p>
+<p>A Klipper célja, hogy támogassa az általános 3. féltől származó szoftverek (pl. OctoPrint, Printrun, Slic3r, Cura, stb.) által generált G-Kód parancsokat a szabványos konfigurációikban. Nem cél, hogy minden lehetséges G-Kód parancsot támogasson. Ehelyett a Klipper az ember által olvasható <a href="#additional-commands">"kiterjesztett G-Kód"</a> parancsokat részesíti előnyben. Hasonlóképpen, a G-Kód terminál kimenete is csak ember által olvasható. Lásd az <a href="API_Server.html">API Szerver dokumentumot</a>, ha a Klippert külső szoftverből irányítod.</p>
 <p>Ha egy kevésbé gyakori G-kód parancsra van szükség, akkor azt egy egyéni <a href="Config_Reference.html#gcode_macro">gcode_macro config section</a> segítségével lehet megvalósítani. Például ezt használhatnánk a következőkre: <code>G12</code>, <code>G29</code>, <code>G30</code>, <code>G31</code>, <code>M42</code>, <code>M80</code>, <code>M81</code>, <code>T1</code> stb.</p>
 <h2 id="tovabbi-parancsok">További parancsok<a class="headerlink" href="#tovabbi-parancsok" title="Permanent link">&para;</a></h2>
 <p>A Klipper "kiterjesztett" G-kód parancsokat használ az általános konfigurációhoz és állapothoz. Ezek a kiterjesztett parancsok mind hasonló formátumot követnek, egy parancsnévvel kezdődnek, és egy vagy több paraméter követheti őket. Például: <code>SET_SERVO SERVO=myservo ANGLE=5.3</code>. Ebben a parancssorban a parancsok és paraméterek nagybetűvel szerepelnek, azonban a nagy- és kisbetűket nem kell figyelembe venni. (Tehát a "SET_SERVO" és a "set_servo" mindkettő ugyanazt jelenti.)</p>
-<p>This section is organized my Klipper module name, which generally follows the section names specified in the <a href="Config_Reference.html">printer configuration file</a>. Note that some modules are automatically loaded.</p>
+<p>Ez a szakasz a Klipper-modul nevével van generálva, amely általában a <a href="Config_Reference.html">nyomtató konfigurációs fájlban</a> megadott szakaszneveket követi. Vegye figyelembe, hogy néhány modul automatikusan betöltődik.</p>
 <h3 id="adxl345">[adxl345]<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when an <a href="Config_Reference.html#adxl345">adxl345 config section</a> is enabled.</p>
+<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#adxl345">adxl345 konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="accelerometer_measure">ACCELEROMETER_MEASURE<a class="headerlink" href="#accelerometer_measure" title="Permanent link">&para;</a></h4>
 <p><code>ACCELEROMETER_MEASURE [CHIP=&lt;config_name&gt;] [NAME=&lt;value&gt;]</code>: A gyorsulásmérő mérések elindítása a kért másodpercenkénti mintavételek számával. Ha a CHIP nincs megadva, az alapértelmezett érték "adxl345". A parancs start-stop üzemmódban működik: az első végrehajtáskor elindítja a méréseket, a következő végrehajtáskor leállítja azokat. A mérések eredményei a <code>/tmp/adxl345-&lt;chip&gt;-&lt;name&gt; .csv nevű fájlba kerülnek kiírásra</code>, ahol <code>&lt;chip&gt;</code> a gyorsulásmérő chip neve (<code>my_chip_name</code> from <code>[adxl345 my_chip_name]</code>) és <code>&lt;name&gt;</code> az opcionális NAME paraméter. Ha a NAME nincs megadva, akkor az alapértelmezett érték az aktuális idő "ÉÉÉÉÉHHNN_ÓÓPPMM" formátumban. Ha a gyorsulásmérőnek nincs neve a konfigurációs szakaszban (egyszerűen <code>[adxl345]</code>), akkor a <code>&lt;chip&gt;</code> névrész nem generálódik.</p>
 <h4 id="accelerometer_query">ACCELEROMETER_QUERY<a class="headerlink" href="#accelerometer_query" title="Permanent link">&para;</a></h4>
@@ -4117,110 +4117,110 @@
 <h4 id="accelerometer_debug_write">ACCELEROMETER_DEBUG_WRITE<a class="headerlink" href="#accelerometer_debug_write" title="Permanent link">&para;</a></h4>
 <p><code>ACCELEROMETER_DEBUG_WRITE [CHIP=&lt;config_name&gt;] REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Nyers "érték" írása a "register"-be. Mind az "érték", mind a "register" lehet decimális vagy hexadecimális egész szám. Használja óvatosan, és hivatkozzon az ADXL345 adatlapjára.</p>
 <h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when an <a href="Config_Reference.html#angle">angle config section</a> is enabled.</p>
+<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#angle">szög konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="angle_calibrate">ANGLE_CALIBRATE<a class="headerlink" href="#angle_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>ANGLE_CALIBRATE CHIP=&lt;chip_name&gt;</code>: Perform angle calibration on the given sensor (there must be an <code>[angle chip_name]</code> config section that has specified a <code>stepper</code> parameter). IMPORTANT - this tool will command the stepper motor to move without checking the normal kinematic boundary limits. Ideally the motor should be disconnected from any printer carriage before performing calibration. If the stepper can not be disconnected from the printer, make sure the carriage is near the center of its rail before starting calibration. (The stepper motor may move forwards or backwards two full rotations during this test.) After completing this test use the <code>SAVE_CONFIG</code> command to save the calibration data to the config file. In order to use this tool the Python "numpy" package must be installed (see the <a href="Measuring_Resonances.html#software-installation">measuring resonance document</a> for more information).</p>
+<p><code>ANGLE_CALIBRATE CHIP=&lt;chip_name&gt;</code>: Szögkalibrálás végrehajtása az adott érzékelőn (kell lennie egy <code>[angle chip_name]</code> konfigurációs szakasznak, amely megadta a <code>stepper</code> paramétert). FONTOS! Ez az eszköz a normál kinematikai határértékek ellenőrzése nélkül adja ki a léptetőmotor mozgását. Ideális esetben a motort a kalibrálás elvégzése előtt le kell választani az adott kocsiról. Ha a léptetőmotor nem kapcsolható le a nyomtatóról, győződjön meg róla, hogy a kocsi a kalibrálás megkezdése előtt a sín közepénél van. (A léptetőmotor két teljes fordulatot előre vagy hátra mozoghat a teszt során.) A teszt elvégzése után használja a <code>SAVE_CONFIG</code> parancsot a kalibrációs adatok printer.cfg fájlba történő mentéséhez. Az eszköz használatához telepíteni kell a Python "numpy" csomagot (további információkért lásd a <a href="Measuring_Resonances.html#software-installation">rezonancia mérése dokumentumot</a>.</p>
 <h4 id="angle_debug_read">ANGLE_DEBUG_READ<a class="headerlink" href="#angle_debug_read" title="Permanent link">&para;</a></h4>
-<p><code>ANGLE_DEBUG_READ CHIP=&lt;config_name&gt; REG=&lt;register&gt;</code>: Queries sensor register "register" (e.g. 44 or 0x2C). Can be useful for debugging purposes. This is only available for tle5012b chips.</p>
+<p><code>ANGLE_DEBUG_READ CHIP=&lt;config_name&gt; REG=&lt;register&gt;</code>: A "regiszter" (pl. 44 vagy 0x2C) érzékelőregiszter lekérdezése. Hasznos lehet hibakeresési célokra. Ez csak a TLE5012B chipek esetében érhető el.</p>
 <h4 id="angle_debug_write">ANGLE_DEBUG_WRITE<a class="headerlink" href="#angle_debug_write" title="Permanent link">&para;</a></h4>
-<p><code>ANGLE_DEBUG_WRITE CHIP=&lt;config_name&gt; REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Writes raw "value" into register "register". Both "value" and "register" can be a decimal or a hexadecimal integer. Use with care, and refer to sensor data sheet for the reference. This is only available for tle5012b chips.</p>
+<p><code>ANGLE_DEBUG_WRITE CHIP=&lt;config_name&gt; REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Nyers "érték" írása a "register" regiszterébe. Mind az "érték", mind a "regiszter" lehet decimális vagy hexadecimális egész szám. Használja óvatosan, és hivatkozzon az érzékelő adatlapjára. Ez csak a TLE5012B chipek esetében érhető el.</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> is enabled (also see the <a href="Bed_Mesh.html">bed mesh guide</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_mesh">bed_mesh konfigurációs szakasz</a> engedélyezve van (lásd még az <a href="Bed_Mesh.html">ágy háló útmutatót</a>).</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágyat a konfigurációban megadott paraméterek által generált pontok segítségével szintezi. A szintezés után egy háló generálódik, és a Z elmozdulás a hálónak megfelelően kerül beállításra. Az opcionális szintező paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual parancsot adta meg, akkor a kézi szintező eszköz aktiválódik. Az eszköz aktiválása közben elérhető további parancsok részleteit lásd a fenti MANUAL_PROBE parancsban.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>: This command outputs the current probed z values and current mesh values to the terminal. If PGP=1 is specified the X, Y coordinates generated by bed_mesh, along with their associated indices, will be output to the terminal.</p>
+<p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>: Ez a parancs az aktuális mért Z értékeket és az aktuális hálóértékeket adja ki a terminálra. A PGP=1 megadása esetén a bed_mesh által generált X, Y koordináták és a hozzájuk tartozó indexek kerülnek a terminálra.</p>
 <h4 id="bed_mesh_map">BED_MESH_MAP<a class="headerlink" href="#bed_mesh_map" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_MAP</code>: Ez a parancs a BED_MESH_OUTPUT-hoz hasonlóan a háló aktuális állapotát írja ki a terminálra. Az értékek ember által olvasható formátumban történő kiírása helyett az állapotot JSON formátumban szerializálja. Ez lehetővé teszi az OctoPrint pluginek számára, hogy könnyen rögzítsék az adatokat, és az ágy felszínét közelítő magassági térképeket hozzanak létre.</p>
 <h4 id="bed_mesh_clear">BED_MESH_CLEAR<a class="headerlink" href="#bed_mesh_clear" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_CLEAR</code>: Ez a parancs törli a hálót és eltávolít minden Z-beállítást. Ajánlott ezt a parancsot befejező G-kódba tenni.</p>
 <h4 id="bed_mesh_profile">BED_MESH_PROFILE<a class="headerlink" href="#bed_mesh_profile" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_PROFILE LOAD=&lt;name&gt; SAVE=&lt;name&gt; REMOVE=&lt;name&gt;</code>: This command provides profile management for mesh state. LOAD will restore the mesh state from the profile matching the supplied name. SAVE will save the current mesh state to a profile matching the supplied name. Remove will delete the profile matching the supplied name from persistent memory. Note that after SAVE or REMOVE operations have been run the SAVE_CONFIG gcode must be run to make the changes to persistent memory permanent.</p>
+<p><code>BED_MESH_PROFILE LOAD=&lt;name&gt; SAVE=&lt;name&gt; REMOVE=&lt;name&gt;</code>: Ez a parancs a háló állapotának profilkezelését biztosítja. A LOAD a háló állapotát a megadott névnek megfelelő profilból állítja vissza. A SAVE parancs az aktuális hálóállapotot a megadott névnek megfelelő profilba menti. A REMOVE a megadott névnek megfelelő profilt törli a tartós memóriából. Megjegyzendő, hogy a SAVE vagy REMOVE műveletek lefuttatása után a SAVE_CONFIG parancsot kell futtatni, hogy a tartós memóriában végrehajtott változtatások véglegesek legyenek.</p>
 <h4 id="bed_mesh_offset">BED_MESH_OFFSET<a class="headerlink" href="#bed_mesh_offset" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code>: X és/vagy Y eltolást alkalmazza a hálókereséshez. Ez a független extruderekkel rendelkező nyomtatóknál hasznos, mivel az eltolás szükséges a szerszámcsere utáni helyes Z-beállításhoz.</p>
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#bed_screws">bed_screws config section</a> is enabled (also see the <a href="Manual_Level.html#adjusting-bed-leveling-screws">manual level guide</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#bed_screws">ágyszintező csavarok konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Manual_Level.html#adjusting-bed-leveling-screws">kézi szintezés útmutatót</a>).</p>
 <h4 id="bed_screws_adjust">BED_SCREWS_ADJUST<a class="headerlink" href="#bed_screws_adjust" title="Permanent link">&para;</a></h4>
 <p><code>BED_SCREWS_ADJUST</code>: Ez a parancs az ágy állítócsavarok beállítási eszközét hívja elő. A fúvókát különböző helyekre küldi (a konfigurációs fájlban meghatározottak szerint), és lehetővé teszi az ágy állítócsavarok beállítását, hogy az ágy állandó távolságra legyen a fúvókától.</p>
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#bed_tilt">bed_tilt config section</a> is enabled.</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_tilt">bed_tilt konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>BED_TILT_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs a konfigurációban megadott pontokat vizsgálja, majd frissített X és Y dőlésbeállításokat javasol. Az opcionális mérési paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual van megadva, akkor a kézi szintező aktiválódik. Az ezen eszköz aktiválásakor elérhető további parancsok részleteit lásd a fenti MANUAL_PROBE parancsban.</p>
 <h3 id="bltouch">[bltouch]<a class="headerlink" href="#bltouch" title="Permanent link">&para;</a></h3>
-<p>The following command is available when a <a href="Config_Reference.html#bltouch">bltouch config section</a> is enabled (also see the <a href="BLTouch.html">BL-Touch guide</a>).</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#bltouch">bltouch konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="BLTouch.html">BL-Touch útmutatót</a>).</p>
 <h4 id="bltouch_debug">BLTOUCH_DEBUG<a class="headerlink" href="#bltouch_debug" title="Permanent link">&para;</a></h4>
-<p><code>BLTOUCH_DEBUG COMMAND=&lt;command&gt;</code>: This sends a command to the BLTouch. It may be useful for debugging. Available commands are: <code>pin_down</code>, <code>touch_mode</code>, <code>pin_up</code>, <code>self_test</code>, <code>reset</code>. A BL-Touch V3.0 or V3.1 may also support <code>set_5V_output_mode</code>, <code>set_OD_output_mode</code>, <code>output_mode_store</code> commands.</p>
+<p><code>BLTOUCH_DEBUG COMMAND=&lt;command&gt;</code>: Ez egy parancsot küld a BLTouch-nak. Hasznos lehet a hibakereséshez. A rendelkezésre álló parancsok a következők: <code>pin_down</code>, <code>touch_mode</code>, <code>pin_up</code>, <code>self_test</code>, <code>reset</code>. A BL-Touch V3.0 vagy V3.1 támogathatja a <code>set_5V_output_mode</code>, <code>set_OD_output_mode</code>, <code>output_mode_store</code> parancsokat is.</p>
 <h4 id="bltouch_store">BLTOUCH_STORE<a class="headerlink" href="#bltouch_store" title="Permanent link">&para;</a></h4>
 <p><code>BLTOUCH_STORE MODE=&lt;output_mode&gt;</code>: Ez egy kimeneti módot tárol a BLTouch V3.1 EEPROM-jában: <code>5V</code>, <code>OD</code>.</p>
 <h3 id="configfile">[configfile]<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h3>
-<p>The configfile module is automatically loaded.</p>
+<p>A configfile modul automatikusan betöltődik.</p>
 <h4 id="save_config">SAVE_CONFIG<a class="headerlink" href="#save_config" title="Permanent link">&para;</a></h4>
 <p><code>SAVE_CONFIG</code>: Ez a parancs felülírja a nyomtató fő konfigurációs fájlját és újraindítja a gazdaszoftvert. Ez a parancs más kalibrálási parancsokkal együtt használható a kalibrációs tesztek eredményeinek tárolására.</p>
 <h3 id="delayed_gcode">[delayed_gcode]<a class="headerlink" href="#delayed_gcode" title="Permanent link">&para;</a></h3>
-<p>The following command is enabled if a <a href="Config_Reference.html#delayed_gcode">delayed_gcode config section</a> has been enabled (also see the <a href="Command_Templates.html#delayed-gcodes">template guide</a>).</p>
+<p>A következő parancs akkor engedélyezett, ha a <a href="Config_Reference.html#delayed_gcode">delayed_gcode konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Command_Templates.html#delayed-gcodes">parancssablon útmutatót</a>).</p>
 <h4 id="update_delayed_gcode">UPDATE_DELAYED_GCODE<a class="headerlink" href="#update_delayed_gcode" title="Permanent link">&para;</a></h4>
 <p><code>UPDATE_DELAYED_GCODE [ID=&lt;name&gt;] [DURATION=&lt;seconds&gt;]</code>: Frissíti az azonosított [delayed_gcode] késleltetési időtartamát és elindítja a G-Kód végrehajtásának időzítőjét. A 0 érték törli a függőben lévő késleltetett G-Kód végrehajtását.</p>
 <h3 id="delta_calibrate">[delta_calibrate]<a class="headerlink" href="#delta_calibrate" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#linear-delta-kinematics">delta_calibrate config section</a> is enabled (also see the <a href="Delta_Calibrate.html">delta calibrate guide</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#linear-delta-kinematics">delta_kalibrate konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Delta_Calibrate.html">delta kalibrációs útmutatót</a>).</p>
 <h4 id="delta_calibrate_1">DELTA_CALIBRATE<a class="headerlink" href="#delta_calibrate_1" title="Permanent link">&para;</a></h4>
 <p><code>DELTA_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágy hét pontját vizsgálja meg, és frissített végállások, toronyszögek és sugarak ajánlására szolgál. Az opcionális mérési paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual érték van megadva, akkor a kézi szintezés aktiválódik. Lásd a fenti MANUAL_PROBE parancsot a további parancsok részleteiért, amelyek akkor állnak rendelkezésre, amikor ez az eszköz aktív.</p>
 <h4 id="delta_analyze">DELTA_ANALYZE<a class="headerlink" href="#delta_analyze" title="Permanent link">&para;</a></h4>
 <p><code>DELTA_ANALYZE</code>: Ez a parancs a fokozott delta-kalibrálás során használatos. A részletekért lásd a <a href="Delta_Calibrate.html">Delta kalibrálás</a> című dokumentumot.</p>
 <h3 id="display">[display]<a class="headerlink" href="#display" title="Permanent link">&para;</a></h3>
-<p>The following command is available when a <a href="Config_Reference.html#gcode_macro">display config section</a> is enabled.</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#gcode_macro">konfigurációs szakasz megjelenítése</a> engedélyezve van.</p>
 <h4 id="set_display_group">SET_DISPLAY_GROUP<a class="headerlink" href="#set_display_group" title="Permanent link">&para;</a></h4>
 <p><code>SET_DISPLAY_GROUP [DISPLAY=&lt;display&gt;] GROUP=&lt;group&gt;</code>: Az LCD-kijelző aktív kijelzőcsoportjának beállítása. Ez lehetővé teszi több kijelző adatcsoport definiálását a konfigurációban, pl. <code>[display_data &lt;group&gt; &lt;elementname&gt;]</code> és a köztük való váltást ezzel a kiterjesztett G-Kód paranccsal. Ha a DISPLAY nincs megadva, akkor alapértelmezés szerint "display" (az elsődleges kijelző).</p>
 <h3 id="display_status">[display_status]<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h3>
-<p>The display_status module is automatically loaded if a <a href="Config_Reference.html#display">display config section</a> is enabled. It provides the following standard G-Code commands:</p>
+<p>A display_status modul automatikusan betöltődik, ha a <a href="Config_Reference.html#display">display konfigurációs szakasz</a> engedélyezve van. A következő szabványos G-Kód parancsokat biztosítja:</p>
 <ul>
 <li>Üzenet megjelenítése: <code>M117 &lt;message&gt;</code></li>
 <li>Nyomtatási folyamat százalékos arány beállítása: <code>M73 P&lt;percent&gt;</code></li>
 </ul>
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
-<p>The following command is available when the <a href="Config_Reference.html#dual_carriage">dual_carriage config section</a> is enabled.</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#dual_carriage">dual_carriage konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="set_dual_carriage">SET_DUAL_CARRIAGE<a class="headerlink" href="#set_dual_carriage" title="Permanent link">&para;</a></h4>
 <p><code>SET_DUAL_CARRIAGE CARRIAGE=[0|1]</code>: Ez a parancs beállítja az aktív kocsit. Általában az activate_gcode és deactivate_gcode mezőkből hívható elő több extruder konfigurációban.</p>
 <h3 id="endstop_phase">[endstop_phase]<a class="headerlink" href="#endstop_phase" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when an <a href="Config_Reference.html#endstop_phase">endstop_phase config section</a> is enabled (also see the <a href="Endstop_Phase.html">endstop phase guide</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#endstop_phase">endstop_phase konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Endstop_Phase.html">végállás fázis útmutatót</a>).</p>
 <h4 id="endstop_phase_calibrate">ENDSTOP_PHASE_CALIBRATE<a class="headerlink" href="#endstop_phase_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>ENDSTOP_PHASE_CALIBRATE [STEPPER=&lt;config_name&gt;]</code>: Ha nincs megadva STEPPER paraméter, akkor ez a parancs a múltbeli kezdőpont felvételi műveletek során a végállási lépcsőfázisok statisztikáit jelenti. STEPPER paraméter megadása esetén gondoskodik arról, hogy a megadott végállásfázis-beállítás a konfigurációs fájlba íródjon (a SAVE_CONFIG parancs segítségével).</p>
 <h3 id="extruder">[extruder]<a class="headerlink" href="#extruder" title="Permanent link">&para;</a></h3>
-<p>The following commands are available if an <a href="Config_Reference.html#extruder">extruder config section</a> is enabled:</p>
+<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#extruder">extruder konfigurációs szakasz</a> engedélyezve van:</p>
 <h4 id="activate_extruder">ACTIVATE_EXTRUDER<a class="headerlink" href="#activate_extruder" title="Permanent link">&para;</a></h4>
-<p><code>ACTIVATE_EXTRUDER EXTRUDER=&lt;config_name&gt;</code>: In a printer with multiple <a href="Config_Reference.html#extruder">extruder</a> config sections, this command changes the active hotend.</p>
+<p><code>ACTIVATE_EXTRUDER EXTRUDER=&lt;config_name&gt;</code>: Több <a href="Config_Reference.html#extruder">extruder</a> konfigurációs szakaszokkal rendelkező nyomtatóban ez a parancs megváltoztatja az aktív nyomtatófejet.</p>
 <h4 id="set_pressure_advance">SET_PRESSURE_ADVANCE<a class="headerlink" href="#set_pressure_advance" title="Permanent link">&para;</a></h4>
-<p><code>SET_PRESSURE_ADVANCE [EXTRUDER=&lt;config_name&gt;] [ADVANCE=&lt;pressure_advance&gt;] [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Set pressure advance parameters of an extruder stepper (as defined in an <a href="Config_Reference#extruder">extruder</a> or <a href="Config_Reference#extruder_stepper">extruder_stepper</a> config section). If EXTRUDER is not specified, it defaults to the stepper defined in the active hotend.</p>
+<p><code>SET_PRESSURE_ADVANCE [EXTRUDER=&lt;config_name&gt;] [ADVANCE=&lt;pressure_advance&gt;] [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Az extruder léptető nyomásszabályozási paramétereinek beállítása (ahogyan az <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban definiálva van). Ha az EXTRUDER nincs megadva, akkor az alapértelmezett érték az aktív nyomtatófejhez definiált léptető.</p>
 <h4 id="set_extruder_rotation_distance">SET_EXTRUDER_ROTATION_DISTANCE<a class="headerlink" href="#set_extruder_rotation_distance" title="Permanent link">&para;</a></h4>
-<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: Set a new value for the provided extruder stepper's "rotation distance" (as defined in an <a href="Config_Reference#extruder">extruder</a> or <a href="Config_Reference#extruder_stepper">extruder_stepper</a> config section). If the rotation distance is a negative number then the stepper motion will be inverted (relative to the stepper direction specified in the config file). Changed settings are not retained on Klipper reset. Use with caution as small changes can result in excessive pressure between extruder and hotend. Do proper calibration with filament before use. If 'DISTANCE' value is not provided then this command will return the current rotation distance.</p>
+<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: Új értéket állít be a megadott extruder léptető "rotation distance" (ahogyan az egy <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> config szakaszban definiálva van). Ha a forgási távolság negatív szám, akkor a léptető mozgása fordított lesz (a konfigurációs fájlban megadott léptető irányhoz képest). A megváltoztatott beállítások nem maradnak meg a Klipper visszaállításakor. Óvatosan használja, mivel a kis változtatások túlzott nyomást eredményezhetnek az extruder és a nyomtatófej között. Használat előtt végezze el a megfelelő kalibrációt a nyomtatószállal. Ha a 'DISTANCE' érték nincs megadva, akkor ez a parancs az aktuális forgási távolságot adja vissza.</p>
 <h4 id="sync_extruder_motion">SYNC_EXTRUDER_MOTION<a class="headerlink" href="#sync_extruder_motion" title="Permanent link">&para;</a></h4>
-<p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;name&gt; MOTION_QUEUE=&lt;name&gt;</code>: This command will cause the stepper specified by EXTRUDER (as defined in an <a href="Config_Reference#extruder">extruder</a> or <a href="Config_Reference#extruder_stepper">extruder_stepper</a> config section) to become synchronized to the movement of an extruder specified by MOTION_QUEUE (as defined in an <a href="Config_Reference#extruder">extruder</a> config section). If MOTION_QUEUE is an empty string then the stepper will be desynchronized from all extruder movement.</p>
+<p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;name&gt; MOTION_QUEUE=&lt;name&gt;</code>: Ezzel a paranccsal az EXTRUDER által meghatározott (az <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban meghatározott) léptető szinkronizálódik a MOTION_QUEUE által meghatározott (az <a href="Config_Reference#extruder">extruder</a> konfigurációs szakaszban meghatározott) extruder mozgásához. Ha a MOTION_QUEUE üres karakterlánc, akkor a léptető deszinkronizálódik minden extruder mozgásra.</p>
 <h4 id="set_extruder_step_distance">SET_EXTRUDER_STEP_DISTANCE<a class="headerlink" href="#set_extruder_step_distance" title="Permanent link">&para;</a></h4>
-<p>This command is deprecated and will be removed in the near future.</p>
+<p>Ez a parancs elavult, és a közeljövőben eltávolításra kerül.</p>
 <h4 id="sync_stepper_to_extruder">SYNC_STEPPER_TO_EXTRUDER<a class="headerlink" href="#sync_stepper_to_extruder" title="Permanent link">&para;</a></h4>
-<p>This command is deprecated and will be removed in the near future.</p>
+<p>Ez a parancs elavult, és a közeljövőben eltávolításra kerül.</p>
 <h3 id="fan_generic">[fan_generic]<a class="headerlink" href="#fan_generic" title="Permanent link">&para;</a></h3>
-<p>The following command is available when a <a href="Config_Reference.html#fan_generic">fan_generic config section</a> is enabled.</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#fan_generic">fan_generic konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="set_fan_speed">SET_FAN_SPEED<a class="headerlink" href="#set_fan_speed" title="Permanent link">&para;</a></h4>
-<p><code>SET_FAN_SPEED FAN=config_name SPEED=&lt;speed&gt;</code> This command sets the speed of a fan. "speed" must be between 0.0 and 1.0.</p>
+<p><code>SET_FAN_SPEED FAN=config_name SPEED=&lt;speed&gt;</code> Ez a parancs beállítja a ventilátor sebességét. "speed" 0.0 és 1.0 között kell lennie.</p>
 <h3 id="filament_switch_sensor">[filament_switch_sensor]<a class="headerlink" href="#filament_switch_sensor" title="Permanent link">&para;</a></h3>
-<p>The following command is available when a <a href="Config_Reference.html#filament_switch_sensor">filament_switch_sensor</a> or <a href="Config_Reference.html#filament_motion_sensor">filament_motion_sensor</a> config section is enabled.</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#filament_switch_sensor">filament_switch_sensor</a> vagy <a href="Config_Reference.html#filament_motion_sensor">filament_motion_sensor</a> konfigurációs szakasz engedélyezve van.</p>
 <h4 id="query_filament_sensor">QUERY_FILAMENT_SENSOR<a class="headerlink" href="#query_filament_sensor" title="Permanent link">&para;</a></h4>
-<p><code>QUERY_FILAMENT_SENSOR SENSOR=&lt;sensor_name&gt;</code>: Queries the current status of the filament sensor. The data displayed on the terminal will depend on the sensor type defined in the configuration.</p>
+<p><code>QUERY_FILAMENT_SENSOR SENSOR=&lt;sensor_name&gt;</code>: A nyomtatószál-érzékelő aktuális állapotának lekérdezése. A terminálon megjelenő adatok a konfigurációban meghatározott érzékelőtípustól függnek.</p>
 <h4 id="set_filament_sensor">SET_FILAMENT_SENSOR<a class="headerlink" href="#set_filament_sensor" title="Permanent link">&para;</a></h4>
 <p><code>SET_FILAMENT_SENSOR SENSOR=&lt;sensor_name&gt; ENABLE=[0|1]</code>: A nyomtatószál érzékelő be/ki kapcsolása. Ha az ENABLE értéke 0, akkor a nyomtatószál-érzékelő ki lesz kapcsolva, ha 1-re van állítva, akkor bekapcsol.</p>
 <h3 id="firmware_retraction">[firmware_retraction]<a class="headerlink" href="#firmware_retraction" title="Permanent link">&para;</a></h3>
-<p>The following standard G-Code commands are available when the <a href="Config_Reference.html#firmware_retraction">firmware_retraction config section</a> is enabled. These commands allow you to utilize the firmware retraction feature available in many slicers, to reduce stringing during non-extrusion moves from one part of the print to another. Appropriately configuring pressure advance reduces the length of retraction required.</p>
+<p>A következő szabványos G-Kódú parancsok állnak rendelkezésre, ha a <a href="Config_Reference.html#firmware_retraction">firmware_retraction konfigurációs szakasz</a> engedélyezve van. Ezek a parancsok lehetővé teszik a szeletelőkben elérhető firmware retraction funkció kihasználását, hogy csökkentse a húrosodást a nem extrudálásos mozgások során a nyomtatás egyik részéből a másikba. A nyomásszabályozás megfelelő beállítása csökkenti a szükséges visszahúzás hosszát.</p>
 <ul>
 <li><code>G10</code>: Visszahúzza a nyomtatószálat a konfigurált paraméterek szerint.</li>
 <li><code>G11</code>: Betölti a nyomtatószálat a konfigurált paraméterek szerint.</li>
 </ul>
-<p>The following additional commands are also available.</p>
+<p>A következő további parancsok is rendelkezésre állnak.</p>
 <h4 id="set_retraction">SET_RETRACTION<a class="headerlink" href="#set_retraction" title="Permanent link">&para;</a></h4>
 <p><code>SET_RETRACTION [RETRACT_LENGTH=&lt;mm&gt;] [RETRACT_SPEED=&lt;mm/s&gt;] [UNRETRACT_EXTRA_LENGTH=&lt;mm&gt;] [UNRETRACT_SPEED=&lt;mm/s&gt;]</code>: A firmware visszahúzás által használt paraméterek beállítása. A RETRACT_LENGTH határozza meg a visszahúzandó és a visszahúzást megszüntető szál hosszát. A visszahúzás sebessége a RETRACT_SPEED segítségével állítható be, és általában viszonylag magasra van állítva. A visszahúzás sebességét az UNRETRACT_SPEED segítségével állítjuk be, és nem különösebben kritikus, bár gyakran alacsonyabb, mint a RETRACT_SPEED. Bizonyos esetekben hasznos, ha a visszahúzáskor egy kis plusz hosszúságot adunk hozzá, és ezt az UNRETRACT_EXTRA_LENGTH segítségével állítjuk be. A SET_RETRACTION általában a szeletelő szálankénti konfiguráció részeként kerül beállításra, mivel a különböző szálak különböző paraméterbeállításokat igényelnek.</p>
 <h4 id="get_retraction">GET_RETRACTION<a class="headerlink" href="#get_retraction" title="Permanent link">&para;</a></h4>
 <p><code>GET_RETRACTION</code>: A firmware visszahúzás által használt aktuális paraméterek lekérdezése és megjelenítése a terminálon.</p>
 <h3 id="force_move">[force_move]<a class="headerlink" href="#force_move" title="Permanent link">&para;</a></h3>
-<p>The force_move module is automatically loaded, however some commands require setting <code>enable_force_move</code> in the <a href="Config_Reference#force_move">printer config</a>.</p>
+<p>A force_move modul automatikusan betöltődik, azonban néhány parancshoz szükséges az <code>enable_force_move</code> beállítása a <a href="Config_Reference#force_move">nyomtató konfigurációban</a>.</p>
 <h4 id="stepper_buzz">STEPPER_BUZZ<a class="headerlink" href="#stepper_buzz" title="Permanent link">&para;</a></h4>
 <p><code>STEPPER_BUZZ STEPPER=&lt;config_name&gt;</code>: Az adott léptetőmotor mozgatása egy mm-t előre, majd egy mm-t hátra, 10 alkalommal megismételve. Ez egy diagnosztikai eszköz, amely segít a léptető kapcsolatának ellenőrzésében.</p>
 <h4 id="force_move_1">FORCE_MOVE<a class="headerlink" href="#force_move_1" title="Permanent link">&para;</a></h4>
@@ -4228,14 +4228,14 @@
 <h4 id="set_kinematic_position">SET_KINEMATIC_POSITION<a class="headerlink" href="#set_kinematic_position" title="Permanent link">&para;</a></h4>
 <p><code>SET_KINEMATIC_POSITION [X=&lt;value&gt;] [Y=&lt;value&gt;] [Z=&lt;value&gt;]</code>: Kényszeríti az alacsony szintű kinematikai kódot, hogy azt higgye, a nyomtatófej a megadott cartesian pozícióban van. Ez egy diagnosztikai és hibakeresési parancs; használja a SET_GCODE_OFFSET és/vagy a G92 parancsot a normál tengelytranszformációkhoz. Ha egy tengely nincs megadva, akkor alapértelmezés szerint az a pozíció lesz, ahová a fejet utoljára parancsolták. A helytelen vagy érvénytelen pozíció beállítása belső szoftverhibához vezethet. Ez a parancs érvénytelenítheti a későbbi határérték ellenőrzéseket; a kinematika visszaállításához adjon ki egy G28 parancsot.</p>
 <h3 id="gcode">[gcode]<a class="headerlink" href="#gcode" title="Permanent link">&para;</a></h3>
-<p>The gcode module is automatically loaded.</p>
+<p>A G-Kód modul automatikusan betöltődik.</p>
 <h4 id="restart">RESTART<a class="headerlink" href="#restart" title="Permanent link">&para;</a></h4>
 <p><code>RESTART</code>: Ez arra készteti a gazdaszoftvert, hogy újratöltse a konfigurációját és belső alaphelyzetbe állítást végezzen. Ez a parancs nem törli a mikrokontroller hibaállapotát (lásd FIRMWARE_RESTART), és nem tölt be új szoftvert (lásd a <a href="FAQ.html#how-do-i-upgrade-to-the-latest-software">GYIK</a> oldalt).</p>
 <h4 id="firmware_restart">FIRMWARE_RESTART<a class="headerlink" href="#firmware_restart" title="Permanent link">&para;</a></h4>
 <p><code>FIRMWARE_RESTART</code>: Ez hasonló a RESTART parancshoz, de a mikrokontroller hibaállapotát is törli.</p>
 <h4 id="status">STATUS<a class="headerlink" href="#status" title="Permanent link">&para;</a></h4>
 <p><code>STATUS</code>: Jelentse a Klipper gazdagép szoftver állapotát.</p>
-<h4 id="help">HELP<a class="headerlink" href="#help" title="Permanent link">&para;</a></h4>
+<h4 id="sugo">SÚGÓ<a class="headerlink" href="#sugo" title="Permanent link">&para;</a></h4>
 <p><code>HELP</code>: A rendelkezésre álló kiterjesztett G-Kód parancsok listájának megjelenítése.</p>
 <h3 id="gcode_arcs">[gcode_arcs]<a class="headerlink" href="#gcode_arcs" title="Permanent link">&para;</a></h3>
 <p>A következő szabványos G-kód parancsok elérhetők, ha a <a href="Config_Reference.html#gcode_arcs">gcode_arcs config section</a> engedélyezve van:</p>
@@ -4243,13 +4243,13 @@
 <li>Vezérelt ívmozgás (G2 vagy G3): <code>G2 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;</code></li>
 </ul>
 <h3 id="gcode_macro">[gcode_macro]<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h3>
-<p>The following command is available when a <a href="Config_Reference.html#gcode_macro">gcode_macro config section</a> is enabled (also see the <a href="Command_Templates.html">command templates guide</a>).</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#gcode_macro">gcode_macro konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Command_Templates.html">parancssablonok útmutatóját</a>).</p>
 <h4 id="set_gcode_variable">SET_GCODE_VARIABLE<a class="headerlink" href="#set_gcode_variable" title="Permanent link">&para;</a></h4>
 <p><code>SET_GCODE_VARIABLE MACRO=&lt;macro_name&gt; VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code>: Ez a parancs lehetővé teszi a gcode_macro változó értékének megváltoztatását üzem közben. A megadott VALUE-t Python literálként elemzi a program.</p>
 <h3 id="gcode_move">[gcode_move]<a class="headerlink" href="#gcode_move" title="Permanent link">&para;</a></h3>
-<p>The gcode_move module is automatically loaded.</p>
+<p>A gcode_move modul automatikusan betöltődik.</p>
 <h4 id="get_position">GET_POSITION<a class="headerlink" href="#get_position" title="Permanent link">&para;</a></h4>
-<p><code>GET_POSITION</code>: Return information on the current location of the toolhead. See the developer documentation of <a href="Code_Overview.html#coordinate-systems">GET_POSITION output</a> for more information.</p>
+<p><code>GET_POSITION</code>: A nyomtatófej aktuális helyzetére vonatkozó információk visszaadása. További információkért lásd a <a href="Code_Overview.html#coordinate-systems">GET_POSITION kimenet</a> fejlesztői dokumentációját.</p>
 <h4 id="set_gcode_offset">SET_GCODE_OFFSET<a class="headerlink" href="#set_gcode_offset" title="Permanent link">&para;</a></h4>
 <p><code>SET_GCODE_OFFSET [X=&lt;pos&gt;|X_ADJUST=&lt;adjust&gt;] [Y=&lt;pos&gt;|Y_ADJUST=&lt;adjust&gt;] [Z=&lt;pos&gt;|Z_ADJUST=&lt;adjust&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>: Pozíciós eltolás beállítása, amelyet a későbbi G-kód parancsokra kell alkalmazni. Ezt általában a Z ágy eltolás virtuális megváltoztatására vagy a fúvókák XY eltolásának beállítására használják extruder váltáskor. Például, ha a "SET_GCODE_OFFSET Z=0.2" parancsot küldjük, akkor a jövőbeli G-kód mozgások Z magasságához 0,2 mm-t adunk hozzá. Ha az X_ADJUST stílusparamétereket használjuk, akkor a kiigazítás hozzáadódik a meglévő eltoláshoz (pl. a "SET_GCODE_OFFSET Z=-0.2" és a "SET_GCODE_OFFSET Z_ADJUST=0.3" utána a teljes Z eltolás 0.1 lesz). Ha a "MOVE=1" van megadva, akkor a nyomtatófej mozgatása a megadott eltolás alkalmazására történik (egyébként az eltolás a következő abszolút G-kódú mozgatáskor lép hatályba, amely az adott tengelyt adja meg). Ha a "MOVE_SPEED" meg van adva, akkor a szerszámfej mozgatása a megadott sebességgel (mm/mp-ben) történik; egyébként a nyomtatófej mozgatása az utoljára megadott G-kód sebességet fogja használni.</p>
 <h4 id="save_gcode_state">SAVE_GCODE_STATE<a class="headerlink" href="#save_gcode_state" title="Permanent link">&para;</a></h4>
@@ -4257,23 +4257,23 @@
 <h4 id="restore_gcode_state">RESTORE_GCODE_STATE<a class="headerlink" href="#restore_gcode_state" title="Permanent link">&para;</a></h4>
 <p><code>RESTORE_GCODE_STATE [NAME=&lt;state_name&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>: A SAVE_GCODE_STATE segítségével korábban elmentett állapot visszaállítása. Ha "MOVE=1" van megadva, akkor a nyomtatófej mozgatása az előző XYZ-pozícióba való visszalépéshez történik. Ha "MOVE_SPEED" van megadva, akkor a nyomtatófej mozgatása a megadott sebességgel (mm/mp-ben) történik; egyébként a nyomtatófej mozgatása a visszaállított G-Kód sebességét használja.</p>
 <h3 id="hall_filament_width_sensor">[hall_filament_width_sensor]<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#tsl1401cl_filament_width_sensor">tsl1401cl filament width sensor config section</a> or <a href="Config_Reference.html#hall_filament_width_sensor">hall filament width sensor config section</a> is enabled (also see <a href="TSL1401CL_Filament_Width_Sensor.html">TSLl401CL Filament Width Sensor</a> and <a href="Hall_Filament_Width_Sensor.html">Hall Filament Width Sensor</a>):</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#tsl1401cl_filament_width_sensor">tsl1401cl szálszélesség érzékelő konfigurációs szakasz</a> vagy a <a href="Config_Reference.html#hall_filament_width_sensor">hall szálszélesség érzékelő konfigurációs szakasz</a> engedélyezve van (lásd még <a href="TSL1401CL_Filament_Width_Sensor.html">TSLll401CL Szálszélesség érzékelő</a> és a <a href="Hall_Filament_Width_Sensor.html">Hall Szálszélesség érzékelő</a> dokumentumot):</p>
 <h4 id="query_filament_width">QUERY_FILAMENT_WIDTH<a class="headerlink" href="#query_filament_width" title="Permanent link">&para;</a></h4>
-<p><code>QUERY_FILAMENT_WIDTH</code>: Return the current measured filament width.</p>
+<p><code>QUERY_FILAMENT_WIDTH</code>: Visszaadja az aktuálisan mért izzószál szélességet.</p>
 <h4 id="reset_filament_width_sensor">RESET_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#reset_filament_width_sensor" title="Permanent link">&para;</a></h4>
-<p><code>RESET_FILAMENT_WIDTH_SENSOR</code>: Clear all sensor readings. Helpful after filament change.</p>
+<p><code>RESET_FILAMENT_WIDTH_SENSOR</code>: Törli az összes érzékelő leolvasását. Hasznos nyomtatószál csere után.</p>
 <h4 id="disable_filament_width_sensor">DISABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#disable_filament_width_sensor" title="Permanent link">&para;</a></h4>
-<p><code>DISABLE_FILAMENT_WIDTH_SENSOR</code>: Turn off the filament width sensor and stop using it for flow control.</p>
+<p><code>DISABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsolja ki a szálszélesség érzékelőt, és ne használja áramlásszabályozáshoz.</p>
 <h4 id="enable_filament_width_sensor">ENABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#enable_filament_width_sensor" title="Permanent link">&para;</a></h4>
-<p><code>ENABLE_FILAMENT_WIDTH_SENSOR</code>: Turn on the filament width sensor and start using it for flow control.</p>
+<p><code>ENABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsolja be a szálszélesség érzékelőt, és kezdje el használni az áramlásszabályozáshoz.</p>
 <h4 id="query_raw_filament_width">QUERY_RAW_FILAMENT_WIDTH<a class="headerlink" href="#query_raw_filament_width" title="Permanent link">&para;</a></h4>
-<p><code>QUERY_RAW_FILAMENT_WIDTH</code>: Return the current ADC channel readings and RAW sensor value for calibration points.</p>
+<p><code>QUERY_RAW_FILAMENT_WIDTH</code>: Visszaadja az ADC-csatorna aktuális leolvasását és a RAW-érzékelő értékét a kalibrációs pontokhoz.</p>
 <h4 id="enable_filament_width_log">ENABLE_FILAMENT_WIDTH_LOG<a class="headerlink" href="#enable_filament_width_log" title="Permanent link">&para;</a></h4>
-<p><code>ENABLE_FILAMENT_WIDTH_LOG</code>: Turn on diameter logging.</p>
+<p><code>ENABLE_FILAMENT_WIDTH_LOG</code>: Az átmérő naplózásának bekapcsolása.</p>
 <h4 id="disable_filament_width_log">DISABLE_FILAMENT_WIDTH_LOG<a class="headerlink" href="#disable_filament_width_log" title="Permanent link">&para;</a></h4>
-<p><code>DISABLE_FILAMENT_WIDTH_LOG</code>: Turn off diameter logging.</p>
+<p><code>DISABLE_FILAMENT_WIDTH_LOG</code>: Az átmérő naplózásának kikapcsolása.</p>
 <h3 id="heaters">[heaters]<a class="headerlink" href="#heaters" title="Permanent link">&para;</a></h3>
-<p>The heaters module is automatically loaded if a heater is defined in the config file.</p>
+<p>A fűtőmodul automatikusan betöltődik, ha a konfigurációs fájlban van fűtőelem definiálva.</p>
 <h4 id="turn_off_heaters">TURN_OFF_HEATERS<a class="headerlink" href="#turn_off_heaters" title="Permanent link">&para;</a></h4>
 <p><code>TURN_OFF_HEATERS</code>: Kapcsolja ki az összes fűtőberendezést.</p>
 <h4 id="temperature_wait">TEMPERATURE_WAIT<a class="headerlink" href="#temperature_wait" title="Permanent link">&para;</a></h4>
@@ -4281,15 +4281,15 @@
 <h4 id="set_heater_temperature">SET_HEATER_TEMPERATURE<a class="headerlink" href="#set_heater_temperature" title="Permanent link">&para;</a></h4>
 <p><code>SET_HEATER_TEMPERATURE HEATER=&lt;heater_name&gt; [TARGET=&lt;target_temperature&gt;]</code>: A fűtőtest célhőmérsékletének beállítása. Ha nincs megadva célhőmérséklet, akkor az érték 0.</p>
 <h3 id="idle_timeout">[idle_timeout]<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h3>
-<p>The idle_timeout module is automatically loaded.</p>
+<p>Az idle_timeout modul automatikusan betöltődik.</p>
 <h4 id="set_idle_timeout">SET_IDLE_TIMEOUT<a class="headerlink" href="#set_idle_timeout" title="Permanent link">&para;</a></h4>
 <p><code>SET_IDLE_TIMEOUT [TIMEOUT=&lt;timeout&gt;]</code>: Lehetővé teszi a felhasználó számára az üresjárati időkorlát beállítását (másodpercben).</p>
 <h3 id="input_shaper">[input_shaper]<a class="headerlink" href="#input_shaper" title="Permanent link">&para;</a></h3>
-<p>The following command is enabled if an <a href="Config_Reference.html#input_shaper">input_shaper config section</a> has been enabled (also see the <a href="Resonance_Compensation.html">resonance compensation guide</a>).</p>
+<p>A következő parancs akkor engedélyezett, ha az <a href="Config_Reference.html#input_shaper">input_shaper konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Resonance_Compensation.html">rezonancia kompenzációs útmutatót</a>).</p>
 <h4 id="set_input_shaper">SET_INPUT_SHAPER<a class="headerlink" href="#set_input_shaper" title="Permanent link">&para;</a></h4>
 <p><code>SET_INPUT_SHAPER [SHAPER_FREQ_X=&lt;shaper_freq_x&gt;] [SHAPER_FREQ_Y=&lt;shaper_freq_y&gt;] [DAMPING_RATIO_X=&lt;damping_ratio_x&gt;] [DAMPING_RATIO_Y=&lt;damping_ratio_y&gt;] [SHAPER_TYPE=&lt;shaper&gt;] [SHAPER_TYPE_X=&lt;shaper_type_x&gt;] [SHAPER_TYPE_Y=&lt;shaper_type_y&gt;]</code>: A bemeneti formáló paraméterek módosítása. Vegye figyelembe, hogy a SHAPER_TYPE paraméter visszaállítja a bemeneti formálót mind az X, mind az Y tengelyre, még akkor is, ha az [input_shaper] szakaszban különböző formálótípusok lettek beállítva. A SHAPER_TYPE nem használható együtt a SHAPER_TYPE_X és SHAPER_TYPE_Y paraméterekkel. Az egyes paraméterekkel kapcsolatos további részletekért lásd a <a href="Config_Reference.html#input_shaper">konfigurációs hivatkozást</a>.</p>
 <h3 id="manual_probe">[manual_probe]<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h3>
-<p>The manual_probe module is automatically loaded.</p>
+<p>A manual_probe modul automatikusan betöltődik.</p>
 <h4 id="manual_probe_1">MANUAL_PROBE<a class="headerlink" href="#manual_probe_1" title="Permanent link">&para;</a></h4>
 <p><code>MANUAL_PROBE [SPEED=&lt;speed&gt;]</code>: Egy segédszkript futtatása, amely hasznos a fúvóka magasságának méréséhez egy adott helyen. Ha SPEED van megadva, akkor a TESTZ parancsok sebességét állítja be (az alapértelmezett 5 mm/mp). A kézi mérés során a következő további parancsok állnak rendelkezésre:</p>
 <ul>
@@ -4302,26 +4302,26 @@
 <h4 id="z_offset_apply_endstop">Z_OFFSET_APPLY_ENDSTOP<a class="headerlink" href="#z_offset_apply_endstop" title="Permanent link">&para;</a></h4>
 <p><code>Z_OFFSET_APPLY_ENDSTOP</code>: Vegyük az aktuális Z G-Kód eltolást (más néven mikrolépés), és vonjuk ki a stepper_z endstop_positionból. Ez egy gyakran használt mikrolépés értéket vesz, és "állandóvá teszi". Egy <code>SAVE_CONFIG</code> szükséges a hatálybalépéshez.</p>
 <h3 id="manual_stepper">[manual_stepper]<a class="headerlink" href="#manual_stepper" title="Permanent link">&para;</a></h3>
-<p>The following command is available when a <a href="Config_Reference.html#manual_stepper">manual_stepper config section</a> is enabled.</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#manual_stepper">manual_stepper konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="manual_stepper_1">MANUAL_STEPPER<a class="headerlink" href="#manual_stepper_1" title="Permanent link">&para;</a></h4>
 <p><code>MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]] [SET_POSITION=&lt;pos&gt;] [SPEED=&lt;speed&gt;] [ACCEL=&lt;accel&gt;] [MOVE=&lt;pos&gt; [STOP_ON_ENDSTOP=[1|2|2|-1|-2]] [SYNC=0]]]</code>: Ez a parancs megváltoztatja a léptető állapotát. Az ENABLE paraméterrel engedélyezheti/letilthatja a léptetőt. A SET_POSITION paraméterrel kényszerítheti a léptetőt arra, hogy azt higgye, az adott helyzetben van. A MOVE paraméterrel kezdeményezhet mozgást egy adott pozícióba. Ha a SPEED és/vagy az ACCEL paraméter meg van adva, akkor a rendszer a megadott értékeket használja a konfigurációs fájlban megadott alapértelmezett értékek helyett. Ha nulla ACCEL-t ad meg, akkor nem történik gyorsítás. Ha STOP_ON_ENDSTOP=1 van megadva, akkor a lépés korán véget ér. Ha a végálláskapcsoló aktiválódik (a STOP_ON_ENDSTOP=2 paranccsal hiba nélkül befejezheti a mozgást, még akkor is, ha a végálláskapcsoló nem aktiválódott. Használja a -1 vagy a -2 jelölést, hogy leálljon, amikor a végálláskapcsoló még nem aktiválódott). Normális esetben a későbbi G-Kód parancsok a léptetőmozgás befejezése után kerülnek ütemezésre, azonban ha a kézi léptetőmozgás parancs a SYNC=0 értéket használja, akkor a későbbi G-kód mozgatási parancsok a léptetőmozgással párhuzamosan is futhatnak.</p>
 <h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
-<p>The following command is available when any of the <a href="Config_Reference.html#leds">led config sections</a> are enabled.</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#leds">LED konfigurációs szakaszok</a> bármelyike engedélyezve van.</p>
 <h4 id="set_led">SET_LED<a class="headerlink" href="#set_led" title="Permanent link">&para;</a></h4>
-<p><code>SET_LED LED=&lt;config_name&gt; RED=&lt;value&gt; GREEN=&lt;value&gt; BLUE=&lt;value&gt; WHITE=&lt;value&gt; [INDEX=&lt;index&gt;] [TRANSMIT=0] [SYNC=1]</code>: This sets the LED output. Each color <code>&lt;value&gt;</code> must be between 0.0 and 1.0. The WHITE option is only valid on RGBW LEDs. If the LED supports multiple chips in a daisy-chain then one may specify INDEX to alter the color of just the given chip (1 for the first chip, 2 for the second, etc.). If INDEX is not provided then all LEDs in the daisy-chain will be set to the provided color. If TRANSMIT=0 is specified then the color change will only be made on the next SET_LED command that does not specify TRANSMIT=0; this may be useful in combination with the INDEX parameter to batch multiple updates in a daisy-chain. By default, the SET_LED command will sync it's changes with other ongoing gcode commands. This can lead to undesirable behavior if LEDs are being set while the printer is not printing as it will reset the idle timeout. If careful timing is not needed, the optional SYNC=0 parameter can be specified to apply the changes without resetting the idle timeout.</p>
+<p><code>SET_LED LED=&lt;config_name&gt; RED=&lt;value&gt; GREEN=&lt;value&gt; BLUE=&lt;value&gt; WHITE=&lt;value&gt; [INDEX=&lt;index&gt;] [TRANSMIT=0] [SYNC=1]</code>: Ez állítja be a LED kimenetet. Minden szín <code>&lt;value&gt;</code> 0,0 és 1,0 között kell lennie. A WHITE opció csak RGBW LED-ek esetén érvényes. Ha a LED több chipet támogat egy daisy-chainben, akkor megadhatjuk az INDEX-et, hogy csak az adott chip színét változtassuk meg (1 az első chiphez, 2 a másodikhoz stb.). Ha az INDEX nincs megadva, akkor a daisy-chain összes LED-je a megadott színre lesz beállítva. Ha TRANSMIT=0 van megadva, akkor a színváltoztatás csak a következő SET_LED parancsnál történik meg, amely nem ad meg TRANSMIT=0-t. Ez hasznos lehet az INDEX paraméterrel kombinálva, ha egy daisy-chainben több frissítést szeretnénk kötegelni. Alapértelmezés szerint a SET_LED parancs szinkronizálja a változtatásokat a többi folyamatban lévő G-Kód paranccsal. Ez nemkívánatos viselkedéshez vezethet, ha a LED-ek beállítása akkor történik, amikor a nyomtató nem nyomtat, mivel ez visszaállítja az üresjárati időkorlátot. Ha nincs szükség gondos időzítésre, az opcionális SYNC=0 paraméter megadható, hogy a módosításokat az üresjárati időkorlát visszaállítása nélkül alkalmazza.</p>
 <h4 id="set_led_template">SET_LED_TEMPLATE<a class="headerlink" href="#set_led_template" title="Permanent link">&para;</a></h4>
-<p><code>SET_LED_TEMPLATE LED=&lt;led_name&gt; TEMPLATE=&lt;template_name&gt; [&lt;param_x&gt;=&lt;literal&gt;] [INDEX=&lt;index&gt;]</code>: Assign a <a href="Config_Reference.html#display_template">display_template</a> to a given <a href="Config_Reference.html#leds">LED</a>. For example, if one defined a <code>[display_template my_led_template]</code> config section then one could assign <code>TEMPLATE=my_led_template</code> here. The display_template should produce a comma separated string containing four floating point numbers corresponding to red, green, blue, and white color settings. The template will be continuously evaluated and the LED will be automatically set to the resulting colors. One may set display_template parameters to use during template evaluation (parameters will be parsed as Python literals). If INDEX is not specified then all chips in the LED's daisy-chain will be set to the template, otherwise only the chip with the given index will be updated. If TEMPLATE is an empty string then this command will clear any previous template assigned to the LED (one can then use <code>SET_LED</code> commands to manage the LED's color settings).</p>
+<p><code>SET_LED_TEMPLATE LED=&lt;led_name&gt; TEMPLATE=&lt;template_name&gt; [&lt;param_x&gt;=&lt;literal&gt;] [INDEX=&lt;index&gt;]</code>: Egy <a href="Config_Reference.html#display_template">display_template</a> hozzárendelése egy adott <a href="Config_Reference.html#leds">LED-hez</a>. Például, ha definiáltunk egy <code>[display_template my_led_template]</code> konfigurációs szakaszt, akkor itt hozzárendelhetjük a <code>TEMPLATE=my_led_template</code>. A display_template-nek egy vesszővel elválasztott karakterláncot kell létrehoznia, amely négy lebegőpontos számot tartalmaz, amelyek megfelelnek a piros, zöld, kék és fehér színbeállításoknak. A sablon folyamatosan kiértékelésre kerül, és a LED automatikusan az így kapott színekre lesz beállítva. A sablon kiértékelése során használandó display_template paramétereket lehet beállítani (a paraméterek Python literálokként lesznek elemezve). Ha az INDEX nincs megadva, akkor a LED's daisy-chain összes chipje a sablonra lesz beállítva, ellenkező esetben csak a megadott indexszel rendelkező chip lesz frissítve. Ha a TEMPLATE üres karakterlánc, akkor ez a parancs törli a LED-hez rendelt korábbi sablonokat (ekkor a <code>SET_LED</code> parancsokat használhatjuk a LED színbeállításainak kezelésére).</p>
 <h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
-<p>The following command is available when an <a href="Config_Reference.html#output_pin">output_pin config section</a> is enabled.</p>
+<p>A következő parancs akkor érhető el, ha az <a href="Config_Reference.html#output_pin">output_pin konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
-<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; CYCLE_TIME=&lt;cycle_time&gt;</code>: Note - hardware PWM does not currently support the CYCLE_TIME parameter and will use the cycle time defined in the config.</p>
+<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; CYCLE_TIME=&lt;cycle_time&gt;</code>: Megjegyzés: A hardveres PWM jelenleg nem támogatja a CYCLE_TIME paramétert, és a konfigurációban meghatározott ciklusidőt használja.</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#palette2">palette2 config section</a> is enabled.</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#palette2">palette2 konfigurációs szakasz</a> engedélyezve van.</p>
 <p>A paletta nyomtatások speciális OCode-ok (Omega-kódok) beágyazásával működnek a G-Kód fájlban:</p>
 <ul>
 <li><code>O1</code>...<code>O32</code>: Ezeket a kódokat a G-Kód folyamatból olvassa be és dolgozza fel ez a modul, majd továbbítja a Palette 2 eszköznek.</li>
 </ul>
-<p>The following additional commands are also available.</p>
+<p>A következő további parancsok is rendelkezésre állnak.</p>
 <h4 id="palette_connect">PALETTE_CONNECT<a class="headerlink" href="#palette_connect" title="Permanent link">&para;</a></h4>
 <p><code>PALETTE_CONNECT</code>: Ez a parancs inicializálja a kapcsolatot a Palette 2-vel.</p>
 <h4 id="palette_disconnect">PALETTE_DISCONNECT<a class="headerlink" href="#palette_disconnect" title="Permanent link">&para;</a></h4>
@@ -4333,7 +4333,7 @@
 <h4 id="palette_smart_load">PALETTE_SMART_LOAD<a class="headerlink" href="#palette_smart_load" title="Permanent link">&para;</a></h4>
 <p><code>PALETTE_SMART_LOAD</code>: Ez a parancs elindítja az intelligens betöltési sorozatot a Paletta 2-n. A nyomtatószál betöltése automatikusan történik a készülékben a nyomtatóhoz kalibrált távolság extrudálásával, és utasítja a Palette 2-t, amint a betöltés befejeződött. Ez a parancs megegyezik a <strong>Smart Load</strong> megnyomásával közvetlenül a Palette 2 képernyőjén, miután a nyomtatószál betöltése befejeződött.</p>
 <h3 id="pid_calibrate">[pid_calibrate]<a class="headerlink" href="#pid_calibrate" title="Permanent link">&para;</a></h3>
-<p>The pid_calibrate module is automatically loaded if a heater is defined in the config file.</p>
+<p>A pid_calibrate modul automatikusan betöltődik, ha a konfigurációs fájlban van egy fűtés definiálva.</p>
 <h4 id="pid_calibrate_1">PID_CALIBRATE<a class="headerlink" href="#pid_calibrate_1" title="Permanent link">&para;</a></h4>
 <p><code>PID_CALIBRATE HEATER=&lt;config_name&gt; TARGET=&lt;temperature&gt; [WRITE_FILE=1]</code>: A PID kalibrációs teszt elvégzése. A megadott fűtőberendezés a megadott célhőmérséklet eléréséig engedélyezve lesz, majd a fűtőberendezés több cikluson keresztül ki- és bekapcsol. Ha a WRITE_FILE paraméter engedélyezve van, akkor létrejön a /tmp/heattest.txt fájl a teszt során vett összes hőmérséklet-mintát tartalmazó naplóval.</p>
 <h3 id="pause_resume">[pause_resume]<a class="headerlink" href="#pause_resume" title="Permanent link">&para;</a></h3>
@@ -4347,7 +4347,7 @@
 <h4 id="cancel_print">CANCEL_PRINT<a class="headerlink" href="#cancel_print" title="Permanent link">&para;</a></h4>
 <p><code>CANCEL_PRINT</code>: Az aktuális nyomtatás törlése.</p>
 <h3 id="probe">[probe]<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when a <a href="Config_Reference.html#probe">probe config section</a> or <a href="Config_Reference.html#bltouch">bltouch config section</a> is enabled (also see the <a href="Probe_Calibrate.html">probe calibrate guide</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#probe">szonda konfigurációs szakasz</a> vagy a <a href="Config_Reference.html#bltouch">bltouch konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Probe_Calibrate.html">szonda kalibrációs útmutatót</a>).</p>
 <h4 id="probe_1">PROBE<a class="headerlink" href="#probe_1" title="Permanent link">&para;</a></h4>
 <p><code>PROBE [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;] [SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;] [SAMPLES_TOLERANCE_RETRIES=&lt;count&gt;] [SAMPLES_RESULT=median|average]</code>: Mozgassa a fúvókát lefelé, amíg a szonda nem érzékel. Ha bármelyik opcionális paramétert megadjuk, azok felülírják a <a href="Config_Reference.html#szonda">szonda konfigurációs szakaszában</a> megadott megfelelő beállításokat.</p>
 <h4 id="query_probe">QUERY_PROBE<a class="headerlink" href="#query_probe" title="Permanent link">&para;</a></h4>
@@ -4359,101 +4359,101 @@
 <h4 id="z_offset_apply_probe">Z_OFFSET_APPLY_PROBE<a class="headerlink" href="#z_offset_apply_probe" title="Permanent link">&para;</a></h4>
 <p><code>Z_OFFSET_APPLY_PROBE</code>: Vegyük az aktuális Z G-Kód eltolást (más néven mikrolépés), és vonjuk ki a szonda z_offset-jéből. Ez egy gyakran használt mikrolépés értéket vesz, és "állandóvá teszi". Egy <code>SAVE_CONFIG</code> szükséges a hatálybalépéshez.</p>
 <h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
-<p>The query_endstops module is automatically loaded.</p>
+<p>A query_endstops modul automatikusan betöltődik.</p>
 <h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_ADC [NAME=&lt;config_name&gt;] [PULLUP=&lt;value&gt;]</code>: Jelenti a konfigurált analóg tűhöz utoljára kapott analóg értéket. Ha NAME nincs megadva, a rendelkezésre álló ADC nevek listája kerül jelentésre. Ha a PULLUP meg van adva (ohmban megadott értékként), akkor a nyers analóg értéket és a pullup adott egyenértékű ellenállást jelenti.</p>
 <h3 id="query_endstops">[query_endstops]<a class="headerlink" href="#query_endstops" title="Permanent link">&para;</a></h3>
-<p>The query_endstops module is automatically loaded. The following standard G-Code commands are currently available, but using them is not recommended:</p>
+<p>A query_endstops modul automatikusan betöltődik. Jelenleg a következő szabványos G-Kód parancsok állnak rendelkezésre, de használatuk nem ajánlott:</p>
 <ul>
 <li>Végállás állapotának lekérdezése: <code>M119</code> (Használja QUERY_ENDSTOPS helyett.)</li>
 </ul>
 <h4 id="query_endstops_1">QUERY_ENDSTOPS<a class="headerlink" href="#query_endstops_1" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_ENDSTOPS</code>: Méri a tengelyvégállásokat és jelenti, ha azok "kioldottak" vagy "nyitott" állapotban vannak. Ezt a parancsot általában annak ellenőrzésére használják, hogy egy végállás megfelelően működik-e.</p>
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when a <a href="Config_Reference.html#resonance_tester">resonance_tester config section</a> is enabled (also see the <a href="Measuring_Resonances.html">measuring resonances guide</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#resonance_tester">resonance_tester konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Measuring_Resonances.html">rezonanciák mérése útmutatót</a>).</p>
 <h4 id="measure_axes_noise">MEASURE_AXES_NOISE<a class="headerlink" href="#measure_axes_noise" title="Permanent link">&para;</a></h4>
 <p><code>MEASURE_AXES_NOISE</code>: Az összes engedélyezett gyorsulásmérő chip összes tengelyének zaját méri és adja ki.</p>
 <h4 id="test_resonances">TEST_RESONANCES<a class="headerlink" href="#test_resonances" title="Permanent link">&para;</a></h4>
-<p><code>TEST_RESONANCES AXIS=&lt;axis&gt; OUTPUT=&lt;resonances,raw_data&gt; [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Runs the resonance test in all configured probe points for the requested "axis" and measures the acceleration using the accelerometer chips configured for the respective axis. "axis" can either be X or Y, or specify an arbitrary direction as <code>AXIS=dx,dy</code>, where dx and dy are floating point numbers defining a direction vector (e.g. <code>AXIS=X</code>, <code>AXIS=Y</code>, or <code>AXIS=1,-1</code> to define a diagonal direction). Note that <code>AXIS=dx,dy</code> and <code>AXIS=-dx,-dy</code> is equivalent. If <code>INPUT_SHAPING=0</code> or not set (default), disables input shaping for the resonance testing, because it is not valid to run the resonance testing with the input shaper enabled. <code>OUTPUT</code> parameter is a comma-separated list of which outputs will be written. If <code>raw_data</code> is requested, then the raw accelerometer data is written into a file or a series of files <code>/tmp/raw_data_&lt;axis&gt;_[&lt;point&gt;_]&lt;name&gt;.csv</code> with (<code>&lt;point&gt;_</code> part of the name generated only if more than 1 probe point is configured). If <code>resonances</code> is specified, the frequency response is calculated (across all probe points) and written into <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> file. If unset, OUTPUT defaults to <code>resonances</code>, and NAME defaults to the current time in "YYYYMMDD_HHMMSS" format.</p>
+<p><code>TEST_RESONANCES AXIS=&lt;axis&gt; OUTPUT=&lt;resonances,raw_data&gt; [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Lefuttatja a rezonancia tesztet a kért "tengely" összes konfigurált mérőpontján, és méri a gyorsulást az adott tengelyhez konfigurált gyorsulásmérő chipek segítségével. A "tengely" lehet X vagy Y, vagy megadhat egy tetszőleges irányt <code>AXIS=dx,dy</code>, ahol dx és dy egy irányvektort meghatározó lebegőpontos számok (pl. <code>AXIS=X</code>, <code>AXIS=Y</code>, vagy <code>AXIS=1,-1</code> az átlós irány meghatározásához). Vegyük figyelembe, hogy az <code>AXIS=dx,dy</code> és az <code>AXIS=-dx,-dy</code> egyenértékű. Ha <code>INPUT_SHAPING=0</code> vagy nincs beállítva (alapértelmezett), letiltja a bemeneti változót a rezonancia teszteléshez, mivel a rezonancia tesztelés nem érvényes a bemeneti változó engedélyezésével. <code>OUTPUT</code> paraméter egy vesszővel elválasztott lista arról, hogy mely kimenetek kerülnek kiírásra. Ha <code>raw_data</code> paramétert kér, akkor a nyers gyorsulásmérő adatok egy <code>/tmp/raw_data_&lt;axis&gt;_[&lt;point&gt;_]&lt;name&gt;.csv</code> fájlba vagy fájlsorozatba íródnak. A (<code>&lt;point&gt;_</code> névrészletével, amely csak akkor generálódik, ha 1-nél több mérőpont van konfigurálva). Ha <code>resonances</code> van megadva, a frekvenciaválasz kiszámításra kerül (az összes mérőpontra vonatkozóan) és a <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> fájlba íródik. Ha nincs beállítva, az OUTPUT alapértelmezés szerint <code>resonances</code>, a NAME pedig alapértelmezés szerint az aktuális időpontot jelenti "ÉÉÉÉHHNN_ÓÓPPMPMP" formátumban.</p>
 <h4 id="shaper_calibrate">SHAPER_CALIBRATE<a class="headerlink" href="#shaper_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>SHAPER_CALIBRATE [AXIS=&lt;axis&gt;] [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [MAX_SMOOTHING=&lt;max_smoothing&gt;]</code>: A <code>TEST_RESONANCES</code> paraméterhez hasonlóan lefuttatja a rezonancia tesztet a konfiguráltak szerint, és megpróbálja megtalálni a bemeneti változó optimális paramétereit a kért tengelyre (vagy mind az X, mind az Y tengelyre, ha az <code>AXIS</code> paraméter nincs beállítva). Ha a <code>MAX_SMOOTHING</code> nincs beállítva, az értékét a <code>[resonance_tester]</code> szakaszból veszi, az alapértelmezett érték pedig a be nem állított érték. Lásd a <a href="Measuring_Resonances.html#max-smoothing">Max simítás</a> a rezonanciák mérése című útmutatóban a funkció használatáról szóló további információkat. A hangolás eredményei kiíródnak a konzolra, a frekvenciaválaszok és a különböző bemeneti alakítók értékei pedig egy vagy több CSV-fájlba íródnak <code>/tmp/calibration_data_&lt;axis&gt;_&lt;name&gt;.csv</code>. Hacsak nincs megadva, a NAME alapértelmezés szerint az aktuális időpontot jelenti "YYYYMMDD_HHMMSS" formátumban. Vegye figyelembe, hogy a javasolt bemeneti változó paraméterek a <code>SAVE_CONFIG</code> parancs kiadásával megőrizhetők a konfigurációs fájlban.</p>
 <h3 id="respond">[respond]<a class="headerlink" href="#respond" title="Permanent link">&para;</a></h3>
-<p>The following standard G-Code commands are available when the <a href="Config_Reference.html#respond">respond config section</a> is enabled:</p>
+<p>A következő szabványos G-Kódú parancsok állnak rendelkezésre, ha a <a href="Config_Reference.html#respond">respond konfigurációs szakasz</a> engedélyezve van:</p>
 <ul>
 <li><code>M118 &lt;message&gt;</code>: visszhangozza az üzenetet a konfigurált alapértelmezett előtaggal (vagy <code>echo:</code>, ha nincs konfigurálva előtag).</li>
 </ul>
-<p>The following additional commands are also available.</p>
+<p>A következő további parancsok is rendelkezésre állnak.</p>
 <h4 id="respond_1">RESPOND<a class="headerlink" href="#respond_1" title="Permanent link">&para;</a></h4>
 <ul>
 <li><code>RESPOND MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet a konfigurált alapértelmezett előtaggal kiegészítve (vagy <code>echo:</code>, ha nincs konfigurálva előtag).</li>
 <li><code>RESPOND TYPE=echo MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet, amelyet <code>echo:</code> küld.</li>
-<li><code>RESPOND TYPE=command MSG="&lt;message&gt;"</code>: echo the message prepended with <code>//</code>. OctoPrint can be configured to respond to these messages (e.g. <code>RESPOND TYPE=command MSG=action:pause</code>).</li>
+<li><code>RESPOND TYPE=command MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet <code>//</code>. Az OctoPrint konfigurálható úgy, hogy válaszoljon ezekre az üzenetekre (pl. <code>RESPOND TYPE=command MSG=action:pause</code>).</li>
 <li><code>RESPOND TYPE=error MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet <code>!!</code>.</li>
 <li><code>RESPOND PREFIX=&lt;prefix&gt; MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet <code>&lt;prefix&gt;</code> előtaggal kiegészítve. (A <code>PREFIX</code> paraméter elsőbbséget élvez a <code>TYPE</code> paraméterrel szemben.)</li>
 </ul>
 <h3 id="save_variables">[save_variables]<a class="headerlink" href="#save_variables" title="Permanent link">&para;</a></h3>
-<p>The following command is enabled if a <a href="Config_Reference.html#save_variables">save_variables config section</a> has been enabled.</p>
+<p>A következő parancs akkor engedélyezett, ha a <a href="Config_Reference.html#save_variables">save_variables konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="save_variable">SAVE_VARIABLE<a class="headerlink" href="#save_variable" title="Permanent link">&para;</a></h4>
 <p><code>SAVE_VARIABLE VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code>: A változót a lemezre menti, hogy újraindításkor is használható legyen. Minden tárolt változó betöltődik a <code>printer.save_variables.variables</code> dict indításkor, és használható a G-Kód makrókban. A megadott VALUE-t Python literálként elemzi.</p>
 <h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#screws_tilt_adjust">screws_tilt_adjust config section</a> is enabled (also see the <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">manual level guide</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#screws_tilt_adjust">screws_tilt_adjust konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">kézi szintbeállítási útmutatót</a>).</p>
 <h4 id="screws_tilt_calculate">SCREWS_TILT_CALCULATE<a class="headerlink" href="#screws_tilt_calculate" title="Permanent link">&para;</a></h4>
 <p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágy csavarjainak beállítási eszközét hívja elő. A fúvókát különböző helyekre (a konfigurációs fájlban meghatározottak szerint) parancsolja a Z magasságot mérve és kiszámítja az ágy szintjének beállításához szükséges gombfordulatok számát. Ha DIRECTION van megadva, akkor a gombfordulatok mind ugyanabba az irányba, az óramutató járásával megegyező (CW) vagy az óramutató járásával ellentétes (CCW) irányba fognak történni. Az opcionális szondaparaméterekkel kapcsolatos részletekért lásd a PROBE parancsot. FONTOS: A parancs használata előtt mindig el kell végezni egy G28-at.</p>
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
-<p>When the <a href="Config_Reference.html#sdcard_loop">sdcard_loop config section</a> is enabled, the following extended commands are available.</p>
+<p>Ha az <a href="Config_Reference.html#sdcard_loop">sdcard_loop konfigurációs szakasz</a> engedélyezve van, a következő kiterjesztett parancsok állnak rendelkezésre.</p>
 <h4 id="sdcard_loop_begin">SDCARD_LOOP_BEGIN<a class="headerlink" href="#sdcard_loop_begin" title="Permanent link">&para;</a></h4>
-<p><code>SDCARD_LOOP_BEGIN COUNT=&lt;count&gt;</code>: Begin a looped section in the SD print. A count of 0 indicates that the section should be looped indefinitely.</p>
+<p><code>SDCARD_LOOP_BEGIN COUNT=&lt;count&gt;</code>: Egy hurokszerű szakasz kezdete az SD nyomtatásban. A 0-ás szám azt jelzi, hogy a szakasz végtelenített hurokba kerüljön.</p>
 <h4 id="sdcard_loop_end">SDCARD_LOOP_END<a class="headerlink" href="#sdcard_loop_end" title="Permanent link">&para;</a></h4>
 <p><code>SDCARD_LOOP_END</code>: Az SD-nyomtatásban egy ciklusos szakasz befejezése.</p>
 <h4 id="sdcard_loop_desist">SDCARD_LOOP_DESIST<a class="headerlink" href="#sdcard_loop_desist" title="Permanent link">&para;</a></h4>
 <p><code>SDCARD_LOOP_DESIST</code>: A meglévő ciklusok befejezése további iterációk nélkül.</p>
 <h3 id="servo">[servo]<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when a <a href="Config_Reference.html#servo">servo config section</a> is enabled.</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#servo">szervó konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="set_servo">SET_SERVO<a class="headerlink" href="#set_servo" title="Permanent link">&para;</a></h4>
 <p><code>SET_SERVO SERVO=config_name [ANGLE=&lt;degrees&gt; | WIDTH=&lt;seconds&gt;]</code>: A szervó pozíciójának beállítása a megadott szögre (fokban) vagy impulzusszélességre (másodpercben). A <code>WIDTH=0</code> használatával letilthatja a szervókimenetet.</p>
 <h3 id="skew_correction">[skew_correction]<a class="headerlink" href="#skew_correction" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#skew_correction">skew_correction config section</a> is enabled (also see the <a href="Skew_Correction.html">Skew Correction</a> guide).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#skew_correction">skew_correction konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Skew_Correction.html">Ferdeségi korrekció</a> útmutatót).</p>
 <h4 id="set_skew">SET_SKEW<a class="headerlink" href="#set_skew" title="Permanent link">&para;</a></h4>
 <p><code>SET_SKEW [XY=&lt;ac_length,bd_length,ad_length&gt;] [XZ=&lt;ac,bd,ad&gt;] [YZ=&lt;ac,bd,ad&gt;] [CLEAR=&lt;0|1&gt;]</code>: A [skew_correction] modul konfigurálása a kalibrációs nyomatból vett mérésekkel (mm-ben). A mérések a síkok tetszőleges kombinációjára adhatók meg, a be nem adott síkok megtartják az aktuális értéküket. Ha <code>CLEAR=1</code> van megadva, akkor minden ferdeségkorrekció ki lesz kapcsolva.</p>
 <h4 id="get_current_skew">GET_CURRENT_SKEW<a class="headerlink" href="#get_current_skew" title="Permanent link">&para;</a></h4>
 <p><code>GET_CURRENT_SKEW</code>: A nyomtató aktuális ferdeségét jelenti minden síkhoz radiánban és fokban. A ferdeség kiszámítása a <code>SET_SKEW</code> G-Kóddal megadott paraméterek alapján történik.</p>
 <h4 id="calc_measured_skew">CALC_MEASURED_SKEW<a class="headerlink" href="#calc_measured_skew" title="Permanent link">&para;</a></h4>
-<p><code>CALC_MEASURED_SKEW [AC=&lt;ac_length&gt;] [BD=&lt;bd_length&gt;] [AD=&lt;ad_length&gt;]</code>: Calculates and reports the skew (in radians and degrees) based on a measured print. This can be useful for determining the printer's current skew after correction has been applied. It may also be useful before correction is applied to determine if skew correction is necessary. See <a href="Skew_Correction.html">Skew Correction</a> for details on skew calibration objects and measurements.</p>
+<p><code>CALC_MEASURED_SKEW [AC=&lt;ac_length&gt;] [BD=&lt;bd_length&gt;] [AD=&lt;ad_length&gt;]</code>: Kiszámítja és jelenti a ferdeséget (radiánban és fokban) egy mért lenyomat alapján. Ez hasznos lehet a nyomtató aktuális ferdeségének meghatározásához a korrekció alkalmazása után. A korrekció alkalmazása előtt is hasznos lehet annak meghatározásához, hogy szükséges-e a ferdeségkorrekció. A ferdeség kalibrációs objektumok és mérések részleteiért lásd a <a href="Skew_Correction.html">Ferdeség korrekció</a> dokumentumot.</p>
 <h4 id="skew_profile">SKEW_PROFILE<a class="headerlink" href="#skew_profile" title="Permanent link">&para;</a></h4>
-<p><code>SKEW_PROFILE [LOAD=&lt;name&gt;] [SAVE=&lt;name&gt;] [REMOVE=&lt;name&gt;]</code>: Profile management for skew_correction. LOAD will restore skew state from the profile matching the supplied name. SAVE will save the current skew state to a profile matching the supplied name. Remove will delete the profile matching the supplied name from persistent memory. Note that after SAVE or REMOVE operations have been run the SAVE_CONFIG gcode must be run to make the changes to persistent memory permanent.</p>
+<p><code>SKEW_PROFILE [LOAD=&lt;name&gt;] [SAVE=&lt;name&gt;] [REMOVE=&lt;name&gt;]</code>: Profilkezelés a skew_correction számára. A LOAD visszaállítja a ferdeség állapotát a megadott névnek megfelelő profilból. A SAVE a megadott névnek megfelelő profilba menti az aktuális ferdeségállapotot. A REMOVE törli a megadott névnek megfelelő profilt a tartós memóriából. Megjegyzendő, hogy a SAVE vagy REMOVE műveletek lefuttatása után a SAVE_CONFIG parancsot kell futtatni, hogy a tartós memóriában végrehajtott változtatások véglegesek legyenek.</p>
 <h3 id="stepper_enable">[stepper_enable]<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h3>
-<p>The stepper_enable module is automatically loaded.</p>
+<p>A stepper_enable modul automatikusan betöltődik.</p>
 <h4 id="set_stepper_enable">SET_STEPPER_ENABLE<a class="headerlink" href="#set_stepper_enable" title="Permanent link">&para;</a></h4>
 <p><code>SET_STEPPER_ENABLE STEPPER=&lt;config_name&gt; ENABLE=[0|1]</code>: Csak az adott léptetőmotor engedélyezése vagy letiltása. Ez egy diagnosztikai és hibakeresési eszköz, ezért óvatosan kell használni. Egy léptetőmotor letiltása nem állítja vissza a kezdőpont felvételi információkat. Egy letiltott léptetőmotor kézi mozgatása azt okozhatja, hogy a gép a biztonságos határértékeken kívül működteti a motort. Ez a tengely alkatrészeinek, a nyomtatófejnek és a nyomtatási felületnek a károsodásához vezethet.</p>
 <h3 id="temperature_fan">[temperature_fan]<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h3>
-<p>The following command is available when a <a href="Config_Reference.html#temperature_fan">temperature_fan config section</a> is enabled.</p>
+<p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#temperature_fan">temperature_fan konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="set_temperature_fan_target">SET_TEMPERATURE_FAN_TARGET<a class="headerlink" href="#set_temperature_fan_target" title="Permanent link">&para;</a></h4>
-<p><code>SET_TEMPERATURE_FAN_TARGET temperature_fan=&lt;temperature_fan_name&gt; [target=&lt;target_temperature&gt;] [min_speed=&lt;min_speed&gt;] [max_speed=&lt;max_speed&gt;]</code>: Sets the target temperature for a temperature_fan. If a target is not supplied, it is set to the specified temperature in the config file. If speeds are not supplied, no change is applied.</p>
+<p><code>SET_TEMPERATURE_FAN_TARGET temperature_fan=&lt;temperature_fan_name&gt; [target=&lt;target_temperature&gt;] [min_speed=&lt;min_speed&gt;] [max_speed=&lt;max_speed&gt;]</code>: A temperature_fan célhőmérsékletének beállítása. Ha nincs megadva célérték, akkor a konfigurációs fájlban megadott hőmérsékletet állítja be. Ha a sebességek nincsenek megadva, akkor nem történik változás.</p>
 <h3 id="tmcxxxx">[tmcXXXX]<a class="headerlink" href="#tmcxxxx" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when any of the <a href="Config_Reference.html#tmc-stepper-driver-configuration">tmcXXXX config sections</a> are enabled.</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#tmc-stepper-driver-configuration">tmcXXXXXX konfigurációs szakaszok</a> bármelyike engedélyezve van.</p>
 <h4 id="dump_tmc">DUMP_TMC<a class="headerlink" href="#dump_tmc" title="Permanent link">&para;</a></h4>
 <p><code>DUMP_TMC STEPPER=&lt;name&gt;</code>: Ez a parancs kiolvassa a TMC-motorvezérlő regisztereit és jelenti azok értékeit.</p>
 <h4 id="init_tmc">INIT_TMC<a class="headerlink" href="#init_tmc" title="Permanent link">&para;</a></h4>
-<p><code>INIT_TMC STEPPER=&lt;name&gt;</code>: This command will initialize the TMC registers. Needed to re-enable the driver if power to the chip is turned off then back on.</p>
+<p><code>INIT_TMC STEPPER=&lt;name&gt;</code>: Ez a parancs inicializálja a TMC regisztereket. A meghajtó újraaktiválásához szükséges, ha a chip áramellátása kikapcsol, majd visszakapcsol.</p>
 <h4 id="set_tmc_current">SET_TMC_CURRENT<a class="headerlink" href="#set_tmc_current" title="Permanent link">&para;</a></h4>
 <p><code>SET_TMC_CURRENT STEPPER=&lt;name&gt; CURRENT=&lt;amps&gt; HOLDCURRENT=&lt;amps&gt;</code>: Ez a TMC-motorvezérlő futó- és tartóáramát állítja be. (A HOLDCURRENT nem alkalmazható a tmc2660 motorvezérlőkre).</p>
 <h4 id="set_tmc_field">SET_TMC_FIELD<a class="headerlink" href="#set_tmc_field" title="Permanent link">&para;</a></h4>
 <p><code>SET_TMC_FIELD STEPPER=&lt;name&gt; FIELD=&lt;field&gt; VALUE=&lt;value&gt;</code>: Ez módosítja a TMC-motorvezérlő megadott regisztermezőjének értékét. Ez a parancs csak alacsony szintű diagnosztikára és hibakeresésre szolgál, mivel a mezők futás közbeni módosítása a nyomtató nem kívánt és potenciálisan veszélyes viselkedéséhez vezethet. A tartós változtatásokat inkább a nyomtató konfigurációs fájljának használatával kell elvégezni. A megadott értékek esetében nem történik ellenőrzés.</p>
 <h3 id="toolhead">[toolhead]<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h3>
-<p>The toolhead module is automatically loaded.</p>
+<p>A nyomtatófejmodul automatikusan betöltődik.</p>
 <h4 id="set_velocity_limit">SET_VELOCITY_LIMIT<a class="headerlink" href="#set_velocity_limit" title="Permanent link">&para;</a></h4>
 <p><code>SET_VELOCITY_LIMIT [VELOCITY=&lt;value&gt;] [ACCEL=&lt;value&gt;] [ACCEL_TO_DECEL=&lt;value&gt;] [SQUARE_CORNER_VELOCITY=&lt;value&gt;]</code>: A nyomtató sebességhatárainak módosítása.</p>
 <h3 id="tuning_tower">[tuning_tower]<a class="headerlink" href="#tuning_tower" title="Permanent link">&para;</a></h3>
-<p>The tuning_tower module is automatically loaded.</p>
+<p>A tuning_tower modul automatikusan betöltődik.</p>
 <h4 id="tuning_tower_1">TUNING_TOWER<a class="headerlink" href="#tuning_tower_1" title="Permanent link">&para;</a></h4>
 <p><code>TUNING_TOWER COMMAND=&lt;command&gt; PARAMETER=&lt;name&gt; START=&lt;value&gt; [SKIP=&lt;value&gt;] [FACTOR=&lt;value&gt; [BAND=&lt;value&gt;]] | [STEP_DELTA=&lt;value&gt; STEP_HEIGHT=&lt;value&gt;]</code>: Egy eszköz egy paraméter beállítására minden egyes Z magasságon a nyomtatás során. Az eszköz az adott <code>COMMAND</code> parancsot a megadott <code>PARAMETER</code> értékhez rendelt <code>Z</code> értékkel egy képlet szerint változó értékkel futtatja. Használja a <code>FACTOR</code> lehetőséget, ha vonalzóval vagy tolómérővel fogja mérni az optimális Z magasságot, vagy <code>STEP_DELTA</code> és <code>STEP_HEIGHT</code>, ha a hangolótorony modellje diszkrét értékek sávjaival rendelkezik, mint ahogy az a hőmérséklet-tornyoknál gyakori. Ha <code>SKIP=&lt;value&gt;</code> van megadva, akkor a hangolási folyamat nem kezdődik meg, amíg a Z magasság <code>&lt;value&gt;</code> elérését, és ez alatt az érték <code>START</code> értékre lesz beállítva; ebben az esetben az alábbi képletekben használt <code>z_height</code> valójában <code>max(z - skip, 0)</code>. Három lehetséges kombináció létezik:</p>
 <ul>
-<li><code>FACTOR</code>: The value changes at a rate of <code>factor</code> per millimeter. The formula used is: <code>value = start + factor * z_height</code>. You can plug the optimum Z height directly into the formula to determine the optimum parameter value.</li>
-<li><code>FACTOR</code> and <code>BAND</code>: The value changes at an average rate of <code>factor</code> per millimeter, but in discrete bands where the adjustment will only be made every <code>BAND</code> millimeters of Z height. The formula used is: <code>value = start + factor * ((floor(z_height / band) + .5) * band)</code>.</li>
-<li><code>STEP_DELTA</code> and <code>STEP_HEIGHT</code>: The value changes by <code>STEP_DELTA</code> every <code>STEP_HEIGHT</code> millimeters. The formula used is: <code>value = start + step_delta * floor(z_height / step_height)</code>. You can simply count bands or read tuning tower labels to determine the optimum value.</li>
+<li><code>FACTOR</code>: Az érték <code>factor</code> milliméterenként változik. Az alkalmazott képlet: <code>value = start + factor * z_height</code>. Az optimális Z magasságot közvetlenül a képletbe illesztheti az optimális paraméterérték meghatározásához.</li>
+<li><code>FACTOR</code> és <code>BAND</code>: Az érték átlagosan <code>Faktor</code> milliméterenként változik, de diszkrét sávokban, ahol a kiigazítás csak minden <code>BAND</code> milliméterenként történik a Z magasságban. A használt képlet a következő: <code>value= start + factor* ((floor(z_height / band) + .5) * band)</code>.</li>
+<li><code>STEP_DELTA</code> és <code>STEP_HEIGHT</code>: Az érték <code>STEP_DELTA</code> minden <code>STEP_HEIGHT</code> milliméterrel változik. A használt képlet a következő: <code>value = start + step_delta * floor(z_height / step_height)</code>. Az optimális érték meghatározásához egyszerűen megszámolhatja a sávokat vagy leolvashatja a hangolótorony értékeit.</li>
 </ul>
 <h3 id="virtual_sdcard">[virtual_sdcard]<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h3>
-<p>Klipper supports the following standard G-Code commands if the <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard config section</a> is enabled:</p>
+<p>A Klipper támogatja a következő szabványos G-Kód parancsokat, ha a <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard konfigurációs szakasz</a> engedélyezve van:</p>
 <ul>
 <li>SD-kártya listázása: <code>M20</code></li>
 <li>SD-kártya inicializálása: <code>M21</code></li>
@@ -4463,13 +4463,13 @@
 <li>SD pozíció beállítása: <code>M26 S&lt;offset&gt;</code></li>
 <li>SD nyomtatási státusz jelentése: <code>M27</code></li>
 </ul>
-<p>In addition, the following extended commands are available when the "virtual_sdcard" config section is enabled.</p>
+<p>Ezenkívül a következő kiterjesztett parancsok is elérhetők, ha a "virtual_sdcard" konfigurációs szakasz engedélyezve van.</p>
 <h4 id="sdcard_print_file">SDCARD_PRINT_FILE<a class="headerlink" href="#sdcard_print_file" title="Permanent link">&para;</a></h4>
-<p><code>SDCARD_PRINT_FILE FILENAME=&lt;filename&gt;</code>: Load a file and start SD print.</p>
+<p><code>SDCARD_PRINT_FILE FILENAME=&lt;filename&gt;</code>: Egy fájl betöltése és az SD-nyomtatás elindítása.</p>
 <h4 id="sdcard_reset_file">SDCARD_RESET_FILE<a class="headerlink" href="#sdcard_reset_file" title="Permanent link">&para;</a></h4>
-<p><code>SDCARD_RESET_FILE</code>: Unload file and clear SD state.</p>
+<p><code>SDCARD_RESET_FILE</code>: A fájl eltávolítása és az SD állapotának törlése.</p>
 <h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#z_tilt">z_tilt konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
 <p><code>Z_TILT_ADJUST [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs a konfigurációban megadott pontokat vizsgálja meg, majd a dőlés kompenzálása érdekében minden egyes Z léptetőn független beállításokat végez. Az opcionális mérési paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot.</p>
 
