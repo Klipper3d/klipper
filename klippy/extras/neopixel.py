@@ -38,7 +38,7 @@ class PrinterNeoPixel:
         # Initialize color data
         pled = printer.load_object(config, "led")
         self.led_helper = pled.setup_helper(config, self.update_leds,
-                                            self.chain_count, elem_size==4)
+                                            self.chain_count)
         self.color_data = bytearray(self.chain_count * elem_size)
         self.update_color_data(self.led_helper.get_status()['color_data'])
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])

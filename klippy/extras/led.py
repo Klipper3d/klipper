@@ -11,7 +11,7 @@ RENDER_TIME = 0.500
 
 # Helper code for common LED initialization and control
 class LEDHelper:
-    def __init__(self, config, update_func, led_count=1, has_white=False):
+    def __init__(self, config, update_func, led_count=1):
         self.printer = config.get_printer()
         self.update_func = update_func
         self.led_count = led_count
@@ -20,9 +20,7 @@ class LEDHelper:
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
         blue = config.getfloat('initial_BLUE', 0., minval=0., maxval=1.)
-        white = 0.
-        if has_white:
-            white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
+        white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
         self.led_state = [(red, green, blue, white)] * led_count
         # Register commands
         name = config.get_name().split()[-1]
@@ -93,8 +91,8 @@ class PrinterLED:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_LED_TEMPLATE", self.cmd_SET_LED_TEMPLATE,
                                desc=self.cmd_SET_LED_TEMPLATE_help)
-    def setup_helper(self, config, update_func, led_count=1, has_white=False):
-        led_helper = LEDHelper(config, update_func, led_count, has_white)
+    def setup_helper(self, config, update_func, led_count=1):
+        led_helper = LEDHelper(config, update_func, led_count)
         name = config.get_name().split()[-1]
         self.led_helpers[name] = led_helper
         return led_helper
@@ -208,7 +206,7 @@ class PrinterPWMLED:
         self.last_print_time = 0.
         # Initialize color data
         pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)
+        self.led_helper = pled.setup_helper(config, self.update_leds, 1)
         self.prev_color = color = self.led_helper.get_status()['color_data'][0]
         for idx, mcu_pin in self.pins:
             mcu_pin.setup_start_value(color[idx], 0.)
