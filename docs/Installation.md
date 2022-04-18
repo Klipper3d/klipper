@@ -49,6 +49,10 @@ cd ~/klipper/
 make menuconfig
 ```
 
+It is recommended that you review the comments at the top of the printer
+config file in `~/klipper/config/` for your printer. This has hints on 
+which options to select in this menu. 
+ 
 Select the appropriate micro-controller and review any other options
 provided. Once configured, run:
 
@@ -87,6 +91,10 @@ sudo service klipper start
 
 Be sure to update the FLASH_DEVICE with the printer's unique serial
 port name.
+
+Not all printers can be flashed in this manner.  Check the comments at 
+the top of your printer configuration file for your printer in 
+`~/klipper/config/` for hints on flashing the firmware. 
 
 When flashing for the first time, make sure that OctoPrint is not
 connected directly to the printer (from the OctoPrint web page, under
