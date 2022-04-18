@@ -6,6 +6,9 @@
 import math, collections
 import readlog
 
+class error(Exception):
+    pass
+
 
 ######################################################################
 # Analysis code
