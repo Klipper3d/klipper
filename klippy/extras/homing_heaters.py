@@ -4,8 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import logging
-
 class HomingHeaters:
     def __init__(self, config):
         self.printer = config.get_printer()

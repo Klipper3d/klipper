@@ -3,7 +3,7 @@
 # Copyright (C) 2021  Fabrice Gallet <tircown@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
+
 
 class DualCarriages:
     def __init__(self, printer, rail_0, rail_1, axis):

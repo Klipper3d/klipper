@@ -3,7 +3,6 @@
 # Copyright (C) 2021  Marc-Andre Denis <marcadenis@msn.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 from . import bus
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000

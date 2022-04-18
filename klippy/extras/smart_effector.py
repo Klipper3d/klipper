@@ -3,8 +3,6 @@
 # Copyright (C) 2021  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
-import logging
 from . import probe
 
 # SmartEffector communication protocol implemented here originates from

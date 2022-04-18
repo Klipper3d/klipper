@@ -16,7 +16,6 @@ import traceback
 import json
 import board_defs
 import fatfs_lib
-import util
 import reactor
 import serialhdl
 import clocksync

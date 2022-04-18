@@ -4,7 +4,7 @@
 # Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, optparse, time
+import sys, optparse, time
 import can
 
 CANBUS_ID_ADMIN = 0x3f0

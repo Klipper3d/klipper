@@ -3,7 +3,6 @@
 # Copyright (C) 2020 Alan Lord <alanslists@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 import mcu
 
 DS18_REPORT_TIME = 3.0

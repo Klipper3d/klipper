@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import mcu
 
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8

@@ -3,7 +3,6 @@
 # Copyright (C) 2021 Joshua Wherrett <thejoshw.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 from . import filament_switch_sensor
 
 CHECK_RUNOUT_TIMEOUT = .250
