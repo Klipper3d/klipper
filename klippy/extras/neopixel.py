@@ -1,6 +1,6 @@
 # Support for "neopixel" leds
 #
-# Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2022  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -14,37 +14,40 @@ MAX_MCU_SIZE = 500  # Sanity check on LED chain length
 
 class PrinterNeoPixel:
     def __init__(self, config):
-        self.printer = config.get_printer()
-        name = config.get_name().split()[1]
-        self.mutex = self.printer.get_reactor().mutex()
+        self.printer = printer = config.get_printer()
+        self.mutex = printer.get_reactor().mutex()
         # Configure neopixel
-        ppins = self.printer.lookup_object('pins')
+        ppins = printer.lookup_object('pins')
         pin_params = ppins.lookup_pin(config.get('pin'))
         self.mcu = pin_params['chip']
         self.oid = self.mcu.create_oid()
         self.pin = pin_params['pin']
         self.mcu.register_config_callback(self.build_config)
-        formats = {v: v for v in ["RGB", "GRB", "BRG", "RGBW", "GRBW"]}
-        self.color_order = config.getchoice("color_order", formats, "GRB")
-        elem_size = len(self.color_order)
-        self.chain_count = config.getint('chain_count', 1, minval=1,
-                                         maxval=MAX_MCU_SIZE//elem_size)
         self.neopixel_update_cmd = self.neopixel_send_cmd = None
-        # Initial color
-        self.color_data = bytearray(self.chain_count * elem_size)
-        red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
-        green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
-        blue = config.getfloat('initial_BLUE', 0., minval=0., maxval=1.)
-        white = 0
-        if elem_size == 4:
-            white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
-        self.update_color_data(red, green, blue, white)
+        # Build color map
+        chain_count = config.getint('chain_count', 1, minval=1)
+        color_order = config.getlist("color_order", ["GRB"])
+        if len(color_order) == 1:
+            color_order = [color_order[0]] * chain_count
+        if len(color_order) != chain_count:
+            raise config.error("color_order does not match chain_count")
+        color_indexes = []
+        for lidx, co in enumerate(color_order):
+            if sorted(co) not in (sorted("RGB"), sorted("RGBW")):
+                raise config.error("Invalid color_order '%s'" % (co,))
+            color_indexes.extend([(lidx, "RGBW".index(c)) for c in co])
+        self.color_map = list(enumerate(color_indexes))
+        if len(self.color_map) > MAX_MCU_SIZE:
+            raise config.error("neopixel chain too long")
+        # Initialize color data
+        pled = printer.load_object(config, "led")
+        self.led_helper = pled.setup_helper(config, self.update_leds,
+                                            chain_count)
+        self.color_data = bytearray(len(self.color_map))
+        self.update_color_data(self.led_helper.get_status()['color_data'])
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])
-        # Register commands
-        self.printer.register_event_handler("klippy:connect", self.send_data)
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
-                                   desc=self.cmd_SET_LED_help)
+        # Register callbacks
+        printer.register_event_handler("klippy:connect", self.send_data)
     def build_config(self):
         bmt = self.mcu.seconds_to_clock(BIT_MAX_TIME)
         rmt = self.mcu.seconds_to_clock(RESET_MIN_TIME)
@@ -58,26 +61,10 @@ class PrinterNeoPixel:
         self.neopixel_send_cmd = self.mcu.lookup_query_command(
             "neopixel_send oid=%c", "neopixel_result oid=%c success=%c",
             oid=self.oid, cq=cmd_queue)
-    def update_color_data(self, red, green, blue, white, index=None):
-        red = int(red * 255. + .5)
-        blue = int(blue * 255. + .5)
-        green = int(green * 255. + .5)
-        white = int(white * 255. + .5)
-        if self.color_order == "GRB":
-            color_data = [green, red, blue]
-        elif self.color_order == "RGB":
-            color_data = [red, green, blue]
-        elif self.color_order == "BRG":
-            color_data = [blue, red, green]
-        elif self.color_order == "GRBW":
-            color_data = [green, red, blue, white]
-        else:
-            color_data = [red, green, blue, white]
-        if index is None:
-            self.color_data[:] = color_data * self.chain_count
-        else:
-            elem_size = len(color_data)
-            self.color_data[(index-1)*elem_size:index*elem_size] = color_data
+    def update_color_data(self, led_state):
+        color_data = self.color_data
+        for cdidx, (lidx, cidx) in self.color_map:
+            color_data[cdidx] = int(led_state[lidx][cidx] * 255. + .5)
     def send_data(self, print_time=None):
         old_data, new_data = self.old_color_data, self.color_data
         if new_data == old_data:
@@ -112,42 +99,14 @@ class PrinterNeoPixel:
                 break
         else:
             logging.info("Neopixel update did not succeed")
-    cmd_SET_LED_help = "Set the color of an LED"
-    def cmd_SET_LED(self, gcmd):
-        # Parse parameters
-        red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
-        green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
-        blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
-        white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
-        index = gcmd.get_int('INDEX', None, minval=1, maxval=self.chain_count)
-        transmit = gcmd.get_int('TRANSMIT', 1)
-        sync = gcmd.get_int('SYNC', 1)
-        # Update and transmit data
-        def reactor_bgfunc(print_time):
+    def update_leds(self, led_state, print_time):
+        def reactor_bgfunc(eventtime):
             with self.mutex:
-                self.update_color_data(red, green, blue, white, index)
-                if transmit:
-                    self.send_data(print_time)
-        def lookahead_bgfunc(print_time):
-            reactor = self.printer.get_reactor()
-            reactor.register_callback(lambda et: reactor_bgfunc(print_time))
-        if sync:
-            #Sync LED Update with print time and send
-            toolhead = self.printer.lookup_object('toolhead')
-            toolhead.register_lookahead_callback(lookahead_bgfunc)
-        else:
-            #Send update now (so as not to wake toolhead and reset idle_timeout)
-            lookahead_bgfunc(None)
-    def get_status(self, eventtime):
-        cdata = []
-        elem_size = len(self.color_order)
-        for i in range(self.chain_count):
-            idx = i * elem_size
-            cdata.append(
-                {k: round(v / 255., 4) for k, v in
-                 zip(self.color_order, self.color_data[idx:idx+elem_size])}
-            )
-        return {'color_data': cdata}
+                self.update_color_data(led_state)
+                self.send_data(print_time)
+        self.printer.get_reactor().register_callback(reactor_bgfunc)
+    def get_status(self, eventtime=None):
+        return self.led_helper.get_status(eventtime)
 
 def load_config_prefix(config):
     return PrinterNeoPixel(config)

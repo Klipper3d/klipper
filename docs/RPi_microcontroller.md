@@ -71,8 +71,8 @@ menu.
 
 ## Optional: Identify the correct gpiochip
 
-On Rasperry and on many clones the pins exposed on the GPIO belong to
-the first gpiochip. They can therefore be used on klipper simply by
+On Raspberry Pi and on many clones the pins exposed on the GPIO belong
+to the first gpiochip. They can therefore be used on klipper simply by
 referring them with the name `gpio0..n`. However, there are cases in
 which the exposed pins belong to gpiochips other than the first. For
 example in the case of some OrangePi models or if a Port Expander is
