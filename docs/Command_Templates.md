@@ -351,5 +351,4 @@ gcode:
   ACTIVATE_EXTRUDER extruder={svv.currentextruder}
 ```
 
-Be aware to only use small letters for the variable name, otherwise you may can't overwrite the stored data. Even if the console confirm with `Variable Saved
-`.
+Be aware to only use small letters for the variable name, otherwise you may can't overwrite the stored data. Even if the console confirm with `Variable Saved`.
