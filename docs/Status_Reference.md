@@ -319,6 +319,20 @@ is defined):
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
 
+## load_cell_probe
+
+The following information is available in the
+[load_cell_probe](Config_Reference.md#load_cell_probe):
+- `last_force`: Returns the last force measured by the probes force
+  sensor. The force readout takes place contineously even if no probe
+  command is running, so this value can e.g. be placed on the display
+  to monitor the extrusion force (if applied to the sensor).
+- `last_z_result`: Returns the Z result value of the last PROBE
+  command. Note, if this is used in a macro, due to the order of
+  template expansion, the PROBE (or similar) command must be run prior
+  to the macro containing this reference.
+
+
 ## quad_gantry_level
 
 The following information is available in the `quad_gantry_level` object

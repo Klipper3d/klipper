@@ -135,3 +135,78 @@ def matrix_sub(m1, m2):
 
 def matrix_mul(m1, s):
     return [m1[0]*s, m1[1]*s, m1[2]*s]
+
+
+######################################################################
+# Simple statistics
+######################################################################
+
+# Standard deviation (square-root of variance) of the given samples
+def std(samples) :
+    mean = 0.
+    for v in samples :
+      mean += v/float(len(samples))
+    variance = 0.
+    for v in samples :
+      variance += (v-mean)**2
+    return math.sqrt(variance)
+
+######################################################################
+# Linear regression helper function
+######################################################################
+
+def linear_regression(X, Y, extra_err=0):
+
+    def mean(Xs):
+        return sum(Xs) / len(Xs)
+
+    def std(Xs, m):
+        normalizer = len(Xs) - 1
+        return math.sqrt(sum((pow(x - m, 2) for x in Xs)) / normalizer)
+
+    sum_xy = 0
+    sum_sq_v_x = 0
+    sum_sq_v_y = 0
+    sum_sq_x = 0
+
+    m_X = mean(X)
+    m_Y = mean(Y)
+
+    for (x, y) in zip(X, Y):
+        var_x = x - m_X
+        var_y = y - m_Y
+        sum_xy += var_x * var_y
+        sum_sq_v_x += pow(var_x, 2)
+        sum_sq_v_y += pow(var_y, 2)
+        sum_sq_x += pow(x, 2)
+
+    # Number of data points
+    n = len(X)
+
+    # Pearson R
+    r = sum_xy / math.sqrt(sum_sq_v_x * sum_sq_v_y)
+
+    # Slope
+    m = r * (std(Y, m_Y) / std(X, m_X))
+
+    # Intercept
+    b = m_Y - m * m_X
+
+    # Estimate measurement error from resuduals
+    sum_res_sq = 0
+    for (x, y) in zip(X, Y):
+        res = m*x + b - y + extra_err
+        sum_res_sq += pow(res,2)
+
+    # Error on slope
+    if n > 2 and sum_res_sq > 0 :
+      sm = math.sqrt(1./(n-2) * sum_res_sq / sum_sq_v_x)
+    elif sum_res_sq > 0 :
+      sm = math.sqrt(sum_res_sq / sum_sq_v_x)
+    else :
+      sm = 0
+
+    # Error on intercept
+    sb = sm * math.sqrt(1./n * sum_sq_x)
+
+    return [m,b,r,sm,sb]

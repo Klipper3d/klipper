@@ -1835,6 +1835,42 @@ z_offset:
 #   See the "probe" section for more information on the parameters above.
 ```
 
+### [load_cell_probe]
+
+Load-cell based probe. One may define this section (instead of a probe
+section) to enable a load-cell based probe. See
+[Load-cell probe guide](LoadCellProbe.md) and
+[command reference](G-Codes.md#load_cell_probe) for further
+information. Some of the parameters are determined in a semi-automatic
+[calibration procedure](LoadCellProbe.md#setup-for-new-printer-models).
+
+```
+[load_cell_probe]
+#
+# General parameters:
+#
+adc:
+#   ADC pin which digitizes the load cell signal.
+adc_rate:
+#   Rate (in samples per second) at which to request the ADC samples.
+max_abs_force:
+#   Maximum absolute value of measured force (in chosen unit), if exceeded
+#   printer will shutdown immediately.
+#
+# Parameters determined by semi-automatic procedure described in the
+# load-cell probe guide.
+#
+force_calibration:
+#   Conversion factor to get from ADC value to physical unit. Default value is
+#   1 (no conversion).
+stiffness:
+#   Stiffness/"spring constant", i.e. force per distance. Default value is a
+#   safe value resulting in very small step sizes.
+noise_level:
+#   Noise level of force measurements (standard deviation, in physical units).
+#   Default value is a safe value just to get started.
+```
+
 ## Additional stepper motors and extruders
 
 ### [stepper_z1]
@@ -3405,6 +3441,10 @@ lcd_type:
 #   See the display sections below for information on each type and
 #   additional parameters they provide. This parameter must be
 #   provided.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
 #display_group:
 #   The name of the display_data group to show on the display. This
 #   controls the content of the screen (see the "display_data" section

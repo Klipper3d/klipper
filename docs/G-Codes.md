@@ -915,6 +915,56 @@ babystepping), and subtract if from the probe's z_offset.  This acts
 to take a frequently used babystepping value, and "make it permanent".
 Requires a `SAVE_CONFIG` to take effect.
 
+### [load_cell_probe]
+
+The following commands are available when a
+[load_cell_probe config section](Config_Reference.md#load_cell_probe) is enabled
+(also see the [Load-cell probe guide](LoadCellProbe.md)):
+
+#### PROBE
+`PROBE`: Probe the bed surface.
+
+#### PROBE_ACCURACY
+`PROBE_ACCURACY SAMPLES=<n> SAMPLE_RETRACT_DIST=<dist> DIRECTION=<dir>`:
+Test accuracy of the probe by performing `n` probe measurements, retracting
+`dist` millimeters in between and comparing the results. The probe direction
+`dir` is passed on to the `PROBE` command, if specified. The number of samples
+defaults to 10, while the retract distance defaults to the
+`sample_retract_dist` value in the config section.
+
+#### LCP_READ
+`LCP_READ`: Perform averaged measurement and print result to console.
+Useful for testing and initial calibration.
+
+#### LCP_COMPENSATE
+`LCP_COMPENSATE [SAMPLES=<n>]`: Perform null/"tare" measurement which will be
+subtracted from future measurements. The optional parameter allows to specify
+how many samples to record for averaging, defaults to 10. Mainly useful for
+testing and initial calibration, will be done automatically when necessary.
+
+#### LCP_CALIB_NOISE
+`LCP_CALIB_NOISE [SAMPLES=<n>]`: Only used for the initial calibration.
+Determine the `noise_level` configuration parameter from the given number of
+samples (defaults to 50).
+
+#### LCP_CALIB_WEIGHT
+`LCP_CALIB_WEIGHT WEIGHT=<weight> [SAMPLES=<n>]`:  Only used for the initial
+calibration. Determine the `force_calibration` configuration parameter, assuming
+the current ADC reading is the equivalent of the given `weight` value (in
+used-defined physical units). The optional number of samples is used for
+averaging (defaults to 10).
+
+#### LCP_CALIB_STIFFNESS
+`LCP_CALIB_STIFFNESS [SAMPLES=<n>]`: Only used for the initial calibration.
+Determine the `stiffness` configuration parameter with the procedure defined in
+the [calibration procedure](LoadCellProbe.md#setup-for-new-printer-models). The
+optional number of samples is used for averaging (defaults to 10).
+
+#### LCP_INFO
+`LCP_INFO`: Print parameters used by the load cell probe algorithms to the
+console. Useful for debugging and testing.
+
+
 ### [query_adc]
 
 The query_adc module is automatically loaded.
