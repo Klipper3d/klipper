@@ -1,5 +1,8 @@
 # Main configuration file for mkdocs generation of klipper3d.org website
 
+# Note that the build-translations.sh script expects a certain file
+# layout.  See that script and the README file for more details.
+
 # Site and directory configuration
 site_name: Klipper documentation
 repo_url: https://github.com/Klipper3d/klipper
@@ -8,9 +11,8 @@ edit_uri: blob/master/docs/
 use_directory_urls: False
 docs_dir: '../'
 site_dir: '../../site/'
-INHERIT: translations.yml
 
-# Markdown document translation settings
+# Custom markdown dialect settings
 markdown_extensions:
   - toc:
       permalink: True
@@ -20,7 +22,8 @@ markdown_extensions:
   - mdx_truly_sane_lists
   - mdx_breakless_lists
 plugins:
-  search: {}
+  search:
+    lang: en
   mkdocs-simple-hooks:
     hooks:
       on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
@@ -59,6 +62,7 @@ theme:
       - search.suggest
       - search.highlight
       - search.share
+  language: en
 extra_css:
   - _klipper3d/css/extra.css
 
@@ -68,6 +72,12 @@ extra:
   analytics:
     provider: google
     property: UA-138371409-1
+  # Language Selection
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    # Alternate language links automatically added here
 
 # Navigation hierarchy (this should mimic the layout of Overview.md)
 nav:

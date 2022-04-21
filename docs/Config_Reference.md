@@ -732,14 +732,17 @@ control:
 #   Control algorithm (either pid or watermark). This parameter must
 #   be provided.
 pid_Kp:
-#   Kp is the "proportional" constant for the pid. This parameter must
-#   be provided for PID heaters.
 pid_Ki:
-#   Ki is the "integral" constant for the pid. This parameter must be
-#   provided for PID heaters.
 pid_Kd:
-#   Kd is the "derivative" constant for the pid. This parameter must
-#   be provided for PID heaters.
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
+#     heater_pwm = (Kp*error + Ki*integral(error) - Kd*derivative(error)) / 255
+#   Where "error" is "requested_temperature - measured_temperature"
+#   and "heater_pwm" is the requested heating rate with 0.0 being full
+#   off and 1.0 being full on. Consider using the PID_CALIBRATE
+#   command to obtain these parameters. The pid_Kp, pid_Ki, and pid_Kd
+#   parameters must be provided for PID heaters.
 #max_delta: 2.0
 #   On 'watermark' controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater
@@ -1578,8 +1581,8 @@ section of the measuring resonances guide for more information on
 #   for more details on using this feature.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
-#max_freq: 120
-#   Maximum frequency to test for resonances. The default is 120 Hz.
+#max_freq: 133.33
+#   Maximum frequency to test for resonances. The default is 133.33 Hz.
 #accel_per_hz: 75
 #   This parameter is used to determine which acceleration to use to
 #   test a specific frequency: accel = accel_per_hz * freq. Higher the
@@ -1774,6 +1777,60 @@ control_pin:
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
+```
+
+### [smart_effector]
+
+The "Smart Effector" from Duet3d implements a Z probe using a force
+sensor. One may define this section instead of `[probe]` to enable the
+Smart Effector specific features. This also enables
+[runtime commands](G-Codes.md#smart_effector) to adjust the parameters
+of the Smart Effector at run time.
+
+```
+[smart_effector]
+pin:
+#   Pin connected to the Smart Effector Z Probe output pin (pin 5). Note that
+#   pullup resistor on the board is generally not required. However, if the
+#   output pin is connected to the board pin with a pullup resistor, that
+#   resistor must be high value (e.g. 10K Ohm or more). Some boards have a low
+#   value pullup resistor on the Z probe input, which will likely result in an
+#   always-triggered probe state. In this case, connect the Smart Effector to
+#   a different pin on the board. This parameter is required.
+#control_pin:
+#   Pin connected to the Smart Effector control input pin (pin 7). If provided,
+#   Smart Effector sensitivity programming commands become available.
+#probe_accel:
+#   If set, limits the acceleration of the probing moves (in mm/sec^2).
+#   A sudden large acceleration at the beginning of the probing move may
+#   cause spurious probe triggering, especially if the hotend is heavy.
+#   To prevent that, it may be necessary to reduce the acceleration of
+#   the probing moves via this parameter.
+#recovery_time: 0.4
+#   A delay between the travel moves and the probing moves in seconds. A fast
+#   travel move prior to probing may result in a spurious probe triggering.
+#   This may cause 'Probe triggered prior to movement' errors if no delay
+#   is set. Value 0 disables the recovery delay.
+#   Default value is 0.4.
+#x_offset:
+#y_offset:
+#   Should be left unset (or set to 0).
+z_offset:
+#   Trigger height of the probe. Start with -0.1 (mm), and adjust later using
+#   `PROBE_CALIBRATE` command. This parameter must be provided.
+#speed:
+#   Speed (in mm/s) of the Z axis when probing. It is recommended to start
+#   with the probing speed of 20 mm/s and adjust it as necessary to improve
+#   the accuracy and repeatability of the probe triggering.
+#samples:
+#sample_retract_dist:
+#samples_result:
+#samples_tolerance:
+#samples_tolerance_retries:
+#activate_gcode:
+#deactivate_gcode:
+#deactivate_on_each_sample:
+#   See the "probe" section for more information on the parameters above.
 ```
 
 ## Additional stepper motors and extruders
@@ -2493,14 +2550,25 @@ information.
 #sensor_type:
 #sensor_pin:
 #control:
-#pid_Kp:
-#pid_Ki:
-#pid_Kd:
-#pid_deriv_time:
 #max_delta:
 #min_temp:
 #max_temp:
 #   See the "extruder" section for a description of the above parameters.
+#pid_Kp:
+#pid_Ki:
+#pid_Kd:
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
+#     fan_pwm = max_power - (Kp*e + Ki*integral(e) - Kd*derivative(e)) / 255
+#   Where "e" is "target_temperature - measured_temperature" and
+#   "fan_pwm" is the requested fan rate with 0.0 being full off and
+#   1.0 being full on. The pid_Kp, pid_Ki, and pid_Kd parameters must
+#   be provided when the PID control algorithm is enabled.
+#pid_deriv_time: 2.0
+#   A time value (in seconds) over which temperature measurements will
+#   be smoothed when using the PID control algorithm. This may reduce
+#   the impact of measurement noise. The default is 2 seconds.
 #target_temp: 40.0
 #   A temperature (in Celsius) that will be the target temperature.
 #   The default is 40 degrees.
@@ -2578,7 +2646,10 @@ sections with a "neopixel" prefix). See the
 [command reference](G-Codes.md#led) for more information.
 
 Note that the [linux mcu](RPi_microcontroller.md) implementation does
-not currently support directly connected neopixels.
+not currently support directly connected neopixels. The current design
+using the Linux kernel interface does not allow this scenario because
+the kernel GPIO interface is not fast enough to provide the required
+pulse rates.
 
 ```
 [neopixel my_neopixel]
@@ -2591,8 +2662,9 @@ pin:
 #   Neopixel is connected to the pin).
 #color_order: GRB
 #   Set the pixel order required by the LED hardware (using a string
-#   containing the letters R, G, B, W with W optional). The default is
-#   GRB.
+#   containing the letters R, G, B, W with W optional). Alternatively,
+#   this may be a comma separated list of pixel orders - one for each
+#   LED in the chain. The default is GRB.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
@@ -2649,10 +2721,22 @@ PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
 
 ```
 [pca9632 my_pca9632]
-scl_pin:
-#   The SCL "clock" pin. This parameter must be provided.
-sda_pin:
-#   The SDA "data" pin. This parameter must be provided.
+#i2c_address: 98
+#   The i2c address that the chip is using on the i2c bus. This may be
+#   96, 97, 98, or 99.  The default is 98.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#scl_pin:
+#sda_pin:
+#   Alternatively, if the pca9632 is not connected to a hardware I2C
+#   bus, then one may specify the "clock" (scl_pin) and "data"
+#   (sda_pin) pins. The default is to use hardware I2C.
+#color_order: RGBW
+#   Set the pixel order of the LED (using a string containing the
+#   letters R, G, B, W). The default is RGBW.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
