@@ -754,7 +754,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -789,7 +789,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -892,7 +892,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1108,7 +1108,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1409,7 +1409,7 @@
 <p>Elérhető a 20201020. Főbb változások ebben a kiadásban:</p>
 <ul>
 <li>Az "Input Shaping" a nyomtató rezonanciájának ellensúlyozására szolgáló mechanizmus támogatása. Csökkentheti vagy megszüntetheti a "gyűrődést" a nyomatokon.</li>
-<li>Új "Smooth Pressure Advance" rendszer. Ezt a "Pressure Advance" rendszert a pillanatnyi sebességváltozások bevezetése nélkül valósítja meg. Mostantól lehetőség van a nyomásszabályozás beállítására is a "Tuning Tower" módszerrel.</li>
+<li>Új "Smooth Pressure Advance" rendszer. Ezt a "Pressure Advance" rendszert a pillanatnyi sebesség változások bevezetése nélkül valósítja meg. Mostantól lehetőség van a nyomásszabályozás beállítására is a "Tuning Tower" módszerrel.</li>
 <li>Új "webhooks" API-kiszolgáló. Ez egy programozható JSON interfészt biztosít a Klipperhez.</li>
 <li>Az LCD kijelző és a menü mostantól a Jinja2 sablonnyelv segítségével konfigurálható.</li>
 <li>A TMC2208 léptetőmotor-meghajtók mostantól "standalone" üzemmódban is használhatók a Klipperrel.</li>
@@ -1426,10 +1426,10 @@
 <h2 id="klipper-080">Klipper 0.8.0<a class="headerlink" href="#klipper-080" title="Permanent link">&para;</a></h2>
 <p>Elérhető a 20191021 verzió. Főbb változások ebben a kiadásban:</p>
 <ul>
-<li>Új G-kód parancssablon támogatás. A konfigurációs fájlban lévő G-kódot mostantól a Jinja2 sablonnyelvvel értékeli ki a rendszer.</li>
+<li>Új G-Kód parancssablon támogatás. A konfigurációs fájlban lévő G-Kódot mostantól a Jinja2 sablonnyelvvel értékeli ki a rendszer.</li>
 <li>A Trinamic léptető meghajtók javítása:<ul>
 <li>Új támogatás a TMC2209 és TMC5160 illesztőprogramokhoz.</li>
-<li>Továbbfejlesztett DUMP_TMC, SET_TMC_CURRENT és INIT_TMC G-kód parancsok.</li>
+<li>Továbbfejlesztett DUMP_TMC, SET_TMC_CURRENT és INIT_TMC G-Kód parancsok.</li>
 <li>Javított támogatás a TMC UART kezeléséhez analóg mux-al.</li>
 </ul>
 </li>
@@ -1474,7 +1474,7 @@
 <li>A "uc1701" és "ssd1306" kijelzők támogatása</li>
 </ul>
 </li>
-<li>További mikrokontroller-támogatás:<ul>
+<li>További mikrokontroller támogatás:<ul>
 <li>Klipper portolva: LPC176x (Smoothieboards), SAM4E8E (Duet2), SAMD21 (Arduino Zero), STM32F103 ("Blue pill" eszközök), atmega32u4</li>
 <li>Új generikus USB CDC vezérlő implementálva AVR, LPC176x, SAMD21 és STM32F103 platformokra</li>
 <li>Teljesítményjavulás ARM processzorokon</li>
@@ -1483,7 +1483,7 @@
 <li>A kinematikai kódot átírtuk, hogy egy "iteratív megoldót" használjon</li>
 <li>Új automatikus tesztelési esetek a Klipper gazdagép szoftverhez</li>
 <li>Számos új példa konfigurációs fájl a szokásos nyomtatókhoz</li>
-<li>Dokumentációfrissítések rendszerbetöltőkhöz, teljesítményértékeléshez, mikrovezérlő portoláshoz, konfigurációs ellenőrzésekhez, pin-hozzárendeléshez, szeletelőbeállításokhoz, csomagoláshoz és egyebekhez</li>
+<li>Dokumentációfrissítések rendszerbetöltőkhöz, teljesítményértékeléshez, mikrovezérlő portoláshoz, konfigurációs ellenőrzésekhez, tű hozzárendeléshez, szeletelőbeállításokhoz, csomagoláshoz és egyebekhez</li>
 <li>Számos hibajavítás és kódtisztítás</li>
 </ul>
 <h2 id="klipper-060">Klipper 0.6.0<a class="headerlink" href="#klipper-060" title="Permanent link">&para;</a></h2>
@@ -1501,15 +1501,15 @@
 </ul>
 </li>
 <li>Több léptető tengelyenkénti konfigurálásának támogatása (pl. kettős Z)</li>
-<li>Egyedi digitális és PWM kimeneti pinek támogatása (új SET_PIN paranccsal)</li>
+<li>Egyedi digitális és PWM kimeneti tűk támogatása (új SET_PIN paranccsal)</li>
 <li>Kezdeti támogatás egy "virtuális SDcard" számára, amely lehetővé teszi a nyomtatást közvetlenül a Klipperről (segít a túl lassú gépeken, hogy az OctoPrint jól fusson)</li>
 <li>Különböző karhosszúságok beállításának támogatása a delta minden egyes tornyán</li>
-<li>A G-kód M220/M221 parancsok támogatása (sebességtényező felülbírálása / extrudálási tényező felülbírálása)</li>
+<li>A G-Kód M220/M221 parancsok támogatása (sebességtényező felülbírálása / extrudálási tényező felülbírálása)</li>
 <li>Számos dokumentáció frissítés:<ul>
 <li>Számos új példa konfigurációs fájl a szokásos nyomtatókhoz</li>
 <li>Új több MCU konfigurációs példa</li>
 <li>Új BL-Touch érzékelő konfigurációs példa</li>
-<li>Új GYIK, konfigurációs ellenőrzés és G-kód dokumentumok</li>
+<li>Új GYIK, konfigurációs ellenőrzés és G-Kód dokumentumok</li>
 </ul>
 </li>
 <li>Kezdeti támogatás a folyamatos integráció teszteléséhez az összes végleges GitHub fejlesztésben</li>
@@ -1546,9 +1546,9 @@
 <li>Delta kinematikai robotok támogatása</li>
 <li>Arduino Due mikrokontroller támogatása (ARM cortex-M3)</li>
 <li>USB alapú AVR mikrovezérlők támogatása</li>
-<li>Támogatás a "nyomás szabályozás" algoritmushoz - ez csökkenti a nyomatok során keletkező szivárgást.</li>
+<li>Támogatás a "nyomásszabályozás" algoritmushoz - ez csökkenti a nyomatok során keletkező szivárgást.</li>
 <li>Új "léptetőfázis-alapú végállás" funkció - nagyobb pontosságot tesz lehetővé a kezdőpont végállásában.</li>
-<li>A "kiterjesztett G-kód" parancsok támogatása, mint például a "help", "restart" és "status".</li>
+<li>A "kiterjesztett G-Kód" parancsok támogatása, mint például a "help", "restart" és "status".</li>
 <li>A Klipper konfiguráció újratöltésének és a gazdaszoftver újraindításának támogatása a "restart" parancs terminálból történő kiadásával.</li>
 <li>Lépegető teljesítményének javítása (20Mhz-es AVR-ek akár 158K lépés/másodpercig).</li>
 <li>Javított hibajelentés. A legtöbb hiba mostantól a terminálon keresztül jelenik meg, a megoldásra vonatkozó segítséggel együtt.</li>
@@ -1558,7 +1558,7 @@
 <p>A Klipper első kiadása. Elérhető 20160525. A kezdeti kiadásban elérhető főbb funkciók a következők:</p>
 <ul>
 <li>Alapvető támogatás cartesian nyomtatókhoz (stepperek, extruder, fűtött ágy, hűtőventilátor).</li>
-<li>A gyakori G-kód parancsok támogatása. Az OctoPrint interfész támogatása.</li>
+<li>A gyakori G-Kód parancsok támogatása. Az OctoPrint interfész támogatása.</li>
 <li>Gyorsulás és előretekintő kezelés</li>
 <li>AVR mikrovezérlők támogatása szabványos soros portokon keresztül</li>
 </ul>

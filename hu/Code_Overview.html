@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1097,7 +1097,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1477,7 +1477,7 @@ Recv: // gcode homing: X:0.000000 Y:0.000000 Z:0.000000
 <p>A "gcode base" a G-Kód origójának helye cartesian koordinátákban a konfigurációs fájlban megadott koordinátarendszerhez képest. Az olyan parancsok, mint a <code>G92</code>, <code>SET_GCODE_OFFSET</code> és <code>M221</code> módosítják ezt az értéket.</p>
 <p>A "gcode homing" az a hely, amelyet a G-Kód origójaként (a konfigurációs fájlban megadott koordinátarendszerhez viszonyított cartesian koordinátákban) a <code>G28</code> home parancs után használni kell. A <code>SET_GCODE_OFFSET</code> parancs megváltoztathatja ezt az értéket.</p>
 <h2 id="ido">Idő<a class="headerlink" href="#ido" title="Permanent link">&para;</a></h2>
-<p>A Klipper működésének alapvető eleme az órák, időpontok és időbélyegek kezelése. A Klipper a nyomtatón végrehajtott műveleteket a közeljövőben bekövetkező események ütemezésével hajtja végre. Például egy ventilátor bekapcsolásához a kód ütemezheti egy GPIO-tű változását 100 ms alatt. Ritkán fordul elő, hogy a kód azonnali műveletet próbál végrehajtani. Ezért az idő kezelése a Klipperben kritikus fontosságú a helyes működés szempontjából.</p>
+<p>A Klipper működésének alapvető eleme az órák, időpontok és időbélyegek kezelése. A Klipper a nyomtatón végrehajtott műveleteket a közeljövőben bekövetkező események ütemezésével hajtja végre. Például egy ventilátor bekapcsolásához a kód ütemezheti egy GPIO-tű változását 100ms alatt. Ritkán fordul elő, hogy a kód azonnali műveletet próbál végrehajtani. Ezért az idő kezelése a Klipperben kritikus fontosságú a helyes működés szempontjából.</p>
 <p>A Klipper gazdaszoftverben háromféle időtípust követhetünk nyomon:</p>
 <ul>
 <li>Rendszeridő. A rendszeridő a rendszer monoton óráját használja. Ez egy lebegőpontos szám, amelyet másodpercként tárolnak, és (általában) a gazdaszámítógép utolsó indításakor. A rendszeridők korlátozottan használhatók a szoftverben. Elsősorban az operációs rendszerrel való interakció során használják őket. Az állomáskódon belül a rendszeridőket gyakran az <em>eventtime</em> vagy <em>curtime</em> nevű változók tárolják.</li>

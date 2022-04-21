@@ -646,7 +646,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -681,7 +681,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -784,7 +784,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1062,7 +1062,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1295,8 +1295,8 @@
 <h1 id="pwm-eszkozok-hasznalata">PWM eszközök használata<a class="headerlink" href="#pwm-eszkozok-hasznalata" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum leírja, hogyan állíthat be egy PWM-vezérelt lézert vagy orsót az <code>output_pin</code> és néhány makró segítségével.</p>
 <h2 id="hogyan-mukodik">Hogyan működik?<a class="headerlink" href="#hogyan-mukodik" title="Permanent link">&para;</a></h2>
-<p>A nyomtatófej ventilátor pwm kimenetének felhasználásával lézereket vagy orsókat vezérelhet. Ez akkor hasznos, ha kapcsolható nyomtatófejeket használ, például az E3D toolchanger vagy egy barkácsmegoldás. Általában az olyan cam-toolok, mint a LaserWeb, úgy konfigurálhatók, hogy <code>M3-M5</code> parancsokat használjanak, amelyek <em>spindle speed CW</em> (<code>M3 S[0-255]</code>), <em>orsó fordulatszám * (<code>M4 S[0-255]</code>) és </em>orsóstop* (<code>M5</code>).</p>
-<p><strong>Figyelmeztetés:</strong> A lézer vezetésekor tartson be minden biztonsági óvintézkedést, ami csak eszébe jut! A diódalézerek általában invertáltak. Ez azt jelenti, hogy amikor az MCU újraindul, a lézer <em>teljesen be lesz kapcsolva</em> arra az időre, amíg az MCU újraindul. A biztonság kedvéért ajánlott <em>mindig</em> megfelelő hullámhosszúságú lézerszemüveget viselni, ha a lézer be van kapcsolva; és a lézert le kell kapcsolni, ha nincs rá szükség. Emellett be kell állítania egy biztonsági időkorlátot, hogy ha a gazdagép vagy az MCU hibát észlel, a szerszám leálljon.</p>
+<p>A nyomtatófej ventilátor PWM kimenetének felhasználásával lézereket vagy orsókat vezérelhet. Ez akkor hasznos, ha kapcsolható nyomtatófejeket használ, például az E3D szerszámváltó vagy egy barkácsmegoldás. Általában az olyan cam-tool, mint a LaserWeb, úgy konfigurálhatók, hogy <code>M3-M5</code> parancsokat használjanak, amelyek <em>spindle speed CW</em> (<code>M3 S[0-255]</code>), <em>orsó fordulatszám * (<code>M4 S[0-255]</code>) és </em>orsóstop* (<code>M5</code>).</p>
+<p><strong>Figyelmeztetés:</strong> A lézer használatakor tartson be minden biztonsági óvintézkedést, amit csak lehet! A diódalézerek általában invertáltak. Ez azt jelenti, hogy amikor az MCU újraindul, a lézer <em>teljesen be lesz kapcsolva</em> arra az időre. A biztonság kedvéért ajánlott <em>mindig</em> megfelelő hullámhosszúságú lézerszemüveget viselni, ha a lézer be van kapcsolva, és a lézert le kell kapcsolni, ha nincs rá szükség. Emellett be kell állítania egy biztonsági időkorlátot, hogy ha a gazdagép vagy az MCU hibát észlel, a szerszám leálljon.</p>
 <p>Egy példakonfigurációért lásd <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>.</p>
 <h2 id="jelenlegi-korlatozasok">Jelenlegi korlátozások<a class="headerlink" href="#jelenlegi-korlatozasok" title="Permanent link">&para;</a></h2>
 <p>Korlátozott, hogy milyen gyakoriak lehetnek a PWM-frissítések. Bár nagyon pontos, a PWM frissítés csak 0,1 másodpercenként fordulhat elő, így szinte használhatatlanná válik a rasztergravírozáshoz. Létezik azonban egy <a href="https://github.com/Cirromulus/klipper/tree/laser_tool">kísérleti ág</a>, amelynek saját kompromisszumai vannak. Hosszú távon azt tervezik, hogy ezt a funkciót hozzáadják a fővonali klipperhez.</p>
@@ -1305,26 +1305,26 @@
 <h2 id="laserweb-konfiguracio">Laserweb konfiguráció<a class="headerlink" href="#laserweb-konfiguracio" title="Permanent link">&para;</a></h2>
 <p>Ha a Laserwebet használja, akkor a következő konfiguráció működhet:</p>
 <pre><code>GCODE START:
-    M5 ; Lézer kikapcsolása
-    G21 ; Egységek beállítása mm-re
-    G90 ; Abszolút pozicionálás
-    G0 Z0 F7000 ; Nem vágási sebesség beállítása
+    M5            ; Lézer letiltása
+    G21           ;Állítsa az egységeket mm-re
+    G90           ; Abszolút pozicionálás
+    G0 Z0 F7000   ;Állítsa be a nem vágási sebességet
 
 GCODE END:
-    M5 ; Lézer kikapcsolása
-    G91 ; relatív
+    M5            ; Lézer letiltása
+    G91           ; relatív
     G0 Z+20 F4000 ;
-    G90 ; abszolút
+    G90           ; abszolút
 
 GCODE HOMING:
-    M5 ; Lézer kikapcsolása
-    G28 ; Minden tengely alaphelyzetbe állítása
+    M5            ; Lézer letiltása
+    G28           ; Kezdőpontfelvétel minden tengelyen
 
 TOOL ON:
     M3 $INTENSITY
 
 TOOL OFF:
-    M5 ; Lézer kikapcsolása
+    M5            ; Lézer letiltása
 
 LASER INTENSITY:
     S

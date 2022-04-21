@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -998,7 +998,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1708,7 +1708,7 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 <h3 id="stm32f103-hid-bootloaderrel">STM32F103 HID bootloaderrel<a class="headerlink" href="#stm32f103-hid-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>A <a href="https://github.com/Serasidis/STM32_HID_Bootloader">HID bootloader</a> egy kompakt, driver nélküli bootloader, amely képes USB-n keresztül égetni. Szintén elérhető egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">fork az SKR Mini E3 1.2 specifikus buildekkel</a>.</p>
 <p>Az általános STM32F103 alaplapok, mint például a blue pill esetében a bootloader 3,3V-os soros égetése lehetséges az stm32flash használatával, amint azt a fenti stm32duino szakaszban említettük, a kívánt hid bootloader bináris fájlnevének behelyettesítésével (azaz: hid_generic_pc13.bin a blue pillhez).</p>
-<p>Az SKR Mini E3 esetében nem lehet stm32flash-t használni, mivel a boot0 pin közvetlenül a földre van kötve, és nincs alaplapi tűkiállása. A bootloader égetéséhez ajánlott STLink V2-t használni STM32Cube programozóval. Ha nincs vagy nem fér hozzá egy STLinkhez, akkor lehetséges egy <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi és OpenOCD</a> használata is a következő chipkonfigurációval:</p>
+<p>Az SKR Mini E3 esetében nem lehet stm32flash-t használni, mivel a boot0 láb közvetlenül a földre van kötve, és nincs alaplapi tűkiállása. A bootloader égetéséhez ajánlott STLink V2-t használni STM32Cube programozóval. Ha nincs vagy nem fér hozzá egy STLinkhez, akkor lehetséges egy <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi és OpenOCD</a> használata is a következő chipkonfigurációval:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/stm32f1x.cfg]
 </code></pre></div>
 

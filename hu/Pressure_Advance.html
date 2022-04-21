@@ -13,7 +13,7 @@
     
     
       
-        <title>Nyomás előrehaladás - Klipper documentation</title>
+        <title>Nyomásszabályozás - Klipper documentation</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#nyomas-elorehaladas" class="md-skip">
+        <a href="#nyomasszabalyozas" class="md-skip">
           Kihagyás
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Nyomás előrehaladás
+              Nyomásszabályozás
             
           </span>
         </div>
@@ -646,7 +646,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -690,12 +690,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Nyomás előrehaladás
+          Nyomásszabályozás
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Pressure_Advance.html" class="md-nav__link md-nav__link--active">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
       
         
@@ -714,8 +714,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#nnyomas-szabalyozas-hangolasa" class="md-nav__link">
-    Nnyomás szabályozás hangolása
+  <a href="#nyomas-szabalyozas-hangolasa" class="md-nav__link">
+    Nyomás szabályozás hangolása
   </a>
   
 </li>
@@ -832,7 +832,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1048,7 +1048,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1234,8 +1234,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#nnyomas-szabalyozas-hangolasa" class="md-nav__link">
-    Nnyomás szabályozás hangolása
+  <a href="#nyomas-szabalyozas-hangolasa" class="md-nav__link">
+    Nyomás szabályozás hangolása
   </a>
   
 </li>
@@ -1264,13 +1264,13 @@
 </a>
 
 
-<h1 id="nyomas-elorehaladas">Nyomás előrehaladás<a class="headerlink" href="#nyomas-elorehaladas" title="Permanent link">&para;</a></h1>
-<p>Ez a dokumentum a "nyomás szabályozás" konfigurációs változó adott fúvókához és nyomtatószálhoz való beállításával kapcsolatos információkat tartalmaz. A nyomás szabályozás funkció hasznos lehet a nyákosodás csökkentésében. A nyomás szabályozás megvalósításáról további információkat a <a href="Kinematics.html">kinematics</a> dokumentumban talál.</p>
-<h2 id="nnyomas-szabalyozas-hangolasa">Nnyomás szabályozás hangolása<a class="headerlink" href="#nnyomas-szabalyozas-hangolasa" title="Permanent link">&para;</a></h2>
-<p>A nyomás szabályozás két hasznos dolgot tesz - csökkenti a nem extrudált mozgások során fellépő nyákosodást, és csökkenti a kanyarodás során fellépő puffadást. Ez az útmutató a második funkciót (kanyarodás közbeni puffadás csökkentése) használja a hangolás mechanizmusaként.</p>
-<p>A nyomás szabályozás kalibrálásához a nyomtatónak konfiguráltnak és működőképesnek kell lennie, mivel a hangolási teszt egy tesztobjektum nyomtatásával és vizsgálatával jár. A teszt lefuttatása előtt érdemes ezt a dokumentumot teljes egészében elolvasni.</p>
-<p>A <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a> fájlban található nagy üreges négyzet g-kódjának létrehozásához használjon egy szeletelőt. Használjon nagy sebességet (pl. 100 mm/s), nulla kitöltést és durva rétegmagasságot (a rétegmagasságnak a fúvóka átmérőjének 75%-a körül kell lennie). Győződjön meg róla, hogy a szeletelőben minden "dinamikus gyorsításvezérlés" ki van kapcsolva.</p>
-<p>Készüljön fel a tesztre a következő G-kód parancs kiadásával:</p>
+<h1 id="nyomasszabalyozas">Nyomásszabályozás<a class="headerlink" href="#nyomasszabalyozas" title="Permanent link">&para;</a></h1>
+<p>Ez a dokumentum a "nyomásszabályozás" konfigurációs változó adott fúvókához és nyomtatószálhoz való beállításával kapcsolatos információkat tartalmaz. A nyomásszabályozás funkció hasznos lehet a szálazás csökkentésében. A nyomásszabályozás megvalósításáról további információkat a <a href="Kinematics.html">kinematika</a> dokumentumban talál.</p>
+<h2 id="nyomas-szabalyozas-hangolasa">Nyomás szabályozás hangolása<a class="headerlink" href="#nyomas-szabalyozas-hangolasa" title="Permanent link">&para;</a></h2>
+<p>A nyomásszabályozás két hasznos dolgot tesz. Csökkenti a nem extrudált mozgások során fellépő szálazás, és csökkenti a kanyarodás során fellépő puffadást. Ez az útmutató a második funkciót (kanyarodás közbeni puffadás csökkentése) használja a hangolás mechanizmusaként.</p>
+<p>A nyomásszabályozás kalibrálásához a nyomtatónak konfiguráltnak és működőképesnek kell lennie, mivel a hangolási teszt egy tesztobjektum nyomtatásával és vizsgálatával jár. A teszt lefuttatása előtt érdemes ezt a dokumentumot teljes egészében elolvasni.</p>
+<p>A <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a> fájlban található nagy üreges négyzet G-Kódjának létrehozásához használjon egy szeletelőt. Használjon nagy sebességet (pl. 100 mm/s), nulla kitöltést és durva rétegmagasságot (a rétegmagasságnak a fúvóka átmérőjének 75%-a körül kell lennie). Győződjön meg róla, hogy a szeletelőben minden "dinamikus gyorsításvezérlés" ki van kapcsolva.</p>
+<p>Készüljön fel a tesztre a következő G-Kód parancs kiadásával:</p>
 <div class="highlight"><pre><span></span><code>SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
 </code></pre></div>
 
@@ -1289,19 +1289,19 @@
 <p>Ellenőrizze az objektumot, majd digitális tolómérővel mérje meg azt a magasságot, amely a legjobb minőségű sarkokkal rendelkezik. Ha kétségei vannak, válassza az alacsonyabb magasságot.</p>
 <p><img alt="tune_pa" src="img/tune_pa.jpg" /></p>
 <p>A pressure_advance értéket ezután a következőképpen lehet kiszámítani: <code>pressure_advance = &lt;start&gt; + &lt;measured_height&gt; * &lt;factor&gt;</code>. (Például <code>0 + 12,90 * .020</code> lenne <code>.258</code>.)</p>
-<p>Lehetőség van a START és a FACTOR egyéni beállításainak kiválasztására, ha ez segít a legjobb nyomás szabályozás beállítás meghatározásában. Ennek során ügyeljen arra, hogy a TUNING_TOWER parancsot minden egyes próbanyomtatás elején ki kell adni.</p>
-<p>A tipikus nyomás szabályozás értékek 0,050 és 1,000 között vannak (a legmagasabb értékek általában csak a bowdenes extrudereknél). Ha az 1,000-ig terjedő nyomás szabályozással nem tapasztalható jelentős javulás, akkor a nyomás szabályozás valószínűleg nem javítja a nyomatok minőségét. Térjen vissza az alapértelmezett konfigurációhoz, ahol a nyomás szabályozás ki van kapcsolva.</p>
+<p>Lehetőség van a START és a FACTOR egyéni beállításainak kiválasztására, ha ez segít a legjobb nyomásszabályozás beállítás meghatározásában. Ennek során ügyeljen arra, hogy a TUNING_TOWER parancsot minden egyes próbanyomtatás elején ki kell adni.</p>
+<p>A tipikus nyomásszabályozás értékek 0,050 és 1,000 között vannak (a legmagasabb értékek általában csak a bowdenes extrudereknél). Ha az 1,000-ig terjedő nyomás szabályozással nem tapasztalható jelentős javulás, akkor a nyomásszabályozás valószínűleg nem javítja a nyomatok minőségét. Térjen vissza az alapértelmezett konfigurációhoz, ahol a nyomásszabályozás ki van kapcsolva.</p>
 <p>Bár ez a hangolási gyakorlat közvetlenül javítja a sarkok minőségét, érdemes megjegyezni, hogy a jó nyomás szabályozási konfiguráció csökkenti a nyomat teljes terjedelmét.</p>
 <p>A teszt befejezésekor állítsa be a <code>pressure_advance = &lt;calculated_value&gt;</code> értéket a konfigurációs fájl <code>[extruder]</code> szakaszában, és adjon ki egy RESTART parancsot. A RESTART parancs törli a tesztállapotot, és visszaállítja a gyorsulási és kanyarodási sebességeket a normál értékekre.</p>
 <h2 id="fontos-megjegyzesek">Fontos megjegyzések<a class="headerlink" href="#fontos-megjegyzesek" title="Permanent link">&para;</a></h2>
 <ul>
-<li>A nyomás szabályozás értéke az extruder, a fúvóka és a szál függvénye. Gyakori, hogy a különböző gyártóktól származó vagy különböző pigmenteket tartalmazó nyomtatószálak jelentősen eltérő nyomás szabályozási értékeket igényelnek. Ezért minden nyomtatónál és minden egyes tekercs nyomtatószálnál kalibrálni kell a nyomás szabályozást.</li>
-<li>A nyomtatási hőmérséklet és az extrudálási sebesség befolyásolhatja a nyomást. A nyomás szabályozás beállítása előtt mindenképpen hangolja be az <a href="Rotation_Distance.html#calibrating-rotation_distance-on-extruders">extruder rotation_distance</a> és a <a href="http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#Nozzle_Temperature">nozzle temperature</a> értékeket.</li>
+<li>A nyomásszabályozás értéke az extruder, a fúvóka és a szál függvénye. Gyakori, hogy a különböző gyártóktól származó vagy különböző pigmenteket tartalmazó nyomtatószálak jelentősen eltérő nyomás szabályozási értékeket igényelnek. Ezért minden nyomtatónál és minden egyes tekercs nyomtatószálnál kalibrálni kell a nyomás szabályozást.</li>
+<li>A nyomtatási hőmérséklet és az extrudálási sebesség befolyásolhatja a nyomást. A nyomásszabályozás beállítása előtt mindenképpen hangolja be az <a href="Rotation_Distance.html#calibrating-rotation_distance-on-extruders">extruder rotation_distance</a> és a <a href="http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide#Nozzle_Temperature">fúvóka hőmérséklet</a> értékeket.</li>
 <li>A tesztnyomtatást úgy tervezték, hogy nagy extruder-áramlási sebességgel, de egyébként "normál" szeletelő beállításokkal fusson. A nagy áramlási sebességet nagy nyomtatási sebesség (pl. 100 mm/s) és durva rétegmagasság (jellemzően a fúvóka átmérőjének kb. 75%-a) alkalmazásával érjük el. A többi szeletelőbeállításnak hasonlónak kell lennie az alapértelmezettekhez (pl. 2 vagy 3 soros kerület, normál behúzási mennyiség). Hasznos lehet a külső kerület sebességét a nyomtatás többi részével megegyező sebességre állítani, de ez nem követelmény.</li>
 <li>Gyakori, hogy a tesztnyomtatás minden egyes sarkon eltérő viselkedést mutat. Gyakran előfordul, hogy a szeletelő az egyik sarkon rétegváltást hajt végre, ami azt eredményezheti, hogy az a sarok jelentősen eltér a többi három saroktól. Ha ez előfordul, akkor hagyja figyelmen kívül ezt a sarkot, és a másik három sarkot használva hangolja a nyomás szabályozást. Az is gyakori, hogy a fennmaradó sarkok kissé eltérnek. (Ez azért fordulhat elő, mert a nyomtató kerete kis eltérésekkel reagál a bizonyos irányokba történő kanyarodásra.) Próbáljon meg olyan értéket választani, amely az összes többi saroknál jól működik. Ha kétségei vannak, válasszon inkább egy alacsonyabb nyomás szabályozási értéket.</li>
-<li>Ha magas nyomás szabályozási értéket (pl. 0,200 fölött) használunk, akkor előfordulhat, hogy az extruder kihagy, amikor visszatér a nyomtató normál gyorsuláshoz. A nyomás szabályozási rendszer úgy veszi figyelembe a nyomást, hogy gyorsításkor extra szálat tol, és lassításkor visszahúzza ezt a szálat. Nagy gyorsítás és nagy nyomás szabályozás esetén előfordulhat, hogy az extruder nem rendelkezik elegendő nyomatékkal a szükséges szálak kinyomásához. Ha ez bekövetkezik, vagy használjon alacsonyabb gyorsítási értéket, vagy tiltsa le a nyomás szabályozási funkciót.</li>
+<li>Ha magas nyomás szabályozási értéket (pl. 0,200 fölött) használunk, akkor előfordulhat, hogy az extruder kihagy, amikor visszatér a nyomtató normál gyorsuláshoz. A nyomás szabályozási rendszer úgy veszi figyelembe a nyomást, hogy gyorsításkor extra szálat tol, és lassításkor visszahúzza ezt a szálat. Nagy gyorsítás és nagy nyomásszabályozás esetén előfordulhat, hogy az extruder nem rendelkezik elegendő nyomatékkal a szükséges szálak kinyomásához. Ha ez bekövetkezik, vagy használjon alacsonyabb gyorsítási értéket, vagy tiltsa le a nyomás szabályozási funkciót.</li>
 <li>Miután a Klipperben beállítottuk a nyomás szabályozást, hasznos lehet kisebb visszahúzási értéket beállítani a szeletelőben (pl. 0,75 mm), és használni a szeletelő "wipe on retract" opciót, ha rendelkezésre áll. Ezek a szeletelő beállítások segíthetnek a szálak kohéziója (a műanyag ragadós volta miatt a fúvókából kihúzott szálak) okozta folyása ellen. Ajánlott a szeletelő "z-lift on retract" opció kikapcsolása.</li>
-<li>A nyomás szabályozási rendszer nem változtatja meg a nymtatófej időzítését vagy útját. A nyomás szabályozással bekapcsolt állapotban ugyanannyi időt vesz igénybe, mint a nyomás szabályozás nélküli nyomtatás. A nyomás szabályozás nem változtatja meg a nyomtatás során extrudált szál teljes mennyiségét sem. A nyomás szabályozás extra extrudermozgást eredményez a mozgás gyorsítása és lassítása során. Egy nagyon magas nyomás szabályozási beállítás nagyon nagy extrudermozgást eredményez a gyorsítás és lassítás során, és semmilyen konfigurációs beállítás nem szab határt ennek a mozgásnak.</li>
+<li>A nyomás szabályozási rendszer nem változtatja meg a nymtatófej időzítését vagy útját. A nyomás szabályozással bekapcsolt állapotban ugyanannyi időt vesz igénybe, mint a nyomásszabályozás nélküli nyomtatás. A nyomásszabályozás nem változtatja meg a nyomtatás során extrudált szál teljes mennyiségét sem. A nyomásszabályozás extra extrudermozgást eredményez a mozgás gyorsítása és lassítása során. Egy nagyon magas nyomás szabályozási beállítás nagyon nagy extrudermozgást eredményez a gyorsítás és lassítás során, és semmilyen konfigurációs beállítás nem szab határt ennek a mozgásnak.</li>
 </ul>
 
               

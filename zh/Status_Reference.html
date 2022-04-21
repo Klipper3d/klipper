@@ -1847,7 +1847,7 @@
 <h2 id="led">led<a class="headerlink" href="#led" title="Permanent link">&para;</a></h2>
 <p>以下信息适用于每个在printer.cfg中定义了的 <code>[led led_name]</code>、<code>[neopixel led_name]</code>、<code>[dotstar led_name]</code>、<code>[pca9533 led_name]</code> , 和 <code>[pca9632 led_name]</code> 配置分段：</p>
 <ul>
-<li><code>color_data</code>: A list of color lists containing the RGBW values for a led in the chain. Each value is represented as a float from 0.0 to 1.0. Each color list contains 4 items (red, green, blue, white) even if the underyling LED supports fewer color channels. For example, the blue value (3rd item in color list) of the second neopixel in a chain could be accessed at <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
+<li><code>color_data</code>：一个包含链中每个LED的RGBW值的颜色列表的列表。每个值都以0.0到1.0的浮点数表示。每个颜色列表包含4个项目（红、绿、蓝、白），即使底层的LED支持较少的颜色通道。例如，可以通过<code>printer["neopixel &lt;配置名&gt;"].color_data[1][2]</code>访问链中第二个neopixel的蓝色值（颜色列表中的第三项）。</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#mcu">mcu</a>和<a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a>对象提供了以下信息：</p>

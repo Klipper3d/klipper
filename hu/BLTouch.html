@@ -738,7 +738,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -773,7 +773,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -876,7 +876,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1092,7 +1092,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1353,7 +1353,7 @@
 <h1 id="bl-touch">BL-Touch<a class="headerlink" href="#bl-touch" title="Permanent link">&para;</a></h1>
 <h2 id="bl-touch-csatlakoztatasa">BL-Touch csatlakoztatása<a class="headerlink" href="#bl-touch-csatlakoztatasa" title="Permanent link">&para;</a></h2>
 <p>Egy <strong>figyelmeztetés</strong> mielőtt elkezdené: Kerülje a BL-Touch tűjének puszta ujjal való érintését, mivel meglehetősen érzékeny az zsírra. Ha pedig mégis hozzáér, legyen nagyon óvatos, hogy ne hajlítsa vagy nyomja meg a tüskét.</p>
-<p>Csatlakoztassa a BL-Touch "servo" csatlakozót a <code>control_pin</code> csatlakozóhoz a BL-Touch dokumentáció vagy az MCU dokumentációja szerint. Az eredeti kábelezést használva a hármasból a sárga vezeték a <code>control_pin</code> és a vezetékpárból a fehér lesz a <code>sensor_pin</code>. Ezeket a pineket a kábelezésnek megfelelően kell konfigurálnia. A legtöbb BL-Touch pullup jelet igényel a pinbeállításnál (ezért a csatlakozás nevének előtagja "^"). Például:</p>
+<p>Csatlakoztassa a BL-Touch "servo" csatlakozót a <code>control_pin</code> csatlakozóhoz a BL-Touch dokumentáció vagy az MCU dokumentációja szerint. Az eredeti kábelezést használva a hármasból a sárga vezeték a <code>control_pin</code> és a vezetékpárból a fehér lesz a <code>sensor_pin</code>. Ezeket a tűket a kábelezésnek megfelelően kell konfigurálnia. A legtöbb BL-Touch pullup jelet igényel a tűbeállításnál (ezért a csatlakozás nevének előtagja "^"). Például:</p>
 <div class="highlight"><pre><span></span><code>[bltouch]
 sensor_pin: ^P1.24
 control_pin: P1.26
@@ -1407,8 +1407,8 @@ z_hop_speed: 5
 </li>
 </ul>
 <ul>
-<li>Ha önnek BL-Touch Smart V3.0-ja van, akkor a 'set_output_mode-ot: 5V' paramétert kell megadni, hogy minden egyes indításkor biztosítsa ezt a beállítást, mivel a szonda nem tudja megjegyezni a szükséges beállítást.</li>
-<li>Ha önnek BL-Touch Smart V3.1-je van, akkor választhat a 'set_output_mode: 5V' vagy az üzemmód egyszeri tárolása a 'BLTOUCH_STORE MODE=5V' parancsok közül, kézzel és NEM a 'set_output_mode:' paraméter használatával.</li>
+<li>ha önnek BL-Touch Smart V3.0-ja van, akkor a 'set_output_mode-ot: 5V' paramétert kell megadni, hogy minden egyes indításkor biztosítsa ezt a beállítást, mivel a szonda nem tudja megjegyezni a szükséges beállítást.</li>
+<li>ha önnek BL-Touch Smart V3.1-je van, akkor választhat a 'set_output_mode: 5V' vagy az üzemmód egyszeri tárolása a 'BLTOUCH_STORE MODE=5V' parancsok közül, kézzel és NEM a 'set_output_mode:' paraméter használatával.</li>
 <li>ha van más szondája is: A kimeneti üzemmód (végleges) beállításához néhány szondának van egy bekötése az alaplapon, amelyet el kell vágni, vagy egy jumperrel kell beállítani. Ebben az esetben hagyja ki teljesen a 'set_output_mode' paramétert.
 Ha V3.1 szondával rendelkezik, ne automatizálja vagy ismételje a kimeneti üzemmód tárolását, hogy elkerülje a szonda EEPROM-jának elhasználódását. A BLTouch EEPROM körülbelül 100.000 frissítésre alkalmas. A napi 100 tárolás körülbelül 3 évnyi működést jelentene, mielőtt elhasználódna. Így a kimeneti üzemmód tárolását a V3.1-ben a gyártó bonyolult műveletnek tervezte (a gyári alapértelmezett egy biztonságos OPEN DRAIN üzemmód), és nem alkalmas arra, hogy bármilyen szeletelő, makró vagy bármi más által ismételten kiadja, lehetőleg csak akkor használható, amikor először integrálják a szondát egy nyomtató alaplapjára.</li>
 </ul>

@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1082,7 +1082,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1335,7 +1335,7 @@
 <h1 id="canbus-protokoll">CANBUS protokoll<a class="headerlink" href="#canbus-protokoll" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper által a <a href="https://en.wikipedia.org/wiki/CAN_bus">CAN-buszon</a> keresztül történő kommunikációhoz használt protokollt írja le. A Klipper CAN-busszal való konfigurálásával kapcsolatos információkért lásd a <CANBUS.md> című dokumentumot.</p>
 <h2 id="mikrokontroller-azonosito-hozzarendelese">Mikrokontroller azonosító hozzárendelése<a class="headerlink" href="#mikrokontroller-azonosito-hozzarendelese" title="Permanent link">&para;</a></h2>
-<p>A Klipper csak a CAN 2.0A szabványos méretű CAN-busz csomagokat használja, amelyek 8 adatbájtra és egy 11 bites CAN-busz azonosítóra korlátozódnak. A hatékony kommunikáció támogatása érdekében minden mikrokontrollerhez futáskor egy egyedi, 1 bájtos CAN-busz nodeid (<code>canbus_nodeid</code>) van rendelve az általános Klipper parancs- és válaszforgalomhoz. A hosztról a mikrokontroller felé irányuló Klipper-parancsüzenetek a <code>canbus_nodeid * 2 + 256</code> CAN-busz azonosítót használják, míg a mikrokontrollerről a hoszt felé irányuló Klipper-válaszüzenetek a <code>canbus_nodeid * 2 + 256 + 1</code> azonosítót.</p>
+<p>A Klipper csak a CAN 2.0A szabványos méretű CAN-busz csomagokat használja, amelyek 8 adatbájtra és egy 11 bites CAN-busz azonosítóra korlátozódnak. A hatékony kommunikáció támogatása érdekében minden mikrokontrollerhez futáskor egy egyedi, 1 bájtos CAN-busz nodeid (<code>canbus_nodeid</code>) van rendelve az általános Klipper parancs- és válaszforgalomhoz. A gazdagépről a mikrokontroller felé irányuló Klipper-parancsüzenetek a <code>canbus_nodeid * 2 + 256</code> CAN-busz azonosítót használják, míg a mikrokontrollerről a gazdagép felé irányuló Klipper-válaszüzenetek a <code>canbus_nodeid * 2 + 256 + 1</code> azonosítót.</p>
 <p>Minden mikrokontroller rendelkezik egy gyárilag hozzárendelt egyedi chipazonosítóval, amelyet az azonosító hozzárendelése során használnak. Ez az azonosító meghaladhatja egy CAN csomag hosszát, ezért egy hash függvényt használunk arra, hogy a gyári azonosítóból egy egyedi 6 bájtos azonosítót (<code>canbus_uuid</code>) generáljunk.</p>
 <h2 id="rendszergazdai-uzenetek">Rendszergazdai üzenetek<a class="headerlink" href="#rendszergazdai-uzenetek" title="Permanent link">&para;</a></h2>
 <p>Az rendszergazdai üzeneteket az azonosító hozzárendeléséhez használják. A gazdatesttől a mikrokontrollerhez küldött admin üzenetek a CAN-buszon a <code>0x3f0</code>, a mikrokontrollerről a gazdatesthez küldött üzenetek pedig a CAN-buszon a <code>0x3f1</code> azonosítót használják. Minden mikrovezérlő a <code>0x3f0</code> azonosítón fogadja az üzeneteket; ez az azonosító egy "broadcast cím" -nek tekinthető.</p>
@@ -1349,7 +1349,7 @@
 <p>A RESP_NEED_NODEID üzenet formátuma a következő: <code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;</code></p>
 <h2 id="adatcsomagok">Adatcsomagok<a class="headerlink" href="#adatcsomagok" title="Permanent link">&para;</a></h2>
 <p>A CMD_SET_NODEID paranccsal nodeid-t kapott mikrokontroller adatcsomagokat küldhet és fogadhat.</p>
-<p>A csomópontot használó üzenetek csomagadatai (<code>canbus_nodeid * 2 + 256</code>) egyszerűen egy pufferbe kerülnek, és amikor egy teljes <a href="Protocol.html">mcu protokoll üzenet</a> található, annak tartalmát elemezzük és feldolgozzuk. Az adatokat bájtfolyamként kezelik - nem követelmény, hogy a Klipper üzenetblokk kezdete egyezzen a CAN-buszcsomag kezdetével.</p>
+<p>A csomópontot használó üzenetek csomagadatai (<code>canbus_nodeid * 2 + 256</code>) egyszerűen egy pufferbe kerülnek, és amikor egy teljes <a href="Protocol.html">mcu protokoll üzenet</a> található, annak tartalmát elemezzük és feldolgozzuk. Az adatokat bájtfolyamként kezelik. Nem követelmény, hogy a Klipper üzenetblokk kezdete egyezzen a CAN-buszcsomag kezdetével.</p>
 <p>Hasonlóképpen, az MCU protokoll üzenetválaszok a mikrokontrollerről a gazdagéphez úgy kerülnek elküldésre, hogy az üzenetadatokat egy vagy több csomagba másolják a csomópontnak a CAN-buszon való átvitelére vonatkozó azonosítójával (<code>canbus_nodeid * 2 + 256 + 1</code>).</p>
 
               

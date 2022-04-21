@@ -537,8 +537,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gear_ratio-hasznalata" class="md-nav__link">
-    Gear_ratio használata
+  <a href="#a-gear_ratio-hasznalata" class="md-nav__link">
+    A gear_ratio használata
   </a>
   
 </li>
@@ -737,7 +737,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -772,7 +772,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -875,7 +875,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1091,7 +1091,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1325,8 +1325,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gear_ratio-hasznalata" class="md-nav__link">
-    Gear_ratio használata
+  <a href="#a-gear_ratio-hasznalata" class="md-nav__link">
+    A gear_ratio használata
   </a>
   
 </li>
@@ -1349,13 +1349,13 @@
 
 
 <h1 id="forgatasi-tavolsag">Forgatási távolság<a class="headerlink" href="#forgatasi-tavolsag" title="Permanent link">&para;</a></h1>
-<p>A Klipper léptetőmotor-meghajtók minden <a href="Config_Reference.html#stepper">léptető konfigurációs szakaszban</a> megkövetelnek egy <code>rotation_distance</code> paramétert. A <code>rotation_distance</code> az a távolság, amelyet a tengely a léptetőmotor egy teljes fordulatával elmozdít. Ez a dokumentum leírja, hogyan lehet ezt az értéket beállítani.</p>
+<p>A Klipper léptetőmotor meghajtók minden <a href="Config_Reference.html#stepper">léptető konfigurációs szakaszban</a> megkövetelnek egy <code>rotation_distance</code> paramétert. A <code>rotation_distance</code> az a távolság, amelyet a tengely a léptetőmotor egy teljes fordulatával elmozdít. Ez a dokumentum leírja, hogyan lehet ezt az értéket beállítani.</p>
 <h2 id="a-rotation_distance-kinyerese-a-steps_per_mm-vagy-step_distance-ertekbol">A rotation_distance kinyerése a steps_per_mm (vagy step_distance) értékből<a class="headerlink" href="#a-rotation_distance-kinyerese-a-steps_per_mm-vagy-step_distance-ertekbol" title="Permanent link">&para;</a></h2>
-<p>A 3d nyomtató tervezői eredetileg <code>steps_per_mm</code> forgási távolságból számították ki. Ha ismeri a steps_per_mm értéket, akkor ezzel az általános képlettel megkaphatja ezt az eredeti forgási távolságot:</p>
+<p>A 3D nyomtató tervezői eredetileg <code>steps_per_mm</code> forgási távolságból számították ki. Ha ismeri a steps_per_mm értéket, akkor ezzel az általános képlettel megkaphatja ezt az eredeti forgási távolságot:</p>
 <div class="highlight"><pre><span></span><code>rotation_distance = &lt;full_steps_per_rotation&gt; * &lt;microsteps&gt; / &lt;steps_per_mm&gt;
 </code></pre></div>
 
-<p>Vagy ha régebbi Klipper-konfigurációval rendelkezik, és ismeri a <code>step_distance</code> paramétert, akkor használhatja ezt a képletet:</p>
+<p>Vagy ha régebbi Klipper konfigurációval rendelkezik, és ismeri a <code>step_distance</code> paramétert, akkor használhatja ezt a képletet:</p>
 <div class="highlight"><pre><span></span><code>rotation_distance = &lt;full_steps_per_rotation&gt; * &lt;microsteps&gt; * &lt;step_distance&gt;
 </code></pre></div>
 
@@ -1368,18 +1368,18 @@
 <p>Ezután a következő eljárást alkalmazza a "mérés és igazítás" elvégzéséhez:</p>
 <ol>
 <li>Győződjön meg arról, hogy az extruderben van-e nyomtatószál, a hotend megfelelő hőmérsékletre van-e melegítve, és a nyomtató készen áll-e az extrudálásra.</li>
-<li>Jelölje meg a nyomtatószálat egy jelölővel az extrudertest szívónyílásától kb. 70 mm-re. Ezután egy digitális tolómérővel mérje meg a lehető legpontosabban ennek a jelölésnek a tényleges távolságát. Ezt jegyezze fel <code>&lt;initial_mark_distance&gt;</code>.</li>
+<li>Jelölje meg a nyomtatószálat egy jelölővel az extrudertest bemenő nyílásától kb. 70 mm-re. Ezután egy digitális tolómérővel mérje meg a lehető legpontosabban ennek a jelölésnek a tényleges távolságát. Ezt jegyezze fel <code>&lt;initial_mark_distance&gt;</code>.</li>
 <li>Extrudáljon 50 mm nyomtatószálat a következő parancsokkal: <code>G91</code>, majd <code>G1 E50 F60</code>. Az 50 mm-t jegyezze meg <code>&lt;requested_extrude_distance&gt;</code>. Várja meg, amíg az extruder befejezi a mozgást (ez körülbelül 50 másodpercig tart). Fontos, hogy lassú extrudálási sebességet használjon ehhez a teszthez, mivel a gyorsabb sebesség magas nyomást okozhat az extruderben, ami torzítja az eredményeket. (Ne használja az "extrude gombot" a grafikus előlapon ehhez a teszthez, mivel azok gyors ütemben extrudálnak.)</li>
 <li>A digitális tolómérővel mérje meg az extruder teste és a szálon lévő jelölés közötti új távolságot. Ezt jegyezze fel <code>&lt;subsequent_mark_distance&gt;</code>. Ezután számítsa ki: <code>actual_extrude_distance = &lt;initial_mark_distance&gt; - &lt;subsequent_mark_distance&gt;</code></li>
 <li>A rotation_distance kiszámítása: <code>rotation_distance = &lt;previous_rotation_distance&gt; * &lt;actual_extrude_distance&gt; / &lt;requested_extrude_distance&gt;</code> Az új rotation_distance-t három tizedesjegyre kerekítjük.</li>
 </ol>
 <p>Ha az actual_extrude_distance több mint 2 mm-rel eltér a requested_extrude_distance-tól, akkor érdemes a fenti lépéseket másodszor is elvégezni.</p>
-<p>Megjegyzés: Ne használjon <em>nem</em> "mérés és trimmelés" típusú módszert az x, y vagy z típusú tengelyek kalibrálására. A "measure and trim" módszer nem elég pontos ezekhez a tengelyekhez, és valószínűleg rosszabb konfigurációhoz vezet. Ehelyett, ha szükséges, ezeket a tengelyeket <a href="#obtaining-rotation_distance-by-inspecting-the-hardware">a szíjak, a szíjtárcsák és az ólomcsavarok hardverének mérésével</a> lehet meghatározni.</p>
+<p>Megjegyzés: <em>Ne</em> használjon "mérés és trimmelés" típusú módszert az X, Y vagy Z típusú tengelyek kalibrálására. A "measure and trim" módszer nem elég pontos ezekhez a tengelyekhez, és valószínűleg rosszabb konfigurációhoz vezet. Ehelyett, ha szükséges, ezeket a tengelyeket <a href="#obtaining-rotation_distance-by-inspecting-the-hardware">a szíjak, szíjtárcsák és az orsók hardverének mérésével</a> lehet meghatározni.</p>
 <h2 id="a-rotation_distance-meghatarozasa-a-hardver-vizsgalataval">A rotation_distance meghatározása a hardver vizsgálatával<a class="headerlink" href="#a-rotation_distance-meghatarozasa-a-hardver-vizsgalataval" title="Permanent link">&para;</a></h2>
 <p>Lehetséges a rotation_distance kiszámítása a léptetőmotorok és a nyomtató kinematikájának ismeretében. Ez hasznos lehet, ha a steps_per_mm nem ismert, vagy ha új nyomtatót tervezünk.</p>
 <h3 id="szijhajtasu-tengelyek">Szíjhajtású tengelyek<a class="headerlink" href="#szijhajtasu-tengelyek" title="Permanent link">&para;</a></h3>
 <p>Egyszerű kiszámítani a rotation_distance-t egy szíjat és csigát használó lineáris tengely esetében.</p>
-<p>Először határozza meg a szíj típusát. A legtöbb nyomtató 2 mm-es fogosztást használ (azaz a szalag minden egyes foga 2 mm távolságra van egymástól). Ezután számolja meg a léptetőmotor szíjtárcsájának fogainak számát. A rotation_distance ezután a következőképpen számítható ki:</p>
+<p>Először határozza meg a szíj típusát. A legtöbb nyomtató 2 mm-es fogosztást használ (azaz a szíj minden egyes foga 2 mm távolságra van egymástól). Ezután számolja meg a léptetőmotor szíjtárcsája fogainak számát. A rotation_distance ezután a következőképpen számítható ki:</p>
 <div class="highlight"><pre><span></span><code>rotation_distance = &lt;belt_pitch&gt; * &lt;number_of_teeth_on_pulley&gt;
 </code></pre></div>
 
@@ -1393,9 +1393,9 @@
 <p>A "menetes szárakkal" ellátott régebbi nyomtatóknak csak egy "menet" van a menetes száron, és így a forgási távolság a csavar lépésszöge. (A csavar lépésköze a csavaron lévő egyes hornyok közötti távolság.) Így például egy M6-os metrikus menetes szár forgási távolsága 1, és egy M8-as menetes száré pedig 1,25mm-es.</p>
 <h3 id="extruder">Extruder<a class="headerlink" href="#extruder" title="Permanent link">&para;</a></h3>
 <p>Az extruderek kezdeti forgási távolságát úgy lehet meghatározni, hogy megmérjük a "szálmozgató kerék" átmérőjét, amely a szálakat tolja, és a következő képletet használjuk: <code>rotation_distance = &lt;diameter&gt; * 3.14</code></p>
-<p>Ha az extruder fogaskerekeket használ, akkor <a href="#using-a-gear_ratio">meg kell határozni és be kell állítani a gear_ratio-t</a> értéket az extruderhez.</p>
-<p>Az extruder tényleges forgási távolsága nyomtatóról nyomtatóra változik, mivel a "szálmozgató kerék" fogása, amely a szálakkal érintkezik, változhat. Ez még az egyes száltekercsek között is változhat. A kezdeti rotation_distance meghatározása után használja a <a href="#calibrating-rotation_distance-on-extruders">mérés és trimmelés eljárás</a> műveletet a pontosabb beállításhoz.</p>
-<h2 id="gear_ratio-hasznalata">Gear_ratio használata<a class="headerlink" href="#gear_ratio-hasznalata" title="Permanent link">&para;</a></h2>
+<p>Ha az extruder fogaskerekeket használ, akkor <a href="#using-a-gear_ratio">meg kell határozni és be kell állítani a gear_ratio</a> értéket az extruderhez.</p>
+<p>Az extruder tényleges forgási távolsága nyomtatóról nyomtatóra változik, mivel a "szálmozgató kerék" fogazása, amely a szálakkal érintkezik, változhat. Ez még az egyes száltekercsek között is változhat. A kezdeti rotation_distance meghatározása után használja a <a href="#calibrating-rotation_distance-on-extruders">mérés és trimmelés eljárás</a> műveletet a pontosabb beállításhoz.</p>
+<h2 id="a-gear_ratio-hasznalata">A gear_ratio használata<a class="headerlink" href="#a-gear_ratio-hasznalata" title="Permanent link">&para;</a></h2>
 <p>A <code>gear_ratio</code> beállítása megkönnyítheti a <code>rotation_distance</code> konfigurálását olyan léptetőknél, amelyekhez áttétel (vagy hasonló) van csatlakoztatva. A legtöbb léptető nem rendelkezik áttétellel. Ha nem biztos benne, akkor ne állítsa be a <code>gear_ratio</code> értéket a konfigurációban.</p>
 <p>Ha <code>gear_ratio</code> be van állítva, a <code>rotation_distance</code> azt a távolságot jelöli, amelyet a tengely az áttételen lévő utolsó fogaskerék egy teljes elfordulásával megtesz. Ha például egy "5:1"-es áttételt használunk, akkor kiszámíthatjuk a rotation_distance-ot <a href="#obtaining-rotation_distance-by-inspecting-the-hardware">a hardver ismeretében</a>, majd hozzáadhatjuk a <code>gear_ratio: 5:1</code> értéket a konfigurációs fájlhoz.</p>
 <p>A szíjakkal és szíjtárcsákkal megvalósított hajtóművek esetében a fogaskerekek fogainak megszámlálásával lehet meghatározni a gear_ratio-t. Ha például egy 16 fogazású szíjtárcsával rendelkező léptető meghajtja a, 80 fogazású szíjtárcsát, akkor a <code>gear_ratio: 80:16</code> értéket használjuk. Valóban, ki lehetne nyitni egy közönséges, "fogaskerékdobozt" és megszámolni a benne lévő fogakat, hogy megerősítsük a fogaskerék áttételét.</p>

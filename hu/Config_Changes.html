@@ -685,7 +685,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -720,7 +720,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -823,7 +823,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1039,7 +1039,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1276,7 +1276,7 @@
 <p>20210503: The gcode_macro <code>default_parameter_&lt;name&gt;</code> config option is deprecated. Use the <code>params</code> pseudo-variable to access macro parameters. Other methods for accessing macro parameters will be removed in the near future. Most users can replace a <code>default_parameter_NAME: VALUE</code> config option with a line like the following in the start of the macro: <code>{% set NAME = params.NAME|default(VALUE)|float %}</code>. See the <a href="Command_Templates.html#macro-parameters">Command Templates
 document</a> for examples.</p>
 <p>20210430: A SET_VELOCITY_LIMIT (és az M204) parancs mostantól a konfigurációs fájlban megadott értékeknél nagyobb sebességet, gyorsulást és square_corner_velocity-t is beállíthat.</p>
-<p>20210325: A <code>pin_map</code> config opció támogatása elavult. Használja a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a> fájlt a tényleges mikrokontroller pin nevekre való fordításhoz. A <code>pin_map</code> config opció a közeljövőben eltávolításra kerül.</p>
+<p>20210325: A <code>pin_map</code> config opció támogatása elavult. Használja a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a> fájlt a tényleges mikrokontroller tű nevekre való fordításhoz. A <code>pin_map</code> config opció a közeljövőben eltávolításra kerül.</p>
 <p>20210313: A Klipper CAN-busszal kommunikáló mikrovezérlők támogatása megváltozott. Ha CAN-buszt használ, akkor az összes mikrokontrollert újra kell égetni és a <a href="CANBUS.html">Klipper konfigurációt frissíteni kell</a>.</p>
 <p>20210310: A TMC2660 alapértelmezett driver_SFILT értéke 1-ről 0-ra változott.</p>
 <p>20210227: Az UART vagy SPI módban lévő TMC léptetőmotor-meghajtók mostantól másodpercenként egyszer lekérdezésre kerülnek, amikor engedélyezve vannak. Ha a meghajtóval nem lehet kapcsolatba lépni, vagy ha a meghajtó hibát jelent, akkor a Klipper leállási állapotba lép.</p>
@@ -1293,13 +1293,13 @@ document</a> for examples.</p>
 <p>20201029: A serial opció az mcu config szakaszban már nem /dev/ttyS0 az alapértelmezett érték. Abban a ritka helyzetben, amikor a /dev/ttyS0 a kívánt soros port, azt kifejezetten meg kell adni.</p>
 <p>20201020: Klipper v0.9.0 megjelent.</p>
 <p>20200902: A MAX31865 átalakítók RTD ellenállás-hőmérséklet számítása javításra került, hogy ne legyen alacsony. Ha ilyen eszközt használ, akkor kalibrálja újra a nyomtatási hőmérsékletet és a PID-beállításokat.</p>
-<p>20200816: A G-kód makró <code>printer.gcode</code> objektumot átneveztük <code>printer.gcode_move</code> objektumra. A <code>printer.toolhead</code> és <code>printer.gcode</code> objektumokból több nem dokumentált változót eltávolítottunk. A rendelkezésre álló sablonváltozók listáját lásd a docs/Command_Templates.md fájlban.</p>
-<p>20200816: A G-kód makró "action_" rendszere megváltozott. Cserélje ki a <code>printer.gcode.action_emergency_stop()</code> hívásokat <code>action_emergency_stop()</code>, <code>printer.gcode.action_respond_info()</code> a <code>action_respond_info()</code>, és <code>printer.gcode.action_respond_error()</code> a <code>action_raise_error()</code>-el.</p>
+<p>20200816: A G-Kód makró <code>printer.gcode</code> objektumot átneveztük <code>printer.gcode_move</code> objektumra. A <code>printer.toolhead</code> és <code>printer.gcode</code> objektumokból több nem dokumentált változót eltávolítottunk. A rendelkezésre álló sablonváltozók listáját lásd a docs/Command_Templates.md fájlban.</p>
+<p>20200816: A G-Kód makró "action_" rendszere megváltozott. Cserélje ki a <code>printer.gcode.action_emergency_stop()</code> hívásokat <code>action_emergency_stop()</code>, <code>printer.gcode.action_respond_info()</code> a <code>action_respond_info()</code>, és <code>printer.gcode.action_respond_error()</code> a <code>action_raise_error()</code>-el.</p>
 <p>20200809: A menürendszer átírásra került. Ha a menüt testre szabták, akkor frissíteni kell az új konfigurációra. A konfiguráció részleteiért lásd a config/example-menu.cfg fájlt, a példákért pedig a klippy/extras/display/menu.cfg fájlt.</p>
 <p>20200731: A <code>progress</code> attribútum viselkedése megváltozott, amelyet a <code>virtual_sdcard</code> nyomtatóobjektum jelentett. A nyomtatás szüneteltetésekor a Progress már nem áll vissza 0-ra. Mostantól mindig a belső fájl pozíciója alapján jelenti a haladást. Vagy 0, ha nincs betöltve fájl.</p>
 <p>20200725: A szervo <code>enable</code> konfigurációs paraméter és a SET_SERVO <code>ENABLE</code> paraméter eltávolításra került. Frissítsen minden makrót, hogy a <code>SET_SERVO SERVO=my_servo WIDTH=0</code> paramétert használja a szervó letiltásához.</p>
 <p>20200608: Az LCD-kijelző támogatása megváltoztatta néhány belső "írásjel" nevét. Ha egyéni kijelző elrendezés került implementálásra, akkor szükséges lehet frissíteni a legújabb gliph nevekre (lásd klippy/extras/display/display.cfg az elérhető gliph-ek listáját).</p>
-<p>20200606: A linux MCU pin nevei megváltoztak. A pin nevek mostantól a <code>gpiochip&lt;chipid&gt;/gpio&lt;gpio&gt;</code> formájúak. A gpiochip0 esetében egy rövid <code>gpio&lt;gpio&gt;</code> is használható. Például, amire korábban <code>P20</code> néven hivatkoztunk, az most <code>gpio20</code> vagy <code>gpiochip0/gpio20</code> lesz.</p>
+<p>20200606: A linux MCU tű nevei megváltoztak. A tűnevek mostantól a <code>gpiochip&lt;chipid&gt;/gpio&lt;gpio&gt;</code> formájúak. A gpiochip0 esetében egy rövid <code>gpio&lt;gpio&gt;</code> is használható. Például, amire korábban <code>P20</code> néven hivatkoztunk, az most <code>gpio20</code> vagy <code>gpiochip0/gpio20</code> lesz.</p>
 <p>20200603: Az alapértelmezett 16x4-es LCD kijelzőn már nem jelenik meg a nyomtatásból hátralévő becsült idő. (Csak az eltelt idő jelenik meg.) Ha a régi működést szeretnénk, akkor a menü kijelzőjét testre lehet szabni ezzel az információval (a részletekért lásd a config/example-extras.cfg fájlban a display_data leírását).</p>
 <p>20200531: Az alapértelmezett USB gyártó/termék azonosító mostantól 0x1d50/0x614e. Ezek az új azonosítók a Klipper számára vannak fenntartva (köszönet az openmoko projektnek). Ez a változás nem igényel semmilyen konfigurációs módosítást, de az új azonosítók megjelenhetnek a rendszer naplóiban.</p>
 <p>20200524: A TMC5160 pwm_freq mező alapértelmezett értéke mostantól nulla (egy helyett).</p>
@@ -1314,7 +1314,7 @@ document</a> for examples.</p>
 <p>20191202: A "G4" parancs nem dokumentált "S" paraméterének támogatása megszűnt. Az S minden előfordulását a szabványos "P" paraméterrel helyettesíti (a milliszekundumokban megadott késleltetés).</p>
 <p>20191126: Az USB nevek megváltoztak a natív USB-támogatással rendelkező mikrovezérlőkön. Mostantól alapértelmezés szerint egyedi chip-azonosítót használnak (ahol van ilyen). Ha egy "MCU" config szakasz olyan "serial" beállítást használ, amely "/dev/serial/by-id/" kezdetű, akkor szükség lehet a config frissítésére. Futtassa a "ls /dev/serial/by-id/*" parancsot egy SSH terminálban az új azonosító meghatározásához.</p>
 <p>20191121: A pressure_advance_lookahead_time paramétert eltávolítottuk. Az alternatív konfigurációs beállításokat lásd a example.cfg fájlban.</p>
-<p>20191112: A TMC léptető vezérlő virtuális engedélyezési képessége mostantól automatikusan engedélyezve van, ha a léptető nem rendelkezik dedikált léptető engedélyező pin-nel. A tmcXXXX:virtual_enable-re való hivatkozások eltávolítása a konfigurációból. A stepper enable_pin konfigurációban több pin vezérlésének lehetősége megszűnt. Ha több pinre van szükség, akkor használjon egy multi_pin config szekciót.</p>
+<p>20191112: A TMC léptető vezérlő virtuális engedélyezési képessége mostantól automatikusan engedélyezve van, ha a léptető nem rendelkezik dedikált léptető engedélyező tűvel. A tmcXXXX:virtual_enable-re való hivatkozások eltávolítása a konfigurációból. A stepper enable_pin konfigurációban több pin vezérlésének lehetősége megszűnt. Ha több pinre van szükség, akkor használjon egy multi_pin config szekciót.</p>
 <p>20191107: Az elsődleges extruder konfigurációs szakaszát "extruder" néven kell megadni, és már nem lehet "extruder0" néven megadni. Az extruder állapotát lekérdező Gcode parancssablonokat mostantól a "{printer.extruder}" segítségével lehet elérni.</p>
 <p>20191021: Klipper v0.8.0 megjelent</p>
 <p>20191003: A move_to_previous opció a [safe_z_homing]-ban mostantól alapértelmezés szerint False. (A 20190918 előtt ténylegesen False volt.)</p>
@@ -1323,11 +1323,11 @@ document</a> for examples.</p>
 <p>20190726: Az mcp4728 digitális-analóg kódja megváltozott. Az alapértelmezett i2c_address most 0x60, és a feszültségreferencia most az mcp4728's belső 2,048 voltos referenciához viszonyítva van.</p>
 <p>20190710: A [firmware_retract] konfigurációs szakaszból eltávolították a z_hop opciót. A z_hop támogatása hiányos volt, és több gyakori szeletelővel hibás viselkedést okozott.</p>
 <p>20190710: A PROBE_ACCURACY parancs opcionális paraméterei megváltoztak. Szükség lehet a parancsot használó makrók vagy szkriptek frissítésére.</p>
-<p>20190628: A [skew_correction] szakaszból eltávolítottuk az összes konfigurációs opciót. A skew_correction konfigurálása mostantól a SET_SKEW G-kódon keresztül történik. Lásd a <a href="Skew_Correction.html">Ferdeség Korrekció</a> ajánlott használatát.</p>
+<p>20190628: A [skew_correction] szakaszból eltávolítottuk az összes konfigurációs opciót. A skew_correction konfigurálása mostantól a SET_SKEW G-Kódon keresztül történik. Lásd a <a href="Skew_Correction.html">Ferdeség Korrekció</a> ajánlott használatát.</p>
 <p>20190607: A gcode_macro "variable_X" paraméterei (a SET_GCODE_VARIABLE VALUE paraméterével együtt) mostantól Python literálokként kerülnek értelmezésre. Ha egy értékhez karakterláncot kell rendelni, akkor csomagolja az értéket idézőjelekbe, hogy karakterláncként kerüljön kiértékelésre.</p>
 <p>20190606: A "samples", "samples_result" és "sample_retract_dist" konfigurációs beállítások átkerültek a "probe" konfigurációs szakaszba. Ezek az opciók már nem támogatottak a "delta_calibrate", "bed_tilt", "bed_mesh", "screws_tilt_adjust", "z_tilt", vagy "quad_gantry_level" config szakaszokban.</p>
 <p>20190528: A gcode_macro sablon kiértékelésében a mágikus "status" változót átneveztük "printer" -re.</p>
-<p>20190520: A SET_GCODE_OFFSET parancs megváltozott; ennek megfelelően frissítse a G-kód makrókat. A parancs már nem alkalmazza a kért eltolást a következő G1 parancsra. A régi viselkedés megközelíthető az új "MOVE=1" paraméter használatával.</p>
+<p>20190520: A SET_GCODE_OFFSET parancs megváltozott; ennek megfelelően frissítse a G-Kód makrókat. A parancs már nem alkalmazza a kért eltolást a következő G1 parancsra. A régi viselkedés megközelíthető az új "MOVE=1" paraméter használatával.</p>
 <p>20190404: A Python gazda szoftvercsomagok frissítésre kerültek. A felhasználóknak újra kell futtatniuk a ~/klipper/scripts/install-octopi.sh szkriptet (vagy más módon frissíteniük kell a python függőségeket, ha nem standard OctoPi telepítést használnak).</p>
 <p>20190404: Az i2c_bus és spi_bus paraméterek (a különböző konfigurációs szakaszokban) mostantól szám helyett busznevet fogadnak el.</p>
 <p>20190404: Az sx1509 konfigurációs paraméterei megváltoztak. Az 'address' paraméter mostantól 'i2c_address', és decimális számként kell megadni. A korábban használt 0x3E helyett 62-t kell megadni.</p>

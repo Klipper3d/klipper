@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1006,7 +1006,7 @@
       
         <li class="md-nav__item">
   <a href="#a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra" class="md-nav__link">
-    A G-kód fájlok lefordítása mikrokontroller-parancsokra
+    A G-Kód fájlok lefordítása mikrokontroller-parancsokra
   </a>
   
 </li>
@@ -1096,7 +1096,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1297,7 +1297,7 @@
       
         <li class="md-nav__item">
   <a href="#a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra" class="md-nav__link">
-    A G-kód fájlok lefordítása mikrokontroller-parancsokra
+    A G-Kód fájlok lefordítása mikrokontroller-parancsokra
   </a>
   
 </li>
@@ -1374,14 +1374,14 @@
 </code></pre></div>
 
 <h2 id="parancsok-kezi-kuldese-a-mikrokontrollernek">Parancsok kézi küldése a mikrokontrollernek<a class="headerlink" href="#parancsok-kezi-kuldese-a-mikrokontrollernek" title="Permanent link">&para;</a></h2>
-<p>Normális esetben a G-kód parancsokat a klippy.py folyamat fordítja Klipper mikrokontroller parancsokra. Azonban az is lehetséges, hogy manuálisan küldjük el ezeket az MCU-parancsokat (a Klipper forráskódjában a DECL_COMMAND() makróval jelölt függvények). Ehhez futtassa a következőket:</p>
+<p>Normális esetben a G-Kód parancsokat a klippy.py folyamat fordítja Klipper mikrokontroller parancsokra. Azonban az is lehetséges, hogy manuálisan küldjük el ezeket az MCU-parancsokat (a Klipper forráskódjában a DECL_COMMAND() makróval jelölt függvények). Ehhez futtassa a következőket:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial
 </code></pre></div>
 
 <p>Az eszközön belül a "HELP" parancsban talál további információkat a funkcióiról.</p>
 <p>Néhány parancssori opció is rendelkezésre áll. További információkért futtassa a: <code>~/klippy-env/bin/python ./klippy/console.py --help</code> parancsot</p>
-<h2 id="a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra">A G-kód fájlok lefordítása mikrokontroller-parancsokra<a class="headerlink" href="#a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra" title="Permanent link">&para;</a></h2>
-<p>A Klippy gazdagép kódja futhat kötegelt üzemmódban, hogy előállítsa a G-kód fájlhoz tartozó alacsony szintű mikrokontroller-parancsokat. Ezeknek az alacsony szintű parancsoknak a vizsgálata hasznos, amikor megpróbálja megérteni az alacsony szintű hardver műveleteit. Az is hasznos lehet, hogy összehasonlítsuk a mikrokontroller-parancsok közötti különbséget egy kódváltás után.</p>
+<h2 id="a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra">A G-Kód fájlok lefordítása mikrokontroller-parancsokra<a class="headerlink" href="#a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra" title="Permanent link">&para;</a></h2>
+<p>A Klippy gazdagép kódja futhat kötegelt üzemmódban, hogy előállítsa a G-Kód fájlhoz tartozó alacsony szintű mikrokontroller-parancsokat. Ezeknek az alacsony szintű parancsoknak a vizsgálata hasznos, amikor megpróbálja megérteni az alacsony szintű hardver műveleteit. Az is hasznos lehet, hogy összehasonlítsuk a mikrokontroller-parancsok közötti különbséget egy kódváltás után.</p>
 <p>A Klippy futtatásához ebben a kötegelt üzemmódban egy egyszeri lépés szükséges a mikrokontroller "adatszótár" létrehozásához. Ez a mikrokontroller kódjának lefordításával történik, hogy megkapjuk a <strong>out/klipper.dict</strong> fájlt:</p>
 <div class="highlight"><pre><span></span><code>make menuconfig
 make
@@ -1452,7 +1452,7 @@ cp /tmp/klippy.log .
 
 <p>A szkript kinyeri a nyomtató konfigurációs fájlját, és kinyeri az MCU leállítási adatait. Az MCU leállításából származó információsor (ha van ilyen) időbélyegek szerint át lesz rendezve, hogy segítse az ok-okozati forgatókönyvek diagnosztizálását.</p>
 <h2 id="teszteles-simulavr-rel">Tesztelés simulavr-rel<a class="headerlink" href="#teszteles-simulavr-rel" title="Permanent link">&para;</a></h2>
-<p>A <a href="http://www.nongnu.org/simulavr/">simulavr</a> eszköz lehetővé teszi egy Atmel ATmega mikrokontroller szimulálását. Ez a szakasz leírja, hogyan lehet teszt G-kód fájlokat futtatni a simulavr segítségével. Javasoljuk, hogy ezt egy asztali gépen futtassuk (nem Raspberry Pi), mivel a hatékony futtatáshoz erős CPU-ra van szükség.</p>
+<p>A <a href="http://www.nongnu.org/simulavr/">simulavr</a> eszköz lehetővé teszi egy Atmel ATmega mikrokontroller szimulálását. Ez a szakasz leírja, hogyan lehet teszt G-Kód fájlokat futtatni a simulavr segítségével. Javasoljuk, hogy ezt egy asztali gépen futtassuk (nem Raspberry Pi), mivel a hatékony futtatáshoz erős CPU-ra van szükség.</p>
 <p>A simulavr használatához töltse le a simulavr csomagot, és fordítsa le python támogatással. Vegye figyelembe, hogy a build rendszernek telepítenie kell néhány csomagot (például a swig-et) ahhoz, hogy a python modult fel tudja építeni.</p>
 <div class="highlight"><pre><span></span><code>git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr
@@ -1485,7 +1485,7 @@ make menuconfig
 <div class="highlight"><pre><span></span><code>./scripts/avrsim.py out/klipper.elf
 </code></pre></div>
 
-<p>Ezután, ha a simulavr egy másik ablakban fut, futtathatjuk a következőt, hogy G-kódot olvassunk be egy fájlból (pl. "test.gcode"), feldolgozzuk a Klippy-vel, és elküldjük a simulavr-ben futó Klipper-nek (lásd <a href="Installation.html">Telepítés</a> a python virtuális környezet létrehozásához szükséges lépéseket):</p>
+<p>Ezután, ha a simulavr egy másik ablakban fut, futtathatjuk a következőt, hogy G-Kódot olvassunk be egy fájlból (pl. "test.gcode"), feldolgozzuk a Klippy-vel, és elküldjük a simulavr-ben futó Klipper-nek (lásd <a href="Installation.html">Telepítés</a> a python virtuális környezet létrehozásához szükséges lépéseket):</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/klippy.py config/generic-simulavr.cfg -i test.gcode -v
 </code></pre></div>
 

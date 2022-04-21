@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -998,8 +998,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nyomas-elorehaladas" class="md-nav__link">
-    Nyomás előrehaladás
+  <a href="#nyomasszabalyozas" class="md-nav__link">
+    Nyomásszabályozás
   </a>
   
 </li>
@@ -1123,7 +1123,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1386,8 +1386,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nyomas-elorehaladas" class="md-nav__link">
-    Nyomás előrehaladás
+  <a href="#nyomasszabalyozas" class="md-nav__link">
+    Nyomásszabályozás
   </a>
   
 </li>
@@ -1499,7 +1499,7 @@ stepper_z_position = cartesian_z_position
 <div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
 </code></pre></div>
 
-<h3 id="nyomas-elorehaladas">Nyomás előrehaladás<a class="headerlink" href="#nyomas-elorehaladas" title="Permanent link">&para;</a></h3>
+<h3 id="nyomasszabalyozas">Nyomásszabályozás<a class="headerlink" href="#nyomasszabalyozas" title="Permanent link">&para;</a></h3>
 <p>A kísérletek azt mutatták, hogy az extruder modellezését az alap extruder képleten túl is lehet javítani. Ideális esetben az extrudálási mozgás előrehaladtával a mozgás minden egyes pontján ugyanannyi szálnak kell lerakódnia, és a mozgás után nem szabad extrudálódnia. Sajnos gyakran előfordul, hogy az alap extrudálási képletek miatt az extrudálási mozgások kezdetén túl kevés szál kerül ki az extruderből, és az extrudálás befejezése után többletszál kerül extrudálásra. Ezt gyakran nevezik "ooze"-nak.</p>
 <p><img alt="ooze" src="img/ooze.svg.png" /></p>
 <p>A "nyomásszabályozás" rendszer ezt úgy próbálja figyelembe venni, hogy az extruderhez egy másik modellt használ. Ahelyett, hogy naivan azt hinné, hogy az extruderbe táplált minden egyes mm^3 szálat az extruderből azonnal ugyanannyi mm^3 fog kilépni, a rendszer egy nyomáson alapuló modellt használ. A nyomás nő, amikor a szál az extruderbe kerül (mint a <a href="https://en.wikipedia.org/wiki/Hooke%27s_law">Hooke törvény</a> szerint), és az extrudáláshoz szükséges nyomást a fúvóka nyílásán keresztül történő áramlási sebesség uralja (mint a <a href="https://en.wikipedia.org/wiki/Poiseuille_law">Poiseuille törvény</a> szerint). A kulcsgondolat az, hogy a szál, a nyomás és az áramlási sebesség közötti kapcsolat egy lineáris együtthatóval modellezhető:</p>
@@ -1510,7 +1510,7 @@ stepper_z_position = cartesian_z_position
 <p>Az alapvető nyomásszabályozás képlete az extruder motorjának hirtelen sebességváltozásait okozhatja. A Klipper ennek elkerülése érdekében az extruder mozgásának "simítását" alkalmazza.</p>
 <p><img alt="pressure-advance" src="img/pressure-velocity.png" /></p>
 <p>A fenti grafikon egy példát mutat két olyan extrudálási mozgásra, amelyek között a kanyarsebesség nem nulla. Vegye figyelembe, hogy a nyomásszabályozás rendszer miatt a gyorsítás során további szálak kerülnek az extruderbe. Minél nagyobb a kívánt száláramlási sebesség, annál több szálat kell betolni a gyorsítás során a nyomás miatt. A fej lassítása során a plusz szál visszahúzódik (az extruder sebessége negatív lesz).</p>
-<p>A "simítás" az extruder pozíciójának súlyozott átlagával történik egy kis időintervallumban (ahogyan azt a <code>pressure_advance_smooth_time</code> konfigurációs paraméter megadja). Ez az átlagolás több G-kód mozgást is átfoghat. Figyelje meg, hogy az extrudermotor az első extrudermozgás névleges kezdete előtt elkezd mozogni, és az utolsó extrudermozgás névleges vége után is mozogni fog.</p>
+<p>A "simítás" az extruder pozíciójának súlyozott átlagával történik egy kis időintervallumban (ahogyan azt a <code>pressure_advance_smooth_time</code> konfigurációs paraméter megadja). Ez az átlagolás több G-Kód mozgást is átfoghat. Figyelje meg, hogy az extrudermotor az első extrudermozgás névleges kezdete előtt elkezd mozogni, és az utolsó extrudermozgás névleges vége után is mozogni fog.</p>
 <p>Kulcsképlet a "simított nyomásszabályozáshoz":</p>
 <div class="highlight"><pre><span></span><code>smooth_pa_position(t) =
     ( definitive_integral(pa_position(x) * (smooth_time/2 - abs(t - x)) * dx,

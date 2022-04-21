@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -998,7 +998,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1144,8 +1144,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#valaszthato-a-megfelelo-gpiochip-azonositasa" class="md-nav__link">
-    Választható: A megfelelő gpiochip azonosítása
+  <a href="#valaszthato-a-megfelelo-gpio-chip-azonositasa" class="md-nav__link">
+    Választható: A megfelelő GPIO chip azonosítása
   </a>
   
 </li>
@@ -1304,8 +1304,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#valaszthato-a-megfelelo-gpiochip-azonositasa" class="md-nav__link">
-    Választható: A megfelelő gpiochip azonosítása
+  <a href="#valaszthato-a-megfelelo-gpio-chip-azonositasa" class="md-nav__link">
+    Választható: A megfelelő GPIO chip azonosítása
   </a>
   
 </li>
@@ -1337,7 +1337,7 @@
 <h1 id="rpi-mikrokontroller">RPi mikrokontroller<a class="headerlink" href="#rpi-mikrokontroller" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum leírja a Klipper futtatásának folyamatát egy RPi-n, és ugyanazt az RPi-t használja másodlagos MCU-ként.</p>
 <h2 id="miert-erdemes-az-rpi-t-masodlagos-mcu-kent-hasznalni">Miért érdemes az RPi-t másodlagos MCU-ként használni?<a class="headerlink" href="#miert-erdemes-az-rpi-t-masodlagos-mcu-kent-hasznalni" title="Permanent link">&para;</a></h2>
-<p>A 3D nyomtatók vezérlésére szolgáló MCU-k gyakran korlátozott és előre konfigurált számú szabad kimenettel rendelkeznek a fő nyomtatási funkciók (hőellenállások, extruderek, léptetők stb.) kezelésére. Az RPi használata, ahol a Klipper másodlagos MCU-ként van telepítve, lehetővé teszi a GPIO-k és az RPi kimeneteinek (I2C, SPI) közvetlen használatát a klipperben anélkül, hogy Octoprint bővítményeket (ha van ilyen) vagy külső programokat használva, amelyek lehetővé teszik, hogy mindent vezéreljen a Klipper-en belül a nyomtatási G-kód.</p>
+<p>A 3D nyomtatók vezérlésére szolgáló MCU-k gyakran korlátozott és előre konfigurált számú szabad kimenettel rendelkeznek a fő nyomtatási funkciók (hőellenállások, extruderek, léptetők stb.) kezelésére. Az RPi használata, ahol a Klipper másodlagos MCU-ként van telepítve, lehetővé teszi a GPIO-k és az RPi kimeneteinek (I2C, SPI) közvetlen használatát a klipperben anélkül, hogy Octoprint bővítményeket (ha van ilyen) vagy külső programokat használva, amelyek lehetővé teszik, hogy mindent vezéreljen a Klipper-en belül a nyomtatási G-Kód.</p>
 <p><strong>Figyelmeztetés</strong>: Ha az Ön platformja egy <em>Beaglebone</em>, és helyesen követte a telepítés lépéseit, a Linux MCU már telepítve és konfigurálva van a rendszeréhez.</p>
 <h2 id="az-rc-szkript-telepitese">Az rc szkript telepítése<a class="headerlink" href="#az-rc-szkript-telepitese" title="Permanent link">&para;</a></h2>
 <p>Ha a gazdagépet másodlagos MCU-ként szeretné használni, a klipper_mcu folyamatnak a klippy folyamat előtt kell futnia.</p>
@@ -1365,25 +1365,25 @@ sudo service klipper start
 </code></pre></div>
 
 <h2 id="hatralevo-konfiguracio">Hátralevő konfiguráció<a class="headerlink" href="#hatralevo-konfiguracio" title="Permanent link">&para;</a></h2>
-<p>Fejezze be a telepítést a Klipper másodlagos MCU konfigurálásával a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-raspberry-pi.cfg">RaspberryPi sample config</a> és a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-multi-mcu.cfg">Multi MCU sample config</a> utasításai szerint.</p>
+<p>Fejezze be a telepítést a Klipper másodlagos MCU konfigurálásával a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-raspberry-pi.cfg">RaspberryPi minta konfiguráció</a> és a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-multi-mcu.cfg">Multi MCU minta konfiguráció</a> utasításai szerint.</p>
 <h2 id="valaszthato-spi-engedelyezese">Választható: SPI engedélyezése<a class="headerlink" href="#valaszthato-spi-engedelyezese" title="Permanent link">&para;</a></h2>
 <p>Győződjünk meg róla, hogy a Linux SPI-illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az SPI engedélyezésével az "Interfacing options" menüben.</p>
-<h2 id="valaszthato-a-megfelelo-gpiochip-azonositasa">Választható: A megfelelő gpiochip azonosítása<a class="headerlink" href="#valaszthato-a-megfelelo-gpiochip-azonositasa" title="Permanent link">&para;</a></h2>
+<h2 id="valaszthato-a-megfelelo-gpio-chip-azonositasa">Választható: A megfelelő GPIO chip azonosítása<a class="headerlink" href="#valaszthato-a-megfelelo-gpio-chip-azonositasa" title="Permanent link">&para;</a></h2>
 <p>A Raspberry Pi-n és sok klónon a GPIO-n látható tűk az első GPIO chiphez tartoznak. Ezért a klipperben egyszerűen úgy használhatók, hogy a <code>gpio0..n</code> névvel hivatkozunk rájuk. Vannak azonban olyan esetek, amikor a kitett tűk az elsőtől eltérő GPIO chipekhez tartoznak. Például egyes OrangePi modellek esetében, vagy ha Port Expander-t használunk. Ezekben az esetekben hasznos a <em>Linux GPIO karakteres eszköz </em>Linux GPIO eszköz* elérésére szolgáló parancsok használata a konfiguráció ellenőrzéséhez.</p>
 <p>A <em>Linux GPIO character device - binary</em> telepítéséhez egy debian alapú disztribúció kell, mint például az octopi. Futtassa:</p>
 <div class="highlight"><pre><span></span><code>sudo apt-get install gpiod
 </code></pre></div>
 
-<p>A rendelkezésre álló gpiochip ellenőrzéséhez futtassa:</p>
+<p>A rendelkezésre álló GPIO chip ellenőrzéséhez futtassa:</p>
 <div class="highlight"><pre><span></span><code>gpiodetect
 </code></pre></div>
 
-<p>A pin szám és a pin elérhetőségének ellenőrzésére futtassa:</p>
+<p>A tű számának és a tű elérhetőségének ellenőrzésére futtassa:</p>
 <div class="highlight"><pre><span></span><code>gpioinfo
 </code></pre></div>
 
-<p>A kiválasztott pin így a konfiguráción belül <code>gpiochip&lt;n&gt;/gpio&lt;o&gt; néven használható;</code> ahol <strong>n</strong> a <code>gpiodetect</code> által látott chipszám parancs által látott sorszám, és <strong>o</strong> a<code>gpioinfo</code> parancs által látott sorszám.</p>
-<p><strong>Figyelmeztetés:</strong> csak <code>unused</code> jelöléssel rendelkező gpio használható. A <em>line</em> nem használható egyszerre több folyamatban.</p>
+<p>A kiválasztott tű így a konfiguráción belül <code>gpiochip&lt;n&gt;/gpio&lt;o&gt; néven használható;</code> ahol <strong>n</strong> a <code>gpiodetect</code> által látott chipszám parancs által látott sorszám, és <strong>o</strong> a<code>gpioinfo</code> parancs által látott sorszám.</p>
+<p><strong>Figyelmeztetés:</strong> csak <code>unused</code> jelöléssel rendelkező GPIO használható. A <em>line</em> nem használható egyszerre több folyamatban.</p>
 <p>Például egy RPi 3B+, ahol a klipper használja a GPIO20-at, egy kapcsoló:</p>
 <div class="highlight"><pre><span></span><code>$ gpiodetect
 gpiochip0 [pinctrl-bcm2835] (54 lines)
@@ -1458,12 +1458,12 @@ gpiochip1 - 8 lines:
 
 <h2 id="valaszthato-hardveres-pwm">Választható: Hardveres PWM<a class="headerlink" href="#valaszthato-hardveres-pwm" title="Permanent link">&para;</a></h2>
 <p>A Raspberry Pi két PWM csatornával (PWM0 és PWM1) rendelkezik, amelyek a fejlécen láthatók, vagy ha nem, akkor a meglévő GPIO érintkezőkhöz irányíthatók. A Linux mcu démon a pwmchip sysfs interfészt használja a hardveres PWM eszközök vezérlésére a Linux gazdagépeken. A PWM sysfs interfész alapértelmezés szerint nincs kitéve a Raspberry-n, és a <code>/boot/config.txt</code> egy sor hozzáadásával aktiválható:</p>
-<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interface
+<div class="highlight"><pre><span></span><code># A pwmchip sysfs felület engedélyezése
 dtoverlay=pwm,pin=12,func=4
 </code></pre></div>
 
 <p>Ez a példa csak a PWM0-t engedélyezi, és a GPIO12-re irányítja. Ha mindkét PWM csatornát engedélyezni kell, használhatja a <code>pwm-2chan</code> parancsot.</p>
-<p>Az overlay nem teszi ki a PWM sort a sysfs-en a rendszerindításkor, és azt a PWM csatorna számát a <code>/sys/class/pwm/pwmchip0/export</code> echo'ing-be kell exportálni:</p>
+<p>Az átfedés nem teszi ki a PWM sort a sysfs-en a rendszerindításkor, és azt a PWM csatorna számát a <code>/sys/class/pwm/pwmchip0/export</code> echo'ing-be kell exportálni:</p>
 <div class="highlight"><pre><span></span><code>echo 0 &gt; /sys/class/pwm/pwmchip0/export
 </code></pre></div>
 
@@ -1476,7 +1476,7 @@ hardware_pwm: True
 cycle_time: 0.000001
 </code></pre></div>
 
-<p>Ez hozzáadja a hardveres PWM vezérlést a Pi GPIO12-höz (mivel az overlay úgy volt konfigurálva, hogy a PWM0-t a pin=12-re irányítsa).</p>
+<p>Ez hozzáadja a hardveres PWM vezérlést a Pi GPIO12-höz (mivel az átfedés úgy volt konfigurálva, hogy a PWM0-t a pin=12-re irányítsa).</p>
 <p>A PWM0 a GPIO12 és a GPIO18 a PWM1 a GPIO13 és a GPIO19 felé irányítható:</p>
 <table>
 <thead>

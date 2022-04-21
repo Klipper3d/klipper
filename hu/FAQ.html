@@ -846,7 +846,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -881,7 +881,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -984,7 +984,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1200,7 +1200,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1654,7 +1654,7 @@ baud: 250000
 <p>Ha ezt választja, akkor a szükséges indítási, leállítási és telepítési parancsfájlokat (ha vannak ilyenek) kell végrehajtania. Az <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> szkript és a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-start.sh">klipper-start.sh</a> szkript hasznos lehet példaként.</p>
 <h2 id="muszaj-az-octoprintet-hasznalnom">Muszáj az OctoPrintet használnom?<a class="headerlink" href="#muszaj-az-octoprintet-hasznalnom" title="Permanent link">&para;</a></h2>
 <p>A Klipper szoftver nem függ az OctoPrint-től. Lehetséges alternatív szoftvereket használni a Klipper parancsok küldésére, de ehhez Linux adminisztrátori ismeretekre van szükség.</p>
-<p>A Klipper létrehoz egy "virtuális soros portot" a "/tmp/printer" fájlon keresztül, és ezen keresztül emulál egy klasszikus 3D-nyomtató soros interfészt. Általánosságban elmondható, hogy alternatív szoftverek is működhetnek a Klipperrel, amennyiben konfigurálhatóak úgy, hogy a "/tmp/printer" -t használják a nyomtató soros portjaként.</p>
+<p>A Klipper létrehoz egy "virtuális soros portot" a "/tmp/printer" fájlon keresztül, és ezen keresztül emulál egy klasszikus 3D nyomtató soros interfészt. Általánosságban elmondható, hogy alternatív szoftverek is működhetnek a Klipperrel, amennyiben konfigurálhatóak úgy, hogy a "/tmp/printer" -t használják a nyomtató soros portjaként.</p>
 <h2 id="miert-nem-tudom-mozgatni-a-leptetomotort-a-nyomtato-beallitasa-elott">Miért nem tudom mozgatni a léptetőmotort a nyomtató beállítása előtt?<a class="headerlink" href="#miert-nem-tudom-mozgatni-a-leptetomotort-a-nyomtato-beallitasa-elott" title="Permanent link">&para;</a></h2>
 <p>A kód ezt azért teszi, hogy csökkentse annak esélyét, hogy a fejet véletlenül az ágyba vagy a falba ütköztesse. Miután a nyomtató kezdőponthoz ért, a szoftver megpróbálja ellenőrizni, hogy minden egyes mozgás a konfigurációs fájlban meghatározott position_min/max értéken belül van-e. Ha a motorok ki vannak kapcsolva (M84 vagy M18 parancs segítségével), akkor a motorokat a mozgás előtt újra be kell állítani.</p>
 <p>Ha a fejet az OctoPrint segítségével történő nyomtatás törlése után szeretné elmozdítani, fontolja meg az OctoPrint törlési sorrendjének módosítását, hogy ezt megtegye Ön helyett. Ez az OctoPrintben a webböngészőn keresztül konfigurálható a következő menüpont alatt: Beállítások-&gt;GCODE szkriptek</p>
@@ -1687,7 +1687,7 @@ baud: 250000
 <p>Ezenkívül a mikrovezérlő szoftver indításkor minden fűtőberendezéshez be van állítva egy minimális és maximális hőmérséklettartomány (a részletekért lásd a <a href="Config_Reference.html#extruder">konfigurációs hivatkozásban</a> található min_temp és max_temp paramétereket). Ha a mikrokontroller azt érzékeli, hogy a hőmérséklet e tartományon kívül esik, akkor szintén "leállítás" állapotba lép.</p>
 <p>A gazdaszoftver külön kódot is tartalmaz a fűtőelemek és a hőmérséklet-érzékelők helyes működésének ellenőrzésére. További részletekért lásd a <a href="Config_Reference.html#verify_heater">konfigurációs hivatkozás</a> dokumentumot.</p>
 <h2 id="hogyan-alakithatok-at-egy-marlin-tu-szamot-klipper-tu-nevre">Hogyan alakíthatok át egy Marlin tű számot Klipper tű névre?<a class="headerlink" href="#hogyan-alakithatok-at-egy-marlin-tu-szamot-klipper-tu-nevre" title="Permanent link">&para;</a></h2>
-<p>Rövid válasz: <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a> fájlban található leképezés. Használja ezt a fájlt útmutatóként a tényleges mikrokontroller tű nevek megtalálásához. (Az is lehetséges, hogy a vonatkozó <a href="Config_Reference.html#board_pins">board_pins</a> config szakaszt átmásolja a config fájljába, és használja az álneveket a configban, de előnyösebb a tényleges mikrokontroller tű nevek lefordítása és használata.) Vegye figyelembe, hogy a sample-aliases.cfg fájl olyan tű neveket használ, amelyek "ar" előtaggal kezdődnek "D" helyett (pl. az Arduino pin <code>D23</code> a Klipper álnév <code>ar23</code>) és az "analog" helyett "A" (pl. az Arduino pin <code>A14</code> a Klipper álnév <code>analog14</code>).</p>
+<p>Rövid válasz: <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a> fájlban található leképezés. Használja ezt a fájlt útmutatóként a tényleges mikrokontroller tű nevek megtalálásához. (Az is lehetséges, hogy a vonatkozó <a href="Config_Reference.html#board_pins">board_pins</a> config szakaszt átmásolja a config fájljába, és használja az álneveket a configban, de előnyösebb a tényleges mikrokontroller tű nevek lefordítása és használata.) Vegye figyelembe, hogy a sample-aliases.cfg fájl olyan tű neveket használ, amelyek "ar" előtaggal kezdődnek "D" helyett (pl. az Arduino tű <code>D23</code> a Klipper álnév <code>ar23</code>) és az "analog" helyett "A" (pl. az Arduino tű <code>A14</code> a Klipper álnév <code>analog14</code>).</p>
 <p>Hosszú válasz: Klipper a mikrokontroller által meghatározott szabványos tű neveket használja. Az Atmega chipeken ezek a hardveres tűk olyan neveket viselnek, mint <code>PA4</code>, <code>PC7</code>, vagy <code>PD2</code>.</p>
 <p>Régen az Arduino projekt úgy döntött, hogy nem használja a szabványos hardverneveket, hanem saját, növekvő számokon alapuló tű neveket használ. Ezek az Arduino nevek általában úgy néznek ki, mint <code>D23</code> vagy <code>A14</code>. Ez egy szerencsétlen választás volt, amely sok zavart okozott. Különösen az Arduino tű-számok gyakran nem fordítják le ugyanazokat a hardveres neveket. Például a <code>D21</code> az <code>PD0</code> egy közös Arduino lapon, de <code>PC7</code> egy másik közös Arduino lapon.</p>
 <p>A zavar elkerülése érdekében a Klipper alapkódja a mikrokontroller által meghatározott szabványos tű neveket használja.</p>
@@ -1708,7 +1708,7 @@ baud: 250000
 <h2 id="miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat">Miért jelent hibát a Klipper? Elrontotta a nyomtatásomat!<a class="headerlink" href="#miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat" title="Permanent link">&para;</a></h2>
 <p>Rövid válasz: A nyomtatóink problémákat észlelnek, hogy a mögöttes problémát orvosolni lehessen, és kiváló minőségű nyomatokat kaphassunk. Semmiképpen sem szeretnénk, ha a nyomtatóink csendben rossz minőségű nyomatokat készítenének.</p>
 <p>Hosszú válasz: A Klipper úgy lett megtervezve, hogy automatikusan megoldjon számos átmeneti problémát. Például automatikusan észleli a kommunikációs hibákat, és újratovábbítja azokat; előre ütemezi a műveleteket, és több rétegben puffereli a parancsokat, hogy még időszakos interferencia esetén is pontos időzítést tegyen lehetővé. Ha azonban a szoftver olyan hibát észlel, amelyből nem tud helyreállni, ha érvénytelen műveletre kap parancsot, vagy ha azt észleli, hogy reménytelenül képtelen végrehajtani a parancsolt feladatot, akkor a Klipper hibát jelent. Ezekben a helyzetekben nagy a kockázata annak, hogy rossz minőségű nyomtatás készül (vagy rosszabb). Reméljük, hogy a felhasználó figyelmeztetése lehetővé teszi számára, hogy megoldja a kiváltó problémát, és javítsa a nyomatok általános minőségét.</p>
-<p>Van néhány kapcsolódó kérdés: Miért nem szünetelteti a Klipper a nyomtatást? Nem jelent figyelmeztetést helyette? A nyomtatás előtt nem ellenőrzi a hibákat? Figyelmen kívül hagyja a hibákat a felhasználó által begépelt parancsokban? stb. Jelenleg a Klipper a G-kód protokollt használva olvassa a parancsokat, és sajnos a G-kód parancsprotokoll nem elég rugalmas ahhoz, hogy ezek az alternatívák ma már praktikusak legyenek. A fejlesztők érdeklődnek a felhasználói élmény javítása iránt a rendellenes események során, de ez várhatóan jelentős infrastrukturális munkát igényel (beleértve a G-kódtól való eltávolodást).</p>
+<p>Van néhány kapcsolódó kérdés: Miért nem szünetelteti a Klipper a nyomtatást? Nem jelent figyelmeztetést helyette? A nyomtatás előtt nem ellenőrzi a hibákat? Figyelmen kívül hagyja a hibákat a felhasználó által begépelt parancsokban? stb. Jelenleg a Klipper a G-Kód protokollt használva olvassa a parancsokat, és sajnos a G-Kód parancsprotokoll nem elég rugalmas ahhoz, hogy ezek az alternatívák ma már praktikusak legyenek. A fejlesztők érdeklődnek a felhasználói élmény javítása iránt a rendellenes események során, de ez várhatóan jelentős infrastrukturális munkát igényel (beleértve a G-Kódtól való eltávolodást).</p>
 <h2 id="hogyan-frissithetek-a-legujabb-szoftverre">Hogyan frissíthetek a legújabb szoftverre?<a class="headerlink" href="#hogyan-frissithetek-a-legujabb-szoftverre" title="Permanent link">&para;</a></h2>
 <p>A szoftver frissítésének első lépése a legfrissebb <a href="Config_Changes.html">konfigurációs változások</a> dokumentum áttekintése. Alkalmanként olyan változások történnek a szoftverben, amelyek miatt a felhasználóknak frissíteniük kell a beállításaikat a szoftverfrissítés részeként. A frissítés előtt érdemes átnézni ezt a dokumentumot.</p>
 <p>Ha készen áll a frissítésre, az általános módszer az, hogy SSH-t használunk a Raspberry Pi-n, és futtatjuk:</p>
@@ -1735,7 +1735,7 @@ sudo service klipper restart
 
 <p>Ha e parancs használata után a szoftver arra figyelmeztet, hogy a mikrokontrollert újra kell égetni, vagy más szokatlan hiba lép fel, akkor kövesse a fent leírt teljes frissítési lépéseket.</p>
 <p>Ha továbbra is fennállnak a hibák, akkor ellenőrizze a <a href="Config_Changes.html">konfigurációs változások</a> dokumentumot, mivel lehet, hogy módosítani kell a nyomtató konfigurációját.</p>
-<p>Ne feledje, hogy a RESTART és FIRMWARE_RESTART G-kód parancsok nem töltenek be új szoftvert a fenti "sudo service klipper restart" és "make flash" parancsok szükségesek a szoftverváltás érvénybe lépéséhez.</p>
+<p>Ne feledje, hogy a RESTART és FIRMWARE_RESTART G-Kód parancsok nem töltenek be új szoftvert a fenti "sudo service klipper restart" és "make flash" parancsok szükségesek a szoftverváltás érvénybe lépéséhez.</p>
 <h2 id="hogyan-tudom-eltavolitani-a-klippert">Hogyan tudom eltávolítani a Klippert?<a class="headerlink" href="#hogyan-tudom-eltavolitani-a-klippert" title="Permanent link">&para;</a></h2>
 <p>A firmware oldalon semmi különösnek nem kell történnie. Csak kövesse az új firmware égetési utasításait.</p>
 <p>A Raspberry Pi oldalon egy eltávolító szkript elérhető a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-uninstall.sh">scripts/klipper-uninstall.sh</a> alatt. Például:</p>

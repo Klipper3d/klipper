@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -998,7 +998,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1328,7 +1328,7 @@ iface can0 can static
 <h2 id="az-ellenallasok-megszuntetese">Az ellenállások megszüntetése<a class="headerlink" href="#az-ellenallasok-megszuntetese" title="Permanent link">&para;</a></h2>
 <p>A CAN-buszon két 120 ohmos ellenállásnak kell lennie a CANH és CANL vezetékek között. Ideális esetben egy-egy ellenállás a busz mindkét végén található.</p>
 <p>Vegye figyelembe, hogy egyes eszközök beépített 120 ohmos ellenállással rendelkeznek (például a "Waveshare Raspberry Pi CAN sapka" egy beforrasztott ellenállással rendelkezik, amelyet nem lehet könnyen eltávolítani). Egyes eszközök egyáltalán nem tartalmaznak ellenállást. Más eszközök rendelkeznek egy mechanizmussal az ellenállás kiválasztására (általában egy "pin jumper" csatlakoztatásával). Mindenképpen ellenőrizze a CAN-buszon lévő összes eszköz kapcsolási rajzát, hogy a buszon két és csak két 120 Ohm-os ellenállás van-e.</p>
-<p>Az ellenállások értékének teszteléséhez a nyomtatót áramtalaníthatja, és egy multi-méterrel ellenőrizheti a CANH és CANL vezetékek közötti ellenállást - egy helyesen bekötött CAN-buszon ~60 ohmot kell mérnie.</p>
+<p>Az ellenállások értékének teszteléséhez a nyomtatót áramtalaníthatja, és egy multi-méterrel ellenőrizheti a CANH és CANL vezetékek közötti ellenállást. Egy helyesen bekötött CAN-buszon ~60 ohmot kell mérnie.</p>
 <h2 id="a-canbus_uuid-keresese-uj-mikrovezerlokhoz">A canbus_uuid keresése új mikrovezérlőkhöz<a class="headerlink" href="#a-canbus_uuid-keresese-uj-mikrovezerlokhoz" title="Permanent link">&para;</a></h2>
 <p>A CAN-buszon lévő minden mikrovezérlőhöz egyedi azonosítót rendelnek a gyári chipazonosító alapján, amely minden mikrovezérlőbe kódolva van. Az egyes mikrokontrollerek eszközazonosítójának megtalálásához győződjön meg arról, hogy a hardver megfelelően van bekapcsolva és bekötve, majd futtassa le:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/scripts/canbus_query.py can0
@@ -1339,7 +1339,7 @@ iface can0 can static
 </code></pre></div>
 
 <p>Minden eszköz egyedi azonosítóval rendelkezik. A fenti példában <code>11aa22bb33cc</code> a mikrokontroller "canbus_uuid" azonosítója.</p>
-<p>Vegye figyelembe, hogy a <code>canbus_query.py</code> eszköz csak az inicializálatlan eszközöket jelzi - ha a Klipper (vagy egy hasonló eszköz) konfigurálja az eszközt, akkor az már nem jelenik meg a listában.</p>
+<p>Vegye figyelembe, hogy a <code>canbus_query.py</code> eszköz csak az inicializálatlan eszközöket jelzi. Ha a Klipper (vagy egy hasonló eszköz) konfigurálja az eszközt, akkor az már nem jelenik meg a listában.</p>
 <h2 id="a-klipper-beallitasa">A Klipper beállítása<a class="headerlink" href="#a-klipper-beallitasa" title="Permanent link">&para;</a></h2>
 <p>Frissítse a Klipper <a href="Config_Reference.html#mcu">mcu konfigurációt</a>, hogy a CAN-buszon keresztül kommunikáljon az eszközzel - például:</p>
 <div class="highlight"><pre><span></span><code>[mcu my_can_mcu]

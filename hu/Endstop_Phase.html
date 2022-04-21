@@ -702,7 +702,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -737,7 +737,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -840,7 +840,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1056,7 +1056,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1303,7 +1303,7 @@
 <li>Ez a funkció a leghasznosabb a delta nyomtatókon és a cartesian/corexy nyomtatók Z végpontján. A funkciót a cartesian nyomtatók XY végállásainál is lehet használni, de ez nem túl hasznos, mivel az X/Y végállás pozíciójának kisebb hibája valószínűleg nem befolyásolja a nyomtatás minőségét. Nem érvényes ezt a funkciót a corexy nyomtatók XY végállásainál használni (mivel az XY pozíciót nem egyetlen léptető határozza meg a corexy kinematikánál). Nem érvényes ezt a funkciót olyan nyomtatókon használni, amelyek "probe:z_virtual_endstop" Z végállást használnak (mivel a léptetőfázis csak akkor stabil, ha a végállás egy sín statikus helyén van).</li>
 <li>A végállásfázis kalibrálása után, ha a végállást később elmozdítják vagy beállítják, akkor a végállást újra kell kalibrálni. Távolítsa el a kalibrálási adatokat a konfigurációs fájlból, és futtassa újra a fenti lépéseket.</li>
 <li>A rendszer használatához a végállásnak elég pontosnak kell lennie ahhoz, hogy a léptető pozícióját két "teljes lépésen" belül azonosítsa. Így például, ha egy léptető 16 mikrolépést használ 0,005 mm-es lépésközzel, akkor a végállásnak legalább 0,160 mm-es pontossággal kell rendelkeznie. Ha a "Endstop stepper_z incorrect phase" típusú hibaüzeneteket kapunk, akkor ez egy nem kellően pontos végállás miatt lehet. Ha az újrakalibrálás nem segít, akkor tiltsa le az endstop fázisbeállítását a konfigurációs fájlból való eltávolítással.</li>
-<li>Ha valaki hagyományos léptető vezérlésű Z tengelyt használ (mint egy cartesian vagy corexy nyomtatón) hagyományos ágykiegyenlítő csavarokkal együtt, akkor az is lehetséges, hogy ezt a rendszert úgy használja, hogy minden egyes nyomtatási réteget egy "teljes lépés" határon végezzen el. Ennek a funkciónak az engedélyezéséhez győződjön meg arról, hogy a G-kód szeletelő olyan rétegmagassággal van konfigurálva, amely a "teljes lépés" többszöröse, manuálisan engedélyezze az endstop_align_zero opciót az endstop_phase config szakaszban (további részletekért lásd <a href="Config_Reference.html#endstop_phase">config reference</a>), majd szintezze újra az ágy csavarjait.</li>
+<li>Ha valaki hagyományos léptető vezérlésű Z tengelyt használ (mint egy cartesian vagy corexy nyomtatón) hagyományos ágykiegyenlítő csavarokkal együtt, akkor az is lehetséges, hogy ezt a rendszert úgy használja, hogy minden egyes nyomtatási réteget egy "teljes lépés" határon végezzen el. Ennek a funkciónak az engedélyezéséhez győződjön meg arról, hogy a G-Kód szeletelő olyan rétegmagassággal van konfigurálva, amely a "teljes lépés" többszöröse, manuálisan engedélyezze az endstop_align_zero opciót az endstop_phase config szakaszban (további részletekért lásd <a href="Config_Reference.html#endstop_phase">config reference</a>), majd szintezze újra az ágy csavarjait.</li>
 <li>Ez a rendszer hagyományos (nem Trinamic) léptetőmotor-meghajtókkal is használható. Ehhez azonban gondoskodni kell arról, hogy a léptetőmotor-meghajtók a mikrokontroller minden egyes resetelésekor újrainduljanak. (Ha a kettő mindig együtt van resetelve, akkor a Klipper a léptető fázisát úgy tudja meghatározni, hogy nyomon követi a léptetőnek adott parancsok teljes lépésszámát). Jelenleg ez csak akkor lehetséges megbízhatóan, ha mind a mikrokontroller, mind a léptetőmotor-meghajtók kizárólag USB-ről kapnak áramot, és az USB-ről egy Raspberry Pi-n futó hostról kapjuk az áramot. Ebben a helyzetben meg lehet adni egy MCU konfigurációt a "restart_method: rpi_usb" - ez az opció gondoskodik arról, hogy a mikrokontrollert mindig USB tápellátás-visszaállítással állítsák vissza, ami gondoskodik arról, hogy a mikrokontroller és a léptetőmotor-illesztőprogramok együtt álljanak vissza. Ha ezt a mechanizmust használjuk, akkor manuálisan kell konfigurálni a "trigger_phase" konfigurációs szakaszokat (a részleteket lásd <a href="Config_Reference.html#endstop_phase">config reference</a>).</li>
 </ul>
 
@@ -1340,13 +1340,13 @@
       
       
         
-        <a href="Resonance_Compensation.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Rezonancia kompenzáció" rel="next">
+        <a href="Resonance_Compensation.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Rezonancia Kompenzáció" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Következő
               </span>
-              Rezonancia kompenzáció
+              Rezonancia Kompenzáció
             </div>
           </div>
           <div class="md-footer__button md-icon">

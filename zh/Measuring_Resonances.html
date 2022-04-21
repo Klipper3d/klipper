@@ -751,8 +751,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bed-slinger-printers" class="md-nav__link">
-    Bed-slinger printers
+  <a href="#_9" class="md-nav__link">
+    平行于喷嘴移动打印床的打印机
   </a>
   
 </li>
@@ -1394,8 +1394,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bed-slinger-printers" class="md-nav__link">
-    Bed-slinger printers
+  <a href="#_9" class="md-nav__link">
+    平行于喷嘴移动打印床的打印机
   </a>
   
 </li>
@@ -1589,8 +1589,8 @@ probe_points: ...
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
 </code></pre></div>
 
-<p>This script will generate the charts <code>/tmp/shaper_calibrate_x.png</code> and <code>/tmp/shaper_calibrate_y.png</code> with frequency responses. You will also get the suggested frequencies for each input shaper, as well as which input shaper is recommended for your setup. For example:</p>
-<p><img alt="Resonances" src="img/calibrate-y.png" /></p>
+<p>此脚本将生成频率响应的图表 <code>/tmp/shaper_calibrate_x.png</code> 和 <code>/tmp/shaper_calibrate_y.png</code>。它还会给出每个输入整形器的建议频率，以及推荐的输入整形器。例如：</p>
+<p><img alt="共振" src="img/calibrate-y.png" /></p>
 <div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 34.4 Hz (vibrations = 4.0%, smoothing ~= 0.132)
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 4500 mm/sec^2
 Fitted shaper &#39;mzv&#39; frequency = 34.6 Hz (vibrations = 0.0%, smoothing ~= 0.170)
@@ -1604,7 +1604,7 @@ To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 2
 Recommended shaper is mzv @ 34.6 Hz
 </code></pre></div>
 
-<p>The suggested configuration can be added to <code>[input_shaper]</code> section of <code>printer.cfg</code>, e.g.:</p>
+<p>推荐的配置可以添加到<code>[input_shaper]</code>的<code>printer.cfg</code>分段中，例如：</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]
 shaper_freq_x: ...
 shaper_type_x: ...
@@ -1615,10 +1615,10 @@ shaper_type_y: mzv
 max_accel: 3000  # should not exceed the estimated max_accel for X and Y axes
 </code></pre></div>
 
-<p>or you can choose some other configuration yourself based on the generated charts: peaks in the power spectral density on the charts correspond to the resonance frequencies of the printer.</p>
-<p>Note that alternatively you can run the input shaper autocalibration from Klipper <a href="#input-shaper-auto-calibration">directly</a>, which can be convenient, for example, for the input shaper <a href="#input-shaper-re-calibration">re-calibration</a>.</p>
-<h3 id="bed-slinger-printers">Bed-slinger printers<a class="headerlink" href="#bed-slinger-printers" title="Permanent link">&para;</a></h3>
-<p>If your printer is a bed slinger printer, you will need to change the location of the accelerometer between the measurements for X and Y axes: measure the resonances of X axis with the accelerometer attached to the toolhead and the resonances of Y axis - to the bed (the usual bed slinger setup).</p>
+<p>也可以根据生成的图表自己选择一些其他配置：图表上的功率谱密度的峰值对应于打印机的共振频率。</p>
+<p>请注意，可以<a href="#input-shaper-auto-calibration">直接</a>在Klipper中运行输入整形器自动校准，这可能更方便，例如，对于输入整形器<a href="#input-shaper-re-calibration">重新校准</a>。</p>
+<h3 id="_9">平行于喷嘴移动打印床的打印机<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>如果打印机的打印床可以平行于喷嘴移动，测量X和Y轴时需要改变加速度计的安装位置。安装加速度计到打印头以测量X轴共振，安装到打印床以测量Y轴（该类打印机的常见配置）。</p>
 <p>However, you can also connect two accelerometers simultaneously, though they must be connected to different boards (say, to an RPi and printer MCU board), or to two different physical SPI interfaces on the same board (rarely available). Then they can be configured in the following manner:</p>
 <div class="highlight"><pre><span></span><code>[adxl345 hotend]
 # Assuming `hotend` chip is connected to an RPi

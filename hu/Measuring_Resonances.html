@@ -648,7 +648,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -833,7 +833,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -936,7 +936,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1152,7 +1152,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1471,7 +1471,7 @@
 
 
 <h1 id="rezonanciak-merese">Rezonanciák mérése<a class="headerlink" href="#rezonanciak-merese" title="Permanent link">&para;</a></h1>
-<p>A Klipper beépített támogatással rendelkezik az ADXL345 gyorsulásmérőhöz, amely a nyomtató rezonanciáinak mérésére használható a különböző tengelyek esetében, és automatikus hangolással <a href="Resonance_Compensation.html">rezonancia kompenzáció</a> a rezonanciák kompenzálására. Vegye figyelembe, hogy az ADXL345 használata némi forrasztást és krimpelést igényel. Az ADXL345 közvetlenül csatlakoztatható egy Raspberry Pi-hez, vagy egy MCU-kártya SPI-interfészéhez (meglehetősen gyorsnak kell lennie).</p>
+<p>A Klipper beépített támogatással rendelkezik az ADXL345 gyorsulásmérőhöz, amely a nyomtató rezonanciáinak mérésére használható a különböző tengelyek esetében, és automatikus hangolással <a href="Resonance_Compensation.html">rezonancia kompenzációval</a> a rezonanciák kompenzálására. Vegye figyelembe, hogy az ADXL345 használata némi forrasztást és krimpelést igényel. Az ADXL345 közvetlenül csatlakoztatható egy Raspberry Pi-hez, vagy egy MCU-kártya SPI-interfészéhez (meglehetősen gyorsnak kell lennie).</p>
 <p>Az ADXL345 beszerzésekor vegye figyelembe, hogy számos különböző NYÁK lapkakialakítás és különböző klónok léteznek. Győződjön meg róla, hogy a kártya támogatja az SPI módot (kis számú kártya úgy tűnik, hogy szorosan konfigurálva van az I2C-re az SDO GND-re húzásával), és ha 5V-os nyomtató MCU-hoz csatlakozik ellenőrizze,hogy rendelkezik feszültségszabályozóval és szintválasztóval.</p>
 <h2 id="telepitesi-utasitasok">Telepítési utasítások<a class="headerlink" href="#telepitesi-utasitasok" title="Permanent link">&para;</a></h2>
 <h3 id="vezetekek">Vezetékek<a class="headerlink" href="#vezetekek" title="Permanent link">&para;</a></h3>
@@ -1524,7 +1524,7 @@
 <p>A gyorsulásmérőt a szerszámfejhez kell csatlakoztatni. Meg kell tervezni egy megfelelő rögzítést, amely illeszkedik a saját 3D nyomtatóhoz. A gyorsulásmérő tengelyeit jobb a nyomtató tengelyeihez igazítani (de ha ez kényelmesebbé teszi, a tengelyek felcserélhetők - azaz nem kell az X tengelyt X-hez igazítani, és így tovább. Akkor is rendben kell lennie, ha a gyorsulásmérő Z tengelye a nyomtató X tengelye, stb).</p>
 <p>Példa az ADXL345 SmartEffectorra történő felszerelésére:</p>
 <p><img alt="ADXL345 on SmartEffector" src="img/adxl345-mount.jpg" /></p>
-<p>Vegye figyelembe, hogy egy ágycsúsztatós nyomtatónál 2 rögzítést kell tervezni: egyet a szerszámfejhez és egyet az ágyhoz, és a méréseket kétszer kell elvégezni. További részletekért lásd a megfelelő <a href="#bed-slinger-printers">szakasz</a>.</p>
+<p>Vegye figyelembe, hogy egy ágycsúsztatós nyomtatónál 2 rögzítést kell tervezni: egyet a szerszámfejhez és egyet az ágyhoz, és a méréseket kétszer kell elvégezni. További részletekért lásd a megfelelő <a href="#bed-slinger-printers">szakaszt</a>.</p>
 <p><strong>Figyelem:</strong> győződjön meg arról, hogy a gyorsulásmérő és a helyére rögzítő csavarok nem érnek a nyomtató fém részeihez. Alapvetően a rögzítést úgy kell kialakítani, hogy biztosítsa a gyorsulásmérő elektromos szigetelését a nyomtató keretétől. Ennek elmulasztása földhurkot hozhat létre a rendszerben, ami károsíthatja az elektronikát.</p>
 <h3 id="szoftver-telepitese">Szoftver telepítése<a class="headerlink" href="#szoftver-telepitese" title="Permanent link">&para;</a></h3>
 <p>Vegye figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először is, a Raspberry Pi-n a következő parancsot kell futtatnia:</p>
@@ -1591,7 +1591,7 @@ probe_points: ...
 
 <p>Ez a szkript létrehozza a <code>/tmp/shaper_calibrate_x.png</code> és <code>/tmp/shaper_calibrate_y.png</code> diagramokat a frekvenciaválaszokkal. Az egyes bemeneti shaperek javasolt frekvenciáit is megkapja, valamint azt, hogy melyik bemeneti shaper ajánlott az Ön beállításához. Például:</p>
 <p><img alt="Resonances" src="img/calibrate-y.png" /></p>
-<div class="highlight"><pre><span></span><code>illesztett alakító &#39;zv&#39; frekvencia = 34,4 Hz (rezgések = 4,0%, simítás ~= 0,132)
+<div class="highlight"><pre><span></span><code>Illesztett alakító &#39;zv&#39; frekvencia = 34,4 Hz (rezgések = 4,0%, simítás ~= 0,132)
 A túl nagy simítás elkerülése érdekében a &#39;zv&#39;, javasolt max_accel &lt;= 4500 mm/sec^2
 Alkalmazott alakító &#39;mzv&#39; frekvencia = 34,6 Hz (rezgések = 0,0%, simítás ~= 0,170)
 A túl nagy simítás elkerülése érdekében az &#39;mzv&#39; esetében javasolt max_accel &lt;= 3500 mm/sec^2
@@ -1621,12 +1621,12 @@ max_accel: 3000 # nem haladhatja meg a becsült max_accel értéket az X és Y t
 <p>Ha az Ön nyomtatója ágya Y tengelyen van, akkor meg kell változtatnia a gyorsulásmérő helyét az X és Y tengelyek mérései között: az X tengely rezonanciáit a szerszámfejre szerelt gyorsulásmérővel, az Y tengely rezonanciáit pedig az ágyra szerelt gyorsulásmérővel kell mérnie (a szokásos nyomtató beállítással).</p>
 <p>Azonban két gyorsulásmérőt is csatlakoztathatsz egyszerre, bár ezeket különböző lapokhoz kell csatlakoztatni (mondjuk egy RPi és egy nyomtató MCU laphoz), vagy két különböző fizikai SPI interfészhez ugyanazon a lapon (ritkán elérhető). Ezután a következő módon lehet őket konfigurálni:</p>
 <div class="highlight"><pre><span></span><code>[adxl345 hotend]
-# Feltételezve, hogy a `hotend` chip egy RPihez van csatlakoztatva.
+# Feltételezve, hogy a `hotend` chip egy RPi-hez van csatlakoztatva.
 cs_pin: rpi:None
 
 [adxl345 bed]
 # Feltételezve, hogy a `bed` chip egy nyomtató MCU lapkához van csatlakoztatva.
-cs_pin: ...  # nyomtató alaplap SPI chip select (CS) pinje
+cs_pin: ...  # nyomtató alaplap SPI chip kiválasztó (CS) tűje
 
 [resonance_tester]
 # Feltételezve az Y ágyas nyomtató tipikus beállítását.
@@ -1640,7 +1640,7 @@ probe_points: ...
 <p>Ne feledje, hogy a bemeneti formázó simítást hozhat létre az alkatrészekben. A <code>calibrate_shaper.py</code> szkript vagy <code>SHAPER_CALIBRATE</code> parancs által végrehajtott bemeneti formázó automatikus hangolása nem súlyosbítja a simítást, ugyanakkor megpróbálja minimalizálni az ebből eredő rezgéseket. Néha az alakformáló frekvencia optimálistól elmaradó választását hozhatják, vagy talán egyszerűen csak kevésbé simítják az alkatrészeket a nagyobb fennmaradó rezgések rovására. Ezekben az esetekben kérheti a bemeneti formázó maximális simításának korlátozását.</p>
 <p>Nézzük meg az automatikus hangolás következő eredményeit:</p>
 <p><img alt="Resonances" src="img/calibrate-x.png" /></p>
-<div class="highlight"><pre><span></span><code>illesztett alakító &#39;zv&#39; frekvencia = 57,8 Hz (rezgések = 20,3%, simítás ~= 0,053)
+<div class="highlight"><pre><span></span><code>Illesztett alakító &#39;zv&#39; frekvencia = 57,8 Hz (rezgések = 20,3%, simítás ~= 0,053)
 A túl nagy simítás elkerülése érdekében a &#39;zv&#39;, javasolt max_accel &lt;= 13000 mm/sec^2
 Alkalmazott alakító &#39;mzv&#39; frekvencia = 34,8 Hz (rezgések = 3,6%, simítás ~= 0,168)
 A túl nagy simítás elkerülése érdekében az &#39;mzv&#39; esetében javasolt max_accel &lt;= 3600 mm/sec^2
@@ -1660,7 +1660,7 @@ Az ajánlott alakító 2hump_ei @ 45,2 Hz.
 
 <p>amely a simítást 0,2 pontszámra korlátozza. Most a következő eredményt kaphatja:</p>
 <p><img alt="Resonances" src="img/calibrate-x-max-smoothing.png" /></p>
-<div class="highlight"><pre><span></span><code>illesztett alakító &#39;zv&#39; frekvencia = 55,4 Hz (rezgések = 19,7%, simítás ~= 0,057)
+<div class="highlight"><pre><span></span><code>Illesztett alakító &#39;zv&#39; frekvencia = 55,4 Hz (rezgések = 19,7%, simítás ~= 0,057)
 A túl nagy simítás elkerülése érdekében a &#39;zv&#39;, javasolt max_accel &lt;= 12000 mm/sec^2
 Alkalmazott alakító &#39;mzv&#39; frekvencia = 34,6 Hz (rezgések = 3,6%, simítás ~= 0,170)
 A túl nagy simítás elkerülése érdekében az &#39;mzv&#39; esetében javasolt max_accel &lt;= 3500 mm/sec^2
@@ -1675,7 +1675,7 @@ Az ajánlott alakító 3hump_ei @ 72,6 Hz.
 
 <p>Ha összehasonlítjuk a korábban javasolt paraméterekkel, a rezgések kicsit nagyobbak, de a simítás lényegesen kisebb, mint korábban, ami nagyobb maximális gyorsulást tesz lehetővé.</p>
 <p>A <code>max_smoothing</code> paraméter kiválasztásakor a próbálgatás és a tévedés módszerét alkalmazhatjuk. Próbáljon ki néhány különböző értéket, és nézze meg, milyen eredményeket kap. Vegye figyelembe, hogy a bemeneti alakító által előállított tényleges simítás elsősorban a nyomtató legalacsonyabb rezonanciafrekvenciájától függ: minél magasabb a legalacsonyabb rezonancia frekvenciája - annál kisebb a simítás. Ezért ha azt kéri a parancsfájltól, hogy a bemeneti alakító olyan konfigurációját keresse meg, amely irreálisan kis simítással rendelkezik, akkor ez a legalacsonyabb rezonanciafrekvenciákon (amelyek jellemzően a nyomatokon is jobban láthatóak) megnövekedett rezgés árán fog történni. Ezért mindig ellenőrizze kétszeresen a szkript által jelzett vetített maradó rezgéseket, és győződjön meg róla, hogy azok nem túl magasak.</p>
-<p>Ha mindkét tengelyhez jó <code>max_smoothing</code> értéket választott, akkor azt a <code>printer.cfg</code> állományban tárolhatja a következő módon:</p>
+<p>Ha mindkét tengelyhez jó <code>max_smoothing</code> értéket választott, akkor azt a <code>printer.cfg</code> állományban tárolhatja a következő módon</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 accel_chip: ...
 probe_points: ...
@@ -1686,7 +1686,7 @@ max_smoothing: 0.25 # egy példa
 <h3 id="a-max_accel-kivalasztasa">A max_accel kiválasztása<a class="headerlink" href="#a-max_accel-kivalasztasa" title="Permanent link">&para;</a></h3>
 <p>Mivel a bemeneti alakító némi simítást okozhat az elemekben, különösen nagy gyorsulásoknál, továbbra is meg kell választani a <code>max_accel</code> értéket, amely nem okoz túl nagy simítást a nyomtatott alkatrészekben. Egy kalibrációs szkript becslést ad a <code>max_accel</code> paraméterre, amely nem okozhat túl nagy simítást. Vegye figyelembe, hogy a kalibrációs szkript által megjelenített <code>max_accel</code> csak egy elméleti maximum, amelynél az adott alakító még képes úgy dolgozni, hogy nem okoz túl nagy simítást. Semmiképpen sem ajánlott ezt a gyorsulást beállítani a nyomtatáshoz. A nyomtatója által elviselhető maximális gyorsulás a nyomtató mechanikai tulajdonságaitól és a használt léptetőmotorok maximális nyomatékától függ. Ezért javasolt a <code>max_accel</code> beállítása a <code>[nyomtató]</code> szakaszban, amely nem haladja meg az X és Y tengelyek becsült értékeit, valószínűleg némi konzervatív biztonsági tartalékkal.</p>
 <p>Alternatívaként kövesse <a href="Resonance_Compensation.html#selecting-max_accel">ezt</a> a részt a bemeneti alakító hangolási útmutatójában, és nyomtassa ki a tesztmodellt a <code>max_accel</code> paraméter kísérleti kiválasztásához.</p>
-<p>Ugyanez a figyelmeztetés vonatkozik a bemeneti alakító <a href="#input-shaper-auto-calibration">auto-kalibrálás</a> <code>SHAPER_CALIBRATE</code> paranccsal történő használatára is: az auto-kalibrálás után továbbra is szükséges a megfelelő <code>max_accel</code> érték kiválasztása, és a javasolt gyorsulási korlátok nem lesznek automatikusan alkalmazva.</p>
+<p>Ugyanez a figyelmeztetés vonatkozik a bemeneti alakító <a href="#input-shaper-auto-calibration">automatikus kalibrálás</a> <code>SHAPER_CALIBRATE</code> paranccsal történő használatára is: az automatikus kalibrálás után továbbra is szükséges a megfelelő <code>max_accel</code> érték kiválasztása, és a javasolt gyorsulási korlátok nem lesznek automatikusan alkalmazva.</p>
 <p>Ha a formázó újrakalibrálását végzi, és a javasolt formázó konfigurációhoz tartozó simítás majdnem megegyezik az előző kalibrálás során kapott értékkel, ez a lépés kihagyható.</p>
 <h3 id="egyeni-tengelyek-tesztelese">Egyéni tengelyek tesztelése<a class="headerlink" href="#egyeni-tengelyek-tesztelese" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code> parancs támogatja az egyéni tengelyeket. Bár ez nem igazán hasznos a bemeneti alakító kalibrálásához, a nyomtató rezonanciáinak alapos tanulmányozására és például a szíjfeszítés ellenőrzésére használható.</p>
@@ -1743,7 +1743,7 @@ Ajánlott shaper_type_y = mzv, shaper_freq_y = 36,8 Hz
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
 </code></pre></div>
 
-<p><strong>Figyelmeztetés!</strong> Nem tanácsos a formázógép automatikus kalibrációját nagyon gyakran futtatni (pl. minden nyomtatás előtt vagy minden nap). A rezonanciafrekvenciák meghatározása érdekében az autokalibrálás intenzív rezgéseket hoz létre az egyes tengelyeken. A 3D nyomtatókat általában nem úgy tervezték, hogy a rezonanciafrekvenciákhoz közeli rezgéseknek tartósan ellenálljanak. Ez növelheti a nyomtató alkatrészeinek kopását és csökkentheti élettartamukat. Megnő a kockázata annak is, hogy egyes alkatrészek kicsavarodnak vagy meglazulnak. Minden egyes automatikus hangolás után mindig ellenőrizze, hogy a nyomtató minden alkatrésze (beleértve azokat is, amelyek normál esetben nem mozoghatnak) biztonságosan a helyén van-e rögzítve.</p>
+<p><strong>Figyelmeztetés!</strong> Nem tanácsos a gépen az automatikus kalibrációt nagyon gyakran futtatni (pl. minden nyomtatás előtt vagy minden nap). A rezonanciafrekvenciák meghatározása érdekében az automatikus kalibrálás intenzív rezgéseket hoz létre az egyes tengelyeken. A 3D nyomtatókat általában nem úgy tervezték, hogy a rezonanciafrekvenciákhoz közeli rezgéseknek tartósan ellenálljanak. Ez növelheti a nyomtató alkatrészeinek kopását és csökkentheti élettartamukat. Megnő a kockázata annak is, hogy egyes alkatrészek kicsavarodnak vagy meglazulnak. Minden egyes automatikus hangolás után mindig ellenőrizze, hogy a nyomtató minden alkatrésze (beleértve azokat is, amelyek normál esetben nem mozoghatnak) biztonságosan a helyén van-e rögzítve.</p>
 <p>Továbbá a mérések zajossága miatt lehetséges, hogy a hangolási eredmények kissé eltérnek az egyes kalibrálási folyamatok között. Ennek ellenére nem várható, hogy a zaj túlságosan befolyásolja a nyomtatási minőséget. Mindazonáltal továbbra is tanácsos kétszer is ellenőrizni a javasolt paramétereket, és használat előtt nyomtatni néhány próbanyomatot, hogy megbizonyosodjon arról, hogy azok megfelelőek.</p>
 <h2 id="a-gyorsulasmero-adatainak-offline-feldolgozasa">A gyorsulásmérő adatainak offline feldolgozása<a class="headerlink" href="#a-gyorsulasmero-adatainak-offline-feldolgozasa" title="Permanent link">&para;</a></h2>
 <p>Lehetőség van a nyers gyorsulásmérő adatok előállítására és offline feldolgozására (pl. egy központi gépen), például rezonanciák keresésére. Ehhez futtassa a következő parancsokat az Octoprint terminálon keresztül:</p>
@@ -1752,7 +1752,7 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 </code></pre></div>
 
 <p>a <code>SET_INPUT_SHAPER</code> parancs hibáinak figyelmen kívül hagyása. A <code>TEST_RESONANCES</code> parancshoz adja meg a kívánt teszttengelyt. A nyers adatok az RPi <code>/tmp</code> könyvtárába kerülnek kiírásra.</p>
-<p>A nyers adatokat úgy is megkaphatjuk, ha a <code>ACCELEROMETER_MEASURE</code> parancsot kétszer futtatjuk valamilyen normál nyomtatási tevékenység közben - először a mérések elindításához, majd azok leállításához és a kimeneti fájl írásához. További részletekért lásd a <a href="G-Codes.html#adxl345">G-kódok</a> című dokumentumot.</p>
+<p>A nyers adatokat úgy is megkaphatjuk, ha a <code>ACCELEROMETER_MEASURE</code> parancsot kétszer futtatjuk valamilyen normál nyomtatási tevékenység közben - először a mérések elindításához, majd azok leállításához és a kimeneti fájl írásához. További részletekért lásd a <a href="G-Codes.html#adxl345">G-Kódok</a> című dokumentumot.</p>
 <p>Az adatokat később a következő szkriptekkel lehet feldolgozni: <code>scripts/graph_accelerometer.py</code> és <code>scripts/calibrate_shaper.py</code>. Mindkettő egy vagy több nyers csv-fájlt fogad el bemenetként a módtól függően. A graph_accelerometer.py szkript többféle üzemmódot támogat:</p>
 <ul>
 <li>nyers gyorsulásmérő adatok ábrázolása (használja a <code>-r</code> paramétert), csak 1 bemenet támogatott;</li>
@@ -1792,7 +1792,7 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
     <nav class="md-footer__inner md-grid" aria-label="Élőláb">
       
         
-        <a href="Resonance_Compensation.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Rezonancia kompenzáció" rel="prev">
+        <a href="Resonance_Compensation.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Rezonancia Kompenzáció" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1801,20 +1801,20 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
               <span class="md-footer__direction">
                 Előző
               </span>
-              Rezonancia kompenzáció
+              Rezonancia Kompenzáció
             </div>
           </div>
         </a>
       
       
         
-        <a href="Pressure_Advance.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Nyomás előrehaladás" rel="next">
+        <a href="Pressure_Advance.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Nyomásszabályozás" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Következő
               </span>
-              Nyomás előrehaladás
+              Nyomásszabályozás
             </div>
           </div>
           <div class="md-footer__button md-icon">

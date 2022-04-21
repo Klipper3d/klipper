@@ -646,7 +646,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -681,7 +681,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -729,7 +729,7 @@
       
         <li class="md-nav__item">
   <a href="#g-kod-parancsok" class="md-nav__link">
-    G-kód parancsok
+    G-Kód parancsok
   </a>
   
 </li>
@@ -2232,7 +2232,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -2448,7 +2448,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -2635,7 +2635,7 @@
       
         <li class="md-nav__item">
   <a href="#g-kod-parancsok" class="md-nav__link">
-    G-kód parancsok
+    G-Kód parancsok
   </a>
   
 </li>
@@ -4066,16 +4066,16 @@
 
 <h1 id="g-kodok">G-Kódok<a class="headerlink" href="#g-kodok" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper által támogatott parancsokat írja le. Ezek olyan parancsok, amelyeket az OctoPrint konzoljába lehet beírni.</p>
-<h2 id="g-kod-parancsok">G-kód parancsok<a class="headerlink" href="#g-kod-parancsok" title="Permanent link">&para;</a></h2>
-<p>A Klipper a következő szabványos G-kód parancsokat támogatja:</p>
+<h2 id="g-kod-parancsok">G-Kód parancsok<a class="headerlink" href="#g-kod-parancsok" title="Permanent link">&para;</a></h2>
+<p>A Klipper a következő szabványos G-Kód parancsokat támogatja:</p>
 <ul>
 <li>Move (G0 or G1): <code>G1 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;]</code></li>
 <li>Tartózkodás: <code>G4 P&lt;milliszekundum&gt;</code></li>
 <li>Ugrás a forrásra: <code>G28 [X] [Y] [Z]</code></li>
-<li>Kapcsolja ki a motorokat: <code>M18</code> vagy <code>M84</code>.</li>
+<li>Kapcsolja ki a motorokat: <code>M18</code> vagy <code>M84</code></li>
 <li>Várja meg, amíg az aktuális mozdulat befejeződik: <code>M400</code></li>
-<li>Használjon abszolút/relatív távolságokat az extrudáláshoz: <code>M82</code>, <code>M83</code>.</li>
-<li>Abszolút/relatív koordináták használata: <code>G90</code>, <code>G91</code>.</li>
+<li>Használjon abszolút/relatív távolságokat az extrudáláshoz: <code>M82</code>, <code>M83</code></li>
+<li>Abszolút/relatív koordináták használata: <code>G90</code>, <code>G91</code></li>
 <li>Állítsa be a pozíciót: <code>G92 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;]</code></li>
 <li>A sebességtényező felülbírálási százalékának beállítása: <code>M220 S&lt;percent&gt;</code></li>
 <li>Extrudálási tényező felülbírálási százalékának beállítása: <code>M221 S&lt;percent&gt;</code></li>
@@ -4086,12 +4086,12 @@
 <li>Extruder hőmérsékletének lekérdezése: <code>M105</code></li>
 <li>Az extruder hőmérsékletének beállítása: <code>M104 [T&lt;index&gt;] [S&lt;temperature&gt;]</code></li>
 <li>Beállítja az extruder hőmérsékletét és várakozik: <code>M109 [T&lt;index&gt;] S&lt;temperature&gt;</code><ul>
-<li>Megjegyzés: Az M109 mindig megvárja, míg a hőmérséklet beáll a kért értékre.</li>
+<li>Megjegyzés: Az M109 mindig megvárja, míg a hőmérséklet beáll a kért értékre</li>
 </ul>
 </li>
 <li>Beállítja az ágy hőmérsékletét: <code>M140 [S&lt;temperature&gt;]</code></li>
 <li>Beállítja az ágy hőmérsékletét és várakozik: <code>M190 S&lt;temperature&gt;</code><ul>
-<li>Megjegyzés: Az M190 mindig megvárja, hogy a hőmérséklet beálljon a kért értékre.</li>
+<li>Megjegyzés: Az M190 mindig megvárja, hogy a hőmérséklet beálljon a kért értékre</li>
 </ul>
 </li>
 <li>A ventilátor sebességének beállítása: <code>M106 S&lt;value&gt;</code></li>
@@ -4100,11 +4100,11 @@
 <li>Jelenlegi pozíció lekérdezése: <code>M114</code></li>
 <li>A firmware verziójának lekérdezése: <code>M115</code></li>
 </ul>
-<p>A fenti parancsokkal kapcsolatos további részletekért lásd a <a href="http://reprap.org/wiki/G-code">RepRap G-kód dokumentáció</a> fájlt.</p>
+<p>A fenti parancsokkal kapcsolatos további részletekért lásd a <a href="http://reprap.org/wiki/G-code">RepRap G-Kód dokumentáció</a> fájlt.</p>
 <p>A Klipper célja, hogy támogassa az általános 3. féltől származó szoftverek (pl. OctoPrint, Printrun, Slic3r, Cura, stb.) által generált G-Kód parancsokat a szabványos konfigurációikban. Nem cél, hogy minden lehetséges G-Kód parancsot támogasson. Ehelyett a Klipper az ember által olvasható <a href="#additional-commands">"kiterjesztett G-Kód"</a> parancsokat részesíti előnyben. Hasonlóképpen, a G-Kód terminál kimenete is csak ember által olvasható. Lásd az <a href="API_Server.html">API Szerver dokumentumot</a>, ha a Klippert külső szoftverből irányítod.</p>
-<p>Ha egy kevésbé gyakori G-kód parancsra van szükség, akkor azt egy egyéni <a href="Config_Reference.html#gcode_macro">gcode_macro config section</a> segítségével lehet megvalósítani. Például ezt használhatnánk a következőkre: <code>G12</code>, <code>G29</code>, <code>G30</code>, <code>G31</code>, <code>M42</code>, <code>M80</code>, <code>M81</code>, <code>T1</code> stb.</p>
+<p>Ha egy kevésbé gyakori G-Kód parancsra van szükség, akkor azt egy egyéni <a href="Config_Reference.html#gcode_macro">gcode_macro config section</a> segítségével lehet megvalósítani. Például ezt használhatnánk a következőkre: <code>G12</code>, <code>G29</code>, <code>G30</code>, <code>G31</code>, <code>M42</code>, <code>M80</code>, <code>M81</code>, <code>T1</code> stb.</p>
 <h2 id="tovabbi-parancsok">További parancsok<a class="headerlink" href="#tovabbi-parancsok" title="Permanent link">&para;</a></h2>
-<p>A Klipper "kiterjesztett" G-kód parancsokat használ az általános konfigurációhoz és állapothoz. Ezek a kiterjesztett parancsok mind hasonló formátumot követnek, egy parancsnévvel kezdődnek, és egy vagy több paraméter követheti őket. Például: <code>SET_SERVO SERVO=myservo ANGLE=5.3</code>. Ebben a parancssorban a parancsok és paraméterek nagybetűvel szerepelnek, azonban a nagy- és kisbetűket nem kell figyelembe venni. (Tehát a "SET_SERVO" és a "set_servo" mindkettő ugyanazt jelenti.)</p>
+<p>A Klipper "kiterjesztett" G-Kód parancsokat használ az általános konfigurációhoz és állapothoz. Ezek a kiterjesztett parancsok mind hasonló formátumot követnek, egy parancsnévvel kezdődnek, és egy vagy több paraméter követheti őket. Például: <code>SET_SERVO SERVO=myservo ANGLE=5.3</code>. Ebben a parancssorban a parancsok és paraméterek nagybetűvel szerepelnek, azonban a nagy- és kisbetűket nem kell figyelembe venni. (Tehát a "SET_SERVO" és a "set_servo" mindkettő ugyanazt jelenti.)</p>
 <p>Ez a szakasz a Klipper-modul nevével van generálva, amely általában a <a href="Config_Reference.html">nyomtató konfigurációs fájlban</a> megadott szakaszneveket követi. Vegye figyelembe, hogy néhány modul automatikusan betöltődik.</p>
 <h3 id="adxl345">[adxl345]<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#adxl345">adxl345 konfigurációs szakasz</a> engedélyezve van.</p>
@@ -4133,7 +4133,7 @@
 <h4 id="bed_mesh_map">BED_MESH_MAP<a class="headerlink" href="#bed_mesh_map" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_MAP</code>: Ez a parancs a BED_MESH_OUTPUT-hoz hasonlóan a háló aktuális állapotát írja ki a terminálra. Az értékek ember által olvasható formátumban történő kiírása helyett az állapotot JSON formátumban szerializálja. Ez lehetővé teszi az OctoPrint pluginek számára, hogy könnyen rögzítsék az adatokat, és az ágy felszínét közelítő magassági térképeket hozzanak létre.</p>
 <h4 id="bed_mesh_clear">BED_MESH_CLEAR<a class="headerlink" href="#bed_mesh_clear" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_CLEAR</code>: Ez a parancs törli a hálót és eltávolít minden Z-beállítást. Ajánlott ezt a parancsot befejező G-kódba tenni.</p>
+<p><code>BED_MESH_CLEAR</code>: Ez a parancs törli a hálót és eltávolít minden Z-beállítást. Ajánlott ezt a parancsot befejező G-Kódba tenni.</p>
 <h4 id="bed_mesh_profile">BED_MESH_PROFILE<a class="headerlink" href="#bed_mesh_profile" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_PROFILE LOAD=&lt;name&gt; SAVE=&lt;name&gt; REMOVE=&lt;name&gt;</code>: Ez a parancs a háló állapotának profilkezelését biztosítja. A LOAD a háló állapotát a megadott névnek megfelelő profilból állítja vissza. A SAVE parancs az aktuális hálóállapotot a megadott névnek megfelelő profilba menti. A REMOVE a megadott névnek megfelelő profilt törli a tartós memóriából. Megjegyzendő, hogy a SAVE vagy REMOVE műveletek lefuttatása után a SAVE_CONFIG parancsot kell futtatni, hogy a tartós memóriában végrehajtott változtatások véglegesek legyenek.</p>
 <h4 id="bed_mesh_offset">BED_MESH_OFFSET<a class="headerlink" href="#bed_mesh_offset" title="Permanent link">&para;</a></h4>
@@ -4151,7 +4151,7 @@
 <h4 id="bltouch_debug">BLTOUCH_DEBUG<a class="headerlink" href="#bltouch_debug" title="Permanent link">&para;</a></h4>
 <p><code>BLTOUCH_DEBUG COMMAND=&lt;command&gt;</code>: Ez egy parancsot küld a BLTouch-nak. Hasznos lehet a hibakereséshez. A rendelkezésre álló parancsok a következők: <code>pin_down</code>, <code>touch_mode</code>, <code>pin_up</code>, <code>self_test</code>, <code>reset</code>. A BL-Touch V3.0 vagy V3.1 támogathatja a <code>set_5V_output_mode</code>, <code>set_OD_output_mode</code>, <code>output_mode_store</code> parancsokat is.</p>
 <h4 id="bltouch_store">BLTOUCH_STORE<a class="headerlink" href="#bltouch_store" title="Permanent link">&para;</a></h4>
-<p><code>BLTOUCH_STORE MODE=&lt;output_mode&gt;</code>: Ez egy kimeneti módot tárol a BLTouch V3.1 EEPROM-jában: <code>5V</code>, <code>OD</code>.</p>
+<p><code>BLTOUCH_STORE MODE=&lt;output_mode&gt;</code>: Ez egy kimeneti módot tárol a BLTouch V3.1 EEPROM-jában: <code>5V</code>, <code>OD</code></p>
 <h3 id="configfile">[configfile]<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h3>
 <p>A configfile modul automatikusan betöltődik.</p>
 <h4 id="save_config">SAVE_CONFIG<a class="headerlink" href="#save_config" title="Permanent link">&para;</a></h4>
@@ -4238,7 +4238,7 @@
 <h4 id="sugo">SÚGÓ<a class="headerlink" href="#sugo" title="Permanent link">&para;</a></h4>
 <p><code>HELP</code>: A rendelkezésre álló kiterjesztett G-Kód parancsok listájának megjelenítése.</p>
 <h3 id="gcode_arcs">[gcode_arcs]<a class="headerlink" href="#gcode_arcs" title="Permanent link">&para;</a></h3>
-<p>A következő szabványos G-kód parancsok elérhetők, ha a <a href="Config_Reference.html#gcode_arcs">gcode_arcs config section</a> engedélyezve van:</p>
+<p>A következő szabványos G-Kód parancsok elérhetők, ha a <a href="Config_Reference.html#gcode_arcs">gcode_arcs config section</a> engedélyezve van:</p>
 <ul>
 <li>Vezérelt ívmozgás (G2 vagy G3): <code>G2 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;</code></li>
 </ul>
@@ -4251,7 +4251,7 @@
 <h4 id="get_position">GET_POSITION<a class="headerlink" href="#get_position" title="Permanent link">&para;</a></h4>
 <p><code>GET_POSITION</code>: A nyomtatófej aktuális helyzetére vonatkozó információk visszaadása. További információkért lásd a <a href="Code_Overview.html#coordinate-systems">GET_POSITION kimenet</a> fejlesztői dokumentációját.</p>
 <h4 id="set_gcode_offset">SET_GCODE_OFFSET<a class="headerlink" href="#set_gcode_offset" title="Permanent link">&para;</a></h4>
-<p><code>SET_GCODE_OFFSET [X=&lt;pos&gt;|X_ADJUST=&lt;adjust&gt;] [Y=&lt;pos&gt;|Y_ADJUST=&lt;adjust&gt;] [Z=&lt;pos&gt;|Z_ADJUST=&lt;adjust&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>: Pozíciós eltolás beállítása, amelyet a későbbi G-kód parancsokra kell alkalmazni. Ezt általában a Z ágy eltolás virtuális megváltoztatására vagy a fúvókák XY eltolásának beállítására használják extruder váltáskor. Például, ha a "SET_GCODE_OFFSET Z=0.2" parancsot küldjük, akkor a jövőbeli G-kód mozgások Z magasságához 0,2 mm-t adunk hozzá. Ha az X_ADJUST stílusparamétereket használjuk, akkor a kiigazítás hozzáadódik a meglévő eltoláshoz (pl. a "SET_GCODE_OFFSET Z=-0.2" és a "SET_GCODE_OFFSET Z_ADJUST=0.3" utána a teljes Z eltolás 0.1 lesz). Ha a "MOVE=1" van megadva, akkor a nyomtatófej mozgatása a megadott eltolás alkalmazására történik (egyébként az eltolás a következő abszolút G-kódú mozgatáskor lép hatályba, amely az adott tengelyt adja meg). Ha a "MOVE_SPEED" meg van adva, akkor a szerszámfej mozgatása a megadott sebességgel (mm/mp-ben) történik; egyébként a nyomtatófej mozgatása az utoljára megadott G-kód sebességet fogja használni.</p>
+<p><code>SET_GCODE_OFFSET [X=&lt;pos&gt;|X_ADJUST=&lt;adjust&gt;] [Y=&lt;pos&gt;|Y_ADJUST=&lt;adjust&gt;] [Z=&lt;pos&gt;|Z_ADJUST=&lt;adjust&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>: Pozíciós eltolás beállítása, amelyet a későbbi G-Kód parancsokra kell alkalmazni. Ezt általában a Z ágy eltolás virtuális megváltoztatására vagy a fúvókák XY eltolásának beállítására használják extruder váltáskor. Például, ha a "SET_GCODE_OFFSET Z=0.2" parancsot küldjük, akkor a jövőbeli G-Kód mozgások Z magasságához 0,2 mm-t adunk hozzá. Ha az X_ADJUST stílusparamétereket használjuk, akkor a kiigazítás hozzáadódik a meglévő eltoláshoz (pl. a "SET_GCODE_OFFSET Z=-0.2" és a "SET_GCODE_OFFSET Z_ADJUST=0.3" utána a teljes Z eltolás 0.1 lesz). Ha a "MOVE=1" van megadva, akkor a nyomtatófej mozgatása a megadott eltolás alkalmazására történik (egyébként az eltolás a következő abszolút G-Kódú mozgatáskor lép hatályba, amely az adott tengelyt adja meg). Ha a "MOVE_SPEED" meg van adva, akkor a szerszámfej mozgatása a megadott sebességgel (mm/mp-ben) történik; egyébként a nyomtatófej mozgatása az utoljára megadott G-Kód sebességet fogja használni.</p>
 <h4 id="save_gcode_state">SAVE_GCODE_STATE<a class="headerlink" href="#save_gcode_state" title="Permanent link">&para;</a></h4>
 <p><code>SAVE_GCODE_STATE [NAME=&lt;state_name&gt;]</code>: Az aktuális G-Kód koordináták elemzési állapotának mentése. A G-Kód állapotának mentése és visszaállítása hasznos a szkriptekben és makrókban. Ez a parancs elmenti az aktuális G-Kód abszolút koordinátamódot (G90/G91), az abszolút extrudálási módot (M82/M83), az origót (G92), az eltolást (SET_GCODE_OFFSET), a sebesség felülbírálását (M220), az extruder felülbírálását (M221), a mozgási sebességet, az aktuális XYZ pozíciót és a relatív extruder "E" pozíciót. A NAME megadása esetén lehetővé teszi, hogy a mentett állapotot a megadott karakterláncnak nevezzük el. Ha a NAME nincs megadva, az alapértelmezett érték "default".</p>
 <h4 id="restore_gcode_state">RESTORE_GCODE_STATE<a class="headerlink" href="#restore_gcode_state" title="Permanent link">&para;</a></h4>
@@ -4304,7 +4304,7 @@
 <h3 id="manual_stepper">[manual_stepper]<a class="headerlink" href="#manual_stepper" title="Permanent link">&para;</a></h3>
 <p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#manual_stepper">manual_stepper konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="manual_stepper_1">MANUAL_STEPPER<a class="headerlink" href="#manual_stepper_1" title="Permanent link">&para;</a></h4>
-<p><code>MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]] [SET_POSITION=&lt;pos&gt;] [SPEED=&lt;speed&gt;] [ACCEL=&lt;accel&gt;] [MOVE=&lt;pos&gt; [STOP_ON_ENDSTOP=[1|2|2|-1|-2]] [SYNC=0]]]</code>: Ez a parancs megváltoztatja a léptető állapotát. Az ENABLE paraméterrel engedélyezheti/letilthatja a léptetőt. A SET_POSITION paraméterrel kényszerítheti a léptetőt arra, hogy azt higgye, az adott helyzetben van. A MOVE paraméterrel kezdeményezhet mozgást egy adott pozícióba. Ha a SPEED és/vagy az ACCEL paraméter meg van adva, akkor a rendszer a megadott értékeket használja a konfigurációs fájlban megadott alapértelmezett értékek helyett. Ha nulla ACCEL-t ad meg, akkor nem történik gyorsítás. Ha STOP_ON_ENDSTOP=1 van megadva, akkor a lépés korán véget ér. Ha a végálláskapcsoló aktiválódik (a STOP_ON_ENDSTOP=2 paranccsal hiba nélkül befejezheti a mozgást, még akkor is, ha a végálláskapcsoló nem aktiválódott. Használja a -1 vagy a -2 jelölést, hogy leálljon, amikor a végálláskapcsoló még nem aktiválódott). Normális esetben a későbbi G-Kód parancsok a léptetőmozgás befejezése után kerülnek ütemezésre, azonban ha a kézi léptetőmozgás parancs a SYNC=0 értéket használja, akkor a későbbi G-kód mozgatási parancsok a léptetőmozgással párhuzamosan is futhatnak.</p>
+<p><code>MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]] [SET_POSITION=&lt;pos&gt;] [SPEED=&lt;speed&gt;] [ACCEL=&lt;accel&gt;] [MOVE=&lt;pos&gt; [STOP_ON_ENDSTOP=[1|2|2|-1|-2]] [SYNC=0]]]</code>: Ez a parancs megváltoztatja a léptető állapotát. Az ENABLE paraméterrel engedélyezheti/letilthatja a léptetőt. A SET_POSITION paraméterrel kényszerítheti a léptetőt arra, hogy azt higgye, az adott helyzetben van. A MOVE paraméterrel kezdeményezhet mozgást egy adott pozícióba. Ha a SPEED és/vagy az ACCEL paraméter meg van adva, akkor a rendszer a megadott értékeket használja a konfigurációs fájlban megadott alapértelmezett értékek helyett. Ha nulla ACCEL-t ad meg, akkor nem történik gyorsítás. Ha STOP_ON_ENDSTOP=1 van megadva, akkor a lépés korán véget ér. Ha a végálláskapcsoló aktiválódik (a STOP_ON_ENDSTOP=2 paranccsal hiba nélkül befejezheti a mozgást, még akkor is, ha a végálláskapcsoló nem aktiválódott. Használja a -1 vagy a -2 jelölést, hogy leálljon, amikor a végálláskapcsoló még nem aktiválódott). Normális esetben a későbbi G-Kód parancsok a léptetőmozgás befejezése után kerülnek ütemezésre, azonban ha a kézi léptetőmozgás parancs a SYNC=0 értéket használja, akkor a későbbi G-Kód mozgatási parancsok a léptetőmozgással párhuzamosan is futhatnak.</p>
 <h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
 <p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#leds">LED konfigurációs szakaszok</a> bármelyike engedélyezve van.</p>
 <h4 id="set_led">SET_LED<a class="headerlink" href="#set_led" title="Permanent link">&para;</a></h4>
@@ -4490,7 +4490,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Élőláb">
       
         
-        <a href="Pressure_Advance.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Nyomás előrehaladás" rel="prev">
+        <a href="Pressure_Advance.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Nyomásszabályozás" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -4499,7 +4499,7 @@
               <span class="md-footer__direction">
                 Előző
               </span>
-              Nyomás előrehaladás
+              Nyomásszabályozás
             </div>
           </div>
         </a>

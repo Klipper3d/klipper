@@ -743,7 +743,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -778,7 +778,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -881,7 +881,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1097,7 +1097,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1363,40 +1363,40 @@
 
 
 <h1 id="konfiguracios-ellenorzesek">Konfigurációs ellenőrzések<a class="headerlink" href="#konfiguracios-ellenorzesek" title="Permanent link">&para;</a></h1>
-<p>Ez a dokumentum a Klipper printer.cfg fájl pin beállításainak megerősítéséhez szükséges lépések listáját tartalmazza. Célszerű ezeket a lépéseket a <a href="Installation.html">telepítési dokumentum</a> lépéseinek követése után végrehajtani.</p>
+<p>Ez a dokumentum a Klipper printer.cfg fájl tű beállításainak megerősítéséhez szükséges lépések listáját tartalmazza. Célszerű ezeket a lépéseket a <a href="Installation.html">telepítési dokumentum</a> lépéseinek követése után végrehajtani.</p>
 <p>Az útmutató során szükség lehet a Klipper konfigurációs fájljának módosítására. Ügyeljen arra, hogy a konfigurációs fájl minden módosítása után adjon ki egy RESTART parancsot, hogy megbizonyosodjon arról, hogy a változtatás érvénybe lép (írja be a "restart" kifejezést az Octoprint terminál lapjára, majd kattintson a "Küldés" gombra). Az is jó ötlet, hogy minden RESTART után kiad egy STATUS parancsot a konfigurációs fájl sikeres betöltésének ellenőrzésére.</p>
 <h2 id="ellenorizze-a-homersekletet">Ellenőrizze a hőmérsékletet<a class="headerlink" href="#ellenorizze-a-homersekletet" title="Permanent link">&para;</a></h2>
-<p>Kezdje azzal, hogy ellenőrizze, hogy a hőmérsékleteket megfelelően jelentették-e. Lépjen az Octoprint hőmérséklet lapra.</p>
+<p>Kezdje azzal, hogy ellenőrzi, a hőmérséklet megfelelően van-e jelentve. Lépjen az Octoprint hőmérséklet lapjára.</p>
 <p><img alt="octoprint-temperature" src="img/octoprint-temperature.png" /></p>
 <p>Ellenőrizze, hogy a fúvóka és az ágy hőmérséklete (ha van) jelen van-e, és nem emelkedik. Ha növekszik, kapcsolja ki a nyomtatót. Ha a hőmérsékletek nem pontosak, tekintse át a fúvóka és/vagy ágy "sensor_type" és "sensor_pin" beállításait.</p>
 <h2 id="ellenorzes-m112">Ellenőrzés M112<a class="headerlink" href="#ellenorzes-m112" title="Permanent link">&para;</a></h2>
-<p>Navigáljon az Octoprint terminál fülre, és adjon ki egy M112 parancsot a terminálmezőben. Ez a parancs arra kéri a Klippert, hogy lépjen "leállási" állapotba. Ennek hatására az Octoprint megszakítja a kapcsolatot a Klipperrel. Navigáljon a Connection (Kapcsolat) területre, és kattintson a "Kapcsolódás" gombra, hogy az Octoprint újra csatlakozzon. Ezután navigáljon az Octoprint hőmérséklet fülre, és ellenőrizze, hogy a hőmérsékletek továbbra is frissülnek-e, és a hőmérsékletek nem emelkednek-e. Ha a hőmérsékletek emelkednek, kapcsolja ki a nyomtatót a hálózatból.</p>
+<p>Navigáljon az Octoprint terminál fülre, és adjon ki egy M112 parancsot a terminálmezőben. Ez a parancs arra kéri a Klippert, hogy lépjen "leállási" állapotba. Ennek hatására az Octoprint megszakítja a kapcsolatot a Klipperrel. Navigáljon a Connection (Kapcsolat) területre, és kattintson a "Kapcsolódás" gombra, hogy az Octoprint újra csatlakozzon. Ezután navigáljon az Octoprint hőmérséklet fülre, és ellenőrizze, hogy a hőmérsékletek továbbra is frissülnek-e, és a hőmérsékletek nem emelkednek-e. Ha a hőmérsékletek emelkednek, kapcsolja le a nyomtatót a hálózatról.</p>
 <p>Az M112 parancs hatására a Klipper "leállítás" állapotba kerül. Ennek az állapotnak a törléséhez adjon ki egy FIRMWARE_RESTART parancsot az Octoprint terminál lapon.</p>
 <h2 id="ellenorizze-a-futotesteket">Ellenőrizze a fűtőtesteket<a class="headerlink" href="#ellenorizze-a-futotesteket" title="Permanent link">&para;</a></h2>
 <p>Navigáljon az Octoprint hőmérséklet fülre, és írja be az 50-et, majd nyomjon Entert az "Eszköz" hőmérséklet mezőbe. Az extruder hőmérsékletének a grafikonon növekednie kell (körülbelül 30 másodpercen belül). Ezután lépjen a "Eszköz" hőmérséklet legördülő mezőbe, és válassza az "Off" lehetőséget. Néhány perc múlva a hőmérsékletnek el kell kezdenie visszaesni a kezdeti hőmérséklet felé. Ha a hőmérséklet nem emelkedik, akkor ellenőrizze a "heater_pin" beállítását a konfigurációs fájban.</p>
 <p>Ha a nyomtató fűtött ággyal rendelkezik, akkor végezze el a fenti vizsgálatot az ágynál is.</p>
 <h2 id="a-leptetomotor-engedelyezo-tu-ellenorzese">A léptetőmotor engedélyező tű ellenőrzése<a class="headerlink" href="#a-leptetomotor-engedelyezo-tu-ellenorzese" title="Permanent link">&para;</a></h2>
-<p>Ellenőrizze, hogy a nyomtató minden tengelye manuálisan szabadon mozog-e (a léptetőmotorok ki vannak kapcsolva). Ha nem, adjon ki egy M84 parancsot a motorok letiltására. Ha valamelyik tengely még mindig nem tud szabadon mozogni, akkor ellenőrizze a léptető "enable_pin" konfigurációt az adott tengelyhez. A legtöbb hagyományos léptetőmotor-meghajtónál a motor engedélyező tű "aktív alacsony", ezért az engedélyező tű előtt egy "!" jelnek kell állnia (például "enable_pin: !ar38").</p>
+<p>Ellenőrizze, hogy a nyomtató minden tengelye manuálisan szabadon mozog-e (a léptetőmotorok ki vannak kapcsolva). Ha nem, adjon ki egy M84 parancsot a motorok letiltására. Ha valamelyik tengely még mindig nem tud szabadon mozogni, akkor ellenőrizze a léptető "enable_pin" konfigurációt az adott tengelyhez. A legtöbb hagyományos léptetőmotor meghajtónál a motor engedélyező tű "active low", ezért az engedélyező tű előtt egy "!" jelnek kell állnia (például "enable_pin: !ar38").</p>
 <h2 id="vegallasok-ellenorzese">Végállások ellenőrzése<a class="headerlink" href="#vegallasok-ellenorzese" title="Permanent link">&para;</a></h2>
-<p>Kézzel mozgassa az összes nyomtatótengelyt úgy, hogy egyikük se érintkezzen végállással. Küldjön QUERY_ENDSTOPS parancsot az Octoprint terminál lapján keresztül. A nyomtatónak válaszolnia kell az összes konfigurált végállás aktuális állapotával, és mindegyiknek "nyitott" állapotot kell jeleznie. Az egyes végleállások esetében futtassa újra a QUERY_ENDSTOPS parancsot, miközben manuálisan indítja el a végleállást. A QUERY_ENDSTOPS parancsnak jeleznie kell a végállást, mint "TRIGGERED".</p>
-<p>Ha a végállás inverznek tűnik (a kiváltáskor "nyitott" jelzést ad, és fordítva), akkor adjunk hozzá egy "!" -t a tű definícióhoz (például "endstop_pin: ^!ar3"), vagy távolítsuk el a "!" -t, ha már van ilyen.</p>
-<p>Ha a végállás egyáltalán nem változik, akkor ez általában azt jelzi, hogy a végállás egy másik pinhez van csatlakoztatva. Azonban az is előfordulhat, hogy a pin pullup beállításának megváltoztatására van szükség (a '^' az endstop_pin név elején - a legtöbb nyomtató pullup ellenállást használ, és a '^' -nek jelen kell lennie).</p>
+<p>Kézzel mozgassa az összes nyomtatótengelyt úgy, hogy egyikük se érintkezzen végállással. Küldjön QUERY_ENDSTOPS parancsot az Octoprint terminál lapján keresztül. A nyomtatónak válaszolnia kell az összes konfigurált végállás aktuális állapotával, és mindegyiknek "open" állapotot kell jeleznie. Az egyes végleállások esetében futtassa újra a QUERY_ENDSTOPS parancsot, miközben manuálisan indítja el a végleállást. A QUERY_ENDSTOPS parancsnak jeleznie kell a végállást, mint "TRIGGERED".</p>
+<p>Ha a végállás inverznek tűnik (a kiváltáskor "open" jelzést ad, és fordítva), akkor adjunk hozzá egy "!" -t a tű definícióhoz (például "endstop_pin: ^!ar3"), vagy távolítsuk el a "!" -t, ha már van ilyen.</p>
+<p>Ha a végállás egyáltalán nem változik, akkor ez általában azt jelzi, hogy a végállás egy másik tűhöz van csatlakoztatva. Azonban az is előfordulhat, hogy a tű "pullup" beállításának megváltoztatására van szükség (a '^' az endstop_pin név elején, a legtöbb nyomtató "pullup" ellenállást használ, és a '^' -nek jelen kell lennie).</p>
 <h2 id="leptetomotorok-ellenorzese">Léptetőmotorok ellenőrzése<a class="headerlink" href="#leptetomotorok-ellenorzese" title="Permanent link">&para;</a></h2>
-<p>A STEPPER_BUZZ parancs segítségével ellenőrizze az egyes léptetőmotorok csatlakozását. Kezdje az adott tengely kézi pozicionálásával egy középső pontra, majd futtassa a <code>STEPPER_BUZZ STEPPER=stepper_x</code> parancsot. A STEPPER_BUZZ parancs hatására az adott stepper egy millimétert mozdul pozitív irányba, majd visszatér a kiindulási helyzetébe. (Ha a végállást a position_endstop=0 értéken definiáljuk, akkor minden egyes mozgás kezdetén a léptető a végállástól távolodik). Ezt az mozgást tízszer fogja végrehajtani.</p>
+<p>A STEPPER_BUZZ parancs segítségével ellenőrizze az egyes léptetőmotorok csatlakozását. Kezdje az adott tengely kézi pozicionálásával egy középső pontra, majd futtassa a <code>STEPPER_BUZZ STEPPER=stepper_x</code> parancsot. A STEPPER_BUZZ parancs hatására az adott stepper egy millimétert mozdul pozitív irányba, majd visszatér a kiindulási helyzetébe. (Ha a végállást a position_endstop=0 értéken definiáljuk, akkor minden egyes mozgás kezdetén a léptető a végállástól távolodik). Ezt a mozgást tízszer fogja végrehajtani.</p>
 <p>Ha a léptető egyáltalán nem mozog, akkor ellenőrizze az "enable_pin" és "step_pin" beállításokat a léptetőnél. Ha a léptetőmotor mozog, de nem tér vissza az eredeti helyzetébe, akkor ellenőrizze a "dir_pin" beállítást. Ha a léptetőmotor helytelen irányban mozog, akkor ez általában azt jelzi, hogy a tengely "dir_pin" beállítását meg kell fordítani. Ezt úgy lehet megtenni, hogy a nyomtató konfigurációs fájlban a "dir_pin" értékhez hozzáadunk egy '!' jelet (vagy eltávolítjuk, ha már van ilyen). Ha a motor egy milliméternél lényegesen többet vagy lényegesen kevesebbet mozog, akkor ellenőrizze a "rotation_distance" beállítást.</p>
 <p>Futtassa a fenti tesztet a konfigurációs fájlban definiált minden egyes léptetőmotorra. (Állítsa a STEPPER_BUZZ parancs STEPPER paraméterét a tesztelendő konfigurációs szakasz nevére). Ha nincs nyomtatószál az extruderben, akkor a STEPPER_BUZZ paranccsal ellenőrizheti az extruder motor csatlakozását (használja a STEPPER=extruder parancsot). Ellenkező esetben a legjobb ha az extruder motort külön teszteljük (lásd a következő szakaszt).</p>
 <p>Az összes végállás és léptetőmotor ellenőrzése után a célba állítási mechanizmust tesztelni kell. Adjon ki egy G28 parancsot az összes tengely alaphelyzetbe állításához. Ha a nyomtató nem állítható be megfelelően, kapcsolja ki a nyomtatót. Ha szükséges, ismételje meg a végállás és a léptetőmotorok ellenőrzését.</p>
 <h2 id="extruder-motor-ellenorzese">Extruder motor ellenőrzése<a class="headerlink" href="#extruder-motor-ellenorzese" title="Permanent link">&para;</a></h2>
-<p>Az extruder motor teszteléséhez az extrudert nyomtatási hőmérsékletre kell melegíteni. Navigáljon az Octoprint hőmérséklet fülre, és válasszon ki egy célhőmérsékletet a hőmérséklet legördülő menüből (vagy adja meg manuálisan a megfelelő hőmérsékletet). Várja meg, amíg a nyomtató eléri a kívánt hőmérsékletet. Ezután navigáljon az Octoprint vezérlő lapra, és kattintson az "Extrudálás" gombra. Ellenőrizze, hogy az extruder motorja a megfelelő irányba forog-e. Ha nem, akkor az előző szakaszban található hibaelhárítási tippek alapján ellenőrizze az extruder "enable_pin", "step_pin" és "dir_pin" beállításait.</p>
+<p>Az extruder motor teszteléséhez a nyomtatófejet nyomtatási hőmérsékletre kell melegíteni. Navigáljon az Octoprint hőmérséklet fülre, és válasszon ki egy célhőmérsékletet a hőmérséklet legördülő menüből (vagy adja meg manuálisan a megfelelő hőmérsékletet). Várja meg, amíg a nyomtató eléri a kívánt hőmérsékletet. Ezután navigáljon az Octoprint vezérlő lapra, és kattintson az "Extrudálás" gombra. Ellenőrizze, hogy az extruder motorja a megfelelő irányba forog-e. Ha nem, akkor az előző szakaszban található hibaelhárítási tippek alapján ellenőrizze az extruder "enable_pin", "step_pin" és "dir_pin" beállításait.</p>
 <h2 id="pid-beallitasok-kalibralasa">PID beállítások kalibrálása<a class="headerlink" href="#pid-beallitasok-kalibralasa" title="Permanent link">&para;</a></h2>
 <p>A Klipper támogatja a <a href="https://en.wikipedia.org/wiki/PID_controller">PID-szabályozást</a> az extruder és az ágyfűtés számára. Ahhoz, hogy ezt a vezérlési mechanizmust használni lehessen, a PID-beállításokat minden nyomtatónál kalibrálni kell (a más firmware-ekben vagy a példakonfigurációs fájlokban található PID-beállítások gyakran rosszul működnek).</p>
 <p>Az extruder kalibrálásához navigáljon az OctoPrint terminál fülre, és futtassa a PID_CALIBRATE parancsot. Például: <code>PID_CALIBRATE HEATER=extruder TARGET=170</code></p>
 <p>A hangolási teszt végén futtassa a <code>SAVE_CONFIG</code> parancsot a printer.cfg fájl új PID-beállításainak frissítéséhez.</p>
 <p>Ha a nyomtató fűtött ággyal rendelkezik, és az támogatja a PWM (impulzusszélesség-moduláció) vezérlést, akkor ajánlott PID vezérlést használni az ágyhoz. (Ha az ágyfűtést PID algoritmussal vezérli, akkor másodpercenként tízszer is be- és kikapcsolhat, ami nem biztos, hogy megfelelő a mechanikus kapcsolót használó fűtőberendezésekhez.) A tipikus ágy PID-kalibrálási parancs: <code>PID_CALIBRATE HEATER=heater_bed TARGET=60</code></p>
 <h2 id="kovetkezo-lepesek">Következő lépések<a class="headerlink" href="#kovetkezo-lepesek" title="Permanent link">&para;</a></h2>
-<p>Ez az útmutató a Klipper konfigurációs fájlban lévő pin-beállítások alapvető ellenőrzéséhez nyújt segítséget. Mindenképpen olvassa el az <a href="Bed_Level.html">ágy szintezése</a> útmutatót. A Klipperrel történő szeletelő konfigurálásával kapcsolatos információkért olvassa el a <a href="Slicers.html">Slicers</a> dokumentumot is.</p>
-<p>Miután meggyőződtünk arról, hogy az alapnyomtatás működik, érdemes megfontolni a <a href="Pressure_Advance.html">nyomás szabályozás</a> kalibrálását.</p>
-<p>Előfordulhat, hogy más típusú részletes nyomtató-kalibrálásra is szükség lehet - ehhez számos útmutató áll rendelkezésre az interneten (keressen rá például a "3d nyomtató kalibrálás" szövegre). Ha például a csengésnek nevezett hatást tapasztalja, megpróbálhatja követni a <a href="Resonance_Compensation.html">rezonancia-kompenzáció</a> hangolási útmutatót.</p>
+<p>Ez az útmutató a Klipper konfigurációs fájlban lévő tű-beállítások alapvető ellenőrzéséhez nyújt segítséget. Mindenképpen olvassa el az <a href="Bed_Level.html">ágy szintezése</a> útmutatót. A Klipperrel történő szeletelő konfigurálásával kapcsolatos információkért olvassa el a <a href="Slicers.html">Szeletelők</a> dokumentumot is.</p>
+<p>Miután meggyőződtünk arról, hogy az alapnyomtatás működik, érdemes megfontolni a <a href="Pressure_Advance.html">nyomásszabályozás</a> kalibrálását.</p>
+<p>Előfordulhat, hogy más típusú részletes nyomtató-kalibrálásra is szükség lehet. Ehhez számos útmutató áll rendelkezésre az interneten (keressen rá például a "3d nyomtató kalibrálás" szövegre). Ha például a gyűrődésnek nevezett hatást tapasztalja, megpróbálhatja követni a <a href="Resonance_Compensation.html">rezonancia kompenzáció</a> hangolási útmutatót.</p>
 
               
             </article>

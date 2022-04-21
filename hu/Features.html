@@ -692,7 +692,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -727,7 +727,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -830,7 +830,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1046,7 +1046,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1273,15 +1273,15 @@
 <li>A Klipper támogatja az "Input Shaping" funkciót a rezgések nyomtatási minőségre gyakorolt hatásának csökkentése érdekében. Ez csökkentheti vagy kiküszöbölheti a "gyűrődést" (más néven "szellemkép", "visszhang" vagy "hullámzás") a nyomatokon. Lehetővé teheti a gyorsabb nyomtatási sebesség elérését is, miközben a nyomtatás minősége továbbra is magas marad.</li>
 <li>A Klipper egy "interaktív megoldást" használ a pontos lépésidők kiszámításához egyszerű kinematikai egyenletekből. Ez megkönnyíti a Klipper átültetését új típusú robotokra, és az időzítést még összetett kinematika esetén is pontosan tartja (nincs szükség "vonalszegmentálásra").</li>
 <li>Átvihető kód. A Klipper ARM, AVR és PRU alapú mikrovezérlőkön is működik. A meglévő "RepRap" stílusú nyomtatók hardveres módosítás nélkül futtathatják a Klippert. Csak egy Raspberry Pi-t kell hozzáadni. A Klipper belső kódelrendezése megkönnyíti más mikrokontroller-architektúrák támogatását is.</li>
-<li>Egyszerűbb kód. A Klipper egy nagyon magas szintű nyelvet (Python) használ a legtöbb kódhoz. A kinematikai algoritmusok, a G-kód elemzése, a fűtési és termisztor algoritmusok stb. mind Pythonban íródnak. Ez megkönnyíti az új funkciók fejlesztését is.</li>
-<li>Egyéni programozható makrók. Új G-kód parancsok definiálhatók a nyomtató konfigurációs fájljában (nincs szükség kódmódosításra). Ezek a parancsok programozhatók lehetővé téve, hogy a nyomtató állapotától függően különböző műveleteket hajtsanak végre.</li>
-<li>Beépített API-kiszolgáló. A Klipper a szabványos G-kódos interfész mellett egy gazdag JSON-alapú alkalmazási felületet is támogat. Ez lehetővé teszi a programozók számára, hogy külső alkalmazásokat készítsenek a nyomtató részletes vezérlésével.</li>
+<li>Egyszerűbb kód. A Klipper egy nagyon magas szintű nyelvet (Python) használ a legtöbb kódhoz. A kinematikai algoritmusok, a G-Kód elemzése, a fűtési és termisztor algoritmusok stb. mind Pythonban íródnak. Ez megkönnyíti az új funkciók fejlesztését is.</li>
+<li>Egyéni programozható makrók. Új G-Kód parancsok definiálhatók a nyomtató konfigurációs fájljában (nincs szükség kódmódosításra). Ezek a parancsok programozhatók lehetővé téve, hogy a nyomtató állapotától függően különböző műveleteket hajtsanak végre.</li>
+<li>Beépített API-kiszolgáló. A Klipper a szabványos G-Kódos interfész mellett egy gazdag JSON-alapú alkalmazási felületet is támogat. Ez lehetővé teszi a programozók számára, hogy külső alkalmazásokat készítsenek a nyomtató részletes vezérlésével.</li>
 </ul>
 <h2 id="tovabbi-jellemzok">További jellemzők<a class="headerlink" href="#tovabbi-jellemzok" title="Permanent link">&para;</a></h2>
 <p>A Klipper számos szabványos 3D nyomtató funkciót támogat:</p>
 <ul>
 <li>Együttműködik az Octoprint-tel. Ez lehetővé teszi a nyomtató vezérlését egy hagyományos webböngészővel. Ugyanaz a Raspberry Pi, amelyen a Klipper fut, képes az Octoprint futtatására is.</li>
-<li>Standard G-kód támogatás. A tipikus "szeletelők" (SuperSlicer, Cura, PrusaSlicer, stb.) által előállított általános G-kód parancsok támogatottak.</li>
+<li>Standard G-Kód támogatás. A tipikus "szeletelők" (SuperSlicer, Cura, PrusaSlicer, stb.) által előállított általános G-Kód parancsok támogatottak.</li>
 <li>Több extruder támogatása. A közös fűtőberendezéssel rendelkező extrudereket és a független kocsikon (IDEX) lévő extrudereket is támogatják.</li>
 <li>Támogatja a cartesian, delta, corexy, corexz, hybrid-corexy, hybrid-corexz, rotary delta, polár és kábelcsörlő stílusú nyomtatókat.</li>
 <li>Automatikus ágyszintező támogatás. A Klipper konfigurálható alapszintű ágydőlés-érzékelésre vagy teljes hálós ágyszintezésre. Ha az ágy több Z steppert használ, akkor a Klipper a Z stepperek független manipulálásával is képes szintezni. A legtöbb Z magasságmérő szonda támogatott, beleértve a BL-Touch szondákat és a szervómotoros szondákat is.</li>
@@ -1291,7 +1291,7 @@
 <li>Standard ventilátorok, fejhűtő ventilátorok és hőmérséklet-szabályozott ventilátorok támogatása. Nincs szükség arra, hogy a ventilátorok folyamatosan működjenek, amikor a nyomtató üresjáratban van. A fordulatszámmérővel ellátott ventilátoroknál a ventilátorok fordulatszáma ellenőrizhető.</li>
 <li>A TMC2130, TMC2208/TMC2224, TMC2209, TMC2660 és TMC5160 léptetőmotor-meghajtók futásidejű konfigurációjának támogatása. A hagyományos léptetőmotor-meghajtók AD5206, MCP4451, MCP4728, MCP4018 és PWM-csapokon keresztül történő áramszabályozásának támogatása is biztosított.</li>
 <li>Közvetlenül a nyomtatóhoz csatlakoztatott általános LCD-kijelzők támogatása. Egy alapértelmezett menü is rendelkezésre áll. A kijelző és a menü tartalma a konfigurációs fájlon keresztül teljesen testreszabható.</li>
-<li>Állandó gyorsulás és "look-ahead" támogatás. Minden mozgás fokozatosan gyorsul fel álló helyzetből utazósebességre, majd lassul vissza álló helyzetbe. A beérkező G-kódos mozgásparancsok sorba kerülnek és elemzik őket. A hasonló irányú mozgások közötti gyorsulás optimalizálva lesz a nyomtatási hibák csökkentése és a teljes nyomtatási idő javítása érdekében.</li>
+<li>Állandó gyorsulás és "look-ahead" támogatás. Minden mozgás fokozatosan gyorsul fel álló helyzetből utazósebességre, majd lassul vissza álló helyzetbe. A beérkező G-Kódos mozgásparancsok sorba kerülnek és elemzik őket. A hasonló irányú mozgások közötti gyorsulás optimalizálva lesz a nyomtatási hibák csökkentése és a teljes nyomtatási idő javítása érdekében.</li>
 <li>A Klipper egy olyan "léptetőfázis végállás" algoritmust valósít meg, amely javíthatja a tipikus végálláskapcsolók pontosságát. Megfelelő beállítás esetén javíthatja a nyomtatás első réteg ágyhoz tapadását.</li>
 <li>Száljelenlét-, szálmozgás- és szálszélesség-érzékelők támogatása.</li>
 <li>A rezgések mérésének és rögzítésének támogatása adxl345 gyorsulásmérővel.</li>

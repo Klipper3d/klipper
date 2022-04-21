@@ -13,7 +13,7 @@
     
     
       
-        <title>Klipper Csomagolás - Klipper documentation</title>
+        <title>Klipper csomagolás - Klipper documentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Klipper Csomagolás
+              Klipper csomagolás
             
           </span>
         </div>
@@ -644,7 +644,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        Rezonancia kompenzáció
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomás előrehaladás
+        Nyomásszabályozás
       </a>
     </li>
   
@@ -782,7 +782,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        Több mikrovezélős kezdőpnt és szondázás
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -1009,12 +1009,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Klipper Csomagolás
+          Klipper csomagolás
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Packaging.html" class="md-nav__link md-nav__link--active">
-        Klipper Csomagolás
+        Klipper csomagolás
       </a>
       
         
@@ -1292,7 +1292,7 @@
 </a>
 
 
-<h1 id="klipper-csomagolas">Klipper Csomagolás<a class="headerlink" href="#klipper-csomagolas" title="Permanent link">&para;</a></h1>
+<h1 id="klipper-csomagolas">Klipper csomagolás<a class="headerlink" href="#klipper-csomagolas" title="Permanent link">&para;</a></h1>
 <p>A Klipper egyfajta csomagolási anomália a python programok között, mivel nem használja a setuptools-t a szerkesztéshez és a telepítéshez. Néhány megjegyzés arra vonatkozóan, hogy hogyan lehet a legjobban csomagolni, a következő:</p>
 <h2 id="c-modulok">C modulok<a class="headerlink" href="#c-modulok" title="Permanent link">&para;</a></h2>
 <p>A Klipper egy C modult használ néhány kinematikai számítás gyorsabb elvégzésére. Ezt a modult a csomagolási időben kell lefordítani, hogy elkerüljük a fordítóprogramtól való futásidejű függőséget. A C modul lefordításához futtassuk a <code>python2 klippy/chelper/__init__.py</code> fájlt.</p>
@@ -1301,7 +1301,7 @@
 <h2 id="verziokezeles">Verziókezelés<a class="headerlink" href="#verziokezeles" title="Permanent link">&para;</a></h2>
 <p>Ha a Klipper csomagot git-ből építed, a szokásos gyakorlat szerint nem szállítasz .git könyvtárat, így a verziókezelést git nélkül kell megoldanod. Ehhez használd a <code>scripts/make_version.py</code> alatt szállított szkriptet, amelyet a következőképpen kell futtatni: <code>python2 scripts/make_version.py YOURDISTRONAME &gt; klippy/.version</code>.</p>
 <h2 id="minta-csomagolasi-szkript">Minta csomagolási szkript<a class="headerlink" href="#minta-csomagolasi-szkript" title="Permanent link">&para;</a></h2>
-<p>A klipper-git az Arch Linuxhoz van csomagolva, és a PKGBUILD (csomagépítő szkript) elérhető az <a href="https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=klipper-git">Arch User Repositiory</a> oldalon.</p>
+<p>a klipper-git az Arch Linuxhoz van csomagolva, és a PKGBUILD (csomagépítő szkript) elérhető az <a href="https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=klipper-git">Arch Felhasználói adattár</a> oldalon.</p>
 
               
             </article>
