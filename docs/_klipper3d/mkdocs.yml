@@ -98,6 +98,7 @@ nav:
       - Delta_Calibrate.md
       - Probe_Calibrate.md
       - BLTouch.md
+      - LoadCellProbe.md
       - Manual_Level.md
       - Bed_Mesh.md
       - Endstop_Phase.md
