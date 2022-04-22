@@ -320,7 +320,7 @@ class PrinterExtruder:
             extruder = toolhead.get_extruder()
             extruder.filament_diameter = f_diameter
             gcmd.respond_info("Filament '%s' rotation distance set to %0.6f"
-                          % (self.filament_diameter))
+                          % (extruder.filament_diameter))
         else:
             raise gcmd.error("Diameter must be specified")
 # Dummy extruder class used when a printer has no extruder at all
