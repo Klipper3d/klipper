@@ -208,6 +208,9 @@ class PrinterExtruder:
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
+        gcode.register_mux_command("SET_FILAMENT_DIAMETER", "EXTRUDER",
+                                   self.name, self.cmd_SET_FILAMENT_DIAMETER,
+                                   desc=self.cmd_SET_FILAMENT_DIAMETER_help)
     def update_move_time(self, flush_time):
         self.trapq_finalize_moves(self.trapq, flush_time)
     def get_status(self, eventtime):
@@ -305,7 +308,17 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.last_position)
         self.printer.send_event("extruder:activate_extruder")
-
+    cmd_SET_FILAMENT_DIAMETER_help = "Sets current filament diameter"
+    def cmd_SET_FILAMENT_DIAMETER(self, gcmd):
+        f_diameter = gcmd.get_float('DIAMETER', None)
+        if f_diameter is not None:
+            if f_diameter <= 0:
+                raise gcmd.error("Diameter must be greater than 0")
+            self.filament_diameter = f_diameter
+            gcmd.respond_info("Filament '%s' rotation distance set to %0.6f"
+                          % (self.filament_diameter))
+        else:
+            raise gcmd.error("Diameter must be specified")
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
     def __init__(self, printer):
