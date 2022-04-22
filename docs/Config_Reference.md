@@ -998,7 +998,7 @@ information.
 ```
 [screws_tilt_adjust]
 #screw1:
-#   The (X, Y) coordinate of the first bed leveling screw. This is 
+#   The (X, Y) coordinate of the first bed leveling screw. This is
 #   expressed in nozzle coordinates when the probe is directly
 #   above the bed screw (or as close as possible while still being above the bed).
 #   This parameter must be provided.
