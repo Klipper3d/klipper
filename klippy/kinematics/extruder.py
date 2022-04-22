@@ -319,7 +319,7 @@ class PrinterExtruder:
             toolhead = self.printer.lookup_object('toolhead')
             extruder = toolhead.get_extruder()
             extruder.filament_diameter = f_diameter
-            gcmd.respond_info("Filament '%s' rotation distance set to %0.6f"
+            gcmd.respond_info("Filament diameter set to %0.3f"
                           % (extruder.filament_diameter))
         else:
             raise gcmd.error("Diameter must be specified")
