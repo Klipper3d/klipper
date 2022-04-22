@@ -173,6 +173,9 @@ class PrinterExtruder:
         self.max_e_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * def_max_extrude_ratio
             , above=0.)
+        self.max_e_volumetric_speed = config.getfloat(
+            'max_volumetric_speed', 0, maxval=1000
+            , above=0.)
         self.max_e_accel = config.getfloat(
             'max_extrude_only_accel', max_accel * def_max_extrude_ratio
             , above=0.)
