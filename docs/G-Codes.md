@@ -861,7 +861,7 @@ Requires a `SAVE_CONFIG` to take effect.
 
 ### [query_adc]
 
-The query_endstops module is automatically loaded.
+The query_adc module is automatically loaded.
 
 #### QUERY_ADC
 `QUERY_ADC [NAME=<config_name>] [PULLUP=<value>]`: Report the last
