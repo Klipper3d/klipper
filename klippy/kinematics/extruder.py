@@ -298,6 +298,7 @@ class PrinterExtruder:
     def cmd_M109(self, gcmd):
         # Set Extruder Temperature and Wait
         self.cmd_M104(gcmd, wait=True)
+
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
@@ -308,13 +309,16 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.last_position)
         self.printer.send_event("extruder:activate_extruder")
+
     cmd_SET_FILAMENT_DIAMETER_help = "Sets current filament diameter"
     def cmd_SET_FILAMENT_DIAMETER(self, gcmd):
         f_diameter = gcmd.get_float('DIAMETER', None)
         if f_diameter is not None:
             if f_diameter <= 0:
                 raise gcmd.error("Diameter must be greater than 0")
-            self.filament_diameter = f_diameter
+            toolhead = self.printer.lookup_object('toolhead')
+            extruder = toolhead.get_extruder()
+            extruder.filament_diameter = f_diameter
             gcmd.respond_info("Filament '%s' rotation distance set to %0.6f"
                           % (self.filament_diameter))
         else:
