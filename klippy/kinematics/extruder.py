@@ -287,6 +287,7 @@ class PrinterExtruder:
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.max_extrude_ratio * self.filament_area))
         else:
+            # The calculation is redundant and it should be checked if this is nessesary
             toolhead_speed = math.sqrt(self.max_cruise_v2)
             e_velocity = (move.axes_d[3] * toolhead_speed) / move.move_d
             if e_velocity > self.max_e_velocity:
