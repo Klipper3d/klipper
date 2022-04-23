@@ -380,7 +380,7 @@ slowed down to match the maximal Velocity. You can either specify
 the velocity directly in mm/s or use volumetric speed
 in (mm³/s). The second option will calculate the extruder velocity
 by the given filament diameter. See 
-[SET_FILAMENT_DIAMETER](G-Codes#SET_FILAMENT_DIAMETER) for
+[SET_FILAMENT_DIAMETER](G-Codes.md#SET_FILAMENT_DIAMETER) for
 addition details. 
 
 #### SET_FILAMENT_DIAMETER
