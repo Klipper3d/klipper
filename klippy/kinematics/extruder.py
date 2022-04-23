@@ -287,15 +287,16 @@ class PrinterExtruder:
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.max_extrude_ratio * self.filament_area))
         else:
-            e_velocity = (move.axes_d[3] * move.speed) / move.move_d
+            toolhead_speed = math.sqrt(self.max_cruise_v2)
+            e_velocity = (move.axes_d[3] * toolhead_speed) / move.move_d
             if e_velocity > self.max_e_velocity:
                 # limit the speed if the move excedes max e speed.
                 # use the relation between max and current velocity to scale down
-                new_speed_limit = move.speed*(self.max_e_velocity/e_velocity)
+                new_speed_limit = toolhead_speed*(self.max_e_velocity/e_velocity)
                 logging.info(
                     "Limiting the current move speed to respect max e speed"
                     "from: %f to: %f"
-                    % (move.speed, new_speed_limit))
+                    % (toolhead_speed, new_speed_limit))
                 # move.limit_speed(new_speed_limit, move.accel)
 
     def calc_junction(self, prev_move, move):
