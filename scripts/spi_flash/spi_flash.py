@@ -95,7 +95,7 @@ def check_need_convert(board_name, config):
 
 SPI_OID = 0
 SPI_MODE = 0
-SD_SPI_SPEED = 4000000
+SD_SPI_SPEED = 400000
 # MCU Command Constants
 RESET_CMD = "reset"
 GET_CFG_CMD = "get_config"
