@@ -286,8 +286,8 @@ class PrinterExtruder:
                 "Move exceeds maximum extrusion (%.3fmm^2 vs %.3fmm^2)\n"
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.max_extrude_ratio * self.filament_area))
-        elif False:
-            e_velocity = (move.axes_d[3] * move.speed) / move.dist
+        else:
+            e_velocity = (move.axes_d[3] * move.speed) / move.move_d
             if e_velocity > self.max_e_velocity:
                 # limit the speed if the move excedes max e speed.
                 # use the relation between max and current velocity to scale down
