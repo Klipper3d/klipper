@@ -296,7 +296,7 @@ class PrinterExtruder:
                     "Limiting the current move speed to respect max e speed"
                     "from: %f to: %f"
                     % (move.speed, new_speed_limit))
-                move.limit_speed(new_speed_limit, move.accel)
+                # move.limit_speed(new_speed_limit, move.accel)
 
     def calc_junction(self, prev_move, move):
         diff_r = move.axes_r[3] - prev_move.axes_r[3]
@@ -396,7 +396,7 @@ class PrinterExtruder:
             gcmd.respond_info(
                 "max extruder velocity has been set to %0.3f coresponding to %0.3f "
                 "filament diameter, the max volumetric speed is %0.3f now"
-                % (max_e_velocity, extruder.filament_diameter, extruder.max_e_velocity))
+                % (max_e_velocity, extruder.filament_diameter, self.max_e_volumetric_speed))
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
