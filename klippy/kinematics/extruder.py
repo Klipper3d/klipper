@@ -381,7 +381,7 @@ class PrinterExtruder:
         max_vol_speed = gcmd.get_float('VOLUMETRIC_SPEED', None)
         max_e_velocity = gcmd.get_float('EXTRUDER_VELOCITY', None)
         if ( (max_vol_speed is None and max_e_velocity is None) or
-             (max_vol_speed is not None and max_e_velocity is None) ):
+             (max_vol_speed is not None and max_e_velocity is not None) ):
             raise gcmd.error("Specify volumetric OR extruder speed")
         if max_vol_speed is not None:
             if max_vol_speed <= 0:
