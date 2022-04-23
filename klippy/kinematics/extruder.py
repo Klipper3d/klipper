@@ -252,7 +252,7 @@ class PrinterExtruder:
             raise self.printer.command_error(
                 "Filament needs to be positive number")
         self.filament_diameter = f_diameter
-        self.filament_area = math.pi * (f_diameter * .5)
+        self.filament_area = math.pi * (f_diameter * .5)**2
         # TODO: Update other values that will effected by the change
         # This is currently not possible as we don't know if settings
         # are default values (should be changed) or set by user (no change)
