@@ -370,6 +370,22 @@ This command is deprecated and will be removed in the near future.
 #### SYNC_STEPPER_TO_EXTRUDER
 This command is deprecated and will be removed in the near future.
 
+
+#### SET_MAX_EXTRUDER_VELOCITY
+`SET_MAX_EXTRUDER_VELOCITY EXTRUDER=<name>
+[EXTRUDER_VELOCITY=<velocity>] [VOLUMETRIC_SPEED=<volumetric_speed>]`:
+This command will set the maximum velocity of the extruder. If a move
+will exceed the given extruder velocity, the complete move will be
+slowed down to match the maximal Velocity. You can either specify
+the velocity directly in mm/s or use volumetric speed
+in (mm³/s). The second option will calculate the extruder velocity
+by the given filament diameter. See 
+[SET_FILAMENT_DIAMETER](G-Codes#SET_FILAMENT_DIAMETER) for
+addition details. 
+
+#### SET_FILAMENT_DIAMETER
+
+
 ### [fan_generic]
 
 The following command is available when a
