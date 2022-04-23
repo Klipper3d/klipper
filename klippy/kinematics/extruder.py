@@ -287,7 +287,7 @@ class PrinterExtruder:
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.max_extrude_ratio * self.filament_area))
         else:
-            e_velocity = (move.axis_d[3] * move.speed) / move.dist
+            e_velocity = (move.axes_d[3] * move.speed) / move.dist
             if e_velocity > self.max_e_velocity:
                 # limit the speed if the move excedes max e speed.
                 # use the relation between max and current velocity to scale down
@@ -389,7 +389,7 @@ class PrinterExtruder:
                 "Max volumetric speed has been set to %0.3f coresponding to %0.3f "
                 "filament diameter, the max extruder velocity is %0.3f now"
                 % (max_vol_speed, extruder.filament_diameter, extruder.max_e_velocity))
-        elif False:
+        else:
             if max_e_velocity <= 0:
                 raise gcmd.error("SPEED must be greater than 0")
             self.set_max_velocity(max_e_velocity)
