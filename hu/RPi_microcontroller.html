@@ -693,7 +693,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -1337,7 +1337,7 @@
 <h1 id="rpi-mikrokontroller">RPi mikrokontroller<a class="headerlink" href="#rpi-mikrokontroller" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum leírja a Klipper futtatásának folyamatát egy RPi-n, és ugyanazt az RPi-t használja másodlagos MCU-ként.</p>
 <h2 id="miert-erdemes-az-rpi-t-masodlagos-mcu-kent-hasznalni">Miért érdemes az RPi-t másodlagos MCU-ként használni?<a class="headerlink" href="#miert-erdemes-az-rpi-t-masodlagos-mcu-kent-hasznalni" title="Permanent link">&para;</a></h2>
-<p>A 3D nyomtatók vezérlésére szolgáló MCU-k gyakran korlátozott és előre konfigurált számú szabad kimenettel rendelkeznek a fő nyomtatási funkciók (hőellenállások, extruderek, léptetők stb.) kezelésére. Az RPi használata, ahol a Klipper másodlagos MCU-ként van telepítve, lehetővé teszi a GPIO-k és az RPi kimeneteinek (I2C, SPI) közvetlen használatát a klipperben anélkül, hogy Octoprint bővítményeket (ha van ilyen) vagy külső programokat használva, amelyek lehetővé teszik, hogy mindent vezéreljen a Klipper-en belül a nyomtatási G-Kód.</p>
+<p>A 3D nyomtatók vezérlésére szolgáló MCU-k gyakran korlátozott és előre konfigurált számú szabad kimenettel rendelkeznek a fő nyomtatási funkciók (hőellenállások, extruderek, léptetők stb.) kezelésére. Az RPi használata, ahol a Klipper másodlagos MCU-ként van telepítve, lehetővé teszi a GPIO-k és az RPi kimeneteinek (I2C, SPI) közvetlen használatát a klipperben anélkül, hogy Octoprint bővítményeket (ha van ilyen) vagy külső programokat használva, amelyek lehetővé teszik, hogy mindent vezéreljen a Klipper-en belül a nyomtatási G-kód.</p>
 <p><strong>Figyelmeztetés</strong>: Ha az Ön platformja egy <em>Beaglebone</em>, és helyesen követte a telepítés lépéseit, a Linux MCU már telepítve és konfigurálva van a rendszeréhez.</p>
 <h2 id="az-rc-szkript-telepitese">Az rc szkript telepítése<a class="headerlink" href="#az-rc-szkript-telepitese" title="Permanent link">&para;</a></h2>
 <p>Ha a gazdagépet másodlagos MCU-ként szeretné használni, a klipper_mcu folyamatnak a klippy folyamat előtt kell futnia.</p>

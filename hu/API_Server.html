@@ -693,7 +693,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -1629,7 +1629,7 @@
 <p>Az "info" végpontot a Klipper rendszert és verzióinformációinak lekérdezésére használjuk. Arra is szolgál, hogy a kliens verziót a Klipper számára megadja. Például: <code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}}</code></p>
 <p>Ha jelen van a "client_info" paraméter egy szótárnak kell lennie, de a szótár tetszőleges tartalmú lehet. A felhasználóknak ajánlott megadniuk az ügyfél nevét és a szoftver verzióját, amikor először csatlakoznak a Klipper API kiszolgálóhoz.</p>
 <h3 id="emergency_stop">emergency_stop<a class="headerlink" href="#emergency_stop" title="Permanent link">&para;</a></h3>
-<p>Az "emergency_stop" végpont arra szolgál, hogy utasítsa a Klippert a "shutdown" állapotba való átmenetre. Hasonlóan viselkedik, mint a G-Kód <code>M112</code> parancs. Például: <code>{"id": 123, "method": "emergency_stop"}</code></p>
+<p>Az "emergency_stop" végpont arra szolgál, hogy utasítsa a Klippert a "shutdown" állapotba való átmenetre. Hasonlóan viselkedik, mint a G-kód <code>M112</code> parancs. Például: <code>{"id": 123, "method": "emergency_stop"}</code></p>
 <h3 id="register_remote_method">register_remote_method<a class="headerlink" href="#register_remote_method" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont lehetővé teszi az ügyfelek számára, hogy regisztrálják a klipperből hívható metódusokat. Siker esetén egy üres objektumot ad vissza.</p>
 <p>Például: <code>{"id": 123, "method": "register_remote_method", "params": {"response_template": {"action": "run_paneldue_beep"}, "remote_method": "paneldue_beep"}}}</code> fog visszatérni: <code>{"id": 123, "result": {}}</code></p>
@@ -1639,7 +1639,7 @@ gcode:
   {action_call_remote_method(&quot;paneldue_beep&quot;, frequency=300, duration=1.0)}
 </code></pre></div>
 
-<p>Amikor a PANELDUE_BEEP G-Kód makró végrehajtódik, a Klipper valami ilyesmit küld a kapcsolaton keresztül: <code>{"action": "run_paneldue_beep", "params": {"frequency": 300, "duration": 1.0}}</code></p>
+<p>Amikor a PANELDUE_BEEP G-kód makró végrehajtódik, a Klipper valami ilyesmit küld a kapcsolaton keresztül: <code>{"action": "run_paneldue_beep", "params": {"frequency": 300, "duration": 1.0}}</code></p>
 <h3 id="objectslist">objects/list<a class="headerlink" href="#objectslist" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont lekérdezi az elérhető nyomtató objektumok listáját, amelyeket lekérdezhetünk (az "objects/query" végponton keresztül). Például: <code>{"id": 123, "method": "objects/list"}</code> visszatérhet: <code>{"id": 123, "result": {"objects": ["webhooks", "configfile", "heaters", "gcode_move", "query_endstops", "idle_timeout", "toolhead", "extruder"]}}</code></p>
 <h3 id="objectsquery">objects/query<a class="headerlink" href="#objectsquery" title="Permanent link">&para;</a></h3>
@@ -1650,20 +1650,20 @@ gcode:
 <h3 id="objectssubscribe">objects/subscribe<a class="headerlink" href="#objectssubscribe" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont lehetővé teszi a nyomtató objektumokból származó információk lekérdezését, majd előjegyzését. A végpont kérése és válasza megegyezik a "objects/query" végponttal. Például: <code>{"id": 123, "method": "objects/subscribe", "params": {"objects":{"toolhead": ["position"], "webhooks": ["state"]}, "response_template":{}}}</code> might return: <code>{"id": 123, "result": {"status": {"webhooks": {"state": "ready"}, "toolhead": {"position": [0.0, 0.0, 0.0, 0.0, 0.0]}}, "eventtime": 3052153.382083195}}</code> és az ezt követő aszinkron üzeneteket eredményez, mint például: <code>{"params": {"status": {"webhooks": {"state": "shutdown"}}, "eventtime": 3052165.418815847}}</code></p>
 <h3 id="gcodehelp">gcode/help<a class="headerlink" href="#gcodehelp" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont lehetővé teszi a rendelkezésre álló G-Kód parancsok lekérdezését, amelyekhez súgószöveg van definiálva. Például: <code>{"id": 123, "method": "gcode/help"}</code> visszatérhet: <code>{"id": 123, "result": {"RESTORE_GCODE_STATE": "Egy korábban elmentett G-Kód állapot visszaállítása", "PID_CALIBRATE": "PID kalibrációs teszt futtatása", "QUERY_ADC": "Egy analóg tű utolsó értékének jelentése", ...}}</code></p>
+<p>Ez a végpont lehetővé teszi a rendelkezésre álló G-kód parancsok lekérdezését, amelyekhez súgószöveg van definiálva. Például: <code>{"id": 123, "method": "gcode/help"}</code> visszatérhet: <code>{"id": 123, "result": {"RESTORE_GCODE_STATE": "Egy korábban elmentett G-kód állapot visszaállítása", "PID_CALIBRATE": "PID kalibrációs teszt futtatása", "QUERY_ADC": "Egy analóg tű utolsó értékének jelentése", ...}}</code></p>
 <h3 id="gcodescript">gcode/script<a class="headerlink" href="#gcodescript" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont lehetővé teszi egy sor G-Kód parancs futtatását. Például: <code>{"id": 123, "method": "gcode/script", "params": {"script": "G90"}}}</code></p>
-<p>Ha a megadott G-Kód szkript hibát okoz, akkor a rendszer hibaválaszt generál. Ha azonban a G-Kód parancs terminál kimenetet eredményez, a terminál kimenete nem szerepel a válaszban. (A "gcode/subscribe_output" végpontot használja a G-Kód terminálkimenethez.)</p>
-<p>Ha a kérés beérkezésekor éppen egy G-Kód parancsot dolgoznak fel, akkor a megadott szkript sorba kerül. Ez a késedelem jelentős lehet (pl. ha egy G-Kódos hőmérsékleti várakozás parancs fut). A JSON válaszüzenet akkor kerül elküldésre, amikor a parancsfájl feldolgozása teljesen befejeződött.</p>
+<p>Ez a végpont lehetővé teszi egy sor G-kód parancs futtatását. Például: <code>{"id": 123, "method": "gcode/script", "params": {"script": "G90"}}}</code></p>
+<p>Ha a megadott G-kód szkript hibát okoz, akkor a rendszer hibaválaszt generál. Ha azonban a G-kód parancs terminál kimenetet eredményez, a terminál kimenete nem szerepel a válaszban. (A "gcode/subscribe_output" végpontot használja a G-kód terminálkimenethez.)</p>
+<p>Ha a kérés beérkezésekor éppen egy G-kód parancsot dolgoznak fel, akkor a megadott szkript sorba kerül. Ez a késedelem jelentős lehet (pl. ha egy G-kódos hőmérsékleti várakozás parancs fut). A JSON válaszüzenet akkor kerül elküldésre, amikor a parancsfájl feldolgozása teljesen befejeződött.</p>
 <h3 id="gcoderestart">gcode/restart<a class="headerlink" href="#gcoderestart" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont lehetővé teszi az újraindítás kérését, hasonlóan a G-Kód "RESTART" parancs futtatásához. Például: <code>{"id": }</code>&lt;x id="123, "method": "gcode/restart"}`</p>
-<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-Kód parancsok befejezése után fejeződik be.</p>
+<p>Ez a végpont lehetővé teszi az újraindítás kérését, hasonlóan a G-kód "RESTART" parancs futtatásához. Például: <code>{"id": }</code>&lt;x id="123, "method": "gcode/restart"}`</p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
 <h3 id="gcodefirmware_restart">gcode/firmware_restart<a class="headerlink" href="#gcodefirmware_restart" title="Permanent link">&para;</a></h3>
-<p>Ez hasonló a "gcode/restart" végponthoz. A G-Kód "FIRMWARE_RESTART" parancsot valósítja meg. Például: <code>{"id": 123, "method": "gcode/firmware_restart"}</code></p>
-<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-Kód parancsok befejezése után fejeződik be.</p>
+<p>Ez hasonló a "gcode/restart" végponthoz. A G-kód "FIRMWARE_RESTART" parancsot valósítja meg. Például: <code>{"id": 123, "method": "gcode/firmware_restart"}</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
 <h3 id="gcodesubscribe_output">gcode/subscribe_output<a class="headerlink" href="#gcodesubscribe_output" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont a Klipper által generált G-Kódos terminálüzenetekre való feliratkozásra szolgál. Például: <code>{"id": 123, "method": "gcode/subscribe_output", "params": {"response_template":{}}}}</code> később olyan aszinkron üzeneteket eredményezhet, mint például: <code>{"params": {"response": "// Klipper state: Shutdown"}}</code></p>
-<p>Ez a végpont az emberi interakciót hivatott támogatni egy "terminálablak" interfészen keresztül. A G-Kód terminál kimenetéből származó tartalom elemzése nem javasolt. A Klipper állapotának frissítéséhez használja az "objects/subscribe" végpontot.</p>
+<p>Ez a végpont a Klipper által generált G-kódos terminálüzenetekre való feliratkozásra szolgál. Például: <code>{"id": 123, "method": "gcode/subscribe_output", "params": {"response_template":{}}}}</code> később olyan aszinkron üzeneteket eredményezhet, mint például: <code>{"params": {"response": "// Klipper state: Shutdown"}}</code></p>
+<p>Ez a végpont az emberi interakciót hivatott támogatni egy "terminálablak" interfészen keresztül. A G-kód terminál kimenetéből származó tartalom elemzése nem javasolt. A Klipper állapotának frissítéséhez használja az "objects/subscribe" végpontot.</p>
 <h3 id="motion_reportdump_stepper">motion_report/dump_stepper<a class="headerlink" href="#motion_reportdump_stepper" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont a Klipper belső léptető queue_step parancsfolyamra való feliratkozásra szolgál egy léptető számára. Ezeknek az alacsony szintű mozgásfrissítéseknek a lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszer terhelését.</p>
 <p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"motion_report/dump_stepper", "params": {"name": "stepper_x", "response_template": {}}}</code> és esetleg visszatér: <code>{"id": 123, "result": {"header": }}}</code>, és később aszinkron üzeneteket produkálhat, mint például: ["intervallum", "count", "add"]}}<code -1525_="-1525]," -160_="-160]," -8685_="-8685]," 0_="0]," 10.984_="10.984," 1000_="1000," 1534_="1534]," 179601081_="179601081," 187_="187]," 1_="1," 219686097_="219686097," 2_="2," 4_="4," 5_="5," 6_="6," 8.98_="8.98," 9442_="9442]]" 976_="976," _10000_="[10000," _10559_="[10559," _11632_="[11632," _16230_="[16230," _179601081_="[[179601081," _20756_="[20756," _29573_="[29573," _9855_="[9855," _data_:="&quot;data&quot;:" _first_clock_:="{&quot;first_clock&quot;:" _first_position_:="&quot;first_position&quot;:" _first_time_:="&quot;first_time&quot;:" _last_clock_:="&quot;last_clock&quot;:" _last_time_:="&quot;last_time&quot;:" _params_:="&quot;params&quot;:">:</code>}`</p>
@@ -1681,17 +1681,17 @@ gcode:
 <p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> és esetleg visszatér: <code>{"id": 123,"result":{"header":["time","angle"]}}}</code> és később olyan aszinkron üzeneteket produkálhat, mint például: <code>{"params":{"position_offset":3.151562,"errors":0, "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
 <p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont hasonló a "PRINT_CANCEL" G-Kód parancs futtatásához. Például: <code>{"id": }</code></p>
-<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-Kód parancsok befejezése után fejeződik be.</p>
+<p>Ez a végpont hasonló a "PRINT_CANCEL" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
 <h3 id="pause_resumepause">pause_resume/pause<a class="headerlink" href="#pause_resumepause" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont hasonló a "PAUSE" G-Kód parancs futtatásához. Például: <code>{"id": }</code></p>
-<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-Kód parancsok befejezése után fejeződik be.</p>
+<p>Ez a végpont hasonló a "PAUSE" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
 <h3 id="pause_resumeresume">pause_resume/resume<a class="headerlink" href="#pause_resumeresume" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont hasonló a "RESUME" G-Kód parancs futtatásához. Például: <code>{"id": }</code></p>
-<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-Kód parancsok befejezése után fejeződik be.</p>
+<p>Ez a végpont hasonló a "RESUME" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
 <h3 id="query_endstopsstatus">query_endstops/status<a class="headerlink" href="#query_endstopsstatus" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont lekérdezi az aktív végpontokat és visszaadja azok állapotát. Például: <code>{"id": 123, "method": "query_endstops/status"}</code> visszatérhet: <code>{"id": 123, "result": {"y": "open", "x": "open", "z": "TRIGGERED"}}</code></p>
-<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-Kód parancsok befejezése után fejeződik be.</p>
+<p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
 
               
             </article>

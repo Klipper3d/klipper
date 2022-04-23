@@ -695,7 +695,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -1767,8 +1767,8 @@
 <h2 id="display_status">display_status<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>display_status</code> objektumban érhetők el (ez az objektum automatikusan elérhető, ha a <a href="Config_Reference.html#display">kijelző</a> konfigurációs szakasz definiálva van):</p>
 <ul>
-<li><code>progress</code>: A legutóbbi <code>M73</code> G-Kód parancs progress értéke (vagy <code>virtual_sdcard.progress</code>, ha nem érkezett legutóbbi <code>M73</code>).</li>
-<li><code>message</code>: Az utolsó <code>M117</code> G-Kódú parancsban szereplő üzenet.</li>
+<li><code>progress</code>: A legutóbbi <code>M73</code> G-kód parancs progress értéke (vagy <code>virtual_sdcard.progress</code>, ha nem érkezett legutóbbi <code>M73</code>).</li>
+<li><code>message</code>: Az utolsó <code>M117</code> G-kódú parancsban szereplő üzenet.</li>
 </ul>
 <h2 id="endstop_phase">endstop_phase<a class="headerlink" href="#endstop_phase" title="Permanent link">&para;</a></h2>
 <p>A következő információk az <a href="Config_Reference.html#endstop_phase">endstop_phase</a> objektumban érhetők el:</p>
@@ -1808,9 +1808,9 @@
 <h2 id="gcode_move">gcode_move<a class="headerlink" href="#gcode_move" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>gcode_move</code> objektumban érhetők el (ez az objektum mindig elérhető):</p>
 <ul>
-<li><code>gcode_position</code>: A nyomtatófej aktuális pozíciója az aktuális G-Kód origóhoz képest. Vagyis olyan pozíciók, amelyeket közvetlenül egy <code>G1</code> parancsnak küldhetünk. Lehetőség van e pozíció X, Y, Z és az E, komponensének elérésére (pl. <code>gcode_position.x</code>).</li>
+<li><code>gcode_position</code>: A nyomtatófej aktuális pozíciója az aktuális G-kód origóhoz képest. Vagyis olyan pozíciók, amelyeket közvetlenül egy <code>G1</code> parancsnak küldhetünk. Lehetőség van e pozíció X, Y, Z és az E, komponensének elérésére (pl. <code>gcode_position.x</code>).</li>
 <li><code>position</code>: A nyomtatófej utolsó kiadott pozíciója a konfigurációs fájlban megadott koordináta rendszerrel. Lehetőség van ennek a pozíciónak az X, Y, Z és az E, komponenséhez hozzáférni (pl. <code>position.x</code>).</li>
-<li><code>homing_origin</code>: A G-Kód koordináta rendszer origója (a config fájlban megadott koordináta rendszerhez képest), amelyet a <code>G28</code> parancs után használni kell. A <code>SET_GCODE_OFFSET</code> parancs megváltoztathatja ezt a pozíciót. Lehetőség van ennek a pozíciónak az X, Y és Z komponenséhez hozzáférni (pl. <code>homing_origin.x</code>).</li>
+<li><code>homing_origin</code>: A G-kód koordináta rendszer origója (a config fájlban megadott koordináta rendszerhez képest), amelyet a <code>G28</code> parancs után használni kell. A <code>SET_GCODE_OFFSET</code> parancs megváltoztathatja ezt a pozíciót. Lehetőség van ennek a pozíciónak az X, Y és Z komponenséhez hozzáférni (pl. <code>homing_origin.x</code>).</li>
 <li><code>speed</code>: Az utolsó, <code>G1</code> parancsban beállított sebesség (mm/mp-ben).</li>
 <li><code>speed_factor</code>: Az <code>M220</code> parancs által beállított "sebességtényező felülbírálása". Ez egy lebegőpontos érték, így 1.0 azt jelenti, hogy nincs felülbírálat, és például a 2.0 megduplázza a kért sebességet.</li>
 <li><code>extrude_factor</code>: Az <code>M221</code> parancs által beállított "extrude factor override". Ez egy lebegőpontos érték, így 1.0 azt jelenti, hogy nincs felülbírálat, és például a 2.0 megduplázza a kért extrudálásokat.</li>
@@ -1948,7 +1948,7 @@
 <li><code>homed_axes</code>: Az aktuálisan "homed" állapotban lévőnek tekintett cartesian tengelyek. Ez egy karakterlánc, amely egy vagy több "X", "Y", "Z" értéket tartalmaz.</li>
 <li><code>axis_minimum</code>, <code>axis_maximum</code>: A tengely mozgásának határai (mm) a kezdőpont felvétel után. Lehetőség van e határérték X, Y, Z összetevőinek elérésére (pl. <code>axis_minimum.x</code>, <code>axis_maximum.z</code>).</li>
 <li><code>max_velocity</code>, <code>max_accel</code>, <code>max_accel_to_decel</code>, <code>square_corner_velocity</code>: Az aktuálisan érvényben lévő nyomtatási korlátok. Ez eltérhet a konfigurációs fájl beállításaitól, ha a <code>SET_VELOCITY_LIMIT</code> (vagy <code>M204</code>) parancs megváltoztatja azokat használat közben.</li>
-<li><code>stalls</code>: Az összes alkalom száma (az utolsó újraindítás óta), amikor a nyomtatót szüneteltetni kellett, mert a nyomtatófej gyorsabban mozgott, mint ahány mozdulatot a G-Kód bemenetről be lehetett olvasni.</li>
+<li><code>stalls</code>: Az összes alkalom száma (az utolsó újraindítás óta), amikor a nyomtatót szüneteltetni kellett, mert a nyomtatófej gyorsabban mozgott, mint ahány mozdulatot a G-kód bemenetről be lehetett olvasni.</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#dual_carriage">dual_carriage</a> alatt érhetőek el egy hybrid_corexy vagy hybrid_corexz gép esetében</p>

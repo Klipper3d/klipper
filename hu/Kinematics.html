@@ -693,7 +693,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -1510,7 +1510,7 @@ stepper_z_position = cartesian_z_position
 <p>Az alapvető nyomásszabályozás képlete az extruder motorjának hirtelen sebességváltozásait okozhatja. A Klipper ennek elkerülése érdekében az extruder mozgásának "simítását" alkalmazza.</p>
 <p><img alt="pressure-advance" src="img/pressure-velocity.png" /></p>
 <p>A fenti grafikon egy példát mutat két olyan extrudálási mozgásra, amelyek között a kanyarsebesség nem nulla. Vegye figyelembe, hogy a nyomásszabályozás rendszer miatt a gyorsítás során további szálak kerülnek az extruderbe. Minél nagyobb a kívánt száláramlási sebesség, annál több szálat kell betolni a gyorsítás során a nyomás miatt. A fej lassítása során a plusz szál visszahúzódik (az extruder sebessége negatív lesz).</p>
-<p>A "simítás" az extruder pozíciójának súlyozott átlagával történik egy kis időintervallumban (ahogyan azt a <code>pressure_advance_smooth_time</code> konfigurációs paraméter megadja). Ez az átlagolás több G-Kód mozgást is átfoghat. Figyelje meg, hogy az extrudermotor az első extrudermozgás névleges kezdete előtt elkezd mozogni, és az utolsó extrudermozgás névleges vége után is mozogni fog.</p>
+<p>A "simítás" az extruder pozíciójának súlyozott átlagával történik egy kis időintervallumban (ahogyan azt a <code>pressure_advance_smooth_time</code> konfigurációs paraméter megadja). Ez az átlagolás több G-kód mozgást is átfoghat. Figyelje meg, hogy az extrudermotor az első extrudermozgás névleges kezdete előtt elkezd mozogni, és az utolsó extrudermozgás névleges vége után is mozogni fog.</p>
 <p>Kulcsképlet a "simított nyomásszabályozáshoz":</p>
 <div class="highlight"><pre><span></span><code>smooth_pa_position(t) =
     ( definitive_integral(pa_position(x) * (smooth_time/2 - abs(t - x)) * dx,

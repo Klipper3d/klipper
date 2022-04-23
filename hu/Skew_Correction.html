@@ -695,7 +695,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -1325,15 +1325,15 @@ Hossz AD = 99.8
 <div class="highlight"><pre><span></span><code>SET_SKEW XY=140.4,142.8,99.8
 </code></pre></div>
 
-<p>Az XZ és YZ méréseket is hozzáadhatja a G-Kódhoz:</p>
+<p>Az XZ és YZ méréseket is hozzáadhatja a G-kódhoz:</p>
 <div class="highlight"><pre><span></span><code>SET_SKEW XY=140.4,142.8,99.8 XZ=141.6,141.4,99.8 YZ=142.4,140.5,99.5
 </code></pre></div>
 
-<p>A <code>[skew_correction]</code> modul a <code>[bed_mesh]</code> modulhoz hasonló módon támogatja a profilkezelést is. Miután a <code>SET_SKEW</code> gkóddal beállította a ferdeséget, a <code>SKEW_PROFILE</code> G-Kóddal elmentheti azt:</p>
+<p>A <code>[skew_correction]</code> modul a <code>[bed_mesh]</code> modulhoz hasonló módon támogatja a profilkezelést is. Miután a <code>SET_SKEW</code> gkóddal beállította a ferdeséget, a <code>SKEW_PROFILE</code> G-kóddal elmentheti azt:</p>
 <div class="highlight"><pre><span></span><code>SKEW_PROFILE SAVE=my_skew_profile
 </code></pre></div>
 
-<p>A parancs után a rendszer felszólítja a <code>SAVE_CONFIG</code> G-Kód kiadását a profil tartós tárolóba történő mentéséhez. Ha nincs <code>my_skew_profile</code> nevű profil, akkor egy új profil jön létre. Ha a megnevezett profil létezik, akkor azt felülírja.</p>
+<p>A parancs után a rendszer felszólítja a <code>SAVE_CONFIG</code> G-kód kiadását a profil tartós tárolóba történő mentéséhez. Ha nincs <code>my_skew_profile</code> nevű profil, akkor egy új profil jön létre. Ha a megnevezett profil létezik, akkor azt felülírja.</p>
 <p>Ha már van mentett profilja, betöltheti azt:</p>
 <div class="highlight"><pre><span></span><code>SKEW_PROFILE LOAD=my_skew_profile
 </code></pre></div>
@@ -1349,7 +1349,7 @@ Hossz AD = 99.8
 </code></pre></div>
 
 <h2 id="ovintezkedesek">Óvintézkedések<a class="headerlink" href="#ovintezkedesek" title="Permanent link">&para;</a></h2>
-<p>A ferdeségkorrekció természetéből adódóan ajánlott a ferdeséget az indító gkódban konfigurálni, a kezdőpont felvétel és minden olyan mozgás után, amely a nyomtatási terület széléhez közelít, mint például a tisztítás vagy a fúvóka törlése. Ehhez használhatja a <code>SET_SKEW</code> vagy a <code>SKEW_PROFILE</code> gkódokat. Ajánlott továbbá a <code>SET_SKEW CLEAR=1</code> parancs kiadása a befejező G-Kódban.</p>
+<p>A ferdeségkorrekció természetéből adódóan ajánlott a ferdeséget az indító gkódban konfigurálni, a kezdőpont felvétel és minden olyan mozgás után, amely a nyomtatási terület széléhez közelít, mint például a tisztítás vagy a fúvóka törlése. Ehhez használhatja a <code>SET_SKEW</code> vagy a <code>SKEW_PROFILE</code> gkódokat. Ajánlott továbbá a <code>SET_SKEW CLEAR=1</code> parancs kiadása a befejező G-kódban.</p>
 <p>Ne feledje! Lehetséges, hogy a <code>[skew_correction]</code> olyan korrekciót generál, amely a fejet az X és/vagy Y tengelyen a nyomtató határain túlra helyezi. A <code>[skew_correction]</code> használatakor ajánlott a nyomtatófejet a szélektől távolabb elhelyezni.</p>
 
               

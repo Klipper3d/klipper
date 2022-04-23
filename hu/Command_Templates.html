@@ -695,7 +695,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -771,14 +771,14 @@
       
         <li class="md-nav__item">
   <a href="#g-kod-makro-elnevezese" class="md-nav__link">
-    G-Kód makró elnevezése
+    G-kód makró elnevezése
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#a-g-kod-formazasa-a-konfiguracioban" class="md-nav__link">
-    A G-Kód formázása a konfigurációban
+    A G-kód formázása a konfigurációban
   </a>
   
 </li>
@@ -792,7 +792,7 @@
       
         <li class="md-nav__item">
   <a href="#allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz" class="md-nav__link">
-    Állapot mentése/visszaállítása G-Kódos mozgásokhoz
+    Állapot mentése/visszaállítása G-kódos mozgásokhoz
   </a>
   
 </li>
@@ -847,7 +847,7 @@
       
         <li class="md-nav__item">
   <a href="#kesleltetett-g-kodok" class="md-nav__link">
-    Késleltetett G-Kódok
+    Késleltetett G-kódok
   </a>
   
 </li>
@@ -1320,14 +1320,14 @@
       
         <li class="md-nav__item">
   <a href="#g-kod-makro-elnevezese" class="md-nav__link">
-    G-Kód makró elnevezése
+    G-kód makró elnevezése
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#a-g-kod-formazasa-a-konfiguracioban" class="md-nav__link">
-    A G-Kód formázása a konfigurációban
+    A G-kód formázása a konfigurációban
   </a>
   
 </li>
@@ -1341,7 +1341,7 @@
       
         <li class="md-nav__item">
   <a href="#allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz" class="md-nav__link">
-    Állapot mentése/visszaállítása G-Kódos mozgásokhoz
+    Állapot mentése/visszaállítása G-kódos mozgásokhoz
   </a>
   
 </li>
@@ -1396,7 +1396,7 @@
       
         <li class="md-nav__item">
   <a href="#kesleltetett-g-kodok" class="md-nav__link">
-    Késleltetett G-Kódok
+    Késleltetett G-kódok
   </a>
   
 </li>
@@ -1433,11 +1433,11 @@
 
 
 <h1 id="parancssablonok">Parancssablonok<a class="headerlink" href="#parancssablonok" title="Permanent link">&para;</a></h1>
-<p>Ez a dokumentum a G-Kód parancssorozatok gcode_macro (és hasonló) konfigurációs szakaszokban történő implementálásáról nyújt információt.</p>
-<h2 id="g-kod-makro-elnevezese">G-Kód makró elnevezése<a class="headerlink" href="#g-kod-makro-elnevezese" title="Permanent link">&para;</a></h2>
-<p>A G-Kódos makronév esetében a nagy- és kisbetűs írásmód nem fontos - a MY_MACRO és a my_macro ugyanúgy kiértékelődik, és kicsi vagy nagybetűvel is meghívható. Ha a makronévben számokat használunk, akkor azoknak a név végén kell állniuk (pl. a TEST_MACRO25 érvényes, de a MACRO25_TEST3 nem).</p>
-<h2 id="a-g-kod-formazasa-a-konfiguracioban">A G-Kód formázása a konfigurációban<a class="headerlink" href="#a-g-kod-formazasa-a-konfiguracioban" title="Permanent link">&para;</a></h2>
-<p>A behúzás fontos, amikor makrót definiál a konfigurációs fájlban. Többsoros G-Kód szekvencia megadásához fontos, hogy minden sorban megfelelő behúzás legyen. Például:</p>
+<p>Ez a dokumentum a G-kód parancssorozatok gcode_macro (és hasonló) konfigurációs szakaszokban történő implementálásáról nyújt információt.</p>
+<h2 id="g-kod-makro-elnevezese">G-kód makró elnevezése<a class="headerlink" href="#g-kod-makro-elnevezese" title="Permanent link">&para;</a></h2>
+<p>A G-kódos makronév esetében a nagy- és kisbetűs írásmód nem fontos - a MY_MACRO és a my_macro ugyanúgy kiértékelődik, és kicsi vagy nagybetűvel is meghívható. Ha a makronévben számokat használunk, akkor azoknak a név végén kell állniuk (pl. a TEST_MACRO25 érvényes, de a MACRO25_TEST3 nem).</p>
+<h2 id="a-g-kod-formazasa-a-konfiguracioban">A G-kód formázása a konfigurációban<a class="headerlink" href="#a-g-kod-formazasa-a-konfiguracioban" title="Permanent link">&para;</a></h2>
+<p>A behúzás fontos, amikor makrót definiál a konfigurációs fájlban. Többsoros G-kód szekvencia megadásához fontos, hogy minden sorban megfelelő behúzás legyen. Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro blink_led]
 gcode:
   SET_PIN PIN=my_led VALUE=1
@@ -1445,9 +1445,9 @@ gcode:
   SET_PIN PIN=my_led VALUE=0
 </code></pre></div>
 
-<p>Figyeljük meg, hogy a <code>gcode:</code> config opció mindig a sor elején kezdődik, valamint a G-Kód makró további sorai soha nem kezdődnek a sor elején.</p>
+<p>Figyeljük meg, hogy a <code>gcode:</code> config opció mindig a sor elején kezdődik, valamint a G-kód makró további sorai soha nem kezdődnek a sor elején.</p>
 <h2 id="leiras-hozzaadasa-a-makrohoz">Leírás hozzáadása a makróhoz<a class="headerlink" href="#leiras-hozzaadasa-a-makrohoz" title="Permanent link">&para;</a></h2>
-<p>A funkció azonosításának megkönnyítése érdekében rövid leírás adható hozzá. Adjunk hozzá <code>description:</code> egy rövid szöveget a funkció leírására. Ha nincs megadva, az alapértelmezett érték "G-Kód makró". Például:</p>
+<p>A funkció azonosításának megkönnyítése érdekében rövid leírás adható hozzá. Adjunk hozzá <code>description:</code> egy rövid szöveget a funkció leírására. Ha nincs megadva, az alapértelmezett érték "G-kód makró". Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro blink_led]
 description: Blink my_led one time
 gcode:
@@ -1457,8 +1457,8 @@ gcode:
 </code></pre></div>
 
 <p>A terminál megjeleníti a leírást, ha a <code>HELP</code> parancsot vagy az automatikus kitöltés funkciót használja.</p>
-<h2 id="allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz">Állapot mentése/visszaállítása G-Kódos mozgásokhoz<a class="headerlink" href="#allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz" title="Permanent link">&para;</a></h2>
-<p>Sajnos a G-Kód parancsnyelv használata kihívást jelenthet. A nyomtatófej mozgatásának szabványos mechanizmusa a <code>G1</code> parancson keresztül történik (a <code>G0</code> parancs a <code>G1</code> parancs álnevének tekinthető, és felcserélhető vele). Ez a parancs azonban a "G-Kód elemzési állapotára" támaszkodik: <code>M82</code>, <code>M83</code>, <code>G90</code> általi beállításra, <code>G91</code>, <code>G92</code> és a korábbi <code>G1</code> parancsok is. Egy G-Kód makró létrehozásakor célszerű mindig kifejezetten beállítani a G-Kód elemzési állapotát a <code>G1</code> parancs kiadása előtt. (Ellenkező esetben fennáll annak a veszélye, hogy a <code>G1</code> parancs nemkívánatos kérést fog végrehajtani.)</p>
+<h2 id="allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz">Állapot mentése/visszaállítása G-kódos mozgásokhoz<a class="headerlink" href="#allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz" title="Permanent link">&para;</a></h2>
+<p>Sajnos a G-kód parancsnyelv használata kihívást jelenthet. A nyomtatófej mozgatásának szabványos mechanizmusa a <code>G1</code> parancson keresztül történik (a <code>G0</code> parancs a <code>G1</code> parancs álnevének tekinthető, és felcserélhető vele). Ez a parancs azonban a "G-kód elemzési állapotára" támaszkodik: <code>M82</code>, <code>M83</code>, <code>G90</code> általi beállításra, <code>G91</code>, <code>G92</code> és a korábbi <code>G1</code> parancsok is. Egy G-kód makró létrehozásakor célszerű mindig kifejezetten beállítani a G-kód elemzési állapotát a <code>G1</code> parancs kiadása előtt. (Ellenkező esetben fennáll annak a veszélye, hogy a <code>G1</code> parancs nemkívánatos kérést fog végrehajtani.)</p>
 <p>Ennek egyik gyakori módja, hogy a <code>G1</code> mozdulatokat <code>SAVE_GCODE_STATE</code>-be csomagoljuk, <code>G91</code>, és <code>RESTORE_GCODE_STATE</code>-ba. Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro MOVE_UP]
 gcode:
@@ -1468,7 +1468,7 @@ gcode:
   RESTORE_GCODE_STATE NAME=my_move_up_state
 </code></pre></div>
 
-<p>A <code>G91</code> parancs a G-Kód elemzési állapotot "relatív mozgatási módba" helyezi, a <code>RESTORE_GCODE_STATE</code> parancs pedig visszaállítja a makró belépése előtti állapotot. Ügyeljen arra, hogy az első <code>G1</code> parancsnál adjon meg explicit sebességet (az <code>F</code> paraméterrel).</p>
+<p>A <code>G91</code> parancs a G-kód elemzési állapotot "relatív mozgatási módba" helyezi, a <code>RESTORE_GCODE_STATE</code> parancs pedig visszaállítja a makró belépése előtti állapotot. Ügyeljen arra, hogy az első <code>G1</code> parancsnál adjon meg explicit sebességet (az <code>F</code> paraméterrel).</p>
 <h2 id="sablon-bovites">Sablon bővítés<a class="headerlink" href="#sablon-bovites" title="Permanent link">&para;</a></h2>
 <p>A gcode_macro <code>gcode:</code> konfigurációs szakasz kiértékelése a Jinja2 sablonnyelv használatával történik. A kifejezéseket kiértékelhetjük futásidőben <code>{ }</code> karakterekbe csomagolva, vagy használhatunk feltételes utasításokat <code>{% %}</code> karakterekbe csomagolva. A szintaxissal kapcsolatos további információkért lásd a <a href="http://jinja.pocoo.org/docs/2.10/templates/">Jinja2 dokumentáció</a>.</p>
 <p>Példa egy összetett makróra:</p>
@@ -1529,7 +1529,7 @@ gcode:
 </code></pre></div>
 
 <h2 id="tevekenysegek">Tevékenységek<a class="headerlink" href="#tevekenysegek" title="Permanent link">&para;</a></h2>
-<p>A nyomtató állapotának megváltoztatására néhány parancs áll rendelkezésre. Például az <code>{ action_emergency_stop() }</code> a nyomtatót leállítási állapotba helyezi. Vegye figyelembe, hogy ezek a műveletek a makró kiértékelésének időpontjában történnek, ami jelentős idővel a generált G-Kód parancsok végrehajtása előtt történhet.</p>
+<p>A nyomtató állapotának megváltoztatására néhány parancs áll rendelkezésre. Például az <code>{ action_emergency_stop() }</code> a nyomtatót leállítási állapotba helyezi. Vegye figyelembe, hogy ezek a műveletek a makró kiértékelésének időpontjában történnek, ami jelentős idővel a generált G-kód parancsok végrehajtása előtt történhet.</p>
 <p>Elérhető "művelet" parancsok:</p>
 <ul>
 <li><code>action_respond_info(msg)</code>: A megadott <code>msg</code> kiírása a /tmp/printer álterminálra. Az <code>msg</code> minden egyes sora "// " előtaggal lesz elküldve.</li>
@@ -1558,8 +1558,8 @@ gcode:
 </code></pre></div>
 
 <p>A SET_GCODE_VARIABLE használatakor mindenképpen vegye figyelembe a makró kiértékelésének és a parancs végrehajtásának időzítését.</p>
-<h2 id="kesleltetett-g-kodok">Késleltetett G-Kódok<a class="headerlink" href="#kesleltetett-g-kodok" title="Permanent link">&para;</a></h2>
-<p>A [delayed_gcode] konfigurációs opció késleltetett G-Kód szekvencia végrehajtásához használható:</p>
+<h2 id="kesleltetett-g-kodok">Késleltetett G-kódok<a class="headerlink" href="#kesleltetett-g-kodok" title="Permanent link">&para;</a></h2>
+<p>A [delayed_gcode] konfigurációs opció késleltetett G-kód szekvencia végrehajtásához használható:</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode clear_display]
 gcode:
   M117
@@ -1574,7 +1574,7 @@ gcode:
  UPDATE_DELAYED_GCODE ID=clear_display DURATION=10
 </code></pre></div>
 
-<p>Amikor a fenti <code>load_filament</code> makró végrehajtódik, az extrudálás befejezése után megjelenik egy "Load Complete!" üzenet. A G-Kód utolsó sora engedélyezi a "clear_display" delayed_gcode-ot, amely 10 másodperc múlva végrehajtásra van beállítva.</p>
+<p>Amikor a fenti <code>load_filament</code> makró végrehajtódik, az extrudálás befejezése után megjelenik egy "Load Complete!" üzenet. A G-kód utolsó sora engedélyezi a "clear_display" delayed_gcode-ot, amely 10 másodperc múlva végrehajtásra van beállítva.</p>
 <p>Az <code>initial_duration</code> konfigurációs beállítás beállítható úgy, hogy a nyomtató indításakor végrehajtsa a delayed_gcode parancsot. A visszaszámlálás akkor kezdődik, amikor a nyomtató a "ready" állapotba lép. Az alábbi delayed_gcode például a nyomtató elkészülte után 5 másodperccel végrehajtja a műveletet, és a kijelzőt "Üdvözlés!" üzenettel inicializálja:</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode welcome]
 initial_duration: 5.
@@ -1582,7 +1582,7 @@ gcode:
   M117 Welcome!
 </code></pre></div>
 
-<p>Lehetséges, hogy egy késleltetett G-Kód megismétlődik a G-Kód opcióban történő frissítéssel:</p>
+<p>Lehetséges, hogy egy késleltetett G-kód megismétlődik a G-kód opcióban történő frissítéssel:</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode report_temp]
 initial_duration: 2.
 gcode:
@@ -1590,7 +1590,7 @@ gcode:
   UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
 </code></pre></div>
 
-<p>A fenti delayed_gcode 2 másodpercenként elküldi az "// Extruder Temp: [ex0_temp]" kódot az Octoprintnek. Ez a következő G-Kóddal törölhető:</p>
+<p>A fenti delayed_gcode 2 másodpercenként elküldi az "// Extruder Temp: [ex0_temp]" kódot az Octoprintnek. Ez a következő G-kóddal törölhető:</p>
 <div class="highlight"><pre><span></span><code>UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 </code></pre></div>
 
@@ -1616,7 +1616,7 @@ gcode:
 </li>
 </ul>
 <h2 id="valtozok-mentese-lemezre">Változók mentése lemezre<a class="headerlink" href="#valtozok-mentese-lemezre" title="Permanent link">&para;</a></h2>
-<p>Ha a <a href="Config_Reference.html#save_variables">save_variables config section</a> engedélyezve van, a <code>SAVE_VARIABLE VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code> használható a változó lemezre mentésére, hogy az újraindítások során is használható legyen. Minden tárolt változó betöltődik a <code>printer.save_variables.variables</code> dict-be indításkor, és felhasználható a G-Kód makrókban. A túl hosszú sorok elkerülése érdekében a makró elejére a következőket írhatjuk:</p>
+<p>Ha a <a href="Config_Reference.html#save_variables">save_variables config section</a> engedélyezve van, a <code>SAVE_VARIABLE VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code> használható a változó lemezre mentésére, hogy az újraindítások során is használható legyen. Minden tárolt változó betöltődik a <code>printer.save_variables.variables</code> dict-be indításkor, és felhasználható a G-kód makrókban. A túl hosszú sorok elkerülése érdekében a makró elejére a következőket írhatjuk:</p>
 <div class="highlight"><pre><span></span><code>{% set svv = printer.save_variables.variables %}
 </code></pre></div>
 
@@ -1654,7 +1654,7 @@ gcode:
     <nav class="md-footer__inner md-grid" aria-label="Élőláb">
       
         
-        <a href="G-Codes.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: G-Kódok" rel="prev">
+        <a href="G-Codes.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: G-kódok" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1663,7 +1663,7 @@ gcode:
               <span class="md-footer__direction">
                 Előző
               </span>
-              G-Kódok
+              G-kódok
             </div>
           </div>
         </a>

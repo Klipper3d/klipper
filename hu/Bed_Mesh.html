@@ -696,10 +696,10 @@
       
         <li class="md-nav__item">
   <a href="#agy-halo-g-kodok" class="md-nav__link">
-    Ágy háló G-Kódok
+    Ágy háló G-kódok
   </a>
   
-    <nav class="md-nav" aria-label="Ágy háló G-Kódok">
+    <nav class="md-nav" aria-label="Ágy háló G-kódok">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -854,7 +854,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -1421,10 +1421,10 @@
       
         <li class="md-nav__item">
   <a href="#agy-halo-g-kodok" class="md-nav__link">
-    Ágy háló G-Kódok
+    Ágy háló G-kódok
   </a>
   
-    <nav class="md-nav" aria-label="Ágy háló G-Kódok">
+    <nav class="md-nav" aria-label="Ágy háló G-kódok">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1547,7 +1547,7 @@ bicubic_tension: 0.2
 <p>Az alábbi ábra azt mutatja, hogy a fenti opciókat hogyan használjuk egy interpolált háló létrehozásához.</p>
 <p><img alt="bedmesh_interpolated" src="img/bedmesh_interpolated.svg" /></p>
 <h3 id="mozgas-felosztas">Mozgás felosztás<a class="headerlink" href="#mozgas-felosztas" title="Permanent link">&para;</a></h3>
-<p>Az ágy háló úgy működik, hogy megkapja a G-Kód mozgatási parancsokat és transzformációt alkalmaz a Z koordinátájukra. A hosszú mozgásokat kisebb mozgásokra kell bontani, hogy helyesen kövessék az ágy alakját. Az alábbi opciók a felosztási viselkedést szabályozzák.</p>
+<p>Az ágy háló úgy működik, hogy megkapja a G-kód mozgatási parancsokat és transzformációt alkalmaz a Z koordinátájukra. A hosszú mozgásokat kisebb mozgásokra kell bontani, hogy helyesen kövessék az ágy alakját. Az alábbi opciók a felosztási viselkedést szabályozzák.</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -1620,7 +1620,7 @@ faulty_region_4_max: 45.0, 210.0
 </ul>
 <p>Az alábbi kép azt szemlélteti, hogyan generálódnak a cserepontok, ha egy generált pont egy hibás területen belül van. Az ábrázolt régiók megegyeznek a fenti mintakonfigurációban szereplő régiókkal. A cserepontok és koordinátáik zöld színnel vannak jelölve.</p>
 <p><img alt="bedmesh_interpolated" src="img/bedmesh_faulty_regions.svg" /></p>
-<h2 id="agy-halo-g-kodok">Ágy háló G-Kódok<a class="headerlink" href="#agy-halo-g-kodok" title="Permanent link">&para;</a></h2>
+<h2 id="agy-halo-g-kodok">Ágy háló G-kódok<a class="headerlink" href="#agy-halo-g-kodok" title="Permanent link">&para;</a></h2>
 <h3 id="kalibracio">Kalibráció<a class="headerlink" href="#kalibracio" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CALIBRATE PROFILE=&lt;name&gt; METHOD=[manual | automatic] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code> * Alapértelmezett profil: alapértelmezett<em> </em>Alapértelmezett módszer: automatikus, ha érzékelőt észlel, egyébként manuális*</p>
 <p>Elindítja a mérési eljárást az ágyháló kalibrálásához.</p>
@@ -1648,7 +1648,7 @@ faulty_region_4_max: 45.0, 210.0
 <p>Az egyes paraméterek hálóra való alkalmazásának részleteit lásd a fenti konfigurációs dokumentációban.</p>
 <h3 id="profilok">Profilok<a class="headerlink" href="#profilok" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_PROFILE SAVE=&lt;name&gt; LOAD=&lt;name&gt; REMOVE=&lt;name&gt;</code></p>
-<p>A BED_MESH_CALIBRATE elvégzése után lehetőség van a háló aktuális állapotának elmentésére egy megnevezett profilba. Ez lehetővé teszi a háló betöltését az ágy újbóli mérése nélkül. Miután egy profilt a <code>BED_MESH_PROFILE SAVE=&lt;name&gt;</code> segítségével elmentettünk, a <code>SAVE_CONFIG</code> G-Kód végrehajtható a profil printer.cfg fájlba való írásához.</p>
+<p>A BED_MESH_CALIBRATE elvégzése után lehetőség van a háló aktuális állapotának elmentésére egy megnevezett profilba. Ez lehetővé teszi a háló betöltését az ágy újbóli mérése nélkül. Miután egy profilt a <code>BED_MESH_PROFILE SAVE=&lt;name&gt;</code> segítségével elmentettünk, a <code>SAVE_CONFIG</code> G-kód végrehajtható a profil printer.cfg fájlba való írásához.</p>
 <p>A profilok a <code>BED_MESH_PROFILE LOAD=&lt;name&gt;</code> parancs végrehajtásával tölthetők be.</p>
 <p>Meg kell jegyezni, hogy minden alkalommal, amikor a BED_MESH_CALIBRATE használatba kerül, az aktuális állapot automatikusan az <em>alapértelmezett</em> profilba kerül mentésre. Ha ez a profil létezik, akkor a Klipper indításakor automatikusan betöltődik. Ha ez a viselkedés nem kívánatos, a <em>default</em> profil a következőképpen távolítható el:</p>
 <p><code>BED_MESH_PROFILE REMOVE=default</code></p>
@@ -1679,7 +1679,7 @@ faulty_region_4_max: 45.0, 210.0
 <p>A "Tool Adjusted" pontok az egyes pontok fúvókájának helyére, a "Probe" pontok pedig a szonda helyére utalnak. Vegye figyelembe, hogy kézi mérés esetén a "Probe" pontok mind a szerszám, mind a fúvóka helyére vonatkoznak.</p>
 <h3 id="tiszta-halos-allapot">Tiszta hálós állapot<a class="headerlink" href="#tiszta-halos-allapot" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CLEAR</code></p>
-<p>Ez a G-Kód használható a belső háló állapotának törlésére.</p>
+<p>Ez a G-kód használható a belső háló állapotának törlésére.</p>
 <h3 id="xy-eltolasok-alkalmazasa">X/Y eltolások alkalmazása<a class="headerlink" href="#xy-eltolasok-alkalmazasa" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code></p>
 <p>Ez több független extruderrel rendelkező nyomtatóknál hasznos, mivel a szerszámcsere utáni helyes Z-beállításhoz szükség van egy eltolásra. Az eltolásokat az elsődleges extruderhez képest kell megadni. Vagyis pozitív X eltolást kell megadni, ha a másodlagos extruder az elsődleges extrudertől jobbra van felszerelve, és pozitív Y eltolást kell megadni, ha a másodlagos extruder az elsődleges extruder mögött van felszerelve.</p>

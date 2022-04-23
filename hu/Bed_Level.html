@@ -752,7 +752,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Kódok
+        G-kódok
       </a>
     </li>
   
@@ -1334,7 +1334,7 @@ Recv: // Z position: ?????? --&gt; 5.000 &lt;-- ??????
 <p>A számítás legegyszerűbben úgy végezhető el, ha kinyomtatunk egy olyan tesztobjektumot, amelynek minden oldalán egyenes falak vannak. Ehhez a <a href="prints/square.stl">docs/prints/square.stl</a> fájlban található nagy, üreges négyzetet használhatjuk. Az objektum szeletelésekor győződjön meg róla, hogy a szeletelő az első szinthez ugyanazt a rétegmagasságot és extrudálási szélességet használja, mint az összes további réteghez. Használjon durva rétegmagasságot (a rétegmagasságnak a fúvóka átmérőjének körülbelül 75%-ának kell lennie), és ne használjon peremet vagy szoknyát.</p>
 <p>Nyomtassa ki a tesztobjektumot, várja meg, amíg lehűl, és vegye le az ágyról. Ellenőrizze a tárgy legalsó rétegét. (Az is hasznos lehet, ha ujját vagy körmét végighúzza az alsó szélén.) Ha azt tapasztaljuk, hogy az alsó réteg a tárgy minden oldala mentén kissé kidudorodik, akkor ez azt jelzi, hogy a fúvóka kissé közelebb volt az ágyhoz, mint kellett volna. A magasság növeléséhez kiadhatunk egy <code>SET_GCODE_OFFSET Z=+.010</code> parancsot. A későbbi nyomtatásokban ellenőrizhetjük ezt a viselkedést, és szükség szerint további kiigazításokat végezhetünk. Az ilyen típusú beállítások jellemzően 10 mikronokban (.010mm) történnek.</p>
 <p>Ha az alsó réteg keskenyebbnek tűnik, mint a következő rétegek, akkor a SET_GCODE_OFFSET paranccsal negatív Z-beállítást végezhetünk. Ha bizonytalanok vagyunk, akkor a Z-beállítást addig csökkenthetjük, amíg a nyomatok alsó rétege egy kis dudort nem mutat, majd addig csökkenthetjük, amíg az el nem tűnik.</p>
-<p>A legegyszerűbb módja a kívánt Z-korrigálásnak, ha létrehoz egy START_PRINT G-Kód makrót. A szeletelő úgy intézi, hogy a makró minden nyomtatás kezdetekor meghívja ezt a parancsot, és hozzáad egy SET_GCODE_OFFSET parancsot. További részletekért lásd a <a href="Slicers.html">szeletelők</a> dokumentumot.</p>
+<p>A legegyszerűbb módja a kívánt Z-korrigálásnak, ha létrehoz egy START_PRINT G-kód makrót. A szeletelő úgy intézi, hogy a makró minden nyomtatás kezdetekor meghívja ezt a parancsot, és hozzáad egy SET_GCODE_OFFSET parancsot. További részletekért lásd a <a href="Slicers.html">szeletelők</a> dokumentumot.</p>
 
               
             </article>
