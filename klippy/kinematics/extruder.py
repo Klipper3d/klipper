@@ -302,8 +302,10 @@ class PrinterExtruder:
             e_velocity = (move.axes_d[3] * toolhead_speed) / move.move_d
             if e_velocity > self.max_e_velocity:
                 # limit the speed if the move excedes max e speed.
-                # use the relation between max and current velocity to scale down
-                new_speed_limit = toolhead_speed*(self.max_e_velocity/e_velocity)
+                # use the relation between max and current velocity to scale
+                # down
+                new_speed_limit = (
+                    toolhead_speed*(self.max_e_velocity/e_velocity))
                 #logging.info(
                 #    "Limiting the current move speed to respect max e speed"
                 #    "from: %f to: %f"
