@@ -25,7 +25,7 @@ SAMPLE_RATE_DIVS = {
 }
 
 SET_FIFO_EN_ACCEL = 0x80 # Only enable FIFO for accelerometer
-SET_CONFIG =        0x00 # FIFO mode 'stream' style 
+SET_CONFIG =        0x01 # FIFO mode 'stream' style 
 SET_ACCEL_CONFIG =  0x10 # 4g full scale
 SET_ACCEL_CONFIG2 = 0x01 # 184Hz BW, 5.80ms delay 1kHz sample rate
 SET_USER_CTRL_FIFO =0x40 # Enable fifo access over serial
