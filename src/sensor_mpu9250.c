@@ -116,17 +116,16 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         mp->limit_count++;
 
     uint16_t remaining_bytes = fifo_status;
-    while ( remaining_bytes > 255 ) {
+    while ( remaining_bytes >= 6 ) { // 6 bytes per entry
         // Extract x, y, z measurements into data holder and report
-        i2c_read(mp->i2c->i2c_config, 1, &regs[0], 255, mp->data);
-        mp->data_count = 255;
-        mp9250_report(mp, oid);
-        remaining_bytes -= 255;
+        i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, mp->data);
+        mp->data_count += 6;
+        remaining_bytes -= 6;
+        if (mp->data_count >= 252) // buffer is filled
+            mp9250_report(mp, oid);
     } 
 
-    if ( remaining_bytes > 0 ) {
-        i2c_read(mp->i2c->i2c_config, 1, &regs[0], remaining_bytes, mp->data);
-        mp->data_count = remaining_bytes;
+    if ( mp->data_count > 0 ) {
         mp9250_report(mp, oid);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
@@ -186,8 +185,8 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     }
 
     // Report final data
-    if (mp->data_count)
-        mp9250_report(mp, oid);
+    // if (mp->data_count)
+    //     mp9250_report(mp, oid);
     mp9250_status(mp, oid, end1_time, end2_time, fifo_status);
 }
 
