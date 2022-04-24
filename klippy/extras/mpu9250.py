@@ -293,13 +293,13 @@ class MPU9250:
 
     def set_reg(self, reg, val, minclock=0):
         self.i2c.i2c_write([reg, val & 0xFF], minclock=minclock)
-        stored_val = self.read_reg(reg)
-        if stored_val != val:
-            raise self.printer.command_error(
-                    "Failed to set MPU9250 register [0x%x] to 0x%x: got 0x%x. "
-                    "This is generally indicative of connection problems "
-                    "(e.g. faulty wiring) or a faulty mpu9250 chip." % (
-                        reg, val, stored_val))
+        # stored_val = self.read_reg(reg)
+        # if stored_val != val:
+        #     raise self.printer.command_error(
+        #             "Failed to set MPU9250 register [0x%x] to 0x%x: got 0x%x. "
+        #             "This is generally indicative of connection problems "
+        #             "(e.g. faulty wiring) or a faulty mpu9250 chip." % (
+        #                 reg, val, stored_val))
 
     # Measurement collection
     def is_measuring(self):
