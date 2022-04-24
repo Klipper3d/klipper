@@ -245,7 +245,7 @@ class MPU9250:
         if any([a not in am for a in axes_map]):
             raise config.error("Invalid mpu9250 axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
-        self.data_rate = config.getint('rate', 1000)
+        self.data_rate = config.getint('rate', 31)
         if self.data_rate not in SAMPLE_RATE_DIVS:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
         # Measurement storage (accessed from background thread)

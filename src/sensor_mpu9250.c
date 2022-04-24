@@ -117,7 +117,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         // Extract x, y, z measurements into data holder
         i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
         mp->data_count += 6;
-        if (mp->data_count + 6 > ARRAY_SIZE(mp->data))
+        //if (mp->data_count + 6 > ARRAY_SIZE(mp->data))
             mp9250_report(mp, oid);
 
         if (fifo_status > 1) {
