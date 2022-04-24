@@ -50,6 +50,9 @@ choice
     config MACH_STM32F446
         bool "STM32F446"
         select MACH_STM32F4
+    config MACH_STM32F723
+        bool "STM32F723"
+        select MACH_STM32F7
     config MACH_STM32F031
         bool "STM32F031"
         select MACH_STM32F0
@@ -67,8 +70,8 @@ choice
     config MACH_STM32G0B1
         bool "STM32G0B1"
         select MACH_STM32G0
-    config MACH_STM32H743
-        bool "STM32H743"
+    config MACH_STM32H723
+        bool "STM32H723"
         select MACH_STM32H7
     config MACH_STM32H750
         bool "STM32H750"
@@ -86,6 +89,8 @@ config MACH_STM32F4
 config MACH_STM32G0
     bool
 config MACH_STM32H7
+    bool
+config MACH_STM32F7
     bool
 config MACH_STM32F0x2 # F042, F072 series
     bool
@@ -114,8 +119,10 @@ config MCU
     default "stm32f407xx" if MACH_STM32F407
     default "stm32f429xx" if MACH_STM32F429
     default "stm32f446xx" if MACH_STM32F446
+    default "stm32f723xx" if MACH_STM32F723
     default "stm32g0b1xx" if MACH_STM32G0B1
     default "stm32h743xx" if MACH_STM32H743
+    default "stm32h723xx" if MACH_STM32H723
     default "stm32h750xx" if MACH_STM32H750
 
 config CLOCK_FREQ
@@ -128,6 +135,7 @@ config CLOCK_FREQ
     default 168000000 if MACH_STM32F4x5
     default 180000000 if MACH_STM32F446
     default 64000000 if MACH_STM32G0
+    default 216000000 if MACH_STM32F7
     default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
 
 config FLASH_SIZE
@@ -140,11 +148,11 @@ config FLASH_SIZE
     default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x20000 if MACH_STM32G0B1
     default 0x20000 if MACH_STM32H750
-    default 0x200000 if MACH_STM32H743
+    default 0x200000 if MACH_STM32H743 || MACH_STM32F723 || MACH_STM32H723
 
 config RAM_START
     hex
-    default 0x24000000 if MACH_STM32H743
+    default 0x24000000 if MACH_STM32H743 || MACH_STE32H723
     default 0x20000000
 
 config RAM_SIZE
@@ -158,7 +166,7 @@ config RAM_SIZE
     default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x24000 if MACH_STM32G0B1
     default 0x20000 if MACH_STM32H750
-    default 0x80000 if MACH_STM32H743
+    default 0x80000 if MACH_STM32H743 || MACH_STM32F723
 
 config STACK_SIZE
     int
@@ -182,21 +190,21 @@ config STM32F103GD_DISABLE_SWD
 choice
     prompt "Bootloader offset"
     config STM32_FLASH_START_2000
-        bool "8KiB bootloader" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0
+        bool "8KiB bootloader" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0 || MACH_STM32F723 || MACH_STM32F401
     config STM32_FLASH_START_5000
-        bool "20KiB bootloader" if MACH_STM32F103
+        bool "20KiB bootloader" if MACH_STM32F103 || MACH_STM32F723 || MACH_STM32F401 || MACH_STM32H723
     config STM32_FLASH_START_7000
-        bool "28KiB bootloader" if MACH_STM32F103
+        bool "28KiB bootloader" if MACH_STM32F103 || MACH_STM32F723 || MACH_STM32F401 || MACH_STM32H723
     config STM32_FLASH_START_8000
-        bool "32KiB bootloader" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4
+        bool "32KiB bootloader" if MACH_STM32F103 || MACH_STM32F207 || MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32F723 || MACH_STM32F401
     config STM32_FLASH_START_8800
-        bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
+        bool "34KiB bootloader" if MACH_STM32F103 || MACH_STM32H723
     config STM32_FLASH_START_20200
-        bool "128KiB bootloader with 512 byte offset (Prusa Buddy)" if MACH_STM32F4x5
+        bool "128KiB bootloader" if MACH_STM32F4x5 || MACH_STM32F723 || MACH_STM32F401 || MACH_STM32H723
     config STM32_FLASH_START_C000
-        bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F4x5
+        bool "48KiB bootloader" if MACH_STM32F4x5 || MACH_STM32F401 || MACH_STM32H723
     config STM32_FLASH_START_10000
-        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446
+        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446 || MACH_STM32F401 || MACH_STM32H723
 
     config STM32_FLASH_START_800
         bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
