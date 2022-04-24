@@ -254,10 +254,7 @@ class MPU9250:
         self.oid = oid = mcu.create_oid()
         self.query_mpu9250_cmd = self.query_mpu9250_end_cmd = None
         self.query_mpu9250_status_cmd = None
-        mcu.add_config_cmd("config_mpu9250 oid=%d i2c_oid=%d"
-                           % (oid, self.i2c.get_oid()))
-        mcu.add_config_cmd("query_mpu9250 oid=%d clock=0 rest_ticks=0"
-                           % (oid,), on_restart=True)
+        
         mcu.register_config_callback(self._build_config)
         mcu.register_response(self._handle_mpu9250_data, "mpu9250_data", oid)
         # Clock tracking
@@ -273,6 +270,10 @@ class MPU9250:
                                  self._handle_dump_mpu9250)
     def _build_config(self):
         cmdqueue = self.i2c.get_command_queue()
+        self.mcu.add_config_cmd("config_mpu9250 oid=%d i2c_oid=%d"
+                           % (self.oid, self.i2c.get_oid()))
+        self.mcu.add_config_cmd("query_mpu9250 oid=%d clock=0 rest_ticks=0"
+                           % (self.oid,), on_restart=True)
         self.query_mpu9250_cmd = self.mcu.lookup_command(
             "query_mpu9250 oid=%c clock=%u rest_ticks=%u", cq=cmdqueue)
         self.query_mpu9250_end_cmd = self.mcu.lookup_query_command(
