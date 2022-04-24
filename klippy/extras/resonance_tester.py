@@ -225,14 +225,14 @@ class ResonanceTester:
                 " where x, y and z are valid floating point numbers")
 
         if accel_chips:
-            initialized_chips = []
+            parsed_chips = []
             for chip_name in accel_chips.split(','):
                 if "adxl345" in chip_name:
                     chip_lookup_name = chip_name.strip()
                 else:
                     chip_lookup_name = "adxl345 " + chip_name.strip();
                 chip = self.printer.lookup_object(chip_lookup_name)
-                initialized_chips.append(chip)
+                parsed_chips.append(chip)
 
         outputs = gcmd.get("OUTPUT", "resonances").lower().split(',')
         for output in outputs:
@@ -257,7 +257,7 @@ class ResonanceTester:
         data = self._run_test(
                 gcmd, [axis], helper,
                 raw_name_suffix=name_suffix if raw_output else None,
-                accel_chips=initialized_chips if accel_chips else None,
+                accel_chips=parsed_chips if accel_chips else None,
                 test_point=test_point)[axis]
         if csv_output:
             csv_name = self.save_calibration_data('resonances', name_suffix,
