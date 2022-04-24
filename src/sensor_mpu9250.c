@@ -102,28 +102,28 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     // Regs are: [Xh, Xl, Yh, Yl, Zh, Zl] and [FIFO_CNTh, FIFO_CNTl]
     //uint8_t regs[] = {AR_ACCEL_OUT_XH, AR_FIFO_COUNT_H};
     uint8_t regs[] = {AR_FIFO, AR_FIFO_COUNT_H};
-    uint8_t data_lens[] = {6, 2};
     uint8_t fifo_count[2];
 
-    // Extract x, y, z measurements into data holder
-    uint8_t *d = &mp->data[mp->data_count];
-    i2c_read(mp->i2c->i2c_config, 1, &regs[0], data_lens[0], d);
-    i2c_read(mp->i2c->i2c_config, 1, &regs[1], data_lens[1], fifo_count);
-
     // Get FIFO size
+    i2c_read(mp->i2c->i2c_config, 1, &regs[1], 2, fifo_count);
     fifo_count[0] = 0x1F & fifo_count[0]; // discard 3 MSB of fifo size
     uint16_t fifo_status = (((uint16_t)fifo_count[0]) << 8) | fifo_count[1];
-    
-    mp->data_count += 6;
-    if (mp->data_count + 6 > ARRAY_SIZE(mp->data))
-        mp9250_report(mp, oid);
 
     // Check fifo status
-    if (fifo_status >= AR_FIFO_SIZE-1)
+    if (fifo_status >= AR_FIFO_SIZE)
         mp->limit_count++;
-    if (fifo_status > 1 && fifo_status <= AR_FIFO_SIZE) {
-        // More data in fifo - wake this task again
-        sched_wake_task(&mpu9250_wake);
+
+    if (fifo_status > 0) {
+        // Extract x, y, z measurements into data holder
+        i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
+        mp->data_count += 6;
+        if (mp->data_count + 6 > ARRAY_SIZE(mp->data))
+            mp9250_report(mp, oid);
+
+        if (fifo_status > 1) {
+            // More data in fifo - wake this task again
+            sched_wake_task(&mpu9250_wake);
+        }
     } else if (mp->flags & AX_RUNNING) {
         // Sleep until next check time
         sched_del_timer(&mp->timer);
