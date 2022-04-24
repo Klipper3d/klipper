@@ -82,16 +82,17 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
 // Chip registers
 #define AR_FIFO_SIZE 512
 
-#define AR_PWR_MGMT_1  0x6B
-#define AR_FIFO_EN     0x23
+#define AR_PWR_MGMT_1   0x6B
+#define AR_FIFO_EN      0x23
 #define AR_ACCEL_OUT_XH 0x3B
-#define AR_FIFO_COUNT_H  0x72
+#define AR_FIFO_COUNT_H 0x72
+#define AR_FIFO         0x74
 
 #define SET_ENABLE_FIFO 0x80
 #define SET_DISABLE_FIFO 0x00
 
-#define SET_PWR_SLEEP 0x80
-#define SET_PWR_WAKE  0x00
+#define SET_PWR_SLEEP   0x80
+#define SET_PWR_WAKE    0x00
 
 // Query accelerometer data
 static void
@@ -99,7 +100,8 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
 {
     // Read data
     // Regs are: [Xh, Xl, Yh, Yl, Zh, Zl] and [FIFO_CNTh, FIFO_CNTl]
-    uint8_t regs[] = {AR_ACCEL_OUT_XH, AR_FIFO_COUNT_H};
+    //uint8_t regs[] = {AR_ACCEL_OUT_XH, AR_FIFO_COUNT_H};
+    uint8_t regs[] = {AR_FIFO, AR_FIFO_COUNT_H};
     uint8_t data_lens[] = {6, 2};
     uint8_t fifo_count[2];
 

@@ -17,6 +17,7 @@ REG_SMPLRT_DIV =    0x19
 REG_CONFIG =        0x1A
 REG_ACCEL_CONFIG =  0x1C
 REG_ACCEL_CONFIG2 = 0x1D
+REG_USER_CTRL =     0x6A
 REG_PWR_MGMT_1 =    0x6B
 
 SAMPLE_RATE_DIVS = {
@@ -27,6 +28,8 @@ SET_FIFO_EN_ACCEL = 0x80 # Only enable FIFO for accelerometer
 SET_CONFIG =        0x00 # FIFO mode 'stream' style 
 SET_ACCEL_CONFIG =  0x10 # 4g full scale
 SET_ACCEL_CONFIG2 = 0x00 # 460Hz BW, 1.94ms delay 1kHz sample rate
+SET_USER_CTRL_FIFO =0x40 # Enable fifo access over serial
+SET_USER_CTRL_RESET_FIFO = 0x04 # Reset fifo buffer
 SET_PWR_MGMT_WAKE = 0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
@@ -168,12 +171,12 @@ class MPU9250CommandHelper:
                           % (accel_x, accel_y, accel_z))
     cmd_ACCELEROMETER_DEBUG_READ_help = "Query mpu9250 register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
-        reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
         gcmd.respond_info("MPU9250 REG[0x%x] = 0x%x" % (reg, val))
     cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set mpu9250 register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
-        reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
 
@@ -387,7 +390,8 @@ class MPU9250:
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
         self.set_reg(REG_FIFO_EN, SET_FIFO_EN_ACCEL)
-
+        
+        self.set_reg(REG_USER_CTRL, SET_USER_CTRL_FIFO | SET_USER_CTRL_RESET_FIFO)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_WAKE) # wake up
 
         # Setup samples
