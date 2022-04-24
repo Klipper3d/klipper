@@ -278,7 +278,8 @@ class PrinterExtruder:
                 raise self.printer.command_error(
                     "Extrude only move too long (%.3fmm vs %.3fmm)\n"
                     "See the 'max_extrude_only_distance' config"
-                    " option for details" % (move.axes_d[3], self.max_e_only_dist))
+                    " option for details"
+                    % (move.axes_d[3], self.max_e_only_dist))
             inv_extrude_r = 1. / abs(axis_r)
             move.limit_speed(self.max_e_only_velocity * inv_extrude_r,
                              self.max_e_accel * inv_extrude_r)
@@ -295,7 +296,8 @@ class PrinterExtruder:
                 % (area, self.max_extrude_ratio * self.filament_area))
         else:
             # Normal move with extrusion
-            # The calculation is redundant and it should be checked if this is nessesary
+            # The calculation is redundant and it should be checked if this is
+            # nessesary
             toolhead_speed = math.sqrt(move.max_cruise_v2)
             e_velocity = (move.axes_d[3] * toolhead_speed) / move.move_d
             if e_velocity > self.max_e_velocity:
@@ -390,19 +392,24 @@ class PrinterExtruder:
         if max_vol_speed is not None:
             if max_vol_speed <= 0:
                 raise gcmd.error("SPEED must be greater than 0")
-            self.set_max_velocity(max_vol_speed/(math.pi * (self.filament_diameter * .5)**2))
+            self.set_max_velocity(
+                max_vol_speed/(math.pi * (self.filament_diameter * .5)**2))
             gcmd.respond_info(
-                "Max volumetric speed has been set to %0.3f coresponding to %0.3f "
-                "filament diameter, the max extruder velocity is %0.3f now"
-                % (self.max_e_volumetric_speed, self.filament_diameter, self.max_e_velocity))
+                "Max volumetric speed has been set to %0.3f coresponding to "
+                "%0.3f filament diameter, the max extruder velocity is %0.3f "
+                "now."
+                % (self.max_e_volumetric_speed, self.filament_diameter,
+                self.max_e_velocity))
         else:
             if max_e_velocity <= 0:
                 raise gcmd.error("SPEED must be greater than 0")
             self.set_max_velocity(max_e_velocity)
             gcmd.respond_info(
-                "max extruder velocity has been set to %0.3f coresponding to %0.3f "
-                "filament diameter, the max volumetric speed is %0.3f now"
-                % (self.max_e_velocity, self.filament_diameter, self.max_e_volumetric_speed))
+                "max extruder velocity has been set to %0.3f coresponding to "
+                "%0.3f filament diameter, the max volumetric speed is %0.3f "
+                "now."
+                % (self.max_e_velocity, self.filament_diameter,
+                self.max_e_volumetric_speed))
     cmd_GET_MAX_EXTRUDER_VELOCITY_help = (
         "Returns the maximum extruder velocity and maximum volumetric speed")
     def cmd_GET_MAX_EXTRUDER_VELOCITY(self, gcmd):
