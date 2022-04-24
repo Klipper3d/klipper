@@ -22,13 +22,15 @@ class ExtruderStepper:
                                             self._handle_connect)
         gcode = self.printer.lookup_object('gcode')
         if self.name == 'extruder':
-            gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
+            gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
+                                       None,
                                        self.cmd_default_SET_PRESSURE_ADVANCE,
                                        desc=self.cmd_SET_PRESSURE_ADVANCE_help)
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
                                    desc=self.cmd_SET_PRESSURE_ADVANCE_help)
-        gcode.register_mux_command("SET_EXTRUDER_ROTATION_DISTANCE", "EXTRUDER",
+        gcode.register_mux_command("SET_EXTRUDER_ROTATION_DISTANCE",
+                                   "EXTRUDER",
                                    self.name, self.cmd_SET_E_ROTATION_DISTANCE,
                                    desc=self.cmd_SET_E_ROTATION_DISTANCE_help)
         gcode.register_mux_command("SYNC_EXTRUDER_MOTION", "EXTRUDER",
@@ -38,7 +40,8 @@ class ExtruderStepper:
                                    self.name, self.cmd_SET_E_STEP_DISTANCE,
                                    desc=self.cmd_SET_E_STEP_DISTANCE_help)
         gcode.register_mux_command("SYNC_STEPPER_TO_EXTRUDER", "STEPPER",
-                                   self.name, self.cmd_SYNC_STEPPER_TO_EXTRUDER,
+                                   self.name,
+                                   self.cmd_SYNC_STEPPER_TO_EXTRUDER,
                                    desc=self.cmd_SYNC_STEPPER_TO_EXTRUDER_help)
     def _handle_connect(self):
         toolhead = self.printer.lookup_object('toolhead')
@@ -159,9 +162,9 @@ class PrinterExtruder:
             self.heater = pheaters.lookup_heater(shared_heater)
         # Setup kinematic checks
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
-        f_diameter = config.getfloat(
+        self.filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
-        self.set_filament_diameter(f_diameter)
+        self.set_filament_diameter()
         def_max_cross_section = 4. * self.nozzle_diameter**2
         def_max_extrude_ratio = def_max_cross_section / self.filament_area
         self.max_cross_section = config.getfloat(
@@ -173,10 +176,10 @@ class PrinterExtruder:
         self.max_e_only_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * def_max_extrude_ratio
             , above=0.)
-        max_e_velocity = config.getfloat(
-            'max_extruder_velocity', max_velocity * def_max_extrude_ratio, maxval=10000.0
-            , above=0.)
-        self.set_max_velocity(max_e_velocity)
+        self.max_e_velocity = config.getfloat(
+            'max_extruder_velocity', max_velocity * def_max_extrude_ratio,
+            maxval=10000.0, above=0.)
+        self.set_max_velocity()
         self.max_e_accel = config.getfloat(
             'max_extrude_only_accel', max_accel * def_max_extrude_ratio
             , above=0.)
@@ -213,10 +216,12 @@ class PrinterExtruder:
                                    self.name, self.cmd_SET_FILAMENT_DIAMETER,
                                    desc=self.cmd_SET_FILAMENT_DIAMETER_help)
         gcode.register_mux_command("SET_MAX_EXTRUDER_VELOCITY", "EXTRUDER",
-                                   self.name, self.cmd_SET_MAX_EXTRUDER_VELOCITY,
+                                   self.name,
+                                   self.cmd_SET_MAX_EXTRUDER_VELOCITY,
                                    desc=self.cmd_SET_MAX_EXTRUDER_VELOCITY_help)
         gcode.register_mux_command("GET_MAX_EXTRUDER_VELOCITY", "EXTRUDER",
-                                   self.name, self.cmd_GET_MAX_EXTRUDER_VELOCITY,
+                                   self.name,
+                                   self.cmd_GET_MAX_EXTRUDER_VELOCITY,
                                    desc=self.cmd_GET_MAX_EXTRUDER_VELOCITY_help)
     def update_move_time(self, flush_time):
         self.trapq_finalize_moves(self.trapq, flush_time)
@@ -258,7 +263,7 @@ class PrinterExtruder:
         # TODO: Update other values that will effected by the change
         # This is currently not possible as we don't know if settings
         # are default values (should be changed) or set by user (no change)
-    
+
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
@@ -372,7 +377,7 @@ class PrinterExtruder:
         # on filament size
         gcmd.respond_info("Filament diameter set to %0.3f"
                         % (self.filament_diameter))
-    
+
     cmd_SET_MAX_EXTRUDER_VELOCITY_help = (
         "Sets the maximum extruder speed by either VOLUMETRIC_SPEED or "
         "EXTRUDER_VELOCITY")
