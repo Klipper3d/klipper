@@ -35,9 +35,8 @@ struct mpu9250 {
     uint32_t rest_ticks;
     struct i2cdev_s *i2c;
     uint16_t sequence, limit_count;
-    uint8_t flags;
-    uint16_t data_count;
-    uint8_t data[AR_FIFO_SIZE];
+    uint8_t flags, data_count;
+    uint8_t data[255];
 };
 
 enum {
@@ -116,12 +115,21 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     if (fifo_status >= AR_FIFO_SIZE)
         mp->limit_count++;
 
-    if ( fifo_status > 0 ) {
+    uint16_t remaining_bytes = fifo_status;
+    while ( remaining_bytes > 255 ) {
         // Extract x, y, z measurements into data holder and report
-        i2c_read_ext(mp->i2c->i2c_config, 1, &regs[0], fifo_status, mp->data);
-        mp->data_count = fifo_status;
+        i2c_read(mp->i2c->i2c_config, 1, &regs[0], 255, mp->data);
+        mp->data_count = 255;
         mp9250_report(mp, oid);
-    } else if (mp->flags & AX_RUNNING) {
+        remaining_bytes -= 255;
+    } 
+
+    if ( remaining_bytes > 0 ) {
+        i2c_read(mp->i2c->i2c_config, 1, &regs[0], remaining_bytes, mp->data);
+        mp->data_count = remaining_bytes;
+        mp9250_report(mp, oid);
+    }
+    else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
         // Sleep until next check time
         sched_del_timer(&mp->timer);
         mp->flags &= ~AX_PENDING;
