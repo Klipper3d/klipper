@@ -670,6 +670,20 @@ filament_diameter:
 #   If a move requests an extrusion rate that would exceed this value
 #   it will cause an error to be returned. The default is: 4.0 *
 #   nozzle_diameter^2
+#max_extruder_velocity: 6
+#   Maximum extruder velocity in mm/s. If a xyz movement requires a
+#   higher extrusion speed, the speed of the complete movement is
+#   reduced, so that the maximum extruder velocity is respected.
+#   Retraction moves and moves without extrusion will ignore this
+#   limit.
+#   This can be also be changed at run time.
+#   [SET_FILAMENT_DIAMETER](G-Codes.md#SET_MAX_EXTRUDER_VELOCITY)
+#   If the only known value is the maximum volumetric speed in mm^3/s
+#   you have option you to set this value in runtime as the
+#   SET_FILAMENT_DIAMETER command directly support this or you can
+#   convert it by using this formula:
+#   max_extruder_velocity =
+#   max_volumeric_speed / ((filament_diameter / 2)^2 * PI()).
 #instantaneous_corner_velocity: 1.000
 #   The maximum instantaneous velocity change (in mm/s) of the
 #   extruder during the junction of two moves. The default is 1mm/s.
@@ -999,10 +1013,10 @@ information.
 [screws_tilt_adjust]
 #screw1:
 #   The (X, Y) coordinate of the first bed leveling screw. This is a
-#   position to command the nozzle to that is directly above the bed
-#   screw (or as close as possible while still being above the bed).
-#   This is the base screw used in calculations. This parameter must
-#   be provided.
+#   position to command the nozzle to so that the probe is directly
+#   above the bed screw (or as close as possible while still being
+#   above the bed). This is the base screw used in calculations. This
+#   parameter must be provided.
 #screw1_name:
 #   An arbitrary name for the given screw. This name is displayed when
 #   the helper script runs. The default is to use a name based upon

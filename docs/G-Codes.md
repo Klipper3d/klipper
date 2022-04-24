@@ -330,6 +330,13 @@ The following commands are available if an
 [extruder](Config_Reference.md#extruder) config sections, this command
 changes the active hotend.
 
+#### SET_FILAMENT_DIAMETER
+`SET_FILAMENT_DIAMETER EXTRUDER=<name> DIAMETER=<filament_diameter>`:
+This command will set the filament diameter in mm. Allready calculated
+default values as max_extrude_only_accel that use this value will not
+be updatet after updating the diameter. All ongoing calculations as
+a call of SET_MAX_EXTRUDER_VELOCITY will respect the new value.
+
 #### SET_PRESSURE_ADVANCE
 `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>]
 [ADVANCE=<pressure_advance>]
@@ -369,6 +376,23 @@ This command is deprecated and will be removed in the near future.
 
 #### SYNC_STEPPER_TO_EXTRUDER
 This command is deprecated and will be removed in the near future.
+
+#### SET_MAX_EXTRUDER_VELOCITY
+`SET_MAX_EXTRUDER_VELOCITY EXTRUDER=<name>
+[EXTRUDER_VELOCITY=<velocity>] [VOLUMETRIC_SPEED=<volumetric_speed>]`:
+This command will set the maximum velocity of the extruder. If a move
+will exceed the given extruder velocity, the complete move will be
+slowed down to match the maximal Velocity. You can either specify
+the velocity directly in mm/s or use volumetric speed
+in (mm³/s). The second option will calculate the extruder velocity
+by the given filament diameter. See 
+[SET_FILAMENT_DIAMETER](G-Codes.md#SET_FILAMENT_DIAMETER) for
+addition details.
+
+#### GET_MAX_EXTRUDER_VELOCITY
+`GET_MAX_EXTRUDER_VELOCITY EXTRUDER=<name>`: Will print the current
+settings for maximum extruder velocity and the corresponding value
+for max volumetric speed.
 
 ### [fan_generic]
 
