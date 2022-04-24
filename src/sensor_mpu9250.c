@@ -35,7 +35,8 @@ struct mpu9250 {
     uint32_t rest_ticks;
     struct i2cdev_s *i2c;
     uint16_t sequence, limit_count;
-    uint8_t flags, data_count;
+    uint8_t flags;
+    uint16_t data_count;
     uint8_t data[AR_FIFO_SIZE];
 };
 
