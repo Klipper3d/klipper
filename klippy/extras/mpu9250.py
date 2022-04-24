@@ -27,7 +27,7 @@ SAMPLE_RATE_DIVS = {
 SET_FIFO_EN_ACCEL = 0x80 # Only enable FIFO for accelerometer
 SET_CONFIG =        0x00 # FIFO mode 'stream' style 
 SET_ACCEL_CONFIG =  0x10 # 4g full scale
-SET_ACCEL_CONFIG2 = 0x03 # 460Hz BW, 1.94ms delay 1kHz sample rate
+SET_ACCEL_CONFIG2 = 0x01 # 184Hz BW, 5.80ms delay 1kHz sample rate
 SET_USER_CTRL_FIFO =0x40 # Enable fifo access over serial
 SET_USER_CTRL_RESET_FIFO = 0x04 # Reset fifo buffer
 SET_PWR_MGMT_WAKE = 0x00
@@ -391,7 +391,7 @@ class MPU9250:
         self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
         #self.set_reg(REG_FIFO_EN, SET_FIFO_EN_ACCEL)
         
-        self.set_reg(REG_USER_CTRL, SET_USER_CTRL_FIFO | SET_USER_CTRL_RESET_FIFO)
+        #self.set_reg(REG_USER_CTRL, SET_USER_CTRL_FIFO | SET_USER_CTRL_RESET_FIFO)
         #self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_WAKE) # wake up
 
         # Setup samples

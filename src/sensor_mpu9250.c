@@ -85,11 +85,13 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
 #define AR_PWR_MGMT_1   0x6B
 #define AR_FIFO_EN      0x23
 #define AR_ACCEL_OUT_XH 0x3B
+#define AR_USER_CTRL    0x6A
 #define AR_FIFO_COUNT_H 0x72
 #define AR_FIFO         0x74
 
 #define SET_ENABLE_FIFO 0x80
 #define SET_DISABLE_FIFO 0x00
+#define SET_USER_FIFO_RESET 0x44
 
 #define SET_PWR_SLEEP   0x80
 #define SET_PWR_WAKE    0x00
@@ -113,14 +115,14 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     if (fifo_status >= AR_FIFO_SIZE)
         mp->limit_count++;
 
-    if (fifo_status > 0) {
+    if ( fifo_status >=6 ) {
         // Extract x, y, z measurements into data holder
         i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
         mp->data_count += 6;
         if (mp->data_count + 6 > ARRAY_SIZE(mp->data))
             mp9250_report(mp, oid);
 
-        if (fifo_status > 1) {
+        if (fifo_status > 6) {
             // More data in fifo - wake this task again
             sched_wake_task(&mpu9250_wake);
         }
@@ -140,8 +142,10 @@ mp9250_start(struct mpu9250 *mp, uint8_t oid)
     mp->flags = AX_RUNNING;
     uint8_t msg[2] = { AR_PWR_MGMT_1, 0x00 }; // wake up
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-    uint8_t msg2[2] = { AR_FIFO_EN, SET_ENABLE_FIFO }; // enable accel FIFO
-    i2c_write(mp->i2c->i2c_config, sizeof(msg2), msg2);
+    msg = { AR_FIFO_EN, SET_ENABLE_FIFO }; // enable accel FIFO
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+    msg = { AR_USER_CTRL, SET_USER_FIFO_RESET }; // reset FIFO buffer
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
     mp9250_reschedule_timer(mp);
 }
 
@@ -165,15 +169,13 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     uint16_t fifo_status;
     uint_fast8_t i;
     uint8_t regs[] = {AR_FIFO_COUNT_H};
-    for (i=0; i<33; i++) {
-        i2c_read(mp->i2c->i2c_config, 1, regs, 2, msg);
-        msg[0] = 0x1F & msg[0]; // discard 3 MSB
-        fifo_status = (((uint16_t)msg[0]) << 8) | msg[1];
 
-        if (!fifo_status)
-            break;
-        if (fifo_status <= AR_FIFO_SIZE)
-            mp9250_query(mp, oid);
+    i2c_read(mp->i2c->i2c_config, 1, regs, 2, msg);
+    msg[0] = 0x1F & msg[0]; // discard 3 MSB
+    fifo_status = (((uint16_t)msg[0]) << 8) | msg[1];
+
+    if (fifo_status > 0) {
+        mp9250_query(mp, oid);
     }
 
     // Report final data
