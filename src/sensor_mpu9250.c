@@ -142,10 +142,15 @@ mp9250_start(struct mpu9250 *mp, uint8_t oid)
     mp->flags = AX_RUNNING;
     uint8_t msg[2] = { AR_PWR_MGMT_1, 0x00 }; // wake up
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-    msg = { AR_FIFO_EN, SET_ENABLE_FIFO }; // enable accel FIFO
+
+    msg[0] = AR_FIFO_EN;
+    msg[1] = SET_ENABLE_FIFO; // enable accel FIFO
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-    msg = { AR_USER_CTRL, SET_USER_FIFO_RESET }; // reset FIFO buffer
+
+    msg[0] = AR_USER_CTRL;
+    msg[1] = SET_USER_FIFO_RESET; // reset FIFO buffer
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+    
     mp9250_reschedule_timer(mp);
 }
 
