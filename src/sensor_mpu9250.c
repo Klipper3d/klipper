@@ -191,7 +191,7 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     }
 
     // Report final data
-    if (mp->data_count)
+    if (mp->data_count > 0)
         mp9250_report(mp, oid);
     mp9250_status(mp, oid, end1_time, end2_time, fifo_status);
 }
