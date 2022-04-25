@@ -21,7 +21,7 @@ REG_USER_CTRL =     0x6A
 REG_PWR_MGMT_1 =    0x6B
 
 SAMPLE_RATE_DIVS = {
-    31: 0x1F, 62: 0x0F, 125: 0x07, 250: 0x03, 500: 0x01, 1000: 0x00,
+    32: 0x1F, 63: 0x0F, 125: 0x07, 250: 0x03, 500: 0x01, 1000: 0x00,
 }
 
 SET_FIFO_EN_ACCEL = 0x80 # Only enable FIFO for accelerometer
@@ -245,7 +245,7 @@ class MPU9250:
         if any([a not in am for a in axes_map]):
             raise config.error("Invalid mpu9250 axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
-        self.data_rate = config.getint('rate', 31)
+        self.data_rate = config.getint('rate', 32)
         if self.data_rate not in SAMPLE_RATE_DIVS:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
         # Measurement storage (accessed from background thread)
