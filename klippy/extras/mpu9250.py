@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time, collections, threading, multiprocessing, os
 from . import bus, motion_report
+import json
 
 MPU9250_ADDR =      0x68
 
@@ -305,7 +306,7 @@ class MPU9250:
     def is_measuring(self):
         return self.query_rate > 0
     def _handle_mpu9250_data(self, params):
-        logging.info("handling data: " + params)
+        logging.info("handling data: " + json.dumps(params))
         with self.lock:
             self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
