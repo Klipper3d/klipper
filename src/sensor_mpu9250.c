@@ -36,7 +36,7 @@ struct mpu9250 {
     struct i2cdev_s *i2c;
     uint16_t sequence, limit_count;
     uint8_t flags, data_count;
-    uint8_t data[255];
+    uint8_t data[48];
 };
 
 enum {
@@ -116,17 +116,17 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         mp->limit_count++;
 
     uint16_t remaining_bytes = fifo_status;
-    while ( remaining_bytes >= 6 ) { // 6 bytes per entry
+    if ( remaining_bytes >= 6 ) { // 6 bytes per entry
         // Extract x, y, z measurements into data holder and report
         i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
         mp->data_count += 6;
         remaining_bytes -= 6;
-        if (mp->data_count >= 252) // buffer is filled
+        if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) // buffer is filled
             mp9250_report(mp, oid);
     } 
 
-    if ( mp->data_count > 0 ) {
-        mp9250_report(mp, oid);
+    if ( remaining_bytes >= 6 ) {
+        sched_wake_task(&mpu9250_wake);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
         // Sleep until next check time
