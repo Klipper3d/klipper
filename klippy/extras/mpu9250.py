@@ -305,7 +305,7 @@ class MPU9250:
     def is_measuring(self):
         return self.query_rate > 0
     def _handle_mpu9250_data(self, params):
-        logging.info("handling data: seq: %u  data: %s" % (params['sequence'], params['data'].encode('utf-8').hex()))
+        logging.info("handling data: seq: %u  data: %s" % (params['sequence'], params['data'].hex()))
         with self.lock:
             self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
