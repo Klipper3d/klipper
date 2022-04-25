@@ -116,10 +116,10 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         mp->limit_count++;
 
     uint16_t remaining_bytes = fifo_status;
-    bool should_sched = false;
+    uint8_t should_sched = 0;
     if ( remaining_bytes > ARRAY_SIZE(mp->data) ) {
         remaining_bytes = ARRAY_SIZE(mp->data);
-        should_sched = true;
+        should_sched = 1;
     }
 
     if ( remaining_bytes >= 6 ) { // 6 bytes per entry
@@ -131,7 +131,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
             mp9250_report(mp, oid);
     } 
 
-    if ( should_sched ) {
+    if ( should_sched != 0 ) {
         sched_wake_task(&mpu9250_wake);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
