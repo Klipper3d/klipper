@@ -116,6 +116,12 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         mp->limit_count++;
 
     uint16_t remaining_bytes = fifo_status;
+    bool should_sched = false;
+    if ( remaining_bytes > ARRAY_SIZE(mp->data) ) {
+        remaining_bytes = ARRAY_SIZE(mp->data);
+        should_sched = true;
+    }
+
     if ( remaining_bytes >= 6 ) { // 6 bytes per entry
         // Extract x, y, z measurements into data holder and report
         i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
@@ -125,7 +131,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
             mp9250_report(mp, oid);
     } 
 
-    if ( remaining_bytes >= 6 ) {
+    if ( should_sched ) {
         sched_wake_task(&mpu9250_wake);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
@@ -166,7 +172,7 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
 
     uint8_t msg[2] = { AR_FIFO_EN, SET_DISABLE_FIFO }; // disable accel FIFO
     uint32_t end1_time = timer_read_time();
-    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+    i2c_write(mp->i2c->i2c_config, 2, msg);
     uint32_t end2_time = timer_read_time();
 
     // uint8_t msg[2] = { AR_PWR_MGMT_1, SET_PWR_SLEEP }; // set to sleep
@@ -185,8 +191,8 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     }
 
     // Report final data
-    // if (mp->data_count)
-    //     mp9250_report(mp, oid);
+    if (mp->data_count)
+        mp9250_report(mp, oid);
     mp9250_status(mp, oid, end1_time, end2_time, fifo_status);
 }
 
