@@ -360,11 +360,11 @@ class MPU9250:
             limit_count += 0x10000
         self.last_limit_count = limit_count
         duration = params['query_ticks']
-        if duration > self.max_query_duration:
-            # Skip measurement as a high query time could skew clock tracking
-            self.max_query_duration = max(2 * self.max_query_duration,
-                                          self.mcu.seconds_to_clock(.000005))
-            return
+        # if duration > self.max_query_duration:
+        #     # Skip measurement as a high query time could skew clock tracking
+        #     self.max_query_duration = max(2 * self.max_query_duration,
+        #                                   self.mcu.seconds_to_clock(.000005))
+        #     return
         self.max_query_duration = 2 * duration
         msg_count = (sequence * SAMPLES_PER_BLOCK
                      + buffered // BYTES_PER_SAMPLE + fifo)

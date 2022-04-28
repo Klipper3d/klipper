@@ -36,7 +36,7 @@ struct mpu9250 {
     struct i2cdev_s *i2c;
     uint16_t sequence, limit_count;
     uint8_t flags, data_count;
-    uint8_t data[48];
+    uint8_t data[18];
 };
 
 enum {
