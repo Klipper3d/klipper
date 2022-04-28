@@ -11,7 +11,7 @@ KLIPPER_GROUP=$KLIPPER_USER
 install_packages()
 {
     # Packages for python cffi
-    PKGLIST="virtualenv python-dev libffi-dev build-essential"
+    PKGLIST="virtualenv python2-dev libffi-dev build-essential  python2-pip-whl python2-setuptools-whl"
     # kconfig requirements
     PKGLIST="${PKGLIST} libncurses-dev"
     # hub-ctrl
