@@ -128,7 +128,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
         mp->data_count += 6;
         remaining_bytes -= 6;
-        if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) // buffer is filled {
+        if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) { // buffer is filled
             sendf("attempting to report fifo buffer.");
             mp9250_report(mp, oid);
         }
