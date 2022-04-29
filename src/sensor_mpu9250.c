@@ -136,7 +136,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     } 
 
     if ( should_sched != 0 ) {
-        sendf("fifo_debug in fifo, rescheduling. rbytes=%u, oid=%c", remainingbytes, oid);
+        sendf("fifo_debug in fifo, rescheduling. rbytes=%u, oid=%c", remaining_bytes, oid);
         sched_wake_task(&mpu9250_wake);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
