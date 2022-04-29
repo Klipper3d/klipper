@@ -95,7 +95,7 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
     sched_add_timer(&mp->timer);
     irq_enable();
 }
-
+//query_mpu9250 oid=%c clock=%u rest_ticks=%u
 // Query accelerometer data
 static void
 mp9250_query(struct mpu9250 *mp, uint8_t oid)
@@ -118,7 +118,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     uint16_t remaining_bytes = fifo_status;
     uint8_t should_sched = 0;
     if ( remaining_bytes > ARRAY_SIZE(mp->data) ) {
-        sendf("query_mpu9250 more data in fifo than buffer size (%u). clamping. oid=%c", fifo_status, oid);
+        sendf("fifo_debug more data in fifo than buffer size (%u). clamping. oid=%c", fifo_status, oid);
         remaining_bytes = ARRAY_SIZE(mp->data);
         should_sched = 1;
     }
@@ -129,14 +129,14 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         mp->data_count += 6;
         remaining_bytes -= 6;
         if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) { // buffer is filled
-            sendf("query_mpu9250 attempting to report fifo buffer. oid=%c", oid);
+            sendf("fifo_debug attempting to report fifo buffer, rbytes=%u. oid=%c", remaining_bytes, oid);
             mp9250_report(mp, oid);
         }
             
     } 
 
     if ( should_sched != 0 ) {
-        sendf("query_mpu9250 in fifo, rescheduling. oid=%c", oid);
+        sendf("fifo_debug in fifo, rescheduling. rbytes=%u, oid=%c", remainingbytes, oid);
         sched_wake_task(&mpu9250_wake);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
