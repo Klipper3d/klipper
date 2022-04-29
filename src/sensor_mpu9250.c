@@ -111,6 +111,8 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     fifo_count[0] = 0x1F & fifo_count[0]; // discard 3 MSB of fifo size
     uint16_t fifo_status = (((uint16_t)fifo_count[0]) << 8) | fifo_count[1];
 
+    output("fifo_debug fifo=%u oid=%c", fifo_status, oid);
+
     // Check fifo status
     if (fifo_status >= AR_FIFO_SIZE)
         mp->limit_count++;
@@ -247,12 +249,18 @@ mpu9250_task(void)
     struct mpu9250 *mp;
     foreach_oid(oid, mp, command_config_mpu9250) {
         uint_fast8_t flags = mp->flags;
-        if (!(flags & AX_PENDING))
+        if (!(flags & AX_PENDING)) {
+            output("skipping");
             continue;
-        if (flags & AX_HAVE_START)
+        }
+        if (flags & AX_HAVE_START) {
+            output("running start");
             mp9250_start(mp, oid);
-        else
+        }
+        else {
+            output("running query");
             mp9250_query(mp, oid);
+        }
     }
 }
 DECL_TASK(mpu9250_task);
