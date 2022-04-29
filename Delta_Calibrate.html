@@ -1401,7 +1401,11 @@ verify dimensional accuracy.</p>
 measuring parts of that test object with digital calipers.</p>
 <p>Prior to running an enhanced delta calibration one must run the basic
 delta calibration (via the DELTA_CALIBRATE command) and save the
-results (via the SAVE_CONFIG command).</p>
+results (via the SAVE_CONFIG command). Make sure there hasn't been any
+notable change to the printer configuration nor hardware since last
+performing a basic delta calibration (if unsure, rerun the
+<a href="#basic-delta-calibration">basic delta calibration</a>, including
+SAVE_CONFIG, just prior to printing the test object described below.)</p>
 <p>Use a slicer to generate G-Code from the
 <a href="prints/calibrate_size.stl">docs/prints/calibrate_size.stl</a> file.
 Slice the object using a slow speed (eg, 40mm/s). If possible, use a
