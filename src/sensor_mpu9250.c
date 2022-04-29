@@ -118,7 +118,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     uint16_t remaining_bytes = fifo_status;
     uint8_t should_sched = 0;
     if ( remaining_bytes > ARRAY_SIZE(mp->data) ) {
-        sendf("more data in fifo than buffer size (%u). clamping. oid=%c", fifo_status, oid);
+        sendf("query_mpu9250 more data in fifo than buffer size (%u). clamping. oid=%c", fifo_status, oid);
         remaining_bytes = ARRAY_SIZE(mp->data);
         should_sched = 1;
     }
@@ -129,14 +129,14 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         mp->data_count += 6;
         remaining_bytes -= 6;
         if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) { // buffer is filled
-            sendf("attempting to report fifo buffer. oid=%c", oid);
+            sendf("query_mpu9250 attempting to report fifo buffer. oid=%c", oid);
             mp9250_report(mp, oid);
         }
             
     } 
 
     if ( should_sched != 0 ) {
-        sendf("data in fifo, rescheduling. oid=%c", oid);
+        sendf("query_mpu9250 in fifo, rescheduling. oid=%c", oid);
         sched_wake_task(&mpu9250_wake);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
