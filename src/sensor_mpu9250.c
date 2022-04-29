@@ -111,7 +111,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     fifo_count[0] = 0x1F & fifo_count[0]; // discard 3 MSB of fifo size
     uint16_t fifo_status = (((uint16_t)fifo_count[0]) << 8) | fifo_count[1];
 
-    output("fifo_debug0 fifo=%u oid=%c", fifo_status, oid);
+    //output("fifo_debug0 fifo=%u oid=%c", fifo_status, oid);
 
     // Check fifo status
     if (fifo_status >= AR_FIFO_SIZE)
@@ -120,7 +120,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     uint16_t remaining_bytes = fifo_status;
     uint8_t should_sched = 0;
     if ( remaining_bytes > ARRAY_SIZE(mp->data) ) {
-        output("fifo_debug1 fifo=%u oid=%c", fifo_status, oid);
+        //output("fifo_debug1 fifo=%u oid=%c", fifo_status, oid);
         remaining_bytes = ARRAY_SIZE(mp->data);
         should_sched = 1;
     }
@@ -131,14 +131,14 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         mp->data_count += 6;
         remaining_bytes -= 6;
         if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) { // buffer is filled
-            output("fifo_debug2 rbytes=%u oid=%c", remaining_bytes, oid);
+            //output("fifo_debug2 rbytes=%u oid=%c", remaining_bytes, oid);
             mp9250_report(mp, oid);
         }
             
     } 
 
     if ( should_sched != 0 ) {
-        output("fifo_debug3 rbytes=%u, oid=%c", remaining_bytes, oid);
+        //output("fifo_debug3 rbytes=%u, oid=%c", remaining_bytes, oid);
         sched_wake_task(&mpu9250_wake);
     }
     else if (mp->flags & AX_RUNNING) {
@@ -250,15 +250,15 @@ mpu9250_task(void)
     foreach_oid(oid, mp, command_config_mpu9250) {
         uint_fast8_t flags = mp->flags;
         if (!(flags & AX_PENDING)) {
-            output("skipping");
+            //output("skipping");
             continue;
         }
         if (flags & AX_HAVE_START) {
-            output("running start");
+            //output("running start");
             mp9250_start(mp, oid);
         }
         else {
-            output("running query");
+            //output("running query");
             mp9250_query(mp, oid);
         }
     }
