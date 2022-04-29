@@ -1969,6 +1969,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#smart_effector" class="md-nav__link">
+    [smart_effector]
+  </a>
+  
+    <nav class="md-nav" aria-label="[smart_effector]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_smart_effector" class="md-nav__link">
+    SET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_smart_effector" class="md-nav__link">
+    RESET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#stepper_enable" class="md-nav__link">
     [stepper_enable]
   </a>
@@ -3875,6 +3902,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#smart_effector" class="md-nav__link">
+    [smart_effector]
+  </a>
+  
+    <nav class="md-nav" aria-label="[smart_effector]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_smart_effector" class="md-nav__link">
+    SET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_smart_effector" class="md-nav__link">
+    RESET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#stepper_enable" class="md-nav__link">
     [stepper_enable]
   </a>
@@ -4359,7 +4413,7 @@
 <h4 id="z_offset_apply_probe">Z_OFFSET_APPLY_PROBE<a class="headerlink" href="#z_offset_apply_probe" title="Permanent link">&para;</a></h4>
 <p><code>Z_OFFSET_APPLY_PROBE</code>: Vegyük az aktuális Z G-kód eltolást (más néven mikrolépés), és vonjuk ki a szonda z_offset-jéből. Ez egy gyakran használt mikrolépés értéket vesz, és "állandóvá teszi". Egy <code>SAVE_CONFIG</code> szükséges a hatálybalépéshez.</p>
 <h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
-<p>A query_endstops modul automatikusan betöltődik.</p>
+<p>The query_adc module is automatically loaded.</p>
 <h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_ADC [NAME=&lt;config_name&gt;] [PULLUP=&lt;value&gt;]</code>: Jelenti a konfigurált analóg tűhöz utoljára kapott analóg értéket. Ha NAME nincs megadva, a rendelkezésre álló ADC nevek listája kerül jelentésre. Ha a PULLUP meg van adva (ohmban megadott értékként), akkor a nyers analóg értéket és a pullup adott egyenértékű ellenállást jelenti.</p>
 <h3 id="query_endstops">[query_endstops]<a class="headerlink" href="#query_endstops" title="Permanent link">&para;</a></h3>
@@ -4421,6 +4475,12 @@
 <p><code>CALC_MEASURED_SKEW [AC=&lt;ac_length&gt;] [BD=&lt;bd_length&gt;] [AD=&lt;ad_length&gt;]</code>: Kiszámítja és jelenti a ferdeséget (radiánban és fokban) egy mért lenyomat alapján. Ez hasznos lehet a nyomtató aktuális ferdeségének meghatározásához a korrekció alkalmazása után. A korrekció alkalmazása előtt is hasznos lehet annak meghatározásához, hogy szükséges-e a ferdeségkorrekció. A ferdeség kalibrációs objektumok és mérések részleteiért lásd a <a href="Skew_Correction.html">Ferdeség korrekció</a> dokumentumot.</p>
 <h4 id="skew_profile">SKEW_PROFILE<a class="headerlink" href="#skew_profile" title="Permanent link">&para;</a></h4>
 <p><code>SKEW_PROFILE [LOAD=&lt;name&gt;] [SAVE=&lt;name&gt;] [REMOVE=&lt;name&gt;]</code>: Profilkezelés a skew_correction számára. A LOAD visszaállítja a ferdeség állapotát a megadott névnek megfelelő profilból. A SAVE a megadott névnek megfelelő profilba menti az aktuális ferdeségállapotot. A REMOVE törli a megadott névnek megfelelő profilt a tartós memóriából. Megjegyzendő, hogy a SAVE vagy REMOVE műveletek lefuttatása után a SAVE_CONFIG parancsot kell futtatni, hogy a tartós memóriában végrehajtott változtatások véglegesek legyenek.</p>
+<h3 id="smart_effector">[smart_effector]<a class="headerlink" href="#smart_effector" title="Permanent link">&para;</a></h3>
+<p>Several commands are available when a <a href="Config_Reference.html#smart_effector">smart_effector config section</a> is enabled. Be sure to check the official documentation for the Smart Effector on the <a href="https://duet3d.dozuki.com/Wiki/Smart_effector_and_carriage_adapters_for_delta_printer">Duet3D Wiki</a> before changing the Smart Effector parameters. Also check the <a href="Probe_Calibrate.html">probe calibration guide</a>.</p>
+<h4 id="set_smart_effector">SET_SMART_EFFECTOR<a class="headerlink" href="#set_smart_effector" title="Permanent link">&para;</a></h4>
+<p><code>SET_SMART_EFFECTOR [SENSITIVITY=&lt;sensitivity&gt;] [ACCEL=&lt;accel&gt;] [RECOVERY_TIME=&lt;time&gt;]</code>: Set the Smart Effector parameters. When <code>SENSITIVITY</code> is specified, the respective value is written to the SmartEffector EEPROM (requires <code>control_pin</code> to be provided). Acceptable <code>&lt;sensitivity&gt;</code> values are 0..255, the default is 50. Lower values require less nozzle contact force to trigger (but there is a higher risk of false triggering due to vibrations during probing), and higher values reduce false triggering (but require larger contact force to trigger). Since the sensitivity is written to EEPROM, it is preserved after the shutdown, and so it does not need to be configured on every printer startup. <code>ACCEL</code> and <code>RECOVERY_TIME</code> allow to override the corresponding parameters at run-time, see the <a href="Config_Reference.html#smart_effector">config section</a> of Smart Effector for more info on those parameters.</p>
+<h4 id="reset_smart_effector">RESET_SMART_EFFECTOR<a class="headerlink" href="#reset_smart_effector" title="Permanent link">&para;</a></h4>
+<p><code>RESET_SMART_EFFECTOR</code>: Resets Smart Effector sensitivity to its factory settings. Requires <code>control_pin</code> to be provided in the config section.</p>
 <h3 id="stepper_enable">[stepper_enable]<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h3>
 <p>A stepper_enable modul automatikusan betöltődik.</p>
 <h4 id="set_stepper_enable">SET_STEPPER_ENABLE<a class="headerlink" href="#set_stepper_enable" title="Permanent link">&para;</a></h4>

@@ -1234,6 +1234,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f072-with-msc-bootloader" class="md-nav__link">
+    STM32F103/STM32F072 with MSC bootloader
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1471,6 +1478,13 @@
           <li class="md-nav__item">
   <a href="#hid-stm32f103" class="md-nav__link">
     带有 HID 引导程序的STM32F103
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f072-with-msc-bootloader" class="md-nav__link">
+    STM32F103/STM32F072 with MSC bootloader
   </a>
   
 </li>
@@ -1761,6 +1775,15 @@ make
 </code></pre></div>
 
 <p>可能需要手动进入引导程序，这可以通过设置 "boot 0 "的低电平和 "boot 1 "的高电平来完成。在SKR Mini E3上，"Boot 1 "是不可用的，所以如果你写入过"hid_btt_skr_mini_e3.bin"，可以通过设置PA2的低电平来完成。在SKR Mini E3的 "PIN "文件中，这个引脚在TFT插座上被标记为 "TX0"。在PA2旁边有一个接地引脚，你可以用它来把PA2拉低。</p>
+<h3 id="stm32f103stm32f072-with-msc-bootloader">STM32F103/STM32F072 with MSC bootloader<a class="headerlink" href="#stm32f103stm32f072-with-msc-bootloader" title="Permanent link">&para;</a></h3>
+<p>The <a href="https://github.com/Telekatz/MSC-stm32f103-bootloader">MSC bootloader</a> is a driverless bootloader capable of flashing over USB.</p>
+<p>It is possible to flash the bootloader via 3.3v serial using stm32flash as noted in the stm32duino section above, substituting the file name for the desired MSC bootloader binary (ie: MSCboot-Bluepill.bin for the blue pill).</p>
+<p>For STM32F072 boards it is also possible to flash the bootloader over USB (via DFU) with something like:</p>
+<div class="highlight"><pre><span></span><code> dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s0x08000000:leave
+</code></pre></div>
+
+<p>This bootloader uses 8KiB or 16KiB of flash space, see description of the bootloader (the application must be compiled with with the corresponding starting address).</p>
+<p>The bootloader can be activated by pressing the reset button of the board twice. As soon as the bootloader is activated, the board appears as a USB flash drive onto which the klipper.bin file can be copied.</p>
 <h2 id="stm32f4-skr-pro-11">STM32F4 微控制器 (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>STM32F4微控制器配备了一个内置的系统引导程序，能够通过USB（通过DFU）、3.3v串口和其他各种方法进行刷写（更多信息见STM文件AN2606）。一些STM32F4板，如SKR Pro 1.1，不能进入DFU引导程序。基于STM32F405/407的板子可以使用HID引导程序，如果用户愿意通过USB刷写而不是使用SD卡。请注意，你可能需针对你的板子配置和构建一个特定的版本，<a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">针对SKR Pro 1.1的构建可以在这里找到</a>。</p>
 <p>除非你的板子有DFU功能，否则最容易的写入方法可能是通过3.3v的串口，这与<a href="#stm32f103-micro-controllers-blue-pill-devices">使用stm32flash刷写STM32F103</a>的步骤相同。例如：</p>
