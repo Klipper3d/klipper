@@ -118,6 +118,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     uint16_t remaining_bytes = fifo_status;
     uint8_t should_sched = 0;
     if ( remaining_bytes > ARRAY_SIZE(mp->data) ) {
+        sendf("more data in fifo than buffer size (%u). clamping.", fifo_status);
         remaining_bytes = ARRAY_SIZE(mp->data);
         should_sched = 1;
     }
@@ -127,11 +128,15 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
         i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
         mp->data_count += 6;
         remaining_bytes -= 6;
-        if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) // buffer is filled
+        if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) // buffer is filled {
+            sendf("attempting to report fifo buffer.");
             mp9250_report(mp, oid);
+        }
+            
     } 
 
     if ( should_sched != 0 ) {
+        sendf("more data in fifo, rescheduling.");
         sched_wake_task(&mpu9250_wake);
     }
     else if (fifo_status == 0 && mp->flags & AX_RUNNING) {
