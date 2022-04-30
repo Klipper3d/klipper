@@ -6,9 +6,14 @@
 import stepper, chelper
 from . import force_move
 
+MOVE_BATCH_TIME = 0.500
+FLUSH_DELAY = 0.001
 class ManualStepper:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
+        self.all_mcus = [
+            m for n, m in self.printer.lookup_objects(module='mcu')]
         if config.get('endstop_pin', None) is not None:
             self.can_home = True
             self.rail = stepper.PrinterRail(
@@ -20,6 +25,8 @@ class ManualStepper:
             self.steppers = [self.rail]
         self.velocity = config.getfloat('velocity', 5., above=0.)
         self.accel = self.homing_accel = config.getfloat('accel', 0., minval=0.)
+        self.move_flush_time = config.getfloat(
+            'move_flush_time', 0.050, above=0.)
         self.next_cmd_time = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -56,6 +63,8 @@ class ManualStepper:
     def do_set_position(self, setpos):
         self.rail.set_position([setpos, 0., 0.])
     def do_move(self, movepos, speed, accel, sync=True):
+        toolhead = self.printer.lookup_object('toolhead')
+        batch_time = MOVE_BATCH_TIME
         self.sync_print_time()
         cp = self.rail.get_commanded_position()
         dist = movepos - cp
@@ -65,11 +74,23 @@ class ManualStepper:
                           accel_t, cruise_t, accel_t,
                           cp, 0., 0., axis_r, 0., 0.,
                           0., cruise_v, accel)
-        self.next_cmd_time = self.next_cmd_time + accel_t + cruise_t + accel_t
-        self.rail.generate_steps(self.next_cmd_time)
-        self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9)
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.note_kinematic_activity(self.next_cmd_time)
+        next_print_time = self.next_cmd_time + accel_t + cruise_t + accel_t
+        while 1:
+            segment_time = self.next_cmd_time + batch_time
+            self.next_cmd_time = min(segment_time, next_print_time)
+            self.rail.generate_steps(self.next_cmd_time)
+            finalize_time = self.next_cmd_time - FLUSH_DELAY
+            if self.next_cmd_time >= next_print_time:
+                finalize_time = self.reactor.NEVER
+            self.trapq_finalize_moves(self.trapq, finalize_time)
+            toolhead.note_kinematic_activity(self.next_cmd_time)
+            for m in self.all_mcus:
+                flush_time = self.next_cmd_time
+                if self.next_cmd_time < next_print_time:
+                    flush_time -= self.move_flush_time
+                m.flush_moves(flush_time)
+            if self.next_cmd_time >= next_print_time:
+                break
         if sync:
             self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
