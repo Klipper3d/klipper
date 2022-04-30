@@ -78,6 +78,7 @@ endchoice
 if MACH_STM32F103
 choice
     prompt "STM32F103 series"
+    default MACH_STM32F103x8
     config MACH_STM32F103x4
         bool "STM32F103x4 (T4/C4/R4)"
     config MACH_STM32F103x6
@@ -92,10 +93,6 @@ choice
         bool "STM32F103xD (RD/VD/ZD)"
     config MACH_STM32F103xE
         bool "STM32F103xE (RE/VE/ZE)"
-    config MACH_STM32F103xF
-        bool "STM32F103xF (RF/VF/ZF)"
-    config MACH_STM32F103xG
-        bool "STM32F103xG (RG/VG/ZG)"
 endchoice
 endif
 
@@ -156,18 +153,22 @@ config CLOCK_FREQ
 
 config FLASH_SIZE
     hex
-    default 0x4000 if MACH_STM32F031 || MACH_STM32F103x4
-    default 0x8000 if MACH_STM32F042 || MACH_STM32F103x6
-    default 0x20000 if MACH_STM32F070 || MACH_STM32F072 || MACH_STM32F103xB
-    default 0x10000 if MACH_STM32F103x8 # Flash size of stm32f103x8 (64KiB)
-    default 0x40000 if MACH_STM32F2 || MACH_STM32F401 || MACH_STM32F103xC
-    default 0x60000 if MACH_STM32F103xD
-    default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32F103xE
-    default 0xC0000 if MACH_STM32F103xF
+    default 0x4000 if MACH_STM32F031
+    default 0x8000 if MACH_STM32F042
+    default 0x20000 if MACH_STM32F070 || MACH_STM32F072
+    default 0x10000 if MACH_STM32F103 # Flash size of stm32f103x8 (64KiB)
+    default 0x40000 if MACH_STM32F2 || MACH_STM32F401
+    default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x20000 if MACH_STM32G0B1
     default 0x20000 if MACH_STM32H750
-    default 0x100000 if MACH_STM32F103xG
     default 0x200000 if MACH_STM32H743
+    default 0x4000 if MACH_STM32F103 && MACH_STM32F103x4
+    default 0x8000 if MACH_STM32F103 && MACH_STM32F103x6
+    default 0x10000 if MACH_STM32F103 && MACH_STM32F103x8
+    default 0x20000 if MACH_STM32F103 && MACH_STM32F103xB
+    default 0x40000 if MACH_STM32F103 && MACH_STM32F103xC
+    default 0x60000 if MACH_STM32F103 && MACH_STM32F103xD
+    default 0x80000 if MACH_STM32F103 && MACH_STM32F103xE
 
 config RAM_START
     hex
@@ -177,18 +178,20 @@ config RAM_START
 config RAM_SIZE
     hex
     default 0x1000 if MACH_STM32F031
-    default 0x1800 if MACH_STM32F042 || MACH_STM32F103x4
-    default 0x2800 if MACH_STM32F103x6
+    default 0x1800 if MACH_STM32F042
     default 0x4000 if MACH_STM32F070 || MACH_STM32F072
-    default 0x5000 if MACH_STM32F103x8 || MACH_STM32F103xB # Ram size of stm32f103x8 (20KiB)
-    default 0xC000 if MACH_STM32F103xC
+    default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
     default 0x20000 if MACH_STM32F207
-    default 0x10000 if MACH_STM32F401 || MACH_STM32F103xD || MACH_STM32F103xE
-    default 0x18000 if MACH_STM32F103xF || MACH_STM32F103xG
+    default 0x10000 if MACH_STM32F401
     default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x24000 if MACH_STM32G0B1
     default 0x20000 if MACH_STM32H750
     default 0x80000 if MACH_STM32H743
+    default 0x1800 if MACH_STM32F103 && MACH_STM32F103x4
+    default 0x2800 if MACH_STM32F103 && MACH_STM32F103x6
+    default 0x5000 if MACH_STM32F103 && (MACH_STM32F103x8 || MACH_STM32F103xB)
+    default 0xC000 if MACH_STM32F103 && MACH_STM32F103xC
+    default 0x10000 if MACH_STM32F103 && (MACH_STM32F103xD || MACH_STM32F103xE)
 
 config STACK_SIZE
     int
@@ -226,12 +229,12 @@ choice
     config STM32_FLASH_START_C000
         bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F4x5
     config STM32_FLASH_START_10000
-        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446
+        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446 || MACH_STM32F401
 
     config STM32_FLASH_START_800
         bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_4000
-        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F401 || MACH_STM32F4x5 || MACH_STM32F103
+        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F401 || MACH_STM32F4x5 || MACH_STM32F103 || MACH_STM32F072
     config STM32_FLASH_START_20000
         bool "128KiB bootloader (SKR SE BX v2.0)" if MACH_STM32H743
 
