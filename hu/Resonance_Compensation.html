@@ -724,8 +724,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nyomasszabalyozas" class="md-nav__link">
-    Nyomásszabályozás
+  <a href="#nyomas-elotolas" class="md-nav__link">
+    Nyomás előtolás
   </a>
   
 </li>
@@ -847,7 +847,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomásszabályozás
+        Nyomás előtolás
       </a>
     </li>
   
@@ -1395,8 +1395,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nyomasszabalyozas" class="md-nav__link">
-    Nyomásszabályozás
+  <a href="#nyomas-elotolas" class="md-nav__link">
+    Nyomás előtolás
   </a>
   
 </li>
@@ -1520,7 +1520,7 @@
 <ol>
 <li>Ha a <code>square_corner_velocity</code> paramétert megváltoztattuk, állítsuk vissza az 5.0-ra. Nem tanácsos növelni, ha bemeneti alakítót használ, mert ez nagyobb simítást okozhat az alkatrészekben - helyette jobb, ha nagyobb gyorsulási értéket használ.</li>
 <li>Növelje a <code>max_accel_to_decel</code> értéket a következő parancs kiadásával: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
-<li>Nyomásszabályozás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Ha már hozzáadta az <code>[input_shaper]</code> részt a printer.cfg fájlhoz, akkor hajtsa végre a <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code> parancsot. Ha "Unknown command" hibát kap, nyugodtan figyelmen kívül hagyhatja ezen a ponton, és folytathatja a méréseket.</li>
 <li>Végezze el a parancsot: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Alapvetően a gyorsulás különböző nagy értékeinek beállításával próbáljuk a gyűrődést hangsúlyosabbá tenni. Ez a parancs 1500 mm/sec^2-től kezdve 5 mm-enként növeli a gyorsulást: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 és így tovább, egészen 7000 mm/sec^2-ig az utolsó sávra.</li>
 <li>Nyomtassa ki a szeletelt tesztmodellt a javasolt paraméterekkel.</li>
@@ -1561,7 +1561,7 @@ shaper_freq_y: ...  # a tesztmodell Y jelének frekvenciája
 <ol>
 <li>Indítsa újra a firmware-t: <code>RESTART</code></li>
 <li>Készüljön fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
-<li>Nyomásszabályozás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Adja ki a parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Adja ki a parancsot: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
 <li>Nyomtassa ki a szeletelt tesztmodellt a javasolt paraméterekkel.</li>
@@ -1612,7 +1612,7 @@ shaper_type: mzv
 <p>Ismételje meg ezeket a lépéseket az Y tengelyre ugyanígy, az X tengelyre való hivatkozásokat az Y tengelyre való hivatkozással helyettesítve (pl. cserélje ki a <code>shaper_freq_x</code>-t <code>shaper_freq_y</code>-ra a képletekben és a <code>TUNING_TOWER</code> parancsban).</p>
 <p>Példaként tegyük fel, hogy az egyik tengelyen 45 Hz-es gyűrődési frekvenciát mértünk. Ez a start = 45 * 83 / 132 = 28,30 és a faktor = 45 / 66 = 0,6818 értéket ad a <code>TUNING_TOWER</code> parancshoz. Most tegyük fel, hogy a tesztmodell kinyomtatása után az alulról számított negyedik sáv adja a legkevesebb gyűrődést. Ekkor a frissített shaper_freq_? érték 45 * (39 + 5 * 4) / 66 ≈ 40,23.</p>
 <p>Miután mindkét új <code>shaper_freq_x</code> és <code>shaper_freq_y</code> paramétert kiszámította, frissítheti az <code>[input_shaper]</code> szakaszát a nyomtató <code>printer.cfg</code> fájljában az új <code>shaper_freq_x</code> és <code>shaper_freq_y</code> értékekkel.</p>
-<h3 id="nyomasszabalyozas">Nyomásszabályozás<a class="headerlink" href="#nyomasszabalyozas" title="Permanent link">&para;</a></h3>
+<h3 id="nyomas-elotolas">Nyomás előtolás<a class="headerlink" href="#nyomas-elotolas" title="Permanent link">&para;</a></h3>
 <p>Ha Pressure Advance-t használ, akkor lehet, hogy újra kell hangolni. Kövesse az <a href="Pressure_Advance.html#tuning-pressure-advance">utasításokat</a> az új érték megtalálásához, ha az eltér az előzőtől. A Pressure Advance beállítása előtt mindenképpen indítsa újra a Klippert.</p>
 <h3 id="a-gyurodesi-frekvenciak-megbizhatatlan-meresei">A gyűrődési frekvenciák megbízhatatlan mérései<a class="headerlink" href="#a-gyurodesi-frekvenciak-megbizhatatlan-meresei" title="Permanent link">&para;</a></h3>
 <p>Ha nem tudja mérni a gyűrődési frekvenciákat, pl. ha a rezgések közötti távolság nem stabil, akkor még mindig kihasználhatja a bemeneti alakítási technikákat, de az eredmények nem biztos, hogy olyan jók lesznek, mint a frekvenciák megfelelő mérésével. Valamint egy kicsit több hangolást és a tesztmodell nyomtatását igényli. Megjegyzendő, hogy egy másik lehetőség egy gyorsulásmérő beszerzése és felszerelése, valamint a rezonanciák mérése (lásd a <a href="Measuring_Resonances.html">dokumentumot</a>, amely leírja a szükséges hardvert és a beállítási folyamatot) - de ez a lehetőség némi kézügyességet, krimpelést és forrasztást igényel.</p>

@@ -758,7 +758,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomásszabályozás
+        Nyomás előtolás
       </a>
     </li>
   
@@ -1346,7 +1346,7 @@ DELTA_CALIBRATE METHOD=manual
 <h2 id="tovabbfejlesztett-delta-kalibralas">Továbbfejlesztett delta kalibrálás<a class="headerlink" href="#tovabbfejlesztett-delta-kalibralas" title="Permanent link">&para;</a></h2>
 <p>Az alap delta-kalibrálás általában jó munkát végez a delta paraméterek kiszámításában, hogy a fúvóka a megfelelő távolságra legyen az ágytól. Nem próbálja azonban kalibrálni az X és Y dimenzió pontosságát. A méretpontosság ellenőrzésére érdemes egy kibővített delta-kalibrációt elvégezni.</p>
 <p>Ehhez a kalibrálási eljáráshoz ki kell nyomtatni egy tesztobjektumot, és a tesztobjektum egyes részeit digitális tolómérővel kell megmérni.</p>
-<p>A kibővített delta-kalibrálás futtatása előtt le kell futtatni az alap delta-kalibrálást (a DELTA_CALIBRATE paranccsal) és el kell menteni az eredményeket (a SAVE_CONFIG paranccsal).</p>
+<p>Prior to running an enhanced delta calibration one must run the basic delta calibration (via the DELTA_CALIBRATE command) and save the results (via the SAVE_CONFIG command). Make sure there hasn't been any notable change to the printer configuration nor hardware since last performing a basic delta calibration (if unsure, rerun the <a href="#basic-delta-calibration">basic delta calibration</a>, including SAVE_CONFIG, just prior to printing the test object described below.)</p>
 <p>Használjon szeletelőt a <a href="prints/calibrate_size.stl">docs/prints/calibrate_size.stl</a> fájlból G-kód generálásához. Szeletelje az objektumot lassú sebességgel (pl. 40mm/s). Ha lehetséges, használjon merev műanyagot (pl. PLA) a tárgyhoz. A tárgy átmérője 140 mm. Ha ez túl nagy a nyomtató számára, akkor át lehet méretezni (de ügyeljen arra, hogy mind az X, és az Y tengelyt egyenletesen méretezze). Ha a nyomtató jelentősen nagyobb nyomatokat támogat, akkor a tárgy is megnövelhető. A nagyobb méret javíthatja a mérési pontosságot, de a jó tapadás fontosabb, mint a nagyobb nyomtatási méret.</p>
 <p>Nyomtassa ki a tesztobjektumot, és várja meg, amíg teljesen kihűl. Az alább leírt parancsokat ugyanazokkal a nyomtatóbeállításokkal kell futtatni, mint amelyekkel a kalibrációs tárgyat nyomtatta (ne futtassa a DELTA_CALIBRATE parancsot a nyomtatás és a mérés között, vagy ne tegyen olyat, ami egyébként megváltoztatná a nyomtató konfigurációját).</p>
 <p>Ha lehetséges, az alábbiakban leírt méréseket akkor végezze el, amikor a tárgy még mindig a nyomtatóágyhoz van rögzítve, de ne aggódjon, ha az alkatrész leválik az ágyról. Csak próbálja meg elkerülni a tárgy meghajlását a mérések elvégzésekor.</p>

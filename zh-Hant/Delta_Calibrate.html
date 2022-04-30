@@ -1346,7 +1346,7 @@ DELTA_CALIBRATE METHOD=manual
 <h2 id="_3">進階三角洲校準<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>簡單三角洲校準獲得的三角洲參數可以很好地修正噴嘴距離之類問題。然而，該模式不能校準X，Y軸上的準確度。而進階三角洲校準則是針對維度準確性地問題。</p>
 <p>校準流程需要列印一個測試模型並用遊標卡尺測量模型的尺寸。</p>
-<p>在進行進階三角洲校準時，必須先完成三角洲校準（通過DELTA_CALIBRATE命令）並儲存結果（通過SAVE_CONFIG 命令）。</p>
+<p>Prior to running an enhanced delta calibration one must run the basic delta calibration (via the DELTA_CALIBRATE command) and save the results (via the SAVE_CONFIG command). Make sure there hasn't been any notable change to the printer configuration nor hardware since last performing a basic delta calibration (if unsure, rerun the <a href="#basic-delta-calibration">basic delta calibration</a>, including SAVE_CONFIG, just prior to printing the test object described below.)</p>
 <p>用切片器對<a href="prints/calibrate_size.stl">docs/prints/calibrate_size.stl</a>的模型進行切片，產生G-Code。速度設定使用低速（例如 40mm/s）。如可能使用剛性塑料（如PLA）。模型的外徑為140mm。如果尺寸太大則按照熱床大小進行縮小（但應注意X和Y應按比例進行縮放）。如果印表機的熱床足夠大，也可以放大該模型。大尺寸可以提高測量的準確性，但是模型的床附著對測量準確性影響更大。</p>
 <p>列印測試模型並等待其完全冷卻。印表機設定和校準模型必須一一對應（即，在列印校準模型后，不要再進行DELTA_CALIBRATE或修改印表機參數，否則模型測量無效），再執行下面的命令。</p>
 <p>如可能，在模型黏著在床上進行測量，但若模型脫離熱床也沒有關係——這步驟只是爲了減少模型的彎曲。</p>

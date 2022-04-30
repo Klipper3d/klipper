@@ -679,7 +679,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Nyomásszabályozás
+        Nyomás előtolás
       </a>
     </li>
   
@@ -998,8 +998,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nyomasszabalyozas" class="md-nav__link">
-    Nyomásszabályozás
+  <a href="#nyomas-elotolas" class="md-nav__link">
+    Nyomás előtolás
   </a>
   
 </li>
@@ -1386,8 +1386,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nyomasszabalyozas" class="md-nav__link">
-    Nyomásszabályozás
+  <a href="#nyomas-elotolas" class="md-nav__link">
+    Nyomás előtolás
   </a>
   
 </li>
@@ -1499,7 +1499,7 @@ stepper_z_position = cartesian_z_position
 <div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
 </code></pre></div>
 
-<h3 id="nyomasszabalyozas">Nyomásszabályozás<a class="headerlink" href="#nyomasszabalyozas" title="Permanent link">&para;</a></h3>
+<h3 id="nyomas-elotolas">Nyomás előtolás<a class="headerlink" href="#nyomas-elotolas" title="Permanent link">&para;</a></h3>
 <p>A kísérletek azt mutatták, hogy az extruder modellezését az alap extruder képleten túl is lehet javítani. Ideális esetben az extrudálási mozgás előrehaladtával a mozgás minden egyes pontján ugyanannyi szálnak kell lerakódnia, és a mozgás után nem szabad extrudálódnia. Sajnos gyakran előfordul, hogy az alap extrudálási képletek miatt az extrudálási mozgások kezdetén túl kevés szál kerül ki az extruderből, és az extrudálás befejezése után többletszál kerül extrudálásra. Ezt gyakran nevezik "ooze"-nak.</p>
 <p><img alt="ooze" src="img/ooze.svg.png" /></p>
 <p>A "nyomásszabályozás" rendszer ezt úgy próbálja figyelembe venni, hogy az extruderhez egy másik modellt használ. Ahelyett, hogy naivan azt hinné, hogy az extruderbe táplált minden egyes mm^3 szálat az extruderből azonnal ugyanannyi mm^3 fog kilépni, a rendszer egy nyomáson alapuló modellt használ. A nyomás nő, amikor a szál az extruderbe kerül (mint a <a href="https://en.wikipedia.org/wiki/Hooke%27s_law">Hooke törvény</a> szerint), és az extrudáláshoz szükséges nyomást a fúvóka nyílásán keresztül történő áramlási sebesség uralja (mint a <a href="https://en.wikipedia.org/wiki/Poiseuille_law">Poiseuille törvény</a> szerint). A kulcsgondolat az, hogy a szál, a nyomás és az áramlási sebesség közötti kapcsolat egy lineáris együtthatóval modellezhető:</p>
