@@ -1592,7 +1592,7 @@
 </code></pre></div>
 
 <p>Ennek hatására a gazdaszoftver létrehoz egy Unix Domain Socketet. Az ügyfél ezután kapcsolatot nyithat ezen keresztül, és parancsokat küldhet a Klippernek.</p>
-<p>See the <a href="https://github.com/Arksine/moonraker">Moonraker</a> project for a popular tool that can forward HTTP requests to Klipper's API Server Unix Domain Socket.</p>
+<p>Lásd a <a href="https://github.com/Arksine/moonraker">Moonraker</a> projektet egy népszerű eszközért, amely képes továbbítani a HTTP-kéréseket a Klipper's API Server Unix Domain Socket-hez.</p>
 <h2 id="kerelem-formatuma">Kérelem formátuma<a class="headerlink" href="#kerelem-formatuma" title="Permanent link">&para;</a></h2>
 <p>A socket-en küldött és fogadott üzenetek JSON kódolású karakterláncok, amelyeket egy ASCII 0x03 karakter zár le:</p>
 <div class="highlight"><pre><span></span><code>&lt;json_object_1&gt;&lt;0x03&gt;&lt;json_object_2&gt;&lt;0x03&gt;...

@@ -942,8 +942,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#hasznalhatom-a-stealthchop-uzemmodot-nyomasszabalyozassal-rendelkezo-extruderen" class="md-nav__link">
-    Használhatom a StealthChop üzemmódot nyomásszabályozással rendelkező extruderen?
+  <a href="#hasznalhatom-a-stealthchop-uzemmodot-nyomas-elotolassal-rendelkezo-extruderen" class="md-nav__link">
+    Használhatom a StealthChop üzemmódot nyomás előtolással rendelkező extruderen?
   </a>
   
 </li>
@@ -1572,8 +1572,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#hasznalhatom-a-stealthchop-uzemmodot-nyomasszabalyozassal-rendelkezo-extruderen" class="md-nav__link">
-    Használhatom a StealthChop üzemmódot nyomásszabályozással rendelkező extruderen?
+  <a href="#hasznalhatom-a-stealthchop-uzemmodot-nyomas-elotolassal-rendelkezo-extruderen" class="md-nav__link">
+    Használhatom a StealthChop üzemmódot nyomás előtolással rendelkező extruderen?
   </a>
   
 </li>
@@ -1821,8 +1821,8 @@ gcode:
 <p>E mezők mindegyikét az egyes meghajtók Trinamic adatlapja határozza meg. Ezek az adatlapok megtalálhatók a <a href="https://www.trinamic.com/">Trinamic weboldalán</a>.</p>
 <p>Vegye figyelembe, hogy a Trinamic adatlapok néha olyan megfogalmazást használnak, amely összetéveszthet egy magas szintű beállítást (például "hysteresis end") egy alacsony szintű mezőértékkel (pl. "HEND"). A Klipperben a <code>driver_XXX</code> és a SET_TMC_FIELD mindig azt az alacsony szintű mezőértéket állítja be, amely ténylegesen a meghajtóba íródik. Így például, ha a Trinamic adatlapja szerint 3 értéket kell írni a HEND mezőbe, hogy a "hiszterézis vége" 0 legyen, akkor a <code>driver_HEND=3</code> beállításával a 0 magas szintű értéket kapjuk.</p>
 <h2 id="gyakori-kerdesek">Gyakori kérdések<a class="headerlink" href="#gyakori-kerdesek" title="Permanent link">&para;</a></h2>
-<h3 id="hasznalhatom-a-stealthchop-uzemmodot-nyomasszabalyozassal-rendelkezo-extruderen">Használhatom a StealthChop üzemmódot nyomásszabályozással rendelkező extruderen?<a class="headerlink" href="#hasznalhatom-a-stealthchop-uzemmodot-nyomasszabalyozassal-rendelkezo-extruderen" title="Permanent link">&para;</a></h3>
-<p>Sokan sikeresen használják a "StealthChop" üzemmódot a Klipper nyomásszabályozással. A Klipper <a href="Kinematics.html#pressure-advance">simított nyomásszabályozása</a>, amely nem vezet be pillanatnyi sebesség változást.</p>
+<h3 id="hasznalhatom-a-stealthchop-uzemmodot-nyomas-elotolassal-rendelkezo-extruderen">Használhatom a StealthChop üzemmódot nyomás előtolással rendelkező extruderen?<a class="headerlink" href="#hasznalhatom-a-stealthchop-uzemmodot-nyomas-elotolassal-rendelkezo-extruderen" title="Permanent link">&para;</a></h3>
+<p>Sokan sikeresen használják a "StealthChop" üzemmódot a Klipper nyomás előtolással. A Klipper <a href="Kinematics.html#pressure-advance">simított nyomás előtolása</a>, amely nem vezet be pillanatnyi sebesség változást.</p>
 <p>A "StealthChop" üzemmód azonban alacsonyabb motornyomatékot és/vagy nagyobb motorhőt eredményezhet. Lehet, hogy ez az üzemmód megfelelő az Ön adott nyomtatója számára, de az is lehet, hogy nem.</p>
 <h3 id="folyamatosan-kap-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat">Folyamatosan kap "Nem tudom olvasni a tmc uart 'stepper_x' regiszter IFCNT" hibákat?<a class="headerlink" href="#folyamatosan-kap-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat" title="Permanent link">&para;</a></h3>
 <p>Ez akkor fordul elő, ha a Klipper nem tud kommunikálni egy TMC2208 vagy TMC2209 meghajtóval.</p>

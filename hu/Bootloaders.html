@@ -1235,8 +1235,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32f103stm32f072-with-msc-bootloader" class="md-nav__link">
-    STM32F103/STM32F072 with MSC bootloader
+  <a href="#stm32f103stm32f072-msc-bootloaderrel" class="md-nav__link">
+    STM32F103/STM32F072 MSC bootloaderrel
   </a>
   
 </li>
@@ -1483,8 +1483,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32f103stm32f072-with-msc-bootloader" class="md-nav__link">
-    STM32F103/STM32F072 with MSC bootloader
+  <a href="#stm32f103stm32f072-msc-bootloaderrel" class="md-nav__link">
+    STM32F103/STM32F072 MSC bootloaderrel
   </a>
   
 </li>
@@ -1775,15 +1775,15 @@ make
 </code></pre></div>
 
 <p>Szükség lehet a bootloader manuális belépésére, ezt a "boot 0" alacsony és "boot 1" magas értékek beállításával lehet megtenni. Az SKR Mini E3 esetében a "Boot 1" nem áll rendelkezésre, ezért a PA2 tű alacsonyra állításával lehet elvégezni, ha a "hid_btt_skr_mini_e3.bin" fájlt égetjük. Ez a tű az SKR Mini E3 "PIN" dokumentumban "TX0"-ként van jelölve a TFT fejlécen. A PA2 mellett van egy földelt tű, amellyel a PA2-t alacsonyra húzhatja.</p>
-<h3 id="stm32f103stm32f072-with-msc-bootloader">STM32F103/STM32F072 with MSC bootloader<a class="headerlink" href="#stm32f103stm32f072-with-msc-bootloader" title="Permanent link">&para;</a></h3>
-<p>The <a href="https://github.com/Telekatz/MSC-stm32f103-bootloader">MSC bootloader</a> is a driverless bootloader capable of flashing over USB.</p>
-<p>It is possible to flash the bootloader via 3.3v serial using stm32flash as noted in the stm32duino section above, substituting the file name for the desired MSC bootloader binary (ie: MSCboot-Bluepill.bin for the blue pill).</p>
-<p>For STM32F072 boards it is also possible to flash the bootloader over USB (via DFU) with something like:</p>
+<h3 id="stm32f103stm32f072-msc-bootloaderrel">STM32F103/STM32F072 MSC bootloaderrel<a class="headerlink" href="#stm32f103stm32f072-msc-bootloaderrel" title="Permanent link">&para;</a></h3>
+<p>Az <a href="https://github.com/Telekatz/MSC-stm32f103-bootloader">MSC bootloader</a> egy USB-n keresztül égethető, driver nélküli bootloader.</p>
+<p>Lehetőség van a bootloader 3,3V-os soros égetésére az stm32flash használatával, ahogyan azt a fenti stm32duino szakaszban említettük, a kívánt MSC bootloader bináris fájlnevének behelyettesítésével (azaz: MSCboot-Bluepill.bin a Bluepill-hez).</p>
+<p>Az STM32F072 lapok esetében a bootloader USB-n keresztül (DFU-n keresztül) is égethető, például a következőkkel:</p>
 <div class="highlight"><pre><span></span><code> dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s0x08000000:leave
 </code></pre></div>
 
-<p>This bootloader uses 8KiB or 16KiB of flash space, see description of the bootloader (the application must be compiled with with the corresponding starting address).</p>
-<p>The bootloader can be activated by pressing the reset button of the board twice. As soon as the bootloader is activated, the board appears as a USB flash drive onto which the klipper.bin file can be copied.</p>
+<p>Ez a bootloader 8KiB vagy 16KiB flash helyet használ, lásd a bootloader leírását (az alkalmazást a megfelelő kezdőcímmel kell lefordítani).</p>
+<p>A bootloader a kártya reset gombjának kétszeri megnyomásával aktiválható. Amint a bootloader aktiválódik, a kártya USB flash meghajtóként jelenik meg, amelyre a klipper.bin fájl másolható.</p>
 <h2 id="stm32f4-mikrovezerlok-skr-pro-11">STM32F4 mikrovezérlők (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-mikrovezerlok-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>Az STM32F4 mikrokontrollerek beépített rendszerbetöltővel rendelkeznek, amely képes USB-n keresztül (DFU-n keresztül), 3,3V-os soros és különböző más módszerekkel is égetni (további információkért lásd az STM AN2606 dokumentumát). Egyes STM32F4 lapok, mint például az SKR Pro 1.1, nem képesek belépni a DFU bootloaderbe. A HID bootloader elérhető az STM32F405/407 alapú lapokhoz, amennyiben a felhasználó az USB-n keresztül történő égetést részesíti előnyben az SD-kártya használatával szemben. Ne feledje, hogy szükség lehet egy, a lapjára specifikus verzió konfigurálására és építésére, egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">az SKR Pro 1.1-es verzióra vonatkozó építés elérhető itt</a>.</p>
 <p>Hacsak a lapod nem DFU-képes, a legkönnyebben elérhető égetési módszer valószínűleg a 3,3V-os soros, amely ugyanazt az eljárást követi, mint <a href="#stm32f103-micro-controllers-blue-pill-devices">az STM32F103 égetése az stm32flash segítségével</a>. Például:</p>
