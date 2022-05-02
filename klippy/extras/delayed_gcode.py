@@ -22,6 +22,10 @@ class DelayedGcode:
             "UPDATE_DELAYED_GCODE", "ID", self.name,
             self.cmd_UPDATE_DELAYED_GCODE,
             desc=self.cmd_UPDATE_DELAYED_GCODE_help)
+        self.gcode.register_mux_command(
+            "QUERY_DELAYED_GCODE", "ID", self.name,
+            self.cmd_QUERY_DELAYED_GCODE,
+            desc=self.cmd_QUERY_DELAYED_GCODE_help)
     def _handle_ready(self):
         waketime = self.reactor.NEVER
         if self.duration:
@@ -49,6 +53,13 @@ class DelayedGcode:
             if self.duration:
                 waketime = self.reactor.monotonic() + self.duration
             self.reactor.update_timer(self.timer_handler, waketime)
+    def cmd_QUERY_DELAYED_GCODE(self, gcmd):
+        if self.inside_timer:
+            msg = "%s running" % (self.name)
+        else:
+            msg = "%s not running" % (self.name)
+        gcmd.respond_info(msg)
+    cmd_QUERY_DELAYED_GCODE_help = "Returns the status of a delayed_gcode"
 
 def load_config_prefix(config):
     return DelayedGcode(config)
