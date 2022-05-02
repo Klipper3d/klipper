@@ -17,18 +17,20 @@
 #define AR_FIFO_SIZE 512
 
 #define AR_PWR_MGMT_1   0x6B
+#define AR_PWR_MGMT_2   0x6C
 #define AR_FIFO_EN      0x23
 #define AR_ACCEL_OUT_XH 0x3B
 #define AR_USER_CTRL    0x6A
 #define AR_FIFO_COUNT_H 0x72
 #define AR_FIFO         0x74
 
-#define SET_ENABLE_FIFO 0x80
+#define SET_ENABLE_FIFO 0x08
 #define SET_DISABLE_FIFO 0x00
 #define SET_USER_FIFO_RESET 0x44
 
-#define SET_PWR_SLEEP   0x80
+#define SET_PWR_SLEEP   0x40
 #define SET_PWR_WAKE    0x00
+#define SET_PWR_2_ACCEL_ONLY 0x07 //disable gyro sensors
 
 struct mpu9250 {
     struct timer timer;
@@ -36,7 +38,7 @@ struct mpu9250 {
     struct i2cdev_s *i2c;
     uint16_t sequence, limit_count;
     uint8_t flags, data_count;
-    uint8_t data[18];
+    uint8_t data[48];
 };
 
 enum {
@@ -182,8 +184,9 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     i2c_write(mp->i2c->i2c_config, 2, msg);
     uint32_t end2_time = timer_read_time();
 
-    // uint8_t msg[2] = { AR_PWR_MGMT_1, SET_PWR_SLEEP }; // set to sleep
-    // i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+    msg[0] = AR_PWR_MGMT_2;
+    msg[1] = SET_PWR_2_ACCEL_ONLY; // turn off unused sensors
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
 
     // Drain any measurements still in fifo
     uint16_t fifo_status;
@@ -201,6 +204,11 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     if (mp->data_count > 0)
         mp9250_report(mp, oid);
     mp9250_status(mp, oid, end1_time, end2_time, fifo_status);
+
+    msg[0] = AR_PWR_MGMT_1;
+    msg[1] = SET_PWR_SLEEP; // set to sleep
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+
 }
 
 void

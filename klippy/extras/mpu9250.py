@@ -21,19 +21,21 @@ REG_USER_CTRL =     0x6A
 REG_PWR_MGMT_1 =    0x6B
 
 SAMPLE_RATE_DIVS = {
-    32: 0x1F, 63: 0x0F, 125: 0x07, 250: 0x03, 500: 0x01, 1000: 0x00,
+    32: 0x1F, 63: 0x0F, 125: 0x07, 250: 0x03, 500: 0x01, 1000: 0x00, 2000: 0x01, 4000:0x00
 }
 
 SET_FIFO_EN_ACCEL = 0x80 # Only enable FIFO for accelerometer
 SET_CONFIG =        0x01 # FIFO mode 'stream' style 
-SET_ACCEL_CONFIG =  0x10 # 4g full scale
-SET_ACCEL_CONFIG2 = 0x01 # 184Hz BW, 5.80ms delay 1kHz sample rate
-SET_USER_CTRL_FIFO =0x40 # Enable fifo access over serial
-SET_USER_CTRL_RESET_FIFO = 0x04 # Reset fifo buffer
-SET_PWR_MGMT_WAKE = 0x00
+SET_ACCEL_CONFIG =  0x10 # 8g full scale
+#SET_ACCEL_CONFIG2 = 0x01 # 184Hz BW, 5.80ms delay 1kHz sample rate
+#SET_ACCEL_CONFIG2 = 0x07 # 420Hz BW, 1.38ms delay 1kHz sample rate
+SET_ACCEL_CONFIG2 = 0x80 # 1046Hz BW, 0.503ms delay 4kHz sample rate
+#SET_USER_CTRL_FIFO =0x40 # Enable fifo access over serial
+#SET_USER_CTRL_RESET_FIFO = 0x04 # Reset fifo buffer
+#SET_PWR_MGMT_WAKE = 0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
-SCALE = 0.0000610 * FREEFALL_ACCEL # 61ug/LSB @4g scale * Earth gravity in mm/s**2
+SCALE = 0.000244140625 * FREEFALL_ACCEL # 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
 
 FIFO_SIZE = 512
 
@@ -245,7 +247,7 @@ class MPU9250:
         if any([a not in am for a in axes_map]):
             raise config.error("Invalid mpu9250 axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
-        self.data_rate = config.getint('rate', 32)
+        self.data_rate = config.getint('rate', 2000)
         if self.data_rate not in SAMPLE_RATE_DIVS:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
         # Measurement storage (accessed from background thread)
@@ -305,7 +307,8 @@ class MPU9250:
     def is_measuring(self):
         return self.query_rate > 0
     def _handle_mpu9250_data(self, params):
-        logging.info("handling data: seq: %u  data: %s" % (params['sequence'], params['data']))
+        datastr = ''.join('{:02x}'.format(x) for x in bytearray(params['data']))
+        logging.info("handling data: seq: %u  data: %s" % (params['sequence'], datastr))
         with self.lock:
             self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
