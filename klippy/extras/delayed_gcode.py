@@ -27,11 +27,11 @@ class DelayedGcode:
             self.cmd_QUERY_DELAYED_GCODE,
             desc=self.cmd_QUERY_DELAYED_GCODE_help)
     def _handle_ready(self):
-        waketime = self.reactor.NEVER
+        self.waketime = self.reactor.NEVER
         if self.duration:
-            waketime = self.reactor.monotonic() + self.duration
+            self.waketime = self.reactor.monotonic() + self.duration
         self.timer_handler = self.reactor.register_timer(
-            self._gcode_timer_event, waketime)
+            self._gcode_timer_event, self.waketime)
     def _gcode_timer_event(self, eventtime):
         self.inside_timer = True
         try:
@@ -49,13 +49,13 @@ class DelayedGcode:
         if self.inside_timer:
             self.repeat = (self.duration != 0.)
         else:
-            waketime = self.reactor.NEVER
+            self.waketime = self.reactor.NEVER
             if self.duration:
-                waketime = self.reactor.monotonic() + self.duration
-            self.reactor.update_timer(self.timer_handler, waketime)
+                self.waketime = self.reactor.monotonic() + self.duration
+            self.reactor.update_timer(self.timer_handler, self.waketime)
     def cmd_QUERY_DELAYED_GCODE(self, gcmd):
         if self.timer_handler:
-            msg = "%s running, duration %s" % (self.name, self.timer_handler)
+            msg = "%s running, waketime %s" % (self.name, self.waketime)
         else:
             msg = "%s not running" % (self.name)
         gcmd.respond_info(msg)
