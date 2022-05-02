@@ -56,7 +56,7 @@ class DelayedGcode:
     def cmd_QUERY_DELAYED_GCODE(self, gcmd):
         remain_time = self.waketime - self.reactor.monotonic()
         if remain_time > 0:
-            msg = "%s running, %s remaining" % (self.name, remain_time)
+            msg = "%s running, %.1f seconds remaining" % (self.name, remain_time)
         else:
             msg = "%s not running" % (self.name)
         gcmd.respond_info(msg)
