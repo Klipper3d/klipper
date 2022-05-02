@@ -54,8 +54,8 @@ class DelayedGcode:
                 waketime = self.reactor.monotonic() + self.duration
             self.reactor.update_timer(self.timer_handler, waketime)
     def cmd_QUERY_DELAYED_GCODE(self, gcmd):
-        if self.duration:
-            msg = "%s running, duration %s" % (self.name, self.duration)
+        if self.timer_handler:
+            msg = "%s running, duration %s" % (self.name, self.timer_handler)
         else:
             msg = "%s not running" % (self.name)
         gcmd.respond_info(msg)
