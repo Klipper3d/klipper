@@ -141,6 +141,7 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
 CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
+CONFIG ../../config/printer-anycubic-predator-2020.cfg
 CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
 
