@@ -59,7 +59,7 @@ class DelayedGcode:
         #    msg = "%s running, %.1f seconds remaining" % (self.name, remain_time)
         #else:
         #    msg = "%s not running" % (self.name)
-        msg = self.reactor.get_time()
+        msg = self.reactor.NOW
         gcmd.respond_info(msg)
     cmd_QUERY_DELAYED_GCODE_help = "Returns the status of a delayed_gcode"
 
