@@ -42,6 +42,12 @@ FIFO_SIZE = 512
 Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
+# Helper method for converting an unsigned int as if it were twos-complement
+def twos_complement(val, nbits):
+    if (val & (1 << (nbits - 1))) != 0:
+        val = val - (1 << nbits)
+    return val
+
 # Helper class to obtain measurements
 class MPU9250QueryHelper:
     def __init__(self, printer, cconn):
@@ -329,10 +335,11 @@ class MPU9250:
             for i in range(len(d) // BYTES_PER_SAMPLE):
                 d_xyz = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
                 xhigh, xlow, yhigh, ylow, zhigh, zlow = d_xyz
-                rx = (xhigh << 8) | xlow
-                ry = (yhigh << 8) | ylow
-                rz = (zhigh << 8) | zlow
+                rx = twos_complement(xhigh << 8 | xlow, 16)
+                ry = twos_complement(yhigh << 8 | ylow, 16)
+                rz = twos_complement(zhigh << 8 | zlow, 16)
                 raw_xyz = (rx, ry, rz)
+
                 x = round(raw_xyz[x_pos] * x_scale, 6)
                 y = round(raw_xyz[y_pos] * y_scale, 6)
                 z = round(raw_xyz[z_pos] * z_scale, 6)
@@ -342,6 +349,7 @@ class MPU9250:
         self.clock_sync.set_last_chip_clock(seq * SAMPLES_PER_BLOCK + i)
         del samples[count:]
         return samples
+
     def _update_clock(self, minclock=0):
         # Query current state
         for retry in range(5):
