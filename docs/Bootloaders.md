@@ -254,10 +254,11 @@ bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
 ## STM32F103 micro-controllers (Blue Pill devices)
 
 The STM32F103 devices have a ROM that can flash a bootloader or
-application via 3.3V serial. To access this ROM, one should connect
-the "boot 0" pin to high and "boot 1" pin to low, and then reset the
-device. The "stm32flash" package can then be used to flash the device
-using something like:
+application via 3.3V serial. Typically one would wire the PA10 (MCU
+Rx) and PA9 (MCU Tx) pins to a 3.3V UART adapter. To access the ROM,
+one should connect the "boot 0" pin to high and "boot 1" pin to low,
+and then reset the device. The "stm32flash" package can then be used
+to flash the device using something like:
 ```
 stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 ```
