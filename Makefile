@@ -19,7 +19,10 @@ OBJCOPY=$(CROSS_PREFIX)objcopy
 OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
 CPP=cpp
-PYTHON=python2
+
+# Determine python version
+PYTHON=$(shell if [ -n "$(command -v python2)" ]; then echo "python2"; \
+    else echo "python3"; fi)
 
 # Source files
 src-y =
