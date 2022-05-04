@@ -8,6 +8,8 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220504: Added support for `[mpu9250]` I2C accelerometer in config.
+
 20220407: The temperature_fan `pid_integral_max` config option has
 been removed (it was deprecated on 20210612).
 
