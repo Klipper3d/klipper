@@ -307,7 +307,6 @@ class MPU9250:
     def is_measuring(self):
         return self.query_rate > 0
     def _handle_mpu9250_data(self, params):
-        datastr = ''.join('{:02x}'.format(x) for x in bytearray(params['data']))
         with self.lock:
             self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
