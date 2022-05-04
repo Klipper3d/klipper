@@ -21,18 +21,12 @@ REG_USER_CTRL =     0x6A
 REG_PWR_MGMT_1 =    0x6B
 
 SAMPLE_RATE_DIVS = {
-    32: 0x1F, 63: 0x0F, 125: 0x07, 250: 0x03, 500: 0x01, 1000: 0x00, 2000: 0x01, 4000:0x00
+    125: 0x1F, 250: 0x0F, 500: 0x07, 1000: 0x03, 2000: 0x01, 4000:0x00
 }
 
-SET_FIFO_EN_ACCEL = 0x80 # Only enable FIFO for accelerometer
 SET_CONFIG =        0x01 # FIFO mode 'stream' style 
 SET_ACCEL_CONFIG =  0x10 # 8g full scale
-#SET_ACCEL_CONFIG2 = 0x01 # 184Hz BW, 5.80ms delay 1kHz sample rate
-#SET_ACCEL_CONFIG2 = 0x07 # 420Hz BW, 1.38ms delay 1kHz sample rate
 SET_ACCEL_CONFIG2 = 0x80 # 1046Hz BW, 0.503ms delay 4kHz sample rate
-#SET_USER_CTRL_FIFO =0x40 # Enable fifo access over serial
-#SET_USER_CTRL_RESET_FIFO = 0x04 # Reset fifo buffer
-#SET_PWR_MGMT_WAKE = 0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
 SCALE = 0.000244140625 * FREEFALL_ACCEL # 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
@@ -42,7 +36,7 @@ FIFO_SIZE = 512
 Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
-# Helper method for converting an unsigned int as if it were twos-complement
+# Helper method for getting the two's complement value of an unsigned int
 def twos_complement(val, nbits):
     if (val & (1 << (nbits - 1))) != 0:
         val = val - (1 << nbits)
@@ -314,7 +308,6 @@ class MPU9250:
         return self.query_rate > 0
     def _handle_mpu9250_data(self, params):
         datastr = ''.join('{:02x}'.format(x) for x in bytearray(params['data']))
-        logging.info("handling data: seq: %u  data: %s" % (params['sequence'], datastr))
         with self.lock:
             self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
@@ -371,11 +364,11 @@ class MPU9250:
             limit_count += 0x10000
         self.last_limit_count = limit_count
         duration = params['query_ticks']
-        # if duration > self.max_query_duration:
-        #     # Skip measurement as a high query time could skew clock tracking
-        #     self.max_query_duration = max(2 * self.max_query_duration,
-        #                                   self.mcu.seconds_to_clock(.000005))
-        #     return
+        if duration > self.max_query_duration:
+            # Skip measurement as a high query time could skew clock tracking
+            self.max_query_duration = max(2 * self.max_query_duration,
+                                          self.mcu.seconds_to_clock(.000005))
+            return
         self.max_query_duration = 2 * duration
         msg_count = (sequence * SAMPLES_PER_BLOCK
                      + buffered // BYTES_PER_SAMPLE + fifo)
@@ -401,10 +394,6 @@ class MPU9250:
         self.set_reg(REG_CONFIG, SET_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
-        #self.set_reg(REG_FIFO_EN, SET_FIFO_EN_ACCEL)
-        
-        #self.set_reg(REG_USER_CTRL, SET_USER_CTRL_FIFO | SET_USER_CTRL_RESET_FIFO)
-        #self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_WAKE) # wake up
 
         # Setup samples
         with self.lock:

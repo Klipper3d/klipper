@@ -104,7 +104,6 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
 {
     // Read data
     // Regs are: [Xh, Xl, Yh, Yl, Zh, Zl] and [FIFO_CNTh, FIFO_CNTl]
-    //uint8_t regs[] = {AR_ACCEL_OUT_XH, AR_FIFO_COUNT_H};
     uint8_t regs[] = {AR_FIFO, AR_FIFO_COUNT_H};
     uint8_t fifo_count[2];
 
