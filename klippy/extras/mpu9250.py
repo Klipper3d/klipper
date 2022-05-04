@@ -24,12 +24,13 @@ SAMPLE_RATE_DIVS = {
     125: 0x1F, 250: 0x0F, 500: 0x07, 1000: 0x03, 2000: 0x01, 4000:0x00
 }
 
-SET_CONFIG =        0x01 # FIFO mode 'stream' style 
+SET_CONFIG =        0x01 # FIFO mode 'stream' style
 SET_ACCEL_CONFIG =  0x10 # 8g full scale
 SET_ACCEL_CONFIG2 = 0x80 # 1046Hz BW, 0.503ms delay 4kHz sample rate
 
 FREEFALL_ACCEL = 9.80665 * 1000.
-SCALE = 0.000244140625 * FREEFALL_ACCEL # 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
+# SCALE = 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
+SCALE = 0.000244140625 * FREEFALL_ACCEL
 
 FIFO_SIZE = 512
 
@@ -254,12 +255,13 @@ class MPU9250:
         self.lock = threading.Lock()
         self.raw_samples = []
         # Setup mcu sensor_mpu9250 bulk query code
-        self.i2c = bus.MCU_I2C_from_config(config, default_addr=MPU9250_ADDR, default_speed=400000)
+        self.i2c = bus.MCU_I2C_from_config(config, 
+                                           default_addr=MPU9250_ADDR, 
+                                           default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
         self.oid = oid = mcu.create_oid()
         self.query_mpu9250_cmd = self.query_mpu9250_end_cmd = None
         self.query_mpu9250_status_cmd = None
-        
         mcu.register_config_callback(self._build_config)
         mcu.register_response(self._handle_mpu9250_data, "mpu9250_data", oid)
         # Clock tracking
@@ -295,13 +297,6 @@ class MPU9250:
 
     def set_reg(self, reg, val, minclock=0):
         self.i2c.i2c_write([reg, val & 0xFF], minclock=minclock)
-        # stored_val = self.read_reg(reg)
-        # if stored_val != val:
-        #     raise self.printer.command_error(
-        #             "Failed to set MPU9250 register [0x%x] to 0x%x: got 0x%x. "
-        #             "This is generally indicative of connection problems "
-        #             "(e.g. faulty wiring) or a faulty mpu9250 chip." % (
-        #                 reg, val, stored_val))
 
     # Measurement collection
     def is_measuring(self):
