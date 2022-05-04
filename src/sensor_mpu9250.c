@@ -127,7 +127,8 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     //  (so that we can guarantee a reasonable runtime)
     uint8_t reg = AR_FIFO;
     uint16_t processed_packets = 0;
-    while ( processed_packets < sizeof(mp->data) / BYTES_PER_FIFO_ENTRY) { 
+    uint16_t packets_to_read = min(sizeof(mp->data), fifo_status) / BYTES_PER_FIFO_ENTRY
+    while ( processed_packets < packets_to_read) { 
         // Extract x, y, z measurements into data holder and report
         i2c_read(mp->i2c->i2c_config, sizeof(reg), &reg, 
             BYTES_PER_FIFO_ENTRY, &mp->data[mp->data_count]);
@@ -197,7 +198,7 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
 
     // Drain any measurements still in fifo
     uint16_t fifo_status = get_fifo_status(mp);
-    while (fifo_status > 0) {
+    while (fifo_status > BYTES_PER_FIFO_ENTRY) {
         mp9250_query(mp, oid);
         fifo_status = get_fifo_status(mp);
     }
