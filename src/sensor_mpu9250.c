@@ -30,7 +30,10 @@
 
 #define SET_PWR_SLEEP   0x40
 #define SET_PWR_WAKE    0x00
-#define SET_PWR_2_ACCEL_ONLY 0x07 //disable gyro sensors
+#define SET_PWR_2_ACCEL 0x07 // only enable accelerometers
+#define SET_PWR_2_NONE  0x3F // disable all sensors
+
+#define BYTES_PER_FIFO_ENTRY 6
 
 struct mpu9250 {
     struct timer timer;
@@ -46,6 +49,17 @@ enum {
 };
 
 static struct task_wake mpu9250_wake;
+
+// Reads the fifo byte count from the device.
+uint16_t
+get_fifo_status (struct mpu9250 *mp)
+{
+    uint8_t regs[] = {AR_FIFO_COUNT_H};
+    uint8_t msg[2];
+    i2c_read(mp->i2c->i2c_config, sizeof(regs), regs, 2, msg);
+    msg[0] = 0x1F & msg[0]; // discard 3 MSB per datasheet
+    return ((uint16_t)msg[0]) << 8 | msg[1];
+}
 
 // Event handler that wakes mpu9250_task() periodically
 static uint_fast8_t
@@ -97,53 +111,41 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
     sched_add_timer(&mp->timer);
     irq_enable();
 }
-//query_mpu9250 oid=%c clock=%u rest_ticks=%u
+
 // Query accelerometer data
 static void
 mp9250_query(struct mpu9250 *mp, uint8_t oid)
 {
-    // Read data
-    // Regs are: [Xh, Xl, Yh, Yl, Zh, Zl] and [FIFO_CNTh, FIFO_CNTl]
-    uint8_t regs[] = {AR_FIFO, AR_FIFO_COUNT_H};
-    uint8_t fifo_count[2];
-
-    // Get FIFO size
-    i2c_read(mp->i2c->i2c_config, 1, &regs[1], 2, fifo_count);
-    fifo_count[0] = 0x1F & fifo_count[0]; // discard 3 MSB of fifo size
-    uint16_t fifo_status = (((uint16_t)fifo_count[0]) << 8) | fifo_count[1];
-
-    //output("fifo_debug0 fifo=%u oid=%c", fifo_status, oid);
-
     // Check fifo status
+    uint16_t fifo_status = get_fifo_status(mp);
     if (fifo_status >= AR_FIFO_SIZE)
         mp->limit_count++;
 
-    uint16_t remaining_bytes = fifo_status;
-    uint8_t should_sched = 0;
-    if ( remaining_bytes > ARRAY_SIZE(mp->data) ) {
-        //output("fifo_debug1 fifo=%u oid=%c", fifo_status, oid);
-        remaining_bytes = ARRAY_SIZE(mp->data);
-        should_sched = 1;
-    }
-
-    while ( remaining_bytes >= 6 ) { // 6 bytes per entry
+    // Read data
+    // FIFO data are: [Xh, Xl, Yh, Yl, Zh, Zl]
+    // limit amount of packets processed per query to size of data buffer
+    //  (so that we can guarantee a reasonable runtime)
+    uint8_t reg = AR_FIFO;
+    uint16_t processed_packets = 0;
+    while ( processed_packets < sizeof(mp->data) / BYTES_PER_FIFO_ENTRY) { 
         // Extract x, y, z measurements into data holder and report
-        i2c_read(mp->i2c->i2c_config, 1, &regs[0], 6, &mp->data[mp->data_count]);
-        mp->data_count += 6;
-        remaining_bytes -= 6;
-        if (mp->data_count + 6 > ARRAY_SIZE(mp->data)) { // buffer is filled
-            //output("fifo_debug2 rbytes=%u oid=%c", remaining_bytes, oid);
+        i2c_read(mp->i2c->i2c_config, sizeof(reg), &reg, 
+            BYTES_PER_FIFO_ENTRY, &mp->data[mp->data_count]);
+        mp->data_count += BYTES_PER_FIFO_ENTRY;
+        processed_packets ++;
+        // If we filled our buffer, report data to host
+        if (mp->data_count + BYTES_PER_FIFO_ENTRY > sizeof(mp->data)) {
             mp9250_report(mp, oid);
         }
-            
     } 
 
-    if ( should_sched != 0 ) {
-        //output("fifo_debug3 rbytes=%u, oid=%c", remaining_bytes, oid);
+    // check if we need to run the task again
+    if ( processed_packets * BYTES_PER_FIFO_ENTRY < fifo_status ) {
+        // more data still ready in the fifo buffer
         sched_wake_task(&mpu9250_wake);
     }
     else if (mp->flags & AX_RUNNING) {
-        // Sleep until next check time
+        // No more fifo data, but actively running. Sleep until next check
         sched_del_timer(&mp->timer);
         mp->flags &= ~AX_PENDING;
         mp9250_reschedule_timer(mp);
@@ -157,6 +159,10 @@ mp9250_start(struct mpu9250 *mp, uint8_t oid)
     sched_del_timer(&mp->timer);
     mp->flags = AX_RUNNING;
     uint8_t msg[2] = { AR_PWR_MGMT_1, 0x00 }; // wake up
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+
+    msg[0] = AR_PWR_MGMT_2;
+    msg[1] = SET_PWR_2_ACCEL; // turn on accelerometer sensor
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
 
     msg[0] = AR_FIFO_EN;
@@ -178,25 +184,22 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     sched_del_timer(&mp->timer);
     mp->flags = 0;
 
-    uint8_t msg[2] = { AR_FIFO_EN, SET_DISABLE_FIFO }; // disable accel FIFO
+    // disable accel FIFO
+    uint8_t msg[2] = { AR_FIFO_EN, SET_DISABLE_FIFO }; 
     uint32_t end1_time = timer_read_time();
-    i2c_write(mp->i2c->i2c_config, 2, msg);
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
     uint32_t end2_time = timer_read_time();
 
+    // turn off sensors
     msg[0] = AR_PWR_MGMT_2;
-    msg[1] = SET_PWR_2_ACCEL_ONLY; // turn off unused sensors
+    msg[1] = SET_PWR_2_NONE; 
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
 
     // Drain any measurements still in fifo
-    uint16_t fifo_status;
-    uint8_t regs[] = {AR_FIFO_COUNT_H};
-
-    i2c_read(mp->i2c->i2c_config, 1, regs, 2, msg);
-    msg[0] = 0x1F & msg[0]; // discard 3 MSB
-    fifo_status = (((uint16_t)msg[0]) << 8) | msg[1];
-
-    if (fifo_status > 0) {
+    uint16_t fifo_status = get_fifo_status(mp);
+    while (fifo_status > 0) {
         mp9250_query(mp, oid);
+        fifo_status = get_fifo_status(mp);
     }
 
     // Report final data

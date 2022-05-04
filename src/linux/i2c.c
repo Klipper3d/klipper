@@ -100,17 +100,3 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
         try_shutdown("Unable to read i2c device");
     }
 }
-
-void
-i2c_read_ext(struct i2c_config config, uint8_t reg_len, uint8_t *reg
-         , uint16_t read_len, uint8_t *data)
-{
-    if(reg_len != 0)
-        i2c_write(config, reg_len, reg);
-    int ret = read(config.fd, data, read_len);
-    if (ret != read_len) {
-        if (ret < 0)
-            report_errno("read value i2c", ret);
-        try_shutdown("Unable to read i2c device");
-    }
-}
