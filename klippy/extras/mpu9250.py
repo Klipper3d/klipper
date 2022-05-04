@@ -255,8 +255,8 @@ class MPU9250:
         self.lock = threading.Lock()
         self.raw_samples = []
         # Setup mcu sensor_mpu9250 bulk query code
-        self.i2c = bus.MCU_I2C_from_config(config, 
-                                           default_addr=MPU9250_ADDR, 
+        self.i2c = bus.MCU_I2C_from_config(config,
+                                           default_addr=MPU9250_ADDR,
                                            default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
         self.oid = oid = mcu.create_oid()
