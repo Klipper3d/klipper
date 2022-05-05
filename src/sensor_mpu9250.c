@@ -1,7 +1,7 @@
 // Support for gathering acceleration data from mpu9250 chip
 //
-// Copyright (C) 2022 Harry Beyel <harry3b9@gmail.com> 
-//      
+// Copyright (C) 2022 Harry Beyel <harry3b9@gmail.com>
+//
 // Derived from sensor_adxl345.c by Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
