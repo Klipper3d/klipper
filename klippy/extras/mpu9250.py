@@ -11,6 +11,7 @@ from . import bus, motion_report
 MPU9250_ADDR =      0x68
 
 MPU9250_DEV_ID =    0x73
+MPU6050_DEV_ID =    0x68
 
 # MPU9250 registers
 REG_DEVID =         0x75
@@ -379,12 +380,12 @@ class MPU9250:
         # In case of miswiring, testing MPU9250 device ID prevents treating
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_DEVID)
-        if dev_id != MPU9250_DEV_ID:
+        if dev_id != MPU9250_DEV_ID and dev_id != MPU6050_DEV_ID:
             raise self.printer.command_error(
-                "Invalid mpu9250 id (got %x vs %x).\n"
+                "Invalid mpu9250/mpu6050 id (got %x).\n"
                 "This is generally indicative of connection problems\n"
-                "(e.g. faulty wiring) or a faulty mpu9250 chip."
-                % (dev_id, MPU9250_DEV_ID))
+                "(e.g. faulty wiring) or a faulty chip."
+                % (dev_id))
         # Setup chip in requested query rate
         self.set_reg(REG_SMPLRT_DIV, SAMPLE_RATE_DIVS[self.data_rate])
         self.set_reg(REG_CONFIG, SET_CONFIG)
