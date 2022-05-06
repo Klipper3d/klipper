@@ -182,7 +182,7 @@ class Printer:
                ' '.join(message_protocol_error3.splitlines())[1:],
                "",
                str(e)]
-        
+
         return "\n".join(msg)
 
     def _connect(self, eventtime):
