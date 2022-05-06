@@ -161,7 +161,7 @@ def plot_system(data):
 
     # Build plot
     fig, ax1 = matplotlib.pyplot.subplots()
-    ax1.set_title("MCU bandwidth and load utilization")
+    ax1.set_title("System load utilization")
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Load (% of a core)')
     ax1.plot_date(times, sysloads, '-', label='system load',
