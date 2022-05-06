@@ -1773,10 +1773,11 @@ like:</p>
 
 <h2 id="stm32f103-micro-controllers-blue-pill-devices">STM32F103 micro-controllers (Blue Pill devices)<a class="headerlink" href="#stm32f103-micro-controllers-blue-pill-devices" title="Permanent link">&para;</a></h2>
 <p>The STM32F103 devices have a ROM that can flash a bootloader or
-application via 3.3V serial. To access this ROM, one should connect
-the "boot 0" pin to high and "boot 1" pin to low, and then reset the
-device. The "stm32flash" package can then be used to flash the device
-using something like:</p>
+application via 3.3V serial. Typically one would wire the PA10 (MCU
+Rx) and PA9 (MCU Tx) pins to a 3.3V UART adapter. To access the ROM,
+one should connect the "boot 0" pin to high and "boot 1" pin to low,
+and then reset the device. The "stm32flash" package can then be used
+to flash the device using something like:</p>
 <div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
