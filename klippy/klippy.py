@@ -145,16 +145,8 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
-    def _get_versions(self):
-        try:
-            parts = ["%s=%s" % (n.split()[-1], m.get_status()['mcu_version'])
-                     for n, m in self.lookup_objects('mcu')]
-            parts.insert(0, "host=%s" % (self.start_args['software_version']))
-            return "\nKnown versions: %s\n" % (", ".join(parts),)
-        except:
-            logging.exception("Error in _get_versions()")
-            return ""
-    def _get_outdated_versions(self):
+
+    def _build_protocol_error_message(self):
         try:
             host_version = self.start_args['software_version']
 
@@ -200,7 +192,7 @@ class Printer:
             msg = [message_protocol_error1,
                    "",
                    ' '.join(message_protocol_error2.splitlines())[1:],
-                   self._get_outdated_versions(),
+                   self._build_protocol_error_message(),
                    ' '.join(message_protocol_error3.splitlines())[1:],
                    "",
                    str(e)]
