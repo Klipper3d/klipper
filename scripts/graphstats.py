@@ -174,7 +174,9 @@ def plot_system(data):
                   color='yellow', alpha=0.3)
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
-    ax1.legend(loc='best', prop=fontP)
+    ax1li, ax1la = ax1.get_legend_handles_labels()
+    ax2li, ax2la = ax2.get_legend_handles_labels()
+    ax1.legend(ax1li + ax2li, ax1la + ax2la, loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
     return fig
@@ -248,7 +250,9 @@ def plot_temperature(data, heaters):
     ax2.set_ylabel('pwm')
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
-    ax1.legend(loc='best', prop=fontP)
+    ax1li, ax1la = ax1.get_legend_handles_labels()
+    ax2li, ax2la = ax2.get_legend_handles_labels()
+    ax1.legend(ax1li + ax2li, ax1la + ax2la, loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
     return fig
