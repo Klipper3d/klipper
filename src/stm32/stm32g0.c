@@ -30,6 +30,8 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - AHBPERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHBENR, .rst=&RCC->AHBRSTR, .bit=bit};
     }
+    if ((periph_base == FDCAN1_BASE) || (periph_base == FDCAN2_BASE))
+        return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<12};
     if (periph_base == USB_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<13};
     if (periph_base == CRS_BASE)
