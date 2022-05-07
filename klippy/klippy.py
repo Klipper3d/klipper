@@ -22,15 +22,17 @@ command to reload the config and restart the host software.
 Printer is halted
 """
 
-message_protocol_error1 = """
-This type of error is frequently caused by running an older
-version of the firmware on the micro-controller (fix by
-recompiling and flashing the firmware).
-"""
+message_protocol_error1 = "MCU Protocol error"
+
 message_protocol_error2 = """
+This is frequently caused by running an older version of the
+firmware on the MCU(s). Fix by recompiling and flashing the
+firmware.
+"""
+
+message_protocol_error3 = """
 Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
-Protocol error connecting to printer
 """
 
 message_mcu_connect_error = """
@@ -143,15 +145,46 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
-    def _get_versions(self):
-        try:
-            parts = ["%s=%s" % (n.split()[-1], m.get_status()['mcu_version'])
-                     for n, m in self.lookup_objects('mcu')]
-            parts.insert(0, "host=%s" % (self.start_args['software_version'],))
-            return "\nKnown versions: %s\n" % (", ".join(parts),)
-        except:
-            logging.exception("Error in _get_versions()")
-            return ""
+
+    def _build_protocol_error_message(self, e):
+        host_version = self.start_args['software_version']
+
+        msg_update = []
+        msg_updated = []
+
+        for n,mcu_obj in self.lookup_objects('mcu'):
+            try:
+                mcu_version = mcu_obj.get_status()['mcu_version']
+            except:
+                logging.exception("Unable to retrieve mcu_version from mcu_obj")
+                continue
+
+            if mcu_version != host_version:
+                msg_update.append("%s: Current version %s" % (
+                n.split()[-1], mcu_obj.get_status()['mcu_version']))
+            else:
+                msg_updated.append("%s: Current version %s" % (
+                n.split()[-1], mcu_obj.get_status()['mcu_version']))
+
+        if len(msg_updated) == 0:
+            msg_updated.append("<none>")
+
+        version_msg = ["\nYour Klipper version is: %s\n" % host_version,
+               "MCU(s) which should be updated:",
+               "\n%s\n" % "\n".join(msg_update),
+               "Up-to-date MCU(s):",
+               "\n%s\n" % "\n".join(msg_updated)]
+
+        msg = [message_protocol_error1,
+               "",
+               ' '.join(message_protocol_error2.splitlines())[1:],
+               "\n".join(version_msg),
+               ' '.join(message_protocol_error3.splitlines())[1:],
+               "",
+               str(e)]
+
+        return "\n".join(msg)
+
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -166,9 +199,7 @@ class Printer:
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
-            self._set_state("%s\n%s%s%s" % (str(e), message_protocol_error1,
-                                          self._get_versions(),
-                                          message_protocol_error2))
+            self._set_state(self._build_protocol_error_message(e))
             util.dump_mcu_build()
             return
         except mcu.error as e:
