@@ -23,9 +23,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_GPIO_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -285,8 +282,6 @@ extern en_result_t PORT_SetSubFunc(en_port_func_t enFuncSel);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_GPIO_ENABLE */
 
 #endif /* __HC32F460_GPIO_H__ */
 

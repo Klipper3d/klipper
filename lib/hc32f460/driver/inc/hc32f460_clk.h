@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_CLK_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -637,8 +634,6 @@ void CLK_ClearXtalStdFlag(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_CLK_ENABLE */
 
 #endif /* __HC32F460_CLK_H__ */
 

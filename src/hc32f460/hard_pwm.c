@@ -11,7 +11,10 @@
 #include "internal.h"   // GPIO
 #include "sched.h"      // sched_shutdown
 
-#include "hc32_ddl.h"
+// library
+#include "hc32f460_timera.h"
+#include "hc32f460_pwc.h"
+#include "hc32f460_gpio.h"
 
 
 #define MAX_PWM ((1 << 16) - 1)
@@ -121,7 +124,6 @@ gpio_pwm_setup(uint8_t gpio, uint32_t cycle_time, uint8_t val)
 
     // set the function - only using #4 (Func_Tima0)
     PORT_SetFunc(GPIO2PORT(gpio), GPIO2PIN(gpio), Func_Tima0, Disable);
-
 
     /* Configuration timera unit 1 base structure */
     stc_timera_base_init_t stcTimeraInit;

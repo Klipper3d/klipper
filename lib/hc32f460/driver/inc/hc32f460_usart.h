@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_USART_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -349,8 +346,6 @@ en_result_t USART_SetBaudrate(M4_USART_TypeDef *USARTx,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_USART_ENABLE */
 
 #endif /* __HC32F460_USART_H__ */
 

@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_AES_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -71,8 +68,6 @@ en_result_t AES_Decrypt(const uint8_t *pu8Ciphertext,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_AES_ENABLE */
 
 #endif /* __HC32F460_AES_H__ */
 

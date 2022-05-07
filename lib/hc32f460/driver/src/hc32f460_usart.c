@@ -22,8 +22,6 @@
 #include "hc32f460_usart.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_USART_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup UsartGroup
@@ -1632,8 +1630,6 @@ static uint32_t UsartGetClk(const M4_USART_TypeDef *USARTx)
 }
 
 //@} // UsartGroup
-
-#endif /* DDL_USART_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

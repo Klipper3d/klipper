@@ -22,8 +22,6 @@
 #include "hc32f460_rtc.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_RTC_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup RtcGroup
@@ -970,8 +968,6 @@ en_result_t RTC_ClearAlarmFlag(void)
 }
 
 //@} // RtcGroup
-
-#endif /* DDL_RTC_ENABLE */
 
 /******************************************************************************
  * EOF (not truncated)

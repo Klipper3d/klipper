@@ -12,7 +12,9 @@
 #include "generic/serial_irq.h"
 #include "generic/armcm_boot.h"
 
-#include "hc32_ddl.h"
+#include "hc32f460_usart.h"
+#include "hc32f460_gpio.h"
+#include "hc32f460_pwc.h"
 
 
 #define USART_BAUDRATE  (CONFIG_SERIAL_BAUD)

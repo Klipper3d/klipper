@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_PWC_ENABLE == DDL_ON)
 
 
 /* C binding of definitions if building with C++ compiler */
@@ -557,8 +554,6 @@ en_result_t PWC_HP2LS(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_PWC_ENABLE */
 
 #endif /* __HC32F460_PWC_H__ */
 

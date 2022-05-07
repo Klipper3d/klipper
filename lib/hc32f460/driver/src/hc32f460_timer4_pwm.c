@@ -22,8 +22,6 @@
 #include "hc32f460_timer4_pwm.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMER4_PWM_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup Timer4PwmGroup
@@ -592,8 +590,6 @@ en_result_t TIMER4_PWM_SetFilterCountValue(M4_TMR4_TypeDef *TMR4x,
 }
 
 //@} // Timer4PwmGroup
-
-#endif /* DDL_TIMER4_PWM_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

@@ -5,7 +5,7 @@ CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/hc32f460 src/generic lib/hc32f460/driver/src lib/hc32f460/mcu/common
 
-CFLAGS += -mthumb -mcpu=cortex-m4 -Isrc/hc32f460 -Ilib/hc32f460/driver/inc -Ilib/hc32f460/mcu/common -Ilib/hc32f460/mcu/GCC/CMSIS/Core/Include -DHC32F460
+CFLAGS += -mthumb -mcpu=cortex-m4 -Isrc/hc32f460 -Ilib/hc32f460/driver/inc -Ilib/hc32f460/mcu/common -Ilib/cmsis-core -DHC32F460
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
@@ -22,6 +22,7 @@ src-y += ../lib/hc32f460/driver/src/hc32f460_sram.c
 src-y += ../lib/hc32f460/driver/src/hc32f460_utility.c
 src-y += ../lib/hc32f460/driver/src/hc32f460_gpio.c
 src-y += ../lib/hc32f460/driver/src/hc32f460_pwc.c
+src-$(CONFIG_HAVE_GPIO_I2C) += hc32f460/i2c.c../lib/hc32f460/driver/src/hc32f460_i2c.c
 src-$(CONFIG_HAVE_GPIO_ADC) += hc32f460/adc.c ../lib/hc32f460/driver/src/hc32f460_adc.c
 src-$(CONFIG_SERIAL) += hc32f460/serial.c generic/serial_irq.c ../lib/hc32f460/driver/src/hc32f460_usart.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += hc32f460/hard_pwm.c ../lib/hc32f460/driver/src/hc32f460_timera.c

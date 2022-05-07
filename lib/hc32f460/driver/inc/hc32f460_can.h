@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_CAN_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -507,8 +504,6 @@ uint8_t CAN_TxErrorCntGet(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_CAN_ENABLE */
 
 #endif /* __HC32F460_CAN_H__ */
 

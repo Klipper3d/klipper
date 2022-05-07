@@ -22,8 +22,6 @@
 #include "hc32f460_emb.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_EMB_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup EMBGroup
@@ -479,8 +477,6 @@ en_result_t EMB_SwBrake(M4_EMB_TypeDef *EMBx, bool bEn)
 }
 
 //@} // EMBGroup
-
-#endif /* DDL_EMB_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

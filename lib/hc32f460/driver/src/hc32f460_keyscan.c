@@ -22,8 +22,6 @@
 #include "hc32f460_keyscan.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_KEYSCAN_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup KeyscanGroup
@@ -199,8 +197,6 @@ uint8_t KEYSCAN_GetColIdx(void)
 }
 
 //@} // KeyscanGroup
-
-#endif /* DDL_KEYSCAN_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_ADC_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -498,8 +495,6 @@ uint8_t ADC_GetChannelPinNum(const M4_ADC_TypeDef *ADCx, uint8_t u8ChIndex);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_ADC_ENABLE */
 
 #endif /* __HC32F460_ADC_H__ */
 

@@ -22,8 +22,6 @@
 #include "hc32f460_sram.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_SRAM_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup SramGroup
@@ -278,8 +276,6 @@ en_result_t SRAM_DeInit(void)
 }
 
 //@} // SramGroup
-
-#endif /* DDL_SRAM_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

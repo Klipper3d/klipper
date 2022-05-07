@@ -22,8 +22,6 @@
 #include "hc32f460_swdt.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_SWDT_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup SwdtGroup
@@ -162,8 +160,6 @@ en_result_t SWDT_ClearFlag(en_swdt_flag_type_t enFlag)
 }
 
 //@} // SwdtGroup
-
-#endif /* DDL_SWDT_ENABLE */
 
 /******************************************************************************
  * EOF (not truncated)

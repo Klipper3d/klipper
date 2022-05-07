@@ -2,11 +2,9 @@
 #define __HC32F460_INTERNAL_H
 
 
-
 // Local definitions for Huada HC32F460
 
 #include "autoconf.h"
-
 #include "hc32f460.h"
 
 // The HC32F460 library uses a port address and a shifted pin bit

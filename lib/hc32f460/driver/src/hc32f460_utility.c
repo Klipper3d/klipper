@@ -21,8 +21,8 @@
  ******************************************************************************/
 #include "hc32f460_utility.h"
 
-#if (DDL_UTILITY_ENABLE == DDL_ON)
-
+#if defined(DDL_UTILITY_ENABLE)
+asdf
 /**
  *******************************************************************************
  ** \addtogroup DdlUtilityGroup
@@ -36,7 +36,7 @@
 /*******************************************************************************
  * Local pre-processor symbols/macros ('#define')
  ******************************************************************************/
-#if (DDL_PRINT_ENABLE == DDL_ON)
+#if defined(PRINT_ENABLE)
 /*!< Parameter valid check for USART Instances. */
 #define IS_VALID_UART(x)                                                       \
 (   (M4_USART1 == (x))                      ||                                 \
@@ -79,7 +79,7 @@ do {                                                                           \
 static uint32_t m_u32TickStep = 0UL;
 static __IO uint32_t m_u32TickCount = 0UL;
 
-#if (DDL_PRINT_ENABLE == DDL_ON)
+#if defined(PRINT_ENABLE)
 static M4_USART_TypeDef *m_PrintfDevice;
 static uint32_t m_u32PrintfTimeout;
 #endif
@@ -87,7 +87,7 @@ static uint32_t m_u32PrintfTimeout;
 /*******************************************************************************
  * Function implementation - global ('extern') and local ('static')
  ******************************************************************************/
-#if (DDL_PRINT_ENABLE == DDL_ON)
+#if defined(PRINT_ENABLE)
 /**
  *******************************************************************************
  ** \brief  UART transmit.
@@ -504,7 +504,7 @@ __WEAKDEF void SysTick_Resume(void)
 __WEAKDEF void Ddl_AssertHandler(uint8_t *file, int16_t line)
 {
     /* Users can re-implement this function to print information */
-#if (DDL_PRINT_ENABLE == DDL_ON)
+#if defined(PRINT_ENABLE)
     printf("Wrong parameters value: file %s on line %d\r\n", file, line);
 #else
     (void)file;

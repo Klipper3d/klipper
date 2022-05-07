@@ -23,9 +23,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_TIMERA_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -483,8 +480,6 @@ en_result_t TIMERA_CaptureComTriggerCmd(en_timera_com_trigger_t enComTrigger, en
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_TIMERA_ENABLE */
 
 #endif /* __HC32F460_TIMERA_H__ */
 

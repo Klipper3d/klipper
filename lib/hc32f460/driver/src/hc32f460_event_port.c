@@ -22,8 +22,6 @@
 #include "hc32f460_event_port.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_EVENT_PORT_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup EventPortGroup
@@ -460,8 +458,6 @@ en_result_t EVENTPORT_ResetBits(en_event_port_t enEventPort, en_event_pin_t u16E
 }
 
 //@} // EventPortGroup
-
-#endif /* DDL_EVENT_PORT_ENABLE */
 
 /******************************************************************************
  * EOF (not truncated)

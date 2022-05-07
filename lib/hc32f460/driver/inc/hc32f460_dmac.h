@@ -22,10 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_DMAC_ENABLE == DDL_ON)
-
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -379,8 +375,6 @@ void DMA_DeInit(M4_DMA_TypeDef* pstcDmaReg, uint8_t u8Ch);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_DMAC_ENABLE */
 
 #endif /* __HC32F460_DMAC_H__*/
 

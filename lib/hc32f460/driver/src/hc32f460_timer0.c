@@ -22,8 +22,6 @@
 #include "hc32f460_timer0.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMER0_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup Timer0Group
@@ -959,8 +957,6 @@ en_result_t TIMER0_HardTriggerInit(M4_TMR0_TypeDef* pstcTim0Reg,en_tim0_channel_
 }
 
 //@} // Timer0Group
-
-#endif /* DDL_TIMER0_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

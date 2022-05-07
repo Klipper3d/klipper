@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_RTC_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -264,8 +261,6 @@ en_result_t RTC_ClearAlarmFlag(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_RTC_ENABLE */
 
 #endif /* __HC32F460_RTC_H__ */
 

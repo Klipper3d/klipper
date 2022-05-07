@@ -23,9 +23,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_I2S_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -196,8 +193,6 @@ en_result_t I2s_DeInit(M4_I2S_TypeDef* pstcI2sReg);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_I2S_ENABLE */
 
 #endif /* __HC32F460_I2S_H__ */
 
