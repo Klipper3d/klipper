@@ -22,8 +22,6 @@
 #include "hc32f460_sdioc.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_SDIOC_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup SdiocGroup
@@ -2213,8 +2211,6 @@ en_result_t SDIOC_ForceAutoCmdErr(M4_SDIOC_TypeDef *SDIOCx,
 }
 
 //@} // SdiocGroup
-
-#endif /* DDL_SDIOC_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

@@ -22,8 +22,6 @@
 #include "hc32f460_wdt.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_WDT_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup WdtGroup
@@ -246,8 +244,6 @@ en_result_t WDT_ClearFlag(en_wdt_flag_type_t enFlag)
 }
 
 //@} // WdtGroup
-
-#endif /* DDL_WDT_ENABLE */
 
 /******************************************************************************
  * EOF (not truncated)

@@ -22,8 +22,6 @@
 #include "hc32f460_dmac.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_DMAC_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup DmacGroup
@@ -2119,8 +2117,6 @@ void DMA_DeInit(M4_DMA_TypeDef* pstcDmaReg, uint8_t u8Ch)
     /* disable channel */
     DMA_ChannelCmd(pstcDmaReg, u8Ch, Disable);
 }
-
-#endif /* DDL_DMAC_ENABLE */
 
 //@} // DmacGroup
 

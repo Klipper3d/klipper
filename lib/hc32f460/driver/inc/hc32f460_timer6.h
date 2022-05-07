@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_TIMER6_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -723,8 +720,6 @@ en_result_t Timer6_ConfigZMask(M4_TMR6_TypeDef *TMR6x, const stc_timer6_zmask_cf
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_TIMER6_ENABLE */
 
 #endif /* __HC32F460_TIMER6_H__ */
 

@@ -23,9 +23,7 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
 
-#if (DDL_SRAM_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -181,8 +179,6 @@ extern en_result_t SRAM_ClrStatus(en_sram_err_status_t enSramErrStatus);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_SRAM_ENABLE */
 
 #endif /* __HC32F460_SRAM_H__ */
 /*******************************************************************************

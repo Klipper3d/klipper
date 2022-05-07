@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_MPU_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -283,8 +280,6 @@ en_result_t MPU_IpProtCmd(uint32_t u32ProtMode,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_MPU_ENABLE */
 
 #endif /* __HC32F460_MPU_H__ */
 

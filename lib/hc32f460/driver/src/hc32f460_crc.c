@@ -22,8 +22,6 @@
 #include "hc32f460_crc.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_CRC_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup CrcGroup
@@ -319,8 +317,6 @@ static uint32_t CRC_ReverseBits(uint32_t u32Data)
 }
 
 //@} // CrcGroup
-
-#endif /* DDL_CRC_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

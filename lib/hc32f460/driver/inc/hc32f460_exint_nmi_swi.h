@@ -23,9 +23,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_EXINT_NMI_SWI_ENABLE  == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -248,8 +245,6 @@ extern en_result_t SWI_Disable(uint32_t u32SwiCh);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_EXINT_NMI_SWI_ENABLE */
 
 #endif /* __HC32F460_EXINT_NMI_SWI_H__ */
 /*******************************************************************************

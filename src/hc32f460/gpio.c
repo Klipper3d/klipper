@@ -11,7 +11,7 @@
 #include "internal.h"
 #include "sched.h"      // sched_shutdown
 
-#include "hc32_ddl.h"
+#include "hc32f460_gpio.h"
 
 
 // only 3 ports for the 64pin package (ignoring H)

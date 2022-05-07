@@ -23,8 +23,6 @@
 #include "hc32f460_timera.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMERA_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup TimeraGroup
@@ -1964,8 +1962,6 @@ en_result_t TIMERA_CaptureComTriggerCmd(en_timera_com_trigger_t enComTrigger, en
 }
 
 //@} // TimeraGroup
-
-#endif /* DDL_TIMERA_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

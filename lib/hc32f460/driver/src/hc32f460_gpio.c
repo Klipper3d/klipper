@@ -22,8 +22,6 @@
 #include "hc32f460_gpio.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_GPIO_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup GpioGroup
@@ -663,8 +661,6 @@ en_result_t PORT_SetSubFunc(en_port_func_t enFuncSel)
 }
 
 //@} // GpioGroup
-
-#endif /* DDL_GPIO_ENABLE */
 
 /******************************************************************************
  * EOF (not truncated)

@@ -22,8 +22,6 @@
 #include "hc32f460_mpu.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_MPU_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup MpuGroup
@@ -1049,8 +1047,6 @@ en_result_t MPU_IpProtCmd(uint32_t u32ProtMode,
 }
 
 //@} // MpuGroup
-
-#endif /* DDL_MPU_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

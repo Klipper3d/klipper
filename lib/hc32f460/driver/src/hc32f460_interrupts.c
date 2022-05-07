@@ -22,8 +22,6 @@
 #include "hc32f460_interrupts.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_INTERRUPTS_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup InterruptGroup
@@ -2052,7 +2050,7 @@ void IRQ127_Handler(void)
     }
 }
 
-#if (DDL_INTERRUPTS_SHARE_ENABLE == DDL_ON)
+#if defined(INTERRUPTS_SHARE_ENABLE)
 /**
  *******************************************************************************
  ** \brief Int No.128 share IRQ handler
@@ -3775,8 +3773,6 @@ void IRQ143_Handler(void)
 #endif
 
 //@} // InterruptGroup
-
-#endif /* DDL_INTERRUPTS_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

@@ -22,8 +22,6 @@
 #include "hc32f460_timer6.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMER6_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup Timer6Group
@@ -1816,8 +1814,6 @@ en_result_t Timer6_ConfigZMask(M4_TMR6_TypeDef *TMR6x, const stc_timer6_zmask_cf
 
 
 //@} // Timer6Group
-
-#endif /* DDL_TIMER6_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

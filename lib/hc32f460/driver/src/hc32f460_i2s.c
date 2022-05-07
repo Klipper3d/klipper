@@ -22,8 +22,6 @@
 #include "hc32f460_i2s.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_I2S_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup I2sGroup
@@ -429,8 +427,6 @@ en_result_t I2s_DeInit(M4_I2S_TypeDef* pstcI2sReg)
 }
 
 //@} // I2sGroup
-
-#endif /* DDL_I2S_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

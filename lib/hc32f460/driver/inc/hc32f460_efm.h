@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_EFM_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -198,8 +195,6 @@ stc_efm_unique_id_t EFM_ReadUID(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_EFM_ENABLE */
 
 #endif /* __HC32F460_EFM_H__ */
 

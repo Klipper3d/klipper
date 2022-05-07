@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_DCU_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -117,7 +114,7 @@ typedef enum en_dcu_int_win_mode
 {
     DcuIntInvalid       = 0u,               ///< DCU don't occur interrupt
     DcuWinIntInvalid    = 1u,               ///< DCU window interrupt is invalid.
-    DcuInsideWinCmpInt  = 2u,               ///< DCU occur interrupt when DATA2 ¡Ü DATA0 ¡Ü DATA2
+    DcuInsideWinCmpInt  = 2u,               ///< DCU occur interrupt when DATA2 ï¿½ï¿½ DATA0 ï¿½ï¿½ DATA2
     DcuOutsideWinCmpInt = 3u,               ///< DCU occur interrupt when DATA0 > DATA1 or DATA0 < DATA2
 } en_dcu_int_win_mode_t;
 
@@ -206,8 +203,6 @@ void DCU_ComTriggerCmd(M4_DCU_TypeDef *DCUx,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_DCU_ENABLE */
 
 #endif /* __HC32F460_DCU_H__ */
 

@@ -22,8 +22,6 @@
 #include "hc32f460_cmp.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_CMP_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup CmpGroup
@@ -1038,8 +1036,6 @@ en_result_t CMP_ADC_SetRefVoltPath(en_cmp_adc_int_ref_volt_path_t enRefVoltPath)
 }
 
 //@} // CmpGroup
-
-#endif /* DDL_CMP_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

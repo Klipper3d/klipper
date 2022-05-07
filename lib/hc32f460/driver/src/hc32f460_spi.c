@@ -22,8 +22,6 @@
 #include "hc32f460_spi.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_SPI_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup SpiGroup
@@ -1129,8 +1127,6 @@ en_result_t SPI_ClearFlag(M4_SPI_TypeDef *SPIx, en_spi_flag_type_t enFlag)
 }
 
 //@} // SpiGroup
-
-#endif /* DDL_SPI_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

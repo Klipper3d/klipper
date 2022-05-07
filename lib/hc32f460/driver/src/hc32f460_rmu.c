@@ -22,8 +22,6 @@
 #include "hc32f460_rmu.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_RMU_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup RmuGroup
@@ -134,8 +132,6 @@ en_result_t RMU_ClrResetFlag(void)
 
 
 //@} // RmuGroup
-
-#endif /* DDL_RMU_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

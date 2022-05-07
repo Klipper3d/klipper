@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_OTS_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -129,8 +126,6 @@ float OTS_CalculateTemp(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_OTS_ENABLE */
 
 #endif /* __HC32F460_OTS_H__ */
 

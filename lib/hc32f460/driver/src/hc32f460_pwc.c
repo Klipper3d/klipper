@@ -22,8 +22,6 @@
 #include "hc32f460_pwc.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_PWC_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup PwcGroup
@@ -2015,8 +2013,6 @@ en_result_t PWC_HP2LS(void)
 
     return Ok;
 }
-
-#endif /* DDL_PWC_ENABLE */
 
 //@} // PwcGroup
 

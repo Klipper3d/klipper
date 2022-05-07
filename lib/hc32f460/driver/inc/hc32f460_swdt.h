@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_SWDT_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -76,8 +73,6 @@ en_result_t SWDT_ClearFlag(en_swdt_flag_type_t enFlag);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_SWDT_ENABLE */
 
 #endif /* __HC32F460_SWDT_H__ */
 

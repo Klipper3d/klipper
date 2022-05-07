@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_QSPI_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -392,8 +389,6 @@ en_result_t QSPI_ClearFlag(en_qspi_flag_type_t enFlag);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_QSPI_ENABLE */
 
 #endif /* __HC32F460_QSPI_H__ */
 
