@@ -4232,30 +4232,30 @@ max_temp:
 <p>打印床倾斜补偿。可以定义一个 bed_tilt 配置分段来启用移动变换倾斜打印床补偿。请注意，bed_mesh 和 bed_tilt 不兼容：两者无法同时被定义。</p>
 <p>See the <a href="G-Codes.html#bed_tilt">command reference</a> for additional information.</p>
 <div class="highlight"><pre><span></span><code>[bed_tilt]
-#x_adjust: 0
-#   The amount to add to each move&#39;s Z height for each mm on the X
-#   axis. The default is 0.
-#y_adjust: 0
-#   The amount to add to each move&#39;s Z height for each mm on the Y
-#   axis. The default is 0.
-#z_adjust: 0
-#   The amount to add to the Z height when the nozzle is nominally at
-#   0, 0. The default is 0.
-# The remaining parameters control a BED_TILT_CALIBRATE extended
-# g-code command that may be used to calibrate appropriate x and y
-# adjustment parameters.
-#points:
-#   A list of X, Y coordinates (one per line; subsequent lines
-#   indented) that should be probed during a BED_TILT_CALIBRATE
-#   command. Specify coordinates of the nozzle and be sure the probe
-#   is above the bed at the given nozzle coordinates. The default is
-#   to not enable the command.
-#speed: 50
-#   The speed (in mm/s) of non-probing moves during the calibration.
-#   The default is 50.
-#horizontal_move_z: 5
-#   The height (in mm) that the head should be commanded to move to
-#   just prior to starting a probe operation. The default is 5.
+#x_调整：0
+# 在 X 轴上每 mm 添加到每次移动的 Z 高度的量
+# 轴。默认值为 0。
+#y_调整：0
+# 在 Y 轴上每 mm 添加到每次移动的 Z 高度的量
+# 轴。默认值为 0。
+#z_调整：0
+# 喷嘴标称位置时添加到 Z 高度的量
+# 0, 0。默认为 0。
+# 其余参数控制一个 BED_TILT_CALIBRATE 扩展
+# g-code 命令，可用于校准适当的 x 和 y
+#调整参数。
+#点：
+# X、Y 坐标列表（每行一个；后续行
+# indented) 应该在 BED_TILT_CALIBRATE 期间探测
+＃   命令。指定喷嘴的坐标并确保探头
+# 在给定喷嘴坐标处的床上方。默认是
+# 不启用命令。
+#速度：50
+# 校准期间非探测移动的速度（以 mm/s 为单位）。
+# 默认为 50。
+#horizontal_move_z：5
+# 头部应该被命令移动到的高度（以毫米为单位）
+# 就在开始探测操作之前。默认值为 5。
 </code></pre></div>
 
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
@@ -4504,7 +4504,7 @@ gcode：
 </code></pre></div>
 
 <h3 id="delayed_gcode">[delayed_gcode]<a class="headerlink" href="#delayed_gcode" title="Permanent link">&para;</a></h3>
-<p>Execute a gcode on a set delay. See the <a href="Command_Templates.html#delayed-gcodes">command template guide</a> and <a href="G-Codes.html#delayed_gcode">command reference</a> for more information.</p>
+<p>在设定的延迟上执行 gcode。 有关详细信息，请参阅 <a href="Command_Templates.html#delayed-gcodes">命令模板指南</a> 和 <a href="G-Codes.html#delayed_gcode">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode my_delayed_gcode]。
 gcode:
 #   当延迟时间结束后执行的G代码命令列表。支持G代码模板。
@@ -4601,7 +4601,7 @@ path:
 </code></pre></div>
 
 <h3 id="respond">[respond]<a class="headerlink" href="#respond" title="Permanent link">&para;</a></h3>
-<p>Enable the "M118" and "RESPOND" extended <a href="G-Codes.html#respond">commands</a>.</p>
+<p>启用“M118”和“RESPOND”扩展 <a href="G-Codes.html#respond">commands</a>。</p>
 <div class="highlight"><pre><span></span><code>[respond]
 #default_type: echo
 #   Sets the default prefix of the &quot;M118&quot; and &quot;RESPOND&quot; output to one
@@ -4616,7 +4616,7 @@ path:
 
 <h2 id="_13">共振补偿<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <h3 id="input_shaper">[input_shaper]<a class="headerlink" href="#input_shaper" title="Permanent link">&para;</a></h3>
-<p>Enables <a href="Resonance_Compensation.html">resonance compensation</a>. Also see the <a href="G-Codes.html#input_shaper">command reference</a>.</p>
+<p>启用 <a href="Resonance_Compensation.html">共振补偿</a>。 另请参阅 <a href="G-Codes.html#input_shaper">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]
 #shaper_freq_x: 0
 #   输入整形器的 X 轴频率(Hz)。通常这是希望被输入整形器消除的
@@ -4929,14 +4929,14 @@ z_offset:
 <h3 id="extruder1">[extruder1]<a class="headerlink" href="#extruder1" title="Permanent link">&para;</a></h3>
 <p>在一个多挤出机的打印机中，为每个额外的挤出机添加一个额外挤出机分段。额外挤出机分段应被命名为"extruder1"、"extruder2"、"extruder3"，以此类推。有关可用参数，参见"extruder"章节。</p>
 <p>多挤出机参考示例<a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-multi-extruder.cfg">sample-multi-extruder.cfg</a></p>
-<div class="highlight"><pre><span></span><code>[extruder1]
-#step_pin:
-#dir_pin:
+<div class="highlight"><pre><span></span><code>[挤出机1]
+#step_pin：
+#dir_pin：
 #...
-#   See the &quot;extruder&quot; section for available stepper and heater
-#   parameters.
-#shared_heater:
-#   This option is deprecated and should no longer be specified.
+# 有关可用的步进器和加热器，请参阅“挤出机”部分
+＃   参数。
+#shared_heater：
+# 此选项已弃用，不应再指定。
 </code></pre></div>
 
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
@@ -5551,20 +5551,20 @@ pin:
 </code></pre></div>
 
 <h3 id="dotstar">[dotstar]<a class="headerlink" href="#dotstar" title="Permanent link">&para;</a></h3>
-<p>Dotstar (aka APA102) LED support (one may define any number of sections with a "dotstar" prefix). See the <a href="G-Codes.html#led">command reference</a> for more information.</p>
+<p>Dotstar（又名 APA102）LED 支持（可以使用“dotstar”前缀定义任意数量的部分）。 有关详细信息，请参阅 <a href="G-Codes.html#led">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[dotstar my_dotstar]
-data_pin:
-#   The pin connected to the data line of the dotstar. This parameter
-#   must be provided.
-clock_pin:
-#   The pin connected to the clock line of the dotstar. This parameter
-#   must be provided.
-#chain_count:
-#   See the &quot;neopixel&quot; section for information on this parameter.
-#initial_RED: 0.0
-#initial_GREEN: 0.0
-#initial_BLUE: 0.0
-#   See the &quot;led&quot; section for information on these parameters.
+数据引脚：
+# 接点星数据线的管脚。 这个参数
+＃   必须提供。
+时钟引脚：
+# 连接到dotstar时钟线的引脚。 这个参数
+＃   必须提供。
+#chain_count：
+# 有关此参数的信息，请参阅“neopixel”部分。
+#initial_RED：0.0
+#initial_GREEN：0.0
+#initial_BLUE：0.0
+# 有关这些参数的信息，请参阅“led”部分。
 </code></pre></div>
 
 <h3 id="pca9533">[pca9533]<a class="headerlink" href="#pca9533" title="Permanent link">&para;</a></h3>
@@ -6389,20 +6389,20 @@ text:
 <p>显示数据文本"macros"（可以定义任意数量的带有display_template前缀的部分）。有关模板评估的信息，请参阅<a href="Command_Templates.html">命令模板</a>文件。</p>
 <p>This feature allows one to reduce repetitive definitions in display_data sections. One may use the builtin <code>render()</code> function in display_data sections to evaluate a template. For example, if one were to define <code>[display_template my_template]</code> then one could use <code>{ render('my_template') }</code> in a display_data section.</p>
 <p>This feature can also be used for continuous LED updates using the <a href="G-Codes.html#set_led_template">SET_LED_TEMPLATE</a> command.</p>
-<div class="highlight"><pre><span></span><code>[display_template my_template_name]
-#param_&lt;name&gt;:
-#   One may specify any number of options with a &quot;param_&quot; prefix. The
-#   given name will be assigned the given value (parsed as a Python
-#   literal) and will be available during macro expansion. If the
-#   parameter is passed in the call to render() then that value will
-#   be used during macro expansion. For example, a config with
-#   &quot;param_speed = 75&quot; might have a caller with
-#   &quot;render(&#39;my_template_name&#39;, param_speed=80)&quot;. Parameter names may
-#   not use upper case characters.
-text:
-#   The text to return when the this template is rendered. This field
-#   is evaluated using command templates (see
-#   docs/Command_Templates.md). This parameter must be provided.
+<div class="highlight"><pre><span></span><code>[显示模板我的模板名称]
+#param_&lt;名称&gt;：
+# 可以指定任意数量的带有“param_”前缀的选项。 这
+# 给定的名称将被赋予给定的值（解析为 Python
+# 字面量）并且在宏扩展期间可用。 如果
+# 参数在调用 render() 时传递，然后该值将
+# 在宏扩展时使用。 例如，一个配置
+# &quot;param_speed = 75&quot; 可能有一个调用者
+# &quot;render(&#39;my_template_name&#39;, param_speed=80)&quot;. 参数名称可以
+# 不使用大写字符。
+文本：
+# 渲染此模板时要返回的文本。 这个领域
+# 使用命令模板进行评估（参见
+# docs/Command_Templates.md）。 必须提供此参数。
 </code></pre></div>
 
 <h3 id="display_glyph">[display_glyph]<a class="headerlink" href="#display_glyph" title="Permanent link">&para;</a></h3>
