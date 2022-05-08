@@ -607,6 +607,16 @@ above the supplied MINIMUM and/or at or below the supplied MAXIMUM.
 [TARGET=<target_temperature>]`: Sets the target temperature for a
 heater. If a target temperature is not supplied, the target is 0.
 
+### [hx711]
+
+The following command is available when a
+[hx711](Config_Reference.md#hx711)
+config section is enabled.
+
+#### QUERY_HX711
+`QUERY_HX711 NAME=<sensor_name>`: Queries last obtained value and
+raw value of the hx711 sensor.
+
 ### [idle_timeout]
 
 The idle_timeout module is automatically loaded.

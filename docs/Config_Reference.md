@@ -3929,6 +3929,22 @@ adc2:
 #   above parameters.
 ```
 
+### [hx711]
+
+HX711 Load Cell Sensor (see
+[HX711 Load Cell Sensor](HX711_Load_Cell_Sensor.md)).
+
+```
+[hx711 my_sensor]
+dout_pin:
+# Pin connected to hx711's DOUT pin
+sclk_pin:
+# Pin connected to hx711's PD_SCK pin
+#calib_data: 0,0;1,1
+#   A semicolon ';' separated list of <raw_value>,<value> pairs to form the conversion.
+#   Default: 0,0;1,1
+```
+
 ## Board specific hardware support
 
 ### [sx1509]
