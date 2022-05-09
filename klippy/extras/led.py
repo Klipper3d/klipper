@@ -16,6 +16,7 @@ class LEDHelper:
         self.update_func = update_func
         self.led_count = led_count
         self.need_transmit = False
+        self.turn_off_flag = False
         # Initial color
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
@@ -38,11 +39,15 @@ class LEDHelper:
             logging.exception("led update transmit error")
     cmd_SET_LED_OFF_help = "Turn off LED"
     def cmd_SET_LED_OFF(self, gcmd):
-        led_state = [(0,0,0,0)] * self.led_count
-        self.transmit(led_state, None)
+        if not self.turn_off_flag:
+            self.turn_off_flag = True
+            led_state = [(0,0,0,0)] * self.led_count
+            self.transmit(led_state, None)
     cmd_SET_LED_ON_help = "Turn on LED"
     def cmd_SET_LED_ON(self, gcmd):
-        self.transmit(self.led_state, None)
+        if self.turn_off_flag:
+            self.turn_off_flag = False
+            self.transmit(self.led_state, None)
     def get_led_count(self):
         return self.led_count
     def set_color(self, index, color):
