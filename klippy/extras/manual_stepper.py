@@ -84,8 +84,8 @@ class ManualStepper:
                 finalize_time = self.reactor.NEVER
             self.trapq_finalize_moves(self.trapq, finalize_time)
             toolhead.note_kinematic_activity(self.next_cmd_time)
+            flush_time = self.next_cmd_time
             for m in self.all_mcus:
-                flush_time = self.next_cmd_time
                 if self.next_cmd_time < next_print_time:
                     flush_time -= self.move_flush_time
                 m.flush_moves(flush_time)
