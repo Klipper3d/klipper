@@ -181,7 +181,8 @@ class PrinterLCD:
         self.off_flag = False
 
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
-        self.key_event_gcode = gcode_macro.load_template(config, 'key_event_gcode', '')
+        self.key_event_gcode = gcode_macro.load_template(config, 
+                'key_event_gcode', '')
 
         # Load low-level lcd handler
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
@@ -215,10 +216,10 @@ class PrinterLCD:
         self.gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', name,
                                    self.cmd_SET_DISPLAY_GROUP,
                                    desc=self.cmd_SET_DISPLAY_GROUP_help)
-        self.gcode.register_command("SET_DISPLAY_OFF", self.cmd_SET_DISPLAY_OFF,
-                               desc=self.cmd_SET_DISPLAY_OFF_help)
-        self.gcode.register_command("SET_DISPLAY_ON", self.cmd_SET_DISPLAY_ON,
-                               desc=self.cmd_SET_DISPLAY_ON_help)            
+        self.gcode.register_command("SET_DISPLAY_OFF", 
+                self.cmd_SET_DISPLAY_OFF, desc=self.cmd_SET_DISPLAY_OFF_help)
+        self.gcode.register_command("SET_DISPLAY_ON", 
+                self.cmd_SET_DISPLAY_ON, desc=self.cmd_SET_DISPLAY_ON_help)            
         if name == 'display':
             self.gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', None,
                                        self.cmd_SET_DISPLAY_GROUP)

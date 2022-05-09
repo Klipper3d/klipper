@@ -27,10 +27,10 @@ class LEDHelper:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
                                    desc=self.cmd_SET_LED_help)
-        gcode.register_mux_command("SET_LED_OFF", "LED", name, self.cmd_SET_LED_OFF,
-                                   desc=self.cmd_SET_LED_OFF_help)
-        gcode.register_mux_command("SET_LED_ON", "LED", name, self.cmd_SET_LED_ON,
-                                   desc=self.cmd_SET_LED_OFF_help)
+        gcode.register_mux_command("SET_LED_OFF", "LED", name, 
+                self.cmd_SET_LED_OFF, desc=self.cmd_SET_LED_OFF_help)
+        gcode.register_mux_command("SET_LED_ON", "LED", name, 
+                self.cmd_SET_LED_ON, desc=self.cmd_SET_LED_OFF_help)
     def transmit(self, led_state, print_time):
         try:
             self.update_func(led_state, print_time)
