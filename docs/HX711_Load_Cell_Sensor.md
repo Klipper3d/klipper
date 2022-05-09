@@ -6,6 +6,8 @@ To use the HX711 load cell sensor, read
 [Config Reference](Config_Reference.md#hx711) and
 [G-Code documentation](G-Codes.md#hx711).
 
+HX711 is only supported on MCUs with bitbanging support.
+
 ## Calibration procedure
 
 To get sensor value you can use **QUERY_HX711** command in terminal.
