@@ -4,3 +4,4 @@ out
 .config
 .config.old
 klippy/.version
+scripts/install-ubuntu-20.04.sh
