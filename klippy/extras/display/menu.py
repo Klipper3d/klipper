@@ -1040,7 +1040,7 @@ class MenuManager:
             self.down(True)
         elif key == 'back':
             self.back()
- 
+
         # Run key event gcode of display
         self.display.run_key_event_gcode()
 
