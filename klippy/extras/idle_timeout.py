@@ -38,7 +38,9 @@ class IdleTimeout:
         return { "state": self.state, "printing_time": printing_time }
     def handle_ready(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.timeout_timer = self.reactor.register_timer(self.timeout_handler)
+        # Make sure the timeout to run at startup
+        checktime = self.reactor.monotonic() + self.idle_timeout
+        self.timeout_timer = self.reactor.register_timer(self.timeout_handler, checktime)
         self.printer.register_event_handler("toolhead:sync_print_time",
                                             self.handle_sync_print_time)
     def transition_idle_state(self, eventtime):
@@ -73,6 +75,7 @@ class IdleTimeout:
     def timeout_handler(self, eventtime):
         if self.printer.is_shutdown():
             return self.reactor.NEVER
+
         if self.state == "Ready":
             return self.check_idle_timeout(eventtime)
         # Check if need to transition to "ready" state

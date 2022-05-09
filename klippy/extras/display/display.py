@@ -176,6 +176,13 @@ class PrinterLCD:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
+
+        # Setup screen off flag, defaut is False
+        self.off_flag = False
+
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
+        self.key_event_gcode = gcode_macro.load_template(config, 'key_event_gcode', '')
+
         # Load low-level lcd handler
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         # Load menu and display_status
@@ -204,15 +211,27 @@ class PrinterLCD:
         self.redraw_request_pending = False
         self.redraw_time = 0.
         # Register g-code commands
-        gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', name,
+        self.gcode = self.printer.lookup_object("gcode")
+        self.gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', name,
                                    self.cmd_SET_DISPLAY_GROUP,
                                    desc=self.cmd_SET_DISPLAY_GROUP_help)
+        self.gcode.register_command("SET_DISPLAY_OFF", self.cmd_SET_DISPLAY_OFF,
+                               desc=self.cmd_SET_DISPLAY_OFF_help)
+        self.gcode.register_command("SET_DISPLAY_ON", self.cmd_SET_DISPLAY_ON,
+                               desc=self.cmd_SET_DISPLAY_ON_help)            
         if name == 'display':
-            gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', None,
+            self.gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', None,
                                        self.cmd_SET_DISPLAY_GROUP)
     def get_dimensions(self):
         return self.lcd_chip.get_dimensions()
+    def run_key_event_gcode(self):
+        # self.key_event_gcode.run_gcode_from_command()
+        try:
+            script = self.key_event_gcode.render()
+            res = self.gcode.run_script(script)
+        except:
+            logging.exception("key event gcode execution")
+
     def handle_ready(self):
         self.lcd_chip.init()
         # Start screen update timer
@@ -223,6 +242,12 @@ class PrinterLCD:
             self.redraw_request_pending = False
             self.redraw_time = eventtime + REDRAW_MIN_TIME
         self.lcd_chip.clear()
+
+        # if screen off, do nothing.
+        if self.off_flag:
+            self.lcd_chip.flush()
+            return eventtime + REDRAW_TIME
+
         # update menu component
         if self.menu is not None:
             ret = self.menu.screen_update_event(eventtime)
@@ -259,6 +284,12 @@ class PrinterLCD:
             data = [0xff] + [(pixels >> (i * 8)) & 0xff] * 14 + [0xff]
             self.lcd_chip.write_graphics(col + width - 1 - i, row, data)
         return ""
+    def turn_on_display(self):
+        self.off_flag = False
+    def turn_off_display(self):
+        self.off_flag = True
+        self.lcd_chip.clear()
+        self.lcd_chip.flush()
     cmd_SET_DISPLAY_GROUP_help = "Set the active display group"
     def cmd_SET_DISPLAY_GROUP(self, gcmd):
         group = gcmd.get('GROUP')
@@ -266,6 +297,16 @@ class PrinterLCD:
         if new_dg is None:
             raise gcmd.error("Unknown display_data group '%s'" % (group,))
         self.show_data_group = new_dg
+    cmd_SET_DISPLAY_OFF_help = "Turn off the display screen"
+    def cmd_SET_DISPLAY_OFF(self, gcmd):
+        if self.off_flag == False:
+            gcmd.respond_info("Turn off the display screen")
+            self.turn_off_display()
+    cmd_SET_DISPLAY_ON_help = "Turn on the display screen"
+    def cmd_SET_DISPLAY_ON(self, gcmd):
+        if self.off_flag:
+            gcmd.respond_info("Turn on the display screen")
+            self.turn_on_display()
 
 def load_config(config):
     return PrinterLCD(config)

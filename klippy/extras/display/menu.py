@@ -1040,6 +1040,10 @@ class MenuManager:
             self.down(True)
         elif key == 'back':
             self.back()
+        
+        # Run key event gcode of display
+        self.display.run_key_event_gcode()
+
         self.display.request_redraw()
 
     # Collection of manager class helper methods
