@@ -125,6 +125,6 @@ callbacks.
 
 The canboot directory contains code from:
   https://github.com/Arksine/CanBoot
-revision f0d7bb7f9c189de2c22af9eb7210487ed5695f58.  The Python module,
+revision ae687a404d0edb2724a084f78e565dbc7dd505aa.  The Python module,
 flash_can.py, is taken from the repo's scripts directory.  It may be
 used to upload firmware to devices flashed with the CanBoot bootloader.

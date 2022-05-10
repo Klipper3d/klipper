@@ -428,7 +428,7 @@ enter the bootloader by pressing the reset button twice in succession.
 
 The `flash_can.py` utility supplied in the `lib/canboot` folder may be used to
 upload Klipper firmware.  The device UUID is necessary to flash.  If you do not
-have a UUID it is possible to query nodes in currently running the bootloader:
+have a UUID it is possible to query nodes currently running the bootloader:
 ```
 python3 flash_can.py -q
 ```
