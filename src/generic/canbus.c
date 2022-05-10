@@ -90,7 +90,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
 
 // Available commands and responses
 #define CANBUS_CMD_QUERY_UNASSIGNED 0x00
-#define CANBUS_CMD_SET_NODEID 0x01
+#define CANBUS_CMD_SET_KLIPPER_NODEID 0x01
 #define CANBUS_CMD_REQUEST_BOOTLOADER 0x02
 #define CANBUS_RESP_NEED_NODEID 0x20
 
@@ -127,7 +127,7 @@ can_process_query_unassigned(uint32_t id, uint32_t len, uint8_t *data)
     uint8_t send[8];
     send[0] = CANBUS_RESP_NEED_NODEID;
     memcpy(&send[1], canbus_uuid, sizeof(canbus_uuid));
-    send[7] = CANBUS_CMD_SET_NODEID;
+    send[7] = CANBUS_CMD_SET_KLIPPER_NODEID;
     // Send with retry
     for (;;) {
         int ret = canbus_send(CANBUS_ID_ADMIN_RESP, 8, send);
@@ -145,7 +145,7 @@ can_id_conflict(void)
 }
 
 static void
-can_process_set_nodeid(uint32_t id, uint32_t len, uint8_t *data)
+can_process_set_klipper_nodeid(uint32_t id, uint32_t len, uint8_t *data)
 {
     if (len < 8)
         return;
@@ -188,8 +188,8 @@ can_process(uint32_t id, uint32_t len, uint8_t *data)
     case CANBUS_CMD_QUERY_UNASSIGNED:
         can_process_query_unassigned(id, len, data);
         break;
-    case CANBUS_CMD_SET_NODEID:
-        can_process_set_nodeid(id, len, data);
+    case CANBUS_CMD_SET_KLIPPER_NODEID:
+        can_process_set_klipper_nodeid(id, len, data);
         break;
     case CANBUS_CMD_REQUEST_BOOTLOADER:
         can_process_request_bootloader(id, len, data);
