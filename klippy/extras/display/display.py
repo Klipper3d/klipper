@@ -9,7 +9,7 @@ import logging, os, ast
 from . import hd44780, hd44780_spi, st7920, uc1701, menu
 
 # Normal time between each screen redraw
-REDRAW_TIME = 0.500
+REDRAW_TIME = 0.200
 # Minimum time between screen redraws
 REDRAW_MIN_TIME = 0.100
 
@@ -176,14 +176,19 @@ class PrinterLCD:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
+        self.toolhead = None
 
         # Setup screen off flag, defaut is False
-        self.off_flag = False
-
+        self.screen_off = False
+        # Setup key event gcode and auto screen event gcode
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.key_event_gcode = gcode_macro.load_template(config,
                 'key_event_gcode', '')
-
+        self.screen_auto_off_gcode = gcode_macro.load_template(config,
+                'screen_auto_off_gcode', '')
+        self.screen_auto_off_time = config.getint("screen_auto_off_time",
+                0, minval=0)
+        self.last_key_event_time = self.reactor.monotonic()
         # Load low-level lcd handler
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
         # Load menu and display_status
@@ -225,18 +230,23 @@ class PrinterLCD:
                 'DISPLAY', None, self.cmd_SET_DISPLAY_GROUP)
     def get_dimensions(self):
         return self.lcd_chip.get_dimensions()
-    def run_key_event_gcode(self):
-        # self.key_event_gcode.run_gcode_from_command()
+    def run_gcode(self, gcode_cmd):
         try:
-            script = self.key_event_gcode.render()
+            script = gcode_cmd.render()
             res = self.gcode.run_script(script)
         except:
-            logging.exception("key event gcode execution")
+            logging.exception("display gcode execution")
+
+    def on_key_event(self, key):
+        self.run_gcode(self.key_event_gcode)
+        self.last_key_event_time = self.reactor.monotonic()
+        self.screen_off = False
 
     def handle_ready(self):
         self.lcd_chip.init()
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
+        self.toolhead = self.printer.lookup_object('toolhead')
     # Screen updating
     def screen_update_event(self, eventtime):
         if self.redraw_request_pending:
@@ -244,8 +254,20 @@ class PrinterLCD:
             self.redraw_time = eventtime + REDRAW_MIN_TIME
         self.lcd_chip.clear()
 
+        # check timeout of screen when screen is on
+        if self.screen_off is False and \
+            self.screen_auto_off_time > 0 and \
+            self.toolhead is not None:
+            ct = self.reactor.monotonic()
+            print_time = self.toolhead.get_last_move_time()
+            # not timeout at printing
+            if ct > print_time + self.screen_auto_off_time:
+                if ct > self.last_key_event_time + self.screen_auto_off_time:
+                    self.screen_off = True
+                    self.run_gcode(self.screen_auto_off_gcode)
+
         # if screen off, do nothing.
-        if self.off_flag:
+        if self.screen_off:
             self.lcd_chip.flush()
             return eventtime + REDRAW_TIME
 
@@ -286,9 +308,9 @@ class PrinterLCD:
             self.lcd_chip.write_graphics(col + width - 1 - i, row, data)
         return ""
     def turn_on_display(self):
-        self.off_flag = False
+        self.screen_off = False
     def turn_off_display(self):
-        self.off_flag = True
+        self.screen_off = True
         self.lcd_chip.clear()
         self.lcd_chip.flush()
     cmd_SET_DISPLAY_GROUP_help = "Set the active display group"
@@ -300,12 +322,12 @@ class PrinterLCD:
         self.show_data_group = new_dg
     cmd_SET_DISPLAY_OFF_help = "Turn off the display screen"
     def cmd_SET_DISPLAY_OFF(self, gcmd):
-        if self.off_flag == False:
+        if self.screen_off == False:
             gcmd.respond_info("Turn off the display screen")
             self.turn_off_display()
     cmd_SET_DISPLAY_ON_help = "Turn on the display screen"
     def cmd_SET_DISPLAY_ON(self, gcmd):
-        if self.off_flag:
+        if self.screen_off:
             gcmd.respond_info("Turn on the display screen")
             self.turn_on_display()
 

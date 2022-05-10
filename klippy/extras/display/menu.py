@@ -1042,7 +1042,7 @@ class MenuManager:
             self.back()
 
         # Run key event gcode of display
-        self.display.run_key_event_gcode()
+        self.display.on_key_event(key)
 
         self.display.request_redraw()
 

@@ -43,11 +43,13 @@ class LEDHelper:
             self.turn_off_flag = True
             led_state = [(0,0,0,0)] * self.led_count
             self.transmit(led_state, None)
+            gcmd.respond_info("Turn off leds")
     cmd_SET_LED_ON_help = "Turn on LED"
     def cmd_SET_LED_ON(self, gcmd):
         if self.turn_off_flag:
             self.turn_off_flag = False
             self.transmit(self.led_state, None)
+            gcmd.respond_info("Turn on leds")
     def get_led_count(self):
         return self.led_count
     def set_color(self, index, color):
