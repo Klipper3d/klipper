@@ -277,7 +277,7 @@ config CANSERIAL
 choice
     prompt "Communication interface"
     config STM32_USB_PA11_PA12
-        bool "USB (on PA11/PA12)" if HAVE_STM32_USBFS || HAVE_STM32_USBOTG
+        bool "USB (on PA11/PA12)" if (HAVE_STM32_USBFS || HAVE_STM32_USBOTG) && !(STM32_CLOCK_REF_INTERNAL && MACH_STM32F103)
         select USBSERIAL
     config STM32_USB_PA11_PA12_REMAP
         bool "USB (on PA9/PA10)" if LOW_LEVEL_OPTIONS && MACH_STM32F042
