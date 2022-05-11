@@ -73,7 +73,60 @@ Common things a reviewer will look for:
    Updates to documentation should not declare that they are a "work
    in progress".
 
-2. Is the copyright of the submission clear, non-gratuitous, and
+2. Does the submission provide a "high impact" benefit to real-world
+   users performing real-world tasks?
+
+   Reviewers need to identify, at least in their own minds, roughly
+   "who the target audience is", a rough scale of "the size of that
+   audience", the "benefit" they will obtain, how the "benefit is
+   measured", and the "results of those measurement tests". In most
+   cases this will be obvious to both the submitter and the reviewer,
+   and it is not explicitly stated during a review.
+
+   Submissions to the master Klipper branch are expected to have a
+   noteworthy target audience. As a general "rule of thumb",
+   submissions should target a user base of at least a 100 real-world
+   users.
+
+   If a reviewer asks for details on the "benefit" of a submission,
+   please don't consider it criticism. Being able to understand the
+   real-world benefits of a change is a natural part of a review.
+
+   When discussing benefits it is preferable to discuss "facts and
+   measurements". In general, reviewers are not looking for responses
+   of the form "someone may find option X useful", nor are they
+   looking for responses of the form "this submission adds a feature
+   that firmware X implements". Instead, it is generally preferable to
+   discuss details on how the quality improvement was measured and
+   what were the results of those measurements - for example, "tests
+   on Acme X1000 printers show improved corners as seen in picture
+   ...", or for example "print time of real-world object X on a
+   Foomatic X900 printer went from 4 hours to 3.5 hours". It is
+   understood that testing of this type can take significant time and
+   effort. Some of Klipper's most notable features took months of
+   discussion, rework, testing, and documentation prior to being
+   merged into the master branch.
+
+   All new modules, config options, commands, command parameters, and
+   documents should have "high impact". We do not want to burden users
+   with options that they can not reasonably configure nor do we want
+   to burden them with options that don't provide a notable benefit.
+
+   A reviewer may ask for clarification on how a user is to configure
+   an option - an ideal response will contain details on the process -
+   for example, "users of the MegaX500 are expected to set option X to
+   99.3 while users of the Elite100Y are expected to calibrate option
+   X using procedure ...".
+
+   If the goal of an option is to make the code more modular then
+   prefer using code constants instead of user facing config options.
+
+   New modules, new options, and new parameters should not provide
+   similar functionality to existing modules - if the differences are
+   arbitrary than it's preferable to utilize the existing system or
+   refactor the existing code.
+
+3. Is the copyright of the submission clear, non-gratuitous, and
    compatible?
 
    New C files and Python files should have an unambiguous copyright
@@ -91,14 +144,14 @@ Common things a reviewer will look for:
    real name. It indicates the submitter agrees with the
    [developer certificate of origin](developer-certificate-of-origin).
 
-3. Does the submission follow guidelines specified in the Klipper
+4. Does the submission follow guidelines specified in the Klipper
    documentation?
 
    In particular, code should follow the guidelines in
    [Code_Overview.md](Code_Overview.md) and config files should follow
    the guidelines in [Example_Configs.md](Example_Configs.md).
 
-4. Is the Klipper documentation updated to reflect new changes?
+5. Is the Klipper documentation updated to reflect new changes?
 
    At a minimum, the reference documentation must be updated with
    corresponding changes to the code:
@@ -118,7 +171,7 @@ Common things a reviewer will look for:
    added to the website index
    [docs/_klipper3d/mkdocs.yml](../docs/_klipper3d/mkdocs.yml).
 
-5. Are commits well formed, address a single topic per commit, and
+6. Are commits well formed, address a single topic per commit, and
    independent?
 
    Commit messages should follow the
@@ -139,61 +192,6 @@ Common things a reviewer will look for:
    Whitespace changes should not be mixed with functional changes. In
    general, gratuitous whitespace changes are not accepted unless they
    are from the established "owner" of the code being modified.
-
-6. Does the submission provide a "high impact" benefit to real-world
-   users performing real-world tasks?
-
-   Reviewers need to identify, at least in their own minds, roughly
-   "who the target audience is", a rough scale of "the size of that
-   audience", the "benefit" they will obtain, how the "benefit is
-   measured", and the "results of those measurement tests". In most
-   cases this will be obvious to both the submitter and the reviewer,
-   and it is not explicitly stated during a review.
-
-   Submissions to the master Klipper branch are expected to have a
-   noteworthy target audience. As a general "rule of thumb",
-   submissions should target a user base of at least a 100 real-world
-   users.
-
-   If a reviewer asks for details on the "benefit" of a submission,
-   please don't consider it criticism. Being able to understand the
-   real-world benefits of a change is a natural part of a review.
-
-   When discussing benefits it is preferable to discuss "facts and
-   measurements" instead of "opinions and theories". In general,
-   reviewers are not looking for responses of the form "this
-   submission may improve quality because of ...", nor are they
-   looking for responses of the form "someone may find option X
-   useful", nor are they looking for responses of the form "this
-   submission adds a feature that firmware X implements". Instead, it
-   is generally preferable to discuss details on how the quality
-   improvement was measured and what were the results of those
-   measurements - for example, "tests on Acme X1000 printers show
-   improved corners as seen in picture ...", or for example "print
-   time of real-world object X on a Foomatic X900 printer went from 4
-   hours to 3.5 hours". It is understood that testing of this type can
-   take significant time and effort. Some of Klipper's most notable
-   features took years of discussion, rework, testing, and
-   documentation prior to being merged into the master branch.
-
-   All new modules, config options, commands, command parameters, and
-   documents should have "high impact". We do not want to burden users
-   with options that they can not reasonably configure nor do we want
-   to burden them with options that don't provide a notable benefit.
-
-   A reviewer may ask for clarification on how a user is to configure
-   an option - an ideal response will contain details on the process -
-   for example, "users of the MegaX500 are expected to set option X to
-   99.3 while users of the Elite100Y are expected to calibrate option
-   X using procedure ...".
-
-   If the goal of an option is to make the code more modular then
-   prefer using code constants instead of user facing config options.
-
-   New modules, new options, and new parameters should not provide
-   similar functionality to existing modules - if the differences are
-   arbitrary than it's preferable to utilize the existing system or
-   refactor the existing code.
 
 Klipper does not implement a strict "coding style guide", but
 modifications to existing code should follow the high-level code flow,
@@ -301,14 +299,12 @@ contributions) and contain a current email address.
 [Klipper-translations Project](https://github.com/Klipper3d/klipper-translations)
 is a project dedicated to translating Klipper to different languages.
 [Weblate](https://hosted.weblate.org/projects/klipper/) hosts all the
-Gettext strings for translating and reviewing. Locales can merge into
-the Klipper project once they satisfy the following requirements:
+Gettext strings for translating and reviewing. Locales can be displayed on
+[klipper3d.org](https://www.klipper3d.org) once they satisfy the following requirements:
 
 - [ ] 75% Total coverage
-- [ ] All titles (H1) are covered
+- [ ] All titles (H1) are translated
 - [ ] An updated navigation hierarchy PR in klipper-translations.
-
-The navigation hierarchy is in `docs\_klipper3d\mkdocs.yml`.
 
 To reduce the frustration of translating domain-specific terms and
 gain awareness of the ongoing translations, you can submit a PR
@@ -321,15 +317,15 @@ If a translation already exists in the Klipper repository and no
 longer meets the checklist above, it will be marked out-of-date after
 a month without updates.
 
-Please follow the following format for `mkdocs.yml` navigation
-hierarchy:
+Once the requirements are met, you need to:
 
-```yml
-nav:
-  - existing hierachy
-  - <language>:
-    - locales/<language code>/md file
-```
+1. update klipper-tranlations repository
+[active_translations](https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations)
+2. Optional: add a manual-index.md file in klipper-translations repository's
+`docs\locals\<lang>` folder to replace the language specific index.md (generated
+index.md does not render correctly).
 
-Note: Currently, there isn't a method for correctly translating
-pictures in the documentation.
+Known Issues:
+1. Currently, there isn't a method for correctly translating pictures in
+the documentation
+2. It is impossible to translate titles in mkdocs.yml.

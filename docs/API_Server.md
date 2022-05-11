@@ -16,6 +16,10 @@ This causes the host software to create a Unix Domain Socket. A client
 can then open a connection on that socket and send commands to
 Klipper.
 
+See the [Moonraker](https://github.com/Arksine/moonraker) project for
+a popular tool that can forward HTTP requests to Klipper's API Server
+Unix Domain Socket.
+
 ## Request format
 
 Messages sent and received on the socket are JSON encoded strings
@@ -337,6 +341,25 @@ and might return:
 and might later produce asynchronous messages such as:
 `{"params":{"overflows":0,"data":[[3292.432935,-535.44309,-1529.8374,9561.4],
 [3292.433256,-382.45935,-1606.32927,9561.48375]]}}`
+
+The "header" field in the initial query response is used to describe
+the fields found in later "data" responses.
+
+### angle/dump_angle
+
+This endpoint is used to subscribe to
+[angle sensor data](Config_Reference.md#angle). Obtaining these
+low-level motion updates may be useful for diagnostic and debugging
+purposes. Using this endpoint may increase Klipper's system load.
+
+A request may look like:
+`{"id": 123, "method":"angle/dump_angle",
+"params": {"sensor": "my_angle_sensor", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","angle"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"position_offset":3.151562,"errors":0,
+"data":[[1290.951905,-5063],[1290.952321,-5065]]}}`
 
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.

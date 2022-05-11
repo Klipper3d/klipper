@@ -158,13 +158,7 @@ class VirtualSD:
         if self.work_timer is not None:
             raise gcmd.error("SD busy")
         self._reset_file()
-        try:
-            orig = gcmd.get_commandline()
-            filename = orig[orig.find("M23") + 4:].split()[0].strip()
-            if '*' in filename:
-                filename = filename[:filename.find('*')].strip()
-        except:
-            raise gcmd.error("Unable to extract filename")
+        filename = gcmd.get_raw_command_parameters().strip()
         if filename.startswith('/'):
             filename = filename[1:]
         self._load_file(gcmd, filename)

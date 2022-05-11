@@ -129,12 +129,12 @@ typical bed leveling procedures. It may be possible to tune the probe
 speed and/or probe start height to improve the repeatability of the
 probe. The `PROBE_ACCURACY` command allows one to run tests with
 different parameters to see their impact - see the
-[G-Codes document](G-Codes.md) for further details. If the probe
-generally obtains repeatable results but has an occasional outlier,
-then it may be possible to account for that by using multiple samples
-on each probe - read the description of the probe `samples` config
-parameters in the [config reference](Config_Reference.md#probe) for
-more details.
+[G-Codes document](G-Codes.md#probe_accuracy) for further details. If
+the probe generally obtains repeatable results but has an occasional
+outlier, then it may be possible to account for that by using multiple
+samples on each probe - read the description of the probe `samples`
+config parameters in the [config reference](Config_Reference.md#probe)
+for more details.
 
 If new probe speed, samples count, or other settings are needed, then
 update the printer.cfg file and issue a `RESTART` command. If so, it

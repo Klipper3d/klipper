@@ -11,7 +11,7 @@ an assembly video is also available on [Youtube](https://www.youtube.com/watch?v
 
 To use Hall filament width sensor, read
 [Config Reference](Config_Reference.md#hall_filament_width_sensor) and
-[G-Code documentation](G-Codes.md#Hall_Filament_Width_Sensor_Commands).
+[G-Code documentation](G-Codes.md#hall_filament_width_sensor).
 
 
 ## How does it work?
