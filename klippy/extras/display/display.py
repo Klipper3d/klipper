@@ -256,6 +256,7 @@ class PrinterLCD:
         # Start screen update timer
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
         self.toolhead = self.printer.lookup_object('toolhead')
+
     # Screen updating
     def screen_update_event(self, eventtime):
         if self.redraw_request_pending:
@@ -264,7 +265,7 @@ class PrinterLCD:
         self.lcd_chip.clear()
 
         # turn on the screen while printing, and exec the key event gcode.
-        is_printing = self.check_is_printing()
+        is_printing = self.check_is_printing(eventtime)
         if is_printing:
             self.last_key_event_time = self.reactor.monotonic()
             if self.screen_off :
