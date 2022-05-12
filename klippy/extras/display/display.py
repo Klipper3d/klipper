@@ -241,6 +241,14 @@ class PrinterLCD:
         self.run_gcode(self.key_event_gcode)
         self.last_key_event_time = self.reactor.monotonic()
         self.screen_off = False
+    
+    def check_is_printing(self, eventtime):
+        # Determine "printing" status
+        print_stats = self.printer.lookup_object('print_stats')
+        is_printing_1 = print_stats.get_status(eventtime)["state"] == "printing"
+        #idle_timeout = self.printer.lookup_object("idle_timeout")
+        #is_printing_2 = idle_timeout.get_status(eventtime)["state"] == "Printing"
+        return is_printing_1
 
     def handle_ready(self):
         self.lcd_chip.init()
@@ -254,17 +262,22 @@ class PrinterLCD:
             self.redraw_time = eventtime + REDRAW_MIN_TIME
         self.lcd_chip.clear()
 
+        # turn on the screen while printing, and exec the key event gcode.
+        is_printing = self.check_is_printing()
+        if is_printing:
+            self.last_key_event_time = self.reactor.monotonic()
+            if self.screen_off :
+                self.screen_off = False
+                self.on_key_event(None)
+
         # check timeout of screen when screen is on
-        if self.screen_off is False and \
+        if not self.screen_off and \
             self.screen_auto_off_time > 0 and \
-            self.toolhead is not None:
+            not is_printing:
             ct = self.reactor.monotonic()
-            print_time = self.toolhead.get_last_move_time()
-            # not timeout at printing
-            if ct > print_time + self.screen_auto_off_time:
-                if ct > self.last_key_event_time + self.screen_auto_off_time:
-                    self.screen_off = True
-                    self.run_gcode(self.screen_auto_off_gcode)
+            if ct > self.last_key_event_time + self.screen_auto_off_time:
+                self.screen_off = True
+                self.run_gcode(self.screen_auto_off_gcode)
 
         # if screen off, do nothing.
         if self.screen_off:
