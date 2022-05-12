@@ -241,13 +241,14 @@ class PrinterLCD:
         self.run_gcode(self.key_event_gcode)
         self.last_key_event_time = self.reactor.monotonic()
         self.screen_off = False
-    
+
     def check_is_printing(self, eventtime):
         # Determine "printing" status
         print_stats = self.printer.lookup_object('print_stats')
         is_printing_1 = print_stats.get_status(eventtime)["state"] == "printing"
         #idle_timeout = self.printer.lookup_object("idle_timeout")
-        #is_printing_2 = idle_timeout.get_status(eventtime)["state"] == "Printing"
+        #is_printing_2 =
+        # (idle_timeout.get_status(eventtime)["state"] == "Printing")
         return is_printing_1
 
     def handle_ready(self):
