@@ -244,12 +244,9 @@ class PrinterLCD:
 
     def check_is_printing(self, eventtime):
         # Determine "printing" status
-        print_stats = self.printer.lookup_object('print_stats')
-        is_printing_1 = print_stats.get_status(eventtime)["state"] == "printing"
-        #idle_timeout = self.printer.lookup_object("idle_timeout")
-        #is_printing_2 =
-        # (idle_timeout.get_status(eventtime)["state"] == "Printing")
-        return is_printing_1
+        idle_timeout = self.printer.lookup_object("idle_timeout")
+        printing = (idle_timeout.get_status(eventtime)["state"] == "Printing")
+        return printing
 
     def handle_ready(self):
         self.lcd_chip.init()
