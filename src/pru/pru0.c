@@ -14,6 +14,7 @@
 #include <pru_virtio_ids.h> // VIRTIO_ID_RPMSG
 #include <rsc_types.h> // resource_table
 #include "board/io.h" // readl
+#include "board/misc.h" // console_sendf
 #include "command.h" // command_encode_add_frame
 #include "compiler.h" // __section
 #include "internal.h" // SHARED_MEM
