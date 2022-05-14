@@ -177,6 +177,10 @@ CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1.1-2021.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
 
+# Printers using the stm32f405
+DICTIONARY stm32f405.dict
+CONFIG ../../config/generic-mellow-fly-gemini-v1.cfg
+
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-e3-rrf-v1.1.cfg
