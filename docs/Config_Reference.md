@@ -1334,6 +1334,9 @@ path:
 #   are not supported). One may point this to OctoPrint's upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
+#on_error_gcode:
+#   A list of G-Code commands to execute when an error is reported.
+
 ```
 
 ### [sdcard_loop]
