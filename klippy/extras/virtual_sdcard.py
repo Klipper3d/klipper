@@ -23,6 +23,10 @@ class VirtualSD:
         self.must_pause_work = self.cmd_from_sd = False
         self.next_file_position = 0
         self.work_timer = None
+        # Error handling
+        gcode_macro = printer.load_object(config, 'gcode_macro')
+        self.on_error_gcode = gcode_macro.load_template(
+            config, 'on_error_gcode', '')
         # Register commands
         self.gcode = printer.lookup_object('gcode')
         for cmd in ['M20', 'M21', 'M23', 'M24', 'M25', 'M26', 'M27']:
@@ -258,6 +262,10 @@ class VirtualSD:
                 self.gcode.run_script(line)
             except self.gcode.error as e:
                 error_message = str(e)
+                try:
+                    self.gcode.run_script(self.on_error_gcode.render())
+                except:
+                    logging.exception("virtual_sdcard on_error")
                 break
             except:
                 logging.exception("virtual_sdcard dispatch")
