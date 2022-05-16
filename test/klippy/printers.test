@@ -180,6 +180,7 @@ CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
 # Printers using the stm32f405
 DICTIONARY stm32f405.dict
 CONFIG ../../config/generic-mellow-fly-gemini-v1.cfg
+CONFIG ../../config/generic-mellow-fly-gemini-v2.cfg
 
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
@@ -188,6 +189,7 @@ CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
+CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
