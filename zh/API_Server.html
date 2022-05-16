@@ -977,11 +977,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-endpoints" class="md-nav__link">
-    Available "endpoints"
+  <a href="#endpoint" class="md-nav__link">
+    可用的"endpoint"
   </a>
   
-    <nav class="md-nav" aria-label="Available "endpoints"">
+    <nav class="md-nav" aria-label="可用的"endpoint"">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1422,11 +1422,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-endpoints" class="md-nav__link">
-    Available "endpoints"
+  <a href="#endpoint" class="md-nav__link">
+    可用的"endpoint"
   </a>
   
-    <nav class="md-nav" aria-label="Available "endpoints"">
+    <nav class="md-nav" aria-label="可用的"endpoint"">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1624,7 +1624,7 @@
 <p>并导致 Klipper 在未来发送类似于以下内容的消息：</p>
 <p><code>{"params": {"response": "ok B:22.8 /0.0 T0:22.4 /0.0"}, "key": 345}</code></p>
 <p>A subscription request accepts a "response_template" dictionary in the "params" field of the request. That "response_template" dictionary is used as a template for future asynchronous messages - it may contain arbitrary key/value pairs. When sending these future asynchronous messages, Klipper will add a "params" field containing a dictionary with "endpoint" specific contents to the response template and then send that template. If a "response_template" field is not provided then it defaults to an empty dictionary (<code>{}</code>).</p>
-<h2 id="available-endpoints">Available "endpoints"<a class="headerlink" href="#available-endpoints" title="Permanent link">&para;</a></h2>
+<h2 id="endpoint">可用的"endpoint"<a class="headerlink" href="#endpoint" title="Permanent link">&para;</a></h2>
 <p>By convention, Klipper "endpoints" are of the form <code>&lt;module_name&gt;/&lt;some_name&gt;</code>. When making a request to an "endpoint", the full name must be set in the "method" parameter of the request dictionary (eg, <code>{"method"="gcode/restart"}</code>).</p>
 <h3 id="info">info<a class="headerlink" href="#info" title="Permanent link">&para;</a></h3>
 <p>The "info" endpoint is used to obtain system and version information from Klipper. It is also used to provide the client's version information to Klipper. For example: <code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}</code></p>

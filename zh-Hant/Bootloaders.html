@@ -1241,6 +1241,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f0x2-with-canboot-bootloader" class="md-nav__link">
+    STM32F103/STM32F0x2 with CanBoot bootloader
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1489,6 +1496,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f0x2-with-canboot-bootloader" class="md-nav__link">
+    STM32F103/STM32F0x2 with CanBoot bootloader
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1700,7 +1714,7 @@ at91samd bootloader 16384
 </code></pre></div>
 
 <h2 id="stm32f103-blue-pill">STM32F103 微控制器（Blue Pill 開發板）<a class="headerlink" href="#stm32f103-blue-pill" title="Permanent link">&para;</a></h2>
-<p>STM32F103 產品線的晶片包含一個可以通過 3.3V 串列埠刷寫載入程式或應用程式的ROM。要訪問這個ROM，在"boot 0 "引腳接到高電平"boot 1 " 引腳接到低電平後重置晶片。然後，可以使用 "stm32flash "軟體包，使用類似以下的命令刷寫：</p>
+<p>The STM32F103 devices have a ROM that can flash a bootloader or application via 3.3V serial. Typically one would wire the PA10 (MCU Rx) and PA9 (MCU Tx) pins to a 3.3V UART adapter. To access the ROM, one should connect the "boot 0" pin to high and "boot 1" pin to low, and then reset the device. The "stm32flash" package can then be used to flash the device using something like:</p>
 <div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
@@ -1784,6 +1798,21 @@ make
 
 <p>This bootloader uses 8KiB or 16KiB of flash space, see description of the bootloader (the application must be compiled with with the corresponding starting address).</p>
 <p>The bootloader can be activated by pressing the reset button of the board twice. As soon as the bootloader is activated, the board appears as a USB flash drive onto which the klipper.bin file can be copied.</p>
+<h3 id="stm32f103stm32f0x2-with-canboot-bootloader">STM32F103/STM32F0x2 with CanBoot bootloader<a class="headerlink" href="#stm32f103stm32f0x2-with-canboot-bootloader" title="Permanent link">&para;</a></h3>
+<p>The <a href="https://github.com/Arksine/CanBoot">CanBoot</a> bootloader provides an option for uploading Klipper firmware over the CANBUS. The bootloader itself is derived from Klipper's source code. Currently CanBoot supports the STM32F103, STM32F042, and STM32F072 models.</p>
+<p>It is recommended to use a ST-Link Programmer to flash CanBoot, however it should be possible to flash using <code>stm32flash</code> on STM32F103 devices, and <code>dfu-util</code> on STM32F042/STM32F072 devices. See the previous sections in this document for instructions on these flashing methods, substituting <code>canboot.bin</code> for the file name where appropriate. The CanBoot repo linked above provides instructions for building the bootloader.</p>
+<p>The first time CanBoot has been flashed it should detect that no application is present and enter the bootloader. If this doesn't occur it is possible to enter the bootloader by pressing the reset button twice in succession.</p>
+<p>The <code>flash_can.py</code> utility supplied in the <code>lib/canboot</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
+<div class="highlight"><pre><span></span><code>python3 flash_can.py -q
+</code></pre></div>
+
+<p>This will return UUIDs for all connected nodes not currently assigned a UUID. This should include all nodes currently in the bootloader.</p>
+<p>Once you have a UUID, you may upload firmware with following command:</p>
+<div class="highlight"><pre><span></span><code>python3 flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u aabbccddeeff
+</code></pre></div>
+
+<p>Where <code>aabbccddeeff</code> is replaced by your UUID. Note that the <code>-i</code> and <code>-f</code> options may be omitted, they default to <code>can0</code> and <code>~/klipper/out/klipper.bin</code> respectively.</p>
+<p>When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.</p>
 <h2 id="stm32f4-skr-pro-11">STM32F4 微控制器 (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>STM32F4微控制器配備了一個內建的系統載入程式，能夠通過USB（通過DFU）、3.3v串列埠和其他各種方法進行刷寫（更多資訊見STM檔案AN2606）。一些STM32F4板，如SKR Pro 1.1，不能進入DFU載入程式。基於STM32F405/407的板子可以使用HID載入程式，如果使用者願意通過USB刷寫而不是使用SD卡。請注意，你可能需針對你的板子配置和構建一個特定的版本，<a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">針對SKR Pro 1.1的構建可以在這裡找到</a>。</p>
 <p>除非你的板子有DFU功能，否則最容易的寫入方法可能是通過3.3v的串列埠，這與<a href="#stm32f103-micro-controllers-blue-pill-devices">使用stm32flash刷寫STM32F103</a>的步驟相同。例如：</p>

@@ -1430,7 +1430,7 @@
 <p>Ez a szakasz néhány tippet ad a Klipper további nyomtató kinematikai típusok támogatásának hozzáadásához. Az ilyen típusú tevékenységhez a cél kinematikához tartozó matematikai képletek kiváló ismerete szükséges. Szoftverfejlesztési ismereteket is igényel, bár csak a gazdaszoftvert kell frissíteni.</p>
 <p>Hasznos lépések:</p>
 <ol>
-<li>Kezdd "<a href="#mozgasparancs-kodfolyama">Egy mozgás kódfolyamata</a>" szakasz és a <a href="Kinematics.html">Kinematika dokumentum</a> tanulmányozásával.</li>
+<li>Kezdd "<a href="#code-flow-of-a-move-command">Egy mozgás kódfolyamata</a>" szakasz és a <a href="Kinematics.html">Kinematika dokumentum</a> tanulmányozásával.</li>
 <li>Tekintse át a klippy/kinematics/ könyvtárban található kinematikai osztályokat. A kinematikai osztályok feladata egy cartesian koordinátákban megadott mozgás átalakítása az egyes léptetőkön történő mozgássá. Kiindulópontként le kell tudni másolni az egyik ilyen fájlt.</li>
 <li>Implementáljuk a C léptetőket kinematikai pozíciófüggvényeit minden léptetőhöz, ha azok még nem állnak rendelkezésre (lásd a kin_cart.c, kin_corexy.c és kin_delta.c fájlokat a klippy/chelper/ állományban). A függvénynek meg kell hívnia <code>move_get_coord()</code>, hogy egy adott mozgásidőt (másodpercben) cartesian koordinátává (milliméterben) konvertáljon, majd ebből a cartesian koordinátából kiszámítsa a kívánt léptető pozíciót (milliméterben).</li>
 <li>Az új kinematikai osztályban implementáljuk a <code>calc_position()</code> módszert. Ez a metódus kiszámítja a nyomtatófej pozícióját cartesian koordinátákban az egyes léptetőmotorok pozíciójából. Nem kell, hogy hatékony legyen, mivel jellemzően csak a kezdőpont és az érintési műveletek során hívjuk meg.</li>

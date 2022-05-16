@@ -4159,7 +4159,7 @@
 <p>如果一個人需要一個不太常見的G-Code命令，那麼可以用一個自定義的<a href="Config_Reference.html#gcode_macro">gcode_macro config section</a>來實現它。例如，我們可以用這個來實現。<code>G12</code>, <code>G29</code>, <code>G30</code>, <code>G31</code>, <code>M42</code>, <code>M80</code>, <code>M81</code>, <code>T1</code> ，etc.</p>
 <h2 id="_1">其他命令<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>Klipper使用 "extended" 的G程式碼命令來進行一般的配置和狀態。這些擴充套件命令都遵循一個類似的格式--它們以一個命令名開始，後面可能有一個或多個參數。比如說：<code>SET_SERVO SERVO=myservo ANGLE=5.3</code>。在本檔案中，命令和參數以大寫字母顯示，但它們不分大小寫。(所以，"SET_SERVO "和 "set_servo "都是執行同一個命令）</p>
-<p>這部分是組織我的Klipper模塊名稱，一般遵循<a href="Config_Reference.html">printer configuration file</a>中指定的部分名稱。請注意，某些模塊會自動載入。</p>
+<p>This section is organized by Klipper module name, which generally follows the section names specified in the <a href="Config_Reference.html">printer configuration file</a>. Note that some modules are automatically loaded.</p>
 <h3 id="adxl345">[adxl345]<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h3>
 <p>當<a href="Config_Reference.html#adxl345">adxl345配置分段</a>被啟用時，以下命令可用.</p>
 <h4 id="accelerometer_measure">ACCELEROMETER_MEASURE<a class="headerlink" href="#accelerometer_measure" title="Permanent link">&para;</a></h4>

@@ -1756,7 +1756,7 @@ homing_retract_dist: 0
 ...
 </code></pre></div>
 
-<p>A fenti példák csak az érzékelő nélküli kezdőpont felvételre jellemző beállításokat mutatják. Az összes elérhető beállításért lásd a <a href="Config_Reference.html#tmc-stepper-driver-configuration">konfigurációs referencia</a> dokumentumot.</p>
+<p>A fenti példák csak az érzékelő nélküli kezdőpont felvételre jellemző beállításokat mutatják. Az összes elérhető beállításért lásd a <a href="Config_Reference.html#tmc-motorvezerlo-konfiguracioja">konfigurációs referencia</a> dokumentumot.</p>
 <h4 id="keresse-meg-a-legmagasabb-erzekenyseget-amely-sikeresen-jelzi-a-kezdopontot">Keresse meg a legmagasabb érzékenységet, amely sikeresen jelzi a kezdőpontot<a class="headerlink" href="#keresse-meg-a-legmagasabb-erzekenyseget-amely-sikeresen-jelzi-a-kezdopontot" title="Permanent link">&para;</a></h4>
 <p>Helyezze a kocsit a sín közepéhez közel. A SET_TMC_FIELD paranccsal állítsa be a legnagyobb érzékenységet. A TMC2209 esetében:</p>
 <div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=SGTHRS VALUE=255
@@ -1816,7 +1816,7 @@ gcode:
 <p>A `<a href="G-Codes.html#dump_tmc">DUMP_TMC parancs</a> hasznos eszköz a motorvezérlők konfigurálásához és diagnosztizálásához. A Klipper által konfigurált összes mezőt, valamint a motorvezérlőt lekérdezhető összes mezőt jelenti.</p>
 <p>Az összes bejelentett mezőt az egyes motorvezérlők Trinamic adatlapja határozza meg. Ezek az adatlapok megtalálhatók a <a href="https://www.trinamic.com/">Trinamic weboldalán</a>. A DUMP_TMC eredményeinek értelmezéséhez szerezze be és tekintse át a meghajtó Trinamic adatlapját.</p>
 <h2 id="a-driver_xxx-beallitasok-konfiguralasa">A driver_XXX beállítások konfigurálása<a class="headerlink" href="#a-driver_xxx-beallitasok-konfiguralasa" title="Permanent link">&para;</a></h2>
-<p>A Klipper támogatja számos alacsony szintű motorvezérlő konfigurálását a <code>driver_XXX</code> beállítások használatával. A <a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC meghajtó konfigurációs hivatkozás</a> tartalmazza az egyes meghajtótípusokhoz elérhető mezők teljes listáját.</p>
+<p>A Klipper támogatja számos alacsony szintű motorvezérlő konfigurálását a <code>driver_XXX</code> beállítások használatával. A <a href="Config_Reference.html#tmc-motorvezerlo-konfiguracioja">TMC meghajtó konfigurációs hivatkozás</a> tartalmazza az egyes meghajtótípusokhoz elérhető mezők teljes listáját.</p>
 <p>Ezenkívül szinte minden mező módosítható használat közben a <a href="G-Codes.html#set_tmc_field">SET_TMC_FIELD parancs</a> segítségével.</p>
 <p>E mezők mindegyikét az egyes meghajtók Trinamic adatlapja határozza meg. Ezek az adatlapok megtalálhatók a <a href="https://www.trinamic.com/">Trinamic weboldalán</a>.</p>
 <p>Vegye figyelembe, hogy a Trinamic adatlapok néha olyan megfogalmazást használnak, amely összetéveszthet egy magas szintű beállítást (például "hysteresis end") egy alacsony szintű mezőértékkel (pl. "HEND"). A Klipperben a <code>driver_XXX</code> és a SET_TMC_FIELD mindig azt az alacsony szintű mezőértéket állítja be, amely ténylegesen a meghajtóba íródik. Így például, ha a Trinamic adatlapja szerint 3 értéket kell írni a HEND mezőbe, hogy a "hiszterézis vége" 0 legyen, akkor a <code>driver_HEND=3</code> beállításával a 0 magas szintű értéket kapjuk.</p>

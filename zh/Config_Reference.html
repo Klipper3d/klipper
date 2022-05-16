@@ -3994,46 +3994,41 @@ microsteps:
 rotation_distance:
 #full_steps_per_rotation:
 #gear_ratio:
-#   See the &quot;stepper&quot; section for a description of the above
-#   parameters. If none of the above parameters are specified then no
-#   stepper will be associated with the nozzle hotend (though a
-#   SYNC_EXTRUDER_MOTION command may associate one at run-time).
+#   以上参数详见“extruder”配置分段。
+#   如果未指定任意上述参数，则没有步进电机与热端相关联
+#   （尽管使用SYNC_EXTRUDER_MOTION命令可能可以在运行时关联一个热端）
 nozzle_diameter:
-#   Diameter of the nozzle orifice (in mm). This parameter must be
-#   provided.
+#   喷嘴的孔径（以毫米为单位）
+#   必须提供这个参数。
 filament_diameter:
-#   The nominal diameter of the raw filament (in mm) as it enters the
-#   extruder. This parameter must be provided.
+#   进入挤出机的耗材上标的直径（以毫米为单位）
+#   必须提供这个参数。
 #max_extrude_cross_section:
-#   Maximum area (in mm^2) of an extrusion cross section (eg,
-#   extrusion width multiplied by layer height). This setting prevents
-#   excessive amounts of extrusion during relatively small XY moves.
-#   If a move requests an extrusion rate that would exceed this value
-#   it will cause an error to be returned. The default is: 4.0 *
-#   nozzle_diameter^2
+#   挤出线条横截面的最大面积（以平方毫米为单位）
+#   （例如：挤出线宽乘层高）
+#   这个设置能防止在相对较小的XY移动时产生过度的挤出
+#   如果一个挤出速率请求超过了这个值，这会导致返回一个错误
+#   默认值是：4.0 * 喷嘴直径 ^ 2
 #instantaneous_corner_velocity: 1.000
-#   The maximum instantaneous velocity change (in mm/s) of the
-#   extruder during the junction of two moves. The default is 1mm/s.
+#   两次挤出之间最大的速度变化（以毫米每秒为单位）
+#   默认值是：1mm/s
 #max_extrude_only_distance: 50.0
-#   Maximum length (in mm of raw filament) that a retraction or
-#   extrude-only move may have. If a retraction or extrude-only move
-#   requests a distance greater than this value it will cause an error
-#   to be returned. The default is 50mm.
+#   一次挤出或回抽的最大长度（以毫米耗材的长度为单位）
+#   如果一次挤出或回抽超过了这个值，这会导致返回一个错误
+#   默认值是：50mm
 #max_extrude_only_velocity:
 #max_extrude_only_accel:
-#   Maximum velocity (in mm/s) and acceleration (in mm/s^2) of the
-#   extruder motor for retractions and extrude-only moves. These
-#   settings do not have any impact on normal printing moves. If not
-#   specified then they are calculated to match the limit an XY
-#   printing move with a cross section of 4.0*nozzle_diameter^2 would
-#   have.
+#   最大的挤出和回抽速度（以毫米每秒为单位）
+#   和加速度（以毫米每二次方秒为单位）
+#   这些设置对正常打印的移动没有任何影响
+#   如果未指定，则会计算来匹配 XY打印速度和挤出线横截面为4.0 * 喷嘴直径 ^ 2的限制
 #pressure_advance: 0.0
-#   The amount of raw filament to push into the extruder during
-#   extruder acceleration. An equal amount of filament is retracted
-#   during deceleration. It is measured in millimeters per
-#   millimeter/second. The default is 0, which disables pressure
-#   advance.
+#   挤出机加速过程中耗材被挤入的数量
+#   同等数量的耗材会在减速过程中收回
+#   这个值以毫米每毫米每秒测量
+#   关闭压力提前时默认值是0
 #pressure_advance_smooth_time: 0.040
+
 #   A time range (in seconds) to use when calculating the average
 #   extruder velocity for pressure advance. A larger value results in
 #   smoother extruder movements. This parameter may not exceed 200ms.
@@ -4963,16 +4958,15 @@ axis:
 <p>See the <a href="G-Codes.html#extruder">command reference</a> for more information.</p>
 <div class="highlight"><pre><span></span><code>[extruder_stepper my_extra_stepper]
 extruder:
-#   The extruder this stepper is synchronized to. If this is set to an
-#   empty string then the stepper will not be synchronized to an
-#   extruder. This parameter must be provided.
+#   这个步进电机将要同步到的挤出机名称
+#   如果被设为空字符串，这个步进电机将不会被同步到挤出机
+#   必须提供此参数
 #step_pin:
 #dir_pin:
 #enable_pin:
 #microsteps:
 #rotation_distance:
-#   See the &quot;stepper&quot; section for the definition of the above
-#   parameters.
+#   以上参数详见“stepper”配置分段。
 </code></pre></div>
 
 <h3 id="manual_stepper">[manual_stepper]<a class="headerlink" href="#manual_stepper" title="Permanent link">&para;</a></h3>

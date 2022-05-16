@@ -13,7 +13,7 @@
     
     
       
-        <title>Példa konfigurációk - Klipper documentation</title>
+        <title>Navigation - Klipper documentation</title>
       
     
     
@@ -73,11 +73,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#pelda-konfiguraciok" class="md-skip">
-          Kihagyás
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -106,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Példa konfigurációk
+              Navigation
             
           </span>
         </div>
@@ -1017,14 +1012,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
       
       
       
@@ -1045,52 +1038,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Példa konfigurációk
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="Example_Configs.html" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
         Példa konfigurációk
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Tartalomjegyzék
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#iranyelvek" class="md-nav__link">
-    Irányelvek
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1207,89 +1159,26 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Tartalomjegyzék
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#iranyelvek" class="md-nav__link">
-    Irányelvek
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           <div class="md-content" data-md-component="content">
             <article class="md-content__inner md-typeset">
               
                 
-<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Example_Configs.md" title="Oldal szerkesztése" class="md-content__button md-icon">
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Navigation.md" title="Oldal szerkesztése" class="md-content__button md-icon">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
 </a>
 
 
-<h1 id="pelda-konfiguraciok">Példa konfigurációk<a class="headerlink" href="#pelda-konfiguraciok" title="Permanent link">&para;</a></h1>
-<p>Ez a dokumentum a Klipper github tárhoz (a <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config könyvtárban</a> található) egy Klipper példakonfigurációhoz való hozzájáruláshoz tartalmaz útmutatást.</p>
-<p>Ne feledje, hogy a <a href="https://community.klipper3d.org">Klipper Community Discourse szerver</a> szintén hasznos forrás a konfigurációs fájlok kereséséhez és megosztásához.</p>
-<h2 id="iranyelvek">Irányelvek<a class="headerlink" href="#iranyelvek" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Válassza ki a megfelelő konfigurációs fájlnév előtagot:<ol>
-<li>A <code>printer</code> előtagot az általános gyártó által értékesített nyomtatókra használják.</li>
-<li>Az <code>általános</code> előtagot olyan 3D nyomtató alaplapra használják, amely számos különböző típusú nyomtatóban használható.</li>
-<li>A <code>kit</code> előtag olyan 3D nyomtatókra vonatkozik, amelyeket egy széles körben használt specifikáció szerint állítanak össze. Ezek a "kit" nyomtatók általában abban különböznek a normál "nyomtatóktól", hogy nem egy gyártó értékesíti őket.</li>
-<li>A <code>sample</code> előtagot a konfigurációs "snippetek" számára használjuk, amelyeket másolva beilleszthetünk a fő konfigurációs fájlba.</li>
-<li>A <code>példa</code> előtag a nyomtató kinematikájának leírására szolgál. Az ilyen típusú konfiguráció jellemzően csak a nyomtató kinematikájának új típusához tartozó kóddal együtt kerül hozzáadásra.</li>
-</ol>
-</li>
-<li>Minden konfigurációs fájlnak <code>.cfg</code> végződéssel kell végződnie. A <code>printer</code> konfigurációs fájloknak egy évszámmal kell végződniük, amelyet a <code>.cfg</code> végződés követ (pl. <code>-2019.cfg</code>). Ebben az esetben az évszám az adott nyomtató eladásának hozzávetőleges éve.</li>
-<li>Ne használjon szóközöket vagy speciális karaktereket a konfigurációs fájlnévben. A fájlnév csak a <code>A-Z</code>, <code>a-z</code>, <code>0-9</code>, <code>-</code> és <code>karaktereket tartalmazhatja.</code>.</li>
-<li>A Klippernek hiba nélkül el kell tudnia indítani a <code>printer</code>, <code>generic</code> és <code>kit</code> példa konfigurációs fájlt. Ezeket a konfigurációs fájlokat hozzá kell adni a <a href="https://github.com/Klipper3d/klipper/blob/master/test/klippy/printers.test">test/klippy/printers.test</a> regressziós tesztesethez. Adja hozzá az új konfigurációs fájlokat ehhez a tesztesethez a megfelelő szakaszban és a szakaszon belül ábécé sorrendben.</li>
-<li>A példakonfigurációnak a nyomtató "stock" konfigurációjára kell vonatkoznia. (Túl sok "testreszabott" konfiguráció van ahhoz, hogy a Klipper fő tárolójában nyomon lehessen követni.) Hasonlóképpen, csak olyan nyomtatók, készletek és kártyák példakonfigurációs fájljait adjuk hozzá, amelyek népszerűek (pl. legalább 100 darabnak kell lennie belőlük aktív használatban). Fontolja meg a <a href="https://community.klipper3d.org">Klipper Community Discourse szerver</a> használatát más konfigurációkhoz.</li>
-<li>Only specify those devices present on the given printer or board. Do not specify settings specific to your particular setup.<ol>
-<li>For <code>generic</code> config files, only those devices on the mainboard should be described. For example, it would not make sense to add a display config section to a "generic" config as there is no way to know if the board will be attached to that type of display. If the board has a specific hardware port to facilitate an optional peripheral (eg, a bltouch port) then one can add a "commented out" config section for the given device.</li>
-<li>Ne adja meg a <code>pressure_advance</code> értéket egy példakonfigurációban, mivel ez az érték a szálra, nem pedig a nyomtató hardverére jellemző. Hasonlóképpen ne adjon meg <code>max_extrude_only_velocity</code> és <code>max_extrude_only_accel</code> beállításokat.</li>
-<li>Ne adjon meg olyan konfigurációs részt, amely állomás elérési útvonalat vagy állomáshardvert tartalmaz. Például ne adjon meg <code>[virtual_sdcard]</code> és <code>[temperature_host]</code> konfigurációs szakaszokat.</li>
-<li>Csak olyan makrókat definiáljon, amelyek az adott nyomtatóra jellemző funkciókat használják, vagy olyan g-kódokat definiáljon, amelyeket az adott nyomtatóhoz konfigurált szeletelők általában kiadnak.</li>
-</ol>
-</li>
-<li>Where possible, it is best to use the same wording, phrasing, indentation, and section ordering as the existing config files.<ol>
-<li>The top of each config file should list the type of micro-controller the user should select during "make menuconfig". It should also have a reference to "docs/Config_Reference.md".</li>
-<li>Ne másolja be a mező dokumentációját a példakonfigurációs fájlokba. (Ez karbantartási terhet jelent, mivel a dokumentáció frissítése sok helyen változtatást igényelne.)</li>
-<li>A példa konfigurációs fájlok nem tartalmazhatnak "SAVE_CONFIG" részt. Ha szükséges, másolja át a SAVE_CONFIG szakaszból a megfelelő mezőket a fő konfigurációs terület megfelelő szakaszába.</li>
-<li>Használja a <code>field: value</code> szintaxist a <code>field=value</code> helyett.</li>
-<li>Extruder <code>rotation_distance</code> hozzáadásakor célszerű megadni a <code>gear_ratio</code> értéket, ha az extruder fogaskerékkel rendelkezik. A példakonfigurációkban szereplő rotation_distance értéktől azt várjuk, hogy korreláljon az extruderben lévő fogaskerék kerületével. Ez általában 20 és 35 mm közötti tartományban van. A <code>gear_ratio</code> megadásakor előnyösebb a mechanizmuson lévő tényleges fogaskerekek fogszámának megadása (pl. inkább <code>gear_ratio: 80:20</code>, mint <code>gear_ratio: 4:1</code>). További információkért lásd a <a href="Rotation_Distance.html#using-a-gear_ratio">forgási távolság dokumentumot</a>.</li>
-<li>Kerülje az alapértelmezett értékre beállított mezőértékek meghatározását. Például nem szabad megadni <code>min_extrude_temp: 170</code>, mivel ez már az alapértelmezett érték.</li>
-<li>Ahol lehetséges, a sorok száma nem haladhatja meg a 80 oszlopot.</li>
-<li>Kerülje el az attribúciós vagy revíziós üzenetek hozzáadását a konfigurációs fájlokhoz. (Például kerülje az olyan sorok hozzáadását, mint a "this file was created by ..."). Helyezze el az attribúciót és a változtatási előzményeket a git commit üzenetben.</li>
-</ol>
-</li>
-<li>Ne használjon semmilyen elavult funkciót a példakonfigurációs fájlban.</li>
-<li>Ne tiltson le egy alapértelmezett biztonsági rendszert egy példakonfig-fájlban. Például egy konfiguráció nem adhat meg egy egyéni <code>max_extrude_cross_section</code> értéket. Ne engedélyezze a hibakeresési funkciókat. Például ne legyen <code>force_move</code> config szakasz.</li>
-<li>All known boards that Klipper supports can use the default serial baud rate of 250000. Do not recommend a different baud rate in an example config file.</li>
-</ol>
-<p>A példa konfigurációs fájlok elküldése egy github "pull request" létrehozásával történik. Kérjük, kövesse a <a href="CONTRIBUTING.html">közreműködő dokumentum</a> utasításait is.</p>
+  <h1>Navigation</h1>
+
+<p>Klipper dokumentáció</p>
+<p>Telepítés és Konfiguráció</p>
+<p>Konfigurációs Hivatkozás</p>
+<p>Ágy szint</p>
+<p>Rezonancia Kompenzáció</p>
+<p>Parancssablonok</p>
+<p>Fejlesztői Dokumentáció</p>
+<p>Eszközspecifikus Dokumentumok</p>
 
               
             </article>
@@ -1304,41 +1193,6 @@
       </main>
       
         <footer class="md-footer">
-  
-    <nav class="md-footer__inner md-grid" aria-label="Élőláb">
-      
-        
-        <a href="Packaging.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Klipper csomagolás" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Előző
-              </span>
-              Klipper csomagolás
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="SDCard_Updates.html" class="md-footer__link md-footer__link--next" aria-label="Következő: SD-kártya frissítések" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Következő
-              </span>
-              SD-kártya frissítések
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

@@ -1319,7 +1319,7 @@
 <div class="highlight"><pre><span></span><code>SAVE_CONFIG
 </code></pre></div>
 
-<p>最好是在Z轴与床面相对的一端使用Z轴止动器开关（远离床面的止动器更加坚固，因为这样的话，Z轴的原点通常是安全的）。然而，如果必须向床头归位，建议调整逆止器，使其在床头上方一小段距离（例如0.5毫米）触发。几乎所有的止动器开关都可以在触发点以外的一小段距离安全地压下。当这样做时，你会发现<code>Z_ENDSTOP_CALIBRATE</code>命令报告了一个小的正值（比如0.5毫米）的Z限位位置。在</p>
+<p>最好是在Z轴与加热床面之间使用Z限位开关（远离床面的限位开关更加稳定安全，因为这样的话，Z轴的原点通常是安全的）。然而，如果必须向加热床归位，建议调整限位开关，使其在加热床床面上方一小段距离（例如0.5毫米）触发。几乎所有的限位开关都可以在触发点以外的一小段距离安全地压下。当这样做时，你会发现<code>Z_ENDSTOP_CALIBRATE</code>命令输出一个小的正值（比如0.5毫米）的Z限位位置。</p>
 <p>某些打印机能够手动调整限位开关的物理位置，但是建议使用 Klipper 在软件中执行 Z 限位定位-在将限位的物理位置固定于方便微调的位置，就可以通过运行 Z_ENDSTOP_CALIBRATE 或通过手动更新配置文件中的 Z position_endstop 来进行进一步的调整。</p>
 <h2 id="_2">调整打印调平螺丝<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>The secret to getting good bed leveling with bed leveling screws is to utilize the printer's high precision motion system during the bed leveling process itself. This is done by commanding the nozzle to a position near each bed screw and then adjusting that screw until the bed is a set distance from the nozzle. Klipper has a tool to assist with this. In order to use the tool it is necessary to specify each screw XY location.</p>

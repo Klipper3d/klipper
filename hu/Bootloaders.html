@@ -1241,6 +1241,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f0x2-with-canboot-bootloader" class="md-nav__link">
+    STM32F103/STM32F0x2 with CanBoot bootloader
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1489,6 +1496,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stm32f103stm32f0x2-with-canboot-bootloader" class="md-nav__link">
+    STM32F103/STM32F0x2 with CanBoot bootloader
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1700,7 +1714,7 @@ at91samd bootloader 16384
 </code></pre></div>
 
 <h2 id="stm32f103-mikrovezerlok-blue-pill-eszkozok">STM32F103 mikrovezérlők (Blue Pill eszközök)<a class="headerlink" href="#stm32f103-mikrovezerlok-blue-pill-eszkozok" title="Permanent link">&para;</a></h2>
-<p>Az STM32F103 eszközök rendelkeznek egy ROM-mal, amely 3,3V-os soros kapcsolaton keresztül képes bootloadert vagy alkalmazást égetni. A ROM eléréséhez a "boot 0" csapot magasra, a "boot 1" csapot pedig alacsonyra kell kapcsolni, majd vissza kell állítani az eszközt. Az "stm32flash" csomagot ezután használhatjuk az eszköz égetéséhez, például a következőkkel:</p>
+<p>The STM32F103 devices have a ROM that can flash a bootloader or application via 3.3V serial. Typically one would wire the PA10 (MCU Rx) and PA9 (MCU Tx) pins to a 3.3V UART adapter. To access the ROM, one should connect the "boot 0" pin to high and "boot 1" pin to low, and then reset the device. The "stm32flash" package can then be used to flash the device using something like:</p>
 <div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
@@ -1784,6 +1798,21 @@ make
 
 <p>Ez a bootloader 8KiB vagy 16KiB flash helyet használ, lásd a bootloader leírását (az alkalmazást a megfelelő kezdőcímmel kell lefordítani).</p>
 <p>A bootloader a kártya reset gombjának kétszeri megnyomásával aktiválható. Amint a bootloader aktiválódik, a kártya USB flash meghajtóként jelenik meg, amelyre a klipper.bin fájl másolható.</p>
+<h3 id="stm32f103stm32f0x2-with-canboot-bootloader">STM32F103/STM32F0x2 with CanBoot bootloader<a class="headerlink" href="#stm32f103stm32f0x2-with-canboot-bootloader" title="Permanent link">&para;</a></h3>
+<p>The <a href="https://github.com/Arksine/CanBoot">CanBoot</a> bootloader provides an option for uploading Klipper firmware over the CANBUS. The bootloader itself is derived from Klipper's source code. Currently CanBoot supports the STM32F103, STM32F042, and STM32F072 models.</p>
+<p>It is recommended to use a ST-Link Programmer to flash CanBoot, however it should be possible to flash using <code>stm32flash</code> on STM32F103 devices, and <code>dfu-util</code> on STM32F042/STM32F072 devices. See the previous sections in this document for instructions on these flashing methods, substituting <code>canboot.bin</code> for the file name where appropriate. The CanBoot repo linked above provides instructions for building the bootloader.</p>
+<p>The first time CanBoot has been flashed it should detect that no application is present and enter the bootloader. If this doesn't occur it is possible to enter the bootloader by pressing the reset button twice in succession.</p>
+<p>The <code>flash_can.py</code> utility supplied in the <code>lib/canboot</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
+<div class="highlight"><pre><span></span><code>python3 flash_can.py -q
+</code></pre></div>
+
+<p>This will return UUIDs for all connected nodes not currently assigned a UUID. This should include all nodes currently in the bootloader.</p>
+<p>Once you have a UUID, you may upload firmware with following command:</p>
+<div class="highlight"><pre><span></span><code>python3 flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u aabbccddeeff
+</code></pre></div>
+
+<p>Where <code>aabbccddeeff</code> is replaced by your UUID. Note that the <code>-i</code> and <code>-f</code> options may be omitted, they default to <code>can0</code> and <code>~/klipper/out/klipper.bin</code> respectively.</p>
+<p>When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.</p>
 <h2 id="stm32f4-mikrovezerlok-skr-pro-11">STM32F4 mikrovezérlők (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-mikrovezerlok-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>Az STM32F4 mikrokontrollerek beépített rendszerbetöltővel rendelkeznek, amely képes USB-n keresztül (DFU-n keresztül), 3,3V-os soros és különböző más módszerekkel is égetni (további információkért lásd az STM AN2606 dokumentumát). Egyes STM32F4 lapok, mint például az SKR Pro 1.1, nem képesek belépni a DFU bootloaderbe. A HID bootloader elérhető az STM32F405/407 alapú lapokhoz, amennyiben a felhasználó az USB-n keresztül történő égetést részesíti előnyben az SD-kártya használatával szemben. Ne feledje, hogy szükség lehet egy, a lapjára specifikus verzió konfigurálására és építésére, egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">az SKR Pro 1.1-es verzióra vonatkozó építés elérhető itt</a>.</p>
 <p>Hacsak a lapod nem DFU-képes, a legkönnyebben elérhető égetési módszer valószínűleg a 3,3V-os soros, amely ugyanazt az eljárást követi, mint <a href="#stm32f103-micro-controllers-blue-pill-devices">az STM32F103 égetése az stm32flash segítségével</a>. Például:</p>
