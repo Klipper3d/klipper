@@ -11,6 +11,7 @@
 #include "command.h" // DECL_CONSTANT
 #include "generic/io.h" // readb
 #include "generic/irq.h" // irq_disable
+#include "generic/misc.h" // console_sendf
 #include "board/internal.h" // NVIC_SystemReset
 #include "sched.h" // sched_wake_task
 
