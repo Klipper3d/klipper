@@ -621,8 +621,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fine-grained-bed-screw-adjustments" class="md-nav__link">
-    Fine grained bed screw adjustments
+  <a href="#_3" class="md-nav__link">
+    细颗粒热床调平螺丝调整
   </a>
   
 </li>
@@ -1271,8 +1271,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fine-grained-bed-screw-adjustments" class="md-nav__link">
-    Fine grained bed screw adjustments
+  <a href="#_3" class="md-nav__link">
+    细颗粒热床调平螺丝调整
   </a>
   
 </li>
@@ -1323,24 +1323,24 @@
 <p>某些打印机能够手动调整限位开关的物理位置，但是建议使用 Klipper 在软件中执行 Z 限位定位-在将限位的物理位置固定于方便微调的位置，就可以通过运行 Z_ENDSTOP_CALIBRATE 或通过手动更新配置文件中的 Z position_endstop 来进行进一步的调整。</p>
 <h2 id="_2">调整打印调平螺丝<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>The secret to getting good bed leveling with bed leveling screws is to utilize the printer's high precision motion system during the bed leveling process itself. This is done by commanding the nozzle to a position near each bed screw and then adjusting that screw until the bed is a set distance from the nozzle. Klipper has a tool to assist with this. In order to use the tool it is necessary to specify each screw XY location.</p>
-<p>This is done by creating a <code>[bed_screws]</code> config section. For example, it might look something similar to:</p>
+<p>这是通过创建一个<code>[bed_screws]</code>配置部分来实现的。例如，它可能看起来类似于以下内容:</p>
 <div class="highlight"><pre><span></span><code>[bed_screws]
 screw1: 100, 50
 screw2: 100, 150
 screw3: 150, 100
 </code></pre></div>
 
-<p>If a bed screw is under the bed, then specify the XY position directly above the screw. If the screw is outside the bed then specify an XY position closest to the screw that is still within the range of the bed.</p>
-<p>Once the config file is ready, run <code>RESTART</code> to load that config, and then one can start the tool by running:</p>
+<p>如果床头调平螺丝在床下，则指定调平螺丝正上方的XY位置。如果螺钉在床身外，则指定一个最接近调平螺丝的XY位置，但仍在床身的范围内。</p>
+<p>一旦配置文件准备好了，运行<code>RESTART</code>来加载该配置，然后就可以通过运行以下命令使用工具:</p>
 <div class="highlight"><pre><span></span><code>BED_SCREWS_ADJUST
 </code></pre></div>
 
-<p>This tool will move the printer's nozzle to each screw XY location and then move the nozzle to a Z=0 height. At this point one can use the "paper test" to adjust the bed screw directly under the nozzle. See the information described in <a href="Bed_Level.html#the-paper-test">"the paper test"</a>, but adjust the bed screw instead of commanding the nozzle to different heights. Adjust the bed screw until there is a small amount of friction when pushing the paper back and forth.</p>
-<p>Once the screw is adjusted so that a small amount of friction is felt, run either the <code>ACCEPT</code> or <code>ADJUSTED</code> command. Use the <code>ADJUSTED</code> command if the bed screw needed an adjustment (typically anything more than about 1/8th of a turn of the screw). Use the <code>ACCEPT</code> command if no significant adjustment is necessary. Both commands will cause the tool to proceed to the next screw. (When an <code>ADJUSTED</code> command is used, the tool will schedule an additional cycle of bed screw adjustments; the tool completes successfully when all bed screws are verified to not require any significant adjustments.) One can use the <code>ABORT</code> command to exit the tool early.</p>
-<p>This system works best when the printer has a flat printing surface (such as glass) and has straight rails. Upon successful completion of the bed leveling tool the bed should be ready for printing.</p>
-<h3 id="fine-grained-bed-screw-adjustments">Fine grained bed screw adjustments<a class="headerlink" href="#fine-grained-bed-screw-adjustments" title="Permanent link">&para;</a></h3>
-<p>If the printer uses three bed screws and all three screws are under the bed, then it may be possible to perform a second "high precision" bed leveling step. This is done by commanding the nozzle to locations where the bed moves a larger distance with each bed screw adjustment.</p>
-<p>For example, consider a bed with screws at locations A, B, and C:</p>
+<p>这个工具将把打印机的喷嘴移动到每个调平螺丝的XY位置，然后把喷嘴移动到Z=0的高度。在这一点上，可以使用"纸张测试"来直接调整喷嘴下方的热床调平螺母。参见<a href="Bed_Level.html#the-paper-test">"纸张测试"</a>中描述的信息，但要调整的是热床螺母而不是指定喷头到不同的高度。调整热床调平螺母，直到来回推送纸张时有少量的摩擦。</p>
+<p>一旦螺丝被调整到可以感觉到少量的摩擦，运行<code>ACCEPT</code>或者<code>ADJUSTED</code>命令。如果床身螺丝需要调整（通常是任何超过1/8圈的转动），使用<code>ADJUSTED</code>命令。如果没有必要进行重大调整，则使用<code>ACCEPT</code>命令。这两条命令都会使工具进入下一个螺丝。(当使用<code>ADJUSTED</code>命令时，工具将安排一个额外的床身螺钉调整周期；当所有热床调平螺丝被确认不需要任何重大调整时，工具成功完成。)也可以使用<code>ABORT</code>命令来提前退出工具。</p>
+<p>这个系统在打印机有一个平整的打印表面（如玻璃）并有笔直的导轨时效果最好。在成功完成打印床调平工具后，热床应该准备好进行打印。</p>
+<h3 id="_3">细颗粒热床调平螺丝调整<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>如果打印机使用三个热床调平螺丝，并且所有三个调平螺丝都在热床下面，那么就有可能执行第二个"高精度"热床调平步骤。这是通过命令喷头到热床当在每次调整床身时移动较大距离的位置来实现的。</p>
+<p>例如，考虑一张在A B C位置有螺丝的打印平台：</p>
 <p><img alt="bed_screws" src="img/bed_screws.svg.png" /></p>
 <p>For each adjustment made to the bed screw at location C, the bed will swing along a pendulum defined by the remaining two bed screws (shown here as a green line). In this situation, each adjustment to the bed screw at C will move the bed at position D a further amount than directly at C. It is thus possible to make an improved C screw adjustment when the nozzle is at position D.</p>
 <p>To enable this feature, one would determine the additional nozzle coordinates and add them to the config file. For example, it might look like:</p>

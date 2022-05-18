@@ -4402,16 +4402,16 @@ changes the active hotend.</p>
 [ADVANCE=&lt;pressure_advance&gt;]
 [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Set pressure advance
 parameters of an extruder stepper (as defined in an
-<a href="Config_Reference#extruder">extruder</a> or
-<a href="Config_Reference#extruder_stepper">extruder_stepper</a> config section).
+<a href="Config_Reference.html#extruder">extruder</a> or
+<a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config section).
 If EXTRUDER is not specified, it defaults to the stepper defined in
 the active hotend.</p>
 <h4 id="set_extruder_rotation_distance">SET_EXTRUDER_ROTATION_DISTANCE<a class="headerlink" href="#set_extruder_rotation_distance" title="Permanent link">&para;</a></h4>
 <p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt;
 [DISTANCE=&lt;distance&gt;]</code>: Set a new value for the provided extruder
 stepper's "rotation distance" (as defined in an
-<a href="Config_Reference#extruder">extruder</a> or
-<a href="Config_Reference#extruder_stepper">extruder_stepper</a> config section).
+<a href="Config_Reference.html#extruder">extruder</a> or
+<a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config section).
 If the rotation distance is a negative number then the stepper motion
 will be inverted (relative to the stepper direction specified in the
 config file). Changed settings are not retained on Klipper reset. Use
@@ -4422,10 +4422,10 @@ current rotation distance.</p>
 <h4 id="sync_extruder_motion">SYNC_EXTRUDER_MOTION<a class="headerlink" href="#sync_extruder_motion" title="Permanent link">&para;</a></h4>
 <p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;name&gt; MOTION_QUEUE=&lt;name&gt;</code>: This
 command will cause the stepper specified by EXTRUDER (as defined in an
-<a href="Config_Reference#extruder">extruder</a> or
-<a href="Config_Reference#extruder_stepper">extruder_stepper</a> config section)
+<a href="Config_Reference.html#extruder">extruder</a> or
+<a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config section)
 to become synchronized to the movement of an extruder specified by
-MOTION_QUEUE (as defined in an <a href="Config_Reference#extruder">extruder</a>
+MOTION_QUEUE (as defined in an <a href="Config_Reference.html#extruder">extruder</a>
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.</p>
 <h4 id="set_extruder_step_distance">SET_EXTRUDER_STEP_DISTANCE<a class="headerlink" href="#set_extruder_step_distance" title="Permanent link">&para;</a></h4>
@@ -4487,7 +4487,7 @@ retraction and displays them on the terminal.</p>
 <h3 id="force_move">[force_move]<a class="headerlink" href="#force_move" title="Permanent link">&para;</a></h3>
 <p>The force_move module is automatically loaded, however some commands
 require setting <code>enable_force_move</code> in the
-<a href="Config_Reference#force_move">printer config</a>.</p>
+<a href="Config_Reference.html#force_move">printer config</a>.</p>
 <h4 id="stepper_buzz">STEPPER_BUZZ<a class="headerlink" href="#stepper_buzz" title="Permanent link">&para;</a></h4>
 <p><code>STEPPER_BUZZ STEPPER=&lt;config_name&gt;</code>: Move the given stepper forward
 one mm and then backward one mm, repeated 10 times. This is a
