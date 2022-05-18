@@ -335,8 +335,8 @@ changes the active hotend.
 [ADVANCE=<pressure_advance>]
 [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
 parameters of an extruder stepper (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section).
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section).
 If EXTRUDER is not specified, it defaults to the stepper defined in
 the active hotend.
 
@@ -344,8 +344,8 @@ the active hotend.
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder
 stepper's "rotation distance" (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section).
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section).
 If the rotation distance is a negative number then the stepper motion
 will be inverted (relative to the stepper direction specified in the
 config file). Changed settings are not retained on Klipper reset. Use
@@ -357,10 +357,10 @@ current rotation distance.
 #### SYNC_EXTRUDER_MOTION
 `SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
 command will cause the stepper specified by EXTRUDER (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section)
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section)
 to become synchronized to the movement of an extruder specified by
-MOTION_QUEUE (as defined in an [extruder](Config_Reference#extruder)
+MOTION_QUEUE (as defined in an [extruder](Config_Reference.md#extruder)
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.
 
@@ -436,7 +436,7 @@ retraction and displays them on the terminal.
 
 The force_move module is automatically loaded, however some commands
 require setting `enable_force_move` in the
-[printer config](Config_Reference#force_move).
+[printer config](Config_Reference.md#force_move).
 
 #### STEPPER_BUZZ
 `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
