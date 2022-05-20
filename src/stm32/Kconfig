@@ -163,7 +163,7 @@ config RAM_SIZE
     default 0x24000 if MACH_STM32G0B1
     default 0x20000 if MACH_STM32H750
     default 0x80000 if MACH_STM32H723 || MACH_STM32H743
- 
+     
 config STACK_SIZE
     int
     default 512
