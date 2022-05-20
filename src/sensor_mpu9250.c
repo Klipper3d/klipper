@@ -28,7 +28,8 @@
 
 #define SET_ENABLE_FIFO 0x08
 #define SET_DISABLE_FIFO 0x00
-#define SET_USER_FIFO_RESET 0x44
+#define SET_USER_FIFO_RESET 0x04
+#define SET_USER_FIFO_EN 0x40
 
 #define SET_PWR_SLEEP   0x40
 #define SET_PWR_WAKE    0x00
@@ -43,6 +44,8 @@ struct mpu9250 {
     struct i2cdev_s *i2c;
     uint16_t sequence, limit_count;
     uint8_t flags, data_count;
+    // data size must be <= 255 due to i2c api
+    // = SAMPLES_PER_BLOCK (from mpu9250.py) * BYTES_PER_FIFO_ENTRY + 1
     uint8_t data[48];
 };
 
@@ -60,7 +63,7 @@ get_fifo_status (struct mpu9250 *mp)
     uint8_t msg[2];
     i2c_read(mp->i2c->i2c_config, sizeof(regs), regs, 2, msg);
     msg[0] = 0x1F & msg[0]; // discard 3 MSB per datasheet
-    return ((uint16_t)msg[0]) << 8 | msg[1];
+    return (((uint16_t)msg[0]) << 8 | msg[1]);
 }
 
 // Event handler that wakes mpu9250_task() periodically
@@ -119,33 +122,36 @@ static void
 mp9250_query(struct mpu9250 *mp, uint8_t oid)
 {
     // Check fifo status
-    uint16_t fifo_status = get_fifo_status(mp);
-    if (fifo_status >= AR_FIFO_SIZE)
+    uint16_t fifo_bytes = get_fifo_status(mp);
+    if (fifo_bytes >= AR_FIFO_SIZE - BYTES_PER_FIFO_ENTRY)
         mp->limit_count++;
 
     // Read data
     // FIFO data are: [Xh, Xl, Yh, Yl, Zh, Zl]
-    // limit amount of packets processed per query to size of data buffer
-    //  (so that we can guarantee a reasonable runtime)
     uint8_t reg = AR_FIFO;
-    uint16_t processed_packets = 0;
-    uint16_t packets_to_read = (fifo_status < sizeof(mp->data)) ?
-                                    fifo_status / BYTES_PER_FIFO_ENTRY :
-                                    sizeof(mp->data) / BYTES_PER_FIFO_ENTRY;
-    while ( processed_packets < packets_to_read) {
-        // Extract x, y, z measurements into data holder and report
+    uint8_t bytes_to_read = fifo_bytes < sizeof(mp->data) - mp->data_count ?
+                                    fifo_bytes & 0xFF :
+                                    (sizeof(mp->data) - mp->data_count) & 0xFF;
+
+    // round down to nearest full packet of data
+    bytes_to_read = bytes_to_read / BYTES_PER_FIFO_ENTRY * BYTES_PER_FIFO_ENTRY;
+
+    // Extract x, y, z measurements into data holder and report
+    if (bytes_to_read > 0) {
         i2c_read(mp->i2c->i2c_config, sizeof(reg), &reg,
-            BYTES_PER_FIFO_ENTRY, &mp->data[mp->data_count]);
-        mp->data_count += BYTES_PER_FIFO_ENTRY;
-        processed_packets ++;
-        // If we filled our buffer, report data to host
+                bytes_to_read, &mp->data[mp->data_count]);
+        mp->data_count += bytes_to_read;
+
+        // report data when buffer is full
         if (mp->data_count + BYTES_PER_FIFO_ENTRY > sizeof(mp->data)) {
             mp9250_report(mp, oid);
         }
     }
 
-    // check if we need to run the task again
-    if ( processed_packets * BYTES_PER_FIFO_ENTRY < fifo_status ) {
+    // check if we need to run the task again (more packets in fifo?)
+    if ( bytes_to_read > 0 &&
+            bytes_to_read / BYTES_PER_FIFO_ENTRY <
+            fifo_bytes / BYTES_PER_FIFO_ENTRY) {
         // more data still ready in the fifo buffer
         sched_wake_task(&mpu9250_wake);
     }
@@ -163,19 +169,22 @@ mp9250_start(struct mpu9250 *mp, uint8_t oid)
 {
     sched_del_timer(&mp->timer);
     mp->flags = AX_RUNNING;
-    uint8_t msg[2] = { AR_PWR_MGMT_1, 0x00 }; // wake up
-    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-
-    msg[0] = AR_PWR_MGMT_2;
-    msg[1] = SET_PWR_2_ACCEL; // turn on accelerometer sensor
-    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+    uint8_t msg[2];
 
     msg[0] = AR_FIFO_EN;
-    msg[1] = SET_ENABLE_FIFO; // enable accel FIFO
+    msg[1] = SET_DISABLE_FIFO; // disable FIFO
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
 
     msg[0] = AR_USER_CTRL;
     msg[1] = SET_USER_FIFO_RESET; // reset FIFO buffer
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+
+    msg[0] = AR_USER_CTRL;
+    msg[1] = SET_USER_FIFO_EN; // enable FIFO buffer access
+    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
+
+    msg[0] = AR_FIFO_EN;
+    msg[1] = SET_ENABLE_FIFO; // enable accel output to FIFO
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
 
     mp9250_reschedule_timer(mp);
@@ -195,27 +204,18 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
     uint32_t end2_time = timer_read_time();
 
-    // turn off sensors
-    msg[0] = AR_PWR_MGMT_2;
-    msg[1] = SET_PWR_2_NONE;
-    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-
     // Drain any measurements still in fifo
-    uint16_t fifo_status = get_fifo_status(mp);
-    while (fifo_status > BYTES_PER_FIFO_ENTRY) {
+    uint16_t fifo_bytes = get_fifo_status(mp);
+    while (fifo_bytes >= BYTES_PER_FIFO_ENTRY) {
         mp9250_query(mp, oid);
-        fifo_status = get_fifo_status(mp);
+        fifo_bytes = get_fifo_status(mp);
     }
 
     // Report final data
     if (mp->data_count > 0)
         mp9250_report(mp, oid);
-    mp9250_status(mp, oid, end1_time, end2_time, fifo_status);
-
-    msg[0] = AR_PWR_MGMT_1;
-    msg[1] = SET_PWR_SLEEP; // set to sleep
-    i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-
+    mp9250_status(mp, oid, end1_time, end2_time,
+                    fifo_bytes / BYTES_PER_FIFO_ENTRY);
 }
 
 void
@@ -250,8 +250,8 @@ command_query_mpu9250_status(uint32_t *args)
     i2c_read(mp->i2c->i2c_config, 1, regs, 2, msg);
     uint32_t time2 = timer_read_time();
     msg[0] = 0x1F & msg[0]; // discard 3 MSB
-    uint16_t fifo_status = (((uint16_t)msg[0]) << 8) | msg[1];
-    mp9250_status(mp, args[0], time1, time2, fifo_status);
+    uint16_t fifo_bytes = (((uint16_t)msg[0]) << 8) | msg[1];
+    mp9250_status(mp, args[0], time1, time2, fifo_bytes / BYTES_PER_FIFO_ENTRY);
 }
 DECL_COMMAND(command_query_mpu9250_status, "query_mpu9250_status oid=%c");
 
@@ -265,15 +265,12 @@ mpu9250_task(void)
     foreach_oid(oid, mp, command_config_mpu9250) {
         uint_fast8_t flags = mp->flags;
         if (!(flags & AX_PENDING)) {
-            //output("skipping");
             continue;
         }
         if (flags & AX_HAVE_START) {
-            //output("running start");
             mp9250_start(mp, oid);
         }
         else {
-            //output("running query");
             mp9250_query(mp, oid);
         }
     }
