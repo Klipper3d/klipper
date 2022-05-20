@@ -1,8 +1,7 @@
 # Support for reading acceleration data from an mpu9250 chip
 #
 # Copyright (C) 2022  Harry Beyel <harry3b9@gmail.com>
-#
-# Derived from adxl345.py by Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2020-2021 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time, collections, threading, multiprocessing, os
