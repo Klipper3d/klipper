@@ -187,7 +187,12 @@ gpio_adc_setup(uint32_t pin)
     }
     gpio_peripheral(pin, GPIO_ANALOG, 0);
     // Preselect (connect) channel
-    adc->PCSEL |= (1 << chan);
+    #if (CONFIG_MACH_STM32H723)
+        adc->PCSEL_RES0 |= (1 << chan);
+    #else
+        adc->PCSEL |= (1 << chan);
+    #endif
+
     return (struct gpio_adc){ .adc = adc, .chan = chan };
 }
 
