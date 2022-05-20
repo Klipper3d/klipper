@@ -58,9 +58,10 @@
    application
   */
 
-#if !defined (STM32H743xx) && !defined (STM32H753xx)  && !defined (STM32H750xx) && !defined (STM32H742xx) && \
+#if !defined (STM32H723xx) && !defined (STM32H743xx) && !defined (STM32H753xx)  && !defined (STM32H750xx) && !defined (STM32H742xx) && \
     !defined (STM32H745xx) && !defined (STM32H755xx)  && !defined (STM32H747xx) && !defined (STM32H757xx) && \
-    !defined (STM32H7A3xx) && !defined (STM32H7A3xxQ) && !defined (STM32H7B3xx) && !defined (STM32H7B3xxQ) && !defined (STM32H7B0xx)  && !defined (STM32H7B0xxQ)
+    !defined (STM32H7A3xx) && !defined (STM32H7A3xxQ) && !defined (STM32H7B3xx) && !defined (STM32H7B3xxQ) && \
+    !defined (STM32H7B0xx)  && !defined (STM32H7B0xxQ)
   /* #define STM32H742xx */   /*!< STM32H742VI, STM32H742ZI, STM32H742AI, STM32H742II, STM32H742BI, STM32H742XI Devices */
   /* #define STM32H743xx */   /*!< STM32H743VI, STM32H743ZI, STM32H743AI, STM32H743II, STM32H743BI, STM32H743XI Devices */
   /* #define STM32H753xx */   /*!< STM32H753VI, STM32H753ZI, STM32H753AI, STM32H753II, STM32H753BI, STM32H753XI Devices */
@@ -112,8 +113,9 @@
 /** @addtogroup Device_Included
   * @{
   */
-
-#if defined(STM32H743xx)
+#if defined(STM32H723xx)
+  #include "stm32h723xx.h"
+#elif defined(STM32H743xx)
   #include "stm32h743xx.h"
 #elif defined(STM32H753xx)
   #include "stm32h753xx.h"
