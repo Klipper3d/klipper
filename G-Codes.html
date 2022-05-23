@@ -4865,23 +4865,28 @@ all enabled accelerometer chips.</p>
 <h4 id="test_resonances">TEST_RESONANCES<a class="headerlink" href="#test_resonances" title="Permanent link">&para;</a></h4>
 <p><code>TEST_RESONANCES AXIS=&lt;axis&gt; OUTPUT=&lt;resonances,raw_data&gt;
 [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;]
-[HZ_PER_SEC=&lt;hz_per_sec&gt;] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Runs the resonance
+[HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;adxl345_chip_name&gt;]
+[POINT=x,y,z] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
 the respective axis. "axis" can either be X or Y, or specify an
 arbitrary direction as <code>AXIS=dx,dy</code>, where dx and dy are floating
 point numbers defining a direction vector (e.g. <code>AXIS=X</code>, <code>AXIS=Y</code>, or
 <code>AXIS=1,-1</code> to define a diagonal direction). Note that <code>AXIS=dx,dy</code>
-and <code>AXIS=-dx,-dy</code> is equivalent. If <code>INPUT_SHAPING=0</code> or not set
-(default), disables input shaping for the resonance testing, because
+and <code>AXIS=-dx,-dy</code> is equivalent. <code>adxl345_chip_name</code> can be one or
+more configured adxl345 chip,delimited with comma, for example
+<code>CHIPS="adxl345, adxl345 rpi"</code>. Note that <code>adxl345</code> can be omitted from
+named adxl345 chips. If POINT is specified it will override the point(s)
+configured in <code>[resonance_tester]</code>. If <code>INPUT_SHAPING=0</code> or not set(default),
+disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper
 enabled. <code>OUTPUT</code> parameter is a comma-separated list of which outputs
 will be written. If <code>raw_data</code> is requested, then the raw
 accelerometer data is written into a file or a series of files
-<code>/tmp/raw_data_&lt;axis&gt;_[&lt;point&gt;_]&lt;name&gt;.csv</code> with (<code>&lt;point&gt;_</code> part of
-the name generated only if more than 1 probe point is configured).  If
-<code>resonances</code> is specified, the frequency response is calculated
-(across all probe points) and written into
+<code>/tmp/raw_data_&lt;axis&gt;_[&lt;chip_name&gt;_][&lt;point&gt;_]&lt;name&gt;.csv</code> with
+(<code>&lt;point&gt;_</code> part of the name generated only if more than 1 probe point
+is configured or POINT is specified). If <code>resonances</code> is specified, the
+frequency response is calculated (across all probe points) and written into
 <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> file. If unset, OUTPUT defaults to
 <code>resonances</code>, and NAME defaults to the current time in
 "YYYYMMDD_HHMMSS" format.</p>
