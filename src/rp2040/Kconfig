@@ -83,6 +83,19 @@ choice
     config RP2040_SERIAL_UART0
         bool "Serial (on UART0 GPIO1/GPIO0)"
         select SERIAL
+    config RP2040_CANBUS
+        bool "CAN bus"
+        select CANSERIAL
 endchoice
+
+config RP2040_CANBUS_GPIO_RX
+    int "CAN RX gpio number" if CANBUS
+    default 4
+    range 0 29
+
+config RP2040_CANBUS_GPIO_TX
+    int "CAN TX gpio number" if CANBUS
+    default 5
+    range 0 29
 
 endif
