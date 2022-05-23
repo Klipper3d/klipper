@@ -987,7 +987,9 @@ number of knob turns to adjust the bed level. If DIRECTION is
 specified, the knob turns will all be in the same direction, clockwise
 (CW) or counterclockwise (CCW). See the PROBE command for details on
 the optional probe parameters. IMPORTANT: You MUST always do a G28
-before using this command. If MAX_DEVIATION is specified, the command will raise a gcode error if any difference in the screw height relative to the base screw height is greater than the value provided.
+before using this command. If MAX_DEVIATION is specified, the command
+will raise a gcode error if any difference in the screw height
+relative to the base screw height is greater than the value provided.
 
 ### [sdcard_loop]
 
