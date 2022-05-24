@@ -19,7 +19,6 @@ REG_MOD_MULTI = 0x40
 ADXL345_DEV_ID = 0xe5
 SET_FIFO_CTL = 0x90
 
-
 # Printer class that controls ADXL345 chip
 class ADXL345 (MotionSensorBase):
     # SCALE = 3.9mg/LSB * Earth gravity in mm/s**2
@@ -28,7 +27,7 @@ class ADXL345 (MotionSensorBase):
     SAMPLES_PER_BLOCK = 10
     FIFO_SIZE = 32 # in number of samples
 
-    QUERY_RATES = {
+    SAMPLE_RATES = {
         25: 0x8, 50: 0x9, 100: 0xa, 200: 0xb, 400: 0xc,
         800: 0xd, 1600: 0xe, 3200: 0xf,
     }
@@ -36,7 +35,7 @@ class ADXL345 (MotionSensorBase):
     def __init__(self, config):
         super(ADXL345, self).__init__(config)
         self.data_rate = config.getint('rate', 3200)
-        if self.data_rate not in self.QUERY_RATES:
+        if self.data_rate not in self.SAMPLE_RATES:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate))
         self.mcu.register_response(self._handle_motion_sensor_data,
                                     "adxl345_data", self.oid)
@@ -163,5 +162,5 @@ class ADXL345 (MotionSensorBase):
         self.set_reg(REG_POWER_CTL, 0x00)
         self.set_reg(REG_DATA_FORMAT, 0x0B)
         self.set_reg(REG_FIFO_CTL, 0x00)
-        self.set_reg(REG_BW_RATE, self.QUERY_RATES[self.data_rate])
+        self.set_reg(REG_BW_RATE, self.SAMPLE_RATES[self.data_rate])
         self.set_reg(REG_FIFO_CTL, SET_FIFO_CTL)
