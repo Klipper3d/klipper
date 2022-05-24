@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time
 
-from motion_sensor import MotionSensorBase, FREEFALL_ACCEL
+from .motion_sensor import MotionSensorBase, FREEFALL_ACCEL
 from .. import bus
 
 # Register mapping for MPU-xxxx devices

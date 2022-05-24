@@ -7,7 +7,7 @@
 
 from abc import ABCMeta, abstractmethod
 import importlib, time, threading, logging, multiprocessing, os, collections
-from clocksync import ClockSyncRegression
+from .clocksync import ClockSyncRegression
 from .. import motion_report
 
 # info used to determine which class to load in load_config
