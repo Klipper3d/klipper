@@ -336,7 +336,8 @@ class PrinterRail:
             'homing_retract_dist', 5., minval=0.)
         self.homing_positive_dir = config.getboolean(
             'homing_positive_dir', None)
-        self.homing_final_retract = config.getboolean('homing_final_retract', False)
+        self.homing_final_retract = config.getboolean(
+            'homing_final_retract', False)
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
             if self.position_endstop <= self.position_min + axis_len / 4.:
