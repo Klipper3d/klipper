@@ -196,9 +196,9 @@ position_max:
 #   default is true if position_endstop is near position_max and false
 #   if near position_min.
 #homing_final_retract:
-#   Set to true to enable retraction after homing. This is useful for 
-#   sensorless homing, where you want to prevent the stepper from 
-#   pressing the carriage into the frame after homing. Uses 
+#   Set to true to enable retraction after homing. This is useful for
+#   sensorless homing, where you want to prevent the stepper from
+#   pressing the carriage into the frame after homing. Uses
 #   homing_retract_dist and homing_retract_speed.
 ```
 
