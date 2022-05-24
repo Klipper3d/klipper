@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-from . import bus
+from .. import bus
 from .motion_sensor import MotionSensorBase, FREEFALL_ACCEL
 
 # ADXL345 registers

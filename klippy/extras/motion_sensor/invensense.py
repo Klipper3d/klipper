@@ -4,9 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time
-
-from .motion_sensor import MotionSensorBase, FREEFALL_ACCEL
 from .. import bus
+from .motion_sensor import MotionSensorBase, FREEFALL_ACCEL
 
 # Register mapping for MPU-xxxx devices
 REG_SMPLRT_DIV =    0x19
