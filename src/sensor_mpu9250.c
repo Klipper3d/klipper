@@ -1,6 +1,6 @@
 // Support for gathering acceleration data from mpu9250 chip
 //
-// Copyright (C) 2022 Harry Beyel <harry3b9@gmail.com>
+// Copyright (C) 2022  Harry Beyel <harry3b9@gmail.com>
 // Copyright (C) 2020-2021 Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
@@ -43,8 +43,8 @@ struct mpu9250 {
     struct i2cdev_s *i2c;
     uint16_t sequence, limit_count;
     uint8_t flags, data_count;
-    // data size must be <= 255 due to i2c api
-    // = SAMPLES_PER_BLOCK (from mpu9250.py) * BYTES_PER_FIFO_ENTRY + 1
+    // data size must be <= 255 due to i2c api and
+    // = SAMPLES_PER_BLOCK (from mpu9250.py) * BYTES_PER_FIFO_ENTRY
     uint8_t data[48];
 };
 

@@ -153,9 +153,11 @@ class DataLogger:
         # Subscribe to additional sensor data
         config = status["configfile"]["settings"]
         for cfgname in config.keys():
-            if cfgname == "adxl345" or cfgname.startswith("adxl345 "):
+            if cfgname == "motion_sensor" or cfgname.startswith(
+                                                "motion_sensor "):
                 aname = cfgname.split()[-1]
-                self.send_subscribe("adxl345:" + aname, "adxl345/dump_adxl345",
+                self.send_subscribe("motion_sensor:" + aname,
+                                    "motion_sensor/motion_sensor",
                                     {"sensor": aname})
             if cfgname.startswith("angle "):
                 aname = cfgname.split()[1]

@@ -1,11 +1,11 @@
 # Measuring Resonances
 
-Klipper has built-in support for ADXL345 accelerometer, which can be used to
-measure resonance frequencies of the printer for different axes, and auto-tune
-[input shapers](Resonance_Compensation.md) to compensate for resonances.
-Note that using ADXL345 requires some soldering and crimping. ADXL345 can be
-connected to a Raspberry Pi directly, or to an SPI interface of an MCU
-board (it needs to be reasonably fast).
+Klipper has built-in support for the ADXL345 accelerometer and MPU6050/MPU9250
+IMUs, which can be used to measure resonance frequencies of the printer for
+different axes, and auto-tune [input shapers](Resonance_Compensation.md) to
+compensate for resonances. Note that using ADXL345 requires some soldering and
+crimping. ADXL345 can be connected to a Raspberry Pi directly, or to an SPI
+interface of an MCU board (it needs to be reasonably fast).
 
 When sourcing ADXL345, be aware that there is a variety of different PCB
 board designs and different clones of them. Make sure that the board supports
@@ -31,7 +31,8 @@ and **will not work**. The recommended connection scheme:
 | SDA | 19 | GPIO10 (SPI0_MOSI) |
 | SCL | 23 | GPIO11 (SPI0_SCLK) |
 
-An alternative to the ADXL345 is the MPU-9250 (or MPU-6050).  This accelerometer has been tested to work over I2C on the RPi at 400kbaud.
+An alternative to the ADXL345 is the MPU-6050 (or MPU-9250).  This accelerometer has been tested to work over I2C on the Rasberry Pi and Pi Pico at 400kbaud
+using a modified USB cable.
 Recommended connection scheme for I2C:
 
 | MPU-9250 pin | RPi pin | RPi pin name |
@@ -103,28 +104,30 @@ For the ADXL345, add the following to the printer.cfg file:
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
 
-[adxl345]
+[motion_sensor]
+chip: adxl345
 cs_pin: rpi:None
 
 [resonance_tester]
-accel_chip: adxl345
+accel_chip: motion_sensor
 probe_points:
     100, 100, 20  # an example
 ```
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
-For the MPU-9250:
+For the MPU-9250 (for the MPU-6050, replace mpu9250 with mpu6050):
 ```
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
 
-[mpu9250]
+[motion_sensor]
+chip: mpu9250
 i2c_mcu: rpi
 i2c_bus: i2c.1
 
 [resonance_tester]
-accel_chip: mpu9250
+accel_chip: motion_sensor
 probe_points:
     100, 100, 20  # an example
 ```
@@ -147,13 +150,13 @@ Now you can test a connection.
 You should see the current measurements from the accelerometer, including the
 free-fall acceleration, e.g.
 ```
-Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
+Recv: // motion_sensor values (x, y, z): 470.719200, 941.438400, 9728.196800
 ```
 
-If you get an error like `Invalid adxl345 id (got xx vs e5)`, where `xx`
-is some other ID, it is indicative of the connection problem with ADXL345,
-or the faulty sensor. Double-check the power, the wiring (that it matches
-the schematics, no wire is broken or loose, etc.), and soldering quality.
+If you get an error like `Invalid adxl345 id (got xx)`, where `xx`
+is some other ID, it is indicative of the connection problem with the sensor,
+a faulty sensor, or wrong `chip` specified in the config. Double-check the
+power, the wiring (that it matches the schematics, no wire is broken or loose, etc.), soldering quality, and printer config.
 
 Next, try running `MEASURE_AXES_NOISE` in Octoprint, you should get some
 baseline numbers for the noise of accelerometer on the axes (should be
@@ -178,7 +181,7 @@ If the vibrations do get too strong, you can attempt to specify a lower than the
 default value for `accel_per_hz` parameter in `[resonance_tester]` section, e.g.
 ```
 [resonance_tester]
-accel_chip: adxl345
+accel_chip: motion_sensor
 accel_per_hz: 50  # default is 75
 probe_points: ...
 ```
@@ -247,18 +250,20 @@ must be connected to different boards (say, to an RPi and printer MCU board), or
 to two different physical SPI interfaces on the same board (rarely available).
 Then they can be configured in the following manner:
 ```
-[adxl345 hotend]
+[motion_sensor hotend]
 # Assuming `hotend` chip is connected to an RPi
+chip: adxl345
 cs_pin: rpi:None
 
-[adxl345 bed]
+[motion_sensor bed]
 # Assuming `bed` chip is connected to a printer MCU board
+chip: adxl345
 cs_pin: ...  # Printer board SPI chip select (CS) pin
 
 [resonance_tester]
 # Assuming the typical setup of the bed slinger printer
-accel_chip_x: adxl345 hotend
-accel_chip_y: adxl345 bed
+accel_chip_x: motion_sensor hotend
+accel_chip_y: motion_sensor bed
 probe_points: ...
 ```
 
@@ -502,7 +507,7 @@ command, specify the desired test axis. The raw data will be written into
 The raw data can also be obtained by running the command
 `ACCELEROMETER_MEASURE` command twice during some normal printer
 activity - first to start the measurements, and then to stop them and
-write the output file. Refer to [G-Codes](G-Codes.md#adxl345) for more
+write the output file. Refer to [G-Codes](G-Codes.md#motion_sensor) for more
 details.
 
 The data can be processed later by the following scripts:

@@ -325,16 +325,14 @@ and might later produce asynchronous messages such as:
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.
 
-### adxl345/dump_adxl345
+### motion_sensor/dump_motion_sensor
 
-This endpoint is used to subscribe to ADXL345 accelerometer data.
-Obtaining these low-level motion updates may be useful for diagnostic
-and debugging purposes. Using this endpoint may increase Klipper's
-system load.
+This endpoint is used to subscribe to motion sensor (e.g. accelerometer) data.
+Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.
 
 A request may look like:
-`{"id": 123, "method":"adxl345/dump_adxl345",
-"params": {"sensor": "adxl345", "response_template": {}}}`
+`{"id": 123, "method":"motion_sensor/dump_motion_sensor",
+"params": {"sensor": "motion_sensor", "response_template": {}}}`
 and might return:
 `{"id": 123,"result":{"header":["time","x_acceleration","y_acceleration",
 "z_acceleration"]}}`

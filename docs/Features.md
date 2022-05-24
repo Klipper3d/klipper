@@ -139,8 +139,8 @@ Klipper supports many standard 3d printer features:
 * Support for filament presence sensors, filament motion sensors, and
   filament width sensors.
 
-* Support for measuring and recording acceleration using an adxl345
-  accelerometer.
+* Support for measuring and recording acceleration using an ADXL345
+  accelerometer or MPU6050/MPU9250 inertial measurement unit.
 
 * Support for limiting the top speed of short "zigzag" moves to reduce
   printer vibration and noise. See the [kinematics](Kinematics.md)

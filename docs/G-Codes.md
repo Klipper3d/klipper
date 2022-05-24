@@ -68,43 +68,43 @@ follows the section names specified in the
 [printer configuration file](Config_Reference.md). Note that some
 modules are automatically loaded.
 
-### [adxl345]
+### [motion_sensor]
 
 The following commands are available when an
-[adxl345 config section](Config_Reference.md#adxl345) is enabled.
+[motion_sensor config section](Config_Reference.md#motion_sensor) is enabled.
 
 #### ACCELEROMETER_MEASURE
 `ACCELEROMETER_MEASURE [CHIP=<config_name>] [NAME=<value>]`: Starts
 accelerometer measurements at the requested number of samples per
-second. If CHIP is not specified it defaults to "adxl345". The command
+second. If CHIP is not specified it defaults to "motion_sensor". The command
 works in a start-stop mode: when executed for the first time, it
 starts the measurements, next execution stops them. The results of
 measurements are written to a file named
-`/tmp/adxl345-<chip>-<name>.csv` where `<chip>` is the name of the
-accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`) and
+`/tmp/motion_sensor-<chip>-<name>.csv` where `<chip>` is the name of the
+accelerometer chip (`my_chip_name` from `[motion_sensor my_chip_name]`) and
 `<name>` is the optional NAME parameter. If NAME is not specified it
 defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
 accelerometer does not have a name in its config section (simply
-`[adxl345]`) then `<chip>` part of the name is not generated.
+`[motion_sensor]`) then `<chip>` part of the name is not generated.
 
 #### ACCELEROMETER_QUERY
 `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
 accelerometer for the current value. If CHIP is not specified it
-defaults to "adxl345". If RATE is not specified, the default value is
-used. This command is useful to test the connection to the ADXL345
-accelerometer: one of the returned values should be a free-fall
-acceleration (+/- some noise of the chip).
+defaults to "motion_sensor". If RATE is not specified, the default value is
+used. This command is useful to test the connection to the accelerometer:
+one of the returned values should be a free-fall acceleration (+/- some
+noise of the chip).
 
 #### ACCELEROMETER_DEBUG_READ
 `ACCELEROMETER_DEBUG_READ [CHIP=<config_name>] REG=<register>`:
-queries ADXL345 register "register" (e.g. 44 or 0x2C). Can be useful
+queries accelerometer register "register" (e.g. 44 or 0x2C). Can be useful
 for debugging purposes.
 
 #### ACCELEROMETER_DEBUG_WRITE
 `ACCELEROMETER_DEBUG_WRITE [CHIP=<config_name>] REG=<register>
 VAL=<value>`: Writes raw "value" into a register "register". Both
 "value" and "register" can be a decimal or a hexadecimal integer. Use
-with care, and refer to ADXL345 data sheet for the reference.
+with care, and refer to the motion sensor's data sheet for the reference.
 
 ### [angle]
 

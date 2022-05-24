@@ -331,11 +331,12 @@ class HandleStepPhase:
 LogHandlers["step_phase"] = HandleStepPhase
 
 # Extract accelerometer data
-class HandleADXL345:
+class HandleMotionSensor:
     SubscriptionIdParts = 2
     ParametersMin = ParametersMax = 2
     DataSets = [
-        ('adxl345(<name>,<axis>)', 'Accelerometer for given axis (x, y, or z)'),
+        ('motion_sensor(<name>,<axis>)',
+         'Accelerometer for given axis (x, y, or z)'),
     ]
     def __init__(self, lmanager, name, name_parts):
         self.name = name
@@ -346,7 +347,7 @@ class HandleADXL345:
         self.cur_data = []
         self.data_pos = 0
         if name_parts[2] not in 'xyz':
-            raise error("Unknown adxl345 data selection '%s'" % (name,))
+            raise error("Unknown motion_sensor data selection '%s'" % (name,))
         self.axis = 'xyz'.index(name_parts[2])
     def get_label(self):
         label = '%s %s acceleration' % (self.adxl_name, 'xyz'[self.axis])
@@ -372,7 +373,7 @@ class HandleADXL345:
             self.next_accel_time, x, y, z = self.cur_data[self.data_pos]
             self.next_accel = (x, y, z)
             self.data_pos += 1
-LogHandlers["adxl345"] = HandleADXL345
+LogHandlers["motion_sensor"] = HandleMotionSensor
 
 # Extract positions from magnetic angle sensor
 class HandleAngle:

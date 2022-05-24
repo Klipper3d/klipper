@@ -1472,16 +1472,18 @@ the [command reference](G-Codes.md#input_shaper).
 #   parameter requires no tuning and should not be changed.
 ```
 
-### [adxl345]
+### [motion_sensor]
 
-Support for ADXL345 accelerometers. This support allows one to query
-accelerometer measurements from the sensor. This enables an
-ACCELEROMETER_MEASURE command (see [G-Codes](G-Codes.md#adxl345) for
+Support for motion sensors (e.g. accelerometers). This support allows one to query accelerometer measurements from the sensor. This enables an
+ACCELEROMETER_MEASURE command (see [G-Codes](G-Codes.md#motion_sensor) for
 more information). The default chip name is "default", but one may
-specify an explicit name (eg, [adxl345 my_chip_name]).
+specify an explicit name (eg, [motion_sensor my_chip_name]).
 
+SPI configuration:
 ```
-[adxl345]
+[motion_sensor]
+chip: adxl345
+#   The chip to use as a motion sensor.  Supported SPI sensor: adxl345
 cs_pin:
 #   The SPI enable pin for the sensor. This parameter must be provided.
 #spi_speed: 5000000
@@ -1507,6 +1509,29 @@ cs_pin:
 #   rates below 800 will considerably affect the quality of resonance
 #   measurements.
 ```
+I2C configuration:
+```
+[motion_sensor]
+chip: mpu6050
+#   The chip to use as the sensor.  Supported I2C sensors: mpu6050, mpu9250
+i2c_bus:
+#   The I2C bus to use for the sensor.  This parameter must be provided.
+#   To use this chip for resonance measurements, it is required to support a
+#   baud rate (i2c_speed) of 400000.
+#i2c_mcu:
+#i2c_speed: 400000
+#   Optionally specify a different mcu or speed to use for the I2C connection.
+#   Also, see "Common I2C Settings" section for a description of other options.
+#axes_map: x, y, z
+#   The sensor's accelerometer axis for each of the printer's X, Y, and
+#   Z axes. This may be useful if the accelerometer is mounted in an
+#   orientation that does not match the printer orientation. For
+#   example, one could set this to "y, x, z" to swap the X and Y axes.
+#   It is also possible to negate an axis if the accelerometer
+#   direction is reversed (eg, "x, z, -y"). The default is "x, y, z".
+#rate: 4000
+#   Output data rate for the sensor. Currently only supports rate: 4000
+#   which is the default and recommended for resonance measurements.
 
 ### [resonance_tester]
 
