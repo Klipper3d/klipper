@@ -142,7 +142,7 @@ class MPU6050 (MotionSensorBase):
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_OFF)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)
 
-    def _configure_sensor(self, mode=None):
+    def _configure_sensor(self):
         # Setup chip in requested query rate
         self.set_reg(REG_SMPLRT_DIV, self.SAMPLE_RATES[self.data_rate])
         self.set_reg(REG_CONFIG, SET_CONFIG)
