@@ -896,23 +896,28 @@ all enabled accelerometer chips.
 #### TEST_RESONANCES
 `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
 [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
-[HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
+[HZ_PER_SEC=<hz_per_sec>] [CHIPS=<adxl345_chip_name>]
+[POINT=x,y,z] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
 the respective axis. "axis" can either be X or Y, or specify an
 arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
 `AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
-and `AXIS=-dx,-dy` is equivalent. If `INPUT_SHAPING=0` or not set
-(default), disables input shaping for the resonance testing, because
+and `AXIS=-dx,-dy` is equivalent. `adxl345_chip_name` can be one or
+more configured adxl345 chip,delimited with comma, for example
+`CHIPS="adxl345, adxl345 rpi"`. Note that `adxl345` can be omitted from
+named adxl345 chips. If POINT is specified it will override the point(s)
+configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
+disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper
 enabled. `OUTPUT` parameter is a comma-separated list of which outputs
 will be written. If `raw_data` is requested, then the raw
 accelerometer data is written into a file or a series of files
-`/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
-the name generated only if more than 1 probe point is configured).  If
-`resonances` is specified, the frequency response is calculated
-(across all probe points) and written into
+`/tmp/raw_data_<axis>_[<chip_name>_][<point>_]<name>.csv` with
+(`<point>_` part of the name generated only if more than 1 probe point
+is configured or POINT is specified). If `resonances` is specified, the
+frequency response is calculated (across all probe points) and written into
 `/tmp/resonances_<axis>_<name>.csv` file. If unset, OUTPUT defaults to
 `resonances`, and NAME defaults to the current time in
 "YYYYMMDD_HHMMSS" format.
@@ -979,7 +984,7 @@ is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)).
 
 #### SCREWS_TILT_CALCULATE
-`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW]
+`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=<value>]
 [<probe_parameter>=<value>]`: This command will invoke the bed screws
 adjustment tool. It will command the nozzle to different locations (as
 defined in the config file) probing the z height and calculate the
@@ -987,7 +992,9 @@ number of knob turns to adjust the bed level. If DIRECTION is
 specified, the knob turns will all be in the same direction, clockwise
 (CW) or counterclockwise (CCW). See the PROBE command for details on
 the optional probe parameters. IMPORTANT: You MUST always do a G28
-before using this command.
+before using this command. If MAX_DEVIATION is specified, the command
+will raise a gcode error if any difference in the screw height
+relative to the base screw height is greater than the value provided.
 
 ### [sdcard_loop]
 
