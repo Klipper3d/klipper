@@ -27,7 +27,7 @@ static const uint8_t adc_pins[] = {
     0, GPIO('A', 0), GPIO('A', 1), GPIO('A', 6),
     GPIO('A', 3), GPIO('F', 4), 0, 0,
     0, 0, 0, 0,
-    0, 0, 0, 0, 
+    0, 0, 0, 0,
     ADC_TEMPERATURE_PIN, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
@@ -54,7 +54,7 @@ static const uint8_t adc_pins[] = {
     0, GPIO('E', 14), GPIO('E', 15), GPIO('B', 12),
     GPIO('B', 14), GPIO('B', 15), 0, 0,
     0, 0, 0, 0,
-    GPIO('D', 8), GPIO('D', 9), 0, 0, 
+    GPIO('D', 8), GPIO('D', 9), 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
@@ -106,12 +106,12 @@ adc_calibrate(ADC_TypeDef *adc)
 #if CONFIG_N32G452 == 1
     adc->CTRL2 = CTRL2_AD_ON_SET;
     while (!(adc->CTRL3 & ADC_FLAG_RDY))
-    	;
+        ;
     adc->CTRL3 &= (~ADC_CTRL3_BPCAL_MSK);
     udelay(10);
     adc->CTRL2 = CTRL2_AD_ON_SET | CTRL2_CAL_SET;
     while (adc->CTRL2 & CTRL2_CAL_SET)
-    	;
+        ;
 #else
     adc->CR2 = ADC_CR2_ADON;
     udelay(10);
@@ -120,7 +120,7 @@ adc_calibrate(ADC_TypeDef *adc)
         ;
     adc->CR2 = ADC_CR2_ADON | ADC_CR2_CAL;
     while (adc->CR2 & ADC_CR2_CAL)
-    	;
+        ;
 #endif
 #endif
 }
@@ -141,13 +141,13 @@ gpio_adc_setup(uint32_t pin)
 #if CONFIG_N32G452 == 1
     ADC_Module *adc /*= NS_ADC1*/;
     if ((chan >> 5) == 0)
-    	adc = NS_ADC1;
+        adc = NS_ADC1;
     if ((chan >> 5) == 1)
-    	adc = NS_ADC2;
+        adc = NS_ADC2;
     if ((chan >> 5) == 2)
-    	adc = NS_ADC3;
+        adc = NS_ADC3;
     if ((chan >> 5) == 3)
-    	adc = NS_ADC4;
+        adc = NS_ADC4;
     chan &= 0x1F;
  #else
     ADC_TypeDef *adc = ADC1;
@@ -166,11 +166,12 @@ gpio_adc_setup(uint32_t pin)
 #if CONFIG_N32G452 == 1
     uint32_t reg_temp;
     reg_temp = ADC_RCC_AHBPCLKEN;
-    reg_temp |= (RCC_AHB_PERIPH_ADC1 | RCC_AHB_PERIPH_ADC2 | RCC_AHB_PERIPH_ADC3 | RCC_AHB_PERIPH_ADC4);
-    ADC_RCC_AHBPCLKEN = reg_temp;             
+    reg_temp |= (RCC_AHB_PERIPH_ADC1 | RCC_AHB_PERIPH_ADC2 |
+                RCC_AHB_PERIPH_ADC3 | RCC_AHB_PERIPH_ADC4);
+    ADC_RCC_AHBPCLKEN = reg_temp;
 
     reg_temp = ADC_RCC_CFG2;
-    reg_temp &= CFG2_ADCPLLPRES_RESET_MASK; 
+    reg_temp &= CFG2_ADCPLLPRES_RESET_MASK;
     reg_temp |= RCC_ADCPLLCLK_DIV16;
     ADC_RCC_CFG2 = reg_temp;
 
@@ -205,8 +206,8 @@ gpio_adc_setup(uint32_t pin)
         ADC123_COMMON->CCR = ADC_CCR_TSVREFE;
 #endif
 #if CONFIG_N32G452 == 1
-	NS_ADC1->CTRL2 |= CTRL2_TSVREFE_SET;
-	VREF1P2_CTRL |= (1<<10);
+        NS_ADC1->CTRL2 |= CTRL2_TSVREFE_SET;
+        VREF1P2_CTRL |= (1<<10);
 #endif
     } else {
         gpio_peripheral(pin, GPIO_ANALOG, 0);

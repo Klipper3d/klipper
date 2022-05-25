@@ -180,9 +180,9 @@ config N32G452
     depends on MACH_STM32F103 && LOW_LEVEL_OPTIONS
     default n
     help
-	Some Voxelab Aquila motherboards have N32G452 chip instead of
-	GD32F103. This cortex-M4 chip is very similar to F103 but
-	have different ADC. Enable this option to make ADC working.
+        Some Voxelab Aquila motherboards have N32G452 chip instead of
+        GD32F103. This cortex-M4 chip is very similar to F103 but
+        have different ADC. Enable this option to make ADC working.
 
 ######################################################################
 # Bootloader
