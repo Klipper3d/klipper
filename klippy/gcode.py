@@ -30,6 +30,11 @@ class GCodeCommand:
         command = self._command
         if command.startswith("M117 ") or command.startswith("M118 "):
             command = command[:4]
+        elif command.startswith("M117.") or command.startswith("M118."):
+            # If there's a space, it means that there was a special character
+            space_index = command.find(" ")
+            if space_index >= 0:
+                command = command[:space_index]
         rawparams = self._commandline
         urawparams = rawparams.upper()
         if not urawparams.startswith(command):
@@ -282,6 +287,15 @@ class GCodeDispatch:
             if handler is not None:
                 handler(gcmd)
                 return
+        elif cmd.startswith("M117.") or cmd.startswith("M118."):
+            # Handle renamed M117/M118 gcode with numeric and special characters
+            space_index = cmd.find(' ')
+            if space_index >= 0:
+                cmd = cmd[:space_index]
+            handler = self.gcode_handlers.get(cmd, None)
+            if handler is not None:
+                handler(gcmd)
+                return
         elif cmd in ['M140', 'M104'] and not gcmd.get_float('S', 0.):
             # Don't warn about requests to turn off heaters when not present
             return
@@ -351,7 +365,6 @@ class GCodeDispatch:
             if cmd in self.gcode_help:
                 cmdhelp.append("%-10s: %s" % (cmd, self.gcode_help[cmd]))
         gcmd.respond_info("\n".join(cmdhelp), log=False)
-
 # Support reading gcode from a pseudo-tty interface
 class GCodeIO:
     def __init__(self, printer):
