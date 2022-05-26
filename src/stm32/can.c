@@ -13,7 +13,6 @@
 #include "fasthash.h" // fasthash64
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
-#include "generic/serial_irq.h" // serial_rx_byte
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 

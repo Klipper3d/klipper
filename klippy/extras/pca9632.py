@@ -32,10 +32,10 @@ class PCA9632:
         color_order = config.get("color_order", "RGBW")
         if sorted(color_order) != sorted("RGBW"):
             raise config.error("Invalid color_order '%s'" % (color_order,))
-        self.color_map = [color_order.index(c) for c in "RGBW"]
+        self.color_map = ["RGBW".index(c) for c in color_order]
         self.prev_regs = {}
         pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)
+        self.led_helper = pled.setup_helper(config, self.update_leds, 1)
         printer.register_event_handler("klippy:connect", self.handle_connect)
     def reg_write(self, reg, val, minclock=0):
         if self.prev_regs.get(reg) == val:

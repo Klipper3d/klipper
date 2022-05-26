@@ -11,6 +11,8 @@
 #include "command.h" // DECL_CONSTANT
 #include "generic/io.h" // readb
 #include "generic/irq.h" // irq_disable
+#include "generic/misc.h" // console_sendf
+#include "board/internal.h" // NVIC_SystemReset
 #include "sched.h" // sched_wake_task
 
 static uint32_t canbus_assigned_id;
@@ -89,8 +91,13 @@ console_sendf(const struct command_encoder *ce, va_list args)
 
 // Available commands and responses
 #define CANBUS_CMD_QUERY_UNASSIGNED 0x00
-#define CANBUS_CMD_SET_NODEID 0x01
+#define CANBUS_CMD_SET_KLIPPER_NODEID 0x01
+#define CANBUS_CMD_REQUEST_BOOTLOADER 0x02
 #define CANBUS_RESP_NEED_NODEID 0x20
+
+// CanBoot definitions
+#define CANBOOT_SIGNATURE 0x21746f6f426e6143
+#define CANBOOT_REQUEST   0x5984E3FA6CA1589B
 
 // Helper to verify a UUID in a command matches this chip's UUID
 static int
@@ -121,9 +128,10 @@ can_process_query_unassigned(uint32_t id, uint32_t len, uint8_t *data)
     uint8_t send[8];
     send[0] = CANBUS_RESP_NEED_NODEID;
     memcpy(&send[1], canbus_uuid, sizeof(canbus_uuid));
+    send[7] = CANBUS_CMD_SET_KLIPPER_NODEID;
     // Send with retry
     for (;;) {
-        int ret = canbus_send(CANBUS_ID_ADMIN_RESP, 7, send);
+        int ret = canbus_send(CANBUS_ID_ADMIN_RESP, 8, send);
         if (ret >= 0)
             return;
     }
@@ -138,7 +146,7 @@ can_id_conflict(void)
 }
 
 static void
-can_process_set_nodeid(uint32_t id, uint32_t len, uint8_t *data)
+can_process_set_klipper_nodeid(uint32_t id, uint32_t len, uint8_t *data)
 {
     if (len < 8)
         return;
@@ -153,6 +161,24 @@ can_process_set_nodeid(uint32_t id, uint32_t len, uint8_t *data)
     }
 }
 
+static void
+can_process_request_bootloader(uint32_t id, uint32_t len, uint8_t *data)
+{
+    if (!can_check_uuid(id, len, data))
+        return;
+    uint32_t *bl_vectors = (uint32_t *)(CONFIG_FLASH_START & 0xFF000000);
+    uint64_t *boot_sig = (uint64_t *)(bl_vectors[1] - 9);
+    uint64_t *req_sig = (uint64_t *)bl_vectors[0];
+    if (boot_sig == (void *)ALIGN((size_t)boot_sig, 8) &&
+        *boot_sig == CANBOOT_SIGNATURE &&
+        req_sig == (void *)ALIGN((size_t)req_sig, 8))
+    {
+        irq_disable();
+        *req_sig = CANBOOT_REQUEST;
+        NVIC_SystemReset();
+    }
+}
+
 // Handle an "admin" command
 static void
 can_process(uint32_t id, uint32_t len, uint8_t *data)
@@ -163,8 +189,11 @@ can_process(uint32_t id, uint32_t len, uint8_t *data)
     case CANBUS_CMD_QUERY_UNASSIGNED:
         can_process_query_unassigned(id, len, data);
         break;
-    case CANBUS_CMD_SET_NODEID:
-        can_process_set_nodeid(id, len, data);
+    case CANBUS_CMD_SET_KLIPPER_NODEID:
+        can_process_set_klipper_nodeid(id, len, data);
+        break;
+    case CANBUS_CMD_REQUEST_BOOTLOADER:
+        can_process_request_bootloader(id, len, data);
         break;
     }
 }

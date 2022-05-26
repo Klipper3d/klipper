@@ -63,7 +63,7 @@ document, the commands and parameters are shown in uppercase, however
 they are not case sensitive. (So, "SET_SERVO" and "set_servo" both run
 the same command.)
 
-This section is organized my Klipper module name, which generally
+This section is organized by Klipper module name, which generally
 follows the section names specified in the
 [printer configuration file](Config_Reference.md). Note that some
 modules are automatically loaded.
@@ -335,8 +335,8 @@ changes the active hotend.
 [ADVANCE=<pressure_advance>]
 [SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
 parameters of an extruder stepper (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section).
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section).
 If EXTRUDER is not specified, it defaults to the stepper defined in
 the active hotend.
 
@@ -344,8 +344,8 @@ the active hotend.
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder
 stepper's "rotation distance" (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section).
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section).
 If the rotation distance is a negative number then the stepper motion
 will be inverted (relative to the stepper direction specified in the
 config file). Changed settings are not retained on Klipper reset. Use
@@ -357,10 +357,10 @@ current rotation distance.
 #### SYNC_EXTRUDER_MOTION
 `SYNC_EXTRUDER_MOTION EXTRUDER=<name> MOTION_QUEUE=<name>`: This
 command will cause the stepper specified by EXTRUDER (as defined in an
-[extruder](Config_Reference#extruder) or
-[extruder_stepper](Config_Reference#extruder_stepper) config section)
+[extruder](Config_Reference.md#extruder) or
+[extruder_stepper](Config_Reference.md#extruder_stepper) config section)
 to become synchronized to the movement of an extruder specified by
-MOTION_QUEUE (as defined in an [extruder](Config_Reference#extruder)
+MOTION_QUEUE (as defined in an [extruder](Config_Reference.md#extruder)
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.
 
@@ -436,7 +436,7 @@ retraction and displays them on the terminal.
 
 The force_move module is automatically loaded, however some commands
 require setting `enable_force_move` in the
-[printer config](Config_Reference#force_move).
+[printer config](Config_Reference.md#force_move).
 
 #### STEPPER_BUZZ
 `STEPPER_BUZZ STEPPER=<config_name>`: Move the given stepper forward
@@ -861,7 +861,7 @@ Requires a `SAVE_CONFIG` to take effect.
 
 ### [query_adc]
 
-The query_endstops module is automatically loaded.
+The query_adc module is automatically loaded.
 
 #### QUERY_ADC
 `QUERY_ADC [NAME=<config_name>] [PULLUP=<value>]`: Report the last
@@ -896,23 +896,28 @@ all enabled accelerometer chips.
 #### TEST_RESONANCES
 `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
 [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
-[HZ_PER_SEC=<hz_per_sec>] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
+[HZ_PER_SEC=<hz_per_sec>] [CHIPS=<adxl345_chip_name>]
+[POINT=x,y,z] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
 the respective axis. "axis" can either be X or Y, or specify an
 arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
 `AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
-and `AXIS=-dx,-dy` is equivalent. If `INPUT_SHAPING=0` or not set
-(default), disables input shaping for the resonance testing, because
+and `AXIS=-dx,-dy` is equivalent. `adxl345_chip_name` can be one or
+more configured adxl345 chip,delimited with comma, for example
+`CHIPS="adxl345, adxl345 rpi"`. Note that `adxl345` can be omitted from
+named adxl345 chips. If POINT is specified it will override the point(s)
+configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
+disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper
 enabled. `OUTPUT` parameter is a comma-separated list of which outputs
 will be written. If `raw_data` is requested, then the raw
 accelerometer data is written into a file or a series of files
-`/tmp/raw_data_<axis>_[<point>_]<name>.csv` with (`<point>_` part of
-the name generated only if more than 1 probe point is configured).  If
-`resonances` is specified, the frequency response is calculated
-(across all probe points) and written into
+`/tmp/raw_data_<axis>_[<chip_name>_][<point>_]<name>.csv` with
+(`<point>_` part of the name generated only if more than 1 probe point
+is configured or POINT is specified). If `resonances` is specified, the
+frequency response is calculated (across all probe points) and written into
 `/tmp/resonances_<axis>_<name>.csv` file. If unset, OUTPUT defaults to
 `resonances`, and NAME defaults to the current time in
 "YYYYMMDD_HHMMSS" format.
@@ -979,7 +984,7 @@ is enabled (also see the
 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe)).
 
 #### SCREWS_TILT_CALCULATE
-`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW]
+`SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=<value>]
 [<probe_parameter>=<value>]`: This command will invoke the bed screws
 adjustment tool. It will command the nozzle to different locations (as
 defined in the config file) probing the z height and calculate the
@@ -987,7 +992,9 @@ number of knob turns to adjust the bed level. If DIRECTION is
 specified, the knob turns will all be in the same direction, clockwise
 (CW) or counterclockwise (CCW). See the PROBE command for details on
 the optional probe parameters. IMPORTANT: You MUST always do a G28
-before using this command.
+before using this command. If MAX_DEVIATION is specified, the command
+will raise a gcode error if any difference in the screw height
+relative to the base screw height is greater than the value provided.
 
 ### [sdcard_loop]
 
@@ -1052,6 +1059,35 @@ state to a profile matching the supplied name. Remove will delete the
 profile matching the supplied name from persistent memory. Note that
 after SAVE or REMOVE operations have been run the SAVE_CONFIG gcode
 must be run to make the changes to persistent memory permanent.
+
+### [smart_effector]
+
+Several commands are available when a
+[smart_effector config section](Config_Reference.md#smart_effector) is enabled.
+Be sure to check the official documentation for the Smart Effector on the
+[Duet3D Wiki](https://duet3d.dozuki.com/Wiki/Smart_effector_and_carriage_adapters_for_delta_printer)
+before changing the Smart Effector parameters. Also check the
+[probe calibration guide](Probe_Calibrate.md).
+
+#### SET_SMART_EFFECTOR
+`SET_SMART_EFFECTOR [SENSITIVITY=<sensitivity>] [ACCEL=<accel>]
+[RECOVERY_TIME=<time>]`: Set the Smart Effector parameters. When
+`SENSITIVITY` is specified, the respective value is written to the
+SmartEffector EEPROM (requires `control_pin` to be provided).
+Acceptable `<sensitivity>` values are 0..255, the default is 50. Lower
+values require less nozzle contact force to trigger (but there is a
+higher risk of false triggering due to vibrations during probing), and
+higher values reduce false triggering (but require larger contact
+force to trigger). Since the sensitivity is written to EEPROM, it is
+preserved after the shutdown, and so it does not need to be configured
+on every printer startup. `ACCEL` and `RECOVERY_TIME` allow to
+override the corresponding parameters at run-time, see the
+[config section](Config_Reference.md#smart_effector) of Smart Effector
+for more info on those parameters.
+
+#### RESET_SMART_EFFECTOR
+`RESET_SMART_EFFECTOR`: Resets Smart Effector sensitivity to its factory
+settings. Requires `control_pin` to be provided in the config section.
 
 ### [stepper_enable]
 

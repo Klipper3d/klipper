@@ -6,6 +6,7 @@
 
 #include <string.h> // memmove
 #include "autoconf.h" // CONFIG_USB_VENDOR_ID
+#include "board/misc.h" // console_sendf
 #include "board/pgm.h" // PROGMEM
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "byteorder.h" // cpu_to_le16

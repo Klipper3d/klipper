@@ -11,23 +11,44 @@ RENDER_TIME = 0.500
 
 # Helper code for common LED initialization and control
 class LEDHelper:
-    def __init__(self, config, update_func, led_count=1, has_white=False):
+    def __init__(self, config, update_func, led_count=1):
         self.printer = config.get_printer()
         self.update_func = update_func
         self.led_count = led_count
+        self.need_transmit = False
         # Initial color
         red = config.getfloat('initial_RED', 0., minval=0., maxval=1.)
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
         blue = config.getfloat('initial_BLUE', 0., minval=0., maxval=1.)
-        white = 0.
-        if has_white:
-            white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
+        white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
         self.led_state = [(red, green, blue, white)] * led_count
         # Register commands
         name = config.get_name().split()[-1]
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
                                    desc=self.cmd_SET_LED_help)
+    def get_led_count(self):
+        return self.led_count
+    def set_color(self, index, color):
+        if index is None:
+            new_led_state = [color] * self.led_count
+            if self.led_state == new_led_state:
+                return
+        else:
+            if self.led_state[index - 1] == color:
+                return
+            new_led_state = list(self.led_state)
+            new_led_state[index - 1] = color
+        self.led_state = new_led_state
+        self.need_transmit = True
+    def check_transmit(self, print_time):
+        if not self.need_transmit:
+            return
+        self.need_transmit = False
+        try:
+            self.update_func(self.led_state, print_time)
+        except self.printer.command_error as e:
+            logging.exception("led update transmit error")
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, gcmd):
         # Parse parameters
@@ -41,21 +62,9 @@ class LEDHelper:
         color = (red, green, blue, white)
         # Update and transmit data
         def lookahead_bgfunc(print_time):
-            if index is None:
-                new_led_state = [color] * self.led_count
-                if self.led_state == new_led_state:
-                    return
-                self.led_state = new_led_state
-            else:
-                if self.led_state[index - 1] == color:
-                    return
-                self.led_state = led_state = list(self.led_state)
-                led_state[index - 1] = color
+            self.set_color(index, color)
             if transmit:
-                try:
-                    self.update_func(self.led_state, print_time)
-                except self.printer.command_error as e:
-                    logging.exception("led update transmit error")
+                self.check_transmit(print_time)
         if sync:
             #Sync LED Update with print time and send
             toolhead = self.printer.lookup_object('toolhead')
@@ -82,8 +91,8 @@ class PrinterLED:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_LED_TEMPLATE", self.cmd_SET_LED_TEMPLATE,
                                desc=self.cmd_SET_LED_TEMPLATE_help)
-    def setup_helper(self, config, update_func, led_count=1, has_white=False):
-        led_helper = LEDHelper(config, update_func, led_count, has_white)
+    def setup_helper(self, config, update_func, led_count=1):
+        led_helper = LEDHelper(config, update_func, led_count)
         name = config.get_name().split()[-1]
         self.led_helpers[name] = led_helper
         return led_helper
@@ -129,19 +138,12 @@ class PrinterLED:
                 if len(parts) < 4:
                     parts += [0.] * (4 - len(parts))
                 rendered[uid] = color = tuple(parts)
-            prev_color = led_helper.led_state[index-1]
-            if color != prev_color:
-                if led_helper not in need_transmit:
-                    need_transmit[led_helper] = 1
-                    led_helper.led_state = list(led_helper.led_state)
-                led_helper.led_state[index-1] = color
+            need_transmit[led_helper] = 1
+            led_helper.set_color(index, color)
         context.clear() # Remove circular references for better gc
         # Transmit pending changes
         for led_helper in need_transmit.keys():
-            try:
-                led_helper.update_func(led_helper.led_state, None)
-            except Exception as e:
-                logging.exception("led template transmit error")
+            led_helper.check_transmit(None)
         return eventtime + RENDER_TIME
     cmd_SET_LED_TEMPLATE_help = "Assign a display_template to an LED"
     def cmd_SET_LED_TEMPLATE(self, gcmd):
@@ -149,7 +151,7 @@ class PrinterLED:
         led_helper = self.led_helpers.get(led_name)
         if led_helper is None:
             raise gcmd.error("Unknown LED '%s'" % (led_name,))
-        led_count = led_helper.led_count
+        led_count = led_helper.get_led_count()
         index = gcmd.get_int("INDEX", None, minval=1, maxval=led_count)
         template = None
         lparams = {}
@@ -204,7 +206,7 @@ class PrinterPWMLED:
         self.last_print_time = 0.
         # Initialize color data
         pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)
+        self.led_helper = pled.setup_helper(config, self.update_leds, 1)
         self.prev_color = color = self.led_helper.get_status()['color_data'][0]
         for idx, mcu_pin in self.pins:
             mcu_pin.setup_start_value(color[idx], 0.)

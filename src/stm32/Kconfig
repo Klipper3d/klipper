@@ -93,7 +93,8 @@ config MACH_STM32F4x5 # F405, F407, F429 series
     bool
 config HAVE_STM32_USBFS
     bool
-    default y if MACH_STM32F103 || MACH_STM32F0x2 || MACH_STM32F070 || MACH_STM32G0
+    default y if MACH_STM32F0x2 || MACH_STM32G0
+    default y if (MACH_STM32F103 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
 config HAVE_STM32_USBOTG
     bool
     default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32H7
@@ -182,7 +183,7 @@ config STM32F103GD_DISABLE_SWD
 choice
     prompt "Bootloader offset"
     config STM32_FLASH_START_2000
-        bool "8KiB bootloader" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0
+        bool "8KiB bootloader" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0 || MACH_STM32F0x2
     config STM32_FLASH_START_5000
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000
@@ -196,12 +197,12 @@ choice
     config STM32_FLASH_START_C000
         bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F4x5
     config STM32_FLASH_START_10000
-        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446
+        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F446 || MACH_STM32F401
 
     config STM32_FLASH_START_800
         bool "2KiB bootloader (HID Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_4000
-        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F401 || MACH_STM32F4x5 || MACH_STM32F103
+        bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F401 || MACH_STM32F4x5 || MACH_STM32F103 || MACH_STM32F072
     config STM32_FLASH_START_20000
         bool "128KiB bootloader (SKR SE BX v2.0)" if MACH_STM32H743
 
