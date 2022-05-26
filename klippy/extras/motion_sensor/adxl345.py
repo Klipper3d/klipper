@@ -57,6 +57,7 @@ class ADXL345 (MotionSensorBase):
             "query_adxl345_status oid=%c",
             "adxl345_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
             " buffered=%c fifo=%c limit_count=%hu", oid=self.oid, cq=cmdqueue)
+        super(ADXL345, self)._build_config()
 
     def read_reg(self, reg):
         params = self.conn.spi_transfer([reg | REG_MOD_READ, 0x00])

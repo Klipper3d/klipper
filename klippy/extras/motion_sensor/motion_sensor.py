@@ -260,11 +260,14 @@ class MotionSensorBase:
 
     @abstractmethod
     def _init_conn(self, config):
+        # Sets up device connection object (self.conn)
         pass
 
     @abstractmethod
     def _build_config(self):
-        pass
+        # Configures device connection by adding config commands and
+        # getting the query command objects
+        self._sleep_sensor()
 
     def _update_clock(self, minclock=0):
         # Query current state
