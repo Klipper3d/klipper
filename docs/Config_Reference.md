@@ -1143,10 +1143,10 @@ See also: [extended g-code commands](G-Codes.md#z_thermal_adjust).
 ```
 [z_thermal_adjust]
 #temp_coeff:
-#   The temperature coefficient of expansion, in mm/K. For example, a
-#   temp_coeff of 0.01 mm/K will move the Z axis downwards by 0.01 mm for every
-#   Kelvin/degree Celsius that the temperature sensor increases. Defaults to
-#   0.0, which applies no adjustment.
+#   The temperature coefficient of expansion, in mm/degC. For example, a
+#   temp_coeff of 0.01 mm/degC will move the Z axis downwards by 0.01 mm for 
+#   every degree Celsius that the temperature sensor increases. Defaults to
+#   0.0 mm/degC, which applies no adjustment.
 temp_sensor:
 #   Temperature sensor to use for Z adjustment. Use full config section name
 #   without quoutes. E.g. temperature_sensor frame. Also compatible with
