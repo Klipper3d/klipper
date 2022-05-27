@@ -133,6 +133,32 @@ def flash_hidflash(device, binfile, sudo=True):
     pathname = wait_path(devpath)
     call_hidflash(binfile, sudo)
 
+# Call Klipper modified "picoboot"
+def call_picoboot(bus, addr, binfile, sudo):
+    args = ["lib/rp2040_flash/rp2040_flash", binfile]
+    if bus is not None:
+        args.extend([bus, addr])
+    if sudo:
+        args.insert(0, "sudo")
+    sys.stderr.write(" ".join(args) + '\n\n')
+    res = subprocess.call(args)
+    if res != 0:
+        raise error("Error running rp2040_flash")
+
+# Flash via Klipper modified "picoboot"
+def flash_picoboot(device, binfile, sudo):
+    buspath, devpath = translate_serial_to_usb_path(device)
+    # We need one level up to get access to busnum/devnum files
+    usbdir = os.path.dirname(devpath)
+    enter_bootloader(device)
+    wait_path(usbdir)
+    with open(usbdir + "/busnum") as f:
+        bus = f.read().strip()
+    with open(usbdir + "/devnum") as f:
+        addr = f.read().strip()
+    call_picoboot(bus, addr, binfile, sudo)
+
+
 ######################################################################
 # Device specific helpers
 ######################################################################
@@ -161,22 +187,6 @@ def flash_atsamd(options, binfile):
         sys.stderr.write("Failed to flash to %s: %s\n" % (
             options.device, str(e)))
         sys.exit(-1)
-
-# Look for an rp2040 and flash it with rp2040_flash.
-def rp2040_flash(devpath, binfile, sudo):
-    args = ["lib/rp2040_flash/rp2040_flash", binfile]
-    if len(devpath) > 0:
-        with open(devpath + "/busnum") as f:
-            bus = f.read().strip()
-        with open(devpath + "/devnum") as f:
-            addr = f.read().strip()
-        args += [bus, addr]
-    sys.stderr.write(" ".join(args) + '\n\n')
-    if sudo:
-        args.insert(0, "sudo")
-    res = subprocess.call(args)
-    if res != 0:
-        raise error("Error running rp2040_flash")
 
 SMOOTHIE_HELP = """
 Failed to flash to %s: %s
@@ -270,16 +280,9 @@ device as a usb drive, and copy klipper.uf2 to the device.
 def flash_rp2040(options, binfile):
     try:
         if options.device.lower() == "first":
-            rp2040_flash("", binfile, options.sudo)
-            return
-
-        buspath, devpath = translate_serial_to_usb_path(options.device)
-        # We need one level up to get access to busnum/devnum files
-        devpath = os.path.dirname(devpath)
-        enter_bootloader(options.device)
-        wait_path(devpath)
-        rp2040_flash(devpath, binfile, options.sudo)
-
+            call_picoboot(None, None, binfile, options.sudo)
+        else:
+            flash_picoboot(options.device, binfile, options.sudo)
     except error as e:
         sys.stderr.write(RP2040_HELP % (options.device, str(e)))
         sys.exit(-1)
