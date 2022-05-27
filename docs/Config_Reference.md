@@ -1164,7 +1164,7 @@ temp_sensor:
 #   default is 99999999.0 mm (unlimited).
 ```
 
-# Customized homing
+## Customized homing
 
 ### [safe_z_home]
 
