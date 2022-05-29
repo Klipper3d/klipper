@@ -3953,7 +3953,7 @@ radius:
 
 <h3 id="_8">缆绳绞盘运动学<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-winch.cfg">example-winch.cfg</a> for an example cable winch kinematics config file.</p>
-<p>这里只描述了缆绳铰盘式打印机特有的参数 — 全部可用的参数见<a href="#common-kinematic-settings">常用的运动学设置</a>。</p>
+<p>这里只描述了缆绳铰盘式(cable winch)打印机特有的参数 — 全部可用的参数见<a href="#common-kinematic-settings">常用的运动学设置</a>。</p>
 <p>缆绳铰盘支持是实验性的。归位在缆绳绞盘运动学中没有实现。在打印机归位时需要手动发送运动指令将工具头处于0, 0, 0位置，然后发出<code>G28</code>归位。</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: winch
@@ -5523,7 +5523,7 @@ pin:
 
 <h3 id="neopixel">[neopixel]<a class="headerlink" href="#neopixel" title="Permanent link">&para;</a></h3>
 <p>Neopixel (aka WS2812) LED support (one may define any number of sections with a "neopixel" prefix). See the <a href="G-Codes.html#led">command reference</a> for more information.</p>
-<p>Note that the <a href="RPi_microcontroller.html">linux mcu</a> implementation does not currently support directly connected neopixels. The current design using the Linux kernel interface does not allow this scenario because the kernel GPIO interface is not fast enough to provide the required pulse rates.</p>
+<p>注意！<a href="RPi_microcontroller.html">linux mcu</a>的实现目前不支持直接连接的neopixels。目前使用Linux内核接口的设计不允许这种情况发生，因为内核的GPIO接口速度不够快，无法提供所需的脉冲率。</p>
 <div class="highlight"><pre><span></span><code>[neopixel my_neopixel]
 pin:
 #   The pin connected to the neopixel. This parameter must be
