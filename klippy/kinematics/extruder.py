@@ -91,12 +91,14 @@ class ExtruderStepper:
         smooth_time = gcmd.get_float('SMOOTH_TIME',
                                      self.pressure_advance_smooth_time,
                                      minval=0., maxval=.200)
+        quiet = gcmd.get_int('QUIET', 0)
         self._set_pressure_advance(pressure_advance, smooth_time)
         msg = ("pressure_advance: %.6f\n"
                "pressure_advance_smooth_time: %.6f"
                % (pressure_advance, smooth_time))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
-        gcmd.respond_info(msg, log=False)
+        if not quiet:
+          gcmd.respond_info(msg, log=False)
     cmd_SET_E_ROTATION_DISTANCE_help = "Set extruder rotation distance"
     def cmd_SET_E_ROTATION_DISTANCE(self, gcmd):
         rotation_dist = gcmd.get_float('DISTANCE', None)
