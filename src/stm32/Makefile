@@ -61,9 +61,12 @@ serial-src-$(CONFIG_MACH_STM32H7) := stm32/stm32h7_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
 src-$(CONFIG_CANSERIAL) += stm32/can.c ../lib/fast-hash/fasthash.c
 src-$(CONFIG_CANSERIAL) += generic/canbus.c
+src-$(CONFIG_FDCANSERIAL) += stm32/fdcan.c ../lib/fast-hash/fasthash.c
+src-$(CONFIG_FDCANSERIAL) += generic/canbus.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += stm32/hard_pwm.c
 
 dirs-$(CONFIG_CANSERIAL) += lib/fast-hash
+dirs-$(CONFIG_FDCANSERIAL) += lib/fast-hash
 
 # Binary output file rules
 target-y += $(OUT)klipper.bin

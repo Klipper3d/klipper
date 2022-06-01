@@ -252,7 +252,7 @@ compute_btr(uint32_t pclock, uint32_t bitrate)
 
     uint32_t bit_clocks = pclock / bitrate; // clock ticks per bit
 
-    uint32_t sjw =  2;
+    uint32_t sjw = 2;
     uint32_t qs;
     // Find number of time quantas that gives us the exact wanted bit time
     for (qs = 18; qs > 9; qs--) {
