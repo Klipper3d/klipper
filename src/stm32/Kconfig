@@ -278,8 +278,6 @@ config SERIAL
     bool
 config CANSERIAL
     bool
-config FDCANSERIAL
-    bool
 choice
     prompt "Communication interface"
     config STM32_USB_PA11_PA12
@@ -348,13 +346,13 @@ choice
         depends on HAVE_STM32_CANBUS
         select CANSERIAL
     config STM32_CANBUS_PB0_PB1
-        bool "CAN bus (on PB0/PB1)" if LOW_LEVEL_OPTIONS
+        bool "CAN bus (on PB0/PB1)"
         depends on HAVE_STM32_FDCANBUS
-        select FDCANSERIAL
+        select CANSERIAL
 endchoice
 
 config CANBUS_FREQUENCY
-    int "CAN bus speed" if LOW_LEVEL_OPTIONS && (CANSERIAL || FDCANSERIAL)
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
     default 500000
 
 endif
