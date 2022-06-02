@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import traceback, logging, ast, copy
 import jinja2
+import pipes
 
 
 ######################################################################
@@ -72,6 +73,9 @@ class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.env = jinja2.Environment('{%', '%}', '{', '}')
+        self.env.add_extension("jinja2.ext.do")
+        self.env.filters["repr"] = repr
+        self.env.filters["shell_quote"] = pipes.quote
     def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
         if default is None:
