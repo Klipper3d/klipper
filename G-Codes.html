@@ -1074,6 +1074,47 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+    <nav class="md-nav" aria-label="[exclude_object]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_1" class="md-nav__link">
+    EXCLUDE_OBJECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_define" class="md-nav__link">
+    EXCLUDE_OBJECT_DEFINE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_start" class="md-nav__link">
+    EXCLUDE_OBJECT_START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_end" class="md-nav__link">
+    EXCLUDE_OBJECT_END
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#extruder" class="md-nav__link">
     [extruder]
   </a>
@@ -2300,6 +2341,20 @@
   
   
     <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclude Obects
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="Using_PWM_Tools.html" class="md-nav__link">
         Using PWM tools
       </a>
@@ -2997,6 +3052,47 @@
           <li class="md-nav__item">
   <a href="#endstop_phase_calibrate" class="md-nav__link">
     ENDSTOP_PHASE_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+    <nav class="md-nav" aria-label="[exclude_object]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_1" class="md-nav__link">
+    EXCLUDE_OBJECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_define" class="md-nav__link">
+    EXCLUDE_OBJECT_DEFINE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_start" class="md-nav__link">
+    EXCLUDE_OBJECT_START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_end" class="md-nav__link">
+    EXCLUDE_OBJECT_END
   </a>
   
 </li>
@@ -4390,6 +4486,46 @@ endstop stepper phases during past homing operations. When a STEPPER
 parameter is provided it arranges for the given endstop phase setting
 to be written to the config file (in conjunction with the SAVE_CONFIG
 command).</p>
+<h3 id="exclude_object">[exclude_object]<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when an
+<a href="Config_Reference.html#exclude_object">exclude_object config section</a> is
+enabled (also see the <a href="Exclude_Object.html">exclude object guide</a>):</p>
+<h4 id="exclude_object_1"><code>EXCLUDE_OBJECT</code><a class="headerlink" href="#exclude_object_1" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT [NAME=object_name] [CURRENT=1] [RESET=1]</code>:
+With no parameters, this will return a list of all currently excluded objects.</p>
+<p>When the <code>NAME</code> parameter is given, the named object will be excluded from
+printing.</p>
+<p>When the <code>CURRENT</code> parameter is given, the current object will be excluded from
+printing.</p>
+<p>When the <code>RESET</code> parameter is given, the list of excluded objects will be
+cleared. Additionally including <code>NAME</code> will only reset the named object. This
+<strong>can</strong> cause print failures, if layers were already skipped.</p>
+<h4 id="exclude_object_define"><code>EXCLUDE_OBJECT_DEFINE</code><a class="headerlink" href="#exclude_object_define" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_DEFINE [NAME=object_name [CENTER=X,Y] [POLYGON=[[x,y],...]]
+[RESET=1] [JSON=1]</code>:
+Provides a summary of an object in the file.</p>
+<p>With no parameters provided, this will list the defined objects known to
+Klipper. Returns a list of strings, unless the <code>JSON</code> parameter is given,
+when it will return object details in json format.</p>
+<p>When the <code>NAME</code> parameter is included, this defines an object to be excluded.</p>
+<ul>
+<li><code>NAME</code>: This parameter is required.  It is the identifier used by other
+    commands in this module.</li>
+<li><code>CENTER</code>: An X,Y coordinate for the object.</li>
+<li><code>POLYGON</code>: An array of X,Y coordinates that provide an outline for the
+    object.</li>
+</ul>
+<p>When the <code>RESET</code> parameter is provided, all defined objects will be cleared, and
+the <code>[exclude_object]</code> module will be reset.</p>
+<h4 id="exclude_object_start"><code>EXCLUDE_OBJECT_START</code><a class="headerlink" href="#exclude_object_start" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_START NAME=object_name</code>:
+This command takes a <code>NAME</code> parameter and denotes the start of the gcode for an
+object on the current layer.</p>
+<h4 id="exclude_object_end"><code>EXCLUDE_OBJECT_END</code><a class="headerlink" href="#exclude_object_end" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_END [NAME=object_name]</code>:
+Denotes the end of the object's gcode for the layer. It is paired with
+<code>EXCLUDE_OBJECT_START</code>. A <code>NAME</code> parameter is optional, and will only warn when
+the provided name does not match the current object.</p>
 <h3 id="extruder">[extruder]<a class="headerlink" href="#extruder" title="Permanent link">&para;</a></h3>
 <p>The following commands are available if an
 <a href="Config_Reference.html#extruder">extruder config section</a> is enabled:</p>

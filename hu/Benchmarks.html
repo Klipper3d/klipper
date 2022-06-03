@@ -513,7 +513,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágyszintezés
+        Ágy szintezése
       </a>
     </li>
   
@@ -811,6 +811,20 @@
     <li class="md-nav__item">
       <a href="Skew_Correction.html" class="md-nav__link">
         Ferdeség korrekció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.md" class="md-nav__link">
+        None
       </a>
     </li>
   
@@ -1537,7 +1551,7 @@ queue_step oid=2 interval=3000 count=1 add=0
 </code></pre></div>
 
 <p>Az egylépcsős referenciaértékek eléréséhez ugyanazt a konfigurációs sorrendet kell használni, de a fenti tesztnek csak az első blokkja a másolás és beillesztés a console.py ablakba.</p>
-<p>A <a href="Features.html">Jellemzők</a> dokumentumban található referenciatesztek előállításához a másodpercenkénti lépések teljes számát úgy kell kiszámítani, hogy az aktív léptetők számát megszorozzuk a névleges MCU frekvenciával, és elosztjuk a végső "ticks" paraméterrel. Az eredményeket a legközelebbi K-ra kerekítjük. Például három aktív léptetővel:</p>
+<p>A <a href="Features.html">Funkciók</a> dokumentumban található referenciatesztek előállításához a másodpercenkénti lépések teljes számát úgy kell kiszámítani, hogy az aktív léptetők számát megszorozzuk a névleges MCU frekvenciával, és elosztjuk a végső "ticks" paraméterrel. Az eredményeket a legközelebbi K-ra kerekítjük. Például három aktív léptetővel:</p>
 <div class="highlight"><pre><span></span><code>ECHO A teszt eredménye: {&quot;%.0fK&quot; % (3. * freq / ticks / 1000.)}
 </code></pre></div>
 

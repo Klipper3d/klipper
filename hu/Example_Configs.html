@@ -513,7 +513,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágyszintezés
+        Ágy szintezése
       </a>
     </li>
   
@@ -811,6 +811,20 @@
     <li class="md-nav__item">
       <a href="Skew_Correction.html" class="md-nav__link">
         Ferdeség korrekció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.md" class="md-nav__link">
+        None
       </a>
     </li>
   
@@ -1279,7 +1293,7 @@
 <li>Ne másolja be a mező dokumentációját a példakonfigurációs fájlokba. (Ez karbantartási terhet jelent, mivel a dokumentáció frissítése sok helyen változtatást igényelne.)</li>
 <li>A példa konfigurációs fájlok nem tartalmazhatnak "SAVE_CONFIG" részt. Ha szükséges, másolja át a SAVE_CONFIG szakaszból a megfelelő mezőket a fő konfigurációs terület megfelelő szakaszába.</li>
 <li>Használja a <code>field: value</code> szintaxist a <code>field=value</code> helyett.</li>
-<li>Extruder <code>rotation_distance</code> hozzáadásakor célszerű megadni a <code>gear_ratio</code> értéket, ha az extruder fogaskerékkel rendelkezik. A példakonfigurációkban szereplő rotation_distance értéktől azt várjuk, hogy korreláljon az extruderben lévő fogaskerék kerületével. Ez általában 20 és 35 mm közötti tartományban van. A <code>gear_ratio</code> megadásakor előnyösebb a mechanizmuson lévő tényleges fogaskerekek fogszámának megadása (pl. inkább <code>gear_ratio: 80:20</code>, mint <code>gear_ratio: 4:1</code>). További információkért lásd a <a href="Rotation_Distance.html#using-a-gear_ratio">forgási távolság dokumentumot</a>.</li>
+<li>Extruder <code>rotation_distance</code> hozzáadásakor célszerű megadni a <code>gear_ratio</code> értéket, ha az extruder fogaskerékkel rendelkezik. A példakonfigurációkban szereplő rotation_distance értéktől azt várjuk, hogy korreláljon az extruderben lévő fogaskerék kerületével. Ez általában 20 és 35 mm közötti tartományban van. A <code>gear_ratio</code> megadásakor előnyösebb a mechanizmuson lévő tényleges fogaskerekek fogszámának megadása (pl. inkább <code>gear_ratio: 80:20</code>, mint <code>gear_ratio: 4:1</code>). További információkért lásd a <a href="Rotation_Distance.html#using-a-gear_ratio">forgatási távolság dokumentumot</a>.</li>
 <li>Kerülje az alapértelmezett értékre beállított mezőértékek meghatározását. Például nem szabad megadni <code>min_extrude_temp: 170</code>, mivel ez már az alapértelmezett érték.</li>
 <li>Ahol lehetséges, a sorok száma nem haladhatja meg a 80 oszlopot.</li>
 <li>Kerülje el az attribúciós vagy revíziós üzenetek hozzáadását a konfigurációs fájlokhoz. (Például kerülje az olyan sorok hozzáadását, mint a "this file was created by ..."). Helyezze el az attribúciót és a változtatási előzményeket a git commit üzenetben.</li>

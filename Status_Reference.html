@@ -819,6 +819,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    exclude_object
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fan" class="md-nav__link">
     fan
   </a>
@@ -1101,6 +1108,20 @@
     <li class="md-nav__item">
       <a href="Skew_Correction.html" class="md-nav__link">
         Skew correction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclude Obects
       </a>
     </li>
   
@@ -1509,6 +1530,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    exclude_object
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fan" class="md-nav__link">
     fan
   </a>
@@ -1809,6 +1837,46 @@ Klipper software.</p>
   home attempt. The position is the total number of steps taken in a
   forward direction minus the total number of steps taken in the
   reverse direction since the micro-controller was last restarted.</li>
+</ul>
+<h2 id="exclude_object">exclude_object<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the
+<a href="Exclude_Object.html">exclude_object</a> object:</p>
+<ul>
+<li>
+<p><code>objects</code>:  An array of the known objects as provided by the
+  <code>EXCLUDE_OBJECT_DEFINE</code> command.  This is the same information provided by
+  the <code>EXCLUDE_OBJECT VERBOSE=1</code> command. The <code>center</code> and <code>polygon</code> fields will
+  only be present if provided in the original <code>EXCLUDE_OBJECT_DEFINE</code></p>
+<p>Here is a JSON sample:</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>[
+  {
+    &quot;polygon&quot;: [
+      [ 156.25, 146.2511675 ],
+      [ 156.25, 153.7488325 ],
+      [ 163.75, 153.7488325 ],
+      [ 163.75, 146.2511675 ]
+    ],
+    &quot;name&quot;: &quot;CYLINDER_2_STL_ID_2_COPY_0&quot;,
+    &quot;center&quot;: [ 160, 150 ]
+  },
+  {
+    &quot;polygon&quot;: [
+      [ 146.25, 146.2511675 ],
+      [ 146.25, 153.7488325 ],
+      [ 153.75, 153.7488325 ],
+      [ 153.75, 146.2511675 ]
+    ],
+    &quot;name&quot;: &quot;CYLINDER_2_STL_ID_1_COPY_0&quot;,
+    &quot;center&quot;: [ 150, 150 ]
+  }
+]
+</code></pre></div>
+
+<ul>
+<li><code>excluded_objects</code>: An array of strings listing the names of excluded objects.</li>
+<li><code>current_object</code>: The name of the object currently being printed.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p>The following information is available in

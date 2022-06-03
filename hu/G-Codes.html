@@ -515,7 +515,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágyszintezés
+        Ágy szintezése
       </a>
     </li>
   
@@ -2288,6 +2288,20 @@
     <li class="md-nav__item">
       <a href="Skew_Correction.html" class="md-nav__link">
         Ferdeség korrekció
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.md" class="md-nav__link">
+        None
       </a>
     </li>
   
@@ -4245,7 +4259,7 @@
 <h4 id="set_pressure_advance">SET_PRESSURE_ADVANCE<a class="headerlink" href="#set_pressure_advance" title="Permanent link">&para;</a></h4>
 <p><code>SET_PRESSURE_ADVANCE [EXTRUDER=&lt;config_name&gt;] [ADVANCE=&lt;pressure_advance&gt;] [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Az extruder léptető nyomás előtolási paramétereinek beállítása (ahogyan az <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban definiálva van). Ha az EXTRUDER nincs megadva, akkor az alapértelmezett érték az aktív nyomtatófejhez definiált léptető.</p>
 <h4 id="set_extruder_rotation_distance">SET_EXTRUDER_ROTATION_DISTANCE<a class="headerlink" href="#set_extruder_rotation_distance" title="Permanent link">&para;</a></h4>
-<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: Új értéket állít be a megadott extruder léptető "rotation distance" (ahogyan az egy <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> config szakaszban definiálva van). Ha a forgási távolság negatív szám, akkor a léptető mozgása fordított lesz (a konfigurációs fájlban megadott léptető irányhoz képest). A megváltoztatott beállítások nem maradnak meg a Klipper visszaállításakor. Óvatosan használja, mivel a kis változtatások túlzott nyomást eredményezhetnek az extruder és a nyomtatófej között. Használat előtt végezze el a megfelelő kalibrációt a nyomtatószállal. Ha a 'DISTANCE' érték nincs megadva, akkor ez a parancs az aktuális forgási távolságot adja vissza.</p>
+<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: Új értéket állít be a megadott extruder léptető "rotation distance" (ahogyan az egy <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> config szakaszban definiálva van). Ha a forgatási távolság negatív szám, akkor a léptető mozgása fordított lesz (a konfigurációs fájlban megadott léptető irányhoz képest). A megváltoztatott beállítások nem maradnak meg a Klipper visszaállításakor. Óvatosan használja, mivel a kis változtatások túlzott nyomást eredményezhetnek az extruder és a nyomtatófej között. Használat előtt végezze el a megfelelő kalibrációt a nyomtatószállal. Ha a 'DISTANCE' érték nincs megadva, akkor ez a parancs az aktuális forgatási távolságot adja vissza.</p>
 <h4 id="sync_extruder_motion">SYNC_EXTRUDER_MOTION<a class="headerlink" href="#sync_extruder_motion" title="Permanent link">&para;</a></h4>
 <p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;name&gt; MOTION_QUEUE=&lt;name&gt;</code>: Ezzel a paranccsal az EXTRUDER által meghatározott (az <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban meghatározott) léptető szinkronizálódik a MOTION_QUEUE által meghatározott (az <a href="Config_Reference#extruder">extruder</a> konfigurációs szakaszban meghatározott) extruder mozgásához. Ha a MOTION_QUEUE üres karakterlánc, akkor a léptető deszinkronizálódik minden extruder mozgásra.</p>
 <h4 id="set_extruder_step_distance">SET_EXTRUDER_STEP_DISTANCE<a class="headerlink" href="#set_extruder_step_distance" title="Permanent link">&para;</a></h4>
