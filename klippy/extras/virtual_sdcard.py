@@ -25,7 +25,7 @@ class VirtualSD:
         self.next_file_position = 0
         self.work_timer = None
         # Error handling
-        gcode_macro = printer.load_object(config, 'gcode_macro')
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.on_error_gcode = gcode_macro.load_template(
             config, 'on_error_gcode', '')
         # Register commands
