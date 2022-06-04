@@ -42,7 +42,4 @@ struct cline lookup_clock_line(uint32_t periph_base);
 uint32_t get_pclock_frequency(uint32_t periph_base);
 void gpio_clock_enable(GPIO_TypeDef *regs);
 
-// armcm_timer.c
-void try_request_canboot(void);
-
 #endif // internal.h
