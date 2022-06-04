@@ -231,6 +231,7 @@ check_usb_dfu_bootloader(void)
 void
 usb_request_bootloader(void)
 {
+    try_request_canboot();
     if (CONFIG_STM32_FLASH_START_4000)
         usb_hid_bootloader();
     usb_reboot_for_dfu_bootloader();
