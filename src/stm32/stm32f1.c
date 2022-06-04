@@ -243,6 +243,7 @@ usb_stm32duino_bootloader(void)
 void
 usb_request_bootloader(void)
 {
+    try_request_canboot();
     if (CONFIG_STM32_FLASH_START_800)
         usb_hid_bootloader();
     else if (CONFIG_STM32_FLASH_START_2000)

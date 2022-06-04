@@ -999,10 +999,10 @@ information.
 [screws_tilt_adjust]
 #screw1:
 #   The (X, Y) coordinate of the first bed leveling screw. This is a
-#   position to command the nozzle to that is directly above the bed
-#   screw (or as close as possible while still being above the bed).
-#   This is the base screw used in calculations. This parameter must
-#   be provided.
+#   position to command the nozzle to so that the probe is directly
+#   above the bed screw (or as close as possible while still being
+#   above the bed). This is the base screw used in calculations. This
+#   parameter must be provided.
 #screw1_name:
 #   An arbitrary name for the given screw. This name is displayed when
 #   the helper script runs. The default is to use a name based upon
@@ -1187,9 +1187,9 @@ home_xy_position:
 #   than z_hop, then this will lift the head to a height of z_hop. If
 #   the Z axis is not already homed the head is lifted by z_hop.
 #   The default is to not implement Z hop.
-#z_hop_speed: 20.0
+#z_hop_speed: 15.0
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
-#   default is 20mm/s.
+#   default is 15 mm/s.
 #move_to_previous: False
 #   When set to True, the X and Y axes are reset to their previous
 #   positions after Z axis homing. The default is False.
@@ -1367,6 +1367,9 @@ path:
 #   are not supported). One may point this to OctoPrint's upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
+#on_error_gcode:
+#   A list of G-Code commands to execute when an error is reported.
+
 ```
 
 ### [sdcard_loop]
@@ -1463,6 +1466,20 @@ Enable the "M118" and "RESPOND" extended
 #default_prefix: echo:
 #   Directly sets the default prefix. If present, this value will
 #   override the "default_type".
+```
+
+### [exclude_object]
+Enables support to exclude or cancel individual objects during the printing
+process.
+
+See the [exclude objects guide](Exclude_Object.md) and
+[command reference](G-Codes.md#excludeobject)
+for additional information. See the
+[sample-macros.cfg](../config/sample-macros.cfg) file for a
+Marlin/RepRapFirmware compatible M486 G-Code macro.
+
+```
+[exclude_object]
 ```
 
 ## Resonance compensation

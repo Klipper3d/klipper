@@ -54,6 +54,8 @@ communication with the Klipper developers.
   perfectly square.
 - [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
   tools such as lasers or spindles.
+- [Exclude Object](Exclude_Object.md): The guide to the Exclude Objecs
+  implementation.
 
 ## Developer Documentation
 
