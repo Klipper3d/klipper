@@ -61,6 +61,11 @@ config USB_SERIAL_NUMBER_CHIPID
 config USB_SERIAL_NUMBER
     default "12345"
 
+# Generic configuration options for CANbus
+config CANBUS_FREQUENCY
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    default 500000
+
 menu "USB ids"
     depends on USBSERIAL && LOW_LEVEL_OPTIONS
 config USB_VENDOR_ID

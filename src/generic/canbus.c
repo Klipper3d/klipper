@@ -7,12 +7,12 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "board/armcm_reset.h" // try_request_canboot
+#include "board/io.h" // readb
+#include "board/irq.h" // irq_save
+#include "board/misc.h" // console_sendf
 #include "canbus.h" // canbus_set_uuid
 #include "command.h" // DECL_CONSTANT
-#include "generic/io.h" // readb
-#include "generic/irq.h" // irq_disable
-#include "generic/misc.h" // console_sendf
-#include "board/internal.h" // NVIC_SystemReset
 #include "sched.h" // sched_wake_task
 
 static uint32_t canbus_assigned_id;

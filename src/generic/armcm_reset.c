@@ -4,10 +4,11 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "armcm_reset.h" // try_request_canboot
+#include "autoconf.h" // CONFIG_FLASH_START
 #include "board/internal.h" // NVIC_SystemReset
+#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND_FLAGS
-#include "autoconf.h"  // CONFIG_FLASH_START
-#include "irq.h"     // irq_disable
 
 #define CANBOOT_SIGNATURE 0x21746f6f426e6143
 #define CANBOOT_REQUEST   0x5984E3FA6CA1589B
