@@ -190,6 +190,7 @@ clock_setup(void)
 void
 usb_request_bootloader(void)
 {
+    try_request_canboot();
 }
 
 
