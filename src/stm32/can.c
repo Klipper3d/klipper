@@ -135,7 +135,11 @@ canbus_send(uint32_t id, uint32_t len, uint8_t *data)
         irq_enable();
         return -1;
     }
-    int mbox = (tsr & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
+    int mbox = 2;
+    if (tsr & CAN_TSR_TME0)
+        mbox = 0;
+    else if (tsr & CAN_TSR_TME1)
+        mbox = 1;
     CAN_TxMailBox_TypeDef *mb = &SOC_CAN->sTxMailBox[mbox];
 
     /* Set up the DLC */
@@ -252,7 +256,7 @@ compute_btr(uint32_t pclock, uint32_t bitrate)
 
     uint32_t bit_clocks = pclock / bitrate; // clock ticks per bit
 
-    uint32_t sjw =  2;
+    uint32_t sjw = 2;
     uint32_t qs;
     // Find number of time quantas that gives us the exact wanted bit time
     for (qs = 18; qs > 9; qs--) {

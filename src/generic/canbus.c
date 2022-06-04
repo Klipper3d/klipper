@@ -95,10 +95,6 @@ console_sendf(const struct command_encoder *ce, va_list args)
 #define CANBUS_CMD_REQUEST_BOOTLOADER 0x02
 #define CANBUS_RESP_NEED_NODEID 0x20
 
-// CanBoot definitions
-#define CANBOOT_SIGNATURE 0x21746f6f426e6143
-#define CANBOOT_REQUEST   0x5984E3FA6CA1589B
-
 // Helper to verify a UUID in a command matches this chip's UUID
 static int
 can_check_uuid(uint32_t id, uint32_t len, uint8_t *data)
@@ -166,17 +162,7 @@ can_process_request_bootloader(uint32_t id, uint32_t len, uint8_t *data)
 {
     if (!can_check_uuid(id, len, data))
         return;
-    uint32_t *bl_vectors = (uint32_t *)(CONFIG_FLASH_START & 0xFF000000);
-    uint64_t *boot_sig = (uint64_t *)(bl_vectors[1] - 9);
-    uint64_t *req_sig = (uint64_t *)bl_vectors[0];
-    if (boot_sig == (void *)ALIGN((size_t)boot_sig, 8) &&
-        *boot_sig == CANBOOT_SIGNATURE &&
-        req_sig == (void *)ALIGN((size_t)req_sig, 8))
-    {
-        irq_disable();
-        *req_sig = CANBOOT_REQUEST;
-        NVIC_SystemReset();
-    }
+    try_request_canboot();
 }
 
 // Handle an "admin" command
