@@ -181,7 +181,8 @@ fail4:
 fail5:
     shutdown("Could not start DS18B20 reader thread");
 }
-DECL_COMMAND(command_config_ds18b20, "config_ds18b20 oid=%c serial=%*s");
+DECL_COMMAND(command_config_ds18b20,
+             "config_ds18b20 oid=%c serial=%*s");
 
 void
 command_query_ds18b20(uint32_t *args)
