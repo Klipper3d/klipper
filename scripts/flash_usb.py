@@ -27,6 +27,8 @@ def enter_bootloader(device):
 # Translate a serial device name to a stable serial name in /dev/serial/by-path/
 def translate_serial_to_tty(device):
     ttyname = os.path.realpath(device)
+    if not os.path.exists('/dev/serial/by-path/'):
+        raise error("Unable to find serial 'by-path' folder")
     for fname in os.listdir('/dev/serial/by-path/'):
         fname = '/dev/serial/by-path/' + fname
         if os.path.realpath(fname) == ttyname:
@@ -71,6 +73,42 @@ def wait_path(path, alt_path=None):
         if cur_time > end_time:
             return path
 
+CANBOOT_ID ="1d50:6177"
+
+def detect_canboot(devpath):
+    usbdir = os.path.dirname(devpath)
+    try:
+        with open(os.path.join(usbdir, "idVendor")) as f:
+            vid = f.read().strip().lower()
+        with open(os.path.join(usbdir, "idProduct")) as f:
+            pid = f.read().strip().lower()
+    except Exception:
+        return False
+    usbid = "%s:%s" % (vid, pid)
+    return usbid == CANBOOT_ID
+
+def call_flashcan(device, binfile):
+    try:
+        import serial
+    except ModuleNotFoundError:
+        sys.stderr.write(
+            "Python's pyserial module is required to update. Install\n"
+            "with the following command:\n"
+            "   %s -m pip install pyserial\n\n" % (sys.executable,)
+        )
+        sys.exit(-1)
+    args = [sys.executable, "lib/canboot/flash_can.py", "-d",
+            device, "-f", binfile]
+    sys.stderr.write(" ".join(args) + '\n\n')
+    res = subprocess.call(args)
+    if res != 0:
+        sys.stderr.write("Error running flash_can.py\n")
+        sys.exit(-1)
+
+def flash_canboot(options, binfile):
+    ttyname, pathname = translate_serial_to_tty(options.device)
+    call_flashcan(pathname, binfile)
+
 # Flash via a call to bossac
 def flash_bossac(device, binfile, extra_flags=[]):
     ttyname, pathname = translate_serial_to_tty(device)
@@ -108,10 +146,14 @@ def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
     if hexfmt_r.match(device.strip()):
         call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile, sudo)
         return
+    ttyname, serbypath = translate_serial_to_tty(device)
     buspath, devpath = translate_serial_to_usb_path(device)
     enter_bootloader(device)
     pathname = wait_path(devpath)
-    call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
+    if detect_canboot(devpath):
+        call_flashcan(serbypath, binfile)
+    else:
+        call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
 
 def call_hidflash(binfile, sudo):
     args = ["lib/hidflash/hid-flash", binfile]
@@ -128,10 +170,14 @@ def flash_hidflash(device, binfile, sudo=True):
     if hexfmt_r.match(device.strip()):
         call_hidflash(binfile, sudo)
         return
+    ttyname, serbypath = translate_serial_to_tty(device)
     buspath, devpath = translate_serial_to_usb_path(device)
     enter_bootloader(device)
     pathname = wait_path(devpath)
-    call_hidflash(binfile, sudo)
+    if detect_canboot(devpath):
+        call_flashcan(serbypath, binfile)
+    else:
+        call_hidflash(binfile, sudo)
 
 # Call Klipper modified "picoboot"
 def call_picoboot(bus, addr, binfile, sudo):
