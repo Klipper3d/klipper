@@ -303,8 +303,6 @@ can_init(void)
     if (SOC_CAN == FDCAN1)
         FDCAN_CONFIG->CKDIV = 0;
 
-    /* Disable automatic retransmission */
-    SOC_CAN->CCCR |= FDCAN_CCCR_DAR;
     /* Disable protocol exception handling */
     SOC_CAN->CCCR |= FDCAN_CCCR_PXHD;
 
