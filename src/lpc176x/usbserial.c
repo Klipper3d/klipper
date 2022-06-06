@@ -8,6 +8,7 @@
 #include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
 #include "byteorder.h" // cpu_to_le32
@@ -250,6 +251,7 @@ usb_request_bootloader(void)
 {
     if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
         return;
+    try_request_canboot();
     // Disable USB and pause for 5ms so host recognizes a disconnect
     irq_disable();
     sie_cmd_write(SIE_CMD_SET_DEVICE_STATUS, 0);
