@@ -1267,7 +1267,7 @@ The following commands are available when the
 is enabled.
 
 #### SET_Z_THERMAL_ADJUST
-`SET_Z_THERMAL_ADJUST [ENABLE=<0:1>] [TEMP_COEFF=<value>]` [REF_TEMP=<value>]:
+`SET_Z_THERMAL_ADJUST [ENABLE=<0:1>] [TEMP_COEFF=<value>] [REF_TEMP=<value>]`:
 Enable or disable the Z thermal adjustment with `ENABLE`. Disabling does not
 remove any adjustment already applied, but will freeze the current adjustment
 value - this prevents potentially unsafe downward Z movement. Re-enabling can
