@@ -1256,8 +1256,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32f103stm32f0x2-with-canboot-bootloader" class="md-nav__link">
-    STM32F103/STM32F0x2 with CanBoot bootloader
+  <a href="#canbootstm32f103stm32f0x2" class="md-nav__link">
+    带有CanBoot引导程序的STM32F103/STM32F0x2
   </a>
   
 </li>
@@ -1511,8 +1511,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32f103stm32f0x2-with-canboot-bootloader" class="md-nav__link">
-    STM32F103/STM32F0x2 with CanBoot bootloader
+  <a href="#canbootstm32f103stm32f0x2" class="md-nav__link">
+    带有CanBoot引导程序的STM32F103/STM32F0x2
   </a>
   
 </li>
@@ -1688,7 +1688,7 @@ bossac -U -p /dev/ttyACM0 -R
 <h2 id="samd21arduino-zero">SAMD21微控制器（Arduino Zero）<a class="headerlink" href="#samd21arduino-zero" title="Permanent link">&para;</a></h2>
 <p>SAMD21 引导加载程序通过 ARM 串行线调试 （SWD） 接口进行刷写，通常需要一个专用的 SWD 硬件转换器或者使用<a href="#running-openocd-on-the-raspberry-pi">安装了 OpenOCD 的 Raspberry Pi</a>来完成。</p>
 <p>要使用 OpenOCD 刷写引导加载程序，请使用以下芯片配置：</p>
-<div class="highlight"><pre><span></span><code>来源 [查找目标/at91samdXX.cfg]
+<div class="highlight"><pre><span></span><code>source [find target/at91samdXX.cfg]
 </code></pre></div>
 
 <p>获取引导加载程序 - 例如：</p>
@@ -1710,7 +1710,7 @@ program samd21_sam_ba.bin verify
 
 <h2 id="samd51-adafruit-metro-m4">SAMD51 微控制器(Adafruit Metro-M4及类似的开发板)<a class="headerlink" href="#samd51-adafruit-metro-m4" title="Permanent link">&para;</a></h2>
 <p>和 SAMD21 一样，SAMD51 的启动引导程序也是通过 ARM 串行线调试（SWD）接口刷写的。要用<a href="#running-openocd-on-the-raspberry-pi">运行 OpenOCD的 Raspberry Pi</a>刷写引导程序，请使用以下芯片配置：</p>
-<div class="highlight"><pre><span></span><code>来源 [查找目标/atsame5x.cfg]
+<div class="highlight"><pre><span></span><code>source [find target/atsame5x.cfg]
 </code></pre></div>
 
 <p>获得一个引导程序--很多引导程序可以从 <a href="https://github.com/adafruit/uf2-samdx1/releases/latest">https://github.com/adafruit/uf2-samdx1/releases/latest</a>获得。例如：</p>
@@ -1728,7 +1728,7 @@ at91samd bootloader 16384
 </code></pre></div>
 
 <h2 id="stm32f103-blue-pill">STM32F103 微控制器（Blue Pill 开发板）<a class="headerlink" href="#stm32f103-blue-pill" title="Permanent link">&para;</a></h2>
-<p>The STM32F103 devices have a ROM that can flash a bootloader or application via 3.3V serial. Typically one would wire the PA10 (MCU Rx) and PA9 (MCU Tx) pins to a 3.3V UART adapter. To access the ROM, one should connect the "boot 0" pin to high and "boot 1" pin to low, and then reset the device. The "stm32flash" package can then be used to flash the device using something like:</p>
+<p>STM32F103设备有一个ROM，可以通过3.3V串口刷写引导程序或应用程序。通常会把PA10（MCU Rx）和PA9（MCU Tx）引脚连接到3.3V UART适配器上。要访问ROM，应该把"boot 0"引脚连接到高电平，"boot 1"引脚连接到低电平，然后重置设备。然后可以用"stm32flash"包刷写设备，使用的方法如下：</p>
 <div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
@@ -1751,7 +1751,7 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 <p><a href="https://github.com/Serasidis/STM32_HID_Bootloader">HID bootloader</a>是一个紧凑的、不包含驱动的启动引导程序，能够通过USB进行刷写。此外，还有一个<a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">针对SKR Mini E3 1.2构建的分支</a>。</p>
 <p>对于常见的STM32F103板，如Blue Pill，和 stm32duino 章节中一样，可以通过 3.3v 串行用stm32flash 刷写启动引导程序，将文件名替换为所需的 hid引导程序二进制文件（例如Blue Pill 使用的 hid_generic_pc13.bin）。</p>
 <p>SKR Mini E3无法使用stm32flash ，因为boot 0引脚被直接接到GND且没有跳线断开。推荐使用STLink V2通过STM32Cubeprogrammer刷写启动引导程序。如果你没有STLink ，也可以按照以下芯片配置使用<a href="#running-openocd-on-the-raspberry-pi">树莓派和OpenOCD</a> 刷写：</p>
-<div class="highlight"><pre><span></span><code>来源 [查找目标/stm32f1x.cfg]
+<div class="highlight"><pre><span></span><code>source [find target/stm32f1x.cfg]
 </code></pre></div>
 
 <p>如果你愿意，可以使用下面的命令备份当前闪存上的程序。请注意，这可能需要一些时间来完成备份：</p>
@@ -1812,21 +1812,21 @@ make
 
 <p>此引导加载程序使用 8KiB 或 16KiB 的闪存空间，请参阅引导加载程序的说明（必须使用相应的起始地址编译应用程序）。</p>
 <p>可以通过按两次电路板上的复位按钮来激活引导程序。一旦启动引导程序，该板就会显示为一个 USB 闪存驱动器，可以将 klipper.bin 文件复制到该驱动器上。</p>
-<h3 id="stm32f103stm32f0x2-with-canboot-bootloader">STM32F103/STM32F0x2 with CanBoot bootloader<a class="headerlink" href="#stm32f103stm32f0x2-with-canboot-bootloader" title="Permanent link">&para;</a></h3>
-<p>The <a href="https://github.com/Arksine/CanBoot">CanBoot</a> bootloader provides an option for uploading Klipper firmware over the CANBUS. The bootloader itself is derived from Klipper's source code. Currently CanBoot supports the STM32F103, STM32F042, and STM32F072 models.</p>
-<p>It is recommended to use a ST-Link Programmer to flash CanBoot, however it should be possible to flash using <code>stm32flash</code> on STM32F103 devices, and <code>dfu-util</code> on STM32F042/STM32F072 devices. See the previous sections in this document for instructions on these flashing methods, substituting <code>canboot.bin</code> for the file name where appropriate. The CanBoot repo linked above provides instructions for building the bootloader.</p>
-<p>The first time CanBoot has been flashed it should detect that no application is present and enter the bootloader. If this doesn't occur it is possible to enter the bootloader by pressing the reset button twice in succession.</p>
-<p>The <code>flash_can.py</code> utility supplied in the <code>lib/canboot</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
+<h3 id="canbootstm32f103stm32f0x2">带有CanBoot引导程序的STM32F103/STM32F0x2<a class="headerlink" href="#canbootstm32f103stm32f0x2" title="Permanent link">&para;</a></h3>
+<p><a href="https://github.com/Arksine/CanBoot">CanBoot</a>引导程序提供了一个通过CANBUS上传Klipper固件的选项。该引导程序本身来自Klipper的源代码。目前CanBoot支持STM32F103、STM32F042和STM32F072型号。</p>
+<p>建议使用ST-Link编程器来刷写CanBoot，然而在STM32F103设备上使用<code>stm32flash</code>，在STM32F042/STM32F072设备上使用<code>dfu-util</code>应该是可以刷写。关于这些刷写方法的说明，请参见本文的前几节，在适当的地方用<code>canboot.bin</code>代替文件名。上面链接的CanBoot repo提供了构建引导程序的说明。</p>
+<p>在CanBoot第一次被写入时，应该检测到没有应用程序，并进入引导程序。如果没有出现这种情况，可以通过连续按两次复位按钮进入引导程序。</p>
+<p><code>flash_can.py</code>在<code>lib/canboot</code>文件夹中提供的工具可以用来上传Klipper固件。设备的UUID对于写入固件来说是必要的。如果你没有UUID可以查询当前运行引导程序的节点：</p>
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -q
 </code></pre></div>
 
-<p>This will return UUIDs for all connected nodes not currently assigned a UUID. This should include all nodes currently in the bootloader.</p>
-<p>Once you have a UUID, you may upload firmware with following command:</p>
+<p>这会返回所有未被分配UUID的节点的UUID。这应该包括当前在bootloader中的所有节点。</p>
+<p>一旦你有了UUID，你可以用以下命令上传固件：</p>
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u aabbccddeeff
 </code></pre></div>
 
-<p>Where <code>aabbccddeeff</code> is replaced by your UUID. Note that the <code>-i</code> and <code>-f</code> options may be omitted, they default to <code>can0</code> and <code>~/klipper/out/klipper.bin</code> respectively.</p>
-<p>When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.</p>
+<p>其中<code>aabbccddeeff</code>被你的UUID取代。注意选项<code>-i</code>和<code>-f</code>可以被省略，它们分别默认为<code>can0</code>和<code>~/klipper/out/klipper.bin</code>。</p>
+<p>当构建Klipper与CanBoot一起使用时，选择8 KiB Bootloader选项。</p>
 <h2 id="stm32f4-skr-pro-11">STM32F4 微控制器 (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>STM32F4微控制器配备了一个内置的系统引导程序，能够通过USB（通过DFU）、3.3v串口和其他各种方法进行刷写（更多信息见STM文件AN2606）。一些STM32F4板，如SKR Pro 1.1，不能进入DFU引导程序。基于STM32F405/407的板子可以使用HID引导程序，如果用户愿意通过USB刷写而不是使用SD卡。请注意，你可能需针对你的板子配置和构建一个特定的版本，<a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">针对SKR Pro 1.1的构建可以在这里找到</a>。</p>
 <p>除非你的板子有DFU功能，否则最容易的写入方法可能是通过3.3v的串口，这与<a href="#stm32f103-micro-controllers-blue-pill-devices">使用stm32flash刷写STM32F103</a>的步骤相同。例如：</p>
