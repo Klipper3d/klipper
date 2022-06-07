@@ -36,6 +36,7 @@ class ZThermalAdjuster:
         self.last_temp = self.smoothed_temp = 0.
         self.last_temp_time = 0.
         self.ref_temperature = 0.
+        self.ref_temp_override = False
 
         # Z transformation
         self.z_adjust_mm = 0.
@@ -48,12 +49,6 @@ class ZThermalAdjuster:
         self.gcode.register_command('SET_Z_THERMAL_ADJUST',
                                     self.cmd_SET_Z_THERMAL_ADJUST,
                                     desc=self.cmd_SET_Z_THERMAL_ADJUST_help)
-        self.gcode.register_command('QUERY_Z_THERMAL_ADJUST',
-                                    self.cmd_QUERY_Z_THERMAL_ADJUST,
-                                    desc=self.cmd_QUERY_Z_THERMAL_ADJUST_help)
-        self.gcode.register_command('SET_Z_THERMAL_ADJUST_REF',
-                                    self.cmd_SET_Z_THERMAL_ADJUST_REF,
-                                    desc=self.cmd_SET_Z_THERMAL_ADJUST_REF_help)
 
     def handle_connect(self):
         'Called after all printer objects are instantiated'
@@ -93,6 +88,7 @@ class ZThermalAdjuster:
         'Set reference temperature after Z homing.'
         if 2 in homing_state.get_axes():
             self.ref_temperature = self.smoothed_temp
+            self.ref_temp_override = False
             self.z_adjust_mm = 0.
 
     def calc_adjust(self, pos):
@@ -147,49 +143,38 @@ class ZThermalAdjuster:
             self.smoothed_temp += temp_diff * adj_time
 
     def cmd_SET_Z_THERMAL_ADJUST(self, gcmd):
-        new_state = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
-        self.temp_coeff = gcmd.get_float('COEFF', self.temp_coeff,
-                                         minval=-1, maxval=1)
-        state = 'ENABLED' if new_state else 'DISABLED'
-        msg = ("state: %s\n"
-               "temp_coeff: %f mm/K"
-               % (state, self.temp_coeff)
-        )
-        gcmd.respond_info(msg)
+        enable = gcmd.get_int('ENABLE', None, minval=0, maxval=1)
+        coeff = gcmd.get_float('TEMP_COEFF', None, minval=-1, maxval=1)
+        ref_temp = gcmd.get_float('REF_TEMP', None, minval=-273.15)
 
-        if new_state != self.adjust_enable:
-            gcode_move = self.printer.lookup_object('gcode_move')
-            gcode_move.reset_last_position()
-            self.adjust_enable = new_state
-
-    def cmd_QUERY_Z_THERMAL_ADJUST(self, gcmd):
-        state = 'ENABLED' if self.adjust_enable else 'DISABLED'
-        msg = ("state: %s\n"
-               "current temperature: %.2f degC\n"
-               "reference temperature: %.2f degC\n"
-               "applied Z adjustment: %.4f mm" % (state,
-                                            self.smoothed_temp,
-                                            self.ref_temperature,
-                                            self.z_adjust_mm)
-        )
-        gcmd.respond_info(msg)
-
-    def cmd_SET_Z_THERMAL_ADJUST_REF(self, gcmd):
-        ref_temp = gcmd.get_float('TEMPERATURE', -273.16, minval=-273.15)
-        if ref_temp > -273.16:
+        if ref_temp is not None:
             self.ref_temperature = ref_temp
-        else:
-            self.ref_temperature = self.smoothed_temp
-        msg = ("Z thermal adjust reference temperature set"
-               " manually to %.3fc" % self.ref_temperature)
+            self.ref_temp_override = True
+        if coeff is not None:
+            self.temp_coeff = coeff
+        if enable is not None:
+            if enable != self.adjust_enable:
+                self.adjust_enable = True if enable else False
+                gcode_move = self.printer.lookup_object('gcode_move')
+                gcode_move.reset_last_position()
+
+        state = '1 (enabled)' if self.adjust_enable else '0 (disabled)'
+        override = ' (manual)' if self.ref_temp_override else ''
+        msg = ("enable: %s\n"
+               "temp_coeff: %f mm/degC\n"
+               "ref_temp: %.2f degC%s\n"
+               "-------------------\n"
+               "Current Z temp: %.2f degC\n"
+               "Applied Z adjustment: %.4f mm"
+               % (state,
+                  self.temp_coeff,
+                  self.ref_temperature, override,
+                  self.smoothed_temp,
+                  self.z_adjust_mm)
+        )
         gcmd.respond_info(msg)
 
-    cmd_SET_Z_THERMAL_ADJUST_help = 'Set Z Thermal Adjust parameters.'
-    cmd_QUERY_Z_THERMAL_ADJUST_help = ('Report current Z Thermal Adjust'
-                                       'parameters.')
-    cmd_SET_Z_THERMAL_ADJUST_REF_help = ('Use current probe temperature as Z '
-                                         'Thermal Adjust reference '
-                                         'temperature')
+    cmd_SET_Z_THERMAL_ADJUST_help = 'Set/query Z Thermal Adjust parameters.'
 
 def load_config(config):
     return ZThermalAdjuster(config)
