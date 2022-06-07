@@ -174,6 +174,11 @@ class MotionSensorCommandHelper:
         self.chip.set_reg(reg, val)
 
 class MotionSensorBase:
+    # Base class for motion sensing devices such as accelerometers and 
+    # gyroscopes.  Use caution when creating member variables (self.xxx)
+    # in subclasses.  Unintentionally overriding an existing variable can
+    # cause problems.
+
     __metaclass__ = ABCMeta
     @property
     @abstractmethod
