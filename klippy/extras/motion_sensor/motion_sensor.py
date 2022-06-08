@@ -248,7 +248,11 @@ class MotionSensorBase:
         self.query_motion_sensor_cmd = None
         self.query_motion_sensor_end_cmd = None
         self.query_motion_sensor_status_cmd = None
+
+        # Register event handlers
         mcu.register_config_callback(self._build_config)
+        self.printer.register_event_handler("klippy:connect",
+                                            self._sleep_sensor)
 
         # Clock tracking
         self.last_sequence = self.max_query_duration = 0
@@ -272,7 +276,7 @@ class MotionSensorBase:
     def _build_config(self):
         # Configures device connection by adding config commands and
         # getting the query command objects
-        self._sleep_sensor()
+        pass
 
     def _update_clock(self, minclock=0):
         # Query current state
