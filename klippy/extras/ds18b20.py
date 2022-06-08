@@ -32,8 +32,9 @@ class DS18B20:
 
     def _build_config(self):
         sid = "".join(["%02x" % (x,) for x in self.sensor_id])
-        self._mcu.add_config_cmd("config_ds18b20 oid=%d serial=%s"
-                                 % (self.oid, sid, DS18_MAX_CONSECUTIVE_ERRORS))
+        self._mcu.add_config_cmd(
+            "config_ds18b20 oid=%d serial=%s max_error_count=%d"
+            % (self.oid, sid, DS18_MAX_CONSECUTIVE_ERRORS))
 
         clock = self._mcu.get_query_slot(self.oid)
         self._report_clock = self._mcu.seconds_to_clock(self.report_time)
