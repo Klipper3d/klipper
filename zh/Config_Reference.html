@@ -4008,7 +4008,7 @@ microsteps:
 rotation_distance:
 #full_steps_per_rotation:
 #gear_ratio:
-#   以上参数详见“extruder”配置分段。
+#   以上参数详见“stepper”配置分段。
 #   如果未指定任意上述参数，则没有步进电机与热端相关联
 #   （尽管使用SYNC_EXTRUDER_MOTION命令可能可以在运行时关联一个热端）
 nozzle_diameter:
@@ -4042,14 +4042,13 @@ filament_diameter:
 #   这个值以毫米每毫米每秒测量
 #   关闭压力提前时默认值是0
 #pressure_advance_smooth_time: 0.040
-
 #   A time range (in seconds) to use when calculating the average
 #   extruder velocity for pressure advance. A larger value results in
 #   smoother extruder movements. This parameter may not exceed 200ms.
 #   This setting only applies if pressure_advance is non-zero. The
 #   default is 0.040 (40 milliseconds).
 #
-# The remaining variables describe the extruder heater.
+#  The remaining variables describe the extruder heater.
 heater_pin:
 #   PWM output pin controlling the heater. This parameter must be
 #   provided.
@@ -4582,7 +4581,7 @@ path:
 </code></pre></div>
 
 <h3 id="firmware_retraction">[firmware_retraction]<a class="headerlink" href="#firmware_retraction" title="Permanent link">&para;</a></h3>
-<p>Firmware filament retraction. This enables G10 (retract) and G11 (unretract) GCODE commands issued by many slicers. The parameters below provide startup defaults, although the values can be adjusted via the SET_RETRACTION <a href="G-Codes.html#firmware_retraction">command</a>), allowing per-filament settings and runtime tuning.</p>
+<p>固件耗材回抽。这个选项启用了许多切片软件发布的G10（回抽）和G11（回抽后恢复挤出）GCODE指令。下面的参数提供了启动默认值，尽管这些值可以通过SET_RETRACTION<a href="G-Codes.html#firmware_retraction">command</a>来允许每个耗材设置和运行时调整</p>
 <div class="highlight"><pre><span></span><code>[firmware_retraction]
 #retract_length: 0
 # 当 G10 被运行时回抽的长度（以毫米(mm)为单位）
@@ -5097,7 +5096,7 @@ extruder:
 </code></pre></div>
 
 <h3 id="heater_generic">[heater_generic]<a class="headerlink" href="#heater_generic" title="Permanent link">&para;</a></h3>
-<p>Generic heaters (one may define any number of sections with a "heater_generic" prefix). These heaters behave similarly to standard heaters (extruders, heated beds). Use the SET_HEATER_TEMPERATURE command (see <a href="G-Codes.html#heaters">G-Codes</a> for details) to set the target temperature.</p>
+<p>通用的加热器（任意数量的使用"heater_generic"前缀定义的节）。这些加热器表现得类似于标准加热器（挤出机、热床）。使用SET_HEATER_TEMPERATURE命令（详见<a href="G-Code.md#heaters">G-Code</a>）来设置目标温度。</p>
 <div class="highlight"><pre><span></span><code>[heater_generic my_generic_heater]
 #gcode_id:
 #   使用M105查询温度时使用的ID。
@@ -5336,46 +5335,45 @@ pin:
 #   风扇速度。
 #   默认为 0。
 #cycle_time: 0.010
-#   The amount of time (in seconds) for each PWM power cycle to the
-#   fan. It is recommended this be 10 milliseconds or greater when
-#   using software based PWM. The default is 0.010 seconds.
+#   每个风扇电源的PWM周期时间（以秒为单位）
+#   使用基于软件的PWM时建议大于10毫秒
+#   默认为0.010秒
 #hardware_pwm: False
-#   Enable this to use hardware PWM instead of software PWM. Most fans
-#   do not work well with hardware PWM, so it is not recommended to
-#   enable this unless there is an electrical requirement to switch at
-#   very high speeds. When using hardware PWM the actual cycle time is
-#   constrained by the implementation and may be significantly
-#   different than the requested cycle_time. The default is False.
+#   启用硬件PWM来代替软件PWM
+#   许多风扇使用硬件PWM时可能会不能很好地工作
+#   所以这不是很推荐启用的，除非有切换得非常快的电气需求
+#   当使用硬件PWM时，真正的PWM周期时间受执行的约束，
+#   可能显著地与请求的周期时间不同。
+#   默认为False
 #kick_start_time: 0.100
-#   Time (in seconds) to run the fan at full speed when either first
-#   enabling or increasing it by more than 50% (helps get the fan
-#   spinning). The default is 0.100 seconds.
+#   当初次开启或提高风扇速度到50%以上时
+#   使风扇全速运行的时间（以秒为单位）
+#   （帮助风扇开始旋转）
+#   默认为0.100秒
 #off_below: 0.0
-#   The minimum input speed which will power the fan (expressed as a
-#   value from 0.0 to 1.0). When a speed lower than off_below is
-#   requested the fan will instead be turned off. This setting may be
-#   used to prevent fan stalls and to ensure kick starts are
-#   effective. The default is 0.0.
+#   给风扇供电的最低输入速度（在0.0到1.0之间）
+#   当请求了一个低于off_below的速度，风扇会关闭
+#   这个设置可能会被用于防止风扇失速并且
+#   保证kick starts的有效
+#   默认为0.0
 #
-#   This setting should be recalibrated whenever max_power is adjusted.
-#   To calibrate this setting, start with off_below set to 0.0 and the
-#   fan spinning. Gradually lower the fan speed to determine the lowest
-#   input speed which reliably drives the fan without stalls. Set
-#   off_below to the duty cycle corresponding to this value (for
-#   example, 12% -&gt; 0.12) or slightly higher.
+#   这个设置应该在max_power被调整时重新校准
+#   为了校准这个设置，可以在off_below设为0.0时让风扇转动
+#   逐步降低风扇的速度来决定最小的可靠的不使风扇失速的速度
+#   根据相应或略微更高的值设置off_below（比如12%-&gt;0.12）
 #tachometer_pin:
-#   Tachometer input pin for monitoring fan speed. A pullup is generally
-#   required. This parameter is optional.
+#    监控风扇转速的输入引脚
+#   通常需要一个上拉电阻
+#   这个参数是可选的
 #tachometer_ppr: 2
-#   When tachometer_pin is specified, this is the number of pulses per
-#   revolution of the tachometer signal. For a BLDC fan this is
-#   normally half the number of poles. The default is 2.
+#   当指定了tachometer_pin，这是每转脉冲的个数
+#   对于一个无刷直流风扇（BLDC）这个通常为极对数的一半
+#   默认为2
 #tachometer_poll_interval: 0.0015
-#   When tachometer_pin is specified, this is the polling period of the
-#   tachometer pin, in seconds. The default is 0.0015, which is fast
-#   enough for fans below 10000 RPM at 2 PPR. This must be smaller than
-#   30/(tachometer_ppr*rpm), with some margin, where rpm is the
-#   maximum speed (in RPM) of the fan.
+#   当指定了tachometer_pin，这是tachometer_pin的轮询周期，以秒为单位
+#   默认为0.0015，对于测量低于10000转每分和2脉冲每转已经够快
+#   这个值必须比30/(tachometer_ppr * rpm)小且留有一些余量
+#   其中rpm是风扇的最高转速
 </code></pre></div>
 
 <h3 id="heater_fan">[heater_fan]<a class="headerlink" href="#heater_fan" title="Permanent link">&para;</a></h3>
@@ -5516,23 +5514,24 @@ pin:
 #green_pin:
 #blue_pin:
 #white_pin:
-#   The pin controlling the given LED color. At least one of the above
-#   parameters must be provided.
+#   控制给定LED的引脚。
+#   至少提供一个上述引脚
 #cycle_time: 0.010
-#   The amount of time (in seconds) per PWM cycle. It is recommended
-#   this be 10 milliseconds or greater when using software based PWM.
-#   The default is 0.010 seconds.
+#   每个PWM周期的时间（以秒为单位）
+#   使用软件PWM时建议大于10毫秒
+#   默认值为0.010秒
 #hardware_pwm: False
-#   Enable this to use hardware PWM instead of software PWM. When
-#   using hardware PWM the actual cycle time is constrained by the
-#   implementation and may be significantly different than the
-#   requested cycle_time. The default is False.
+#   启用硬件PWM代替软件PWM
+#   当使用硬件PWM时，真正的PWM周期时间受执行的约束，
+#   可能显著地与请求的周期时间不同。
+#   默认为False
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
-#   Sets the initial LED color. Each value should be between 0.0 and
-#   1.0. The default for each color is 0.
+#   设置初始化时LED颜色
+#   每个值应当在0.0与1.0之间
+#   每个颜色的默认值都为0
 </code></pre></div>
 
 <h3 id="neopixel">[neopixel]<a class="headerlink" href="#neopixel" title="Permanent link">&para;</a></h3>
