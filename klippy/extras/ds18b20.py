@@ -45,12 +45,10 @@ class DS18B20:
     def _handle_ds18b20_response(self, params):
         temp = params['value'] / 1000.0
 
-        if params["fault"] != 0:
-            temp = 0  # read error! report 0C and don't check temp range
-        elif temp < self.min_temp or temp > self.max_temp:
-            self.printer.invoke_shutdown(
-                "DS18B20 temperature %0.1f outside range of %0.1f:%.01f"
-                % (temp, self.min_temp, self.max_temp))
+        if params["fault"]:
+            logging.info("ds18b20 reports fault %d (temp=%0.1f)",
+                         params["fault"], temp)
+            return
 
         next_clock      = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
