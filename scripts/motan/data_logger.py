@@ -153,7 +153,10 @@ class DataLogger:
         # Subscribe to additional sensor data
         config = status["configfile"]["settings"]
         for cfgname in config.keys():
-            if cfgname == "motion_sensor" or cfgname.startswith(
+            if cfgname == "motion_sensor" or \
+                    cfgname == "adxl345" or \
+                    cfgname == "mpu6050" or \
+                    cfgname == "mpu9250" or cfgname.startswith(
                                                 "motion_sensor "):
                 aname = cfgname.split()[-1]
                 self.send_subscribe("motion_sensor:" + aname,

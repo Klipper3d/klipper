@@ -21,13 +21,6 @@ sensor_chip_infos = {
 MIN_MSG_TIME = 0.100
 FREEFALL_ACCEL = 9.80665 * 1000. # mm/s**2
 
-def load_config(config):
-    sensor_chip_info = config.getchoice('chip', sensor_chip_infos)
-    mod = importlib.import_module(name=sensor_chip_info["module"],
-        package='.'.join(__name__.split('.')[:-1]))
-    sensor_class = getattr(mod, sensor_chip_info["class"])
-    return sensor_class(config)
-
 Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
@@ -110,7 +103,7 @@ class MotionSensorCommandHelper:
         self.bg_client = None
         self.name = config.get_name().split()[-1]
         self.register_commands(self.name)
-        if self.name == "motion_sensor":
+        if self.name in sensor_chip_infos.keys():
             self.register_commands(None)
     def register_commands(self, name):
         # Register commands

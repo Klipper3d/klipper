@@ -104,12 +104,11 @@ For the ADXL345, add the following to the printer.cfg file:
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
 
-[motion_sensor]
-chip: adxl345
+[adxl345]
 cs_pin: rpi:None
 
 [resonance_tester]
-accel_chip: motion_sensor
+accel_chip: adxl345
 probe_points:
     100, 100, 20  # an example
 ```
@@ -121,13 +120,12 @@ For the MPU-9250 (for the MPU-6050, replace mpu9250 with mpu6050):
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
 
-[motion_sensor]
-chip: mpu9250
+[mpu9250]
 i2c_mcu: rpi
 i2c_bus: i2c.1
 
 [resonance_tester]
-accel_chip: motion_sensor
+accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
 ```
@@ -181,7 +179,7 @@ If the vibrations do get too strong, you can attempt to specify a lower than the
 default value for `accel_per_hz` parameter in `[resonance_tester]` section, e.g.
 ```
 [resonance_tester]
-accel_chip: motion_sensor
+accel_chip: adxl345
 accel_per_hz: 50  # default is 75
 probe_points: ...
 ```
@@ -250,20 +248,18 @@ must be connected to different boards (say, to an RPi and printer MCU board), or
 to two different physical SPI interfaces on the same board (rarely available).
 Then they can be configured in the following manner:
 ```
-[motion_sensor hotend]
+[adxl345 hotend]
 # Assuming `hotend` chip is connected to an RPi
-chip: adxl345
 cs_pin: rpi:None
 
-[motion_sensor bed]
+[mpu6050 bed]
 # Assuming `bed` chip is connected to a printer MCU board
-chip: adxl345
 cs_pin: ...  # Printer board SPI chip select (CS) pin
 
 [resonance_tester]
 # Assuming the typical setup of the bed slinger printer
-accel_chip_x: motion_sensor hotend
-accel_chip_y: motion_sensor bed
+accel_chip_x: adxl345 hotend
+accel_chip_y: mpu6050 bed
 probe_points: ...
 ```
 

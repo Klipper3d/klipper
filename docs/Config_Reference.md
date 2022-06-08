@@ -1472,17 +1472,18 @@ the [command reference](G-Codes.md#input_shaper).
 #   parameter requires no tuning and should not be changed.
 ```
 
-### [motion_sensor]
+### [adxl345]
+### [mpu9250]
+### [mpu6050]
 
 Support for motion sensors (e.g. accelerometers). This support allows one to query accelerometer measurements from the sensor. This enables an
 ACCELEROMETER_MEASURE command (see [G-Codes](G-Codes.md#motion_sensor) for
-more information). The default chip name is "default", but one may
-specify an explicit name (eg, [motion_sensor my_chip_name]).
+more information). The default chip name is nothing, but one may
+specify an explicit name (eg, [adxl345 my_chip_name]).
 
 SPI configuration:
 ```
-[motion_sensor]
-chip: adxl345
+[adxl345]
 #   The chip to use as a motion sensor.  Supported SPI sensor: adxl345
 cs_pin:
 #   The SPI enable pin for the sensor. This parameter must be provided.
@@ -1511,8 +1512,7 @@ cs_pin:
 ```
 I2C configuration:
 ```
-[motion_sensor]
-chip: mpu6050
+[mpu6050]
 #   The chip to use as the sensor.  Supported I2C sensors: mpu6050, mpu9250
 i2c_bus:
 #   The I2C bus to use for the sensor.  This parameter must be provided.

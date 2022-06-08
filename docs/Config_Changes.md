@@ -8,9 +8,6 @@ All dates in this document are approximate.
 
 ## Changes
 
-20220524: The `[adxl345]` config section has been changed to `[motion_sensor]`
-with option `chip: adxl345`.
-
 20220407: The temperature_fan `pid_integral_max` config option has
 been removed (it was deprecated on 20210612).
 
