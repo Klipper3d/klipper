@@ -108,6 +108,12 @@ config HAVE_STM32_CANBUS
 config HAVE_STM32_FDCANBUS
     bool
     default y if MACH_STM32G0
+config HAVE_STM32_USBCANBUS
+    bool
+    depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
+    depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
+    depends on !MACH_STM32F103
+    default y
 
 config MCU
     string
@@ -327,30 +333,74 @@ choice
         bool "CAN bus (on PA9/PA10)" if LOW_LEVEL_OPTIONS
         depends on HAVE_STM32_CANBUS && MACH_STM32F042
         select CANSERIAL
-    config STM32_CANBUS_PB8_PB9
+    config STM32_MMENU_CANBUS_PB8_PB9
         bool "CAN bus (on PB8/PB9)" if LOW_LEVEL_OPTIONS
         depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
         select CANSERIAL
-    config STM32_CANBUS_PI9_PH13
+    config STM32_MMENU_CANBUS_PI9_PH13
         bool "CAN bus (on PI9/PH13)" if LOW_LEVEL_OPTIONS
         depends on HAVE_STM32_CANBUS && MACH_STM32F4
         select CANSERIAL
-    config STM32_CANBUS_PB5_PB6
+    config STM32_MMENU_CANBUS_PB5_PB6
         bool "CAN bus (on PB5/PB6)" if LOW_LEVEL_OPTIONS
         depends on HAVE_STM32_CANBUS && MACH_STM32F4
         select CANSERIAL
-    config STM32_CANBUS_PB12_PB13
+    config STM32_MMENU_CANBUS_PB12_PB13
         bool "CAN bus (on PB12/PB13)" if LOW_LEVEL_OPTIONS
         depends on HAVE_STM32_CANBUS && MACH_STM32F4
         select CANSERIAL
-    config STM32_CANBUS_PD0_PD1
+    config STM32_MMENU_CANBUS_PD0_PD1
         bool "CAN bus (on PD0/PD1)" if LOW_LEVEL_OPTIONS
         depends on HAVE_STM32_CANBUS
         select CANSERIAL
-    config STM32_CANBUS_PB0_PB1
+    config STM32_MMENU_CANBUS_PB0_PB1
         bool "CAN bus (on PB0/PB1)"
         depends on HAVE_STM32_FDCANBUS
         select CANSERIAL
+    config STM32_USBCANBUS_PA11_PA12
+        bool "USB to CAN bus bridge (USB on PA11/PA12)"
+        depends on HAVE_STM32_USBCANBUS
+        select USBCANBUS
 endchoice
+choice
+    prompt "CAN bus interface" if USBCANBUS
+    config STM32_CMENU_CANBUS_PB8_PB9
+        bool "CAN bus (on PB8/PB9)"
+    config STM32_CMENU_CANBUS_PI9_PH13
+        bool "CAN bus (on PI9/PH13)"
+        depends on HAVE_STM32_CANBUS && MACH_STM32F4
+    config STM32_CMENU_CANBUS_PB5_PB6
+        bool "CAN bus (on PB5/PB6)"
+        depends on HAVE_STM32_CANBUS && MACH_STM32F4
+    config STM32_CMENU_CANBUS_PB12_PB13
+        bool "CAN bus (on PB12/PB13)"
+        depends on HAVE_STM32_CANBUS && MACH_STM32F4
+    config STM32_CMENU_CANBUS_PD0_PD1
+        bool "CAN bus (on PD0/PD1)"
+        depends on HAVE_STM32_CANBUS
+    config STM32_CMENU_CANBUS_PB0_PB1
+        bool "CAN bus (on PB0/PB1)"
+        depends on HAVE_STM32_FDCANBUS
+endchoice
+
+
+config STM32_CANBUS_PB8_PB9
+    bool
+    default y if STM32_MMENU_CANBUS_PB8_PB9 || STM32_CMENU_CANBUS_PB8_PB9
+config STM32_CANBUS_PI9_PH13
+    bool
+    default y if STM32_MMENU_CANBUS_PI9_PH13 || STM32_CMENU_CANBUS_PI9_PH13
+config STM32_CANBUS_PB5_PB6
+    bool
+    default y if STM32_MMENU_CANBUS_PB5_PB6 || STM32_CMENU_CANBUS_PB5_PB6
+config STM32_CANBUS_PB12_PB13
+    bool
+    default y if STM32_MMENU_CANBUS_PB12_PB13 || STM32_CMENU_CANBUS_PB12_PB13
+config STM32_CANBUS_PD0_PD1
+    bool
+    default y if STM32_MMENU_CANBUS_PD0_PD1 || STM32_CMENU_CANBUS_PD0_PD1
+config STM32_CANBUS_PB0_PB1
+    bool
+    default y if STM32_MMENU_CANBUS_PB0_PB1 || STM32_CMENU_CANBUS_PB0_PB1
 
 endif
