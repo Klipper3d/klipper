@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Tool to enter a USB bootloader and flash Klipper
 #
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
