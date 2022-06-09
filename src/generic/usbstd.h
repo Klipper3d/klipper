@@ -8,6 +8,12 @@
 #define USB_DIR_OUT                     0               /* to device */
 #define USB_DIR_IN                      0x80            /* to host */
 
+#define USB_TYPE_MASK                   (0x03 << 5)
+#define USB_TYPE_STANDARD               (0x00 << 5)
+#define USB_TYPE_CLASS                  (0x01 << 5)
+#define USB_TYPE_VENDOR                 (0x02 << 5)
+#define USB_TYPE_RESERVED               (0x03 << 5)
+
 #define USB_REQ_GET_STATUS              0x00
 #define USB_REQ_CLEAR_FEATURE           0x01
 #define USB_REQ_SET_FEATURE             0x03
