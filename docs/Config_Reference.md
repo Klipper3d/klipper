@@ -2189,6 +2189,8 @@ sensor_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
+#spi_mode: 1
+#   For MAX31865 only, select SPI mode 1 or 3
 #tc_type: K
 #tc_use_50Hz_filter: False
 #tc_averaging_count: 1

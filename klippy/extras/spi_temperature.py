@@ -277,8 +277,9 @@ class MAX31865(SensorBase):
         rtd_reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
         adc_to_resist = rtd_reference_r / float(MAX31865_ADC_MAX)
         self.adc_to_resist_div_nominal = adc_to_resist / rtd_nominal_r
+        spi_mode=config.getchoice('spi_mode', {1: 1, 3: 3}, default=1)
         SensorBase.__init__(self, config, "MAX31865",
-                            self.build_spi_init(config))
+                            self.build_spi_init(config), spi_mode=spi_mode)
     def calc_temp(self, adc, fault):
         if fault & 0x80:
             self.fault("Max31865 RTD input is disconnected")
