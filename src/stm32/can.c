@@ -91,41 +91,9 @@
  #error No known CAN device for configured MCU
 #endif
 
-// Read the next CAN packet
-int
-canbus_read(uint32_t *id, uint8_t *data)
-{
-    if (!(SOC_CAN->RF0R & CAN_RF0R_FMP0)) {
-        // All rx mboxes empty, enable wake on rx IRQ
-        irq_disable();
-        SOC_CAN->IER |= CAN_IER_FMPIE0;
-        irq_enable();
-        return -1;
-    }
-
-    // Read and ack packet
-    CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[0];
-    uint32_t rir_id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
-    uint32_t dlc = mb->RDTR & CAN_RDT0R_DLC;
-    uint32_t rdlr = mb->RDLR, rdhr = mb->RDHR;
-    SOC_CAN->RF0R = CAN_RF0R_RFOM0;
-
-    // Return packet
-    *id = rir_id;
-    data[0] = (rdlr >>  0) & 0xff;
-    data[1] = (rdlr >>  8) & 0xff;
-    data[2] = (rdlr >> 16) & 0xff;
-    data[3] = (rdlr >> 24) & 0xff;
-    data[4] = (rdhr >>  0) & 0xff;
-    data[5] = (rdhr >>  8) & 0xff;
-    data[6] = (rdhr >> 16) & 0xff;
-    data[7] = (rdhr >> 24) & 0xff;
-    return dlc;
-}
-
 // Transmit a packet
 int
-canbus_send(uint32_t id, uint32_t len, uint8_t *data)
+canbus_send(struct canbus_msg *msg)
 {
     uint32_t tsr = SOC_CAN->TSR;
     if (!(tsr & (CAN_TSR_TME0|CAN_TSR_TME1|CAN_TSR_TME2))) {
@@ -143,23 +111,15 @@ canbus_send(uint32_t id, uint32_t len, uint8_t *data)
     CAN_TxMailBox_TypeDef *mb = &SOC_CAN->sTxMailBox[mbox];
 
     /* Set up the DLC */
-    mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (len & 0x0F);
+    mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (msg->dlc & 0x0F);
 
     /* Set up the data field */
-    if (len) {
-        mb->TDLR = (((uint32_t)data[3] << 24)
-                    | ((uint32_t)data[2] << 16)
-                    | ((uint32_t)data[1] << 8)
-                    | ((uint32_t)data[0] << 0));
-        mb->TDHR = (((uint32_t)data[7] << 24)
-                    | ((uint32_t)data[6] << 16)
-                    | ((uint32_t)data[5] << 8)
-                    | ((uint32_t)data[4] << 0));
-    }
+    mb->TDLR = msg->data32[0];
+    mb->TDHR = msg->data32[1];
 
     /* Request transmission */
-    mb->TIR = (id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
-    return len;
+    mb->TIR = (msg->id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
+    return CANMSG_DATA_LEN(msg);
 }
 
 // Setup the receive packet filter
@@ -182,9 +142,6 @@ canbus_set_filter(uint32_t id)
     /* 32-bit scale for the filter */
     SOC_CAN->FS1R = (1<<0) | (1<<1) | (1<<2);
 
-    /* FIFO 1 assigned to 'id' */
-    SOC_CAN->FFA1R = (1<<2);
-
     /* Filter activation */
     SOC_CAN->FA1R = (1<<0) | (id ? (1<<1) | (1<<2) : 0);
     /* Leave the initialisation mode for the filter */
@@ -195,27 +152,20 @@ canbus_set_filter(uint32_t id)
 void
 CAN_IRQHandler(void)
 {
-    if (SOC_CAN->RF1R & CAN_RF1R_FMP1) {
+    if (SOC_CAN->RF0R & CAN_RF0R_FMP0) {
         // Read and ack data packet
-        CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[1];
-        uint32_t rir_id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
-        uint32_t dlc = mb->RDTR & CAN_RDT0R_DLC;
-        uint32_t rdlr = mb->RDLR, rdhr = mb->RDHR;
-        SOC_CAN->RF1R = CAN_RF1R_RFOM1;
+        CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[0];
+        struct canbus_msg msg;
+        msg.id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
+        msg.dlc = mb->RDTR & CAN_RDT0R_DLC;
+        msg.data32[0] = mb->RDLR;
+        msg.data32[1] = mb->RDHR;
+        SOC_CAN->RF0R = CAN_RF0R_RFOM0;
 
         // Process packet
-        union {
-            struct { uint32_t rdlr, rdhr; };
-            uint8_t data[8];
-        } rdata = { .rdlr = rdlr, .rdhr = rdhr };
-        canbus_process_data(rir_id, dlc, rdata.data);
+        canbus_process_data(&msg);
     }
     uint32_t ier = SOC_CAN->IER;
-    if (ier & CAN_IER_FMPIE0 && SOC_CAN->RF0R & CAN_RF0R_FMP0) {
-        // Admin Rx
-        SOC_CAN->IER = ier = ier & ~CAN_IER_FMPIE0;
-        canbus_notify_rx();
-    }
     if (ier & CAN_IER_TMEIE
         && SOC_CAN->TSR & (CAN_TSR_RQCP0|CAN_TSR_RQCP1|CAN_TSR_RQCP2)) {
         // Tx
@@ -310,7 +260,7 @@ can_init(void)
         armcm_enable_irq(CAN_IRQHandler, CAN_RX1_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_TX_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
-    SOC_CAN->IER = CAN_IER_FMPIE1;
+    SOC_CAN->IER = CAN_IER_FMPIE0;
 
     // Convert unique 96-bit chip id into 48 bit representation
     uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);

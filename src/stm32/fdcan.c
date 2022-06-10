@@ -17,13 +17,6 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
-/*
- FDCAN max date length = 64bytes
- data_len[] is the data length & DLC mapping table
- Required when the data length exceeds 64bytes
- */
-uint8_t data_len[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
-
 typedef struct
 {
        uint32_t RESERVED0 : 18;
@@ -38,7 +31,7 @@ typedef struct
        uint32_t RESERVED1 : 2;
   __IO uint32_t FIDX : 7;
   __IO uint32_t ANMF : 1;
-  __IO uint8_t  data[64];
+  __IO uint32_t data[64 / 4];
 }FDCAN_RX_FIFO_TypeDef;
 
 typedef struct
@@ -66,8 +59,6 @@ typedef struct
 
 FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
 
-#define FDCAN_IE_RX_FIFO0  (FDCAN_IE_RF0NE | FDCAN_IE_RF0FE | FDCAN_IE_RF0LE)
-#define FDCAN_IE_RX_FIFO1  (FDCAN_IE_RF1NE | FDCAN_IE_RF1FE | FDCAN_IE_RF1LE)
 #define FDCAN_IE_TC        (FDCAN_IE_TCE | FDCAN_IE_TCFE | FDCAN_IE_TFEE)
 
 #if CONFIG_STM32_CANBUS_PB0_PB1
@@ -85,7 +76,6 @@ FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
  #endif
 
  #define CAN_IT0_IRQn  TIM16_FDCAN_IT0_IRQn
- #define CAN_IT1_IRQn  TIM17_FDCAN_IT1_IRQn
  #define CAN_FUNCTION  GPIO_FUNCTION(3) // Alternative function mapping number
 #endif
 
@@ -93,35 +83,9 @@ FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
  #error No known CAN device for configured MCU
 #endif
 
-// Read the next CAN packet
-int
-canbus_read(uint32_t *id, uint8_t *data)
-{
-    if (!(SOC_CAN->RXF0S & FDCAN_RXF0S_F0FL)) {
-        // All rx mboxes empty, enable wake on rx IRQ
-        irq_disable();
-        SOC_CAN->IE |= FDCAN_IE_RF0NE;
-        irq_enable();
-        return -1;
-    }
-
-    // Read and ack packet
-    uint32_t r_index = ((SOC_CAN->RXF0S & FDCAN_RXF0S_F0GI)
-                        >> FDCAN_RXF0S_F0GI_Pos);
-    FDCAN_RX_FIFO_TypeDef *rxf0 = &MSG_RAM.RXF0[r_index];
-    uint32_t dlc = rxf0->DLC;
-    *id = rxf0->ID;
-    for (uint8_t i = 0; i < dlc; i++) {
-        data[i] = rxf0->data[i];
-    }
-    SOC_CAN->RXF0A = r_index;
-
-    return dlc;
-}
-
 // Transmit a packet
 int
-canbus_send(uint32_t id, uint32_t len, uint8_t *data)
+canbus_send(struct canbus_msg *msg)
 {
     uint32_t txfqs = SOC_CAN->TXFQS;
     if (txfqs & FDCAN_TXFQS_TFQF) {
@@ -134,23 +98,16 @@ canbus_send(uint32_t id, uint32_t len, uint8_t *data)
 
     uint32_t w_index = ((txfqs & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos);
     FDCAN_TX_FIFO_TypeDef *txfifo = &MSG_RAM.TXFIFO[w_index];
-    txfifo->id_section = id << 18;
-    txfifo->dlc_section = len << 16;
-    if (len) {
-        txfifo->data[0] = (((uint32_t)data[3] << 24)
-                           | ((uint32_t)data[2] << 16)
-                           | ((uint32_t)data[1] << 8)
-                           | ((uint32_t)data[0] << 0));
-        txfifo->data[1] = (((uint32_t)data[7] << 24)
-                           | ((uint32_t)data[6] << 16)
-                           | ((uint32_t)data[5] << 8)
-                           | ((uint32_t)data[4] << 0));
-    }
+    txfifo->id_section = (msg->id & 0x1fffffff) << 18;
+    txfifo->dlc_section = (msg->dlc & 0x0f) << 16;
+    txfifo->data[0] = msg->data32[0];
+    txfifo->data[1] = msg->data32[1];
     SOC_CAN->TXBAR = ((uint32_t)1 << w_index);
-    return len;
+    return CANMSG_DATA_LEN(msg);
 }
 
-void can_filter(uint32_t id, uint8_t index)
+static void
+can_filter(uint32_t index, uint32_t id)
 {
     MSG_RAM.FLS[index] = ((0x2 << 30) // Classic filter
                           | (0x1 << 27) // Store in Rx FIFO 0 if filter matches
@@ -170,17 +127,12 @@ canbus_set_filter(uint32_t id)
     /* Enable configuration change */
     SOC_CAN->CCCR |= FDCAN_CCCR_CCE;
 
-    can_filter(CANBUS_ID_ADMIN, 0);
-
-    /*  List size standard */
-    SOC_CAN->RXGFC &= ~(FDCAN_RXGFC_LSS);
-    SOC_CAN->RXGFC |= 1 << FDCAN_RXGFC_LSS_Pos;
-
-    /* Filter remote frames with 11-bit standard IDs
-       Non-matching frames standard reject or accept in Rx FIFO 1 */
-    SOC_CAN->RXGFC &= ~(FDCAN_RXGFC_RRFS | FDCAN_RXGFC_ANFS);
-    SOC_CAN->RXGFC |= ((0 << FDCAN_RXGFC_RRFS_Pos)
-                       | ((id ? 0x01 : 0x02) << FDCAN_RXGFC_ANFS_Pos));
+    // Load filter
+    can_filter(0, CANBUS_ID_ADMIN);
+    can_filter(1, id);
+    can_filter(2, id + 1);
+    SOC_CAN->RXGFC = ((id ? 3 : 1) << FDCAN_RXGFC_LSS_Pos
+                      | 0x02 << FDCAN_RXGFC_ANFS_Pos);
 
     /* Leave the initialisation mode for the filter */
     SOC_CAN->CCCR &= ~FDCAN_CCCR_CCE;
@@ -191,36 +143,28 @@ canbus_set_filter(uint32_t id)
 void
 CAN_IRQHandler(void)
 {
-    uint32_t ir = SOC_CAN->IR;
-    uint32_t ie = SOC_CAN->IE;
+    uint32_t ir = SOC_CAN->IR & SOC_CAN->IE;
 
-    if (ir & FDCAN_IE_RX_FIFO1 && ie & FDCAN_IE_RX_FIFO1) {
-        SOC_CAN->IR = FDCAN_IE_RX_FIFO1;
+    if (ir & FDCAN_IE_RF0NE) {
+        SOC_CAN->IR = FDCAN_IE_RF0NE;
 
-        if (SOC_CAN->RXF1S & FDCAN_RXF1S_F1FL) {
+        uint32_t rxf0s = SOC_CAN->RXF0S;
+        if (rxf0s & FDCAN_RXF0S_F0FL) {
             // Read and ack data packet
-            uint32_t r_index = ((SOC_CAN->RXF1S & FDCAN_RXF1S_F1GI)
-                                >> FDCAN_RXF1S_F1GI_Pos);
-            FDCAN_RX_FIFO_TypeDef *rxf1 = &MSG_RAM.RXF1[r_index];
-
-            uint32_t rir_id = rxf1->ID;
-            uint32_t dlc = rxf1->DLC;
-            uint8_t data[8];
-            for (uint8_t i = 0; i < dlc; i++) {
-                data[i] = rxf1->data[i];
-            }
-            SOC_CAN->RXF1A = r_index;
+            uint32_t idx = (rxf0s & FDCAN_RXF0S_F0GI) >> FDCAN_RXF0S_F0GI_Pos;
+            FDCAN_RX_FIFO_TypeDef *rxf0 = &MSG_RAM.RXF0[idx];
+            struct canbus_msg msg;
+            msg.id = rxf0->ID;
+            msg.dlc = rxf0->DLC;
+            msg.data32[0] = rxf0->data[0];
+            msg.data32[1] = rxf0->data[1];
+            SOC_CAN->RXF0A = idx;
 
             // Process packet
-            canbus_process_data(rir_id, dlc, data);
+            canbus_process_data(&msg);
         }
     }
-    if (ie & FDCAN_IE_RX_FIFO0 && ir & FDCAN_IE_RX_FIFO0) {
-        // Admin Rx
-        SOC_CAN->IR = FDCAN_IE_RX_FIFO0;
-        canbus_notify_rx();
-    }
-    if (ie & FDCAN_IE_TC && ir & FDCAN_IE_TC) {
+    if (ir & FDCAN_IE_TC) {
         // Tx
         SOC_CAN->IR = FDCAN_IE_TC;
         canbus_notify_tx();
@@ -317,10 +261,8 @@ can_init(void)
 
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CAN_IT0_IRQn, 0);
-    if (CAN_IT0_IRQn != CAN_IT1_IRQn)
-        armcm_enable_irq(CAN_IRQHandler, CAN_IT1_IRQn, 0);
-    SOC_CAN->ILE |= 0x03;
-    SOC_CAN->IE |= FDCAN_IE_RX_FIFO0 | FDCAN_IE_RX_FIFO1;
+    SOC_CAN->ILE = FDCAN_ILE_EINT0;
+    SOC_CAN->IE = FDCAN_IE_RF0NE;
 
     // Convert unique 96-bit chip id into 48 bit representation
     uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);

@@ -27,8 +27,10 @@ static struct canbus_data {
     // Rx data
     struct task_wake rx_wake;
     uint8_t receive_pos;
+    uint32_t admin_pull_pos, admin_push_pos;
 
     // Transfer buffers
+    struct canbus_msg admin_queue[8];
     uint8_t transmit_buf[96];
     uint8_t receive_buf[192];
 } CanData;
@@ -54,12 +56,16 @@ canbus_tx_task(void)
         CanData.transmit_pos = CanData.transmit_max = 0;
         return;
     }
+    struct canbus_msg msg;
+    msg.id = id + 1;
     uint32_t tpos = CanData.transmit_pos, tmax = CanData.transmit_max;
     for (;;) {
         int avail = tmax - tpos, now = avail > 8 ? 8 : avail;
         if (avail <= 0)
             break;
-        int ret = canbus_send(id + 1, now, &CanData.transmit_buf[tpos]);
+        msg.dlc = now;
+        memcpy(msg.data, &CanData.transmit_buf[tpos], now);
+        int ret = canbus_send(&msg);
         if (ret <= 0)
             break;
         tpos += now;
@@ -110,9 +116,10 @@ console_sendf(const struct command_encoder *ce, va_list args)
 
 // Helper to verify a UUID in a command matches this chip's UUID
 static int
-can_check_uuid(uint32_t id, uint32_t len, uint8_t *data)
+can_check_uuid(struct canbus_msg *msg)
 {
-    return len >= 7 && memcmp(&data[1], CanData.uuid, sizeof(CanData.uuid))==0;
+    return (msg->dlc >= 7
+            && memcmp(&msg->data[1], CanData.uuid, sizeof(CanData.uuid)) == 0);
 }
 
 // Helpers to encode/decode a CAN identifier to a 1-byte "nodeid"
@@ -130,17 +137,19 @@ can_decode_nodeid(int nodeid)
 }
 
 static void
-can_process_query_unassigned(uint32_t id, uint32_t len, uint8_t *data)
+can_process_query_unassigned(struct canbus_msg *msg)
 {
     if (CanData.assigned_id)
         return;
-    uint8_t send[8];
-    send[0] = CANBUS_RESP_NEED_NODEID;
-    memcpy(&send[1], CanData.uuid, sizeof(CanData.uuid));
-    send[7] = CANBUS_CMD_SET_KLIPPER_NODEID;
+    struct canbus_msg send;
+    send.id = CANBUS_ID_ADMIN_RESP;
+    send.dlc = 8;
+    send.data[0] = CANBUS_RESP_NEED_NODEID;
+    memcpy(&send.data[1], CanData.uuid, sizeof(CanData.uuid));
+    send.data[7] = CANBUS_CMD_SET_KLIPPER_NODEID;
     // Send with retry
     for (;;) {
-        int ret = canbus_send(CANBUS_ID_ADMIN_RESP, 8, send);
+        int ret = canbus_send(&send);
         if (ret >= 0)
             return;
     }
@@ -155,12 +164,12 @@ can_id_conflict(void)
 }
 
 static void
-can_process_set_klipper_nodeid(uint32_t id, uint32_t len, uint8_t *data)
+can_process_set_klipper_nodeid(struct canbus_msg *msg)
 {
-    if (len < 8)
+    if (msg->dlc < 8)
         return;
-    uint32_t newid = can_decode_nodeid(data[7]);
-    if (can_check_uuid(id, len, data)) {
+    uint32_t newid = can_decode_nodeid(msg->data[7]);
+    if (can_check_uuid(msg)) {
         if (newid != CanData.assigned_id) {
             CanData.assigned_id = newid;
             canbus_set_filter(CanData.assigned_id);
@@ -171,28 +180,28 @@ can_process_set_klipper_nodeid(uint32_t id, uint32_t len, uint8_t *data)
 }
 
 static void
-can_process_request_bootloader(uint32_t id, uint32_t len, uint8_t *data)
+can_process_request_bootloader(struct canbus_msg *msg)
 {
-    if (!can_check_uuid(id, len, data))
+    if (!can_check_uuid(msg))
         return;
     try_request_canboot();
 }
 
 // Handle an "admin" command
 static void
-can_process(uint32_t id, uint32_t len, uint8_t *data)
+can_process_admin(struct canbus_msg *msg)
 {
-    if (!len)
+    if (!msg->dlc)
         return;
-    switch (data[0]) {
+    switch (msg->data[0]) {
     case CANBUS_CMD_QUERY_UNASSIGNED:
-        can_process_query_unassigned(id, len, data);
+        can_process_query_unassigned(msg);
         break;
     case CANBUS_CMD_SET_KLIPPER_NODEID:
-        can_process_set_klipper_nodeid(id, len, data);
+        can_process_set_klipper_nodeid(msg);
         break;
     case CANBUS_CMD_REQUEST_BOOTLOADER:
-        can_process_request_bootloader(id, len, data);
+        can_process_request_bootloader(msg);
         break;
     }
 }
@@ -202,7 +211,7 @@ can_process(uint32_t id, uint32_t len, uint8_t *data)
  * CAN packet reading
  ****************************************************************/
 
-void
+static void
 canbus_notify_rx(void)
 {
     sched_wake_task(&CanData.rx_wake);
@@ -212,16 +221,30 @@ DECL_CONSTANT("RECEIVE_WINDOW", ARRAY_SIZE(CanData.receive_buf));
 
 // Handle incoming data (called from IRQ handler)
 void
-canbus_process_data(uint32_t id, uint32_t len, uint8_t *data)
+canbus_process_data(struct canbus_msg *msg)
 {
-    if (!id || id != CanData.assigned_id)
-        return;
-    int rpos = CanData.receive_pos;
-    if (len > sizeof(CanData.receive_buf) - rpos)
-        len = sizeof(CanData.receive_buf) - rpos;
-    memcpy(&CanData.receive_buf[rpos], data, len);
-    CanData.receive_pos = rpos + len;
-    canbus_notify_rx();
+    uint32_t id = msg->id;
+    if (CanData.assigned_id && id == CanData.assigned_id) {
+        // Add to incoming data buffer
+        int rpos = CanData.receive_pos;
+        uint32_t len = CANMSG_DATA_LEN(msg);
+        if (len > sizeof(CanData.receive_buf) - rpos)
+            len = sizeof(CanData.receive_buf) - rpos;
+        memcpy(&CanData.receive_buf[rpos], msg->data, len);
+        CanData.receive_pos = rpos + len;
+        canbus_notify_rx();
+    } else if (id == CANBUS_ID_ADMIN
+               || (CanData.assigned_id && id == CanData.assigned_id + 1)) {
+        // Add to admin command queue
+        uint32_t pushp = CanData.admin_push_pos;
+        if (pushp >= CanData.admin_pull_pos + ARRAY_SIZE(CanData.admin_queue))
+            // No space - drop message
+            return;
+        uint32_t pos = pushp % ARRAY_SIZE(CanData.admin_queue);
+        memcpy(&CanData.admin_queue[pos], msg, sizeof(*msg));
+        CanData.admin_push_pos = pushp + 1;
+        canbus_notify_rx();
+    }
 }
 
 // Remove from the receive buffer the given number of bytes
@@ -257,17 +280,20 @@ canbus_rx_task(void)
     if (!sched_check_wake(&CanData.rx_wake))
         return;
 
-    // Read any pending CAN packets
+    // Process pending admin messages
     for (;;) {
-        uint8_t data[8];
-        uint32_t id;
-        int ret = canbus_read(&id, data);
-        if (ret < 0)
+        uint32_t pushp = readl(&CanData.admin_push_pos);
+        uint32_t pullp = CanData.admin_pull_pos;
+        if (pushp == pullp)
             break;
-        if (id && id == CanData.assigned_id + 1)
+        uint32_t pos = pullp % ARRAY_SIZE(CanData.admin_queue);
+        struct canbus_msg *msg = &CanData.admin_queue[pos];
+        uint32_t id = msg->id;
+        if (CanData.assigned_id && id == CanData.assigned_id + 1)
             can_id_conflict();
         else if (id == CANBUS_ID_ADMIN)
-            can_process(id, ret, data);
+            can_process_admin(msg);
+        CanData.admin_pull_pos = pullp + 1;
     }
 
     // Check for a complete message block and process it
