@@ -15,44 +15,56 @@
 #include "command.h" // DECL_CONSTANT
 #include "sched.h" // sched_wake_task
 
-static uint32_t canbus_assigned_id;
-static uint8_t canbus_uuid[CANBUS_UUID_LEN];
+// Global storage
+static struct canbus_data {
+    uint32_t assigned_id;
+    uint8_t uuid[CANBUS_UUID_LEN];
+
+    // Tx data
+    struct task_wake tx_wake;
+    uint8_t transmit_pos, transmit_max;
+
+    // Rx data
+    struct task_wake rx_wake;
+    uint8_t receive_pos;
+
+    // Transfer buffers
+    uint8_t transmit_buf[96];
+    uint8_t receive_buf[192];
+} CanData;
 
 
 /****************************************************************
  * Data transmission over CAN
  ****************************************************************/
 
-static struct task_wake canbus_tx_wake;
-static uint8_t transmit_buf[96], transmit_pos, transmit_max;
-
 void
 canbus_notify_tx(void)
 {
-    sched_wake_task(&canbus_tx_wake);
+    sched_wake_task(&CanData.tx_wake);
 }
 
 void
 canbus_tx_task(void)
 {
-    if (!sched_check_wake(&canbus_tx_wake))
+    if (!sched_check_wake(&CanData.tx_wake))
         return;
-    uint32_t id = canbus_assigned_id;
+    uint32_t id = CanData.assigned_id;
     if (!id) {
-        transmit_pos = transmit_max = 0;
+        CanData.transmit_pos = CanData.transmit_max = 0;
         return;
     }
-    uint32_t tpos = transmit_pos, tmax = transmit_max;
+    uint32_t tpos = CanData.transmit_pos, tmax = CanData.transmit_max;
     for (;;) {
         int avail = tmax - tpos, now = avail > 8 ? 8 : avail;
         if (avail <= 0)
             break;
-        int ret = canbus_send(id + 1, now, &transmit_buf[tpos]);
+        int ret = canbus_send(id + 1, now, &CanData.transmit_buf[tpos]);
         if (ret <= 0)
             break;
         tpos += now;
     }
-    transmit_pos = tpos;
+    CanData.transmit_pos = tpos;
 }
 DECL_TASK(canbus_tx_task);
 
@@ -61,26 +73,27 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Verify space for message
-    uint32_t tpos = transmit_pos, tmax = transmit_max;
+    uint32_t tpos = CanData.transmit_pos, tmax = CanData.transmit_max;
     if (tpos >= tmax)
-        transmit_pos = transmit_max = tpos = tmax = 0;
+        CanData.transmit_pos = CanData.transmit_max = tpos = tmax = 0;
     uint32_t max_size = ce->max_size;
-    if (tmax + max_size > sizeof(transmit_buf)) {
-        if (tmax + max_size - tpos > sizeof(transmit_buf))
+    if (tmax + max_size > sizeof(CanData.transmit_buf)) {
+        if (tmax + max_size - tpos > sizeof(CanData.transmit_buf))
             // Not enough space for message
             return;
         // Move buffer
         tmax -= tpos;
-        memmove(&transmit_buf[0], &transmit_buf[tpos], tmax);
-        transmit_pos = tpos = 0;
-        transmit_max = tmax;
+        memmove(&CanData.transmit_buf[0], &CanData.transmit_buf[tpos], tmax);
+        CanData.transmit_pos = tpos = 0;
+        CanData.transmit_max = tmax;
     }
 
     // Generate message
-    uint32_t msglen = command_encode_and_frame(&transmit_buf[tmax], ce, args);
+    uint32_t msglen = command_encode_and_frame(&CanData.transmit_buf[tmax]
+                                               , ce, args);
 
     // Start message transmit
-    transmit_max = tmax + msglen;
+    CanData.transmit_max = tmax + msglen;
     canbus_notify_tx();
 }
 
@@ -99,16 +112,16 @@ console_sendf(const struct command_encoder *ce, va_list args)
 static int
 can_check_uuid(uint32_t id, uint32_t len, uint8_t *data)
 {
-    return len >= 7 && memcmp(&data[1], canbus_uuid, sizeof(canbus_uuid)) == 0;
+    return len >= 7 && memcmp(&data[1], CanData.uuid, sizeof(CanData.uuid))==0;
 }
 
 // Helpers to encode/decode a CAN identifier to a 1-byte "nodeid"
 static int
 can_get_nodeid(void)
 {
-    if (!canbus_assigned_id)
+    if (!CanData.assigned_id)
         return 0;
-    return (canbus_assigned_id - 0x100) >> 1;
+    return (CanData.assigned_id - 0x100) >> 1;
 }
 static uint32_t
 can_decode_nodeid(int nodeid)
@@ -119,11 +132,11 @@ can_decode_nodeid(int nodeid)
 static void
 can_process_query_unassigned(uint32_t id, uint32_t len, uint8_t *data)
 {
-    if (canbus_assigned_id)
+    if (CanData.assigned_id)
         return;
     uint8_t send[8];
     send[0] = CANBUS_RESP_NEED_NODEID;
-    memcpy(&send[1], canbus_uuid, sizeof(canbus_uuid));
+    memcpy(&send[1], CanData.uuid, sizeof(CanData.uuid));
     send[7] = CANBUS_CMD_SET_KLIPPER_NODEID;
     // Send with retry
     for (;;) {
@@ -136,8 +149,8 @@ can_process_query_unassigned(uint32_t id, uint32_t len, uint8_t *data)
 static void
 can_id_conflict(void)
 {
-    canbus_assigned_id = 0;
-    canbus_set_filter(canbus_assigned_id);
+    CanData.assigned_id = 0;
+    canbus_set_filter(CanData.assigned_id);
     shutdown("Another CAN node assigned this ID");
 }
 
@@ -148,11 +161,11 @@ can_process_set_klipper_nodeid(uint32_t id, uint32_t len, uint8_t *data)
         return;
     uint32_t newid = can_decode_nodeid(data[7]);
     if (can_check_uuid(id, len, data)) {
-        if (newid != canbus_assigned_id) {
-            canbus_assigned_id = newid;
-            canbus_set_filter(canbus_assigned_id);
+        if (newid != CanData.assigned_id) {
+            CanData.assigned_id = newid;
+            canbus_set_filter(CanData.assigned_id);
         }
-    } else if (newid == canbus_assigned_id) {
+    } else if (newid == CanData.assigned_id) {
         can_id_conflict();
     }
 }
@@ -189,28 +202,25 @@ can_process(uint32_t id, uint32_t len, uint8_t *data)
  * CAN packet reading
  ****************************************************************/
 
-static struct task_wake canbus_rx_wake;
-
 void
 canbus_notify_rx(void)
 {
-    sched_wake_task(&canbus_rx_wake);
+    sched_wake_task(&CanData.rx_wake);
 }
 
-static uint8_t receive_buf[192], receive_pos;
-DECL_CONSTANT("RECEIVE_WINDOW", ARRAY_SIZE(receive_buf));
+DECL_CONSTANT("RECEIVE_WINDOW", ARRAY_SIZE(CanData.receive_buf));
 
 // Handle incoming data (called from IRQ handler)
 void
 canbus_process_data(uint32_t id, uint32_t len, uint8_t *data)
 {
-    if (!id || id != canbus_assigned_id)
+    if (!id || id != CanData.assigned_id)
         return;
-    int rpos = receive_pos;
-    if (len > sizeof(receive_buf) - rpos)
-        len = sizeof(receive_buf) - rpos;
-    memcpy(&receive_buf[rpos], data, len);
-    receive_pos = rpos + len;
+    int rpos = CanData.receive_pos;
+    if (len > sizeof(CanData.receive_buf) - rpos)
+        len = sizeof(CanData.receive_buf) - rpos;
+    memcpy(&CanData.receive_buf[rpos], data, len);
+    CanData.receive_pos = rpos + len;
     canbus_notify_rx();
 }
 
@@ -220,21 +230,21 @@ console_pop_input(int len)
 {
     int copied = 0;
     for (;;) {
-        int rpos = readb(&receive_pos);
+        int rpos = readb(&CanData.receive_pos);
         int needcopy = rpos - len;
         if (needcopy) {
-            memmove(&receive_buf[copied], &receive_buf[copied + len]
-                    , needcopy - copied);
+            memmove(&CanData.receive_buf[copied]
+                    , &CanData.receive_buf[copied + len], needcopy - copied);
             copied = needcopy;
             canbus_notify_rx();
         }
         irqstatus_t flag = irq_save();
-        if (rpos != readb(&receive_pos)) {
+        if (rpos != readb(&CanData.receive_pos)) {
             // Raced with irq handler - retry
             irq_restore(flag);
             continue;
         }
-        receive_pos = needcopy;
+        CanData.receive_pos = needcopy;
         irq_restore(flag);
         break;
     }
@@ -244,7 +254,7 @@ console_pop_input(int len)
 void
 canbus_rx_task(void)
 {
-    if (!sched_check_wake(&canbus_rx_wake))
+    if (!sched_check_wake(&CanData.rx_wake))
         return;
 
     // Read any pending CAN packets
@@ -254,17 +264,17 @@ canbus_rx_task(void)
         int ret = canbus_read(&id, data);
         if (ret < 0)
             break;
-        if (id && id == canbus_assigned_id + 1)
+        if (id && id == CanData.assigned_id + 1)
             can_id_conflict();
         else if (id == CANBUS_ID_ADMIN)
             can_process(id, ret, data);
     }
 
     // Check for a complete message block and process it
-    uint_fast8_t rpos = readb(&receive_pos), pop_count;
-    int ret = command_find_block(receive_buf, rpos, &pop_count);
+    uint_fast8_t rpos = readb(&CanData.receive_pos), pop_count;
+    int ret = command_find_block(CanData.receive_buf, rpos, &pop_count);
     if (ret > 0)
-        command_dispatch(receive_buf, pop_count);
+        command_dispatch(CanData.receive_buf, pop_count);
     if (ret) {
         console_pop_input(pop_count);
         if (ret > 0)
@@ -282,14 +292,14 @@ void
 command_get_canbus_id(uint32_t *args)
 {
     sendf("canbus_id canbus_uuid=%.*s canbus_nodeid=%u"
-          , sizeof(canbus_uuid), canbus_uuid, can_get_nodeid());
+          , sizeof(CanData.uuid), CanData.uuid, can_get_nodeid());
 }
 DECL_COMMAND_FLAGS(command_get_canbus_id, HF_IN_SHUTDOWN, "get_canbus_id");
 
 void
 canbus_set_uuid(void *uuid)
 {
-    memcpy(canbus_uuid, uuid, sizeof(canbus_uuid));
+    memcpy(CanData.uuid, uuid, sizeof(CanData.uuid));
     canbus_notify_rx();
 }
 
