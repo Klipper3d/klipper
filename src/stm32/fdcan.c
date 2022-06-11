@@ -61,23 +61,30 @@ FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
 
 #define FDCAN_IE_TC        (FDCAN_IE_TCE | FDCAN_IE_TCFE | FDCAN_IE_TFEE)
 
-#if CONFIG_STM32_CANBUS_PB0_PB1
+#if CONFIG_STM32_CANBUS_PA11_PA12
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PA12");
+ #define GPIO_Rx GPIO('A', 11)
+ #define GPIO_Tx GPIO('A', 12)
+#elif CONFIG_STM32_CANBUS_PB8_PB9
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB8,PB9");
+ #define GPIO_Rx GPIO('B', 8)
+ #define GPIO_Tx GPIO('B', 9)
+#elif CONFIG_STM32_CANBUS_PB0_PB1
  DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB0,PB1");
  #define GPIO_Rx GPIO('B', 0)
  #define GPIO_Tx GPIO('B', 1)
 #endif
 
-#if CONFIG_MACH_STM32G0
- #if CONFIG_STM32_CANBUS_PB0_PB1
-  #define SOC_CAN FDCAN2
-  #define MSG_RAM fdcan_ram->fdcan2
- #else
-  #error Uknown pins for STMF32G0 CAN
- #endif
-
- #define CAN_IT0_IRQn  TIM16_FDCAN_IT0_IRQn
- #define CAN_FUNCTION  GPIO_FUNCTION(3) // Alternative function mapping number
+#if !CONFIG_STM32_CANBUS_PB0_PB1
+ #define SOC_CAN FDCAN1
+ #define MSG_RAM fdcan_ram->fdcan1
+#else
+ #define SOC_CAN FDCAN2
+ #define MSG_RAM fdcan_ram->fdcan2
 #endif
+
+#define CAN_IT0_IRQn  TIM16_FDCAN_IT0_IRQn
+#define CAN_FUNCTION  GPIO_FUNCTION(3) // Alternative function mapping number
 
 #ifndef SOC_CAN
  #error No known CAN device for configured MCU
@@ -239,9 +246,6 @@ can_init(void)
         ;
     /* Enable configuration change */
     SOC_CAN->CCCR |= FDCAN_CCCR_CCE;
-
-    if (SOC_CAN == FDCAN1)
-        FDCAN_CONFIG->CKDIV = 0;
 
     /* Disable protocol exception handling */
     SOC_CAN->CCCR |= FDCAN_CCCR_PXHD;
