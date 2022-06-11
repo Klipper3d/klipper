@@ -118,6 +118,12 @@ canbus_send(struct canbus_msg *msg)
     mb->TDHR = msg->data32[1];
 
     /* Request transmission */
+    uint32_t tir;
+    if (msg->id & CANMSG_ID_EFF)
+        tir = ((msg->id & 0x1fffffff) << CAN_TI0R_EXID_Pos) | CAN_TI0R_IDE;
+    else
+        tir = (msg->id & 0x7ff) << CAN_TI0R_STID_Pos;
+    tir |= msg->id & CANMSG_ID_RTR ? CAN_TI0R_RTR : 0;
     mb->TIR = (msg->id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
     return CANMSG_DATA_LEN(msg);
 }
@@ -131,7 +137,7 @@ canbus_set_filter(uint32_t id)
     /* Initialisation mode for the filter */
     SOC_CAN->FA1R = 0;
 
-    uint32_t mask = CAN_RI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
+    uint32_t mask = CAN_TI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
     SOC_CAN->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
     SOC_CAN->sFilterRegister[0].FR2 = mask;
     SOC_CAN->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
@@ -155,8 +161,13 @@ CAN_IRQHandler(void)
     if (SOC_CAN->RF0R & CAN_RF0R_FMP0) {
         // Read and ack data packet
         CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[0];
+        uint32_t rir = mb->RIR;
         struct canbus_msg msg;
-        msg.id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
+        if (rir & CAN_RI0R_IDE)
+            msg.id = ((rir >> CAN_RI0R_EXID_Pos) & 0x1fffffff) | CANMSG_ID_EFF;
+        else
+            msg.id = (rir >> CAN_RI0R_STID_Pos) & 0x7ff;
+        msg.id |= rir & CAN_RI0R_RTR ? CANMSG_ID_RTR : 0;
         msg.dlc = mb->RDTR & CAN_RDT0R_DLC;
         msg.data32[0] = mb->RDLR;
         msg.data32[1] = mb->RDHR;

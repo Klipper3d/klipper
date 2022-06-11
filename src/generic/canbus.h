@@ -16,6 +16,9 @@ struct canbus_msg {
     };
 };
 
+#define CANMSG_ID_RTR (1<<30)
+#define CANMSG_ID_EFF (1<<31)
+
 #define CANMSG_DATA_LEN(msg) ((msg)->dlc > 8 ? 8 : (msg)->dlc)
 
 // callbacks provided by board specific code

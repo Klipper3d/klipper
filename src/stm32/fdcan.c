@@ -19,36 +19,22 @@
 
 typedef struct
 {
-       uint32_t RESERVED0 : 18;
-  __IO uint32_t ID : 11;
-  __IO uint32_t RTR : 1;
-  __IO uint32_t XTD : 1;
-  __IO uint32_t ESI : 1;
-  __IO uint32_t RXTS : 16;
-  __IO uint32_t DLC : 4;
-  __IO uint32_t BRS : 1;
-  __IO uint32_t FDF : 1;
-       uint32_t RESERVED1 : 2;
-  __IO uint32_t FIDX : 7;
-  __IO uint32_t ANMF : 1;
-  __IO uint32_t data[64 / 4];
-}FDCAN_RX_FIFO_TypeDef;
-
-typedef struct
-{
   __IO uint32_t id_section;
   __IO uint32_t dlc_section;
   __IO uint32_t data[64 / 4];
-}FDCAN_TX_FIFO_TypeDef;
+}FDCAN_FIFO_TypeDef;
+
+#define FDCAN_XTD (1<<30)
+#define FDCAN_RTR (1<<29)
 
 typedef struct
 {
   __IO uint32_t FLS[28]; // Filter list standard
   __IO uint32_t FLE[16]; // Filter list extended
-  FDCAN_RX_FIFO_TypeDef RXF0[3];
-  FDCAN_RX_FIFO_TypeDef RXF1[3];
+  FDCAN_FIFO_TypeDef RXF0[3];
+  FDCAN_FIFO_TypeDef RXF1[3];
   __IO uint32_t TEF[6]; // Tx event FIFO
-  FDCAN_TX_FIFO_TypeDef TXFIFO[3];
+  FDCAN_FIFO_TypeDef TXFIFO[3];
 }FDCAN_MSG_RAM_TypeDef;
 
 typedef struct
@@ -100,8 +86,14 @@ canbus_send(struct canbus_msg *msg)
         return -1;
 
     uint32_t w_index = ((txfqs & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos);
-    FDCAN_TX_FIFO_TypeDef *txfifo = &MSG_RAM.TXFIFO[w_index];
-    txfifo->id_section = (msg->id & 0x1fffffff) << 18;
+    FDCAN_FIFO_TypeDef *txfifo = &MSG_RAM.TXFIFO[w_index];
+    uint32_t ids;
+    if (msg->id & CANMSG_ID_EFF)
+        ids = (msg->id & 0x1fffffff) | FDCAN_XTD;
+    else
+        ids = (msg->id & 0x7ff) << 18;
+    ids |= msg->id & CANMSG_ID_RTR ? FDCAN_RTR : 0;
+    txfifo->id_section = ids;
     txfifo->dlc_section = (msg->dlc & 0x0f) << 16;
     txfifo->data[0] = msg->data32[0];
     txfifo->data[1] = msg->data32[1];
@@ -155,10 +147,15 @@ CAN_IRQHandler(void)
         if (rxf0s & FDCAN_RXF0S_F0FL) {
             // Read and ack data packet
             uint32_t idx = (rxf0s & FDCAN_RXF0S_F0GI) >> FDCAN_RXF0S_F0GI_Pos;
-            FDCAN_RX_FIFO_TypeDef *rxf0 = &MSG_RAM.RXF0[idx];
+            FDCAN_FIFO_TypeDef *rxf0 = &MSG_RAM.RXF0[idx];
+            uint32_t ids = rxf0->id_section;
             struct canbus_msg msg;
-            msg.id = rxf0->ID;
-            msg.dlc = rxf0->DLC;
+            if (ids & FDCAN_XTD)
+                msg.id = (ids & 0x1fffffff) | CANMSG_ID_EFF;
+            else
+                msg.id = (ids >> 18) & 0x7ff;
+            msg.id |= ids & FDCAN_RTR ? CANMSG_ID_RTR : 0;
+            msg.dlc = (rxf0->dlc_section >> 16) & 0x0f;
             msg.data32[0] = rxf0->data[0];
             msg.data32[1] = rxf0->data[1];
             SOC_CAN->RXF0A = idx;
