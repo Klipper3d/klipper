@@ -113,6 +113,8 @@ can_filter(uint32_t index, uint32_t id)
 void
 canbus_set_filter(uint32_t id)
 {
+    if (!CONFIG_CANBUS_FILTER)
+        return;
     /* Request initialisation */
     SOC_CAN->CCCR |= FDCAN_CCCR_INIT;
     /* Wait the acknowledge */

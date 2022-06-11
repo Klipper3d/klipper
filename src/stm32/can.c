@@ -136,13 +136,19 @@ canbus_set_filter(uint32_t id)
     /* Initialisation mode for the filter */
     SOC_CAN->FA1R = 0;
 
-    uint32_t mask = CAN_TI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
-    SOC_CAN->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
-    SOC_CAN->sFilterRegister[0].FR2 = mask;
-    SOC_CAN->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
-    SOC_CAN->sFilterRegister[1].FR2 = mask;
-    SOC_CAN->sFilterRegister[2].FR1 = id << CAN_RI0R_STID_Pos;
-    SOC_CAN->sFilterRegister[2].FR2 = mask;
+    if (CONFIG_CANBUS_FILTER) {
+        uint32_t mask = CAN_TI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
+        SOC_CAN->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
+        SOC_CAN->sFilterRegister[0].FR2 = mask;
+        SOC_CAN->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
+        SOC_CAN->sFilterRegister[1].FR2 = mask;
+        SOC_CAN->sFilterRegister[2].FR1 = id << CAN_RI0R_STID_Pos;
+        SOC_CAN->sFilterRegister[2].FR2 = mask;
+    } else {
+        SOC_CAN->sFilterRegister[0].FR1 = 0;
+        SOC_CAN->sFilterRegister[0].FR2 = 0;
+        id = 0;
+    }
 
     /* 32-bit scale for the filter */
     SOC_CAN->FS1R = (1<<0) | (1<<1) | (1<<2);
