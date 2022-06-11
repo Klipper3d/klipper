@@ -22,6 +22,7 @@
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 #define FREQ_USB 48000000
 
+
 // Map a peripheral address to its enable bits
 struct cline
 lookup_clock_line(uint32_t periph_base)
