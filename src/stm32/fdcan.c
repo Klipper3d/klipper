@@ -88,13 +88,9 @@ int
 canbus_send(struct canbus_msg *msg)
 {
     uint32_t txfqs = SOC_CAN->TXFQS;
-    if (txfqs & FDCAN_TXFQS_TFQF) {
-        // No space in transmit fifo - enable tx irq
-        irq_disable();
-        SOC_CAN->IE |= FDCAN_IE_TC;
-        irq_enable();
+    if (txfqs & FDCAN_TXFQS_TFQF)
+        // No space in transmit fifo - wait for irq
         return -1;
-    }
 
     uint32_t w_index = ((txfqs & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos);
     FDCAN_TX_FIFO_TypeDef *txfifo = &MSG_RAM.TXFIFO[w_index];
@@ -143,7 +139,7 @@ canbus_set_filter(uint32_t id)
 void
 CAN_IRQHandler(void)
 {
-    uint32_t ir = SOC_CAN->IR & SOC_CAN->IE;
+    uint32_t ir = SOC_CAN->IR;
 
     if (ir & FDCAN_IE_RF0NE) {
         SOC_CAN->IR = FDCAN_IE_RF0NE;
@@ -262,7 +258,7 @@ can_init(void)
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CAN_IT0_IRQn, 0);
     SOC_CAN->ILE = FDCAN_ILE_EINT0;
-    SOC_CAN->IE = FDCAN_IE_RF0NE;
+    SOC_CAN->IE = FDCAN_IE_RF0NE | FDCAN_IE_TC;
 
     // Convert unique 96-bit chip id into 48 bit representation
     uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);
