@@ -1334,6 +1334,9 @@ path:
 #   are not supported). One may point this to OctoPrint's upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
+#on_error_gcode:
+#   A list of G-Code commands to execute when an error is reported.
+
 ```
 
 ### [sdcard_loop]
@@ -1430,6 +1433,20 @@ Enable the "M118" and "RESPOND" extended
 #default_prefix: echo:
 #   Directly sets the default prefix. If present, this value will
 #   override the "default_type".
+```
+
+### [exclude_object]
+Enables support to exclude or cancel individual objects during the printing
+process.
+
+See the [exclude objects guide](Exclude_Object.md) and
+[command reference](G-Codes.md#excludeobject)
+for additional information. See the
+[sample-macros.cfg](../config/sample-macros.cfg) file for a
+Marlin/RepRapFirmware compatible M486 G-Code macro.
+
+```
+[exclude_object]
 ```
 
 ## Resonance compensation

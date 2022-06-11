@@ -13,7 +13,6 @@
 #include <time.h> // clock_gettime
 #include "basecmd.h" // oid_alloc
 #include "board/irq.h" // irq_disable
-#include "board/misc.h" // output
 #include "command.h" // DECL_COMMAND
 #include "internal.h" // report_errno
 #include "sched.h" // DECL_SHUTDOWN
@@ -51,17 +50,23 @@ struct ds18_s {
     int temperature;
     struct timespec request_time;
     uint8_t status;
-    const char* error;
+    uint8_t error_count;
+    uint8_t max_error_count;
 };
 
-// Lock ds18_s mutex, set error status and message, unlock mutex.
+// Lock ds18_s mutex, set error status, unlock mutex.
 static void
-locking_set_read_error(struct ds18_s *d, const char *error)
+locking_handle_read_error(struct ds18_s *d)
 {
     pthread_mutex_lock(&d->lock);
-    d->error = error;
     d->status = W1_ERROR;
-    pthread_mutex_unlock(&d->lock);
+    d->error_count++;
+    if (d->error_count <= d->max_error_count) {
+        pthread_mutex_unlock(&d->lock);
+    } else {
+        pthread_mutex_unlock(&d->lock);
+        pthread_exit(NULL);
+    }
 }
 
 // The kernel interface to DS18B20 sensors is a sysfs entry that blocks for
@@ -89,15 +94,14 @@ reader_start_routine(void *param) {
         int ret = read(d->fd, data, sizeof(data)-1);
         if (ret < 0) {
             report_errno("read DS18B20", ret);
-            locking_set_read_error(d, "Unable to read DS18B20");
-            pthread_exit(NULL);
+            locking_handle_read_error(d);
+            continue;
         }
         data[ret] = '\0';
         char *temp_string = strstr(data, "t=");
         if (temp_string == NULL || temp_string[2] == '\0') {
-            locking_set_read_error(d,
-            "Unable to find temperature value in DS18B20 report");
-            pthread_exit(NULL);
+            locking_handle_read_error(d);
+            continue;
         }
         // Don't pass 't' and '=' to atoi
         temp_string += 2;
@@ -113,8 +117,8 @@ reader_start_routine(void *param) {
         ret = lseek(d->fd, 0, SEEK_SET);
         if (ret < 0) {
             report_errno("seek DS18B20", ret);
-            locking_set_read_error(d, "Unable to seek DS18B20");
-            pthread_exit(NULL);
+            locking_handle_read_error(d);
+            continue;
         }
     }
     pthread_exit(NULL);
@@ -151,6 +155,8 @@ command_config_ds18b20(uint32_t *args)
     }
 
     struct ds18_s *d = oid_alloc(args[0], command_config_ds18b20, sizeof(*d));
+    d->max_error_count = args[3];
+    d->error_count = 0;
     d->timer.func = ds18_event;
     d->fd = fd;
     d->status = W1_IDLE;
@@ -181,7 +187,8 @@ fail4:
 fail5:
     shutdown("Could not start DS18B20 reader thread");
 }
-DECL_COMMAND(command_config_ds18b20, "config_ds18b20 oid=%c serial=%*s");
+DECL_COMMAND(command_config_ds18b20,
+             "config_ds18b20 oid=%c serial=%*s max_error_count=%c");
 
 void
 command_query_ds18b20(uint32_t *args)
@@ -215,12 +222,15 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
 
     pthread_mutex_lock(&d->lock);
     if (d->status == W1_ERROR) {
-        // try_shutdown expects a static string. Output the specific error,
-        // then shut down with a generic error.
-        output("Error: %s", d->error);
-        pthread_mutex_unlock(&d->lock);
-        try_shutdown("Error reading DS18B20 sensor");
-        return;
+        if (d->error_count > d->max_error_count) {
+            try_shutdown("Error reading DS18B20 sensor");
+            pthread_mutex_unlock(&d->lock);
+            return;
+        } else {
+          sendf("ds18b20_result oid=%c next_clock=%u value=%i fault=%u"
+                  , oid, next_begin_time, d->temperature, d->error_count);
+          d->status = W1_READ_REQUESTED;
+        }
     } else if (d->status == W1_IDLE) {
         // This happens the first time requesting a temperature.
         // Nothing to report yet.
@@ -228,8 +238,8 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         d->status = W1_READ_REQUESTED;
     } else if (d->status == W1_READY) {
         // Report the previous temperature and request a new one.
-        sendf("ds18b20_result oid=%c next_clock=%u value=%i"
-              , oid, next_begin_time, d->temperature);
+        sendf("ds18b20_result oid=%c next_clock=%u value=%i fault=%u"
+              , oid, next_begin_time, d->temperature, 0);
         if (d->temperature < d->min_value || d->temperature > d->max_value) {
             pthread_mutex_unlock(&d->lock);
             try_shutdown("DS18B20 out of range");
@@ -237,6 +247,7 @@ ds18_send_and_request(struct ds18_s *d, uint32_t next_begin_time, uint8_t oid)
         }
         d->request_time = request_time;
         d->status = W1_READ_REQUESTED;
+        d->error_count = 0; //successful reading, reset error count
     } else if (d->status == W1_READ_REQUESTED) {
         // Reader thread is already reading (or will be soon).
         // This can happen if two queries come in quick enough
