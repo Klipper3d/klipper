@@ -12,6 +12,7 @@
 #include "command.h" // DECL_CONSTANT_STR
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
+#include "generic/canserial.h" // CANBUS_ID_ADMIN
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
