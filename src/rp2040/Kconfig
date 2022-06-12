@@ -86,6 +86,9 @@ choice
     config RP2040_CANBUS
         bool "CAN bus"
         select CANSERIAL
+    config RP2040_USBCANBUS
+        bool "USB to CAN bus bridge"
+        select USBCANBUS
 endchoice
 
 config RP2040_CANBUS_GPIO_RX
