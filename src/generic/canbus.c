@@ -13,7 +13,10 @@
 #include "board/misc.h" // console_sendf
 #include "canbus.h" // canbus_set_uuid
 #include "command.h" // DECL_CONSTANT
+#include "fasthash.h" // fasthash64
 #include "sched.h" // sched_wake_task
+
+#define CANBUS_UUID_LEN 6
 
 // Global storage
 static struct canbus_data {
@@ -323,9 +326,10 @@ command_get_canbus_id(uint32_t *args)
 DECL_COMMAND_FLAGS(command_get_canbus_id, HF_IN_SHUTDOWN, "get_canbus_id");
 
 void
-canbus_set_uuid(void *uuid)
+canbus_set_uuid(uint8_t *raw_uuid, uint32_t raw_uuid_len)
 {
-    memcpy(CanData.uuid, uuid, sizeof(CanData.uuid));
+    uint64_t hash = fasthash64(raw_uuid, raw_uuid_len, 0xA16231A7);
+    memcpy(CanData.uuid, &hash, sizeof(CanData.uuid));
     canbus_notify_rx();
 }
 

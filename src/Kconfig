@@ -56,15 +56,10 @@ config USB_VENDOR_ID
 config USB_DEVICE_ID
     default 0x614e
 config USB_SERIAL_NUMBER_CHIPID
-    depends on HAVE_CHIPID
+    depends on HAVE_CHIPID && USBSERIAL
     default y
 config USB_SERIAL_NUMBER
     default "12345"
-
-# Generic configuration options for CANbus
-config CANBUS_FREQUENCY
-    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
-    default 500000
 
 menu "USB ids"
     depends on USBSERIAL && LOW_LEVEL_OPTIONS
@@ -78,6 +73,12 @@ config USB_SERIAL_NUMBER
     string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
 
+# Generic configuration options for CANbus
+config CANBUS_FREQUENCY
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    default 500000
+
+# Support setting gpio state at startup
 config INITIAL_PINS
     string "GPIO pins to set at micro-controller startup"
     depends on LOW_LEVEL_OPTIONS

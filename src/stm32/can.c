@@ -10,7 +10,6 @@
 #include "autoconf.h" // CONFIG_MACH_STM32F1
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
-#include "fasthash.h" // fasthash64
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
 #include "internal.h" // enable_pclock
@@ -272,9 +271,5 @@ can_init(void)
     if (CAN_RX0_IRQn != CAN_TX_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
     SOC_CAN->IER = CAN_IER_FMPIE0;
-
-    // Convert unique 96-bit chip id into 48 bit representation
-    uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);
-    canbus_set_uuid(&hash);
 }
 DECL_INIT(can_init);

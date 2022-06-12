@@ -5,7 +5,6 @@
 
 #define CANBUS_ID_ADMIN 0x3f0
 #define CANBUS_ID_ADMIN_RESP 0x3f1
-#define CANBUS_UUID_LEN 6
 
 struct canbus_msg {
     uint32_t id;
@@ -28,6 +27,6 @@ void canbus_set_filter(uint32_t id);
 // canbus.c
 void canbus_notify_tx(void);
 void canbus_process_data(struct canbus_msg *msg);
-void canbus_set_uuid(void *data);
+void canbus_set_uuid(uint8_t *raw_uuid, uint32_t raw_uuid_len);
 
 #endif // canbus.h
