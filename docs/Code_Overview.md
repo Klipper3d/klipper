@@ -58,9 +58,12 @@ functions are declared using the DECL_COMMAND() macro (see the
 
 Task, init, and command functions always run with interrupts enabled
 (however, they can temporarily disable interrupts if needed). These
-functions should never pause, delay, or do any work that lasts more
-than a few micro-seconds. These functions schedule work at specific
-times by scheduling timers.
+functions should avoid long pauses, delays, or do work that lasts a
+significant time. (Long delays in these "task" functions result in
+scheduling jitter for other "tasks" - delays over 100us may become
+noticeable, delays over 500us may result in command retransmissions,
+delays over 100ms may result in watchdog reboots.) These functions
+schedule work at specific times by scheduling timers.
 
 Timer functions are scheduled by calling sched_add_timer() (located in
 **src/sched.c**). The scheduler code will arrange for the given
@@ -286,6 +289,17 @@ The following may also be useful:
   `printer.lookup_object("pins").setup_pin("pwm",
   config.get("my_pin"))`. The returned object can then be commanded at
   run-time.
+* If the printer object defines a `get_status()` method then the
+  module can export [status information](Status_Reference.md) via
+  [macros](Command_Templates.md) and via the
+  [API Server](API_Server.md). The `get_status()` method must return a
+  Python dictionary with keys that are strings and values that are
+  integers, floats, strings, lists, dictionaries, True, False, or
+  None. Tuples (and named tuples) may also be used (these appear as
+  lists when accessed via the API Server). Lists and dictionaries that
+  are exported must be treated as "immutable" - if their contents
+  change then a new object must be returned from `get_status()`,
+  otherwise the API Server will not detect those changes.
 * If the module needs access to system timing or external file
   descriptors then use `printer.get_reactor()` to obtain access to the
   global "event reactor" class. This reactor class allows one to
@@ -300,6 +314,16 @@ The following may also be useful:
 * Avoid accessing the internal member variables (or calling methods
   that start with an underscore) of other printer objects. Observing
   this convention makes it easier to manage future changes.
+* It is recommended to assign a value to all member variables in the
+  Python constructor of Python classes. (And therefore avoid utilizing
+  Python's ability to dynamically create new member variables.)
+* If a Python variable is to store a floating point value then it is
+  recommended to always assign and manipulate that variable with
+  floating point constants (and never use integer constants). For
+  example, prefer `self.speed = 1.` over `self.speed = 1`, and prefer
+  `self.speed = 2. * x` over `self.speed = 2 * x`. Consistent use of
+  floating point values can avoid hard to debug quirks in Python type
+  conversions.
 * If submitting the module for inclusion in the main Klipper code, be
   sure to place a copyright notice at the top of the module. See the
   existing modules for the preferred format.
@@ -367,8 +391,8 @@ Useful steps:
 3. The first main coding task is to bring up communication support to
    the target board. This is the most difficult step in a new port.
    Once basic communication is working, the remaining steps tend to be
-   much easier. It is typical to use an RS-232 style serial port
-   during initial development as these types of hardware devices are
+   much easier. It is typical to use a UART type serial device during
+   initial development as these types of hardware devices are
    generally easier to enable and control. During this phase, make
    liberal use of helper code from the src/generic/ directory (check
    how src/simulator/Makefile includes the generic C code into the
@@ -381,19 +405,33 @@ Useful steps:
    micro-controller communication protocol to a human readable form.
 5. Add support for timer dispatch from hardware interrupts. See
    Klipper
-   [commit 970831ee](https://github.com/KevinOConnor/klipper/commit/970831ee0d3b91897196e92270d98b2a3067427f)
+   [commit 970831ee](https://github.com/Klipper3d/klipper/commit/970831ee0d3b91897196e92270d98b2a3067427f)
    as an example of steps 1-5 done for the LPC176x architecture.
 6. Bring up basic GPIO input and output support. See Klipper
-   [commit c78b9076](https://github.com/KevinOConnor/klipper/commit/c78b90767f19c9e8510c3155b89fb7ad64ca3c54)
+   [commit c78b9076](https://github.com/Klipper3d/klipper/commit/c78b90767f19c9e8510c3155b89fb7ad64ca3c54)
    as an example of this.
 7. Bring up additional peripherals - for example see Klipper commit
-   [65613aed](https://github.com/KevinOConnor/klipper/commit/65613aeddfb9ef86905cb1dade9e773a02ef3c27),
-   [c812a40a](https://github.com/KevinOConnor/klipper/commit/c812a40a3782415e454b04bf7bd2158a6f0ec8b5),
+   [65613aed](https://github.com/Klipper3d/klipper/commit/65613aeddfb9ef86905cb1dade9e773a02ef3c27),
+   [c812a40a](https://github.com/Klipper3d/klipper/commit/c812a40a3782415e454b04bf7bd2158a6f0ec8b5),
    and
-   [c381d03a](https://github.com/KevinOConnor/klipper/commit/c381d03aad5c3ee761169b7c7bced519cc14da29).
+   [c381d03a](https://github.com/Klipper3d/klipper/commit/c381d03aad5c3ee761169b7c7bced519cc14da29).
 8. Create a sample Klipper config file in the config/ directory. Test
    the micro-controller with the main klippy.py program.
 9. Consider adding build test cases in the test/ directory.
+
+Additional coding tips:
+1. Avoid using "C bitfields" to access IO registers; prefer direct
+   read and write operations of 32bit, 16bit, or 8bit integers. The C
+   language specifications don't clearly specify how the compiler must
+   implement C bitfields (eg, endianness, and bit layout), and it's
+   difficult to determine what IO operations will occur on a C
+   bitfield read or write.
+2. Prefer writing explicit values to IO registers instead of using
+   read-modify-write operations. That is, if updating a field in an IO
+   register where the other fields have known values, then it is
+   preferable to explicitly write the full contents of the register.
+   Explicit writes produce code that is smaller, faster, and easier to
+   debug.
 
 ## Coordinate Systems
 
@@ -424,11 +462,10 @@ Recv: // gcode homing: X:0.000000 Y:0.000000 Z:0.000000
 The "mcu" position (`stepper.get_mcu_position()` in the code) is the
 total number of steps the micro-controller has issued in a positive
 direction minus the number of steps issued in a negative direction
-since the micro-controller was last reset. The value reported is only
-valid after the stepper has been homed. If the robot is in motion when
-the query is issued then the reported value includes moves buffered on
-the micro-controller, but does not include moves on the look-ahead
-queue.
+since the micro-controller was last reset. If the robot is in motion
+when the query is issued then the reported value includes moves
+buffered on the micro-controller, but does not include moves on the
+look-ahead queue.
 
 The "stepper" position (`stepper.get_commanded_position()`) is the
 position of the given stepper as tracked by the kinematics code. This

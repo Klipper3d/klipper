@@ -437,7 +437,7 @@ class BME280:
         else:
             factor = 0
             while duration_ms > 0x3F:
-                duration_ms /= 4
+                duration_ms //= 4
                 factor += 1
             duration_reg = duration_ms + (factor * 64)
 
@@ -464,7 +464,7 @@ class BME280:
 
     def get_status(self, eventtime):
         data = {
-            'temperature': self.temp,
+            'temperature': round(self.temp, 2),
             'pressure': self.pressure
         }
         if self.chip_type in ('BME280', 'BME680'):

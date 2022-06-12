@@ -122,8 +122,11 @@ class MCU_trsync:
         params = self._trsync_query_cmd.send([self._oid,
                                               self.REASON_HOST_REQUEST])
         for s in self._steppers:
-            s.note_homing_end(did_trigger=True) # XXX
+            s.note_homing_end()
         return params['trigger_reason']
+
+TRSYNC_TIMEOUT = 0.025
+TRSYNC_SINGLE_MCU_TIMEOUT = 0.250
 
 class MCU_endstop:
     RETRY_QUERY = 1.000
@@ -136,17 +139,30 @@ class MCU_endstop:
         self._home_cmd = self._query_cmd = None
         self._mcu.register_config_callback(self._build_config)
         self._trigger_completion = None
+        self._rest_ticks = 0
         ffi_main, ffi_lib = chelper.get_ffi()
         self._trdispatch = ffi_main.gc(ffi_lib.trdispatch_alloc(), ffi_lib.free)
-        self._trsync = MCU_trsync(mcu, self._trdispatch)
+        self._trsyncs = [MCU_trsync(mcu, self._trdispatch)]
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
-        if stepper.get_mcu() is not self._mcu:
-            raise pins.error("Endstop and stepper must be on the same mcu")
-        self._trsync.add_stepper(stepper)
+        trsyncs = {trsync.get_mcu(): trsync for trsync in self._trsyncs}
+        trsync = trsyncs.get(stepper.get_mcu())
+        if trsync is None:
+            trsync = MCU_trsync(stepper.get_mcu(), self._trdispatch)
+            self._trsyncs.append(trsync)
+        trsync.add_stepper(stepper)
+        # Check for unsupported multi-mcu shared stepper rails
+        sname = stepper.get_name()
+        if sname.startswith('stepper_'):
+            for ot in self._trsyncs:
+                for s in ot.get_steppers():
+                    if ot is not trsync and s.get_name().startswith(sname[:9]):
+                        cerror = self._mcu.get_printer().config_error
+                        raise cerror("Multi-mcu homing not supported on"
+                                     " multi-mcu shared axis")
     def get_steppers(self):
-        return self._trsync.get_steppers()
+        return [s for trsync in self._trsyncs for s in trsync.get_steppers()]
     def _build_config(self):
         # Setup config
         self._mcu.add_config_cmd("config_endstop oid=%d pin=%s pull_up=%d"
@@ -156,7 +172,7 @@ class MCU_endstop:
             " rest_ticks=0 pin_value=0 trsync_oid=0 trigger_reason=0"
             % (self._oid,), on_restart=True)
         # Lookup commands
-        cmd_queue = self._trsync.get_command_queue()
+        cmd_queue = self._trsyncs[0].get_command_queue()
         self._home_cmd = self._mcu.lookup_command(
             "endstop_home oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u pin_value=%c trsync_oid=%c trigger_reason=%c",
@@ -169,10 +185,15 @@ class MCU_endstop:
                    triggered=True):
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
+        self._rest_ticks = rest_ticks
         reactor = self._mcu.get_printer().get_reactor()
         self._trigger_completion = reactor.completion()
-        etrsync = self._trsync
-        etrsync.start(print_time, self._trigger_completion, .250)
+        expire_timeout = TRSYNC_TIMEOUT
+        if len(self._trsyncs) == 1:
+            expire_timeout = TRSYNC_SINGLE_MCU_TIMEOUT
+        for trsync in self._trsyncs:
+            trsync.start(print_time, self._trigger_completion, expire_timeout)
+        etrsync = self._trsyncs[0]
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_start(self._trdispatch, etrsync.REASON_HOST_REQUEST)
         self._home_cmd.send(
@@ -181,7 +202,7 @@ class MCU_endstop:
              etrsync.get_oid(), etrsync.REASON_ENDSTOP_HIT], reqclock=clock)
         return self._trigger_completion
     def home_wait(self, home_end_time):
-        etrsync = self._trsync
+        etrsync = self._trsyncs[0]
         etrsync.set_home_end_time(home_end_time)
         if self._mcu.is_fileoutput():
             self._trigger_completion.complete(True)
@@ -189,8 +210,16 @@ class MCU_endstop:
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_stop(self._trdispatch)
-        res = etrsync.stop()
-        return res == etrsync.REASON_ENDSTOP_HIT
+        res = [trsync.stop() for trsync in self._trsyncs]
+        if any([r == etrsync.REASON_COMMS_TIMEOUT for r in res]):
+            return -1.
+        if res[0] != etrsync.REASON_ENDSTOP_HIT:
+            return 0.
+        if self._mcu.is_fileoutput():
+            return home_end_time
+        params = self._query_cmd.send([self._oid])
+        next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
+        return self._mcu.clock_to_print_time(next_clock - self._rest_ticks)
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():
@@ -225,13 +254,18 @@ class MCU_digital_out:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
                                      % (self._pin, self._start_value))
             return
+        if self._max_duration and self._start_value != self._shutdown_value:
+            raise pins.error("Pin with max duration must have start"
+                             " value equal to shutdown value")
+        mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
+        if mdur_ticks >= 1<<31:
+            raise pins.error("Digital pin max duration too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d default_value=%d"
-            " max_duration=%d"
-            % (self._oid, self._pin, self._start_value, self._shutdown_value,
-               self._mcu.seconds_to_clock(self._max_duration)))
+            " max_duration=%d" % (self._oid, self._pin, self._start_value,
+                                  self._shutdown_value, mdur_ticks))
         self._mcu.add_config_cmd("update_digital_out oid=%d value=%d"
                                  % (self._oid, self._start_value),
                                  on_restart=True)
@@ -276,11 +310,17 @@ class MCU_pwm:
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._is_static = is_static
     def _build_config(self):
+        if self._max_duration and self._start_value != self._shutdown_value:
+            raise pins.error("Pin with max duration must have start"
+                             " value equal to shutdown value")
         cmd_queue = self._mcu.alloc_command_queue()
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+        mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
+        if mdur_ticks >= 1<<31:
+            raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             if self._is_static:
@@ -296,8 +336,7 @@ class MCU_pwm:
                 " default_value=%d max_duration=%d"
                 % (self._oid, self._pin, cycle_ticks,
                    self._start_value * self._pwm_max,
-                   self._shutdown_value * self._pwm_max,
-                   self._mcu.seconds_to_clock(self._max_duration)))
+                   self._shutdown_value * self._pwm_max, mdur_ticks))
             svalue = int(self._start_value * self._pwm_max + 0.5)
             self._mcu.add_config_cmd("queue_pwm_out oid=%d clock=%d value=%d"
                                      % (self._oid, self._last_clock, svalue),
@@ -312,14 +351,15 @@ class MCU_pwm:
             self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
                                      % (self._pin, self._start_value >= 0.5))
             return
+        if cycle_ticks >= 1<<31:
+            raise pins.error("PWM pin cycle time too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
             % (self._oid, self._pin, self._start_value >= 1.0,
-               self._shutdown_value >= 0.5,
-               self._mcu.seconds_to_clock(self._max_duration)))
+               self._shutdown_value >= 0.5, mdur_ticks))
         self._mcu.add_config_cmd(
             "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
             % (self._oid, cycle_ticks))
@@ -348,6 +388,9 @@ class MCU_pwm:
             cycle_time = self._cycle_time
         cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
         if cycle_ticks != self._last_cycle_ticks:
+            if cycle_ticks >= 1<<31:
+                raise self._mcu.get_printer().command_error(
+                    "PWM cycle time too large")
             self._set_cycle_ticks.send([self._oid, cycle_ticks],
                                        minclock=minclock, reqclock=clock)
             self._last_cycle_ticks = cycle_ticks
@@ -531,7 +574,6 @@ class MCU:
         self._config_cmds = []
         self._restart_cmds = []
         self._init_cmds = []
-        self._pin_map = config.get('pin_map', None)
         self._mcu_freq = 0.
         # Move command queuing
         ffi_main, self._ffi_lib = chelper.get_ffi()
@@ -621,13 +663,12 @@ class MCU:
         mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
         pin_resolver = ppins.get_pin_resolver(self._name)
-        if self._pin_map is not None:
-            pin_resolver.add_pin_mapping(mcu_type, self._pin_map)
         for cmdlist in (self._config_cmds, self._restart_cmds, self._init_cmds):
             for i, cmd in enumerate(cmdlist):
                 cmdlist[i] = pin_resolver.update_command(cmd)
         # Calculate config CRC
-        config_crc = zlib.crc32('\n'.join(self._config_cmds)) & 0xffffffff
+        encoded_config = '\n'.join(self._config_cmds).encode()
+        config_crc = zlib.crc32(encoded_config) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
         if prev_crc is not None and config_crc != prev_crc:
             self._check_restart("CRC mismatch")
@@ -657,7 +698,7 @@ class MCU:
     def _send_get_config(self):
         get_config_cmd = self.lookup_query_command(
             "get_config",
-            "config is_config=%c crc=%u move_count=%hu is_shutdown=%c")
+            "config is_config=%c crc=%u is_shutdown=%c move_count=%hu")
         if self.is_fileoutput():
             return { 'is_config': 0, 'move_count': 500, 'crc': 0 }
         config_params = get_config_cmd.send()

@@ -14,7 +14,7 @@ may require users to update their printer config file.
 - [Contact](Contact.md): Information on bug reporting and general
 communication with the Klipper developers.
 
-## Configuration and Tuning Guides
+## Installation and Configuration
 
 - [Installation](Installation.md): Guide to installing Klipper.
 - [Config Reference](Config_Reference.md): Description of config
@@ -41,18 +41,21 @@ communication with the Klipper developers.
     using adxl345 accelerometer hardware to measure resonance.
 - [Pressure advance](Pressure_Advance.md): Calibrate extruder
   pressure.
-- [Slicers](Slicers.md): Configure "slicer" software for Klipper.
+- [G-Codes](G-Codes.md): Information on commands supported by Klipper.
 - [Command Templates](Command_Templates.md): G-Code macros and
   conditional evaluation.
   - [Status Reference](Status_Reference.md): Information available to
     macros (and similar).
 - [TMC Drivers](TMC_Drivers.md): Using Trinamic stepper motor drivers
   with Klipper.
-- [Skew correction](skew_correction.md): Adjustments for axes not
+- [Multi-MCU Homing](Multi_MCU_Homing.md): Homing and probing using multiple micro-controllers.
+- [Slicers](Slicers.md): Configure "slicer" software for Klipper.
+- [Skew correction](Skew_Correction.md): Adjustments for axes not
   perfectly square.
 - [PWM tools](Using_PWM_Tools.md): Guide on how to use PWM controlled
   tools such as lasers or spindles.
-- [G-Codes](G-Codes.md): Information on commands supported by Klipper.
+- [Exclude Object](Exclude_Object.md): The guide to the Exclude Objecs
+  implementation.
 
 ## Developer Documentation
 
@@ -84,10 +87,10 @@ communication with the Klipper developers.
   copying a binary to an sdcard in the micro-controller.
 - [Raspberry Pi as Micro-controller](RPi_microcontroller.md): Details
   for controlling devices wired to the GPIO pins of a Raspberry Pi.
-- [Beaglebone](beaglebone.md): Details for running Klipper on the
+- [Beaglebone](Beaglebone.md): Details for running Klipper on the
   Beaglebone PRU.
 - [Bootloaders](Bootloaders.md): Developer information on
   micro-controller flashing.
 - [CAN bus](CANBUS.md): Information on using CAN bus with Klipper.
 - [TSL1401CL filament width sensor](TSL1401CL_Filament_Width_Sensor.md)
-- [Hall filament width sensor](HallFilamentWidthSensor.md)
+- [Hall filament width sensor](Hall_Filament_Width_Sensor.md)

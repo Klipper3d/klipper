@@ -13,8 +13,7 @@ class ControllerFan:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.steppers_to_monitor = config.get("stepper", "")
-        self.stepper_names = []
+        self.stepper_names = config.getlist("stepper", None)
         self.stepper_enable = self.printer.load_object(config, 'stepper_enable')
         self.printer.load_object(config, 'heaters')
         self.heaters = []
@@ -24,26 +23,23 @@ class ControllerFan:
         self.idle_speed = config.getfloat(
             'idle_speed', default=self.fan_speed, minval=0., maxval=1.)
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
-        self.heater_name = config.get("heater", "extruder")
+        self.heater_names = config.getlist("heater", ("extruder",))
         self.last_on = self.idle_timeout
         self.last_speed = 0.
     def handle_connect(self):
         # Heater lookup
         pheaters = self.printer.lookup_object('heaters')
-        self.heaters = [pheaters.lookup_heater(n.strip())
-                        for n in self.heater_name.split(',')]
+        self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
         # Stepper lookup
         all_steppers = self.stepper_enable.get_steppers()
-        steppers = [n.strip() for n in self.steppers_to_monitor.split(',')]
-        if steppers == [""]:
+        if self.stepper_names is None:
             self.stepper_names = all_steppers
             return
-        if not all(x in all_steppers for x in steppers):
+        if not all(x in all_steppers for x in self.stepper_names):
             raise self.printer.config_error(
-                ("One or more of these steppers are unknown: "
-                 "%s (valid steppers are: %s)")
-                % (steppers, ", ".join(all_steppers)))
-        self.stepper_names = steppers
+                "One or more of these steppers are unknown: "
+                 "%s (valid steppers are: %s)"
+                % (self.stepper_names, ", ".join(all_steppers)))
     def handle_ready(self):
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)

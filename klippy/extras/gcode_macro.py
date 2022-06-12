@@ -140,9 +140,6 @@ class GCodeMacro:
                                         name, self.cmd_SET_GCODE_VARIABLE,
                                         desc=self.cmd_SET_GCODE_VARIABLE_help)
         self.in_script = False
-        prefix = 'default_parameter_'
-        self.kwparams = { o[len(prefix):].upper(): config.get(o)
-                          for o in config.get_prefix_options(prefix) }
         self.variables = {}
         prefix = 'variable_'
         for option in config.get_prefix_options(prefix):
@@ -169,24 +166,21 @@ class GCodeMacro:
         variable = gcmd.get('VARIABLE')
         value = gcmd.get('VALUE')
         if variable not in self.variables:
-            if variable in self.kwparams:
-                self.kwparams[variable] = value
-                return
             raise gcmd.error("Unknown gcode_macro variable '%s'" % (variable,))
         try:
             literal = ast.literal_eval(value)
         except ValueError as e:
             raise gcmd.error("Unable to parse '%s' as a literal" % (value,))
-        self.variables[variable] = literal
+        v = dict(self.variables)
+        v[variable] = literal
+        self.variables = v
     def cmd(self, gcmd):
         if self.in_script:
             raise gcmd.error("Macro %s called recursively" % (self.alias,))
-        params = gcmd.get_command_parameters()
-        kwparams = dict(self.kwparams)
-        kwparams.update(params)
-        kwparams.update(self.variables)
+        kwparams = dict(self.variables)
         kwparams.update(self.template.create_template_context())
-        kwparams['params'] = params
+        kwparams['params'] = gcmd.get_command_parameters()
+        kwparams['rawparams'] = gcmd.get_raw_command_parameters()
         self.in_script = True
         try:
             self.template.run_gcode_from_command(kwparams)

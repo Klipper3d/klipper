@@ -14,7 +14,7 @@ from . import bus
 #       HTU21D - Tested on Linux MCU.
 #       Si7013 - Untested
 #       Si7020 - Untested
-#       Si7021 - Untested
+#       Si7021 - Tested on Pico MCU
 #       SHT21  - Untested
 #
 ######################################################################
@@ -56,7 +56,7 @@ HTU21D_DEVICES = {
         'TEMP13_HUM10':[ .7, .5],
         'TEMP12_HUM08':[ .4, .4],
         'TEMP11_HUM11':[ .3, .7]},
-    'SI7021':{'id':0x14,
+    'SI7021':{'id':0x15,
         'TEMP14_HUM12':[.11,.12],
         'TEMP13_HUM10':[ .7, .5],
         'TEMP12_HUM08':[ .4, .4],
@@ -199,7 +199,7 @@ class HTU21D:
                 if (self.humidity < 0):
                     #due to RH accuracy, measured value might be
                     # slightly less than 0 or more 100
-                    self.temp = 0
+                    self.humidity = 0
                 elif (self.humidity > 100):
                     self.humidity = 100
                 # Only for HTU21D & SHT21.
@@ -236,7 +236,7 @@ class HTU21D:
 
     def get_status(self, eventtime):
         return {
-            'temperature': self.temp,
+            'temperature': round(self.temp, 2),
             'humidity': self.humidity,
         }
 

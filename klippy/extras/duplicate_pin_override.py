@@ -8,7 +8,7 @@ class PrinterDupPinOverride:
     def __init__(self, config):
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
-        for pin_desc in config.get('pins').split(','):
+        for pin_desc in config.getlist('pins'):
             ppins.allow_multi_use_pin(pin_desc)
 
 def load_config(config):

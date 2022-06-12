@@ -8,7 +8,7 @@ fi
 set -e
 
 # Install new micro-controller code
-echo "Installing mirco-controller code to /usr/local/bin/"
+echo "Installing micro-controller code to /usr/local/bin/"
 rm -f /usr/local/bin/klipper_mcu
 cp out/klipper.elf /usr/local/bin/klipper_mcu
 sync

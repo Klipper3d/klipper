@@ -3,6 +3,38 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+## Klipper 0.10.0
+
+Available on 20210929. Major changes in this release:
+* Support for "Multi-MCU Homing". It is now possible for a stepper
+  motor and its endstop to be wired to separate micro-controllers.
+  This simplifies wiring of Z probes on "toolhead boards".
+* Klipper now has a
+  [Community Discord Server](https://discord.klipper3d.org)
+  and a [Community Discourse Server](https://community.klipper3d.org).
+* The [Klipper website](https://www.klipper3d.org) now uses the
+  "mkdocs" infrastructure. There is also a
+  [Klipper Translations](https://github.com/Klipper3d/klipper-translations)
+  project.
+* Automated support for flashing firmware via sdcard on many boards.
+* New kinematic support for "Hybrid CoreXY" and "Hybrid CoreXZ"
+  printers.
+* Klipper now uses `rotation_distance` to configure stepper motor
+  travel distances.
+* The main Klipper host code can now directly communicate with
+  micro-controllers using CAN bus.
+* New "motion analysis" system. Klipper's internal motion updates and
+  sensor results can be tracked and logged for analysis.
+* Trinamic stepper motor drivers are now continuously monitored for
+  error conditions.
+* Support for the rp2040 micro-controller (Raspberry Pi Pico boards).
+* The "make menuconfig" system now utilizes kconfiglib.
+* Many additional modules added: ds18b20, duplicate_pin_override,
+  filament_motion_sensor, palette2, motion_report, pca9533,
+  pulse_counter, save_variables, sdcard_loop, temperature_host,
+  temperature_mcu
+* Several bug fixes and code cleanups.
+
 ## Klipper 0.9.0
 
 Available on 20201020. Major changes in this release:

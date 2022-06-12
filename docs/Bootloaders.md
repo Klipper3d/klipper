@@ -254,18 +254,19 @@ bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
 ## STM32F103 micro-controllers (Blue Pill devices)
 
 The STM32F103 devices have a ROM that can flash a bootloader or
-application via 3.3V serial. To access this ROM, one should connect
-the "boot 0" pin to high and "boot 1" pin to low, and then reset the
-device. The "stm32flash" package can then be used to flash the device
-using something like:
+application via 3.3V serial. Typically one would wire the PA10 (MCU
+Rx) and PA9 (MCU Tx) pins to a 3.3V UART adapter. To access the ROM,
+one should connect the "boot 0" pin to high and "boot 1" pin to low,
+and then reset the device. The "stm32flash" package can then be used
+to flash the device using something like:
 ```
 stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 ```
 
 Note that if one is using a Raspberry Pi for the 3.3V serial, the
 stm32flash protocol uses a serial parity mode which the Raspberry Pi's
-"miniuart" does not support. See
-[https://www.raspberrypi.org/documentation/configuration/uart.md](https://www.raspberrypi.org/documentation/configuration/uart.md)
+"mini UART" does not support. See
+[https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts](https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts)
 for details on enabling the full uart on the Raspberry Pi GPIO pins.
 
 After flashing, set both "boot 0" and "boot 1" back to low so that
@@ -301,7 +302,7 @@ while it is running). Alternatively, set the "boot 0" pin to low and
 The [HID bootloader](https://github.com/Serasidis/STM32_HID_Bootloader) is a
 compact, driverless bootloader capable of flashing over USB. Also available
 is a [fork with builds specific to the SKR Mini E3 1.2](
-  https://github.com/Arksine/STM32_HID_Bootloader/releases/tag/v0.5-beta).
+  https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
 
 For generic STM32F103 boards such as the blue pill it is possible to flash
 the bootloader via 3.3v serial using stm32flash as noted in the stm32duino
@@ -385,6 +386,66 @@ not available, so it may be done by setting pin PA2 low if you flashed
 the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
 which you can use to pull PA2 low.
 
+### STM32F103/STM32F072 with MSC bootloader
+
+The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader) is a driverless bootloader capable of flashing over USB.
+
+It is possible to flash the bootloader via 3.3v serial using stm32flash as noted
+in the stm32duino section above, substituting the file name for the desired
+MSC bootloader binary (ie: MSCboot-Bluepill.bin for the blue pill).
+
+For STM32F072 boards it is also possible to flash the bootloader over USB (via DFU)
+with something like:
+
+```
+ dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s0x08000000:leave
+```
+
+This bootloader uses 8KiB or 16KiB of flash space, see description of the bootloader
+(the application must be compiled with with the corresponding starting address).
+
+The bootloader can be activated by pressing the reset button of the board twice.
+As soon as the bootloader is activated, the board appears as a USB flash drive
+onto which the klipper.bin file can be copied.
+
+### STM32F103/STM32F0x2 with CanBoot bootloader
+
+The [CanBoot](https://github.com/Arksine/CanBoot) bootloader provides an option
+for uploading Klipper firmware over the CANBUS.  The bootloader itself is
+derived from Klipper's source code.  Currently CanBoot supports the STM32F103,
+STM32F042, and STM32F072 models.
+
+It is recommended to use a ST-Link Programmer to flash CanBoot, however it
+should be possible to flash using `stm32flash` on STM32F103 devices, and
+`dfu-util` on STM32F042/STM32F072 devices.  See the previous sections in this
+document for instructions on these flashing methods, substituting `canboot.bin`
+for the file name where appropriate.  The CanBoot repo linked above provides
+instructions for building the bootloader.
+
+The first time CanBoot has been flashed it should detect that no application
+is present and enter the bootloader.  If this doesn't occur it is possible to
+enter the bootloader by pressing the reset button twice in succession.
+
+The `flash_can.py` utility supplied in the `lib/canboot` folder may be used to
+upload Klipper firmware.  The device UUID is necessary to flash.  If you do not
+have a UUID it is possible to query nodes currently running the bootloader:
+```
+python3 flash_can.py -q
+```
+This will return UUIDs for all connected nodes not currently assigned a UUID.
+This should include all nodes currently in the bootloader.
+
+Once you have a UUID, you may upload firmware with following command:
+```
+python3 flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u aabbccddeeff
+```
+
+Where `aabbccddeeff` is replaced by your UUID.  Note that the `-i` and `-f`
+options may be omitted, they default to `can0` and `~/klipper/out/klipper.bin`
+respectively.
+
+When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.
+
 ## STM32F4 micro-controllers (SKR Pro 1.1)
 
 STM32F4 microcontrollers come equipped with a built-in system bootloader
@@ -395,7 +456,7 @@ bootloader.  The HID bootloader is available for STM32F405/407
 based boards should the user prefer flashing over USB over using the sdcard.
 Note that you may need to configure and build a version specific to your
 board, a [build for the SKR Pro 1.1 is available here](
-  https://github.com/Arksine/STM32_HID_Bootloader/releases/tag/v0.5-beta).
+  https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
 
 Unless your board is DFU capable the most accessable flashing method
 is likely via 3.3v serial, which follows the same procedure as

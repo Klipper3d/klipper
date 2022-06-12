@@ -1,0 +1,7 @@
+# Test case for input_stepper
+CONFIG input_shaper.cfg
+DICTIONARY atmega2560.dict
+
+# Simple command test
+SET_INPUT_SHAPER SHAPER_FREQ_X=22.2 DAMPING_RATIO_X=.1 SHAPER_TYPE_X=zv
+SET_INPUT_SHAPER SHAPER_FREQ_Y=33.3 DAMPING_RATIO_X=.11 SHAPER_TYPE_X=2hump_ei

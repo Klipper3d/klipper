@@ -14,14 +14,7 @@ from . import probe
 
 # Load a stable position from a config entry
 def load_config_stable(config, option):
-    spos = config.get(option)
-    try:
-        sa, sb, sc = map(float, spos.split(','))
-    except:
-        msg = "Unable to parse stable position '%s'" % (spos,)
-        logging.exception(msg)
-        raise config.error(msg)
-    return sa, sb, sc
+    return config.getfloatlist(option, count=3)
 
 
 ######################################################################

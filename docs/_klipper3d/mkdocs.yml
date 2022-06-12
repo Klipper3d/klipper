@@ -1,7 +1,36 @@
-# This is the main configuration file for mkdocs
+# Main configuration file for mkdocs generation of klipper3d.org website
+
+# Note that the build-translations.sh script expects a certain file
+# layout.  See that script and the README file for more details.
+
+# Site and directory configuration
+site_name: Klipper documentation
+repo_url: https://github.com/Klipper3d/klipper
+repo_name: Klipper3d/klipper
+edit_uri: blob/master/docs/
+use_directory_urls: False
 docs_dir: '../'
 site_dir: '../../site/'
-site_name: Klipper documentation
+
+# Custom markdown dialect settings
+markdown_extensions:
+  - toc:
+      permalink: True
+      toc_depth: 6
+  - attr_list
+  - mdx_partial_gfm
+  - mdx_truly_sane_lists
+  - mdx_breakless_lists
+plugins:
+  search:
+    lang: en
+  mkdocs-simple-hooks:
+    hooks:
+      on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
+  exclude:
+    glob: "README.md"
+
+# Website layout configuration (using mkdocs-material theme)
 theme:
   name: material
   palette:
@@ -19,12 +48,11 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
-    # primary: white
-    # accent: blue
   logo: img/klipper.svg
   favicon: img/favicon.ico
   icon:
     repo: fontawesome/brands/github
+    alternate: material/web
   features:
       #- navigation.tabs
       #- navigation.expand
@@ -34,53 +62,38 @@ theme:
       - search.suggest
       - search.highlight
       - search.share
+  language: en
 extra_css:
   - _klipper3d/css/extra.css
-use_directory_urls: False
-repo_url: https://github.com/KevinOConnor/klipper
-repo_name: KevinOConnor/klipper
-edit_uri: blob/master/docs/
-plugins:
-  - search
-  - section-index
-  - mkdocs-simple-hooks:
-      hooks:
-        on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
-  - exclude:
-      glob:
-        - README.md
-markdown_extensions:
-  - toc:
-      permalink: True
-      toc_depth: 6
-  #- pymdownx.snippets
-  - attr_list
-  - mdx_partial_gfm
-  - mdx_truly_sane_lists
-  - mdx_breakless_lists
 
+# Site usage statistics
 extra:
-  analytics:
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
+  analytics:
     provider: google
     property: UA-138371409-1
-  # version:
-  #   provider: mike
+  # Language Selection
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    # Alternate language links automatically added here
+
+# Navigation hierarchy (this should mimic the layout of Overview.md)
 nav:
-  - Overview:
-    - Overview.md
-    - Features.md
-    - FAQ.md
-    - Releases.md
-    - Config_Changes.md
-    - Contact.md
-  - Configuration and Tuning:
+  - Overview.md
+  - Features.md
+  - FAQ.md
+  - Releases.md
+  - Config_Changes.md
+  - Contact.md
+  - Installation and Configuration:
     - Installation.md
-    - Configuration reference:
+    - Configuration Reference:
       - Config_Reference.md
       - Rotation_Distance.md
     - Config_checks.md
-    - Bed level:
+    - Bed Level:
       - Bed_Level.md
       - Delta_Calibrate.md
       - Probe_Calibrate.md
@@ -88,19 +101,21 @@ nav:
       - Manual_Level.md
       - Bed_Mesh.md
       - Endstop_Phase.md
-    - Resonance compensation:
+    - Resonance Compensation:
       - Resonance_Compensation.md
       - Measuring_Resonances.md
     - Pressure_Advance.md
-    - Slicers.md
+    - G-Codes.md
     - Command templates:
       - Command_Templates.md
       - Status_Reference.md
     - TMC_Drivers.md
-    - skew_correction.md
+    - Multi_MCU_Homing.md
+    - Slicers.md
+    - Skew_Correction.md
+    - Exclude_Object.md
     - Using_PWM_Tools.md
-    - G-Codes.md
-  - Developer documentation:
+  - Developer Documentation:
     - Code_Overview.md
     - Kinematics.md
     - Protocol.md
@@ -111,12 +126,12 @@ nav:
     - Benchmarks.md
     - CONTRIBUTING.md
     - Packaging.md
-  - Device specific documents:
+  - Device Specific Documents:
     - Example_Configs.md
     - SDCard_Updates.md
     - RPi_microcontroller.md
-    - beaglebone.md
+    - Beaglebone.md
     - Bootloaders.md
     - CANBUS.md
     - TSL1401CL_Filament_Width_Sensor.md
-    - HallFilamentWidthSensor.md
+    - Hall_Filament_Width_Sensor.md

@@ -23,14 +23,14 @@ Printer is halted
 """
 
 message_protocol_error1 = """
-This type of error is frequently caused by running an older
-version of the firmware on the micro-controller (fix by
-recompiling and flashing the firmware).
+This is frequently caused by running an older version of the
+firmware on the MCU(s). Fix by recompiling and flashing the
+firmware.
 """
+
 message_protocol_error2 = """
 Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
-Protocol error connecting to printer
 """
 
 message_mcu_connect_error = """
@@ -143,15 +143,33 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
-    def _get_versions(self):
-        try:
-            parts = ["%s=%s" % (n.split()[-1], m.get_status()['mcu_version'])
-                     for n, m in self.lookup_objects('mcu')]
-            parts.insert(0, "host=%s" % (self.start_args['software_version'],))
-            return "\nKnown versions: %s\n" % (", ".join(parts),)
-        except:
-            logging.exception("Error in _get_versions()")
-            return ""
+    def _build_protocol_error_message(self, e):
+        host_version = self.start_args['software_version']
+        msg_update = []
+        msg_updated = []
+        for mcu_name, mcu in self.lookup_objects('mcu'):
+            try:
+                mcu_version = mcu.get_status()['mcu_version']
+            except:
+                logging.exception("Unable to retrieve mcu_version from mcu")
+                continue
+            if mcu_version != host_version:
+                msg_update.append("%s: Current version %s"
+                                  % (mcu_name.split()[-1], mcu_version))
+            else:
+                msg_updated.append("%s: Current version %s"
+                                   % (mcu_name.split()[-1], mcu_version))
+        if not msg_update:
+            msg_update.append("<none>")
+        if not msg_updated:
+            msg_updated.append("<none>")
+        msg = ["MCU Protocol error",
+               message_protocol_error1,
+               "Your Klipper version is: %s" % (host_version,),
+               "MCU(s) which should be updated:"]
+        msg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
+        msg += [message_protocol_error2, str(e)]
+        return "\n".join(msg)
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -166,9 +184,7 @@ class Printer:
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
-            self._set_state("%s\n%s%s%s" % (str(e), message_protocol_error1,
-                                          self._get_versions(),
-                                          message_protocol_error2))
+            self._set_state(self._build_protocol_error_message(e))
             util.dump_mcu_build()
             return
         except mcu.error as e:
@@ -256,6 +272,21 @@ class Printer:
 # Startup
 ######################################################################
 
+def import_test():
+    # Import all optional modules (used as a build test)
+    dname = os.path.dirname(__file__)
+    for mname in ['extras', 'kinematics']:
+        for fname in os.listdir(os.path.join(dname, mname)):
+            if fname.endswith('.py') and fname != '__init__.py':
+                module_name = fname[:-3]
+            else:
+                iname = os.path.join(dname, mname, fname, '__init__.py')
+                if not os.path.exists(iname):
+                    continue
+                module_name = fname
+            importlib.import_module(mname + '.' + module_name)
+    sys.exit(0)
+
 def arg_dictionary(option, opt_str, value, parser):
     key, fname = "dictionary", value
     if '=' in value:
@@ -284,7 +315,11 @@ def main():
     opts.add_option("-d", "--dictionary", dest="dictionary", type="string",
                     action="callback", callback=arg_dictionary,
                     help="file to read for mcu protocol dictionary")
+    opts.add_option("--import-test", action="store_true",
+                    help="perform an import module test")
     options, args = opts.parse_args()
+    if options.import_test:
+        import_test()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
     start_args = {'config_file': args[0], 'apiserver': options.apiserver,

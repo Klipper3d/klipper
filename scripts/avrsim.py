@@ -169,11 +169,11 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-m", "--machine", type="string", dest="machine",
                     default="atmega644", help="type of AVR machine to simulate")
-    opts.add_option("-s", "--speed", type="int", dest="speed", default=8000000,
+    opts.add_option("-s", "--speed", type="int", dest="speed", default=16000000,
                     help="machine speed")
     opts.add_option("-r", "--rate", type="float", dest="pacing_rate",
                     default=0., help="real-time pacing rate")
-    opts.add_option("-b", "--baud", type="int", dest="baud", default=38400,
+    opts.add_option("-b", "--baud", type="int", dest="baud", default=250000,
                     help="baud rate of the emulated serial port")
     opts.add_option("-t", "--trace", type="string", dest="trace",
                     help="signals to trace (? for help)")

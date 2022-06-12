@@ -157,3 +157,8 @@ To begin using Klipper start by
 
 Klipper is Free Software. See the [license](COPYING) or read the
 [documentation](https://www.klipper3d.org/Overview.html).
+
+
+# Unofficial Prusa Mini/+ LCD support
+
+This repo uses [Matthew Lloyd](https://github.com/matthewlloyd)'s work to support Prusa Mini's screen in Klipper. Unfortunatelly Matthew Lloyd removed his repo but some users like [Rafał Matysiak](https://github.com/Pravv) managed to save his work. I forked this repo to try and keep his work around - I am not planning to update it in any way, just maybe keep it up to date with Klipper master (hopefully no breaking changes).

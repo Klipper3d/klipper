@@ -61,31 +61,30 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val) {
         enable_pclock(PCLK_PWM1);
     }
 
-    if (LPC_PWM1->TCR & 1) {
+    if (LPC_PWM1->TCR & 0x1) {
         if (LPC_PWM1->PR != prescaler) {
             shutdown("PWM already programmed at different speed");
         }
     } else {
+        LPC_PWM1->PCR = 0;
         LPC_PWM1->PR = (uint16_t) prescaler;
-        LPC_PWM1->MCR = 2;
         LPC_PWM1->MR0 = MAX_PWM - 1;
-        LPC_PWM1->LER |= 1 << 0;
-        LPC_PWM1->TCR = 0x2; // Reset PWM
-        LPC_PWM1->TCR = 0x8; // Enable PWM mode
+        LPC_PWM1->TCR = 0x2;  // Reset PWM TC and PC
+        LPC_PWM1->MCR = 0x2;  // Reset Counter on MR0 match
+        LPC_PWM1->TCR = 0x8;  // Enable PWM mode
+        LPC_PWM1->TCR |= 0x1; // Enable PWM peripheral
     }
 
     if (LPC_PWM1->PCR & (1 << (p->channel + 8))) {
         shutdown("PWM output already in use");
     }
 
+    // Setup channel
     struct gpio_pwm channel = {.reg = p->reg, .channel = p->channel};
     gpio_pwm_write(channel, val);
 
     // Enable channel
     LPC_PWM1->PCR |= (1 << (p->channel + 8));
-
-    // Enable PWM peripheral
-    LPC_PWM1->TCR |= 0x1;
 
     return channel;
 }

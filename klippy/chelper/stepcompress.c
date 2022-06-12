@@ -259,13 +259,23 @@ stepcompress_alloc(uint32_t oid)
 // Fill message id information
 void __visible
 stepcompress_fill(struct stepcompress *sc, uint32_t max_error
-                  , uint32_t invert_sdir, int32_t queue_step_msgtag
-                  , int32_t set_next_step_dir_msgtag)
+                  , int32_t queue_step_msgtag, int32_t set_next_step_dir_msgtag)
 {
     sc->max_error = max_error;
-    sc->invert_sdir = !!invert_sdir;
     sc->queue_step_msgtag = queue_step_msgtag;
     sc->set_next_step_dir_msgtag = set_next_step_dir_msgtag;
+}
+
+// Set the inverted stepper direction flag
+void __visible
+stepcompress_set_invert_sdir(struct stepcompress *sc, uint32_t invert_sdir)
+{
+    invert_sdir = !!invert_sdir;
+    if (invert_sdir != sc->invert_sdir) {
+        sc->invert_sdir = invert_sdir;
+        if (sc->sdir >= 0)
+            sc->sdir ^= 1;
+    }
 }
 
 // Helper to free items from the history_list
@@ -553,7 +563,8 @@ stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock)
 
 // Set last_position in the stepcompress object
 int __visible
-stepcompress_set_last_position(struct stepcompress *sc, int64_t last_position)
+stepcompress_set_last_position(struct stepcompress *sc, uint64_t clock
+                               , int64_t last_position)
 {
     int ret = stepcompress_flush(sc, UINT64_MAX);
     if (ret)
@@ -563,7 +574,7 @@ stepcompress_set_last_position(struct stepcompress *sc, int64_t last_position)
     // Add a marker to the history list
     struct history_steps *hs = malloc(sizeof(*hs));
     memset(hs, 0, sizeof(*hs));
-    hs->first_clock = hs->last_clock = sc->last_step_clock;
+    hs->first_clock = hs->last_clock = clock;
     hs->start_position = last_position;
     list_add_head(&hs->node, &sc->history_list);
     return 0;

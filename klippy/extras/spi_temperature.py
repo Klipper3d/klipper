@@ -167,13 +167,13 @@ class MAX31856(SensorBase):
         }
         value = config.getchoice('tc_type', types, default="K")
         averages = {
-            "1"  : MAX31856_CR1_AVGSEL1,
-            "2"  : MAX31856_CR1_AVGSEL2,
-            "4"  : MAX31856_CR1_AVGSEL4,
-            "8"  : MAX31856_CR1_AVGSEL8,
-            "16" : MAX31856_CR1_AVGSEL16
+            1  : MAX31856_CR1_AVGSEL1,
+            2  : MAX31856_CR1_AVGSEL2,
+            4  : MAX31856_CR1_AVGSEL4,
+            8  : MAX31856_CR1_AVGSEL8,
+            16 : MAX31856_CR1_AVGSEL16
         }
-        value |= config.getchoice('tc_averaging_count', averages, "1")
+        value |= config.getchoice('tc_averaging_count', averages, 1)
         cmds.append(value)
 
         value = (MAX31856_MASK_VOLTAGE_UNDER_OVER_FAULT |

@@ -1,7 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Generate extruder pressure advance motion graphs
 #
-# Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, optparse, datetime

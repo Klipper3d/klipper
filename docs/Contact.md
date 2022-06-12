@@ -106,11 +106,11 @@ bug. Please follow these steps:
    experiencing similar issues then you can search the
    [Klipper Community Forum](#community-forum).
 2. Make sure you are running unmodified code from
-   [https://github.com/KevinOConnor/klipper](https://github.com/KevinOConnor/klipper).
+   [https://github.com/Klipper3d/klipper](https://github.com/Klipper3d/klipper).
    If the code has been modified or is obtained from another source,
    then you will need to reproduce the problem on the unmodified code
    from
-   [https://github.com/KevinOConnor/klipper](https://github.com/KevinOConnor/klipper)
+   [https://github.com/Klipper3d/klipper](https://github.com/Klipper3d/klipper)
    prior to reporting an issue.
 3. If possible, run an `M112` command in the OctoPrint terminal window
    immediately after the undesirable event occurs. This causes Klipper
@@ -139,7 +139,7 @@ bug. Please follow these steps:
    5. If the log file is very large (eg, greater than 2MB) then one
       may need to compress the log with zip or gzip.
 5. Open a new github issue at
-   [https://github.com/KevinOConnor/klipper/issues](https://github.com/KevinOConnor/klipper/issues)
+   [https://github.com/Klipper3d/klipper/issues](https://github.com/Klipper3d/klipper/issues)
    and provide a clear description of the problem. The Klipper
    developers need to understand what steps were taken, what the
    desired outcome was, and what outcome actually occurred. The

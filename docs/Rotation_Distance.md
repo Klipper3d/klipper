@@ -36,7 +36,7 @@ Most drivers use 16 microsteps. If unsure, set `microsteps: 16` in the
 config and use 16 in the formula above.
 
 Almost all printers should have a whole number for `rotation_distance`
-on x, y, and z type axes. If the above formula results in a
+on X, Y, and Z type axes. If the above formula results in a
 rotation_distance that is within .01 of a whole number then round the
 final value to that whole_number.
 
@@ -62,7 +62,11 @@ Then use the following procedure to "measure and trim":
 3. Extrude 50mm of filament with the following command sequence: `G91`
    followed by `G1 E50 F60`. Note 50mm as
    `<requested_extrude_distance>`. Wait for the extruder to finish the
-   move (it will take about 50 seconds).
+   move (it will take about 50 seconds). It is important to use the
+   slow extrusion rate for this test as a faster rate can cause high
+   pressure in the extruder which will skew the results. (Do not use
+   the "extrude button" on graphical front-ends for this test as they
+   extrude at a fast rate.)
 4. Use the digital calipers to measure the new distance between the
    extruder body and the mark on the filament. Note this as
    `<subsequent_mark_distance>`. Then calculate:

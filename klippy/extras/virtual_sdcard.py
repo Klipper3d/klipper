@@ -9,22 +9,27 @@ VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
 class VirtualSD:
     def __init__(self, config):
-        printer = config.get_printer()
-        printer.register_event_handler("klippy:shutdown", self.handle_shutdown)
+        self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self.handle_shutdown)
         # sdcard state
         sd = config.get('path')
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
         self.file_position = self.file_size = 0
         # Print Stat Tracking
-        self.print_stats = printer.load_object(config, 'print_stats')
+        self.print_stats = self.printer.load_object(config, 'print_stats')
         # Work timer
-        self.reactor = printer.get_reactor()
+        self.reactor = self.printer.get_reactor()
         self.must_pause_work = self.cmd_from_sd = False
         self.next_file_position = 0
         self.work_timer = None
+        # Error handling
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
+        self.on_error_gcode = gcode_macro.load_template(
+            config, 'on_error_gcode', '')
         # Register commands
-        self.gcode = printer.lookup_object('gcode')
+        self.gcode = self.printer.lookup_object('gcode')
         for cmd in ['M20', 'M21', 'M23', 'M24', 'M25', 'M26', 'M27']:
             self.gcode.register_command(cmd, getattr(self, 'cmd_' + cmd))
         for cmd in ['M28', 'M29', 'M30']:
@@ -125,6 +130,7 @@ class VirtualSD:
             self.current_file = None
         self.file_position = self.file_size = 0.
         self.print_stats.reset()
+        self.printer.send_event("virtual_sdcard:reset_file")
     cmd_SDCARD_RESET_FILE_help = "Clears a loaded SD File. Stops the print "\
         "if necessary"
     def cmd_SDCARD_RESET_FILE(self, gcmd):
@@ -158,13 +164,7 @@ class VirtualSD:
         if self.work_timer is not None:
             raise gcmd.error("SD busy")
         self._reset_file()
-        try:
-            orig = gcmd.get_commandline()
-            filename = orig[orig.find("M23") + 4:].split()[0].strip()
-            if '*' in filename:
-                filename = filename[:filename.find('*')].strip()
-        except:
-            raise gcmd.error("Unable to extract filename")
+        filename = gcmd.get_raw_command_parameters().strip()
         if filename.startswith('/'):
             filename = filename[1:]
         self._load_file(gcmd, filename)
@@ -177,7 +177,7 @@ class VirtualSD:
             if fname not in flist:
                 fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
-            f = open(fname, 'rb')
+            f = open(fname, 'r')
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
@@ -264,6 +264,10 @@ class VirtualSD:
                 self.gcode.run_script(line)
             except self.gcode.error as e:
                 error_message = str(e)
+                try:
+                    self.gcode.run_script(self.on_error_gcode.render())
+                except:
+                    logging.exception("virtual_sdcard on_error")
                 break
             except:
                 logging.exception("virtual_sdcard dispatch")
