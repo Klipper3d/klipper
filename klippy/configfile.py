@@ -341,7 +341,7 @@ class PrinterConfig:
         svalue = str(value)
         self.autosave.fileconfig.set(section, option, svalue)
         pending = dict(self.status_save_pending)
-        if not section in pending:
+        if not section in pending or pending[section] is None:
             pending[section] = {}
         else:
             pending[section] = dict(pending[section])
@@ -350,12 +350,18 @@ class PrinterConfig:
         self.save_config_pending = True
         logging.info("save_config: set [%s] %s = %s", section, option, svalue)
     def remove_section(self, section):
-        self.autosave.fileconfig.remove_section(section)
-        if section in self.status_save_pending:
+        if self.autosave.fileconfig.has_section(section):
+            self.autosave.fileconfig.remove_section(section)
+            pending = dict(self.status_save_pending)
+            pending[section] = None
+            self.status_save_pending = pending
+            self.save_config_pending = True
+        elif (section in self.status_save_pending and
+              self.status_save_pending[section] is not None):
             pending = dict(self.status_save_pending)
             del pending[section]
             self.status_save_pending = pending
-        self.save_config_pending = True
+            self.save_config_pending = True
     def _disallow_include_conflicts(self, regular_data, cfgname, gcode):
         config = self._build_config_wrapper(regular_data, cfgname)
         for section in self.autosave.fileconfig.sections():
