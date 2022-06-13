@@ -1445,7 +1445,7 @@
 <p><img alt="trapezoids" src="img/trapezoids.svg.png" /></p>
 <h2 id="eloretekinto">Előretekintő<a class="headerlink" href="#eloretekinto" title="Permanent link">&para;</a></h2>
 <p>A "look-ahead" rendszert a kanyarsebességek meghatározására használják a mozgások között.</p>
-<p>Tekintsük a következő két mozgást, amelyek egy X-Y-síkon helyezkednek el:</p>
+<p>Nézzük meg a következő két mozgást, amelyek egy X-Y-síkon helyezkednek el:</p>
 <p><img alt="corner" src="img/corner.svg.png" /></p>
 <p>A fenti helyzetben lehetséges az első lépés után teljesen lelassítani, majd a következő lépés kezdetén teljesen felgyorsítani, de ez nem ideális, mivel ez a sok gyorsítás és lassítás jelentősen megnövelné a nyomtatási időt, és az anyagáramlás gyakori változása rossz nyomtatási minőséget eredményezne.</p>
 <p>Ennek megoldására a "look-ahead" mechanizmus több bejövő mozgást sorba állít, és elemzi a mozgások közötti szögeket, hogy meghatározzon egy ésszerű sebességet, amelyet a két mozgás közötti "kereszteződés" alatt lehet elérni. Ha a következő lépés közel azonos irányba mutat, akkor a fejnek csak egy kicsit kell lassítania (ha egyáltalán kell).</p>
