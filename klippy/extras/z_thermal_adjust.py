@@ -9,6 +9,8 @@
 
 import threading
 
+KELVIN_TO_CELSIUS = -273.15
+
 class ZThermalAdjuster:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -19,10 +21,6 @@ class ZThermalAdjuster:
         # Get config parameters, convert to SI units where necessary
         self.temp_coeff = config.getfloat('temp_coeff', minval=-1, maxval=1,
             default=0)
-        self.temp_sensor_name = config.get('temp_sensor')
-        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
-        self.inv_smooth_time = 1. / self.smooth_time
-
         self.off_above_z = config.getfloat('z_adjust_off_above', 99999999.)
         self.max_z_adjust_mm = config.getfloat('max_z_adjustment', 99999999.)
 
@@ -33,7 +31,19 @@ class ZThermalAdjuster:
                                             self.handle_homing_move_end)
 
         # Setup temperature sensor
-        self.last_temp = self.smoothed_temp = 0.
+        self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
+        self.inv_smooth_time = 1. / self.smooth_time
+        self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
+        self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        pheaters = self.printer.load_object(config, 'heaters')
+        self.sensor = pheaters.setup_sensor(config)
+        self.sensor.setup_minmax(self.min_temp, self.max_temp)
+        self.sensor.setup_callback(self.temperature_callback)
+        pheaters.register_sensor(config, self)
+
+        self.last_temp = 0.
+        self.measured_min = self.measured_max = 0.
+        self.smoothed_temp = 0.
         self.last_temp_time = 0.
         self.ref_temperature = 0.
         self.ref_temp_override = False
@@ -55,18 +65,6 @@ class ZThermalAdjuster:
         self.toolhead = self.printer.lookup_object('toolhead')
         gcode_move = self.printer.lookup_object('gcode_move')
 
-        # Temperature sensor config check and callback registration
-        try:
-            self.sensor = self.printer.lookup_object(self.temp_sensor_name)
-        except Exception as e:
-            msg = '''
-            %s\nUse the full config section name in the "temp_sensor" parameter,
-            e.g. "temp_sensor: temperature_sensor frame".
-            ''' % e
-            raise self.printer.config_error(msg)
-        else:
-            self.sensor.sensor.setup_callback(self.z_adj_temperature_callback)
-
         # Register move transformation
         self.next_transform = gcode_move.set_move_transform(self, force=True)
 
@@ -79,6 +77,8 @@ class ZThermalAdjuster:
     def get_status(self, eventtime):
         return {
             'temperature': self.smoothed_temp,
+            'measured_min_temp': round(self.measured_min, 2),
+            'measured_max_temp': round(self.measured_max, 2),
             'current_z_adjust': self.z_adjust_mm,
             'z_adjust_ref_temperature': self.ref_temperature,
             'enabled': self.adjust_enable
@@ -131,9 +131,8 @@ class ZThermalAdjuster:
             self.next_transform.move(adjusted_pos, speed)
         self.last_position[:] = newpos
 
-    def z_adj_temperature_callback(self, read_time, temp):
-        'Called everytime the thermistor is read, used for smoothing'
-        self.sensor.temperature_callback(read_time, temp)
+    def temperature_callback(self, read_time, temp):
+        'Called everytime the Z adjust thermistor is read'
         with self.lock:
             time_diff = read_time - self.last_temp_time
             self.last_temp = temp
@@ -141,11 +140,13 @@ class ZThermalAdjuster:
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
+            self.measured_min = min(self.measured_min, self.smoothed_temp)
+            self.measured_max = max(self.measured_max, self.smoothed_temp)
 
     def cmd_SET_Z_THERMAL_ADJUST(self, gcmd):
         enable = gcmd.get_int('ENABLE', None, minval=0, maxval=1)
         coeff = gcmd.get_float('TEMP_COEFF', None, minval=-1, maxval=1)
-        ref_temp = gcmd.get_float('REF_TEMP', None, minval=-273.15)
+        ref_temp = gcmd.get_float('REF_TEMP', None, minval=KELVIN_TO_CELSIUS)
 
         if ref_temp is not None:
             self.ref_temperature = ref_temp
