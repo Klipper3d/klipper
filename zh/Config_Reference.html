@@ -1581,7 +1581,7 @@
         
           <li class="md-nav__item">
   <a href="#i2c" class="md-nav__link">
-    常见的I2C 设置
+    常见的I2C设置
   </a>
   
 </li>
@@ -3459,7 +3459,7 @@
         
           <li class="md-nav__item">
   <a href="#i2c" class="md-nav__link">
-    常见的I2C 设置
+    常见的I2C设置
   </a>
   
 </li>
@@ -4368,7 +4368,7 @@ max_temp:
 </code></pre></div>
 
 <h3 id="quad_gantry_level">[quad_gantry_level]<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h3>
-<p>Moving gantry leveling using 4 independently controlled Z motors. Corrects hyperbolic parabola effects (potato chip) on moving gantry which is more flexible. WARNING: Using this on a moving bed may lead to undesirable results. If this section is present then a QUAD_GANTRY_LEVEL extended G-Code command becomes available. This routine assumes the following Z motor configuration:</p>
+<p>调平使用4个独立Z轴电机的动龙门。纠正动龙门架由于龙门活动性造成的双曲抛物线效应（薯片形）。警告：在移动打印床上使用该功能可能会导致不理想的结果。如果该分段存在，可以使用 QUAD_GANTRY_LEVEL 扩展G代码命令。该程序假定Z轴电机配置如下：</p>
 <div class="highlight"><pre><span></span><code> ----------------
  |Z1          Z2|
  |  ---------   |
@@ -4982,7 +4982,7 @@ extruder:
 </code></pre></div>
 
 <h3 id="manual_stepper">[manual_stepper]<a class="headerlink" href="#manual_stepper" title="Permanent link">&para;</a></h3>
-<p>Manual steppers (one may define any number of sections with a "manual_stepper" prefix). These are steppers that are controlled by the MANUAL_STEPPER g-code command. For example: "MANUAL_STEPPER STEPPER=my_stepper MOVE=10 SPEED=5". See <a href="G-Codes.html#manual_stepper">G-Codes</a> file for a description of the MANUAL_STEPPER command. The steppers are not connected to the normal printer kinematics.</p>
+<p>手动步进器（可以通过定义任何数量"manual_stepper"前缀的配置分段）。这些是由 MANUAL_STEPPER G代码命令控制的步进电机。例如："MANUAL_STEPPER STEPPER=my_stepper MOVE=10 SPEED=5"。参见<a href="G-Code.md#manual_stepper">G-Code</a>文档中关于 MANUAL_STEPPER 命令的描述。手动步进器械不会连接到正常的打印机运动学中。</p>
 <div class="highlight"><pre><span></span><code>[manual_stepper my_stepper]。
 #step_pin:
 #dir_pin:
@@ -5490,7 +5490,7 @@ pin:
 </code></pre></div>
 
 <h3 id="fan_generic">[fan_generic]<a class="headerlink" href="#fan_generic" title="Permanent link">&para;</a></h3>
-<p>Manually controlled fan (one may define any number of sections with a "fan_generic" prefix). The speed of a manually controlled fan is set with the SET_FAN_SPEED <a href="G-Codes.html#fan_generic">gcode command</a>.</p>
+<p>手动控制的风扇（可以用"fan_generic"前缀定义任何数量的手动风扇分）。可以通过 SET_FAN_SPEED<a href="G-Code.md#fan_generic">gcode命令</a>设置风扇速度。</p>
 <div class="highlight"><pre><span></span><code>[fan_generic extruder_partfan]
 #pin:
 #max_power:
@@ -6083,13 +6083,12 @@ enable_pin:
 <p>Statically configured MCP4451 digipot connected via I2C bus (one may define any number of sections with an "mcp4451" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mcp4451 my_digipot]
 i2c_address:
-#   The i2c address that the chip is using on the i2c bus. This
-#   parameter must be provided.
+#   芯片在I2C总线上的地址。
+#   必须提供此参数。
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
+#   以上参数请见“常见的I2C设置”章节。
 #wiper_0:
 #wiper_1:
 #wiper_2:
@@ -6114,32 +6113,28 @@ i2c_address:
 <p>Statically configured MCP4728 digital-to-analog converter connected via I2C bus (one may define any number of sections with an "mcp4728" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mcp4728 my_dac]
 #i2c_address: 96
-#   The i2c address that the chip is using on the i2c bus. The default
-#   is 96.
+#   芯片在I2C总线上使用的地址。
+#   默认为96。
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
+#   以上参数请见“常见的I2C设置”
 #channel_a:
 #channel_b:
 #channel_c:
 #channel_d:
-#   The value to statically set the given MCP4728 channel to. This is
-#   typically set to a number between 0.0 and 1.0 with 1.0 being the
-#   highest voltage (2.048V) and 0.0 being the lowest voltage.
-#   However, the range may be changed with the &#39;scale&#39; parameter (see
-#   below). If a channel is not specified then it is left
-#   unconfigured.
+#   设置 MCP4728 通道为给定的静态值。通常它被设置为一个在
+#   0.0和1.0之间，1.0代表最高电压（2.048V）而0.0代表最低电压。
+#   然而，该范围可以被&#39;scale&#39;（ 缩放）参数改变（见下文）。没有给
+#   定值的通道不会被配置。
 #scale:
-#   This parameter can be used to alter how the &#39;channel_x&#39; parameters
-#   are interpreted. If provided, then the &#39;channel_x&#39; parameters
-#   should be between 0.0 and &#39;scale&#39;. This may be useful when the
-#   MCP4728 is used to set stepper voltage references. The &#39;scale&#39; can
+#   该参数可以改变&#39;channel_x&#39;参数被解释的方式。如果设定了该参数，
+#   &#39;channel_x&#39;参数的范围会在0.0 和 &#39;scale&#39;之间。该功能在使用MCP4728 产生
+#   步进电机参考电压时可能有用。The &#39;scale&#39; can
 #   be set to the equivalent stepper amperage if the MCP4728 were at
 #   its highest voltage (2.048V), and then the &#39;channel_x&#39; parameters
 #   can be specified using the desired amperage value for the
-#   stepper. The default is to not scale the &#39;channel_x&#39; parameters.
+#   stepper.默认不对channel_x&#39;参数进行缩放。
 </code></pre></div>
 
 <h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
@@ -6147,10 +6142,10 @@ i2c_address:
 <div class="highlight"><pre><span></span><code>[mcp4018 my_digipot]
 scl_pin:
 #   SCL &quot;时钟&quot;引脚。
-#   必须提供此参数。
+#   必须提供这个参数。
 sda_pin:
 #   SCL &quot;数据&quot;引脚。
-#   必须提供此参数。
+#   必须提供这个参数。
 wiper:
 #   The value to statically set the given MCP4018 &quot;wiper&quot; to. This is
 #   typically set to a number between 0.0 and 1.0 with 1.0 being the
@@ -6760,7 +6755,7 @@ serial:
 </code></pre></div>
 
 <h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
-<p>Magnetic hall angle sensor support for reading stepper motor angle shaft measurements using a1333, as5047d, or tle5012b SPI chips. The measurements are available via the <a href="API_Server.html">API Server</a> and <a href="Debugging.html#motion-analysis-and-data-logging">motion analysis tool</a>. See the <a href="G-Codes.html#angle">G-Code reference</a> for available commands.</p>
+<p>支持使用a1333、as5047d或tle5012b SPI芯片的磁性霍尔角度传感器测量并读取步进电机的角度。测量结果可以通过<a href="API_Server.html">API服务器</a>和<a href="Debugging.html#motion-analysis-and-data-logging">运动分析工具</a>获取。可用的命令请见<a href="G-Codes.html#angle">G代码参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[angle my_angle_sensor]
 sensor_type:
 # 磁性霍尔传感器芯片的类型。
@@ -6803,7 +6798,7 @@ cs_pin:
 #   &quot;software spi&quot;.
 </code></pre></div>
 
-<h3 id="i2c">常见的I2C 设置<a class="headerlink" href="#i2c" title="Permanent link">&para;</a></h3>
+<h3 id="i2c">常见的I2C设置<a class="headerlink" href="#i2c" title="Permanent link">&para;</a></h3>
 <p>以下参数一般适用于使用I2C总线的设备。</p>
 <div class="highlight"><pre><span></span><code>#i2c_address:
 #   设备的 I2C 地址。必须是一个十进制数字（而不是十六进制）。

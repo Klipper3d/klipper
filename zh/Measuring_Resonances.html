@@ -758,8 +758,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#max-smoothing" class="md-nav__link">
-    Max smoothing
+  <a href="#_10" class="md-nav__link">
+    最大平滑度
   </a>
   
 </li>
@@ -1415,8 +1415,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#max-smoothing" class="md-nav__link">
-    Max smoothing
+  <a href="#_10" class="md-nav__link">
+    最大平滑度
   </a>
   
 </li>
@@ -1633,7 +1633,7 @@ max_accel: 3000  # should not exceed the estimated max_accel for X and Y axes
 <p>请注意，可以<a href="#input-shaper-auto-calibration">直接</a>在Klipper中运行输入整形器自动校准，这可能更方便，例如，对于输入整形器<a href="#input-shaper-re-calibration">重新校准</a>。</p>
 <h3 id="_9">平行于喷嘴移动打印床的打印机<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>如果打印机的打印床可以平行于喷嘴移动，测量X和Y轴时需要改变加速度计的安装位置。安装加速度计到打印头以测量X轴共振，安装到打印床以测量Y轴（该类打印机的常见配置）。</p>
-<p>However, you can also connect two accelerometers simultaneously, though they must be connected to different boards (say, to an RPi and printer MCU board), or to two different physical SPI interfaces on the same board (rarely available). Then they can be configured in the following manner:</p>
+<p>也可以同时连接两个加速度计，尽管它们必须连接到不同的主板（例如，连接到树莓派和MCU），或者连接到同一板上两个不同的物理SPI接口（大多数情况下不可用）。然后可以按以下方式配置它们：</p>
 <div class="highlight"><pre><span></span><code>[adxl345 hotend]
 # Assuming `hotend` chip is connected to an RPi
 cs_pin: rpi:None
@@ -1649,8 +1649,8 @@ accel_chip_y: adxl345 bed
 probe_points: ...
 </code></pre></div>
 
-<p>Then the commands <code>TEST_RESONANCES AXIS=X</code> and <code>TEST_RESONANCES AXIS=Y</code> will use the correct accelerometer for each axis.</p>
-<h3 id="max-smoothing">Max smoothing<a class="headerlink" href="#max-smoothing" title="Permanent link">&para;</a></h3>
+<p>然后，命令<code>TEST_RESONANCES AXIS=X</code>和<code>TEST_RESONANCES AXIS=Y</code>会使用每个轴相应的加速度计。</p>
+<h3 id="_10">最大平滑度<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p>Keep in mind that the input shaper can create some smoothing in parts. Automatic tuning of the input shaper performed by <code>calibrate_shaper.py</code> script or <code>SHAPER_CALIBRATE</code> command tries not to exacerbate the smoothing, but at the same time they try to minimize the resulting vibrations. Sometimes they can make a sub-optimal choice of the shaper frequency, or maybe you simply prefer to have less smoothing in parts at the expense of a larger remaining vibrations. In these cases, you can request to limit the maximum smoothing from the input shaper.</p>
 <p>Let's consider the following results from the automatic tuning:</p>
 <p><img alt="Resonances" src="img/calibrate-x.png" /></p>

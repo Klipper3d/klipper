@@ -1372,13 +1372,13 @@
 <p>对文件的更新不应该声明它们是一项正在进行的工作。</p>
 </li>
 <li>
-<p>提交的文件是否为执行真实世界任务的真实世界用户提供了 "高度影响"的好处？Reviewers need to identify, at least in their own minds, roughly "who the target audience is", a rough scale of "the size of that audience", the "benefit" they will obtain, how the "benefit is measured", and the "results of those measurement tests". In most cases this will be obvious to both the submitter and the reviewer, and it is not explicitly stated during a review.</p>
-<p>Submissions to the master Klipper branch are expected to have a noteworthy target audience. As a general "rule of thumb", submissions should target a user base of at least a 100 real-world users.</p>
-<p>If a reviewer asks for details on the "benefit" of a submission, please don't consider it criticism. Being able to understand the real-world benefits of a change is a natural part of a review.</p>
+<p>提交的文件是否为执行真实世界任务的用户提供了 "高影响力"的改进？评审员需要确定，至少在他们自己的脑海中，大致的"目标受众"，"受众的规模"，受众将获得的"利益"，“如何衡量利益"，以及”这些测试的结果“。在大多数情况下，这对提交者和评审者来说都是显而易见的，而且在评审过程不需要明确的说明。</p>
+<p>提交到Klipper主分支的代码应该有足够的目标受众。作为一般的经验法则，提交的内容应该针对至少100个用户的用户群体。</p>
+<p>如果审稿人询问有关提交可以带来的“好处”的细节，请不要将其视为批评。能够理解更改带来的实际好处是审查的一个自然部分。</p>
 <p>When discussing benefits it is preferable to discuss "facts and measurements". In general, reviewers are not looking for responses of the form "someone may find option X useful", nor are they looking for responses of the form "this submission adds a feature that firmware X implements". Instead, it is generally preferable to discuss details on how the quality improvement was measured and what were the results of those measurements - for example, "tests on Acme X1000 printers show improved corners as seen in picture ...", or for example "print time of real-world object X on a Foomatic X900 printer went from 4 hours to 3.5 hours". It is understood that testing of this type can take significant time and effort. Some of Klipper's most notable features took months of discussion, rework, testing, and documentation prior to being merged into the master branch.</p>
 <p>All new modules, config options, commands, command parameters, and documents should have "high impact". We do not want to burden users with options that they can not reasonably configure nor do we want to burden them with options that don't provide a notable benefit.</p>
-<p>A reviewer may ask for clarification on how a user is to configure an option - an ideal response will contain details on the process - for example, "users of the MegaX500 are expected to set option X to 99.3 while users of the Elite100Y are expected to calibrate option X using procedure ...".</p>
-<p>If the goal of an option is to make the code more modular then prefer using code constants instead of user facing config options.</p>
+<p>评审员可能会要求解释用户该如何配置一个选项，一个理想的答复将包含过程的细节，例如："MegaX500的用户应将选项 X 设置为99.3，而Elite100Y的用户应使用程序校准选项X..." 。</p>
+<p>如果一个选项的目标是使代码更加模块化，那么最好使用代码常量而不是向用户开放的配置选项。</p>
 <p>New modules, new options, and new parameters should not provide similar functionality to existing modules - if the differences are arbitrary than it's preferable to utilize the existing system or refactor the existing code.</p>
 </li>
 <li>
