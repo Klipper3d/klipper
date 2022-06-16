@@ -1532,7 +1532,7 @@ round_probe_count: 5
 </code></pre></div>
 
 <ul>
-<li><code>mesh_radius: 75</code> <em>必须配置</em> 探测网格范围的半径（以毫米为单位），相对于 <code>mesh_origin</code>。 请注意，探针的偏移会限制网格半径的大小。 在此示例中，大于 76 mm的半径会将打印头移动到打印机的范围之外。</li>
+<li><code>mesh_radius: 75</code> <em>必须配置</em> 探测网格范围的半径（单位：mm），相对于 <code>mesh_origin</code>。 请注意，探针的偏移会限制网格半径的大小。 在此示例中，大于 76 mm的半径会将打印头移动到打印机的范围之外。</li>
 <li><code>mesh_origin: 0, 0</code> <em>默认值：0, 0</em> 探测网格的中心点。 该坐标相对于探针的位置。 虽然默认值为 0,0，但如果希望探测床的边角可以修改该值。 请参阅下图。</li>
 <li><code>round_probe_count: 5</code> <em>默认值： 5</em> 这是一个整数值，用于限制沿 X 轴和 Y 轴的最大探测点数。 “最大”是指沿网格原点探测的点数。 该值必须是奇数，因为需要探测网格的中心。</li>
 </ul>

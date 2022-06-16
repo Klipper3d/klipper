@@ -1651,9 +1651,9 @@ probe_points: ...
 
 <p>然后，命令<code>TEST_RESONANCES AXIS=X</code>和<code>TEST_RESONANCES AXIS=Y</code>会使用每个轴相应的加速度计。</p>
 <h3 id="_10">最大平滑度<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
-<p>Keep in mind that the input shaper can create some smoothing in parts. Automatic tuning of the input shaper performed by <code>calibrate_shaper.py</code> script or <code>SHAPER_CALIBRATE</code> command tries not to exacerbate the smoothing, but at the same time they try to minimize the resulting vibrations. Sometimes they can make a sub-optimal choice of the shaper frequency, or maybe you simply prefer to have less smoothing in parts at the expense of a larger remaining vibrations. In these cases, you can request to limit the maximum smoothing from the input shaper.</p>
-<p>Let's consider the following results from the automatic tuning:</p>
-<p><img alt="Resonances" src="img/calibrate-x.png" /></p>
+<p>请注意，输入整形器会在使一些打印的路径被平滑。由执行<code>calibrate_shaper.py</code>脚本或<code>SHAPER_CALIBRATE</code>命令自动得出的输入整形器会尽量不加剧平滑的同时试图最小化产生的振动。脚本可能会得出不是最优的整形器的频率，或者你可能希望以更强的剩余振动为代价来减少平滑度。在这些情况下，可以要求脚本限制输入整形器的最大平滑度。</p>
+<p>参考以下自动调谐结果：</p>
+<p><img alt="共振" src="img/calibrate-x.png" /></p>
 <div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 57.8 Hz (vibrations = 20.3%, smoothing ~= 0.053)
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 13000 mm/sec^2
 Fitted shaper &#39;mzv&#39; frequency = 34.8 Hz (vibrations = 3.6%, smoothing ~= 0.168)
@@ -1667,13 +1667,13 @@ To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 1
 Recommended shaper is 2hump_ei @ 45.2 Hz
 </code></pre></div>
 
-<p>Note that the reported <code>smoothing</code> values are some abstract projected values. These values can be used to compare different configurations: the higher the value, the more smoothing a shaper will create. However, these smoothing scores do not represent any real measure of smoothing, because the actual smoothing depends on <a href="#selecting-max-accel"><code>max_accel</code></a> and <code>square_corner_velocity</code> parameters. Therefore, you should print some test prints to see how much smoothing exactly a chosen configuration creates.</p>
-<p>In the example above the suggested shaper parameters are not bad, but what if you want to get less smoothing on the X axis? You can try to limit the maximum shaper smoothing using the following command:</p>
+<p>请注意，报告的 <code>smoothing</code>（平滑）值是抽象的预测值。这些值可用于比较不同的配置：值越高，整形器造成的平滑度就越高。但是，这些平滑值并不表示任何实际的平滑度的量，因为实际的平滑取决于<a href="#selecting-max-accel"><code>max_accel</code></a>和<code>square_corner_velocity</code>参数。因此，如果希望了解所选配置造成的实际平滑效果，需要打印一些测试件。</p>
+<p>在上面的示例中，脚本给出了不错的整形器参数建议，但是如果想在 X 轴上减少平滑度，就需要尝试使用以下命令限制脚本挑选参数时的整形器平滑值极限：</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
 </code></pre></div>
 
-<p>which limits the smoothing to 0.2 score. Now you can get the following result:</p>
-<p><img alt="Resonances" src="img/calibrate-x-max-smoothing.png" /></p>
+<p>这将平滑值限制在0.2。现在可以得到以下结果：</p>
+<p><img alt="共振" src="img/calibrate-x-max-smoothing.png" /></p>
 <div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 55.4 Hz (vibrations = 19.7%, smoothing ~= 0.057)
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 12000 mm/sec^2
 Fitted shaper &#39;mzv&#39; frequency = 34.6 Hz (vibrations = 3.6%, smoothing ~= 0.170)

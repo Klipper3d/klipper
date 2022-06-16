@@ -1264,11 +1264,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tmc-stepper-driver-configuration" class="md-nav__link">
-    TMC stepper driver configuration
+  <a href="#tmc" class="md-nav__link">
+    TMC步进驱动配置
   </a>
   
-    <nav class="md-nav" aria-label="TMC stepper driver configuration">
+    <nav class="md-nav" aria-label="TMC步进驱动配置">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1383,8 +1383,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#st7920-display" class="md-nav__link">
-    st7920 display
+  <a href="#st7920" class="md-nav__link">
+    st7920屏幕
   </a>
   
 </li>
@@ -1404,8 +1404,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ssd1306-and-sh1106-displays" class="md-nav__link">
-    ssd1306 and sh1106 displays
+  <a href="#ssd1306sh1106" class="md-nav__link">
+    ssd1306和sh1106屏幕
   </a>
   
 </li>
@@ -3142,11 +3142,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tmc-stepper-driver-configuration" class="md-nav__link">
-    TMC stepper driver configuration
+  <a href="#tmc" class="md-nav__link">
+    TMC步进驱动配置
   </a>
   
-    <nav class="md-nav" aria-label="TMC stepper driver configuration">
+    <nav class="md-nav" aria-label="TMC步进驱动配置">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3261,8 +3261,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#st7920-display" class="md-nav__link">
-    st7920 display
+  <a href="#st7920" class="md-nav__link">
+    st7920屏幕
   </a>
   
 </li>
@@ -3282,8 +3282,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ssd1306-and-sh1106-displays" class="md-nav__link">
-    ssd1306 and sh1106 displays
+  <a href="#ssd1306sh1106" class="md-nav__link">
+    ssd1306和sh1106屏幕
   </a>
   
 </li>
@@ -3852,34 +3852,30 @@ max_z_accel:
 <h3 id="_7">极坐标运动学<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>polar运动学配置文件参考 <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-polar.cfg">example-polar.cfg</a></p>
 <p>这里只描述了极地打印机特有的参数—全部可用的参数请见<a href="#common-kinematic-settings">常用的运动学设置</a>。</p>
-<p>POLAR KINEMATICS ARE A WORK IN PROGRESS. Moves around the 0, 0 position are known to not work properly.</p>
+<p>极坐标运动学还在开发中。在0, 0位置周围移动有一些已知问题。</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: polar
 max_z_velocity:
-#   This sets the maximum velocity (in mm/s) of movement along the z
-#   axis. This setting can be used to restrict the maximum speed of
-#   the z stepper motor. The default is to use max_velocity for
-#   max_z_velocity.
+#   定义了z轴的极限速度（单位：mm/s）。该设置可以单独限制
+#   Z轴步进电机的极限速度。
+#   默认使用 max_velocity 为 max_z_velocity。
 max_z_accel:
-#   This sets the maximum acceleration (in mm/s^2) of movement along
-#   the z axis. It limits the acceleration of the z stepper motor. The
-#   default is to use max_accel for max_z_accel.
+#   定义了Z轴的极限加速度（单位：mm/s^2）。该设置单独限制了
+#   Z轴步进电机的加速度。
+#   默认使用max_accel为max_z_accel。
 
-# The stepper_bed section is used to describe the stepper controlling
-# the bed.
+#   stepper_bed 分段定义了控制打印床的步进电机。
 [stepper_bed]
 gear_ratio:
-#   A gear_ratio must be specified and rotation_distance may not be
-#   specified. For example, if the bed has an 80 toothed pulley driven
-#   by a stepper with a 16 toothed pulley then one would specify a
-#   gear ratio of &quot;80:16&quot;. This parameter must be provided.
+#   必须指定齿轮比，但不必须指定旋转距离。例如，如果打印床有
+#   一个80齿的滑轮，由一个16齿的步进电机驱动，那么可以指定
+#   齿轮比为&quot;80:16&quot;。
+#   必须提供此参数。
 
-# The stepper_arm section is used to describe the stepper controlling
-# the carriage on the arm.
+#   stepper_arm分段定义了控制机械臂上滑车的步进电机。
 [stepper_arm]
 
-# The stepper_z section is used to describe the stepper controlling
-# the Z axis.
+#   stepper_z 分段定义了控制Z轴的步进电机。
 [stepper_z]
 </code></pre></div>
 
@@ -3992,8 +3988,7 @@ anchor_z:
 kinematics: none
 max_velocity: 1
 max_accel: 1
-#   The max_velocity and max_accel parameters must be defined. The
-#   values are not used for &quot;none&quot; kinematics.
+#   必须定义 max_velocity 和 max_accel，但是 它们不会被“none”运动学使用。
 </code></pre></div>
 
 <h2 id="_10">常见的挤出机和热床支持<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
@@ -4117,7 +4112,7 @@ max_temp:
 </code></pre></div>
 
 <h3 id="heater_bed">[heater_bed]<a class="headerlink" href="#heater_bed" title="Permanent link">&para;</a></h3>
-<p>The heater_bed section describes a heated bed. It uses the same heater settings described in the "extruder" section.</p>
+<p>heater_bed分段定义了一个热床。它有和“extruder”分段的加热器设置选项。</p>
 <div class="highlight"><pre><span></span><code>[heater_bed]
 heater_pin:
 sensor_type:
@@ -4131,7 +4126,7 @@ max_temp:
 <h2 id="_11">打印床调平支持<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
 <p>网床调平。定义一个 bed_mesh 配置分段来启用基于探测点生成网格的 Z 轴偏移移动变换。当使用探针归位 Z 轴时，建议通过 printer.cfg 中定义一个 safe_z_home 分段使 Z 轴归位在打印区域的中心执行。</p>
-<p>See the <a href="Bed_Mesh.html">bed mesh guide</a> and <a href="G-Codes.html#bed_mesh">command reference</a> for additional information.</p>
+<p>更多信息请参阅 <a href="Bed_Mesh.html">网床指南</a>和<a href="G-Codes.html#bed_mesh">命令参考</a>。</p>
 <p>可视化示例：</p>
 <div class="highlight"><pre><span></span><code> rectangular bed, probe_count = 3, 3:
              x---x---x (max_point)
@@ -4237,7 +4232,7 @@ max_temp:
 
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
 <p>打印床倾斜补偿。可以定义一个 bed_tilt 配置分段来启用移动变换倾斜打印床补偿。请注意，bed_mesh 和 bed_tilt 不兼容：两者无法同时被定义。</p>
-<p>See the <a href="G-Codes.html#bed_tilt">command reference</a> for additional information.</p>
+<p>更多信息请参阅<a href="G-Codes.html#bed_tilt">命令参考</a> 。</p>
 <div class="highlight"><pre><span></span><code>[bed_tilt]
 #x_调整：0
 # 在 X 轴上每 mm 添加到每次移动的 Z 高度的量
@@ -4333,7 +4328,7 @@ max_temp:
 </code></pre></div>
 
 <h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
-<p>Multiple Z stepper tilt adjustment. This feature enables independent adjustment of multiple z steppers (see the "stepper_z1" section) to adjust for tilt. If this section is present then a Z_TILT_ADJUST extended <a href="G-Codes.html#z_tilt">G-Code command</a> becomes available.</p>
+<p>多个独立Z轴步进电机的倾斜校正。这个功能可以独立调整多个 Z 步进电机（见"stepper_z1"部分），以调整倾斜度。如果该分段存在，那么Z_TILT_ADJUST 扩展<a href="G-Code.md#z_tilt">G代码命令</a>就可用。</p>
 <div class="highlight"><pre><span></span><code>[z_tilt]
 #z_positions:
 #   A list of X, Y coordinates (one per line; subsequent lines
@@ -4415,7 +4410,7 @@ max_temp:
 
 <h2 id="_12">自定义归零<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <h3 id="safe_z_home">[safe_z_home]<a class="headerlink" href="#safe_z_home" title="Permanent link">&para;</a></h3>
-<p>Safe Z homing. One may use this mechanism to home the Z axis at a specific X, Y coordinate. This is useful if the toolhead, for example has to move to the center of the bed before Z can be homed.</p>
+<p>安全Z轴归位。可以用该机制定义Z轴归位时的 X, Y 坐标。在工具头必须先移动到打印床中央再进行Z归位时很有用。</p>
 <div class="highlight"><pre><span></span><code>[safe_z_home]
 home_xy_position:
 #   A X, Y coordinate (e.g. 100, 100) where the Z homing should be
@@ -4558,7 +4553,7 @@ path:
 
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
 <p>Some printers with stage-clearing features, such as a part ejector or a belt printer, can find use in looping sections of the sdcard file. (For example, to print the same part over and over, or repeat the a section of a part for a chain or other repeated pattern).</p>
-<p>See the <a href="G-Codes.html#sdcard_loop">command reference</a> for supported commands. See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin compatible M808 G-Code macro.</p>
+<p>有关支持的命令请参阅<a href="G-Codes.html#sdcard_loop">命令参考</a>。兼容Marlin M808 的G代码宏可以在<a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a>中找到。</p>
 <div class="highlight"><pre><span></span><code>[sdcard_loop]
 </code></pre></div>
 
@@ -4597,7 +4592,7 @@ path:
 </code></pre></div>
 
 <h3 id="gcode_arcs">[gcode_arcs]<a class="headerlink" href="#gcode_arcs" title="Permanent link">&para;</a></h3>
-<p>Support for gcode arc (G2/G3) commands.</p>
+<p>支持G代码弧线(G2/G3)命令。</p>
 <div class="highlight"><pre><span></span><code>[gcode_arcs]
 #resolution: 1.0
 #   一条弧线将被分割成若干段。每段的长度将
@@ -4966,8 +4961,8 @@ axis:
 </code></pre></div>
 
 <h3 id="extruder_stepper">[extruder_stepper]<a class="headerlink" href="#extruder_stepper" title="Permanent link">&para;</a></h3>
-<p>Support for additional steppers synchronized to the movement of an extruder (one may define any number of sections with an "extruder_stepper" prefix).</p>
-<p>See the <a href="G-Codes.html#extruder">command reference</a> for more information.</p>
+<p>支持额外和挤出机运动同步的步进电机（可以定义任意数量的带有“extruder_stepper”前缀的分段）。</p>
+<p>更多信息请参阅<a href="G-Codes.html#extruder">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[extruder_stepper my_extra_stepper]
 extruder:
 #   这个步进电机将要同步到的挤出机名称
@@ -5122,11 +5117,9 @@ extruder:
 #sensor_pin:
 #min_temp:
 #max_temp:
-#   See the &quot;extruder&quot; section for the definition of the above
-#   parameters.
+#   以上参数的定义请见“extruder”章节。
 #gcode_id:
-#   See the &quot;heater_generic&quot; section for the definition of this
-#   parameter.
+#   以上参数的定义请见“heater_generic”章节。
 </code></pre></div>
 
 <h2 id="_18">温度传感器<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
@@ -5168,11 +5161,11 @@ sensor_pin:
 <p>直接连接到控制板的 PT1000 传感器。以下参数可用于使用这些传感器之一的加热器分段。</p>
 <div class="highlight"><pre><span></span><code>sensor_type: PT1000
 sensor_pin:
-#   Analog input pin connected to the sensor. This parameter must be
-#   provided.
+#   连接到传感器的模拟引脚。
+#   必须提供此参数。
 #pullup_resistor: 4700
-#   The resistance (in ohms) of the pullup attached to the sensor. The
-#   default is 4700 ohms.
+#   连接到传感器的上拉电阻阻值（单位：ohm）。
+#   默认为 4700 ohms。
 </code></pre></div>
 
 <h3 id="maxxxxxx">MAXxxxxx 温度传感器<a class="headerlink" href="#maxxxxxx" title="Permanent link">&para;</a></h3>
@@ -5293,7 +5286,7 @@ sensor_pin:
 </code></pre></div>
 
 <h3 id="_22">主机温度传感器<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h3>
-<p>Temperature from the machine (eg Raspberry Pi) running the host software.</p>
+<p>运行主机程序的电脑（例如树莓派）的温度。</p>
 <div class="highlight"><pre><span></span><code>sensor_type: temperature_host
 #sensor_path:
 #   The path to temperature system file. The default is
@@ -5438,7 +5431,7 @@ pin:
 
 <h3 id="temperature_fan">[temperature_fan]<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h3>
 <p>温度触发的冷却风扇（可以定义任意数量的带有“temperature_fan”前缀的部分）。一个"temperature fan"是一个只要其相关的传感器高于设定温度就会启用的风扇。默认情况下，一个温度风扇的关闭速度等于最大功率。</p>
-<p>See the <a href="G-Codes.html#temperature_fan">command reference</a> for additional information.</p>
+<p>更多信息请参阅<a href="G-Codes.html#temperature_fan">command reference</a>。</p>
 <div class="highlight"><pre><span></span><code>[temperature_fan my_temp_fan]
 #pin:
 #max_power:
@@ -5536,24 +5529,23 @@ pin:
 <h3 id="neopixel">[neopixel]<a class="headerlink" href="#neopixel" title="Permanent link">&para;</a></h3>
 <p>对于Neopixel（也就是WS2812）LED的支持（可以定义任意数量的带有“neopixel”前缀的部分）见<a href="G-Codes.html#led">command reference</a>获取更多信息</p>
 <p>注意！<a href="RPi_microcontroller.html">linux mcu</a>的实现目前不支持直接连接的neopixels。目前使用Linux内核接口的设计不允许这种情况发生，因为内核的GPIO接口速度不够快，无法提供所需的脉冲率。</p>
-<div class="highlight"><pre><span></span><code>[neopixel my_neopixel]
+<div class="highlight"><pre><span></span><code>[neopixel 我的neopixel]
 pin:
-#   The pin connected to the neopixel. This parameter must be
-#   provided.
+#   连接到neopixel的引脚。
+#   必须提供此参数。
 #chain_count:
-#   The number of Neopixel chips that are &quot;daisy chained&quot; to the
-#   provided pin. The default is 1 (which indicates only a single
-#   Neopixel is connected to the pin).
+#   菊链中 neopixel 芯片的数量。
+#   默认为1（代表有一个neopixel芯片连接到了这个引脚）。
 #color_order: GRB
-#   Set the pixel order required by the LED hardware (using a string
-#   containing the letters R, G, B, W with W optional). Alternatively,
-#   this may be a comma separated list of pixel orders - one for each
-#   LED in the chain. The default is GRB.
+#   设置LED硬件的RGB像素顺序（提供一个包含字母R（红），G（绿）
+#   ，B（蓝）和W（白）的字符串，W是可选的）。或者也可以用一个
+#   逗号分隔字符列表来描述像素顺序。
+#   默认为GRB。
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
-#   See the &quot;led&quot; section for information on these parameters.
+#  以上参数请参阅“led”章节。
 </code></pre></div>
 
 <h3 id="dotstar">[dotstar]<a class="headerlink" href="#dotstar" title="Permanent link">&para;</a></h3>
@@ -5619,7 +5611,7 @@ pin:
 
 <h2 id="_24">额外的舵机、按钮和其他引脚<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h2>
 <h3 id="servo">[servo]<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h3>
-<p>Servos (one may define any number of sections with a "servo" prefix). The servos may be controlled using the SET_SERVO <a href="G-Codes.html#servo">g-code command</a>. For example: SET_SERVO SERVO=my_servo ANGLE=180</p>
+<p>伺服电机（可以定义任意数量的带有“servo”前缀的分段）。可以通过SET_SERVO<a href="G-Codes.html#servo">G代码命令</a>控制伺服电机。例如：SET_SERVO SERVO=my_servo ANGLE=180</p>
 <div class="highlight"><pre><span></span><code>[servo my_servo]
 pin:
 #   PWM output pin controlling the servo. This parameter must be
@@ -5665,10 +5657,10 @@ pin:
 
 <h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
 <p>Run-time configurable output pins (one may define any number of sections with an "output_pin" prefix). Pins configured here will be setup as output pins and one may modify them at run-time using "SET_PIN PIN=my_pin VALUE=.1" type extended <a href="G-Codes.html#output_pin">g-code commands</a>.</p>
-<div class="highlight"><pre><span></span><code>[output_pin my_pin]
+<div class="highlight"><pre><span></span><code>[output_pin 我的引脚]
 pin:
-#   The pin to configure as an output. This parameter must be
-#   provided.
+#   被设置为输出的引脚。
+#   必须提供此参数。
 #pwm: False
 #   Set if the output pin should be capable of pulse-width-modulation.
 #   If this is true, the value fields should be between 0 and 1; if it
@@ -5730,7 +5722,7 @@ pins:
 #   必须提供此参数。
 </code></pre></div>
 
-<h2 id="tmc-stepper-driver-configuration">TMC stepper driver configuration<a class="headerlink" href="#tmc-stepper-driver-configuration" title="Permanent link">&para;</a></h2>
+<h2 id="tmc">TMC步进驱动配置<a class="headerlink" href="#tmc" title="Permanent link">&para;</a></h2>
 <p>在UART/SPI模式下配置Trinamic步进电机驱动器。其他信息在<a href="TMC_Drivers.html">TMC驱动程序指南</a>和<a href="G-Code.md#tmcxxxx">命令参考</a>中。</p>
 <h3 id="tmc2130">[tmc2130]<a class="headerlink" href="#tmc2130" title="Permanent link">&para;</a></h3>
 <p>通过 SPI 总线配置 TMC2130 步进电机驱动。要使用此功能，请定义一个带有“tmc2130”前缀并后跟步进驱动配置分段相应名称的配置分段（例如，“[tmc2130 stepper_x]”）。</p>
@@ -6141,11 +6133,11 @@ i2c_address:
 <p>Statically configured MCP4018 digipot connected via two gpio "bit banging" pins (one may define any number of sections with an "mcp4018" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mcp4018 my_digipot]
 scl_pin:
-#   SCL &quot;时钟&quot;引脚。
-#   必须提供这个参数。
+#   SCL “时钟”引脚。
+#   必须提供此参数。
 sda_pin:
-#   SCL &quot;数据&quot;引脚。
-#   必须提供这个参数。
+#   SDA “数据”引脚
+#   必须提供此参数
 wiper:
 #   The value to statically set the given MCP4018 &quot;wiper&quot; to. This is
 #   typically set to a number between 0.0 and 1.0 with 1.0 being the
@@ -6165,7 +6157,7 @@ wiper:
 
 <h2 id="_26">显示屏支持<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h2>
 <h3 id="display">[display]<a class="headerlink" href="#display" title="Permanent link">&para;</a></h3>
-<p>Support for a display attached to the micro-controller.</p>
+<p>支持一个连接到微控制器的屏幕</p>
 <div class="highlight"><pre><span></span><code>[display]
 lcd_type:
 #   使用的 LCD 芯片类型。这可以是“hd44780”、“hd44780_spi”、
@@ -6284,7 +6276,7 @@ spi_software_miso_pin:
 ...
 </code></pre></div>
 
-<h4 id="st7920-display">st7920 display<a class="headerlink" href="#st7920-display" title="Permanent link">&para;</a></h4>
+<h4 id="st7920">st7920屏幕<a class="headerlink" href="#st7920" title="Permanent link">&para;</a></h4>
 <p>有关配置 st7920 类显示屏的信息（可用于 "RepRapDiscount 12864 Full Graphic Smart Controller" 类型的显示器）。</p>
 <div class="highlight"><pre><span></span><code>[display]
 lcd_type: st7920
@@ -6333,7 +6325,7 @@ a0_pin:
 ...
 </code></pre></div>
 
-<h4 id="ssd1306-and-sh1106-displays">ssd1306 and sh1106 displays<a class="headerlink" href="#ssd1306-and-sh1106-displays" title="Permanent link">&para;</a></h4>
+<h4 id="ssd1306sh1106">ssd1306和sh1106屏幕<a class="headerlink" href="#ssd1306sh1106" title="Permanent link">&para;</a></h4>
 <p>ssd1306 和 sh1106 显示屏的配置信息。</p>
 <div class="highlight"><pre><span></span><code>[display]
 lcd_type:
@@ -6501,7 +6493,7 @@ text:
 <h2 id="_27">耗材传感器<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h2>
 <h3 id="filament_switch_sensor">[filament_switch_sensor]<a class="headerlink" href="#filament_switch_sensor" title="Permanent link">&para;</a></h3>
 <p>耗材开关传感器。支持使用开关传感器（如限位开关）进行耗材插入和耗尽检测。</p>
-<p>See the <a href="G-Codes.html#filament_switch_sensor">command reference</a> for more information.</p>
+<p>更多信息请参阅<a href="G-Codes.html#filament_switch_sensor">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[filament_switch_sensor my_sensor]。
 #pause_on_runout: True
 #   当设置为 &quot;True &quot;时，会在检测到耗尽后立即暂停打印机。
@@ -6535,7 +6527,7 @@ text:
 
 <h3 id="filament_motion_sensor">[filament_motion_sensor]<a class="headerlink" href="#filament_motion_sensor" title="Permanent link">&para;</a></h3>
 <p>耗材移动传感器。使用一个在耗材通过传感器时输出引脚状态会发生变化来检测耗材插入和耗尽。</p>
-<p>See the <a href="G-Codes.html#filament_switch_sensor">command reference</a> for more information.</p>
+<p>更多信息请参阅<a href="G-Codes.html#filament_switch_sensor">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[filament_motion_sensor my_sensor]
 detection_length: 7.0
 #   触发传感器 switch_pin 引脚状态变化的最小距离。
@@ -6617,7 +6609,7 @@ adc2:
 <h2 id="_28">控制板特定硬件支持<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h2>
 <h3 id="sx1509">[sx1509]<a class="headerlink" href="#sx1509" title="Permanent link">&para;</a></h3>
 <p>将一个 SX1509 I2C 配置为 GPIO 扩展器。由于 I2C 通信本身的延迟，不应将 SX1509 引脚用作步进电机的 enable （启用)、step（步进）或 dir （方向）引脚或任何其他需要快速 bit-banging（位拆裂）的引脚。它们最适合用作静态或G代码控制的数字输出或硬件 pwm 引脚，例如风扇。可以使用“sx1509”前缀定义任意数量的分段。每个扩展器提供可用于打印机配置的一组 16 个引脚（sx1509_my_sx1509:PIN_0 到 sx1509_my_sx1509:PIN_15）。</p>
-<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/generic-duet2-duex.cfg">generic-duet2-duex.cfg</a> file for an example.</p>
+<p>请见范例配置文件<a href="https://github.com/Klipper3d/klipper/blob/master/config/generic-duet2-duex.cfg">generic-duet2-duex.cfg</a>。</p>
 <div class="highlight"><pre><span></span><code>[sx1509 my_sx1509]
 i2c_address:
 #   I2C address used by this expander. Depending on the hardware
@@ -6658,7 +6650,7 @@ clk_pin:
 
 <h3 id="adc_scaled">[adc_scaled]<a class="headerlink" href="#adc_scaled" title="Permanent link">&para;</a></h3>
 <p>Duet 2 Maestro 通过vref和vssa读数进行模拟缩放。定义一个adc_scaled分段来启用根据板载vref和vssa监视引脚调节的虚拟adc引脚（例如“my_name:PB0"）。虚拟引脚必须先被Duet 2 Maestro 通过vref和vssa读数进行模拟缩放。定义一个adc_scaled分段来启用根据板载vref和vssa监视引脚调节的虚拟adc引脚（例如“my_name:PB0"）。虚拟引脚必须先被定义才能用在其他配置分段中。</p>
-<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/generic-duet2-maestro.cfg">generic-duet2-maestro.cfg</a> file for an example.</p>
+<p>请见范例配置文件<a href="https://github.com/Klipper3d/klipper/blob/master/config/generic-duet2-maestro.cfg">generic-duet2-maestro.cfg</a>。</p>
 <div class="highlight"><pre><span></span><code>[adc_scaled my_name]
 vref_pin:
 #   用于监测 VREF 的 ADC 引脚。这个参数必须被提供。
@@ -6733,7 +6725,7 @@ host_mcu:
 <h2 id="_29">其他自定义模块<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h2>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
 <p>Palette 2 多材料支持 - 提供更紧密的集成，支持处于连接模式的 Palette 2 设备。</p>
-<p>This modules also requires <code>[virtual_sdcard]</code> and <code>[pause_resume]</code> for full functionality.</p>
+<p>该模块的全部功能需要<code>[virtual_sdcard]</code>和<code>[pause_resume]</code>。</p>
 <p>不要和 Octoprint 的 Palette 2插件一起使用这个模块，因为它们会发生冲突，造成初始化和打印失败。</p>
 <p>如果使用 OctoPrint 并通过串行端口流式传输 G-Code，而不通过 virtual_sd 打印，将 * 设置&gt;串行连接&gt;固件和协议 * 中的“暂停命令” 设置为<strong>M1</strong> 和 <strong>M0</strong> 可以避免在开始打印时需要在Palette 2 上选择开始打印并在 OctoPrint 中取消暂停。</p>
 <div class="highlight"><pre><span></span><code>[palette2]
@@ -6781,7 +6773,7 @@ cs_pin:
 
 <h2 id="_30">常见的总线参数<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h2>
 <h3 id="spi">常见 SPI 设置<a class="headerlink" href="#spi" title="Permanent link">&para;</a></h3>
-<p>以下参数一般适用于使用SPI总线的设备。</p>
+<p>以下参数适用于多数使用SPI总线的设备。</p>
 <div class="highlight"><pre><span></span><code>#spi_speed:
 #   The SPI speed (in hz) to use when communicating with the device.
 #   The default depends on the type of device.

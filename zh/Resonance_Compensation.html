@@ -1569,7 +1569,7 @@ shaper_freq_y: ...  # frequency for the Y mark of the test model
 
 <p>对于上述例子，我们得到 shaper_freq_x/y = 49.4。</p>
 <h3 id="_5">选择输入整形器<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<p>Klipper支持数种输入整形器。这些整形器之间的差异在于</p>
+<p>Klipper支持数种输入整形器。这些整形器之间的差异在于它们容许的共振频率测量误差和它们在打印件中产生的平滑度。请注意，一些整形器，例如2HUMP_EI和3HUMP_EI，不应与shaper_freq = 共振频率一起使用。它们应该被配置为同时减少多个不同的频率。</p>
 <p>对于大多数打印机，推荐 MZV 或E I整形器。章节介绍了在它们之间进行选择，并找出其他一些相关参数的测试过程。</p>
 <p>Print the ringing test model as follows:</p>
 <ol>
