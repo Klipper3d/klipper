@@ -30,7 +30,7 @@ Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
 # Helper class to obtain measurements
-class ADXL345QueryHelper:
+class AccelQueryHelper:
     def __init__(self, printer, cconn):
         self.printer = printer
         self.cconn = cconn
@@ -432,7 +432,7 @@ class ADXL345:
         web_request.send({'header': hdr})
     def start_internal_client(self):
         cconn = self.api_dump.add_internal_client()
-        return ADXL345QueryHelper(self.printer, cconn)
+        return AccelQueryHelper(self.printer, cconn)
 
 def load_config(config):
     return ADXL345(config)

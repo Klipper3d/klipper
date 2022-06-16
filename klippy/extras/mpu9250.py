@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time, collections, threading, multiprocessing, os
-from . import bus, motion_report
+from . import bus, motion_report, adxl345
 
 MPU9250_ADDR =      0x68
 
@@ -47,77 +47,6 @@ def twos_complement(val, nbits):
     if (val & (1 << (nbits - 1))) != 0:
         val = val - (1 << nbits)
     return val
-
-# Helper class to obtain measurements
-class MPU9250QueryHelper:
-    def __init__(self, printer, cconn):
-        self.printer = printer
-        self.cconn = cconn
-        print_time = printer.lookup_object('toolhead').get_last_move_time()
-        self.request_start_time = self.request_end_time = print_time
-        self.samples = self.raw_samples = []
-    def finish_measurements(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        self.request_end_time = toolhead.get_last_move_time()
-        toolhead.wait_moves()
-        self.cconn.finalize()
-    def _get_raw_samples(self):
-        raw_samples = self.cconn.get_messages()
-        if raw_samples:
-            self.raw_samples = raw_samples
-        return self.raw_samples
-    def has_valid_samples(self):
-        raw_samples = self._get_raw_samples()
-        for msg in raw_samples:
-            data = msg['params']['data']
-            first_sample_time = data[0][0]
-            last_sample_time = data[-1][0]
-            if (first_sample_time > self.request_end_time
-                    or last_sample_time < self.request_start_time):
-                continue
-            # The time intervals [first_sample_time, last_sample_time]
-            # and [request_start_time, request_end_time] have non-zero
-            # intersection. It is still theoretically possible that none
-            # of the samples from raw_samples fall into the time interval
-            # [request_start_time, request_end_time] if it is too narrow
-            # or on very heavy data losses. In practice, that interval
-            # is at least 1 second, so this possibility is negligible.
-            return True
-        return False
-    def get_samples(self):
-        raw_samples = self._get_raw_samples()
-        if not raw_samples:
-            return self.samples
-        total = sum([len(m['params']['data']) for m in raw_samples])
-        count = 0
-        self.samples = samples = [None] * total
-        for msg in raw_samples:
-            for samp_time, x, y, z in msg['params']['data']:
-                if samp_time < self.request_start_time:
-                    continue
-                if samp_time > self.request_end_time:
-                    break
-                samples[count] = Accel_Measurement(samp_time, x, y, z)
-                count += 1
-        del samples[count:]
-        return self.samples
-    def write_to_file(self, filename):
-        def write_impl():
-            try:
-                # Try to re-nice writing process
-                os.nice(20)
-            except:
-                pass
-            f = open(filename, "w")
-            f.write("#time,accel_x,accel_y,accel_z\n")
-            samples = self.samples or self.get_samples()
-            for t, accel_x, accel_y, accel_z in samples:
-                f.write("%.6f,%.6f,%.6f,%.6f\n" % (
-                    t, accel_x, accel_y, accel_z))
-            f.close()
-        write_proc = multiprocessing.Process(target=write_impl)
-        write_proc.daemon = True
-        write_proc.start()
 
 # Helper class for G-Code commands
 class MPU9250CommandHelper:
@@ -452,7 +381,7 @@ class MPU9250:
         web_request.send({'header': hdr})
     def start_internal_client(self):
         cconn = self.api_dump.add_internal_client()
-        return MPU9250QueryHelper(self.printer, cconn)
+        return adxl345.AccelQueryHelper(self.printer, cconn)
 
 def load_config(config):
     return MPU9250(config)
