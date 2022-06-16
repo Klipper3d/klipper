@@ -42,12 +42,6 @@ FIFO_SIZE = 512
 Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
-# Helper method for getting the two's complement value of an unsigned int
-def twos_complement(val, nbits):
-    if (val & (1 << (nbits - 1))) != 0:
-        val = val - (1 << nbits)
-    return val
-
 MIN_MSG_TIME = 0.100
 
 BYTES_PER_SAMPLE = 6
@@ -139,11 +133,12 @@ class MPU9250:
             for i in range(len(d) // BYTES_PER_SAMPLE):
                 d_xyz = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
                 xhigh, xlow, yhigh, ylow, zhigh, zlow = d_xyz
-                rx = twos_complement(xhigh << 8 | xlow, 16)
-                ry = twos_complement(yhigh << 8 | ylow, 16)
-                rz = twos_complement(zhigh << 8 | zlow, 16)
-                raw_xyz = (rx, ry, rz)
+                # Merge and perform twos-complement
+                rx = ((xhigh << 8) | xlow) - ((xhigh & 0x80) << 9)
+                ry = ((yhigh << 8) | ylow) - ((yhigh & 0x80) << 9)
+                rz = ((zhigh << 8) | zlow) - ((zhigh & 0x80) << 9)
 
+                raw_xyz = (rx, ry, rz)
                 x = round(raw_xyz[x_pos] * x_scale, 6)
                 y = round(raw_xyz[y_pos] * y_scale, 6)
                 z = round(raw_xyz[z_pos] * z_scale, 6)
