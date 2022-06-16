@@ -48,75 +48,6 @@ def twos_complement(val, nbits):
         val = val - (1 << nbits)
     return val
 
-# Helper class for G-Code commands
-class MPU9250CommandHelper:
-    def __init__(self, config, chip):
-        self.printer = config.get_printer()
-        self.chip = chip
-        self.bg_client = None
-        self.name = config.get_name().split()[-1]
-        self.register_commands(self.name)
-        if self.name == "mpu9250":
-            self.register_commands(None)
-    def register_commands(self, name):
-        # Register commands
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_MEASURE,
-                                   desc=self.cmd_ACCELEROMETER_MEASURE_help)
-        gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_QUERY,
-                                   desc=self.cmd_ACCELEROMETER_QUERY_help)
-        gcode.register_mux_command("ACCELEROMETER_DEBUG_READ", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_DEBUG_READ,
-                                   desc=self.cmd_ACCELEROMETER_DEBUG_READ_help)
-        gcode.register_mux_command("ACCELEROMETER_DEBUG_WRITE", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_DEBUG_WRITE,
-                                   desc=self.cmd_ACCELEROMETER_DEBUG_WRITE_help)
-    cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
-    def cmd_ACCELEROMETER_MEASURE(self, gcmd):
-        if self.bg_client is None:
-            # Start measurements
-            self.bg_client = self.chip.start_internal_client()
-            gcmd.respond_info("mpu9250 measurements started")
-            return
-        # End measurements
-        name = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
-        if not name.replace('-', '').replace('_', '').isalnum():
-            raise gcmd.error("Invalid mpu9250 NAME parameter")
-        bg_client = self.bg_client
-        self.bg_client = None
-        bg_client.finish_measurements()
-        # Write data to file
-        if self.name == "mpu9250":
-            filename = "/tmp/mpu9250-%s.csv" % (name,)
-        else:
-            filename = "/tmp/mpu9250-%s-%s.csv" % (self.name, name,)
-        bg_client.write_to_file(filename)
-        gcmd.respond_info("Writing raw accelerometer data to %s file"
-                          % (filename,))
-    cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
-    def cmd_ACCELEROMETER_QUERY(self, gcmd):
-        aclient = self.chip.start_internal_client()
-        self.printer.lookup_object('toolhead').dwell(1.)
-        aclient.finish_measurements()
-        values = aclient.get_samples()
-        if not values:
-            raise gcmd.error("No mpu9250 measurements found")
-        _, accel_x, accel_y, accel_z = values[-1]
-        gcmd.respond_info("mpu9250 values (x, y, z): %.6f, %.6f, %.6f"
-                          % (accel_x, accel_y, accel_z))
-    cmd_ACCELEROMETER_DEBUG_READ_help = "Query mpu9250 register (for debugging)"
-    def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
-        val = self.chip.read_reg(reg)
-        gcmd.respond_info("MPU9250 REG[0x%x] = 0x%x" % (reg, val))
-    cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set mpu9250 register (for debugging)"
-    def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
-        val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
-        self.chip.set_reg(reg, val)
-
 MIN_MSG_TIME = 0.100
 
 BYTES_PER_SAMPLE = 6
@@ -126,7 +57,7 @@ SAMPLES_PER_BLOCK = 8
 class MPU9250:
     def __init__(self, config):
         self.printer = config.get_printer()
-        MPU9250CommandHelper(config, self)
+        adxl345.AccelCommandHelper(config, self)
         self.query_rate = 0
         am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
               '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
