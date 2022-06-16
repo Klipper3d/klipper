@@ -275,12 +275,6 @@ config STM32F0_TRIM
 # Communication inteface
 ######################################################################
 
-config USBSERIAL
-    bool
-config SERIAL
-    bool
-config CANSERIAL
-    bool
 choice
     prompt "Communication interface"
     config STM32_USB_PA11_PA12
