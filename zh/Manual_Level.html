@@ -1336,7 +1336,7 @@
 <p>最好是在Z轴与加热床面之间使用Z限位开关（远离床面的限位开关更加稳定安全，因为这样的话，Z轴的原点通常是安全的）。然而，如果必须向加热床归位，建议调整限位开关，使其在加热床床面上方一小段距离（例如0.5毫米）触发。几乎所有的限位开关都可以在触发点以外的一小段距离安全地压下。当这样做时，你会发现<code>Z_ENDSTOP_CALIBRATE</code>命令输出一个小的正值（比如0.5毫米）的Z限位位置。</p>
 <p>某些打印机能够手动调整限位开关的物理位置，但是建议使用 Klipper 在软件中执行 Z 限位定位-在将限位的物理位置固定于方便微调的位置，就可以通过运行 Z_ENDSTOP_CALIBRATE 或通过手动更新配置文件中的 Z position_endstop 来进行进一步的调整。</p>
 <h2 id="_2">调整打印调平螺丝<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>The secret to getting good bed leveling with bed leveling screws is to utilize the printer's high precision motion system during the bed leveling process itself. This is done by commanding the nozzle to a position near each bed screw and then adjusting that screw until the bed is a set distance from the nozzle. Klipper has a tool to assist with this. In order to use the tool it is necessary to specify each screw XY location.</p>
+<p>使用打印床调平螺丝获得平整打印床的秘诀是在床身调平过程中利用打印机高精度的运动系统，通过将喷嘴命令到每个调平螺丝附近的位置，然后调整该螺丝直到床与喷嘴保持固定的距离。Klipper 的一个内置工具可以协助解决这个问题。为了使用该工具，必须指定每个螺丝的XY坐标。</p>
 <p>这是通过创建一个<code>[bed_screws]</code>配置部分来实现的。例如，它可能看起来类似于以下内容:</p>
 <div class="highlight"><pre><span></span><code>[bed_screws]
 screw1: 100, 50
@@ -1356,8 +1356,8 @@ screw3: 150, 100
 <p>如果打印机使用三个热床调平螺丝，并且所有三个调平螺丝都在热床下面，那么就有可能执行第二个"高精度"热床调平步骤。这是通过命令喷头到热床当在每次调整床身时移动较大距离的位置来实现的。</p>
 <p>例如，考虑一张在A B C位置有螺丝的打印平台：</p>
 <p><img alt="bed_screws" src="img/bed_screws.svg.png" /></p>
-<p>For each adjustment made to the bed screw at location C, the bed will swing along a pendulum defined by the remaining two bed screws (shown here as a green line). In this situation, each adjustment to the bed screw at C will move the bed at position D a further amount than directly at C. It is thus possible to make an improved C screw adjustment when the nozzle is at position D.</p>
-<p>To enable this feature, one would determine the additional nozzle coordinates and add them to the config file. For example, it might look like:</p>
+<p>在位于C位置的螺丝每次调整间，打印床/打印头将沿着由其余两个螺丝定义的坐标摆锤摆动（此处显示为绿线）。在这种情况下，每次调整C处的床螺钉都会使打印床在位置D处移动比在C处移动更多的量。因此，可以通过将喷嘴置于D位置进行对C位置螺丝的精确调整。</p>
+<p>要启用此功能，需要定义额外的喷嘴坐标并将其添加到配置文件中。例如：</p>
 <div class="highlight"><pre><span></span><code>[bed_screws]
 screw1: 100, 50
 screw1_fine_adjust: 0, 0
