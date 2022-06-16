@@ -31,7 +31,8 @@ and **will not work**. The recommended connection scheme:
 | SDA | 19 | GPIO10 (SPI0_MOSI) |
 | SCL | 23 | GPIO11 (SPI0_SCLK) |
 
-An alternative to the ADXL345 is the MPU-9250 (or MPU-6050).  This accelerometer has been tested to work over I2C on the RPi at 400kbaud.
+An alternative to the ADXL345 is the MPU-9250 (or MPU-6050).  This
+accelerometer has been tested to work over I2C on the RPi at 400kbaud.
 Recommended connection scheme for I2C:
 
 | MPU-9250 pin | RPi pin | RPi pin name |
