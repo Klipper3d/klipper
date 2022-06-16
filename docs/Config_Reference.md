@@ -1525,6 +1525,24 @@ cs_pin:
 #   measurements.
 ```
 
+### [mpu9250]
+
+Support for mpu9250 and mpu6050 accelerometers (one may define any
+number of sections with an "mpu9250" prefix).
+
+```
+[mpu9250 my_accelerometer]
+#i2c_address:
+#   Default is 104 (0x68).
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
 ### [resonance_tester]
 
 Support for resonance testing and automatic input shaper calibration.
