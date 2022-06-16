@@ -115,7 +115,9 @@ probe_points:
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
-For the MPU-9250:
+For the MPU-9250, make sure the Linux I2C driver is enabled and the baud rate is
+set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
+section for more details). Then, add the following to the printer.cfg:
 ```
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
