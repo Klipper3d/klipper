@@ -1,3 +1,16 @@
+diff --git a/lib/rp2040/boot_stage2/boot2_generic_03h.S b/lib/rp2040/boot_stage2/boot2_generic_03h.S
+index a10e66abd..cc7e4fbc7 100644
+--- a/lib/rp2040/boot_stage2/boot2_generic_03h.S
++++ b/lib/rp2040/boot_stage2/boot2_generic_03h.S
+@@ -16,7 +16,7 @@
+ //                4-byte checksum. Therefore code size cannot exceed 252 bytes.
+ // ----------------------------------------------------------------------------
+ 
+-#include "pico/asm_helper.S"
++//#include "pico/asm_helper.S"
+ #include "hardware/regs/addressmap.h"
+ #include "hardware/regs/ssi.h"
+ 
 diff --git a/lib/rp2040/boot_stage2/boot2_w25q080.S b/lib/rp2040/boot_stage2/boot2_w25q080.S
 index ad3238e2..8fb3def4 100644
 --- a/lib/rp2040/boot_stage2/boot2_w25q080.S
