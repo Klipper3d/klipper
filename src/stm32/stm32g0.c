@@ -147,7 +147,6 @@ usb_request_bootloader(void)
 void
 armcm_main(void)
 {
-    check_usb_dfu_bootloader();
     SCB->VTOR = (uint32_t)VectorTable;
 
     // Reset clock registers (in case bootloader has changed them)
@@ -163,6 +162,8 @@ armcm_main(void)
     RCC->AHBENR = 0x00000100;
     RCC->APBENR1 = 0x00000000;
     RCC->APBENR2 = 0x00000000;
+
+    check_usb_dfu_bootloader();
 
     // Set flash latency
     FLASH->ACR = (2<<FLASH_ACR_LATENCY_Pos) | FLASH_ACR_ICEN | FLASH_ACR_PRFTEN;
