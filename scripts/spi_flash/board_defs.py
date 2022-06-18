@@ -68,8 +68,7 @@ BOARD_DEFS = {
     },
     'monster8': {
         'mcu': "stm32f407xx",
-        'spi_bus': "swspi",
-        'spi_pins': "PC11,PC12,PC10",
+        'spi_bus': "spi3a",
         "cs_pin": "PC9"
     }
 }
