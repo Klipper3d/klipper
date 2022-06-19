@@ -984,8 +984,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#corexy-robots" class="md-nav__link">
-    CoreXY Robots
+  <a href="#corexy" class="md-nav__link">
+    CoreXY 机器人
   </a>
   
 </li>
@@ -998,8 +998,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stepper-motor-acceleration-limits" class="md-nav__link">
-    Stepper motor acceleration limits
+  <a href="#_7" class="md-nav__link">
+    步进电机加速限制
   </a>
   
 </li>
@@ -1012,7 +1012,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_8" class="md-nav__link">
     压力提前
   </a>
   
@@ -1372,8 +1372,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#corexy-robots" class="md-nav__link">
-    CoreXY Robots
+  <a href="#corexy" class="md-nav__link">
+    CoreXY 机器人
   </a>
   
 </li>
@@ -1386,8 +1386,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stepper-motor-acceleration-limits" class="md-nav__link">
-    Stepper motor acceleration limits
+  <a href="#_7" class="md-nav__link">
+    步进电机加速限制
   </a>
   
 </li>
@@ -1400,7 +1400,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_8" class="md-nav__link">
     压力提前
   </a>
   
@@ -1462,11 +1462,11 @@
 <p><img alt="zigzag" src="img/zigzag.svg.png" /></p>
 <p>在上述情况下，从加速到减速的频繁变化会导致机器振动并且会对机器造成压力和加噪音。为了减少这种情况，Klipper既跟踪常规的移动加速度并且也跟踪虚拟的"加减速率"。利用这个系统，这些短的"zigzag"移动的最高速度被限制以使得打印机的运动可以更加平滑：</p>
 <p><img alt="smoothed" src="img/smoothed.svg.png" /></p>
-<p>Specifically, the code calculates what the velocity of each move would be if it were limited to this virtual "acceleration to deceleration" rate (half the normal acceleration rate by default). In the above picture the dashed gray lines represent this virtual acceleration rate for the first move. If a move can not reach its full cruising speed using this virtual acceleration rate then its top speed is reduced to the maximum speed it could obtain at this virtual acceleration rate. For most moves the limit will be at or above the move's existing limits and no change in behavior is induced. For short zigzag moves, however, this limit reduces the top speed. Note that it does not change the actual acceleration within the move - the move continues to use the normal acceleration scheme up to its adjusted top-speed.</p>
+<p>具体来说，代码计算的是限制在这个虚拟的“加速到减速”率下时（默认为正常加速率的一半），每个动作的速度是多少。在上图中，灰色虚线代表了第一段移动时的虚拟加速率。如果一段移动使用这个虚拟加速度不能达到目标巡航速度，那么这段移动的最高速度将被降低到它在这个虚拟加速率下所能获得的最大速度。对于大多数移动来说，该限制将处于或高于该移动的现有限制，并且不会改变移动的行为。然而，对于短的 "之 "字形移动，这个限制会降低最高速度。请注意，它不会改变移动中的实际加速度--移动会继续使用正常的加速，直到其调整后的最高速度。</p>
 <h2 id="generating-steps">生成步数（Generating steps）<a class="headerlink" href="#generating-steps" title="Permanent link">&para;</a></h2>
-<p>Once the look-ahead process completes, the print head movement for the given move is fully known (time, start position, end position, velocity at each point) and it is possible to generate the step times for the move. This process is done within "kinematic classes" in the Klipper code. Outside of these kinematic classes, everything is tracked in millimeters, seconds, and in cartesian coordinate space. It's the task of the kinematic classes to convert from this generic coordinate system to the hardware specifics of the particular printer.</p>
-<p>Klipper uses an <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">iterative solver</a> to generate the step times for each stepper. The code contains the formulas to calculate the ideal cartesian coordinates of the head at each moment in time, and it has the kinematic formulas to calculate the ideal stepper positions based on those cartesian coordinates. With these formulas, Klipper can determine the ideal time that the stepper should be at each step position. The given steps are then scheduled at these calculated times.</p>
-<p>The key formula to determine how far a move should travel under constant acceleration is:</p>
+<p>前瞻过程完成后给定移动的打印头运动已被确定（时间、开始位置、结束位置、每一点的速度），可以被用于生成移动的步进时间。这个过程是在Klipper代码的运动学类中完成的。在这些运动学类之外，所有的东西都是以毫米、秒为单位，在笛卡尔坐标空间进行跟踪。运动学类负责将这个通用坐标系统转换为符合打印机硬件特性的坐标系。</p>
+<p>Klipper使用一个<a href="https://zh.wikipedia.org/wiki/%E6%B1%82%E6%A0%B9%E7%AE%97%E6%B3%95">迭代求解器</a>来生成每个步进的步进时间。该代码包含了计算打印头在每个时间点上的理想笛卡尔坐标的公式，它还有运动学公式来计算基于这些笛卡尔坐标的理想步进位置。通过这些公式，Klipper可以确定步进电机在每个步进位置时的理想步进时间。然后在这些计算出的时间内安排给定的步进。</p>
+<p>确定一个移动在恒定加速度下应该移动多远的关键公式是：</p>
 <div class="highlight"><pre><span></span><code>move_distance = (start_velocity + .5 * accel * move_time) * move_time
 </code></pre></div>
 
@@ -1481,22 +1481,22 @@ cartesian_z_position = start_z + move_distance * total_z_movement / total_moveme
 </code></pre></div>
 
 <h3 id="_5">笛卡尔机器<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<p>Generating steps for cartesian printers is the simplest case. The movement on each axis is directly related to the movement in cartesian space.</p>
-<p>Key formulas:</p>
+<p>为笛卡尔坐标的打印机生成步进是最简单的情况。每个轴上的运动与笛卡尔空间中的运动直接相关。</p>
+<p>关键公式：</p>
 <div class="highlight"><pre><span></span><code>stepper_x_position = cartesian_x_position
 stepper_y_position = cartesian_y_position
 stepper_z_position = cartesian_z_position
 </code></pre></div>
 
-<h3 id="corexy-robots">CoreXY Robots<a class="headerlink" href="#corexy-robots" title="Permanent link">&para;</a></h3>
-<p>Generating steps on a CoreXY machine is only a little more complex than basic cartesian robots. The key formulas are:</p>
+<h3 id="corexy">CoreXY 机器人<a class="headerlink" href="#corexy" title="Permanent link">&para;</a></h3>
+<p>在CoreXY的机器上生成步进只比基本的卡特尔机器人复杂一点。关键公式是：</p>
 <div class="highlight"><pre><span></span><code>stepper_a_position = cartesian_x_position + cartesian_y_position
 stepper_b_position = cartesian_x_position - cartesian_y_position
 stepper_z_position = cartesian_z_position
 </code></pre></div>
 
 <h3 id="_6">三角洲机器<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
-<p>Step generation on a delta robot is based on Pythagoras's theorem:</p>
+<p>三角洲结构机器人上的步进生成基于勾股定理：</p>
 <div class="highlight"><pre><span></span><code>stepper_position = (sqrt(arm_length^2
 
                          - (cartesian_x_position - tower_x_position)^2
@@ -1504,7 +1504,7 @@ stepper_z_position = cartesian_z_position
                     + cartesian_z_position)
 </code></pre></div>
 
-<h3 id="stepper-motor-acceleration-limits">Stepper motor acceleration limits<a class="headerlink" href="#stepper-motor-acceleration-limits" title="Permanent link">&para;</a></h3>
+<h3 id="_7">步进电机加速限制<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>With delta kinematics it is possible for a move that is accelerating in cartesian space to require an acceleration on a particular stepper motor greater than the move's acceleration. This can occur when a stepper arm is more horizontal than vertical and the line of movement passes near that stepper's tower. Although these moves could require a stepper motor acceleration greater than the printer's maximum configured move acceleration, the effective mass moved by that stepper would be smaller. Thus the higher stepper acceleration does not result in significantly higher stepper torque and it is therefore considered harmless.</p>
 <p>However, to avoid extreme cases, Klipper enforces a maximum ceiling on stepper acceleration of three times the printer's configured maximum move acceleration. (Similarly, the maximum velocity of the stepper is limited to three times the maximum move velocity.) In order to enforce this limit, moves at the extreme edge of the build envelope (where a stepper arm may be nearly horizontal) will have a lower maximum acceleration and velocity.</p>
 <h3 id="extruder-kinematics">Extruder kinematics<a class="headerlink" href="#extruder-kinematics" title="Permanent link">&para;</a></h3>
@@ -1513,7 +1513,7 @@ stepper_z_position = cartesian_z_position
 <div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
 </code></pre></div>
 
-<h3 id="_7">压力提前<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<h3 id="_8">压力提前<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>Experimentation has shown that it's possible to improve the modeling of the extruder beyond the basic extruder formula. In the ideal case, as an extrusion move progresses, the same volume of filament should be deposited at each point along the move and there should be no volume extruded after the move. Unfortunately, it's common to find that the basic extrusion formulas cause too little filament to exit the extruder at the start of extrusion moves and for excess filament to extrude after extrusion ends. This is often referred to as "ooze".</p>
 <p><img alt="ooze" src="img/ooze.svg.png" /></p>
 <p>The "pressure advance" system attempts to account for this by using a different model for the extruder. Instead of naively believing that each mm^3 of filament fed into the extruder will result in that amount of mm^3 immediately exiting the extruder, it uses a model based on pressure. Pressure increases when filament is pushed into the extruder (as in <a href="https://en.wikipedia.org/wiki/Hooke%27s_law">Hooke's law</a>) and the pressure necessary to extrude is dominated by the flow rate through the nozzle orifice (as in <a href="https://en.wikipedia.org/wiki/Poiseuille_law">Poiseuille's law</a>). The key idea is that the relationship between filament, pressure, and flow rate can be modeled using a linear coefficient:</p>
