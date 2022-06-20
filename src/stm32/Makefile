@@ -62,7 +62,7 @@ src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
 canbus-src-y := generic/canbus.c ../lib/fast-hash/fasthash.c
 canbus-src-$(CONFIG_HAVE_STM32_CANBUS) += stm32/can.c
 canbus-src-$(CONFIG_HAVE_STM32_FDCANBUS) += stm32/fdcan.c
-src-$(CONFIG_CANSERIAL) += $(canbus-src-y)
+src-$(CONFIG_CANSERIAL) += $(canbus-src-y) stm32/chipid.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += stm32/hard_pwm.c
 
 # Binary output file rules

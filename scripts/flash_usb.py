@@ -315,17 +315,19 @@ def flash_stm32f4(options, binfile):
 RP2040_HELP = """
 Failed to flash to %s: %s
 
-If the device is already in bootloader mode, use 'first' as FLASH_DEVICE.
-This will use rp2040_flash to flash the first available rp2040.
+If the device is already in bootloader mode it can be flashed with the
+following command:
+  make flash FLASH_DEVICE=2e8a:0003
 
 Alternatively, one can flash rp2040 boards like the Pico by manually
 entering bootloader mode(hold bootsel button during powerup), mount the
 device as a usb drive, and copy klipper.uf2 to the device.
+
 """
 
 def flash_rp2040(options, binfile):
     try:
-        if options.device.lower() == "first":
+        if options.device.lower() == "2e8a:0003":
             call_picoboot(None, None, binfile, options.sudo)
         else:
             flash_picoboot(options.device, binfile, options.sudo)

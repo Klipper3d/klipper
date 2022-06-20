@@ -42,6 +42,8 @@ source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
 
 # Generic configuration options for serial ports
+config SERIAL
+    bool
 config SERIAL_BAUD
     depends on SERIAL
     int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
@@ -51,20 +53,17 @@ config SERIAL_BAUD
         to 250000. Read the FAQ before changing this value.
 
 # Generic configuration options for USB
+config USBSERIAL
+    bool
 config USB_VENDOR_ID
     default 0x1d50
 config USB_DEVICE_ID
     default 0x614e
 config USB_SERIAL_NUMBER_CHIPID
-    depends on HAVE_CHIPID
+    depends on HAVE_CHIPID && USBSERIAL
     default y
 config USB_SERIAL_NUMBER
     default "12345"
-
-# Generic configuration options for CANbus
-config CANBUS_FREQUENCY
-    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
-    default 500000
 
 menu "USB ids"
     depends on USBSERIAL && LOW_LEVEL_OPTIONS
@@ -78,6 +77,14 @@ config USB_SERIAL_NUMBER
     string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
 
+# Generic configuration options for CANbus
+config CANSERIAL
+    bool
+config CANBUS_FREQUENCY
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    default 500000
+
+# Support setting gpio state at startup
 config INITIAL_PINS
     string "GPIO pins to set at micro-controller startup"
     depends on LOW_LEVEL_OPTIONS

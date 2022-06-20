@@ -51,10 +51,6 @@ config FLASH_START
 # Communication inteface
 ######################################################################
 
-config USBSERIAL
-    bool
-config SERIAL
-    bool
 choice
     prompt "Communication interface"
     config RP2040_USB
