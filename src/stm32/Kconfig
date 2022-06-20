@@ -75,6 +75,10 @@ choice
         select MACH_STM32H7
 endchoice
 
+config MACH_STM32F103x6
+    depends on LOW_LEVEL_OPTIONS && MACH_STM32F103
+    bool "Only 10KiB of RAM (for rare stm32f103x6 variant)"
+
 config MACH_STM32F0
     bool
 config MACH_STM32F1
@@ -156,7 +160,8 @@ config RAM_SIZE
     default 0x1000 if MACH_STM32F031
     default 0x1800 if MACH_STM32F042
     default 0x4000 if MACH_STM32F070 || MACH_STM32F072
-    default 0x5000 if MACH_STM32F103 # Ram size of stm32f103x8 (20KiB)
+    default 0x2800 if MACH_STM32F103x6
+    default 0x5000 if MACH_STM32F103 && !MACH_STM32F103x6 # Ram size of stm32f103x8
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
     default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
