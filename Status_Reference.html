@@ -1810,6 +1810,8 @@ Klipper software.</p>
   here.) All values are returned as strings.</li>
 <li><code>save_config_pending</code>: Returns true if there are updates that a
   <code>SAVE_CONFIG</code> command may persist to disk.</li>
+<li><code>save_config_pending_items</code>: Contains the sections and options that
+  were changed and would be persisted by a <code>SAVE_CONFIG</code>.</li>
 <li><code>warnings</code>: A list of warnings about config options. Each entry in
   the list will be a dictionary containing a <code>type</code> and <code>message</code>
   field (both strings). Additional fields may be available depending
