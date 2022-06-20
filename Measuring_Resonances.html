@@ -1598,20 +1598,20 @@ from the printer frame. Failing to ensure that can create a ground loop in
 the system that may damage the electronics.</p>
 <h3 id="software-installation">Software installation<a class="headerlink" href="#software-installation" title="Permanent link">&para;</a></h3>
 <p>Note that resonance measurements and shaper auto-calibration require additional
-software dependencies not installed by default. First, you will have to run on
-your Raspberry Pi the following command:</p>
+software dependencies not installed by default. First, run on your Raspberry Pi
+the following commands:</p>
+<div class="highlight"><pre><span></span><code>sudo apt update
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+</code></pre></div>
+
+<p>Next, in order to install NumPy in the Klipper environment, run the command:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v numpy
 </code></pre></div>
 
-<p>to install <code>numpy</code> package. Note that, depending on the performance of the
-CPU, it may take <em>a lot</em> of time, up to 10-20 minutes. Be patient and wait
-for the completion of the installation. On some occasions, if the board has
-too little RAM, the installation may fail and you will need to enable swap.</p>
-<p>Next, run the following commands to install the additional dependencies:</p>
-<div class="highlight"><pre><span></span><code>sudo apt update
-sudo apt install python3-numpy python3-matplotlib
-</code></pre></div>
-
+<p>Note that, depending on the performance of the CPU, it may take <em>a lot</em>
+of time, up to 10-20 minutes. Be patient and wait for the completion of
+the installation. On some occasions, if the board has too little RAM
+the installation may fail and you will need to enable swap.</p>
 <p>Afterwards, check and follow the instructions in the
 <a href="RPi_microcontroller.html">RPi Microcontroller document</a> to setup the
 "linux mcu" on the Raspberry Pi.</p>
@@ -1632,7 +1632,9 @@ probe_points:
 
 <p>It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.</p>
-<p>For the MPU-9250:</p>
+<p>For the MPU-9250, make sure the Linux I2C driver is enabled and the baud rate is
+set to 400000 (see <a href="RPi_microcontroller.html#optional-enabling-i2c">Enabling I2C</a>
+section for more details). Then, add the following to the printer.cfg:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
