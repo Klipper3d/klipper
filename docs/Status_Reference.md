@@ -41,6 +41,8 @@ The following information is available in the `configfile` object
   here.) All values are returned as strings.
 - `save_config_pending`: Returns true if there are updates that a
   `SAVE_CONFIG` command may persist to disk.
+- `save_config_pending_items`: Contains the sections and options that
+  were changed and would be persisted by a `SAVE_CONFIG`.
 - `warnings`: A list of warnings about config options. Each entry in
   the list will be a dictionary containing a `type` and `message`
   field (both strings). Additional fields may be available depending
