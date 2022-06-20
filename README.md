@@ -1,3 +1,22 @@
+# Greetings!
+
+Welcome to a branch of the Klipper project.  Briefly, the feature set added is listed below.
+Currently, the focus of this branch is the Raspberry Pi PICO RP2040 microprocessor.  Check out 
+the [Wiki](https://github.com/kpishere/klipper/wiki) for representative boards that use this MCU. 
+
+- ADC1X1X support - this family of i2c ADC chips can be used for thermocouple measurement, 
+  current measurement, transducer measurement, etc.  Both heater and extruder elements 
+  can use this device for temperature measurement
+- XRA140X GPIO Expander Support - A gpio expander for, well, more gpio pins.  Interrupts are used
+  to minimize traffic on the SPI bus.
+- Klipper builds on the Mac with Homebrew pours installed for GCC cross-compiler, etc.
+
+Dear Klipper Team :
+
+Additions here-in follow the GNU V3 Licence and you're welcome to pull whatever you think is worthy.
+
+=====
+
 Welcome to the Klipper project!
 
 [![Klipper](docs/img/klipper-logo-small.png)](https://www.klipper3d.org/)

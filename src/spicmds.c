@@ -12,19 +12,7 @@
 #include "sched.h" // DECL_SHUTDOWN
 #include "spi_software.h" // spi_software_setup
 #include "spicmds.h" // spidev_transfer
-
-struct spidev_s {
-    union {
-        struct spi_config spi_config;
-        struct spi_software *spi_software;
-    };
-    struct gpio_out pin;
-    uint8_t flags;
-};
-
-enum {
-    SF_HAVE_PIN = 1, SF_SOFTWARE = 2, SF_HARDWARE = 4, SF_CS_ACTIVE_HIGH = 8
-};
+#include "spi_vdev.h" // spidev
 
 void
 command_config_spi(uint32_t *args)
