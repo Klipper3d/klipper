@@ -4890,9 +4890,9 @@ number of sections with an "mpu9250" prefix).</p>
 #   Default is 104 (0x68).
 #i2c_mcu:
 #i2c_bus:
-#i2c_speed:
+#i2c_speed: 400000
 #   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
+#   above parameters. The default &quot;i2c_speed&quot; is 400000.
 #axes_map: x, y, z
 #   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
@@ -7315,6 +7315,14 @@ wires may result in Klipper raising a run-time error. Klipper's
 support for error recovery varies between each micro-controller type.
 It is generally recommended to only use i2c devices that are on the
 same printed circuit board as the micro-controller.</p>
+<p>Most Klipper micro-controller implementations only support an
+<code>i2c_speed</code> of 100000. The Klipper "linux" micro-controller supports a
+400000 speed, but it must be
+<a href="RPi_microcontroller.html#optional-enabling-i2c">set in the operating system</a>
+and the <code>i2c_speed</code> parameter is otherwise ignored. The Klipper
+"rp2040" micro-controller supports a rate of 400000 via the
+<code>i2c_speed</code> parameter. All other Klipper micro-controllers use a
+100000 rate and ignore the <code>i2c_speed</code> parameter.</p>
 <div class="highlight"><pre><span></span><code>#i2c_address:
 #   The i2c address of the device. This must specified as a decimal
 #   number (not in hex). The default depends on the type of device.
