@@ -19,7 +19,7 @@ OBJCOPY=$(CROSS_PREFIX)objcopy
 OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
 CPP=cpp
-PYTHON=python2
+PYTHON=python3
 
 # Source files
 src-y =
@@ -31,7 +31,7 @@ cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
 
 CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD \
     -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
-    -ffunction-sections -fdata-sections
+    -ffunction-sections -fdata-sections -fno-delete-null-pointer-checks
 CFLAGS += -flto -fwhole-program -fno-use-linker-plugin -ggdb3
 
 OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
@@ -85,17 +85,21 @@ $(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scri
 
 ################ Auto generation of "board/" include file link
 
-$(OUT)board-link: $(KCONFIG_CONFIG)
+create-board-link:
 	@echo "  Creating symbolic link $(OUT)board"
 	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
-	$(Q)echo "#$(CONFIG_BOARD_DIRECTORY)" > $@.temp
-	$(Q)if ! cmp -s $@.temp $@; then rm -f $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y)) ; mv $@.temp $@ ; fi
+	$(Q)rm -f $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y))
 	$(Q)rm -f $(OUT)board
 	$(Q)ln -sf $(CURDIR)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
 	$(Q)mkdir -p $(OUT)board-generic
 	$(Q)rm -f $(OUT)board-generic/board
 	$(Q)ln -sf $(CURDIR)/src/generic $(OUT)board-generic/board
 
+# Hack to rebuild OUT directory and reload make dependencies on Kconfig change
+$(OUT)board-link: $(KCONFIG_CONFIG)
+	$(Q)mkdir -p $(OUT)
+	$(Q)echo "# Makefile board-link rule" > $@
+	$(Q)$(MAKE) create-board-link
 include $(OUT)board-link
 
 ################ Kconfig rules
@@ -114,7 +118,7 @@ menuconfig:
 ################ Generic rules
 
 # Make definitions
-.PHONY : all clean distclean olddefconfig menuconfig FORCE
+.PHONY : all clean distclean olddefconfig menuconfig create-board-link FORCE
 .DELETE_ON_ERROR:
 
 all: $(target-y)

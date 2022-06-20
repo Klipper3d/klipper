@@ -98,7 +98,6 @@ SignedFields = ["sgt"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
-    "dedge": (lambda v: "1(Both Edges Active!)" if v else ""),
     "chm": (lambda v: "1(constant toff)" if v else "0(spreadCycle)"),
     "vsense": (lambda v: "1(165mV)" if v else "0(305mV)"),
     "sdoff": (lambda v: "1(Step/Dir disabled!)" if v else ""),
@@ -137,17 +136,26 @@ class TMC2660CurrentHelper:
 
     def _calc_current_bits(self, current, vsense):
         vref = 0.165 if vsense else 0.310
-        cs = int(32 * current * self.sense_resistor * math.sqrt(2.) / vref
-                 - 1. + .5)
+        sr = self.sense_resistor
+        cs = int(32. * sr * current * math.sqrt(2.) / vref + .5) - 1
         return max(0, min(31, cs))
 
+    def _calc_current_from_bits(self, cs, vsense):
+        vref = 0.165 if vsense else 0.310
+        return (cs + 1) * vref / (32. * self.sense_resistor * math.sqrt(2.))
+
     def _calc_current(self, run_current):
-        vsense = False
-        cs = self._calc_current_bits(run_current, vsense)
-        if cs < 16:
-            vsense = True
-            cs = self._calc_current_bits(run_current, vsense)
-        return vsense, cs
+        vsense = True
+        irun = self._calc_current_bits(run_current, True)
+        if irun == 31:
+            cur = self._calc_current_from_bits(irun, True)
+            if cur < run_current:
+                irun2 = self._calc_current_bits(run_current, False)
+                cur2 = self._calc_current_from_bits(irun2, False)
+                if abs(run_current - cur2) < abs(run_current - cur):
+                    vsense = False
+                    irun = irun2
+        return vsense, irun
 
     def _handle_printing(self, print_time):
         print_time -= 0.100 # Schedule slightly before deadline
@@ -169,7 +177,7 @@ class TMC2660CurrentHelper:
             self.mcu_tmc.set_register("DRVCONF", val, print_time)
 
     def get_current(self):
-        return self.current, None, MAX_CURRENT
+        return self.current, None, None, MAX_CURRENT
 
     def set_current(self, run_current, hold_current, print_time):
         self.current = run_current

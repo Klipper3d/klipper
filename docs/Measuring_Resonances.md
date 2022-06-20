@@ -31,6 +31,18 @@ and **will not work**. The recommended connection scheme:
 | SDA | 19 | GPIO10 (SPI0_MOSI) |
 | SCL | 23 | GPIO11 (SPI0_SCLK) |
 
+An alternative to the ADXL345 is the MPU-9250 (or MPU-6050).  This
+accelerometer has been tested to work over I2C on the RPi at 400kbaud.
+Recommended connection scheme for I2C:
+
+| MPU-9250 pin | RPi pin | RPi pin name |
+|:--:|:--:|:--:|
+| 3V3 (or VCC) | 01 | 3.3v DC power |
+| GND | 09 | Ground |
+| SDA | 03 | GPIO02 (SDA1) |
+| SCL | 05 | GPIO03 (SCL1) |
+
+
 Fritzing wiring diagrams for some of the ADXL345 boards:
 
 ![ADXL345-Rpi](img/adxl345-fritzing.png)
@@ -64,21 +76,21 @@ the system that may damage the electronics.
 ### Software installation
 
 Note that resonance measurements and shaper auto-calibration require additional
-software dependencies not installed by default. First, you will have to run on
-your Raspberry Pi the following command:
+software dependencies not installed by default. First, run on your Raspberry Pi
+the following commands:
+```
+sudo apt update
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+```
+
+Next, in order to install NumPy in the Klipper environment, run the command:
 ```
 ~/klippy-env/bin/pip install -v numpy
 ```
-to install `numpy` package. Note that, depending on the performance of the
-CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
-for the completion of the installation. On some occasions, if the board has
-too little RAM, the installation may fail and you will need to enable swap.
-
-Next, run the following commands to install the additional dependencies:
-```
-sudo apt update
-sudo apt install python-numpy python-matplotlib
-```
+Note that, depending on the performance of the CPU, it may take *a lot*
+of time, up to 10-20 minutes. Be patient and wait for the completion of
+the installation. On some occasions, if the board has too little RAM
+the installation may fail and you will need to enable swap.
 
 Afterwards, check and follow the instructions in the
 [RPi Microcontroller document](RPi_microcontroller.md) to setup the
@@ -87,7 +99,7 @@ Afterwards, check and follow the instructions in the
 Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
 
-Add the following to the printer.cfg file:
+For the ADXL345, add the following to the printer.cfg file:
 ```
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
@@ -98,10 +110,27 @@ cs_pin: rpi:None
 [resonance_tester]
 accel_chip: adxl345
 probe_points:
-    100,100,20  # an example
+    100, 100, 20  # an example
 ```
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
+
+For the MPU-9250, make sure the Linux I2C driver is enabled and the baud rate is
+set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
+section for more details). Then, add the following to the printer.cfg:
+```
+[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[mpu9250]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+```
 
 Restart Klipper via the `RESTART` command.
 
@@ -163,7 +192,7 @@ TEST_RESONANCES AXIS=Y
 ```
 This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
 `/tmp/resonances_y_*.csv`). These files can be processed with the stand-alone
-script on a Raspberry Pi. To do that, run running the following commands:
+script on a Raspberry Pi. To do that, run the following commands:
 ```
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
@@ -473,28 +502,29 @@ ignoring any errors for `SET_INPUT_SHAPER` command. For `TEST_RESONANCES`
 command, specify the desired test axis. The raw data will be written into
 `/tmp` directory on the RPi.
 
-The raw data can also be obtained by running the command `ACCELEROMETER_MEASURE`
-command twice during some normal printer activity - first to start the
-measurements, and then to stop them and write the output file. Refer to
-[G-Codes](G-Codes.md#adxl345-accelerometer-commands) for more details.
+The raw data can also be obtained by running the command
+`ACCELEROMETER_MEASURE` command twice during some normal printer
+activity - first to start the measurements, and then to stop them and
+write the output file. Refer to [G-Codes](G-Codes.md#adxl345) for more
+details.
 
 The data can be processed later by the following scripts:
 `scripts/graph_accelerometer.py` and `scripts/calibrate_shaper.py`. Both
 of them accept one or several raw csv files as the input depending on the
 mode. The graph_accelerometer.py script supports several modes of operation:
 
-  * plotting raw accelerometer data (use `-r` parameter), only 1 input is
-    supported;
-  * plotting a frequency response (no extra parameters required), if multiple
-    inputs are specified, the average frequency response is computed;
-  * comparison of the frequency response between several inputs (use `-c`
-    parameter); you can additionally specify which accelerometer axis to
+* plotting raw accelerometer data (use `-r` parameter), only 1 input is
+  supported;
+* plotting a frequency response (no extra parameters required), if multiple
+  inputs are specified, the average frequency response is computed;
+* comparison of the frequency response between several inputs (use `-c`
+  parameter); you can additionally specify which accelerometer axis to
     consider via `-a x`, `-a y` or `-a z` parameter (if none specified,
     the sum of vibrations for all axes is used);
-  * plotting the spectrogram (use `-s` parameter), only 1 input is supported;
-    you can additionally specify which accelerometer axis to consider via
-    `-a x`, `-a y` or `-a z` parameter (if none specified, the sum of vibrations
-    for all axes is used).
+* plotting the spectrogram (use `-s` parameter), only 1 input is supported;
+  you can additionally specify which accelerometer axis to consider via
+  `-a x`, `-a y` or `-a z` parameter (if none specified, the sum of vibrations
+  for all axes is used).
 
 Note that graph_accelerometer.py script supports only the raw_data\*.csv files
 and not resonances\*.csv or calibration_data\*.csv files.
@@ -515,16 +545,16 @@ the CSV file if `-c output.csv` parameter is specified.
 Providing several inputs to shaper_calibrate.py script can be useful if running
 some advanced tuning of the input shapers, for example:
 
-  * Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
-    axis twice on a bed slinger printer with the accelerometer attached to the
-    toolhead the first time, and the accelerometer attached to the bed the
-    second time in order to detect axes cross-resonances and attempt to cancel
-    them with input shapers.
-  * Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
-    a glass bed and a magnetic surfaces (which is lighter) to find the input
-    shaper parameters that work well for any print surface configuration.
-  * Combining the resonance data from multiple test points.
-  * Combining the resonance data from 2 axis (e.g. on a bed slinger printer
-    to configure X-axis input_shaper from both X and Y axes resonances to
-    cancel vibrations of the *bed* in case the nozzle 'catches' a print when
-    moving in X axis direction).
+* Running `TEST_RESONANCES AXIS=X OUTPUT=raw_data` (and `Y` axis) for a single
+  axis twice on a bed slinger printer with the accelerometer attached to the
+  toolhead the first time, and the accelerometer attached to the bed the
+  second time in order to detect axes cross-resonances and attempt to cancel
+  them with input shapers.
+* Running `TEST_RESONANCES AXIS=Y OUTPUT=raw_data` twice on a bed slinger with
+  a glass bed and a magnetic surfaces (which is lighter) to find the input
+  shaper parameters that work well for any print surface configuration.
+* Combining the resonance data from multiple test points.
+* Combining the resonance data from 2 axis (e.g. on a bed slinger printer
+  to configure X-axis input_shaper from both X and Y axes resonances to
+  cancel vibrations of the *bed* in case the nozzle 'catches' a print when
+  moving in X axis direction).

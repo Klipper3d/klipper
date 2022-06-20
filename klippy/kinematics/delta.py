@@ -13,13 +13,13 @@ class DeltaKinematics:
     def __init__(self, toolhead, config):
         # Setup tower rails
         stepper_configs = [config.getsection('stepper_' + a) for a in 'abc']
-        rail_a = stepper.PrinterRail(
+        rail_a = stepper.LookupMultiRail(
             stepper_configs[0], need_position_minmax = False)
         a_endstop = rail_a.get_homing_info().position_endstop
-        rail_b = stepper.PrinterRail(
+        rail_b = stepper.LookupMultiRail(
             stepper_configs[1], need_position_minmax = False,
             default_position_endstop=a_endstop)
-        rail_c = stepper.PrinterRail(
+        rail_c = stepper.LookupMultiRail(
             stepper_configs[2], need_position_minmax = False,
             default_position_endstop=a_endstop)
         self.rails = [rail_a, rail_b, rail_c]
@@ -30,6 +30,8 @@ class DeltaKinematics:
         self.max_z_velocity = config.getfloat(
             'max_z_velocity', self.max_velocity,
             above=0., maxval=self.max_velocity)
+        self.max_z_accel = config.getfloat('max_z_accel', self.max_accel,
+                                          above=0., maxval=self.max_accel)
         # Read radius and arm lengths
         self.radius = radius = config.getfloat('delta_radius', above=0.)
         print_radius = config.getfloat('print_radius', radius, above=0.)
@@ -129,7 +131,9 @@ class DeltaKinematics:
                 raise move.move_error()
             limit_xy2 = -1.
         if move.axes_d[2]:
-            move.limit_speed(self.max_z_velocity, move.accel)
+            z_ratio = move.move_d / abs(move.axes_d[2])
+            move.limit_speed(self.max_z_velocity * z_ratio,
+                             self.max_z_accel * z_ratio)
             limit_xy2 = -1.
         # Limit the speed/accel of this move if is is at the extreme
         # end of the build envelope
@@ -138,10 +142,7 @@ class DeltaKinematics:
             r = 0.5
             if extreme_xy2 > self.very_slow_xy2:
                 r = 0.25
-            max_velocity = self.max_velocity
-            if move.axes_d[2]:
-                max_velocity = self.max_z_velocity
-            move.limit_speed(max_velocity * r, self.max_accel * r)
+            move.limit_speed(self.max_velocity * r, self.max_accel * r)
             limit_xy2 = -1.
         self.limit_xy2 = min(limit_xy2, self.slow_xy2)
     def get_status(self, eventtime):

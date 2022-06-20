@@ -63,9 +63,9 @@ This is done by creating a `[bed_screws]` config section. For example,
 it might look something similar to:
 ```
 [bed_screws]
-screw1: 100,50
-screw2: 100,150
-screw3: 150,100
+screw1: 100, 50
+screw2: 100, 150
+screw3: 150, 100
 ```
 
 If a bed screw is under the bed, then specify the XY position directly
@@ -79,8 +79,8 @@ then one can start the tool by running:
 BED_SCREWS_ADJUST
 ```
 
-This tool will move the printer's nozzle to each screw XY location and
-then move the nozzle to a Z=0 height. At this point one can use the
+This tool will move the printer's nozzle to each screw XY location
+and then move the nozzle to a Z=0 height. At this point one can use the
 "paper test" to adjust the bed screw directly under the nozzle. See
 the information described in
 ["the paper test"](Bed_Level.md#the-paper-test), but adjust the bed
@@ -126,12 +126,12 @@ coordinates and add them to the config file. For example, it might
 look like:
 ```
 [bed_screws]
-screw1: 100,50
-screw1_fine_adjust: 0,0
-screw2: 100,150
-screw2_fine_adjust: 300,300
-screw3: 150,100
-screw3_fine_adjust: 0,100
+screw1: 100, 50
+screw1_fine_adjust: 0, 0
+screw2: 100, 150
+screw2_fine_adjust: 300, 300
+screw3: 150, 100
+screw3_fine_adjust: 0, 100
 ```
 
 When this feature is enabled, the `BED_SCREWS_ADJUST` tool will first
@@ -151,13 +151,13 @@ config file. For example, it might look like:
 
 ```
 [screws_tilt_adjust]
-screw1: -5,30
+screw1: -5, 30
 screw1_name: front left screw
-screw2: 155,30
+screw2: 155, 30
 screw2_name: front right screw
-screw3: 155,190
+screw3: 155, 190
 screw3_name: rear right screw
-screw4: -5,190
+screw4: -5, 190
 screw4_name: rear left screw
 horizontal_move_z: 10.
 speed: 50.
@@ -179,12 +179,15 @@ Recv: // rear right screw : y=155.0, y=190.0, z=2.71500 : adjust CCW 00:50
 Recv: // read left screw : x=-5.0, y=190.0, z=2.47250 : adjust CW 00:02
 Recv: ok
 ```
-This means that:
 
-    - front left screw is the reference point you must not change it.
-    - front right screw must be turned clockwise 1 full turn and a quarter turn
-    - rear right screw must be turned counter-clockwise 50 minutes
-    - read left screw must be turned clockwise 2 minutes (not need it's ok)
+This means that:
+- front left screw is the reference point you must not change it.
+- front right screw must be turned clockwise 1 full turn and a quarter turn
+- rear right screw must be turned counter-clockwise 50 minutes
+- rear left screw must be turned clockwise 2 minutes (not need it's ok)
+
+Note that "minutes" refers to "minutes of a clock face". So, for
+example, 15 minutes is a quarter of a full turn.
 
 Repeat the process several times until you get a good level bed -
 normally when all adjustments are below 6 minutes.

@@ -13,6 +13,7 @@ config ATSAMD_SELECT
     select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
+    select HAVE_STEPPER_BOTH_EDGE
 
 config HAVE_SERCOM
     depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
@@ -133,10 +134,6 @@ config FLASH_START
     default 0x2000 if FLASH_START_2000
     default 0x0000
 
-config USBSERIAL
-    bool
-config SERIAL
-    bool
 choice
     prompt "Communication interface"
     config ATSAMD_USB

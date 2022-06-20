@@ -224,6 +224,10 @@ class TMCCommandHelper:
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
+        self.printer.register_event_handler("stepper:set_sdir_inverted",
+                                            self._handle_sync_mcu_pos)
+        self.printer.register_event_handler("klippy:mcu_identify",
+                                            self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         # Set microstep config options
@@ -261,26 +265,25 @@ class TMCCommandHelper:
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
     def cmd_SET_TMC_CURRENT(self, gcmd):
         ch = self.current_helper
-        prev_run_current, prev_hold_current, max_current = ch.get_current()
-        run_current = gcmd.get_float('CURRENT', None,
-                                     minval=0., maxval=max_current)
+        prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
+        run_current = gcmd.get_float('CURRENT', None, minval=0., maxval=max_cur)
         hold_current = gcmd.get_float('HOLDCURRENT', None,
-                                      above=0., maxval=max_current)
+                                      above=0., maxval=max_cur)
         if run_current is not None or hold_current is not None:
             if run_current is None:
-                run_current = prev_run_current
+                run_current = prev_cur
             if hold_current is None:
-                hold_current = prev_hold_current
+                hold_current = req_hold_cur
             toolhead = self.printer.lookup_object('toolhead')
             print_time = toolhead.get_last_move_time()
             ch.set_current(run_current, hold_current, print_time)
-            prev_run_current, prev_hold_current, max_current = ch.get_current()
+            prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
         # Report values
-        if prev_hold_current is None:
-            gcmd.respond_info("Run Current: %0.2fA" % (prev_run_current,))
+        if prev_hold_cur is None:
+            gcmd.respond_info("Run Current: %0.2fA" % (prev_cur,))
         else:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
-                              % (prev_run_current, prev_hold_current))
+                              % (prev_cur, prev_hold_cur))
     # Stepper phase tracking
     def _get_phases(self):
         return (256 >> self.fields.get_field("mres")) * 4
@@ -305,14 +308,14 @@ class TMCCommandHelper:
             if enable_line.is_motor_enabled():
                 raise
             return
-        if not stepper.is_dir_inverted():
+        if not stepper.get_dir_inverted()[0]:
             driver_phase = 1023 - driver_phase
         phases = self._get_phases()
         phase = int(float(driver_phase) / 1024 * phases + .5) % phases
         moff = (phase - stepper.get_mcu_position()) % phases
         if self.mcu_phase_offset is not None and self.mcu_phase_offset != moff:
             logging.warning("Stepper %s phase change (was %d now %d)",
-                            self.mcu_phase_offset, moff)
+                            self.stepper_name, self.mcu_phase_offset, moff)
         self.mcu_phase_offset = moff
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
@@ -346,19 +349,26 @@ class TMCCommandHelper:
             self.echeck_helper.stop_checks()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
-    def handle_stepper_enable(self, print_time, is_enable):
+    def _handle_mcu_identify(self):
+        # Lookup stepper object
+        force_move = self.printer.lookup_object("force_move")
+        self.stepper = force_move.lookup_stepper(self.stepper_name)
+        # Note pulse duration and step_both_edge optimizations available
+        self.stepper.setup_default_pulse_duration(.000000100, True)
+    def _handle_stepper_enable(self, print_time, is_enable):
         if is_enable:
             cb = (lambda ev: self._do_enable(print_time))
         else:
             cb = (lambda ev: self._do_disable(print_time))
         self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
-        # Lookup stepper object
-        force_move = self.printer.lookup_object("force_move")
-        self.stepper = force_move.lookup_stepper(self.stepper_name)
+        # Check if using step on both edges optimization
+        pulse_duration, step_both_edge = self.stepper.get_pulse_duration()
+        if step_both_edge:
+            self.fields.set_field("dedge", 1)
         # Check for soft stepper enable/disable
         enable_line = self.stepper_enable.lookup_enable(self.stepper_name)
-        enable_line.register_state_callback(self.handle_stepper_enable)
+        enable_line.register_state_callback(self._handle_stepper_enable)
         if not enable_line.has_dedicated_enable():
             self.toff = self.fields.get_field("toff")
             self.fields.set_field("toff", 0)
@@ -374,8 +384,11 @@ class TMCCommandHelper:
         cpos = None
         if self.stepper is not None and self.mcu_phase_offset is not None:
             cpos = self.stepper.mcu_to_commanded_position(self.mcu_phase_offset)
+        current = self.current_helper.get_current()
         res = {'mcu_phase_offset': self.mcu_phase_offset,
-               'phase_offset_position': cpos}
+               'phase_offset_position': cpos,
+               'run_current': current[0],
+               'hold_current': current[1]}
         res.update(self.echeck_helper.get_status(eventtime))
         return res
     # DUMP_TMC support
@@ -509,8 +522,9 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
     if velocity:
         stepper_name = " ".join(config.get_name().split()[1:])
-        stepper_config = config.getsection(stepper_name)
-        step_dist = stepper.parse_step_distance(stepper_config)
+        sconfig = config.getsection(stepper_name)
+        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
+        step_dist = rotation_dist / steps_per_rotation
         step_dist_256 = step_dist / (1 << fields.get_field("mres"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
         fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))

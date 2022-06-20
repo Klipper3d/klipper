@@ -1,11 +1,10 @@
-// Hardware interface to "fullspeed USB controller" on stm32f1
+// Hardware interface to "fullspeed USB controller"
 //
-// Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // NULL
-#include "autoconf.h" // CONFIG_STM32_FLASH_START_2000
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
 #include "board/gpio.h" // gpio_out_setup
@@ -16,80 +15,152 @@
 #include "internal.h" // GPIO
 #include "sched.h" // DECL_INIT
 
+#if CONFIG_MACH_STM32F103
+  // Transfer memory is accessed with 32bits, but contains only 16bits of data
+  typedef volatile uint32_t epmword_t;
+  #define WSIZE 2
+  #define USBx_IRQn USB_LP_IRQn
+#elif CONFIG_MACH_STM32F0
+  // Transfer memory is accessed with 16bits and contains 16bits of data
+  typedef volatile uint16_t epmword_t;
+  #define WSIZE 2
+  #define USBx_IRQn USB_IRQn
+#elif CONFIG_MACH_STM32G0
+  // Transfer memory is accessed with 32bits and contains 32bits of data
+  typedef volatile uint32_t epmword_t;
+  #define WSIZE 4
+  #define USBx_IRQn USB_UCPD1_2_IRQn
+
+  // The stm32g0 has slightly different register names
+  #define USB USB_DRD_FS
+  #define USB_PMAADDR USB_DRD_PMAADDR
+  #define USB_EPADDR_FIELD USB_CHEP_ADDR
+  #define USB_EP_CTR_RX USB_EP_VTRX
+  #define USB_EP_CTR_TX USB_EP_VTTX
+  #define USB_EPRX_STAT USB_EP_RX_STRX
+  #define USB_EPTX_STAT USB_EP_TX_STTX
+  #define USB_ISTR_EP_ID USB_ISTR_IDN
+  #define USB_CNTR_FRES USB_CNTR_USBRST
+#endif
+
 
 /****************************************************************
  * USB transfer memory
  ****************************************************************/
 
-#if CONFIG_MACH_STM32F103
-typedef volatile uint32_t epmword_t;
-#else
-typedef volatile uint16_t epmword_t;
-#endif
+// Layout of the USB transfer memory
+#define EPM ((epmword_t*)USB_PMAADDR)
+#define EPM_EP_DESC(ep) (&EPM[(ep) * (8 / WSIZE)])
+#define EPM_BUF_OFFSET 0x10
+#define EPM_EP_BUF_SIZE (64 / WSIZE + 1)
+#define EPM_EP_TX_BUF(ep) (&EPM[EPM_BUF_OFFSET + (ep)*2*EPM_EP_BUF_SIZE])
+#define EPM_EP_RX_BUF(ep) (&EPM[EPM_BUF_OFFSET + (1+(ep)*2)*EPM_EP_BUF_SIZE])
 
-struct ep_desc {
-    epmword_t addr_tx, count_tx, addr_rx, count_rx;
-};
+// Configure the usb descriptor for an endpoint
+static void
+epm_ep_desc_setup(int ep, int rx_size)
+{
+    uint32_t addr_tx = (EPM_EP_TX_BUF(ep) - EPM) * WSIZE, count_tx = 0;
+    uint32_t addr_rx = (EPM_EP_RX_BUF(ep) - EPM) * WSIZE;
+    uint32_t count_rx = (rx_size <= 30 ? DIV_ROUND_UP(rx_size, 2) << 10
+                         : ((DIV_ROUND_UP(rx_size, 32) - 1) << 10) | 0x8000);
+    epmword_t *desc = EPM_EP_DESC(ep);
+    if (WSIZE == 2) {
+        desc[0] = addr_tx;
+        desc[1] = count_tx;
+        desc[2] = addr_rx;
+        desc[3] = count_rx;
+    } else {
+        desc[0] = addr_tx | (count_tx << 16);
+        desc[1] = addr_rx | (count_rx << 16);
+    }
+}
 
-struct ep_mem {
-    struct ep_desc ep0, ep_acm, ep_bulk_out, ep_bulk_in;
-    epmword_t ep0_tx[USB_CDC_EP0_SIZE / 2];
-    epmword_t ep0_rx[USB_CDC_EP0_SIZE / 2 + 1];
-    epmword_t ep_acm_tx[USB_CDC_EP_ACM_SIZE / 2];
-    epmword_t ep_bulk_out_rx[USB_CDC_EP_BULK_OUT_SIZE / 2 + 1];
-    epmword_t ep_bulk_in_tx[USB_CDC_EP_BULK_IN_SIZE / 2];
-};
+// Return number of read bytes on an rx endpoint
+static uint32_t
+epm_get_ep_count_rx(int ep)
+{
+    epmword_t *desc = EPM_EP_DESC(ep);
+    if (WSIZE == 2)
+        return desc[3] & 0x3ff;
+    return (desc[1] >> 16) & 0x3ff;
+}
 
-#define EPM ((struct ep_mem *)USB_PMAADDR)
-
-#define CALC_ADDR(p) (((epmword_t*)(p) - (epmword_t*)EPM) * 2)
-#define CALC_SIZE(s) ((s) > 32 ? (DIV_ROUND_UP((s), 32) << 10) | 0x8000 \
-                      : DIV_ROUND_UP((s), 2) << 10)
+// Set number of bytes ready to be transmitted on a tx endpoint
+static void
+epm_set_ep_count_tx(int ep, uint32_t count)
+{
+    epmword_t *desc = EPM_EP_DESC(ep);
+    if (WSIZE == 2) {
+        desc[1] = count;
+    } else {
+        uint32_t addr_tx = (EPM_EP_TX_BUF(ep) - EPM) * WSIZE;
+        desc[0] = addr_tx | (count << 16);
+    }
+}
 
 // Setup the transfer descriptors in dedicated usb memory
 static void
 btable_configure(void)
 {
-    EPM->ep0.count_tx = 0;
-    EPM->ep0.addr_tx = CALC_ADDR(EPM->ep0_tx);
-    EPM->ep0.count_rx = CALC_SIZE(USB_CDC_EP0_SIZE);
-    EPM->ep0.addr_rx = CALC_ADDR(EPM->ep0_rx);
-
-    EPM->ep_acm.count_tx = 0;
-    EPM->ep_acm.addr_tx = CALC_ADDR(EPM->ep_acm_tx);
-
-    EPM->ep_bulk_out.count_rx = CALC_SIZE(USB_CDC_EP_BULK_OUT_SIZE);
-    EPM->ep_bulk_out.addr_rx = CALC_ADDR(EPM->ep_bulk_out_rx);
-
-    EPM->ep_bulk_in.count_tx = 0;
-    EPM->ep_bulk_in.addr_tx = CALC_ADDR(EPM->ep_bulk_in_tx);
+    epm_ep_desc_setup(0, USB_CDC_EP0_SIZE);
+    epm_ep_desc_setup(USB_CDC_EP_ACM, 0);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, USB_CDC_EP_BULK_OUT_SIZE);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_IN, 0);
 }
 
 // Read a packet stored in dedicated usb memory
-static void
-btable_read_packet(uint8_t *dest, epmword_t *src, int count)
+static uint32_t
+btable_read_packet(int ep, uint8_t *dest, int max_len)
 {
-    uint_fast8_t i;
-    for (i=0; i<(count/2); i++) {
+    epmword_t *src = EPM_EP_RX_BUF(ep);
+    uint32_t count = epm_get_ep_count_rx(ep);
+    if (count > max_len)
+        count = max_len;
+    int i;
+    for (i=0; i<count/WSIZE; i++) {
         uint32_t d = *src++;
         *dest++ = d;
         *dest++ = d >> 8;
+        if (WSIZE == 4) {
+            *dest++ = d >> 16;
+            *dest++ = d >> 24;
+        }
     }
-    if (count & 1)
-        *dest = *src;
+    if (count & (WSIZE-1)) {
+        uint32_t d = *src;
+        *dest++ = d;
+        if ((count & (WSIZE-1)) > 1)
+            *dest++ = d >> 8;
+        if ((count & (WSIZE-1)) > 2)
+            *dest++ = d >> 16;
+    }
+    return count;
 }
 
 // Write a packet to dedicated usb memory
 static void
-btable_write_packet(epmword_t *dest, const uint8_t *src, int count)
+btable_write_packet(int ep, const uint8_t *src, int count)
 {
+    epmword_t *dest = EPM_EP_TX_BUF(ep);
     int i;
-    for (i=0; i<(count/2); i++) {
-        uint8_t b1 = *src++, b2 = *src++;
-        *dest++ = b1 | (b2 << 8);
+    for (i=0; i<count/WSIZE; i++) {
+        uint8_t b1 = *src++, b2 = *src++, b3 = 0, b4 = 0;
+        if (WSIZE == 4) {
+            b3 = *src++;
+            b4 = *src++;
+        }
+        *dest++ = b1 | (b2 << 8) | (b3 << 16) | (b4 << 24);
     }
-    if (count & 1)
-        *dest = *src;
+    if (count & (WSIZE-1)) {
+        uint32_t d = *src++;
+        if ((count & (WSIZE-1)) > 1)
+            d |= *src++ << 8;
+        if ((count & (WSIZE-1)) > 2)
+            d |= *src++ << 16;
+        *dest = d;
+    }
+    epm_set_ep_count_tx(ep, count);
 }
 
 
@@ -133,10 +204,7 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
     if ((epr & USB_EPRX_STAT) == USB_EP_RX_VALID)
         // No data ready
         return -1;
-    uint32_t count = EPM->ep_bulk_out.count_rx & 0x3ff;
-    if (count > max_len)
-        count = max_len;
-    btable_read_packet(data, EPM->ep_bulk_out_rx, count);
+    uint32_t count = btable_read_packet(USB_CDC_EP_BULK_OUT, data, max_len);
     USB_EPR[USB_CDC_EP_BULK_OUT] = set_stat_rx_bits(epr, USB_EP_RX_VALID);
     return count;
 }
@@ -148,8 +216,7 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
     if ((epr & USB_EPTX_STAT) != USB_EP_TX_NAK)
         // No buffer space available
         return -1;
-    btable_write_packet(EPM->ep_bulk_in_tx, data, len);
-    EPM->ep_bulk_in.count_tx = len;
+    btable_write_packet(USB_CDC_EP_BULK_IN, data, len);
     USB_EPR[USB_CDC_EP_BULK_IN] = set_stat_tx_bits(epr, USB_EP_TX_VALID);
     return len;
 }
@@ -161,10 +228,7 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
     if ((epr & USB_EPRX_STAT) != USB_EP_RX_NAK)
         // No data ready
         return -1;
-    uint32_t count = EPM->ep0.count_rx & 0x3ff;
-    if (count > max_len)
-        count = max_len;
-    btable_read_packet(data, EPM->ep0_rx, count);
+    uint32_t count = btable_read_packet(0, data, max_len);
     USB_EPR[0] = set_stat_rxtx_bits(epr, USB_EP_RX_VALID | USB_EP_TX_NAK);
     return count;
 }
@@ -185,8 +249,7 @@ usb_send_ep0(const void *data, uint_fast8_t len)
     if ((epr & USB_EPTX_STAT) != USB_EP_TX_NAK)
         // No buffer space available
         return -1;
-    btable_write_packet(EPM->ep0_tx, data, len);
-    EPM->ep0.count_tx = len;
+    btable_write_packet(0, data, len);
     USB_EPR[0] = set_stat_tx_bits(epr, USB_EP_TX_VALID);
     return len;
 }
@@ -289,14 +352,9 @@ usb_init(void)
 
     // Reset usb controller and enable interrupts
     USB->CNTR = USB_CNTR_FRES;
-    USB->BTABLE = 0;
     USB->DADDR = 0;
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
-#if CONFIG_MACH_STM32F103
-    armcm_enable_irq(USB_IRQHandler, USB_LP_IRQn, 1);
-#elif CONFIG_MACH_STM32F0
-    armcm_enable_irq(USB_IRQHandler, USB_IRQn, 1);
-#endif
+    armcm_enable_irq(USB_IRQHandler, USBx_IRQn, 1);
 }
 DECL_INIT(usb_init);

@@ -137,12 +137,17 @@ This section lists some commonly used config commands.
   sampled at regular interval using the query_analog_in command (see
   below).
 
-* `config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c` : This
-  command creates an internal stepper object. The 'step_pin' and
-  'dir_pin' parameters specify the step and direction pins
-  respectively; this command will configure them in digital output
-  mode. The 'invert_step' parameter specifies whether a step occurs on
-  a rising edge (invert_step=0) or falling edge (invert_step=1).
+* `config_stepper oid=%c step_pin=%c dir_pin=%c invert_step=%c
+  step_pulse_ticks=%u` : This command creates an internal stepper
+  object. The 'step_pin' and 'dir_pin' parameters specify the step and
+  direction pins respectively; this command will configure them in
+  digital output mode. The 'invert_step' parameter specifies whether a
+  step occurs on a rising edge (invert_step=0) or falling edge
+  (invert_step=1). The 'step_pulse_ticks' parameter specifies the
+  minimum duration of the step pulse. If the mcu exports the constant
+  'STEPPER_BOTH_EDGE=1' then setting step_pulse_ticks=0 and
+  invert_step=-1 will setup for stepping on both the rising and
+  falling edges of the step pin.
 
 * `config_endstop oid=%c pin=%c pull_up=%c stepper_count=%c` : This
   command creates an internal "endstop" object. It is used to specify

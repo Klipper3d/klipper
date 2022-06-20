@@ -67,12 +67,11 @@ in preparation for the next test:
 clear_shutdown
 ```
 
-To obtain the single stepper and dual stepper benchmarks, the same
-configuration sequence is used, but only the first block (for the
-single stepper case) or first two blocks (for the dual stepper case)
-of the above test is cut-and-paste into the console.py window.
+To obtain the single stepper benchmarks, the same configuration
+sequence is used, but only the first block of the above test is
+cut-and-paste into the console.py window.
 
-To produce the benchmarks found in the Features.md document, the total
+To produce the benchmarks found in the [Features](Features.md) document, the total
 number of steps per second is calculated by multiplying the number of
 active steppers with the nominal mcu frequency and dividing by the
 final ticks parameter. The results are rounded to the nearest K. For
@@ -81,332 +80,300 @@ example, with three active steppers:
 ECHO Test result is: {"%.0fK" % (3. * freq / ticks / 1000.)}
 ```
 
-Benchmarks may be run with the micro-controller code compiled using a
-"step pulse duration" of zero (the tables below report this as "no
-delay"). This configuration is believed to be valid in real-world
-usage when one is solely using Trinamic stepper drivers. The results
-of these benchmarks are not reported in the Features.md document.
+The benchmarks are run with parameters suitable for TMC Drivers. For
+micro-controllers that support `STEPPER_BOTH_EDGE=1` (as reported in
+the `MCU config` line when console.py first starts) use
+`step_pulse_duration=0` and `invert_step=-1` to enable optimized
+stepping on both edges of the step pulse. For other micro-controllers
+use a `step_pulse_duration` corresponding to 100ns.
 
 ### AVR step rate benchmark
 
 The following configuration sequence is used on AVR chips:
 ```
-PINS arduino
 allocate_oids count=3
-config_stepper oid=0 step_pin=ar29 dir_pin=ar28 invert_step=0
-config_stepper oid=1 step_pin=ar27 dir_pin=ar26 invert_step=0
-config_stepper oid=2 step_pin=ar23 dir_pin=ar22 invert_step=0
+config_stepper oid=0 step_pin=PA5 dir_pin=PA4 invert_step=0 step_pulse_ticks=32
+config_stepper oid=1 step_pin=PA3 dir_pin=PA2 invert_step=0 step_pulse_ticks=32
+config_stepper oid=2 step_pin=PC7 dir_pin=PC6 invert_step=0 step_pulse_ticks=32
 finalize_config crc=0
 ```
 
-The test was last run on commit `01d2183f` with gcc version `avr-gcc
+The test was last run on commit `59314d99` with gcc version `avr-gcc
 (GCC) 5.4.0`. Both the 16Mhz and 20Mhz tests were run using simulavr
 configured for an atmega644p (previous tests have confirmed simulavr
 results match tests on both a 16Mhz at90usb and a 16Mhz atmega2560).
 
 | avr              | ticks |
 | ---------------- | ----- |
-| 1 stepper        | 104   |
-| 2 stepper        | 296   |
-| 3 stepper        | 472   |
+| 1 stepper        | 102   |
+| 3 stepper        | 486   |
 
 ### Arduino Due step rate benchmark
 
 The following configuration sequence is used on the Due:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=PB27 dir_pin=PA21 invert_step=0
-config_stepper oid=1 step_pin=PB26 dir_pin=PC30 invert_step=0
-config_stepper oid=2 step_pin=PA21 dir_pin=PC30 invert_step=0
+config_stepper oid=0 step_pin=PB27 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB26 dir_pin=PC30 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA21 dir_pin=PC30 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8d4a5c16` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`.
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`.
 
 | sam3x8e              | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 388   |
-| 2 stepper            | 405   |
-| 3 stepper            | 576   |
-| 1 stepper (no delay) | 77    |
-| 3 stepper (no delay) | 299   |
+| 1 stepper            | 66    |
+| 3 stepper            | 257   |
 
 ### Duet Maestro step rate benchmark
 
 The following configuration sequence is used on the Duet Maestro:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=PC26 dir_pin=PC18 invert_step=0
-config_stepper oid=1 step_pin=PC26 dir_pin=PA8 invert_step=0
-config_stepper oid=2 step_pin=PC26 dir_pin=PB4 invert_step=0
+config_stepper oid=0 step_pin=PC26 dir_pin=PC18 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PC26 dir_pin=PA8 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PC26 dir_pin=PB4 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8d4a5c16` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`.
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`.
 
 | sam4s8c              | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 527   |
-| 2 stepper            | 535   |
-| 3 stepper            | 638   |
-| 1 stepper (no delay) | 70    |
-| 3 stepper (no delay) | 254   |
+| 1 stepper            | 71    |
+| 3 stepper            | 260   |
 
 ### Duet Wifi step rate benchmark
 
 The following configuration sequence is used on the Duet Wifi:
 ```
-allocate_oids count=4
-config_stepper oid=0 step_pin=PD6 dir_pin=PD11 invert_step=0
-config_stepper oid=1 step_pin=PD7 dir_pin=PD12 invert_step=0
-config_stepper oid=2 step_pin=PD8 dir_pin=PD13 invert_step=0
-config_stepper oid=3 step_pin=PD5 dir_pin=PA1 invert_step=0
+allocate_oids count=3
+config_stepper oid=0 step_pin=PD6 dir_pin=PD11 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PD7 dir_pin=PD12 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PD8 dir_pin=PD13 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
-
 ```
 
-The test was last run on commit `59a60d68` with gcc version
-`arm-none-eabi-gcc 7.3.1 20180622 (release)
-[ARM/embedded-7-branch revision 261907]`.
+The test was last run on commit `59314d99` with gcc version
+`gcc version 10.3.1 20210621 (release) (GNU Arm Embedded Toolchain 10.3-2021.07)`.
 
 | sam4e8e          | ticks |
 | ---------------- | ----- |
-| 1 stepper        | 519   |
-| 2 stepper        | 520   |
-| 3 stepper        | 525   |
-| 4 stepper        | 703   |
+| 1 stepper        | 48    |
+| 3 stepper        | 215   |
 
 ### Beaglebone PRU step rate benchmark
 
 The following configuration sequence is used on the PRU:
 ```
-PINS beaglebone
 allocate_oids count=3
-config_stepper oid=0 step_pin=P8_13 dir_pin=P8_12 invert_step=0
-config_stepper oid=1 step_pin=P8_15 dir_pin=P8_14 invert_step=0
-config_stepper oid=2 step_pin=P8_19 dir_pin=P8_18 invert_step=0
+config_stepper oid=0 step_pin=gpio0_23 dir_pin=gpio1_12 invert_step=0 step_pulse_ticks=20
+config_stepper oid=1 step_pin=gpio1_15 dir_pin=gpio0_26 invert_step=0 step_pulse_ticks=20
+config_stepper oid=2 step_pin=gpio0_22 dir_pin=gpio2_1 invert_step=0 step_pulse_ticks=20
 finalize_config crc=0
 ```
 
-The test was last run on commit `b161a69e` with gcc version `pru-gcc
+The test was last run on commit `59314d99` with gcc version `pru-gcc
 (GCC) 8.0.0 20170530 (experimental)`.
 
 | pru              | ticks |
 | ---------------- | ----- |
-| 1 stepper        | 861   |
-| 2 stepper        | 853   |
-| 3 stepper        | 883   |
+| 1 stepper        | 231   |
+| 3 stepper        | 847   |
 
 ### STM32F042 step rate benchmark
 
 The following configuration sequence is used on the STM32F042:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=PA1 dir_pin=PA2 invert_step=0
-config_stepper oid=1 step_pin=PA3 dir_pin=PA2 invert_step=0
-config_stepper oid=2 step_pin=PB8 dir_pin=PA2 invert_step=0
+config_stepper oid=0 step_pin=PA1 dir_pin=PA2 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PA3 dir_pin=PA2 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PB8 dir_pin=PA2 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `0b0c47c5` with gcc version
-`arm-none-eabi-gcc (Fedora 9.2.0-1.fc30) 9.2.0`.
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`.
 
 | stm32f042        | ticks |
 | ---------------- | ----- |
-| 1 stepper        | 247   |
-| 2 stepper        | 328   |
-| 3 stepper        | 558   |
+| 1 stepper        | 59    |
+| 3 stepper        | 249   |
 
 ### STM32F103 step rate benchmark
 
 The following configuration sequence is used on the STM32F103:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=PC13 dir_pin=PB5 invert_step=0
-config_stepper oid=1 step_pin=PB3 dir_pin=PB6 invert_step=0
-config_stepper oid=2 step_pin=PA4 dir_pin=PB7 invert_step=0
+config_stepper oid=0 step_pin=PC13 dir_pin=PB5 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB3 dir_pin=PB6 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA4 dir_pin=PB7 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8d4a5c16` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`.
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`.
 
 | stm32f103            | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 347   |
-| 2 stepper            | 372   |
-| 3 stepper            | 600   |
-| 1 stepper (no delay) | 71    |
-| 3 stepper (no delay) | 288   |
+| 1 stepper            | 61    |
+| 3 stepper            | 264   |
 
 ### STM32F4 step rate benchmark
 
 The following configuration sequence is used on the STM32F4:
 ```
-allocate_oids count=4
-config_stepper oid=0 step_pin=PA5 dir_pin=PB5 invert_step=0
-config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=0
-config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=0
-config_stepper oid=3 step_pin=PB3 dir_pin=PB8 invert_step=0
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA5 dir_pin=PB5 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8d4a5c16` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`. The STM32F407 results
-were obtained by running an STM32F407 binary on an STM32F446 (and thus
-using a 168Mhz clock).
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`. The STM32F407
+results were obtained by running an STM32F407 binary on an STM32F446
+(and thus using a 168Mhz clock).
 
 | stm32f446            | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 757   |
-| 2 stepper            | 761   |
-| 3 stepper            | 757   |
-| 4 stepper            | 767   |
-| 1 stepper (no delay) | 51    |
-| 3 stepper (no delay) | 226   |
+| 1 stepper            | 46    |
+| 3 stepper            | 205   |
 
 | stm32f407            | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 709   |
-| 2 stepper            | 714   |
-| 3 stepper            | 709   |
-| 4 stepper            | 729   |
-| 1 stepper (no delay) | 52    |
-| 3 stepper (no delay) | 226   |
+| 1 stepper            | 46    |
+| 3 stepper            | 205   |
+
+### STM32G0B1 step rate benchmark
+
+The following configuration sequence is used on the STM32G0B1:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PB13 dir_pin=PB12 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB10 dir_pin=PB2 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PB0 dir_pin=PC5 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+```
+
+The test was last run on commit `247cd753` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`.
+
+| stm32g0b1        | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 58    |
+| 3 stepper        | 243   |
 
 ### LPC176x step rate benchmark
 
 The following configuration sequence is used on the LPC176x:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=P1.20 dir_pin=P1.18 invert_step=0
-config_stepper oid=1 step_pin=P1.21 dir_pin=P1.18 invert_step=0
-config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 invert_step=0
+config_stepper oid=0 step_pin=P1.20 dir_pin=P1.18 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=P1.21 dir_pin=P1.18 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8d4a5c16` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0`. The 120Mhz LPC1769
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`. The 120Mhz LPC1769
 results were obtained by overclocking an LPC1768 to 120Mhz.
 
 | lpc1768              | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 448   |
-| 2 stepper            | 450   |
-| 3 stepper            | 523   |
-| 1 stepper (no delay) | 56    |
-| 3 stepper (no delay) | 240   |
+| 1 stepper            | 52    |
+| 3 stepper            | 222   |
 
 | lpc1769              | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 525   |
-| 2 stepper            | 526   |
-| 3 stepper            | 545   |
-| 1 stepper (no delay) | 56    |
-| 3 stepper (no delay) | 240   |
+| 1 stepper            | 51    |
+| 3 stepper            | 222   |
 
 ### SAMD21 step rate benchmark
 
 The following configuration sequence is used on the SAMD21:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=PA27 dir_pin=PA20 invert_step=0
-config_stepper oid=1 step_pin=PB3 dir_pin=PA21 invert_step=0
-config_stepper oid=2 step_pin=PA17 dir_pin=PA21 invert_step=0
+config_stepper oid=0 step_pin=PA27 dir_pin=PA20 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PB3 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA17 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `8d4a5c16` with gcc version
-`arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0` on a SAMD21G18
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0` on a SAMD21G18
 micro-controller.
 
 | samd21               | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 277   |
-| 2 stepper            | 410   |
-| 3 stepper            | 664   |
-| 1 stepper (no delay) | 83    |
-| 3 stepper (no delay) | 321   |
+| 1 stepper            | 70    |
+| 3 stepper            | 306   |
 
 ### SAMD51 step rate benchmark
 
 The following configuration sequence is used on the SAMD51:
 ```
-allocate_oids count=5
-config_stepper oid=0 step_pin=PA22 dir_pin=PA20 invert_step=0
-config_stepper oid=1 step_pin=PA22 dir_pin=PA21 invert_step=0
-config_stepper oid=2 step_pin=PA22 dir_pin=PA19 invert_step=0
-config_stepper oid=3 step_pin=PA22 dir_pin=PA18 invert_step=0
-config_stepper oid=4 step_pin=PA23 dir_pin=PA17 invert_step=0
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA22 dir_pin=PA20 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PA22 dir_pin=PA21 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PA22 dir_pin=PA19 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `524ebbc7` with gcc version
-`arm-none-eabi-gcc (Fedora 9.2.0-1.fc30) 9.2.0` on a SAMD51J19A
+The test was last run on commit `59314d99` with gcc version
+`arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0` on a SAMD51J19A
 micro-controller.
 
 | samd51               | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 516   |
-| 2 stepper            | 520   |
-| 3 stepper            | 520   |
-| 4 stepper            | 631   |
-| 1 stepper (200Mhz)   | 839   |
-| 2 stepper (200Mhz)   | 838   |
-| 3 stepper (200Mhz)   | 838   |
-| 4 stepper (200Mhz)   | 838   |
-| 5 stepper (200Mhz)   | 891   |
-| 1 stepper (no delay) | 42    |
-| 3 stepper (no delay) | 194   |
+| 1 stepper            | 39    |
+| 3 stepper            | 191   |
+| 1 stepper (200Mhz)   | 39    |
+| 3 stepper (200Mhz)   | 181   |
 
 ### RP2040 step rate benchmark
 
 The following configuration sequence is used on the RP2040:
 
 ```
-allocate_oids count=4
-config_stepper oid=0 step_pin=gpio25 dir_pin=gpio3 invert_step=0
-config_stepper oid=1 step_pin=gpio26 dir_pin=gpio4 invert_step=0
-config_stepper oid=2 step_pin=gpio27 dir_pin=gpio5 invert_step=0
-config_stepper oid=3 step_pin=gpio28 dir_pin=gpio6 invert_step=0
+allocate_oids count=3
+config_stepper oid=0 step_pin=gpio25 dir_pin=gpio3 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=gpio26 dir_pin=gpio4 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=gpio27 dir_pin=gpio5 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 ```
 
-The test was last run on commit `c5667193` with gcc version
+The test was last run on commit `59314d99` with gcc version
 `arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0` on a Raspberry Pi
 Pico board.
 
 | rp2040               | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 52    |
-| 2 stepper            | 52    |
-| 3 stepper            | 52    |
-| 4 stepper            | 66    |
-| 1 stepper (no delay) | 5     |
-| 3 stepper (no delay) | 22    |
+| 1 stepper            | 5     |
+| 3 stepper            | 22    |
 
 ### Linux MCU step rate benchmark
 
 The following configuration sequence is used on a Raspberry Pi:
 ```
 allocate_oids count=3
-config_stepper oid=0 step_pin=gpio2 dir_pin=gpio3 invert_step=0
-config_stepper oid=1 step_pin=gpio4 dir_pin=gpio5 invert_step=0
-config_stepper oid=2 step_pin=gpio6 dir_pin=gpio7 invert_step=0
+config_stepper oid=0 step_pin=gpio2 dir_pin=gpio3 invert_step=0 step_pulse_ticks=5
+config_stepper oid=1 step_pin=gpio4 dir_pin=gpio5 invert_step=0 step_pulse_ticks=5
+config_stepper oid=2 step_pin=gpio6 dir_pin=gpio17 invert_step=0 step_pulse_ticks=5
 finalize_config crc=0
 ```
 
-The test was last run on commit `db0fb5d5` with gcc version `gcc
-(Raspbian 6.3.0-18+rpi1+deb9u1) 6.3.0 20170516` on a Raspberry Pi 3
-(revision a22082).
+The test was last run on commit `59314d99` with gcc version
+`gcc (Raspbian 8.3.0-6+rpi1) 8.3.0` on a Raspberry Pi 3 (revision
+a02082). It was difficult to get stable results in this benchmark.
 
 | Linux (RPi3)         | ticks |
 | -------------------- | ----- |
-| 1 stepper            | 349   |
-| 2 stepper            | 350   |
-| 3 stepper            | 400   |
+| 1 stepper            | 160   |
+| 3 stepper            | 380   |
 
 ## Command dispatch benchmark
 

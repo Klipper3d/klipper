@@ -98,7 +98,7 @@ class LM75:
 
     def get_status(self, eventtime):
         return {
-            'temperature': self.temp,
+            'temperature': round(self.temp, 2),
         }
 
 

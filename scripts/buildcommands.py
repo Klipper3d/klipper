@@ -453,7 +453,7 @@ def check_output(prog):
     if retcode:
         return ""
     try:
-        return output.decode()
+        return str(output.decode('utf8'))
     except UnicodeError:
         logging.debug("Exception on decode: %s" % (traceback.format_exc(),))
         return ""
