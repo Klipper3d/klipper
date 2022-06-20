@@ -861,6 +861,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#mpu9250" class="md-nav__link">
+    [mpu9250]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#resonance_tester" class="md-nav__link">
     [resonance_tester]
   </a>
@@ -2741,6 +2748,13 @@
           <li class="md-nav__item">
   <a href="#adxl345" class="md-nav__link">
     [adxl345]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mpu9250" class="md-nav__link">
+    [mpu9250]
   </a>
   
 </li>
@@ -4866,6 +4880,21 @@ cs_pin:
 #   not recommended to change this rate from the default 3200, and
 #   rates below 800 will considerably affect the quality of resonance
 #   measurements.
+</code></pre></div>
+
+<h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
+<p>Support for mpu9250 and mpu6050 accelerometers (one may define any
+number of sections with an "mpu9250" prefix).</p>
+<div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
+#i2c_address:
+#   Default is 104 (0x68).
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters.
+#axes_map: x, y, z
+#   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
 
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>
