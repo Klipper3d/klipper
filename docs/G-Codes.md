@@ -295,6 +295,11 @@ provides the following standard G-Code commands:
 - Display Message: `M117 <message>`
 - Set build percentage: `M73 P<percent>`
 
+Also provided is the following extended G-Code command:
+- `SET_DISPLAY_TEXT MSG=<message>`: Performs the equivalent of M117,
+  setting the supplied `MSG` as the current display message.  If
+  `MSG` is omitted the display will be cleared.
+
 ### [dual_carriage]
 
 The following command is available when the
