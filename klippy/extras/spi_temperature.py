@@ -13,16 +13,17 @@ from . import bus
 ######################################################################
 
 REPORT_TIME = 0.300
+CONSECUTIVE_FAULT_LIMIT = 3
 
 class SensorBase:
     def __init__(self, config, chip_type, config_cmd=None,
-                 spi_mode=1, consecutive_fault_limit=0):
+                 spi_mode=1):
         self.printer = config.get_printer()
         self.chip_type = chip_type
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
-        self.consecutive_fault_limit = consecutive_fault_limit
+        self.consecutive_fault_limit = CONSECUTIVE_FAULT_LIMIT
         self.spi = bus.MCU_SPI_from_config(
             config, spi_mode, pin_option="sensor_pin", default_speed=4000000)
         self.config_cmd = config_cmd
@@ -288,13 +289,8 @@ class MAX31865(SensorBase):
         adc_to_resist = rtd_reference_r / float(MAX31865_ADC_MAX)
         self.adc_to_resist_div_nominal = adc_to_resist / rtd_nominal_r
         self.last_temp = None
-        consecutive_fault_limit = \
-            config.getint('rtd_consecutive_fault_limit', 0)
-        logging.info("Max31865: allowing {} faults"
-            .format(consecutive_fault_limit))
         SensorBase.__init__(self, config, "MAX31865",
-                            self.build_spi_init(config),
-                            consecutive_fault_limit=consecutive_fault_limit)
+                            self.build_spi_init(config))
     def calc_temp(self, adc, consecutive_faults, fault):
         fault_msg = None
         if fault & 0x80:
@@ -320,8 +316,7 @@ class MAX31865(SensorBase):
 
             # Reinitialize the sensor with the initial configuration command
             self.spi.spi_send(self.config_cmd)
-            logging.info("Max31865: recovered from fault (consecutive_faults="
-                         "{}, consecutive_fault_limit={}): {}"
+            logging.info("Max31865: recovered from fault ({} of {}): {}"
                          .format(consecutive_faults,
                                  self.consecutive_fault_limit, fault_msg))
 
