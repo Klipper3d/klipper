@@ -57,12 +57,7 @@ class SensorBase:
                 self.oid, clock, self._report_clock,
                 self.min_sample_value, self.max_sample_value), is_init=True)
     def _handle_spi_response(self, params):
-        consecutive_faults = 0
-        if 'consecutive_faults' in params:
-            consecutive_faults = params['consecutive_faults']
-
-        temp = self.calc_temp(params['value'], consecutive_faults,
-                              params['fault'])
+        temp = self.calc_temp(params['value'], params['fault'])
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
@@ -131,7 +126,7 @@ class MAX31856(SensorBase):
     def __init__(self, config):
         SensorBase.__init__(self, config, "MAX31856",
                             self.build_spi_init(config))
-    def calc_temp(self, adc, consecutive_faults, fault):
+    def calc_temp(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
             self.fault("Max31856: Cold Junction Range Fault")
         if fault & MAX31856_FAULT_TCRANGE:
@@ -203,7 +198,7 @@ MAX31855_MULT = 0.25
 class MAX31855(SensorBase):
     def __init__(self, config):
         SensorBase.__init__(self, config, "MAX31855", spi_mode=0)
-    def calc_temp(self, adc, consecutive_faults, fault):
+    def calc_temp(self, adc, fault):
         if adc & 0x1:
             self.fault("MAX31855 : Open Circuit")
         if adc & 0x2:
@@ -232,7 +227,7 @@ MAX6675_MULT = 0.25
 class MAX6675(SensorBase):
     def __init__(self, config):
         SensorBase.__init__(self, config, "MAX6675", spi_mode=0)
-    def calc_temp(self, adc, consecutive_faults, fault):
+    def calc_temp(self, adc, fault):
         if adc & 0x02:
             self.fault("Max6675 : Device ID error")
         if adc & 0x04:
@@ -291,7 +286,7 @@ class MAX31865(SensorBase):
         self.last_temp = None
         SensorBase.__init__(self, config, "MAX31865",
                             self.build_spi_init(config))
-    def calc_temp(self, adc, consecutive_faults, fault):
+    def calc_temp(self, adc, fault):
         fault_msg = None
         if fault & 0x80:
             fault_msg = "RTD input is disconnected"
@@ -309,18 +304,12 @@ class MAX31865(SensorBase):
             fault_msg = "Unspecified error"
 
         if fault_msg:
-            if consecutive_faults > self.consecutive_fault_limit:
-                logging.warn("Max31865: out of recoverable faults, raising: {}"
-                             .format(fault_msg))
-                self.fault("Max31865: {}".format(fault_msg))
-
-            # Reinitialize the sensor with the initial configuration command
+            # Attempt to recover from intermittent faults:
+            #  Reinitialize the sensor with the initial configuration command
             self.spi.spi_send(self.config_cmd)
-            logging.info("Max31865: recovered from fault ({} of {}): {}"
-                         .format(consecutive_faults,
-                                 self.consecutive_fault_limit, fault_msg))
-
-            # Recoverable failure, return last known temperature
+            logging.info("MAX31865: recovered from fault: {}"
+                         .format(fault_msg))
+            #  Return last known valid temperature
             return self.last_temp
 
         adc = adc >> 1 # remove fault bit

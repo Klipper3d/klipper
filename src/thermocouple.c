@@ -90,9 +90,8 @@ static void
 thermocouple_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
                     , uint32_t value, uint8_t fault, uint8_t oid)
 {
-    sendf("thermocouple_result oid=%c next_clock=%u value=%u fault=%c"
-          " consecutive_faults=%c",
-          oid, next_begin_time, value, fault, spi->consecutive_faults);
+    sendf("thermocouple_result oid=%c next_clock=%u value=%u fault=%c",
+          oid, next_begin_time, value, fault);
     /* check the result and stop if below or above allowed range */
     if (value < spi->min_value || value > spi->max_value) {
         spi->consecutive_faults++;
