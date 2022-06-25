@@ -7,10 +7,12 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_*
 #include "board/armcm_reset.h" // try_request_canboot
 #include "board/io.h" // readb
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // console_sendf
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "canbus.h" // canbus_set_uuid
 #include "canserial.h" // canserial_notify_tx
 #include "command.h" // DECL_CONSTANT
@@ -188,7 +190,11 @@ can_process_request_bootloader(struct canbus_msg *msg)
 {
     if (!can_check_uuid(msg))
         return;
+#ifdef CONFIG_USBCANBUS
+    usb_request_bootloader();
+#else // CONFIG_USBCANBUS
     try_request_canboot();
+#endif // CONFIG_USBCANBUS
 }
 
 // Handle an "admin" command
