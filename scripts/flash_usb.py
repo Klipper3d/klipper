@@ -4,7 +4,7 @@
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, re, subprocess, optparse, time, fcntl, termios, struct
+import sys, os, re, subprocess, optparse, time, fcntl, termios, struct, socket
 
 class error(Exception):
     pass
@@ -23,6 +23,28 @@ def enter_bootloader(device):
         f.close()
     except (IOError, OSError) as e:
         pass
+
+CANBUS_ID_ADMIN = 0x3f0
+CANBUS_CMD_REQUEST_BOOTLOADER = 0x02
+CAN_FMT = "<IB3x8s"
+
+# Attempt to enter bootloader via CanBus
+def enter_bootloader_via_canbus(interface : str, canbus_uuid : int):
+    cansock = socket.socket(socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW)
+    try:
+        cansock.bind((interface,))
+        payload = [(canbus_uuid >> ((5 - i) * 8)) & 0xFF for i in range(6)]
+        payload.insert(0, CANBUS_CMD_REQUEST_BOOTLOADER)
+        can_id = CANBUS_ID_ADMIN
+        packet = struct.pack(CAN_FMT, can_id, len(payload), bytes(payload))
+        cansock.send(packet)
+
+        # Wait a few seconds for device to re-appear
+        time.sleep(3)
+    except (IOError, OSError) as e:
+        sys.stderr.write("%s\n" % (str(e)))
+    else:
+        cansock.close()
 
 # Translate a serial device name to a stable serial name in /dev/serial/by-path/
 def translate_serial_to_tty(device):
@@ -142,6 +164,10 @@ def call_dfuutil(flags, binfile, sudo):
 
 # Flash via a call to dfu-util
 def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
+    canfmt_r = re.compile(r"^can\d+:[a-fA-F0-9]+:")
+    if canfmt_r.match(device.strip()):
+        interface, uuid, device = device.strip().split(':', 2)
+        enter_bootloader_via_canbus(interface, int(uuid,16))
     hexfmt_r = re.compile(r"^[a-fA-F0-9]{4}:[a-fA-F0-9]{4}$")
     if hexfmt_r.match(device.strip()):
         call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile, sudo)

@@ -149,7 +149,9 @@ usb_reboot_for_dfu_bootloader(void)
 static void
 check_usb_dfu_bootloader(void)
 {
-    if (!CONFIG_USBSERIAL || !CONFIG_MACH_STM32F0x2
+    if (!CONFIG_USBSERIAL && !CONFIG_USBCANBUS)
+        return;
+    if (!CONFIG_MACH_STM32F0x2
         || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
