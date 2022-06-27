@@ -264,7 +264,7 @@ class ClientConnection:
             self.reactor.register_callback(self._do_send)
 
     def _do_send(self, eventtime):
-        retries = 10
+        retries = 1000
         while self.send_buffer:
             try:
                 sent = self.sock.send(self.send_buffer)
@@ -274,10 +274,10 @@ class ClientConnection:
                     sent = 0
                 else:
                     retries -= 1
-                    waketime = self.reactor.monotonic() + .001
+                    waketime = self.reactor.monotonic() + .002
                     self.reactor.pause(waketime)
                     continue
-            retries = 10
+            retries = 1000
             if sent > 0:
                 self.send_buffer = self.send_buffer[sent:]
             else:
