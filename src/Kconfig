@@ -55,22 +55,24 @@ config SERIAL_BAUD
 # Generic configuration options for USB
 config USBSERIAL
     bool
+config USBCANBUS
+    bool
 config USB_VENDOR_ID
     default 0x1d50
 config USB_DEVICE_ID
     default 0x614e
 config USB_SERIAL_NUMBER_CHIPID
-    depends on HAVE_CHIPID && USBSERIAL
+    depends on HAVE_CHIPID && (USBSERIAL || USBCANBUS)
     default y
 config USB_SERIAL_NUMBER
     default "12345"
 
 menu "USB ids"
-    depends on USBSERIAL && LOW_LEVEL_OPTIONS
+    depends on (USBSERIAL || USBCANBUS) && LOW_LEVEL_OPTIONS
 config USB_VENDOR_ID
-    hex "USB vendor ID"
+    hex "USB vendor ID" if USBSERIAL
 config USB_DEVICE_ID
-    hex "USB device ID"
+    hex "USB device ID" if USBSERIAL
 config USB_SERIAL_NUMBER_CHIPID
     bool "USB serial number from CHIPID" if HAVE_CHIPID
 config USB_SERIAL_NUMBER
@@ -80,9 +82,15 @@ endmenu
 # Generic configuration options for CANbus
 config CANSERIAL
     bool
+config CANBUS
+    bool
+    default y if CANSERIAL || USBCANBUS
 config CANBUS_FREQUENCY
-    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANSERIAL
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANBUS
     default 500000
+config CANBUS_FILTER
+    bool
+    default y if CANSERIAL
 
 # Support setting gpio state at startup
 config INITIAL_PINS
