@@ -4467,6 +4467,12 @@ provides the following standard G-Code commands:</p>
 <li>Display Message: <code>M117 &lt;message&gt;</code></li>
 <li>Set build percentage: <code>M73 P&lt;percent&gt;</code></li>
 </ul>
+<p>Also provided is the following extended G-Code command:</p>
+<ul>
+<li><code>SET_DISPLAY_TEXT MSG=&lt;message&gt;</code>: Performs the equivalent of M117,
+  setting the supplied <code>MSG</code> as the current display message.  If
+  <code>MSG</code> is omitted the display will be cleared.</li>
+</ul>
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
 <p>The following command is available when the
 <a href="Config_Reference.html#dual_carriage">dual_carriage config section</a> is

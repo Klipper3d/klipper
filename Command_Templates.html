@@ -1556,8 +1556,13 @@ gcode:
 <div class="highlight"><pre><span></span><code>[gcode_macro M117]
 rename_existing: M117.1
 gcode:
-  M117.1 { rawparams }
-  M118 { rawparams }
+  {% if rawparams %}
+    {% set escaped_msg = rawparams|replace(&#39;&quot;&#39;, &#39;\\&quot;&#39;) %}
+    SET_DISPLAY_TEXT MSG=&quot;{escaped_msg}&quot;
+    RESPOND TYPE=command MSG=&quot;{escaped_msg}&quot;
+  {% else %}
+    SET_DISPLAY_TEXT
+  {% endif %}
 </code></pre></div>
 
 <h3 id="the-printer-variable">The "printer" Variable<a class="headerlink" href="#the-printer-variable" title="Permanent link">&para;</a></h3>
