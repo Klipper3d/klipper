@@ -819,6 +819,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    exclude_object
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fan" class="md-nav__link">
     fan
   </a>
@@ -1113,8 +1120,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objektumok kizárása
       </a>
     </li>
   
@@ -1523,6 +1530,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    exclude_object
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fan" class="md-nav__link">
     fan
   </a>
@@ -1776,6 +1790,7 @@
 <li><code>settings.&lt;section&gt;.&lt;option&gt;</code>: Visszaadja az adott konfigurációs fájl beállítását (vagy alapértelmezett értékét) a szoftver utolsó indítása vagy újraindítása során. (A használat közben megváltoztatott beállítások nem jelennek meg itt.)</li>
 <li><code>config.&lt;section&gt;.&lt;option&gt;</code>: Visszaadja az adott nyers konfigurációs fájl beállítását, ahogyan azt a Klipper a legutóbbi szoftverindítás vagy újraindítás során beolvasta. (A működés közben megváltoztatott beállítások nem jelennek meg itt.) Minden értéket stringként ad vissza.</li>
 <li><code>save_config_pending</code>: True értéket ad, ha vannak olyan frissítések, amelyeket a <code>SAVE_CONFIG</code> parancs a lemezen is megőrizhet.</li>
+<li><code>save_config_pending_items</code>: Tartalmazza azokat a szakaszokat és opciókat, amelyeket megváltoztattak, és amelyeket egy <code>SAVE_CONFIG</code> elmenthetne.</li>
 <li><code>figyelmeztetések</code>: A konfigurációs beállításokkal kapcsolatos figyelmeztetések listája. A lista minden egyes bejegyzése egy szótár lesz, amely tartalmaz egy <code>type</code> és egy <code>message</code> mezőt (mindkettő karakterlánc). A figyelmeztetés típusától függően további mezők is rendelkezésre állhatnak.</li>
 </ul>
 <h2 id="display_status">display_status<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h2>
@@ -1790,6 +1805,39 @@
 <li><code>last_home.&lt;stepper name&gt;.phase</code>: A léptetőmotor fázisa az utolsó kezdőpont felvételi kísérlet végén.</li>
 <li><code>last_home.&lt;stepper name&gt;.phases</code>: A léptetőmotoron rendelkezésre álló fázisok száma.</li>
 <li><code>last_home.&lt;stepper name&gt;.mcu_position</code>: A léptetőmotor pozíciója (ahogyan azt a mikrokontroller követi) a legutóbbi kezdőpont felvételi kísérlet végén. A pozíció az előremenő irányban megtett lépések száma mínusz a mikrokontroller utolsó újraindítása óta visszafelé megtett lépések számával.</li>
+</ul>
+<h2 id="exclude_object">exclude_object<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h2>
+<p>A következő információk az <a href="Exclude_Object.html">exclude_object</a> objektumban találhatók:</p>
+<ul>
+<li><code>objektumok</code>: Az <code>EXCLUDE_OBJECT_DEFINE</code> parancs által megadott ismert objektumok tömbje. Ez ugyanaz az információ, amelyet az <code>EXCLUDE_OBJECT VERBOSE=1</code> parancs szolgáltat. A <code>center</code> és <code>polygon</code> mezők csak akkor lesznek jelen, ha az eredeti <code>EXCLUDE_OBJECT_DEFINE</code> parancsban szerepelnek.Íme egy JSON-minta:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>[
+  {
+    &quot;polygon&quot;: [
+      [ 156.25, 146.2511675 ],
+      [ 156.25, 153.7488325 ],
+      [ 163.75, 153.7488325 ],
+      [ 163.75, 146.2511675 ]
+    ],
+    &quot;name&quot;: &quot;CYLINDER_2_STL_ID_2_COPY_0&quot;,
+    &quot;center&quot;: [ 160, 150 ]
+  },
+  {
+    &quot;polygon&quot;: [
+      [ 146.25, 146.2511675 ],
+      [ 146.25, 153.7488325 ],
+      [ 153.75, 153.7488325 ],
+      [ 153.75, 146.2511675 ]
+    ],
+    &quot;name&quot;: &quot;CYLINDER_2_STL_ID_1_COPY_0&quot;,
+    &quot;center&quot;: [ 150, 150 ]
+  }
+]
+</code></pre></div>
+
+<ul>
+<li><code>excluded_objects</code>: A kizárt objektumok neveit felsoroló karakterláncok tömbje.</li>
+<li><code>current_object</code>: Az aktuálisan nyomtatott objektum neve.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#fan">ventilátor</a>, <a href="Config_Reference.html#heater_fan">heater_fan some_name</a> és <a href="Config_Reference.html#controller_fan">controller_fan some_name</a> objektumokban érhetők el:</p>

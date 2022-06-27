@@ -826,6 +826,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -849,6 +856,13 @@
           <li class="md-nav__item">
   <a href="#adxl345" class="md-nav__link">
     [adxl345]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mpu9250" class="md-nav__link">
+    [mpu9250]
   </a>
   
 </li>
@@ -1978,8 +1992,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclude Objects
       </a>
     </li>
   
@@ -2704,6 +2718,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2727,6 +2748,13 @@
           <li class="md-nav__item">
   <a href="#adxl345" class="md-nav__link">
     [adxl345]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mpu9250" class="md-nav__link">
+    [mpu9250]
   </a>
   
 </li>
@@ -4425,9 +4453,9 @@ home_xy_position:
 #   than z_hop, then this will lift the head to a height of z_hop. If
 #   the Z axis is not already homed the head is lifted by z_hop.
 #   The default is to not implement Z hop.
-#z_hop_speed: 20.0
+#z_hop_speed: 15.0
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
-#   default is 20mm/s.
+#   default is 15 mm/s.
 #move_to_previous: False
 #   When set to True, the X and Y axes are reset to their previous
 #   positions after Z axis homing. The default is False.
@@ -4549,6 +4577,8 @@ path:
 #   are not supported). One may point this to OctoPrint&#39;s upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
+#on_error_gcode:
+#   A list of G-Code commands to execute when an error is reported.
 </code></pre></div>
 
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
@@ -4616,6 +4646,12 @@ path:
 #   override the &quot;default_type&quot;.
 </code></pre></div>
 
+<h3 id="exclude_object">[exclude_object]<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h3>
+<p>Enables support to exclude or cancel individual objects during the printing process.</p>
+<p>See the <a href="Exclude_Object.html">exclude objects guide</a> and <a href="G-Codes.html#excludeobject">command reference</a> for additional information. See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.</p>
+<div class="highlight"><pre><span></span><code>[exclude_object]
+</code></pre></div>
+
 <h2 id="_13">共振补偿<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
 <h3 id="input_shaper">[input_shaper]<a class="headerlink" href="#input_shaper" title="Permanent link">&para;</a></h3>
 <p>启用 <a href="Resonance_Compensation.html">共振补偿</a>。 另请参阅 <a href="G-Codes.html#input_shaper">命令参考</a>。</p>
@@ -4673,6 +4709,20 @@ cs_pin:
 #   3200、1600、800、400、200、100、50和25。请注意，不建议
 #   将此速率从默认的3200改为低于800的速率，这将大大影响
 #   共振测量的质量。
+</code></pre></div>
+
+<h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
+<p>Support for mpu9250 and mpu6050 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
+<div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
+#i2c_address:
+#   Default is 104 (0x68).
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed: 400000
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters. The default &quot;i2c_speed&quot; is 400000.
+#axes_map: x, y, z
+#   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
 
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>
@@ -6792,19 +6842,23 @@ cs_pin:
 
 <h3 id="i2c">常见的I2C设置<a class="headerlink" href="#i2c" title="Permanent link">&para;</a></h3>
 <p>以下参数一般适用于使用I2C总线的设备。</p>
+<p>Note that Klipper's current micro-controller support for i2c is generally not tolerant to line noise. Unexpected errors on the i2c wires may result in Klipper raising a run-time error. Klipper's support for error recovery varies between each micro-controller type. It is generally recommended to only use i2c devices that are on the same printed circuit board as the micro-controller.</p>
+<p>Most Klipper micro-controller implementations only support an <code>i2c_speed</code> of 100000. The Klipper "linux" micro-controller supports a 400000 speed, but it must be <a href="RPi_microcontroller.html#optional-enabling-i2c">set in the operating system</a> and the <code>i2c_speed</code> parameter is otherwise ignored. The Klipper "rp2040" micro-controller supports a rate of 400000 via the <code>i2c_speed</code> parameter. All other Klipper micro-controllers use a 100000 rate and ignore the <code>i2c_speed</code> parameter.</p>
 <div class="highlight"><pre><span></span><code>#i2c_address:
-#   设备的 I2C 地址。必须是一个十进制数字（而不是十六进制）。
-#   默认值取决于设备的类型。
+#   The i2c address of the device. This must specified as a decimal
+#   number (not in hex). The default depends on the type of device.
 #i2c_mcu:
-#   芯片所连接的微控制器的名称。
-#   默认为&quot;mcu&quot;。
+#   The name of the micro-controller that the chip is connected to.
+#   The default is &quot;mcu&quot;.
 #i2c_bus:
-# 如果微控制器支持多个 I2C 总线，可以指定微控制器的总线名称。
-#   默认值取决于微控制器的类型。
+#   If the micro-controller supports multiple I2C busses then one may
+#   specify the micro-controller bus name here. The default depends on
+#   the type of micro-controller.
 #i2c_speed:
-#   与设备通信时使用的I2C速度（Hz）。在某些微控制器上，
-#   该数值无效。
-#   默认值是默认为100000。
+#   The I2C speed (in Hz) to use when communicating with the device.
+#   The Klipper implementation on most micro-controllers is hard-coded
+#   to 100000 and changing this value has no effect. The default is
+#   100000.
 </code></pre></div>
 
               

@@ -977,8 +977,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclude Objects
       </a>
     </li>
   
@@ -1531,6 +1531,38 @@
 </tr>
 </tbody>
 </table>
+<p>An alternative to the ADXL345 is the MPU-9250 (or MPU-6050). This accelerometer has been tested to work over I2C on the RPi at 400kbaud. Recommended connection scheme for I2C:</p>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 pin</th>
+<th align="center">樹莓派引腳</th>
+<th align="center">樹莓派引腳名稱</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">3V3 或 VCC</td>
+<td align="center">01</td>
+<td align="center">3.3v 直流（DC）電源</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">09</td>
+<td align="center">地（GND）</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">03</td>
+<td align="center">GPIO02 (SDA1)</td>
+</tr>
+<tr>
+<td align="center">SCL</td>
+<td align="center">05</td>
+<td align="center">GPIO03 (SCL1)</td>
+</tr>
+</tbody>
+</table>
 <p>部分ADXL345開發板的Fritzing接線圖如下：</p>
 <p><img alt="ADXL345-樹莓派" src="img/adxl345-fritzing.png" /></p>
 <p>為避免損害樹莓派或加速度感測器，請再三確認接線正確再對樹莓派上電。</p>
@@ -1541,19 +1573,19 @@
 <p>注意，滑床式印表機需要設計兩個固定件：一個安裝于列印頭，另一個用於熱床，並進行兩次測量。詳見 <a href="#bed-slinger-printers">對應分節</a>。</p>
 <p><strong>注意</strong>：務必確保加速度感測器和任何螺絲都不應該接觸到印表機的金屬部分。緊韌體必須設計成在加速度感測器和印表機框體間形成電氣絕緣。錯誤的設計可能會形成短路，從而損毀電氣元件。</p>
 <h3 id="_5">軟體設定<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
-<p>共振測量和自動整形校正需要額外的依賴項，這些依賴在Klipper安裝時未作部署，因此，需要在樹莓派上執行下面的命令：</p>
+<p>Note that resonance measurements and shaper auto-calibration require additional software dependencies not installed by default. First, run on your Raspberry Pi the following commands:</p>
+<div class="highlight"><pre><span></span><code>sudo apt update
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+</code></pre></div>
+
+<p>Next, in order to install NumPy in the Klipper environment, run the command:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v numpy
 </code></pre></div>
 
-<p>安裝<code>numpy</code>包。numpy需要在安裝時進行編譯。編譯時間據主機的CPU算力而異，需要<em>耗費大量時間</em>，最大可至半小時（PiZero），請耐心等待編譯安裝完成。少部分情況下，主機的RAM不足會導致安裝失敗，需要開啟swap功能以實現安裝。</p>
-<p>接下來，運行以下命令來安裝其他依賴項：</p>
-<div class="highlight"><pre><span></span><code>sudo apt update
-sudo apt install python3-numpy python3-matplotlib
-</code></pre></div>
-
+<p>Note that, depending on the performance of the CPU, it may take <em>a lot</em> of time, up to 10-20 minutes. Be patient and wait for the completion of the installation. On some occasions, if the board has too little RAM the installation may fail and you will need to enable swap.</p>
 <p>之後，參考<a href="RPi_microcontroller.html">樹莓派作為微控制器文件</a>的指引完成「LINUX微處理器」的設定。</p>
 <p>通過執行<code>sudo raspi-config</code> 后的 "Interfacing options"菜單中啟用 SPI 以確保Linux SPI 驅動已啟用。</p>
-<p>在printer.cfg附上下面的內容：</p>
+<p>For the ADXL345, add the following to the printer.cfg file:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -1567,6 +1599,20 @@ probe_points:
 </code></pre></div>
 
 <p>建議在測試開始前，用探針在熱床中央進行一次探測，觸發后稍微上移。</p>
+<p>For the MPU-9250, make sure the Linux I2C driver is enabled and the baud rate is set to 400000 (see <a href="RPi_microcontroller.html#optional-enabling-i2c">Enabling I2C</a> section for more details). Then, add the following to the printer.cfg:</p>
+<div class="highlight"><pre><span></span><code>[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[mpu9250]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+</code></pre></div>
+
 <p>通過<code>RESTART</code>命令重啟Klipper。</p>
 <h2 id="_6">測量共振值<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <h3 id="_7">檢查設定<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>

@@ -823,8 +823,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclude Objects
       </a>
     </li>
   
@@ -1158,6 +1158,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#optional-enabling-i2c" class="md-nav__link">
+    Optional: Enabling I2C
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gpiochip" class="md-nav__link">
     可选步骤：识别正确的 gpiochip
   </a>
@@ -1318,6 +1325,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#optional-enabling-i2c" class="md-nav__link">
+    Optional: Enabling I2C
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gpiochip" class="md-nav__link">
     可选步骤：识别正确的 gpiochip
   </a>
@@ -1382,6 +1396,8 @@ sudo service klipper start
 <p>按照<a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-raspberry-pi.cfg">RaspberryPi 参考配置</a>和<a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-multi-mcu.cfg">多微控制器参考配置</a>中的说明配置Klipper 二级微控制器来完成安装。</p>
 <h2 id="spi">可选：启用 SPI<a class="headerlink" href="#spi" title="Permanent link">&para;</a></h2>
 <p>通过运行<code>sudo raspi-config</code> 后的 "Interfacing options"菜单中启用 SPI 以确保Linux SPI 驱动已启用。</p>
+<h2 id="optional-enabling-i2c">Optional: Enabling I2C<a class="headerlink" href="#optional-enabling-i2c" title="Permanent link">&para;</a></h2>
+<p>Make sure the Linux I2C driver is enabled by running <code>sudo raspi-config</code> and enabling I2C under the "Interfacing options" menu. If planning to use I2C for the MPU accelerometer, it is also required to set the baud rate to 400000 by: adding/uncommenting <code>dtparam=i2c_arm=on,i2c_arm_baudrate=400000</code> in <code>/boot/config.txt</code> (or <code>/boot/firmware/config.txt</code> in some distros).</p>
 <h2 id="gpiochip">可选步骤：识别正确的 gpiochip<a class="headerlink" href="#gpiochip" title="Permanent link">&para;</a></h2>
 <p>在Raspberry Pi和许多类似的单板电脑上，暴露在 GPIO 上的引脚属于第一个gpiochip。因此，它们可以在klipper上使用，只需用<code>gpio0...n</code>的名字来引用它们。然而，在有些情况下，暴露的引脚属于第一个以外的gpiochips。例如，在一些OrangePi型号或者如果使用了一个端口扩展器的情况下，需要使用命令访问<em>Linux GPIO character device</em>来验证配置是有用的。</p>
 <p>要在基于 Debian 的发行版（如 OctoPi）上安装 <em>Linux GPIO character device - binary</em>，请运行：</p>

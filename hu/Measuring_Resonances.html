@@ -977,8 +977,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objektumok kizárása
       </a>
     </li>
   
@@ -1531,6 +1531,38 @@
 </tr>
 </tbody>
 </table>
+<p>Az ADXL345 alternatívája az MPU-9250 (vagy MPU-6050). Ezt a gyorsulásmérőt úgy tesztelték, hogy az RPi-n 400kbaud-on keresztül I2C-n keresztül működik. Ajánlott csatlakozási séma az I2C-hez:</p>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 tű</th>
+<th align="center">RPi tű</th>
+<th align="center">RPi tű név</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">3V3 (or VCC)</td>
+<td align="center">01</td>
+<td align="center">3.3v DC feszültség</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">09</td>
+<td align="center">Föld</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">03</td>
+<td align="center">GPIO02 (SDA1)</td>
+</tr>
+<tr>
+<td align="center">SCL</td>
+<td align="center">05</td>
+<td align="center">GPIO03 (SCL1)</td>
+</tr>
+</tbody>
+</table>
 <p>Fritzing kapcsolási rajzok néhány ADXL345 laphoz:</p>
 <p><img alt="ADXL345-Rpi" src="img/adxl345-fritzing.png" /></p>
 <p>A Raspberry Pi bekapcsolása előtt ellenőrizze kétszer is a vezetékeket, nehogy megsérüljön a Raspberry Pi vagy a gyorsulásmérő.</p>
@@ -1541,19 +1573,19 @@
 <p>Vegye figyelembe, hogy egy ágycsúsztatós nyomtatónál 2 rögzítést kell tervezni: egyet a szerszámfejhez és egyet az ágyhoz, és a méréseket kétszer kell elvégezni. További részletekért lásd a megfelelő <a href="#bed-slinger-printers">szakaszt</a>.</p>
 <p><strong>Figyelem:</strong> győződjön meg arról, hogy a gyorsulásmérő és a helyére rögzítő csavarok nem érnek a nyomtató fém részeihez. Alapvetően a rögzítést úgy kell kialakítani, hogy biztosítsa a gyorsulásmérő elektromos szigetelését a nyomtató keretétől. Ennek elmulasztása földhurkot hozhat létre a rendszerben, ami károsíthatja az elektronikát.</p>
 <h3 id="szoftver-telepitese">Szoftver telepítése<a class="headerlink" href="#szoftver-telepitese" title="Permanent link">&para;</a></h3>
-<p>Vegye figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először is, a Raspberry Pi-n a következő parancsot kell futtatnia:</p>
+<p>Vegye figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először futtassa a Raspberry Pi számítógépén a következő parancsokat:</p>
+<div class="highlight"><pre><span></span><code>sudo apt update
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+</code></pre></div>
+
+<p>Ezután a NumPy telepítéséhez a Klipper környezetbe futtassuk a parancsot:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v numpy
 </code></pre></div>
 
-<p>a <code>numpy</code> csomag telepítéséhez. Vegye figyelembe, hogy a CPU teljesítményétől függően ez <em>sok</em> időt vehet igénybe, akár 10-20 percet is. Legyen türelmes, és várja meg a telepítés befejezését. Bizonyos esetekben, ha a kártyán túl kevés RAM van, a telepítés meghiúsulhat, és engedélyeznie kell a swapot.</p>
-<p>Ezután futtassa a következő parancsokat a további függőségek telepítéséhez:</p>
-<div class="highlight"><pre><span></span><code>sudo apt update
-sudo apt install python3-numpy python3-matplotlib
-</code></pre></div>
-
+<p>Vegye figyelembe, hogy a CPU teljesítményétől függően ez <em>sok</em> időt vehet igénybe, akár 10-20 percet is. Legyen türelmes, és várja meg a telepítés befejezését. Bizonyos esetekben, ha a kártyán túl kevés RAM van, a telepítés meghiúsulhat, és engedélyeznie kell a swapot.</p>
 <p>Ezután ellenőrizze és kövesse az <a href="RPi_microcontroller.html">RPi Microcontroller dokumentum</a> utasításait a "linux mcu" beállításához a Raspberry Pi-n.</p>
 <p>Győződjünk meg róla, hogy a Linux SPI-illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az SPI engedélyezésével az "Interfacing options" menüben.</p>
-<p>Adja hozzá a következőket a printer.cfg fájlhoz:</p>
+<p>Az ADXL345 esetében adja hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -1567,6 +1599,20 @@ probe_points:
 </code></pre></div>
 
 <p>Javasoljuk, hogy 1 mérőpontal kezdje, a nyomtatási ágy közepén, kissé felette.</p>
+<p>Az MPU-9250 esetében győződjön meg róla, hogy a Linux I2C illesztőprogram engedélyezve van, és az átviteli sebesség 400000-re van állítva (további részletekért lásd az <a href="RPi_microcontroller.html#optional-enabling-i2c">I2C engedélyezése</a> részt). Ezután adjuk hozzá a következőket a printer.cfg fájlhoz:</p>
+<div class="highlight"><pre><span></span><code>[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[mpu9250]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+</code></pre></div>
+
 <p>Indítsa újra a Klippert a <code>RESTART</code> paranccsal.</p>
 <h2 id="a-rezonanciak-merese">A rezonanciák mérése<a class="headerlink" href="#a-rezonanciak-merese" title="Permanent link">&para;</a></h2>
 <h3 id="a-beallitas-ellenorzese">A beállítás ellenőrzése<a class="headerlink" href="#a-beallitas-ellenorzese" title="Permanent link">&para;</a></h3>

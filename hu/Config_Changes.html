@@ -864,8 +864,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objektumok kizárása
       </a>
     </li>
   
@@ -1266,6 +1266,8 @@
 <p>Ez a dokumentum a konfigurációs fájl legújabb szoftveres változtatásait tartalmazza, amelyek nem kompatibilisek visszafelé. A Klipper szoftver frissítésekor érdemes áttanulmányozni ezt a dokumentumot.</p>
 <p>A dokumentumban szereplő valamennyi dátum hozzávetőleges.</p>
 <h2 id="valtozasok">Változások<a class="headerlink" href="#valtozasok" title="Permanent link">&para;</a></h2>
+<p>20220616: Korábban egy rp2040-et bootloader módban lehetett égetni a <code>make flash FLASH_DEVICE=first</code> futtatásával. Az ezzel egyenértékű parancs mostantól <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
+<p>20220612: Az rp2040 mikrokontroller mostantól rendelkezik a "rp2040-e5" USB hiba elhárításával. Ez megbízhatóbbá teszi a kezdeti USB-kapcsolatokat. Ez azonban a GPIO15 tű viselkedésének megváltozását eredményezheti. Nem valószínű, hogy a GPIO15 viselkedésének változása észrevehető lesz.</p>
 <p>20220407: A temperature_fan <code>pid_integral_max</code> konfigurációs opciót eltávolítottuk (a 20210612-es verzióval elavult).</p>
 <p>20220407: A pca9632 LED-ek alapértelmezett színsorrendje mostantól "RGBW". Adjunk hozzá egy explicit <code>color_ordert: RBGW</code> beállítást a pca9632 konfigurációs szakaszába a korábbi működés visszaállításához.</p>
 <p>20220330: A <code>printer.neopixel.color_data</code> állapotinformáció formátuma megváltozott a neopixel és dotstar modulok esetében. Az információ mostantól színlisták listájaként tárolódik (szótárak listája helyett). A részletekért lásd az <a href="Status_Reference.html#led">állapot hivatkozás</a> című dokumentumot.</p>

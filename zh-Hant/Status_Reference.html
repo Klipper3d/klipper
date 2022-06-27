@@ -819,6 +819,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    exclude_object
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fan" class="md-nav__link">
     fan
   </a>
@@ -1113,8 +1120,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclude Objects
       </a>
     </li>
   
@@ -1523,6 +1530,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    exclude_object
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fan" class="md-nav__link">
     fan
   </a>
@@ -1776,6 +1790,7 @@
 <li><code>settings.&lt;分段&gt;.&lt;選項&gt;</code>：返回最後一次軟體啟動或重啟時給定的配置檔案設定（或預設值）。(不會反映執行時的修改。）</li>
 <li><code>config.&lt;分段&gt;.&lt;選項&gt;</code>：返回Klipper在上次軟體啟動或重啟時讀取的原始配置檔案設定。(不會反映執行時的修改。)所有值都以字串形式返回。</li>
 <li><code>save_config_pending</code>：如果存在可以通過 <code>SAVE_CONFIG</code> 命令儲存到配置檔案的更新，則返回 True。</li>
+<li><code>save_config_pending_items</code>: Contains the sections and options that were changed and would be persisted by a <code>SAVE_CONFIG</code>.</li>
 <li><code>warnings</code>：有關配置選項的警告列表。列表中的每個條目都將是一個 dictionary，其中包含 <code>type</code> 和 <code>message</code> 欄位（都是字串）。根據警告型別，可能還有其他可用欄位。</li>
 </ul>
 <h2 id="display_status">display_status<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h2>
@@ -1790,6 +1805,39 @@
 <li><code>last_home.&lt;步進電機名&gt;.phase</code>：最後一次歸為嘗試結束時步進電機的相位。</li>
 <li><code>last_home.&lt;步進電機名稱&gt;.phase</code>：步進電機上可用的總相數。</li>
 <li><code>last_home.&lt;步進電機名稱&gt;.mcu_position</code>：步進電機在上次歸位嘗試結束時的位置（由微控制器跟蹤）。該位置是自微控制器最後一次重啟以來，向前走的總步數減去反向走的總步數。</li>
+</ul>
+<h2 id="exclude_object">exclude_object<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <a href="Exclude_Object.html">exclude_object</a> object:</p>
+<ul>
+<li><code>objects</code>: An array of the known objects as provided by the <code>EXCLUDE_OBJECT_DEFINE</code> command. This is the same information provided by the <code>EXCLUDE_OBJECT VERBOSE=1</code> command. The <code>center</code> and <code>polygon</code> fields will only be present if provided in the original <code>EXCLUDE_OBJECT_DEFINE</code>Here is a JSON sample:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>[
+  {
+    &quot;polygon&quot;: [
+      [ 156.25, 146.2511675 ],
+      [ 156.25, 153.7488325 ],
+      [ 163.75, 153.7488325 ],
+      [ 163.75, 146.2511675 ]
+    ],
+    &quot;name&quot;: &quot;CYLINDER_2_STL_ID_2_COPY_0&quot;,
+    &quot;center&quot;: [ 160, 150 ]
+  },
+  {
+    &quot;polygon&quot;: [
+      [ 146.25, 146.2511675 ],
+      [ 146.25, 153.7488325 ],
+      [ 153.75, 153.7488325 ],
+      [ 153.75, 146.2511675 ]
+    ],
+    &quot;name&quot;: &quot;CYLINDER_2_STL_ID_1_COPY_0&quot;,
+    &quot;center&quot;: [ 150, 150 ]
+  }
+]
+</code></pre></div>
+
+<ul>
+<li><code>excluded_objects</code>: An array of strings listing the names of excluded objects.</li>
+<li><code>current_object</code>: The name of the object currently being printed.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#fan">fan</a>、<a href="Config_Reference.html#heater_fan">heater_fan some_name</a>和<a href="Config_Reference.html#controller_fan">controller_fan some_name</a>對像提供了以下資訊：</p>

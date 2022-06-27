@@ -1074,6 +1074,47 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+    <nav class="md-nav" aria-label="[exclude_object]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_1" class="md-nav__link">
+    EXCLUDE_OBJECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_define" class="md-nav__link">
+    EXCLUDE_OBJECT_DEFINE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_start" class="md-nav__link">
+    EXCLUDE_OBJECT_START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_end" class="md-nav__link">
+    EXCLUDE_OBJECT_END
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#extruder" class="md-nav__link">
     [extruder]
   </a>
@@ -2300,8 +2341,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objektumok kizárása
       </a>
     </li>
   
@@ -3011,6 +3052,47 @@
           <li class="md-nav__item">
   <a href="#endstop_phase_calibrate" class="md-nav__link">
     ENDSTOP_PHASE_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+    <nav class="md-nav" aria-label="[exclude_object]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_1" class="md-nav__link">
+    EXCLUDE_OBJECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_define" class="md-nav__link">
+    EXCLUDE_OBJECT_DEFINE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_start" class="md-nav__link">
+    EXCLUDE_OBJECT_START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_end" class="md-nav__link">
+    EXCLUDE_OBJECT_END
   </a>
   
 </li>
@@ -4252,16 +4334,37 @@
 <p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#endstop_phase">endstop_phase konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Endstop_Phase.html">végállás fázis útmutatót</a>).</p>
 <h4 id="endstop_phase_calibrate">ENDSTOP_PHASE_CALIBRATE<a class="headerlink" href="#endstop_phase_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>ENDSTOP_PHASE_CALIBRATE [STEPPER=&lt;config_name&gt;]</code>: Ha nincs megadva STEPPER paraméter, akkor ez a parancs a múltbeli kezdőpont felvételi műveletek során a végállási lépcsőfázisok statisztikáit jelenti. STEPPER paraméter megadása esetén gondoskodik arról, hogy a megadott végállásfázis-beállítás a konfigurációs fájlba íródjon (a SAVE_CONFIG parancs segítségével).</p>
+<h3 id="exclude_object">[exclude_object]<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h3>
+<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#exclude_object">exclude_object konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Exclude_Object.html">tárgyútmutató kizárása</a>):</p>
+<h4 id="exclude_object_1"><code>EXCLUDE_OBJECT</code><a class="headerlink" href="#exclude_object_1" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT [NAME=object_name] [CURRENT=1] [RESET=1]</code>: Paraméterek nélkül az összes jelenleg kizárt objektum listáját adja vissza.</p>
+<p>Ha a <code>NAME</code> paramétert adjuk meg, a megnevezett objektumot kizárjuk a nyomtatásból.</p>
+<p>A <code>CURRENT</code> paraméter megadásakor az aktuális objektumot kizárja a nyomtatásból.</p>
+<p>A <code>RESET</code> paraméter megadásakor a kizárt objektumok listája törlődik. Ezen kívül a <code>NAME</code> bevonása csak a megnevezett objektumot fogja visszaállítani. Ez <strong>nyomtatási</strong> hibákat okozhat, ha a rétegek már kihagyásra kerültek.</p>
+<h4 id="exclude_object_define"><code>EXCLUDE_OBJECT_DEFINE</code><a class="headerlink" href="#exclude_object_define" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_DEFINE [NAME=object_name [CENTER=X,Y] [POLYGON=[[x,y],...]] [RESET=1] [JSON=1]</code>: A fájlban lévő objektum összefoglalóját adja meg.</p>
+<p>Ha nem adunk meg paramétereket, akkor a Klipper által ismert, definiált objektumok listája jelenik meg. Sztringek listáját adja vissza, kivéve, ha a <code>JSON</code> paramétert adjuk meg, ekkor az objektumok adatait JSON formátumban adja vissza.</p>
+<p>Ha a <code>NAME</code> paraméter szerepel, ez egy kizárandó objektumot határoz meg.</p>
+<ul>
+<li><code>NAME</code>: Ez a paraméter kötelező. Ez a modul más parancsai által használt azonosító.</li>
+<li><code>CENTER</code>: Az objektum X,Y koordinátája.</li>
+<li><code>POLYGON</code>: X,Y koordináták tömbje, amely az objektum körvonalát adja.</li>
+</ul>
+<p>A <code>RESET</code> paraméter megadásakor az összes definiált objektum törlődik, és az <code>[exclude_object]</code> modul visszaáll.</p>
+<h4 id="exclude_object_start"><code>EXCLUDE_OBJECT_START</code><a class="headerlink" href="#exclude_object_start" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_START NAME=object_name</code>: Ez a parancs egy <code>NAME</code> paramétert vesz fel, és az aktuális rétegen lévő objektum G-kódjának kezdetét jelöli.</p>
+<h4 id="exclude_object_end"><code>EXCLUDE_OBJECT_END</code><a class="headerlink" href="#exclude_object_end" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_END [NAME=object_name]</code>: Az objektum G-kódjának végét jelöli a réteghez. Az <code>EXCLUDE_OBJECT_START</code>-al párosul. A <code>NAME</code> paraméter opcionális, és csak akkor figyelmeztet, ha a megadott név nem egyezik az aktuális objektummal.</p>
 <h3 id="extruder">[extruder]<a class="headerlink" href="#extruder" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#extruder">extruder konfigurációs szakasz</a> engedélyezve van:</p>
 <h4 id="activate_extruder">ACTIVATE_EXTRUDER<a class="headerlink" href="#activate_extruder" title="Permanent link">&para;</a></h4>
 <p><code>ACTIVATE_EXTRUDER EXTRUDER=&lt;config_name&gt;</code>: Több <a href="Config_Reference.html#extruder">extruder</a> konfigurációs szakaszokkal rendelkező nyomtatóban ez a parancs megváltoztatja az aktív nyomtatófejet.</p>
 <h4 id="set_pressure_advance">SET_PRESSURE_ADVANCE<a class="headerlink" href="#set_pressure_advance" title="Permanent link">&para;</a></h4>
-<p><code>SET_PRESSURE_ADVANCE [EXTRUDER=&lt;config_name&gt;] [ADVANCE=&lt;pressure_advance&gt;] [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Az extruder léptető nyomás előtolási paramétereinek beállítása (ahogyan az <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban definiálva van). Ha az EXTRUDER nincs megadva, akkor az alapértelmezett érték az aktív nyomtatófejhez definiált léptető.</p>
+<p><code>SET_PRESSURE_ADVANCE [EXTRUDER=&lt;config_name&gt;] [ADVANCE=&lt;pressure_advance&gt;] [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Egy extruder léptető nyomástovábbítási paramétereinek beállítása (ahogyan az egy <a href="Config_Reference.html#extruder">extruder</a> vagy <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban szerepel). Ha az EXTRUDER nincs megadva, akkor az alapértelmezett érték az aktív hotendben definiált stepper.</p>
 <h4 id="set_extruder_rotation_distance">SET_EXTRUDER_ROTATION_DISTANCE<a class="headerlink" href="#set_extruder_rotation_distance" title="Permanent link">&para;</a></h4>
-<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: Új értéket állít be a megadott extruder léptető "rotation distance" (ahogyan az egy <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> config szakaszban definiálva van). Ha a forgatási távolság negatív szám, akkor a léptető mozgása fordított lesz (a konfigurációs fájlban megadott léptető irányhoz képest). A megváltoztatott beállítások nem maradnak meg a Klipper visszaállításakor. Óvatosan használja, mivel a kis változtatások túlzott nyomást eredményezhetnek az extruder és a nyomtatófej között. Használat előtt végezze el a megfelelő kalibrációt a nyomtatószállal. Ha a 'DISTANCE' érték nincs megadva, akkor ez a parancs az aktuális forgatási távolságot adja vissza.</p>
+<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: A megadott extruder léptetők "forgási távolság" új értékének beállítása (ahogyan az <a href="Config_Reference.html#extruder">extruder</a> vagy <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban meghatározott). Ha a forgási távolság negatív szám, akkor a léptető mozgása inverz lesz (a konfigurációs fájlban megadott léptető irányhoz képest). A megváltoztatott beállítások nem maradnak meg a Klipper visszaállításakor. Óvatosan használja, mivel a kis változtatások túlzott nyomást eredményezhetnek az extruder és a hotend között. Használat előtt végezze el a megfelelő kalibrációt a filamenttel. Ha a 'DISTANCE' érték nincs megadva, akkor ez a parancs az aktuális forgási távolságot adja meg.</p>
 <h4 id="sync_extruder_motion">SYNC_EXTRUDER_MOTION<a class="headerlink" href="#sync_extruder_motion" title="Permanent link">&para;</a></h4>
-<p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;name&gt; MOTION_QUEUE=&lt;name&gt;</code>: Ezzel a paranccsal az EXTRUDER által meghatározott (az <a href="Config_Reference#extruder">extruder</a> vagy <a href="Config_Reference#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban meghatározott) léptető szinkronizálódik a MOTION_QUEUE által meghatározott (az <a href="Config_Reference#extruder">extruder</a> konfigurációs szakaszban meghatározott) extruder mozgásához. Ha a MOTION_QUEUE üres karakterlánc, akkor a léptető deszinkronizálódik minden extruder mozgásra.</p>
+<p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;name&gt; MOTION_QUEUE=&lt;name&gt;</code>: Ez a parancs az EXTRUDER által meghatározott léptetőt (ahogyan az <a href="Config_Reference.html#extruder">extruder</a> vagy <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> konfigurációs szakaszban) meghatározott extruder mozgásához szinkronizálódik a MOTION_QUEUE által meghatározott extruder mozgásához (ahogyan az <a href="Config_Reference.html#extruder">extruder</a> konfigurációs szakaszban definiálták). Ha a MOTION_QUEUE üres karakterlánc, akkor a léptető deszinkronizálódik az extruder minden mozgására.</p>
 <h4 id="set_extruder_step_distance">SET_EXTRUDER_STEP_DISTANCE<a class="headerlink" href="#set_extruder_step_distance" title="Permanent link">&para;</a></h4>
 <p>Ez a parancs elavult, és a közeljövőben eltávolításra kerül.</p>
 <h4 id="sync_stepper_to_extruder">SYNC_STEPPER_TO_EXTRUDER<a class="headerlink" href="#sync_stepper_to_extruder" title="Permanent link">&para;</a></h4>
@@ -4288,7 +4391,7 @@
 <h4 id="get_retraction">GET_RETRACTION<a class="headerlink" href="#get_retraction" title="Permanent link">&para;</a></h4>
 <p><code>GET_RETRACTION</code>: A firmware visszahúzás által használt aktuális paraméterek lekérdezése és megjelenítése a terminálon.</p>
 <h3 id="force_move">[force_move]<a class="headerlink" href="#force_move" title="Permanent link">&para;</a></h3>
-<p>A force_move modul automatikusan betöltődik, azonban néhány parancshoz szükséges az <code>enable_force_move</code> beállítása a <a href="Config_Reference#force_move">nyomtató konfigurációban</a>.</p>
+<p>A force_move modul automatikusan betöltődik, azonban néhány parancshoz szükséges az <code>enable_force_move</code> beállítása a <a href="Config_Reference.html#force_move">nyomtató konfig</a>-ban.</p>
 <h4 id="stepper_buzz">STEPPER_BUZZ<a class="headerlink" href="#stepper_buzz" title="Permanent link">&para;</a></h4>
 <p><code>STEPPER_BUZZ STEPPER=&lt;config_name&gt;</code>: Az adott léptetőmotor mozgatása egy mm-t előre, majd egy mm-t hátra, 10 alkalommal megismételve. Ez egy diagnosztikai eszköz, amely segít a léptető kapcsolatának ellenőrzésében.</p>
 <h4 id="force_move_1">FORCE_MOVE<a class="headerlink" href="#force_move_1" title="Permanent link">&para;</a></h4>
@@ -4442,7 +4545,7 @@
 <h4 id="measure_axes_noise">MEASURE_AXES_NOISE<a class="headerlink" href="#measure_axes_noise" title="Permanent link">&para;</a></h4>
 <p><code>MEASURE_AXES_NOISE</code>: Az összes engedélyezett gyorsulásmérő chip összes tengelyének zaját méri és adja ki.</p>
 <h4 id="test_resonances">TEST_RESONANCES<a class="headerlink" href="#test_resonances" title="Permanent link">&para;</a></h4>
-<p><code>TEST_RESONANCES AXIS=&lt;axis&gt; OUTPUT=&lt;resonances,raw_data&gt; [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Lefuttatja a rezonancia tesztet a kért "tengely" összes konfigurált mérőpontján, és méri a gyorsulást az adott tengelyhez konfigurált gyorsulásmérő chipek segítségével. A "tengely" lehet X vagy Y, vagy megadhat egy tetszőleges irányt <code>AXIS=dx,dy</code>, ahol dx és dy egy irányvektort meghatározó lebegőpontos számok (pl. <code>AXIS=X</code>, <code>AXIS=Y</code>, vagy <code>AXIS=1,-1</code> az átlós irány meghatározásához). Vegyük figyelembe, hogy az <code>AXIS=dx,dy</code> és az <code>AXIS=-dx,-dy</code> egyenértékű. Ha <code>INPUT_SHAPING=0</code> vagy nincs beállítva (alapértelmezett), letiltja a bemeneti változót a rezonancia teszteléshez, mivel a rezonancia tesztelés nem érvényes a bemeneti változó engedélyezésével. <code>OUTPUT</code> paraméter egy vesszővel elválasztott lista arról, hogy mely kimenetek kerülnek kiírásra. Ha <code>raw_data</code> paramétert kér, akkor a nyers gyorsulásmérő adatok egy <code>/tmp/raw_data_&lt;axis&gt;_[&lt;point&gt;_]&lt;name&gt;.csv</code> fájlba vagy fájlsorozatba íródnak. A (<code>&lt;point&gt;_</code> névrészletével, amely csak akkor generálódik, ha 1-nél több mérőpont van konfigurálva). Ha <code>resonances</code> van megadva, a frekvenciaválasz kiszámításra kerül (az összes mérőpontra vonatkozóan) és a <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> fájlba íródik. Ha nincs beállítva, az OUTPUT alapértelmezés szerint <code>resonances</code>, a NAME pedig alapértelmezés szerint az aktuális időpontot jelenti "ÉÉÉÉHHNN_ÓÓPPMPMP" formátumban.</p>
+<p><code>TEST_RESONANCES AXIS=&lt;axis&gt; OUTPUT=&lt;resonances,raw_data&gt; [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;adxl345_chip_name&gt;] [POINT=x,y,z] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Lefuttatja a rezonanciatesztet a kért "tengely" összes konfigurált mérőpontjában, és méri a gyorsulást az adott tengelyhez konfigurált gyorsulásmérő chipek segítségével. A "tengely" lehet X vagy Y, vagy megadhat egy tetszőleges irányt <code>AXIS=dx,dy</code>, ahol dx és dy egy irányvektort meghatározó lebegőpontos szám (pl. <code>AXIS=X</code>, <code>AXIS=Y</code>, vagy <code>AXIS=1,-1</code> az átlós irány meghatározásához). Vegyük figyelembe, hogy az <code>AXIS=dx,dy</code> és az <code>AXIS=-dx,-dy</code> egyenértékű. Az <code>adxl345_chip_name</code> lehet egy vagy több konfigurált adxl345 chip, vesszővel elválasztva, például <code>CHIPS="adxl345, adxl345 rpi"</code>. Megjegyzendő, hogy az <code>adxl345</code> elhagyható a nevesített adxl345 chipeknél. Ha POINT van megadva, az felülírja a <code>[resonance_tester]</code> alatt konfigurált pontokat. Ha <code>INPUT_SHAPING=0</code> vagy nincs beállítva (alapértelmezett), letiltja a bemeneti alakítást a rezonancia teszteléshez, mert a rezonancia tesztelés nem érvényes a bemeneti alakító engedélyezésével. Az <code>OUTPUT</code> paraméter egy vesszővel elválasztott lista arról, hogy mely kimenetek kerülnek kiírásra. Ha <code>raw_data</code> paramétert kér, akkor a nyers gyorsulásmérő adatok egy <code>/tmp/raw_data_&lt;axis&gt;_[&lt;chip_name&gt;_][&lt;point&gt;_]&lt;name&gt;.csv</code> fájlba vagy fájlsorozatba íródnak. A (<code>&lt;point&gt;_</code> név részével, amely csak akkor generálódik, ha 1-nél több mérőpont van konfigurálva vagy POINT van megadva). Ha <code>resonances</code> van megadva, a frekvenciaválasz kiszámításra kerül (az összes mérőpontra vonatkozóan), és a <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> fájlba íródik. Ha nincs beállítva, az OUTPUT alapértelmezés szerinti <code>resonances</code>, a NAME pedig alapértelmezés szerint az aktuális időpontot jelenti "ÉÉÉÉHHNN_ÓÓPPMPMP" formátumban.</p>
 <h4 id="shaper_calibrate">SHAPER_CALIBRATE<a class="headerlink" href="#shaper_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>SHAPER_CALIBRATE [AXIS=&lt;axis&gt;] [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [MAX_SMOOTHING=&lt;max_smoothing&gt;]</code>: A <code>TEST_RESONANCES</code> paraméterhez hasonlóan lefuttatja a rezonancia tesztet a konfiguráltak szerint, és megpróbálja megtalálni a bemeneti változó optimális paramétereit a kért tengelyre (vagy mind az X, mind az Y tengelyre, ha az <code>AXIS</code> paraméter nincs beállítva). Ha a <code>MAX_SMOOTHING</code> nincs beállítva, az értékét a <code>[resonance_tester]</code> szakaszból veszi, az alapértelmezett érték pedig a be nem állított érték. Lásd a <a href="Measuring_Resonances.html#max-smoothing">Max simítás</a> a rezonanciák mérése című útmutatóban a funkció használatáról szóló további információkat. A hangolás eredményei kiíródnak a konzolra, a frekvenciaválaszok és a különböző bemeneti alakítók értékei pedig egy vagy több CSV-fájlba íródnak <code>/tmp/calibration_data_&lt;axis&gt;_&lt;name&gt;.csv</code>. Hacsak nincs megadva, a NAME alapértelmezés szerint az aktuális időpontot jelenti "YYYYMMDD_HHMMSS" formátumban. Vegye figyelembe, hogy a javasolt bemeneti változó paraméterek a <code>SAVE_CONFIG</code> parancs kiadásával megőrizhetők a konfigurációs fájlban.</p>
 <h3 id="respond">[respond]<a class="headerlink" href="#respond" title="Permanent link">&para;</a></h3>
@@ -4466,7 +4569,7 @@
 <h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#screws_tilt_adjust">screws_tilt_adjust konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">kézi szintbeállítási útmutatót</a>).</p>
 <h4 id="screws_tilt_calculate">SCREWS_TILT_CALCULATE<a class="headerlink" href="#screws_tilt_calculate" title="Permanent link">&para;</a></h4>
-<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágy csavarjainak beállítási eszközét hívja elő. A fúvókát különböző helyekre (a konfigurációs fájlban meghatározottak szerint) parancsolja a Z magasságot mérve és kiszámítja az ágy szintjének beállításához szükséges gombfordulatok számát. Ha DIRECTION van megadva, akkor a gombfordulatok mind ugyanabba az irányba, az óramutató járásával megegyező (CW) vagy az óramutató járásával ellentétes (CCW) irányba fognak történni. Az opcionális szondaparaméterekkel kapcsolatos részletekért lásd a PROBE parancsot. FONTOS: A parancs használata előtt mindig el kell végezni egy G28-at.</p>
+<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágy csavarjainak beállítási eszközét hívja elő. A fúvókát különböző helyekre (a konfigurációs fájlban meghatározottak szerint) parancsolja a Z magasságot mérve, és kiszámítja az ágy szintjének beállításához szükséges gombfordulatok számát. Ha DIRECTION van megadva, akkor a gombfordulások mind ugyanabba az irányba, az óramutató járásával megegyező vagy az óramutató járásával ellentétes irányba fognak történni. Az opcionális szondaparaméterekkel kapcsolatos részletekért lásd a PROBE parancsot. FONTOS: A parancs használata előtt mindig ki kell adni egy G28 parancsot. Ha MAX_DEVIATION van megadva, a parancs G-kód hibát fog adni, ha a csavar magasságának az alapcsavar magasságához viszonyított bármilyen különbsége nagyobb, mint a megadott érték.</p>
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
 <p>Ha az <a href="Config_Reference.html#sdcard_loop">sdcard_loop konfigurációs szakasz</a> engedélyezve van, a következő kiterjesztett parancsok állnak rendelkezésre.</p>
 <h4 id="sdcard_loop_begin">SDCARD_LOOP_BEGIN<a class="headerlink" href="#sdcard_loop_begin" title="Permanent link">&para;</a></h4>

@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="zh-Hant" class="no-js">
+<html lang="hu" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -13,7 +13,7 @@
     
     
       
-        <title>使用 PWM 工具 - Klipper documentation</title>
+        <title>Objektumok kizárása - Klipper dokumentáció</title>
       
     
     
@@ -74,8 +74,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#pwm" class="md-skip">
-          跳轉至
+        <a href="#objektumok-kizarasa" class="md-skip">
+          Kihagyás
         </a>
       
     </div>
@@ -87,8 +87,8 @@
       
 
 <header class="md-header" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="Élőfej">
+    <a href="." title="Klipper dokumentáció" class="md-header__button md-logo" aria-label="Klipper dokumentáció" data-md-component="logo">
       
   <img src="img/klipper.svg" alt="logo">
 
@@ -100,13 +100,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Klipper documentation
+            Klipper dokumentáció
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              使用 PWM 工具
+              Objektumok kizárása
             
           </span>
         </div>
@@ -182,7 +182,7 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="搜尋" placeholder="搜尋" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Keresés" placeholder="Keresés" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
@@ -193,7 +193,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
           </a>
         
-        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" aria-label="Törlés" tabindex="-1">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </nav>
@@ -205,7 +205,7 @@
       <div class="md-search__scrollwrap" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            正在初始化搜尋引擎
+            Keresés inicializálása
           </div>
           <ol class="md-search-result__list"></ol>
         </div>
@@ -216,7 +216,7 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
@@ -249,18 +249,18 @@
                     
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary" aria-label="Navigáció" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+    <a href="." title="Klipper dokumentáció" class="md-nav__button md-logo" aria-label="Klipper dokumentáció" data-md-component="logo">
       
   <img src="img/klipper.svg" alt="logo">
 
     </a>
-    Klipper documentation
+    Klipper dokumentáció
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Főoldalra ugrás" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
@@ -282,7 +282,7 @@
   
     <li class="md-nav__item">
       <a href="Overview.html" class="md-nav__link">
-        概述
+        Áttekintés
       </a>
     </li>
   
@@ -297,7 +297,7 @@
   
     <li class="md-nav__item">
       <a href="Features.html" class="md-nav__link">
-        功能
+        Funkciók
       </a>
     </li>
   
@@ -312,7 +312,7 @@
   
     <li class="md-nav__item">
       <a href="FAQ.html" class="md-nav__link">
-        常見問題
+        Gyakran ismételt kérdések
       </a>
     </li>
   
@@ -327,7 +327,7 @@
   
     <li class="md-nav__item">
       <a href="Releases.html" class="md-nav__link">
-        版本發佈
+        Kiadás
       </a>
     </li>
   
@@ -342,7 +342,7 @@
   
     <li class="md-nav__item">
       <a href="Config_Changes.html" class="md-nav__link">
-        配置變更
+        Konfigurációs változások
       </a>
     </li>
   
@@ -357,7 +357,7 @@
   
     <li class="md-nav__item">
       <a href="Contact.html" class="md-nav__link">
-        聯繫方式
+        Kapcsolat
       </a>
     </li>
   
@@ -382,14 +382,14 @@
       
       
         <label class="md-nav__link" for="__nav_7">
-          Installation and Configuration
+          Telepítés és Konfiguráció
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+      <nav class="md-nav" aria-label="Telepítés és Konfiguráció" data-md-level="1">
         <label class="md-nav__title" for="__nav_7">
           <span class="md-nav__icon md-icon"></span>
-          Installation and Configuration
+          Telepítés és Konfiguráció
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -400,7 +400,7 @@
   
     <li class="md-nav__item">
       <a href="Installation.html" class="md-nav__link">
-        安裝
+        Telepítés
       </a>
     </li>
   
@@ -422,14 +422,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_2">
-          Configuration Reference
+          Konfigurációs Hivatkozás
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+      <nav class="md-nav" aria-label="Konfigurációs Hivatkozás" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_2">
           <span class="md-nav__icon md-icon"></span>
-          Configuration Reference
+          Konfigurációs Hivatkozás
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -440,7 +440,7 @@
   
     <li class="md-nav__item">
       <a href="Config_Reference.html" class="md-nav__link">
-        配置參考
+        Konfigurációs hivatkozás
       </a>
     </li>
   
@@ -454,7 +454,7 @@
   
     <li class="md-nav__item">
       <a href="Rotation_Distance.html" class="md-nav__link">
-        旋轉距離
+        Forgatási távolság
       </a>
     </li>
   
@@ -475,7 +475,7 @@
   
     <li class="md-nav__item">
       <a href="Config_checks.html" class="md-nav__link">
-        配置檢查
+        Konfigurációs ellenőrzések
       </a>
     </li>
   
@@ -497,14 +497,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Bed Level
+          Ágy szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Bed Level
+          Ágy szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -515,7 +515,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        列印床調平
+        Ágy szintezése
       </a>
     </li>
   
@@ -529,7 +529,7 @@
   
     <li class="md-nav__item">
       <a href="Delta_Calibrate.html" class="md-nav__link">
-        三角校正
+        Delta kalibrálás
       </a>
     </li>
   
@@ -543,7 +543,7 @@
   
     <li class="md-nav__item">
       <a href="Probe_Calibrate.html" class="md-nav__link">
-        探針校準
+        Szonda kalibrálása
       </a>
     </li>
   
@@ -571,7 +571,7 @@
   
     <li class="md-nav__item">
       <a href="Manual_Level.html" class="md-nav__link">
-        手動調平
+        Kézi szintezés
       </a>
     </li>
   
@@ -585,7 +585,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        床網
+        Ágyháló
       </a>
     </li>
   
@@ -599,7 +599,7 @@
   
     <li class="md-nav__item">
       <a href="Endstop_Phase.html" class="md-nav__link">
-        限位相位
+        Végállás szakasz
       </a>
     </li>
   
@@ -628,14 +628,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_5">
-          共振補償
+          Rezonancia Kompenzáció
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="共振補償" data-md-level="2">
+      <nav class="md-nav" aria-label="Rezonancia Kompenzáció" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_5">
           <span class="md-nav__icon md-icon"></span>
-          共振補償
+          Rezonancia Kompenzáció
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -646,7 +646,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        共振補償
+        Rezonancia Kompenzáció
       </a>
     </li>
   
@@ -660,7 +660,7 @@
   
     <li class="md-nav__item">
       <a href="Measuring_Resonances.html" class="md-nav__link">
-        共振值測量
+        Rezonanciák mérése
       </a>
     </li>
   
@@ -681,7 +681,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Pressure advance
+        Nyomás előtolás
       </a>
     </li>
   
@@ -695,7 +695,7 @@
   
     <li class="md-nav__item">
       <a href="G-Codes.html" class="md-nav__link">
-        G-Codes
+        G-kódok
       </a>
     </li>
   
@@ -717,14 +717,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_8">
-          Command templates
+          Parancssablonok
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+      <nav class="md-nav" aria-label="Parancssablonok" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_8">
           <span class="md-nav__icon md-icon"></span>
-          Command templates
+          Parancssablonok
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -735,7 +735,7 @@
   
     <li class="md-nav__item">
       <a href="Command_Templates.html" class="md-nav__link">
-        命令模板
+        Parancssablonok
       </a>
     </li>
   
@@ -749,7 +749,7 @@
   
     <li class="md-nav__item">
       <a href="Status_Reference.html" class="md-nav__link">
-        狀態參考
+        Állapot referencia
       </a>
     </li>
   
@@ -770,7 +770,7 @@
   
     <li class="md-nav__item">
       <a href="TMC_Drivers.html" class="md-nav__link">
-        TMC 驅動器
+        TMC meghajtók
       </a>
     </li>
   
@@ -784,7 +784,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        複數微控制器歸零與探高
+        Több mikrovezélős kezdőpont és szondázás
       </a>
     </li>
   
@@ -798,7 +798,7 @@
   
     <li class="md-nav__item">
       <a href="Slicers.html" class="md-nav__link">
-        切片軟體
+        Szeletelők
       </a>
     </li>
   
@@ -812,21 +812,7 @@
   
     <li class="md-nav__item">
       <a href="Skew_Correction.html" class="md-nav__link">
-        偏斜校正
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="Exclude_Object.html" class="md-nav__link">
-        Exclude Objects
+        Ferdeség korrekció
       </a>
     </li>
   
@@ -849,17 +835,17 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          使用 PWM 工具
+          Objektumok kizárása
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="Using_PWM_Tools.html" class="md-nav__link md-nav__link--active">
-        使用 PWM 工具
+      <a href="Exclude_Object.html" class="md-nav__link md-nav__link--active">
+        Objektumok kizárása
       </a>
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="目錄">
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
   
   
   
@@ -868,34 +854,40 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      目錄
+      Tartalomjegyzék
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    它如何運作？
+  <a href="#munkafolyamat-attekintese" class="md-nav__link">
+    Munkafolyamat áttekintése
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    電流限制
+  <a href="#a-gcode-fajl" class="md-nav__link">
+    A GCode fájl
   </a>
+  
+    <nav class="md-nav" aria-label="A GCode fájl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#objektum-meghatarozasok" class="md-nav__link">
+    Objektum meghatározások
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    命令
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#laserweb" class="md-nav__link">
-    LaserWeb 端配置
+  <a href="#allapotinformacio" class="md-nav__link">
+    Állapotinformáció
   </a>
   
 </li>
@@ -904,6 +896,20 @@
   
 </nav>
       
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        PWM eszközök használata
+      </a>
     </li>
   
 
@@ -932,14 +938,14 @@
       
       
         <label class="md-nav__link" for="__nav_8">
-          Developer Documentation
+          Fejlesztői Dokumentáció
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+      <nav class="md-nav" aria-label="Fejlesztői Dokumentáció" data-md-level="1">
         <label class="md-nav__title" for="__nav_8">
           <span class="md-nav__icon md-icon"></span>
-          Developer Documentation
+          Fejlesztői Dokumentáció
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -950,7 +956,7 @@
   
     <li class="md-nav__item">
       <a href="Code_Overview.html" class="md-nav__link">
-        程式碼總覽
+        Kód áttekintése
       </a>
     </li>
   
@@ -964,7 +970,7 @@
   
     <li class="md-nav__item">
       <a href="Kinematics.html" class="md-nav__link">
-        運動學
+        Kinematika
       </a>
     </li>
   
@@ -978,7 +984,7 @@
   
     <li class="md-nav__item">
       <a href="Protocol.html" class="md-nav__link">
-        協議
+        Protokoll
       </a>
     </li>
   
@@ -992,7 +998,7 @@
   
     <li class="md-nav__item">
       <a href="API_Server.html" class="md-nav__link">
-        API 伺服器
+        API szerver
       </a>
     </li>
   
@@ -1006,7 +1012,7 @@
   
     <li class="md-nav__item">
       <a href="MCU_Commands.html" class="md-nav__link">
-        MCU命令
+        MCU parancsok
       </a>
     </li>
   
@@ -1020,7 +1026,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_protocol.html" class="md-nav__link">
-        CANBUS 協議
+        CANBUS protokoll
       </a>
     </li>
   
@@ -1034,7 +1040,7 @@
   
     <li class="md-nav__item">
       <a href="Debugging.html" class="md-nav__link">
-        除錯
+        Hibakeresés
       </a>
     </li>
   
@@ -1048,7 +1054,7 @@
   
     <li class="md-nav__item">
       <a href="Benchmarks.html" class="md-nav__link">
-        基準測試
+        Referenciaértékek
       </a>
     </li>
   
@@ -1062,7 +1068,7 @@
   
     <li class="md-nav__item">
       <a href="CONTRIBUTING.html" class="md-nav__link">
-        為 Klipper 做貢獻
+        Hozzájárulás a Klipperhez
       </a>
     </li>
   
@@ -1076,7 +1082,7 @@
   
     <li class="md-nav__item">
       <a href="Packaging.html" class="md-nav__link">
-        打包 Klipper
+        Klipper csomagolás
       </a>
     </li>
   
@@ -1106,14 +1112,14 @@
       
       
         <label class="md-nav__link" for="__nav_9">
-          Device Specific Documents
+          Eszközspecifikus Dokumentumok
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+      <nav class="md-nav" aria-label="Eszközspecifikus Dokumentumok" data-md-level="1">
         <label class="md-nav__title" for="__nav_9">
           <span class="md-nav__icon md-icon"></span>
-          Device Specific Documents
+          Eszközspecifikus Dokumentumok
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -1124,7 +1130,7 @@
   
     <li class="md-nav__item">
       <a href="Example_Configs.html" class="md-nav__link">
-        配置示例
+        Példa konfigurációk
       </a>
     </li>
   
@@ -1138,7 +1144,7 @@
   
     <li class="md-nav__item">
       <a href="SDCard_Updates.html" class="md-nav__link">
-        通過SD卡更新
+        SD-kártya frissítések
       </a>
     </li>
   
@@ -1152,7 +1158,7 @@
   
     <li class="md-nav__item">
       <a href="RPi_microcontroller.html" class="md-nav__link">
-        RPi 微控制器
+        RPi mikrokontroller
       </a>
     </li>
   
@@ -1180,7 +1186,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloaders.html" class="md-nav__link">
-        底層載入程式
+        Bootloaderek
       </a>
     </li>
   
@@ -1194,7 +1200,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS.html" class="md-nav__link">
-        CAN 匯流排
+        CANBUS
       </a>
     </li>
   
@@ -1208,7 +1214,7 @@
   
     <li class="md-nav__item">
       <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
-        TSL1401CL 耗材寬度感測器
+        TSL1401CL nyomtatószál szélesség érzékelő
       </a>
     </li>
   
@@ -1222,7 +1228,7 @@
   
     <li class="md-nav__item">
       <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
-        霍爾耗材線徑感測器
+        Hall nyomtatószál szélesség érzékelő
       </a>
     </li>
   
@@ -1248,7 +1254,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="目錄">
+<nav class="md-nav md-nav--secondary" aria-label="Tartalomjegyzék">
   
   
   
@@ -1257,34 +1263,40 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      目錄
+      Tartalomjegyzék
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    它如何運作？
+  <a href="#munkafolyamat-attekintese" class="md-nav__link">
+    Munkafolyamat áttekintése
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    電流限制
+  <a href="#a-gcode-fajl" class="md-nav__link">
+    A GCode fájl
   </a>
+  
+    <nav class="md-nav" aria-label="A GCode fájl">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#objektum-meghatarozasok" class="md-nav__link">
+    Objektum meghatározások
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    命令
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#laserweb" class="md-nav__link">
-    LaserWeb 端配置
+  <a href="#allapotinformacio" class="md-nav__link">
+    Állapotinformáció
   </a>
   
 </li>
@@ -1301,48 +1313,48 @@
             <article class="md-content__inner md-typeset">
               
                 
-<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Using_PWM_Tools.md" title="編輯此頁" class="md-content__button md-icon">
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Exclude_Object.md" title="Oldal szerkesztése" class="md-content__button md-icon">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
 </a>
 
 
-<h1 id="pwm">使用 PWM 工具<a class="headerlink" href="#pwm" title="Permanent link">&para;</a></h1>
-<p>該文件介紹如何配置 <code>output_pin</code> 和宏命令以實現使用 PWM 訊號對鐳射器或主軸進行控制。</p>
-<h2 id="_1">它如何運作？<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>通過重用列印頭模型風扇(part fan)的PWM輸出訊號，我們可以實現對鐳射頭或轉軸的控制。對使用可更換列印頭的裝置，如E3D toolchanger 或其他DIY專案，這是十分有用的功能。通常，cam軟體，例如LaserWeb，會使用<code>M3-M5</code>命令，它們分別是 主軸順時針轉速<em>spindle speed CW</em> (<code>M3 S[0-255]</code>)， 主軸逆時針轉速<em>spindle speed CCW</em> (<code>M4 S[0-255]</code>) 和轉軸停止 <em>spindle stop</em> (<code>M5</code>)。</p>
-<p><strong>警告：</strong> 在驅動鐳射器時，應採用一切可能的預防措施。二極管鐳射一般是使用反訊號的，即當微控制器重啟時，鐳射將會<em>全功率輸出</em>，直至微處理器恢復正常運作。 慎重而言，建議在鐳射器上電期間<em>始終</em>佩戴合適波長的護目鏡；並在不使用鐳射時對鐳射器斷電。同時，應該為鐳射器設定安全定時，保證在上位機和微控制器發生錯誤時，鐳射器能自動停止。</p>
-<p>有關示例配置，請參閱 <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>。</p>
-<h2 id="_2">電流限制<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>PWM脈衝發生的頻率存在上限。儘管相當精確，但每隔0.1秒才能產生一個PWM脈衝，因而幾乎無法用作光柵蝕刻。相對地，可使用以下<a href="https://github.com/Cirromulus/klipper/tree/laser_tool">測試分支</a> 。它與主分支各有考量。長期計劃中將上述功能加入到 Klipper 的主分支中。</p>
-<h2 id="_3">命令<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p><code>M3/M4 S&lt;值&gt;</code> ：設定 PWM 占空比。占空比數值應在0和255之間。 <code>M5</code> : 停止 PWM 訊號輸出。</p>
-<h2 id="laserweb">LaserWeb 端配置<a class="headerlink" href="#laserweb" title="Permanent link">&para;</a></h2>
-<p>如果你使用的是 LaserWeb 軟體，一個可用的配置為：</p>
-<pre><code>GCODE START: 啟動 G 程式碼
-    M5            ; 停用鐳射
-    G21           ; 使用mm作為單位
-    G90           ; 使用絕對座標
-    G0 Z0 F7000   ; 設定空走速度
-
-GCODE END: 結束 G 程式碼
-    M5            ; 停用鐳射
-    G91           ; 使用相對座標
-    G0 Z+20 F4000 ;
-    G90           ; 使用絕對座標
-
-GCODE HOMING: 歸零 G 程式碼
-    M5            ; 停用鐳射
-    G28           ; 全軸歸零
-
-TOOL ON: 開啟工具
-    M3 $INTENSITY
-
-TOOL OFF: 關閉工具
-    M5            ; 停用鐳射
-
-LASER INTENSITY: 鐳射強度
-    S
-</code></pre>
+<h1 id="objektumok-kizarasa">Objektumok kizárása<a class="headerlink" href="#objektumok-kizarasa" title="Permanent link">&para;</a></h1>
+<p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
+section</a> (also see the <a href="G-Codes.html#exclude-object">command
+reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
+<p>Más 3D nyomtatók firmware opcióitól eltérően a Klippert futtató nyomtató komponenscsomagot használ, és a felhasználók számos lehetőség közül választhatnak. Ezért az egységes felhasználói élmény biztosítása érdekében az <code>[exclude_object]</code> modul egyfajta szerződést vagy API-t hoz létre. A szerződés tartalmazza a gcode fájl tartalmát, a modul belső állapotának vezérlését, és azt, hogy ez az állapot hogyan kerül a kliensek rendelkezésre bocsátásra.</p>
+<h2 id="munkafolyamat-attekintese">Munkafolyamat áttekintése<a class="headerlink" href="#munkafolyamat-attekintese" title="Permanent link">&para;</a></h2>
+<p>Egy tipikus munkafolyamat egy fájl nyomtatásához így nézhet ki:</p>
+<ol>
+<li>A szeletelés befejeződik, és a fájl feltöltésre kerül nyomtatásra. A feltöltés során a fájl feldolgozása megtörténik, és <code>[exclude_object]</code> jelölések kerülnek a fájlhoz. A szeletelőket úgy is be lehet állítani, hogy az objektumkizáró jelöléseket natívan vagy saját előfeldolgozási lépésben készítsék el.</li>
+<li>A nyomtatás megkezdésekor a Klipper visszaállítja az <code>[exclude_object]</code> <a href="Status_Reference.html#exclude_object">státuszt</a>.</li>
+<li>Amikor a Klipper feldolgozza az <code>EXCLUDE_OBJECT_DEFINE</code> blokkot, frissíti a státuszt az ismert objektumokkal, és továbbítja azt az ügyfeleknek.</li>
+<li>Az ügyfél felhasználhatja ezeket az információkat arra, hogy egy felhasználói felületet jelenítsen meg a felhasználónak, hogy nyomon követhesse az előrehaladást. A Klipper frissíti az állapotot, hogy tartalmazza az aktuálisan nyomtatott objektumot, amelyet az ügyfél megjelenítési célokra használhat.</li>
+<li>Ha a felhasználó egy objektum törlését kéri, a kliens egy <code>EXCLUDE_OBJECT NAME=&lt;name&gt;</code> parancsot ad a Klippernek.</li>
+<li>Amikor a Klipper feldolgozza a parancsot, hozzáadja az objektumot a kizárt objektumok listájához, és frissíti állapotát az ügyfél felé.</li>
+<li>Az ügyfél megkapja a Klipper frissített állapotát, és ezt az információt felhasználhatja az objektum állapotának megjelenítéséhez a felhasználói felületen.</li>
+<li>A nyomtatás befejezésekor az <code>[exclude_object]</code> állapot továbbra is elérhető marad, amíg egy másik művelet vissza nem állítja.</li>
+</ol>
+<h2 id="a-gcode-fajl">A GCode fájl<a class="headerlink" href="#a-gcode-fajl" title="Permanent link">&para;</a></h2>
+<p>Az objektumok kizárásához szükséges speciális G-kód feldolgozás nem illeszkedik a Klipper alapvető tervezési céljaihoz. Ezért ez a modul megköveteli a fájl feldolgozását, mielőtt a Klippernek nyomtatásra elküldi. A fájl Klipper számára történő előkészítésére két lehetőség egy utófeldolgozó szkript használata a szeletelőben, vagy a fájl feltöltéskor történő feldolgozása a middleware segítségével. Egy referencia utófeldolgozó szkript elérhető futtatható és python könyvtárként is, lásd <a href="https://github.com/kageurufu/cancelobject-preprocessor">az objektum előfeldolgozó törlése</a>.</p>
+<h3 id="objektum-meghatarozasok">Objektum meghatározások<a class="headerlink" href="#objektum-meghatarozasok" title="Permanent link">&para;</a></h3>
+<p>Az <code>EXCLUDE_OBJECT_DEFINE</code> parancsot arra használjuk, hogy a G-kód fájlban lévő minden egyes objektumról összefoglalót adjunk a nyomtatáshoz. A fájlban lévő objektumok összefoglalóját adja meg. Az objektumokat nem kell definiálni ahhoz, hogy más parancsok hivatkozhassanak rájuk. Ennek a parancsnak az elsődleges célja, hogy információt szolgáltasson a felhasználói felületnek anélkül, hogy a teljes G-kód fájlt elemeznie kellene.</p>
+<p>Az objektumdefiníciókat elnevezik, hogy a felhasználók könnyen kiválaszthassák a kizárandó objektumot, és további metaadatokat is megadhatnak a grafikus törlésmegjelenítéshez. A jelenleg definiált metaadatok közé tartozik egy <code>CENTER</code> X,Y koordináta, valamint egy <code>POLYGON</code> X,Y pontok listája, amely az objektum minimális körvonalát ábrázolja. Ez lehet egy egyszerű határoló doboz, vagy egy bonyolult burkolat a nyomtatott objektumok részletesebb megjelenítéséhez. Különösen akkor, ha a G-kód fájlok több, egymást átfedő határoló régiókkal rendelkező alkatrészt tartalmaznak, a középpontok vizuálisan nehezen megkülönböztethetők. <code>POLYGONS</code> pontokból álló json-kompatibilis tömbnek kell lennie <code>[X,Y]</code> szóközök nélkül. A további paraméterek karakterláncokként kerülnek elmentésre az objektumdefinícióban, és állapotfrissítésekben lesznek megadva.</p>
+<p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
+<p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
+Reference</a></p>
+<h2 id="allapotinformacio">Állapotinformáció<a class="headerlink" href="#allapotinformacio" title="Permanent link">&para;</a></h2>
+<p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object
+status</a>.</p>
+<p>Az állapot visszaáll, amikor:</p>
+<ul>
+<li>A Klipper firmware újraindul.</li>
+<li>A <code>[virtual_sdcard]</code> visszaállítása megtörtént. Figyelemre méltó, hogy ezt a Klipper a nyomtatás kezdetén visszaállítja.</li>
+<li>Amikor egy <code>EXCLUDE_OBJECT_DEFINE RESET=1</code> parancsot adunk ki.</li>
+</ul>
+<p>A meghatározott objektumok listája az <code>exclude_object.objects</code> állapotmezőben jelenik meg. Egy jól definiált G-kód fájlban ez a fájl elején található <code>EXCLUDE_OBJECT_DEFINE</code> parancsokkal történik. Ez biztosítja a kliensek számára az objektumok nevét és koordinátáit, így a felhasználói felület kívánság szerint grafikusan is megjelenítheti az objektumokat.</p>
+<p>A nyomtatás előrehaladtával az <code>exclude_object.current_object</code> állapotmező frissül, ahogy a Klipper feldolgozza az <code>EXCLUDE_OBJECT_START</code> és <code>EXCLUDE_OBJECT_END</code> parancsokat. A <code>current_object</code> mező akkor is be lesz állítva, ha az objektumot kizárták. Az <code>EXCLUDE_OBJECT_START</code> mezővel jelölt nem definiált objektumok hozzá lesznek adva az ismert objektumokhoz, hogy segítsék a felhasználói felületre való utalásukat, minden további metaadat nélkül.</p>
+<p>Az <code>EXCLUDE_OBJECT</code> parancsok kiadásakor a kizárt objektumok listáját az <code>exclude_object.excluded_objects</code> tömb tartalmazza. Mivel a Klipper előre tekint, hogy feldolgozza a közelgő G-kódot, a parancs kiadása és az állapot frissítése között késés lehet.</p>
 
               
             </article>
@@ -1358,32 +1370,32 @@ LASER INTENSITY: 鐳射強度
       
         <footer class="md-footer">
   
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
+    <nav class="md-footer__inner md-grid" aria-label="Élőláb">
       
         
-        <a href="Exclude_Object.html" class="md-footer__link md-footer__link--prev" aria-label="上一頁: Exclude Objects" rel="prev">
+        <a href="Skew_Correction.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Ferdeség korrekció" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
-                上一頁
+                Előző
               </span>
-              Exclude Objects
+              Ferdeség korrekció
             </div>
           </div>
         </a>
       
       
         
-        <a href="Code_Overview.html" class="md-footer__link md-footer__link--next" aria-label="下一頁: 程式碼總覽" rel="next">
+        <a href="Using_PWM_Tools.html" class="md-footer__link md-footer__link--next" aria-label="Következő: PWM eszközök használata" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
-                下一頁
+                Következő
               </span>
-              程式碼總覽
+              PWM eszközök használata
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -1413,7 +1425,7 @@ LASER INTENSITY: 鐳射強度
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u62f7\u8c9d", "clipboard.copied": "\u5df2\u62f7\u8c9d", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u5c0b", "search.result.placeholder": "\u9375\u5165\u4ee5\u958b\u59cb\u6aa2\u7d22", "search.result.none": "\u6c92\u6709\u627e\u5230\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.other": "# \u500b\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "M\u00e1sol\u00e1s v\u00e1g\u00f3lapra", "clipboard.copied": "V\u00e1g\u00f3lapra m\u00e1solva", "search.config.lang": "hu", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Keres\u00e9s", "search.result.placeholder": "Keres\u00e9shez \u00edrj ide valamit", "search.result.none": "Nincs tal\u00e1lat", "search.result.one": "1 egyez\u0151 dokumentum", "search.result.other": "# egyez\u0151 dokumentum", "search.result.more.one": "1 tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.more.other": "# tov\u00e1bbi tal\u00e1lat az oldalon", "search.result.term.missing": "\u00dcres", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
     
     
       <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>

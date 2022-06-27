@@ -823,8 +823,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objektumok kizárása
       </a>
     </li>
   
@@ -1158,6 +1158,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#valaszthato-i2c-engedelyezese" class="md-nav__link">
+    Választható: I2C engedélyezése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#valaszthato-a-megfelelo-gpio-chip-azonositasa" class="md-nav__link">
     Választható: A megfelelő GPIO chip azonosítása
   </a>
@@ -1318,6 +1325,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#valaszthato-i2c-engedelyezese" class="md-nav__link">
+    Választható: I2C engedélyezése
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#valaszthato-a-megfelelo-gpio-chip-azonositasa" class="md-nav__link">
     Választható: A megfelelő GPIO chip azonosítása
   </a>
@@ -1382,6 +1396,8 @@ sudo service klipper start
 <p>Fejezze be a telepítést a Klipper másodlagos MCU konfigurálásával a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-raspberry-pi.cfg">RaspberryPi minta konfiguráció</a> és a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-multi-mcu.cfg">Multi MCU minta konfiguráció</a> utasításai szerint.</p>
 <h2 id="valaszthato-spi-engedelyezese">Választható: SPI engedélyezése<a class="headerlink" href="#valaszthato-spi-engedelyezese" title="Permanent link">&para;</a></h2>
 <p>Győződjünk meg róla, hogy a Linux SPI-illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az SPI engedélyezésével az "Interfacing options" menüben.</p>
+<h2 id="valaszthato-i2c-engedelyezese">Választható: I2C engedélyezése<a class="headerlink" href="#valaszthato-i2c-engedelyezese" title="Permanent link">&para;</a></h2>
+<p>Győződjünk meg róla, hogy a Linux I2C illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az I2C engedélyezésével az "Interfacing options" menüben. Ha az MPU gyorsulásmérőjének I2C használatát tervezzük, akkor a átviteli sebességet is 400000-re kell állítani a következő módon: <code>dtparam=i2c_arm=on,i2c_arm_baudrate=400000</code> hozzáadása/elhagyása a <code>/boot/config-ban.txt</code> (vagy <code>/boot/firmware/config.txt</code> néhány disztróban).</p>
 <h2 id="valaszthato-a-megfelelo-gpio-chip-azonositasa">Választható: A megfelelő GPIO chip azonosítása<a class="headerlink" href="#valaszthato-a-megfelelo-gpio-chip-azonositasa" title="Permanent link">&para;</a></h2>
 <p>A Raspberry Pi-n és sok klónon a GPIO-n látható tűk az első GPIO chiphez tartoznak. Ezért a klipperben egyszerűen úgy használhatók, hogy a <code>gpio0..n</code> névvel hivatkozunk rájuk. Vannak azonban olyan esetek, amikor a kitett tűk az elsőtől eltérő GPIO chipekhez tartoznak. Például egyes OrangePi modellek esetében, vagy ha Port Expander-t használunk. Ezekben az esetekben hasznos a <em>Linux GPIO karakteres eszköz </em>Linux GPIO eszköz* elérésére szolgáló parancsok használata a konfiguráció ellenőrzéséhez.</p>
 <p>A <em>Linux GPIO character device - binary</em> telepítéséhez egy debian alapú disztribúció kell, mint például az octopi. Futtassa:</p>

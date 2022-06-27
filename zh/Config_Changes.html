@@ -864,8 +864,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Exclude_Object.md" class="md-nav__link">
-        None
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclude Objects
       </a>
     </li>
   
@@ -1266,6 +1266,8 @@
 <p>本文档涵盖了软件更新中对配置文件不向后兼容的部分。在升级 Klipper 时，最好也查看一下这份文档。</p>
 <p>文档的所有日期都是大概时间。</p>
 <h2 id="_2">变更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>20220616: It was previously possible to flash an rp2040 in bootloader mode by running <code>make flash FLASH_DEVICE=first</code>. The equivalent command is now <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
+<p>20220612: The rp2040 micro-controller now has a workaround for the "rp2040-e5" USB errata. This should make initial USB connections more reliable. However, it may result in a change in behavior for the gpio15 pin. It is unlikely the gpio15 behavior change will be noticeable.</p>
 <p>20220407：temperature_fan 配置分段中的 <code>pid_integral_max</code> 选项已被删除（在 20210612 时已弃用）。</p>
 <p>20220407: pca9632 LED的默认色序现在是"RGBW"。在pca9632配置分段中显式加入<code>color_order:RBGW</code>设置以获得以和原来一样的行为。</p>
 <p>20220330：neopixel和dotstar模块的<code>printer.neopixel.color_data</code>状态信息的格式已经改变。这些信息现在被存储为一个列表中的颜色列表（而不是字典列表）。详情见<a href="Status_Reference.html#led">状态参考</a>。</p>

@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="zh-Hant" class="no-js">
+<html lang="zh" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -13,7 +13,7 @@
     
     
       
-        <title>使用 PWM 工具 - Klipper documentation</title>
+        <title>Exclude Objects - Klipper 文档</title>
       
     
     
@@ -74,8 +74,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#pwm" class="md-skip">
-          跳轉至
+        <a href="#exclude-objects" class="md-skip">
+          跳转至
         </a>
       
     </div>
@@ -87,8 +87,8 @@
       
 
 <header class="md-header" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Klipper documentation" class="md-header__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="." title="Klipper 文档" class="md-header__button md-logo" aria-label="Klipper 文档" data-md-component="logo">
       
   <img src="img/klipper.svg" alt="logo">
 
@@ -100,13 +100,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Klipper documentation
+            Klipper 文档
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              使用 PWM 工具
+              Exclude Objects
             
           </span>
         </div>
@@ -139,7 +139,7 @@
       <div class="md-header__option">
         <div class="md-select">
           
-          <button class="md-header__button md-icon" aria-label="Select language">
+          <button class="md-header__button md-icon" aria-label="选择当前语言">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
           </button>
           <div class="md-select__inner">
@@ -182,18 +182,18 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="搜尋" placeholder="搜尋" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
       </label>
-      <nav class="md-search__options" aria-label="Search">
+      <nav class="md-search__options" aria-label="查找">
         
-          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
           </a>
         
-        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" aria-label="清空当前内容" tabindex="-1">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </nav>
@@ -205,7 +205,7 @@
       <div class="md-search__scrollwrap" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            正在初始化搜尋引擎
+            正在初始化搜索引擎
           </div>
           <ol class="md-search-result__list"></ol>
         </div>
@@ -216,7 +216,7 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+        <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
@@ -249,18 +249,18 @@
                     
 
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Klipper documentation" class="md-nav__button md-logo" aria-label="Klipper documentation" data-md-component="logo">
+    <a href="." title="Klipper 文档" class="md-nav__button md-logo" aria-label="Klipper 文档" data-md-component="logo">
       
   <img src="img/klipper.svg" alt="logo">
 
     </a>
-    Klipper documentation
+    Klipper 文档
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/Klipper3d/klipper/" title="前往倉庫" class="md-source" data-md-component="source">
+      <a href="https://github.com/Klipper3d/klipper/" title="前往仓库" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
@@ -312,7 +312,7 @@
   
     <li class="md-nav__item">
       <a href="FAQ.html" class="md-nav__link">
-        常見問題
+        常见问题
       </a>
     </li>
   
@@ -327,7 +327,7 @@
   
     <li class="md-nav__item">
       <a href="Releases.html" class="md-nav__link">
-        版本發佈
+        版本发布
       </a>
     </li>
   
@@ -342,7 +342,7 @@
   
     <li class="md-nav__item">
       <a href="Config_Changes.html" class="md-nav__link">
-        配置變更
+        配置变更
       </a>
     </li>
   
@@ -357,7 +357,7 @@
   
     <li class="md-nav__item">
       <a href="Contact.html" class="md-nav__link">
-        聯繫方式
+        联系方式
       </a>
     </li>
   
@@ -382,14 +382,14 @@
       
       
         <label class="md-nav__link" for="__nav_7">
-          Installation and Configuration
+          安装和配置
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Installation and Configuration" data-md-level="1">
+      <nav class="md-nav" aria-label="安装和配置" data-md-level="1">
         <label class="md-nav__title" for="__nav_7">
           <span class="md-nav__icon md-icon"></span>
-          Installation and Configuration
+          安装和配置
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -400,7 +400,7 @@
   
     <li class="md-nav__item">
       <a href="Installation.html" class="md-nav__link">
-        安裝
+        安装
       </a>
     </li>
   
@@ -422,14 +422,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_2">
-          Configuration Reference
+          配置参考
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Configuration Reference" data-md-level="2">
+      <nav class="md-nav" aria-label="配置参考" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_2">
           <span class="md-nav__icon md-icon"></span>
-          Configuration Reference
+          配置参考
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -440,7 +440,7 @@
   
     <li class="md-nav__item">
       <a href="Config_Reference.html" class="md-nav__link">
-        配置參考
+        配置参考
       </a>
     </li>
   
@@ -454,7 +454,7 @@
   
     <li class="md-nav__item">
       <a href="Rotation_Distance.html" class="md-nav__link">
-        旋轉距離
+        旋转距离
       </a>
     </li>
   
@@ -475,7 +475,7 @@
   
     <li class="md-nav__item">
       <a href="Config_checks.html" class="md-nav__link">
-        配置檢查
+        配置检查
       </a>
     </li>
   
@@ -497,14 +497,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Bed Level
+          打印床调平
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Bed Level" data-md-level="2">
+      <nav class="md-nav" aria-label="打印床调平" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Bed Level
+          打印床调平
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -515,7 +515,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        列印床調平
+        打印床调平
       </a>
     </li>
   
@@ -543,7 +543,7 @@
   
     <li class="md-nav__item">
       <a href="Probe_Calibrate.html" class="md-nav__link">
-        探針校準
+        探针校准
       </a>
     </li>
   
@@ -571,7 +571,7 @@
   
     <li class="md-nav__item">
       <a href="Manual_Level.html" class="md-nav__link">
-        手動調平
+        手动调平
       </a>
     </li>
   
@@ -585,7 +585,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        床網
+        床网
       </a>
     </li>
   
@@ -628,14 +628,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_5">
-          共振補償
+          共振补偿
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="共振補償" data-md-level="2">
+      <nav class="md-nav" aria-label="共振补偿" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_5">
           <span class="md-nav__icon md-icon"></span>
-          共振補償
+          共振补偿
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -646,7 +646,7 @@
   
     <li class="md-nav__item">
       <a href="Resonance_Compensation.html" class="md-nav__link">
-        共振補償
+        共振补偿
       </a>
     </li>
   
@@ -660,7 +660,7 @@
   
     <li class="md-nav__item">
       <a href="Measuring_Resonances.html" class="md-nav__link">
-        共振值測量
+        共振值测量
       </a>
     </li>
   
@@ -681,7 +681,7 @@
   
     <li class="md-nav__item">
       <a href="Pressure_Advance.html" class="md-nav__link">
-        Pressure advance
+        压力提前
       </a>
     </li>
   
@@ -717,14 +717,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_8">
-          Command templates
+          命令模板
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Command templates" data-md-level="2">
+      <nav class="md-nav" aria-label="命令模板" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_8">
           <span class="md-nav__icon md-icon"></span>
-          Command templates
+          命令模板
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -749,7 +749,7 @@
   
     <li class="md-nav__item">
       <a href="Status_Reference.html" class="md-nav__link">
-        狀態參考
+        状态参考
       </a>
     </li>
   
@@ -770,7 +770,7 @@
   
     <li class="md-nav__item">
       <a href="TMC_Drivers.html" class="md-nav__link">
-        TMC 驅動器
+        TMC 驱动器
       </a>
     </li>
   
@@ -784,7 +784,7 @@
   
     <li class="md-nav__item">
       <a href="Multi_MCU_Homing.html" class="md-nav__link">
-        複數微控制器歸零與探高
+        多微控制器归位与探高
       </a>
     </li>
   
@@ -798,7 +798,7 @@
   
     <li class="md-nav__item">
       <a href="Slicers.html" class="md-nav__link">
-        切片軟體
+        切片软件
       </a>
     </li>
   
@@ -823,20 +823,6 @@
               
   
   
-  
-    <li class="md-nav__item">
-      <a href="Exclude_Object.html" class="md-nav__link">
-        Exclude Objects
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
     
   
   
@@ -849,17 +835,17 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          使用 PWM 工具
+          Exclude Objects
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="Using_PWM_Tools.html" class="md-nav__link md-nav__link--active">
-        使用 PWM 工具
+      <a href="Exclude_Object.html" class="md-nav__link md-nav__link--active">
+        Exclude Objects
       </a>
       
         
 
-<nav class="md-nav md-nav--secondary" aria-label="目錄">
+<nav class="md-nav md-nav--secondary" aria-label="目录">
   
   
   
@@ -868,34 +854,40 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      目錄
+      目录
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    它如何運作？
+  <a href="#workflow-overview" class="md-nav__link">
+    Workflow Overview
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    電流限制
+  <a href="#the-gcode-file" class="md-nav__link">
+    The GCode File
   </a>
+  
+    <nav class="md-nav" aria-label="The GCode File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object-definitions" class="md-nav__link">
+    Object Definitions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    命令
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#laserweb" class="md-nav__link">
-    LaserWeb 端配置
+  <a href="#status-information" class="md-nav__link">
+    Status Information
   </a>
   
 </li>
@@ -904,6 +896,20 @@
   
 </nav>
       
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        使用 PWM 工具
+      </a>
     </li>
   
 
@@ -932,14 +938,14 @@
       
       
         <label class="md-nav__link" for="__nav_8">
-          Developer Documentation
+          开发者文档
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Developer Documentation" data-md-level="1">
+      <nav class="md-nav" aria-label="开发者文档" data-md-level="1">
         <label class="md-nav__title" for="__nav_8">
           <span class="md-nav__icon md-icon"></span>
-          Developer Documentation
+          开发者文档
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -950,7 +956,7 @@
   
     <li class="md-nav__item">
       <a href="Code_Overview.html" class="md-nav__link">
-        程式碼總覽
+        代码总览
       </a>
     </li>
   
@@ -964,7 +970,7 @@
   
     <li class="md-nav__item">
       <a href="Kinematics.html" class="md-nav__link">
-        運動學
+        运动学
       </a>
     </li>
   
@@ -978,7 +984,7 @@
   
     <li class="md-nav__item">
       <a href="Protocol.html" class="md-nav__link">
-        協議
+        协议
       </a>
     </li>
   
@@ -992,7 +998,7 @@
   
     <li class="md-nav__item">
       <a href="API_Server.html" class="md-nav__link">
-        API 伺服器
+        API 服务器
       </a>
     </li>
   
@@ -1020,7 +1026,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_protocol.html" class="md-nav__link">
-        CANBUS 協議
+        CANBUS 协议 (CANBUS protocol)
       </a>
     </li>
   
@@ -1034,7 +1040,7 @@
   
     <li class="md-nav__item">
       <a href="Debugging.html" class="md-nav__link">
-        除錯
+        调试
       </a>
     </li>
   
@@ -1048,7 +1054,7 @@
   
     <li class="md-nav__item">
       <a href="Benchmarks.html" class="md-nav__link">
-        基準測試
+        基准测试
       </a>
     </li>
   
@@ -1062,7 +1068,7 @@
   
     <li class="md-nav__item">
       <a href="CONTRIBUTING.html" class="md-nav__link">
-        為 Klipper 做貢獻
+        为 Klipper 做贡献
       </a>
     </li>
   
@@ -1106,14 +1112,14 @@
       
       
         <label class="md-nav__link" for="__nav_9">
-          Device Specific Documents
+          设备特定文档
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Device Specific Documents" data-md-level="1">
+      <nav class="md-nav" aria-label="设备特定文档" data-md-level="1">
         <label class="md-nav__title" for="__nav_9">
           <span class="md-nav__icon md-icon"></span>
-          Device Specific Documents
+          设备特定文档
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -1138,7 +1144,7 @@
   
     <li class="md-nav__item">
       <a href="SDCard_Updates.html" class="md-nav__link">
-        通過SD卡更新
+        通过SD卡更新
       </a>
     </li>
   
@@ -1180,7 +1186,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloaders.html" class="md-nav__link">
-        底層載入程式
+        底层引导程序
       </a>
     </li>
   
@@ -1194,7 +1200,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS.html" class="md-nav__link">
-        CAN 匯流排
+        CAN 总线
       </a>
     </li>
   
@@ -1208,7 +1214,7 @@
   
     <li class="md-nav__item">
       <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
-        TSL1401CL 耗材寬度感測器
+        TSL1401CL 耗材宽度传感器
       </a>
     </li>
   
@@ -1222,7 +1228,7 @@
   
     <li class="md-nav__item">
       <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
-        霍爾耗材線徑感測器
+        霍尔耗材线径传感器
       </a>
     </li>
   
@@ -1248,7 +1254,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="目錄">
+<nav class="md-nav md-nav--secondary" aria-label="目录">
   
   
   
@@ -1257,34 +1263,40 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      目錄
+      目录
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#_1" class="md-nav__link">
-    它如何運作？
+  <a href="#workflow-overview" class="md-nav__link">
+    Workflow Overview
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    電流限制
+  <a href="#the-gcode-file" class="md-nav__link">
+    The GCode File
   </a>
+  
+    <nav class="md-nav" aria-label="The GCode File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object-definitions" class="md-nav__link">
+    Object Definitions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    命令
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#laserweb" class="md-nav__link">
-    LaserWeb 端配置
+  <a href="#status-information" class="md-nav__link">
+    Status Information
   </a>
   
 </li>
@@ -1301,48 +1313,48 @@
             <article class="md-content__inner md-typeset">
               
                 
-<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Using_PWM_Tools.md" title="編輯此頁" class="md-content__button md-icon">
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Exclude_Object.md" title="编辑此页" class="md-content__button md-icon">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
 </a>
 
 
-<h1 id="pwm">使用 PWM 工具<a class="headerlink" href="#pwm" title="Permanent link">&para;</a></h1>
-<p>該文件介紹如何配置 <code>output_pin</code> 和宏命令以實現使用 PWM 訊號對鐳射器或主軸進行控制。</p>
-<h2 id="_1">它如何運作？<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>通過重用列印頭模型風扇(part fan)的PWM輸出訊號，我們可以實現對鐳射頭或轉軸的控制。對使用可更換列印頭的裝置，如E3D toolchanger 或其他DIY專案，這是十分有用的功能。通常，cam軟體，例如LaserWeb，會使用<code>M3-M5</code>命令，它們分別是 主軸順時針轉速<em>spindle speed CW</em> (<code>M3 S[0-255]</code>)， 主軸逆時針轉速<em>spindle speed CCW</em> (<code>M4 S[0-255]</code>) 和轉軸停止 <em>spindle stop</em> (<code>M5</code>)。</p>
-<p><strong>警告：</strong> 在驅動鐳射器時，應採用一切可能的預防措施。二極管鐳射一般是使用反訊號的，即當微控制器重啟時，鐳射將會<em>全功率輸出</em>，直至微處理器恢復正常運作。 慎重而言，建議在鐳射器上電期間<em>始終</em>佩戴合適波長的護目鏡；並在不使用鐳射時對鐳射器斷電。同時，應該為鐳射器設定安全定時，保證在上位機和微控制器發生錯誤時，鐳射器能自動停止。</p>
-<p>有關示例配置，請參閱 <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>。</p>
-<h2 id="_2">電流限制<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>PWM脈衝發生的頻率存在上限。儘管相當精確，但每隔0.1秒才能產生一個PWM脈衝，因而幾乎無法用作光柵蝕刻。相對地，可使用以下<a href="https://github.com/Cirromulus/klipper/tree/laser_tool">測試分支</a> 。它與主分支各有考量。長期計劃中將上述功能加入到 Klipper 的主分支中。</p>
-<h2 id="_3">命令<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p><code>M3/M4 S&lt;值&gt;</code> ：設定 PWM 占空比。占空比數值應在0和255之間。 <code>M5</code> : 停止 PWM 訊號輸出。</p>
-<h2 id="laserweb">LaserWeb 端配置<a class="headerlink" href="#laserweb" title="Permanent link">&para;</a></h2>
-<p>如果你使用的是 LaserWeb 軟體，一個可用的配置為：</p>
-<pre><code>GCODE START: 啟動 G 程式碼
-    M5            ; 停用鐳射
-    G21           ; 使用mm作為單位
-    G90           ; 使用絕對座標
-    G0 Z0 F7000   ; 設定空走速度
-
-GCODE END: 結束 G 程式碼
-    M5            ; 停用鐳射
-    G91           ; 使用相對座標
-    G0 Z+20 F4000 ;
-    G90           ; 使用絕對座標
-
-GCODE HOMING: 歸零 G 程式碼
-    M5            ; 停用鐳射
-    G28           ; 全軸歸零
-
-TOOL ON: 開啟工具
-    M3 $INTENSITY
-
-TOOL OFF: 關閉工具
-    M5            ; 停用鐳射
-
-LASER INTENSITY: 鐳射強度
-    S
-</code></pre>
+<h1 id="exclude-objects">Exclude Objects<a class="headerlink" href="#exclude-objects" title="Permanent link">&para;</a></h1>
+<p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
+section</a> (also see the <a href="G-Codes.html#exclude-object">command
+reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
+<p>Unlike other 3D printer firmware options, a printer running Klipper utilizes a suite of components and users have many options to choose from. Therefore, in order to provide a a consistent user experience, the <code>[exclude_object]</code> module will establish a contract or API of sorts. The contract covers the contents of the gcode file, how the internal state of the module is controlled, and how that state is provided to clients.</p>
+<h2 id="workflow-overview">Workflow Overview<a class="headerlink" href="#workflow-overview" title="Permanent link">&para;</a></h2>
+<p>A typical workflow for printing a file might look like this:</p>
+<ol>
+<li>Slicing is completed and the file is uploaded for printing. During the upload, the file is processed and <code>[exclude_object]</code> markers are added to the file. Alternately, slicers may be configured to prepare object exclusion markers natively, or in it's own pre-processing step.</li>
+<li>When printing starts, Klipper will reset the <code>[exclude_object]</code> <a href="Status_Reference.html#exclude_object">status</a>.</li>
+<li>When Klipper processes the <code>EXCLUDE_OBJECT_DEFINE</code> block, it will update the status with the known objects and pass it on to clients.</li>
+<li>The client may use that information to present a UI to the user so that progress can be tracked. Klipper will update the status to include the currently printing object which the client can use for display purposes.</li>
+<li>If the user requests that an object be cancelled, the client will issue an <code>EXCLUDE_OBJECT NAME=&lt;name&gt;</code> command to Klipper.</li>
+<li>When Klipper process the command, it will add the object to the list of excluded objects and update the status for the client.</li>
+<li>The client will receive the updated status from Klipper and can use that information to reflect the object's status in the UI.</li>
+<li>When printing finishes, the <code>[exclude_object]</code> status will continue to be available until another action resets it.</li>
+</ol>
+<h2 id="the-gcode-file">The GCode File<a class="headerlink" href="#the-gcode-file" title="Permanent link">&para;</a></h2>
+<p>The specialized gcode processing needed to support excluding objects does not fit into Klipper's core design goals. Therefore, this module requires that the file is processed before being sent to Klipper for printing. Using a post-process script in the slicer or having middleware process the file on upload are two possibilities for preparing the file for Klipper. A reference post-processing script is available both as an executable and a python library, see <a href="https://github.com/kageurufu/cancelobject-preprocessor">cancelobject-preprocessor</a>.</p>
+<h3 id="object-definitions">Object Definitions<a class="headerlink" href="#object-definitions" title="Permanent link">&para;</a></h3>
+<p>The <code>EXCLUDE_OBJECT_DEFINE</code> command is used to provide a summary of each object in the gcode file to be printed. Provides a summary of an object in the file. Objects don't need to be defined in order to be referenced by other commands. The primary purpose of this command is to provide information to the UI without needing to parse the entire gcode file.</p>
+<p>Object definitions are named, to allow users to easily select an object to be excluded, and additional metadata may be provided to allow for graphical cancellation displays. Currently defined metadata includes a <code>CENTER</code> X,Y coordinate, and a <code>POLYGON</code> list of X,Y points representing a minimal outline of the object. This could be a simple bounding box, or a complicated hull for showing more detailed visualizations of the printed objects. Especially when gcode files include multiple parts with overlapping bounding regions, center points become hard to visually distinguish. <code>POLYGONS</code> must be a json-compatible array of point <code>[X,Y]</code> tuples without whitespace. Additional parameters will be saved as strings in the object definition and provided in status updates.</p>
+<p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
+<p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
+Reference</a></p>
+<h2 id="status-information">Status Information<a class="headerlink" href="#status-information" title="Permanent link">&para;</a></h2>
+<p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object
+status</a>.</p>
+<p>The status is reset when:</p>
+<ul>
+<li>The Klipper firmware is restarted.</li>
+<li>There is a reset of the <code>[virtual_sdcard]</code>. Notably, this is reset by Klipper at the start of a print.</li>
+<li>When an <code>EXCLUDE_OBJECT_DEFINE RESET=1</code> command is issued.</li>
+</ul>
+<p>The list of defined objects is represented in the <code>exclude_object.objects</code> status field. In a well defined gcode file, this will be done with <code>EXCLUDE_OBJECT_DEFINE</code> commands at the beginning of the file. This will provide clients with object names and coordinates so the UI can provide a graphical representation of the objects if desired.</p>
+<p>As the print progresses, the <code>exclude_object.current_object</code> status field will be updated as Klipper processes <code>EXCLUDE_OBJECT_START</code> and <code>EXCLUDE_OBJECT_END</code> commands. The <code>current_object</code> field will be set even if the object has been excluded. Undefined objects marked with a <code>EXCLUDE_OBJECT_START</code> will be added to the known objects to assist in UI hinting, without any additional metadata.</p>
+<p>As <code>EXCLUDE_OBJECT</code> commands are issued, the list of excluded objects is provided in the <code>exclude_object.excluded_objects</code> array. Since Klipper looks ahead to process upcoming gcode, there may be a delay between when the command is issued and when the status is updated.</p>
 
               
             </article>
@@ -1351,39 +1363,39 @@ LASER INTENSITY: 鐳射強度
         
           <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
-            Back to top
+            回到页面顶部
           </a>
         
       </main>
       
         <footer class="md-footer">
   
-    <nav class="md-footer__inner md-grid" aria-label="Footer">
+    <nav class="md-footer__inner md-grid" aria-label="页脚">
       
         
-        <a href="Exclude_Object.html" class="md-footer__link md-footer__link--prev" aria-label="上一頁: Exclude Objects" rel="prev">
+        <a href="Skew_Correction.html" class="md-footer__link md-footer__link--prev" aria-label="上一页: 偏斜校正" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
-                上一頁
+                上一页
               </span>
-              Exclude Objects
+              偏斜校正
             </div>
           </div>
         </a>
       
       
         
-        <a href="Code_Overview.html" class="md-footer__link md-footer__link--next" aria-label="下一頁: 程式碼總覽" rel="next">
+        <a href="Using_PWM_Tools.html" class="md-footer__link md-footer__link--next" aria-label="下一页: 使用 PWM 工具" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
-                下一頁
+                下一页
               </span>
-              程式碼總覽
+              使用 PWM 工具
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -1413,7 +1425,7 @@ LASER INTENSITY: 鐳射強度
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u62f7\u8c9d", "clipboard.copied": "\u5df2\u62f7\u8c9d", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u5c0b", "search.result.placeholder": "\u9375\u5165\u4ee5\u958b\u59cb\u6aa2\u7d22", "search.result.none": "\u6c92\u6709\u627e\u5230\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.other": "# \u500b\u7b26\u5408\u689d\u4ef6\u7684\u7d50\u679c", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stemmer", "search.config.separator": "[\\uff0c\\u3002]+", "search.placeholder": "\u641c\u7d22", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.term.missing": "\u7f3a\u5c11", "select.version.title": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
     
     
       <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
