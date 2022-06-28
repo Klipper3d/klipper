@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // armcm_main
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
@@ -163,6 +164,7 @@ check_usb_dfu_bootloader(void)
 void
 usb_request_bootloader(void)
 {
+    try_request_canboot();
     usb_reboot_for_dfu_bootloader();
 }
 

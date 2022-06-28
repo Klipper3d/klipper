@@ -41,6 +41,8 @@ The following information is available in the `configfile` object
   here.) All values are returned as strings.
 - `save_config_pending`: Returns true if there are updates that a
   `SAVE_CONFIG` command may persist to disk.
+- `save_config_pending_items`: Contains the sections and options that
+  were changed and would be persisted by a `SAVE_CONFIG`.
 - `warnings`: A list of warnings about config options. Each entry in
   the list will be a dictionary containing a `type` and `message`
   field (both strings). Additional fields may be available depending
@@ -68,6 +70,44 @@ The following information is available in the
   home attempt. The position is the total number of steps taken in a
   forward direction minus the total number of steps taken in the
   reverse direction since the micro-controller was last restarted.
+
+## exclude_object
+
+The following information is available in the
+[exclude_object](Exclude_Object.md) object:
+
+- `objects`:  An array of the known objects as provided by the
+  `EXCLUDE_OBJECT_DEFINE` command.  This is the same information provided by
+  the `EXCLUDE_OBJECT VERBOSE=1` command. The `center` and `polygon` fields will
+  only be present if provided in the original `EXCLUDE_OBJECT_DEFINE`
+
+  Here is a JSON sample:
+```
+[
+  {
+    "polygon": [
+      [ 156.25, 146.2511675 ],
+      [ 156.25, 153.7488325 ],
+      [ 163.75, 153.7488325 ],
+      [ 163.75, 146.2511675 ]
+    ],
+    "name": "CYLINDER_2_STL_ID_2_COPY_0",
+    "center": [ 160, 150 ]
+  },
+  {
+    "polygon": [
+      [ 146.25, 146.2511675 ],
+      [ 146.25, 153.7488325 ],
+      [ 153.75, 153.7488325 ],
+      [ 153.75, 146.2511675 ]
+    ],
+    "name": "CYLINDER_2_STL_ID_1_COPY_0",
+    "center": [ 150, 150 ]
+  }
+]
+```
+- `excluded_objects`: An array of strings listing the names of excluded objects.
+- `current_object`: The name of the object currently being printed.
 
 ## fan
 

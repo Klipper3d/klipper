@@ -91,3 +91,34 @@ the CAN bus to communicate with the device - for example:
 [mcu my_can_mcu]
 canbus_uuid: 11aa22bb33cc
 ```
+
+## USB to CAN bus bridge mode
+
+Some micro-controllers support selecting "USB to CAN bus bridge" mode
+during "make menuconfig". This mode may allow one to use a
+micro-controller as both a "USB to CAN bus adapter" and as a Klipper
+node.
+
+When Klipper uses this mode the micro-controller appears as a "USB CAN
+bus adapter" under Linux. The "Klipper bridge mcu" itself will appear
+as if was on this CAN bus - it can be identified via `canbus_query.py`
+and configured like other CAN bus Klipper nodes. It will appear
+alongside other devices that are actually on the CAN bus.
+
+Some important notes when using this mode:
+
+* The "bridge mcu" is not actually on the CAN bus. Messages to and
+  from it do not consume bandwidth on the CAN bus. The mcu can not be
+  seen by other adapters that may be on the CAN bus.
+
+* It is necessary to configure the `can0` (or similar) interface in
+  Linux in order to communicate with the bus. However, Linux CAN bus
+  speed and CAN bus bit-timing options are ignored by Klipper.
+  Currently, the CAN bus frequency is specified during "make
+  menuconfig" and the bus speed specified in Linux is ignored.
+
+* Whenever the "bridge mcu" is reset, Linux will disable the
+  corresponding `can0` interface. Generally, this may require running
+  commands such as "ip up" to restart the interface. Thus, Klipper
+  FIRMWARE_RESTART commands (or regular RESTART after a config change)
+  may require restarting the `can0` interface.

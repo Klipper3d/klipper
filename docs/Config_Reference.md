@@ -999,10 +999,10 @@ information.
 [screws_tilt_adjust]
 #screw1:
 #   The (X, Y) coordinate of the first bed leveling screw. This is a
-#   position to command the nozzle to that is directly above the bed
-#   screw (or as close as possible while still being above the bed).
-#   This is the base screw used in calculations. This parameter must
-#   be provided.
+#   position to command the nozzle to so that the probe is directly
+#   above the bed screw (or as close as possible while still being
+#   above the bed). This is the base screw used in calculations. This
+#   parameter must be provided.
 #screw1_name:
 #   An arbitrary name for the given screw. This name is displayed when
 #   the helper script runs. The default is to use a name based upon
@@ -1154,9 +1154,9 @@ home_xy_position:
 #   than z_hop, then this will lift the head to a height of z_hop. If
 #   the Z axis is not already homed the head is lifted by z_hop.
 #   The default is to not implement Z hop.
-#z_hop_speed: 20.0
+#z_hop_speed: 15.0
 #   Speed (in mm/s) at which the Z axis is lifted prior to homing. The
-#   default is 20mm/s.
+#   default is 15 mm/s.
 #move_to_previous: False
 #   When set to True, the X and Y axes are reset to their previous
 #   positions after Z axis homing. The default is False.
@@ -1334,6 +1334,9 @@ path:
 #   are not supported). One may point this to OctoPrint's upload
 #   directory (generally ~/.octoprint/uploads/ ). This parameter must
 #   be provided.
+#on_error_gcode:
+#   A list of G-Code commands to execute when an error is reported.
+
 ```
 
 ### [sdcard_loop]
@@ -1432,6 +1435,20 @@ Enable the "M118" and "RESPOND" extended
 #   override the "default_type".
 ```
 
+### [exclude_object]
+Enables support to exclude or cancel individual objects during the printing
+process.
+
+See the [exclude objects guide](Exclude_Object.md) and
+[command reference](G-Codes.md#excludeobject)
+for additional information. See the
+[sample-macros.cfg](../config/sample-macros.cfg) file for a
+Marlin/RepRapFirmware compatible M486 G-Code macro.
+
+```
+[exclude_object]
+```
+
 ## Resonance compensation
 
 ### [input_shaper]
@@ -1508,6 +1525,24 @@ cs_pin:
 #   measurements.
 ```
 
+### [mpu9250]
+
+Support for mpu9250 and mpu6050 accelerometers (one may define any
+number of sections with an "mpu9250" prefix).
+
+```
+[mpu9250 my_accelerometer]
+#i2c_address:
+#   Default is 104 (0x68).
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
 ### [resonance_tester]
 
 Support for resonance testing and automatic input shaper calibration.
@@ -1548,8 +1583,8 @@ section of the measuring resonances guide for more information on
 #   for more details on using this feature.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
-#max_freq: 120
-#   Maximum frequency to test for resonances. The default is 120 Hz.
+#max_freq: 133.33
+#   Maximum frequency to test for resonances. The default is 133.33 Hz.
 #accel_per_hz: 75
 #   This parameter is used to determine which acceleration to use to
 #   test a specific frequency: accel = accel_per_hz * freq. Higher the
@@ -1744,6 +1779,60 @@ control_pin:
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
+```
+
+### [smart_effector]
+
+The "Smart Effector" from Duet3d implements a Z probe using a force
+sensor. One may define this section instead of `[probe]` to enable the
+Smart Effector specific features. This also enables
+[runtime commands](G-Codes.md#smart_effector) to adjust the parameters
+of the Smart Effector at run time.
+
+```
+[smart_effector]
+pin:
+#   Pin connected to the Smart Effector Z Probe output pin (pin 5). Note that
+#   pullup resistor on the board is generally not required. However, if the
+#   output pin is connected to the board pin with a pullup resistor, that
+#   resistor must be high value (e.g. 10K Ohm or more). Some boards have a low
+#   value pullup resistor on the Z probe input, which will likely result in an
+#   always-triggered probe state. In this case, connect the Smart Effector to
+#   a different pin on the board. This parameter is required.
+#control_pin:
+#   Pin connected to the Smart Effector control input pin (pin 7). If provided,
+#   Smart Effector sensitivity programming commands become available.
+#probe_accel:
+#   If set, limits the acceleration of the probing moves (in mm/sec^2).
+#   A sudden large acceleration at the beginning of the probing move may
+#   cause spurious probe triggering, especially if the hotend is heavy.
+#   To prevent that, it may be necessary to reduce the acceleration of
+#   the probing moves via this parameter.
+#recovery_time: 0.4
+#   A delay between the travel moves and the probing moves in seconds. A fast
+#   travel move prior to probing may result in a spurious probe triggering.
+#   This may cause 'Probe triggered prior to movement' errors if no delay
+#   is set. Value 0 disables the recovery delay.
+#   Default value is 0.4.
+#x_offset:
+#y_offset:
+#   Should be left unset (or set to 0).
+z_offset:
+#   Trigger height of the probe. Start with -0.1 (mm), and adjust later using
+#   `PROBE_CALIBRATE` command. This parameter must be provided.
+#speed:
+#   Speed (in mm/s) of the Z axis when probing. It is recommended to start
+#   with the probing speed of 20 mm/s and adjust it as necessary to improve
+#   the accuracy and repeatability of the probe triggering.
+#samples:
+#sample_retract_dist:
+#samples_result:
+#samples_tolerance:
+#samples_tolerance_retries:
+#activate_gcode:
+#deactivate_gcode:
+#deactivate_on_each_sample:
+#   See the "probe" section for more information on the parameters above.
 ```
 
 ## Additional stepper motors and extruders
@@ -2463,14 +2552,25 @@ information.
 #sensor_type:
 #sensor_pin:
 #control:
-#pid_Kp:
-#pid_Ki:
-#pid_Kd:
-#pid_deriv_time:
 #max_delta:
 #min_temp:
 #max_temp:
 #   See the "extruder" section for a description of the above parameters.
+#pid_Kp:
+#pid_Ki:
+#pid_Kd:
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
+#     fan_pwm = max_power - (Kp*e + Ki*integral(e) - Kd*derivative(e)) / 255
+#   Where "e" is "target_temperature - measured_temperature" and
+#   "fan_pwm" is the requested fan rate with 0.0 being full off and
+#   1.0 being full on. The pid_Kp, pid_Ki, and pid_Kd parameters must
+#   be provided when the PID control algorithm is enabled.
+#pid_deriv_time: 2.0
+#   A time value (in seconds) over which temperature measurements will
+#   be smoothed when using the PID control algorithm. This may reduce
+#   the impact of measurement noise. The default is 2 seconds.
 #target_temp: 40.0
 #   A temperature (in Celsius) that will be the target temperature.
 #   The default is 40 degrees.
@@ -2548,7 +2648,10 @@ sections with a "neopixel" prefix). See the
 [command reference](G-Codes.md#led) for more information.
 
 Note that the [linux mcu](RPi_microcontroller.md) implementation does
-not currently support directly connected neopixels.
+not currently support directly connected neopixels. The current design
+using the Linux kernel interface does not allow this scenario because
+the kernel GPIO interface is not fast enough to provide the required
+pulse rates.
 
 ```
 [neopixel my_neopixel]
@@ -2561,8 +2664,9 @@ pin:
 #   Neopixel is connected to the pin).
 #color_order: GRB
 #   Set the pixel order required by the LED hardware (using a string
-#   containing the letters R, G, B, W with W optional). The default is
-#   GRB.
+#   containing the letters R, G, B, W with W optional). Alternatively,
+#   this may be a comma separated list of pixel orders - one for each
+#   LED in the chain. The default is GRB.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
@@ -4113,6 +4217,22 @@ SPI bus.
 The following parameters are generally available for devices using an
 I2C bus.
 
+Note that Klipper's current micro-controller support for i2c is
+generally not tolerant to line noise. Unexpected errors on the i2c
+wires may result in Klipper raising a run-time error. Klipper's
+support for error recovery varies between each micro-controller type.
+It is generally recommended to only use i2c devices that are on the
+same printed circuit board as the micro-controller.
+
+Most Klipper micro-controller implementations only support an
+`i2c_speed` of 100000. The Klipper "linux" micro-controller supports a
+400000 speed, but it must be
+[set in the operating system](RPi_microcontroller.md#optional-enabling-i2c)
+and the `i2c_speed` parameter is otherwise ignored. The Klipper
+"rp2040" micro-controller supports a rate of 400000 via the
+`i2c_speed` parameter. All other Klipper micro-controllers use a
+100000 rate and ignore the `i2c_speed` parameter.
+
 ```
 #i2c_address:
 #   The i2c address of the device. This must specified as a decimal
@@ -4126,6 +4246,7 @@ I2C bus.
 #   the type of micro-controller.
 #i2c_speed:
 #   The I2C speed (in Hz) to use when communicating with the device.
-#   On some micro-controllers changing this value has no effect. The
-#   default is 100000.
+#   The Klipper implementation on most micro-controllers is hard-coded
+#   to 100000 and changing this value has no effect. The default is
+#   100000.
 ```

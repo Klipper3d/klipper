@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
 #include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_CONSTANT_STR
@@ -231,6 +232,7 @@ check_usb_dfu_bootloader(void)
 void
 usb_request_bootloader(void)
 {
+    try_request_canboot();
     if (CONFIG_STM32_FLASH_START_4000)
         usb_hid_bootloader();
     usb_reboot_for_dfu_bootloader();

@@ -262,7 +262,7 @@ finalize_config crc=0
 The test was last run on commit `247cd753` with gcc version
 `arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0`.
 
-| stm32f042        | ticks |
+| stm32g0b1        | ticks |
 | ---------------- | ----- |
 | 1 stepper        | 58    |
 | 3 stepper        | 243   |
