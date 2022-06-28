@@ -1,6 +1,9 @@
 out
 *.so
 *.pyc
+*.dSYM
 .config
 .config.old
 klippy/.version
+scratch/
+
