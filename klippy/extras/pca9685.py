@@ -11,7 +11,7 @@ from . import bus
 
 PCA9685_BUS = 1
 PCA9685_ADDRESS = 0x70
-from servo import SERVO_SIGNAL_PERIOD as PCA9685_CYCLE_TIME
+PCA9685_CYCLE_TIME = 0.02 # the same as servo
 
 class PCA9685_pin:
     def __init__(self, pca9685, channel, pin_type, pin_params):
