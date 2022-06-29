@@ -105,4 +105,3 @@ class PCA9685:
 
 def load_config(config):
     return PCA9685(config)
-
