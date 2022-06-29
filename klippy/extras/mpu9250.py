@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time, collections, threading, multiprocessing, os
-from . import bus, motion_report
+from . import bus, motion_report, adxl345
 
 MPU9250_ADDR =      0x68
 
@@ -42,200 +42,6 @@ FIFO_SIZE = 512
 Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
-# Helper method for getting the two's complement value of an unsigned int
-def twos_complement(val, nbits):
-    if (val & (1 << (nbits - 1))) != 0:
-        val = val - (1 << nbits)
-    return val
-
-# Helper class to obtain measurements
-class MPU9250QueryHelper:
-    def __init__(self, printer, cconn):
-        self.printer = printer
-        self.cconn = cconn
-        print_time = printer.lookup_object('toolhead').get_last_move_time()
-        self.request_start_time = self.request_end_time = print_time
-        self.samples = self.raw_samples = []
-    def finish_measurements(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        self.request_end_time = toolhead.get_last_move_time()
-        toolhead.wait_moves()
-        self.cconn.finalize()
-    def _get_raw_samples(self):
-        raw_samples = self.cconn.get_messages()
-        if raw_samples:
-            self.raw_samples = raw_samples
-        return self.raw_samples
-    def has_valid_samples(self):
-        raw_samples = self._get_raw_samples()
-        for msg in raw_samples:
-            data = msg['params']['data']
-            first_sample_time = data[0][0]
-            last_sample_time = data[-1][0]
-            if (first_sample_time > self.request_end_time
-                    or last_sample_time < self.request_start_time):
-                continue
-            # The time intervals [first_sample_time, last_sample_time]
-            # and [request_start_time, request_end_time] have non-zero
-            # intersection. It is still theoretically possible that none
-            # of the samples from raw_samples fall into the time interval
-            # [request_start_time, request_end_time] if it is too narrow
-            # or on very heavy data losses. In practice, that interval
-            # is at least 1 second, so this possibility is negligible.
-            return True
-        return False
-    def get_samples(self):
-        raw_samples = self._get_raw_samples()
-        if not raw_samples:
-            return self.samples
-        total = sum([len(m['params']['data']) for m in raw_samples])
-        count = 0
-        self.samples = samples = [None] * total
-        for msg in raw_samples:
-            for samp_time, x, y, z in msg['params']['data']:
-                if samp_time < self.request_start_time:
-                    continue
-                if samp_time > self.request_end_time:
-                    break
-                samples[count] = Accel_Measurement(samp_time, x, y, z)
-                count += 1
-        del samples[count:]
-        return self.samples
-    def write_to_file(self, filename):
-        def write_impl():
-            try:
-                # Try to re-nice writing process
-                os.nice(20)
-            except:
-                pass
-            f = open(filename, "w")
-            f.write("#time,accel_x,accel_y,accel_z\n")
-            samples = self.samples or self.get_samples()
-            for t, accel_x, accel_y, accel_z in samples:
-                f.write("%.6f,%.6f,%.6f,%.6f\n" % (
-                    t, accel_x, accel_y, accel_z))
-            f.close()
-        write_proc = multiprocessing.Process(target=write_impl)
-        write_proc.daemon = True
-        write_proc.start()
-
-# Helper class for G-Code commands
-class MPU9250CommandHelper:
-    def __init__(self, config, chip):
-        self.printer = config.get_printer()
-        self.chip = chip
-        self.bg_client = None
-        self.name = config.get_name().split()[-1]
-        self.register_commands(self.name)
-        if self.name == "mpu9250":
-            self.register_commands(None)
-    def register_commands(self, name):
-        # Register commands
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_MEASURE,
-                                   desc=self.cmd_ACCELEROMETER_MEASURE_help)
-        gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_QUERY,
-                                   desc=self.cmd_ACCELEROMETER_QUERY_help)
-        gcode.register_mux_command("ACCELEROMETER_DEBUG_READ", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_DEBUG_READ,
-                                   desc=self.cmd_ACCELEROMETER_DEBUG_READ_help)
-        gcode.register_mux_command("ACCELEROMETER_DEBUG_WRITE", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_DEBUG_WRITE,
-                                   desc=self.cmd_ACCELEROMETER_DEBUG_WRITE_help)
-    cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
-    def cmd_ACCELEROMETER_MEASURE(self, gcmd):
-        if self.bg_client is None:
-            # Start measurements
-            self.bg_client = self.chip.start_internal_client()
-            gcmd.respond_info("mpu9250 measurements started")
-            return
-        # End measurements
-        name = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
-        if not name.replace('-', '').replace('_', '').isalnum():
-            raise gcmd.error("Invalid mpu9250 NAME parameter")
-        bg_client = self.bg_client
-        self.bg_client = None
-        bg_client.finish_measurements()
-        # Write data to file
-        if self.name == "mpu9250":
-            filename = "/tmp/mpu9250-%s.csv" % (name,)
-        else:
-            filename = "/tmp/mpu9250-%s-%s.csv" % (self.name, name,)
-        bg_client.write_to_file(filename)
-        gcmd.respond_info("Writing raw accelerometer data to %s file"
-                          % (filename,))
-    cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
-    def cmd_ACCELEROMETER_QUERY(self, gcmd):
-        aclient = self.chip.start_internal_client()
-        self.printer.lookup_object('toolhead').dwell(1.)
-        aclient.finish_measurements()
-        values = aclient.get_samples()
-        if not values:
-            raise gcmd.error("No mpu9250 measurements found")
-        _, accel_x, accel_y, accel_z = values[-1]
-        gcmd.respond_info("mpu9250 values (x, y, z): %.6f, %.6f, %.6f"
-                          % (accel_x, accel_y, accel_z))
-    cmd_ACCELEROMETER_DEBUG_READ_help = "Query mpu9250 register (for debugging)"
-    def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
-        val = self.chip.read_reg(reg)
-        gcmd.respond_info("MPU9250 REG[0x%x] = 0x%x" % (reg, val))
-    cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set mpu9250 register (for debugging)"
-    def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
-        val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
-        self.chip.set_reg(reg, val)
-
-# Helper class for chip clock synchronization via linear regression
-class ClockSyncRegression:
-    def __init__(self, mcu, chip_clock_smooth, decay = 1. / 20.):
-        self.mcu = mcu
-        self.chip_clock_smooth = chip_clock_smooth
-        self.decay = decay
-        self.last_chip_clock = self.last_exp_mcu_clock = 0.
-        self.mcu_clock_avg = self.mcu_clock_variance = 0.
-        self.chip_clock_avg = self.chip_clock_covariance = 0.
-    def reset(self, mcu_clock, chip_clock):
-        self.mcu_clock_avg = self.last_mcu_clock = mcu_clock
-        self.chip_clock_avg = chip_clock
-        self.mcu_clock_variance = self.chip_clock_covariance = 0.
-        self.last_chip_clock = self.last_exp_mcu_clock = 0.
-    def update(self, mcu_clock, chip_clock):
-        # Update linear regression
-        decay = self.decay
-        diff_mcu_clock = mcu_clock - self.mcu_clock_avg
-        self.mcu_clock_avg += decay * diff_mcu_clock
-        self.mcu_clock_variance = (1. - decay) * (
-            self.mcu_clock_variance + diff_mcu_clock**2 * decay)
-        diff_chip_clock = chip_clock - self.chip_clock_avg
-        self.chip_clock_avg += decay * diff_chip_clock
-        self.chip_clock_covariance = (1. - decay) * (
-            self.chip_clock_covariance + diff_mcu_clock*diff_chip_clock*decay)
-    def set_last_chip_clock(self, chip_clock):
-        base_mcu, base_chip, inv_cfreq = self.get_clock_translation()
-        self.last_chip_clock = chip_clock
-        self.last_exp_mcu_clock = base_mcu + (chip_clock-base_chip) * inv_cfreq
-    def get_clock_translation(self):
-        inv_chip_freq = self.mcu_clock_variance / self.chip_clock_covariance
-        if not self.last_chip_clock:
-            return self.mcu_clock_avg, self.chip_clock_avg, inv_chip_freq
-        # Find mcu clock associated with future chip_clock
-        s_chip_clock = self.last_chip_clock + self.chip_clock_smooth
-        scdiff = s_chip_clock - self.chip_clock_avg
-        s_mcu_clock = self.mcu_clock_avg + scdiff * inv_chip_freq
-        # Calculate frequency to converge at future point
-        mdiff = s_mcu_clock - self.last_exp_mcu_clock
-        s_inv_chip_freq = mdiff / self.chip_clock_smooth
-        return self.last_exp_mcu_clock, self.last_chip_clock, s_inv_chip_freq
-    def get_time_translation(self):
-        base_mcu, base_chip, inv_cfreq = self.get_clock_translation()
-        clock_to_print_time = self.mcu.clock_to_print_time
-        base_time = clock_to_print_time(base_mcu)
-        inv_freq = clock_to_print_time(base_mcu + inv_cfreq) - base_time
-        return base_time, base_chip, inv_freq
-
 MIN_MSG_TIME = 0.100
 
 BYTES_PER_SAMPLE = 6
@@ -245,7 +51,7 @@ SAMPLES_PER_BLOCK = 8
 class MPU9250:
     def __init__(self, config):
         self.printer = config.get_printer()
-        MPU9250CommandHelper(config, self)
+        adxl345.AccelCommandHelper(config, self)
         self.query_rate = 0
         am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
               '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
@@ -272,7 +78,7 @@ class MPU9250:
         # Clock tracking
         self.last_sequence = self.max_query_duration = 0
         self.last_limit_count = self.last_error_count = 0
-        self.clock_sync = ClockSyncRegression(self.mcu, 640)
+        self.clock_sync = adxl345.ClockSyncRegression(self.mcu, 640)
         # API server endpoints
         self.api_dump = motion_report.APIDumpHelper(
             self.printer, self._api_update, self._api_startstop, 0.100)
@@ -327,11 +133,12 @@ class MPU9250:
             for i in range(len(d) // BYTES_PER_SAMPLE):
                 d_xyz = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
                 xhigh, xlow, yhigh, ylow, zhigh, zlow = d_xyz
-                rx = twos_complement(xhigh << 8 | xlow, 16)
-                ry = twos_complement(yhigh << 8 | ylow, 16)
-                rz = twos_complement(zhigh << 8 | zlow, 16)
-                raw_xyz = (rx, ry, rz)
+                # Merge and perform twos-complement
+                rx = ((xhigh << 8) | xlow) - ((xhigh & 0x80) << 9)
+                ry = ((yhigh << 8) | ylow) - ((yhigh & 0x80) << 9)
+                rz = ((zhigh << 8) | zlow) - ((zhigh & 0x80) << 9)
 
+                raw_xyz = (rx, ry, rz)
                 x = round(raw_xyz[x_pos] * x_scale, 6)
                 y = round(raw_xyz[y_pos] * y_scale, 6)
                 z = round(raw_xyz[z_pos] * z_scale, 6)
@@ -452,7 +259,7 @@ class MPU9250:
         web_request.send({'header': hdr})
     def start_internal_client(self):
         cconn = self.api_dump.add_internal_client()
-        return MPU9250QueryHelper(self.printer, cconn)
+        return adxl345.AccelQueryHelper(self.printer, cconn)
 
 def load_config(config):
     return MPU9250(config)

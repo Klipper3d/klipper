@@ -1525,6 +1525,24 @@ cs_pin:
 #   measurements.
 ```
 
+### [mpu9250]
+
+Support for mpu9250 and mpu6050 accelerometers (one may define any
+number of sections with an "mpu9250" prefix).
+
+```
+[mpu9250 my_accelerometer]
+#i2c_address:
+#   Default is 104 (0x68).
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
 ### [resonance_tester]
 
 Support for resonance testing and automatic input shaper calibration.
@@ -4205,6 +4223,15 @@ wires may result in Klipper raising a run-time error. Klipper's
 support for error recovery varies between each micro-controller type.
 It is generally recommended to only use i2c devices that are on the
 same printed circuit board as the micro-controller.
+
+Most Klipper micro-controller implementations only support an
+`i2c_speed` of 100000. The Klipper "linux" micro-controller supports a
+400000 speed, but it must be
+[set in the operating system](RPi_microcontroller.md#optional-enabling-i2c)
+and the `i2c_speed` parameter is otherwise ignored. The Klipper
+"rp2040" micro-controller supports a rate of 400000 via the
+`i2c_speed` parameter. All other Klipper micro-controllers use a
+100000 rate and ignore the `i2c_speed` parameter.
 
 ```
 #i2c_address:

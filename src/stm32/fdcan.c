@@ -12,6 +12,7 @@
 #include "command.h" // DECL_CONSTANT_STR
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
+#include "generic/canserial.h" // CANBUS_ID_ADMIN
 #include "generic/serial_irq.h" // serial_rx_byte
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
@@ -113,6 +114,8 @@ can_filter(uint32_t index, uint32_t id)
 void
 canbus_set_filter(uint32_t id)
 {
+    if (!CONFIG_CANBUS_FILTER)
+        return;
     /* Request initialisation */
     SOC_CAN->CCCR |= FDCAN_CCCR_INIT;
     /* Wait the acknowledge */

@@ -47,6 +47,30 @@ config FLASH_START
     hex
     default 0x10000000
 
+
+######################################################################
+# Bootloader options
+######################################################################
+
+choice
+    prompt "Flash chip" if LOW_LEVEL_OPTIONS
+    config RP2040_FLASH_W25Q080
+        bool "W25Q080 with CLKDIV 2"
+    config RP2040_FLASH_GENERIC_03
+        bool "GENERIC_03H with CLKDIV 4"
+endchoice
+
+config RP2040_STAGE2_FILE
+    string
+    default "boot2_generic_03h.S" if RP2040_FLASH_GENERIC_03
+    default "boot2_w25q080.S"
+
+config RP2040_STAGE2_CLKDIV
+    int
+    default 4 if RP2040_FLASH_GENERIC_03
+    default 2
+
+
 ######################################################################
 # Communication inteface
 ######################################################################
