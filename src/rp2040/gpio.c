@@ -143,6 +143,7 @@ fail:
     shutdown("Not an output pin");
 }
 
+#if CONFIG_HAVE_EGPIO
 void gpio_acknowledge_irq(uint32_t gpio, uint32_t events) {
     iobank0_hw->intr[gpio / 8] = events << 4 * (gpio % 8);
 }
@@ -183,11 +184,13 @@ gpio_in_setup_interrupt(uint32_t pin, uint8_t val) {
         //   input, pullup enabled, interrupt enabled
         gpio_peripheral(SPI0_INTCS10_PIN, GPIO_FUNC_SIO, 1);
         gpio_set_irq_enabled(SPI0_INTCS10_PIN, GPIO_IRQ_LEVEL_LOW, true);
-    } else {
+    } else
+    {
         gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_FALL \
         | GPIO_IRQ_EDGE_RISE, !!(val));
     }
 }
+#endif
 
 void
 gpio_out_reset(struct gpio_out g, uint8_t val)
