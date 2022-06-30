@@ -2364,6 +2364,43 @@ sensor_type: temperature_host
 #   system file on a Raspberry Pi computer.
 ```
 
+### ADC Temp Sensor on i2c bus of MCU or Host
+
+All ADS1X1X i2c based sensors are supported and can be linked to extruders or heaters
+by inclusion of the following parameters wihtin [extruder] or [heater] config sections
+
+```
+sensor_type: ADS1X1X
+# This sensor type indicates that the i2c device driver is to be used
+probe_type: Generic 3950
+# The probe type indicates the calculation profile to use for the raw data from the
+# ADC device
+pullup_resistor: 4700
+# A setting that defines the physical wiring method of the sensor.  This is for a
+# single-ended wiring of a common PT100 thermistor
+i2c_mcu: mcu
+# Indicates whether to use mcu or host i2c bus
+i2c_bus: i2c1b
+# The name of the bus to use for the indicated mcu/host.  Example shown is an
+# RP2040 bus selection
+ads1x1_chip: 5
+# A number indicating which device is used.  Options are: ADS1013 - 3, ADS1014 - 4,
+# ADS1015 - 5, ADS1113 - 13, ADS1114 - 14, and ADS1115 - 15
+ads1x1_mux: 16384 # AIN0
+# A hex number in decimal form that indicates which device port you are using
+# There are four possible ports, depending upon device wiring and
+# two further options for single-ended or differential wireing.  See constant ADS1X1X_MUX in file klippy/extras/ads1x1x.py for more details.
+# Pullup voltage on thermistor
+adc_voltage: 3.265
+# The suppy voltage for the device.
+# Sensor is reading this amount different from external measuring device
+voltage_offset: -0.295
+# The differential voltage from the supplied voltage to the maximum pull-up voltage that the Device Unter Test (thermistor) sees.
+# ads1x1_addr: GND
+# Default value is GND.  There can be up to four addressed devices depending upon
+# wiring of the device.  Check the datasheet for details.
+```
+
 ### DS18B20 temperature sensor
 
 DS18B20 is a 1-wire (w1) digital temperature sensor. Note that this sensor is not intended for use with extruders and heater beds, but rather for monitoring ambient temperature (C). These sensors have range up to 125 C, so are usable for e.g. chamber temperature monitoring. They can also function as simple fan/heater controllers. DS18B20 sensors are only supported on the "host mcu", e.g. the Raspberry Pi. The w1-gpio Linux kernel module must be installed.
