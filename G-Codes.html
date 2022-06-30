@@ -5063,6 +5063,8 @@ persisted in the config by issuing <code>SAVE_CONFIG</code> command.</p>
   configured default prefix (or <code>echo:</code> if no prefix is configured).</li>
 <li><code>RESPOND TYPE=echo MSG="&lt;message&gt;"</code>: echo the message prepended with
   <code>echo:</code>.</li>
+<li><code>RESPOND TYPE=echo_no_space MSG="&lt;message&gt;"</code>: echo the message prepended with
+  <code>echo:</code> without a space between prefix and message, helpful for compatibility with some octoprint plugins that expect very specific formatting.</li>
 <li><code>RESPOND TYPE=command MSG="&lt;message&gt;"</code>: echo the message prepended
   with <code>//</code>.  OctoPrint can be configured to respond to these messages
   (e.g.  <code>RESPOND TYPE=command MSG=action:pause</code>).</li>
