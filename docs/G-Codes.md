@@ -1010,6 +1010,8 @@ The following additional commands are also available.
   configured default prefix (or `echo: ` if no prefix is configured).
 - `RESPOND TYPE=echo MSG="<message>"`: echo the message prepended with
   `echo: `.
+- `RESPOND TYPE=echo_no_space MSG="<message>"`: echo the message prepended with
+  `echo:` without a space between prefix and message, helpful for compatibility with some octoprint plugins that expect very specific formatting.
 - `RESPOND TYPE=command MSG="<message>"`: echo the message prepended
   with `// `.  OctoPrint can be configured to respond to these messages
   (e.g.  `RESPOND TYPE=command MSG=action:pause`).
