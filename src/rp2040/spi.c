@@ -10,6 +10,11 @@
 #include "internal.h" // pclock, gpio_peripheral
 #include "hardware/structs/spi.h" // spi_hw_t
 #include "hardware/regs/resets.h" // RESETS_RESET_SPI*_BITS
+#include "autoconf.h" // EGPIO
+
+#if CONFIG_HAVE_EGPIO
+#include "spi_xra1403.h" // spi0 device
+#endif
 
 DECL_ENUMERATION("spi_bus", "spi0a", 0);
 DECL_CONSTANT_STR("BUS_PINS_spi0a", "gpio0,gpio3,gpio2");
@@ -27,6 +32,14 @@ DECL_CONSTANT_STR("BUS_PINS_spi1b", "gpio12,gpio15,gpio14");
 DECL_ENUMERATION("spi_bus", "spi1c", 6);
 DECL_CONSTANT_STR("BUS_PINS_spi1c", "gpio24,gpio27,gpio26");
 
+#if CONFIG_HAVE_EGPIO
+    #if true // board : PickSix
+    DECL_ENUMERATION("spi_bus", "spi0e", SPI0_PICKSIX_BUS_OID);
+    DECL_CONSTANT_STR("BUS_PINS_spi0e", "gpio4,gpio3,gpio2");
+    #else
+    #endif
+#endif
+
 struct spi_info {
     spi_hw_t *spi;
     uint8_t miso_pin, mosi_pin, sck_pin;
@@ -41,7 +54,11 @@ static const struct spi_info spi_bus[] = {
 
     {spi1_hw, 8,  11, 10, RESETS_RESET_SPI1_BITS},
     {spi1_hw, 12, 15, 14, RESETS_RESET_SPI1_BITS},
-    {spi1_hw, 24, 27, 26, RESETS_RESET_SPI1_BITS},
+    {spi1_hw, 24, 27, 26, RESETS_RESET_SPI1_BITS}
+#if CONFIG_HAVE_EGPIO
+    ,
+    {spi0_hw, SPI0_RX_PIN,  SPI0_TX_PIN,  SPI0_SCK_PIN,  RESETS_RESET_SPI0_BITS}
+#endif
 };
 
 struct spi_config
@@ -53,9 +70,9 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     if (!is_enabled_pclock(spi_bus[bus].pclk))
             enable_pclock(spi_bus[bus].pclk);
 
-    gpio_peripheral(spi_bus[bus].miso_pin, 1, 1);
-    gpio_peripheral(spi_bus[bus].mosi_pin, 1, 0);
-    gpio_peripheral(spi_bus[bus].sck_pin, 1, 0);
+    gpio_peripheral(spi_bus[bus].miso_pin, GPIO_FUNC_SPI, 1);
+    gpio_peripheral(spi_bus[bus].mosi_pin, GPIO_FUNC_SPI, 0);
+    gpio_peripheral(spi_bus[bus].sck_pin, GPIO_FUNC_SPI, 0);
 
     uint32_t pclk = get_pclock_frequency(spi_bus[bus].pclk);
 
@@ -93,6 +110,13 @@ spi_prepare(struct spi_config config)
     spi->cpsr = config.cpsr;
 }
 
+/* Read/Write on SPI Bus
+ *
+ * config - spi config data structure
+ * receive_data - 1 = yes, 0 - no
+ * len - bytes to send [receive]
+ * data - pointer to where bytes sent and received to
+ */
 void
 spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)

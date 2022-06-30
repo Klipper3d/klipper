@@ -107,6 +107,9 @@ config INITIAL_PINS
 config HAVE_GPIO
     bool
     default n
+config HAVE_EGPIO
+    bool
+    default n
 config HAVE_GPIO_ADC
     bool
     default n
