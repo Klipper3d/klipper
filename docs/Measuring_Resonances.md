@@ -31,6 +31,18 @@ and **will not work**. The recommended connection scheme:
 | SDA | 19 | GPIO10 (SPI0_MOSI) |
 | SCL | 23 | GPIO11 (SPI0_SCLK) |
 
+An alternative to the ADXL345 is the MPU-9250 (or MPU-6050).  This
+accelerometer has been tested to work over I2C on the RPi at 400kbaud.
+Recommended connection scheme for I2C:
+
+| MPU-9250 pin | RPi pin | RPi pin name |
+|:--:|:--:|:--:|
+| 3V3 (or VCC) | 01 | 3.3v DC power |
+| GND | 09 | Ground |
+| SDA | 03 | GPIO02 (SDA1) |
+| SCL | 05 | GPIO03 (SCL1) |
+
+
 Fritzing wiring diagrams for some of the ADXL345 boards:
 
 ![ADXL345-Rpi](img/adxl345-fritzing.png)
@@ -64,21 +76,21 @@ the system that may damage the electronics.
 ### Software installation
 
 Note that resonance measurements and shaper auto-calibration require additional
-software dependencies not installed by default. First, you will have to run on
-your Raspberry Pi the following command:
+software dependencies not installed by default. First, run on your Raspberry Pi
+the following commands:
+```
+sudo apt update
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+```
+
+Next, in order to install NumPy in the Klipper environment, run the command:
 ```
 ~/klippy-env/bin/pip install -v numpy
 ```
-to install `numpy` package. Note that, depending on the performance of the
-CPU, it may take *a lot* of time, up to 10-20 minutes. Be patient and wait
-for the completion of the installation. On some occasions, if the board has
-too little RAM, the installation may fail and you will need to enable swap.
-
-Next, run the following commands to install the additional dependencies:
-```
-sudo apt update
-sudo apt install python3-numpy python3-matplotlib
-```
+Note that, depending on the performance of the CPU, it may take *a lot*
+of time, up to 10-20 minutes. Be patient and wait for the completion of
+the installation. On some occasions, if the board has too little RAM
+the installation may fail and you will need to enable swap.
 
 Afterwards, check and follow the instructions in the
 [RPi Microcontroller document](RPi_microcontroller.md) to setup the
@@ -87,7 +99,7 @@ Afterwards, check and follow the instructions in the
 Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
 
-Add the following to the printer.cfg file:
+For the ADXL345, add the following to the printer.cfg file:
 ```
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
@@ -102,6 +114,23 @@ probe_points:
 ```
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
+
+For the MPU-9250, make sure the Linux I2C driver is enabled and the baud rate is
+set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
+section for more details). Then, add the following to the printer.cfg:
+```
+[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[mpu9250]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+```
 
 Restart Klipper via the `RESTART` command.
 

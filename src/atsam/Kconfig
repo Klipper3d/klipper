@@ -89,10 +89,6 @@ config STACK_SIZE
     int
     default 512
 
-config USBSERIAL
-    bool
-config SERIAL
-    bool
 choice
     prompt "Communication interface"
     config ATSAM_USB

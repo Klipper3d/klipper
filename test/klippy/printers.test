@@ -29,6 +29,7 @@ CONFIG ../../config/printer-anycubic-4maxpro-2.0-2021.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
+CONFIG ../../config/printer-creality-cr10-v3-2020.cfg
 CONFIG ../../config/printer-creality-cr10s-2017.cfg
 CONFIG ../../config/printer-creality-cr20-2018.cfg
 CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
@@ -134,13 +135,13 @@ CONFIG ../../config/printer-monoprice-select-mini-v2-2018.cfg
 
 # Printers using the stm32f103
 DICTIONARY stm32f103.dict
+CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
+CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.2.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
-CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
-CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
 
@@ -196,6 +197,7 @@ CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
 CONFIG ../../config/generic-th3d-ezboard-lite-v2.0.cfg
+CONFIG ../../config/printer-biqu-b1-se-plus-2022.cfg
 CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
 
 # Printers using the stm32f446

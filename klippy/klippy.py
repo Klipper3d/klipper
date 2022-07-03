@@ -342,7 +342,7 @@ def main():
         start_args['log_file'] = options.logfile
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
-        logging.basicConfig(level=debuglevel)
+        logging.getLogger().setLevel(debuglevel)
     logging.info("Starting Klippy...")
     start_args['software_version'] = util.get_git_version()
     start_args['cpu_info'] = util.get_cpu_info()
