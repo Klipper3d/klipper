@@ -7,9 +7,13 @@
 #include <string.h> // memcpy
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/io.h" // writeb
+#include "board/misc.h" // timer_read_time
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "board/usbstd.h" // USB_ENDPOINT_XFER_INT
+#include "hardware/regs/sysinfo.h" // SYSINFO_CHIP_ID_OFFSET
+#include "hardware/structs/iobank0.h" // iobank0_hw
+#include "hardware/structs/padsbank0.h" // padsbank0_hw
 #include "hardware/structs/resets.h" // RESETS_RESET_USBCTRL_BITS
 #include "hardware/structs/usb.h" // usb_hw
 #include "internal.h" // enable_pclock
@@ -165,6 +169,89 @@ usb_request_bootloader(void)
 
 
 /****************************************************************
+ * USB Errata workaround
+ ****************************************************************/
+
+// The rp2040 USB has an errata causing it to sometimes not connect
+// after a reset.  The following code has extracts from the PICO SDK.
+
+static struct task_wake usb_errata_wake;
+
+// Workaround for rp2040-e5 errata
+void
+usb_errata_task(void)
+{
+    if (!sched_check_wake(&usb_errata_wake))
+        return;
+
+    if (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)
+        // Already connected - workaround not needed
+        return;
+
+    // Wait for not in SE0 state
+    if (!(usb_hw->sie_status & USB_SIE_STATUS_LINE_STATE_BITS)) {
+        sched_wake_task(&usb_errata_wake);
+        return;
+    }
+
+    // Backup GPIO15 pad state
+    uint32_t dp = 15;
+    uint32_t gpio_ctrl_prev = iobank0_hw->io[dp].ctrl;
+    uint32_t pad_ctrl_prev = padsbank0_hw->io[dp];
+
+    // Enable bus keep
+    hw_write_masked(&padsbank0_hw->io[dp],
+                    PADS_BANK0_GPIO15_PUE_BITS | PADS_BANK0_GPIO15_PDE_BITS,
+                    PADS_BANK0_GPIO15_PUE_BITS | PADS_BANK0_GPIO15_PDE_BITS);
+    // Disable pad output
+    hw_write_masked(&iobank0_hw->io[dp].ctrl,
+                    0x2 << IO_BANK0_GPIO15_CTRL_OEOVER_LSB,
+                    IO_BANK0_GPIO15_CTRL_OEOVER_BITS);
+    // Enable USB debug muxing function
+    hw_write_masked(&iobank0_hw->io[dp].ctrl,
+                    8 << IO_BANK0_GPIO15_CTRL_FUNCSEL_LSB,
+                    IO_BANK0_GPIO15_CTRL_FUNCSEL_BITS);
+    // Set input override
+    hw_write_masked(&iobank0_hw->io[dp].ctrl,
+                    0x3 << IO_BANK0_GPIO15_CTRL_INOVER_LSB,
+                    IO_BANK0_GPIO15_CTRL_INOVER_BITS);
+    // PHY pullups need to stay on
+    hw_set_alias(usb_hw)->phy_direct = USB_USBPHY_DIRECT_DP_PULLUP_EN_BITS;
+    hw_set_alias(usb_hw)->phy_direct_override =
+        USB_USBPHY_DIRECT_OVERRIDE_DP_PULLUP_EN_OVERRIDE_EN_BITS;
+    // Switch from USB PHY to GPIO PHY, now with J forced
+    usb_hw->muxing = (USB_USB_MUXING_TO_DIGITAL_PAD_BITS
+                      | USB_USB_MUXING_SOFTCON_BITS);
+
+    // Wait 1ms
+    uint32_t endtime = timer_read_time() + timer_from_us(1000);
+    while (timer_is_before(timer_read_time(), endtime))
+        ;
+
+    // Verify in connected state
+    endtime += timer_from_us(1000);
+    for (;;) {
+        if (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)
+            break;
+        if (timer_is_before(endtime, timer_read_time()))
+            // Something went wrong - restore state and continue anyway
+            break;
+    }
+
+    // Switch back to USB phy
+    usb_hw->muxing = USB_USB_MUXING_TO_PHY_BITS | USB_USB_MUXING_SOFTCON_BITS;
+    // Unset PHY pullup overrides
+    hw_clear_alias(usb_hw)->phy_direct_override =
+        USB_USBPHY_DIRECT_OVERRIDE_DP_PULLUP_EN_OVERRIDE_EN_BITS;
+
+    // Restore GPIO control states
+    iobank0_hw->io[dp].ctrl = gpio_ctrl_prev;
+    padsbank0_hw->io[dp] = pad_ctrl_prev;
+}
+DECL_TASK(usb_errata_task);
+
+
+/****************************************************************
  * Setup and interrupts
  ****************************************************************/
 
@@ -190,6 +277,10 @@ USB_Handler(void)
                 set_address = 0;
             }
         }
+    }
+    if (ints & USB_INTS_BUS_RESET_BITS) {
+        usb_hw->sie_status = USB_SIE_STATUS_BUS_RESET_BITS;
+        sched_wake_task(&usb_errata_wake);
     }
 }
 
@@ -228,15 +319,20 @@ usbserial_init(void)
                    | USB_USB_PWR_VBUS_DETECT_OVERRIDE_EN_BITS);
     usb_hw->main_ctrl = USB_MAIN_CTRL_CONTROLLER_EN_BITS;
 
+    // Check if usb errata workaround needed
+    enable_pclock(RESETS_RESET_SYSINFO_BITS);
+    uint32_t chip_id = *((io_ro_32*)(SYSINFO_BASE + SYSINFO_CHIP_ID_OFFSET));
+    uint32_t version = ((chip_id & SYSINFO_CHIP_ID_REVISION_BITS)
+                        >> SYSINFO_CHIP_ID_REVISION_LSB);
+
     // Enable irqs
     usb_hw->sie_ctrl = USB_SIE_CTRL_EP0_INT_1BUF_BITS;
-    usb_hw->inte = USB_INTE_BUFF_STATUS_BITS | USB_INTE_SETUP_REQ_BITS;
+    usb_hw->inte = (USB_INTE_BUFF_STATUS_BITS | USB_INTE_SETUP_REQ_BITS
+                    | (version == 1 ? USB_INTE_BUS_RESET_BITS: 0));
     armcm_enable_irq(USB_Handler, USBCTRL_IRQ_IRQn, 1);
 
     // Enable USB pullup
     usb_hw->sie_ctrl = (USB_SIE_CTRL_EP0_INT_1BUF_BITS
                         | USB_SIE_CTRL_PULLUP_EN_BITS);
-
-    // XXX - errata reset workaround??
 }
 DECL_INIT(usbserial_init);

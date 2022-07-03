@@ -22,6 +22,9 @@
 #define ADC_ISR_LDORDY_Msk                 (0x1UL << ADC_ISR_LDORDY_Pos)
 #define ADC_ISR_LDORDY                     ADC_ISR_LDORDY_Msk
 
+#define ADC_TEMPERATURE_PIN 0xfe
+DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
+
 DECL_CONSTANT("ADC_MAX", 4095);
 
 // GPIOs like A0_C are not covered!
@@ -88,7 +91,7 @@ static const uint8_t adc_pins[] = {
     GPIO('H', 4),  //          ADC3_INP15
     GPIO('H', 5),  //          ADC3_INP16
     0,             //              Vbat/4
-    0,             //              VSENSE
+    ADC_TEMPERATURE_PIN,//         VSENSE
     0,             //             VREFINT
 };
 
@@ -185,7 +188,13 @@ gpio_adc_setup(uint32_t pin)
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSS_Msk,
             OVERSAMPLES_EXPONENT << ADC_CFGR2_OVSS_Pos);
     }
-    gpio_peripheral(pin, GPIO_ANALOG, 0);
+
+    if (pin == ADC_TEMPERATURE_PIN) {
+        ADC3_COMMON->CCR = ADC_CCR_TSEN;
+    } else {
+        gpio_peripheral(pin, GPIO_ANALOG, 0);
+    }
+
     // Preselect (connect) channel
     adc->PCSEL |= (1 << chan);
     return (struct gpio_adc){ .adc = adc, .chan = chan };

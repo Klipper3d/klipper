@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // armcm_main
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
@@ -146,7 +147,6 @@ usb_request_bootloader(void)
 void
 armcm_main(void)
 {
-    check_usb_dfu_bootloader();
     SCB->VTOR = (uint32_t)VectorTable;
 
     // Reset clock registers (in case bootloader has changed them)
@@ -162,6 +162,8 @@ armcm_main(void)
     RCC->AHBENR = 0x00000100;
     RCC->APBENR1 = 0x00000000;
     RCC->APBENR2 = 0x00000000;
+
+    check_usb_dfu_bootloader();
 
     // Set flash latency
     FLASH->ACR = (2<<FLASH_ACR_LATENCY_Pos) | FLASH_ACR_ICEN | FLASH_ACR_PRFTEN;
