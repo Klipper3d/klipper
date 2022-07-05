@@ -985,7 +985,7 @@
         
           <li class="md-nav__item">
   <a href="#corexy" class="md-nav__link">
-    CoreXY 机器人
+    CoreXY 机器
   </a>
   
 </li>
@@ -1005,14 +1005,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#extruder-kinematics" class="md-nav__link">
-    Extruder kinematics
+  <a href="#_8" class="md-nav__link">
+    挤出机运动学
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_9" class="md-nav__link">
     压力提前
   </a>
   
@@ -1373,7 +1373,7 @@
         
           <li class="md-nav__item">
   <a href="#corexy" class="md-nav__link">
-    CoreXY 机器人
+    CoreXY 机器
   </a>
   
 </li>
@@ -1393,14 +1393,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#extruder-kinematics" class="md-nav__link">
-    Extruder kinematics
+  <a href="#_8" class="md-nav__link">
+    挤出机运动学
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_9" class="md-nav__link">
     压力提前
   </a>
   
@@ -1488,7 +1488,7 @@ stepper_y_position = cartesian_y_position
 stepper_z_position = cartesian_z_position
 </code></pre></div>
 
-<h3 id="corexy">CoreXY 机器人<a class="headerlink" href="#corexy" title="Permanent link">&para;</a></h3>
+<h3 id="corexy">CoreXY 机器<a class="headerlink" href="#corexy" title="Permanent link">&para;</a></h3>
 <p>在CoreXY的机器上生成步进只比基本的卡特尔机器人复杂一点。关键公式是：</p>
 <div class="highlight"><pre><span></span><code>stepper_a_position = cartesian_x_position + cartesian_y_position
 stepper_b_position = cartesian_x_position - cartesian_y_position
@@ -1505,15 +1505,15 @@ stepper_z_position = cartesian_z_position
 </code></pre></div>
 
 <h3 id="_7">步进电机加速限制<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
-<p>With delta kinematics it is possible for a move that is accelerating in cartesian space to require an acceleration on a particular stepper motor greater than the move's acceleration. This can occur when a stepper arm is more horizontal than vertical and the line of movement passes near that stepper's tower. Although these moves could require a stepper motor acceleration greater than the printer's maximum configured move acceleration, the effective mass moved by that stepper would be smaller. Thus the higher stepper acceleration does not result in significantly higher stepper torque and it is therefore considered harmless.</p>
-<p>However, to avoid extreme cases, Klipper enforces a maximum ceiling on stepper acceleration of three times the printer's configured maximum move acceleration. (Similarly, the maximum velocity of the stepper is limited to three times the maximum move velocity.) In order to enforce this limit, moves at the extreme edge of the build envelope (where a stepper arm may be nearly horizontal) will have a lower maximum acceleration and velocity.</p>
-<h3 id="extruder-kinematics">Extruder kinematics<a class="headerlink" href="#extruder-kinematics" title="Permanent link">&para;</a></h3>
+<p>在三角洲机器运动时，打印头在笛卡尔空间中运动进行一定加速度的加速运动，其对应轴的步进电机需要高于前述加速度的加速度。这种状况在一打印壁需提供的水平运动幅度大于垂直运动幅度，并且，运动直线靠近某一垂柱时发生。尽管这些运动会要求步进电机的加速度超过打印机的加速度设置限额，但单个步进电机需要承担的有效质量是相对较小的。因此，增加的步进电机加速度不会显著增加步进电机的扭矩需求，可认为这种现象是无害的。</p>
+<p>然而，为了避免极端状况，Klipper强制将步进电机的加速度上限设置为打印机加速度上限的3倍。（同样，步进电机的速度上限也设置为打印机速度上限的3倍。）为了实现上述设置，在打印区域水平边沿的（存在打印臂接近水平的）位置，打印头的速度和加速度上限将相应降低。</p>
+<h3 id="_8">挤出机运动学<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>Klipper implements extruder motion in its own kinematic class. Since the timing and speed of each print head movement is fully known for each move, it's possible to calculate the step times for the extruder independently from the step time calculations of the print head movement.</p>
 <p>Basic extruder movement is simple to calculate. The step time generation uses the same formulas that cartesian robots use:</p>
 <div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
 </code></pre></div>
 
-<h3 id="_8">压力提前<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h3 id="_9">压力提前<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>Experimentation has shown that it's possible to improve the modeling of the extruder beyond the basic extruder formula. In the ideal case, as an extrusion move progresses, the same volume of filament should be deposited at each point along the move and there should be no volume extruded after the move. Unfortunately, it's common to find that the basic extrusion formulas cause too little filament to exit the extruder at the start of extrusion moves and for excess filament to extrude after extrusion ends. This is often referred to as "ooze".</p>
 <p><img alt="ooze" src="img/ooze.svg.png" /></p>
 <p>The "pressure advance" system attempts to account for this by using a different model for the extruder. Instead of naively believing that each mm^3 of filament fed into the extruder will result in that amount of mm^3 immediately exiting the extruder, it uses a model based on pressure. Pressure increases when filament is pushed into the extruder (as in <a href="https://en.wikipedia.org/wiki/Hooke%27s_law">Hooke's law</a>) and the pressure necessary to extrude is dominated by the flow rate through the nozzle orifice (as in <a href="https://en.wikipedia.org/wiki/Poiseuille_law">Poiseuille's law</a>). The key idea is that the relationship between filament, pressure, and flow rate can be modeled using a linear coefficient:</p>
