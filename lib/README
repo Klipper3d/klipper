@@ -128,3 +128,7 @@ The canboot directory contains code from:
 revision 870200826561b150137913d42fd7edc6515229ff.  The Python module,
 flash_can.py, is taken from the repo's scripts directory.  It may be
 used to upload firmware to devices flashed with the CanBoot bootloader.
+
+The can2040 directory contains code from:
+  https://github.com/KevinOConnor/can2040
+revision 17b8ace15584077cd0bf0c3e038c2a2a8edd70ed.
