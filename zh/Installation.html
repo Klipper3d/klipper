@@ -433,8 +433,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#obtain-a-klipper-configuration-file" class="md-nav__link">
-    Obtain a Klipper Configuration File
+  <a href="#klipper" class="md-nav__link">
+    获取 Klipper 配置文件
   </a>
   
 </li>
@@ -461,7 +461,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#klipper" class="md-nav__link">
+  <a href="#klipper_1" class="md-nav__link">
     配置 Klipper
   </a>
   
@@ -1269,8 +1269,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#obtain-a-klipper-configuration-file" class="md-nav__link">
-    Obtain a Klipper Configuration File
+  <a href="#klipper" class="md-nav__link">
+    获取 Klipper 配置文件
   </a>
   
 </li>
@@ -1297,7 +1297,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#klipper" class="md-nav__link">
+  <a href="#klipper_1" class="md-nav__link">
     配置 Klipper
   </a>
   
@@ -1322,10 +1322,10 @@
 
 <h1 id="_1">安装<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>本教程假定软件将会在树莓派上和 Octoprint 一起运行。推荐使用树莓派2/3/4作为主机（关于其他设备，请见<a href="FAQ.html#我可以在-Raspberry-Pi-3-以外的其他设备上运行-Klipper-吗？">常见问题</a>）。</p>
-<h2 id="obtain-a-klipper-configuration-file">Obtain a Klipper Configuration File<a class="headerlink" href="#obtain-a-klipper-configuration-file" title="Permanent link">&para;</a></h2>
-<p>Most Klipper settings are determined by a "printer configuration file" that will be stored on the Raspberry Pi. An appropriate configuration file can often be found by looking in the Klipper <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config directory</a> for a file starting with a "printer-" prefix that corresponds to the target printer. The Klipper configuration file contains technical information about the printer that will be needed during the installation.</p>
-<p>If there isn't an appropriate printer configuration file in the Klipper config directory then try searching the printer manufacturer's website to see if they have an appropriate Klipper configuration file.</p>
-<p>If no configuration file for the printer can be found, but the type of printer control board is known, then look for an appropriate <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config file</a> starting with a "generic-" prefix. These example printer board files should allow one to successfully complete the initial installation, but will require some customization to obtain full printer functionality.</p>
+<h2 id="klipper">获取 Klipper 配置文件<a class="headerlink" href="#klipper" title="Permanent link">&para;</a></h2>
+<p>大多数的 Klipper 设置是由保存在树莓派上的"打印机配置文件"决定的。通常可以在Klipper <a href="https://github.com/Klipper3d/klipper/blob/master/config/">配置文件夹</a>中找到一个以"printer-"前缀开头并与目标打印机相对应的配置文件。Klipper 配置文件包含安装过程中需要的打印机技术信息。</p>
+<p>如果 Klipper 配置目录中没有合适的打印机配置文件，请尝试搜索打印机制造商的网站，看看他们是否有合适的 Klipper 配置文件。</p>
+<p>如果找不到打印机的配置文件，但可以找到打印机控制板的类型，则可以查找以“generic-”前缀开头的适当 <a href="https://github.com/Klipper3d/klipper/blob/master/config/">配置文件</a>。这些示例打印机模板文件应该足以成功完成初始安装，但需要进行一些自定义才能获得完整的打印机功能。</p>
 <p>It is also possible to define a new printer configuration from scratch. However, this requires significant technical knowledge about the printer and its electronics. It is recommended that most users start with an appropriate configuration file. If creating a new custom printer configuration file, then start with the closest example <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config file</a> and use the Klipper <a href="Config_Reference.html">config reference</a> for further information.</p>
 <h2 id="_2">准备操作系统镜像<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>先在树莓派上安装 <a href="https://github.com/guysoft/OctoPi">OctoPi</a>。请使用OctoPi v0.17.0或更高版本，查看 <a href="https://github.com/guysoft/OctoPi/releases">Octopi 发行版</a>来获取最新发布版本。安装完系统后，请先验证 OctoPi 能正常启动，并且 OctoPrint 网络服务器正常运行。连接到 OctoPrint 网页后，按照提示将 OctoPrint 更新到v1.4.2或更高版本。</p>
@@ -1370,7 +1370,7 @@ sudo service klipper start
 <p>在 "设置 "中，浏览到 "Behavior "子选项卡，选择 "取消任何正在进行的打印，但保持与打印机的连接 "选项。点击 "保存"。</p>
 <p>在主页上，在 "连接 "部分（在页面的左上方），确保 "串行端口 "被设置为"/tmp/printer"，然后点击 "连接"。(如果"/tmp/printer "不是一个可用的选择，那么试着重新加载页面)</p>
 <p>连接后，导航到 "终端 "选项卡，在命令输入框中输入 "status"（不带引号），然后点击 "发送"。终端窗口可能会报告在打开配置文件时出现了错误--这意味着 OctoPrint 与 Klipper 成功地进行了通信。继续下一部分。</p>
-<h2 id="klipper">配置 Klipper<a class="headerlink" href="#klipper" title="Permanent link">&para;</a></h2>
+<h2 id="klipper_1">配置 Klipper<a class="headerlink" href="#klipper_1" title="Permanent link">&para;</a></h2>
 <p>The next step is to copy the <a href="#obtain-a-klipper-configuration-file">printer configuration file</a> to the Raspberry Pi.</p>
 <p>Arguably the easiest way to set the Klipper configuration file is to use a desktop editor that supports editing files over the "scp" and/or "sftp" protocols. There are freely available tools that support this (eg, Notepad++, WinSCP, and Cyberduck). Load the printer config file in the editor and then save it as a file named "printer.cfg" in the home directory of the pi user (ie, /home/pi/printer.cfg).</p>
 <p>Alternatively, one can also copy and edit the file directly on the Raspberry Pi via ssh. That may look something like the following (be sure to update the command to use the appropriate printer config filename):</p>

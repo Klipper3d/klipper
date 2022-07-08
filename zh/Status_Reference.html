@@ -1790,7 +1790,7 @@
 <li><code>settings.&lt;分段&gt;.&lt;选项&gt;</code>：返回最后一次软件启动或重启时给定的配置文件设置（或默认值）。(不会反映运行时的修改。）</li>
 <li><code>config.&lt;分段&gt;.&lt;选项&gt;</code>：返回Klipper在上次软件启动或重启时读取的原始配置文件设置。(不会反映运行时的修改。)所有值都以字符串形式返回。</li>
 <li><code>save_config_pending</code>：如果存在可以通过 <code>SAVE_CONFIG</code> 命令保存到配置文件的更新，则返回 True。</li>
-<li><code>save_config_pending_items</code>: Contains the sections and options that were changed and would be persisted by a <code>SAVE_CONFIG</code>.</li>
+<li><code>save_config_pending_items</code>：包含已更改并可以由 <code>SAVE_CONFIG</code> 保存的分段和选项。</li>
 <li><code>warnings</code>：有关配置选项的警告列表。列表中的每个条目都将是一个 dictionary，其中包含 <code>type</code> 和 <code>message</code> 字段（都是字符串）。根据警告类型，可能还有其他可用字段。</li>
 </ul>
 <h2 id="display_status">display_status<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h2>
@@ -1807,9 +1807,9 @@
 <li><code>last_home.&lt;步进电机名称&gt;.mcu_position</code>：步进电机在上次归位尝试结束时的位置（由微控制器跟踪）。该位置是自微控制器最后一次重启以来，向前走的总步数减去反向走的总步数。</li>
 </ul>
 <h2 id="exclude_object">exclude_object<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Exclude_Object.html">exclude_object</a> object:</p>
+<p>以下信息可在<a href="Exclude_Object.html">exclude_object</a>对象中找到：</p>
 <ul>
-<li><code>objects</code>: An array of the known objects as provided by the <code>EXCLUDE_OBJECT_DEFINE</code> command. This is the same information provided by the <code>EXCLUDE_OBJECT VERBOSE=1</code> command. The <code>center</code> and <code>polygon</code> fields will only be present if provided in the original <code>EXCLUDE_OBJECT_DEFINE</code>Here is a JSON sample:</li>
+<li><code>objects</code>：<code>EXCLUDE_OBJECT_DEFINE</code> 命令提供的已知对象数组。这与 <code>EXCLUDE_OBJECT VERBOSE=1</code> 命令提供的信息相同。 <code>center</code> 和 <code>polygon</code> 字段只有在原始 <code>EXCLUDE_OBJECT_DEFINE</code> 中提供时才会出现这里有一个JSON样本：</li>
 </ul>
 <div class="highlight"><pre><span></span><code>[
   {
@@ -1836,8 +1836,8 @@
 </code></pre></div>
 
 <ul>
-<li><code>excluded_objects</code>: An array of strings listing the names of excluded objects.</li>
-<li><code>current_object</code>: The name of the object currently being printed.</li>
+<li><code>excluded_objects</code>：列出已排除对象名称的字符串数组。</li>
+<li><code>current_object</code>：当前正在打印的对象的名称。</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#fan">fan</a>、<a href="Config_Reference.html#heater_fan">heater_fan some_name</a>和<a href="Config_Reference.html#controller_fan">controller_fan some_name</a>对象提供了以下信息：</p>
