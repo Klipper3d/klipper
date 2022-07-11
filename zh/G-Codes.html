@@ -4337,24 +4337,24 @@
 <h3 id="exclude_object">[exclude_object]<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when an <a href="Config_Reference.html#exclude_object">exclude_object config section</a> is enabled (also see the <a href="Exclude_Object.html">exclude object guide</a>):</p>
 <h4 id="exclude_object_1"><code>EXCLUDE_OBJECT</code><a class="headerlink" href="#exclude_object_1" title="Permanent link">&para;</a></h4>
-<p><code>EXCLUDE_OBJECT [NAME=object_name] [CURRENT=1] [RESET=1]</code>: With no parameters, this will return a list of all currently excluded objects.</p>
+<p><code>EXCLUDE_OBJECT [NAME=对象名称] [CURRENT=1] [RESET=1]</code>：在没有参数的情况下，这将返回一个当前所有被排除的对象的列表。</p>
 <p>When the <code>NAME</code> parameter is given, the named object will be excluded from printing.</p>
 <p>When the <code>CURRENT</code> parameter is given, the current object will be excluded from printing.</p>
 <p>When the <code>RESET</code> parameter is given, the list of excluded objects will be cleared. Additionally including <code>NAME</code> will only reset the named object. This <strong>can</strong> cause print failures, if layers were already skipped.</p>
 <h4 id="exclude_object_define"><code>EXCLUDE_OBJECT_DEFINE</code><a class="headerlink" href="#exclude_object_define" title="Permanent link">&para;</a></h4>
-<p><code>EXCLUDE_OBJECT_DEFINE [NAME=object_name [CENTER=X,Y] [POLYGON=[[x,y],...]] [RESET=1] [JSON=1]</code>: Provides a summary of an object in the file.</p>
+<p><code>EXCLUDE_OBJECT_DEFINE [NAME=对象名称[CENTER=X,Y] [POLYGON=[[x,y],...]] [RESET=1] [JSON=1]</code>：提供文件中一个对象的摘要。</p>
 <p>With no parameters provided, this will list the defined objects known to Klipper. Returns a list of strings, unless the <code>JSON</code> parameter is given, when it will return object details in json format.</p>
 <p>When the <code>NAME</code> parameter is included, this defines an object to be excluded.</p>
 <ul>
-<li><code>NAME</code>: This parameter is required. It is the identifier used by other commands in this module.</li>
-<li><code>CENTER</code>: An X,Y coordinate for the object.</li>
-<li><code>POLYGON</code>: An array of X,Y coordinates that provide an outline for the object.</li>
+<li><code>NAME</code>：这个参数是必需的。它是本模块中其他命令所使用的标识符。</li>
+<li><code>CENTER</code>：对象的 X，Y 坐标。</li>
+<li><code>POLYGON</code>：提供对象轮廓的 X,Y 坐标数组。</li>
 </ul>
 <p>When the <code>RESET</code> parameter is provided, all defined objects will be cleared, and the <code>[exclude_object]</code> module will be reset.</p>
 <h4 id="exclude_object_start"><code>EXCLUDE_OBJECT_START</code><a class="headerlink" href="#exclude_object_start" title="Permanent link">&para;</a></h4>
-<p><code>EXCLUDE_OBJECT_START NAME=object_name</code>: This command takes a <code>NAME</code> parameter and denotes the start of the gcode for an object on the current layer.</p>
+<p><code>EXCLUDE_OBJECT_START NAME=对象名称</code>：这个命令接收一个<code>NAME</code>参数，表示当前层上一个对象的gcode开始。</p>
 <h4 id="exclude_object_end"><code>EXCLUDE_OBJECT_END</code><a class="headerlink" href="#exclude_object_end" title="Permanent link">&para;</a></h4>
-<p><code>EXCLUDE_OBJECT_END [NAME=object_name]</code>: Denotes the end of the object's gcode for the layer. It is paired with <code>EXCLUDE_OBJECT_START</code>. A <code>NAME</code> parameter is optional, and will only warn when the provided name does not match the current object.</p>
+<p><code>EXCLUDE_OBJECT_END [NAME=对象名称]</code>：表示对象在该层的代码的结束。它与<code>EXCLUDE_OBJECT_START</code>相配。<code>NAME</code>参数是可选的，只在提供的名称与当前对象不匹配时才会发出警告。</p>
 <h3 id="extruder">[extruder]<a class="headerlink" href="#extruder" title="Permanent link">&para;</a></h3>
 <p>The following commands are available if an <a href="Config_Reference.html#extruder">extruder config section</a> is enabled:</p>
 <h4 id="activate_extruder">ACTIVATE_EXTRUDER<a class="headerlink" href="#activate_extruder" title="Permanent link">&para;</a></h4>
@@ -4362,7 +4362,7 @@
 <h4 id="set_pressure_advance">SET_PRESSURE_ADVANCE<a class="headerlink" href="#set_pressure_advance" title="Permanent link">&para;</a></h4>
 <p><code>SET_PRESSURE_ADVANCE [EXTRUDER=&lt;config_name&gt;] [ADVANCE=&lt;pressure_advance&gt;] [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Set pressure advance parameters of an extruder stepper (as defined in an <a href="Config_Reference.html#extruder">extruder</a> or <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config section). If EXTRUDER is not specified, it defaults to the stepper defined in the active hotend.</p>
 <h4 id="set_extruder_rotation_distance">SET_EXTRUDER_ROTATION_DISTANCE<a class="headerlink" href="#set_extruder_rotation_distance" title="Permanent link">&para;</a></h4>
-<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: Set a new value for the provided extruder stepper's "rotation distance" (as defined in an <a href="Config_Reference.html#extruder">extruder</a> or <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config section). If the rotation distance is a negative number then the stepper motion will be inverted (relative to the stepper direction specified in the config file). Changed settings are not retained on Klipper reset. Use with caution as small changes can result in excessive pressure between extruder and hotend. Do proper calibration with filament before use. If 'DISTANCE' value is not provided then this command will return the current rotation distance.</p>
+<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;配置名&gt; [DISTANCE=&lt;距离&gt;]</code>：为提供的挤出机步进电机的“旋转距离”（如 <a href="Config_Reference.html#extruder">挤出机</a> 或 <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a>配置分段中定义）设置新值。如果旋转距离为负数，则步进运动将反转（相对于配置文件中指定的步进方向）。更改的设置不会在 Klipper 重置时保留。请谨慎使用，因为微小的变化会导致挤出机和热端之间的压力过大。使用前需要用耗材进行适当的校准。如果未提供“DISTANCE”值，则此命令将返回当前旋转距离。</p>
 <h4 id="sync_extruder_motion">SYNC_EXTRUDER_MOTION<a class="headerlink" href="#sync_extruder_motion" title="Permanent link">&para;</a></h4>
 <p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;name&gt; MOTION_QUEUE=&lt;name&gt;</code>: This command will cause the stepper specified by EXTRUDER (as defined in an <a href="Config_Reference.html#extruder">extruder</a> or <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config section) to become synchronized to the movement of an extruder specified by MOTION_QUEUE (as defined in an <a href="Config_Reference.html#extruder">extruder</a> config section). If MOTION_QUEUE is an empty string then the stepper will be desynchronized from all extruder movement.</p>
 <h4 id="set_extruder_step_distance">SET_EXTRUDER_STEP_DISTANCE<a class="headerlink" href="#set_extruder_step_distance" title="Permanent link">&para;</a></h4>
@@ -4569,7 +4569,7 @@
 <h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the <a href="Config_Reference.html#screws_tilt_adjust">screws_tilt_adjust config section</a> is enabled (also see the <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">manual level guide</a>).</p>
 <h4 id="screws_tilt_calculate">SCREWS_TILT_CALCULATE<a class="headerlink" href="#screws_tilt_calculate" title="Permanent link">&para;</a></h4>
-<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will invoke the bed screws adjustment tool. It will command the nozzle to different locations (as defined in the config file) probing the z height and calculate the number of knob turns to adjust the bed level. If DIRECTION is specified, the knob turns will all be in the same direction, clockwise (CW) or counterclockwise (CCW). See the PROBE command for details on the optional probe parameters. IMPORTANT: You MUST always do a G28 before using this command. If MAX_DEVIATION is specified, the command will raise a gcode error if any difference in the screw height relative to the base screw height is greater than the value provided.</p>
+<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;值&gt;] [&lt;探针参数名&gt;=&lt;值&gt;]</code>：这个命令将调用床身螺丝调整工具。它将命令喷嘴到不同的位置（如配置文件中定义的）探测z高度，并计算出调整床面水平的旋钮旋转次数。如果指定了DIRECTION（方向），旋钮的转动方向会是固定的，顺时针（CW）或逆时针（CCW）。有关可选探针参数的详细信息，请参见PROBE命令。重要的是：在使用这条命令之前，必须先做一个G28。如果指定了MAX_DEVIATION，如果螺杆高度相对于基础螺杆高度的任何差异大于所提供的值，该命令将引发一个G代码错误。</p>
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
 <p>When the <a href="Config_Reference.html#sdcard_loop">sdcard_loop config section</a> is enabled, the following extended commands are available.</p>
 <h4 id="sdcard_loop_begin">SDCARD_LOOP_BEGIN<a class="headerlink" href="#sdcard_loop_begin" title="Permanent link">&para;</a></h4>
@@ -4597,7 +4597,7 @@
 <h4 id="set_smart_effector">SET_SMART_EFFECTOR<a class="headerlink" href="#set_smart_effector" title="Permanent link">&para;</a></h4>
 <p><code>SET_SMART_EFFECTOR [SENSITIVITY=&lt;sensitivity&gt;] [ACCEL=&lt;accel&gt;] [RECOVERY_TIME=&lt;time&gt;]</code>: Set the Smart Effector parameters. When <code>SENSITIVITY</code> is specified, the respective value is written to the SmartEffector EEPROM (requires <code>control_pin</code> to be provided). Acceptable <code>&lt;sensitivity&gt;</code> values are 0..255, the default is 50. Lower values require less nozzle contact force to trigger (but there is a higher risk of false triggering due to vibrations during probing), and higher values reduce false triggering (but require larger contact force to trigger). Since the sensitivity is written to EEPROM, it is preserved after the shutdown, and so it does not need to be configured on every printer startup. <code>ACCEL</code> and <code>RECOVERY_TIME</code> allow to override the corresponding parameters at run-time, see the <a href="Config_Reference.html#smart_effector">config section</a> of Smart Effector for more info on those parameters.</p>
 <h4 id="reset_smart_effector">RESET_SMART_EFFECTOR<a class="headerlink" href="#reset_smart_effector" title="Permanent link">&para;</a></h4>
-<p><code>RESET_SMART_EFFECTOR</code>: Resets Smart Effector sensitivity to its factory settings. Requires <code>control_pin</code> to be provided in the config section.</p>
+<p><code>RESET_SMART_EFFECTOR</code>：将Smart Effector灵敏度重置为出厂设置。需要在配置部分提供 <code>control_pin</code>。</p>
 <h3 id="stepper_enable">[stepper_enable]<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h3>
 <p>The stepper_enable module is automatically loaded.</p>
 <h4 id="set_stepper_enable">SET_STEPPER_ENABLE<a class="headerlink" href="#set_stepper_enable" title="Permanent link">&para;</a></h4>
