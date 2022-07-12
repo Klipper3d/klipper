@@ -1199,6 +1199,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#usb-to-can-bus-bridge-mode" class="md-nav__link">
+    USB to CAN bus bridge mode
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1303,6 +1310,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#usb-to-can-bus-bridge-mode" class="md-nav__link">
+    USB to CAN bus bridge mode
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1359,6 +1373,16 @@ iface can0 can static
 <div class="highlight"><pre><span></span><code>[mcu my_can_mcu]
 canbus_uuid: 11aa22bb33cc
 </code></pre></div>
+
+<h2 id="usb-to-can-bus-bridge-mode">USB to CAN bus bridge mode<a class="headerlink" href="#usb-to-can-bus-bridge-mode" title="Permanent link">&para;</a></h2>
+<p>Some micro-controllers support selecting "USB to CAN bus bridge" mode during "make menuconfig". This mode may allow one to use a micro-controller as both a "USB to CAN bus adapter" and as a Klipper node.</p>
+<p>When Klipper uses this mode the micro-controller appears as a "USB CAN bus adapter" under Linux. The "Klipper bridge mcu" itself will appear as if was on this CAN bus - it can be identified via <code>canbus_query.py</code> and configured like other CAN bus Klipper nodes. It will appear alongside other devices that are actually on the CAN bus.</p>
+<p>Some important notes when using this mode:</p>
+<ul>
+<li>The "bridge mcu" is not actually on the CAN bus. Messages to and from it do not consume bandwidth on the CAN bus. The mcu can not be seen by other adapters that may be on the CAN bus.</li>
+<li>It is necessary to configure the <code>can0</code> (or similar) interface in Linux in order to communicate with the bus. However, Linux CAN bus speed and CAN bus bit-timing options are ignored by Klipper. Currently, the CAN bus frequency is specified during "make menuconfig" and the bus speed specified in Linux is ignored.</li>
+<li>Whenever the "bridge mcu" is reset, Linux will disable the corresponding <code>can0</code> interface. Generally, this may require running commands such as "ip up" to restart the interface. Thus, Klipper FIRMWARE_RESTART commands (or regular RESTART after a config change) may require restarting the <code>can0</code> interface.</li>
+</ul>
 
               
             </article>

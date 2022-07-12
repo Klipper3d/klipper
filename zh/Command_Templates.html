@@ -959,7 +959,7 @@
   
     <li class="md-nav__item">
       <a href="Exclude_Object.html" class="md-nav__link">
-        Exclude Objects
+        排除对象
       </a>
     </li>
   
@@ -1521,8 +1521,13 @@ gcode:
 <div class="highlight"><pre><span></span><code>[gcode_macro M117]
 rename_existing: M117.1
 gcode:
-  M117.1 { rawparams }
-  M118 { rawparams }
+  {% if rawparams %}
+    {% set escaped_msg = rawparams|replace(&#39;&quot;&#39;, &#39;\\&quot;&#39;) %}
+    SET_DISPLAY_TEXT MSG=&quot;{escaped_msg}&quot;
+    RESPOND TYPE=command MSG=&quot;{escaped_msg}&quot;
+  {% else %}
+    SET_DISPLAY_TEXT
+  {% endif %}
 </code></pre></div>
 
 <h3 id="printer">"printer"变量<a class="headerlink" href="#printer" title="Permanent link">&para;</a></h3>

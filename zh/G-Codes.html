@@ -2342,7 +2342,7 @@
   
     <li class="md-nav__item">
       <a href="Exclude_Object.html" class="md-nav__link">
-        Exclude Objects
+        排除对象
       </a>
     </li>
   
@@ -4326,6 +4326,10 @@
 <li>显示信息： <code>M117 &lt;message&gt;</code></li>
 <li>设置构建百分比：<code>M73 P&lt;percent&gt;</code></li>
 </ul>
+<p>Also provided is the following extended G-Code command:</p>
+<ul>
+<li><code>SET_DISPLAY_TEXT MSG=&lt;message&gt;</code>: Performs the equivalent of M117, setting the supplied <code>MSG</code> as the current display message. If <code>MSG</code> is omitted the display will be cleared.</li>
+</ul>
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
 <p>使用<a href="Config_Reference.html#dual_carriage">dual_carriage 配置分段</a>时，以下命令可用：</p>
 <h4 id="set_dual_carriage">SET_DUAL_CARRIAGE<a class="headerlink" href="#set_dual_carriage" title="Permanent link">&para;</a></h4>
@@ -4558,6 +4562,7 @@
 <ul>
 <li><code>RESPOND MSG="&lt;message&gt;"</code>：回显带有配置的默认前缀的消息（没有配置前缀则默认 <code>echo:</code>为前缀 ）。</li>
 <li><code>RESPOND TYPE=echo MSG="&lt;消息&gt;"</code>：回显<code>echo:</code>开头消息。</li>
+<li><code>RESPOND TYPE=echo_no_space MSG="&lt;message&gt;"</code>: echo the message prepended with <code>echo:</code> without a space between prefix and message, helpful for compatibility with some octoprint plugins that expect very specific formatting.</li>
 <li><code>RESPOND TYPE=command MSG="&lt;消息&gt;"</code>：回显以<code>/</code>为前缀的消息。可以配置 OctoPrint 对这些消息进行响应（例如，<code>RESPOND TYPE=command MSG=action:pause</code>）。</li>
 <li><code>RESPOND TYPE=error MSG="&lt;消息&gt;"</code>：回显以 <code>!!</code>开头的消息。</li>
 <li><code>RESPOND PREFIX=&lt;prefix&gt; MSG="&lt;message&gt;"</code>: 回应以<code>&lt;prefix&gt;</code>为前缀的信息。(<code>PREFIX</code>参数将优先于<code>TYPE</code>参数)</li>

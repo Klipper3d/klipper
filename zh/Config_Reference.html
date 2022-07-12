@@ -1993,7 +1993,7 @@
   
     <li class="md-nav__item">
       <a href="Exclude_Object.html" class="md-nav__link">
-        Exclude Objects
+        排除对象
       </a>
     </li>
   
@@ -3673,25 +3673,24 @@ position_max:
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: cartesian
 max_z_velocity:
-#   This sets the maximum velocity (in mm/s) of movement along the z
-#   axis. This setting can be used to restrict the maximum speed of
-#   the z stepper motor. The default is to use max_velocity for
-#   max_z_velocity.
+#   定义沿z轴运动的最大速度（单位：mm/s）。它限制了Z轴步进
+#   电机的最大速度。
+#   默认使用max_velocity为 max_z_velocity。
 max_z_accel:
-#   This sets the maximum acceleration (in mm/s^2) of movement along
-#   the z axis. It limits the acceleration of the z stepper motor. The
-#   default is to use max_accel for max_z_accel.
+#   定义沿Z轴运动的最大加速度（单位：mm/s^2）。
+#   它限制了z步进电机的加速度。
+#   默认使用使用max_accel为max_z_accel。
 
-# The stepper_x section is used to describe the stepper controlling
-# the X axis in a cartesian robot.
+#   stepper_x 分段描述了控制了笛卡尔结构中X轴的
+#   步进器。
 [stepper_x]
 
-# The stepper_y section is used to describe the stepper controlling
-# the Y axis in a cartesian robot.
+#   stepper_y 分段描述了控制了笛卡尔结构中Y轴的
+#   步进器。
 [stepper_y]
 
-# The stepper_z section is used to describe the stepper controlling
-# the Z axis in a cartesian robot.
+#   stepper_z 分段描述了控制了笛卡尔结构中Z轴的
+#   步进器。
 [stepper_z]
 </code></pre></div>
 
@@ -4432,7 +4431,7 @@ max_temp:
 </code></pre></div>
 
 <h3 id="skew_correction">[skew_correction]<a class="headerlink" href="#skew_correction" title="Permanent link">&para;</a></h3>
-<p>Printer Skew Correction. It is possible to use software to correct printer skew across 3 planes, xy, xz, yz. This is done by printing a calibration model along a plane and measuring three lengths. Due to the nature of skew correction these lengths are set via gcode. See <a href="Skew_Correction.html">Skew Correction</a> and <a href="G-Codes.html#skew_correction">Command Reference</a> for details.</p>
+<p>打印机偏斜校正。可以用软件来纠正打印机在xy、xz、yz三个平面上的偏斜。这是通过沿一个平面打印一个校准模型并测量三个长度来完成的。由于偏斜校正的性质，这些长度是通过G代码设置的。详情见<a href="Skew_Correction.html">偏斜校正</a>和<a href="G-Code.md#skew_correction">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[skew_correction]
 </code></pre></div>
 
@@ -4636,18 +4635,16 @@ path:
 <p>启用“M118”和“RESPOND”扩展 <a href="G-Codes.html#respond">commands</a>。</p>
 <div class="highlight"><pre><span></span><code>[respond]
 #default_type: echo
-#   Sets the default prefix of the &quot;M118&quot; and &quot;RESPOND&quot; output to one
-#   of the following:
-#       echo: &quot;echo: &quot; (This is the default)
-#       command: &quot;// &quot;
-#       error: &quot;!! &quot;
+#   将 &quot;M118 &quot;和 &quot;RESPOND &quot;输出的默认前缀设置为以下之一：
+#      echo: &quot;echo: &quot; (这是默认的)
+#      command: &quot;// &quot;
+#      error: &quot;!!&quot;
 #default_prefix: echo:
-#   Directly sets the default prefix. If present, this value will
-#   override the &quot;default_type&quot;.
+#   直接设置默认的前缀。如果定义，这个值将覆盖 &quot;default_type&quot;。
 </code></pre></div>
 
 <h3 id="exclude_object">[exclude_object]<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h3>
-<p>Enables support to exclude or cancel individual objects during the printing process.</p>
+<p>启用对在打印过程中排除或取消单个对象的支持。</p>
 <p>See the <a href="Exclude_Object.html">exclude objects guide</a> and <a href="G-Codes.html#excludeobject">command reference</a> for additional information. See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.</p>
 <div class="highlight"><pre><span></span><code>[exclude_object]
 </code></pre></div>
@@ -4715,14 +4712,14 @@ cs_pin:
 <p>Support for mpu9250 and mpu6050 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
 #i2c_address:
-#   Default is 104 (0x68).
+#   默认为104 (0x68)。
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed: 400000
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters. The default &quot;i2c_speed&quot; is 400000.
+#   参见 &quot;常见的I2C设置 &quot;一节，了解关于上述参数的描述。
+#   默认的 &quot;i2c_speed &quot;是400000。
 #axes_map: x, y, z
-#   See the &quot;adxl345&quot; section for information on this parameter.
+#   参见 &quot;adxl345 &quot;部分关于这个参数的信息。
 </code></pre></div>
 
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>
@@ -5617,46 +5614,44 @@ pin:
 
 <h3 id="pca9533">[pca9533]<a class="headerlink" href="#pca9533" title="Permanent link">&para;</a></h3>
 <p>PCA9533 LED支持。PCA9533 在mightyboard上使用。</p>
-<div class="highlight"><pre><span></span><code>[pca9533 my_pca9533]
-#i2c_address: 98
-#   The i2c address that the chip is using on the i2c bus. Use 98 for
-#   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
+<div class="highlight"><pre><span></span><code>[pca9533 my_pca9533]。
+#i2c_address:98
+#   芯片在i2c总线上使用的i2c地址。使用98表示
+#   PCA9533/1，99表示PCA9533/2。默认为98。
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
-#initial_RED: 0.0
+#   参见 &quot;常用I2C设置 &quot;部分，以了解对上述参数的描述。
+#initial_RED:0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
-#   See the &quot;led&quot; section for information on these parameters.
+#   有关这些参数的信息，请参见 &quot;led &quot;分段。
 </code></pre></div>
 
 <h3 id="pca9632">[pca9632]<a class="headerlink" href="#pca9632" title="Permanent link">&para;</a></h3>
 <p>PCA9632 LED支持。PCA9632在FlashForge Dreamer上使用。</p>
-<div class="highlight"><pre><span></span><code>[pca9632 my_pca9632]
-#i2c_address: 98
-#   The i2c address that the chip is using on the i2c bus. This may be
-#   96, 97, 98, or 99.  The default is 98.
+<div class="highlight"><pre><span></span><code>[pca9632 my_pca9632]。
+#i2c_address:98
+#   芯片在i2c总线上使用的i2c地址。可以是96, 97, 98, 或 99。
+#   默认为98。
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
+#   参见 &quot;常见的I2C设置 &quot;一节，以了解对上述参数的描述。
 #scl_pin:
 #sda_pin:
-#   Alternatively, if the pca9632 is not connected to a hardware I2C
-#   bus, then one may specify the &quot;clock&quot; (scl_pin) and &quot;data&quot;
-#   (sda_pin) pins. The default is to use hardware I2C.
-#color_order: RGBW
-#   Set the pixel order of the LED (using a string containing the
-#   letters R, G, B, W). The default is RGBW.
-#initial_RED: 0.0
+#   如果pca9632没有连接到硬件I2C总线，那么可以指定
+#   &quot;时钟&quot;(scl_pin)和 &quot;数据&quot;(sda_pin)引脚。
+#   默认使用硬件I2C。
+#color_order:RGBW
+#   设置LED的像素顺序(使用一个包含R、G、B、W的字符串)。
+#   默认是RGBW。
+#initial_RED:0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
-#   See the &quot;led&quot; section for information on these parameters.
+#   有关这些参数的信息，请参见 &quot;led &quot;分段。
 </code></pre></div>
 
 <h2 id="_24">额外的舵机、按钮和其他引脚<a class="headerlink" href="#_24" title="Permanent link">&para;</a></h2>
@@ -6843,22 +6838,21 @@ cs_pin:
 <h3 id="i2c">常见的I2C设置<a class="headerlink" href="#i2c" title="Permanent link">&para;</a></h3>
 <p>以下参数一般适用于使用I2C总线的设备。</p>
 <p>Note that Klipper's current micro-controller support for i2c is generally not tolerant to line noise. Unexpected errors on the i2c wires may result in Klipper raising a run-time error. Klipper's support for error recovery varies between each micro-controller type. It is generally recommended to only use i2c devices that are on the same printed circuit board as the micro-controller.</p>
-<p>Most Klipper micro-controller implementations only support an <code>i2c_speed</code> of 100000. The Klipper "linux" micro-controller supports a 400000 speed, but it must be <a href="RPi_microcontroller.html#optional-enabling-i2c">set in the operating system</a> and the <code>i2c_speed</code> parameter is otherwise ignored. The Klipper "rp2040" micro-controller supports a rate of 400000 via the <code>i2c_speed</code> parameter. All other Klipper micro-controllers use a 100000 rate and ignore the <code>i2c_speed</code> parameter.</p>
-<div class="highlight"><pre><span></span><code>#i2c_address:
-#   The i2c address of the device. This must specified as a decimal
-#   number (not in hex). The default depends on the type of device.
+<p>大多数Klipper微控制器的实现只支持100000的<code>i2c_speed</code> 。Klipper 的 "linux "微控制器支持400000的速度，但是必须<a href="RPi_microcontroller.html#optional-enabling-i2c">在操作系统中修改设置</a>，否则<code>i2c_speed</code> 参数会被忽略。Klipper "rp2040 "微控制器通过<code>i2c_speed</code> 参数支持400000的速率。所有其他Klipper微控制器使用100000速率，并忽略<code>i2c_speed</code> 参数。</p>
+<div class="highlight"><pre><span></span><code>#i2c_address。
+#   设备的i2c地址。必须是一个十进制的数字(不是十六进制)。
+#   默认值取决于设备的类型。
 #i2c_mcu:
-#   The name of the micro-controller that the chip is connected to.
-#   The default is &quot;mcu&quot;.
+#   芯片所连接的微控制器的名称。
+#   默认为 &quot;mcu&quot;。
 #i2c_bus:
-#   If the micro-controller supports multiple I2C busses then one may
-#   specify the micro-controller bus name here. The default depends on
-#   the type of micro-controller.
+#   如果微控制器支持多个I2C总线，那么可以在这里指定
+#   微控制器的总线名称。
+#   默认值取决于微控制器的类型。
 #i2c_speed:
-#   The I2C speed (in Hz) to use when communicating with the device.
-#   The Klipper implementation on most micro-controllers is hard-coded
-#   to 100000 and changing this value has no effect. The default is
-#   100000.
+#   与设备通信时使用的I2C速度(Hz)。大多数微控制器上
+#   的Klipper实现被硬编码为100000，因此改变这个值没有作用。
+#   默认值是100000.
 </code></pre></div>
 
               

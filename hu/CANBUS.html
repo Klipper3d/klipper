@@ -1199,6 +1199,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#usb-es-can-busz-kozotti-hid-uzemmod" class="md-nav__link">
+    USB és CAN-busz közötti híd üzemmód
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1303,6 +1310,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#usb-es-can-busz-kozotti-hid-uzemmod" class="md-nav__link">
+    USB és CAN-busz közötti híd üzemmód
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1359,6 +1373,16 @@ iface can0 can static
 <div class="highlight"><pre><span></span><code>[mcu my_can_mcu]
 canbus_uuid: 11aa22bb33cc
 </code></pre></div>
+
+<h2 id="usb-es-can-busz-kozotti-hid-uzemmod">USB és CAN-busz közötti híd üzemmód<a class="headerlink" href="#usb-es-can-busz-kozotti-hid-uzemmod" title="Permanent link">&para;</a></h2>
+<p>Egyes mikrovezérlők támogatják az "USB to CAN bus bridge" üzemmód kiválasztását a "make menuconfig" során. Ez az üzemmód lehetővé teheti, hogy egy mikrokontrollert "USB CAN busz adapterként" és Klipper csomópontként is használjunk.</p>
+<p>Amikor a Klipper ezt az üzemmódot használja, a mikrokontroller "USB CAN busz adapterként" jelenik meg Linux alatt. Maga a "Klipper bridge mcu" úgy jelenik meg, mintha ezen a CAN buszon lenne. A <code>canbus_query.py</code> segítségével azonosítható és konfigurálható, mint a többi CAN buszos Klipper csomópont. A többi, ténylegesen a CAN-buszon lévő eszköz mellett fog megjelenni.</p>
+<p>Néhány fontos megjegyzés ennek az üzemmódnak a használatához:</p>
+<ul>
+<li>A "bridge mcu" valójában nem a CAN-buszon van. A hozzá érkező és tőle érkező üzenetek nem fogyasztanak sávszélességet a CAN-buszon. Az MCU-t nem láthatják más adapterek, amelyek esetleg a CAN-buszon vannak.</li>
+<li>A busszal való kommunikációhoz szükséges a <code>can0</code> (vagy hasonló) interfész konfigurálása Linuxban. A Linux CAN-busz sebességét és a CAN-busz bit-időzítési beállításait azonban a Klipper figyelmen kívül hagyja. Jelenleg a CAN-busz frekvenciáját a "make menuconfig" futtatása során kell megadni, és a Linuxban megadott buszsebességet figyelmen kívül hagyjuk.</li>
+<li>Amikor a "bridge mcu" visszaáll, a Linux letiltja a megfelelő <code>can0</code> interfészt. Általában ehhez olyan parancsok futtatására lehet szükség, mint például az "ip up", hogy újraindítsa az interfészt. Így a Klipper FIRMWARE_RESTART parancsok (vagy egy konfigurációváltás után a szokásos RESTART) a <code>can0</code> interfész újraindítását igényelhetik.</li>
+</ul>
 
               
             </article>

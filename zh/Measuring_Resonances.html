@@ -765,8 +765,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#selecting-max_accel" class="md-nav__link">
-    Selecting max_accel
+  <a href="#max_accel" class="md-nav__link">
+    选择 max_accel
   </a>
   
 </li>
@@ -978,7 +978,7 @@
   
     <li class="md-nav__item">
       <a href="Exclude_Object.html" class="md-nav__link">
-        Exclude Objects
+        排除对象
       </a>
     </li>
   
@@ -1422,8 +1422,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#selecting-max_accel" class="md-nav__link">
-    Selecting max_accel
+  <a href="#max_accel" class="md-nav__link">
+    选择 max_accel
   </a>
   
 </li>
@@ -1743,7 +1743,7 @@ max_smoothing: 0.25  # an example
 </code></pre></div>
 
 <p>Then, if you <a href="#input-shaper-re-calibration">rerun</a> the input shaper auto-tuning using <code>SHAPER_CALIBRATE</code> Klipper command in the future, it will use the stored <code>max_smoothing</code> value as a reference.</p>
-<h3 id="selecting-max_accel">Selecting max_accel<a class="headerlink" href="#selecting-max_accel" title="Permanent link">&para;</a></h3>
+<h3 id="max_accel">选择 max_accel<a class="headerlink" href="#max_accel" title="Permanent link">&para;</a></h3>
 <p>Since the input shaper can create some smoothing in parts, especially at high accelerations, you will still need to choose the <code>max_accel</code> value that does not create too much smoothing in the printed parts. A calibration script provides an estimate for <code>max_accel</code> parameter that should not create too much smoothing. Note that the <code>max_accel</code> as displayed by the calibration script is only a theoretical maximum at which the respective shaper is still able to work without producing too much smoothing. It is by no means a recommendation to set this acceleration for printing. The maximum acceleration your printer is able to sustain depends on its mechanical properties and the maximum torque of the used stepper motors. Therefore, it is suggested to set <code>max_accel</code> in <code>[printer]</code> section that does not exceed the estimated values for X and Y axes, likely with some conservative safety margin.</p>
 <p>Alternatively, follow <a href="Resonance_Compensation.html#selecting-max_accel">this</a> part of the input shaper tuning guide and print the test model to choose <code>max_accel</code> parameter experimentally.</p>
 <p>The same notice applies to the input shaper <a href="#input-shaper-auto-calibration">auto-calibration</a> with <code>SHAPER_CALIBRATE</code> command: it is still necessary to choose the right <code>max_accel</code> value after the auto-calibration, and the suggested acceleration limits will not be applied automatically.</p>

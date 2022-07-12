@@ -13,7 +13,7 @@
     
     
       
-        <title>Exclude Objects - Klipper 文档</title>
+        <title>排除对象 - Klipper 文档</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#exclude-objects" class="md-skip">
+        <a href="#_1" class="md-skip">
           跳转至
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Exclude Objects
+              排除对象
             
           </span>
         </div>
@@ -835,12 +835,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Exclude Objects
+          排除对象
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Exclude_Object.html" class="md-nav__link md-nav__link--active">
-        Exclude Objects
+        排除对象
       </a>
       
         
@@ -859,18 +859,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#workflow-overview" class="md-nav__link">
-    Workflow Overview
+  <a href="#_2" class="md-nav__link">
+    工作流程概述
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-gcode-file" class="md-nav__link">
-    The GCode File
+  <a href="#g" class="md-nav__link">
+    G代码文件
   </a>
   
-    <nav class="md-nav" aria-label="The GCode File">
+    <nav class="md-nav" aria-label="G代码文件">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1268,18 +1268,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#workflow-overview" class="md-nav__link">
-    Workflow Overview
+  <a href="#_2" class="md-nav__link">
+    工作流程概述
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-gcode-file" class="md-nav__link">
-    The GCode File
+  <a href="#g" class="md-nav__link">
+    G代码文件
   </a>
   
-    <nav class="md-nav" aria-label="The GCode File">
+    <nav class="md-nav" aria-label="G代码文件">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1318,24 +1318,24 @@
 </a>
 
 
-<h1 id="exclude-objects">Exclude Objects<a class="headerlink" href="#exclude-objects" title="Permanent link">&para;</a></h1>
+<h1 id="_1">排除对象<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
 section</a> (also see the <a href="G-Codes.html#exclude-object">command
 reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
-<p>Unlike other 3D printer firmware options, a printer running Klipper utilizes a suite of components and users have many options to choose from. Therefore, in order to provide a a consistent user experience, the <code>[exclude_object]</code> module will establish a contract or API of sorts. The contract covers the contents of the gcode file, how the internal state of the module is controlled, and how that state is provided to clients.</p>
-<h2 id="workflow-overview">Workflow Overview<a class="headerlink" href="#workflow-overview" title="Permanent link">&para;</a></h2>
-<p>A typical workflow for printing a file might look like this:</p>
+<p>与其他3D打印机固件选项不同，运行 Klipper 的打印机提供了一套允许用户选择许多选项的组件。因此，为了提供一致的用户体验，<code>[exclude_object]</code>模块将建立一个标准或类似的API。标准涵盖了g代码文件的内容，模块的内部状态如何被控制，以及该状态如何被提供给用户。</p>
+<h2 id="_2">工作流程概述<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>打印文件的一个典型工作流可能如下所示：</p>
 <ol>
-<li>Slicing is completed and the file is uploaded for printing. During the upload, the file is processed and <code>[exclude_object]</code> markers are added to the file. Alternately, slicers may be configured to prepare object exclusion markers natively, or in it's own pre-processing step.</li>
-<li>When printing starts, Klipper will reset the <code>[exclude_object]</code> <a href="Status_Reference.html#exclude_object">status</a>.</li>
-<li>When Klipper processes the <code>EXCLUDE_OBJECT_DEFINE</code> block, it will update the status with the known objects and pass it on to clients.</li>
-<li>The client may use that information to present a UI to the user so that progress can be tracked. Klipper will update the status to include the currently printing object which the client can use for display purposes.</li>
-<li>If the user requests that an object be cancelled, the client will issue an <code>EXCLUDE_OBJECT NAME=&lt;name&gt;</code> command to Klipper.</li>
-<li>When Klipper process the command, it will add the object to the list of excluded objects and update the status for the client.</li>
-<li>The client will receive the updated status from Klipper and can use that information to reflect the object's status in the UI.</li>
-<li>When printing finishes, the <code>[exclude_object]</code> status will continue to be available until another action resets it.</li>
+<li>切片完成后，文件被上传并用于打印。在上传过程中，文件被处理，<code>[exclude_object]</code>标记被添加到该文件。另外，切片软件可以被配置为原生支持生成对象排除的标记，或者在它自己的预处理步骤中进行。</li>
+<li>当打印开始时，Klipper将重置<code>[exclude_object]</code><a href="Status_Reference.html#exclude_object">状态</a>。</li>
+<li>当 Klipper 处理<code>EXCLUDE_OBJECT_DEFINE</code>块时，它将使用已知对象更新状态并将其传递给客户端。</li>
+<li>客户端可以使用该信息向用户呈现 UI，以便跟踪进度。Klipper 将更新状态以包含客户端可用于显示目的的当前打印对象。</li>
+<li>如果用户要求取消一个对象，客户端将向Klipper发出<code>EXCLUDE_OBJECT NAME=&lt;名称&gt;</code>命令。</li>
+<li>当 Klipper 处理该命令时，它将把该对象添加到排除对象的列表中，并为客户更新状态。</li>
+<li>客户端将从 Klipper 接收更新的状态，并可以使用该信息在UI中反映对象的状态。</li>
+<li>当打印完成后，<code>[exclude_object]</code>状态将继续可用，直到另一个动作将其重置。</li>
 </ol>
-<h2 id="the-gcode-file">The GCode File<a class="headerlink" href="#the-gcode-file" title="Permanent link">&para;</a></h2>
+<h2 id="g">G代码文件<a class="headerlink" href="#g" title="Permanent link">&para;</a></h2>
 <p>The specialized gcode processing needed to support excluding objects does not fit into Klipper's core design goals. Therefore, this module requires that the file is processed before being sent to Klipper for printing. Using a post-process script in the slicer or having middleware process the file on upload are two possibilities for preparing the file for Klipper. A reference post-processing script is available both as an executable and a python library, see <a href="https://github.com/kageurufu/cancelobject-preprocessor">cancelobject-preprocessor</a>.</p>
 <h3 id="object-definitions">Object Definitions<a class="headerlink" href="#object-definitions" title="Permanent link">&para;</a></h3>
 <p>The <code>EXCLUDE_OBJECT_DEFINE</code> command is used to provide a summary of each object in the gcode file to be printed. Provides a summary of an object in the file. Objects don't need to be defined in order to be referenced by other commands. The primary purpose of this command is to provide information to the UI without needing to parse the entire gcode file.</p>

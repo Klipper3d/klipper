@@ -4326,6 +4326,10 @@
 <li>Üzenet megjelenítése: <code>M117 &lt;message&gt;</code></li>
 <li>Nyomtatási folyamat százalékos arány beállítása: <code>M73 P&lt;percent&gt;</code></li>
 </ul>
+<p>A következő kiterjesztett G-kód parancs is rendelkezésre áll:</p>
+<ul>
+<li><code>SET_DISPLAY_TEXT MSG=&lt;message&gt;</code>: Az M117 paranccsal egyenértékű művelet, amely az <code>MSG</code> címen megadott üzenetet állítja be aktuális kijelzőüzenetként. Ha az <code>MSG</code> elmarad, a kijelző törlődik.</li>
+</ul>
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
 <p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#dual_carriage">dual_carriage konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="set_dual_carriage">SET_DUAL_CARRIAGE<a class="headerlink" href="#set_dual_carriage" title="Permanent link">&para;</a></h4>
@@ -4558,6 +4562,7 @@
 <ul>
 <li><code>RESPOND MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet a konfigurált alapértelmezett előtaggal kiegészítve (vagy <code>echo:</code>, ha nincs konfigurálva előtag).</li>
 <li><code>RESPOND TYPE=echo MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet, amelyet <code>echo:</code> küld.</li>
+<li><code>RESPOND TYPE=echo_no_space MSG="&lt;message&gt;"</code>: az üzenet visszhangja az <code>előtaggal kiegészítve echo:</code> szóköz nélkül az előtag és az üzenet között, hasznos a kompatibilitás néhány olyan octoprint pluginnal, amelyek nagyon speciális formázást várnak el.</li>
 <li><code>RESPOND TYPE=command MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet <code>//</code>. Az OctoPrint konfigurálható úgy, hogy válaszoljon ezekre az üzenetekre (pl. <code>RESPOND TYPE=command MSG=action:pause</code>).</li>
 <li><code>RESPOND TYPE=error MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet <code>!!</code>.</li>
 <li><code>RESPOND PREFIX=&lt;prefix&gt; MSG="&lt;message&gt;"</code>: visszhangozza az üzenetet <code>&lt;prefix&gt;</code> előtaggal kiegészítve. (A <code>PREFIX</code> paraméter elsőbbséget élvez a <code>TYPE</code> paraméterrel szemben.)</li>

@@ -895,7 +895,7 @@
   
     <li class="md-nav__item">
       <a href="Exclude_Object.html" class="md-nav__link">
-        Exclude Objects
+        排除对象
       </a>
     </li>
   
@@ -1326,7 +1326,7 @@
 <p>大多数的 Klipper 设置是由保存在树莓派上的"打印机配置文件"决定的。通常可以在Klipper <a href="https://github.com/Klipper3d/klipper/blob/master/config/">配置文件夹</a>中找到一个以"printer-"前缀开头并与目标打印机相对应的配置文件。Klipper 配置文件包含安装过程中需要的打印机技术信息。</p>
 <p>如果 Klipper 配置目录中没有合适的打印机配置文件，请尝试搜索打印机制造商的网站，看看他们是否有合适的 Klipper 配置文件。</p>
 <p>如果找不到打印机的配置文件，但可以找到打印机控制板的类型，则可以查找以“generic-”前缀开头的适当 <a href="https://github.com/Klipper3d/klipper/blob/master/config/">配置文件</a>。这些示例打印机模板文件应该足以成功完成初始安装，但需要进行一些自定义才能获得完整的打印机功能。</p>
-<p>也可以从头开始定义一个新的打印机配置。然而，这需要关于打印机及其电子系统的大量技术知识。建议大多数用户从一个适当的配置文件开始。如果需要创建一个新的自定义打印机配置文件，那么可以先从最接近的<a href="./config/">配置文件</a>的例子开始，并从 Klipper <a href="Config_Reference.html">配置参考文档</a>了解进一步信息。</p>
+<p>也可以从头开始定义一个新的打印机配置。然而，这需要关于打印机及其电子系统的大量技术知识。建议大多数用户从一个适当的配置文件开始。如果需要创建一个新的自定义打印机配置文件，那么可以先从最接近的<a href="https://github.com/Klipper3d/klipper/blob/master/config/">配置文件</a>的例子开始，并从 Klipper <a href="Config_Reference.html">配置参考文档</a>了解进一步信息。</p>
 <h2 id="_2">准备操作系统镜像<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>先在树莓派上安装 <a href="https://github.com/guysoft/OctoPi">OctoPi</a>。请使用OctoPi v0.17.0或更高版本，查看 <a href="https://github.com/guysoft/OctoPi/releases">Octopi 发行版</a>来获取最新发布版本。安装完系统后，请先验证 OctoPi 能正常启动，并且 OctoPrint 网络服务器正常运行。连接到 OctoPrint 网页后，按照提示将 OctoPrint 更新到v1.4.2或更高版本。</p>
 <p>在安装 OctoPi 和升级 OctoPrint 后，用 ssh 连接目标设备，以运行少量的系统命令。如果使用Linux或MacOS系统，那么 "ssh"软件应该已经预装在系统上。有一些免费的ssh客户端可用于其他操作系统（例如，<a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a>）。使用ssh工具连接到Raspberry Pi（ssh pi@octopi --密码是 "raspberry"），并运行以下命令：</p>

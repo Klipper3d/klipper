@@ -4326,6 +4326,10 @@
 <li>顯示資訊： <code>M117 &lt;message&gt;</code></li>
 <li>設定構建百分比：<code>M73 P&lt;percent&gt;</code></li>
 </ul>
+<p>Also provided is the following extended G-Code command:</p>
+<ul>
+<li><code>SET_DISPLAY_TEXT MSG=&lt;message&gt;</code>: Performs the equivalent of M117, setting the supplied <code>MSG</code> as the current display message. If <code>MSG</code> is omitted the display will be cleared.</li>
+</ul>
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#dual_carriage">dual_carriage config section</a> 時，以下命令可用。</p>
 <h4 id="set_dual_carriage">SET_DUAL_CARRIAGE<a class="headerlink" href="#set_dual_carriage" title="Permanent link">&para;</a></h4>
@@ -4558,6 +4562,7 @@
 <ul>
 <li><code>RESPOND MSG="&lt;message&gt;"</code>：回顯帶有配置的預設字首的訊息（沒有配置字首則預設 <code>echo:</code>為字首 ）。</li>
 <li><code>RESPOND TYPE=echo MSG="&lt;訊息&gt;"</code>：回顯<code>echo:</code>開頭訊息。</li>
+<li><code>RESPOND TYPE=echo_no_space MSG="&lt;message&gt;"</code>: echo the message prepended with <code>echo:</code> without a space between prefix and message, helpful for compatibility with some octoprint plugins that expect very specific formatting.</li>
 <li><code>RESPOND TYPE=command MSG="&lt;訊息&gt;"</code>：回顯以<code>/</code>為字首的訊息。可以配置 OctoPrint 對這些訊息進行響應（例如，<code>RESPOND TYPE=command MSG=action:pause</code>）。</li>
 <li><code>RESPOND TYPE=error MSG="&lt;訊息&gt;"</code>：回顯以 <code>!!</code>開頭的訊息。</li>
 <li><code>RESPOND PREFIX=&lt;prefix&gt; MSG="&lt;message&gt;"</code>: 迴應以<code>&lt;prefix&gt;</code>為字首的資訊。(<code>PREFIX</code>參數將優先於<code>TYPE</code>參數)</li>
