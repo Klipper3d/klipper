@@ -198,7 +198,11 @@ class ControlPID:
                           + temp_diff) / self.min_deriv_time
         # Calculate accumulated temperature "error"
         temp_err = target_temp - temp
-        temp_integ = self.prev_temp_integ + temp_err * time_diff
+        if target_temp == 0:
+            temp_integ = 0
+            self.prev_temp_integ = 0
+        else:
+            temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
