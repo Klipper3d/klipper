@@ -8,5 +8,6 @@ src-$(CONFIG_HAVE_GPIO_SPI) += spicmds.c thermocouple.c
 src-$(CONFIG_HAVE_GPIO_I2C) += i2ccmds.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += pwmcmds.c
 bb-src-$(CONFIG_HAVE_GPIO_SPI) := spi_software.c sensor_adxl345.c sensor_angle.c
+bb-src-$(CONFIG_HAVE_GPIO_I2C) += sensor_mpu9250.c
 src-$(CONFIG_HAVE_GPIO_BITBANGING) += $(bb-src-y) lcd_st7920.c lcd_hd44780.c \
     buttons.c tmcuart.c neopixel.c pulse_counter.c

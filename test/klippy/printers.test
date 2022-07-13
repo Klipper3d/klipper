@@ -29,6 +29,7 @@ CONFIG ../../config/printer-anycubic-4maxpro-2.0-2021.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
+CONFIG ../../config/printer-creality-cr10-v3-2020.cfg
 CONFIG ../../config/printer-creality-cr10s-2017.cfg
 CONFIG ../../config/printer-creality-cr20-2018.cfg
 CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
@@ -134,13 +135,13 @@ CONFIG ../../config/printer-monoprice-select-mini-v2-2018.cfg
 
 # Printers using the stm32f103
 DICTIONARY stm32f103.dict
+CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
+CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.2.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
-CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
-CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
 CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
 
@@ -159,6 +160,8 @@ CONFIG ../../config/printer-creality-cr30-2021.cfg
 CONFIG ../../config/printer-creality-cr6se-2020.cfg
 CONFIG ../../config/printer-creality-cr6se-2021.cfg
 CONFIG ../../config/printer-creality-ender2pro-2021.cfg
+CONFIG ../../config/printer-creality-ender3-s1-2021.cfg
+CONFIG ../../config/printer-creality-ender3-s1pro-2022.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
@@ -177,6 +180,11 @@ CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1.1-2021.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
 
+# Printers using the stm32f405
+DICTIONARY stm32f405.dict
+CONFIG ../../config/generic-mellow-fly-gemini-v1.cfg
+CONFIG ../../config/generic-mellow-fly-gemini-v2.cfg
+
 # Printers using the stm32f407
 DICTIONARY stm32f407.dict
 CONFIG ../../config/generic-bigtreetech-e3-rrf-v1.1.cfg
@@ -184,10 +192,12 @@ CONFIG ../../config/generic-bigtreetech-gtr.cfg
 CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
 CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
+CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
 CONFIG ../../config/generic-th3d-ezboard-lite-v2.0.cfg
+CONFIG ../../config/printer-biqu-b1-se-plus-2022.cfg
 CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
 
 # Printers using the stm32f446

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Tool to enter a USB bootloader and flash Klipper
 #
 # Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
@@ -27,6 +27,8 @@ def enter_bootloader(device):
 # Translate a serial device name to a stable serial name in /dev/serial/by-path/
 def translate_serial_to_tty(device):
     ttyname = os.path.realpath(device)
+    if not os.path.exists('/dev/serial/by-path/'):
+        raise error("Unable to find serial 'by-path' folder")
     for fname in os.listdir('/dev/serial/by-path/'):
         fname = '/dev/serial/by-path/' + fname
         if os.path.realpath(fname) == ttyname:
@@ -71,6 +73,42 @@ def wait_path(path, alt_path=None):
         if cur_time > end_time:
             return path
 
+CANBOOT_ID ="1d50:6177"
+
+def detect_canboot(devpath):
+    usbdir = os.path.dirname(devpath)
+    try:
+        with open(os.path.join(usbdir, "idVendor")) as f:
+            vid = f.read().strip().lower()
+        with open(os.path.join(usbdir, "idProduct")) as f:
+            pid = f.read().strip().lower()
+    except Exception:
+        return False
+    usbid = "%s:%s" % (vid, pid)
+    return usbid == CANBOOT_ID
+
+def call_flashcan(device, binfile):
+    try:
+        import serial
+    except ModuleNotFoundError:
+        sys.stderr.write(
+            "Python's pyserial module is required to update. Install\n"
+            "with the following command:\n"
+            "   %s -m pip install pyserial\n\n" % (sys.executable,)
+        )
+        sys.exit(-1)
+    args = [sys.executable, "lib/canboot/flash_can.py", "-d",
+            device, "-f", binfile]
+    sys.stderr.write(" ".join(args) + '\n\n')
+    res = subprocess.call(args)
+    if res != 0:
+        sys.stderr.write("Error running flash_can.py\n")
+        sys.exit(-1)
+
+def flash_canboot(options, binfile):
+    ttyname, pathname = translate_serial_to_tty(options.device)
+    call_flashcan(pathname, binfile)
+
 # Flash via a call to bossac
 def flash_bossac(device, binfile, extra_flags=[]):
     ttyname, pathname = translate_serial_to_tty(device)
@@ -108,10 +146,14 @@ def flash_dfuutil(device, binfile, extra_flags=[], sudo=True):
     if hexfmt_r.match(device.strip()):
         call_dfuutil(["-d", ","+device.strip()] + extra_flags, binfile, sudo)
         return
+    ttyname, serbypath = translate_serial_to_tty(device)
     buspath, devpath = translate_serial_to_usb_path(device)
     enter_bootloader(device)
     pathname = wait_path(devpath)
-    call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
+    if detect_canboot(devpath):
+        call_flashcan(serbypath, binfile)
+    else:
+        call_dfuutil(["-p", buspath] + extra_flags, binfile, sudo)
 
 def call_hidflash(binfile, sudo):
     args = ["lib/hidflash/hid-flash", binfile]
@@ -128,10 +170,40 @@ def flash_hidflash(device, binfile, sudo=True):
     if hexfmt_r.match(device.strip()):
         call_hidflash(binfile, sudo)
         return
+    ttyname, serbypath = translate_serial_to_tty(device)
     buspath, devpath = translate_serial_to_usb_path(device)
     enter_bootloader(device)
     pathname = wait_path(devpath)
-    call_hidflash(binfile, sudo)
+    if detect_canboot(devpath):
+        call_flashcan(serbypath, binfile)
+    else:
+        call_hidflash(binfile, sudo)
+
+# Call Klipper modified "picoboot"
+def call_picoboot(bus, addr, binfile, sudo):
+    args = ["lib/rp2040_flash/rp2040_flash", binfile]
+    if bus is not None:
+        args.extend([bus, addr])
+    if sudo:
+        args.insert(0, "sudo")
+    sys.stderr.write(" ".join(args) + '\n\n')
+    res = subprocess.call(args)
+    if res != 0:
+        raise error("Error running rp2040_flash")
+
+# Flash via Klipper modified "picoboot"
+def flash_picoboot(device, binfile, sudo):
+    buspath, devpath = translate_serial_to_usb_path(device)
+    # We need one level up to get access to busnum/devnum files
+    usbdir = os.path.dirname(devpath)
+    enter_bootloader(device)
+    wait_path(usbdir)
+    with open(usbdir + "/busnum") as f:
+        bus = f.read().strip()
+    with open(usbdir + "/devnum") as f:
+        addr = f.read().strip()
+    call_picoboot(bus, addr, binfile, sudo)
+
 
 ######################################################################
 # Device specific helpers
@@ -161,22 +233,6 @@ def flash_atsamd(options, binfile):
         sys.stderr.write("Failed to flash to %s: %s\n" % (
             options.device, str(e)))
         sys.exit(-1)
-
-# Look for an rp2040 and flash it with rp2040_flash.
-def rp2040_flash(devpath, binfile, sudo):
-    args = ["lib/rp2040_flash/rp2040_flash", binfile]
-    if len(devpath) > 0:
-        with open(devpath + "/busnum") as f:
-            bus = f.read().strip()
-        with open(devpath + "/devnum") as f:
-            addr = f.read().strip()
-        args += [bus, addr]
-    sys.stderr.write(" ".join(args) + '\n\n')
-    if sudo:
-        args.insert(0, "sudo")
-    res = subprocess.call(args)
-    if res != 0:
-        raise error("Error running rp2040_flash")
 
 SMOOTHIE_HELP = """
 Failed to flash to %s: %s
@@ -259,27 +315,22 @@ def flash_stm32f4(options, binfile):
 RP2040_HELP = """
 Failed to flash to %s: %s
 
-If the device is already in bootloader mode, use 'first' as FLASH_DEVICE.
-This will use rp2040_flash to flash the first available rp2040.
+If the device is already in bootloader mode it can be flashed with the
+following command:
+  make flash FLASH_DEVICE=2e8a:0003
 
 Alternatively, one can flash rp2040 boards like the Pico by manually
 entering bootloader mode(hold bootsel button during powerup), mount the
 device as a usb drive, and copy klipper.uf2 to the device.
+
 """
 
 def flash_rp2040(options, binfile):
     try:
-        if options.device.lower() == "first":
-            rp2040_flash("", binfile, options.sudo)
-            return
-
-        buspath, devpath = translate_serial_to_usb_path(options.device)
-        # We need one level up to get access to busnum/devnum files
-        devpath = os.path.dirname(devpath)
-        enter_bootloader(options.device)
-        wait_path(devpath)
-        rp2040_flash(devpath, binfile, options.sudo)
-
+        if options.device.lower() == "2e8a:0003":
+            call_picoboot(None, None, binfile, options.sudo)
+        else:
+            flash_picoboot(options.device, binfile, options.sudo)
     except error as e:
         sys.stderr.write(RP2040_HELP % (options.device, str(e)))
         sys.exit(-1)
@@ -288,7 +339,8 @@ MCUTYPES = {
     'sam3': flash_atsam3, 'sam4': flash_atsam4, 'samd': flash_atsamd,
     'same70': flash_atsam4, 'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
     'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
-    'stm32f072': flash_stm32f4, 'rp2040': flash_rp2040
+    'stm32f072': flash_stm32f4, 'stm32g0b1': flash_stm32f4,
+    'stm32h7': flash_stm32f4, 'rp2040': flash_rp2040
 }
 
 

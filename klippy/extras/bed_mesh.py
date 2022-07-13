@@ -124,6 +124,8 @@ class BedMesh:
         # Register transform
         gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
+        # initialize status dict
+        self.update_status()
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         self.bmc.print_generated_points(logging.info)
@@ -162,6 +164,7 @@ class BedMesh:
         # cache the current position before a transform takes place
         gcode_move = self.printer.lookup_object('gcode_move')
         gcode_move.reset_last_position()
+        self.update_status()
     def get_z_factor(self, z_pos):
         if z_pos >= self.fade_end:
             return 0.
@@ -216,7 +219,9 @@ class BedMesh:
                         "Mesh Leveling: Error splitting move ")
         self.last_position[:] = newpos
     def get_status(self, eventtime=None):
-        status = {
+        return self.status
+    def update_status(self):
+        self.status = {
             "profile_name": "",
             "mesh_min": (0., 0.),
             "mesh_max": (0., 0.),
@@ -230,12 +235,11 @@ class BedMesh:
             mesh_max = (params['max_x'], params['max_y'])
             probed_matrix = self.z_mesh.get_probed_matrix()
             mesh_matrix = self.z_mesh.get_mesh_matrix()
-            status['profile_name'] = self.pmgr.get_current_profile()
-            status['mesh_min'] = mesh_min
-            status['mesh_max'] = mesh_max
-            status['probed_matrix'] = probed_matrix
-            status['mesh_matrix'] = mesh_matrix
-        return status
+            self.status['profile_name'] = self.pmgr.get_current_profile()
+            self.status['mesh_min'] = mesh_min
+            self.status['mesh_max'] = mesh_max
+            self.status['probed_matrix'] = probed_matrix
+            self.status['mesh_matrix'] = mesh_matrix
     def get_mesh(self):
         return self.z_mesh
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
@@ -1180,6 +1184,7 @@ class ProfileManager:
         profile['mesh_params'] = collections.OrderedDict(mesh_params)
         self.profiles = profiles
         self.current_profile = prof_name
+        self.bedmesh.update_status()
         self.gcode.respond_info(
             "Bed Mesh state has been saved to profile [%s]\n"
             "for the current session.  The SAVE_CONFIG command will\n"
@@ -1206,6 +1211,7 @@ class ProfileManager:
             profiles = dict(self.profiles)
             del profiles[prof_name]
             self.profiles = profiles
+            self.bedmesh.update_status()
             self.gcode.respond_info(
                 "Profile [%s] removed from storage for this session.\n"
                 "The SAVE_CONFIG command will update the printer\n"
