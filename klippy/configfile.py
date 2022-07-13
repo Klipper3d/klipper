@@ -402,10 +402,15 @@ class PrinterConfig:
         if cfgname.endswith(".cfg"):
             backup_name = cfgname[:-4] + datestr + ".cfg"
             temp_name = cfgname[:-4] + "_autosave.cfg"
+        backup_path_idx = backup_name.rfind("/")
+        backup_dir = backup_name[:backup_path_idx] + "/backups"
+        backup_name = backup_dir + backup_name[backup_path_idx:]
         # Create new config file with temporary name and swap with main config
         logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                      cfgname, backup_name)
         try:
+            if not os.path.exists(backup_dir):
+                os.makedirs(backup_dir)
             f = open(temp_name, 'w')
             f.write(data)
             f.close()
