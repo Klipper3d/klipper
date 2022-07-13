@@ -1200,8 +1200,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usb-to-can-bus-bridge-mode" class="md-nav__link">
-    USB to CAN bus bridge mode
+  <a href="#usbcan" class="md-nav__link">
+    USB转CAN总线桥接模式
   </a>
   
 </li>
@@ -1311,8 +1311,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usb-to-can-bus-bridge-mode" class="md-nav__link">
-    USB to CAN bus bridge mode
+  <a href="#usbcan" class="md-nav__link">
+    USB转CAN总线桥接模式
   </a>
   
 </li>
@@ -1374,14 +1374,14 @@ iface can0 can static
 canbus_uuid: 11aa22bb33cc
 </code></pre></div>
 
-<h2 id="usb-to-can-bus-bridge-mode">USB to CAN bus bridge mode<a class="headerlink" href="#usb-to-can-bus-bridge-mode" title="Permanent link">&para;</a></h2>
-<p>Some micro-controllers support selecting "USB to CAN bus bridge" mode during "make menuconfig". This mode may allow one to use a micro-controller as both a "USB to CAN bus adapter" and as a Klipper node.</p>
-<p>When Klipper uses this mode the micro-controller appears as a "USB CAN bus adapter" under Linux. The "Klipper bridge mcu" itself will appear as if was on this CAN bus - it can be identified via <code>canbus_query.py</code> and configured like other CAN bus Klipper nodes. It will appear alongside other devices that are actually on the CAN bus.</p>
-<p>Some important notes when using this mode:</p>
+<h2 id="usbcan">USB转CAN总线桥接模式<a class="headerlink" href="#usbcan" title="Permanent link">&para;</a></h2>
+<p>一些微控制器支持在 "make menuconfig "中选择 "USB 转 CAN 总线桥接"模式。这种模式可以把微控制器作为 "USB到CAN总线适配器"的同时作为Klipper节点使用。</p>
+<p>当Klipper使用这种模式时，微控制器在 Linux 下会显示为一个 "USB CAN总线适配器"。“Klipper 桥接 mcu "本身将出现在这个CAN总线上--它可以通过<code>canbus_query.py</code> ，并像其他CAN总线Klipper节点一样被配置。它将与其他实际在CAN总线上的设备一起出现。</p>
+<p>使用该模式时的一些重要注意事项：</p>
 <ul>
-<li>The "bridge mcu" is not actually on the CAN bus. Messages to and from it do not consume bandwidth on the CAN bus. The mcu can not be seen by other adapters that may be on the CAN bus.</li>
-<li>It is necessary to configure the <code>can0</code> (or similar) interface in Linux in order to communicate with the bus. However, Linux CAN bus speed and CAN bus bit-timing options are ignored by Klipper. Currently, the CAN bus frequency is specified during "make menuconfig" and the bus speed specified in Linux is ignored.</li>
-<li>Whenever the "bridge mcu" is reset, Linux will disable the corresponding <code>can0</code> interface. Generally, this may require running commands such as "ip up" to restart the interface. Thus, Klipper FIRMWARE_RESTART commands (or regular RESTART after a config change) may require restarting the <code>can0</code> interface.</li>
+<li>“桥接MCU” 实际上并不在CAN总线上。传入和传出的消息不会占用CAN总线上的带宽。因此位于CAN总线上的其他适配器无法看到MCU。</li>
+<li>有必要在Linux中配置<code>can0</code> （或类似）接口，以便与总线通信。然而，Klipper 会忽略 Linux的CAN总线速度和 CAN 总线bit-timing选项。目前，CAN总线的频率需要在 "make menuconfig "中指定。Linux中指定的总线速度会被忽略。</li>
+<li>每当 "桥接 mcu "被重置时，Linux 将禁用相应的<code>can0</code> 接口。一般来说，这可能需要运行诸如 "ip up "之类的命令来重新启动接口。因此，Klipper FIRMWARE_RESTART 命令 (或配置改变后的常规 RESTART) 可能需要重新启动<code>can0</code> 接口。</li>
 </ul>
 
               

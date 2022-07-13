@@ -1524,7 +1524,7 @@
 <li>A javasolt rétegmagasság 0,2 vagy 0,25 mm.</li>
 <li>A kitöltő és a felső rétegek 0-ra állíthatók.</li>
 <li>Használjon 1-2 falat, vagy még jobb a sima váza mód 1-2 mm-es alappal.</li>
-<li>A <strong>külső</strong> kerületeknél használjon kellően nagy sebességet, körülbelül 80-100 mm/mp.</li>
+<li>A <strong>külső</strong> kerületeknél használjon kellően nagy sebességet, körülbelül 80-100 mm/sec.</li>
 <li>Győződjön meg róla, hogy a minimális rétegidő <strong>legfeljebb</strong> 3 másodperc.</li>
 <li>Győződjön meg róla, hogy a szeletelőben a "dinamikus gyorsításvezérlés" ki van kapcsolva.</li>
 <li>Ne fordítsa el a modellt. A modell hátulján X és Y jelölések vannak. Figyelje meg a jelek szokatlan elhelyezkedését a nyomtató tengelyeihez képest. Ez nem hiba. A jelölések később a hangolási folyamat során referenciaként használhatók, mert megmutatják, hogy a mérések melyik tengelynek felelnek meg.</li>
@@ -1543,7 +1543,7 @@
 <ol>
 <li>Használja a modell hátulján található X és Y jeleket a tájékozódáshoz. Az X-jelöléssel ellátott oldalról történő méréseket kell használni az X tengely <em>konfigurációhoz</em>, az Y-jelölést pedig az Y tengely konfigurációjához. Mérje meg a távolságot <em>D</em> (mm-ben) több rezgés között az X jelzésű alkatrészen, a bevágások közelében, lehetőleg az első egy-két rezgést kihagyva. Az oszcillációk közötti távolság könnyebb méréséhez először jelölje meg az oszcillációkat, majd mérje meg a jelölések közötti távolságot vonalzóval vagy tolómérővel:|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</li>
 <li>Számolja meg, hogy a mért távolság <em>N</em> hány rezgésnek <em>D</em> felel meg. Ha nem biztos benne, hogy hogyan számolja a rezgéseket, nézze meg a fenti képet, ahol <em>N</em> = 6 rezgés.</li>
-<li>Számítsuk ki az X tengely gyűrődési frekvenciáját <em>V</em> &middot; <em>N</em> / <em>D</em> (Hz), ahol <em>V</em> a külső kerületekre vonatkozó sebesség (mm/mp). A fenti példánál 6 rezgést jelöltünk meg, és a tesztet 100 mm/mp sebességgel nyomtattuk, így a frekvencia 100 * 6 / 12,14 ≈ 49,4 Hz.</li>
+<li>Számítsuk ki az X tengely gyűrődési frekvenciáját <em>V</em> &middot; <em>N</em> / <em>D</em> (Hz), ahol <em>V</em> a külső kerületekre vonatkozó sebesség (mm/sec). A fenti példánál 6 rezgést jelöltünk meg, és a tesztet 100 mm/sec sebességgel nyomtattuk, így a frekvencia 100 * 6 / 12,14 ≈ 49,4 Hz.</li>
 <li>A (8)-(10) pontokat az Y jel esetében is végezzük el.</li>
 </ol>
 </li>
@@ -1602,7 +1602,7 @@ shaper_type: mzv
 <p><img alt="Test gap" src="img/smoothing-test.png" /></p>
 <p>Ahogy nő a gyorsulás, úgy nő a simítás is, és a tényleges rés a nyomtatásban kiszélesedik:</p>
 <p><img alt="Shaper smoothing" src="img/shaper-smoothing.jpg" /></p>
-<p>Ezen a képen a gyorsulás balról jobbra növekszik, és a rés 3500 mm/mp^2-től (balról az 5. sáv) kezd nőni. Tehát ebben az esetben a max_accel = 3000 (mm/sec^2) a jó érték, hogy elkerüljük a túlzott simítást.</p>
+<p>Ezen a képen a gyorsulás balról jobbra növekszik, és a rés 3500 mm/sec^2-től (balról az 5. sáv) kezd nőni. Tehát ebben az esetben a max_accel = 3000 (mm/sec^2) a jó érték, hogy elkerüljük a túlzott simítást.</p>
 <p>Figyelje meg a gyorsulást, amikor a rés még mindig nagyon kicsi a próbanyomaton. Ha kidudorodásokat lát, de a falon egyáltalán nincs rés, még nagy gyorsulásnál is, az a kikapcsolt nyomáselőtolás miatt lehet, különösen a bowdenes extrudereken. Ha ez a helyzet, akkor lehet, hogy meg kell ismételni a nyomtatást engedélyezett PA-val. Ez lehet a rosszul kalibrált (túl magas) nyomtatószál áramlás eredménye is, ezért ezt is érdemes ellenőrizni.</p>
 <p>Válassza ki a két gyorsulási érték közül a legkisebbet (a gyűrődésből és a simításból), és írja be <code>max_accel</code> néven a printer.cfg fájlba.</p>
 <p>Megjegyzendő, hogy előfordulhat különösen alacsony gyűrődési frekvenciáknál, hogy az EI shaper még kisebb gyorsulásoknál is túl nagy simítást okoz. Ebben az esetben az MZV jobb választás lehet, mert nagyobb gyorsulási értékeket engedhet meg.</p>

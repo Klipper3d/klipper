@@ -1399,12 +1399,12 @@ Recv: ok
 
 <p>这意味着：</p>
 <ul>
-<li>front left screw is the reference point you must not change it.</li>
+<li>左前螺丝是参考点，你不能改变它。</li>
 <li>front right screw must be turned clockwise 1 full turn and a quarter turn</li>
 <li>rear right screw must be turned counter-clockwise 50 minutes</li>
 <li>rear left screw must be turned clockwise 2 minutes (not need it's ok)</li>
 </ul>
-<p>Note that "minutes" refers to "minutes of a clock face". So, for example, 15 minutes is a quarter of a full turn.</p>
+<p>请注意，“分钟”是指“时钟上的分钟”。因此，例如，15分钟是完整一圈的四分之一。</p>
 <p>重复这个过程几次，直到打印床变得足够水平--通常情况下，这意味着所有的位置需要的调整都小于6分钟。</p>
 <p>如果使用安装在热端侧面的探头（即它有一个X或Y偏移），那么请注意，调整床身倾斜度将使以前在倾斜的床身下进行的任何探针校准失效。一定要在调整打印床螺丝后运行<a href="Probe_Calibrate.html">探针校准</a>。</p>
 <p>The <code>MAX_DEVIATION</code> parameter is useful when a saved bed mesh is used, to ensure that the bed level has not drifted too far from where it was when the mesh was created. For example, <code>SCREWS_TILT_CALCULATE MAX_DEVIATION=0.01</code> can be added to the custom start gcode of the slicer before the mesh is loaded. It will abort the print if the configured limit is exceeded (0.01mm in this example), giving the user a chance to adjust the screws and restart the print.</p>

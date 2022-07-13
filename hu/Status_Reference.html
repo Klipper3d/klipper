@@ -1873,7 +1873,7 @@
 <li><code>gcode_position</code>: A nyomtatófej aktuális pozíciója az aktuális G-kód origóhoz képest. Vagyis olyan pozíciók, amelyeket közvetlenül egy <code>G1</code> parancsnak küldhetünk. Lehetőség van e pozíció X, Y, Z és az E, komponensének elérésére (pl. <code>gcode_position.x</code>).</li>
 <li><code>position</code>: A nyomtatófej utolsó kiadott pozíciója a konfigurációs fájlban megadott koordináta rendszerrel. Lehetőség van ennek a pozíciónak az X, Y, Z és az E, komponenséhez hozzáférni (pl. <code>position.x</code>).</li>
 <li><code>homing_origin</code>: A G-kód koordináta rendszer origója (a config fájlban megadott koordináta rendszerhez képest), amelyet a <code>G28</code> parancs után használni kell. A <code>SET_GCODE_OFFSET</code> parancs megváltoztathatja ezt a pozíciót. Lehetőség van ennek a pozíciónak az X, Y és Z komponenséhez hozzáférni (pl. <code>homing_origin.x</code>).</li>
-<li><code>speed</code>: Az utolsó, <code>G1</code> parancsban beállított sebesség (mm/mp-ben).</li>
+<li><code>speed</code>: Az utolsó, <code>G1</code> parancsban beállított sebesség (mm/sec-ben).</li>
 <li><code>speed_factor</code>: Az <code>M220</code> parancs által beállított "sebességtényező felülbírálása". Ez egy lebegőpontos érték, így 1.0 azt jelenti, hogy nincs felülbírálat, és például a 2.0 megduplázza a kért sebességet.</li>
 <li><code>extrude_factor</code>: Az <code>M221</code> parancs által beállított "extrude factor override". Ez egy lebegőpontos érték, így 1.0 azt jelenti, hogy nincs felülbírálat, és például a 2.0 megduplázza a kért extrudálásokat.</li>
 <li><code>absolute_coordinates</code>: True értéket ad, ha a <code>G90</code> abszolút koordináta módban van, vagy False értéket, ha a <code>G91</code> relatív módban van.</li>
@@ -1923,8 +1923,8 @@
 <p>A következő információk a <code>motion_report</code> objektumban érhetők el (ez az objektum automatikusan elérhető, ha bármilyen stepper konfigurációs szakasz definiálva van):</p>
 <ul>
 <li><code>live_position</code>: A nyomtatófej kért pozíciója az aktuális időre interpolálva.</li>
-<li><code>live_velocity</code>: A nyomtatófej kért sebessége (mm/mp-ben) az aktuális időpontban.</li>
-<li><code>live_extruder_velocity</code>: A kért extruder sebesség (mm/mp-ben) az aktuális időpontban.</li>
+<li><code>live_velocity</code>: A nyomtatófej kért sebessége (mm/sec-ben) az aktuális időpontban.</li>
+<li><code>live_extruder_velocity</code>: A kért extruder sebesség (mm/sec-ben) az aktuális időpontban.</li>
 </ul>
 <h2 id="output_pin">output_pin<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#output_pin">output_pin some_name</a> objektumokban érhetők el:</p>

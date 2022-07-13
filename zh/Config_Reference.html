@@ -3593,7 +3593,7 @@ max_accel:
 
 <h3 id="stepper">[stepper]<a class="headerlink" href="#stepper" title="Permanent link">&para;</a></h3>
 <p>步进电机定义。 不同的打印机类型（由 [打印] 配置部分中的“运动学”选项指定）步进器需要定义不同的名称（例如，<code>stepper_x</code> 与 <code>stepper_a</code>）。 以下是常见的步进器定义。</p>
-<p>See the <a href="Rotation_Distance.html">rotation distance document</a> for information on calculating the <code>rotation_distance</code> parameter. See the <a href="Multi_MCU_Homing.html">Multi-MCU homing</a> document for information on homing using multiple micro-controllers.</p>
+<p>关于计算<code>rotation_distance</code> 参数的方法，请参见<a href="Rotation_Distance.html">旋转距离文档</a>。关于使用多个微控制器的归位的方法，请参见<a href="Multi_MCU_Homing.html">Multi-MCU homing</a>文件。</p>
 <div class="highlight"><pre><span></span><code>[stepper_x]
 step_pin:
 #   Step GPIO pin (triggered high). This parameter must be provided.
@@ -3988,7 +3988,7 @@ radius:
 </code></pre></div>
 
 <h3 id="_8">缆绳绞盘运动学<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
-<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-winch.cfg">example-winch.cfg</a> for an example cable winch kinematics config file.</p>
+<p>有关缆绳绞盘运动学配置文件的例子，参见<a href="./config/example-winch.cfg">example-winch.cfg</a>。</p>
 <p>这里只描述了缆绳铰盘式(cable winch)打印机特有的参数 — 全部可用的参数见<a href="#common-kinematic-settings">常用的运动学设置</a>。</p>
 <p>缆绳铰盘支持是实验性的。归位在缆绳绞盘运动学中没有实现。在打印机归位时需要手动发送运动指令将工具头处于0, 0, 0位置，然后发出<code>G28</code>归位。</p>
 <div class="highlight"><pre><span></span><code>[printer]
@@ -4289,7 +4289,7 @@ max_temp:
 
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
 <p>Tool to help adjust bed leveling screws. One may define a [bed_screws] config section to enable a BED_SCREWS_ADJUST g-code command.</p>
-<p>See the <a href="Manual_Level.html#adjusting-bed-leveling-screws">leveling guide</a> and <a href="G-Codes.html#bed_screws">command reference</a> for additional information.</p>
+<p>有关更多信息，请参阅 <a href="Manual_Level.html#adjusting-bed-leveling-screws">调平指南</a>和 <a href="G-Codes.html#bed_screws">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[bed_screws]
 #screw1:
 # 第一颗打印机调平螺丝的X,Y坐标。这是将命令喷嘴移动到螺丝正
@@ -4322,7 +4322,7 @@ max_temp:
 
 <h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
 <p>Tool to help adjust bed screws tilt using Z probe. One may define a screws_tilt_adjust config section to enable a SCREWS_TILT_CALCULATE g-code command.</p>
-<p>See the <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">leveling guide</a> and <a href="G-Codes.html#screws_tilt_adjust">command reference</a> for additional information.</p>
+<p>请参阅<a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">调平指南</a>和<a href="G-Code.md#screws_tilt_adjust">命令参考</a>了解更多信息。</p>
 <div class="highlight"><pre><span></span><code>[screws_tilt_adjust]
 #screw1:
 #   The (X, Y) coordinate of the first bed leveling screw. This is a
@@ -4486,7 +4486,7 @@ gcode：
 
 <h3 id="endstop_phase">[endstop_phase]<a class="headerlink" href="#endstop_phase" title="Permanent link">&para;</a></h3>
 <p>Stepper phase adjusted endstops. To use this feature, define a config section with an "endstop_phase" prefix followed by the name of the corresponding stepper config section (for example, "[endstop_phase stepper_z]"). This feature can improve the accuracy of endstop switches. Add a bare "[endstop_phase]" declaration to enable the ENDSTOP_PHASE_CALIBRATE command.</p>
-<p>See the <a href="Endstop_Phase.html">endstop phases guide</a> and <a href="G-Codes.html#endstop_phase">command reference</a> for additional information.</p>
+<p>更多信息见<a href="Endstop_Phase.html">相位限位指南</a>和<a href="G-Code.md#endstop_phase">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[endstop_phase stepper_z]
 #endstop_accuracy:
 #   设置预期的限位精度（以毫米(mm)为单位）。 代表了相位可能
@@ -5250,13 +5250,11 @@ sensor_pin:
 <p>BMP280/BME280/BME680 两线接口 (I2C) 环境传感器。注意，这些传感器不适用于挤出机和加热床。它们可以用于监测环境温度 (C)、压力 (hPa)、相对湿度以及气体水平（仅在BME680上）。请参阅 <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> 以获取可用于报告压力和湿度以及温度的gcode_macro。</p>
 <div class="highlight"><pre><span></span><code>sensor_type: BME280
 #i2c_address:
-#   Default is 118 (0x76). Some BME280 sensors have an address of 119
-#   (0x77).
+#   默认为118(0x76)。一些BME280传感器的地址为119(0x77).
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
+#   参见 &quot;常见的I2C设置 &quot;部分，以了解对上述参数的描述。
 </code></pre></div>
 
 <h3 id="htu21d">HTU21D 传感器<a class="headerlink" href="#htu21d" title="Permanent link">&para;</a></h3>
@@ -5701,7 +5699,7 @@ pin:
 </code></pre></div>
 
 <h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
-<p>Run-time configurable output pins (one may define any number of sections with an "output_pin" prefix). Pins configured here will be setup as output pins and one may modify them at run-time using "SET_PIN PIN=my_pin VALUE=.1" type extended <a href="G-Codes.html#output_pin">g-code commands</a>.</p>
+<p>运行时可配置的输出引脚（可以定义任意数量的带有 "output_pin "前缀的分段）。在这里配置的引脚将被设置为输出引脚，可以在运行时使用 "SET_PIN PIN=my_pin VALUE=.1 "类型的扩展<a href="G-Code.md#output_pin">G代码命令</a>对其进行修改。</p>
 <div class="highlight"><pre><span></span><code>[output_pin 我的引脚]
 pin:
 #   被设置为输出的引脚。
@@ -6472,7 +6470,7 @@ text:
 <h3 id="menu">[menu]<a class="headerlink" href="#menu" title="Permanent link">&para;</a></h3>
 <p>可自定义液晶显示屏菜单。</p>
 <p>一套<a href="https://github.com/Klipper3d/klipper/blob/master/klippy/extras/display/menu.cfg">默认菜单</a>将被自动创建。通过覆盖 printer.cfg 主配置文件中的默认值可以替换或扩展该菜单。</p>
-<p>See the <a href="Command_Templates.html#menu-templates">command template document</a> for information on menu attributes available during template rendering.</p>
+<p>参见<a href="Command_Templates.html#menu-templates">命令模板文档</a>，了解模板渲染过程中可用的菜单属性。</p>
 <div class="highlight"><pre><span></span><code># 所有的菜单配置分段都有的通用参数。
 #[menu __some_list __some_name]
 #type: disabled
@@ -6672,7 +6670,7 @@ i2c_address:
 </code></pre></div>
 
 <h3 id="samd_sercom">[samd_sercom]<a class="headerlink" href="#samd_sercom" title="Permanent link">&para;</a></h3>
-<p>SAMD SERCOM configuration to specify which pins to use on a given SERCOM. One may define any number of sections with a "samd_sercom" prefix. Each SERCOM must be configured prior to using it as SPI or I2C peripheral. Place this config section above any other section that makes use of SPI or I2C buses.</p>
+<p>SAMD SERCOM配置，指定在一个给定的SERCOM上使用哪些引脚。可以用 "samd_sercom "前缀来定义任何数量的分段。每个SERCOM必须在使用它作为SPI或I2C外围设备之前进行配置。将这个配置分段必须在任何其他使用SPI或I2C总线的分段之上。</p>
 <div class="highlight"><pre><span></span><code>[samd_sercom my_sercom]
 sercom:
 #   The name of the sercom bus to configure in the micro-controller.
