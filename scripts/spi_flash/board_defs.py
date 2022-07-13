@@ -70,6 +70,12 @@ BOARD_DEFS = {
         'mcu': "stm32f407xx",
         'spi_bus': "spi3a",
         "cs_pin": "PC9"
+    },
+    'btt-octopus': {
+        'mcu': "stm32f446xx",
+        "cs_pin": "PC11",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
     }
 }
 
