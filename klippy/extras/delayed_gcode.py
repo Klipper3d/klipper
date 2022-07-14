@@ -7,34 +7,6 @@
 import logging
 from gcode_macro import GetStatusWrapper
 
-# # Wrapper for access to printer object get_status() methods
-# class GetStatusWrapper:
-#     def __init__(self, printer, eventtime=None):
-#         self.printer = printer
-#         self.eventtime = eventtime
-#         self.cache = {}
-#     def __getitem__(self, val):
-#         sval = str(val).strip()
-#         if sval in self.cache:
-#             return self.cache[sval]
-#         po = self.printer.lookup_object(sval, None)
-#         if po is None or not hasattr(po, 'get_status'):
-#             raise KeyError(val)
-#         if self.eventtime is None:
-#             self.eventtime = self.printer.get_reactor().monotonic()
-#         self.cache[sval] = res = copy.deepcopy(po.get_status(self.eventtime))
-#         return res
-#     def __contains__(self, val):
-#         try:
-#             self.__getitem__(val)
-#         except KeyError as e:
-#             return False
-#         return True
-#     def __iter__(self):
-#         for name, obj in self.printer.lookup_objects():
-#             if self.__contains__(name):
-#                 yield name
-
 class DelayedGcode:
     def __init__(self, config):
         self.printer = config.get_printer()
