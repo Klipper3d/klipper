@@ -69,7 +69,7 @@ class DelayedGcode:
         else:
             msg = "%s not running" % (self.name)
         mesg = "%s" % (self.duration)
-        msag = "%s" % (self.reactor.monotonic())
+        msag = "%s" % (self.waketime)
         gcmd.respond_info(msg)
         gcmd.respond_info(mesg)
         gcmd.respond_info(msag)
