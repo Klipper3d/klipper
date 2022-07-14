@@ -28,7 +28,9 @@ class DelayedGcode:
             self.cmd_QUERY_DELAYED_GCODE,
             desc=self.cmd_QUERY_DELAYED_GCODE_help)
     def get_status(self, eventtime):
-        remain_time = self.waketime - self.printer.get_reactor().monotonic()
+        remain_time = 0
+        if self.duration > 0:
+          remain_time = self.waketime - self.printer.get_reactor().monotonic()
         if remain_time > 0:
             remaining = remain_time
         else:
