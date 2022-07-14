@@ -70,11 +70,7 @@ class DelayedGcode:
             msg = "%s running, %.1f secs remaining" % (self.name, remain_time)
         else:
             msg = "%s not running" % (self.name)
-        mesg = "%s" % (self.duration)
-        msag = "%s" % (self.waketime)
         gcmd.respond_info(msg)
-        gcmd.respond_info(mesg)
-        gcmd.respond_info(msag)
 
 def load_config_prefix(config):
     return DelayedGcode(config)
