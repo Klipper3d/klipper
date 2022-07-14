@@ -70,7 +70,7 @@ class DelayedGcode:
             msg = "%s not running" % (self.name)
         mesg = self.duration
         gcmd.respond_info(msg)
-        gcmd.respond_info(msg)
+        gcmd.respond_info(mesg)
 
 def load_config_prefix(config):
     return DelayedGcode(config)
