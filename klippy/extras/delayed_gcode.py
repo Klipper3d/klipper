@@ -58,7 +58,7 @@ class DelayedGcode:
             self.repeat = (self.duration != 0.)
         else:
             self.waketime = self.reactor.NEVER
-            if self.duration:
+            if self.duration > 0:
                 self.waketime = self.reactor.monotonic() + self.duration
             self.reactor.update_timer(self.timer_handler, self.waketime)
     cmd_QUERY_DELAYED_GCODE_help = "Returns the status of a delayed_gcode"
