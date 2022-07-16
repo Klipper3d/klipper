@@ -339,7 +339,8 @@ MCUTYPES = {
     'sam3': flash_atsam3, 'sam4': flash_atsam4, 'samd': flash_atsamd,
     'same70': flash_atsam4, 'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
     'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
-    'stm32f072': flash_stm32f4, 'rp2040': flash_rp2040
+    'stm32f072': flash_stm32f4, 'stm32g0b1': flash_stm32f4,
+    'stm32h7': flash_stm32f4, 'rp2040': flash_rp2040
 }
 
 
