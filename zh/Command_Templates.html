@@ -1482,9 +1482,9 @@ gcode:
   RESTORE_GCODE_STATE NAME=my_move_up_state
 </code></pre></div>
 
-<p>The <code>G91</code> command places the G-Code parsing state into "relative move mode" and the <code>RESTORE_GCODE_STATE</code> command restores the state to what it was prior to entering the macro. Be sure to specify an explicit speed (via the <code>F</code> parameter) on the first <code>G1</code> command.</p>
+<p><code>G91</code> 命令将G代码解析状态放入 "相对移动模式"，<code>RESTORE_GCODE_STATE</code> 命令将状态恢复到进入宏之前的状态。请确保在第一条<code>G1</code> 命令中指定一个明确的速度（通过<code>F</code> 参数）。</p>
 <h2 id="_3">模板扩展<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p>The gcode_macro <code>gcode:</code> config section is evaluated using the Jinja2 template language. One can evaluate expressions at run-time by wrapping them in <code>{ }</code> characters or use conditional statements wrapped in <code>{% %}</code>. See the <a href="http://jinja.pocoo.org/docs/2.10/templates/">Jinja2 documentation</a> for further information on the syntax.</p>
+<p>gcode_macro<code>gcode:</code> 配置部分是使用的是Jinja2模板语言。人们可以通过用<code>{ }</code> 字符包装来在运行时使用表达式，或者使用用<code>{% %}</code> 包装的条件语句。参考<a href="http://jinja.pocoo.org/docs/2.10/templates/">Jinja2文档</a>以了解更多关于语法的信息。</p>
 <p>一个更复杂的宏示例：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro clean_nozzle]
 gcode:
@@ -1501,14 +1501,14 @@ gcode:
 </code></pre></div>
 
 <h3 id="_4">宏观参数<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<p>It is often useful to inspect parameters passed to the macro when it is called. These parameters are available via the <code>params</code> pseudo-variable. For example, if the macro:</p>
+<p>当macro被调用时，检查传递给它的参数往往是有用的。这些参数可以通过<code>params</code> 伪变量（pseudo-variable）获得。类似于以下macro：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro SET_PERCENT]
 gcode:
   M117 Now at { params.VALUE|float * 100 }%
 </code></pre></div>
 
-<p>were invoked as <code>SET_PERCENT VALUE=.2</code> it would evaluate to <code>M117 Now at 20%</code>. Note that parameter names are always in upper-case when evaluated in the macro and are always passed as strings. If performing math then they must be explicitly converted to integers or floats.</p>
-<p>It's common to use the Jinja2 <code>set</code> directive to use a default parameter and assign the result to a local name. For example:</p>
+<p>如果以<code>SET_PERCENT VALUE=.2</code> 的方式调用，则会评估为<code>M117 现在为 20%</code> 。需要注意的是在宏（macro）中进行评估时，参数名称始终使用大写字母，并且始终以字符串（strings）形式传递。如果执行数学运算，则必须明确地将其转换为整数（integers）或浮点数（floats）。</p>
+<p>通常使用Jinja2的<code>set</code> 指令来使用一个默认参数，并将结果分配给一个本地名称。比如说：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro SET_BED_TEMPERATURE]
 gcode:
   {% set bed_temp = params.TEMPERATURE|default(40)|float %}
@@ -1531,13 +1531,13 @@ gcode:
 </code></pre></div>
 
 <h3 id="printer">"printer"变量<a class="headerlink" href="#printer" title="Permanent link">&para;</a></h3>
-<p>It is possible to inspect (and alter) the current state of the printer via the <code>printer</code> pseudo-variable. For example:</p>
+<p>可以通过<code>printer</code> 的pseudo-variable来检查（和变更）打印机的当前状态。比如说：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro slow_fan]
 gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
 </code></pre></div>
 
-<p>Available fields are defined in the <a href="Status_Reference.html">Status Reference</a> document.</p>
+<p><a href="Status_Reference.html">Status Reference</a> 文档中定义了可用字段。</p>
 <p>Important! Macros are first evaluated in entirety and only then are the resulting commands executed. If a macro issues a command that alters the state of the printer, the results of that state change will not be visible during the evaluation of the macro. This can also result in subtle behavior when a macro generates commands that call other macros, as the called macro is evaluated when it is invoked (which is after the entire evaluation of the calling macro).</p>
 <p>By convention, the name immediately following <code>printer</code> is the name of a config section. So, for example, <code>printer.fan</code> refers to the fan object created by the <code>[fan]</code> config section. There are some exceptions to this rule - notably the <code>gcode_move</code> and <code>toolhead</code> objects. If the config section contains spaces in it, then one can access it via the <code>[ ]</code> accessor - for example: <code>printer["generic_heater my_chamber_heater"].temperature</code>.</p>
 <p>Note that the Jinja2 <code>set</code> directive can assign a local name to an object in the <code>printer</code> hierarchy. This can make macros more readable and reduce typing. For example:</p>
