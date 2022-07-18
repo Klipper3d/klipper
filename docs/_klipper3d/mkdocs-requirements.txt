@@ -7,3 +7,4 @@ mkdocs-exclude==1.0.2
 mdx-truly-sane-lists==1.2
 mdx-breakless-lists==1.0.1
 py-gfm==1.0.2
+markdown==3.3.7

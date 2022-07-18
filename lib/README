@@ -131,4 +131,4 @@ used to upload firmware to devices flashed with the CanBoot bootloader.
 
 The can2040 directory contains code from:
   https://github.com/KevinOConnor/can2040
-revision 17b8ace15584077cd0bf0c3e038c2a2a8edd70ed.
+revision 9ca095c939a48391de60dd353f0cd91999bb9257.
