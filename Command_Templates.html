@@ -1566,20 +1566,11 @@ gcode:
 </code></pre></div>
 
 <h3 id="the-rawparams-variable">The "rawparams" variable<a class="headerlink" href="#the-rawparams-variable" title="Permanent link">&para;</a></h3>
-<p>The full unparsed parameters for the running macro can be access via the <code>rawparams</code> pseudo-variable.</p>
-<p>This is quite useful if you want to change the behavior of certain commands like the <code>M117</code>. For example:</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro M117]
-rename_existing: M117.1
-gcode:
-  {% if rawparams %}
-    {% set escaped_msg = rawparams|replace(&#39;&quot;&#39;, &#39;\\&quot;&#39;) %}
-    SET_DISPLAY_TEXT MSG=&quot;{escaped_msg}&quot;
-    RESPOND TYPE=command MSG=&quot;{escaped_msg}&quot;
-  {% else %}
-    SET_DISPLAY_TEXT
-  {% endif %}
-</code></pre></div>
-
+<p>The full unparsed parameters for the running macro can be access via the
+<code>rawparams</code> pseudo-variable.</p>
+<p>Note that this will include any comments that were part of the original command.</p>
+<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for an example
+showing how to override the <code>M117</code> command using <code>rawparams</code>.</p>
 <h3 id="the-printer-variable">The "printer" Variable<a class="headerlink" href="#the-printer-variable" title="Permanent link">&para;</a></h3>
 <p>It is possible to inspect (and alter) the current state of the printer
 via the <code>printer</code> pseudo-variable. For example:</p>
