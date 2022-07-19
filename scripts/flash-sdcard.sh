@@ -3,7 +3,7 @@
 #  unattended firmware updates on boards with "SD Card" bootloaders
 
 # Non-standard installations may need to change this location
-KLIPPY_ENV="${HOME}/klippy-env/bin/python"
+KLIPPY_ENV="${KLIPPER_VENV:-${HOME}/klippy-env/bin/python}"
 SRCDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 KLIPPER_BIN="${SRCDIR}/out/klipper.bin"
 KLIPPER_BIN_DEFAULT=$KLIPPER_BIN

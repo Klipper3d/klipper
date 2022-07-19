@@ -2,7 +2,7 @@
 # This script installs Klipper on a Raspberry Pi machine running the
 # OctoPi distribution.
 
-PYTHONDIR="${HOME}/klippy-env"
+PYTHONDIR="${KLIPPER_VENV:-${HOME}/klippy-env}"
 
 # Step 1: Install system packages
 install_packages()

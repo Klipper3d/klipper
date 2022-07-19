@@ -2,7 +2,7 @@
 # This script installs Klipper on an x86_64 machine running the
 # CentOS 7 distribution.
 
-PYTHONDIR="${HOME}/klippy-env"
+PYTHONDIR="${KLIPPER_VENV:-${HOME}/klippy-env}"
 SYSTEMDDIR="/etc/systemd/system"
 
 # Step 1: Install system packages

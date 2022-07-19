@@ -1,11 +1,11 @@
 #!/bin/bash
 # This script installs Klipper on an Arch Linux system
 
-PYTHONDIR="${HOME}/klippy-env"
+PYTHONDIR="${KLIPPER_VENV:-${HOME}/klippy-env}"
 SYSTEMDDIR="/etc/systemd/system"
-AURCLIENT="pamac"
-KLIPPER_USER=$USER
-KLIPPER_GROUP=$KLIPPER_USER
+AURCLIENT="${AURCLIENT:-pamac build}"
+KLIPPER_USER="${KLIPPER_USER:-$USER}"
+KLIPPER_GROUP="${KLIPPER_GROUP:-$KLIPPER_USER}"
 
 # Step 1: Install system packages
 install_packages()
@@ -26,7 +26,7 @@ install_packages()
     # Install desired packages
      report_status "Installing packages..."
      sudo pacman -S ${PKGLIST}
-     $AURCLIENT build ${AURLIST}
+     $AURCLIENT ${AURLIST}
 }
 
 # Step 2: Create python virtual environment
