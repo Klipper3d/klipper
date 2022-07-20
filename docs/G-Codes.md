@@ -624,6 +624,10 @@ is enabled.
 - `QUERY_FILAMENT_SENSOR SENSOR=<sensor_name>`: Queries the current
   status of the filament sensor. The data displayed on the terminal
   will depend on the sensor type defined in the confguration.
+  In a case when filament montion sensor is set query will retrun
+  information about measured sensitivity. This represent value
+  measured by firmware and could be used to calibration/tune of value
+  set in config file. This should prevent false positive triggering.
 - `SET_FILAMENT_SENSOR SENSOR=<sensor_name> ENABLE=[0|1]`: Sets the
   filament sensor on/off. If ENABLE is set to 0, the filament sensor
   will be disabled, if set to 1 it is enabled.

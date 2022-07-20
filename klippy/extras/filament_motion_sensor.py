@@ -75,8 +75,7 @@ class EncoderSensor:
     def encoder_event(self, eventtime, state):
         if self.extruder is not None:
             self._update_filament_runout_pos(eventtime)
-            # Check for filament insertion
-            # Filament is always assumed to be present on an encoder event
+            # Measured sensor sensitivity based on mean value
             self.measured_sensitivity += (self.filament_runout_pos -
                                           self.extruder_pos)
             self.measured_sensitivity /= 2.0
