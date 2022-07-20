@@ -264,7 +264,7 @@ class AnalyzerManager:
         if hdl is None:
             hdl = self.gen_datasets.get(dataset)
             if hdl is None:
-                raise error("Unknown dataset '%s'" % (dataset,))
+                raise self.error("Unknown dataset '%s'" % (dataset,))
         return hdl.get_label()
     def generate_datasets(self):
         # Generate raw data

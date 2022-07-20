@@ -11,6 +11,8 @@
 #include "sam4s.h"
 #elif CONFIG_MACH_SAM4E
 #include "sam4e.h"
+#elif CONFIG_MACH_SAME70
+#include "sam.h"
 #endif
 
 #define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))

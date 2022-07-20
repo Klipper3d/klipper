@@ -93,21 +93,19 @@ Common things a reviewer will look for:
    real-world benefits of a change is a natural part of a review.
 
    When discussing benefits it is preferable to discuss "facts and
-   measurements" instead of "opinions and theories". In general,
-   reviewers are not looking for responses of the form "this
-   submission may improve quality because of ...", nor are they
-   looking for responses of the form "someone may find option X
-   useful", nor are they looking for responses of the form "this
-   submission adds a feature that firmware X implements". Instead, it
-   is generally preferable to discuss details on how the quality
-   improvement was measured and what were the results of those
-   measurements - for example, "tests on Acme X1000 printers show
-   improved corners as seen in picture ...", or for example "print
-   time of real-world object X on a Foomatic X900 printer went from 4
-   hours to 3.5 hours". It is understood that testing of this type can
-   take significant time and effort. Some of Klipper's most notable
-   features took years of discussion, rework, testing, and
-   documentation prior to being merged into the master branch.
+   measurements". In general, reviewers are not looking for responses
+   of the form "someone may find option X useful", nor are they
+   looking for responses of the form "this submission adds a feature
+   that firmware X implements". Instead, it is generally preferable to
+   discuss details on how the quality improvement was measured and
+   what were the results of those measurements - for example, "tests
+   on Acme X1000 printers show improved corners as seen in picture
+   ...", or for example "print time of real-world object X on a
+   Foomatic X900 printer went from 4 hours to 3.5 hours". It is
+   understood that testing of this type can take significant time and
+   effort. Some of Klipper's most notable features took months of
+   discussion, rework, testing, and documentation prior to being
+   merged into the master branch.
 
    All new modules, config options, commands, command parameters, and
    documents should have "high impact". We do not want to burden users

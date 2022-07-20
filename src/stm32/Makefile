@@ -3,7 +3,7 @@
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
 
-dirs-y += src/stm32 src/generic
+dirs-y += src/stm32 src/generic lib/fast-hash
 dirs-$(CONFIG_MACH_STM32F0) += lib/stm32f0
 dirs-$(CONFIG_MACH_STM32F1) += lib/stm32f1
 dirs-$(CONFIG_MACH_STM32F2) += lib/stm32f2
@@ -59,11 +59,13 @@ serial-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial.c
 serial-src-$(CONFIG_MACH_STM32G0) := stm32/stm32f0_serial.c
 serial-src-$(CONFIG_MACH_STM32H7) := stm32/stm32h7_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
-src-$(CONFIG_CANSERIAL) += stm32/can.c ../lib/fast-hash/fasthash.c
-src-$(CONFIG_CANSERIAL) += generic/canbus.c
+canbus-src-y := generic/canserial.c ../lib/fast-hash/fasthash.c
+canbus-src-$(CONFIG_HAVE_STM32_CANBUS) += stm32/can.c
+canbus-src-$(CONFIG_HAVE_STM32_FDCANBUS) += stm32/fdcan.c
+src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c stm32/chipid.c
+src-$(CONFIG_USBCANBUS) += $(usb-src-y) $(canbus-src-y)
+src-$(CONFIG_USBCANBUS) += stm32/chipid.c generic/usb_canbus.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += stm32/hard_pwm.c
-
-dirs-$(CONFIG_CANSERIAL) += lib/fast-hash
 
 # Binary output file rules
 target-y += $(OUT)klipper.bin
