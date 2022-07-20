@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_HASH_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -62,8 +59,6 @@ en_result_t HASH_Start(const uint8_t *pu8SrcData,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_HASH_ENABLE */
 
 #endif /* __HC32F460_HASH_H__ */
 

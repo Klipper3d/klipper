@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_TRNG_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -90,8 +87,6 @@ void TRNG_GetRandomNum(uint32_t *pu32Random, uint8_t u8Length);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_TRNG_ENABLE */
 
 #endif /* __HC32F460_TRNG_H__ */
 

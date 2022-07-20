@@ -22,8 +22,6 @@
 #include "hc32f460_dcu.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_DCU_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup DcuGroup
@@ -967,8 +965,6 @@ static __IO uint32_t* DCU_TRGSELx(const M4_DCU_TypeDef *DCUx)
 }
 
 //@} // DcuGroup
-
-#endif /* DDL_DCU_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

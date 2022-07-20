@@ -22,8 +22,6 @@
 #include "hc32f460_hash.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_HASH_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup HashGroup
@@ -293,8 +291,6 @@ static void HASH_GetMsgDigest(uint8_t *pu8MsgDigest)
 }
 
 //@} // HashGroup
-
-#endif /* DDL_HASH_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

@@ -23,9 +23,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_KEYSCAN_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -182,8 +179,6 @@ extern uint8_t KEYSCAN_GetColIdx(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_KEYSCAN_ENABLE */
 
 #endif /* __HC32F460_KEYSCAN_H__ */
 /*******************************************************************************

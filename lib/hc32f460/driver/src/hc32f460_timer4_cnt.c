@@ -22,8 +22,6 @@
 #include "hc32f460_timer4_cnt.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMER4_CNT_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup Timer4CntGroup
@@ -834,8 +832,6 @@ en_timer4_cnt_int_mask_t TIMER4_CNT_GetIntMaskTimes(M4_TMR4_TypeDef *TMR4x,
 }
 
 //@} // Timer4CntGroup
-
-#endif /* DDL_TIMER4_CNT_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

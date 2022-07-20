@@ -22,8 +22,6 @@
 #include "hc32f460_qspi.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_QSPI_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup QspiGroup
@@ -748,8 +746,6 @@ en_result_t QSPI_ClearFlag(en_qspi_flag_type_t enFlag)
 }
 
 //@} // QspiGroup
-
-#endif /* DDL_QSPI_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

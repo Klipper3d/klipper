@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_TIMER4_OCO_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -263,8 +260,6 @@ uint16_t TIMER4_OCO_ReadOccr(const M4_TMR4_TypeDef *TMR4x,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_TIMER4_OCO_ENABLE */
 
 #endif /* __HC32F460_TIMER4_OCO_H__ */
 

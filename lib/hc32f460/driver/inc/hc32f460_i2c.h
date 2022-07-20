@@ -23,9 +23,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_I2C_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -260,8 +257,6 @@ en_result_t I2C_MasterDataReceiveAndStop(M4_I2C_TypeDef* pstcI2Cx, uint8_t au8Rx
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_I2C_ENABLE */
 
 #endif /* __HC32F460_I2C_H__ */
 

@@ -22,8 +22,6 @@
 #include "hc32f460_timer4_sevt.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMER4_SEVT_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup Timer4SevtGroup
@@ -585,8 +583,6 @@ en_timer4_sevt_mask_t TIMER4_SEVT_GetMaskTimes(M4_TMR4_TypeDef *TMR4x,
 }
 
 //@} // Timer4SevtGroup
-
-#endif /* DDL_TIMER4_SEVT_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

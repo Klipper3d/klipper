@@ -21,8 +21,7 @@
  ******************************************************************************/
 #include "hc32f460_trng.h"
 #include "hc32f460_utility.h"
-
-#if (DDL_TRNG_ENABLE == DDL_ON)
+#include <system_hc32f460.h>
 
 /**
  *******************************************************************************
@@ -255,8 +254,6 @@ void TRNG_GetRandomNum(uint32_t *pu32Random, uint8_t u8Length)
 }
 
 //@} // TrngGroup
-
-#endif /* DDL_TRNG_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

@@ -4,13 +4,16 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "board/misc.h"     // timer_from_us
+#include "generic/misc.h"   // timer_from_us
 #include "command.h"        // shutdown
 #include "board/gpio.h"     // gpio_adc_setup
 #include "board/internal.h" // GPIO
 #include "sched.h"          // sched_shutdown
 
-#include "hc32_ddl.h"
+// library
+#include "hc32f460_adc.h"
+#include "hc32f460_pwc.h"
+#include "hc32f460_gpio.h"
 
 #define ADC_RESOLUTION_12BIT        (12u)
 #define ADC_RESOLUTION_10BIT        (10u)
@@ -32,7 +35,6 @@
 #define TIMEOUT_VAL     (30u)
 
 DECL_CONSTANT("ADC_MAX", ADC1_PRECISION-1);
-
 
 // These pins can be used for ADC
 static const uint8_t adc_gpio[] = {
@@ -75,7 +77,7 @@ gpio_adc_setup(uint32_t gpio)
     // set as analog
     gpio_peripheral(gpio, Pin_Mode_Ana, 0);
 
-    uint8_t sampleTime[] = { TIMEOUT_VAL };   // one channel so one value
+    uint8_t sampleTime[ADC1_CH_COUNT] = { TIMEOUT_VAL };   // all channels
     stc_adc_ch_cfg_t stcAdcChan;
     stcAdcChan.u32Channel   = 1 << chan;
     stcAdcChan.u8Sequence   = ADC_SEQ_A;    // all conversions are done here

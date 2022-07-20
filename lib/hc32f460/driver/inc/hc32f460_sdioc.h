@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_SDIOC_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -549,8 +546,6 @@ en_result_t SDIOC_ForceAutoCmdErr(M4_SDIOC_TypeDef *SDIOCx,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_SDIOC_ENABLE */
 
 #endif /* __HC32F460_SDIOC_H__ */
 

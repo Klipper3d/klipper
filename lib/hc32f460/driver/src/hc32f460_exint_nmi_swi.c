@@ -22,8 +22,6 @@
 #include "hc32f460_exint_nmi_swi.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_EXINT_NMI_SWI_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup ExintNmiSwiGroup
@@ -329,8 +327,6 @@ en_result_t SWI_Disable(uint32_t u32SwiCh)
 }
 
 //@} // ExintNmiSwiGroup
-
-#endif /* DDL_EXINT_NMI_SWI_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

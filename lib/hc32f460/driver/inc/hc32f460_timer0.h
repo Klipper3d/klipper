@@ -24,9 +24,6 @@
  ******************************************************************************/
 
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_TIMER0_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -199,8 +196,6 @@ void TIMER0_ComTriggerCmd(en_tim0_com_trigger_t enComTrigger, en_functional_stat
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_TIMER0_ENABLE */
 
 #endif /* __HC32F460_TIMER0_H__ */
 

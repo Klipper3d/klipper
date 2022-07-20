@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_INTERRUPTS_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -532,8 +529,6 @@ __WEAKDEF void Can_IrqHandler(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_INTERRUPTS_ENABLE */
 
 #endif /* __HC32F460_INTERRUPTS_H___ */
 

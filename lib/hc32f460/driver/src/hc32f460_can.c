@@ -22,8 +22,6 @@
 #include "hc32f460_can.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_CAN_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup CanGroup
@@ -553,8 +551,6 @@ uint8_t CAN_ArbitrationLostCap(void)
 
 
 //@} // CanGroup
-
-#endif /* DDL_CAN_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

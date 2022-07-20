@@ -22,8 +22,6 @@
 #include "hc32f460_aes.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_AES_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup AesGroup
@@ -303,8 +301,6 @@ static void AES_WriteKey(const uint8_t *pu8Key)
 }
 
 //@} // AesGroup
-
-#endif /* DDL_AES_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

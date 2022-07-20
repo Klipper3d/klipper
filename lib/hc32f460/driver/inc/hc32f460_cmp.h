@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_CMP_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -269,8 +266,6 @@ en_result_t CMP_ADC_SetRefVoltPath(en_cmp_adc_int_ref_volt_path_t enRefVoltPath)
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_CMP_ENABLE */
 
 #endif /* __HC32F460_CMP_H__ */
 

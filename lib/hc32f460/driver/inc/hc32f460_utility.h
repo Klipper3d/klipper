@@ -22,9 +22,7 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_UTILITY_ENABLE == DDL_ON)
+#include <hc32f460.h>
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -79,7 +77,7 @@ void Ddl_AssertHandler(uint8_t *file, int16_t line);
 #define DDL_ASSERT(x)                               (void)(0)
 #endif /* __DEBUG */
 
-#if (DDL_PRINT_ENABLE == DDL_ON)
+#if defined(DDL_PRINT_ENABLE)
 #include <stdio.h>
 
 en_result_t UART_PrintfInit(M4_USART_TypeDef *UARTx,
@@ -98,8 +96,6 @@ en_result_t UART_PrintfInit(M4_USART_TypeDef *UARTx,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_UTILITY_ENABLE */
 
 #endif /* __HC32F460_UTILITY_H__ */
 

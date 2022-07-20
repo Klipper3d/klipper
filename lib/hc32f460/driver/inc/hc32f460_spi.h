@@ -22,9 +22,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_SPI_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -416,8 +413,6 @@ en_result_t SPI_ClearFlag(M4_SPI_TypeDef *SPIx, en_spi_flag_type_t enFlag);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_SPI_ENABLE */
 
 #endif /* __HC32F460_SPI_H__ */
 

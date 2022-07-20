@@ -22,8 +22,6 @@
 #include "hc32f460_adc.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_ADC_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup AdcGroup
@@ -1738,8 +1736,6 @@ static void ADC_ReadAllData(const M4_ADC_TypeDef *ADCx, uint16_t *pu16AdcData, u
 }
 
 //@} // AdcGroup
-
-#endif /* DDL_ADC_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

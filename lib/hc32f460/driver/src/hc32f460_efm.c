@@ -22,8 +22,6 @@
 #include "hc32f460_efm.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_EFM_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup EfmGroup
@@ -934,8 +932,6 @@ stc_efm_unique_id_t EFM_ReadUID(void)
 }
 
 //@} // EfmGroup
-
-#endif /* DDL_EFM_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

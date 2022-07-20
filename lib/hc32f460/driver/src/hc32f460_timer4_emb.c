@@ -22,8 +22,6 @@
 #include "hc32f460_timer4_emb.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMER4_EMB_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup Timer4EmbGroup
@@ -270,8 +268,6 @@ en_timer4_emb_state_t TIMER4_EMB_GetState(const M4_TMR4_TypeDef *TMR4x)
 }
 
 //@} // Timer4EmbGroup
-
-#endif /* DDL_TIMER4_EMB_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

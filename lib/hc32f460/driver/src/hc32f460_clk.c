@@ -22,8 +22,6 @@
 #include "hc32f460_clk.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_CLK_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup CmuGroup
@@ -1835,8 +1833,6 @@ void CLK_ClearXtalStdFlag(void)
 
 
 //@} // CmuGroup
-
-#endif /* DDL_CLK_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

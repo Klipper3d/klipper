@@ -5,8 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "sched.h"
+#include "hc32f460_gpio.h"
 
-#include "hc32_ddl.h"
 
 // CPU LED @ PA3    - use for debug or task
 #define  CPULED_PORT    (PortA)

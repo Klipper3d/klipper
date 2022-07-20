@@ -22,8 +22,6 @@
 #include "hc32f460_timer4_oco.h"
 #include "hc32f460_utility.h"
 
-#if (DDL_TIMER4_OCO_ENABLE == DDL_ON)
-
 /**
  *******************************************************************************
  ** \addtogroup Timer4OcoGroup
@@ -1287,8 +1285,6 @@ uint16_t TIMER4_OCO_ReadOccr(const M4_TMR4_TypeDef *TMR4x,
 }
 
 //@} // Timer4OcoGroup
-
-#endif /* DDL_TIMER4_OCO_ENABLE */
 
 /*******************************************************************************
  * EOF (not truncated)

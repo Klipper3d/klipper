@@ -23,9 +23,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_common.h"
-#include "ddl_config.h"
-
-#if (DDL_EVENT_PORT_ENABLE == DDL_ON)
 
 /* C binding of definitions if building with C++ compiler */
 #ifdef __cplusplus
@@ -166,8 +163,6 @@ extern en_result_t EVENTPORT_ResetBits(en_event_port_t enEventPort,            \
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* DDL_EVENT_PORT_ENABLE */
 
 #endif /* __HC32F460_EVENT_PORT_H__ */
 
