@@ -24,9 +24,19 @@ class ManualProbe:
                 'Z_OFFSET_APPLY_ENDSTOP',
                 self.cmd_Z_OFFSET_APPLY_ENDSTOP,
                 desc=self.cmd_Z_OFFSET_APPLY_ENDSTOP_help)
+        self.reset_status()
     def manual_probe_finalize(self, kin_pos):
         if kin_pos is not None:
             self.gcode.respond_info("Z position is %.3f" % (kin_pos[2],))
+    def reset_status(self):
+        self.status = {
+            'is_active': False,
+            'z_position': None,
+            'z_position_lower': None,
+            'z_position_upper': None
+        }
+    def get_status(self, eventtime):
+        return self.status
     cmd_MANUAL_PROBE_help = "Start manual probe helper script"
     def cmd_MANUAL_PROBE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.manual_probe_finalize)
@@ -78,6 +88,7 @@ class ManualProbeHelper:
         self.finalize_callback = finalize_callback
         self.gcode = self.printer.lookup_object('gcode')
         self.toolhead = self.printer.lookup_object('toolhead')
+        self.manual_probe = self.printer.lookup_object('manual_probe')
         self.speed = gcmd.get_float("SPEED", 5.)
         self.past_positions = []
         self.last_toolhead_pos = self.last_kinematics_pos = None
@@ -130,11 +141,20 @@ class ManualProbeHelper:
         prev_pos = next_pos - 1
         if next_pos < len(pp) and pp[next_pos] == z_pos:
             next_pos += 1
+        prev_pos_val = next_pos_val = None
         prev_str = next_str = "??????"
         if prev_pos >= 0:
-            prev_str = "%.3f" % (pp[prev_pos],)
+            prev_pos_val = pp[prev_pos]
+            prev_str = "%.3f" % (prev_pos_val,)
         if next_pos < len(pp):
-            next_str = "%.3f" % (pp[next_pos],)
+            next_pos_val = pp[next_pos]
+            next_str = "%.3f" % (next_pos_val,)
+        self.manual_probe.status = {
+            'is_active': True,
+            'z_position': z_pos,
+            'z_position_lower': prev_pos_val,
+            'z_position_upper': next_pos_val,
+        }
         # Find recent positions
         self.gcode.respond_info("Z position: %s --> %.3f <-- %s"
                                 % (prev_str, z_pos, next_str))
@@ -183,6 +203,7 @@ class ManualProbeHelper:
         self.move_z(next_z_pos)
         self.report_z_status(next_z_pos != z_pos, z_pos)
     def finalize(self, success):
+        self.manual_probe.reset_status()
         self.gcode.register_command('ACCEPT', None)
         self.gcode.register_command('NEXT', None)
         self.gcode.register_command('ABORT', None)
