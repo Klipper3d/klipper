@@ -903,6 +903,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mcu" class="md-nav__link">
     mcu
   </a>
@@ -1629,6 +1636,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mcu" class="md-nav__link">
     mcu
   </a>
@@ -2029,6 +2043,17 @@ is always available):</p>
   the blue value (3rd item in color list) of the second neopixel in a
   chain could be accessed at
   <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
+</ul>
+<h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the
+<code>manual_probe</code> object:</p>
+<ul>
+<li><code>is_active</code>: Returns True if a manual probing helper script is currently
+active.</li>
+<li><code>z_position</code>: The current height of the nozzle (as the printer currently
+understands it).</li>
+<li><code>z_position_lower</code>: Last probe attempt just lower than the current height.</li>
+<li><code>z_position_upper</code>: Last probe attempt just greater than the current height.</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
 <p>The following information is available in
