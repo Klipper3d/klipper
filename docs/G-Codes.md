@@ -244,7 +244,7 @@ calibration tests.
 
 ### [delayed_gcode]
 
-The following command is enabled if a
+The following commands are enabled if a
 [delayed_gcode config section](Config_Reference.md#delayed_gcode) has
 been enabled (also see the
 [template guide](Command_Templates.md#delayed-gcodes)).
@@ -254,6 +254,11 @@ been enabled (also see the
 delay duration for the identified [delayed_gcode] and starts the timer
 for gcode execution. A value of 0 will cancel a pending delayed gcode
 from executing.
+
+#### QUERY_DELAYED_GCODE
+`UPDATE_DELAYED_GCODE [ID=<name>]`: Queries the running state for the
+identified [delayed_gcode] and reports the seconds remaining if the
+gcode is running.
 
 ### [delta_calibrate]
 
