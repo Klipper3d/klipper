@@ -244,6 +244,17 @@ The following information is available for each `[led led_name]`,
   chain could be accessed at
   `printer["neopixel <config_name>"].color_data[1][2]`.
 
+## manual_probe
+
+The following information is available in the
+`manual_probe` object:
+- `is_active`: Returns True if a manual probing helper script is currently
+active.
+- `z_position`: The current height of the nozzle (as the printer currently
+understands it).
+- `z_position_lower`: Last probe attempt just lower than the current height.
+- `z_position_upper`: Last probe attempt just greater than the current height.
+
 ## mcu
 
 The following information is available in

@@ -68,6 +68,7 @@ struct can2040 {
 
     // Reporting
     uint32_t report_state;
+    uint32_t report_eof_key;
 
     // Transmits
     uint32_t tx_state;
