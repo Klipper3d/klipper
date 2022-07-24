@@ -874,8 +874,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#object-definitions" class="md-nav__link">
-    Object Definitions
+  <a href="#_3" class="md-nav__link">
+    对象定义
   </a>
   
 </li>
@@ -1249,8 +1249,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -1298,8 +1298,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#object-definitions" class="md-nav__link">
-    Object Definitions
+  <a href="#_3" class="md-nav__link">
+    对象定义
   </a>
   
 </li>
@@ -1351,9 +1351,9 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <li>当打印完成后，<code>[exclude_object]</code>状态将继续可用，直到另一个动作将其重置。</li>
 </ol>
 <h2 id="g">G代码文件<a class="headerlink" href="#g" title="Permanent link">&para;</a></h2>
-<p>The specialized gcode processing needed to support excluding objects does not fit into Klipper's core design goals. Therefore, this module requires that the file is processed before being sent to Klipper for printing. Using a post-process script in the slicer or having middleware process the file on upload are two possibilities for preparing the file for Klipper. A reference post-processing script is available both as an executable and a python library, see <a href="https://github.com/kageurufu/cancelobject-preprocessor">cancelobject-preprocessor</a>.</p>
-<h3 id="object-definitions">Object Definitions<a class="headerlink" href="#object-definitions" title="Permanent link">&para;</a></h3>
-<p>The <code>EXCLUDE_OBJECT_DEFINE</code> command is used to provide a summary of each object in the gcode file to be printed. Provides a summary of an object in the file. Objects don't need to be defined in order to be referenced by other commands. The primary purpose of this command is to provide information to the UI without needing to parse the entire gcode file.</p>
+<p>支持排除对象所需的专门的G代码处理并不符合Klipper'的核心设计目标。因此，本模块要求在将文件发送到Klipper进行打印之前对其进行处理。为Klipper排除对象修改G代码可以通过切片软件中使用后处理脚本或让中间层软件在上传时处理文件达成。<a href="https://github.com/kageurufu/cancelobject-preprocessor">cancelobject-preprocessor</a>是一个参考后处理脚本，它可以1被当作可执行文件或python库。</p>
+<h3 id="_3">对象定义<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p><code>EXCLUDE_OBJECT_DEFINE</code> 命令用于提供gcode文件中每个要打印的对象的摘要。提供文件中一个对象的摘要。对象被其他命令引用时不需要被定义。这个命令的主要目的是向UI提供信息，而不需要解析整个gcode文件。</p>
 <p>Object definitions are named, to allow users to easily select an object to be excluded, and additional metadata may be provided to allow for graphical cancellation displays. Currently defined metadata includes a <code>CENTER</code> X,Y coordinate, and a <code>POLYGON</code> list of X,Y points representing a minimal outline of the object. This could be a simple bounding box, or a complicated hull for showing more detailed visualizations of the printed objects. Especially when gcode files include multiple parts with overlapping bounding regions, center points become hard to visually distinguish. <code>POLYGONS</code> must be a json-compatible array of point <code>[X,Y]</code> tuples without whitespace. Additional parameters will be saved as strings in the object definition and provided in status updates.</p>
 <p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
 <p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code

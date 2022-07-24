@@ -1314,8 +1314,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -1532,19 +1532,8 @@ gcode:
 
 <h3 id="rawparams">"rawparams" 變數<a class="headerlink" href="#rawparams" title="Permanent link">&para;</a></h3>
 <p>運行巨集的完整未解析參數可以通過 <code>rawparams</code> 偽變數訪問。</p>
-<p>如果您想更改某些命令（如“M117”）的行為，這非常有用。例如：</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro M117]
-rename_existing: M117.1
-gcode:
-  {% if rawparams %}
-    {% set escaped_msg = rawparams|replace(&#39;&quot;&#39;, &#39;\\&quot;&#39;) %}
-    SET_DISPLAY_TEXT MSG=&quot;{escaped_msg}&quot;
-    RESPOND TYPE=command MSG=&quot;{escaped_msg}&quot;
-  {% else %}
-    SET_DISPLAY_TEXT
-  {% endif %}
-</code></pre></div>
-
+<p>Note that this will include any comments that were part of the original command.</p>
+<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for an example showing how to override the <code>M117</code> command using <code>rawparams</code>.</p>
 <h3 id="printer">"printer"變數<a class="headerlink" href="#printer" title="Permanent link">&para;</a></h3>
 <p>可以通過 <code>printer</code> 偽變數檢查（和更改）打印機的當前狀態。例如：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro slow_fan]

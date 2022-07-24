@@ -2348,8 +2348,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -4975,7 +4975,7 @@ z_offset:
 
 <h2 id="_16">额外的步进电机和挤出机<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h2>
 <h3 id="stepper_z1">[stepper_z1]<a class="headerlink" href="#stepper_z1" title="Permanent link">&para;</a></h3>
-<p>Multi-stepper axes. On a cartesian style printer, the stepper controlling a given axis may have additional config blocks defining steppers that should be stepped in concert with the primary stepper. One may define any number of sections with a numeric suffix starting at 1 (for example, "stepper_z1", "stepper_z2", etc.).</p>
+<p>多步进电机轴。在笛卡尔式打印机上，可以在给定的轴上定义与主步进器同步的的步进器的额外配置分段。可以定义任何数量的以数字为后缀的分段（例如，"stepper_z1"、"stepper_z2"，等等）。</p>
 <div class="highlight"><pre><span></span><code>[stepper_z1]
 #step_pin:
 #dir_pin:
@@ -5773,7 +5773,7 @@ pins:
 </code></pre></div>
 
 <h3 id="multi_pin">[multi_pin]<a class="headerlink" href="#multi_pin" title="Permanent link">&para;</a></h3>
-<p>Multiple pin outputs (one may define any number of sections with a "multi_pin" prefix). A multi_pin output creates an internal pin alias that can modify multiple output pins each time the alias pin is set. For example, one could define a "[multi_pin my_fan]" object containing two pins and then set "pin=multi_pin:my_fan" in the "[fan]" section - on each fan change both output pins would be updated. These aliases may not be used with stepper motor pins.</p>
+<p>多引脚输出（可以定义任意数量的带有“multi_pin”前缀的分段）。 每个 multi_pin 输出会创建一个相应的内部引脚别名，配置中使用别名引脚时可以修改多个输出引脚的输出状态。例如，可以定义一个包含两个引脚的“[multi_pin my_fan]”对象，然后在“[fan]”部分设置“pin=multi_pin:my_fan”——在每次风扇更改时，两个输出引脚都会更新。这些别名可能不适用于步进电机引脚。</p>
 <div class="highlight"><pre><span></span><code>[multi_pin my_multi_pin]
 pins:
 #   与此别名关联的引脚的逗号分隔列表。

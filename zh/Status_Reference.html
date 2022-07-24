@@ -903,6 +903,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mcu" class="md-nav__link">
     mcu
   </a>
@@ -1476,8 +1483,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -1624,6 +1631,13 @@
         <li class="md-nav__item">
   <a href="#led" class="md-nav__link">
     led
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
   </a>
   
 </li>
@@ -1925,6 +1939,14 @@
 <p>以下信息适用于每个在printer.cfg中定义了的 <code>[led led_name]</code>、<code>[neopixel led_name]</code>、<code>[dotstar led_name]</code>、<code>[pca9533 led_name]</code> , 和 <code>[pca9632 led_name]</code> 配置分段：</p>
 <ul>
 <li><code>color_data</code>：一个包含链中每个LED的RGBW值的颜色列表的列表。每个值都以0.0到1.0的浮点数表示。每个颜色列表包含4个项目（红、绿、蓝、白），即使底层的LED支持较少的颜色通道。例如，可以通过<code>printer["neopixel &lt;配置名&gt;"].color_data[1][2]</code>访问链中第二个neopixel的蓝色值（颜色列表中的第三项）。</li>
+</ul>
+<h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>manual_probe</code> object:</p>
+<ul>
+<li><code>is_active</code>: Returns True if a manual probing helper script is currently active.</li>
+<li><code>z_position</code>: The current height of the nozzle (as the printer currently understands it).</li>
+<li><code>z_position_lower</code>: Last probe attempt just lower than the current height.</li>
+<li><code>z_position_upper</code>: Last probe attempt just greater than the current height.</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#mcu">mcu</a>和<a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a>对象提供了以下信息：</p>

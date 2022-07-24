@@ -903,6 +903,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mcu" class="md-nav__link">
     mcu
   </a>
@@ -1476,8 +1483,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -1624,6 +1631,13 @@
         <li class="md-nav__item">
   <a href="#led" class="md-nav__link">
     led
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
   </a>
   
 </li>
@@ -1925,6 +1939,14 @@
 <p>A következő információk állnak rendelkezésre minden egyes <code>[led led_name]</code>, <code>[neopixel led_name</code> esetében, <code>[dotstar led_name]</code>, <code>[pca9533 led_name]</code>, és <code>[pca9632 led_name]</code> a nyomtatóban meghatározott printer.cfg fájlban:</p>
 <ul>
 <li><code>color_data</code>: A láncban lévő ledek RGBW értékeit tartalmazó színlisták listája. Minden értéket 0,0 és 1,0 közötti lebegőértékként ábrázolunk. Minden színlista 4 elemet tartalmaz (piros, zöld, kék, fehér), még akkor is, ha az alatta lévő LED kevesebb színcsatornát támogat. Például a lánc második neopixelének kék értéke (a színlista 3. eleme) a <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code> címen érhető el.</li>
+</ul>
+<h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>manual_probe</code> object:</p>
+<ul>
+<li><code>is_active</code>: Returns True if a manual probing helper script is currently active.</li>
+<li><code>z_position</code>: The current height of the nozzle (as the printer currently understands it).</li>
+<li><code>z_position_lower</code>: Last probe attempt just lower than the current height.</li>
+<li><code>z_position_upper</code>: Last probe attempt just greater than the current height.</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
 <p>A következő információk az <a href="Config_Reference.html#mcu">mcu</a> és <a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a> objektumokban érhetők el:</p>

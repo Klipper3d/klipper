@@ -1314,8 +1314,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -1532,19 +1532,8 @@ gcode:
 
 <h3 id="the-rawparams-variable">The "rawparams" variable<a class="headerlink" href="#the-rawparams-variable" title="Permanent link">&para;</a></h3>
 <p>The full unparsed parameters for the running macro can be access via the <code>rawparams</code> pseudo-variable.</p>
-<p>This is quite useful if you want to change the behavior of certain commands like the <code>M117</code>. For example:</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro M117]
-rename_existing: M117.1
-gcode:
-  {% if rawparams %}
-    {% set escaped_msg = rawparams|replace(&#39;&quot;&#39;, &#39;\\&quot;&#39;) %}
-    SET_DISPLAY_TEXT MSG=&quot;{escaped_msg}&quot;
-    RESPOND TYPE=command MSG=&quot;{escaped_msg}&quot;
-  {% else %}
-    SET_DISPLAY_TEXT
-  {% endif %}
-</code></pre></div>
-
+<p>Note that this will include any comments that were part of the original command.</p>
+<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for an example showing how to override the <code>M117</code> command using <code>rawparams</code>.</p>
 <h3 id="printer">"printer"变量<a class="headerlink" href="#printer" title="Permanent link">&para;</a></h3>
 <p>可以通过<code>printer</code> 的pseudo-variable来检查（和变更）打印机的当前状态。比如说：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro slow_fan]

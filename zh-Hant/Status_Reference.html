@@ -903,6 +903,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mcu" class="md-nav__link">
     mcu
   </a>
@@ -1476,8 +1483,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -1624,6 +1631,13 @@
         <li class="md-nav__item">
   <a href="#led" class="md-nav__link">
     led
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    manual_probe
   </a>
   
 </li>
@@ -1925,6 +1939,14 @@
 <p>The following information is available for each <code>[led led_name]</code>, <code>[neopixel led_name]</code>, <code>[dotstar led_name]</code>, <code>[pca9533 led_name]</code>, and <code>[pca9632 led_name]</code> config section defined in printer.cfg:</p>
 <ul>
 <li><code>color_data</code>: A list of color lists containing the RGBW values for a led in the chain. Each value is represented as a float from 0.0 to 1.0. Each color list contains 4 items (red, green, blue, white) even if the underyling LED supports fewer color channels. For example, the blue value (3rd item in color list) of the second neopixel in a chain could be accessed at <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
+</ul>
+<h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>manual_probe</code> object:</p>
+<ul>
+<li><code>is_active</code>: Returns True if a manual probing helper script is currently active.</li>
+<li><code>z_position</code>: The current height of the nozzle (as the printer currently understands it).</li>
+<li><code>z_position_lower</code>: Last probe attempt just lower than the current height.</li>
+<li><code>z_position_upper</code>: Last probe attempt just greater than the current height.</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#mcu">mcu</a>和<a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a>對像提供了以下資訊：</p>

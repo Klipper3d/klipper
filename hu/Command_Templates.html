@@ -1314,8 +1314,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Sponsors.md" class="md-nav__link">
-        None
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
       </a>
     </li>
   
@@ -1532,19 +1532,8 @@ gcode:
 
 <h3 id="a-rawparams-valtozo">A "rawparams" változó<a class="headerlink" href="#a-rawparams-valtozo" title="Permanent link">&para;</a></h3>
 <p>A futó makró teljes, be nem elemzett paraméterei a <code>rawparams</code> pszeudováltozóval érhetők el.</p>
-<p>Ez nagyon hasznos, ha meg akarod változtatni bizonyos parancsok viselkedését, mint például az <code>M117</code>. Például:</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro M117]
-rename_existing: M117.1
-gcode:
-  {% if rawparams %}
-    {% set escaped_msg = rawparams|replace(&#39;&quot;&#39;, &#39;\\&quot;&#39;) %}
-    SET_DISPLAY_TEXT MSG=&quot;{escaped_msg}&quot;
-    RESPOND TYPE=command MSG=&quot;{escaped_msg}&quot;
-  {% else %}
-    SET_DISPLAY_TEXT
-  {% endif %}
-</code></pre></div>
-
+<p>Note that this will include any comments that were part of the original command.</p>
+<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for an example showing how to override the <code>M117</code> command using <code>rawparams</code>.</p>
 <h3 id="a-nyomtato-valtozo">A "nyomtató" változó<a class="headerlink" href="#a-nyomtato-valtozo" title="Permanent link">&para;</a></h3>
 <p>A nyomtató aktuális állapotát a <code>printer</code> álváltozóval lehet ellenőrizni (és megváltoztatni). Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro slow_fan]
