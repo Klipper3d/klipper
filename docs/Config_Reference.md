@@ -2251,11 +2251,11 @@ temperature.
 
 ```
 sensor_type: BME280
+#i2c_mcu:
+#i2c_bus:
 #i2c_address:
 #   Default is 118 (0x76). Some BME280 sensors have an address of 119
 #   (0x77).
-#i2c_mcu:
-#i2c_bus:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
