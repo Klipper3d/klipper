@@ -563,6 +563,7 @@ class MCU:
             self._restart_method = config.getchoice('restart_method',
                                                     rmethods, None)
         self._reset_cmd = self._config_reset_cmd = None
+        self._is_mcu_bridge = False
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
         self._shutdown_clock = 0
@@ -589,9 +590,11 @@ class MCU:
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
         # Register handlers
-        printer.register_event_handler("klippy:connect", self._connect)
+        printer.register_event_handler("klippy:firmware_restart",
+                                       self._firmware_restart)
         printer.register_event_handler("klippy:mcu_identify",
                                        self._mcu_identify)
+        printer.register_event_handler("klippy:connect", self._connect)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
     # Serial callbacks
@@ -794,6 +797,10 @@ class MCU:
         mbaud = msgparser.get_constant('SERIAL_BAUD', None)
         if self._restart_method is None and mbaud is None and not ext_only:
             self._restart_method = 'command'
+        if msgparser.get_constant('CANBUS_BRIDGE', 0):
+            self._is_mcu_bridge = True
+            self._printer.register_event_handler("klippy:firmware_restart",
+                                                 self._firmware_restart_bridge)
         version, build_versions = msgparser.get_version_info()
         self._get_status_info['mcu_version'] = version
         self._get_status_info['mcu_build_versions'] = build_versions
@@ -911,7 +918,9 @@ class MCU:
         chelper.run_hub_ctrl(0)
         self._reactor.pause(self._reactor.monotonic() + 2.)
         chelper.run_hub_ctrl(1)
-    def microcontroller_restart(self):
+    def _firmware_restart(self, force=False):
+        if self._is_mcu_bridge and not force:
+            return
         if self._restart_method == 'rpi_usb':
             self._restart_rpi_usb()
         elif self._restart_method == 'command':
@@ -920,6 +929,8 @@ class MCU:
             self._restart_cheetah()
         else:
             self._restart_arduino()
+    def _firmware_restart_bridge(self):
+        self._firmware_restart(True)
     # Misc external commands
     def is_fileoutput(self):
         return self._printer.get_start_args().get('debugoutput') is not None
