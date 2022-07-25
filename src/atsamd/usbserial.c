@@ -9,6 +9,7 @@
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "command.h" // DECL_CONSTANT_STR
@@ -172,7 +173,7 @@ usb_set_configure(void)
 }
 
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
     if (!CONFIG_FLASH_START)
         return;

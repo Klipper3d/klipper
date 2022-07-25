@@ -160,13 +160,6 @@ usb_set_configure(void)
         USB_BUF_CTRL_AVAIL | USB_BUF_CTRL_LAST | DPBUF_SIZE);
 }
 
-void
-usb_request_bootloader(void)
-{
-    // Use the bootrom-provided code to reset into BOOTSEL mode
-    reset_to_usb_boot(0, 0);
-}
-
 
 /****************************************************************
  * USB Errata workaround
