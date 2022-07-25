@@ -247,7 +247,7 @@ usb_set_configure(void)
 }
 
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
     if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
         return;
