@@ -119,7 +119,20 @@ gpio_adc_sample(struct gpio_adc g)
             return 0;
         goto need_delay;
     }
+#if CONFIG_MACH_STM32G0
+    // Acknowledge EOC flag, clear Channel Config Ready before updating CHSELR
+    adc->ISR = ADC_ISR_EOC | ADC_ISR_CCRDY;
+    adc->ISR;
+#endif
+
     adc->CHSELR = g.chan;
+
+#if CONFIG_MACH_STM32G0
+    // Wait for Channel Config Ready
+    while (!(adc->ISR & ADC_ISR_CCRDY))
+        ;
+#endif
+
     adc->CR = CR_FLAGS | ADC_CR_ADSTART;
 
 need_delay:
