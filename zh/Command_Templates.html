@@ -832,8 +832,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#actions" class="md-nav__link">
-    Actions
+  <a href="#_5" class="md-nav__link">
+    行动
   </a>
   
 </li>
@@ -1410,8 +1410,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#actions" class="md-nav__link">
-    Actions
+  <a href="#_5" class="md-nav__link">
+    行动
   </a>
   
 </li>
@@ -1542,18 +1542,18 @@ gcode:
 </code></pre></div>
 
 <p><a href="Status_Reference.html">Status Reference</a> 文档中定义了可用字段。</p>
-<p>Important! Macros are first evaluated in entirety and only then are the resulting commands executed. If a macro issues a command that alters the state of the printer, the results of that state change will not be visible during the evaluation of the macro. This can also result in subtle behavior when a macro generates commands that call other macros, as the called macro is evaluated when it is invoked (which is after the entire evaluation of the calling macro).</p>
-<p>By convention, the name immediately following <code>printer</code> is the name of a config section. So, for example, <code>printer.fan</code> refers to the fan object created by the <code>[fan]</code> config section. There are some exceptions to this rule - notably the <code>gcode_move</code> and <code>toolhead</code> objects. If the config section contains spaces in it, then one can access it via the <code>[ ]</code> accessor - for example: <code>printer["generic_heater my_chamber_heater"].temperature</code>.</p>
-<p>Note that the Jinja2 <code>set</code> directive can assign a local name to an object in the <code>printer</code> hierarchy. This can make macros more readable and reduce typing. For example:</p>
+<p>注意！宏会先被进行整体计算，然后所产生的命令才会被执行。如果一个宏发出的命令改变了打印机的状态，那么在评估宏的过程中，该状态改变的结果将在执行时不可见。当一个宏产生调用其他宏的命令时，这也可能导致微妙的行为，因为被调用的宏在被调用时才被评估（这是在调用宏的整体计算过程之后）。</p>
+<p>按照惯例，紧跟在<code>printer</code> 后面的名称是一个配置分段的名称。因此，例如，<code>printer.fan</code> 指的是由<code>[fan]</code> 配置分段创建的风扇对象。这条规则有一些例外 - 特别是<code>gcode_move</code> 和<code>toolhead</code> 对象。如果配置分段包含空格，那么可以通过<code>[ ]</code> 访问器访问它--例如：<code>printer["generic_heater my_chamber_heater"].temperature</code> 。</p>
+<p>请注意，Jinja2的<code>set</code> 指令可以为<code>printer</code> 层次结构中的一个对象指定一个本地名称。这可以改善宏的可读性并减少键入量。例如：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro QUERY_HTU21D]
 gcode:
     {% set sensor = printer[&quot;htu21d my_sensor&quot;] %}
     M117 Temp:{sensor.temperature} Humidity:{sensor.humidity}
 </code></pre></div>
 
-<h2 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h2>
+<h2 id="_5">行动<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>There are some commands available that can alter the state of the printer. For example, <code>{ action_emergency_stop() }</code> would cause the printer to go into a shutdown state. Note that these actions are taken at the time that the macro is evaluated, which may be a significant amount of time before the generated g-code commands are executed.</p>
-<p>Available "action" commands:</p>
+<p>可用的“动作”命令：</p>
 <ul>
 <li><code>action_respond_info(msg)</code>: Write the given <code>msg</code> to the /tmp/printer pseudo-terminal. Each line of <code>msg</code> will be sent with a "// " prefix.</li>
 <li><code>action_raise_error(msg)</code>: Abort the current macro (and any calling macros) and write the given <code>msg</code> to the /tmp/printer pseudo-terminal. The first line of <code>msg</code> will be sent with a "!! " prefix and subsequent lines will have a "// " prefix.</li>

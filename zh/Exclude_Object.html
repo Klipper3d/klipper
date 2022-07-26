@@ -886,8 +886,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#status-information" class="md-nav__link">
-    Status Information
+  <a href="#_4" class="md-nav__link">
+    状态信息
   </a>
   
 </li>
@@ -1310,8 +1310,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#status-information" class="md-nav__link">
-    Status Information
+  <a href="#_4" class="md-nav__link">
+    状态信息
   </a>
   
 </li>
@@ -1354,22 +1354,22 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <p>支持排除对象所需的专门的G代码处理并不符合Klipper'的核心设计目标。因此，本模块要求在将文件发送到Klipper进行打印之前对其进行处理。为Klipper排除对象修改G代码可以通过切片软件中使用后处理脚本或让中间层软件在上传时处理文件达成。<a href="https://github.com/kageurufu/cancelobject-preprocessor">cancelobject-preprocessor</a>是一个参考后处理脚本，它可以1被当作可执行文件或python库。</p>
 <h3 id="_3">对象定义<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <p><code>EXCLUDE_OBJECT_DEFINE</code> 命令用于提供gcode文件中每个要打印的对象的摘要。提供文件中一个对象的摘要。对象被其他命令引用时不需要被定义。这个命令的主要目的是向UI提供信息，而不需要解析整个gcode文件。</p>
-<p>Object definitions are named, to allow users to easily select an object to be excluded, and additional metadata may be provided to allow for graphical cancellation displays. Currently defined metadata includes a <code>CENTER</code> X,Y coordinate, and a <code>POLYGON</code> list of X,Y points representing a minimal outline of the object. This could be a simple bounding box, or a complicated hull for showing more detailed visualizations of the printed objects. Especially when gcode files include multiple parts with overlapping bounding regions, center points become hard to visually distinguish. <code>POLYGONS</code> must be a json-compatible array of point <code>[X,Y]</code> tuples without whitespace. Additional parameters will be saved as strings in the object definition and provided in status updates.</p>
+<p>对象定义会被命名，以方便用户选择要排除的对象，并且可以提供额外的元数据以允许图形化的显示取消。目前定义的元数据包括一个<code>CENTER</code>（中心）X,Y坐标，以及一个<code>POLYGON</code> X,Y点的列表代表对象的最小轮廓。这可以是一个简单的边界框，也可以是一个复杂的几何体，用于显示打印对象的更详细的可视化信息。特别是当G代码文件包括具有重叠边界区域的多个实体时，中心点在视觉上会变得难以区分。<code>POLYGONS</code> 必须是一个与json兼容的点数组<code>[X,Y]</code> 图元，没有空格。额外的参数将被保存为对象定义中的字符串，并在状态更新中提供。</p>
 <p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
 <p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
 Reference</a></p>
-<h2 id="status-information">Status Information<a class="headerlink" href="#status-information" title="Permanent link">&para;</a></h2>
+<h2 id="_4">状态信息<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object
 status</a>.</p>
-<p>The status is reset when:</p>
+<p>在以下情况下会重置状态：</p>
 <ul>
-<li>The Klipper firmware is restarted.</li>
-<li>There is a reset of the <code>[virtual_sdcard]</code>. Notably, this is reset by Klipper at the start of a print.</li>
-<li>When an <code>EXCLUDE_OBJECT_DEFINE RESET=1</code> command is issued.</li>
+<li>Klipper固件被重新启动。</li>
+<li><code>[virtual_sdcard]</code> 的重置。值得注意的是，这是由Klipper在打印开始时重置的。</li>
+<li>当发出<code>EXCLUDE_OBJECT_DEFINE RESET=1</code> 命令时。</li>
 </ul>
-<p>The list of defined objects is represented in the <code>exclude_object.objects</code> status field. In a well defined gcode file, this will be done with <code>EXCLUDE_OBJECT_DEFINE</code> commands at the beginning of the file. This will provide clients with object names and coordinates so the UI can provide a graphical representation of the objects if desired.</p>
-<p>As the print progresses, the <code>exclude_object.current_object</code> status field will be updated as Klipper processes <code>EXCLUDE_OBJECT_START</code> and <code>EXCLUDE_OBJECT_END</code> commands. The <code>current_object</code> field will be set even if the object has been excluded. Undefined objects marked with a <code>EXCLUDE_OBJECT_START</code> will be added to the known objects to assist in UI hinting, without any additional metadata.</p>
-<p>As <code>EXCLUDE_OBJECT</code> commands are issued, the list of excluded objects is provided in the <code>exclude_object.excluded_objects</code> array. Since Klipper looks ahead to process upcoming gcode, there may be a delay between when the command is issued and when the status is updated.</p>
+<p>定义的对象列表在<code>exclude_object.object</code> 状态域中。在一个定义良好的G代码文件中，这一步会被用<code>EXCLUDE_OBJECT_DEFINE</code> 命令完成。这将为客户端提供对象的名称和坐标，因此如果需要，用户界面可以提供对象的图形表示。</p>
+<p>随着打印的进行，<code>exclude_object.current_object</code> 状态字段将随着Klipper处理<code>EXCLUDE_OBJECT_START</code> 和<code>EXCLUDE_OBJECT_END</code> 命令而被更新。<code>current_object</code> 字段将被设置，即使该对象已经被排除。用<code>EXCLUDE_OBJECT_START</code> 标记的未定义对象将被添加到已知对象中，以协助UI提示，而没有任何额外的元数据。</p>
+<p>当<code>EXCLUDE_OBJECT</code> 命令被发出时，被排除的对象会被包含在在<code>exclude_object.excludes_objects</code> 数组中。由于Klipper会提前处理即将执行的G代码，在命令发出和状态更新之间可能会有延迟。</p>
 
               
             </article>

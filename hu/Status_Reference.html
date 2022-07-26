@@ -1484,7 +1484,7 @@
   
     <li class="md-nav__item">
       <a href="Sponsors.html" class="md-nav__link">
-        Sponsors
+        Szponzorok
       </a>
     </li>
   
@@ -1941,12 +1941,12 @@
 <li><code>color_data</code>: A láncban lévő ledek RGBW értékeit tartalmazó színlisták listája. Minden értéket 0,0 és 1,0 közötti lebegőértékként ábrázolunk. Minden színlista 4 elemet tartalmaz (piros, zöld, kék, fehér), még akkor is, ha az alatta lévő LED kevesebb színcsatornát támogat. Például a lánc második neopixelének kék értéke (a színlista 3. eleme) a <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code> címen érhető el.</li>
 </ul>
 <h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>manual_probe</code> object:</p>
+<p>A következő információk a <code>manual_probe</code> objektumban találhatók:</p>
 <ul>
-<li><code>is_active</code>: Returns True if a manual probing helper script is currently active.</li>
-<li><code>z_position</code>: The current height of the nozzle (as the printer currently understands it).</li>
-<li><code>z_position_lower</code>: Last probe attempt just lower than the current height.</li>
-<li><code>z_position_upper</code>: Last probe attempt just greater than the current height.</li>
+<li><code>is_active</code>: True értéket ad vissza, ha egy kézi mérési segédszkript jelenleg aktív.</li>
+<li><code>z_position</code>: A fúvóka aktuális magassága (ahogyan azt a nyomtató jelenleg értelmezi).</li>
+<li><code>z_position_lower</code>: Az utolsó mérés kísérlet éppen az aktuális magasságnál alacsonyabb.</li>
+<li><code>z_position_upper</code>: Az utolsó mérés kísérlet éppen nagyobb, mint az aktuális magasság.</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
 <p>A következő információk az <a href="Config_Reference.html#mcu">mcu</a> és <a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a> objektumokban érhetők el:</p>
