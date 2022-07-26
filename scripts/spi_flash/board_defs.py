@@ -26,6 +26,11 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4"
     },
+    'btt-skr-mini-v3': {
+        'mcu': "stm32g0b1xx",
+        'spi_bus': "spi1",
+        "cs_pin": "PA4"
+    },
     'flyboard-mini': {
         'mcu': "stm32f103xe",
         'spi_bus': "spi2",
@@ -55,6 +60,21 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
+    },
+    'btt-skr-se-bx': {
+        'mcu': 'stm32h743xx',
+        'spi_bus': 'spi3a',
+        'cs_pin': 'PA15'
+    },
+    'monster8': {
+        'mcu': "stm32f407xx",
+        'spi_bus': "spi3a",
+        "cs_pin": "PC9"
+    },
+    'fly-gemini-v2': {
+        'mcu': "stm32f405xx",
+        'spi_bus': "spi1",
+        "cs_pin": "PA4"
     }
 }
 
@@ -78,6 +98,7 @@ BOARD_ALIASES = {
     'btt-skr-mini-e3-v1': BOARD_DEFS['btt-skr-mini'],
     'btt-skr-mini-e3-v1.2': BOARD_DEFS['btt-skr-mini'],
     'btt-skr-mini-e3-v2': BOARD_DEFS['btt-skr-mini'],
+    'btt-skr-mini-e3-v3': BOARD_DEFS['btt-skr-mini-v3'],
     'btt-skr-mini-mz': BOARD_DEFS['btt-skr-mini'],
     'btt-skr-e3-dip': BOARD_DEFS['btt-skr-mini'],
     'btt002-v1': BOARD_DEFS['btt-skr-mini'],
@@ -88,7 +109,9 @@ BOARD_ALIASES = {
     'mks-robin-e3d': BOARD_DEFS['mks-robin-e3'],
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
-    'fysetc-s6-v2': BOARD_DEFS['fysetc-spider']
+    'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
+    'monster8': BOARD_DEFS['monster8'],
+    'robin_v3': BOARD_DEFS['monster8']
 }
 
 def list_boards():

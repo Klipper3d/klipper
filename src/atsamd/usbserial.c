@@ -26,7 +26,7 @@ static uint8_t __aligned(4) acmin[USB_CDC_EP_ACM_SIZE];
 static uint8_t __aligned(4) bulkout[USB_CDC_EP_BULK_OUT_SIZE];
 static uint8_t __aligned(4) bulkin[USB_CDC_EP_BULK_IN_SIZE];
 
-static UsbDeviceDescriptor usb_desc[USB_CDC_EP_BULK_IN + 1] = {
+static UsbDeviceDescriptor usb_desc[] = {
     [0] = { {
         {
             .ADDR.reg = (uint32_t)ep0out,

@@ -20,9 +20,15 @@ class ArcSupport:
         self.gcode_move = self.printer.load_object(config, 'gcode_move')
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("G2", self.cmd_G2)
-        self.gcode.register_command("G3", self.cmd_G2)
+        self.gcode.register_command("G3", self.cmd_G3)
 
     def cmd_G2(self, gcmd):
+        self._cmd_inner(gcmd, True)
+
+    def cmd_G3(self, gcmd):
+        self._cmd_inner(gcmd, False)
+
+    def _cmd_inner(self, gcmd, clockwise):
         gcodestatus = self.gcode_move.get_status()
         if not gcodestatus['absolute_coordinates']:
             raise gcmd.error("G2/G3 does not support relative move mode")
@@ -40,7 +46,6 @@ class ArcSupport:
             raise gcmd.error("G2/G3 neither I nor J given")
         asE = gcmd.get_float("E", None)
         asF = gcmd.get_float("F", None)
-        clockwise = (gcmd.get_command() == 'G2')
 
         # Build list of linear coordinates to move to
         coords = self.planArc(currentPos, [asX, asY, asZ], [asI, asJ],

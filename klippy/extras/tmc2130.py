@@ -115,43 +115,48 @@ class TMCCurrentHelper:
         self.fields.set_field("irun", irun)
     def _calc_current_bits(self, current, vsense):
         if self.internal_r_sense:
-            return self._calc_current_bits_internal_rsense(current)
-        sense_resistor = self.sense_resistor + 0.020
-        vref = 0.32
-        if vsense:
-            vref = 0.18
-        cs = int(32. * current * sense_resistor * math.sqrt(2.) / vref
-                 - 1. + .5)
+            r_ref = self.ref_resistor + 450
+            v_ref = 5
+            rms_current_max = (3000 * v_ref / (r_ref * math.sqrt(2.)))
+            cs = int(32. * current / rms_current_max)
+        else:
+            sense_resistor = self.sense_resistor + 0.020
+            vref = 0.32
+            if vsense:
+                vref = 0.18
+            cs = int(32. * sense_resistor * current * math.sqrt(2.) / vref + .5) - 1
         return max(0, min(31, cs))
-
-    def _calc_current_bits_internal_rsense(self, current):
-        r_ref = self.ref_resistor + 450
-        v_ref = 5
-        rms_current_max = (3000 * v_ref / (r_ref * math.sqrt(2.)))
-        cs = int(32. * current / rms_current_max)
-        return max(0, min(31, cs))
-
+    def _calc_current_from_bits(self, cs, vsense):
+        if self.internal_r_sense:
+            r_ref = self.ref_resistor + 450
+            v_ref = 5
+            rms_current_max = (3000 * v_ref / (r_ref * math.sqrt(2.)))
+            return cs * rms_current_max / 32.
+        else:
+            sense_resistor = self.sense_resistor + 0.020
+            vref = 0.32
+            if vsense:
+                vref = 0.18
+            return (cs + 1) * vref / (32. * sense_resistor * math.sqrt(2.))
     def _calc_current(self, run_current, hold_current):
-        vsense = False
-        irun = self._calc_current_bits(run_current, vsense)
-        ihold = self._calc_current_bits(min(hold_current, run_current),
-                                        vsense)
-        if irun < 16 and ihold < 16:
-            vsense = True
-            irun = self._calc_current_bits(run_current, vsense)
-            ihold = self._calc_current_bits(min(hold_current, run_current),
-                                            vsense)
+        vsense = True
+        irun = self._calc_current_bits(run_current, True)
+        if irun == 31:
+            cur = self._calc_current_from_bits(irun, True)
+            if cur < run_current:
+                irun2 = self._calc_current_bits(run_current, False)
+                cur2 = self._calc_current_from_bits(irun2, False)
+                if abs(run_current - cur2) < abs(run_current - cur):
+                    vsense = False
+                    irun = irun2
+        ihold = self._calc_current_bits(min(hold_current, run_current), vsense)
         return vsense, irun, ihold
-    def _calc_current_from_field(self, field_name):
-        bits = self.fields.get_field(field_name)
-        sense_resistor = self.sense_resistor + 0.020
-        vref = 0.32
-        if self.fields.get_field("vsense"):
-            vref = 0.18
-        return (bits + 1) * vref / (32 * sense_resistor * math.sqrt(2.))
     def get_current(self):
-        run_current = self._calc_current_from_field("irun")
-        hold_current = self._calc_current_from_field("ihold")
+        irun = self.fields.get_field("irun")
+        ihold = self.fields.get_field("ihold")
+        vsense = self.fields.get_field("vsense")
+        run_current = self._calc_current_from_bits(irun, vsense)
+        hold_current = self._calc_current_from_bits(ihold, vsense)
         return run_current, hold_current, self.req_hold_current, MAX_CURRENT
     def set_current(self, run_current, hold_current, print_time):
         self.req_hold_current = hold_current

@@ -7,15 +7,19 @@
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "command.h" // shutdown
 #include "gpio.h" // gpio_adc_setup
-#include "internal.h" // GPIO
-#include "sam4e.h" // AFEC0
+#include "internal.h" // GPIO, AFEC0
 #include "sched.h" // sched_shutdown
+
+#if CONFIG_MACH_SAME70
+#include "same70_afec.h" // Fixes for upstream header changes
+#endif
 
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 
 static const uint8_t afec_pins[] = {
     //remove first channel, since it offsets the channel number: GPIO('A', 8),
+    #if CONFIG_MACH_SAM4E
     GPIO('A', 17), GPIO('A', 18), GPIO('A', 19),
     GPIO('A', 20), GPIO('B', 0),  GPIO('B', 1), GPIO('C', 13),
     GPIO('C', 15), GPIO('C', 12), GPIO('C', 29), GPIO('C', 30),
@@ -24,9 +28,40 @@ static const uint8_t afec_pins[] = {
     // AFEC1
     GPIO('B', 2), GPIO('B', 3), GPIO('A', 21), GPIO('A', 22),
     GPIO('C', 1), GPIO('C', 2), GPIO('C', 3), GPIO('C', 4),
+    #elif CONFIG_MACH_SAME70
+    GPIO('D', 30), GPIO('A', 21), GPIO('B', 3),  GPIO('E', 5),
+    GPIO('E', 4),  GPIO('B', 2),  GPIO('A', 17), GPIO('A', 18),
+    GPIO('A', 19), GPIO('A', 20), GPIO('B', 0),
+    ADC_TEMPERATURE_PIN,
+    // AFEC1
+    GPIO('B', 1),  GPIO('C', 13), GPIO('C', 15), GPIO('C', 12),
+    GPIO('C', 29), GPIO('C', 30), GPIO('C', 31), GPIO('C', 26),
+    GPIO('C', 27), GPIO('C', 0),  GPIO('E', 3),  GPIO('E', 0),
+    #endif
 };
 
+#if CONFIG_MACH_SAM4E
 #define AFEC1_START 16 // The first 16 pins are on afec0
+#define CFG_AFE_MR (AFE_MR_ANACH_ALLOWED | \
+                    AFE_MR_PRESCAL(pclk / (2 * ADC_FREQ_MAX) - 1) | \
+                    AFE_MR_SETTLING_AST3 | \
+                    AFE_MR_TRACKTIM(2) | \
+                    AFE_MR_TRANSFER(1) | \
+                    AFE_MR_STARTUP_SUT64)
+#define CFG_AFE_ACR AFE_ACR_IBCTL(1)
+#define CFG_AFE_IDR 0xDF00FFFF
+#define CFG_AFE_COCR (0x800 & AFE_COCR_AOFF_Msk)
+
+#elif CONFIG_MACH_SAME70
+#define AFEC1_START 12 // The first 12 pins are on afec0
+#define CFG_AFE_MR (AFEC_MR_ONE | \
+                    AFE_MR_PRESCAL (pclk / (ADC_FREQ_MAX) -1) | \
+                    AFE_MR_TRANSFER(2) | \
+                    AFE_MR_STARTUP_SUT64)
+#define CFG_AFE_ACR (AFE_ACR_IBCTL(1) | AFEC_ACR_PGA0EN | AFEC_ACR_PGA1EN)
+#define CFG_AFE_IDR 0x47000FFF
+#define CFG_AFE_COCR (0x200 & AFE_COCR_AOFF_Msk)
+#endif
 
 static inline struct gpio_adc
 pin_to_gpio_adc(uint8_t pin)
@@ -73,19 +108,14 @@ init_afec(Afec* afec) {
 
     // Configure afec
     uint32_t pclk = get_pclock_frequency(afec == AFEC0 ? ID_AFEC0 : ID_AFEC1);
-    afec->AFE_MR = AFE_MR_ANACH_ALLOWED | \
-                    AFE_MR_PRESCAL(pclk / (2 * ADC_FREQ_MAX) - 1) | \
-                    AFE_MR_SETTLING_AST3 | \
-                    AFE_MR_TRACKTIM(2) | \
-                    AFE_MR_TRANSFER(1) | \
-                    AFE_MR_STARTUP_SUT64;
+    afec->AFE_MR = CFG_AFE_MR;
     afec->AFE_EMR = AFE_EMR_TAG | \
                      AFE_EMR_RES_NO_AVERAGE | \
                      AFE_EMR_STM;
-    afec->AFE_ACR = AFE_ACR_IBCTL(1);
+    afec->AFE_ACR = CFG_AFE_ACR;
 
     // Disable interrupts
-    afec->AFE_IDR = 0xDF00803F;
+    afec->AFE_IDR = CFG_AFE_IDR;
 
     // Disable SW triggering
     uint32_t mr = afec->AFE_MR;
@@ -123,23 +153,25 @@ gpio_adc_setup(uint8_t pin)
     afec->AFE_DIFFR = reg;
     reg = afec->AFE_CGR;
     reg &= ~(0x03u << (2 * afec_chan));
-    reg |= 1 << (2 * afec_chan);
     afec->AFE_CGR = reg;
 
     // Configure channel
     // afec_ch_get_config_defaults(&ch_cfg);
     // afec_ch_set_config(afec, afec_chan, &ch_cfg);
     // Remove default internal offset from channel
-    // See Atmel Appnote AT03078 Section 1.5
+    // See Atmel Appnote AT03078 Section 1.5 for SAM4E,
+    // datasheet section 52.6.11 for SAME70
     afec->AFE_CSELR = afec_chan;
-    afec->AFE_COCR = (0x800 & AFE_COCR_AOFF_Msk);
+    afec->AFE_COCR = CFG_AFE_COCR;
 
     // Enable and calibrate Channel
     afec->AFE_CHER = 1 << afec_chan;
 
+    #if CONFIG_MACH_SAM4E
     reg = afec->AFE_CHSR;
     afec->AFE_CDOR = reg;
     afec->AFE_CR = AFE_CR_AUTOCAL;
+    #endif
 
     return adc_pin;
 }

@@ -43,9 +43,20 @@
 #endif
 
 #if CONFIG_MACH_STM32F031
-// The stm32f031 has same pins for USART2, but everything is routed to USART1
-#define USART2 USART1
-#define USART2_IRQn USART1_IRQn
+  // The stm32f031 has same pins for USART2, but everything is routed to USART1
+  #define USART2 USART1
+  #define USART2_IRQn USART1_IRQn
+#endif
+
+#if CONFIG_MACH_STM32G0
+  // The stm32g0 has slightly different register names
+  #define USART2_IRQn USART2_LPUART2_IRQn
+  #define USART_CR1_RXNEIE USART_CR1_RXNEIE_RXFNEIE
+  #define USART_CR1_TXEIE USART_CR1_TXEIE_TXFNFIE
+  #define USART_ISR_RXNE USART_ISR_RXNE_RXFNE
+  #define USART_ISR_TXE USART_ISR_TXE_TXFNF
+  #define USART_BRR_DIV_MANTISSA_Pos 4
+  #define USART_BRR_DIV_FRACTION_Pos 0
 #endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
