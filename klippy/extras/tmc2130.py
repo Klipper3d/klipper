@@ -124,7 +124,8 @@ class TMCCurrentHelper:
             vref = 0.32
             if vsense:
                 vref = 0.18
-            cs = int(32. * sense_resistor * current * math.sqrt(2.) / vref + .5) - 1
+            cs = int(32. * sense_resistor * current * math.sqrt(2.)
+                / vref + .5) - 1
         return max(0, min(31, cs))
     def _calc_current_from_bits(self, cs, vsense):
         if self.internal_r_sense:
