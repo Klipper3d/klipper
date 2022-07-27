@@ -161,13 +161,13 @@ CONFIG ../../config/printer-creality-cr6se-2020.cfg
 CONFIG ../../config/printer-creality-cr6se-2021.cfg
 CONFIG ../../config/printer-creality-ender2pro-2021.cfg
 CONFIG ../../config/printer-creality-ender3-s1-2021.cfg
-CONFIG ../../config/printer-creality-ender3-s1pro-2022.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-creality-ender5pro-2020.cfg
 CONFIG ../../config/printer-creality-ender6-2020.cfg
 CONFIG ../../config/printer-creality-sermoonD1-2021.cfg
+CONFIG ../../config/printer-creality-sermoonV1-2022.cfg
 CONFIG ../../config/printer-elegoo-neptune2-2021.cfg
 CONFIG ../../config/printer-eryone-er20-2021.cfg
 CONFIG ../../config/printer-flsun-q5-2020.cfg
