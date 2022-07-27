@@ -38,23 +38,23 @@ with a RESP_NEED_NODEID response message.
 The CMD_QUERY_UNASSIGNED message format is:
 `<1-byte message_id = 0x00>`
 
-### CMD_SET_NODEID message
+### CMD_SET_KLIPPER_NODEID message
 
 This command assigns a `canbus_nodeid` to the micro-controller with a
 given `canbus_uuid`.
 
-The CMD_SET_NODEID message format is:
+The CMD_SET_KLIPPER_NODEID message format is:
 `<1-byte message_id = 0x01><6-byte canbus_uuid><1-byte canbus_nodeid>`
 
 ### RESP_NEED_NODEID message
 
 The RESP_NEED_NODEID message format is:
-`<1-byte message_id = 0x20><6-byte canbus_uuid>`
+`<1-byte message_id = 0x20><6-byte canbus_uuid><1-byte set_klipper_nodeid = 0x01>`
 
 ## Data Packets
 
 A micro-controller that has been assigned a nodeid via the
-CMD_SET_NODEID command can send and receive data packets.
+CMD_SET_KLIPPER_NODEID command can send and receive data packets.
 
 The packet data in messages using the node's receive CAN bus id
 (`canbus_nodeid * 2 + 256`) are simply appended to a buffer, and when
