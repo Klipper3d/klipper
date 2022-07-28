@@ -11,6 +11,14 @@
 #include "internal.h" // UOTGHS
 #include "sched.h" // DECL_INIT
 
+#if CONFIG_MACH_SAME70
+#include "same70_usb.h" // Fixes for upstream header changes
+#define CFG_UOTGHS_CTRL (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_USBE)
+#else
+#define CFG_UOTGHS_CTRL (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE | \
+                         UOTGHS_CTRL_USBE)
+#endif
+
 #define EP_SIZE(s) ((s)==64 ? UOTGHS_DEVEPTCFG_EPSIZE_64_BYTE :         \
                     ((s)==32 ? UOTGHS_DEVEPTCFG_EPSIZE_32_BYTE :        \
                      ((s)==16 ? UOTGHS_DEVEPTCFG_EPSIZE_16_BYTE :       \
@@ -216,8 +224,7 @@ usbserial_init(void)
         ;
 
     // Enable USB
-    UOTGHS->UOTGHS_CTRL = (UOTGHS_CTRL_UIMOD | UOTGHS_CTRL_OTGPADE
-                           | UOTGHS_CTRL_USBE);
+    UOTGHS->UOTGHS_CTRL = CFG_UOTGHS_CTRL;
     UOTGHS->UOTGHS_DEVCTRL = UOTGHS_DEVCTRL_SPDCONF_FORCED_FS;
 
     // Enable interrupts

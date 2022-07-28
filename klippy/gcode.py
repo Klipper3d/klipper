@@ -27,20 +27,19 @@ class GCodeCommand:
     def get_command_parameters(self):
         return self._params
     def get_raw_command_parameters(self):
-        rawparams = self._commandline
         command = self._command
+        if command.startswith("M117 ") or command.startswith("M118 "):
+            command = command[:4]
+        rawparams = self._commandline
         urawparams = rawparams.upper()
         if not urawparams.startswith(command):
-            start = urawparams.find(command)
+            rawparams = rawparams[urawparams.find(command):]
             end = rawparams.rfind('*')
             if end >= 0:
                 rawparams = rawparams[:end]
-            rawparams = rawparams[start:]
-        commandlen = len(command) + 1
-        if len(rawparams) > commandlen:
-            rawparams = rawparams[commandlen:]
-        else:
-            rawparams = ''
+        rawparams = rawparams[len(command):]
+        if rawparams.startswith(' '):
+            rawparams = rawparams[1:]
         return rawparams
     def ack(self, msg=None):
         if not self._need_ack:
@@ -277,9 +276,9 @@ class GCodeDispatch:
             if cmdline:
                 logging.debug(cmdline)
             return
-        if cmd.startswith("M117 "):
-            # Handle M117 gcode with numeric and special characters
-            handler = self.gcode_handlers.get("M117", None)
+        if cmd.startswith("M117 ") or cmd.startswith("M118 "):
+            # Handle M117/M118 gcode with numeric and special characters
+            handler = self.gcode_handlers.get(cmd[:4], None)
             if handler is not None:
                 handler(gcmd)
                 return

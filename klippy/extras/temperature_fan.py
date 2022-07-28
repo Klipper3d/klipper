@@ -72,7 +72,7 @@ class TemperatureFan:
         return self.max_speed
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
-        status["temperature"] = self.last_temp
+        status["temperature"] = round(self.last_temp, 2)
         status["target"] = self.target_temp
         return status
     cmd_SET_TEMPERATURE_FAN_TARGET_help = \
@@ -147,9 +147,9 @@ class ControlPID:
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = config.getfloat('pid_deriv_time', 2., above=0.)
-        imax = config.getfloat('pid_integral_max',
-                               self.temperature_fan.get_max_speed(), minval=0.)
-        self.temp_integ_max = imax / self.Ki
+        self.temp_integ_max = 0.
+        if self.Ki:
+            self.temp_integ_max = self.temperature_fan.get_max_speed() / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
