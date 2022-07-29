@@ -1013,8 +1013,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cmd_set_nodeid-message" class="md-nav__link">
-    CMD_SET_NODEID message
+  <a href="#cmd_set_klipper_nodeid-message" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID message
   </a>
   
 </li>
@@ -1319,8 +1319,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cmd_set_nodeid-message" class="md-nav__link">
-    CMD_SET_NODEID message
+  <a href="#cmd_set_klipper_nodeid-message" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID message
   </a>
   
 </li>
@@ -1391,17 +1391,17 @@ assigned a <code>canbus_nodeid</code>. Unassigned micro-controllers will respond
 with a RESP_NEED_NODEID response message.</p>
 <p>The CMD_QUERY_UNASSIGNED message format is:
 <code>&lt;1-byte message_id = 0x00&gt;</code></p>
-<h3 id="cmd_set_nodeid-message">CMD_SET_NODEID message<a class="headerlink" href="#cmd_set_nodeid-message" title="Permanent link">&para;</a></h3>
+<h3 id="cmd_set_klipper_nodeid-message">CMD_SET_KLIPPER_NODEID message<a class="headerlink" href="#cmd_set_klipper_nodeid-message" title="Permanent link">&para;</a></h3>
 <p>This command assigns a <code>canbus_nodeid</code> to the micro-controller with a
 given <code>canbus_uuid</code>.</p>
-<p>The CMD_SET_NODEID message format is:
+<p>The CMD_SET_KLIPPER_NODEID message format is:
 <code>&lt;1-byte message_id = 0x01&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte canbus_nodeid&gt;</code></p>
 <h3 id="resp_need_nodeid-message">RESP_NEED_NODEID message<a class="headerlink" href="#resp_need_nodeid-message" title="Permanent link">&para;</a></h3>
 <p>The RESP_NEED_NODEID message format is:
-<code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;</code></p>
+<code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte set_klipper_nodeid = 0x01&gt;</code></p>
 <h2 id="data-packets">Data Packets<a class="headerlink" href="#data-packets" title="Permanent link">&para;</a></h2>
 <p>A micro-controller that has been assigned a nodeid via the
-CMD_SET_NODEID command can send and receive data packets.</p>
+CMD_SET_KLIPPER_NODEID command can send and receive data packets.</p>
 <p>The packet data in messages using the node's receive CAN bus id
 (<code>canbus_nodeid * 2 + 256</code>) are simply appended to a buffer, and when
 a complete <a href="Protocol.html">mcu protocol message</a> is found its contents

@@ -1352,9 +1352,9 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>This document describes Klipper's CAN bus support.</p>
 <h2 id="device-hardware">Device Hardware<a class="headerlink" href="#device-hardware" title="Permanent link">&para;</a></h2>
-<p>Klipper currently only supports CAN on stm32 chips. In addition, the
-micro-controller chip must support CAN and it must be on a board that
-has a CAN transceiver.</p>
+<p>Klipper currently supports CAN on stm32 and rp2040 chips. In addition,
+the micro-controller chip must be on a board that has a CAN
+transceiver.</p>
 <p>To compile for CAN, run <code>make menuconfig</code> and select "CAN bus" as the
 communication interface. Finally, compile the micro-controller code
 and flash it to the target board.</p>
@@ -1412,7 +1412,7 @@ powered and wired correctly, and then run:</p>
 
 <p>If uninitialized CAN devices are detected the above command will
 report lines like the following:</p>
-<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc
+<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc, Application: Klipper
 </code></pre></div>
 
 <p>Each device will have a unique identifier. In the above example,
@@ -1452,11 +1452,16 @@ alongside other devices that are actually on the CAN bus.</p>
 </ul>
 <ul>
 <li>Whenever the "bridge mcu" is reset, Linux will disable the
-  corresponding <code>can0</code> interface. Generally, this may require running
-  commands such as "ip up" to restart the interface. Thus, Klipper
-  FIRMWARE_RESTART commands (or regular RESTART after a config change)
-  may require restarting the <code>can0</code> interface.</li>
+  corresponding <code>can0</code> interface. To ensure proper handling of
+  FIRMWARE_RESTART and RESTART commands, it is recommended to replace
+  <code>auto</code> with <code>allow-hotplug</code> in the <code>/etc/network/interfaces.d/can0</code>
+  file. For example:</li>
 </ul>
+<div class="highlight"><pre><span></span><code>allow-hotplug can0
+iface can0 can static
+    bitrate 500000
+    up ifconfig $IFACE txqueuelen 128
+</code></pre></div>
 
               
             </article>
