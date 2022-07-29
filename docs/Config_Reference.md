@@ -2328,6 +2328,8 @@ monitor these temperatures.
 sensor_type: temperature_mcu
 #sensor_mcu: mcu
 #   The micro-controller to read from. The default is "mcu".
+#reference_voltage:
+#   The reference voltage for the ADC of the mcu. Default is 3.3
 #sensor_temperature1:
 #sensor_adc1:
 #   Specify the above two parameters (a temperature in Celsius and an
