@@ -33,8 +33,17 @@ config FLASH_SIZE
     hex
     default 0x40000
 
+choice
+    prompt "Flash start"
+    config HC32F460_FLASH_START_0xC000
+        bool "0xC000" 
+    config HC32F460_FLASH_START_0x8000
+        bool "0x8000" 
+endchoice
+
 config FLASH_START
     hex
+    default 0x8000 if HC32F460_FLASH_START_0x8000
     default 0xC000
 
 config RAM_SIZE
