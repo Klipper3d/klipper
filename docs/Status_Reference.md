@@ -28,6 +28,17 @@ The following information is available in the
 - `profiles`: The set of currently defined profiles as setup
    using BED_MESH_PROFILE.
 
+## bed_screws
+
+The following information is available in the
+`Config_Reference.md#bed_screws` object:
+- `is_active`: Returns True if the bed screws adjustment tool is currently
+active.
+- `state`: The bed screws adjustment tool state. It is one of
+the following strings: "adjust", "fine".
+- `current_screw`: The index for the current screw being adjusted.
+- `accepted_screws`: The number of accepted screws.
+
 ## configfile
 
 The following information is available in the `configfile` object
@@ -41,6 +52,8 @@ The following information is available in the `configfile` object
   here.) All values are returned as strings.
 - `save_config_pending`: Returns true if there are updates that a
   `SAVE_CONFIG` command may persist to disk.
+- `save_config_pending_items`: Contains the sections and options that
+  were changed and would be persisted by a `SAVE_CONFIG`.
 - `warnings`: A list of warnings about config options. Each entry in
   the list will be a dictionary containing a `type` and `message`
   field (both strings). Additional fields may be available depending
@@ -241,6 +254,17 @@ The following information is available for each `[led led_name]`,
   the blue value (3rd item in color list) of the second neopixel in a
   chain could be accessed at
   `printer["neopixel <config_name>"].color_data[1][2]`.
+
+## manual_probe
+
+The following information is available in the
+`manual_probe` object:
+- `is_active`: Returns True if a manual probing helper script is currently
+active.
+- `z_position`: The current height of the nozzle (as the printer currently
+understands it).
+- `z_position_lower`: Last probe attempt just lower than the current height.
+- `z_position_upper`: Last probe attempt just greater than the current height.
 
 ## mcu
 

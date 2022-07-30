@@ -11,11 +11,12 @@ help_txt = """
   This is a debugging console for the Klipper micro-controller.
   In addition to mcu commands, the following artificial commands are
   available:
-    PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
     FLOOD : Send a command many times (eg, "FLOOD 22 .01 get_uptime")
     SUPPRESS : Suppress a response message (eg, "SUPPRESS analog_in_state 4")
     SET   : Create a local variable (eg, "SET myvar 123.4")
+    DUMP  : Dump memory (eg, "DUMP 0x12345678 100 32")
+    FILEDUMP : Dump to file (eg, "FILEDUMP data.bin 0x12345678 100 32")
     STATS : Report serial statistics
     LIST  : List available mcu commands, local commands, and local variables
     HELP  : Show this text
@@ -48,6 +49,7 @@ class KeyboardReader:
         reactor.register_callback(self.connect)
         self.local_commands = {
             "SET": self.command_SET,
+            "DUMP": self.command_DUMP, "FILEDUMP": self.command_FILEDUMP,
             "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
             "SUPPRESS": self.command_SUPPRESS, "STATS": self.command_STATS,
             "LIST": self.command_LIST, "HELP": self.command_HELP,
@@ -98,6 +100,55 @@ class KeyboardReader:
         except ValueError:
             pass
         self.eval_globals[parts[1]] = val
+    def command_DUMP(self, parts, filename=None):
+        # Extract command args
+        try:
+            addr = int(parts[1], 0)
+            count = int(parts[2], 0)
+            order = [2, 0, 1, 0][(addr | count) & 3]
+            if len(parts) > 3:
+                order = {'32': 2, '16': 1, '8': 0}[parts[3]]
+        except ValueError as e:
+            self.output("Error: %s" % (str(e),))
+            return
+        bsize = 1 << order
+        # Query data from mcu
+        vals = []
+        for i in range((count + bsize - 1) >> order):
+            caddr = addr + (i << order)
+            cmd = "debug_read order=%d addr=%d" % (order, caddr)
+            params = self.ser.send_with_response(cmd, "debug_result")
+            vals.append(params['val'])
+        # Report data
+        if filename is None and order == 2:
+            # Common 32bit hex dump
+            for i in range((len(vals) + 3) // 4):
+                p = i * 4
+                hexvals = " ".join(["%08x" % (v,) for v in vals[p:p+4]])
+                self.output("%08x  %s" % (addr + p * 4, hexvals))
+            return
+        # Convert to byte format
+        data = bytearray()
+        for val in vals:
+            for b in range(bsize):
+                data.append((val >> (8 * b)) & 0xff)
+        data = data[:count]
+        if filename is not None:
+            f = open(filename, 'wb')
+            f.write(data)
+            f.close()
+            self.output("Wrote %d bytes to '%s'" % (len(data), filename))
+            return
+        for i in range((count + 15) // 16):
+            p = i * 16
+            paddr = addr + p
+            d = data[p:p+16]
+            hexbytes = " ".join(["%02x" % (v,) for v in d])
+            pb = "".join([chr(v) if v >= 0x20 and v < 0x7f else '.' for v in d])
+            o = "%08x  %-47s  |%s|" % (paddr, hexbytes, pb)
+            self.output("%s %s" % (o[:34], o[34:]))
+    def command_FILEDUMP(self, parts):
+        self.command_DUMP(parts[1:], filename=parts[1])
     def command_DELAY(self, parts):
         try:
             val = int(parts[1])

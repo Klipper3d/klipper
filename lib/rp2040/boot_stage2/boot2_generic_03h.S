@@ -16,7 +16,7 @@
 //                4-byte checksum. Therefore code size cannot exceed 252 bytes.
 // ----------------------------------------------------------------------------
 
-#include "pico/asm_helper.S"
+//#include "pico/asm_helper.S"
 #include "hardware/regs/addressmap.h"
 #include "hardware/regs/ssi.h"
 

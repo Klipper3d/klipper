@@ -162,6 +162,16 @@ class ServerSocket:
     def pop_client(self, client_id):
         self.clients.pop(client_id, None)
 
+    def stats(self, eventtime):
+        # Called once per second - check for idle clients
+        for client in list(self.clients.values()):
+            if client.is_blocking:
+                client.blocking_count -= 1
+                if client.blocking_count < 0:
+                    logging.info("Closing unresponsive client %s", client.uid)
+                    client.close()
+        return False, ""
+
 class ClientConnection:
     def __init__(self, server, sock):
         self.printer = server.printer
@@ -171,9 +181,10 @@ class ClientConnection:
         self.uid = id(self)
         self.sock = sock
         self.fd_handle = self.reactor.register_fd(
-            self.sock.fileno(), self.process_received)
+            self.sock.fileno(), self.process_received, self._do_send)
         self.partial_data = self.send_buffer = b""
-        self.is_sending_data = False
+        self.is_blocking = False
+        self.blocking_count = 0
         self.set_client_info("?", "New connection")
         self.request_log = collections.deque([], REQUEST_LOG_SIZE)
 
@@ -259,33 +270,29 @@ class ClientConnection:
     def send(self, data):
         jmsg = json.dumps(data, separators=(',', ':'))
         self.send_buffer += jmsg.encode() + b"\x03"
-        if not self.is_sending_data:
-            self.is_sending_data = True
-            self.reactor.register_callback(self._do_send)
+        if not self.is_blocking:
+            self._do_send()
 
-    def _do_send(self, eventtime):
-        retries = 10
-        while self.send_buffer:
-            try:
-                sent = self.sock.send(self.send_buffer)
-            except socket.error as e:
-                if e.errno == errno.EBADF or e.errno == errno.EPIPE \
-                        or not retries:
-                    sent = 0
-                else:
-                    retries -= 1
-                    waketime = self.reactor.monotonic() + .001
-                    self.reactor.pause(waketime)
-                    continue
-            retries = 10
-            if sent > 0:
-                self.send_buffer = self.send_buffer[sent:]
-            else:
-                logging.info(
-                    "webhooks: Error sending server data,  closing socket")
+    def _do_send(self, eventtime=None):
+        if self.fd_handle is None:
+            return
+        try:
+            sent = self.sock.send(self.send_buffer)
+        except socket.error as e:
+            if e.errno not in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                logging.info("webhooks: socket write error %d" % (self.uid,))
                 self.close()
-                break
-        self.is_sending_data = False
+                return
+            sent = 0
+        if sent < len(self.send_buffer):
+            if not self.is_blocking:
+                self.reactor.set_fd_wake(self.fd_handle, False, True)
+                self.is_blocking = True
+                self.blocking_count = 5
+        elif self.is_blocking:
+            self.reactor.set_fd_wake(self.fd_handle, True, False)
+            self.is_blocking = False
+        self.send_buffer = self.send_buffer[sent:]
 
 class WebHooks:
     def __init__(self, printer):
@@ -374,6 +381,9 @@ class WebHooks:
     def get_status(self, eventtime):
         state_message, state = self.printer.get_state_message()
         return {'state': state, 'state_message': state_message}
+
+    def stats(self, eventtime):
+        return self.sconn.stats(eventtime)
 
     def call_remote_method(self, method, **kwargs):
         if method not in self._remote_methods:
