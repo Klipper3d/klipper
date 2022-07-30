@@ -784,16 +784,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#input-shaper-auto-calibration" class="md-nav__link">
-    Input Shaper auto-calibration
+  <a href="#_11" class="md-nav__link">
+    输入整形器自动校准
   </a>
   
-    <nav class="md-nav" aria-label="Input Shaper auto-calibration">
+    <nav class="md-nav" aria-label="输入整形器自动校准">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#input-shaper-re-calibration" class="md-nav__link">
-    Input Shaper re-calibration
+  <a href="#_12" class="md-nav__link">
+    重新校准输入整形器
   </a>
   
 </li>
@@ -1456,16 +1456,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#input-shaper-auto-calibration" class="md-nav__link">
-    Input Shaper auto-calibration
+  <a href="#_11" class="md-nav__link">
+    输入整形器自动校准
   </a>
   
-    <nav class="md-nav" aria-label="Input Shaper auto-calibration">
+    <nav class="md-nav" aria-label="输入整形器自动校准">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#input-shaper-re-calibration" class="md-nav__link">
-    Input Shaper re-calibration
+  <a href="#_12" class="md-nav__link">
+    重新校准输入整形器
   </a>
   
 </li>
@@ -1749,20 +1749,20 @@ Recommended shaper is 3hump_ei @ 72.6 Hz
 </code></pre></div>
 
 <p>新的参数与之前的建议比，振动要大一些，但平滑度明显比之前小，允许打印时更高的极限加速度。</p>
-<p>When deciding which <code>max_smoothing</code> parameter to choose, you can use a trial-and-error approach. Try a few different values and see which results you get. Note that the actual smoothing produced by the input shaper depends, primarily, on the lowest resonance frequency of the printer: the higher the frequency of the lowest resonance - the smaller the smoothing. Therefore, if you request the script to find a configuration of the input shaper with the unrealistically small smoothing, it will be at the expense of increased ringing at the lowest resonance frequencies (which are, typically, also more prominently visible in prints). So, always double-check the projected remaining vibrations reported by the script and make sure they are not too high.</p>
-<p>Note that if you chose a good <code>max_smoothing</code> value for both of your axes, you can store it in the <code>printer.cfg</code> as</p>
+<p>在选择 <code>max_smoothing</code> 参数时，可以使用试错的方法。试试几个不同的值并对比得到的结果。请注意，输入整形器产生的实际平滑效果主要取决于打印机的最低谐振频率：最低谐振的频率越高，平滑效果越小。因此，如果要求脚本找到一个具有不切实际小平滑度的输入整形器配置，它将以增加最低共振频率的振纹为代价（通常，这在打印件中比平滑产生的影响更明显）。因此，一定要仔细检查脚本所报告的预计剩余振动，确保它们不会太高。</p>
+<p>注意，如果为两个轴选择了一个相同的 <code>max_smoothing</code> 值，可以把它存储在 <code>printer.cfg</code> 为</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 accel_chip: ...
 probe_points: ...
 max_smoothing: 0.25  # an example
 </code></pre></div>
 
-<p>Then, if you <a href="#input-shaper-re-calibration">rerun</a> the input shaper auto-tuning using <code>SHAPER_CALIBRATE</code> Klipper command in the future, it will use the stored <code>max_smoothing</code> value as a reference.</p>
+<p>如果在将来使用<code>SHAPER_CALIBRATE</code> Klipper命令<a href="#input-shaper-re-calibration">重新运行</a>输入整形器自动调谐，它将使用存储的<code>max_smoothing</code> 值作为参考。</p>
 <h3 id="max_accel">选择 max_accel<a class="headerlink" href="#max_accel" title="Permanent link">&para;</a></h3>
-<p>Since the input shaper can create some smoothing in parts, especially at high accelerations, you will still need to choose the <code>max_accel</code> value that does not create too much smoothing in the printed parts. A calibration script provides an estimate for <code>max_accel</code> parameter that should not create too much smoothing. Note that the <code>max_accel</code> as displayed by the calibration script is only a theoretical maximum at which the respective shaper is still able to work without producing too much smoothing. It is by no means a recommendation to set this acceleration for printing. The maximum acceleration your printer is able to sustain depends on its mechanical properties and the maximum torque of the used stepper motors. Therefore, it is suggested to set <code>max_accel</code> in <code>[printer]</code> section that does not exceed the estimated values for X and Y axes, likely with some conservative safety margin.</p>
-<p>Alternatively, follow <a href="Resonance_Compensation.html#selecting-max_accel">this</a> part of the input shaper tuning guide and print the test model to choose <code>max_accel</code> parameter experimentally.</p>
-<p>The same notice applies to the input shaper <a href="#input-shaper-auto-calibration">auto-calibration</a> with <code>SHAPER_CALIBRATE</code> command: it is still necessary to choose the right <code>max_accel</code> value after the auto-calibration, and the suggested acceleration limits will not be applied automatically.</p>
-<p>If you are doing a shaper re-calibration and the reported smoothing for the suggested shaper configuration is almost the same as what you got during the previous calibration, this step can be skipped.</p>
+<p>由于输入整形器会在打印件中产生一些平滑，特别是在高加速时，选择一个不会产生过多平滑的<code>max_accel</code> 依然很重要校准脚本为<code>max_accel</code> 参数提供了一个不应该产生过多平滑的估计值。请注意，由校准脚本显示的<code>max_accel</code> 只是一个理论上的最大值，在这个值上，各自的整形器仍然能够工作而不产生过多的平滑。这决不是建议设置的打印加速度。你的打印机能够承受的最大加速度取决于它的机械性能和所用步进电机的最大扭矩。因此，建议在<code>[printer]</code> 部分设置<code>max_accel</code> 时不要超过X轴和Y轴的估计值，并保守一些。</p>
+<p>或者，按照<a href="Resonance_Compensation.html#selecting-max_accel">这个</a>章节的输入整形器调整指南，打印测试模型，通过实验选择<code>max_accel</code> 参数。</p>
+<p>同样的通知也适用于带有<code>SHAPER_CALIBRATE</code> 命令的输入整形器<a href="#input-shaper-auto-calibration">自动校准</a>：在自动校准后仍需选择正确的<code>max_accel</code> 值，建议的加速度限制将不会被自动应用。</p>
+<p>如果重新校准一个整形器，并且建议的整形器配置的报告平滑度与你在以前的校准中得到的几乎相同，这个步骤可以被跳过。</p>
 <h3 id="testing-custom-axes">Testing custom axes<a class="headerlink" href="#testing-custom-axes" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code> command supports custom axes. While this is not really useful for input shaper calibration, it can be used to study printer resonances in-depth and to check, for example, belt tension.</p>
 <p>To check the belt tension on CoreXY printers, execute</p>
@@ -1786,12 +1786,12 @@ TEST_RESONANCES AXIS=0.866025404,-0.5 OUTPUT=raw_data
 </code></pre></div>
 
 <p>以生成<code>/tmp/resonances.png</code>，对比共振的数据。</p>
-<h2 id="input-shaper-auto-calibration">Input Shaper auto-calibration<a class="headerlink" href="#input-shaper-auto-calibration" title="Permanent link">&para;</a></h2>
-<p>Besides manually choosing the appropriate parameters for the input shaper feature, it is also possible to run the auto-tuning for the input shaper directly from Klipper. Run the following command via Octoprint terminal:</p>
+<h2 id="_11">输入整形器自动校准<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<p>除了为输入整形器功能手动选择适当的参数外，还可以直接从Klipper运行输入整形器的自动调谐。通过Octoprint终端运行以下命令：</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE
 </code></pre></div>
 
-<p>This will run the full test for both axes and generate the csv output (<code>/tmp/calibration_data_*.csv</code> by default) for the frequency response and the suggested input shapers. You will also get the suggested frequencies for each input shaper, as well as which input shaper is recommended for your setup, on Octoprint console. For example:</p>
+<p>这将为两个轴运行完整的测试，并生成用于频率响应和建议的输入整形器的csv输出（默认为<code>/tmp/calibration_data_*.csv</code> ）。在Octoprint中会提示控制台每个输入整形器的建议频率，以及为这台打印机推荐的输入整形器。例如：</p>
 <div class="highlight"><pre><span></span><code>Calculating the best input shaper parameters for y axis # 正在计算y轴的最佳输入整形参数
 Fitted shaper &#39;zv&#39; frequency = 39.0 Hz (vibrations = 13.2%, smoothing ~= 0.105) # 拟合整形“zv”
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 5900 mm/sec^2 # 为避免使用“zv”方法产生过度平滑，建议最大加速度&lt;=5900 mm/sec^2
@@ -1806,15 +1806,15 @@ To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 2
 Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz # 建议shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
 </code></pre></div>
 
-<p>If you agree with the suggested parameters, you can execute <code>SAVE_CONFIG</code> now to save them and restart the Klipper. Note that this will not update <code>max_accel</code> value in <code>[printer]</code> section. You should update it manually following the considerations in <a href="#selecting-max_accel">Selecting max_accel</a> section.</p>
-<p>If your printer is a bed slinger printer, you can specify which axis to test, so that you can change the accelerometer mounting point between the tests (by default the test is performed for both axes):</p>
+<p>如果认同建议的参数，现在可以执行<code>SAVE_CONFIG</code> 来保存设置并重新启动Klipper。 请注意，这不会更新<code>[printer]</code> 分段中的<code>max_accel</code>值。应该按照<a href="#selecting-max_accel">选择max_accel</a>章节中的注意事项手动更新它。</p>
+<p>如果你的打印机热床水平移动，可以选择测试的轴，这样就可以在测试之间改变加速度计的安装点（默认情况下，测试会同时对两个轴一起进行）：</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Y
 </code></pre></div>
 
-<p>You can execute <code>SAVE_CONFIG</code> twice - after calibrating each axis.</p>
-<p>However, if you connected two accelerometers simultaneously, you simply run <code>SHAPER_CALIBRATE</code> without specifying an axis to calibrate the input shaper for both axes in one go.</p>
-<h3 id="input-shaper-re-calibration">Input Shaper re-calibration<a class="headerlink" href="#input-shaper-re-calibration" title="Permanent link">&para;</a></h3>
-<p><code>SHAPER_CALIBRATE</code> command can be also used to re-calibrate the input shaper in the future, especially if some changes to the printer that can affect its kinematics are made. One can either re-run the full calibration using <code>SHAPER_CALIBRATE</code> command, or restrict the auto-calibration to a single axis by supplying <code>AXIS=</code> parameter, like</p>
+<p>可以在校准每个轴之后执行<code>SAVE_CONFIG</code>。</p>
+<p>然而，如果同时连接了两个加速度计，只需要运行<code>SHAPER_CALIBRATE</code> ，而不指定轴，就可以一次性校准两个轴的输入整形器。</p>
+<h3 id="_12">重新校准输入整形器<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<p><code>SHAPER_CALIBRATE</code> 命令也可以用来在将来重新校准输入整形器，特别是当打印机发生了一些可能影响其运动学的变化时。可以使用<code>SHAPER_CALIBRATE</code> 命令重新进行全面校准，或者通过提供<code>AXIS=</code> 参数将自动校准限制在一个轴上，例如</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
 </code></pre></div>
 

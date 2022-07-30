@@ -839,29 +839,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#variables" class="md-nav__link">
-    Variables
+  <a href="#_6" class="md-nav__link">
+    变量
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#delayed-gcodes" class="md-nav__link">
-    Delayed Gcodes
+  <a href="#g_2" class="md-nav__link">
+    延迟G代码
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#menu-templates" class="md-nav__link">
-    Menu templates
+  <a href="#_7" class="md-nav__link">
+    菜单模板
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#save-variables-to-disk" class="md-nav__link">
-    Save Variables to disk
+  <a href="#_8" class="md-nav__link">
+    保存变量到磁盘
   </a>
   
 </li>
@@ -1417,29 +1417,29 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#variables" class="md-nav__link">
-    Variables
+  <a href="#_6" class="md-nav__link">
+    变量
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#delayed-gcodes" class="md-nav__link">
-    Delayed Gcodes
+  <a href="#g_2" class="md-nav__link">
+    延迟G代码
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#menu-templates" class="md-nav__link">
-    Menu templates
+  <a href="#_7" class="md-nav__link">
+    菜单模板
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#save-variables-to-disk" class="md-nav__link">
-    Save Variables to disk
+  <a href="#_8" class="md-nav__link">
+    保存变量到磁盘
   </a>
   
 </li>
@@ -1552,15 +1552,15 @@ gcode:
 </code></pre></div>
 
 <h2 id="_5">行动<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
-<p>There are some commands available that can alter the state of the printer. For example, <code>{ action_emergency_stop() }</code> would cause the printer to go into a shutdown state. Note that these actions are taken at the time that the macro is evaluated, which may be a significant amount of time before the generated g-code commands are executed.</p>
+<p>有一些可用的命令可以改变打印机的状态。例如，<code>{ action_emergency_stop() }</code> 将导致打印机进入关闭状态。请注意，这些动作会在宏被评估的时候执行，这可能是在生成的G代码命令被执行之前的一段相当长的时间。</p>
 <p>可用的“动作”命令：</p>
 <ul>
-<li><code>action_respond_info(msg)</code>: Write the given <code>msg</code> to the /tmp/printer pseudo-terminal. Each line of <code>msg</code> will be sent with a "// " prefix.</li>
-<li><code>action_raise_error(msg)</code>: Abort the current macro (and any calling macros) and write the given <code>msg</code> to the /tmp/printer pseudo-terminal. The first line of <code>msg</code> will be sent with a "!! " prefix and subsequent lines will have a "// " prefix.</li>
-<li><code>action_emergency_stop(msg)</code>: Transition the printer to a shutdown state. The <code>msg</code> parameter is optional, it may be useful to describe the reason for the shutdown.</li>
-<li><code>action_call_remote_method(method_name)</code>: Calls a method registered by a remote client. If the method takes parameters they should be provided via keyword arguments, ie: <code>action_call_remote_method("print_stuff", my_arg="hello_world")</code></li>
+<li><code>action_respond_info(msg)</code>：将给定的 <code>msg</code> 写入 /tmp/printer 伪终端。 <code>msg</code> 的每一行都会以“//”前缀发送。</li>
+<li><code>action_raise_error(消息)</code>：终止当前宏（以及任何调用的宏），并将给定的<code>消息</code> 写到 /tmp/printer 伪终端。<code>msg</code> 的第一行将以"！！"为前缀发送，随后几行将以"//"为前缀。</li>
+<li><code>action_emergency_stop(消息)</code>：将打印机过渡到关机状态。<code>消息</code> 参数是可选的，可以用来描述关机的原因。</li>
+<li><code>action_call_remote_method(方法名)</code>：调用一个由远程客户端注册的方法。如果该方法需要参数，应通过关键字参数提供，即：<code>action_call_remote_method("print_stuff", 参数="hello_world")</code></li>
 </ul>
-<h2 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">&para;</a></h2>
+<h2 id="_6">变量<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>The SET_GCODE_VARIABLE command may be useful for saving state between macro calls. Variable names may not contain any upper case characters. For example:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro start_probe]
 variable_bed_temp: 0
@@ -1581,8 +1581,8 @@ gcode:
 </code></pre></div>
 
 <p>Be sure to take the timing of macro evaluation and command execution into account when using SET_GCODE_VARIABLE.</p>
-<h2 id="delayed-gcodes">Delayed Gcodes<a class="headerlink" href="#delayed-gcodes" title="Permanent link">&para;</a></h2>
-<p>The [delayed_gcode] configuration option can be used to execute a delayed gcode sequence:</p>
+<h2 id="g_2">延迟G代码<a class="headerlink" href="#g_2" title="Permanent link">&para;</a></h2>
+<p>[delayed_gcode]配置分段可以用来执行一个延迟的G代码序列：</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode clear_display]
 gcode:
   M117
@@ -1617,28 +1617,28 @@ gcode:
 <div class="highlight"><pre><span></span><code>UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 </code></pre></div>
 
-<h2 id="menu-templates">Menu templates<a class="headerlink" href="#menu-templates" title="Permanent link">&para;</a></h2>
+<h2 id="_7">菜单模板<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>If a <a href="Config_Reference.html#display">display config section</a> is enabled, then it is possible to customize the menu with <a href="Config_Reference.html#menu">menu</a> config sections.</p>
-<p>The following read-only attributes are available in menu templates:</p>
+<p>以下只读属性在菜单模板中可用：</p>
 <ul>
-<li><code>menu.width</code> - element width (number of display columns)</li>
-<li><code>menu.ns</code> - element namespace</li>
-<li><code>menu.event</code> - name of the event that triggered the script</li>
-<li><code>menu.input</code> - input value, only available in input script context</li>
+<li><code>menu.width</code> - 元素宽度（显示列数）</li>
+<li><code>menu.ns</code> - 元素命名空间</li>
+<li><code>menu.event</code> - 触发脚本的事件名称</li>
+<li><code>menu.input</code> - 输入值，仅在输入脚本上下文中可用</li>
 </ul>
-<p>The following actions are available in menu templates:</p>
+<p>以下操作在菜单模板中可用：</p>
 <ul>
 <li><code>menu.back(force, update)</code>: will execute menu back command, optional boolean parameters <code>&lt;force&gt;</code> and <code>&lt;update&gt;</code>.<ul>
-<li>When <code>&lt;force&gt;</code> is set True then it will also stop editing. Default value is False.</li>
-<li>When <code>&lt;update&gt;</code> is set False then parent container items are not updated. Default value is True.</li>
+<li>当 <code>&lt;force&gt;</code> 设置为 True 时，它也将停止编辑。默认值为 False。</li>
+<li>当<code>&lt;update&gt;</code> 被设置为False，那么父级容器项目就不会被更新。默认值是True。</li>
 </ul>
 </li>
 <li><code>menu.exit(force)</code> - will execute menu exit command, optional boolean parameter <code>&lt;force&gt;</code> default value False.<ul>
-<li>When <code>&lt;force&gt;</code> is set True then it will also stop editing. Default value is False.</li>
+<li>当 <code>&lt;force&gt;</code> 设置为 True 时，它也将停止编辑。默认值为 False。</li>
 </ul>
 </li>
 </ul>
-<h2 id="save-variables-to-disk">Save Variables to disk<a class="headerlink" href="#save-variables-to-disk" title="Permanent link">&para;</a></h2>
+<h2 id="_8">保存变量到磁盘<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>If a <a href="Config_Reference.html#save_variables">save_variables config section</a> has been enabled, <code>SAVE_VARIABLE VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code> can be used to save the variable to disk so that it can be used across restarts. All stored variables are loaded into the <code>printer.save_variables.variables</code> dict at startup and can be used in gcode macros. to avoid overly long lines you can add the following at the top of the macro:</p>
 <div class="highlight"><pre><span></span><code>{% set svv = printer.save_variables.variables %}
 </code></pre></div>
