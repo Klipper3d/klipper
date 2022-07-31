@@ -43,14 +43,10 @@ polargraph_stepper_alloc(char axis)
     memset(sk, 0, sizeof(*sk));
     if (axis == 'x') {
         sk->calc_position_cb = polargraph_stepper_x_calc_position;
-        sk->active_flags = AF_X;
     } else if (axis == 'y') {
         sk->calc_position_cb = polargraph_stepper_y_calc_position;
-        sk->active_flags = AF_Y;
-    } else if (axis == 'z') {
-        sk->calc_position_cb = polargraph_stepper_z_calc_position;
-        sk->active_flags = AF_Z;
     }
+    sk->active_flags = AF_X | AF_Y;
     return sk;
 }
 
