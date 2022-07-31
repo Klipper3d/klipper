@@ -39,8 +39,8 @@ class PolargraphKinematics:
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self, stepper_positions):
-        x = (stepper_positions['x']**2 - stepper_positions['y']**2 + 400**2) /
-            (2*400)
+        x = (stepper_positions['x']**2 - \
+            stepper_positions['y']**2 + 400**2) / (2*400)
         return [
             x,
             (stepper_positions['x']**2 - x**2)**0.5,
