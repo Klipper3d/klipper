@@ -113,8 +113,7 @@ defs_kin_corexz = """
 """
 
 defs_kin_polargraph = """
-    struct stepper_kinematics *polargraph_stepper_alloc(char axis);
-    struct stepper_kinematics *polargraph_reverse_stepper_alloc(char axis);
+    struct stepper_kinematics *polargraph_stepper_alloc(double width, char side);
 """
 
 defs_kin_delta = """

@@ -13,78 +13,39 @@
 #include "trapq.h" // move_get_coord
 
 static double
-polargraph_stepper_x_calc_position(struct stepper_kinematics *sk, struct move *m
+polargraph_stepper_left_calc_position(struct stepper_kinematics *sk, struct move *m
                              , double move_time)
 {
+    struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper, sk);
     struct coord c = move_get_coord(m, move_time);
-    return (c.x*c.x - c.y*c.y + 400*400) / (2*400);
+    return (c.x*c.x - c.y*c.y + ps->width*ps->width) / (2*ps->width);
 }
 
 static double
-polargraph_stepper_y_calc_position(struct stepper_kinematics *sk, struct move *m
+polargraph_stepper_right_calc_position(struct stepper_kinematics *sk, struct move *m
                              , double move_time)
 {
+    struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper, sk);
     struct coord c = move_get_coord(m, move_time);
-    double x = (c.x*c.x - c.y*c.y + 400*400) / (2*400);
+    double x = (c.x*c.x - c.y*c.y + ps->width*ps->width) / (2*ps->width);
     return sqrt(c.x*c.x - x*x);
 }
 
-static double
-polargraph_stepper_z_calc_position(struct stepper_kinematics *sk, struct move *m
-                             , double move_time)
-{
-    return move_get_coord(m, move_time).z;
-}
-
+struct polargraph_stepper {
+    struct stepper_kinematics sk;
+    double width;
+};
 struct stepper_kinematics * __visible
-polargraph_stepper_alloc(char axis)
+polargraph_stepper_alloc(double width, char side)
 {
-    struct stepper_kinematics *sk = malloc(sizeof(*sk));
-    memset(sk, 0, sizeof(*sk));
-    if (axis == 'x') {
-        sk->calc_position_cb = polargraph_stepper_x_calc_position;
-    } else if (axis == 'y') {
-        sk->calc_position_cb = polargraph_stepper_y_calc_position;
+    struct polargraph_stepper *ps = malloc(sizeof(*ps));
+    memset(ps, 0, sizeof(*ps));
+    if (side == 'l') {
+        ps->sk.calc_position_cb = polargraph_stepper_left_calc_position;
+    } else if (side == 'r') {
+        ps->sk.calc_position_cb = polargraph_stepper_right_calc_position;
     }
-    sk->active_flags = AF_X | AF_Y;
-    return sk;
-}
-
-static double
-polargraph_reverse_stepper_x_calc_position(struct stepper_kinematics *sk
-                             , struct move *m, double move_time)
-{
-    return -move_get_coord(m, move_time).x;
-}
-
-static double
-polargraph_reverse_stepper_y_calc_position(struct stepper_kinematics *sk
-                             , struct move *m, double move_time)
-{
-    return -move_get_coord(m, move_time).y;
-}
-
-static double
-polargraph_reverse_stepper_z_calc_position(struct stepper_kinematics *sk
-                             , struct move *m, double move_time)
-{
-    return -move_get_coord(m, move_time).z;
-}
-
-struct stepper_kinematics * __visible
-polargraph_reverse_stepper_alloc(char axis)
-{
-    struct stepper_kinematics *sk = malloc(sizeof(*sk));
-    memset(sk, 0, sizeof(*sk));
-    if (axis == 'x') {
-        sk->calc_position_cb = polargraph_reverse_stepper_x_calc_position;
-        sk->active_flags = AF_X;
-    } else if (axis == 'y') {
-        sk->calc_position_cb = polargraph_reverse_stepper_y_calc_position;
-        sk->active_flags = AF_Y;
-    } else if (axis == 'z') {
-        sk->calc_position_cb = polargraph_reverse_stepper_z_calc_position;
-        sk->active_flags = AF_Z;
-    }
-    return sk;
+    ps->sk.active_flags = AF_X | AF_Y;
+    ps->width = width;
+    return &ps->sk;
 }
