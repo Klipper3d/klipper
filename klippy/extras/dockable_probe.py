@@ -182,17 +182,21 @@ class DockableProbe:
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
                                                    above=0.)
 
-        def parseCoord(name, c=3):
+        def parseCoord(name, expected_dims=3):
+            val = config.get(name, None)
+            error_msg = "Unable to parse {0} in {1}: {2}"
+            if not val:
+                return None
             try:
-                p = [None] * 3
-                val = config.get(name, None)
-                if not val:
-                    return None
-                p[0:c] = map(lambda x: float(x.strip()),
-                             val.split(','))[0:c]
-            except:
-                e = "Unable to parse {0} in {1}"
-                raise config.error(e.format(self.name, name))
+                vals = [float(x.strip()) for x in val.split(',')]
+            except Exception as e:
+                raise config.error(error_msg.format(name, self.name, str(e)))
+            supplied_dims = len(vals)
+            if not 2 <= supplied_dims <= expected_dims:
+                raise config.error(error_msg.format(name, self.name,
+                                   "Invalid number of coordinates"))
+            p = [None] * 3
+            p[:supplied_dims] = vals
             return p
 
         self.approach_position = parseCoord('approach_position')
