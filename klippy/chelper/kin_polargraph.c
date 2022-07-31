@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <math.h> // sqrt
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // __visible
@@ -15,14 +16,17 @@ static double
 polargraph_stepper_x_calc_position(struct stepper_kinematics *sk, struct move *m
                              , double move_time)
 {
-    return move_get_coord(m, move_time).x;
+    struct coord c = move_get_coord(m, move_time);
+    return (c.x*c.x - c.y*c.y + 400*400) / (2*400);
 }
 
 static double
 polargraph_stepper_y_calc_position(struct stepper_kinematics *sk, struct move *m
                              , double move_time)
 {
-    return move_get_coord(m, move_time).y;
+    struct coord c = move_get_coord(m, move_time);
+    double x = (c.x*c.x - c.y*c.y + 400*400) / (2*400);
+    return sqrt(c.x*c.x - x*x);
 }
 
 static double

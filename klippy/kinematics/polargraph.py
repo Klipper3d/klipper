@@ -8,51 +8,39 @@ import stepper
 
 class PolargraphKinematics:
     def __init__(self, toolhead, config):
-        self.printer = config.get_printer()
-        # Setup axis rails
-        self.dual_carriage_axis = None
-        self.dual_carriage_rails = []
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
                       for n in 'xyz']
-        for rail, axis in zip(self.rails, 'xyz'):
-            rail.setup_itersolve('polargraph_stepper_alloc', axis.encode())
+        for s in self.rails[1].get_steppers():
+            self.rails[0].get_endstops()[0][0].add_stepper(s)
+        for s in self.rails[0].get_steppers():
+            self.rails[1].get_endstops()[0][0].add_stepper(s)
+        self.rails[0].setup_itersolve('corexy_stepper_alloc', b'+')
+        self.rails[1].setup_itersolve('corexy_stepper_alloc', b'-')
+        self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler("stepper_enable:motor_off",
-                                            self._motor_off)
+        config.get_printer().register_event_handler("stepper_enable:motor_off",
+                                                    self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
-                                              above=0., maxval=max_velocity)
-        self.max_z_accel = config.getfloat('max_z_accel', max_accel,
-                                           above=0., maxval=max_accel)
+        self.max_z_velocity = config.getfloat(
+            'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
+        self.max_z_accel = config.getfloat(
+            'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.limits = [(1.0, -1.0)] * 3
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
         self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
-        # Check for dual carriage support
-        if config.has_section('dual_carriage'):
-            dc_config = config.getsection('dual_carriage')
-            dc_axis = dc_config.getchoice('axis', {'x': 'x', 'y': 'y'})
-            self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
-            dc_rail = stepper.LookupMultiRail(dc_config)
-            dc_rail.setup_itersolve('polargraph_stepper_alloc', dc_axis.encode())
-            for s in dc_rail.get_steppers():
-                toolhead.register_step_generator(s.generate_steps)
-            self.dual_carriage_rails = [
-                self.rails[self.dual_carriage_axis], dc_rail]
-            self.printer.lookup_object('gcode').register_command(
-                'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
-                desc=self.cmd_SET_DUAL_CARRIAGE_help)
     def get_steppers(self):
-        rails = self.rails
-        if self.dual_carriage_axis is not None:
-            dca = self.dual_carriage_axis
-            rails = rails[:dca] + self.dual_carriage_rails + rails[dca+1:]
-        return [s for rail in rails for s in rail.get_steppers()]
+        return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self, stepper_positions):
-        return [stepper_positions[rail.get_name()] for rail in self.rails]
+        x = (stepper_positions['x']**2 - stepper_positions['y']**2 + 400**2) / (2*400)
+        return [
+            x,
+            (stepper_positions['x']**2 - x**2)**0.5,
+            stepper_positions['z'],
+        ]
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
@@ -77,16 +65,19 @@ class PolargraphKinematics:
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            if axis == self.dual_carriage_axis:
-                dc1, dc2 = self.dual_carriage_rails
-                altc = self.rails[axis] == dc2
-                self._activate_carriage(0)
-                self._home_axis(homing_state, axis, dc1)
-                self._activate_carriage(1)
-                self._home_axis(homing_state, axis, dc2)
-                self._activate_carriage(altc)
+            rail = self.rails[axis]
+            # Determine movement
+            position_min, position_max = rail.get_range()
+            hi = rail.get_homing_info()
+            homepos = [None, None, None, None]
+            homepos[axis] = hi.position_endstop
+            forcepos = list(homepos)
+            if hi.positive_dir:
+                forcepos[axis] -= 1.5 * (hi.position_endstop - position_min)
             else:
-                self._home_axis(homing_state, axis, self.rails[axis])
+                forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
+            # Perform homing
+            homing_state.home_rails([rail], forcepos, homepos)
     def _motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
     def _check_endstops(self, move):
@@ -119,24 +110,6 @@ class PolargraphKinematics:
             'axis_minimum': self.axes_min,
             'axis_maximum': self.axes_max,
         }
-    # Dual carriage support
-    def _activate_carriage(self, carriage):
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.flush_step_generation()
-        dc_rail = self.dual_carriage_rails[carriage]
-        dc_axis = self.dual_carriage_axis
-        self.rails[dc_axis].set_trapq(None)
-        dc_rail.set_trapq(toolhead.get_trapq())
-        self.rails[dc_axis] = dc_rail
-        pos = toolhead.get_position()
-        pos[dc_axis] = dc_rail.get_commanded_position()
-        toolhead.set_position(pos)
-        if self.limits[dc_axis][0] <= self.limits[dc_axis][1]:
-            self.limits[dc_axis] = dc_rail.get_range()
-    cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
-    def cmd_SET_DUAL_CARRIAGE(self, gcmd):
-        carriage = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
-        self._activate_carriage(carriage)
 
 def load_kinematics(toolhead, config):
     return PolargraphKinematics(toolhead, config)
