@@ -119,7 +119,16 @@ gpio_adc_sample(struct gpio_adc g)
             return 0;
         goto need_delay;
     }
+#if CONFIG_MACH_STM32G0
+    if (adc->CHSELR != g.chan) {
+        adc->ISR = ADC_ISR_CCRDY;
+        adc->CHSELR = g.chan;
+        while (!(adc->ISR & ADC_ISR_CCRDY))
+            ;
+    }
+#else
     adc->CHSELR = g.chan;
+#endif
     adc->CR = CR_FLAGS | ADC_CR_ADSTART;
 
 need_delay:

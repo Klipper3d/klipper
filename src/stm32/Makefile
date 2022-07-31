@@ -59,10 +59,12 @@ serial-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_serial.c
 serial-src-$(CONFIG_MACH_STM32G0) := stm32/stm32f0_serial.c
 serial-src-$(CONFIG_MACH_STM32H7) := stm32/stm32h7_serial.c
 src-$(CONFIG_SERIAL) += $(serial-src-y) generic/serial_irq.c
-canbus-src-y := generic/canbus.c ../lib/fast-hash/fasthash.c
+canbus-src-y := generic/canserial.c ../lib/fast-hash/fasthash.c
 canbus-src-$(CONFIG_HAVE_STM32_CANBUS) += stm32/can.c
 canbus-src-$(CONFIG_HAVE_STM32_FDCANBUS) += stm32/fdcan.c
-src-$(CONFIG_CANSERIAL) += $(canbus-src-y) stm32/chipid.c
+src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c stm32/chipid.c
+src-$(CONFIG_USBCANBUS) += $(usb-src-y) $(canbus-src-y)
+src-$(CONFIG_USBCANBUS) += stm32/chipid.c generic/usb_canbus.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += stm32/hard_pwm.c
 
 # Binary output file rules

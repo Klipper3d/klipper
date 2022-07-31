@@ -72,6 +72,7 @@ class PrinterTemperatureMCU:
             ('stm32f070', self.config_stm32f070),
             ('stm32f072', self.config_stm32f0x2),
             ('stm32g0', self.config_stm32g0),
+            ('stm32h7', self.config_stm32h7),
             ('', self.config_unknown)]
         for name, func in cfg_funcs:
             if self.mcu_type.startswith(name):
@@ -142,6 +143,11 @@ class PrinterTemperatureMCU:
         cal_adc_30 = self.read16(0x1FFF75A8) * 3.0 / (3.3 * 4095.)
         cal_adc_130 = self.read16(0x1FFF75CA) * 3.0 / (3.3 * 4095.)
         self.slope = (130. - 30.) / (cal_adc_130 - cal_adc_30)
+        self.base_temperature = self.calc_base(30., cal_adc_30)
+    def config_stm32h7(self):
+        cal_adc_30 = self.read16(0x1FF1E820) / 65535.
+        cal_adc_110 = self.read16(0x1FF1E840) / 65535.
+        self.slope = (110. - 30.) / (cal_adc_110 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
     def read16(self, addr):
         params = self.debug_read_cmd.send([1, addr])

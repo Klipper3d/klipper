@@ -231,8 +231,7 @@ class Printer:
         run_result = self.run_result
         try:
             if run_result == 'firmware_restart':
-                for n, m in self.lookup_objects(module='mcu'):
-                    m.microcontroller_restart()
+                self.send_event("klippy:firmware_restart")
             self.send_event("klippy:disconnect")
         except:
             logging.exception("Unhandled exception during post run")
@@ -342,7 +341,7 @@ def main():
         start_args['log_file'] = options.logfile
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
-        logging.basicConfig(level=debuglevel)
+        logging.getLogger().setLevel(debuglevel)
     logging.info("Starting Klippy...")
     start_args['software_version'] = util.get_git_version()
     start_args['cpu_info'] = util.get_cpu_info()

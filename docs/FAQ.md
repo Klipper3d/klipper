@@ -1,34 +1,9 @@
 # Frequently Asked Questions
 
-1. [How can I donate to the project?](#how-can-i-donate-to-the-project)
-2. [How do I calculate the rotation_distance config parameter?](#how-do-i-calculate-the-rotation_distance-config-parameter)
-3. [Where's my serial port?](#wheres-my-serial-port)
-4. [When the micro-controller restarts the device changes to /dev/ttyUSB1](#when-the-micro-controller-restarts-the-device-changes-to-devttyusb1)
-5. [The "make flash" command doesn't work](#the-make-flash-command-doesnt-work)
-6. [How do I change the serial baud rate?](#how-do-i-change-the-serial-baud-rate)
-7. [Can I run Klipper on something other than a Raspberry Pi 3?](#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
-8. [Can I run multiple instances of Klipper on the same host machine?](#can-i-run-multiple-instances-of-klipper-on-the-same-host-machine)
-9. [Do I have to use OctoPrint?](#do-i-have-to-use-octoprint)
-10. [Why can't I move the stepper before homing the printer?](#why-cant-i-move-the-stepper-before-homing-the-printer)
-11. [Why is the Z position_endstop set to 0.5 in the default configs?](#why-is-the-z-position_endstop-set-to-05-in-the-default-configs)
-12. [I converted my config from Marlin and the X/Y axes work fine, but I just get a screeching noise when homing the Z axis](#i-converted-my-config-from-marlin-and-the-xy-axes-work-fine-but-i-just-get-a-screeching-noise-when-homing-the-z-axis)
-13. [My TMC motor driver turns off in the middle of a print](#my-tmc-motor-driver-turns-off-in-the-middle-of-a-print)
-14. [I keep getting random "Lost communication with MCU" errors](#i-keep-getting-random-lost-communication-with-mcu-errors)
-15. [My Raspberry Pi keeps rebooting during prints](#my-raspberry-pi-keeps-rebooting-during-prints)
-16. [When I set `restart_method=command` my AVR device just hangs on a restart](#when-i-set-restart_methodcommand-my-avr-device-just-hangs-on-a-restart)
-17. [Will the heaters be left on if the Raspberry Pi crashes?](#will-the-heaters-be-left-on-if-the-raspberry-pi-crashes)
-18. [How do I convert a Marlin pin number to a Klipper pin name?](#how-do-i-convert-a-marlin-pin-number-to-a-klipper-pin-name)
-19. [Do I have to wire my device to a specific type of micro-controller pin?](#do-i-have-to-wire-my-device-to-a-specific-type-of-micro-controller-pin)
-20. [How do I cancel an M109/M190 "wait for temperature" request?](#how-do-i-cancel-an-m109m190-wait-for-temperature-request)
-21. [Can I find out whether the printer has lost steps?](#can-i-find-out-whether-the-printer-has-lost-steps)
-22. [Why does Klipper report errors? I lost my print!](#why-does-klipper-report-errors-i-lost-my-print)
-23. [How do I upgrade to the latest software?](#how-do-i-upgrade-to-the-latest-software)
-24. [How do I uninstall klipper?](#how-do-i-uninstall-klipper)
-
 ## How can I donate to the project?
 
-Thanks. Kevin has a Patreon page at:
-[https://www.patreon.com/koconnor](https://www.patreon.com/koconnor)
+Thank you for your support. See the [Sponsors page](Sponsors.md) for
+information.
 
 ## How do I calculate the rotation_distance config parameter?
 
