@@ -18,21 +18,26 @@ struct polargraph_stepper {
     double width;
 };
 static double
-polargraph_stepper_left_calc_position(struct stepper_kinematics *sk, struct move *m
+polargraph_stepper_left_calc_position(struct stepper_kinematics *sk
+                             , struct move *m
                              , double move_time)
 {
-    struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper, sk);
+    struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper
+                             , sk);
     struct coord c = move_get_coord(m, move_time);
     return (c.x * c.x - c.y * c.y + ps->width * ps->width) / (ps->width * 2);
 }
 
 static double
-polargraph_stepper_right_calc_position(struct stepper_kinematics *sk, struct move *m
+polargraph_stepper_right_calc_position(struct stepper_kinematics *sk
+                             , struct move *m
                              , double move_time)
 {
-    struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper, sk);
+    struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper
+                             , sk);
     struct coord c = move_get_coord(m, move_time);
-    double x = (c.x * c.x - c.y * c.y + ps->width * ps->width) / (ps->width * 2);
+    double x = (c.x * c.x - c.y * c.y + ps->width * ps->width) /
+        (ps->width * 2);
     return sqrt(c.x * c.x - x * x);
 }
 

@@ -16,8 +16,10 @@ class PolargraphKinematics:
             self.rails[1].get_endstops()[0][0].add_stepper(s)
         polargraph_config = config.getsection('drawbot')
         self.width = polargraph_config.getfloat('width', above=0.)
-        self.rails[0].setup_itersolve('polargraph_stepper_alloc', self.width, b'l')
-        self.rails[1].setup_itersolve('polargraph_stepper_alloc', self.width, b'r')
+        self.rails[0].setup_itersolve(
+            'polargraph_stepper_alloc', self.width, b'l')
+        self.rails[1].setup_itersolve(
+            'polargraph_stepper_alloc', self.width, b'r')
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
@@ -37,7 +39,8 @@ class PolargraphKinematics:
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self, stepper_positions):
-        x = (stepper_positions['x']**2 - stepper_positions['y']**2 + 400**2) / (2*400)
+        x = (stepper_positions['x']**2 - stepper_positions['y']**2 + 400**2) /
+            (2*400)
         return [
             x,
             (stepper_positions['x']**2 - x**2)**0.5,
