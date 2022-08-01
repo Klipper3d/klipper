@@ -1561,7 +1561,7 @@ gcode:
 <li><code>action_call_remote_method(方法名)</code>：调用一个由远程客户端注册的方法。如果该方法需要参数，应通过关键字参数提供，即：<code>action_call_remote_method("print_stuff", 参数="hello_world")</code></li>
 </ul>
 <h2 id="_6">变量<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
-<p>The SET_GCODE_VARIABLE command may be useful for saving state between macro calls. Variable names may not contain any upper case characters. For example:</p>
+<p>SET_GCODE_VARIABLE 命令可以在宏调用之间保存状态。变量名不能包含任何大写字符。例如：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro start_probe]
 variable_bed_temp: 0
 gcode:
@@ -1580,7 +1580,7 @@ gcode:
   M140 S{printer[&quot;gcode_macro start_probe&quot;].bed_temp}
 </code></pre></div>
 
-<p>Be sure to take the timing of macro evaluation and command execution into account when using SET_GCODE_VARIABLE.</p>
+<p>在使用SET_GCODE_VARIABLE时，一定要考虑到宏评估和命令执行的时间顺序。</p>
 <h2 id="g_2">延迟G代码<a class="headerlink" href="#g_2" title="Permanent link">&para;</a></h2>
 <p>[delayed_gcode]配置分段可以用来执行一个延迟的G代码序列：</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode clear_display]
@@ -1597,7 +1597,7 @@ gcode:
  UPDATE_DELAYED_GCODE ID=clear_display DURATION=10
 </code></pre></div>
 
-<p>When the <code>load_filament</code> macro above executes, it will display a "Load Complete!" message after the extrusion is finished. The last line of gcode enables the "clear_display" delayed_gcode, set to execute in 10 seconds.</p>
+<p>当上面的<code>load_filament</code> 宏执行时，它将在挤出结束后显示一个 "Load Complete!"的信息。最后一行G代码启用 "clear_display "delayed_gcode，设置为10秒后执行。</p>
 <p>The <code>initial_duration</code> config option can be set to execute the delayed_gcode on printer startup. The countdown begins when the printer enters the "ready" state. For example, the below delayed_gcode will execute 5 seconds after the printer is ready, initializing the display with a "Welcome!" message:</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode welcome]
 initial_duration: 5.
@@ -1605,7 +1605,7 @@ gcode:
   M117 Welcome!
 </code></pre></div>
 
-<p>Its possible for a delayed gcode to repeat by updating itself in the gcode option:</p>
+<p>延迟G代码可以通过在G代码选项中更新自己来重复自生：</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode report_temp]
 initial_duration: 2.
 gcode:
@@ -1618,7 +1618,7 @@ gcode:
 </code></pre></div>
 
 <h2 id="_7">菜单模板<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
-<p>If a <a href="Config_Reference.html#display">display config section</a> is enabled, then it is possible to customize the menu with <a href="Config_Reference.html#menu">menu</a> config sections.</p>
+<p>如果启用了<a href="Config_Reference.html#display">display配置分段</a>，那么就可以用<a href="Config_Reference.html#menu">menu</a>配置分段自定义菜单。</p>
 <p>以下只读属性在菜单模板中可用：</p>
 <ul>
 <li><code>menu.width</code> - 元素宽度（显示列数）</li>
