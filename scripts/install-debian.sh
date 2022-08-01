@@ -6,12 +6,20 @@ PYTHONDIR="${HOME}/klippy-env"
 SYSTEMDDIR="/etc/systemd/system"
 KLIPPER_USER=$USER
 KLIPPER_GROUP=$KLIPPER_USER
+DEBIAN_VER=$(/usr/bin/lsb_release -c -s)
+
 
 # Step 1: Install system packages
 install_packages()
 {
+    if [ "$DEBIAN_VER" = "buster" ] || [ "$DEBIAN_VER" = "stretch" ];
+    then
+        PYTHON_DEV="python-dev"
+    else
+        PYTHON_DEV="python2-dev"
+    fi
     # Packages for python cffi
-    PKGLIST="virtualenv python-dev libffi-dev build-essential"
+    PKGLIST="virtualenv ${PYTHON_DEV} libffi-dev build-essential"
     # kconfig requirements
     PKGLIST="${PKGLIST} libncurses-dev"
     # hub-ctrl
