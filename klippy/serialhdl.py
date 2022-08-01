@@ -12,7 +12,6 @@ class error(Exception):
     pass
 
 class SerialReader:
-    BITS_PER_BYTE = 10.
     def __init__(self, reactor, warn_prefix=""):
         self.reactor = reactor
         self.warn_prefix = warn_prefix
@@ -97,11 +96,13 @@ class SerialReader:
         self.msgparser = msgparser
         self.register_response(self.handle_unknown, '#unknown')
         # Setup baud adjust
-        mcu_baud = msgparser.get_constant_float('SERIAL_BAUD', None)
-        if mcu_baud is not None:
-            baud_adjust = self.BITS_PER_BYTE / mcu_baud
-            self.ffi_lib.serialqueue_set_baud_adjust(
-                self.serialqueue, baud_adjust)
+        if serial_fd_type == b'c':
+            wire_freq = msgparser.get_constant_float('CANBUS_FREQUENCY', None)
+        else:
+            wire_freq = msgparser.get_constant_float('SERIAL_BAUD', None)
+        if wire_freq is not None:
+            self.ffi_lib.serialqueue_set_wire_frequency(self.serialqueue,
+                                                        wire_freq)
         receive_window = msgparser.get_constant_int('RECEIVE_WINDOW', None)
         if receive_window is not None:
             self.ffi_lib.serialqueue_set_receive_window(
