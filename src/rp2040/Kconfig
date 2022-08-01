@@ -47,14 +47,34 @@ config FLASH_START
     hex
     default 0x10000000
 
+
+######################################################################
+# Bootloader options
+######################################################################
+
+choice
+    prompt "Flash chip" if LOW_LEVEL_OPTIONS
+    config RP2040_FLASH_W25Q080
+        bool "W25Q080 with CLKDIV 2"
+    config RP2040_FLASH_GENERIC_03
+        bool "GENERIC_03H with CLKDIV 4"
+endchoice
+
+config RP2040_STAGE2_FILE
+    string
+    default "boot2_generic_03h.S" if RP2040_FLASH_GENERIC_03
+    default "boot2_w25q080.S"
+
+config RP2040_STAGE2_CLKDIV
+    int
+    default 4 if RP2040_FLASH_GENERIC_03
+    default 2
+
+
 ######################################################################
 # Communication inteface
 ######################################################################
 
-config USBSERIAL
-    bool
-config SERIAL
-    bool
 choice
     prompt "Communication interface"
     config RP2040_USB
@@ -63,6 +83,22 @@ choice
     config RP2040_SERIAL_UART0
         bool "Serial (on UART0 GPIO1/GPIO0)"
         select SERIAL
+    config RP2040_CANBUS
+        bool "CAN bus"
+        select CANSERIAL
+    config RP2040_USBCANBUS
+        bool "USB to CAN bus bridge"
+        select USBCANBUS
 endchoice
+
+config RP2040_CANBUS_GPIO_RX
+    int "CAN RX gpio number" if CANBUS
+    default 4
+    range 0 29
+
+config RP2040_CANBUS_GPIO_TX
+    int "CAN TX gpio number" if CANBUS
+    default 5
+    range 0 29
 
 endif

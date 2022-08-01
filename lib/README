@@ -122,3 +122,13 @@ has been modfied to enable the US code page (437) and enable label
 support.  The file "diskio.c" in the original archive is not included
 as it is only serves as an example for how to implement the media api
 callbacks.
+
+The canboot directory contains code from:
+  https://github.com/Arksine/CanBoot
+revision 870200826561b150137913d42fd7edc6515229ff.  The Python module,
+flash_can.py, is taken from the repo's scripts directory.  It may be
+used to upload firmware to devices flashed with the CanBoot bootloader.
+
+The can2040 directory contains code from:
+  https://github.com/KevinOConnor/can2040
+revision 9ca095c939a48391de60dd353f0cd91999bb9257.

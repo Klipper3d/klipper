@@ -8,6 +8,16 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220616: It was previously possible to flash an rp2040 in bootloader
+mode by running `make flash FLASH_DEVICE=first`. The equivalent
+command is now `make flash FLASH_DEVICE=2e8a:0003`.
+
+20220612: The rp2040 micro-controller now has a workaround for the
+"rp2040-e5" USB errata. This should make initial USB connections more
+reliable. However, it may result in a change in behavior for the
+gpio15 pin. It is unlikely the gpio15 behavior change will be
+noticeable.
+
 20220407: The temperature_fan `pid_integral_max` config option has
 been removed (it was deprecated on 20210612).
 

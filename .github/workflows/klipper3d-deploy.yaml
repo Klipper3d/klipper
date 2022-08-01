@@ -7,7 +7,6 @@ on:
       - master
     paths:
       - docs/**
-      - mkdocs.yml
       - .github/workflows/klipper3d-deploy.yaml
 jobs:
   deploy:

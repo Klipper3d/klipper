@@ -45,7 +45,7 @@ def measurements_to_distances(measured_params, delta_params):
         od - opw
         for od, opw in zip(mp['OUTER_DISTS'], mp['OUTER_PILLAR_WIDTHS']) ]
     # Convert angles in degrees to an XY multiplier
-    obj_angles = map(math.radians, MeasureAngles)
+    obj_angles = list(map(math.radians, MeasureAngles))
     xy_angles = list(zip(map(math.cos, obj_angles), map(math.sin, obj_angles)))
     # Calculate stable positions for center measurements
     inner_ridge = MeasureRidgeRadius * scale

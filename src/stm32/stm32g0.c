@@ -6,7 +6,9 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // armcm_main
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
@@ -30,6 +32,8 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - AHBPERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHBENR, .rst=&RCC->AHBRSTR, .bit=bit};
     }
+    if ((periph_base == FDCAN1_BASE) || (periph_base == FDCAN2_BASE))
+        return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<12};
     if (periph_base == USB_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<13};
     if (periph_base == CRS_BASE)
@@ -100,7 +104,7 @@ clock_setup(void)
 
 
 /****************************************************************
- * USB bootloader
+ * Bootloader
  ****************************************************************/
 
 #define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
@@ -129,8 +133,9 @@ check_usb_dfu_bootloader(void)
 
 // Handle USB reboot requests
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
+    try_request_canboot();
     usb_reboot_for_dfu_bootloader();
 }
 
@@ -143,7 +148,6 @@ usb_request_bootloader(void)
 void
 armcm_main(void)
 {
-    check_usb_dfu_bootloader();
     SCB->VTOR = (uint32_t)VectorTable;
 
     // Reset clock registers (in case bootloader has changed them)
@@ -159,6 +163,8 @@ armcm_main(void)
     RCC->AHBENR = 0x00000100;
     RCC->APBENR1 = 0x00000000;
     RCC->APBENR2 = 0x00000000;
+
+    check_usb_dfu_bootloader();
 
     // Set flash latency
     FLASH->ACR = (2<<FLASH_ACR_LATENCY_Pos) | FLASH_ACR_ICEN | FLASH_ACR_PRFTEN;
