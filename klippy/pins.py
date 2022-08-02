@@ -22,9 +22,11 @@ class PinResolver:
         self.aliases = {}
         self.active_pins = {}
     def reserve_pin(self, pin, reserve_name):
-        if pin in self.reserved and self.reserved[pin] != reserve_name:
-            raise error("Pin %s reserved for %s - can't reserve for %s" % (
-                pin, self.reserved[pin], reserve_name))
+# This constraint is too restrictive for multiple bus configuration options
+# ex: RP2040
+#        if pin in self.reserved and self.reserved[pin] != reserve_name:
+#            raise error("Pin %s reserved for %s - can't reserve for %s" % (
+#                pin, self.reserved[pin], reserve_name))
         self.reserved[pin] = reserve_name
     def alias_pin(self, alias, pin):
         if alias in self.aliases and self.aliases[alias] != pin:

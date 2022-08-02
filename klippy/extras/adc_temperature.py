@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
 
-
 ######################################################################
 # Interface between MCU adc and heater temperature callbacks
 ######################################################################
@@ -20,10 +19,12 @@ class PrinterADCtoTemperature:
     def __init__(self, config, adc_convert):
         self.adc_convert = adc_convert
         ppins = config.get_printer().lookup_object('pins')
-        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
-        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
         query_adc = config.get_printer().load_object(config, 'query_adc')
-        query_adc.register_adc(config.get_name(), self.mcu_adc)
+        sensor_pin = config.get('sensor_pin' , None)
+        if(sensor_pin is not None):
+            self.mcu_adc = ppins.setup_pin('adc', sensor_pin)
+            self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+            query_adc.register_adc(config.get_name(), self.mcu_adc)
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
     def get_report_time_delta(self):
@@ -37,6 +38,12 @@ class PrinterADCtoTemperature:
                                   minval=min(adc_range), maxval=max(adc_range),
                                   range_check_count=RANGE_CHECK_COUNT)
 
+# Interface between ADC and temperature calculation tables
+class ConvertADCtoTemperature:
+    def __init__(self, adc_convert):
+        self.adc_convert = adc_convert
+    def calcTemp(self, read_value):
+        return self.adc_convert.calc_temp(read_value)
 
 ######################################################################
 # Linear interpolation
@@ -96,7 +103,7 @@ class LinearVoltage:
             adc = (volt - voltage_offset) / adc_voltage
             if adc < 0. or adc > 1.:
                 logging.warn("Ignoring adc sample %.3f/%.3f in heater %s",
-                             temp, volt, config.get_name())
+                             temp, volt, config.get_name(), adc)
                 continue
             samples.append((adc, temp))
         try:
@@ -266,14 +273,16 @@ def calc_pt100(base=100.):
     A, B = (3.9083e-3, -5.775e-7)
     return [(float(t), base * (1. + A*t + B*t*t)) for t in range(0, 500, 10)]
 
-def calc_ina826_pt100():
+def calc_ina826_pt100(factor=1.):
     # Standard circuit is 4400ohm pullup with 10x gain to 5V
-    return [(t, 10. * 5. * r / (4400. + r)) for t, r in calc_pt100()]
+    return [(t * 1. / factor, 10. * 5. * r / (4400. + r)) for t, \
+        r in calc_pt100()]
 
 DefaultVoltageSensors = [
     ("AD595", AD595), ("AD597", AD597), ("AD8494", AD8494), ("AD8495", AD8495),
     ("AD8496", AD8496), ("AD8497", AD8497),
-    ("PT100 INA826", calc_ina826_pt100())
+    ("PT100 INA826", calc_ina826_pt100()),
+    ("PT100", calc_ina826_pt100(100.))
 ]
 
 DefaultResistanceSensors = [
