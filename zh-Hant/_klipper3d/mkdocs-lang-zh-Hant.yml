@@ -4,7 +4,7 @@
 # layout.  See that script and the README file for more details.
 
 # Site and directory configuration
-site_name: Klipper documentation
+site_name: Klipper 文檔
 repo_url: https://github.com/Klipper3d/klipper
 repo_name: Klipper3d/klipper
 edit_uri: blob/master/docs/
@@ -96,13 +96,13 @@ nav:
   - Releases.md
   - Config_Changes.md
   - Contact.md
-  - Installation and Configuration:
+  - 安裝和配置:
     - Installation.md
-    - Configuration Reference:
+    - 配置參考:
       - Config_Reference.md
       - Rotation_Distance.md
     - Config_checks.md
-    - Bed Level:
+    - 印床水平:
       - Bed_Level.md
       - Delta_Calibrate.md
       - Probe_Calibrate.md
@@ -115,7 +115,7 @@ nav:
       - Measuring_Resonances.md
     - Pressure_Advance.md
     - G-Codes.md
-    - Command templates:
+    - 命令模板:
       - Command_Templates.md
       - Status_Reference.md
     - TMC_Drivers.md
@@ -124,7 +124,7 @@ nav:
     - Skew_Correction.md
     - Exclude_Object.md
     - Using_PWM_Tools.md
-  - Developer Documentation:
+  - 開發者文檔:
     - Code_Overview.md
     - Kinematics.md
     - Protocol.md
@@ -135,7 +135,7 @@ nav:
     - Benchmarks.md
     - CONTRIBUTING.md
     - Packaging.md
-  - Device Specific Documents:
+  - 設備特定文件:
     - Example_Configs.md
     - SDCard_Updates.md
     - RPi_microcontroller.md
