@@ -20,7 +20,7 @@ choice
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_HC32F460
-        bool "Huada HC32F460 - Aquila HC32"
+        bool "Huada HC32F460 (Voxelab H32)"
     config MACH_STM32
         bool "STMicroelectronics STM32"
     config MACH_RP2040
