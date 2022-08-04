@@ -39,11 +39,11 @@ class PolargraphKinematics:
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self, stepper_positions):
-        x = (stepper_positions['l']**2 - \
+        x = self.width - (stepper_positions['l']**2 - \
             stepper_positions['r']**2 + self.width**2) / (2 * self.width)
         return [
             x,
-            (stepper_positions['r']**2 - (self.width - x)**2)**0.5,
+            (stepper_positions['r']**2 - x**2)**0.5,
             stepper_positions['z'],
         ]
     def set_position(self, newpos, homing_axes):
