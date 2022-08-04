@@ -784,8 +784,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#angle" class="md-nav__link">
-    angle
+  <a href="#_2" class="md-nav__link">
+    角度
   </a>
   
 </li>
@@ -987,7 +987,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     溫度感測器
   </a>
   
@@ -1517,8 +1517,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#angle" class="md-nav__link">
-    angle
+  <a href="#_2" class="md-nav__link">
+    角度
   </a>
   
 </li>
@@ -1720,7 +1720,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
+  <a href="#_3" class="md-nav__link">
     溫度感測器
   </a>
   
@@ -1802,8 +1802,8 @@
 <h1 id="_1">狀態參考<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>本文件是可用於 Klipper <a href="Command_Templates.html">宏</a>、<a href="Config_Reference.html#display">顯示欄位</a>以及<a href="API_Server.html">API伺服器</a> 的印表機狀態資訊的參考。</p>
 <p>本文件中的欄位可能會發生變化 - 如果使用了任何欄位，在更新 Klipper 時，請務必檢視<a href="Config_Changes.html">配置變化文件</a>。</p>
-<h2 id="angle">angle<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#angle">angle some_name</a> objects:</p>
+<h2 id="_2">角度<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p><a href="Config_Reference.html#angle">angle some_name</a> 對像中提供了以下信息：</p>
 <ul>
 <li><code>temperature</code>: The last temperature reading (in Celsius) from a tle5012b magnetic hall sensor. This value is only available if the angle sensor is a tle5012b chip and if measurements are in progress (otherwise it reports <code>None</code>).</li>
 </ul>
@@ -1811,7 +1811,7 @@
 <p><a href="Config_Reference.html#bed_mesh">bed_mesh</a> 對像中提供了以下資訊：</p>
 <ul>
 <li><code>profile_name</code>、<code>mesh_min</code>、<code>mesh_max</code>、<code>probed_matrix</code>、<code>mesh_matrix</code>：關於目前活躍的 bed_mesh 配置資訊。</li>
-<li><code>profiles</code>: The set of currently defined profiles as setup using BED_MESH_PROFILE.</li>
+<li><code>profiles</code>：使用 BED_MESH_PROFILE 設置的當前定義的配置文件集。</li>
 </ul>
 <h2 id="configfile">configfile<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h2>
 <p><code>configfile</code> 對像中提供了以下資訊（該對像始終可用）：</p>
@@ -2011,7 +2011,7 @@
 <ul>
 <li><code>sysload</code>、<code>cputime</code>、<code>memavail</code>：關於主機操作系統和程序負載的資訊。</li>
 </ul>
-<h2 id="_2">溫度感測器<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h2 id="_3">溫度感測器<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>以下資訊可在</p>
 <p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>、<a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>、<a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>和<a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> 對像：</p>
 <ul>

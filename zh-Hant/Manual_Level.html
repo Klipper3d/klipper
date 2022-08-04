@@ -1419,7 +1419,7 @@ Recv: ok
 <li>右後螺絲必須逆時針轉動至 50 分鐘方向</li>
 <li>左後螺絲必須順時針轉動至 2 分鐘方向（不需要就可以了）</li>
 </ul>
-<p>Note that "minutes" refers to "minutes of a clock face". So, for example, 15 minutes is a quarter of a full turn.</p>
+<p>請注意，“分鐘”是指“鐘面的分鐘”。因此，例如，15 分鐘是一整圈的四分之一。</p>
 <p>重複這個過程幾次，直到你得到一個好的水平床——通常當所有的調整都低於 6 分鐘。</p>
 <p>如果使用安裝在熱端側面的探頭（即，它具有 X 或 Y 偏移），請注意調整床傾斜度將使之前使用傾斜床執行的任何探頭校準無效。確保在調整底座螺絲後運行 <a href="Probe_Calibrate.html">探頭校準</a>。</p>
 <p>當使用保存的床面網格時，“MAX_DEVIATION”參數很有用，以確保床面高度不會偏離網格創建時的位置太遠。例如，可以在加載網格之前將“SCREWS_TILT_CALCULATE MAX_DEVIATION=0.01”添加到切片器的自定義啟動 gcode。如果超過配置的限制（本例中為 0.01mm），它將中止打印，讓用戶有機會調整螺絲並重新開始打印。</p>
