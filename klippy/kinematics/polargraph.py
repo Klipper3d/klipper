@@ -9,7 +9,7 @@ import stepper
 class PolargraphKinematics:
     def __init__(self, toolhead, config):
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
-                      for n in 'xyz']
+                      for n in 'lrz']
         for s in self.rails[1].get_steppers():
             self.rails[0].get_endstops()[0][0].add_stepper(s)
         for s in self.rails[0].get_steppers():
@@ -39,11 +39,11 @@ class PolargraphKinematics:
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self, stepper_positions):
-        x = (stepper_positions['x']**2 - \
-            stepper_positions['y']**2 + self.width**2) / (2 * self.width)
+        x = (stepper_positions['l']**2 - \
+            stepper_positions['r']**2 + self.width**2) / (2 * self.width)
         return [
             x,
-            (stepper_positions['x']**2 - x**2)**0.5,
+            (stepper_positions['r']**2 - (self.width - x)**2)**0.5,
             stepper_positions['z'],
         ]
     def set_position(self, newpos, homing_axes):

@@ -25,6 +25,7 @@ polargraph_stepper_left_calc_position(struct stepper_kinematics *sk
     struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper
                              , sk);
     struct coord c = move_get_coord(m, move_time);
+    return sqrt(c.x * c.x + c.y*c.y);
     return (c.x * c.x - c.y * c.y + ps->width * ps->width) / (ps->width * 2);
 }
 
@@ -36,9 +37,9 @@ polargraph_stepper_right_calc_position(struct stepper_kinematics *sk
     struct polargraph_stepper *ps = container_of(sk, struct polargraph_stepper
                              , sk);
     struct coord c = move_get_coord(m, move_time);
-    double x = (c.x * c.x - c.y * c.y + ps->width * ps->width) /
-        (ps->width * 2);
-    return sqrt(c.x * c.x - x * x);
+    //double x = (c.x * c.x - c.y * c.y + ps->width * ps->width) /
+    //    (ps->width * 2);
+    return sqrt(c.y * c.y +  (ps->width - c.x) * (ps->width - c.x));
 }
 
 struct stepper_kinematics * __visible
