@@ -8,7 +8,6 @@
 [mcu]
 serial: /dev/ttyUSB0
 baud: 250000
-pin_map: arduino
 
 [stepper_x]
 step_pin: ar54
