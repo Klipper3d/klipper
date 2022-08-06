@@ -584,7 +584,10 @@ class Palette2:
                 self.cmd_Disconnect()
                 return self.reactor.NEVER
             if len(raw_bytes):
-                text_buffer = self.read_buffer + str(raw_bytes.decode())
+                new_buffer = str(
+                    raw_bytes.decode(encoding="UTF-8", errors="ignore")
+                )
+                text_buffer = self.read_buffer + new_buffer
                 while True:
                     i = text_buffer.find("\n")
                     if i >= 0:
