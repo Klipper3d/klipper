@@ -48,6 +48,13 @@ The following information is available in the `configfile` object
   field (both strings). Additional fields may be available depending
   on the type of warning.
 
+## delayed_gcode
+
+The following information is available in
+[delayed_gcode some_name](Config_Reference.md#delayed_gcode) objects:
+- `remaining`: The remaining time of a delayed_gcode. Returns 0 if
+  not running.
+
 ## display_status
 
 The following information is available in the `display_status` object
