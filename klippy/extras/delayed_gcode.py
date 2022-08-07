@@ -29,8 +29,10 @@ class DelayedGcode:
             desc=self.cmd_QUERY_DELAYED_GCODE_help)
     def get_status(self, eventtime):
         remain_time = 0
-        if self.inside_timer:
-          remain_time = self.waketime - self.printer.get_reactor().monotonic()
+        if self.duration > 0:
+          calc_time = self.waketime - self.printer.get_reactor().monotonic()
+          if calc_time > 0:
+            remain_time = calc_time
         return {'remaining': remain_time}
     def _handle_ready(self):
         self.waketime = self.reactor.NEVER
@@ -62,11 +64,12 @@ class DelayedGcode:
     cmd_QUERY_DELAYED_GCODE_help = "Returns the status of a delayed_gcode"
     def cmd_QUERY_DELAYED_GCODE(self, gcmd):
         remain_time = 0
-        if self.inside_timer:
+        if self.duration > 0:
             remain_time = self.waketime - self.printer.get_reactor().monotonic()
-            msg = "%s running, %.1f secs remaining" % (self.name, remain_time)
-        else:
-            msg = "%s not running" % (self.name)
+            if remain_time > 0:
+              msg = "%s running, %.1f secs remaining" % (self.name, remain_time)
+            else:
+              msg = "%s not running" % (self.name)
         gcmd.respond_info(msg)
 
 def load_config_prefix(config):
