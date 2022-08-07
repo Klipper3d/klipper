@@ -256,7 +256,7 @@ for gcode execution. A value of 0 will cancel a pending delayed gcode
 from executing.
 
 #### QUERY_DELAYED_GCODE
-`UPDATE_DELAYED_GCODE [ID=<name>]`: Queries the running state for the
+`QUERY_DELAYED_GCODE [ID=<name>]`: Queries the running state for the
 identified [delayed_gcode] and reports the seconds remaining if the
 gcode is running.
 
