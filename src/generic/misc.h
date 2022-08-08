@@ -18,4 +18,6 @@ void *dynmem_end(void);
 
 uint16_t crc16_ccitt(uint8_t *buf, uint_fast8_t len);
 
+void bootloader_request(void);
+
 #endif // misc.h

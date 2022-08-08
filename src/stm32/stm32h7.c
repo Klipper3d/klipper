@@ -6,8 +6,9 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
-#include "board/irq.h" // irq_disable
 #include "board/armcm_reset.h" // try_request_canboot
+#include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // get_pclock_frequency
 #include "sched.h" // sched_main
@@ -185,7 +186,7 @@ clock_setup(void)
 
 
 /****************************************************************
- * USB bootloader
+ * Bootloader
  ****************************************************************/
 
 #define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
@@ -212,9 +213,9 @@ check_usb_dfu_bootloader(void)
                  : : "r"(sysbase[0]), "r"(sysbase[1]));
 }
 
-// Handle USB reboot requests
+// Handle reboot requests
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
     try_request_canboot();
     usb_reboot_for_dfu_bootloader();

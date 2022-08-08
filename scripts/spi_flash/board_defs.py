@@ -70,6 +70,11 @@ BOARD_DEFS = {
         'mcu': "stm32f407xx",
         'spi_bus': "spi3a",
         "cs_pin": "PC9"
+    },
+    'fly-gemini-v2': {
+        'mcu': "stm32f405xx",
+        'spi_bus': "spi1",
+        "cs_pin": "PA4"
     }
 }
 
