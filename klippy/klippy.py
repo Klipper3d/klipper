@@ -231,8 +231,7 @@ class Printer:
         run_result = self.run_result
         try:
             if run_result == 'firmware_restart':
-                for n, m in self.lookup_objects(module='mcu'):
-                    m.microcontroller_restart()
+                self.send_event("klippy:firmware_restart")
             self.send_event("klippy:disconnect")
         except:
             logging.exception("Unhandled exception during post run")

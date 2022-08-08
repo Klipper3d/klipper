@@ -15,3 +15,4 @@ To begin using Klipper start by [installing](Installation.md) it.
 
 Klipper is Free Software. Read the [documentation](Overview.md) or
 view [the Klipper code on github](https://github.com/Klipper3d/klipper).
+We depend on the generous support from our [sponsors](Sponsors.md).
