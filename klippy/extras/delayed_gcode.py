@@ -68,7 +68,8 @@ class DelayedGcode:
         if self.duration:
             remain_time = self.waketime - self.printer.get_reactor().monotonic()
             if remain_time > 0:
-                msg = "%s running, %.1f secs remaining" % (self.name, remain_time)
+                msg = ("%s running, %.1f secs remaining"
+                                   % (self.name, remain_time))
         gcmd.respond_info(msg)
 
 def load_config_prefix(config):
