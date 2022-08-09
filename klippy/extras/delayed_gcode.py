@@ -64,17 +64,10 @@ class DelayedGcode:
     cmd_QUERY_DELAYED_GCODE_help = "Returns the status of a delayed_gcode"
     def cmd_QUERY_DELAYED_GCODE(self, gcmd):
         remain_time = 0
-<<<<<<< HEAD
         msg = "%s not running" % (self.name)
         if self.duration:
             remain_time = self.waketime - self.printer.get_reactor().monotonic()
             if remain_time > 0:
-=======
-        if self.duration > 0:
-            calc_time = self.waketime - self.printer.get_reactor().monotonic()
-            if calc_time > 0:
-                remain_time = calc_time
->>>>>>> 2c9603f51d72ab79c76b10edcf535c8067e89493
                 msg = "%s running, %.1f secs remaining" % (self.name, remain_time)
         gcmd.respond_info(msg)
 
