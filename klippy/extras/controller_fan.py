@@ -24,6 +24,7 @@ class ControllerFan:
             'idle_speed', default=self.fan_speed, minval=0., maxval=1.)
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
         self.heater_names = config.getlist("heater", ("extruder",))
+        self.heater_temp = config.getfloat("heater_temp", 50.0)
         self.last_on = self.idle_timeout
         self.last_speed = 0.
     def handle_connect(self):
@@ -51,8 +52,8 @@ class ControllerFan:
         for name in self.stepper_names:
             active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
         for heater in self.heaters:
-            _, target_temp = heater.get_temp(eventtime)
-            if target_temp:
+            current_temp, target_temp = heater.get_temp(eventtime)
+            if target_temp or current_temp > self.heater_temp:
                 active = True
         if active:
             self.last_on = 0
@@ -69,3 +70,4 @@ class ControllerFan:
 
 def load_config_prefix(config):
     return ControllerFan(config)
+
