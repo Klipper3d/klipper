@@ -258,7 +258,7 @@ from executing.
 #### QUERY_DELAYED_GCODE
 `QUERY_DELAYED_GCODE [ID=<name>]`: Queries the running state for the
 identified [delayed_gcode] and reports the seconds remaining if the
-gcode is running.
+macro is running.
 
 ### [delta_calibrate]
 
