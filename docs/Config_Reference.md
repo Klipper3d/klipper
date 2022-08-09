@@ -2144,7 +2144,7 @@ temperature sensors that are reported via the M105 command.
 
 Klipper includes definitions for many types of temperature sensors.
 These sensors may be used in any config section that requires a
-temperature sensor (such as an `[extruder]` or `[heated_bed]`
+temperature sensor (such as an `[extruder]` or `[heater_bed]`
 section).
 
 ### Common thermistors

@@ -28,6 +28,17 @@ The following information is available in the
 - `profiles`: The set of currently defined profiles as setup
    using BED_MESH_PROFILE.
 
+## bed_screws
+
+The following information is available in the
+`Config_Reference.md#bed_screws` object:
+- `is_active`: Returns True if the bed screws adjustment tool is currently
+active.
+- `state`: The bed screws adjustment tool state. It is one of
+the following strings: "adjust", "fine".
+- `current_screw`: The index for the current screw being adjusted.
+- `accepted_screws`: The number of accepted screws.
+
 ## configfile
 
 The following information is available in the `configfile` object
