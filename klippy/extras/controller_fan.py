@@ -70,4 +70,3 @@ class ControllerFan:
 
 def load_config_prefix(config):
     return ControllerFan(config)
-
