@@ -1457,9 +1457,9 @@
 </ul>
 <h2 id="_7">增加新运动学模型<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
 <p>本节将提供为Klipper增加新运动学模型的提示。这需要对目标运动学方程有深入的了解。这同时需要一定的软件开发技巧—尽管大多情况下只需要更新上位机软件。</p>
-<p>步骤：</p>
+<p>有用的步骤：</p>
 <ol>
-<li>开始应研究 "<a href="#code-flow-of-a-move-command">移动命令的代码流</a>" 章节和 <a href="Kinematics.html">动力学文档</a>.</li>
+<li>开始应研究 "<a href="#code-flow-of-a-move-command">移动命令工作流</a>" 章节和 <a href="Kinematics.html">动力学</a>.</li>
 <li>参考位于klippy/kinematics/目录已有的运动学类。动力学类旨在将一个笛卡尔坐标系中的运动转化为各个步进电机的运动。建议复制已有的代码，并在其基础上进行修改。</li>
 <li>若需要的运动学方程未被Klipper涵盖，则应使用C语言实现新动力学体系中各个步进电机的位置方程（见klippy/chelper/，如kin_cart.c, kin_corexy.c, and kin_delta.c）。位置方程中应调用<code>move_get_coord()</code>以将运动的时间点（单位 ：秒）转化为对应的笛卡尔坐标位置（单位：毫米），进而计算目标步进电机运动目标位置（单位：毫米）。</li>
 <li>在新的运动学类中实现<code>calc_position</code>方法。该方法将通过各个步进电机的位置计算笛卡尔坐标系下的打印头位置；同时该方法通常只在回零和z探测时使用，因此无需过分追求效率。</li>
@@ -1468,7 +1468,7 @@
 </ol>
 <h2 id="_8">移植到新的微控制器<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
 <p>该节将介绍将Klipper微控制器代码移植到新架构时的一些提示。该操作将需要对嵌入式开发有一定的认识并应有目标微控制器的开发平台。</p>
-<p>步骤：</p>
+<p>有用的步骤：</p>
 <ol>
 <li>首先应确定移植所需的第三方库。常见的例子为“CMSIS”包装器和厂商的“HAL”库。全部第三方代码应遵循或兼容GNU GPLv3协议。第三方代码应提交到Klipper的/lib文件夹。更新lib/README注明第三方库的获取途径和更新时间。推荐不改变内容，直接将代码复制到Klipper，但如果需要进行变更，应将所做的修改列在lib/README文件中。</li>
 <li>在src/下新建一个新架构的子目录，并创建对应的初始Kconfig和Makefile。以已有的架构作为模版，其中src/simulator给出了微控制器架构的基本需求。</li>

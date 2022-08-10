@@ -1692,11 +1692,11 @@ config_stepper oid=2 step_pin=gpio0_22 dir_pin=gpio2_1 invert_step=0 step_pulse_
 finalize_config crc=0
 </code></pre></div>
 
-<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本为 <code>pru-gcc (GCC) 8.0.0 20170530（实验版）</code>。</p>
+<p>测试最后在提交 <code>59314d99</code> 上运行，gcc 版本为 <code>pru-gcc (GCC) 8.0.0 20170530 (experimental)</code>。</p>
 <table>
 <thead>
 <tr>
-<th>可编程实时单元</th>
+<th>pru</th>
 <th>ticks</th>
 </tr>
 </thead>
@@ -1850,7 +1850,7 @@ config_stepper oid=2 step_pin=P1.23 dir_pin=P1.18 invert_step=-1 step_pulse_tick
 finalize_config crc=0
 </code></pre></div>
 
-<p>该测试最后一次运行使用了提交 <code>59314d99</code>，gcc 版本 <code>arm-none-eabi-gcc （Fedora 10.2.0-4.fc34） 10.2.0</code>。120Mhz LPC1769 的结果是通过将 LPC1768 超频到 120Mhz 而获得的。</p>
+<p>该测试最后一次运行使用了提交 <code>59314d99</code>，gcc 版本 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>。120Mhz LPC1769 的结果是通过将 LPC1768 超频到 120Mhz 而获得的。</p>
 <table>
 <thead>
 <tr>
@@ -1896,7 +1896,7 @@ config_stepper oid=2 step_pin=PA17 dir_pin=PA21 invert_step=-1 step_pulse_ticks=
 finalize_config crc=0
 </code></pre></div>
 
-<p>该测试最后一次运行使用了提交 <code>59314d99</code>，gcc 版本 <code>arm-none-eabi-gcc （Fedora 10.2.0-4.fc34） 10.2.0</code> 在 SAMD21G18 微控制器上。</p>
+<p>该测试最后一次运行使用了提交 <code>59314d99</code>，gcc 版本 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code> 在 SAMD21G18 微控制器上。</p>
 <table>
 <thead>
 <tr>
@@ -1924,7 +1924,7 @@ config_stepper oid=2 step_pin=PA22 dir_pin=PA19 invert_step=-1 step_pulse_ticks=
 finalize_config crc=0
 </code></pre></div>
 
-<p>该测试最后一次运行使用了提交 <code>59314d99</code> 与 gcc 版本 <code>arm-none-eabi-gcc （Fedora 10.2.0-4.fc34） 10.2.0</code> 在 SAMD51J19A 微控制器上运行的。</p>
+<p>该测试最后一次运行使用了提交 <code>59314d99</code> 与 gcc 版本 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code> 在 SAMD51J19A 微控制器上运行的。</p>
 <table>
 <thead>
 <tr>
@@ -1942,11 +1942,11 @@ finalize_config crc=0
 <td>191</td>
 </tr>
 <tr>
-<td>1 stepper (200Mhz)</td>
+<td>1 步进电机 (200Mhz)</td>
 <td>39</td>
 </tr>
 <tr>
-<td>3 stepper (200Mhz)</td>
+<td>3 步进电机 (200Mhz)</td>
 <td>181</td>
 </tr>
 </tbody>
@@ -1988,7 +1988,7 @@ config_stepper oid=2 step_pin=gpio6 dir_pin=gpio17 invert_step=0 step_pulse_tick
 finalize_config crc=0
 </code></pre></div>
 
-<p>该测试最后一次运行使用了提交 <code>59314d99</code> 与 gcc 版本 <code>gcc （Raspbian 8.3.0-6+rpi1） 8.3.0</code> 在 Raspberry Pi 3 （修订版 a02082） 上运行。在这个基准测试中很难获得稳定的结果。</p>
+<p>该测试最后一次运行使用了提交 <code>59314d99</code> 与 gcc 版本 <code>gcc (Raspbian 8.3.0-6+rpi1) 8.3.0</code> 在 Raspberry Pi 3 （修订版 a02082） 上运行。在这个基准测试中很难获得稳定的结果。</p>
 <table>
 <thead>
 <tr>
@@ -2033,13 +2033,13 @@ get_uptime
 <td>arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1</td>
 </tr>
 <tr>
-<td>atmega2560 (串行总线)</td>
+<td>atmega2560 (serial)</td>
 <td>23K</td>
 <td>b161a69e</td>
 <td>avr-gcc (GCC) 4.8.1</td>
 </tr>
 <tr>
-<td>sam3x8e (串行总线)</td>
+<td>sam3x8e (serial)</td>
 <td>23K</td>
 <td>b161a69e</td>
 <td>arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0</td>

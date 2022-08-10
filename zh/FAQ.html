@@ -409,7 +409,7 @@
       
         <li class="md-nav__item">
   <a href="#_5" class="md-nav__link">
-    为什么在归位打印机之前我不能移动步进器？
+    为什么在归位打印机之前我不能移动步进电机？
   </a>
   
 </li>
@@ -1479,7 +1479,7 @@
       
         <li class="md-nav__item">
   <a href="#_5" class="md-nav__link">
-    为什么在归位打印机之前我不能移动步进器？
+    为什么在归位打印机之前我不能移动步进电机？
   </a>
   
 </li>
@@ -1658,7 +1658,7 @@ baud: 250000
 <h2 id="octoprint">我必须使用 OctoPrint 吗？<a class="headerlink" href="#octoprint" title="Permanent link">&para;</a></h2>
 <p>Klipper 不依赖 OctoPrint。其他软件也可以向 Klipper 发送命令，但这样做可能需要一些 Linux 管理知识。</p>
 <p>Klipper 通过 “/tmp/printer” 文件创建了一个“虚拟串口”，该文件模拟了一个标准的3D打印机串口。理论上任何能配置并使用 “/tmp/printer” 作为打印机串口的软件都可以与Klipper一起工作。</p>
-<h2 id="_5">为什么在归位打印机之前我不能移动步进器？<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<h2 id="_5">为什么在归位打印机之前我不能移动步进电机？<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>代码这样做是为了减少意外将头撞到床或墙壁的机会。 打印机归位后，软件会尝试验证每个移动是否在配置文件中定义的 position_min/max 范围内。 如果电机被禁用（通过 M84 或 M18 命令），那么电机将需要在运动前再次归位。</p>
 <p>如果您想在通过 OctoPrint 取消打印后移动打印头，请考虑更改 OctoPrint 取消顺序来为您执行此操作。 它是通过 Web 浏览器在 OctoPrint 中配置的：设置-&gt; GCODE 脚本</p>
 <p>如果您想在打印完成后移动头部，请考虑将所需的移动添加到切片机的“自定义 g 代码”部分。</p>
