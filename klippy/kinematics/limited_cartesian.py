@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Code for handling the kinematics of cartesian robots
 # with per-axis limits for velocity and acceleration
 #
@@ -79,8 +78,8 @@ class LimitedCartKinematics(cartesian.CartKinematics):
             msg += "Per axis accelerations limits scale with current acceleration.\n"
         else:
             msg += "Per axis accelerations limits are independent of current acceleration.\n"
-        msg += (u"Maximum XY velocity of %.1f mm/s reached on %.0f° diagonals.\n"
-                u"Maximum XY acceleration of %.0f mm/s² reached on %.0f° diagonals.") % (
+        msg += ("Maximum XY velocity of %.1f mm/s reached on %.0f degrees diagonals.\n"
+                "Maximum XY acceleration of %.0f mm/s^2 reached on %.0f degrees diagonals.") % (
             hypot(self.max_velocities[0], self.max_velocities[1]),
             180*atan2(self.max_velocities[1], self.max_velocities[0]) / pi,
             hypot(self.max_accels[0], self.max_accels[1]),
