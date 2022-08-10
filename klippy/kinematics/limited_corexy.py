@@ -7,8 +7,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 #
 # Usage:
-# Copying this file under `klipper/klippy/kinematics/` should be enough
-# (click the `raw` button on github, then save as)
+# Copying this file under `klipper/klippy/kinematics/` should be enough (click
+# the `raw` button on github, then save as)
 # Then your config's [printer] should look like:
 # [printer]
 # kinematics: limited_corexy
@@ -20,13 +20,15 @@
 # max_z_accel: [untouched]
 # scale_xy_accel: [True/False, default False]
 #
-# If scale_xy_accel is False, `max_accel` defined by M204 / SET_VELOCITY_LIMIT acts as a third limit,
-# which means when you move with less acceleration than max_x_accel and max_y_accel, the toolhead
-# accelerates regardless of the move direction. When True, max_x_accel and max_y_accel are scaled
-# by the ratio of the dynamically set acceleration and the max_accel value from the config.
-# This means that the actual acceleration will always depend on the direction.
+# If scale_xy_accel is False, `max_accel`, set by M204 or SET_VELOCITY_LIMIT,
+# acts as a third limit. This means that moves with an acceleration lower than
+# max_x_accel and max_y_accel, have no per-axis limits applied. When True,
+# max_x_accel and max_y_accel are scaled by the ratio of the dynamically set
+# acceleration and the max_accel value from the config. This means that the
+# actual acceleration will always depend on the direction.
 #
-# Derivation of the formulae described here: http://bl.ocks.org/Piezoid/raw/368e4ca48c65724e419cfb8198cfee0e/
+# Derivation of the formulae described here:
+# http://bl.ocks.org/Piezoid/raw/368e4ca48c65724e419cfb8198cfee0e/
 # (notebook source: /docs/PerAxisLimits.ipynb)
 
 from sys import float_info

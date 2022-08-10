@@ -7,8 +7,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 #
 # Usage:
-# Copying this file under `klipper/klippy/kinematics/` should be enough
-# (click the `raw` button on github, then save as)
+# Copying this file under `klipper/klippy/kinematics/` should be enough (click
+# the `raw` button on github, then save as)
 # Then your config's [printer] should look like:
 # [printer]
 # kinematics: limited_cartesian
@@ -22,13 +22,16 @@
 # max_z_accel: 100
 # scale_xy_accel: [True/False, default False]
 #
-# max_accel/velocity are usualy the hypotenuses of X and Y values,
+# max_accel/velocity are usually the hypotenuses of X and Y values, For example:
+# with max_x_accel = 15000 and max_y_accel = 8000, the recommended value is
+# max_accel = 17000.
 #
-# If scale_xy_accel is False, `max_accel` defined by M204 / SET_VELOCITY_LIMIT acts as a third limit,
-# which means when you move with less acceleration than max_x_accel and max_y_accel, the toolhead
-# accelerates regardless of the move direction. When True, max_x_accel and max_y_accel are scaled
-# by the ratio of the dynamically set acceleration and the max_accel value from the config.
-# This means that the actual acceleration will always depend on the direction.
+# If scale_xy_accel is False, `max_accel`, set by M204 or SET_VELOCITY_LIMIT,
+# acts as a third limit. This means that moves with an acceleration lower than
+# max_x_accel and max_y_accel, have no per-axis limits applied. When True,
+# max_x_accel and max_y_accel are scaled by the ratio of the dynamically set
+# acceleration and the max_accel value from the config. This means that the
+# actual acceleration will always depend on the direction.
 
 from sys import float_info
 from math import hypot, atan2, pi
