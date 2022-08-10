@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Code for handling the kinematics of cartesian robots
 # with per-axis limits for velocity and acceleration
 #

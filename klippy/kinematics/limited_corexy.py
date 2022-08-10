@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Code for handling the kinematics of corexy robots
 # with per-axis limits for acceleration
 #
