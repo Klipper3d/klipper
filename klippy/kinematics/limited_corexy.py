@@ -58,8 +58,8 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
         if self.scale_per_axis:
             msg += "Per axis accelerations limits scale with current acceleration.\n"
         else:
-            msg += "Per axis accelerations limits are independant of current acceleration.\n"
-        msg += "Minimum XY acceleration of %.0f mm/s² reached on %.0f° diagonals." % (
+            msg += "Per axis accelerations limits are independent of current acceleration.\n"
+        msg += u"Minimum XY acceleration of %.0f mm/s² reached on %.0f° diagonals." % (
             1/sqrt(self.max_x_accel**(-2) + self.max_y_accel**(-2)),
             180*atan2(self.max_x_accel, self.max_y_accel) / pi
         )
