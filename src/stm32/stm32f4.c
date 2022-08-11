@@ -226,7 +226,8 @@ usb_reboot_for_dfu_bootloader(void)
         __set_MSP(*(uint32_t *)addr);
 
         SysMemBootJump();
-    }    irq_disable();
+    }
+    irq_disable();
     *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
     NVIC_SystemReset();
 }
