@@ -211,7 +211,22 @@ usb_hid_bootloader(void)
 static void
 usb_reboot_for_dfu_bootloader(void)
 {
-    irq_disable();
+    if (CONFIG_MACH_STM32F429) 
+    {
+        void (*SysMemBootJump)(void);
+        volatile uint32_t addr = 0x1FFF0000;
+
+        SysTick->CTRL = 0;
+        SysTick->LOAD = 0;
+        SysTick->VAL = 0;
+
+        SYSCFG->MEMRMP = 0x01;
+        SysMemBootJump = (void (*)(void)) (*((uint32_t *)(addr + 4)));
+
+        __set_MSP(*(uint32_t *)addr);
+
+        SysMemBootJump();
+    }    irq_disable();
     *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
     NVIC_SystemReset();
 }
