@@ -4,9 +4,9 @@ This document describes Klipper's CAN bus support.
 
 ## Device Hardware
 
-Klipper currently supports CAN on stm32 and rp2040 chips. In addition,
-the micro-controller chip must be on a board that has a CAN
-transceiver.
+Klipper currently supports CAN on stm32 (with integrated CAN controller)
+and rp2040 chips (SW emulation). In addition, each CAN node needs a
+transceiver which might be on board or external (e.g. via UTOC-3, U2C-3).
 
 To compile for CAN, run `make menuconfig` and select "CAN bus" as the
 communication interface. Finally, compile the micro-controller code
@@ -40,12 +40,16 @@ iface can0 can static
 ```
 
 Note that the "Raspberry Pi CAN hat" also requires
-[changes to config.txt](https://www.waveshare.com/wiki/RS485_CAN_HAT).
+[changes to config.txt](https://www.waveshare.com/wiki/RS485_CAN_HAT)
+as a SPI interface is used.
 
 ## Terminating Resistors
 
-A CAN bus should have two 120 ohm resistors between the CANH and CANL
-wires. Ideally, one resistor located at each the end of the bus.
+A high speed CAN bus requires a 60 ohm termination (between the CAN_H
+and CAN_L wires). This is implemented with two 120 ohm resistors,
+where one resistor is located at each end of the bus. CAN is designed
+to allow for stub lines but the longest distance should have the
+termination resistors on its ends.
 
 Note that some devices have a builtin 120 ohm resistor (for example,
 the "Waveshare Raspberry Pi CAN hat" has a soldered on resistor that
@@ -53,11 +57,11 @@ can not be easily removed). Some devices do not include a resistor at
 all. Other devices have a mechanism to select the resistor (typically
 by connecting a "pin jumper"). Be sure to check the schematics of all
 devices on the CAN bus to verify that there are two and only two 120
-Ohm resistors on the bus.
+Ohm resistors on the bus (longest distance).
 
 To test that the resistors are correct, one can remove power to the
-printer and use a multi-meter to check the resistance between the CANH
-and CANL wires - it should report ~60 ohms on a correctly wired CAN
+printer and use a multi-meter to check the resistance between the CAN_H
+and CAN_L wires - it should report ~60 ohms on a correctly wired CAN
 bus.
 
 ## Finding the canbus_uuid for new micro-controllers
