@@ -1048,10 +1048,10 @@
       
         <li class="md-nav__item">
   <a href="#simulavr" class="md-nav__link">
-    用 simulavr 测试
+    使用 simulavr 测试
   </a>
   
-    <nav class="md-nav" aria-label="用 simulavr 测试">
+    <nav class="md-nav" aria-label="使用 simulavr 测试">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1354,10 +1354,10 @@
       
         <li class="md-nav__item">
   <a href="#simulavr" class="md-nav__link">
-    用 simulavr 测试
+    使用 simulavr 测试
   </a>
   
-    <nav class="md-nav" aria-label="用 simulavr 测试">
+    <nav class="md-nav" aria-label="使用 simulavr 测试">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1416,7 +1416,7 @@
 make
 </code></pre></div>
 
-<p>完成上述操作后，可以在批处理模式下运行 Klipper（请参阅<a href="Installation.html">安装</a>以了解构建 Python 虚拟环境(venv)和 printer.cfg 文件所需的步骤）：</p>
+<p>完成上述操作后，可以在批处理模式下运行 Klipper（请参考<a href="Installation.html">安装</a>以了解构建 Python 虚拟环境(venv)和 printer.cfg 文件所需的步骤）：</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/klippy.py ~/printer.cfg -i test.gcode -o test.serial -v -d out/klipper.dict
 </code></pre></div>
 
@@ -1480,7 +1480,7 @@ cp /tmp/klippy.log .
 </code></pre></div>
 
 <p>该脚本将提取打印机的配置文件，并提取 MCU 的关闭信息。来自 MCU 关闭的信息转储（如果存在的话）将按时间戳重新排序，以协助诊断因果关系的情况。</p>
-<h2 id="simulavr">用 simulavr 测试<a class="headerlink" href="#simulavr" title="Permanent link">&para;</a></h2>
+<h2 id="simulavr">使用 simulavr 测试<a class="headerlink" href="#simulavr" title="Permanent link">&para;</a></h2>
 <p><a href="http://www.nongnu.org/simulavr/">simulavr</a>工具可以模拟 Atmel ATmega 微控制器。本章描述了如何通过simulavr运行测试gcode文件。由于该工具需要大量cpu资源，建议在台式机（而不是树莓派）上运行。</p>
 <p>To use simulavr, download the simulavr package and compile with python support. Note that the build system may need to have some packages (such as swig) installed in order to build the python module.</p>
 <div class="highlight"><pre><span></span><code>git clone git://git.savannah.nongnu.org/simulavr.git
@@ -1514,7 +1514,7 @@ make menuconfig
 <div class="highlight"><pre><span></span><code>./scripts/avrsim.py out/klipper.elf
 </code></pre></div>
 
-<p>然后，在另一个窗口中运行simulavr，可以运行以下内容，从一个文件（例如，"test.gcode"）中读取gcode，用Klippy处理它，并将其发送到simulavr中运行的Klipper（关于建立python虚拟环境的必要步骤，见<a href="Installation.html">安装</a>）。</p>
+<p>然后，在另一个窗口中运行simulavr，可以运行以下内容，从一个文件（例如，"test.gcode"）中读取gcode，用Klippy处理它，并将其发送到simulavr中运行的Klipper（关于建立python虚拟环境的必要步骤，见<a href="Installation.html">安装</a>）：</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/klippy.py config/generic-simulavr.cfg -i test.gcode -v
 </code></pre></div>
 

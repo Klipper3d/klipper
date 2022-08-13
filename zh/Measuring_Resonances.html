@@ -1580,13 +1580,13 @@
 </table>
 <p>部分ADXL345开发板的Fritzing接线图如下：</p>
 <p><img alt="ADXL345-树莓派" src="img/adxl345-fritzing.png" /></p>
-<p>为避免损害树莓派或加速度传感器，请再三确认接线正确再对树莓派上电。</p>
+<p>为避免损坏树莓派或者加速度传感器，请检测接线正确再对树莓派上电。</p>
 <h3 id="_4">固定加速度传感器<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>加速度传感器应固定在打印头上。应根据打印机的情况设计合适的固定件。推荐将加速度的测量轴与打印机运行轴的方向进行对齐。然而，如果轴对齐极其麻烦，可以将打印机的轴使用其他测量轴对齐，比如打印机+X对应传感器-X，甚至打印机+X对应传感器-Z等。</p>
 <p>下面是ADXL345固定到SmartEffector的示例：</p>
 <p><img alt="ADXL345固定在SmartEffector" src="img/adxl345-mount.jpg" /></p>
 <p>注意，滑床式打印机需要设计两个固定件：一个安装于打印头，另一个用于热床，并进行两次测量。详见 <a href="#bed-slinger-printers">对应分节</a>。</p>
-<p><strong>注意</strong>：务必确保加速度传感器和任何螺丝都不应该接触到打印机的金属部分。紧固件必须设计成在加速度传感器和打印机框体间形成电气绝缘。错误的设计可能会形成短路，从而损毁电气元件。</p>
+<p><strong>注意！</strong>：务必确保加速度传感器和任何螺丝都不应该接触到打印机的金属部分。紧固件必须设计成在加速度传感器和打印机框体间形成电气绝缘。错误的设计可能会形成短路，从而损坏电气元件。</p>
 <h3 id="_5">软件设置<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>Note that resonance measurements and shaper auto-calibration require additional software dependencies not installed by default. First, run on your Raspberry Pi the following commands:</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
@@ -1633,10 +1633,10 @@ probe_points:
 <h3 id="_7">检查设置<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>首先测试加速度传感器的连接。</p>
 <ul>
-<li>对于只有一个加速度传感器的情况，在Octoprint，输入<code>ACCELEROMETER_QUERY</code>（遍历已连接的加速度传感器）</li>
+<li>对于只有一个加速度传感器的情况，在Octoprint，输入<code>ACCELEROMETER_QUERY</code>（检查已连接的加速度传感器状态）</li>
 <li>对于“滑动床”（即有多个加速度传感器），输入<code>ACCELEROMETER_QUERY CHIP=&lt;chip&gt;</code>，其中<code>&lt;chip&gt;</code>是设置文档中的加速度传感器命名，例如 <code>CHIP=bed</code>(参见：<a href="#bed-slinger-printers">bed-slinger</a>)。</li>
 </ul>
-<p>画面将输出加速度传感器的读值，板子自由落体加速度，例如：</p>
+<p>你应该会看到来自加速度计的当前测量值，包括自由落体（free-fall）的加速度，比如说。</p>
 <div class="highlight"><pre><span></span><code>Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
 </code></pre></div>
 
@@ -1647,8 +1647,8 @@ probe_points:
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=X
 </code></pre></div>
 
-<p>注意，这将在X轴上产生振动。如果之前启用了输入整形，它也将禁用输入整形，因为在启用输入整形的情况下运行共振测试是无效的。</p>
-<p><strong>注意！</strong>请确保第一次运行时时刻观察打印机，以确保振动不会太剧烈（<code>M112</code>命令可以在紧急情况下中止测试；但愿不会到这一步）。如果振动确实太强烈，你可以尝试在<code>[Resonance_tester]</code>分段中为<code>accel_per_hz</code>参数指定一个低于默认值的值，例如:</p>
+<p>注意，这将在X轴上产生振动。如果之前启用了输入整形（input shaping ），它也将禁用输入整形，因为在启用输入整形的情况下运行共振测试是无效的。</p>
+<p><strong>注意！</strong>请确保第一次运行时时刻观察打印机，以确保振动不会太剧烈（<code>M112</code>命令可以在紧急情况下中止测试；但愿不会到这一步）。如果振动确实太强烈，你可以尝试在<code>[Resonance_tester]</code>分段中为<code>accel_per_hz</code>参数指定一个低于默认值的值，比如说。</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 accel_chip: adxl345
 accel_per_hz: 50  # default is 75
