@@ -57,18 +57,21 @@ config USBSERIAL
     bool
 config USBCANBUS
     bool
+config USB
+    bool
+    default y if USBSERIAL || USBCANBUS
 config USB_VENDOR_ID
     default 0x1d50
 config USB_DEVICE_ID
     default 0x614e
 config USB_SERIAL_NUMBER_CHIPID
-    depends on HAVE_CHIPID && (USBSERIAL || USBCANBUS)
+    depends on USB && HAVE_CHIPID
     default y
 config USB_SERIAL_NUMBER
     default "12345"
 
 menu "USB ids"
-    depends on (USBSERIAL || USBCANBUS) && LOW_LEVEL_OPTIONS
+    depends on USB && LOW_LEVEL_OPTIONS
 config USB_VENDOR_ID
     hex "USB vendor ID" if USBSERIAL
 config USB_DEVICE_ID
