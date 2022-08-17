@@ -171,7 +171,7 @@ clock_setup(void)
         ;
 
     // Configure HSI48 clock for USB
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         SET_BIT(RCC->CR, RCC_CR_HSI48ON);
         while((RCC->CR & RCC_CR_HSI48RDY) == 0);
         SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
@@ -205,7 +205,7 @@ usb_reboot_for_dfu_bootloader(void)
 static void
 check_usb_dfu_bootloader(void)
 {
-    if (!CONFIG_USBSERIAL || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
+    if (!CONFIG_USB || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
     uint32_t *sysbase = (uint32_t*)0x1FF09800;
