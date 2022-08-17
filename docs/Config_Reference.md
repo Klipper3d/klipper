@@ -1721,6 +1721,10 @@ z_offset:
 #   completes. See docs/Command_Templates.md for G-Code format. Do not
 #   issue any commands here that move the toolhead. The default is to
 #   not run any special G-Code commands on deactivation.
+#drop_first_result: False
+#   Set to `True` will probe one extra time and remove the first
+#   sample from calculation. This can improve probe accuracy for 
+#   printers that have an outlier first sample.
 ```
 
 ### [bltouch]
