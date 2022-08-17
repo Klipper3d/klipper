@@ -712,9 +712,10 @@ heater_pin:
 #   periods) to the heater. The default is 1.0.
 sensor_type:
 #   Type of sensor - common thermistors are "EPCOS 100K B57560G104F",
-#   "ATC Semitec 104GT-2", "ATC Semitec 104NT-4-R025H42G", "Generic
-#   3950","Honeywell 100K 135-104LAG-J01", "NTC 100K MGB18-104F39050L32",
-#   "SliceEngineering 450", and "TDK NTCG104LH104JT1". See the
+#   "ATC Semitec 104NT-4-R025H42G", "ATC Semitec 104GT-2",
+#   "ATC Semitec 104NT-4-R025H43G", "Generic 3950",
+#   "Honeywell 100K 135-104LAG-J01", "NTC 100K MGB18-104F39050L32",
+#   "SliceEngineering 450", or "TDK NTCG104LH104JT1". See the
 #   "Temperature sensors" section for other sensors. This parameter
 #   must be provided.
 sensor_pin:
@@ -2156,6 +2157,7 @@ sections that use one of these sensors.
 sensor_type:
 #   One of "EPCOS 100K B57560G104F", "ATC Semitec 104GT-2",
 #   "ATC Semitec 104NT-4-R025H42G", "Generic 3950",
+#   "ATC Semitec 104NT-4-R025H43G",
 #   "Honeywell 100K 135-104LAG-J01", "NTC 100K MGB18-104F39050L32",
 #   "SliceEngineering 450", or "TDK NTCG104LH104JT1"
 sensor_pin:
