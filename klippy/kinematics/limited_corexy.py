@@ -26,9 +26,7 @@
 # acceleration and the max_accel value from the config. This means that the
 # actual acceleration will always depend on the direction.
 #
-# Derivation of the formulae described here:
-# http://bl.ocks.org/Piezoid/raw/368e4ca48c65724e419cfb8198cfee0e/
-# (notebook source: /docs/PerAxisLimits.ipynb)
+# Derivation of the formulae described in the notebook docs/PerAxisLimits.ipynb
 
 from sys import float_info
 from . import corexy
@@ -58,7 +56,7 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
             msg += "Per axis accelerations limits scale with current acceleration.\n"
         else:
             msg += "Per axis accelerations limits are independent of current acceleration.\n"
-        msg += "Minimum XY acceleration of %.0f mm/s^2 reached on %.0f diagonals." % (
+        msg += "Minimum XY acceleration of %.0f mm/s^2 reached on %.0f degrees diagonals." % (
             1/sqrt(self.max_x_accel**(-2) + self.max_y_accel**(-2)),
             180*atan2(self.max_x_accel, self.max_y_accel) / pi
         )
