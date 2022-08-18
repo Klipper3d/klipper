@@ -19,6 +19,9 @@ class PrintStats:
     def set_current_file(self, filename):
         self.reset()
         self.filename = filename
+    def set_layer(self, total, current):
+        self.layer_total = total
+        self.layer_current = current
     def note_start(self):
         curtime = self.reactor.monotonic()
         if self.print_start_time is None:
@@ -66,6 +69,8 @@ class PrintStats:
         self.filament_used = self.total_duration = 0.
         self.print_start_time = self.last_pause_time = None
         self.init_duration = 0.
+        self.layer_total = None
+        self.layer_current = None
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration
         if self.print_start_time is not None:
@@ -86,7 +91,9 @@ class PrintStats:
             'print_duration': print_duration,
             'filament_used': self.filament_used,
             'state': self.state,
-            'message': self.error_message
+            'message': self.error_message,
+            'layer_total': self.layer_total,
+            'layer_current': self.layer_current
         }
 
 def load_config(config):

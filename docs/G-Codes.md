@@ -1267,6 +1267,12 @@ print.
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
 
+#### LAYER
+`LAYER [TOTAL=<total_layer_count>] [CURRENT=<current_layer>]`: Write layer
+information in the sliced gcode. Add `LAYER [TOTAL=<total_layer_count>]`
+to your slicer start gcode section and `LAYER [CURRENT=<current_layer>]`
+at the layer change gcode section.
+
 ### [z_tilt]
 
 The following commands are available when the

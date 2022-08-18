@@ -323,8 +323,8 @@ The following information is available in the `print_stats` object
 [virtual_sdcard](Config_Reference.md#virtual_sdcard) config section is
 defined):
 - `filename`, `total_duration`, `print_duration`, `filament_used`,
-  `state`, `message`: Estimated information about the current print
-  when a virtual_sdcard print is active.
+  `state`, `message`, `layer_current`, `layer_total`: Estimated
+  information about the current print when a virtual_sdcard print is active.
 
 ## probe
 
