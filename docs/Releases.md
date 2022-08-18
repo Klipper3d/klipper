@@ -12,7 +12,7 @@ Available on 20210929. Major changes in this release:
 * Klipper now has a
   [Community Discord Server](https://discord.klipper3d.org)
   and a [Community Discourse Server](https://community.klipper3d.org).
-* The [Klipper website](https://www.klipper3d.org) now uses the
+* The [Klipper website](https://DangerKlippers.github.io/danger-klipper) now uses the
   "mkdocs" infrastructure. There is also a
   [Klipper Translations](https://github.com/Klipper3d/klipper-translations)
   project.

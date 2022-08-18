@@ -300,7 +300,7 @@ contributions) and contain a current email address.
 is a project dedicated to translating Klipper to different languages.
 [Weblate](https://hosted.weblate.org/projects/klipper/) hosts all the
 Gettext strings for translating and reviewing. Locales can be displayed on
-[klipper3d.org](https://www.klipper3d.org) once they satisfy the following requirements:
+[klipper3d.org](https://DangerKlippers.github.io/danger-klipper) once they satisfy the following requirements:
 
 - [ ] 75% Total coverage
 - [ ] All titles (H1) are translated
