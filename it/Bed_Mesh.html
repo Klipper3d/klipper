@@ -1,0 +1,1798 @@
+
+<!doctype html>
+<html lang="it" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Matrice del Piatto - Documentazione Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#matrice-del-piatto" class="md-skip">
+          Vai al contenuto
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Intestazione">
+    <a href="." title="Documentazione Klipper" class="md-header__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentazione Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Matrice del Piatto
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Seleziona la lingua">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Muoversi
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Cerca" placeholder="Cerca" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Cerca">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Condividi" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Cancella" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inizializza la ricerca
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigazione" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentazione Klipper" class="md-nav__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentazione Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Panoramica
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caratteristiche
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Domande frequenti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versioni
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Modifiche alla configurazione
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contatti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installazione e configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installazione e configurazione" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installazione e configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Riferimenti di configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Riferimenti di configurazione" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Riferimenti di configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Riferimenti configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotation distance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Controlli della configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Livello del piatto
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livello del piatto" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Livello del piatto
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Livellamento del piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Calibrazione delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Calibrazione sonda
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Livellamento manuale
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Matrice del Piatto
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Bed_Mesh.html" class="md-nav__link md-nav__link--active">
+        Matrice del Piatto
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configurazione-base" class="md-nav__link">
+    Configurazione base
+  </a>
+  
+    <nav class="md-nav" aria-label="Configurazione base">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#piatti-rettangolari" class="md-nav__link">
+    Piatti rettangolari
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#piatti-rotondi" class="md-nav__link">
+    Piatti rotondi
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configurazione-avanzata" class="md-nav__link">
+    Configurazione avanzata
+  </a>
+  
+    <nav class="md-nav" aria-label="Configurazione avanzata">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interpolazione-mesh" class="md-nav__link">
+    Interpolazione mesh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#divisione-dei-movimenti" class="md-nav__link">
+    Divisione dei movimenti
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dissolvenza-mesh" class="md-nav__link">
+    Dissolvenza Mesh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lindice-di-riferimento-relativo" class="md-nav__link">
+    L'Indice di Riferimento Relativo
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regioni-difettose" class="md-nav__link">
+    Regioni difettose
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcodes-della-mesh-del-piatto" class="md-nav__link">
+    GCodes della mesh del piatto
+  </a>
+  
+    <nav class="md-nav" aria-label="GCodes della mesh del piatto">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calibrazione" class="md-nav__link">
+    Calibrazione
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profili" class="md-nav__link">
+    Profili
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    Output
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancella-stato-mesh" class="md-nav__link">
+    Cancella stato mesh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applicare-gli-offset-xy" class="md-nav__link">
+    Applicare gli offset X/Y
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Fase di fine corsa
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensazione della risonanza
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensazione della risonanza" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensazione della risonanza
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensazione della risonanza
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Misurazione delle risonanze
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Anticipo di pressione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Template dei comandi
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Template dei comandi" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Template dei comandi
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Commands templates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Status reference
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Driver TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing e Probing con microcontrollore multiplo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correzione dell'inclinazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Escludi oggetti
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilizzo dei strumenti PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentazione per sviluppatori
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentazione per sviluppatori" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentazione per sviluppatori
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Panoramica del codice
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinematica
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocollo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Server API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Comandi MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocollo CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmark
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuire a Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper packaging
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documenti specifici del dispositivo
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documenti specifici del dispositivo" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documenti specifici del dispositivo
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Esempi di configurazioni
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Aggiornamenti scheda SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrollore RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore TSL1401CL di larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore di Hall per larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configurazione-base" class="md-nav__link">
+    Configurazione base
+  </a>
+  
+    <nav class="md-nav" aria-label="Configurazione base">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#piatti-rettangolari" class="md-nav__link">
+    Piatti rettangolari
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#piatti-rotondi" class="md-nav__link">
+    Piatti rotondi
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configurazione-avanzata" class="md-nav__link">
+    Configurazione avanzata
+  </a>
+  
+    <nav class="md-nav" aria-label="Configurazione avanzata">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interpolazione-mesh" class="md-nav__link">
+    Interpolazione mesh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#divisione-dei-movimenti" class="md-nav__link">
+    Divisione dei movimenti
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dissolvenza-mesh" class="md-nav__link">
+    Dissolvenza Mesh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lindice-di-riferimento-relativo" class="md-nav__link">
+    L'Indice di Riferimento Relativo
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regioni-difettose" class="md-nav__link">
+    Regioni difettose
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcodes-della-mesh-del-piatto" class="md-nav__link">
+    GCodes della mesh del piatto
+  </a>
+  
+    <nav class="md-nav" aria-label="GCodes della mesh del piatto">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calibrazione" class="md-nav__link">
+    Calibrazione
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profili" class="md-nav__link">
+    Profili
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    Output
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancella-stato-mesh" class="md-nav__link">
+    Cancella stato mesh
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#applicare-gli-offset-xy" class="md-nav__link">
+    Applicare gli offset X/Y
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Bed_Mesh.md" title="Modifica" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="matrice-del-piatto">Matrice del Piatto<a class="headerlink" href="#matrice-del-piatto" title="Permanent link">&para;</a></h1>
+<p>Il modulo rete piatto (bed mesh) può essere usato per compensare le irregolarità della superficie del piatto e per ottenere un primo strato migliore su tutto il piatto. Va notato che la correzione basata sul software non raggiungerà risultati perfetti, può solo approssimare la forma del piatto. Bed mesh inoltre non può compensare i problemi meccanici ed elettrici. Se un asse è obliquo o una sonda non è accurata, il modulo Bed mesh non riceverà risultati accurati dal processo di ispezione.</p>
+<p>Prima della calibrazione della mesh dovrai assicurarti che l'offset Z della tua sonda sia calibrato. Se si utilizza un fine corsa per l'homing Z, anche questo dovrà essere calibrato. Per ulteriori informazioni, vedere <a href="Probe_Calibrate.html">Probe Calibrate</a> e Z_ENDSTOP_CALIBRATE in <a href="Manual_Level.html">Manual Level</a>.</p>
+<h2 id="configurazione-base">Configurazione base<a class="headerlink" href="#configurazione-base" title="Permanent link">&para;</a></h2>
+<h3 id="piatti-rettangolari">Piatti rettangolari<a class="headerlink" href="#piatti-rettangolari" title="Permanent link">&para;</a></h3>
+<p>Questo esempio presuppone una stampante con un piatto rettangolare di 250 mm x 220 mm e una sonda con un offset x di 24 mm e un offset y di 5 mm.</p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+</code></pre></div>
+
+<ul>
+<li><code>speed: 120</code> <em>Valore predefinito: 50</em> La velocità con cui la testa di stampa si sposta tra i punti.</li>
+<li><code>horizontal_move_z: 5</code> <em>Valore predefinito: 5</em> La coordinata Z a cui si solleva la sonda prima di spostarsi tra i punti.</li>
+<li><code>mesh_min: 35, 6</code> <em>Richiesto</em> La prima coordinata rilevata, più vicina all'origine. Questa coordinata è relativa alla posizione della sonda.</li>
+<li><code>mesh_max: 240, 198</code> <em>Richiesto</em> La coordinata rilevata più lontana dall'origine. Questo non è necessariamente l'ultimo punto sondato, poiché il processo di rilevamento avviene a zig-zag. Come per <code>mesh_min</code>, questa coordinata è relativa alla posizione della sonda.</li>
+<li><code>probe_count: 5, 3</code> <em>Valore predefinito: 3, 3</em> Il numero di punti da sondare su ciascun asse, specificato come valori interi X, Y. In questo esempio verranno tastati 5 punti lungo l'asse X, con 3 punti lungo l'asse Y, per un totale di 15 punti tastati. Nota che se desideri una griglia quadrata, ad esempio 3x3, questo potrebbe essere specificato come un singolo valore intero che viene utilizzato per entrambi gli assi, ad esempio <code>probe_count: 3</code>. Si noti che una mesh richiede un probe_count minimo di 3 lungo ciascun asse.</li>
+</ul>
+<p>L'illustrazione seguente mostra come le opzioni <code>mesh_min</code>, <code>mesh_max</code> e <code>probe_count</code> vengono utilizzate per generare punti sonda. Le frecce indicano la direzione della procedura di probing, a partire da <code>mesh_min</code>. Per riferimento, quando la sonda è a <code>mesh_min</code>, l'ugello sarà a (11, 1), e quando la sonda è a <code>mesh_max</code>, l'ugello sarà a (206, 193).</p>
+<p><img alt="bedmesh_rect_basic" src="img/bedmesh_rect_basic.svg" /></p>
+<h3 id="piatti-rotondi">Piatti rotondi<a class="headerlink" href="#piatti-rotondi" title="Permanent link">&para;</a></h3>
+<p>Questo esempio presuppone una stampante dotata di un raggio del piatto rotondo di 100 mm. Utilizzeremo gli stessi offset della sonda dell'esempio rettangolare, 24 mm su X e 5 mm su Y.</p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_radius: 75
+mesh_origin: 0, 0
+round_probe_count: 5
+</code></pre></div>
+
+<ul>
+<li><code>mesh_radius: 75</code> <em>Obbligatorio</em> Il raggio della mesh sondata in mm, relativo a <code>mesh_origin</code>. Si noti che gli offset della sonda limitano la dimensione del raggio della mesh. In questo esempio, un raggio maggiore di 76 sposterebbe lo strumento oltre il range della stampante.</li>
+<li><code>mesh_origin: 0, 0</code> <em>Valore predefinito: 0, 0</em> Il punto centrale della mesh. Questa coordinata è relativa alla posizione della sonda. Sebbene il valore predefinito sia 0, 0, può essere utile regolare l'origine nel tentativo di sondare una porzione più ampia del letto. Vedi l'illustrazione qui sotto.</li>
+<li><code>round_probe_count: 5</code> <em>Valore predefinito: 5</em> Questo è un valore intero che definisce il numero massimo di punti sondati lungo gli assi X e Y. Per "massimo" si intende il numero di punti tastati lungo l'origine della mesh. Questo valore deve essere un numero dispari, in quanto è necessario che venga sondato il centro della mesh.</li>
+</ul>
+<p>L'illustrazione seguente mostra come vengono generati i punti sondati. Come puoi vedere, l'impostazione di <code>mesh_origin</code> su (-10, 0) ci consente di specificare un raggio di mesh maggiore di 85.</p>
+<p><img alt="bedmesh_round_basic" src="img/bedmesh_round_basic.svg" /></p>
+<h2 id="configurazione-avanzata">Configurazione avanzata<a class="headerlink" href="#configurazione-avanzata" title="Permanent link">&para;</a></h2>
+<p>Di seguito vengono spiegate in dettaglio le opzioni di configurazione più avanzate. Ciascun esempio si baserà sulla configurazione base del piatto rettangolare mostrata sopra. Ciascuna delle opzioni avanzate si applica allo stesso modo ai piatti rotondi.</p>
+<h3 id="interpolazione-mesh">Interpolazione mesh<a class="headerlink" href="#interpolazione-mesh" title="Permanent link">&para;</a></h3>
+<p>Sebbene sia possibile campionare la matrice sondata direttamente utilizzando una semplice interpolazione bilineare per determinare i valori Z tra i punti sondati, è spesso utile interpolare punti extra utilizzando algoritmi di interpolazione più avanzati per aumentare la densità della mesh. Questi algoritmi aggiungono curvatura alla mesh, tentando di simulare le proprietà del materiale del piatto. Bed Mesh offre l'interpolazione lagrange e bicubica per ottenere questo risultato.</p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+mesh_pps: 2, 3
+algorithm: bicubic
+bicubic_tension: 0.2
+</code></pre></div>
+
+<ul>
+<li><code>mesh_pps: 2, 3</code> <em>Valore predefinito: 2, 2</em> L'opzione <code>mesh_pps</code> è un'abbreviazione per Mesh Points Per Segment. Questa opzione specifica quanti punti interpolare per ciascun segmento lungo gli assi X e Y. Considera un "segmento" come lo spazio tra ogni punto sondato. Come <code>probe_count</code>, <code>mesh_pps</code> è specificato come una coppia di interi X, Y e può anche essere specificato un singolo intero che viene applicato a entrambi gli assi. In questo esempio ci sono 4 segmenti lungo l'asse X e 2 segmenti lungo l'asse Y. Questo restituisce 8 punti interpolati lungo X, 6 punti interpolati lungo Y, che si traduce in una mesh 13x8. Si noti che se mesh_pps è impostato su 0, l'interpolazione della mesh è disabilitata e la matrice sondata verrà campionata direttamente.</li>
+<li><code>algoritmo: lagrange</code> <em>Valore predefinito: lagrange</em> L'algoritmo utilizzato per interpolare la mesh. Può essere "lagrange" o "bicubico". L'interpolazione Lagrange è limitata a 6 punti sondati poiché tende a verificarsi l'oscillazione con un numero maggiore di campioni. L'interpolazione bicubica richiede un minimo di 4 punti sondati lungo ciascun asse, se vengono specificati meno di 4 punti, viene forzato il campionamento lagrange. Se <code>mesh_pps</code> è impostato su 0, questo valore viene ignorato poiché non viene eseguita alcuna interpolazione della mesh.</li>
+<li><code>bicubic_tension: 0.2</code> <em>Valore predefinito: 0.2</em> Se l'opzione <code>algorithm</code> è impostata su bicubic è possibile specificare il valore della tensione. Maggiore è la tensione, maggiore è la pendenza interpolata. Prestare attenzione durante la regolazione, poiché valori più elevati creano anche una maggiore sovraelongazione, che risulterà in valori interpolati superiori o inferiori rispetto ai punti rilevati.</li>
+</ul>
+<p>L'illustrazione seguente mostra come vengono utilizzate le opzioni precedenti per generare una mesh interpolata.</p>
+<p><img alt="bedmesh_interpolated" src="img/bedmesh_interpolated.svg" /></p>
+<h3 id="divisione-dei-movimenti">Divisione dei movimenti<a class="headerlink" href="#divisione-dei-movimenti" title="Permanent link">&para;</a></h3>
+<p>Bed Mesh funziona intercettando i comandi di spostamento di gcode e applicando una trasformazione alla loro coordinata Z. I movimenti lunghi devono essere suddivisi in movimenti più piccoli per seguire correttamente la forma del piatto. Le opzioni seguenti controllano il comportamento di divisione.</p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+move_check_distance: 5
+split_delta_z: .025
+</code></pre></div>
+
+<ul>
+<li><code>move_check_distance: 5</code> <em>Valore predefinito: 5</em> La distanza minima per verificare la modifica desiderata in Z prima di eseguire una divisione. In questo esempio, un movimento più lungo di 5 mm verrà eseguito dall'algoritmo. Ogni 5 mm si verificherà una ricerca Z della mesh, confrontandola con il valore Z del movimento precedente. Se il delta raggiunge la soglia impostata da <code>split_delta_z</code>, il movimento sarà diviso e l'attraversamento continuerà. Questo processo si ripete fino al raggiungimento della fine del movimento, dove verrà applicato un aggiustamento finale. I movimenti più brevi di <code>move_check_distance</code> hanno la correzione Z corretta applicata direttamente alla mossa senza attraversamento o divisione.</li>
+<li><code>split_delta_z: .025</code> <em>Valore predefinito: .025</em> Come accennato in precedenza, questa è la deviazione minima richiesta per attivare una divisione del movimento. In questo esempio, qualsiasi valore Z con una deviazione +/- 0,025 mm attiverà una divisione.</li>
+</ul>
+<p>Generalmente i valori di default per queste opzioni sono sufficienti, infatti il valore di default di 5mm per il <code>move_check_distance</code> potrebbe essere eccessivo. Tuttavia, un utente esperto potrebbe voler sperimentare queste opzioni nel tentativo di spremere un primo layer ottimale.</p>
+<h3 id="dissolvenza-mesh">Dissolvenza Mesh<a class="headerlink" href="#dissolvenza-mesh" title="Permanent link">&para;</a></h3>
+<p>Quando la "dissolvenza" è abilitata, la regolazione Z viene gradualmente eliminata su una distanza definita dalla configurazione. Ciò si ottiene applicando piccole regolazioni all'altezza dello strato, aumentando o diminuendo a seconda della forma del letto. Quando la dissolvenza è completata, la regolazione Z non viene più applicata, consentendo alla parte superiore della stampa di essere piatta anziché rispecchiare la forma del letto. La dissolvenza può anche avere alcuni tratti indesiderati, se dissolve troppo rapidamente può causare artefatti visibili sulla stampa. Inoltre, se il tuo letto è notevolmente deformato, la dissolvenza può ridurre o allungare l'altezza Z della stampa. In quanto tale, la dissolvenza è disabilitata per impostazione predefinita.</p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+fade_start: 1
+fade_end: 10
+fade_target: 0
+</code></pre></div>
+
+<ul>
+<li><code>fade_start: 1</code> <em>Valore predefinito: 1</em> L'altezza Z in cui iniziare la regolazione graduale. È una buona idea avere alcuni layer prima di iniziare il processo di dissolvenza.</li>
+<li><code>fade_end: 10</code> <em>Valore predefinito: 0</em> L'altezza Z in cui deve essere completata la dissolvenza. Se questo valore è inferiore a <code>fade_start</code>, la dissolvenza è disabilitata. Questo valore può essere regolato a seconda di quanto è deformata la superficie di stampa. Una superficie notevolmente deformata dovrebbe dissolvere su una distanza maggiore. Una superficie quasi piatta potrebbe essere in grado di ridurre questo valore per eliminarlo gradualmente più rapidamente. 10mm è un valore ragionevole per cominciare se si utilizza il valore predefinito di 1 per <code>fade_start</code>.</li>
+<li><code>fade_target: 0</code> <em>Valore predefinito: il valore Z medio della mesh</em> Il <code>fade_target</code> può essere pensato come un offset Z aggiuntivo applicato all'intero letto dopo il completamento della dissolvenza. In generale, vorremmo che questo valore fosse 0, tuttavia ci sono circostanze in cui non dovrebbe essere. Ad esempio, supponiamo che la tua posizione di riferimento sul letto sia un valore anomalo, 0,2 mm inferiore all'altezza media rilevata del letto. Se <code>fade_target</code> è 0, la dissolvenza ridurrà la stampa di una media di 0,2 mm sul letto. Impostando <code>fade_target</code> su .2, l'area homed si espanderà di .2 mm, tuttavia il resto del letto avrà una dimensione precisa. Generalmente è una buona idea lasciare <code>fade_target</code> fuori dalla configurazione in modo che venga utilizzata l'altezza media della mesh, tuttavia potrebbe essere desiderabile regolare manualmente il target di dissolvenza se si desidera stampare su una parte specifica del letto.</li>
+</ul>
+<h3 id="lindice-di-riferimento-relativo">L'Indice di Riferimento Relativo<a class="headerlink" href="#lindice-di-riferimento-relativo" title="Permanent link">&para;</a></h3>
+<p>La maggior parte delle sonde è suscettibile alla deriva, cioè: imprecisioni nel sondaggio introdotte da calore o interferenza. Ciò può rendere difficile il calcolo dell'offset z della sonda, in particolare a diverse temperature del letto. In quanto tali, alcune stampanti utilizzano un fine corsa per l'homing dell'asse Z e una sonda per calibrare la mesh. Queste stampanti possono trarre vantaggio dalla configurazione del relativo indice di riferimento.</p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+relative_reference_index: 7
+</code></pre></div>
+
+<ul>
+<li><code>relative_reference_index: 7</code> <em>Valore predefinito: Nessuno (disabilitato)</em> Quando i punti sondati vengono generati, a ciascuno viene assegnato un indice. Puoi cercare questo indice in klippy.log o usando BED_MESH_OUTPUT (vedi la sezione sui GCodes Bed Mesh di seguito per maggiori informazioni). Se si assegna un indice all'opzione <code>relative_reference_index</code>, il valore rilevato a questa coordinata sostituirà lo z_offset del probe. Questo rende effettivamente questa coordinata il riferimento "zero" per la mesh.</li>
+</ul>
+<p>Quando si utilizza l'indice di riferimento relativo, è necessario scegliere l'indice più vicino al punto sul letto in cui è stata eseguita la calibrazione del fine corsa Z. Nota che quando cerchi l'indice usando il log o BED_MESH_OUTPUT, dovresti usare le coordinate elencate sotto l'intestazione "Probe" per trovare l'indice corretto.</p>
+<h3 id="regioni-difettose">Regioni difettose<a class="headerlink" href="#regioni-difettose" title="Permanent link">&para;</a></h3>
+<p>È possibile che alcune aree di un piatto riportino risultati imprecisi durante il sondaggio a causa di un "guasto" in punti specifici. Il miglior esempio di ciò sono i piatti con serie di magneti integrati utilizzati per trattenere le lamiere di acciaio rimovibili. Il campo magnetico su e intorno a questi magneti può causare l'attivazione di una sonda induttiva a una distanza maggiore o minore di quanto sarebbe altrimenti, risultando in una mesh che non rappresenta accuratamente la superficie in queste posizioni. <strong>Nota: questo non deve essere confuso con la distorsione della posizione della sonda, che produce risultati imprecisi sull'intero letto.</strong></p>
+<p>Le opzioni <code>faulty_region</code> possono essere configurate per compensare questo effetto. Se un punto generato si trova all'interno di una regione difettosa, la mesh del letto tenterà di sondare fino a 4 punti ai confini di questa regione. Questi valori sondati verranno mediati e inseriti nella mesh come valore Z alla coordinata generata (X, Y).</p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+faulty_region_1_min: 130.0, 0.0
+faulty_region_1_max: 145.0, 40.0
+faulty_region_2_min: 225.0, 0.0
+faulty_region_2_max: 250.0, 25.0
+faulty_region_3_min: 165.0, 95.0
+faulty_region_3_max: 205.0, 110.0
+faulty_region_4_min: 30.0, 170.0
+faulty_region_4_max: 45.0, 210.0
+</code></pre></div>
+
+<ul>
+<li><code>faulty_region_{1...99}_min</code> <code>faulty_region_{1..99}_max</code> <em>Valore predefinito: Nessuno (disabilitato)</em> Le regioni difettose sono definite in modo simile a quello della mesh stessa, dove minimo e massimo (X , Y) delle coordinate devono essere specificate per ciascuna regione. Una regione difettosa può estendersi al di fuori di una mesh, tuttavia i punti alternativi generati saranno sempre all'interno del confine della mesh. Non possono sovrapporsi due regioni.</li>
+</ul>
+<p>L'immagine seguente illustra come vengono generati i punti di sostituzione quando un punto generato si trova all'interno di una regione difettosa. Le regioni mostrate corrispondono a quelle nella configurazione di esempio sopra. I punti di sostituzione e le relative coordinate sono identificati in verde.</p>
+<p><img alt="bedmesh_interpolated" src="img/bedmesh_faulty_regions.svg" /></p>
+<h2 id="gcodes-della-mesh-del-piatto">GCodes della mesh del piatto<a class="headerlink" href="#gcodes-della-mesh-del-piatto" title="Permanent link">&para;</a></h2>
+<h3 id="calibrazione">Calibrazione<a class="headerlink" href="#calibrazione" title="Permanent link">&para;</a></h3>
+<p><code>BED_MESH_CALIBRATE PROFILE=&lt;nome&gt; METHOD=[manuale | automatico] [&lt;parametro_sonda&gt;=&lt;valore&gt;] [&lt;mesh_parameter&gt;=&lt;valore&gt;]</code> <em>Profilo predefinito: default</em> <em>Metodo predefinito: automatico se viene rilevata una sonda, altrimenti manuale</em></p>
+<p>Avvia la procedura di sondaggio per la calibrazione della mesh del piatto.</p>
+<p>La mesh verrà salvata in un profilo specificato dal parametro <code>PROFILE</code>, o <code>default</code> se non specificato. Se viene selezionato <code>METHOD=manual</code>, si verificherà il rilevamento manuale. Quando si passa dal probing automatico a quello manuale, i punti mesh generati verranno regolati automaticamente.</p>
+<p>È possibile specificare parametri mesh per modificare l'area sondata. Sono disponibili i seguenti parametri:</p>
+<ul>
+<li>Piatti rettangolari (cartesiani):<ul>
+<li><code>MESH_MIN</code></li>
+<li><code>MESH_MAX</code></li>
+<li><code>PROBE_COUNT</code></li>
+</ul>
+</li>
+<li>Piatti rotondi (delta):<ul>
+<li><code>MESH_RADIUS</code></li>
+<li><code>MESH_ORIGIN</code></li>
+<li><code>ROUND_PROBE_COUNT</code></li>
+</ul>
+</li>
+<li>Tutti i piatti:<ul>
+<li><code>RELATIVE_REFERNCE_INDEX</code></li>
+<li><code>ALGORITHM</code></li>
+</ul>
+</li>
+</ul>
+<p>Vedere la documentazione di configurazione sopra per i dettagli su come ogni parametro si applica alla mesh.</p>
+<h3 id="profili">Profili<a class="headerlink" href="#profili" title="Permanent link">&para;</a></h3>
+<p><code>BED_MESH_PROFILE SAVE=&lt;name&gt; LOAD=&lt;name&gt; REMOVE=&lt;name&gt;</code></p>
+<p>Dopo aver eseguito un BED_MESH_CALIBRATE, è possibile salvare lo stato della mesh corrente in un profilo denominato. Ciò consente di caricare una mesh senza risondare il piatto. Dopo che un profilo è stato salvato usando <code>BED_MESH_PROFILE SAVE=&lt;nome&gt;</code> è possibile eseguire il gcode <code>SAVE_CONFIG</code> per scrivere il profilo su printer.cfg.</p>
+<p>I profili possono essere caricati eseguendo <code>BED_MESH_PROFILE LOAD=&lt;name&gt;</code>.</p>
+<p>Va notato che ogni volta che si verifica un BED_MESH_CALIBRATE, lo stato corrente viene automaticamente salvato nel profilo <em>predefinito</em>. Se questo profilo esiste, viene caricato automaticamente all'avvio di Klipper. Se questo comportamento non è desiderabile, il profilo <em>predefinito</em> può essere rimosso come segue:</p>
+<p><code>BED_MESH_PROFILE REMOVE=default</code></p>
+<p>Qualsiasi altro profilo salvato può essere rimosso allo stesso modo, sostituendo <em>default</em> con il nome del profilo che desideri rimuovere.</p>
+<h3 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h3>
+<p><code>BED_MESH_OUTPUT PGP=[0 | 1]</code></p>
+<p>Invia lo stato della mesh corrente al terminale. Si noti che viene emessa la mesh stessa</p>
+<p>Il parametro PGP è un'abbreviazione per "Print Generated Points". Se è impostato <code>PGP=1</code>, i punti sondati generati verranno inviati al terminale:</p>
+<div class="highlight"><pre><span></span><code>// bed_mesh: generated points
+// Index | Tool Adjusted | Probe
+// 0 | (11.0, 1.0) | (35.0, 6.0)
+// 1 | (62.2, 1.0) | (86.2, 6.0)
+// 2 | (113.5, 1.0) | (137.5, 6.0)
+// 3 | (164.8, 1.0) | (188.8, 6.0)
+// 4 | (216.0, 1.0) | (240.0, 6.0)
+// 5 | (216.0, 97.0) | (240.0, 102.0)
+// 6 | (164.8, 97.0) | (188.8, 102.0)
+// 7 | (113.5, 97.0) | (137.5, 102.0)
+// 8 | (62.2, 97.0) | (86.2, 102.0)
+// 9 | (11.0, 97.0) | (35.0, 102.0)
+// 10 | (11.0, 193.0) | (35.0, 198.0)
+// 11 | (62.2, 193.0) | (86.2, 198.0)
+// 12 | (113.5, 193.0) | (137.5, 198.0)
+// 13 | (164.8, 193.0) | (188.8, 198.0)
+// 14 | (216.0, 193.0) | (240.0, 198.0)
+</code></pre></div>
+
+<p>I punti "Tool Adjusted" si riferiscono alla posizione dell'ugello per ciascun punto e i punti "Probe" si riferiscono alla posizione della sonda. Si noti che quando il probing è manuale i punti "sonda" si riferiscono sia alla posizione dell'utensile che dell'ugello.</p>
+<h3 id="cancella-stato-mesh">Cancella stato mesh<a class="headerlink" href="#cancella-stato-mesh" title="Permanent link">&para;</a></h3>
+<p><code>BED_MESH_CLEAR</code></p>
+<p>Questo gcode può essere utilizzato per cancellare lo stato della mesh interna.</p>
+<h3 id="applicare-gli-offset-xy">Applicare gli offset X/Y<a class="headerlink" href="#applicare-gli-offset-xy" title="Permanent link">&para;</a></h3>
+<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code></p>
+<p>Ciò è utile per le stampanti con più estrusori indipendenti, poiché è necessario un offset per produrre la corretta regolazione Z dopo un cambio utensile. Gli offset devono essere specificati rispetto all'estrusore primario. Vale a dire, è necessario specificare un offset X positivo se l'estrusore secondario è montato a destra dell'estrusore primario e un offset Y positivo se l'estrusore secondario è montato "dietro" l'estrusore primario.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Torna su
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Piede">
+      
+        
+        <a href="Manual_Level.html" class="md-footer__link md-footer__link--prev" aria-label="Precedente: Livellamento manuale" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Precedente
+              </span>
+              Livellamento manuale
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--next" aria-label="Prossimo: Fase di fine corsa" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Prossimo
+              </span>
+              Fase di fine corsa
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copia", "clipboard.copied": "Copiato", "search.config.lang": "it", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Cerca", "search.result.placeholder": "Scrivi per iniziare a cercare", "search.result.none": "Nessun documento trovato", "search.result.one": "1 documento trovato", "search.result.other": "# documenti trovati", "search.result.more.one": "1 altro in questa pagina", "search.result.more.other": "# altri in questa pagina", "search.result.term.missing": "Non presente", "select.version.title": "Seleziona la versione"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,4755 @@
+
+<!doctype html>
+<html lang="it" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>G-Codes - Documentazione Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#g-codes" class="md-skip">
+          Vai al contenuto
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Intestazione">
+    <a href="." title="Documentazione Klipper" class="md-header__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentazione Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              G-Codes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Seleziona la lingua">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Muoversi
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Cerca" placeholder="Cerca" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Cerca">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Condividi" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Cancella" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inizializza la ricerca
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigazione" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentazione Klipper" class="md-nav__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentazione Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Panoramica
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caratteristiche
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Domande frequenti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versioni
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Modifiche alla configurazione
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contatti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installazione e configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installazione e configurazione" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installazione e configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Riferimenti di configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Riferimenti di configurazione" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Riferimenti di configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Riferimenti configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotation distance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Controlli della configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Livello del piatto
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livello del piatto" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Livello del piatto
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Livellamento del piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Calibrazione delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Calibrazione sonda
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Livellamento manuale
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Matrice del Piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Fase di fine corsa
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensazione della risonanza
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensazione della risonanza" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensazione della risonanza
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensazione della risonanza
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Misurazione delle risonanze
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Anticipo di pressione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          G-Codes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="G-Codes.html" class="md-nav__link md-nav__link--active">
+        G-Codes
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#comandi-g-code" class="md-nav__link">
+    Comandi G-Code
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comandi-aggiuntivi" class="md-nav__link">
+    Comandi aggiuntivi
+  </a>
+  
+    <nav class="md-nav" aria-label="Comandi aggiuntivi">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    [adxl345]
+  </a>
+  
+    <nav class="md-nav" aria-label="[adxl345]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_measure" class="md-nav__link">
+    ACCELEROMETER_MEASURE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_query" class="md-nav__link">
+    ACCELEROMETER_QUERY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_debug_read" class="md-nav__link">
+    ACCELEROMETER_DEBUG_READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_debug_write" class="md-nav__link">
+    ACCELEROMETER_DEBUG_WRITE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle" class="md-nav__link">
+    [angle]
+  </a>
+  
+    <nav class="md-nav" aria-label="[angle]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#angle_calibrate" class="md-nav__link">
+    ANGLE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_read" class="md-nav__link">
+    ANGLE_DEBUG_READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_write" class="md-nav__link">
+    ANGLE_DEBUG_WRITE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh" class="md-nav__link">
+    [bed_mesh]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bed_mesh]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_calibrate" class="md-nav__link">
+    BED_MESH_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_output" class="md-nav__link">
+    BED_MESH_OUTPUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_map" class="md-nav__link">
+    BED_MESH_MAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_clear" class="md-nav__link">
+    BED_MESH_CLEAR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_profile" class="md-nav__link">
+    BED_MESH_PROFILE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_offset" class="md-nav__link">
+    BED_MESH_OFFSET
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_screws" class="md-nav__link">
+    [bed_screws]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bed_screws]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bed_screws_adjust" class="md-nav__link">
+    BED_SCREWS_ADJUST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_tilt" class="md-nav__link">
+    [bed_tilt]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bed_tilt]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bed_tilt_calibrate" class="md-nav__link">
+    BED_TILT_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bltouch" class="md-nav__link">
+    [bltouch]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bltouch]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bltouch_debug" class="md-nav__link">
+    BLTOUCH_DEBUG
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bltouch_store" class="md-nav__link">
+    BLTOUCH_STORE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configfile" class="md-nav__link">
+    [configfile]
+  </a>
+  
+    <nav class="md-nav" aria-label="[configfile]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#save_config" class="md-nav__link">
+    SAVE_CONFIG
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delayed_gcode" class="md-nav__link">
+    [delayed_gcode]
+  </a>
+  
+    <nav class="md-nav" aria-label="[delayed_gcode]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#update_delayed_gcode" class="md-nav__link">
+    UPDATE_DELAYED_GCODE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delta_calibrate" class="md-nav__link">
+    [delta_calibrate]
+  </a>
+  
+    <nav class="md-nav" aria-label="[delta_calibrate]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#delta_calibrate_1" class="md-nav__link">
+    DELTA_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delta_analyze" class="md-nav__link">
+    DELTA_ANALYZE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#display" class="md-nav__link">
+    [display]
+  </a>
+  
+    <nav class="md-nav" aria-label="[display]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_display_group" class="md-nav__link">
+    SET_DISPLAY_GROUP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#display_status" class="md-nav__link">
+    [display_status]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dual_carriage" class="md-nav__link">
+    [dual_carriage]
+  </a>
+  
+    <nav class="md-nav" aria-label="[dual_carriage]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_dual_carriage" class="md-nav__link">
+    SET_DUAL_CARRIAGE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endstop_phase" class="md-nav__link">
+    [endstop_phase]
+  </a>
+  
+    <nav class="md-nav" aria-label="[endstop_phase]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endstop_phase_calibrate" class="md-nav__link">
+    ENDSTOP_PHASE_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+    <nav class="md-nav" aria-label="[exclude_object]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_1" class="md-nav__link">
+    EXCLUDE_OBJECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_define" class="md-nav__link">
+    EXCLUDE_OBJECT_DEFINE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_start" class="md-nav__link">
+    EXCLUDE_OBJECT_START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_end" class="md-nav__link">
+    EXCLUDE_OBJECT_END
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extruder" class="md-nav__link">
+    [extruder]
+  </a>
+  
+    <nav class="md-nav" aria-label="[extruder]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#activate_extruder" class="md-nav__link">
+    ACTIVATE_EXTRUDER
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_pressure_advance" class="md-nav__link">
+    SET_PRESSURE_ADVANCE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_extruder_rotation_distance" class="md-nav__link">
+    SET_EXTRUDER_ROTATION_DISTANCE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync_extruder_motion" class="md-nav__link">
+    SYNC_EXTRUDER_MOTION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_extruder_step_distance" class="md-nav__link">
+    SET_EXTRUDER_STEP_DISTANCE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync_stepper_to_extruder" class="md-nav__link">
+    SYNC_STEPPER_TO_EXTRUDER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fan_generic" class="md-nav__link">
+    [fan_generic]
+  </a>
+  
+    <nav class="md-nav" aria-label="[fan_generic]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_fan_speed" class="md-nav__link">
+    SET_FAN_SPEED
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filament_switch_sensor" class="md-nav__link">
+    [filament_switch_sensor]
+  </a>
+  
+    <nav class="md-nav" aria-label="[filament_switch_sensor]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_filament_sensor" class="md-nav__link">
+    QUERY_FILAMENT_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_filament_sensor" class="md-nav__link">
+    SET_FILAMENT_SENSOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firmware_retraction" class="md-nav__link">
+    [firmware_retraction]
+  </a>
+  
+    <nav class="md-nav" aria-label="[firmware_retraction]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_retraction" class="md-nav__link">
+    SET_RETRACTION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_retraction" class="md-nav__link">
+    GET_RETRACTION
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#force_move" class="md-nav__link">
+    [force_move]
+  </a>
+  
+    <nav class="md-nav" aria-label="[force_move]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stepper_buzz" class="md-nav__link">
+    STEPPER_BUZZ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#force_move_1" class="md-nav__link">
+    FORCE_MOVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_kinematic_position" class="md-nav__link">
+    SET_KINEMATIC_POSITION
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode" class="md-nav__link">
+    [gcode]
+  </a>
+  
+    <nav class="md-nav" aria-label="[gcode]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restart" class="md-nav__link">
+    RESTART
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firmware_restart" class="md-nav__link">
+    FIRMWARE_RESTART
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    STATUS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help" class="md-nav__link">
+    HELP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode_arcs" class="md-nav__link">
+    [gcode_arcs]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode_macro" class="md-nav__link">
+    [gcode_macro]
+  </a>
+  
+    <nav class="md-nav" aria-label="[gcode_macro]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_gcode_variable" class="md-nav__link">
+    SET_GCODE_VARIABLE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode_move" class="md-nav__link">
+    [gcode_move]
+  </a>
+  
+    <nav class="md-nav" aria-label="[gcode_move]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_position" class="md-nav__link">
+    GET_POSITION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_gcode_offset" class="md-nav__link">
+    SET_GCODE_OFFSET
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save_gcode_state" class="md-nav__link">
+    SAVE_GCODE_STATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore_gcode_state" class="md-nav__link">
+    RESTORE_GCODE_STATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hall_filament_width_sensor" class="md-nav__link">
+    [hall_filament_width_sensor]
+  </a>
+  
+    <nav class="md-nav" aria-label="[hall_filament_width_sensor]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_filament_width" class="md-nav__link">
+    QUERY_FILAMENT_WIDTH
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_filament_width_sensor" class="md-nav__link">
+    RESET_FILAMENT_WIDTH_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable_filament_width_sensor" class="md-nav__link">
+    DISABLE_FILAMENT_WIDTH_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable_filament_width_sensor" class="md-nav__link">
+    ENABLE_FILAMENT_WIDTH_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_raw_filament_width" class="md-nav__link">
+    QUERY_RAW_FILAMENT_WIDTH
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable_filament_width_log" class="md-nav__link">
+    ENABLE_FILAMENT_WIDTH_LOG
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable_filament_width_log" class="md-nav__link">
+    DISABLE_FILAMENT_WIDTH_LOG
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#heaters" class="md-nav__link">
+    [heaters]
+  </a>
+  
+    <nav class="md-nav" aria-label="[heaters]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#turn_off_heaters" class="md-nav__link">
+    TURN_OFF_HEATERS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_wait" class="md-nav__link">
+    TEMPERATURE_WAIT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_heater_temperature" class="md-nav__link">
+    SET_HEATER_TEMPERATURE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idle_timeout" class="md-nav__link">
+    [idle_timeout]
+  </a>
+  
+    <nav class="md-nav" aria-label="[idle_timeout]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_idle_timeout" class="md-nav__link">
+    SET_IDLE_TIMEOUT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper" class="md-nav__link">
+    [input_shaper]
+  </a>
+  
+    <nav class="md-nav" aria-label="[input_shaper]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_input_shaper" class="md-nav__link">
+    SET_INPUT_SHAPER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    [manual_probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[manual_probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual_probe_1" class="md-nav__link">
+    MANUAL_PROBE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_endstop_calibrate" class="md-nav__link">
+    Z_ENDSTOP_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_offset_apply_endstop" class="md-nav__link">
+    Z_OFFSET_APPLY_ENDSTOP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stepper-manuali" class="md-nav__link">
+    [Stepper manuali]
+  </a>
+  
+    <nav class="md-nav" aria-label="[Stepper manuali]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual_stepper" class="md-nav__link">
+    MANUAL_STEPPER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#led" class="md-nav__link">
+    [led]
+  </a>
+  
+    <nav class="md-nav" aria-label="[led]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_led" class="md-nav__link">
+    SET_LED
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_led_template" class="md-nav__link">
+    SET_LED_TEMPLATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_pin" class="md-nav__link">
+    [output_pin]
+  </a>
+  
+    <nav class="md-nav" aria-label="[output_pin]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_pin" class="md-nav__link">
+    SET_PIN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette2" class="md-nav__link">
+    [palette2]
+  </a>
+  
+    <nav class="md-nav" aria-label="[palette2]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#palette_connect" class="md-nav__link">
+    PALETTE_CONNECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_disconnect" class="md-nav__link">
+    PALETTE_DISCONNECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_clear" class="md-nav__link">
+    PALETTE_CLEAR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_cut" class="md-nav__link">
+    PALETTE_CUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_smart_load" class="md-nav__link">
+    PALETTE_SMART_LOAD
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pid_calibrate" class="md-nav__link">
+    [pid_calibrate]
+  </a>
+  
+    <nav class="md-nav" aria-label="[pid_calibrate]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pid_calibrate_1" class="md-nav__link">
+    PID_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resume" class="md-nav__link">
+    [pause_resume]
+  </a>
+  
+    <nav class="md-nav" aria-label="[pause_resume]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pause" class="md-nav__link">
+    PAUSE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resume" class="md-nav__link">
+    RESUME
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clear_pause" class="md-nav__link">
+    CLEAR_PAUSE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancel_print" class="md-nav__link">
+    CANCEL_PRINT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probe" class="md-nav__link">
+    [probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sonda" class="md-nav__link">
+    sonda
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_probe" class="md-nav__link">
+    QUERY_PROBE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probe_accuracy" class="md-nav__link">
+    PROBE_ACCURACY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probe_calibrate" class="md-nav__link">
+    PROBE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_offset_apply_probe" class="md-nav__link">
+    Z_OFFSET_APPLY_PROBE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_adc" class="md-nav__link">
+    [query_adc]
+  </a>
+  
+    <nav class="md-nav" aria-label="[query_adc]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_adc_1" class="md-nav__link">
+    QUERY_ADC
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_endstops" class="md-nav__link">
+    [query_endstops]
+  </a>
+  
+    <nav class="md-nav" aria-label="[query_endstops]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_endstops_1" class="md-nav__link">
+    QUERY_ENDSTOPS
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resonance_tester" class="md-nav__link">
+    [resonance_tester]
+  </a>
+  
+    <nav class="md-nav" aria-label="[resonance_tester]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#measure_axes_noise" class="md-nav__link">
+    MEASURE_AXES_NOISE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test_resonances" class="md-nav__link">
+    TEST_RESONANCES
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shaper_calibrate" class="md-nav__link">
+    SHAPER_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#respond" class="md-nav__link">
+    [respond]
+  </a>
+  
+    <nav class="md-nav" aria-label="[respond]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#respond_1" class="md-nav__link">
+    RESPOND
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save_variables" class="md-nav__link">
+    [save_variables]
+  </a>
+  
+    <nav class="md-nav" aria-label="[save_variables]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#save_variable" class="md-nav__link">
+    SAVE_VARIABLE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#screws_tilt_adjust" class="md-nav__link">
+    [screws_tilt_adjust]
+  </a>
+  
+    <nav class="md-nav" aria-label="[screws_tilt_adjust]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#screws_tilt_calculate" class="md-nav__link">
+    SCREWS_TILT_CALCULATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop" class="md-nav__link">
+    [sdcard_loop]
+  </a>
+  
+    <nav class="md-nav" aria-label="[sdcard_loop]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop_begin" class="md-nav__link">
+    SDCARD_LOOP_BEGIN
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop_end" class="md-nav__link">
+    SDCARD_LOOP_END
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop_desist" class="md-nav__link">
+    SDCARD_LOOP_DESIST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#servo" class="md-nav__link">
+    [servo]
+  </a>
+  
+    <nav class="md-nav" aria-label="[servo]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_servo" class="md-nav__link">
+    SET_SERVO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew_correction" class="md-nav__link">
+    [skew_correction]
+  </a>
+  
+    <nav class="md-nav" aria-label="[skew_correction]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_skew" class="md-nav__link">
+    SET_SKEW
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_current_skew" class="md-nav__link">
+    GET_CURRENT_SKEW
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calc_measured_skew" class="md-nav__link">
+    CALC_MEASURED_SKEW
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew_profile" class="md-nav__link">
+    SKEW_PROFILE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smart_effector" class="md-nav__link">
+    [smart_effector]
+  </a>
+  
+    <nav class="md-nav" aria-label="[smart_effector]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_smart_effector" class="md-nav__link">
+    SET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_smart_effector" class="md-nav__link">
+    RESET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    [stepper_enable]
+  </a>
+  
+    <nav class="md-nav" aria-label="[stepper_enable]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_stepper_enable" class="md-nav__link">
+    SET_STEPPER_ENABLE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_fan" class="md-nav__link">
+    [temperature_fan]
+  </a>
+  
+    <nav class="md-nav" aria-label="[temperature_fan]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_temperature_fan_target" class="md-nav__link">
+    SET_TEMPERATURE_FAN_TARGET
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmcxxxx" class="md-nav__link">
+    [tmcXXXX]
+  </a>
+  
+    <nav class="md-nav" aria-label="[tmcXXXX]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dump_tmc" class="md-nav__link">
+    DUMP_TMC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#init_tmc" class="md-nav__link">
+    INIT_TMC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_tmc_current" class="md-nav__link">
+    SET_TMC_CURRENT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_tmc_field" class="md-nav__link">
+    SET_TMC_FIELD
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toolhead" class="md-nav__link">
+    [toolhead]
+  </a>
+  
+    <nav class="md-nav" aria-label="[toolhead]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_velocity_limit" class="md-nav__link">
+    SET_VELOCITY_LIMIT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning_tower" class="md-nav__link">
+    [tuning_tower]
+  </a>
+  
+    <nav class="md-nav" aria-label="[tuning_tower]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tuning_tower_1" class="md-nav__link">
+    TUNING_TOWER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#virtual_sdcard" class="md-nav__link">
+    [virtual_sdcard]
+  </a>
+  
+    <nav class="md-nav" aria-label="[virtual_sdcard]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_print_file" class="md-nav__link">
+    SDCARD_PRINT_FILE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_reset_file" class="md-nav__link">
+    SDCARD_RESET_FILE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_tilt" class="md-nav__link">
+    [z_tilt]
+  </a>
+  
+    <nav class="md-nav" aria-label="[z_tilt]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#z_tilt_adjust" class="md-nav__link">
+    Z_TILT_ADJUST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Template dei comandi
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Template dei comandi" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Template dei comandi
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Commands templates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Status reference
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Driver TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing e Probing con microcontrollore multiplo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correzione dell'inclinazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Escludi oggetti
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilizzo dei strumenti PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentazione per sviluppatori
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentazione per sviluppatori" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentazione per sviluppatori
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Panoramica del codice
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinematica
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocollo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Server API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Comandi MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocollo CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmark
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuire a Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper packaging
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documenti specifici del dispositivo
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documenti specifici del dispositivo" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documenti specifici del dispositivo
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Esempi di configurazioni
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Aggiornamenti scheda SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrollore RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore TSL1401CL di larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore di Hall per larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#comandi-g-code" class="md-nav__link">
+    Comandi G-Code
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comandi-aggiuntivi" class="md-nav__link">
+    Comandi aggiuntivi
+  </a>
+  
+    <nav class="md-nav" aria-label="Comandi aggiuntivi">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    [adxl345]
+  </a>
+  
+    <nav class="md-nav" aria-label="[adxl345]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_measure" class="md-nav__link">
+    ACCELEROMETER_MEASURE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_query" class="md-nav__link">
+    ACCELEROMETER_QUERY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_debug_read" class="md-nav__link">
+    ACCELEROMETER_DEBUG_READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accelerometer_debug_write" class="md-nav__link">
+    ACCELEROMETER_DEBUG_WRITE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle" class="md-nav__link">
+    [angle]
+  </a>
+  
+    <nav class="md-nav" aria-label="[angle]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#angle_calibrate" class="md-nav__link">
+    ANGLE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_read" class="md-nav__link">
+    ANGLE_DEBUG_READ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#angle_debug_write" class="md-nav__link">
+    ANGLE_DEBUG_WRITE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh" class="md-nav__link">
+    [bed_mesh]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bed_mesh]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_calibrate" class="md-nav__link">
+    BED_MESH_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_output" class="md-nav__link">
+    BED_MESH_OUTPUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_map" class="md-nav__link">
+    BED_MESH_MAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_clear" class="md-nav__link">
+    BED_MESH_CLEAR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_profile" class="md-nav__link">
+    BED_MESH_PROFILE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_mesh_offset" class="md-nav__link">
+    BED_MESH_OFFSET
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_screws" class="md-nav__link">
+    [bed_screws]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bed_screws]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bed_screws_adjust" class="md-nav__link">
+    BED_SCREWS_ADJUST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed_tilt" class="md-nav__link">
+    [bed_tilt]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bed_tilt]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bed_tilt_calibrate" class="md-nav__link">
+    BED_TILT_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bltouch" class="md-nav__link">
+    [bltouch]
+  </a>
+  
+    <nav class="md-nav" aria-label="[bltouch]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bltouch_debug" class="md-nav__link">
+    BLTOUCH_DEBUG
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bltouch_store" class="md-nav__link">
+    BLTOUCH_STORE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configfile" class="md-nav__link">
+    [configfile]
+  </a>
+  
+    <nav class="md-nav" aria-label="[configfile]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#save_config" class="md-nav__link">
+    SAVE_CONFIG
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delayed_gcode" class="md-nav__link">
+    [delayed_gcode]
+  </a>
+  
+    <nav class="md-nav" aria-label="[delayed_gcode]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#update_delayed_gcode" class="md-nav__link">
+    UPDATE_DELAYED_GCODE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delta_calibrate" class="md-nav__link">
+    [delta_calibrate]
+  </a>
+  
+    <nav class="md-nav" aria-label="[delta_calibrate]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#delta_calibrate_1" class="md-nav__link">
+    DELTA_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delta_analyze" class="md-nav__link">
+    DELTA_ANALYZE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#display" class="md-nav__link">
+    [display]
+  </a>
+  
+    <nav class="md-nav" aria-label="[display]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_display_group" class="md-nav__link">
+    SET_DISPLAY_GROUP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#display_status" class="md-nav__link">
+    [display_status]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dual_carriage" class="md-nav__link">
+    [dual_carriage]
+  </a>
+  
+    <nav class="md-nav" aria-label="[dual_carriage]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_dual_carriage" class="md-nav__link">
+    SET_DUAL_CARRIAGE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endstop_phase" class="md-nav__link">
+    [endstop_phase]
+  </a>
+  
+    <nav class="md-nav" aria-label="[endstop_phase]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endstop_phase_calibrate" class="md-nav__link">
+    ENDSTOP_PHASE_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object" class="md-nav__link">
+    [exclude_object]
+  </a>
+  
+    <nav class="md-nav" aria-label="[exclude_object]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_1" class="md-nav__link">
+    EXCLUDE_OBJECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_define" class="md-nav__link">
+    EXCLUDE_OBJECT_DEFINE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_start" class="md-nav__link">
+    EXCLUDE_OBJECT_START
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exclude_object_end" class="md-nav__link">
+    EXCLUDE_OBJECT_END
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extruder" class="md-nav__link">
+    [extruder]
+  </a>
+  
+    <nav class="md-nav" aria-label="[extruder]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#activate_extruder" class="md-nav__link">
+    ACTIVATE_EXTRUDER
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_pressure_advance" class="md-nav__link">
+    SET_PRESSURE_ADVANCE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_extruder_rotation_distance" class="md-nav__link">
+    SET_EXTRUDER_ROTATION_DISTANCE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync_extruder_motion" class="md-nav__link">
+    SYNC_EXTRUDER_MOTION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_extruder_step_distance" class="md-nav__link">
+    SET_EXTRUDER_STEP_DISTANCE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync_stepper_to_extruder" class="md-nav__link">
+    SYNC_STEPPER_TO_EXTRUDER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fan_generic" class="md-nav__link">
+    [fan_generic]
+  </a>
+  
+    <nav class="md-nav" aria-label="[fan_generic]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_fan_speed" class="md-nav__link">
+    SET_FAN_SPEED
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filament_switch_sensor" class="md-nav__link">
+    [filament_switch_sensor]
+  </a>
+  
+    <nav class="md-nav" aria-label="[filament_switch_sensor]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_filament_sensor" class="md-nav__link">
+    QUERY_FILAMENT_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_filament_sensor" class="md-nav__link">
+    SET_FILAMENT_SENSOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firmware_retraction" class="md-nav__link">
+    [firmware_retraction]
+  </a>
+  
+    <nav class="md-nav" aria-label="[firmware_retraction]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_retraction" class="md-nav__link">
+    SET_RETRACTION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_retraction" class="md-nav__link">
+    GET_RETRACTION
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#force_move" class="md-nav__link">
+    [force_move]
+  </a>
+  
+    <nav class="md-nav" aria-label="[force_move]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stepper_buzz" class="md-nav__link">
+    STEPPER_BUZZ
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#force_move_1" class="md-nav__link">
+    FORCE_MOVE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_kinematic_position" class="md-nav__link">
+    SET_KINEMATIC_POSITION
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode" class="md-nav__link">
+    [gcode]
+  </a>
+  
+    <nav class="md-nav" aria-label="[gcode]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restart" class="md-nav__link">
+    RESTART
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firmware_restart" class="md-nav__link">
+    FIRMWARE_RESTART
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    STATUS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help" class="md-nav__link">
+    HELP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode_arcs" class="md-nav__link">
+    [gcode_arcs]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode_macro" class="md-nav__link">
+    [gcode_macro]
+  </a>
+  
+    <nav class="md-nav" aria-label="[gcode_macro]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_gcode_variable" class="md-nav__link">
+    SET_GCODE_VARIABLE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcode_move" class="md-nav__link">
+    [gcode_move]
+  </a>
+  
+    <nav class="md-nav" aria-label="[gcode_move]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_position" class="md-nav__link">
+    GET_POSITION
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_gcode_offset" class="md-nav__link">
+    SET_GCODE_OFFSET
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save_gcode_state" class="md-nav__link">
+    SAVE_GCODE_STATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore_gcode_state" class="md-nav__link">
+    RESTORE_GCODE_STATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hall_filament_width_sensor" class="md-nav__link">
+    [hall_filament_width_sensor]
+  </a>
+  
+    <nav class="md-nav" aria-label="[hall_filament_width_sensor]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_filament_width" class="md-nav__link">
+    QUERY_FILAMENT_WIDTH
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_filament_width_sensor" class="md-nav__link">
+    RESET_FILAMENT_WIDTH_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable_filament_width_sensor" class="md-nav__link">
+    DISABLE_FILAMENT_WIDTH_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable_filament_width_sensor" class="md-nav__link">
+    ENABLE_FILAMENT_WIDTH_SENSOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_raw_filament_width" class="md-nav__link">
+    QUERY_RAW_FILAMENT_WIDTH
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable_filament_width_log" class="md-nav__link">
+    ENABLE_FILAMENT_WIDTH_LOG
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disable_filament_width_log" class="md-nav__link">
+    DISABLE_FILAMENT_WIDTH_LOG
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#heaters" class="md-nav__link">
+    [heaters]
+  </a>
+  
+    <nav class="md-nav" aria-label="[heaters]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#turn_off_heaters" class="md-nav__link">
+    TURN_OFF_HEATERS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_wait" class="md-nav__link">
+    TEMPERATURE_WAIT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_heater_temperature" class="md-nav__link">
+    SET_HEATER_TEMPERATURE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idle_timeout" class="md-nav__link">
+    [idle_timeout]
+  </a>
+  
+    <nav class="md-nav" aria-label="[idle_timeout]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_idle_timeout" class="md-nav__link">
+    SET_IDLE_TIMEOUT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper" class="md-nav__link">
+    [input_shaper]
+  </a>
+  
+    <nav class="md-nav" aria-label="[input_shaper]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_input_shaper" class="md-nav__link">
+    SET_INPUT_SHAPER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual_probe" class="md-nav__link">
+    [manual_probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[manual_probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual_probe_1" class="md-nav__link">
+    MANUAL_PROBE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_endstop_calibrate" class="md-nav__link">
+    Z_ENDSTOP_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_offset_apply_endstop" class="md-nav__link">
+    Z_OFFSET_APPLY_ENDSTOP
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stepper-manuali" class="md-nav__link">
+    [Stepper manuali]
+  </a>
+  
+    <nav class="md-nav" aria-label="[Stepper manuali]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#manual_stepper" class="md-nav__link">
+    MANUAL_STEPPER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#led" class="md-nav__link">
+    [led]
+  </a>
+  
+    <nav class="md-nav" aria-label="[led]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_led" class="md-nav__link">
+    SET_LED
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_led_template" class="md-nav__link">
+    SET_LED_TEMPLATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output_pin" class="md-nav__link">
+    [output_pin]
+  </a>
+  
+    <nav class="md-nav" aria-label="[output_pin]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_pin" class="md-nav__link">
+    SET_PIN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette2" class="md-nav__link">
+    [palette2]
+  </a>
+  
+    <nav class="md-nav" aria-label="[palette2]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#palette_connect" class="md-nav__link">
+    PALETTE_CONNECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_disconnect" class="md-nav__link">
+    PALETTE_DISCONNECT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_clear" class="md-nav__link">
+    PALETTE_CLEAR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_cut" class="md-nav__link">
+    PALETTE_CUT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#palette_smart_load" class="md-nav__link">
+    PALETTE_SMART_LOAD
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pid_calibrate" class="md-nav__link">
+    [pid_calibrate]
+  </a>
+  
+    <nav class="md-nav" aria-label="[pid_calibrate]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pid_calibrate_1" class="md-nav__link">
+    PID_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pause_resume" class="md-nav__link">
+    [pause_resume]
+  </a>
+  
+    <nav class="md-nav" aria-label="[pause_resume]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pause" class="md-nav__link">
+    PAUSE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resume" class="md-nav__link">
+    RESUME
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clear_pause" class="md-nav__link">
+    CLEAR_PAUSE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancel_print" class="md-nav__link">
+    CANCEL_PRINT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probe" class="md-nav__link">
+    [probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sonda" class="md-nav__link">
+    sonda
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_probe" class="md-nav__link">
+    QUERY_PROBE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probe_accuracy" class="md-nav__link">
+    PROBE_ACCURACY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probe_calibrate" class="md-nav__link">
+    PROBE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_offset_apply_probe" class="md-nav__link">
+    Z_OFFSET_APPLY_PROBE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_adc" class="md-nav__link">
+    [query_adc]
+  </a>
+  
+    <nav class="md-nav" aria-label="[query_adc]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_adc_1" class="md-nav__link">
+    QUERY_ADC
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_endstops" class="md-nav__link">
+    [query_endstops]
+  </a>
+  
+    <nav class="md-nav" aria-label="[query_endstops]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_endstops_1" class="md-nav__link">
+    QUERY_ENDSTOPS
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resonance_tester" class="md-nav__link">
+    [resonance_tester]
+  </a>
+  
+    <nav class="md-nav" aria-label="[resonance_tester]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#measure_axes_noise" class="md-nav__link">
+    MEASURE_AXES_NOISE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test_resonances" class="md-nav__link">
+    TEST_RESONANCES
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shaper_calibrate" class="md-nav__link">
+    SHAPER_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#respond" class="md-nav__link">
+    [respond]
+  </a>
+  
+    <nav class="md-nav" aria-label="[respond]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#respond_1" class="md-nav__link">
+    RESPOND
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save_variables" class="md-nav__link">
+    [save_variables]
+  </a>
+  
+    <nav class="md-nav" aria-label="[save_variables]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#save_variable" class="md-nav__link">
+    SAVE_VARIABLE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#screws_tilt_adjust" class="md-nav__link">
+    [screws_tilt_adjust]
+  </a>
+  
+    <nav class="md-nav" aria-label="[screws_tilt_adjust]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#screws_tilt_calculate" class="md-nav__link">
+    SCREWS_TILT_CALCULATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop" class="md-nav__link">
+    [sdcard_loop]
+  </a>
+  
+    <nav class="md-nav" aria-label="[sdcard_loop]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop_begin" class="md-nav__link">
+    SDCARD_LOOP_BEGIN
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop_end" class="md-nav__link">
+    SDCARD_LOOP_END
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_loop_desist" class="md-nav__link">
+    SDCARD_LOOP_DESIST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#servo" class="md-nav__link">
+    [servo]
+  </a>
+  
+    <nav class="md-nav" aria-label="[servo]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_servo" class="md-nav__link">
+    SET_SERVO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew_correction" class="md-nav__link">
+    [skew_correction]
+  </a>
+  
+    <nav class="md-nav" aria-label="[skew_correction]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_skew" class="md-nav__link">
+    SET_SKEW
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_current_skew" class="md-nav__link">
+    GET_CURRENT_SKEW
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calc_measured_skew" class="md-nav__link">
+    CALC_MEASURED_SKEW
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skew_profile" class="md-nav__link">
+    SKEW_PROFILE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smart_effector" class="md-nav__link">
+    [smart_effector]
+  </a>
+  
+    <nav class="md-nav" aria-label="[smart_effector]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_smart_effector" class="md-nav__link">
+    SET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset_smart_effector" class="md-nav__link">
+    RESET_SMART_EFFECTOR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    [stepper_enable]
+  </a>
+  
+    <nav class="md-nav" aria-label="[stepper_enable]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_stepper_enable" class="md-nav__link">
+    SET_STEPPER_ENABLE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_fan" class="md-nav__link">
+    [temperature_fan]
+  </a>
+  
+    <nav class="md-nav" aria-label="[temperature_fan]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_temperature_fan_target" class="md-nav__link">
+    SET_TEMPERATURE_FAN_TARGET
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmcxxxx" class="md-nav__link">
+    [tmcXXXX]
+  </a>
+  
+    <nav class="md-nav" aria-label="[tmcXXXX]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dump_tmc" class="md-nav__link">
+    DUMP_TMC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#init_tmc" class="md-nav__link">
+    INIT_TMC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_tmc_current" class="md-nav__link">
+    SET_TMC_CURRENT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_tmc_field" class="md-nav__link">
+    SET_TMC_FIELD
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toolhead" class="md-nav__link">
+    [toolhead]
+  </a>
+  
+    <nav class="md-nav" aria-label="[toolhead]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_velocity_limit" class="md-nav__link">
+    SET_VELOCITY_LIMIT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning_tower" class="md-nav__link">
+    [tuning_tower]
+  </a>
+  
+    <nav class="md-nav" aria-label="[tuning_tower]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tuning_tower_1" class="md-nav__link">
+    TUNING_TOWER
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#virtual_sdcard" class="md-nav__link">
+    [virtual_sdcard]
+  </a>
+  
+    <nav class="md-nav" aria-label="[virtual_sdcard]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_print_file" class="md-nav__link">
+    SDCARD_PRINT_FILE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sdcard_reset_file" class="md-nav__link">
+    SDCARD_RESET_FILE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_tilt" class="md-nav__link">
+    [z_tilt]
+  </a>
+  
+    <nav class="md-nav" aria-label="[z_tilt]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#z_tilt_adjust" class="md-nav__link">
+    Z_TILT_ADJUST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/G-Codes.md" title="Modifica" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="g-codes">G-Codes<a class="headerlink" href="#g-codes" title="Permanent link">&para;</a></h1>
+<p>Questo documento descrive i comandi che Klipper supporta. Questi sono i comandi che si possono inserire nella scheda del terminale OctoPrint.</p>
+<h2 id="comandi-g-code">Comandi G-Code<a class="headerlink" href="#comandi-g-code" title="Permanent link">&para;</a></h2>
+<p>Klipper supporta i seguenti comandi G-Code standard:</p>
+<ul>
+<li>Movimento (G0 or G1): <code>G1 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;]</code></li>
+<li>Sosta: <code>G4 P&lt;millisecondi&gt;</code></li>
+<li>Sposta all'origine: <code>G28 [X] [Y] [Z]</code></li>
+<li>Spegnere i motori: <code>M18</code> o <code>M84</code></li>
+<li>Attendi che li movimenti correnti finiscano: <code>M400</code></li>
+<li>Utilizzare distanze assolute/relative per l'estrusione: <code>M82</code>, <code>M83</code></li>
+<li>Usa coordinate assolute/relative: <code>G90</code>, <code>G91</code></li>
+<li>Impostare la posizione: <code>G92 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;]</code></li>
+<li>Impostare la percentuale di override del fattore di velocità: <code>M220 S&lt;percentuale&gt;</code></li>
+<li>Imposta la percentuale di sostituzione del fattore di estrusione: <code>M221 S&lt;percentuale&gt;</code></li>
+<li>Impostare l'accelerazione: <code>M204 S&lt;valore&gt;</code> OPPURE <code>M204 P&lt;valore&gt; T&lt;valore&gt;</code><ul>
+<li>Nota: se S non viene specificato e vengono specificati sia P che T, l'accelerazione viene impostata al minimo di P e T. Se viene specificato solo uno di P o T, il comando non ha effetto.</li>
+</ul>
+</li>
+<li>Ottieni la temperatura dell'estrusore: <code>M105</code></li>
+<li>Imposta la temperatura dell'estrusore: <code>M104 [T&lt;index&gt;] [S&lt;temperatura&gt;]</code></li>
+<li>Imposta la temperatura dell'estrusore e attende: <code>M109 [T&lt;index&gt;] S&lt;temperatura&gt;</code><ul>
+<li>Nota: M109 attende sempre che la temperatura si assesti al valore richiesto</li>
+</ul>
+</li>
+<li>Imposta la temperatura del piatto: <code>M140 [S&lt;temperatura&gt;]</code></li>
+<li>Imposta la temperatura del piatto e attende: <code>M190 S&lt;temperatura&gt;</code><ul>
+<li>Nota: M190 attende sempre che la temperatura si assesti al valore richiesto</li>
+</ul>
+</li>
+<li>Imposta la velocità della ventola: <code>M106 S&lt;valore&gt;</code></li>
+<li>Spegnere la ventola: <code>M107</code></li>
+<li>Arresto di emergenza: <code>M112</code></li>
+<li>Ottieni la posizione attuale: <code>M114</code></li>
+<li>Ottieni la versione del firmware: <code>M115</code></li>
+</ul>
+<p>Per ulteriori dettagli sui comandi precedenti, vedere la <a href="http://reprap.org/wiki/G-code">documentazione RepRap G-Code</a>.</p>
+<p>L'obiettivo di Klipper è supportare i comandi G-Code prodotti da comuni software di terze parti (ad es. OctoPrint, Printrun, Slic3r, Cura, ecc.) nelle loro configurazioni standard. Non è un obiettivo supportare ogni possibile comando G-Code. Invece, Klipper preferisce comandi leggibili dall'uomo <a href="#comandi-aggiuntivi">"comandi G-Code estesi"</a>. Allo stesso modo, l'output del terminale G-Code è inteso solo per essere leggibile dall'uomo - vedere il <a href="API_Server.html">documento del server API</a> se si controlla Klipper da un software esterno.</p>
+<p>Se si necessita di un comando G-Code meno comune, potrebbe essere possibile implementarlo con una [sezione di configurazione gcode_macro] personalizzata (Config_Reference.md#gcode_macro). Ad esempio, si potrebbe usare questo per implementare: <code>G12</code>, <code>G29</code>, <code>G30</code>, <code>G31</code>, <code>M42</code>, <code>M80</code>, <code>M81</code>, <code>T1</code>, ecc.</p>
+<h2 id="comandi-aggiuntivi">Comandi aggiuntivi<a class="headerlink" href="#comandi-aggiuntivi" title="Permanent link">&para;</a></h2>
+<p>Klipper utilizza comandi G-Code "estesi" per la configurazione e lo stato generale. Questi comandi estesi seguono tutti un formato simile: iniziano con un nome di comando e possono essere seguiti da uno o più parametri. Ad esempio: <code>SET_SERVO SERVO=mioservo ANGLE=5.3</code>. In questo documento, i comandi ed i parametri sono mostrati in maiuscolo, tuttavia non fanno distinzione tra maiuscole e minuscole. (Quindi, "SET_SERVO" e "set_servo" eseguono entrambi lo stesso comando.)</p>
+<p>Questa sezione è organizzata in base al nome del modulo Klipper, che generalmente segue i nomi delle sezioni specificati nel <a href="Config_Reference.html">file di configurazione della stampante</a>. Si noti che alcuni moduli vengono caricati automaticamente.</p>
+<h3 id="adxl345">[adxl345]<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando una <a href="Config_Reference.html#adxl345">sezione di configurazione adxl345</a> è abilitata.</p>
+<h4 id="accelerometer_measure">ACCELEROMETER_MEASURE<a class="headerlink" href="#accelerometer_measure" title="Permanent link">&para;</a></h4>
+<p><code>ACCELEROMETER_MEASURE [CHIP=&lt;config_name&gt;] [NAME=&lt;value&gt;]</code>: Avvia le misurazioni dell'accelerometro al numero richiesto di campioni al secondo. Se CHIP non è specificato, il valore predefinito è "adxl345". Il comando funziona in modalità start-stop: alla prima esecuzione avvia le misure, alla successiva esecuzione le interrompe. I risultati delle misurazioni vengono scritti in un file denominato <code>/tmp/adxl345-&lt;chip&gt;-&lt;name&gt;.csv</code> dove <code>&lt;chip&gt;</code> è il nome del chip dell'accelerometro (<code>my_chip_name</code> da <code>[adxl345 my_chip_name]</code> ) e <code>&lt;name&gt;</code> è il parametro NAME facoltativo. Se NAME non è specificato, il valore predefinito è l'ora corrente nel formato "AAAAMMGG_HHMMSS". Se l'accelerometro non ha un nome nella sua sezione di configurazione (semplicemente <code>[adxl345]</code>), allora la parte <code>&lt;chip&gt;</code> del nome non viene generata.</p>
+<h4 id="accelerometer_query">ACCELEROMETER_QUERY<a class="headerlink" href="#accelerometer_query" title="Permanent link">&para;</a></h4>
+<p><code>ACCELEROMETER_QUERY [CHIP=&lt;config_name&gt;] [RATE=&lt;value&gt;]</code>: interroga l'accelerometro per il valore corrente. Se CHIP non è specificato, il valore predefinito è "adxl345". Se RATE non è specificato, viene utilizzato il valore predefinito. Questo comando è utile per testare la connessione all'accelerometro ADXL345: uno dei valori restituiti dovrebbe essere un'accelerazione di caduta libera (+/- un po' di rumore del chip).</p>
+<h4 id="accelerometer_debug_read">ACCELEROMETER_DEBUG_READ<a class="headerlink" href="#accelerometer_debug_read" title="Permanent link">&para;</a></h4>
+<p><code>ACCELEROMETER_DEBUG_READ [CHIP=&lt;config_name&gt;] REG=&lt;register&gt;</code>: interroga l'ADXL345 register "register" (es. 44 o 0x2C). Può essere utile per scopi di debug.</p>
+<h4 id="accelerometer_debug_write">ACCELEROMETER_DEBUG_WRITE<a class="headerlink" href="#accelerometer_debug_write" title="Permanent link">&para;</a></h4>
+<p><code>ACCELEROMETER_DEBUG_WRITE [CHIP=&lt;nome_config&gt;] REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Scrive il valore "value" grezzo in un registro "register". Sia "value" che "registrer" possono essere un numero intero decimale o esadecimale. Usare con cura e fare riferimento alla scheda tecnica ADXL345 per riferimento.</p>
+<h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando una <a href="Config_Reference.html#angle">sezione di configurazione dell'angolo</a> è abilitata.</p>
+<h4 id="angle_calibrate">ANGLE_CALIBRATE<a class="headerlink" href="#angle_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_CALIBRATE CHIP=&lt;chip_name&gt;</code>: Esegue la calibrazione dell'angolo sul sensore dato (deve esserci una sezione di configurazione <code>[angle chip_name]</code> che ha specificato un parametro <code>stepper</code>). IMPORTANTE - questo strumento comanderà al motore passo-passo di muoversi senza controllare i normali limiti della cinematica. Idealmente, il motore dovrebbe essere scollegato da qualsiasi carrello della stampante prima di eseguire la calibrazione. Se non è possibile scollegare lo stepper dalla stampante, assicurarsi che il carrello sia vicino al centro della sua guida prima di iniziare la calibrazione. (Il motore passo-passo può spostarsi avanti o indietro di due rotazioni complete durante questo test.) Dopo aver completato questo test, utilizzare il comando <code>SAVE_CONFIG</code> per salvare i dati di calibrazione nel file di configurazione. Per utilizzare questo strumento è necessario installare il pacchetto Python "numpy" (consultare il <a href="Measuring_Resonances.html#software-installation">measuring resonance document</a> per ulteriori informazioni).</p>
+<h4 id="angle_debug_read">ANGLE_DEBUG_READ<a class="headerlink" href="#angle_debug_read" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_DEBUG_READ CHIP=&lt;config_name&gt; REG=&lt;register&gt;</code>: Interroga il registro del sensore "register" (ad es. 44 o 0x2C). Può essere utile per scopi di debug. Questo è disponibile solo per i chip tle5012b.</p>
+<h4 id="angle_debug_write">ANGLE_DEBUG_WRITE<a class="headerlink" href="#angle_debug_write" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_DEBUG_WRITE CHIP=&lt;config_name&gt; REG=&lt;register&gt; VAL=&lt;value&gt;</code>: scrive il valore "value" grezzo nel registro "register". Sia "value" che "register" possono essere un numero intero decimale o esadecimale. Usare con cautela e fare riferimento alla scheda tecnica del sensore per riferimento. Questo è disponibile solo per i chip tle5012b.</p>
+<h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#bed_mesh">sezione di configurazione bed_mesh</a> è abilitata (consultare anche la <a href="Bed_Mesh.html">guida della mesh del letto</a>).</p>
+<h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>BED_MESH_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: Questo comando sonda il piatto utilizzando i punti generati specificati dai parametri nella configurazione. Dopo il sondaggio, viene generata una mesh e il movimento z viene regolato in base alla mesh. Vedere il comando PROBE per i dettagli sui parametri della sonda opzionali. Se viene specificato METHOD=manual, lo strumento di probing manuale è attivato - vedere il comando MANUAL_PROBE per quanti riguarda per i dettagli sui comandi aggiuntivi disponibili mentre questo strumento è attivo.</p>
+<h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
+<p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>: questo comando restituisce i valori z sondati e i valori mesh correnti al terminale. Se viene specificato PGP=1, le coordinate X, Y generate da bed_mesh, insieme ai relativi indici associati, verranno inviate al terminale.</p>
+<h4 id="bed_mesh_map">BED_MESH_MAP<a class="headerlink" href="#bed_mesh_map" title="Permanent link">&para;</a></h4>
+<p><code>BED_MESH_MAP</code>: Come per BED_MESH_OUTPUT, questo comando stampa lo stato corrente della mesh sul terminale. Invece di stampare i valori in un formato leggibile, lo stato viene serializzato in formato json. Ciò consente ai plug-in di Octoprint di acquisire facilmente i dati e generare mappe di altezza che si approssimano la superficie del piatto.</p>
+<h4 id="bed_mesh_clear">BED_MESH_CLEAR<a class="headerlink" href="#bed_mesh_clear" title="Permanent link">&para;</a></h4>
+<p><code>BED_MESH_CLEAR</code>: questo comando cancella la mesh e rimuove tutte le regolazioni z. Si consiglia di inserirlo nella parte finale del gcode.</p>
+<h4 id="bed_mesh_profile">BED_MESH_PROFILE<a class="headerlink" href="#bed_mesh_profile" title="Permanent link">&para;</a></h4>
+<p><code>BED_MESH_PROFILE LOAD=&lt;name&gt; SAVE=&lt;name&gt; REMOVE=&lt;name&gt;</code>: questo comando fornisce la gestione del profilo per lo stato della mesh. LOAD ripristinerà lo stato della mesh dal profilo corrispondente al nome fornito. SAVE salverà lo stato della mesh corrente in un profilo che corrisponde al nome fornito. Rimuovi eliminerà il profilo corrispondente al nome fornito dalla memoria persistente. Si noti che dopo aver eseguito le operazioni SAVE o REMOVE è necessario eseguire il gcode SAVE_CONFIG per rendere permanenti le modifiche alla memoria persistente.</p>
+<h4 id="bed_mesh_offset">BED_MESH_OFFSET<a class="headerlink" href="#bed_mesh_offset" title="Permanent link">&para;</a></h4>
+<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code>: applica gli offset X e/o Y alla ricerca della mesh. Ciò è utile per le stampanti con estrusori indipendenti, poiché è necessario un offset per produrre la corretta regolazione Z dopo un cambio utensile.</p>
+<h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#bed_screws">sezione di configurazione bed_screws</a> è abilitata (consultare anche la <a href="Manual_Level.html#adjusting-bed-leveling-screws">manual level guide</a>).</p>
+<h4 id="bed_screws_adjust">BED_SCREWS_ADJUST<a class="headerlink" href="#bed_screws_adjust" title="Permanent link">&para;</a></h4>
+<p><code>BED_SCREWS_ADJUST</code>: questo comando richiamerà lo strumento di regolazione delle viti del piatto. Comanderà l'ugello in posizioni diverse (come definito nel file di configurazione) e consentirà di effettuare regolazioni alle viti del piatto in modo che il piatto sia a una distanza costante dall'ugello.</p>
+<h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#inclinazione_piatto">sezione di configurazione inclinazione_piatto</a> è abilitata.</p>
+<h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>BED_TILT_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Questo comando sonderà i punti specificati nella configurazione e quindi consiglierà le regolazioni dell'inclinazione x e y aggiornate. Vedere il comando PROBE per i dettagli sui parametri della sonda opzionali. Se viene specificato METHOD=manual, lo strumento di probing manuale è attivato - vedere il comando MANUAL_PROBE sopra per i dettagli sui comandi aggiuntivi disponibili mentre questo strumento è attivo.</p>
+<h3 id="bltouch">[bltouch]<a class="headerlink" href="#bltouch" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando è abilitata una <a href="Config_Reference.html#bltouch">sezione di configurazione bltouch</a> (vedere anche la <a href="BLTouch.html">Guida BL-Touch</a>).</p>
+<h4 id="bltouch_debug">BLTOUCH_DEBUG<a class="headerlink" href="#bltouch_debug" title="Permanent link">&para;</a></h4>
+<p><code>BLTOUCH_DEBUG COMMAND=&lt;command&gt;</code>: Invia un comando al BLTouch. Può essere utile per il debug. I comandi disponibili sono: <code>pin_down</code>, <code>touch_mode</code>, <code>pin_up</code>, <code>self_test</code>, <code>reset</code>. Un BL-Touch V3.0 o V3.1 può anche supportare i comandi <code>set_5V_output_mode</code>, <code>set_OD_output_mode</code>, <code>output_mode_store</code>.</p>
+<h4 id="bltouch_store">BLTOUCH_STORE<a class="headerlink" href="#bltouch_store" title="Permanent link">&para;</a></h4>
+<p><code>BLTOUCH_STORE MODE=&lt;output_mode&gt;</code>: memorizza una modalità di output nella EEPROM di un BLTouch V3.1 Le modalità di output disponibili sono: <code>5V</code>, <code>OD</code></p>
+<h3 id="configfile">[configfile]<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h3>
+<p>Il modulo configfile viene caricato automaticamente.</p>
+<h4 id="save_config">SAVE_CONFIG<a class="headerlink" href="#save_config" title="Permanent link">&para;</a></h4>
+<p><code>SAVE_CONFIG</code>: questo comando sovrascriverà il file di configurazione della stampante principale e riavvierà il software host. Questo comando viene utilizzato insieme ad altri comandi di calibrazione per memorizzare i risultati dei test di calibrazione.</p>
+<h3 id="delayed_gcode">[delayed_gcode]<a class="headerlink" href="#delayed_gcode" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è abilitato se è stata abilitata una <a href="Config_Reference.html#delayed_gcode">sezione di configurazione di gcode ritardata</a> (consultare anche la <a href="Command_Templates.html#delayed-gcodes">guida ai modelli</a>).</p>
+<h4 id="update_delayed_gcode">UPDATE_DELAYED_GCODE<a class="headerlink" href="#update_delayed_gcode" title="Permanent link">&para;</a></h4>
+<p><code>UPDATE_DELAYED_GCODE [ID=&lt;nome&gt;] [DURATION=&lt;secondi&gt;]</code>: aggiorna la durata del ritardo per il [gcode_ritardato] identificato e avvia il timer per l'esecuzione di gcode. Un valore di 0 annullerà l'esecuzione di un gcode ritardato in sospeso.</p>
+<h3 id="delta_calibrate">[delta_calibrate]<a class="headerlink" href="#delta_calibrate" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#linear-delta-cinematica">sezione di configurazione delta_calibrate</a> è abilitata (consultare anche la <a href="Delta_Calibrate.html">guida alla calibrazione delta</a>).</p>
+<h4 id="delta_calibrate_1">DELTA_CALIBRATE<a class="headerlink" href="#delta_calibrate_1" title="Permanent link">&para;</a></h4>
+<p><code>DELTA_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: questo comando sonderà sette punti sul piatto e consiglierà posizioni di finecorsa, angoli della torre e raggio aggiornati. Vedere il comando PROBE per i dettagli sui parametri della sonda opzionali. Se viene specificato METHOD=manual, lo strumento di probe manuale è attivato - vedere il comando MANUAL_PROBE precedente per i dettagli sui comandi aggiuntivi disponibili mentre questo strumento è attivo.</p>
+<h4 id="delta_analyze">DELTA_ANALYZE<a class="headerlink" href="#delta_analyze" title="Permanent link">&para;</a></h4>
+<p><code>DELTA_ANALYZE</code>: questo comando viene utilizzato durante la calibrazione avanzata delle stampanti delta. Vedere <a href="Delta_Calibrate.html">Delta Calibrate</a> per i dettagli.</p>
+<h3 id="display">[display]<a class="headerlink" href="#display" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando è abilitata una <a href="Config_Reference.html#gcode_macro">sezione di configurazione display</a>.</p>
+<h4 id="set_display_group">SET_DISPLAY_GROUP<a class="headerlink" href="#set_display_group" title="Permanent link">&para;</a></h4>
+<p><code>SET_DISPLAY_GROUP [DISPLAY=&lt;display&gt;] GROUP=&lt;group&gt;</code>: Imposta il gruppo di visualizzazione attivo di un display LCD. Ciò consente di definire più gruppi di dati di visualizzazione nella configurazione, ad es. <code>[display_data &lt;group&gt; &lt;elementname&gt;]</code> e passare da uno all'altro usando questo comando gcode esteso. Se DISPLAY non è specificato, l'impostazione predefinita è "display" (il display principale).</p>
+<h3 id="display_status">[display_status]<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h3>
+<p>Il modulo display_status viene caricato automaticamente se una <a href="Config_Reference.html#display">sezione di configurazione display</a> è abilitata. Fornisce i seguenti comandi G-Code standard:</p>
+<ul>
+<li>Messaggio visualizzato: <code>M117 &lt;messaggio&gt;</code></li>
+<li>Imposta la percentuale di costruzione: <code>M73 P&lt;percentuale&gt;</code></li>
+</ul>
+<p>Viene inoltre fornito il seguente comando G-Code esteso:</p>
+<ul>
+<li><code>SET_DISPLAY_TEXT MSG=&lt;messaggio&gt;</code>: esegue l'equivalente di M117, impostando il <code>MSG</code> fornito come messaggio visualizzato. Se <code>MSG</code> viene omesso, il display verrà cancellato.</li>
+</ul>
+<h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando la <a href="Config_Reference.html#dual_carriage">sezione di configurazione dual_carriage</a> è abilitata.</p>
+<h4 id="set_dual_carriage">SET_DUAL_CARRIAGE<a class="headerlink" href="#set_dual_carriage" title="Permanent link">&para;</a></h4>
+<p><code>SET_DUAL_CARRIAGE CARRIAGE=[0|1]</code>: Questo comando imposterà il carrello attivo. Viene in genere richiamato dai campi activate_gcode e deactivate_gcode in una configurazione a più estrusori.</p>
+<h3 id="endstop_phase">[endstop_phase]<a class="headerlink" href="#endstop_phase" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando una <a href="Config_Reference.html#endstop_phase">sezione di configurazione endstop_phase</a> è abilitata (consultare anche la <a href="Endstop_Phase.html">guida alla fase endstop</a>).</p>
+<h4 id="endstop_phase_calibrate">ENDSTOP_PHASE_CALIBRATE<a class="headerlink" href="#endstop_phase_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>ENDSTOP_PHASE_CALIBRATE [STEPPER=&lt;config_name&gt;]</code>: Se non viene fornito alcun parametro STEPPER, questo comando riporterà le statistiche sulle fasi stepper dell'arresto durante le precedenti operazioni di homing. Quando viene fornito un parametro STEPPER, fa in modo che l'impostazione della fase di fine corsa fornita sia scritta nel file di configurazione (insieme al comando SAVE_CONFIG).</p>
+<h3 id="exclude_object">[exclude_object]<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando è abilitata una <a href="Config_Reference.html#exclude_object">exclude_object config section</a> (consultare anche la <a href="Exclude_Object.html">exclude object guide</a>):</p>
+<h4 id="exclude_object_1"><code>EXCLUDE_OBJECT</code><a class="headerlink" href="#exclude_object_1" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT [NAME=object_name] [CURRENT=1] [RESET=1]</code>: Senza parametri, questo restituirà un elenco di tutti gli oggetti attualmente esclusi.</p>
+<p>Quando viene fornito il parametro <code>NAME</code>, l'oggetto denominato verrà escluso dalla stampa.</p>
+<p>Quando viene fornito il parametro <code>CURRENT</code>, l'oggetto corrente verrà escluso dalla stampa.</p>
+<p>Quando viene fornito il parametro <code>RESET</code> l'elenco degli oggetti esclusi verrà cancellato. Inoltre l'inclusione di <code>NAME</code> ripristinerà solo l'oggetto denominato. Questo <strong>può</strong> causare errori di stampa, se i livelli sono già stati saltati.</p>
+<h4 id="exclude_object_define"><code>EXCLUDE_OBJECT_DEFINE</code><a class="headerlink" href="#exclude_object_define" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_DEFINE [NAME=object_name [CENTER=X,Y] [POLYGON=[[x,y],...]] [RESET=1] [JSON=1]</code>: fornisce un riepilogo di un oggetto nel file.</p>
+<p>Senza parametri forniti, questo elencherà gli oggetti definiti noti a Klipper. Restituisce un elenco di stringhe, a meno che non venga fornito il parametro <code>JSON</code>, quando restituirà i dettagli dell'oggetto in formato json.</p>
+<p>Quando il parametro <code>NAME</code> è incluso, definisce un oggetto da escludere.</p>
+<ul>
+<li><code>NAME</code>: questo parametro è obbligatorio. È l'identificatore utilizzato da altri comandi in questo modulo.</li>
+<li><code>CENTER</code>: una coordinata X,Y per l'oggetto.</li>
+<li><code>POLYGON</code>: Un array di coordinate X,Y che fornisce un contorno per l'oggetto.</li>
+</ul>
+<p>Quando viene fornito il parametro <code>RESET</code>, tutti gli oggetti definiti verranno cancellati e il modulo <code>[exclude_object]</code> verrà ripristinato.</p>
+<h4 id="exclude_object_start"><code>EXCLUDE_OBJECT_START</code><a class="headerlink" href="#exclude_object_start" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_START NAME=object_name</code>: questo comando prende un parametro <code>NAME</code> e marca l'inizio del gcode per un oggetto sul livello corrente.</p>
+<h4 id="exclude_object_end"><code>EXCLUDE_OBJECT_END</code><a class="headerlink" href="#exclude_object_end" title="Permanent link">&para;</a></h4>
+<p><code>EXCLUDE_OBJECT_END [NAME=object_name]</code>: Denota la fine del gcode dell'oggetto per il livello. È accoppiato con <code>EXCLUDE_OBJECT_START</code>. Un parametro <code>NAME</code> è facoltativo e avviserà solo quando il nome fornito non corrisponde all'oggetto corrente.</p>
+<h3 id="extruder">[extruder]<a class="headerlink" href="#extruder" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili se una <a href="Config_Reference.html#extruder">sezione di configurazione dell'estrusore</a> è abilitata:</p>
+<h4 id="activate_extruder">ACTIVATE_EXTRUDER<a class="headerlink" href="#activate_extruder" title="Permanent link">&para;</a></h4>
+<p><code>ACTIVATE_EXTRUDER EXTRUDER=&lt;config_name&gt;</code>: in una stampante con più sezioni di configurazione <a href="Config_Reference.html#extruder">extruder</a>, questo comando cambia l'hotend attivo.</p>
+<h4 id="set_pressure_advance">SET_PRESSURE_ADVANCE<a class="headerlink" href="#set_pressure_advance" title="Permanent link">&para;</a></h4>
+<p><code>SET_PRESSURE_ADVANCE [EXTRUDER=&lt;config_name&gt;] [ADVANCE=&lt;pressure_advance&gt;] [SMOOTH_TIME=&lt;pressure_advance_smooth_time&gt;]</code>: Imposta i parametri di pressure advance delleo stepper di un estrusore (come definito in un <a href="Config_Reference.html#extruder">estrusore</a> o [ extruder_stepper] (sezione di configurazione Config_Reference.md#extruder_stepper). Se EXTRUDER non è specificato, per impostazione predefinita viene utilizzato lo stepper definito nell'hotend attivo.</p>
+<h4 id="set_extruder_rotation_distance">SET_EXTRUDER_ROTATION_DISTANCE<a class="headerlink" href="#set_extruder_rotation_distance" title="Permanent link">&para;</a></h4>
+<p><code>SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=&lt;config_name&gt; [DISTANCE=&lt;distance&gt;]</code>: Imposta un nuovo valore per la "distanza di rotazione" dello stepper dell'estrusore fornito (come definito in un <a href="Config_Reference.html#extruder">extruder</a> o <a href="Config_Reference .md#extruder_stepper">extruder_stepper</a> sezione di configurazione). Se la distanza di rotazione è un numero negativo, il movimento passo-passo verrà invertito (rispetto alla direzione passo-passo specificata nel file di configurazione). Le impostazioni modificate non vengono mantenute al ripristino di Klipper. Usare con cautela poiché piccole modifiche possono causare una pressione eccessiva tra l'estrusore e l'hotend. Eseguire una corretta calibrazione con il filamento prima dell'uso. Se il valore 'DISTANZA' non viene fornito, questo comando restituirà la distanza di rotazione corrente.</p>
+<h4 id="sync_extruder_motion">SYNC_EXTRUDER_MOTION<a class="headerlink" href="#sync_extruder_motion" title="Permanent link">&para;</a></h4>
+<p><code>SYNC_EXTRUDER_MOTION EXTRUDER=&lt;nome&gt; MOTION_QUEUE=&lt;nome&gt;</code>: questo comando attiverà lo stepper specificato da EXTRUDER (come definito in un <a href="Config_Reference.html#extruder">extruder</a> o <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a> config sezione) per sincronizzarsi con il movimento di un estrusore specificato da MOTION_QUEUE (come definito in una sezione di configurazione <a href="Config_Reference.html#estrusore">estrusore</a>). Se MOTION_QUEUE è una stringa vuota, lo stepper verrà desincronizzato da tutti i movimenti dell'estrusore.</p>
+<h4 id="set_extruder_step_distance">SET_EXTRUDER_STEP_DISTANCE<a class="headerlink" href="#set_extruder_step_distance" title="Permanent link">&para;</a></h4>
+<p>Questo comando è deprecato e verrà rimosso nel prossimo futuro.</p>
+<h4 id="sync_stepper_to_extruder">SYNC_STEPPER_TO_EXTRUDER<a class="headerlink" href="#sync_stepper_to_extruder" title="Permanent link">&para;</a></h4>
+<p>Questo comando è deprecato e verrà rimosso nel prossimo futuro.</p>
+<h3 id="fan_generic">[fan_generic]<a class="headerlink" href="#fan_generic" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando una <a href="Config_Reference.html#fan_generic">sezione di configurazione fan_generic</a> è abilitata.</p>
+<h4 id="set_fan_speed">SET_FAN_SPEED<a class="headerlink" href="#set_fan_speed" title="Permanent link">&para;</a></h4>
+<p><code>SET_FAN_SPEED FAN=config_name SPEED=&lt;velocità&gt;</code> Questo comando imposta la velocità di una ventola. "velocità" deve essere compresa tra 0.0 e 1.0.</p>
+<h3 id="filament_switch_sensor">[filament_switch_sensor]<a class="headerlink" href="#filament_switch_sensor" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando è abilitata una sezione di configurazione <a href="Config_Reference.html#filament_switch_sensor">filament_switch_sensor</a> o <a href="Config_Reference.html#filament_motion_sensor">filament_motion_sensor</a>.</p>
+<h4 id="query_filament_sensor">QUERY_FILAMENT_SENSOR<a class="headerlink" href="#query_filament_sensor" title="Permanent link">&para;</a></h4>
+<p><code>QUERY_FILAMENT_SENSOR SENSOR=&lt;sensor_name&gt;</code>: Interroga lo stato del sensore di filamento. I dati visualizzati sul terminale dipenderanno dal tipo di sensore definito nella configurazione.</p>
+<h4 id="set_filament_sensor">SET_FILAMENT_SENSOR<a class="headerlink" href="#set_filament_sensor" title="Permanent link">&para;</a></h4>
+<p><code>SET_FILAMENT_SENSOR SENSOR=&lt;nome_sensore&gt; ENABLE=[0|1]</code>: Attiva/disattiva il sensore di filamento. Se ENABLE è impostato su 0, il sensore di filamento sarà disabilitato, se impostato su 1 sarà abilitato.</p>
+<h3 id="firmware_retraction">[firmware_retraction]<a class="headerlink" href="#firmware_retraction" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi G-Code standard sono disponibili quando la <a href="Config_Reference.html#firmware_retraction">sezione di configurazione firmware_retraction</a> è abilitata. Questi comandi consentono di utilizzare la funzione di retraction del firmware disponibile in molti slicer, per ridurre lo stringing durante gli spostamenti di non estrusione da una parte all'altra della stampa. Configurando opportunamente la pressure advance si riduce la lunghezza della retrazione richiesta.</p>
+<ul>
+<li><code>G10</code>: Ritrae l'estrusore utilizzando i parametri attualmente configurati.</li>
+<li><code>G11</code>: Ritira l'estrusore utilizzando i parametri attualmente configurati.</li>
+</ul>
+<p>Sono inoltre disponibili i seguenti comandi aggiuntivi.</p>
+<h4 id="set_retraction">SET_RETRACTION<a class="headerlink" href="#set_retraction" title="Permanent link">&para;</a></h4>
+<p><code>SET_RETRACTION [RETRACT_LENGTH=&lt;mm&gt;] [RETRACT_SPEED=&lt;mm/s&gt;] [UNRETRACT_EXTRA_LENGTH=&lt;mm&gt;] [UNRETRACT_SPEED=&lt;mm/s&gt;]</code>: regola i parametri utilizzati dalla retrazione. RETRACT_LENGTH determina la lunghezza del filamento da ritrarre e estrudere. La velocità di retrazione viene regolata tramite RETRACT_SPEED, ed è generalmente impostata su un valore relativamente alto. La velocità di annullamento viene regolata tramite UNRETRACT_SPEED e non è particolarmente critica, sebbene spesso inferiore a RETRACT_SPEED. In alcuni casi è utile aggiungere una piccola quantità di lunghezza aggiuntiva all'annullamento della retrazione, e questa viene impostata tramite UNRETRACT_EXTRA_LENGTH. SET_RETRACTION è comunemente impostato come parte della configurazione dello slicer per filamento, poiché filamenti diversi richiedono impostazioni dei parametri diverse.</p>
+<h4 id="get_retraction">GET_RETRACTION<a class="headerlink" href="#get_retraction" title="Permanent link">&para;</a></h4>
+<p><code>GET_RETRACTION</code>: interroga i parametri correnti utilizzati dal firmware per retrazione e li visualizza sul terminale.</p>
+<h3 id="force_move">[force_move]<a class="headerlink" href="#force_move" title="Permanent link">&para;</a></h3>
+<p>Il modulo force_move viene caricato automaticamente, tuttavia alcuni comandi richiedono l'impostazione di <code>enable_force_move</code> in <a href="Config_Reference.html#force_move">printer config</a>.</p>
+<h4 id="stepper_buzz">STEPPER_BUZZ<a class="headerlink" href="#stepper_buzz" title="Permanent link">&para;</a></h4>
+<p><code>STEPPER_BUZZ STEPPER=&lt;nome_config&gt;</code>: sposta lo stepper dato in avanti di 1 mm e poi indietro di 1 mm, ripetuto 10 volte. Questo è uno strumento diagnostico per aiutare a verificare la connettività stepper.</p>
+<h4 id="force_move_1">FORCE_MOVE<a class="headerlink" href="#force_move_1" title="Permanent link">&para;</a></h4>
+<p><code>FORCE_MOVE STEPPER=&lt;nome_config&gt; DISTANCE=&lt;value&gt; VELOCITY=&lt;value&gt; [ACCEL=&lt;value&gt;]</code>: Questo comando sposterà forzatamente lo stepper dato della distanza data (in mm) alla velocità costante data (in mm/ S). Se viene specificato ACCEL ed è maggiore di zero, verrà utilizzata l'accelerazione data (in mm/s^2); altrimenti non viene eseguita alcuna accelerazione. Non vengono effettuati controlli sui limiti; non vengono effettuati aggiornamenti cinematici; altri stepper paralleli su un asse non verranno spostati. Prestare attenzione poiché un comando errato potrebbe causare danni! L'uso di questo comando metterà quasi sicuramente la cinematica di basso livello in uno stato errato; emettere un G28 in seguito per ripristinare la cinematica. Questo comando è destinato alla diagnostica e al debug di basso livello.</p>
+<h4 id="set_kinematic_position">SET_KINEMATIC_POSITION<a class="headerlink" href="#set_kinematic_position" title="Permanent link">&para;</a></h4>
+<p><code>SET_KINEMATIC_POSITION [X=&lt;valore&gt;] [Y=&lt;valore&gt;] [Z=&lt;valore&gt;]</code>: forza il codice cinematico di basso livello a credere che la testa di stampa si trovi nella posizione cartesiana data. Questo è un comando diagnostico e di debug; utilizzare SET_GCODE_OFFSET e/o G92 per le normali trasformazioni degli assi. Se un asse non è specificato, verrà impostato automaticamente sulla posizione in cui la testa è stata comandata l'ultima volta. L'impostazione di una posizione errata o non valida può causare errori software interni. Questo comando potrebbe invalidare futuri controlli sui confini; emettere un G28 in seguito per ripristinare la cinematica.</p>
+<h3 id="gcode">[gcode]<a class="headerlink" href="#gcode" title="Permanent link">&para;</a></h3>
+<p>Il modulo gcode viene caricato automaticamente.</p>
+<h4 id="restart">RESTART<a class="headerlink" href="#restart" title="Permanent link">&para;</a></h4>
+<p><code>RESTART</code>: Ciò farà sì che il software host ricarichi la sua configurazione ed esegua un ripristino interno. Questo comando non cancellerà lo stato di errore dal microcontrollore (vedi FIRMWARE_RESTART) né caricherà nuovo software (vedi <a href="FAQ.html#how-do-i-upgrade-to-the-latest-software">FAQ</a>) .</p>
+<h4 id="firmware_restart">FIRMWARE_RESTART<a class="headerlink" href="#firmware_restart" title="Permanent link">&para;</a></h4>
+<p><code>FIRMWARE_RESTART</code>: Questo è simile a un comando RESTART, ma cancella anche qualsiasi stato di errore dal microcontrollore.</p>
+<h4 id="status">STATUS<a class="headerlink" href="#status" title="Permanent link">&para;</a></h4>
+<p><code>STATUS</code>: segnala lo stato del software host di Klipper.</p>
+<h4 id="help">HELP<a class="headerlink" href="#help" title="Permanent link">&para;</a></h4>
+<p><code>HELP</code>: riporta l'elenco dei comandi G-Code estesi disponibili.</p>
+<h3 id="gcode_arcs">[gcode_arcs]<a class="headerlink" href="#gcode_arcs" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi G-Code standard sono disponibili se una <a href="Config_Reference.html#gcode_arcs">sezione di configurazione gcode_arcs</a> è abilitata:</p>
+<ul>
+<li>Movimento controllato dell'arco (G2 o G3): <code>G2 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;velocità&gt;] I&lt;valore&gt; J&lt;valore&gt;</code></li>
+</ul>
+<h3 id="gcode_macro">[gcode_macro]<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando è abilitata una <a href="Config_Reference.html#gcode_macro">sezione di configurazione gcode_macro</a> (consultare anche la <a href="Command_Templates.html">guida ai modelli di comando</a>).</p>
+<h4 id="set_gcode_variable">SET_GCODE_VARIABLE<a class="headerlink" href="#set_gcode_variable" title="Permanent link">&para;</a></h4>
+<p><code>SET_GCODE_VARIABLE MACRO=&lt;nome_macro&gt; VARIABLE=&lt;nome&gt; VALUE=&lt;valore&gt;</code>: questo comando consente di modificare il valore di una variabile gcode_macro in fase di esecuzione. Il VALUE fornito viene analizzato come un valore literal in Python.</p>
+<h3 id="gcode_move">[gcode_move]<a class="headerlink" href="#gcode_move" title="Permanent link">&para;</a></h3>
+<p>Il modulo gcode_move viene caricato automaticamente.</p>
+<h4 id="get_position">GET_POSITION<a class="headerlink" href="#get_position" title="Permanent link">&para;</a></h4>
+<p>GET_POSITION`: Restituisce informazioni sulla posizione corrente della testa di stampa. Per ulteriori informazioni, vedere la documentazione per gli sviluppatori di <a href="Code_Overview.html#coordinate-systems">GET_POSITION output</a>.</p>
+<h4 id="set_gcode_offset">SET_GCODE_OFFSET<a class="headerlink" href="#set_gcode_offset" title="Permanent link">&para;</a></h4>
+<p><code>SET_GCODE_OFFSET [X=&lt;pos&gt;|X_ADJUST=&lt;regola&gt;] [Y=&lt;pos&gt;|Y_ADJUST=&lt;regola&gt;] [Z=&lt;pos&gt;|Z_ADJUST=&lt;regola&gt;] [MOVE=1 [MOVE_SPEED=&lt;velocità &gt;]]</code>: imposta un offset di posizione da applicare ai futuri comandi G-Code. Questo è comunemente usato per cambiare virtualmente l'offset del letto Z o per impostare gli offset XY degli ugelli quando si cambia estrusore. Ad esempio, se viene inviato "SET_GCODE_OFFSET Z=0.2", i futuri movimenti G-Code avranno 0.2 mm aggiunti alla loro altezza Z. Se vengono utilizzati i parametri di stile X_ADJUST, la regolazione verrà aggiunta a qualsiasi offset esistente (ad esempio, "SET_GCODE_OFFSET Z=-0.2" seguito da "SET_GCODE_OFFSET Z_ADJUST=0.3" risulterà in un offset Z totale di 0.1). Se viene specificato "MOVE=1", verrà emesso un movimento della testa di stampa per applicare l'offset specificato (altrimenti l'offset avrà effetto sul successivo movimento assoluto del codice G che specifica l'asse dato). Se viene specificato "MOVE_SPEED", lo spostamento della testa utensile verrà eseguito con la velocità data (in mm/s); in caso contrario, il movimento della testa utensile utilizzerà l'ultima velocità del G-code specificata.</p>
+<h4 id="save_gcode_state">SAVE_GCODE_STATE<a class="headerlink" href="#save_gcode_state" title="Permanent link">&para;</a></h4>
+<p><code>SAVE_GCODE_STATE [NAME=&lt;nome_stato&gt;]</code>: salva lo stato di analisi delle coordinate del G-code corrente. Il salvataggio e il ripristino dello stato del G-code è utile negli script e nelle macro. Questo comando salva la modalità di coordinate assolute del G-code corrente (G90/G91), la modalità di estrusione assoluta (M82/M83), l'origine (G92), l'offset (SET_GCODE_OFFSET), l'override della velocità (M220), l'override dell'estrusore (M221), la velocità di spostamento , la posizione XYZ corrente e la posizione relativa dell'estrusore "E". Se viene fornito NAME, consente di assegnare un nome allo stato salvato alla stringa data. Se NAME non viene fornito, il valore predefinito è "predefinito".</p>
+<h4 id="restore_gcode_state">RESTORE_GCODE_STATE<a class="headerlink" href="#restore_gcode_state" title="Permanent link">&para;</a></h4>
+<p><code>RESTORE_GCODE_STATE [NAME=&lt;nome_stato&gt;] [MOVE=1 [MOVE_SPEED=&lt;velocità&gt;]]</code>: ripristina uno stato precedentemente salvato tramite SAVE_GCODE_STATE. Se viene specificato "MOVE=1", verrà emesso un movimento della testa utensile per tornare alla posizione XYZ precedente. Se viene specificato "MOVE_SPEED", lo spostamento della testa utensile verrà eseguito con la velocità data (in mm/s); in caso contrario, lo spostamento della testa utensile utilizzerà la velocità del codice g ripristinata.</p>
+<h3 id="hall_filament_width_sensor">[hall_filament_width_sensor]<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#tsl1401cl_filament_width_sensor">sezione di configurazione del sensore di larghezza del filamento tsl1401cl</a> o <a href="Config_Reference.html#hall_filament_width_sensor">sezione di configurazione del sensore di larghezza del filamento hall</a> è abilitata (consultare anche <a href="TSL1401CL_Filament_Width_Sensor.html">Sensore di larghezza del filamento TSLl401CL</a> e <a href="Hall_Filament_Width_Sensor.html">Hall Filament Width Sensor</a>):</p>
+<h4 id="query_filament_width">QUERY_FILAMENT_WIDTH<a class="headerlink" href="#query_filament_width" title="Permanent link">&para;</a></h4>
+<p><code>QUERY_FILAMENT_WIDTH</code>: Restituisce lo spessore del filamento misurato.</p>
+<h4 id="reset_filament_width_sensor">RESET_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#reset_filament_width_sensor" title="Permanent link">&para;</a></h4>
+<p><code>RESET_FILAMENT_WIDTH_SENSOR</code>: Cancella tutte le letture del sensore. Utile dopo il cambio del filamento.</p>
+<h4 id="disable_filament_width_sensor">DISABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#disable_filament_width_sensor" title="Permanent link">&para;</a></h4>
+<p><code>DISABLE_FILAMENT_WIDTH_SENSOR</code>: Spegnere il sensore di larghezza del filamento e smettere di usarlo per il controllo del flusso.</p>
+<h4 id="enable_filament_width_sensor">ENABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#enable_filament_width_sensor" title="Permanent link">&para;</a></h4>
+<p><code>ENABLE_FILAMENT_WIDTH_SENSOR</code>: attiva il sensore di larghezza del filamento e inizia a usarlo per il controllo del flusso.</p>
+<h4 id="query_raw_filament_width">QUERY_RAW_FILAMENT_WIDTH<a class="headerlink" href="#query_raw_filament_width" title="Permanent link">&para;</a></h4>
+<p><code>QUERY_RAW_FILAMENT_WIDTH</code>: Restituisce le letture del canale ADC corrente e il valore grezzo (raw) del sensore per i punti di calibrazione.</p>
+<h4 id="enable_filament_width_log">ENABLE_FILAMENT_WIDTH_LOG<a class="headerlink" href="#enable_filament_width_log" title="Permanent link">&para;</a></h4>
+<p><code>ENABLE_FILAMENT_WIDTH_LOG</code>: attiva la registrazione del diametro del filamento.</p>
+<h4 id="disable_filament_width_log">DISABLE_FILAMENT_WIDTH_LOG<a class="headerlink" href="#disable_filament_width_log" title="Permanent link">&para;</a></h4>
+<p><code>DISABLE_FILAMENT_WIDTH_LOG</code>: Disattiva la registrazione del diametro del filamento.</p>
+<h3 id="heaters">[heaters]<a class="headerlink" href="#heaters" title="Permanent link">&para;</a></h3>
+<p>Il modulo heaters viene caricato automaticamente se un riscaldatore è definito nel file di configurazione.</p>
+<h4 id="turn_off_heaters">TURN_OFF_HEATERS<a class="headerlink" href="#turn_off_heaters" title="Permanent link">&para;</a></h4>
+<p><code>TURN_OFF_HEATERS</code>: Spegni tutti i riscaldatori.</p>
+<h4 id="temperature_wait">TEMPERATURE_WAIT<a class="headerlink" href="#temperature_wait" title="Permanent link">&para;</a></h4>
+<p><code>TEMPERATURE_WAIT SENSOR=&lt;config_name&gt; [MINIMUM=&lt;target&gt;] [MAXIMUM=&lt;target&gt;]</code>: Attendere fino a quando il sensore di temperatura specificato è pari o superiore al MINIMO fornito e/o pari o inferiore al MASSIMO fornito.</p>
+<h4 id="set_heater_temperature">SET_HEATER_TEMPERATURE<a class="headerlink" href="#set_heater_temperature" title="Permanent link">&para;</a></h4>
+<p><code>SET_HEATER_TEMPERATURE HEATER=&lt;nome_riscaldatore&gt; [TARGET=&lt;temperatura_destinata&gt;]</code>: Imposta la temperatura target per un riscaldatore. Se non viene fornita una temperatura target, il target è 0.</p>
+<h3 id="idle_timeout">[idle_timeout]<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h3>
+<p>Il modulo idle_timeout viene caricato automaticamente.</p>
+<h4 id="set_idle_timeout">SET_IDLE_TIMEOUT<a class="headerlink" href="#set_idle_timeout" title="Permanent link">&para;</a></h4>
+<p><code>SET_IDLE_TIMEOUT [TIMEOUT=&lt;timeout&gt;]</code>: consente all'utente di impostare il timeout di inattività (in secondi).</p>
+<h3 id="input_shaper">[input_shaper]<a class="headerlink" href="#input_shaper" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è abilitato se è stata abilitata una <a href="Config_Reference.html#input_shaper">sezione di configurazione di input_shaper</a> (consultare anche la <a href="Resonance_Compensation.html">guida alla compensazione della risonanza</a>).</p>
+<h4 id="set_input_shaper">SET_INPUT_SHAPER<a class="headerlink" href="#set_input_shaper" title="Permanent link">&para;</a></h4>
+<p><code>SET_INPUT_SHAPER [SHAPER_FREQ_X=&lt;shaper_freq_x&gt;] [SHAPER_FREQ_Y=&lt;shaper_freq_y&gt;] [DAMPING_RATIO_X=&lt;damping_ratio_x&gt;] [DAMPING_RATIO_Y=&lt;damping_ratio_y&gt;] [SHAPER_TYPE=&lt;shaper&gt;] [SHAPER_TYPE_X=&lt;shaper_type_x&gt;] [SHAPER_TYPE=&lt;shaper_TYPE_X=&lt;shaper_type_x&gt;] [SHAPER_TYPE=&lt;shaper_type_y=&lt;shaper_type_x&gt; ]</code>: Modifica i parametri dell'input shaper. Si noti che il parametro SHAPER_TYPE reimposta l'input shaper per entrambi gli assi X e Y anche se sono stati configurati tipi di shaper diversi nella sezione [input_shaper]. SHAPER_TYPE non può essere utilizzato insieme a uno dei parametri SHAPER_TYPE_X e SHAPER_TYPE_Y. Vedere <a href="Config_Reference.html#input_shaper">config reference</a> per maggiori dettagli su ciascuno di questi parametri.</p>
+<h3 id="manual_probe">[manual_probe]<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h3>
+<p>Il modulo manual_probe viene caricato automaticamente.</p>
+<h4 id="manual_probe_1">MANUAL_PROBE<a class="headerlink" href="#manual_probe_1" title="Permanent link">&para;</a></h4>
+<p><code>MANUAL_PROBE [SPEED=&lt;speed&gt;]</code>: esegue uno script di supporto utile per misurare l'altezza dell'ugello in una determinata posizione. Se viene specificato SPEED, imposta la velocità dei comandi TESTZ (il valore predefinito è 5mm/s). Durante una sonda manuale, sono disponibili i seguenti comandi aggiuntivi:</p>
+<ul>
+<li><code>ACCEPT</code>: questo comando accetta la posizione Z corrente e conclude il probing manuale.</li>
+<li><code>ABORT</code>: questo comando termina lo strumento di probing manuale.</li>
+<li><code>TESTZ Z=&lt;valore&gt;</code>: questo comando sposta l'ugello verso l'alto o verso il basso della quantità specificata in "valore". Ad esempio, <code>TESTZ Z=-.1</code> sposterebbe l'ugello verso il basso di .1 mm mentre <code>TESTZ Z=.1</code> sposterebbe l'ugello verso l'alto di .1 mm. Il valore può anche essere <code>+</code>, <code>-</code>, <code>++</code> o <code>--</code> per spostare l'ugello verso l'alto o verso il basso di un importo rispetto ai tentativi precedenti.</li>
+</ul>
+<h4 id="z_endstop_calibrate">Z_ENDSTOP_CALIBRATE<a class="headerlink" href="#z_endstop_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>Z_ENDSTOP_CALIBRATE [SPEED=&lt;speed&gt;]</code>: esegue uno script di supporto utile per calibrare un'impostazione di configurazione Z position_endstop. Vedere il comando MANUAL_PROBE per i dettagli sui parametri e sui comandi aggiuntivi disponibili mentre lo strumento è attivo.</p>
+<h4 id="z_offset_apply_endstop">Z_OFFSET_APPLY_ENDSTOP<a class="headerlink" href="#z_offset_apply_endstop" title="Permanent link">&para;</a></h4>
+<p><code>Z_OFFSET_APPLY_ENDSTOP</code>: prende l'offset Z Gcode corrente (noto anche come babystepping) e lo sottrae da stepper_z endstop_position. Questa azione per prendere un valore di babystep utilizzato di frequente e "renderlo permanente". Richiede un <code>SAVE_CONFIG</code> per avere effetto.</p>
+<h3 id="stepper-manuali">[Stepper manuali]<a class="headerlink" href="#stepper-manuali" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando una <a href="Config_Reference.html#stepper_manuale">sezione di configurazione stepper_manuale</a> è abilitata.</p>
+<h4 id="manual_stepper">MANUAL_STEPPER<a class="headerlink" href="#manual_stepper" title="Permanent link">&para;</a></h4>
+<p><code>MANUAL_STEPPER STEPPER=nome_config [ENABLE=[0|1]] [SET_POSITION=&lt;pos&gt;] [SPEED=&lt;velocità&gt;] [ACCEL=&lt;accelerazione&gt;] [MOVE=&lt;pos&gt; [STOP_ON_ENDSTOP=[1|2|- 1|-2]] [SYNC=0]]</code>: Questo comando altererà lo stato dello stepper. Utilizzare il parametro ENABLE per abilitare/disabilitare lo stepper. Utilizzare il parametro SET_POSITION per forzare lo stepper a pensare di trovarsi nella posizione data. Utilizzare il parametro MOVE per richiedere un movimento alla posizione data. Se viene specificato SPEED e/o ACCEL, verranno utilizzati i valori forniti al posto dei valori predefiniti specificati nel file di configurazione. Se viene specificato un ACCEL pari a zero, non verrà eseguita alcuna accelerazione. Se viene specificato STOP_ON_ENDSTOP=1, lo spostamento terminerà in anticipo se l'endstop segnala come attivato (usa STOP_ON_ENDSTOP=2 per completare lo spostamento senza errori anche se l'endstop non si attiva, usa -1 o -2 per interrompere quando l'endstop segnala non innescato). Normalmente i futuri comandi G-Code verranno programmati per essere eseguiti dopo il completamento del movimento passo-passo, tuttavia se un movimento passo-passo manuale utilizza SYNC=0, i futuri comandi di movimento G-Code potrebbero essere eseguiti in parallelo con il movimento passo-passo.</p>
+<h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando una qualsiasi delle <a href="Config_Reference.html#leds">sezioni di configurazione led</a> è abilitata.</p>
+<h4 id="set_led">SET_LED<a class="headerlink" href="#set_led" title="Permanent link">&para;</a></h4>
+<p><code>SET_LED LED=&lt;nome_config&gt; ROSSO=&lt;valore&gt; VERDE=&lt;valore&gt; BLU=&lt;valore&gt; BIANCO=&lt;valore&gt; [INDEX=&lt;indice&gt;] [TRANSMIT=0] [SYNC=1]</code>: Imposta il LED in output. Ogni colore <code>&lt;valore&gt;</code> deve essere compreso tra 0,0 e 1,0. L'opzione BIANCO è valida solo su LED RGBW. Se il LED supporta più chip in una catena daisy-chain, è possibile specificare INDEX per modificare il colore del solo chip specificato (1 per il primo chip, 2 per il secondo, ecc.). Se INDEX non viene fornito, tutti i LED nella catena verranno impostati sul colore fornito. Se viene specificato TRANSMIT=0, il cambio colore verrà effettuato solo sul successivo comando SET_LED che non specifica TRANSMIT=0; questo può essere utile in combinazione con il parametro INDEX per raggruppare più aggiornamenti in una catena. Per impostazione predefinita, il comando SET_LED sincronizzerà le modifiche con altri comandi gcode in corso. Ciò può comportare un comportamento indesiderato se i LED vengono impostati mentre la stampante non sta stampando in quanto reimposta il timeout di inattività. Se non è necessaria una tempistica attenta, è possibile specificare il parametro SYNC=0 opzionale per applicare le modifiche senza ripristinare il timeout di inattività.</p>
+<h4 id="set_led_template">SET_LED_TEMPLATE<a class="headerlink" href="#set_led_template" title="Permanent link">&para;</a></h4>
+<p><code>SET_LED_TEMPLATE LED=&lt;nome_led&gt; TEMPLATE=&lt;nome_modello&gt; [&lt;param_x&gt;=&lt;letterale&gt;] [INDEX=&lt;indice&gt;]</code>: Assegna un <a href="Config_Reference.html#modello_visualizzazione">modello_visualizzazione</a> a un dato <a href="Riferimento_Configurazione .md#led">LED</a>. Ad esempio, se si definisce una sezione di configurazione <code>[display_template my_led_template]</code> allora si potrebbe assegnare <code>TEMPLATE=my_led_template</code> qui. Il display_template dovrebbe produrre una stringa separata da virgole contenente quattro numeri in virgola mobile corrispondenti alle impostazioni dei colori rosso, verde, blu e bianco. Il modello verrà continuamente valutato e il LED verrà impostato automaticamente sui colori risultanti. È possibile impostare i parametri display_template da utilizzare durante la valutazione del modello (i parametri verranno analizzati come valori letterali Python). Se INDEX non è specificato, tutti i chip nella catena dei LED verranno impostati sul modello, altrimenti verrà aggiornato solo il chip con l'indice specificato. Se TEMPLATE è una stringa vuota, questo comando cancellerà qualsiasi modello precedente assegnato al LED (è quindi possibile utilizzare i comandi <code>SET_LED</code> per gestire le impostazioni del colore del LED).</p>
+<h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando una <a href="Config_Reference.html#pin_output">sezione di configurazione pin_output</a> è abilitata.</p>
+<h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
+<p><code>SET_PIN PIN=nome_config VALUE=&lt;valore&gt; CYCLE_TIME=&lt;tempo_ciclo&gt;</code>: Nota - PWM hardware attualmente non supporta il parametro CYCLE_TIME e utilizzerà il tempo di ciclo definito nella configurazione.</p>
+<h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#palette2">sezione di configurazione della palette2</a> è abilitata.</p>
+<p>Le stampe di Palette funzionano incorporando speciali OCodes (Codici Omega) nel file GCode:</p>
+<ul>
+<li><code>O1</code>...<code>O32</code>: Questi codici vengono letti dal flusso GCode ed elaborati da questo modulo e passati al dispositivo Palette 2.</li>
+</ul>
+<p>Sono inoltre disponibili i seguenti comandi aggiuntivi.</p>
+<h4 id="palette_connect">PALETTE_CONNECT<a class="headerlink" href="#palette_connect" title="Permanent link">&para;</a></h4>
+<p><code>PALETTE_CONNECT</code>: questo comando inizializza la connessione con la Palette 2.</p>
+<h4 id="palette_disconnect">PALETTE_DISCONNECT<a class="headerlink" href="#palette_disconnect" title="Permanent link">&para;</a></h4>
+<p><code>PALETTE_DISCONNECT</code>: questo comando si disconnette dalla Palette 2.</p>
+<h4 id="palette_clear">PALETTE_CLEAR<a class="headerlink" href="#palette_clear" title="Permanent link">&para;</a></h4>
+<p><code>PALETTE_CLEAR</code>: questo comando indica alla Palette 2 di cancellare tutti i percorsi di input e output del filamento.</p>
+<h4 id="palette_cut">PALETTE_CUT<a class="headerlink" href="#palette_cut" title="Permanent link">&para;</a></h4>
+<p><code>PALETTE_CUT</code>: Questo comando indica alla Palette 2 di tagliare il filamento attualmente caricato nello splice core.</p>
+<h4 id="palette_smart_load">PALETTE_SMART_LOAD<a class="headerlink" href="#palette_smart_load" title="Permanent link">&para;</a></h4>
+<p><code>PALETTE_SMART_LOAD</code>: Questo comando avvia la sequenza di caricamento intelligente sulla Palette 2. Il filamento viene caricato automaticamente estrudendolo alla distanza calibrata sul dispositivo per la stampante e istruisce la Palette 2 una volta completato il caricamento. Questo comando equivale a premere <strong>Smart Load</strong> direttamente sullo schermo della Palette 2 dopo che il caricamento del filamento è stato completato.</p>
+<h3 id="pid_calibrate">[pid_calibrate]<a class="headerlink" href="#pid_calibrate" title="Permanent link">&para;</a></h3>
+<p>Il modulo pid_calibrate viene caricato automaticamente se nel file di configurazione è definito un riscaldatore.</p>
+<h4 id="pid_calibrate_1">PID_CALIBRATE<a class="headerlink" href="#pid_calibrate_1" title="Permanent link">&para;</a></h4>
+<p><code>PID_CALIBRATE HEATER=&lt;nome_config&gt; TARGET=&lt;temperatura&gt; [WRITE_FILE=1]</code>: esegue un test di calibrazione PID. Il riscaldatore specificato verrà abilitato fino al raggiungimento della temperatura target specificata, quindi il riscaldatore verrà spento e acceso per diversi cicli. Se il parametro WRITE_FILE è abilitato, verrà creato il file /tmp/heattest.txt con un log di tutti i campioni di temperatura prelevati durante il test.</p>
+<h3 id="pause_resume">[pause_resume]<a class="headerlink" href="#pause_resume" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#pause_resume">pause_resume config section</a> è abilitata:</p>
+<h4 id="pause">PAUSE<a class="headerlink" href="#pause" title="Permanent link">&para;</a></h4>
+<p><code>PAUSE</code>: mette in pausa la stampa corrente. La posizione attuale viene acquisita per la ripresa al ripristino.</p>
+<h4 id="resume">RESUME<a class="headerlink" href="#resume" title="Permanent link">&para;</a></h4>
+<p><code>RESUME [VELOCITY=&lt;value&gt;]</code>: riprende la stampa da una pausa, ripristinando prima la posizione precedentemente acquisita. Il parametro VELOCITY determina la velocità alla quale l'utensile deve tornare alla posizione originale acquisita.</p>
+<h4 id="clear_pause">CLEAR_PAUSE<a class="headerlink" href="#clear_pause" title="Permanent link">&para;</a></h4>
+<p><code>CLEAR_PAUSE</code>: cancella lo stato di pausa corrente senza riprendere la stampa. Questo è utile se si decide di annullare una stampa dopo un PAUSE. Si consiglia di aggiungerlo al gcode iniziale per assicurarsi che lo stato in pausa sia aggiornato per ogni stampa.</p>
+<h4 id="cancel_print">CANCEL_PRINT<a class="headerlink" href="#cancel_print" title="Permanent link">&para;</a></h4>
+<p><code>CANCEL_PRINT</code>: Annulla la stampa corrente.</p>
+<h3 id="probe">[probe]<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando è abilitata una <a href="Config_Reference.html#probe">sezione di configurazione della sonda</a> o una <a href="Config_Reference.html#bltouch">sezione di configurazione di bltouch</a> (consultare anche la <a href="Probe_Calibrate.html">guida alla calibrazione della sonda</a>).</p>
+<h4 id="sonda">sonda<a class="headerlink" href="#sonda" title="Permanent link">&para;</a></h4>
+<p><code>PROBE [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;] [SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;] [SAMPLES_TOLERANCE_RETRIES=&lt;count&gt;] [SAMPLES_RESULT=median|average]</code>: Sposta il nozzle verso il basso finché la sonda non scatta. Se viene fornito uno qualsiasi dei parametri opzionali, sovrascrive l'impostazione equivalente nella sezione <a href="Config_Reference.html#probe">probe config section</a>.</p>
+<h4 id="query_probe">QUERY_PROBE<a class="headerlink" href="#query_probe" title="Permanent link">&para;</a></h4>
+<p><code>QUERY_PROBE</code>: Riporta lo stato corrente della sonda ("triggered" o "open").</p>
+<h4 id="probe_accuracy">PROBE_ACCURACY<a class="headerlink" href="#probe_accuracy" title="Permanent link">&para;</a></h4>
+<p><code>PROBE_ACCURACY [PROBE_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;] [SAMPLE_RETRACT_DIST=&lt;mm&gt;]</code>: Calcola la deviazione massima, minima, media, mediana e standard di più campionamentidella sonda. Per impostazione predefinita, vengono presi 10 CAMPIONI. In caso contrario, i parametri opzionali sono impostati per default sulla loro impostazione equivalente nella sezione di configurazione della sonda.</p>
+<h4 id="probe_calibrate">PROBE_CALIBRATE<a class="headerlink" href="#probe_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>PROBE_CALIBRATE [SPEED=&lt;speed&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Eseguire uno script di aiuto utile per calibrare l'offset z della sonda. Vedere il comando PROBE per i dettagli sui parametri opzionali della sonda. Vedere il comando MANUAL_PROBE per i dettagli del parametro SPEED e sui comandi aggiuntivi disponibili mentre lo strumento è attivo. Nota che il comando PROBE_CALIBRATE utilizza la variabile di velocità per spostarsi in direzione XY e Z.</p>
+<h4 id="z_offset_apply_probe">Z_OFFSET_APPLY_PROBE<a class="headerlink" href="#z_offset_apply_probe" title="Permanent link">&para;</a></h4>
+<p><code>Z_OFFSET_APPLY_PROBE</code>: prende l'offset Z Gcode corrente (aka, babystepping) e lo sottrae dallo z_offset della sonda. Questo per prendere un valore di babystep utilizzato di frequente e "renderlo permanente". Richiede un <code>SAVE_CONFIG</code> per avere effetto.</p>
+<h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
+<p>Il modulo query_adc viene caricato automaticamente.</p>
+<h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
+<p><code>QUERY_ADC [NAME=&lt;config_name&gt;] [PULLUP=&lt;value&gt;]</code>: Riporta l'ultimo valore analogico ricevuto per un pin analogico configurato. Se NAME non viene fornito, viene riportato l'elenco dei nomi dei convertitori adc disponibili. Se viene fornito PULLUP (come valore in Ohm), viene riportato il valore analogico grezzo insieme alla resistenza equivalente dato quel pullup specificato.</p>
+<h3 id="query_endstops">[query_endstops]<a class="headerlink" href="#query_endstops" title="Permanent link">&para;</a></h3>
+<p>Il modulo query_endstops viene caricato automaticamente. I seguenti comandi G-Code standard sono attualmente disponibili, ma non è consigliabile utilizzarli:</p>
+<ul>
+<li>Ottieni lo stato del finecorsa: <code>M119</code> (usa invece QUERY_ENDSTOPS.)</li>
+</ul>
+<h4 id="query_endstops_1">QUERY_ENDSTOPS<a class="headerlink" href="#query_endstops_1" title="Permanent link">&para;</a></h4>
+<p><code>QUERY_ENDSTOPS</code>: Rilevare i finecorsa degli assi e segnala se sono "attivate" o in uno stato "aperto". Questo comando viene in genere utilizzato per verificare che un finecorsa funzioni correttamente.</p>
+<h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando una <a href="Config_Reference.html#tester_risonanza">sezione di configurazione di tester_risonanza</a> è abilitata (consultare anche la <a href="Measuring_Resonances.html">guida alle risonanze di misurazione</a>).</p>
+<h4 id="measure_axes_noise">MEASURE_AXES_NOISE<a class="headerlink" href="#measure_axes_noise" title="Permanent link">&para;</a></h4>
+<p><code>MEASURE_AXES_NOISE</code>: misura ed riporta il rumore per tutti gli assi di tutti i chip dell'accelerometro abilitati.</p>
+<h4 id="test_resonances">TEST_RESONANCES<a class="headerlink" href="#test_resonances" title="Permanent link">&para;</a></h4>
+<p><code>TEST_RESONANCES AXIS=&lt;asse&gt; OUTPUT=&lt;risonanze,dati_grezzi&gt; [NAME=&lt;nome&gt;] [FREQ_START=&lt;freq_min&gt;] [FREQ_END=&lt;freq_max&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;adxl345_chip_name&gt;] [ POINT=x,y,z] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: esegue il test di risonanza in tutti i punti sonda configurati per l'"asse" richiesto e misura l'accelerazione utilizzando i chip dell'accelerometro configurati per il rispettivo asse. "asse" può essere X o Y, oppure specificare una direzione arbitraria come <code>AXIS=dx,dy</code>, dove dx e dy sono numeri in virgola mobile che definiscono un vettore di direzione (es. <code>AXIS=X</code>, <code>AXIS=Y</code>, o <code>AXIS=1,-1</code> per definire una direzione diagonale). Nota che <code>AXIS=dx,dy</code> e <code>AXIS=-dx,-dy</code> sono equivalenti. <code>adxl345_chip_name</code> può essere uno o più chip adxl345 configurati, delimitati da virgole, ad esempio <code>CHIPS="adxl345, adxl345 rpi"</code>. Nota che <code>adxl345</code> può essere omesso dai chip adxl345 denominati. Se POINT è specificato, sovrascriverà i punti configurati in <code>[resonance_tester]</code>. Se <code>INPUT_SHAPING=0</code> o non impostato (predefinito), disabilita l'input shaping per il test di risonanza, perché non è valido eseguire il test di risonanza con input shaper abilitato. Il parametro <code>OUTPUT</code> è un elenco separato da virgole di cui verranno scritti gli output. Se viene richiesto <code>raw_data</code>, i dati grezzi dell'accelerometro vengono scritti in un file o in una serie di file <code>/tmp/raw_data_&lt;asse&gt;_[&lt;nome_chip&gt;_][&lt;punto&gt;_]&lt;nome&gt;.csv</code> con (<code>&lt;punto&gt;_</code> parte del nome generata solo se è configurato più di 1 punto sonda o è specificato PUNTO). Se viene specificato <code>resonances</code>, la risposta in frequenza viene calcolata (su tutti i punti sonda) e scritta nel file <code>/tmp/resonances_&lt;asse&gt;_&lt;nome&gt;.csv</code>. Se non è impostato, OUTPUT è impostato su <code>risonanze</code> e NAME è impostato sull'ora corrente nel formato "AAAAMMGG_HHMMSS".</p>
+<h4 id="shaper_calibrate">SHAPER_CALIBRATE<a class="headerlink" href="#shaper_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>SHAPER_CALIBRATE [AXIS=&lt;asse&gt;] [NAME=&lt;nome&gt;] [FREQ_START=&lt;freq_min&gt;] [FREQ_END=&lt;freq_max&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [MAX_SMOOTHING=&lt;livellamento_max&gt;]</code>: simile a <code>TEST_RESONANCES</code>, esegue il test di risonanza come configurato e cerca di trovare i parametri ottimali di input shaper per l'asse richiesto (o entrambi gli assi X e Y se il parametro <code>AXIS</code> non è impostato). Se <code>MAX_SMOOTHING</code> non è impostato, il suo valore viene preso dalla sezione <code>[resonance_tester]</code>, con l'impostazione predefinita non impostata. Per ulteriori informazioni sull'uso di questa funzione, vedere il <a href="Measuring_Resonances.html#max-smoothing">Max smoothing</a> della guida alla misurazione delle risonanze. I risultati dell'ottimizzazione vengono stampati sulla console e le risposte in frequenza e i diversi valori degli shaper di input vengono scritti in uno o più file CSV <code>/tmp/calibration_data_&lt;asse&gt;_&lt;nome&gt;.csv</code>. A meno che non sia specificato, NAME imposta l'ora corrente nel formato "AAAAMMGG_HHMMSS". Nota che i parametri di input shaper suggeriti possono essere mantenuti nella configurazione eseguendo il comando <code>SAVE_CONFIG</code>.</p>
+<h3 id="respond">[respond]<a class="headerlink" href="#respond" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi G-Code standard sono disponibili quando la <a href="Config_Reference.html#respond">sezione di configurazione di risposta</a> è abilitata:</p>
+<ul>
+<li><code>M118 &lt;messaggio&gt;</code>: fa eco al messaggio preceduto dal prefisso predefinito configurato (o <code>echo:</code> se non è configurato alcun prefisso).</li>
+</ul>
+<p>Sono inoltre disponibili i seguenti comandi aggiuntivi.</p>
+<h4 id="respond_1">RESPOND<a class="headerlink" href="#respond_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>RESPOND MSG="&lt;message&gt;"</code>: echo il messaggio preceduto dal prefisso predefinito configurato (o <code>echo:</code> se non è configurato alcun prefisso).</li>
+<li><code>RESPOND TYPE=echo MSG="&lt;message&gt;"</code>: echo del messaggio preceduto da <code>echo:</code>.</li>
+<li><code>RESPOND TYPE=echo_no_space MSG="&lt;messaggio&gt;"</code>: fa eco al messaggio preceduto da <code>echo:</code> senza uno spazio tra prefisso e messaggio, utile per la compatibilità con alcuni plugin di octoprint che prevedono una formattazione molto specifica.</li>
+<li><code>RESPOND TYPE=command MSG="&lt;message&gt;"</code>: echo il messaggio preceduto da <code>//</code>. OctoPrint può essere configurato per rispondere a questi messaggi (ad es. <code>RESPOND TYPE=command MSG=action:pause</code>).</li>
+<li><code>RESPOND TYPE=error MSG="&lt;messaggio&gt;"</code>: fa eco al messaggio preceduto da <code>!!</code>.</li>
+<li><code>RESPOND PREFIX=&lt;prefix&gt; MSG="&lt;message&gt;"</code>: echo il messaggio preceduto da <code>&lt;prefix&gt;</code>. (Il parametro <code>PREFIX</code> avrà la priorità sul parametro <code>TYPE</code>)</li>
+</ul>
+<h3 id="save_variables">[save_variables]<a class="headerlink" href="#save_variables" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è abilitato se è stata abilitata una <a href="Config_Reference.html#save_variables">sezione di configurazione save_variables</a>.</p>
+<h4 id="save_variable">SAVE_VARIABLE<a class="headerlink" href="#save_variable" title="Permanent link">&para;</a></h4>
+<p><code>SAVE_VARIABLE VARIABLE=&lt;nome&gt; VALUE=&lt;valore&gt;</code>: salva la variabile su disco in modo che possa essere utilizzata tra i riavvii. Tutte le variabili memorizzate vengono caricate nel dict <code>printer.save_variables.variables</code> all'avvio e possono essere utilizzate nelle macro gcode. Il VALUE fornito viene analizzato come un valore letterale Python.</p>
+<h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#screws_tilt_adjust">sezione di configurazione viti_tilt_adjust</a> è abilitata (consultare anche la <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">manual level guide</a>).</p>
+<h4 id="screws_tilt_calculate">SCREWS_TILT_CALCULATE<a class="headerlink" href="#screws_tilt_calculate" title="Permanent link">&para;</a></h4>
+<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Questo comando richiamerà lo strumento di regolazione delle viti del piatto. Comanderà l'ugello in diverse posizioni (come definito nel file di configurazione) sondando l'altezza z e calcolerà il numero di giri della manopola per regolare il livello del piatto. Se si specifica DIRECTION, le rotazioni della manopola saranno tutte nella stessa direzione, in senso orario (CW) o in senso antiorario (CCW). Vedere il comando PROBE per i dettagli sui parametri della sonda opzionali. IMPORTANTE: DEVI sempre eseguire un G28 prima di utilizzare questo comando. Se viene specificato MAX_DEVIATION, il comando genererà un errore gcode se qualsiasi differenza nell'altezza della vite rispetto all'altezza della vite di base è maggiore del valore fornito.</p>
+<h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
+<p>Quando la <a href="Config_Reference.html#sdcard_loop">sezione di configurazione sdcard_loop</a> è abilitata, sono disponibili i seguenti comandi estesi.</p>
+<h4 id="sdcard_loop_begin">SDCARD_LOOP_BEGIN<a class="headerlink" href="#sdcard_loop_begin" title="Permanent link">&para;</a></h4>
+<p><code>SDCARD_LOOP_BEGIN COUNT=&lt;count&gt;</code>: inizia una sezione in loop nella stampa SD. Un conteggio pari a 0 indica che la sezione deve essere ripetuta indefinitamente.</p>
+<h4 id="sdcard_loop_end">SDCARD_LOOP_END<a class="headerlink" href="#sdcard_loop_end" title="Permanent link">&para;</a></h4>
+<p><code>SDCARD_LOOP_END</code>: termina una sezione in loop nella stampa SD.</p>
+<h4 id="sdcard_loop_desist">SDCARD_LOOP_DESIST<a class="headerlink" href="#sdcard_loop_desist" title="Permanent link">&para;</a></h4>
+<p><code>SDCARD_LOOP_DESIST</code>: completa i loop esistenti senza ulteriori iterazioni.</p>
+<h3 id="servo">[servo]<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando una <a href="Config_Reference.html#servo">sezione di configurazione servo</a> è abilitata.</p>
+<h4 id="set_servo">SET_SERVO<a class="headerlink" href="#set_servo" title="Permanent link">&para;</a></h4>
+<p><code>SET_SERVO SERVO=nome_config [ANGLE=&lt;gradi&gt; | WIDTH=&lt;secondi&gt;]</code>: Imposta la posizione del servo sull'angolo dato (in gradi) o sulla larghezza dell'impulso (in secondi). Usa <code>WIDTH=0</code> per disabilitare l'uscita servo.</p>
+<h3 id="skew_correction">[skew_correction]<a class="headerlink" href="#skew_correction" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando è abilitata la <a href="Config_Reference.html#correzione_asimmetria">sezione config_correzione_asimmetria</a> (consultare anche la guida <a href="Correzione_asimmetria.md">Correzione_asimmetria</a>).</p>
+<h4 id="set_skew">SET_SKEW<a class="headerlink" href="#set_skew" title="Permanent link">&para;</a></h4>
+<p><code>SET_SKEW [XY=&lt;ac_length,bd_length,ad_length&gt;] [XZ=&lt;ac,bd,ad&gt;] [YZ=&lt;ac,bd,ad&gt;] [CLEAR=&lt;0|1&gt;]</code>: Configura il modulo [correzione_inclinazione ] con misure (in mm) tratte da una stampa di calibrazione. Si possono inserire misure per qualsiasi combinazione di piani, i piani non inseriti manterranno il loro valore attuale. Se viene immesso <code>CLEAR=1</code>, tutta la correzione dell'inclinazione sarà disabilitata.</p>
+<h4 id="get_current_skew">GET_CURRENT_SKEW<a class="headerlink" href="#get_current_skew" title="Permanent link">&para;</a></h4>
+<p><code>GET_CURRENT_SKEW</code>: Riporta l'inclinazione corrente della stampante per ciascun piano sia in radianti che in gradi. L'inclinazione viene calcolata in base ai parametri forniti tramite il gcode <code>SET_SKEW</code>.</p>
+<h4 id="calc_measured_skew">CALC_MEASURED_SKEW<a class="headerlink" href="#calc_measured_skew" title="Permanent link">&para;</a></h4>
+<p><code>CALC_MEASURED_SKEW [AC=&lt;ac_length&gt;] [BD=&lt;bd_length&gt;] [AD=&lt;ad_length&gt;]</code>: calcola e riporta l'inclinazione (in radianti e gradi) in base a una stampa di test misurata. Questo può essere utile per determinare l'inclinazione corrente della stampante dopo che è stata applicata la correzione. Può anche essere utile prima di applicare la correzione per determinare se è necessaria la correzione dell'inclinazione. Vedere <a href="Correzione_inclinazione.md">Correzione inclinazione</a> per i dettagli su oggetti e misurazioni di calibrazione inclinazione.</p>
+<h4 id="skew_profile">SKEW_PROFILE<a class="headerlink" href="#skew_profile" title="Permanent link">&para;</a></h4>
+<p><code>SKEW_PROFILE [LOAD=&lt;nome&gt;] [SAVE=&lt;nome&gt;] [REMOVE=&lt;nome&gt;]</code>: Gestione del profilo per correzione_inclinazione. LOAD ripristinerà lo stato di inclinazione dal profilo corrispondente al nome fornito. SAVE salverà lo stato di inclinazione corrente in un profilo che corrisponde al nome fornito. REMOVE eliminerà il profilo corrispondente al nome fornito dalla memoria persistente. Si noti che dopo aver eseguito le operazioni SAVE o REMOVE è necessario eseguire il gcode SAVE_CONFIG per rendere permanenti le modifiche alla memoria persistente.</p>
+<h3 id="smart_effector">[smart_effector]<a class="headerlink" href="#smart_effector" title="Permanent link">&para;</a></h3>
+<p>Sono disponibili diversi comandi quando una <a href="Config_Reference.html#smart_effector">sezione di configurazione smart_effector</a> è abilitata. Assicurati di controllare la documentazione ufficiale per Smart Effector su <a href="https://duet3d.dozuki.com/Wiki/Smart_effector_and_carriage_adapters_for_delta_printer">Duet3D Wiki</a> prima di modificare i parametri di Smart Effector. Controllare anche la <a href="Probe_Calibrate.html">guida alla calibrazione della sonda</a>.</p>
+<h4 id="set_smart_effector">SET_SMART_EFFECTOR<a class="headerlink" href="#set_smart_effector" title="Permanent link">&para;</a></h4>
+<p><code>SET_SMART_EFFECTOR [SENSITIVITY=&lt;sensibilità&gt;] [ACCEL=&lt;accel&gt;] [RECOVERY_TIME=&lt;tempo&gt;]</code>: imposta i parametri di Smart Effector. Quando viene specificato <code>SENSITIVITY</code>, il rispettivo valore viene scritto nella EEPROM dello SmartEffector (richiede che sia fornito <code>control_pin</code>). I valori di <code>&lt;sensibilità&gt;</code> accettabili sono 0..255, il valore predefinito è 50. Valori inferiori richiedono una minore forza di contatto dell'ugello per attivarsi (ma esiste un rischio maggiore di falso trigger a causa delle vibrazioni durante la tastatura) e valori più alti riducono il falso trigger (ma richiede una maggiore forza di contatto per attivarsi). Poiché la sensibilità viene scritta nella EEPROM, viene conservata dopo lo spegnimento e quindi non è necessario configurarla ad ogni avvio della stampante. <code>ACCEL</code> e <code>RECOVERY_TIME</code> consentono di sovrascrivere i parametri corrispondenti in fase di esecuzione, vedere la <a href="Config_Reference.html#smart_effector">sezione di configurazione</a> di Smart Effector per maggiori informazioni su quei parametri.</p>
+<h4 id="reset_smart_effector">RESET_SMART_EFFECTOR<a class="headerlink" href="#reset_smart_effector" title="Permanent link">&para;</a></h4>
+<p><code>RESET_SMART_EFFECTOR</code>: Ripristina la sensibilità di Smart Effector alle impostazioni di fabbrica. Richiede che il relativo <code>control_pin</code> sia fornito nella sezione di configurazione.</p>
+<h3 id="stepper_enable">[stepper_enable]<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h3>
+<p>Il modulo stepper_enable viene caricato automaticamente.</p>
+<h4 id="set_stepper_enable">SET_STEPPER_ENABLE<a class="headerlink" href="#set_stepper_enable" title="Permanent link">&para;</a></h4>
+<p><code>SET_STEPPER_ENABLE STEPPER=&lt;nome_config&gt; ENABLE=[0|1]</code>: Abilita o disabilita solo lo stepper dato. Questo è uno strumento diagnostico e di debug e deve essere utilizzato con cautela. La disabilitazione di un motore dell'asse non ripristina le informazioni di homing. Lo spostamento manuale di uno stepper disabilitato può causare l'azionamento del motore della macchina al di fuori dei limiti di sicurezza. Ciò può causare danni ai componenti dell'asse, al hotend e alla superficie di stampa.</p>
+<h3 id="temperature_fan">[temperature_fan]<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h3>
+<p>Il comando seguente è disponibile quando una <a href="Config_Reference.html#ventola_temperatura">sezione di configurazione della ventola_temperatura</a> è abilitata.</p>
+<h4 id="set_temperature_fan_target">SET_TEMPERATURE_FAN_TARGET<a class="headerlink" href="#set_temperature_fan_target" title="Permanent link">&para;</a></h4>
+<p><code>SET_TEMPERATURE_FAN_TARGET temperature_fan=&lt;temperature_fan_name&gt; [target=&lt;target_temperature&gt;] [min_speed=&lt;min_speed&gt;] [max_speed=&lt;max_speed&gt;]</code>: Imposta la temperatura target per una temperature_fan. Se non viene fornito un target, viene impostato sulla temperatura specificata nel file di configurazione. Se le velocità non vengono fornite, non viene applicata alcuna modifica.</p>
+<h3 id="tmcxxxx">[tmcXXXX]<a class="headerlink" href="#tmcxxxx" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando una qualsiasi delle <a href="Config_Reference.html#tmc-stepper-driver-configuration">tmcXXXX config section</a> è abilitata.</p>
+<h4 id="dump_tmc">DUMP_TMC<a class="headerlink" href="#dump_tmc" title="Permanent link">&para;</a></h4>
+<p><code>DUMP_TMC STEPPER=&lt;nome&gt;</code>: questo comando leggerà i registri del driver TMC e ne riporterà i valori.</p>
+<h4 id="init_tmc">INIT_TMC<a class="headerlink" href="#init_tmc" title="Permanent link">&para;</a></h4>
+<p><code>INIT_TMC STEPPER=&lt;nome&gt;</code>: questo comando inizializzerà i registri TMC. Necessario per riattivare il driver se l'alimentazione al chip viene spenta e poi riaccesa.</p>
+<h4 id="set_tmc_current">SET_TMC_CURRENT<a class="headerlink" href="#set_tmc_current" title="Permanent link">&para;</a></h4>
+<p><code>SET_TMC_CURRENT STEPPER=&lt;nome&gt; CURRENT=&lt;amps&gt; HOLDCURRENT=&lt;amps&gt;</code>: Questo regolerà le correnti di funzionamento e di mantenimento del driver TMC. (HOLDCURRENT non è applicabile ai driver tmc2660.)</p>
+<h4 id="set_tmc_field">SET_TMC_FIELD<a class="headerlink" href="#set_tmc_field" title="Permanent link">&para;</a></h4>
+<p><code>SET_TMC_FIELD STEPPER=&lt;nome&gt; FIELD=&lt;campo&gt; VALUE=&lt;valore&gt;</code>: Questo altererà il valore del campo del registro specificato del driver TMC. Questo comando è destinato alla diagnostica e al debug di basso livello solo perché la modifica dei campi durante l'esecuzione può causare comportamenti indesiderati e potenzialmente pericolosi della stampante. Le modifiche permanenti dovrebbero invece essere apportate utilizzando il file di configurazione della stampante. Non vengono eseguiti controlli di integrità per i valori indicati.</p>
+<h3 id="toolhead">[toolhead]<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h3>
+<p>Il modulo toolhead viene caricato automaticamente.</p>
+<h4 id="set_velocity_limit">SET_VELOCITY_LIMIT<a class="headerlink" href="#set_velocity_limit" title="Permanent link">&para;</a></h4>
+<p><code>SET_VELOCITY_LIMIT [VELOCITY=&lt;valore&gt;] [ACCEL=&lt;valore&gt;] [ACCEL_TO_DECEL=&lt;valore&gt;] [SQUARE_CORNER_VELOCITY=&lt;valore&gt;]</code>: Modifica i limiti di velocità della stampante.</p>
+<h3 id="tuning_tower">[tuning_tower]<a class="headerlink" href="#tuning_tower" title="Permanent link">&para;</a></h3>
+<p>Il modulo tuning_tower viene caricato automaticamente.</p>
+<h4 id="tuning_tower_1">TUNING_TOWER<a class="headerlink" href="#tuning_tower_1" title="Permanent link">&para;</a></h4>
+<p><code>TUNING_TOWER COMMAND=&lt;comando&gt; PARAMETER=&lt;nome&gt; START=&lt;valore&gt; [SKIP=&lt;valore&gt;] [FACTOR=&lt;valore&gt; [BAND=&lt;valore&gt;]] | [STEP_DELTA=&lt;valore&gt; STEP_HEIGHT=&lt;valore&gt;]</code>: Uno strumento per regolare un parametro su ciascuna altezza Z durante una stampa. Lo strumento eseguirà il dato <code>COMMAND</code> con il dato <code>PARAMETER</code> assegnato a un valore che varia con <code>Z</code> secondo una formula. Usa <code>FACTOR</code> se utilizzerai un righello o calibri per misurare l'altezza Z del valore ottimale, o <code>STEP_DELTA</code> e <code>STEP_HEIGHT</code> se il modello della torre di regolazione ha bande di valori discreti come è comune con le torri della temperatura. Se viene specificato <code>SKIP=&lt;valore&gt;</code>, il processo di ottimizzazione non inizia finché non viene raggiunta l'altezza Z <code>&lt;valore&gt;</code>, e al di sotto di essa il valore sarà impostato su <code>START</code>; in questo caso, la <code>z_height</code> usata nelle formule seguenti è in realtà <code>max(z - skip, 0)</code>. Ci sono tre possibili combinazioni di opzioni:</p>
+<ul>
+<li><code>FACTOR</code>: Il valore cambia a una velocità di <code>factor</code> per millimetro. La formula utilizzata è: <code>valore = inizio + fattore * z_altezza</code>. È possibile inserire l'altezza Z ottimale direttamente nella formula per determinare il valore del parametro ottimale.</li>
+<li><code>FACTOR</code> e <code>BAND</code>: il valore cambia a una velocità media di <code>factor</code> per millimetro, ma in bande discrete in cui la regolazione verrà effettuata solo ogni <code>BAND</code> millimetri di altezza Z. La formula utilizzata è: <code>value = start + factor * ((floor(z_height / band) + .5) * band)</code>.</li>
+<li><code>STEP_DELTA</code> e <code>STEP_HEIGHT</code>: il valore cambia di <code>STEP_DELTA</code> ogni <code>STEP_HEIGHT</code> millimetri. La formula utilizzata è: <code>value = start + step_delta * floor(z_height / step_height)</code>. Puoi semplicemente contare le bande o leggere le etichette della torre di tuning per determinare il valore ottimale.</li>
+</ul>
+<h3 id="virtual_sdcard">[virtual_sdcard]<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h3>
+<p>Klipper supporta i seguenti comandi G-Code standard se la <a href="Config_Reference.html#virtual_sdcard">sezione di configurazione di virtual_sdcard</a> è abilitata:</p>
+<ul>
+<li>Elenco scheda SD: <code>M20</code></li>
+<li>Inizializza scheda SD: <code>M21</code></li>
+<li>Selezionare il file SD: <code>M23 &lt;nomefile&gt;</code></li>
+<li>Avvia/riprendi la stampa SD: <code>M24</code></li>
+<li>Sospendi la stampa SD: <code>M25</code></li>
+<li>Impostare la posizione SD: <code>M26 S&lt;offset&gt;</code></li>
+<li>Riporta lo stato di stampa SD: <code>M27</code></li>
+</ul>
+<p>Inoltre, quando la sezione di configurazione "virtual_sdcard" è abilitata, sono disponibili i seguenti comandi estesi.</p>
+<h4 id="sdcard_print_file">SDCARD_PRINT_FILE<a class="headerlink" href="#sdcard_print_file" title="Permanent link">&para;</a></h4>
+<p><code>SDCARD_PRINT_FILE FILENAME=&lt;nomefile&gt;</code>: carica un file e avvia la stampa SD.</p>
+<h4 id="sdcard_reset_file">SDCARD_RESET_FILE<a class="headerlink" href="#sdcard_reset_file" title="Permanent link">&para;</a></h4>
+<p><code>SDCARD_RESET_FILE</code>: Scarica il file e cancella lo stato SD.</p>
+<h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
+<p>I seguenti comandi sono disponibili quando la <a href="Config_Reference.html#z_tilt">sezione z_tilt config</a> è abilitata.</p>
+<h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
+<p><code>Z_TILT_ADJUST [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: questo comando sonderà i punti specificati nella configurazione e quindi apporterà regolazioni indipendenti a ciascuno Z stepper per compensare l'inclinazione. Vedere il comando PROBE per i dettagli sui parametri opzionali della sonda.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Torna su
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Piede">
+      
+        
+        <a href="Pressure_Advance.html" class="md-footer__link md-footer__link--prev" aria-label="Precedente: Anticipo di pressione" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Precedente
+              </span>
+              Anticipo di pressione
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Command_Templates.html" class="md-footer__link md-footer__link--next" aria-label="Prossimo: Commands templates" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Prossimo
+              </span>
+              Commands templates
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copia", "clipboard.copied": "Copiato", "search.config.lang": "it", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Cerca", "search.result.placeholder": "Scrivi per iniziare a cercare", "search.result.none": "Nessun documento trovato", "search.result.one": "1 documento trovato", "search.result.other": "# documenti trovati", "search.result.more.one": "1 altro in questa pagina", "search.result.more.other": "# altri in questa pagina", "search.result.term.missing": "Non presente", "select.version.title": "Seleziona la versione"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

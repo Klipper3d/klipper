@@ -1,0 +1,1603 @@
+
+<!doctype html>
+<html lang="it" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Contribuire a Klipper - Documentazione Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#contribuire-a-klipper" class="md-skip">
+          Vai al contenuto
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Intestazione">
+    <a href="." title="Documentazione Klipper" class="md-header__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentazione Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Contribuire a Klipper
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Seleziona la lingua">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Muoversi
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Cerca" placeholder="Cerca" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Cerca">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Condividi" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Cancella" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inizializza la ricerca
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigazione" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentazione Klipper" class="md-nav__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentazione Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Panoramica
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caratteristiche
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Domande frequenti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versioni
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Modifiche alla configurazione
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contatti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installazione e configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installazione e configurazione" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installazione e configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Riferimenti di configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Riferimenti di configurazione" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Riferimenti di configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Riferimenti configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotation distance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Controlli della configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Livello del piatto
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livello del piatto" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Livello del piatto
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Livellamento del piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Calibrazione delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Calibrazione sonda
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Livellamento manuale
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Matrice del Piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Fase di fine corsa
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensazione della risonanza
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensazione della risonanza" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensazione della risonanza
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensazione della risonanza
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Misurazione delle risonanze
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Anticipo di pressione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Template dei comandi
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Template dei comandi" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Template dei comandi
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Commands templates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Status reference
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Driver TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing e Probing con microcontrollore multiplo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correzione dell'inclinazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Escludi oggetti
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilizzo dei strumenti PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentazione per sviluppatori
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentazione per sviluppatori" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentazione per sviluppatori
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Panoramica del codice
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinematica
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocollo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Server API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Comandi MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocollo CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmark
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Contribuire a Klipper
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="CONTRIBUTING.html" class="md-nav__link md-nav__link--active">
+        Contribuire a Klipper
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#panoramica-del-processo-di-contribuzione" class="md-nav__link">
+    Panoramica del processo di contribuzione
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cosa-aspettarsi-da-una-revisione" class="md-nav__link">
+    Cosa aspettarsi da una revisione
+  </a>
+  
+    <nav class="md-nav" aria-label="Cosa aspettarsi da una revisione">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aiutare-con-le-revisioni" class="md-nav__link">
+    Aiutare con le revisioni
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revisori" class="md-nav__link">
+    Revisori
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formato-dei-messaggi-di-commit" class="md-nav__link">
+    Formato dei messaggi di commit
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contribuire-a-traduzioni-klipper" class="md-nav__link">
+    Contribuire a Traduzioni Klipper
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper packaging
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documenti specifici del dispositivo
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documenti specifici del dispositivo" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documenti specifici del dispositivo
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Esempi di configurazioni
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Aggiornamenti scheda SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrollore RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore TSL1401CL di larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore di Hall per larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#panoramica-del-processo-di-contribuzione" class="md-nav__link">
+    Panoramica del processo di contribuzione
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cosa-aspettarsi-da-una-revisione" class="md-nav__link">
+    Cosa aspettarsi da una revisione
+  </a>
+  
+    <nav class="md-nav" aria-label="Cosa aspettarsi da una revisione">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#aiutare-con-le-revisioni" class="md-nav__link">
+    Aiutare con le revisioni
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#revisori" class="md-nav__link">
+    Revisori
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formato-dei-messaggi-di-commit" class="md-nav__link">
+    Formato dei messaggi di commit
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contribuire-a-traduzioni-klipper" class="md-nav__link">
+    Contribuire a Traduzioni Klipper
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/CONTRIBUTING.md" title="Modifica" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="contribuire-a-klipper">Contribuire a Klipper<a class="headerlink" href="#contribuire-a-klipper" title="Permanent link">&para;</a></h1>
+<p>Grazie per aver contribuito a Klipper! Questo documento descrive il processo per contribuire alle modifiche di Klipper.</p>
+<p>Consulta la <a href="Contact.html">contact page</a> per informazioni sulla segnalazione di un problema o per i dettagli su come contattare gli sviluppatori.</p>
+<h2 id="panoramica-del-processo-di-contribuzione">Panoramica del processo di contribuzione<a class="headerlink" href="#panoramica-del-processo-di-contribuzione" title="Permanent link">&para;</a></h2>
+<p>I contributi a Klipper seguono generalmente un processo di alto livello:</p>
+<ol>
+<li>Inizia creando una <a href="https://github.com/Klipper3d/klipper/pulls">Richiesta pull GitHub</a> quando un proposta è pronta per la diffusione.</li>
+<li>Quando un <a href="#reviewers">reviewer</a> è disponibile per <a href="#what-to-expect-in-a-review">review</a> l'invio, si assegnerà la richiesta pull su GitHub. L'obiettivo della revisione è cercare i difetti e verificare che la proposta segua linee guida documentate.</li>
+<li>Dopo una revisione riuscita, il revisore "approverà la revisione" su GitHub e un <a href="#reviewers">maintainer</a> eseguirà il commit della modifica al ramo principale di Klipper.</li>
+</ol>
+<p>Quando lavori sui miglioramenti, considera di iniziare (o contribuire a) un argomento su <a href="Contact.html">Klipper Discourse</a>. Una discussione in corso sul forum può migliorare la visibilità del lavoro di sviluppo e può attirare altri interessati a testare nuovi lavori.</p>
+<h2 id="cosa-aspettarsi-da-una-revisione">Cosa aspettarsi da una revisione<a class="headerlink" href="#cosa-aspettarsi-da-una-revisione" title="Permanent link">&para;</a></h2>
+<p>I contributi a Klipper vengono rivisti prima del merging. L'obiettivo principale del processo di revisione è verificare la presenza di difetti e verificare che la presentazione segua le linee guida specificate nella documentazione di Klipper.</p>
+<p>Resta inteso che ci sono molti modi per portare a termine un compito; non è intenzione della revisione discutere la "migliore" implementazione. Ove possibile, sono preferibili discussioni di revisione incentrate su fatti e misurazioni.</p>
+<p>La maggior parte degli invii otterrà in feedback da una recensione. Preparati a ottenere feedback, fornire ulteriori dettagli e aggiornare l'invio, se necessario.</p>
+<p>Cose comuni che un revisore cercherà:</p>
+<ol>
+<li>
+<p>L'invio è privo di difetti ed è pronto per essere diffuso?I realizzatori dei contributi sono tenuti a testare le loro modifiche prima dell'invio. I revisori cercano gli errori, ma in generale non testano gli invii. Un invio accettato viene spesso distribuito a migliaia di stampanti entro poche settimane dall'accettazione. La qualità degli invii è quindi considerata una priorità.</p>
+<p>Il repository GitHub principale <a href="https://github.com/Klipper3d/klipper">Klipper3d/klipper</a> non accetta lavori sperimentali. I realizzatori di contributi devono eseguire la sperimentazione, il debug e il test nei propri repository. Il server <a href="Contact.html">Klipper Discourse</a> è un buon posto per aumentare la consapevolezza del nuovo lavoro e per trovare utenti interessati a fornire feedback nel mondo reale.</p>
+<p>Gli invii devono superare tutti i <a href="Debugging.html">test di regressione</a>.</p>
+<p>Gli contributi di codice non devono contenere codice di debug eccessivo, opzioni di debug o registrazione del debug in fase di runtime.</p>
+<p>I commenti negli invii di codice dovrebbero concentrarsi sul miglioramento della manutenzione del codice. Gli invii non devono contenere "codice commentato" né commenti eccessivi che descrivono implementazioni passate. Non dovrebbero esserci commenti "todo" eccessivi.</p>
+<p>Gli aggiornamenti alla documentazione non devono dichiarare che si tratta di un "work in progress".</p>
+</li>
+<li>
+<p>L'invio fornisce un vantaggio "ad alto impatto" per gli utenti del mondo reale che svolgono attività nel mondo reale?I revisori devono identificare, almeno nella loro mente, approssimativamente "chi è il pubblico di destinazione", una scala approssimativa delle "dimensioni di quel pubblico", il "beneficio" che otterranno, come "il beneficio viene misurato" e i "risultati di tali prove di misurazione". Nella maggior parte dei casi questo sarà ovvio sia per il mittente che per il revisore e non è esplicitamente dichiarato durante una revisione.</p>
+<p>Le proposte al ramo principale di Klipper dovrebbero avere un pubblico di destinazione degno di nota. Come "regola pratica" generale, gli invii dovrebbero avere come target una base di utenti di almeno 100 utenti del mondo reale.</p>
+<p>Se un revisore chiede dettagli sul "beneficio" di un invio, non considerarlo una critica. Essere in grado di comprendere i vantaggi reali di un cambiamento è una parte naturale di una revisione.</p>
+<p>Quando si discute dei benefici è preferibile discutere di "fatti e misurazioni". In generale, i revisori non cercano risposte del modulo "qualcuno potrebbe trovare utile l'opzione X", né cercano risposte del modulo "questo invio aggiunge una funzionalità implementata dal firmware X". Invece, è generalmente preferibile discutere i dettagli su come è stato misurato il miglioramento della qualità e quali sono stati i risultati di tali misurazioni, ad esempio "i test sulle stampanti Acme X1000 mostrano angoli migliorati come si vede in figura...", o ad esempio " il tempo di stampa dell'oggetto reale X su una stampante Foomatic X900 è passato da 4 ore a 3,5 ore". Resta inteso che i test di questo tipo possono richiedere molto tempo e sforzi. Alcune delle caratteristiche più importanti di Klipper hanno richiesto mesi di discussioni, rielaborazioni, test e documentazione prima di essere fuse nel ramo principale.</p>
+<p>Tutti i nuovi moduli, opzioni di configurazione, comandi, parametri di comando e documenti dovrebbero avere un "impatto elevato". Non vogliamo appesantire gli utenti con opzioni che non possono configurare ragionevolmente né vogliamo appesantirli con opzioni che non forniscono un vantaggio notevole.</p>
+<p>Un revisore può chiedere chiarimenti su come un utente deve configurare un'opzione - una risposta ideale conterrà dettagli sul processo - ad esempio, "gli utenti del MegaX500 dovrebbero impostare l'opzione X su 99,3 mentre gli utenti dell'Elite100Y dovrebbero calibrare l'opzione X usando la procedura ...".</p>
+<p>Se l'obiettivo di un'opzione è rendere il codice più modulare, è preferibile utilizzare le costanti del codice invece delle opzioni di configurazione rivolte all'utente.</p>
+<p>Nuovi moduli, nuove opzioni e nuovi parametri non dovrebbero fornire funzionalità simili ai moduli esistenti: se le differenze sono arbitrarie, è preferibile utilizzare il sistema esistente o effettuare refactoring del codice esistente.</p>
+</li>
+<li>
+<p>Il copyright dell'invio è chiaro, non gratuito e compatibile?I nuovi file C e Python dovrebbero avere una dichiarazione di copyright univoca. Vedere i file esistenti per il formato preferito. È sconsigliato dichiarare un copyright su un file esistente quando si apportano modifiche minori a quel file.</p>
+<p>Il codice prelevato da fonti di terze parti deve essere compatibile con la licenza Klipper (GNU GPLv3). Grandi aggiunte di codice di terze parti dovrebbero essere aggiunte alla directory <code>lib/</code> (e seguire il formato descritto in <a href="https://github.com/Klipper3d/klipper/blob/master/lib/README">lib/README</a>).</p>
+<p>I mittenti devono fornire una <a href="#format-of-commit-messages">Signed-off-line</a> utilizzando il loro vero nome completo. Indica che il mittente è d'accordo con il <a href="developer-certificate-of-origin">developer certificate of origin</a>.</p>
+</li>
+<li>
+<p>L'invio segue le linee guida specificate nella documentazione di Klipper?In particolare, il codice deve seguire le linee guida in <Code_Overview.md> e i file di configurazione devono seguire le linee guida in <Example_Configs.md>.</p>
+</li>
+<li>
+<p>La documentazione di Klipper è aggiornata per riflettere le nuove modifiche?Come minimo, la documentazione di riferimento deve essere aggiornata con le relative modifiche al codice:</p>
+</li>
+</ol>
+<ul>
+<li>Tutti i comandi e i relativi parametri devono essere documentati in <G-Codes.md>.</li>
+<li>Tutti i moduli rivolti all'utente e i relativi parametri di configurazione devono essere documentati in <Config_Reference.md>.</li>
+<li>Tutte le "variabili di stato" esportate devono essere documentate in <Status_Reference.md>.</li>
+<li>Tutti i nuovi "webhook" e i relativi parametri devono essere documentati in <API_Server.md>.</li>
+<li>Qualsiasi modifica che apporti una modifica non compatibile con le versioni precedenti a un comando o a un'impostazione del file di configurazione deve essere documentata in <Config_Changes.md>.</li>
+</ul>
+<p>I nuovi documenti dovrebbero essere aggiunti a <Overview.md> e all'indice del sito web <a href="https://github.com/Klipper3d/klipper/blob/master/docs/_klipper3d/mkdocs.yml">docs/_klipper3d/mkdocs.yml</a>.</p>
+<ol>
+<li>
+<p>I commit sono ben formati, affrontano un singolo argomento per commit e sono indipendenti?I messaggi di commit devono seguire il <a href="#format-of-commit-messages">formato preferito</a>.</p>
+<p>I commit non devono avere un conflitto in fase di merge. Le nuove aggiunte al ramo principale di Klipper vengono sempre eseguite tramite un "rebase" o "squash and rebase". In genere non è necessario che i propositori uniscano nuovamente il loro invio ad ogni aggiornamento al repository principale di Klipper. Tuttavia, se c'è un conflitto in fase di merge, si consiglia ai mittenti di usare <code>git rebase</code> per risolvere il conflitto.</p>
+<p>Ogni commit dovrebbe affrontare una singola modifica di alto livello. Le modifiche di grandi dimensioni dovrebbero essere suddivise in più commit indipendenti. Ogni commit dovrebbe "stare in piedi da solo" in modo che strumenti come <code>git bisect</code> e <code>git revert</code> funzionino in modo affidabile.</p>
+<p>Le modifiche agli spazi bianchi non devono essere mescolate con le modifiche funzionali. In generale, le modifiche agli spazi bianchi gratuite non sono accettate a meno che non provengano dal "proprietario" stabilito del codice da modificare.</p>
+</li>
+</ol>
+<p>Klipper non implementa una rigida "guida allo stile di codifica", ma le modifiche al codice esistente dovrebbero seguire il flusso di codice di alto livello, lo stile di indentazione del codice e il formato di quel codice esistente. Gli invii di nuovi moduli e sistemi hanno una maggiore flessibilità nello stile di codifica, ma è preferibile che il nuovo codice segua uno stile internamente coerente e generalmente segua le norme di codifica.</p>
+<p>Non è un obiettivo di una revisione discutere di "migliori implementazioni". Tuttavia, se un revisore ha difficoltà a comprendere l'implementazione di un invio, può richiedere modifiche per rendere l'implementazione più trasparente. In particolare, se i revisori non riescono a convincersi che un contributo è privo di difetti, potrebbero essere necessarie modifiche.</p>
+<p>Come parte di una revisione, un revisore può creare una richiesta pull alternativa per un argomento. Questo può essere fatto per evitare eccessivi "avanti e indietro" su elementi procedurali minori e quindi snellire il processo di proposta. Può anche essere fatto perché la discussione ispira un revisore a costruire un'implementazione alternativa. Entrambe le situazioni sono il normale risultato di una revisione e non devono essere considerate critiche alla proposta originale.</p>
+<h3 id="aiutare-con-le-revisioni">Aiutare con le revisioni<a class="headerlink" href="#aiutare-con-le-revisioni" title="Permanent link">&para;</a></h3>
+<p>Apprezziamo l'aiuto con le recensioni! Non è necessario essere un <a href="#reviewers">revisore elencato</a> per eseguire una revisione. I propositori di richieste pull di GitHub sono inoltre incoraggiati a rivedere i propri invii.</p>
+<p>Per aiutare con una revisione, segui i passaggi descritti in <a href="#what-to-expect-in-a-review">cosa aspettarsi in una revisione</a> per verificare l'invio. Dopo aver completato la revisione, aggiungi un commento alla richiesta pull di GitHub con i tuoi risultati. Se l'invio supera la revisione, si prega di dichiararlo esplicitamente nel commento, ad esempio qualcosa del tipo "Ho esaminato questa modifica in base ai passaggi del documento CONTRIBUTING e tutto mi sembra a posto". Se non è possibile completare alcuni passaggi della revisione, indicare esplicitamente quali passaggi sono stati rivisti e quali non sono stati rivisti, ad esempio qualcosa del tipo "Non ho verificato la presenza di difetti nel codice, ma ho rivisto tutto il resto nel documento CONTRIBUTING e sembra buono".</p>
+<p>Apprezziamo anche il test degli invii. Se il codice è stato testato, aggiungi un commento alla richiesta pull di GitHub con i risultati del tuo test: successo o fallimento. Si prega di affermare esplicitamente che il codice è stato testato e i risultati, ad esempio qualcosa del tipo "Ho testato questo codice sulla mia stampante Acme900Z con una stampa a vaso e i risultati sono stati buoni".</p>
+<h3 id="revisori">Revisori<a class="headerlink" href="#revisori" title="Permanent link">&para;</a></h3>
+<p>I "revisori" di Klipper sono:</p>
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>GitHub Id</th>
+<th>Aree di interesse</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dmitry Butyugin</td>
+<td>@dmbutyugin</td>
+<td>Input shaping, test di risonanza, cinematica</td>
+</tr>
+<tr>
+<td>Eric Callahan</td>
+<td>@Arksine</td>
+<td>Livellamento del piatto, flashing MCU</td>
+</tr>
+<tr>
+<td>Kevin O'Connor</td>
+<td>@KevinOConnor</td>
+<td>Core motion system, codice microcontrollore</td>
+</tr>
+<tr>
+<td>Paul McGowan</td>
+<td>@mental405</td>
+<td>File di configurazione, documentazione</td>
+</tr>
+</tbody>
+</table>
+<p>Si prega di non eseguire il "ping" di nessuno dei revisori e di non indirizzare gli invii a loro. Tutti i revisori controllano i forum e le PR e si occuperanno delle revisioni quando ne avranno il tempo.</p>
+<p>I "manutentori" di Klipper sono:</p>
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>nome GitHub</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kevin O'Connor</td>
+<td>@KevinOConnor</td>
+</tr>
+</tbody>
+</table>
+<h2 id="formato-dei-messaggi-di-commit">Formato dei messaggi di commit<a class="headerlink" href="#formato-dei-messaggi-di-commit" title="Permanent link">&para;</a></h2>
+<p>Ogni commit dovrebbe avere un messaggio di commit formattato in modo simile al seguente:</p>
+<div class="highlight"><pre><span></span><code>modulo: Riepilogo breve (50 caratteri o meno) in maiuscolo
+
+Testo esplicativo più dettagliato, se necessario. Incolonna a circa
+75 caratteri o giù di lì. In alcuni contesti, la prima riga è trattata 
+come l&#39;oggetto di un&#39;e-mail e il resto del testo come corpo. La
+riga vuota che separa il riassunto dal corpo è critica (a meno che
+non si ometta del tutto il corpo); strumenti come rebase possono
+confondersi se li metti due insieme.
+
+Ulteriori paragrafi vengono dopo le righe vuote..
+
+Firmato da: Il mio nome &lt;myemail@example.org&gt;
+</code></pre></div>
+
+<p>Nell'esempio sopra, <code>module</code> dovrebbe essere il nome di un file o di una directory nel repository (senza un'estensione di file). Ad esempio, <code>clocksync: fix di errore di battitura nella chiamata pause() al momento della connessione</code>. Lo scopo di specificare un nome di modulo nel messaggio di commit è di aiutare a fornire il contesto per i commenti di commit.</p>
+<p>È importante avere una riga "Signed-off-by" su ogni commit - certifica che accetti il <a href="developer-certificate-of-origin">developer certificate of origin</a>. Deve contenere il tuo vero nome (mi dispiace, niente pseudonimi o contributi anonimi) e contenere un indirizzo email corrente.</p>
+<h2 id="contribuire-a-traduzioni-klipper">Contribuire a Traduzioni Klipper<a class="headerlink" href="#contribuire-a-traduzioni-klipper" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/Klipper3d/klipper-translations">Klipper-translations Project</a> è un progetto dedicato alla traduzione di Klipper in diverse lingue. <a href="https://hosted.weblate.org/projects/klipper/">Weblate</a> ospita tutte le stringhe Gettext per la traduzione e la revisione. Le impostazioni locali possono essere visualizzate su <a href="https://www.klipper3d.org">klipper3d.org</a> una volta che soddisfano i seguenti requisiti:</p>
+<ul>
+<li><input disabled="disabled" type="checkbox" /> 75% Copertura totale</li>
+<li><input disabled="disabled" type="checkbox" /> Tutti i titoli (H1) sono tradotti</li>
+<li><input disabled="disabled" type="checkbox" /> An updated navigation hierarchy PR in klipper-translations.</li>
+</ul>
+<p>Per ridurre la frustrazione di tradurre termini specifici del dominio e acquisire consapevolezza delle traduzioni in corso, puoi inviare un PR modificando il <a href="https://github.com/Klipper3d/klipper-translations">Klipper-translations Project</a> <code>readme.md</code>. Una volta che una traduzione è pronta, è possibile apportare la modifica corrispondente al progetto Klipper.</p>
+<p>Se una traduzione esiste già nel repository Klipper e non soddisfa più l'elenco di controllo di cui sopra, verrà contrassegnata come obsoleta dopo un mese senza aggiornamenti.</p>
+<p>Una volta soddisfatti i requisiti, è necessario:</p>
+<ol>
+<li>aggiorna il repository di klipper-translations <a href="https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations">active_translations</a></li>
+<li>Opzionale: aggiungi un file manual-index.md nella cartella <code>docs\locals\&lt;lang&gt;</code> del repository klipper-translations per sostituire index.md specifico della lingua (il file index.md generato non viene visualizzato correttamente).</li>
+</ol>
+<p>Problemi noti:</p>
+<ol>
+<li>Al momento, non esiste un metodo per tradurre correttamente le immagini nella documentazione</li>
+<li>È impossibile tradurre i titoli in mkdocs.yml.</li>
+</ol>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Torna su
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Piede">
+      
+        
+        <a href="Benchmarks.html" class="md-footer__link md-footer__link--prev" aria-label="Precedente: Benchmark" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Precedente
+              </span>
+              Benchmark
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Packaging.html" class="md-footer__link md-footer__link--next" aria-label="Prossimo: Klipper packaging" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Prossimo
+              </span>
+              Klipper packaging
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copia", "clipboard.copied": "Copiato", "search.config.lang": "it", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Cerca", "search.result.placeholder": "Scrivi per iniziare a cercare", "search.result.none": "Nessun documento trovato", "search.result.one": "1 documento trovato", "search.result.other": "# documenti trovati", "search.result.more.one": "1 altro in questa pagina", "search.result.more.other": "# altri in questa pagina", "search.result.term.missing": "Non presente", "select.version.title": "Seleziona la versione"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

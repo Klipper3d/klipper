@@ -1,0 +1,1710 @@
+
+<!doctype html>
+<html lang="it" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Protocollo - Documentazione Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#protocollo" class="md-skip">
+          Vai al contenuto
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Intestazione">
+    <a href="." title="Documentazione Klipper" class="md-header__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentazione Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Protocollo
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Seleziona la lingua">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Muoversi
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Cerca" placeholder="Cerca" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Cerca">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Condividi" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Cancella" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inizializza la ricerca
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigazione" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentazione Klipper" class="md-nav__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentazione Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Panoramica
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caratteristiche
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Domande frequenti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versioni
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Modifiche alla configurazione
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contatti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installazione e configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installazione e configurazione" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installazione e configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Riferimenti di configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Riferimenti di configurazione" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Riferimenti di configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Riferimenti configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotation distance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Controlli della configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Livello del piatto
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livello del piatto" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Livello del piatto
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Livellamento del piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Calibrazione delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Calibrazione sonda
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Livellamento manuale
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Matrice del Piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Fase di fine corsa
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensazione della risonanza
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensazione della risonanza" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensazione della risonanza
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensazione della risonanza
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Misurazione delle risonanze
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Anticipo di pressione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Template dei comandi
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Template dei comandi" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Template dei comandi
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Commands templates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Status reference
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Driver TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing e Probing con microcontrollore multiplo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correzione dell'inclinazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Escludi oggetti
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilizzo dei strumenti PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentazione per sviluppatori
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentazione per sviluppatori" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentazione per sviluppatori
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Panoramica del codice
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinematica
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Protocollo
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Protocol.html" class="md-nav__link md-nav__link--active">
+        Protocollo
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#interfaccia-microcontrollore" class="md-nav__link">
+    Interfaccia microcontrollore
+  </a>
+  
+    <nav class="md-nav" aria-label="Interfaccia microcontrollore">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dichiarazione-dei-comandi" class="md-nav__link">
+    Dichiarazione dei comandi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#declaring-responses" class="md-nav__link">
+    Declaring responses
+  </a>
+  
+    <nav class="md-nav" aria-label="Declaring responses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#risposte-in-output" class="md-nav__link">
+    Risposte in output
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dichiarazione-di-enumerazioni" class="md-nav__link">
+    Dichiarazione di enumerazioni
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dichiarazione-di-costanti" class="md-nav__link">
+    Dichiarazione di costanti
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#codifica-dei-messaggi-di-basso-livello" class="md-nav__link">
+    Codifica dei messaggi di basso livello
+  </a>
+  
+    <nav class="md-nav" aria-label="Codifica dei messaggi di basso livello">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#blocchi-di-messaggi" class="md-nav__link">
+    Blocchi di messaggi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contenuto-del-blocco-messaggi" class="md-nav__link">
+    Contenuto del blocco messaggi
+  </a>
+  
+    <nav class="md-nav" aria-label="Contenuto del blocco messaggi">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quantita-di-lunghezza-variabile" class="md-nav__link">
+    Quantità di lunghezza variabile
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stringhe-di-lunghezza-variabile" class="md-nav__link">
+    Stringhe di lunghezza variabile
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dizionario-dati" class="md-nav__link">
+    Dizionario dati
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flusso-di-messaggi" class="md-nav__link">
+    Flusso di messaggi
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Server API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Comandi MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocollo CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmark
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuire a Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper packaging
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documenti specifici del dispositivo
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documenti specifici del dispositivo" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documenti specifici del dispositivo
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Esempi di configurazioni
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Aggiornamenti scheda SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrollore RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore TSL1401CL di larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore di Hall per larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#interfaccia-microcontrollore" class="md-nav__link">
+    Interfaccia microcontrollore
+  </a>
+  
+    <nav class="md-nav" aria-label="Interfaccia microcontrollore">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dichiarazione-dei-comandi" class="md-nav__link">
+    Dichiarazione dei comandi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#declaring-responses" class="md-nav__link">
+    Declaring responses
+  </a>
+  
+    <nav class="md-nav" aria-label="Declaring responses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#risposte-in-output" class="md-nav__link">
+    Risposte in output
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dichiarazione-di-enumerazioni" class="md-nav__link">
+    Dichiarazione di enumerazioni
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dichiarazione-di-costanti" class="md-nav__link">
+    Dichiarazione di costanti
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#codifica-dei-messaggi-di-basso-livello" class="md-nav__link">
+    Codifica dei messaggi di basso livello
+  </a>
+  
+    <nav class="md-nav" aria-label="Codifica dei messaggi di basso livello">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#blocchi-di-messaggi" class="md-nav__link">
+    Blocchi di messaggi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#contenuto-del-blocco-messaggi" class="md-nav__link">
+    Contenuto del blocco messaggi
+  </a>
+  
+    <nav class="md-nav" aria-label="Contenuto del blocco messaggi">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quantita-di-lunghezza-variabile" class="md-nav__link">
+    Quantità di lunghezza variabile
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stringhe-di-lunghezza-variabile" class="md-nav__link">
+    Stringhe di lunghezza variabile
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dizionario-dati" class="md-nav__link">
+    Dizionario dati
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flusso-di-messaggi" class="md-nav__link">
+    Flusso di messaggi
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Protocol.md" title="Modifica" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="protocollo">Protocollo<a class="headerlink" href="#protocollo" title="Permanent link">&para;</a></h1>
+<p>Il protocollo di messaggistica Klipper viene utilizzato per la comunicazione di basso livello tra il software host Klipper e il software microcontrollore Klipper. Ad alto livello il protocollo può essere pensato come una serie di stringhe di comando e risposta che vengono compresse, trasmesse e quindi elaborate sul lato ricevente. Una serie di esempio di comandi in formato non compresso leggibile dall'uomo potrebbe essere simile a:</p>
+<div class="highlight"><pre><span></span><code>set_digital_out pin=PA3 value=1
+set_digital_out pin=PA7 value=1
+schedule_digital_out oid=8 clock=4000000 value=0
+queue_step oid=7 interval=7458 count=10 add=331
+queue_step oid=7 interval=11717 count=4 add=1281
+</code></pre></div>
+
+<p>Vedere il documento <a href="MCU_Commands.html">mcu commands</a> per informazioni sui comandi disponibili. Vedere il documento <a href="Debugging.html">debugging</a> per informazioni su come tradurre un file G-Code nei corrispondenti comandi del microcontrollore leggibili dall'uomo.</p>
+<p>Questa pagina fornisce una descrizione di alto livello del protocollo di messaggistica Klipper. Descrive come i messaggi sono dichiarati, codificati in formato binario (lo schema di "compressione") e trasmessi.</p>
+<p>L'obiettivo del protocollo è abilitare un canale di comunicazione privo di errori tra l'host e il microcontrollore che sia a bassa latenza, bassa larghezza di banda e bassa complessità per il microcontrollore.</p>
+<h2 id="interfaccia-microcontrollore">Interfaccia microcontrollore<a class="headerlink" href="#interfaccia-microcontrollore" title="Permanent link">&para;</a></h2>
+<p>Il protocollo di trasmissione Klipper può essere pensato come un meccanismo <a href="https://en.wikipedia.org/wiki/Remote_procedure_call">RPC</a> tra microcontrollore e host. Il software del microcontrollore dichiara i comandi che l'host può richiamare insieme ai messaggi di risposta che può generare. L'host utilizza tali informazioni per comandare al microcontrollore di eseguire azioni e interpretare i risultati.</p>
+<h3 id="dichiarazione-dei-comandi">Dichiarazione dei comandi<a class="headerlink" href="#dichiarazione-dei-comandi" title="Permanent link">&para;</a></h3>
+<p>Il software del microcontrollore dichiara un "comando" utilizzando la macro DECL_COMMAND() nel codice C. Per esempio:</p>
+<div class="highlight"><pre><span></span><code>DECL_COMMAND(command_update_digital_out, &quot;update_digital_out oid=%c value=%c&quot;);
+</code></pre></div>
+
+<p>Quanto sopra dichiara un comando denominato "update_digital_out". Ciò consente all'host di "richiamare" questo comando che causerebbe l'esecuzione della funzione C command_update_digital_out() nel microcontrollore. Quanto sopra indica anche che il comando accetta due parametri interi. Quando viene eseguito il codice C command_update_digital_out(), verrà passata una matrice contenente questi due numeri interi: il primo corrispondente all'"oid" e il secondo corrispondente al "valore".</p>
+<p>In generale, i parametri sono descritti con la sintassi di stile printf() (ad esempio, "%u"). La formattazione corrisponde direttamente alla visualizzazione leggibile dei comandi (ad es. "update_digital_out oid=7 value=1"). Nell'esempio precedente, "value=" è un nome di parametro e "%c" indica che il parametro è un numero intero. Internamente, il nome del parametro viene utilizzato solo come documentazione. In questo esempio, "%c" viene utilizzato anche come documentazione per indicare che l'intero previsto ha una dimensione di 1 byte (la dimensione intera dichiarata non influisce sull'analisi o sulla codifica).</p>
+<p>La build del microcontrollore raccoglierà tutti i comandi dichiarati con DECL_COMMAND(), ne determinerà i parametri e farà in modo che siano richiamabili.</p>
+<h3 id="declaring-responses">Declaring responses<a class="headerlink" href="#declaring-responses" title="Permanent link">&para;</a></h3>
+<p>Per inviare informazioni dal microcontrollore all'host viene generata una "risposta". Questi sono sia dichiarati che trasmessi usando la macro C sendf(). Per esempio:</p>
+<div class="highlight"><pre><span></span><code>sendf(&quot;status clock=%u status=%c&quot;, sched_read_time(), sched_is_shutdown());
+</code></pre></div>
+
+<p>Quanto sopra trasmette un messaggio di risposta di "stato" che contiene due parametri interi ("clock" e "status"). La build del microcontrollore trova automaticamente tutte le chiamate sendf() e genera codificatori per esse. Il primo parametro della funzione sendf() descrive la risposta ed è nello stesso formato delle dichiarazioni di comando.</p>
+<p>L'host può organizzare la registrazione di una funzione di richiamata per ogni risposta. Quindi, in effetti, i comandi consentono all'host di invocare le funzioni C nel microcontrollore e le risposte consentono al software del microcontrollore di richiamare il codice nell'host.</p>
+<p>La macro sendf() deve essere invocata solo da gestori di comandi o attività e non deve essere invocata da interrupt o timer. Il codice non ha bisogno di emettere un sendf() in risposta a un comando ricevuto, non è limitato nel numero di volte in cui sendf() può essere invocato e può invocare sendf() in qualsiasi momento da un task handler.</p>
+<h4 id="risposte-in-output">Risposte in output<a class="headerlink" href="#risposte-in-output" title="Permanent link">&para;</a></h4>
+<p>Per semplificare il debug, esiste anche una funzione C output(). Per esempio:</p>
+<div class="highlight"><pre><span></span><code>output(&quot;Il valore di%u è %s con dimensione %u.&quot;, x, buf, buf_len);
+</code></pre></div>
+
+<p>La funzione output() è simile nell'uso a printf() - è intesa per generare e formattare messaggi arbitrari per il 'consumo umano'.</p>
+<h3 id="dichiarazione-di-enumerazioni">Dichiarazione di enumerazioni<a class="headerlink" href="#dichiarazione-di-enumerazioni" title="Permanent link">&para;</a></h3>
+<p>Le enumerazioni consentono al codice host di utilizzare identificatori di stringa per i parametri che il microcontrollore gestisce come numeri interi. Sono dichiarati nel codice del microcontrollore, ad esempio:</p>
+<div class="highlight"><pre><span></span><code>DECL_ENUMERATION(&quot;spi_bus&quot;, &quot;spi&quot;, 0);
+
+DECL_ENUMERATION_RANGE(&quot;pin&quot;, &quot;PC0&quot;, 16, 8);
+</code></pre></div>
+
+<p>Se il primo esempio, la macro DECL_ENUMERATION() definisce un'enumerazione per qualsiasi messaggio di comando/risposta con nome parametro "spi_bus" o nome parametro con suffisso "_spi_bus". Per quei parametri la stringa "spi" è un valore valido e verrà trasmessa con un valore intero pari a zero.</p>
+<p>È anche possibile dichiarare un intervallo di enumerazione. Nel secondo esempio, un parametro "pin" (o qualsiasi parametro con suffisso "_pin") accetterebbe PC0, PC1, PC2, ..., PC7 come valori validi. Le stringhe verranno trasmesse con numeri interi 16, 17, 18, ..., 23.</p>
+<h3 id="dichiarazione-di-costanti">Dichiarazione di costanti<a class="headerlink" href="#dichiarazione-di-costanti" title="Permanent link">&para;</a></h3>
+<p>Le costanti possono anche essere esportate. Ad esempio, quanto segue:</p>
+<div class="highlight"><pre><span></span><code>DECL_CONSTANT(&quot;SERIAL_BAUD&quot;, 250000);
+</code></pre></div>
+
+<p>esporterebbe una costante denominata "SERIAL_BAUD" con un valore di 250000 dal microcontrollore all'host. È anche possibile dichiarare una costante che è una stringa, ad esempio:</p>
+<div class="highlight"><pre><span></span><code>DECL_CONSTANT_STR(&quot;MCU&quot;, &quot;pru&quot;);
+</code></pre></div>
+
+<h2 id="codifica-dei-messaggi-di-basso-livello">Codifica dei messaggi di basso livello<a class="headerlink" href="#codifica-dei-messaggi-di-basso-livello" title="Permanent link">&para;</a></h2>
+<p>Per realizzare il meccanismo RPC di cui sopra, ogni comando e risposta viene codificato in un formato binario per la trasmissione. Questa sezione descrive il sistema di trasmissione.</p>
+<h3 id="blocchi-di-messaggi">Blocchi di messaggi<a class="headerlink" href="#blocchi-di-messaggi" title="Permanent link">&para;</a></h3>
+<p>Tutti i dati inviati dall'host al microcontrollore e viceversa sono contenuti in "blocchi di messaggi". Un blocco di messaggi ha un'intestazione di due byte e un trailer di tre byte. Il formato di un blocco di messaggi è:</p>
+<div class="highlight"><pre><span></span><code>&lt;1 byte lunghezza&gt;&lt;1 byte sequenza&gt;&lt;n-byte contenuto&gt;&lt;2 byte crc&gt;&lt;1 byte sync&gt;
+</code></pre></div>
+
+<p>Il byte di lunghezza contiene il numero di byte nel blocco di messaggi inclusi i byte di intestazione e trailer (quindi la lunghezza minima del messaggio è 5 byte). La lunghezza massima del blocco di messaggi è attualmente di 64 byte. Il byte di sequenza contiene un numero di sequenza di 4 bit nei bit di ordine inferiore e i bit di ordine superiore contengono sempre 0x10 (i bit di ordine superiore sono riservati per un uso futuro). I byte di contenuto contengono dati arbitrari e il relativo formato è descritto nella sezione seguente. I byte crc contengono un CCITT <a href="https://en.wikipedia.org/wiki/Cyclic_redundancy_check">CRC</a> a 16 bit del blocco di messaggi inclusi i byte di intestazione ma esclusi i byte di trailer. Il byte di sincronizzazione è 0x7e.</p>
+<p>Il formato del blocco di messaggi si ispira ai telegrammi <a href="https://en.wikipedia.org/wiki/High-Level_Data_Link_Control">HDLC</a>. Come in HDLC, il blocco di messaggi può contenere facoltativamente un carattere di sincronizzazione aggiuntivo all'inizio del blocco. A differenza di HDLC, un carattere di sincronizzazione non è esclusivo del framing e può essere presente nel contenuto del blocco di messaggi.</p>
+<h3 id="contenuto-del-blocco-messaggi">Contenuto del blocco messaggi<a class="headerlink" href="#contenuto-del-blocco-messaggi" title="Permanent link">&para;</a></h3>
+<p>Ogni blocco di messaggi inviato dall'host al microcontrollore contiene una serie di zero o più comandi di messaggi. Ogni comando inizia con un <a href="#variable-length-quantities">Quantità a lunghezza variabile</a> (VLQ) command-id seguito da zero o più parametri VLQ per il comando dato.</p>
+<p>Ad esempio, i seguenti quattro comandi possono essere inseriti in un unico blocco di messaggi:</p>
+<div class="highlight"><pre><span></span><code>update_digital_out oid=6 value=1
+update_digital_out oid=5 value=0
+get_config
+get_clock
+</code></pre></div>
+
+<p>e codificato nei seguenti otto interi VLQ:</p>
+<div class="highlight"><pre><span></span><code>&lt;id_update_digital_out&gt;&lt;6&gt;&lt;1&gt;&lt;id_update_digital_out&gt;&lt;5&gt;&lt;0&gt;&lt;id_get_config&gt;&lt;id_get_clock&gt;
+</code></pre></div>
+
+<p>Per codificare e analizzare il contenuto del messaggio, sia l'host che il microcontrollore devono concordare gli ID comando e il numero di parametri di ciascun comando. Quindi, nell'esempio sopra, sia l'host che il microcontrollore saprebbero che "id_update_digital_out" è sempre seguito da due parametri e "id_get_config" e "id_get_clock" hanno zero parametri. L'host e il microcontrollore condividono un "dizionario dei dati" che mappa le descrizioni dei comandi (ad esempio, "update_digital_out oid=%c value=%c") ai loro ID di comando interi. Durante l'elaborazione dei dati, il parser saprà di aspettarsi un numero specifico di parametri codificati VLQ a seguito di un determinato ID comando.</p>
+<p>Il contenuto del messaggio per i blocchi inviati dal microcontrollore all'host segue lo stesso formato. Gli identificatori in questi messaggi sono "ID di risposta", ma servono allo stesso scopo e seguono le stesse regole di codifica. In pratica, i blocchi di messaggi inviati dal microcontrollore all'host non contengono mai più di una risposta nel contenuto del blocco di messaggi.</p>
+<h4 id="quantita-di-lunghezza-variabile">Quantità di lunghezza variabile<a class="headerlink" href="#quantita-di-lunghezza-variabile" title="Permanent link">&para;</a></h4>
+<p>Consulta l'<a href="https://en.wikipedia.org/wiki/Variable-length_quantity">articolo di Wikipedia</a> per ulteriori informazioni sul formato generale degli interi codificati VLQ. Klipper utilizza uno schema di codifica che supporta numeri interi positivi e negativi. Gli interi prossimi allo zero utilizzano meno byte per codificare e gli interi positivi in genere codificano utilizzando meno byte degli interi negativi. La tabella seguente mostra il numero di byte che ogni intero impiega per codificare:</p>
+<table>
+<thead>
+<tr>
+<th>Intero</th>
+<th>Dimensione codificata</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-32 .. 95</td>
+<td>1</td>
+</tr>
+<tr>
+<td>-4096 .. 12287</td>
+<td>2</td>
+</tr>
+<tr>
+<td>-524288 .. 1572863</td>
+<td>3</td>
+</tr>
+<tr>
+<td>-67108864 .. 201326591</td>
+<td>4</td>
+</tr>
+<tr>
+<td>-2147483648 .. 4294967295</td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+<h4 id="stringhe-di-lunghezza-variabile">Stringhe di lunghezza variabile<a class="headerlink" href="#stringhe-di-lunghezza-variabile" title="Permanent link">&para;</a></h4>
+<p>Come eccezione alle regole di codifica precedenti, se un parametro di un comando o di una risposta è una stringa dinamica, il parametro non viene codificato come un semplice intero VLQ. Invece viene codificato trasmettendo la lunghezza come intero codificato VLQ seguito dal contenuto stesso:</p>
+<div class="highlight"><pre><span></span><code>&lt;VLQ encoded length&gt;&lt;n-byte contents&gt;
+</code></pre></div>
+
+<p>Le descrizioni dei comandi che si trovano nel dizionario dei dati consentono sia all'host che al microcontrollore di sapere quali parametri del comando utilizzano la semplice codifica VLQ e quali parametri utilizzano la codifica delle stringhe.</p>
+<h2 id="dizionario-dati">Dizionario dati<a class="headerlink" href="#dizionario-dati" title="Permanent link">&para;</a></h2>
+<p>Affinché vengano stabilite comunicazioni significative tra microcontrollore e host, entrambe le parti devono concordare un "dizionario dei dati". Questo dizionario di dati contiene gli identificatori interi per comandi e risposte insieme alle relative descrizioni.</p>
+<p>La build del microcontrollore utilizza il contenuto delle macro DECL_COMMAND() e sendf() per generare il dizionario dei dati. La build assegna automaticamente identificatori univoci a ciascun comando e risposta. Questo sistema consente sia all'host che al codice del microcontrollore di utilizzare senza problemi nomi descrittivi leggibili dall'uomo pur utilizzando una larghezza di banda minima.</p>
+<p>L'host interroga il dizionario dei dati quando si connette per la prima volta al microcontrollore. Una volta che l'host ha scaricato il dizionario dei dati dal microcontrollore, utilizza quel dizionario dei dati per codificare tutti i comandi e per analizzare tutte le risposte dal microcontrollore. L'host deve quindi gestire un dizionario di dati dinamico. Tuttavia, per mantenere semplice il software del microcontrollore, il microcontrollore utilizza sempre il suo dizionario dati statico (compilato).</p>
+<p>Il dizionario dei dati viene interrogato inviando i comandi "identify" al microcontrollore. Il microcontrollore risponderà a ogni comando di identificazione con un messaggio "identify_response". Poiché questi due comandi sono necessari prima di ottenere il dizionario dei dati, i loro ID interi e tipi di parametri sono codificati sia nel microcontrollore che nell'host. L'ID della risposta "identify_response" è 0, l'ID del comando "identify" è 1. Oltre ad avere ID hardcoded, il comando di identificazione e la relativa risposta vengono dichiarati e trasmessi allo stesso modo degli altri comandi e risposte. Nessun altro comando o risposta è hardcoded.</p>
+<p>Il formato del dizionario dei dati trasmessi stesso è una stringa JSON compressa zlib. Il processo di compilazione del microcontrollore genera la stringa, la comprime e la memorizza nella sezione di testo del flash del microcontrollore. Il dizionario dei dati può essere molto più grande della dimensione massima del blocco del messaggio: l'host lo scarica inviando più comandi di identificazione che richiedono blocchi progressivi del dizionario dei dati. Una volta ottenuti tutti i blocchi, l'host assemblerà i blocchi, decomprimerà i dati e analizzerà il contenuto.</p>
+<p>Oltre alle informazioni sul protocollo di comunicazione, il dizionario dei dati contiene anche la versione del software, le enumerazioni (come definite da DECL_ENUMERATION) e le costanti (come definite da DECL_CONSTANT).</p>
+<h2 id="flusso-di-messaggi">Flusso di messaggi<a class="headerlink" href="#flusso-di-messaggi" title="Permanent link">&para;</a></h2>
+<p>I comandi dei messaggi inviati dall'host al microcontrollore sono concepiti per essere privi di errori. Il microcontrollore controllerà il CRC e i numeri di sequenza in ciascun blocco di messaggi per garantire che i comandi siano accurati e in ordine. Il microcontrollore elabora sempre i blocchi di messaggi in ordine - se riceve un blocco fuori ordine, lo scarterà e tutti gli altri blocchi fuori ordine fino a quando non riceve blocchi con la sequenza corretta.</p>
+<p>Il codice host di basso livello implementa un sistema di ritrasmissione automatica per i blocchi di messaggi persi e corrotti inviati al microcontrollore. Per facilitare ciò, il microcontrollore trasmette un "ack message block" dopo ogni blocco di messaggio ricevuto con successo. L'host pianifica un timeout dopo l'invio di ogni blocco e lo ritrasmetterà se il timeout scade senza ricevere un corrispondente "ack". Inoltre, se il microcontrollore rileva un blocco corrotto o fuori servizio, può trasmettere un "nak message block" per facilitare una rapida ritrasmissione.</p>
+<p>Un "ack" è un blocco di messaggi con contenuto vuoto (cioè un blocco di messaggi di 5 byte) e un numero di sequenza maggiore dell'ultimo numero di sequenza dell'host ricevuto. Un "nak" è un blocco di messaggi con contenuto vuoto e un numero di sequenza inferiore all'ultimo numero di sequenza host ricevuto.</p>
+<p>Il protocollo facilita un sistema di trasmissione "finestra" in modo che l'host possa avere molti blocchi di messaggi in sospeso in viaggio alla volta. (Questo è in aggiunta ai molti comandi che possono essere presenti in un determinato blocco di messaggi.) Ciò consente il massimo utilizzo della larghezza di banda anche in caso di latenza di trasmissione. Il meccanismo di timeout, ritrasmissione, windowing e ack si ispira a meccanismi simili in <a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol">TCP</a>.</p>
+<p>Nell'altra direzione, i blocchi di messaggi inviati dal microcontrollore all'host sono progettati per essere privi di errori, ma non hanno una trasmissione sicura. (Le risposte non dovrebbero essere danneggiate, ma potrebbero scomparire.) Questo viene fatto per mantenere semplice l'implementazione nel microcontrollore. Non esiste un sistema di ritrasmissione automatica delle risposte: ci si aspetta che il codice di alto livello sia in grado di gestire una risposta mancante occasionale (di solito richiedendo nuovamente il contenuto o impostando un programma ricorrente di trasmissione della risposta). Il campo del numero di sequenza nei blocchi di messaggi inviati all'host è sempre uno maggiore dell'ultimo numero di sequenza di blocchi di messaggi ricevuti dall'host. Non viene utilizzato per tenere traccia di sequenze di blocchi di messaggi di risposta.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Torna su
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Piede">
+      
+        
+        <a href="Kinematics.html" class="md-footer__link md-footer__link--prev" aria-label="Precedente: Cinematica" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Precedente
+              </span>
+              Cinematica
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="API_Server.html" class="md-footer__link md-footer__link--next" aria-label="Prossimo: Server API" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Prossimo
+              </span>
+              Server API
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copia", "clipboard.copied": "Copiato", "search.config.lang": "it", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Cerca", "search.result.placeholder": "Scrivi per iniziare a cercare", "search.result.none": "Nessun documento trovato", "search.result.one": "1 documento trovato", "search.result.other": "# documenti trovati", "search.result.more.one": "1 altro in questa pagina", "search.result.more.other": "# altri in questa pagina", "search.result.term.missing": "Non presente", "select.version.title": "Seleziona la versione"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

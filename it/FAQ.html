@@ -1,0 +1,1831 @@
+
+<!doctype html>
+<html lang="it" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Domande frequenti - Documentazione Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#domande-frequenti" class="md-skip">
+          Vai al contenuto
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Intestazione">
+    <a href="." title="Documentazione Klipper" class="md-header__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentazione Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Domande frequenti
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Seleziona la lingua">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Muoversi
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Cerca" placeholder="Cerca" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Cerca">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Condividi" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Cancella" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inizializza la ricerca
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigazione" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentazione Klipper" class="md-nav__button md-logo" aria-label="Documentazione Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentazione Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Apri repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Panoramica
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caratteristiche
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Domande frequenti
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="FAQ.html" class="md-nav__link md-nav__link--active">
+        Domande frequenti
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-donare-al-progetto" class="md-nav__link">
+    Come posso donare al progetto?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-faccio-a-calcolare-il-parametro-di-configurazione-rotation_distance" class="md-nav__link">
+    Come faccio a calcolare il parametro di configurazione rotation_distance?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dove-la-mia-porta-seriale" class="md-nav__link">
+    Dov'è la mia porta seriale?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quando-il-microcontrollore-si-riavvia-il-dispositivo-cambia-in-devttyusb1" class="md-nav__link">
+    Quando il microcontrollore si riavvia, il dispositivo cambia in /dev/ttyUSB1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#il-comando-make-flash-non-funziona" class="md-nav__link">
+    Il comando "make flash" non funziona
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-modificare-la-velocita-di-trasmissione-seriale" class="md-nav__link">
+    Come posso modificare la velocità di trasmissione seriale?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posso-eseguire-klipper-su-qualcosa-di-diverso-da-un-raspberry-pi-3" class="md-nav__link">
+    Posso eseguire Klipper su qualcosa di diverso da un Raspberry Pi 3?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posso-eseguire-piu-istanze-di-klipper-sulla-stessa-macchina-host" class="md-nav__link">
+    Posso eseguire più istanze di Klipper sulla stessa macchina host?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devo-usare-octoprint" class="md-nav__link">
+    Devo usare OctoPrint?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perche-non-riesco-a-spostare-lo-stepper-prima-di-riposizionare-la-stampante" class="md-nav__link">
+    Perché non riesco a spostare lo stepper prima di riposizionare la stampante?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perche-z-position_endstop-e-impostato-su-05-nelle-configurazioni-predefinite" class="md-nav__link">
+    Perché Z position_endstop è impostato su 0.5 nelle configurazioni predefinite?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ho-convertito-la-mia-configurazione-da-marlin-e-gli-assi-xy-funzionano-bene-ma-ottengo-solo-un-rumore-stridente-durante-homing-dellasse-z" class="md-nav__link">
+    Ho convertito la mia configurazione da Marlin e gli assi X/Y funzionano bene, ma ottengo solo un rumore stridente durante homing dell'asse Z
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#il-mio-driver-tmc-del-motore-si-spegne-nel-mezzo-di-una-stampa" class="md-nav__link">
+    Il mio driver TMC del motore si spegne nel mezzo di una stampa
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#continuo-a-ricevere-errori-casuali-comunicazione-persa-con-mcu-lost-communication-with-mcu" class="md-nav__link">
+    Continuo a ricevere errori casuali "Comunicazione persa con MCU" |"Lost communication with MCU"
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#il-mio-raspberry-pi-continua-a-riavviarsi-durante-le-stampe" class="md-nav__link">
+    Il mio Raspberry Pi continua a riavviarsi durante le stampe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quando-imposto-restart_methodcommand-il-mio-dispositivo-avr-si-blocca-al-riavvio" class="md-nav__link">
+    Quando imposto restart_method=command il mio dispositivo AVR si blocca al riavvio
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#i-riscaldatori-verranno-lasciati-accesi-se-il-raspberry-pi-si-arresta-in-modo-anomalo" class="md-nav__link">
+    I riscaldatori verranno lasciati accesi se il Raspberry Pi si arresta in modo anomalo?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-convertire-un-numero-di-pin-marlin-in-un-nome-pin-di-klipper" class="md-nav__link">
+    Come posso convertire un numero di pin Marlin in un nome pin di Klipper?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devo-collegare-il-mio-dispositivo-a-un-tipo-specifico-di-pin-del-microcontrollore" class="md-nav__link">
+    Devo collegare il mio dispositivo a un tipo specifico di pin del microcontrollore?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-annullare-una-richiesta-di-attesa-temperatura-m109m190" class="md-nav__link">
+    Come posso annullare una richiesta di "attesa temperatura" M109/M190?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posso-scoprire-se-la-stampante-ha-perso-dei-passaggi" class="md-nav__link">
+    Posso scoprire se la stampante ha perso dei passaggi?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perche-klipper-segnala-errori-ho-perso-la-mia-stampa" class="md-nav__link">
+    Perché Klipper segnala errori? Ho perso la mia stampa!
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-si-esegue-laggiornamento-al-software-piu-recente" class="md-nav__link">
+    Come si esegue l'aggiornamento al software più recente?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-faccio-a-disinstallare-klipper" class="md-nav__link">
+    Come faccio a disinstallare Klipper?
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versioni
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Modifiche alla configurazione
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contatti
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installazione e configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installazione e configurazione" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installazione e configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Riferimenti di configurazione
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Riferimenti di configurazione" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Riferimenti di configurazione
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Riferimenti configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotation distance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Controlli della configurazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Livello del piatto
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livello del piatto" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Livello del piatto
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Livellamento del piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Calibrazione delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Calibrazione sonda
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Livellamento manuale
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Matrice del Piatto
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Fase di fine corsa
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensazione della risonanza
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensazione della risonanza" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensazione della risonanza
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensazione della risonanza
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Misurazione delle risonanze
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Anticipo di pressione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Template dei comandi
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Template dei comandi" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Template dei comandi
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Commands templates
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Status reference
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Driver TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing e Probing con microcontrollore multiplo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correzione dell'inclinazione
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Escludi oggetti
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilizzo dei strumenti PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentazione per sviluppatori
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentazione per sviluppatori" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentazione per sviluppatori
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Panoramica del codice
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinematica
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocollo
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Server API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Comandi MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocollo CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Debugging
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmark
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuire a Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper packaging
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documenti specifici del dispositivo
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documenti specifici del dispositivo" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documenti specifici del dispositivo
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Esempi di configurazioni
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Aggiornamenti scheda SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrollore RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore TSL1401CL di larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Sensore di Hall per larghezza del filamento
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Indice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Indice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-donare-al-progetto" class="md-nav__link">
+    Come posso donare al progetto?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-faccio-a-calcolare-il-parametro-di-configurazione-rotation_distance" class="md-nav__link">
+    Come faccio a calcolare il parametro di configurazione rotation_distance?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dove-la-mia-porta-seriale" class="md-nav__link">
+    Dov'è la mia porta seriale?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quando-il-microcontrollore-si-riavvia-il-dispositivo-cambia-in-devttyusb1" class="md-nav__link">
+    Quando il microcontrollore si riavvia, il dispositivo cambia in /dev/ttyUSB1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#il-comando-make-flash-non-funziona" class="md-nav__link">
+    Il comando "make flash" non funziona
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-modificare-la-velocita-di-trasmissione-seriale" class="md-nav__link">
+    Come posso modificare la velocità di trasmissione seriale?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posso-eseguire-klipper-su-qualcosa-di-diverso-da-un-raspberry-pi-3" class="md-nav__link">
+    Posso eseguire Klipper su qualcosa di diverso da un Raspberry Pi 3?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posso-eseguire-piu-istanze-di-klipper-sulla-stessa-macchina-host" class="md-nav__link">
+    Posso eseguire più istanze di Klipper sulla stessa macchina host?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devo-usare-octoprint" class="md-nav__link">
+    Devo usare OctoPrint?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perche-non-riesco-a-spostare-lo-stepper-prima-di-riposizionare-la-stampante" class="md-nav__link">
+    Perché non riesco a spostare lo stepper prima di riposizionare la stampante?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perche-z-position_endstop-e-impostato-su-05-nelle-configurazioni-predefinite" class="md-nav__link">
+    Perché Z position_endstop è impostato su 0.5 nelle configurazioni predefinite?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ho-convertito-la-mia-configurazione-da-marlin-e-gli-assi-xy-funzionano-bene-ma-ottengo-solo-un-rumore-stridente-durante-homing-dellasse-z" class="md-nav__link">
+    Ho convertito la mia configurazione da Marlin e gli assi X/Y funzionano bene, ma ottengo solo un rumore stridente durante homing dell'asse Z
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#il-mio-driver-tmc-del-motore-si-spegne-nel-mezzo-di-una-stampa" class="md-nav__link">
+    Il mio driver TMC del motore si spegne nel mezzo di una stampa
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#continuo-a-ricevere-errori-casuali-comunicazione-persa-con-mcu-lost-communication-with-mcu" class="md-nav__link">
+    Continuo a ricevere errori casuali "Comunicazione persa con MCU" |"Lost communication with MCU"
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#il-mio-raspberry-pi-continua-a-riavviarsi-durante-le-stampe" class="md-nav__link">
+    Il mio Raspberry Pi continua a riavviarsi durante le stampe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quando-imposto-restart_methodcommand-il-mio-dispositivo-avr-si-blocca-al-riavvio" class="md-nav__link">
+    Quando imposto restart_method=command il mio dispositivo AVR si blocca al riavvio
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#i-riscaldatori-verranno-lasciati-accesi-se-il-raspberry-pi-si-arresta-in-modo-anomalo" class="md-nav__link">
+    I riscaldatori verranno lasciati accesi se il Raspberry Pi si arresta in modo anomalo?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-convertire-un-numero-di-pin-marlin-in-un-nome-pin-di-klipper" class="md-nav__link">
+    Come posso convertire un numero di pin Marlin in un nome pin di Klipper?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#devo-collegare-il-mio-dispositivo-a-un-tipo-specifico-di-pin-del-microcontrollore" class="md-nav__link">
+    Devo collegare il mio dispositivo a un tipo specifico di pin del microcontrollore?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-posso-annullare-una-richiesta-di-attesa-temperatura-m109m190" class="md-nav__link">
+    Come posso annullare una richiesta di "attesa temperatura" M109/M190?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posso-scoprire-se-la-stampante-ha-perso-dei-passaggi" class="md-nav__link">
+    Posso scoprire se la stampante ha perso dei passaggi?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perche-klipper-segnala-errori-ho-perso-la-mia-stampa" class="md-nav__link">
+    Perché Klipper segnala errori? Ho perso la mia stampa!
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-si-esegue-laggiornamento-al-software-piu-recente" class="md-nav__link">
+    Come si esegue l'aggiornamento al software più recente?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#come-faccio-a-disinstallare-klipper" class="md-nav__link">
+    Come faccio a disinstallare Klipper?
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/FAQ.md" title="Modifica" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="domande-frequenti">Domande frequenti<a class="headerlink" href="#domande-frequenti" title="Permanent link">&para;</a></h1>
+<h2 id="come-posso-donare-al-progetto">Come posso donare al progetto?<a class="headerlink" href="#come-posso-donare-al-progetto" title="Permanent link">&para;</a></h2>
+<p>Grazie per il vostro sostegno. Per informazioni, vedere la <a href="Sponsor.md">Pagina degli sponsor</a>.</p>
+<h2 id="come-faccio-a-calcolare-il-parametro-di-configurazione-rotation_distance">Come faccio a calcolare il parametro di configurazione rotation_distance?<a class="headerlink" href="#come-faccio-a-calcolare-il-parametro-di-configurazione-rotation_distance" title="Permanent link">&para;</a></h2>
+<p>Vedere il <a href="Rotation_Distance.html">rotation distance document</a>.</p>
+<h2 id="dove-la-mia-porta-seriale">Dov'è la mia porta seriale?<a class="headerlink" href="#dove-la-mia-porta-seriale" title="Permanent link">&para;</a></h2>
+<p>Il modo generico per trovare una porta seriale USB è eseguire <code>ls /dev/serial/by-id/*</code> da un terminale ssh sulla macchina host. Probabilmente produrrà un output simile al seguente:</p>
+<div class="highlight"><pre><span></span><code>/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+</code></pre></div>
+
+<p>Il nome trovato nel comando precedente è stabile ed è possibile utilizzarlo nel file di configurazione e durante il flashing del codice del microcontrollore. Ad esempio, un comando flash potrebbe essere simile a:</p>
+<div class="highlight"><pre><span></span><code>sudo service klipper stop
+make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+sudo service klipper start
+</code></pre></div>
+
+<p>e la configurazione aggiornata potrebbe essere simile a:</p>
+<div class="highlight"><pre><span></span><code>[mcu]
+serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
+</code></pre></div>
+
+<p>Assicurati di copiare e incollare il nome dal comando "ls" che hai eseguito sopra poiché il nome sarà diverso per ciascuna stampante.</p>
+<p>Se stai usando più microcontrollori e non hanno ID univoci (comune sulle schede con un chip USB CH340), segui invece le indicazioni sopra usando il comando <code>ls /dev/serial/by-path/*</code>.</p>
+<h2 id="quando-il-microcontrollore-si-riavvia-il-dispositivo-cambia-in-devttyusb1">Quando il microcontrollore si riavvia, il dispositivo cambia in /dev/ttyUSB1<a class="headerlink" href="#quando-il-microcontrollore-si-riavvia-il-dispositivo-cambia-in-devttyusb1" title="Permanent link">&para;</a></h2>
+<p>egui le istruzioni nella sezione "<a href="#wheres-my-serial-port">Where's my serial port?</a>" per evitare che ciò accada.</p>
+<h2 id="il-comando-make-flash-non-funziona">Il comando "make flash" non funziona<a class="headerlink" href="#il-comando-make-flash-non-funziona" title="Permanent link">&para;</a></h2>
+<p>Il codice tenta di eseguire il flashing del dispositivo utilizzando il metodo più comune per ciascuna piattaforma. Sfortunatamente, c'è molta variabilità nei metodi di flashing, quindi il comando "make flash" potrebbe non funzionare su tutte le schede.</p>
+<p>Se si verifica un errore intermittente o si dispone di una configurazione standard, ricontrolla che Klipper non sia in esecuzione durante il flashing (sudo service klipper stop), assicurati che OctoPrint non stia tentando di connettersi direttamente al dispositivo (apri il scheda Connessione nella pagina Web e fare clic su Disconnetti se la porta seriale è impostata sul dispositivo) e assicurarsi che FLASH_DEVICE sia impostato correttamente per la scheda (consultare la <a href="#wheres-my-serial-port">question above</a>.</p>
+<p>Tuttavia, se "make flash" non funziona per la tua scheda, dovrai eseguire il flashing manualmente. Verificare se nella <a href="https://github.com/Klipper3d/klipper/blob/master/config">config directory</a> è presente un file di configurazione con istruzioni specifiche per il flashing del dispositivo. Inoltre, controlla la documentazione del produttore della scheda per vedere se descrive come eseguire il flashing del dispositivo. Infine, potrebbe essere possibile eseguire manualmente il flashing del dispositivo utilizzando strumenti come "avrdude" o "bossac" - vedere il <a href="Bootloaders.html">bootloader document</a> per ulteriori informazioni.</p>
+<h2 id="come-posso-modificare-la-velocita-di-trasmissione-seriale">Come posso modificare la velocità di trasmissione seriale?<a class="headerlink" href="#come-posso-modificare-la-velocita-di-trasmissione-seriale" title="Permanent link">&para;</a></h2>
+<p>Il baud rate consigliato per Klipper è 250000. Questo baud rate funziona bene su tutte le schede di microcontrollore supportate da Klipper. Se hai trovato una guida online che consiglia una velocità di trasmissione diversa, ignora quella parte della guida e continua con il valore predefinito di 250000.</p>
+<p>Se si desidera comunque modificare il baud rate, sarà necessario configurare la nuova velocità nel microcontrollore (durante <strong>make menuconfig</strong>) e il codice aggiornato dovrà essere compilato e flashato sul microcontrollore. Anche il file Klipper printer.cfg dovrà essere aggiornato in modo che corrisponda a tale velocità di trasmissione (consultare il <a href="Config_Reference.html#mcu">config reference</a> per i dettagli). Per esempio:</p>
+<div class="highlight"><pre><span></span><code>[mcu]
+baud: 250000
+</code></pre></div>
+
+<p>La velocità di trasmissione mostrata sulla pagina Web di OctoPrint non ha alcun impatto sulla velocità di trasmissione interna del microcontrollore Klipper. Impostare sempre la velocità di trasmissione OctoPrint su 250000 quando si utilizza Klipper.</p>
+<p>La velocità in baud del microcontrollore Klipper non è correlata alla velocità in baud del bootloader del microcontrollore. Vedere il <a href="Bootloaders.html">bootloader document</a> per ulteriori informazioni sui bootloader.</p>
+<h2 id="posso-eseguire-klipper-su-qualcosa-di-diverso-da-un-raspberry-pi-3">Posso eseguire Klipper su qualcosa di diverso da un Raspberry Pi 3?<a class="headerlink" href="#posso-eseguire-klipper-su-qualcosa-di-diverso-da-un-raspberry-pi-3" title="Permanent link">&para;</a></h2>
+<p>L'hardware consigliato è un Raspberry Pi 2, Raspberry Pi 3 o Raspberry Pi 4.</p>
+<p>Klipper funzionerà su un Raspberry Pi 1 e su Raspberry Pi Zero, ma queste schede non hanno una potenza di elaborazione sufficiente per eseguire bene OctoPrint. È normale che si verifichino interruzioni di stampa su queste macchine più lente quando si stampa direttamente da OctoPrint. (La stampante potrebbe muoversi più velocemente di quanto OctoPrint possa inviare comandi di movimento.) Se desideri comunque eseguire su una di queste schede più lente, considera l'utilizzo della funzione "virtual_sdcard" durante la stampa (consulta <a href="Config_Reference.html#virtual_sdcard">config reference</a> per dettagli).</p>
+<p>Per l'esecuzione su Beaglebone, vedere le <a href="Beaglebone.html">Istruzioni di installazione specifiche di Beaglebone</a>.</p>
+<p>Klipper è stato eseguito su altre macchine. Il software host Klipper richiede solo Python in esecuzione su un computer Linux (o simile). Tuttavia, se desideri eseguirlo su una macchina diversa, avrai bisogno della conoscenza dell'amministratore Linux per installare i prerequisiti di sistema per quella particolare macchina. Consulta lo script <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> per ulteriori informazioni sui passaggi necessari.</p>
+<p>Se stai cercando di eseguire il software host Klipper su un chip di fascia bassa, tieni presente che, come minimo, è necessaria una macchina con hardware a "virgola mobile a doppia precisione".</p>
+<p>Se stai cercando di eseguire il software host Klipper su un desktop generico condiviso o una macchina di classe server, tieni presente che Klipper ha alcuni requisiti di scheduling in tempo reale. Se, durante una stampa, il computer host esegue anche un'intensa attività di elaborazione generica (come deframmentazione di un disco rigido, rendering 3D, scambi pesanti e così via), Klipper potrebbe segnalare errori di stampa.</p>
+<p>Nota: se non stai utilizzando un'immagine OctoPi, tieni presente che diverse distribuzioni Linux abilitano un pacchetto "ModemManager" (o simile) che può interrompere la comunicazione seriale. (Il che può far sì che Klipper riporti errori apparentemente casuali "Comunicazione persa con MCU".) Se installi Klipper su una di queste distribuzioni potresti dover disabilitare quel pacchetto.</p>
+<h2 id="posso-eseguire-piu-istanze-di-klipper-sulla-stessa-macchina-host">Posso eseguire più istanze di Klipper sulla stessa macchina host?<a class="headerlink" href="#posso-eseguire-piu-istanze-di-klipper-sulla-stessa-macchina-host" title="Permanent link">&para;</a></h2>
+<p>È possibile eseguire più istanze del software host Klipper, ma per farlo è necessaria la conoscenza dell'amministratore Linux. Gli script di installazione di Klipper determinano l'esecuzione del seguente comando Unix:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -l /tmp/klippy.log
+</code></pre></div>
+
+<p>È possibile eseguire più istanze del comando precedente purché ogni istanza abbia il proprio file di configurazione della stampante, il proprio file di registro e il proprio pseudo-tty. Per esempio:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer2.cfg -l /tmp/klippy2.log -I /tmp/printer2
+</code></pre></div>
+
+<p>Se scegli di farlo, dovrai implementare gli script di avvio, arresto e installazione necessari (se presenti). Lo script <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> e lo script <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-start.sh">klipper-start.sh</a> possono essere utili come esempi.</p>
+<h2 id="devo-usare-octoprint">Devo usare OctoPrint?<a class="headerlink" href="#devo-usare-octoprint" title="Permanent link">&para;</a></h2>
+<p>Il software Klipper non dipende da OctoPrint. È possibile utilizzare un software alternativo per inviare comandi a Klipper, ma ciò richiede la conoscenza dell'amministratore Linux.</p>
+<p>Klipper crea una "porta seriale virtuale" tramite il file "/tmp/printer" ed emula una classica interfaccia seriale per stampante 3D tramite quel file. In generale, un software alternativo può funzionare con Klipper purché possa essere configurato per utilizzare "/tmp/printer" per la porta seriale della stampante.</p>
+<h2 id="perche-non-riesco-a-spostare-lo-stepper-prima-di-riposizionare-la-stampante">Perché non riesco a spostare lo stepper prima di riposizionare la stampante?<a class="headerlink" href="#perche-non-riesco-a-spostare-lo-stepper-prima-di-riposizionare-la-stampante" title="Permanent link">&para;</a></h2>
+<p>Il codice fa questo per ridurre la possibilità di comandare accidentalmente la testa nel piatto o altri limiti. Una volta che la stampante è stata localizzata, il software tenta di verificare che ogni mossa rientri nella posizione_min/max definita nel file di configurazione. Se i motori sono disabilitati (tramite un comando M84 o M18), i motori dovranno essere nuovamente riposizionati prima del movimento.</p>
+<p>Se desideri spostare la testina dopo aver annullato una stampa tramite OctoPrint, considera di modificare la sequenza di annullamento di OctoPrint per farlo per te. È configurato in OctoPrint tramite un browser web in: Impostazioni-&gt; Script GCODE | Settings-&gt;GCODE Scripts</p>
+<p>Se desideri spostare la testina al termine di una stampa, considera di aggiungere il movimento desiderato alla sezione "G-code personalizzato" del tuo slicer.</p>
+<p>Se la stampante richiede un movimento aggiuntivo come parte del processo stesso di homing (o fondamentalmente non ha un processo di homing), considera l'utilizzo di una sezione safe_z_home o homing_override nel file di configurazione. Se è necessario spostare uno stepper per scopi diagnostici o di debug, considerare l'aggiunta di una sezione force_move al file di configurazione. Vedere <a href="Config_Reference.html#customized_homing">config reference</a> per ulteriori dettagli su queste opzioni.</p>
+<h2 id="perche-z-position_endstop-e-impostato-su-05-nelle-configurazioni-predefinite">Perché Z position_endstop è impostato su 0.5 nelle configurazioni predefinite?<a class="headerlink" href="#perche-z-position_endstop-e-impostato-su-05-nelle-configurazioni-predefinite" title="Permanent link">&para;</a></h2>
+<p>Per le stampanti cartesiane Z position_endstop specifica la distanza dell'ugello dal piatto quando si attiva ilfinecorsa. Se possibile, si consiglia di utilizzare un finecorsa Z-max e di tornare a casa lontano dal piatto (in quanto ciò riduce il rischio di collisioni con il piatto). Tuttavia, se ci si deve avvicinare al piatto, si consiglia di posizionare il finecorsa in modo che si attivi quando la bocchetta è ancora a una piccola distanza dal piatto. In questo modo, durante l'homing dell'asse, si fermerà prima che l'ugello tocchi il letto. Per ulteriori informazioni, vedere il <a href="Bed_Level.html">bed level document</a>.</p>
+<h2 id="ho-convertito-la-mia-configurazione-da-marlin-e-gli-assi-xy-funzionano-bene-ma-ottengo-solo-un-rumore-stridente-durante-homing-dellasse-z">Ho convertito la mia configurazione da Marlin e gli assi X/Y funzionano bene, ma ottengo solo un rumore stridente durante homing dell'asse Z<a class="headerlink" href="#ho-convertito-la-mia-configurazione-da-marlin-e-gli-assi-xy-funzionano-bene-ma-ottengo-solo-un-rumore-stridente-durante-homing-dellasse-z" title="Permanent link">&para;</a></h2>
+<p>Risposta breve: in primo luogo, assicurati di aver verificato la configurazione dello stepper come descritto nel <a href="Config_checks.html">config check document</a>. Se il problema persiste, provare a ridurre l'impostazione max_z_velocity nella configurazione della stampante.</p>
+<p>Risposta lunga: in pratica Marlin può in genere fare solo un passo a una velocità di circa 10000 passi al secondo. Se gli viene richiesto di muoversi a una velocità che richiederebbe una velocità di passo più alta, Marlin generalmente farà un passo più veloce possibile. Klipper è in grado di raggiungere velocità di passo molto più elevate, ma il motore passo-passo potrebbe non avere una coppia sufficiente per muoversi a una velocità più elevata. Quindi, per un asse Z con un rapporto di trasmissione elevato o un'impostazione di micropassi elevata, l'effettiva velocità max_z_ottenibile potrebbe essere inferiore a quella configurata in Marlin.</p>
+<h2 id="il-mio-driver-tmc-del-motore-si-spegne-nel-mezzo-di-una-stampa">Il mio driver TMC del motore si spegne nel mezzo di una stampa<a class="headerlink" href="#il-mio-driver-tmc-del-motore-si-spegne-nel-mezzo-di-una-stampa" title="Permanent link">&para;</a></h2>
+<p>Se si utilizza il driver TMC2208 (o TMC2224) in "modalità standalone", assicurarsi di utilizzare l'<a href="#how-do-i-upgrade-to-the-latest-software">latest version of Klipper</a>. Una soluzione alternativa per un problema del driver "stealthchop" TMC2208 è stata aggiunta a Klipper a metà marzo del 2020.</p>
+<h2 id="continuo-a-ricevere-errori-casuali-comunicazione-persa-con-mcu-lost-communication-with-mcu">Continuo a ricevere errori casuali "Comunicazione persa con MCU" |"Lost communication with MCU"<a class="headerlink" href="#continuo-a-ricevere-errori-casuali-comunicazione-persa-con-mcu-lost-communication-with-mcu" title="Permanent link">&para;</a></h2>
+<p>Ciò è comunemente causato da errori hardware sulla connessione USB tra la macchina host e il microcontrollore. Cose da cercare:</p>
+<ul>
+<li>Utilizzare un cavo USB di buona qualità tra la macchina host e il microcontrollore. Assicurati che i connettori siano ben saldi.</li>
+<li>Se si utilizza un Raspberry Pi, utilizzare un <a href="https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#power-supply">alimentatore di buona qualità</a> per il Raspberry Pi e utilizzare un <a href="https://forums.raspberrypi.com/viewtopic.php?p=589877#p589877">cavo USB di buona qualità</a> per collegare quell'alimentatore al Pi. Se ricevi avvisi di "sottotensione" da OctoPrint, questo è correlato all'alimentatore e deve essere risolto.</li>
+<li>Assicurarsi che l'alimentazione della stampante non sia sovraccarica. (Le fluttuazioni di alimentazione del chip USB del microcontrollore possono comportare il reset di quel chip.)</li>
+<li>Verificare che i cavi dello stepper, del riscaldatore e di altri cavi della stampante non siano arricciati o sfilacciati. (Il movimento della stampante può sollecitare un cavo difettoso causandone la perdita di contatto, un cortocircuito breve o la generazione di rumore eccessivo.)</li>
+<li>Sono stati segnalati rumori USB elevati quando sia l'alimentazione della stampante che l'alimentazione a 5 V dell'host sono mescolate. (Se si scopre che il microcontrollore si accende quando l'alimentazione della stampante è accesa o il cavo USB è collegato, significa che gli alimentatori da 5 V vengono mescolati.) Può essere utile configurare il microcontrollore da utilizzare alimentazione da una sola fonte. (In alternativa, se la scheda del microcontrollore non è in grado di configurare la sua fonte di alimentazione, è possibile modificare un cavo USB in modo che non trasmetta alimentazione a 5V tra l'host e il microcontrollore.)</li>
+</ul>
+<h2 id="il-mio-raspberry-pi-continua-a-riavviarsi-durante-le-stampe">Il mio Raspberry Pi continua a riavviarsi durante le stampe<a class="headerlink" href="#il-mio-raspberry-pi-continua-a-riavviarsi-durante-le-stampe" title="Permanent link">&para;</a></h2>
+<p>Questo è molto probabilmente dovuto alle fluttuazioni di tensione. Segui gli stessi passaggi per la risoluzione dei problemi per un errore <a href="#i-keep-getting-random-lost-communication-with-mcu-errors">"Comunicazione persa con MCU"</a>.</p>
+<h2 id="quando-imposto-restart_methodcommand-il-mio-dispositivo-avr-si-blocca-al-riavvio">Quando imposto <code>restart_method=command</code> il mio dispositivo AVR si blocca al riavvio<a class="headerlink" href="#quando-imposto-restart_methodcommand-il-mio-dispositivo-avr-si-blocca-al-riavvio" title="Permanent link">&para;</a></h2>
+<p>Alcune vecchie versioni del bootloader AVR hanno un bug noto nella gestione degli eventi di watchdog. Questo in genere si manifesta quando il file printer.cfg ha restart_method impostato su "command". Quando si verifica il bug, il dispositivo AVR non risponderà fino a quando l'alimentazione non viene rimossa e ricollegata al dispositivo (anche i LED di alimentazione o di stato potrebbero lampeggiare ripetutamente fino a quando l'alimentazione non viene rimossa).</p>
+<p>La soluzione alternativa è utilizzare un restart_method diverso da "command" o eseguire il flashing di un bootloader aggiornato sul dispositivo AVR. Il flashing di un nuovo bootloader è un passaggio che in genere richiede un programmatore esterno: vedere <a href="Bootloaders.html">Bootloaders</a> per ulteriori dettagli.</p>
+<h2 id="i-riscaldatori-verranno-lasciati-accesi-se-il-raspberry-pi-si-arresta-in-modo-anomalo">I riscaldatori verranno lasciati accesi se il Raspberry Pi si arresta in modo anomalo?<a class="headerlink" href="#i-riscaldatori-verranno-lasciati-accesi-se-il-raspberry-pi-si-arresta-in-modo-anomalo" title="Permanent link">&para;</a></h2>
+<p>Il software è stato progettato per impedirlo. Una volta che l'host abilita un riscaldatore, il software host deve confermare tale abilitazione ogni 5 secondi. Se il microcontrollore non riceve una conferma ogni 5 secondi, entra in uno stato di "spegnimento" progettato per spegnere tutti i riscaldatori e i motori passo-passo.</p>
+<p>Per ulteriori dettagli, vedere il comando "config_digital_out" nel documento <a href="MCU_Commands.html">Comandi MCU</a>.</p>
+<p>Inoltre, il software del microcontrollore è configurato con un intervallo di temperatura minimo e massimo per ciascun riscaldatore all'avvio (consultare i parametri min_temp e max_temp in <a href="Config_Reference.html#extruder">config reference</a> per i dettagli). Se il microcontrollore rileva che la temperatura è al di fuori di tale intervallo, entrerà anche in uno stato di "spegnimento".</p>
+<p>Separatamente, il software host implementa anche il codice per verificare che i riscaldatori e i sensori di temperatura funzionino correttamente. Vedere il <a href="Config_Reference.html#verify_heater">riferimento di configurazione</a> per ulteriori dettagli.</p>
+<h2 id="come-posso-convertire-un-numero-di-pin-marlin-in-un-nome-pin-di-klipper">Come posso convertire un numero di pin Marlin in un nome pin di Klipper?<a class="headerlink" href="#come-posso-convertire-un-numero-di-pin-marlin-in-un-nome-pin-di-klipper" title="Permanent link">&para;</a></h2>
+<p>Risposta breve: una mappatura è disponibile nel file <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a>. Usa quel file come guida per trovare i nomi effettivi dei pin del microcontrollorei. (È anche possibile copiare la relativa sezione di configurazione <a href="Config_Reference.html#board_pins">board_pins</a> nel file di configurazione e utilizzare gli alias nella configurazione, ma è preferibile tradurre e utilizzare i nomi dei pin del microcontrollore effettivi.) Nota che il file sample-aliases.cfg usa nomi di pin che iniziano con il prefisso "ar" invece di "D" (ad esempio, il pin Arduino <code>D23</code> è alias Klipper <code>ar23</code>) e il prefisso "analog" invece di "A " (ad esempio, il pin Arduino <code>A14</code> è alias di Klipper <code>analog14</code>).</p>
+<p>Risposta lunga: Klipper utilizza i nomi dei pin standard definiti dal microcontrollore. Sui chip Atmega questi pin hardware hanno nomi come <code>PA4</code>, <code>PC7</code> o <code>PD2</code>.</p>
+<p>Tempo fa, il progetto Arduino ha deciso di evitare di utilizzare i nomi hardware standard a favore dei propri nomi pin basati su numeri incrementali: questi nomi Arduino generalmente assomigliano a "D23" o "A14". Questa è stata una scelta sfortunata che ha portato a una grande confusione. In particolare, i numeri dei pin di Arduino spesso non si traducono negli stessi nomi hardware. Ad esempio, <code>D21</code> è <code>PD0</code> su una comune scheda Arduino, ma è <code>PC7</code> su un'altra comune scheda Arduino.</p>
+<p>Per evitare questa confusione, il codice di base di Klipper utilizza i nomi dei pin standard definiti dal microcontrollore.</p>
+<h2 id="devo-collegare-il-mio-dispositivo-a-un-tipo-specifico-di-pin-del-microcontrollore">Devo collegare il mio dispositivo a un tipo specifico di pin del microcontrollore?<a class="headerlink" href="#devo-collegare-il-mio-dispositivo-a-un-tipo-specifico-di-pin-del-microcontrollore" title="Permanent link">&para;</a></h2>
+<p>Dipende dal tipo di dispositivo e dal tipo di pin:</p>
+<p>Pin ADC (o pin analogici): per termistori e sensori "analogici" simili, il dispositivo deve essere collegato a un pin compatibile con "analogico" o "ADC" sul microcontrollore. Se configuri Klipper per utilizzare un pin che non è compatibile con l'analogico, Klipper segnalerà un errore "Non un pin ADC valido".</p>
+<p>Pin PWM (o pin Timer): Klipper non utilizza PWM hardware per impostazione predefinita per nessun dispositivo. Quindi, in generale, è possibile collegare riscaldatori, ventole e dispositivi simili a qualsiasi pin IO generico. Tuttavia, le ventole e i dispositivi output_pin possono essere opzionalmente configurati per utilizzare <code>hardware_pwm: True</code>, nel qual caso il microcontrollore deve supportare PWM hardware sul pin (altrimenti, Klipper segnalerà un errore "pin PWM non valido").</p>
+<p>Pin IRQ (o pin di interrupt): Klipper non utilizza gli interrupt hardware sui pin IO, quindi non è mai necessario collegare un dispositivo a uno di questi pin del microcontrollore.</p>
+<p>Pin SPI: quando si utilizza l'SPI hardware, è necessario collegare i pin ai pin SPI del microcontrollore. Tuttavia, la maggior parte dei dispositivi può essere configurata per utilizzare "SPI software", nel qual caso è possibile utilizzare qualsiasi pin IO generico.</p>
+<p>Pin I2C: quando si utilizza I2C è necessario collegare i pin ai pin compatibili con I2C del microcontrollore.</p>
+<p>Altri dispositivi possono essere collegati a qualsiasi pin IO generico. Ad esempio, stepper, riscaldatori, ventole, sonde Z, servocomandi, LED, comuni display LCD hd44780/st7920, la linea di controllo Trinamic UART può essere collegata a qualsiasi pin IO generico.</p>
+<h2 id="come-posso-annullare-una-richiesta-di-attesa-temperatura-m109m190">Come posso annullare una richiesta di "attesa temperatura" M109/M190?<a class="headerlink" href="#come-posso-annullare-una-richiesta-di-attesa-temperatura-m109m190" title="Permanent link">&para;</a></h2>
+<p>Passare alla scheda del terminale OctoPrint ed emettere un comando M112 nel terminale. Il comando M112 farà entrare Klipper in uno stato di "arresto" e causerà la disconnessione di OctoPrint da Klipper. Passare all'area di connessione di OctoPrint e fare clic su "Connetti" per fare in modo che OctoPrint si riconnetta. Torna alla scheda del terminale ed emetti un comando FIRMWARE_RESTART per cancellare lo stato di errore di Klipper. Dopo aver completato questa sequenza, la precedente richiesta di riscaldamento verrà annullata e potrebbe essere avviata una nuova stampa.</p>
+<h2 id="posso-scoprire-se-la-stampante-ha-perso-dei-passaggi">Posso scoprire se la stampante ha perso dei passaggi?<a class="headerlink" href="#posso-scoprire-se-la-stampante-ha-perso-dei-passaggi" title="Permanent link">&para;</a></h2>
+<p>In un certo senso sì. Avviare la stampante, emettere un comando <code>GET_POSITION</code>, eseguire la stampa, tornare a casa ed emettere un altro <code>GET_POSITION</code>. Quindi confronta i valori nella riga <code>mcu:</code>.</p>
+<p>Questo potrebbe essere utile per regolare impostazioni come correnti, accelerazioni e velocità del motore passo-passo senza dover effettivamente stampare qualcosa e sprecare il filamento: basta eseguire alcuni movimenti ad alta velocità tra i comandi <code>GET_POSITION</code>.</p>
+<p>Si noti che gli stessi interruttori di fine corsa tendono a attivarsi in posizioni leggermente diverse, quindi una differenza di un paio di micropassi è probabilmente il risultato di imprecisioni di fine corsa. Un motore passo-passo stesso può perdere passi solo con incrementi di 4 passi completi. (Quindi, se si utilizzano 16 micropassi, un passo perso sullo stepper comporterebbe lo spegnimento del contatore di passi "mcu:" di un multiplo di 64 micropassi.)</p>
+<h2 id="perche-klipper-segnala-errori-ho-perso-la-mia-stampa">Perché Klipper segnala errori? Ho perso la mia stampa!<a class="headerlink" href="#perche-klipper-segnala-errori-ho-perso-la-mia-stampa" title="Permanent link">&para;</a></h2>
+<p>Risposta breve: vogliamo sapere se le nostre stampanti rilevano un problema in modo che il problema sottostante possa essere risolto e possiamo ottenere stampe di ottima qualità. Non vogliamo assolutamente che le nostre stampanti producano in silenzio stampe di bassa qualità.</p>
+<p>Risposta lunga: Klipper è stato progettato per risolvere automaticamente molti problemi transitori. Ad esempio, rileva automaticamente gli errori di comunicazione e li ritrasmette; pianifica le azioni in anticipo e bufferizza i comandi su più livelli per consentire tempi precisi anche con interferenze intermittenti. Tuttavia, se il software rileva un errore dal quale non può essere ripristinato, se gli viene ordinato di eseguire un'azione non valida o se rileva che è irrimediabilmente incapace di eseguire l'attività comandata, Klipper segnalerà un errore. In queste situazioni c'è un alto rischio di produrre una stampa di bassa qualità (o peggio). Si spera che avvisare gli utenti consentirà loro di risolvere il problema sottostante e migliorare la qualità complessiva delle loro stampe.</p>
+<p>Ci sono alcune domande correlate: perché Klipper non mette invece in pausa la stampa? Segnalare invece un avviso? Verificare la presenza di errori prima della stampa? Ignorare gli errori nei comandi digitati dall'utente? eccetera? Attualmente Klipper legge i comandi utilizzando il protocollo G-Code e sfortunatamente il protocollo di comando G-Code non è sufficientemente flessibile per rendere pratiche queste alternative oggi. C'è l'interesse degli sviluppatori nel migliorare l'esperienza dell'utente durante eventi anomali, ma si prevede che ciò richiederà un notevole lavoro infrastrutturale (incluso un passaggio dal G-Code).</p>
+<h2 id="come-si-esegue-laggiornamento-al-software-piu-recente">Come si esegue l'aggiornamento al software più recente?<a class="headerlink" href="#come-si-esegue-laggiornamento-al-software-piu-recente" title="Permanent link">&para;</a></h2>
+<p>Il primo passaggio per l'aggiornamento del software consiste nell'esaminare l'ultimo documento <a href="Config_Changes.html">config changes</a>. A volte, vengono apportate modifiche al software che richiedono agli utenti di aggiornare le proprie impostazioni come parte di un aggiornamento del software. È una buona idea rivedere questo documento prima dell'aggiornamento.</p>
+<p>Quando sei pronto per l'aggiornamento, il metodo generale è quello di entrare in Raspberry Pi ed eseguire:</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+git pull
+~/klipper/scripts/install-octopi.sh
+</code></pre></div>
+
+<p>Quindi si può ricompilare e flashare il codice del microcontrollore. Per esempio:</p>
+<div class="highlight"><pre><span></span><code>make menuconfig
+make clean
+make
+
+sudo service klipper stop
+make flash FLASH_DEVICE=/dev/ttyACM0
+sudo service klipper start
+</code></pre></div>
+
+<p>Tuttavia, capita spesso che cambi solo il software host. In questo caso è possibile aggiornare e riavviare solo il software host con:</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+git pull
+sudo service klipper restart
+</code></pre></div>
+
+<p>Se dopo aver utilizzato questo collegamento il software avverte della necessità di eseguire il reflash del microcontrollore o si verifica qualche altro errore insolito, seguire i passaggi completi di aggiornamento descritti sopra.</p>
+<p>Se gli errori persistono, ricontrolla il documento <a href="Config_Changes.html">config changes</a>, poiché potrebbe essere necessario modificare la configurazione della stampante.</p>
+<p>Si noti che i comandi g-code RESTART e FIRMWARE_RESTART non caricano il nuovo software: i comandi "sudo service klipper restart" e "make flash" di cui sopra sono necessari affinché una modifica del software abbia effetto.</p>
+<h2 id="come-faccio-a-disinstallare-klipper">Come faccio a disinstallare Klipper?<a class="headerlink" href="#come-faccio-a-disinstallare-klipper" title="Permanent link">&para;</a></h2>
+<p>Dal alto del firmware, non deve succedere nulla di speciale. Basta seguire le indicazioni per il flashing del nuovo firmware.</p>
+<p>Dal lato del raspberry pi, uno script di disinstallazione è disponibile in <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-uninstall.sh">scripts/klipper-uninstall.sh</a>. Per esempio:</p>
+<div class="highlight"><pre><span></span><code>sudo ~/klipper/scripts/klipper-uninstall.sh
+rm -rf ~/klippy-env ~/klipper
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Torna su
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Piede">
+      
+        
+        <a href="Features.html" class="md-footer__link md-footer__link--prev" aria-label="Precedente: Caratteristiche" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Precedente
+              </span>
+              Caratteristiche
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Releases.html" class="md-footer__link md-footer__link--next" aria-label="Prossimo: Versioni" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Prossimo
+              </span>
+              Versioni
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copia", "clipboard.copied": "Copiato", "search.config.lang": "it", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Cerca", "search.result.placeholder": "Scrivi per iniziare a cercare", "search.result.none": "Nessun documento trovato", "search.result.one": "1 documento trovato", "search.result.other": "# documenti trovati", "search.result.more.one": "1 altro in questa pagina", "search.result.more.other": "# altri in questa pagina", "search.result.term.missing": "Non presente", "select.version.title": "Seleziona la versione"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -86,6 +86,9 @@ extra:
     - name: Magyar
       link: /hu/
       lang: hu
+    - name: Muoversi
+      link: /it/
+      lang: it
     # Alternate language links automatically added here
 
 # Navigation hierarchy (this should mimic the layout of Overview.md)
