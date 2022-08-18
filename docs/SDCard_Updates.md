@@ -89,7 +89,8 @@ This procedure is automated during the upload process.
   the current version.
 - Only boards that use SPI for SD Card communication are supported.
   Boards that use SDIO, such as the Flymaker Flyboard and MKS Robin Nano
-  V1/V2, will not work.
+  V1/V2, will not work in SDIO mode.  However, it's usually possible to
+  flash such boards using Software SPI mode instead.
 
 ## Board Definitions
 
@@ -127,8 +128,9 @@ and the following additional field should be specified:
   the SD Card in the format of `miso,mosi,sclk`.
 
 It should be exceedingly rare that Software SPI is necessary, typically only
-boards with design errors will require it. The `btt-skr-pro` board definition
-provides an example.
+boards with design errors or boards that normally only support SDIO mode for
+their SD Card will require it. The `btt-skr-pro` board definition provides an
+example.
 
 Prior to creating a new board definition one should check to see if an
 existing board definition meets the criteria necessary for the new board.
