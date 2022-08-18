@@ -43,6 +43,16 @@ lookup_clock_line(uint32_t periph_base)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<14};
     if (periph_base == ADC1_BASE)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<20};
+    if (periph_base == TIM1_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<11};
+    if (periph_base == TIM14_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<15};
+    if (periph_base == TIM15_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<16};
+    if (periph_base == TIM16_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<17};
+    if (periph_base == TIM17_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<18};
     uint32_t bit = 1 << ((periph_base - APBPERIPH_BASE) / 0x400);
     return (struct cline){.en=&RCC->APBENR1, .rst=&RCC->APBRSTR1, .bit=bit};
 }

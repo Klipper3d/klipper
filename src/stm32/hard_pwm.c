@@ -238,7 +238,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val){
     }
     // Enable PWM output
     p->timer->CR1 |= TIM_CR1_CEN;
-#if CONFIG_MACH_STM32H7
+#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G0
     p->timer->BDTR |= TIM_BDTR_MOE;
 #endif
     return channel;
