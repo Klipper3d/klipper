@@ -11,7 +11,7 @@ an issue or for details on contacting the developers.
 Contributions to Klipper generally follow a high-level process:
 
 1. A submitter starts by creating a
-   [GitHub Pull Request](https://github.com/Klipper3d/klipper/pulls)
+   [GitHub Pull Request](https://github.com/DangerKlippers/danger-klipper/pulls)
    when a submission is ready for widespread deployment.
 2. When a [reviewer](#reviewers) is available to
    [review](#what-to-expect-in-a-review) the submission, they will
@@ -53,7 +53,7 @@ Common things a reviewer will look for:
    of printers within a few weeks of acceptance. Quality of
    submissions is therefore considered a priority.
 
-   The main [Klipper3d/klipper](https://github.com/Klipper3d/klipper)
+   The main [Klipper3d/klipper](https://github.com/DangerKlippers/danger-klipper)
    GitHub repository does not accept experimental work. Submitters
    should perform experimentation, debugging, and testing in their own
    repositories. The [Klipper Discourse](Contact.md) server is a good
@@ -296,7 +296,7 @@ contributions) and contain a current email address.
 
 ## Contributing to Klipper Translations
 
-[Klipper-translations Project](https://github.com/Klipper3d/klipper-translations)
+[Klipper-translations Project](https://github.com/DangerKlippers/danger-klipper-translations)
 is a project dedicated to translating Klipper to different languages.
 [Weblate](https://hosted.weblate.org/projects/klipper/) hosts all the
 Gettext strings for translating and reviewing. Locales can be displayed on
@@ -309,7 +309,7 @@ Gettext strings for translating and reviewing. Locales can be displayed on
 To reduce the frustration of translating domain-specific terms and
 gain awareness of the ongoing translations, you can submit a PR
 modifying the
-[Klipper-translations Project](https://github.com/Klipper3d/klipper-translations)
+[Klipper-translations Project](https://github.com/DangerKlippers/danger-klipper-translations)
 `readme.md`. Once a translation is ready, the corresponding
 modification to the Klipper project can be made.
 
@@ -320,7 +320,7 @@ a month without updates.
 Once the requirements are met, you need to:
 
 1. update klipper-tranlations repository
-[active_translations](https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations)
+[active_translations](https://github.com/DangerKlippers/danger-klipper-translations/blob/translations/active_translations)
 2. Optional: add a manual-index.md file in klipper-translations repository's
 `docs\locals\<lang>` folder to replace the language specific index.md (generated
 index.md does not render correctly).

@@ -1,6 +1,6 @@
 # Overview
 
-Welcome to the Klipper documentation. If new to Klipper, start with
+Welcome to the Danger-Klipper documentation. If new to Klipper, start with
 the [features](Features.md) and [installation](Installation.md)
 documents.
 
