@@ -205,6 +205,7 @@ class DeltaKinematics:
             "homed_axes": "" if self.need_home else "xyz",
             "axis_minimum": self.axes_min,
             "axis_maximum": self.axes_max,
+            "cone_start_z": self.limit_z,
         }
 
     def get_calibration(self):
