@@ -190,7 +190,7 @@ gpio_adc_setup(uint32_t pin)
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
-        ADC3_COMMON->CCR = ADC_CCR_TSEN;
+        ADC3_COMMON->CCR |= ADC_CCR_TSEN;
     } else {
         gpio_peripheral(pin, GPIO_ANALOG, 0);
     }
