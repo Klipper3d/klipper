@@ -743,7 +743,7 @@
   
     <li class="md-nav__item">
       <a href="Command_Templates.html" class="md-nav__link">
-        Commands templates
+        Modelli di comandi
       </a>
     </li>
   
@@ -799,6 +799,13 @@
         <li class="md-nav__item">
   <a href="#bed_mesh" class="md-nav__link">
     bed_mesh
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bed_screws" class="md-nav__link">
+    bed_screws
   </a>
   
 </li>
@@ -881,15 +888,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#heater" class="md-nav__link">
-    heater
+  <a href="#riscaldatore" class="md-nav__link">
+    Riscaldatore
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#heaters" class="md-nav__link">
-    heaters
+  <a href="#riscaldatori" class="md-nav__link">
+    Riscaldatori
   </a>
   
 </li>
@@ -1537,6 +1544,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bed_screws" class="md-nav__link">
+    bed_screws
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configfile" class="md-nav__link">
     configfile
   </a>
@@ -1614,15 +1628,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#heater" class="md-nav__link">
-    heater
+  <a href="#riscaldatore" class="md-nav__link">
+    Riscaldatore
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#heaters" class="md-nav__link">
-    heaters
+  <a href="#riscaldatori" class="md-nav__link">
+    Riscaldatori
   </a>
   
 </li>
@@ -1819,6 +1833,14 @@
 <li><code>profile_name</code>, <code>mesh_min</code>, <code>mesh_max</code>, <code>probed_matrix</code>, <code>mesh_matrix</code>: informazioni sulla bed_mesh attualmente attiva.</li>
 <li><code>profiles</code>: The set of currently defined profiles as setup using BED_MESH_PROFILE.</li>
 </ul>
+<h2 id="bed_screws">bed_screws<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>Config_Reference.md#bed_screws</code> object:</p>
+<ul>
+<li><code>is_active</code>: Returns True if the bed screws adjustment tool is currently active.</li>
+<li><code>state</code>: The bed screws adjustment tool state. It is one of the following strings: "adjust", "fine".</li>
+<li><code>current_screw</code>: The index for the current screw being adjusted.</li>
+<li><code>accepted_screws</code>: The number of accepted screws.</li>
+</ul>
 <h2 id="configfile">configfile<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>configfile</code> (questo oggetto è sempre disponibile):</p>
 <ul>
@@ -1895,51 +1917,51 @@
 <h2 id="firmware_retraction">firmware_retraction<a class="headerlink" href="#firmware_retraction" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#firmware_retraction">firmware_retraction</a>:</p>
 <ul>
-<li><code>retract_length</code>, <code>retract_speed</code>, <code>unretract_extra_length</code>, <code>unretract_speed</code>: The current settings for the firmware_retraction module. These settings may differ from the config file if a <code>SET_RETRACTION</code> command alters them.</li>
+<li><code>retract_length</code>, <code>retract_speed</code>, <code>unretract_extra_length</code>, <code>unretract_speed</code>: le impostazioni correnti per il modulo firmware_retraction. Queste impostazioni possono differire dal file di configurazione se un comando <code>SET_RETRACTION</code> le altera.</li>
 </ul>
 <h2 id="gcode_macro">gcode_macro<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#gcode_macro">gcode_macro some_name</a> objects:</p>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#gcode_macro">gcode_macro some_name</a>:</p>
 <ul>
-<li><code>&lt;variable&gt;</code>: The current value of a <a href="Command_Templates.html#variables">gcode_macro variable</a>.</li>
+<li><code>&lt;variabile&gt;</code>: il valore corrente di una <a href="Command_Templates.html#variables">variabile gcode_macro</a>.</li>
 </ul>
 <h2 id="gcode_move">gcode_move<a class="headerlink" href="#gcode_move" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>gcode_move</code> object (this object is always available):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>gcode_move</code> (questo oggetto è sempre disponibile):</p>
 <ul>
-<li><code>gcode_position</code>: The current position of the toolhead relative to the current G-Code origin. That is, positions that one might directly send to a <code>G1</code> command. It is possible to access the x, y, z, and e components of this position (eg, <code>gcode_position.x</code>).</li>
-<li><code>position</code>: The last commanded position of the toolhead using the coordinate system specified in the config file. It is possible to access the x, y, z, and e components of this position (eg, <code>position.x</code>).</li>
-<li><code>homing_origin</code>: The origin of the gcode coordinate system (relative to the coordinate system specified in the config file) to use after a <code>G28</code> command. The <code>SET_GCODE_OFFSET</code> command can alter this position. It is possible to access the x, y, and z components of this position (eg, <code>homing_origin.x</code>).</li>
-<li><code>speed</code>: The last speed set in a <code>G1</code> command (in mm/s).</li>
-<li><code>speed_factor</code>: The "speed factor override" as set by an <code>M220</code> command. This is a floating point value such that 1.0 means no override and, for example, 2.0 would double requested speed.</li>
-<li><code>extrude_factor</code>: The "extrude factor override" as set by an <code>M221</code> command. This is a floating point value such that 1.0 means no override and, for example, 2.0 would double requested extrusions.</li>
-<li><code>absolute_coordinates</code>: This returns True if in <code>G90</code> absolute coordinate mode or False if in <code>G91</code> relative mode.</li>
-<li><code>absolute_extrude</code>: This returns True if in <code>M82</code> absolute extrude mode or False if in <code>M83</code> relative mode.</li>
+<li><code>gcode_position</code>: la posizione corrente della testa di stampa rispetto all'origine del Gcode corrente. Cioè, posizioni che si potrebbero inviare direttamente a un comando <code>G1</code>. È possibile accedere ai componenti x, y, z ed e di questa posizione (ad esempio, <code>gcode_position.x</code>).</li>
+<li><code>position</code>: l'ultima posizione comandata della testina utilizzando il sistema di coordinate specificato nel file di configurazione. È possibile accedere alle componenti x, y, z ed e di questa posizione (ad esempio, <code>position.x</code>).</li>
+<li><code>homing_origin</code>: l'origine del sistema di coordinate gcode (relativo al sistema di coordinate specificato nel file di configurazione) da utilizzare dopo un comando <code>G28</code>. Il comando <code>SET_GCODE_OFFSET</code> può alterare questa posizione. È possibile accedere ai componenti x, y e z di questa posizione (ad esempio, <code>homing_origin.x</code>).</li>
+<li><code>speed</code>: l'ultima velocità impostata in un comando <code>G1</code> (in mm/s).</li>
+<li><code>speed_factor</code>: La"speed factor override" come impostato da un comando <code>M220</code>. Questo è un valore in virgola mobile tale che 1,0 significa nessun override e, ad esempio, 2,0 raddoppierebbe la velocità richiesta.</li>
+<li><code>extrude_factor</code>: L'"extrude factor override" come impostato da un comando <code>M221</code>. Questo è un valore in virgola mobile tale che 1,0 significa nessun override ad esempio 2,0 raddoppierebbe le estrusioni richieste.</li>
+<li><code>absolute_coordinates</code>: restituisce True se in modalità coordinate assolute <code>G90</code> o False se in modalità relativa <code>G91</code>.</li>
+<li><code>absolute_extrude</code>: restituisce True se in modalità di estrusione assoluta <code>M82</code> o False se in modalità relativa <code>M83</code>.</li>
 </ul>
 <h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Config_Reference.html#hall_filament_width_sensor">hall_filament_width_sensor</a> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#hall_filament_width_sensor">hall_filament_width_sensor</a>:</p>
 <ul>
-<li><code>is_active</code>: Returns True if the sensor is currently active.</li>
+<li><code>is_active</code>: Restituisce True se il sensore è attualmente attivo.</li>
 <li><code>Diameter</code>: The last reading from the sensor in mm.</li>
 <li><code>Raw</code>: The last raw ADC reading from the sensor.</li>
 </ul>
-<h2 id="heater">heater<a class="headerlink" href="#heater" title="Permanent link">&para;</a></h2>
-<p>The following information is available for heater objects such as <a href="Config_Reference.html#extruder">extruder</a>, <a href="Config_Reference.html#heater_bed">heater_bed</a>, and <a href="Config_Reference.html#heater_generic">heater_generic</a>:</p>
+<h2 id="riscaldatore">Riscaldatore<a class="headerlink" href="#riscaldatore" title="Permanent link">&para;</a></h2>
+<p>Le seguenti informazioni sono disponibili per oggetti riscaldatore come <a href="Config_Reference.html#extruder">extruder</a>, <a href="Config_Reference.html#heater_bed">heater_bed</a> e <a href="Config_Reference.html#heater_generic">heater_generic</a>:</p>
 <ul>
-<li><code>temperature</code>: The last reported temperature (in Celsius as a float) for the given heater.</li>
-<li><code>target</code>: The current target temperature (in Celsius as a float) for the given heater.</li>
-<li><code>power</code>: The last setting of the PWM pin (a value between 0.0 and 1.0) associated with the heater.</li>
-<li><code>can_extrude</code>: If extruder can extrude (defined by <code>min_extrude_temp</code>), available only for <a href="Config_Reference.html#extruder">extruder</a></li>
+<li><code>temperature</code>: l'ultima temperatura riportata (in gradi Celsius come float) per il dato riscaldatore.</li>
+<li><code>target</code>: la temperatura target attuale (in gradi Celsius come float) per il riscaldatore dato.</li>
+<li><code>power</code>: l'ultima impostazione del pin PWM (un valore compreso tra 0.0 e 1.0) associato al riscaldatore.</li>
+<li><code>can_extrude</code>: Se l'estrusore può estrudere (definito da <code>min_extrude_temp</code>), disponibile solo per <a href="Config_Reference.html#extruder">extruder</a></li>
 </ul>
-<h2 id="heaters">heaters<a class="headerlink" href="#heaters" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>heaters</code> object (this object is available if any heater is defined):</p>
+<h2 id="riscaldatori">Riscaldatori<a class="headerlink" href="#riscaldatori" title="Permanent link">&para;</a></h2>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>heaters</code> (questo oggetto è disponibile se è definito un riscaldatore):</p>
 <ul>
-<li><code>available_heaters</code>: Returns a list of all currently available heaters by their full config section names, e.g. <code>["extruder", "heater_bed", "heater_generic my_custom_heater"]</code>.</li>
-<li><code>available_sensors</code>: Returns a list of all currently available temperature sensors by their full config section names, e.g. <code>["extruder", "heater_bed", "heater_generic my_custom_heater", "temperature_sensor electronics_temp"]</code>.</li>
+<li><code>disponibili_riscaldatori</code>: restituisce un elenco di tutti i riscaldatori attualmente disponibili in base ai nomi completi delle sezioni di configurazione, ad es. <code>["extruder", "heater_bed", "heater_generic my_custom_heater"]</code>.</li>
+<li><code>available_sensors</code>: restituisce un elenco di tutti i riscaldatori attualmente disponibili in base ai nomi completi delle sezioni di configurazione, ad es. <code>["extruder", "heater_bed", "heater_generic my_custom_heater"]</code>.</li>
 </ul>
 <h2 id="idle_timeout">idle_timeout<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Config_Reference.html#idle_timeout">idle_timeout</a> object (this object is always available):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#idle_timeout">idle_timeout</a> (questo oggetto è sempre disponibile):</p>
 <ul>
-<li><code>state</code>: The current state of the printer as tracked by the idle_timeout module. It is one of the following strings: "Idle", "Printing", "Ready".</li>
-<li><code>printing_time</code>: The amount of time (in seconds) the printer has been in the "Printing" state (as tracked by the idle_timeout module).</li>
+<li><code>state</code>: lo stato corrente della stampante monitorato dal modulo idle_timeout. È una delle seguenti stringhe: "Idle", "Printing", "Ready".</li>
+<li><code>printing_time</code>: la quantità di tempo (in secondi) in cui la stampante è rimasta nello stato "Printing" (come tracciato dal modulo idle_timeout).</li>
 </ul>
 <h2 id="led">led<a class="headerlink" href="#led" title="Permanent link">&para;</a></h2>
 <p>The following information is available for each <code>[led led_name]</code>, <code>[neopixel led_name]</code>, <code>[dotstar led_name]</code>, <code>[pca9533 led_name]</code>, and <code>[pca9632 led_name]</code> config section defined in printer.cfg:</p>
@@ -1955,12 +1977,12 @@
 <li><code>z_position_upper</code>: ultimo tentativo di sonda appena maggiore dell'altezza corrente.</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#mcu">mcu</a> and <a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a> objects:</p>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#mcu">mcu</a> e <a href="Config_Reference.html#mcu-my_extra_mcu">mcu some_name</a>:</p>
 <ul>
-<li><code>mcu_version</code>: The Klipper code version reported by the micro-controller.</li>
-<li><code>mcu_build_versions</code>: Information on the build tools used to generate the micro-controller code (as reported by the micro-controller).</li>
-<li><code>mcu_constants.&lt;constant_name&gt;</code>: Compile time constants reported by the micro-controller. The available constants may differ between micro-controller architectures and with each code revision.</li>
-<li><code>last_stats.&lt;statistics_name&gt;</code>: Statistics information on the micro-controller connection.</li>
+<li><code>mcu_version</code>: la versione del codice Klipper riportata dal microcontrollore.</li>
+<li><code>mcu_build_versions</code>: informazioni sugli strumenti di compilazione utilizzati per generare il codice del microcontrollore (come riportato dal microcontrollore).</li>
+<li><code>mcu_constants.&lt;constant_name&gt;</code>: Elenca le costanti di tempo riportate dal microcontrollore. Le costanti disponibili possono differire tra le architetture del microcontrollore e con ogni revisione del codice.</li>
+<li><code>last_stats.&lt;statistics_name&gt;</code>: informazioni statistiche sulla connessione del microcontrollore.</li>
 </ul>
 <h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the <code>motion_report</code> object (this object is automatically available if any stepper config section is defined):</p>
@@ -1970,26 +1992,26 @@
 <li><code>live_extruder_velocity</code>: The requested extruder velocity (in mm/s) at the current time.</li>
 </ul>
 <h2 id="output_pin">output_pin<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#output_pin">output_pin some_name</a> objects:</p>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#output_pin">output_pin some_name</a>:</p>
 <ul>
-<li><code>value</code>: The "value" of the pin, as set by a <code>SET_PIN</code> command.</li>
+<li><code>value</code>: Il "valore" del pin, come impostato da un comando <code>SET_PIN</code>.</li>
 </ul>
 <h2 id="palette2">palette2<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Config_Reference.html#palette2">palette2</a> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#palette2">palette2</a>:</p>
 <ul>
-<li><code>ping</code>: Amount of the last reported Palette 2 ping in percent.</li>
-<li><code>remaining_load_length</code>: When starting a Palette 2 print, this will be the amount of filament to load into the extruder.</li>
-<li><code>is_splicing</code>: True when the Palette 2 is splicing filament.</li>
+<li><code>ping</code>: Valore dell'ultimo ping di Palette 2 riportato in percentuale.</li>
+<li><code>remaining_load_length</code>: Quando si avvia una stampa della Palette 2, questa sarà la quantità di filamento da caricare nell'estrusore.</li>
+<li><code>is_splicing</code>: Vero quando la Palette 2 sta giuntando il filamento.</li>
 </ul>
 <h2 id="pause_resume">pause_resume<a class="headerlink" href="#pause_resume" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Config_Reference.html#pause_resume">pause_resume</a> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#pause_resume">pause_resume</a>:</p>
 <ul>
-<li><code>is_paused</code>: Returns true if a PAUSE command has been executed without a corresponding RESUME.</li>
+<li><code>is_paused</code>: Restituisce vero se un comando PAUSE è stato eseguito senza un corrispondente RESUME.</li>
 </ul>
 <h2 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>print_stats</code> object (this object is automatically available if a <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> config section is defined):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>print_stats</code> (questo oggetto è automaticamente disponibile se è definita una sezione di configurazione <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a>):</p>
 <ul>
-<li><code>filename</code>, <code>total_duration</code>, <code>print_duration</code>, <code>filament_used</code>, <code>state</code>, <code>message</code>: Estimated information about the current print when a virtual_sdcard print is active.</li>
+<li><code>filename</code>, <code>total_duration</code>, <code>print_duration</code>, <code>filament_used</code>, <code>state</code>, <code>message</code>: informazioni stimate sulla stampa corrente quando è attiva una stampa da virtual_sdcard.</li>
 </ul>
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the <a href="Config_Reference.html#probe">probe</a> object (this object is also available if a <a href="Config_Reference.html#bltouch">bltouch</a> config section is defined):</p>
@@ -2099,7 +2121,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Piede">
       
         
-        <a href="Command_Templates.html" class="md-footer__link md-footer__link--prev" aria-label="Precedente: Commands templates" rel="prev">
+        <a href="Command_Templates.html" class="md-footer__link md-footer__link--prev" aria-label="Precedente: Modelli di comandi" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -2108,7 +2130,7 @@
               <span class="md-footer__direction">
                 Precedente
               </span>
-              Commands templates
+              Modelli di comandi
             </div>
           </div>
         </a>

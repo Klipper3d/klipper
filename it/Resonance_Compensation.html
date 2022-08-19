@@ -907,7 +907,7 @@
   
     <li class="md-nav__item">
       <a href="Command_Templates.html" class="md-nav__link">
-        Commands templates
+        Modelli di comandi
       </a>
     </li>
   
@@ -1544,11 +1544,11 @@
 <ul>
 <li>L'altezza dello strato (layer) consigliata è 0,2 o 0,25 mm.</li>
 <li>I livelli di riempimento e superiori possono essere impostati su 0.</li>
-<li>Use 1-2 perimeters, or even better the smooth vase mode with 1-2 mm base.</li>
-<li>Use sufficiently high speed, around 80-100 mm/sec, for <strong>external</strong> perimeters.</li>
-<li>Make sure that the minimum layer time is <strong>at most</strong> 3 seconds.</li>
-<li>Make sure any "dynamic acceleration control" is disabled in the slicer.</li>
-<li>Do not turn the model. The model has X and Y marks at the back of the model. Note the unusual location of the marks vs. the axes of the printer - it is not a mistake. The marks can be used later in the tuning process as a reference, because they show which axis the measurements correspond to.</li>
+<li>Usa 1-2 perimetri, o meglio ancora la modalità vaso liscio con base da 1-2 mm.</li>
+<li>Utilizzare velocità sufficientemente elevate, circa 80-100 mm/sec, per i perimetri <strong>esterni</strong>.</li>
+<li>Assicurati che il tempo minimo per lo strato sia <strong>al massimo</strong> 3 secondi.</li>
+<li>Assicurati che qualsiasi "controllo dinamico dell'accelerazione" sia disabilitato nello slicer.</li>
+<li>Non girare il modello. Il modello ha segni X e Y sul retro del modello. Nota la posizione insolita dei segni rispetto agli assi della stampante: non è un errore. I contrassegni possono essere utilizzati successivamente nel processo di ottimizzazione come riferimento, poiché mostrano a quale asse corrispondono le misurazioni.</li>
 </ul>
 <h3 id="ringing-frequency">Ringing frequency<a class="headerlink" href="#ringing-frequency" title="Permanent link">&para;</a></h3>
 <p>First, measure the <strong>ringing frequency</strong>.</p>
@@ -1558,7 +1558,7 @@
 <li>Disable Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>If you have already added <code>[input_shaper]</code> section to the printer.cfg, execute <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code> command. If you get "Unknown command" error, you can safely ignore it at this point and continue with the measurements.</li>
 <li>Execute the command: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Basically, we try to make ringing more pronounced by setting different large values for acceleration. This command will increase the acceleration every 5 mm starting from 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 and so forth up until 7000 mm/sec^2 at the last band.</li>
-<li>Print the test model sliced with the suggested parameters.</li>
+<li>Stampa il modello di test sliced con i parametri suggeriti.</li>
 <li>
 <p>You can stop the print earlier if the ringing is clearly visible and you see that acceleration gets too high for your printer (e.g. printer shakes too much or starts skipping steps).</p>
 <ol>
@@ -1599,7 +1599,7 @@ shaper_freq_y: ...  # frequency for the Y mark of the test model
 <li>Disable Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Execute: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Execute the command: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
-<li>Print the test model sliced with the suggested parameters.</li>
+<li>Stampa il modello di test sliced con i parametri suggeriti.</li>
 </ol>
 <p>If you see no ringing at this point, then MZV shaper can be recommended for use.</p>
 <p>If you do see some ringing, re-measure the frequencies using steps (8)-(10) described in <a href="#ringing-frequency">Ringing frequency</a> section. If the frequencies differ significantly from the values you obtained earlier, a more complex input shaper configuration is needed. You can refer to Technical details of <a href="#input-shapers">Input shapers</a> section. Otherwise, proceed to the next step.</p>

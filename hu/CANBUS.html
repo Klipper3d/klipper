@@ -1358,7 +1358,7 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper CAN busz támogatását írja le.</p>
 <h2 id="eszkoz-hardver">Eszköz Hardver<a class="headerlink" href="#eszkoz-hardver" title="Permanent link">&para;</a></h2>
-<p>A Klipper jelenleg csak az STM32 chipeken támogatja a CAN-t. Ezenkívül a mikrokontroller chipnek támogatnia kell a CAN-t, és olyan lapon kell lennie, amely rendelkezik CAN adó-vevővel.</p>
+<p>A Klipper jelenleg támogatja a CAN-t az STM32 és RP2040 chipeken. Ezenkívül a mikrokontroller chipnek olyan lapkán kell lennie, amely rendelkezik CAN csatlakozóval.</p>
 <p>A CAN-hez való fordításhoz futtassa a <code>make menuconfig</code> parancsot, és válassza a "CAN busz" kommunikációs interfészt. Végül fordítsa le a mikrokontroller kódját, és égesse a céllapra.</p>
 <h2 id="gazdagep-hardver">Gazdagép Hardver<a class="headerlink" href="#gazdagep-hardver" title="Permanent link">&para;</a></h2>
 <p>A CAN-busz használatához szükség van egy host-adapterre. Jelenleg két elterjedt lehetőség van:</p>
@@ -1384,7 +1384,7 @@ iface can0 can static
 </code></pre></div>
 
 <p>Ha nem inicializált CAN-eszközöket észlel, a fenti parancs a következő sorokat fogja jelenteni:</p>
-<div class="highlight"><pre><span></span><code>Talált canbus_uuid=11aa22bb33cc
+<div class="highlight"><pre><span></span><code>Talált canbus_uuid=11aa22bb33cc, Alkalmazás: Klipper
 </code></pre></div>
 
 <p>Minden eszköz egyedi azonosítóval rendelkezik. A fenti példában <code>11aa22bb33cc</code> a mikrokontroller "canbus_uuid" azonosítója.</p>
@@ -1402,8 +1402,13 @@ canbus_uuid: 11aa22bb33cc
 <ul>
 <li>A "bridge mcu" valójában nem a CAN-buszon van. A hozzá érkező és tőle érkező üzenetek nem fogyasztanak sávszélességet a CAN-buszon. Az MCU-t nem láthatják más adapterek, amelyek esetleg a CAN-buszon vannak.</li>
 <li>A busszal való kommunikációhoz szükséges a <code>can0</code> (vagy hasonló) interfész konfigurálása Linuxban. A Linux CAN-busz sebességét és a CAN-busz bit-időzítési beállításait azonban a Klipper figyelmen kívül hagyja. Jelenleg a CAN-busz frekvenciáját a "make menuconfig" futtatása során kell megadni, és a Linuxban megadott buszsebességet figyelmen kívül hagyjuk.</li>
-<li>Amikor a "bridge mcu" visszaáll, a Linux letiltja a megfelelő <code>can0</code> interfészt. Általában ehhez olyan parancsok futtatására lehet szükség, mint például az "ip up", hogy újraindítsa az interfészt. Így a Klipper FIRMWARE_RESTART parancsok (vagy egy konfigurációváltás után a szokásos RESTART) a <code>can0</code> interfész újraindítását igényelhetik.</li>
+<li>Amikor a "bridge mcu" visszaáll, a Linux letiltja a megfelelő <code>can0</code> interfészt. A FIRMWARE_RESTART és a RESTART parancsok megfelelő kezelése érdekében ajánlott az <code>/etc/network/interfaces.d/can0</code> fájlban az <code>auto</code> helyett az <code>allow-hotplug</code> parancsot használni. Például:</li>
 </ul>
+<div class="highlight"><pre><span></span><code>allow-hotplug can0
+iface can0 can static
+    bitrate 500000
+    up ifconfig $IFACE txqueuelen 128
+</code></pre></div>
 
               
             </article>

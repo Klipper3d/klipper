@@ -1358,7 +1358,7 @@
 <h1 id="can">CAN 匯流排<a class="headerlink" href="#can" title="Permanent link">&para;</a></h1>
 <p>本文件描述了 Klipper 的 CAN 匯流排支援。</p>
 <h2 id="_1">裝置硬體<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>Klipper目前只支援 stm32 晶片的CAN。此外，微控制器晶片必須支援 CAN，而且你使用的主板必須有 CAN 收發器。</p>
+<p>Klipper currently supports CAN on stm32 and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
 <p>要針對 CAN 進行編譯，請執行 <code>make menuconfig</code>並選擇"CAN Bus"作為通訊介面。最後，編譯微控制器程式碼並將其刷寫到目標控制版上。</p>
 <h2 id="_2">主機硬體<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>爲了使用 CAN 匯流排，主機需要一個適配器。目前有兩種常見的選擇：</p>
@@ -1384,7 +1384,7 @@ iface can0 can static
 </code></pre></div>
 
 <p>如果檢測到未初始化的 CAN 裝置，上述命令將報告如下行：</p>
-<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc
+<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc, Application: Klipper
 </code></pre></div>
 
 <p>每個裝置將有一個獨特的識別符號。在上面的例子中，<code>11aa22bb33cc</code>是微控制器'的"canbus_uuid" 。</p>
@@ -1402,8 +1402,13 @@ canbus_uuid: 11aa22bb33cc
 <ul>
 <li>"橋接MCU”實際上不在 CAN bus上。消息進出不會消耗 CAN bus上的帶寬。可能在 CAN bus上的其他適配器無法看到該 mcu。</li>
 <li>為了與總線通信，必須在 Linux 中配置 <code>can0</code>（或類似的）接口。但是，Klipper 忽略了 Linux CAN 總線速度和 CAN 總線位定時選項。目前，CAN 總線頻率在“make menuconfig”期間指定，Linux 中指定的總線速度被忽略。</li>
-<li>每當重置“bridge mcu”時，Linux 將禁用相應的<code>can0</code>接口。通常，這可能需要運行諸如“ip up”之類的命令來重新啟動接口。因此，Klipper FIRMWARE_RESTART 命令（或配置更改後的常規 RESTART）可能需要重新啟動<code>can0</code>接口。</li>
+<li>Whenever the "bridge mcu" is reset, Linux will disable the corresponding <code>can0</code> interface. To ensure proper handling of FIRMWARE_RESTART and RESTART commands, it is recommended to replace <code>auto</code> with <code>allow-hotplug</code> in the <code>/etc/network/interfaces.d/can0</code> file. For example:</li>
 </ul>
+<div class="highlight"><pre><span></span><code>allow-hotplug can0
+iface can0 can static
+    bitrate 500000
+    up ifconfig $IFACE txqueuelen 128
+</code></pre></div>
 
               
             </article>

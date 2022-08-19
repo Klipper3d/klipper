@@ -739,7 +739,7 @@
   
     <li class="md-nav__item">
       <a href="Command_Templates.html" class="md-nav__link">
-        Commands templates
+        Modelli di comandi
       </a>
     </li>
   
@@ -1358,7 +1358,7 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>Questo documento descrive il supporto del CAN bus di Klipper.</p>
 <h2 id="hardware-del-dispositivo">Hardware del dispositivo<a class="headerlink" href="#hardware-del-dispositivo" title="Permanent link">&para;</a></h2>
-<p>Klipper attualmente supporta solo CAN su chip stm32. Inoltre, il chip del microcontrollore deve supportare la CAN e deve trovarsi su una scheda dotata di un ricetrasmettitore CAN.</p>
+<p>Klipper attualmente supporta CAN sui chip stm32 e rp2040. Inoltre, il chip del microcontrollore deve trovarsi su una scheda dotata di un ricetrasmettitore CAN.</p>
 <p>Per compilare per CAN, eseguire <code>make menuconfig</code> e selezionare "CAN bus" come interfaccia di comunicazione. Infine, compila il codice del microcontrollore e flashalo sulla scheda di destinazione.</p>
 <h2 id="hardware-host">Hardware Host<a class="headerlink" href="#hardware-host" title="Permanent link">&para;</a></h2>
 <p>Per utilizzare un bus CAN, è necessario disporre di un adattatore sul host. Attualmente ci sono due opzioni comuni:</p>
@@ -1384,7 +1384,7 @@ iface can0 can static
 </code></pre></div>
 
 <p>Se vengono rilevati dispositivi CAN non inizializzati, il comando precedente riporterà righe come le seguenti:</p>
-<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc
+<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc, Application: Klipper
 </code></pre></div>
 
 <p>Ogni dispositivo avrà un identificatore univoco. Nell'esempio sopra, <code>11aa22bb33cc</code> è il "canbus_uuid" del microcontrollore.</p>
@@ -1402,8 +1402,13 @@ canbus_uuid: 11aa22bb33cc
 <ul>
 <li>Il "bridge mcu" non è effettivamente sul bus CAN. I messaggi in entrata e in uscita non consumano larghezza di banda sul bus CAN. L'mcu non può essere visto da altri adattatori che potrebbero essere sul bus CAN.</li>
 <li>È necessario configurare l'interfaccia <code>can0</code> (o simile) in Linux per comunicare con il bus. Tuttavia, Klipper ignora la velocità del bus CAN di Linux e le opzioni di temporizzazione del bus CAN. Attualmente, la frequenza del bus CAN viene specificata durante "make menuconfig" e la velocità del bus specificata in Linux viene ignorata.</li>
-<li>Ogni volta che il "bridge mcu" viene ripristinato, Linux disabiliterà l'interfaccia <code>can0</code> corrispondente. In genere, ciò potrebbe richiedere l'esecuzione di comandi come "ip up" per riavviare l'interfaccia. Pertanto, i comandi FIRMWARE_RESTART di Klipper (o il normale RESTART dopo una modifica della configurazione) potrebbero richiedere il riavvio dell'interfaccia <code>can0</code>.</li>
+<li>Ogni volta che il "bridge mcu" viene ripristinato, Linux disabiliterà l'interfaccia <code>can0</code> corrispondente. Per garantire una corretta gestione dei comandi FIRMWARE_RESTART e RESTART, si consiglia di sostituire <code>auto</code> con <code>allow-hotplug</code> nel file <code>/etc/network/interfaces.d/can0</code>. Per esempio:</li>
 </ul>
+<div class="highlight"><pre><span></span><code>allow-hotplug can0
+iface can0 can static
+    bitrate 500000
+    up ifconfig $IFACE txqueuelen 128
+</code></pre></div>
 
               
             </article>

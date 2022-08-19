@@ -1358,7 +1358,7 @@
 <h1 id="can">CAN 总线<a class="headerlink" href="#can" title="Permanent link">&para;</a></h1>
 <p>本文档描述了 Klipper 的 CAN 总线支持。</p>
 <h2 id="_1">硬件设备<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>Klipper目前只支持 stm32 芯片的CAN。此外，微控制器芯片必须支持 CAN并且你使用的主板必须有 CAN 收发器。</p>
+<p>Klipper currently supports CAN on stm32 and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
 <p>要针对 CAN 进行编译，请运行 <code>make menuconfig</code>并选择"CAN Bus"作为通信接口。最后，编译微控制器代码并将其刷写到目标控制版上。</p>
 <h2 id="_2">主机硬件<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>为了使用 CAN 总线，主机需要一个适配器。目前有两种常见的选择：</p>
@@ -1384,7 +1384,7 @@ iface can0 can static
 </code></pre></div>
 
 <p>如果检测到未初始化的 CAN 设备，上述命令将报告如下行：</p>
-<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc
+<div class="highlight"><pre><span></span><code>Found canbus_uuid=11aa22bb33cc, Application: Klipper
 </code></pre></div>
 
 <p>每个设备将有一个独特的标识符。在上面的例子中，<code>11aa22bb33cc</code>是微控制器'的"canbus_uuid" 。</p>
@@ -1402,8 +1402,13 @@ canbus_uuid: 11aa22bb33cc
 <ul>
 <li>“桥接MCU” 实际上并不在CAN总线上。传入和传出的消息不会占用CAN总线上的带宽。因此位于CAN总线上的其他适配器无法看到MCU。</li>
 <li>有必要在Linux中配置<code>can0</code> （或类似）接口，以便与总线通信。然而，Klipper 会忽略 Linux的CAN总线速度和 CAN 总线bit-timing选项。目前，CAN总线的频率需要在 "make menuconfig "中指定。Linux中指定的总线速度会被忽略。</li>
-<li>每当 "桥接 mcu "被重置时，Linux 将禁用相应的<code>can0</code> 接口。一般来说，这可能需要运行诸如 "ip up "之类的命令来重新启动接口。因此，Klipper FIRMWARE_RESTART 命令 (或配置改变后的常规 RESTART) 可能需要重新启动<code>can0</code> 接口。</li>
+<li>Whenever the "bridge mcu" is reset, Linux will disable the corresponding <code>can0</code> interface. To ensure proper handling of FIRMWARE_RESTART and RESTART commands, it is recommended to replace <code>auto</code> with <code>allow-hotplug</code> in the <code>/etc/network/interfaces.d/can0</code> file. For example:</li>
 </ul>
+<div class="highlight"><pre><span></span><code>allow-hotplug can0
+iface can0 can static
+    bitrate 500000
+    up ifconfig $IFACE txqueuelen 128
+</code></pre></div>
 
               
             </article>

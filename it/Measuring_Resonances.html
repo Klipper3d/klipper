@@ -893,7 +893,7 @@
   
     <li class="md-nav__item">
       <a href="Command_Templates.html" class="md-nav__link">
-        Commands templates
+        Modelli di comandi
       </a>
     </li>
   
@@ -1834,23 +1834,23 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 
 <p>ignoring any errors for <code>SET_INPUT_SHAPER</code> command. For <code>TEST_RESONANCES</code> command, specify the desired test axis. The raw data will be written into <code>/tmp</code> directory on the RPi.</p>
 <p>I dati grezzi possono anche essere ottenuti eseguendo il comando <code>ACCELEROMETER_MEASURE</code> due volte durante una normale attività della stampante: prima per avviare le misurazioni, quindi per interromperle e scrivere il file di output. Fare riferimento a <a href="G-Codes.html#adxl345">G-Codes</a> per maggiori dettagli.</p>
-<p>The data can be processed later by the following scripts: <code>scripts/graph_accelerometer.py</code> and <code>scripts/calibrate_shaper.py</code>. Both of them accept one or several raw csv files as the input depending on the mode. The graph_accelerometer.py script supports several modes of operation:</p>
+<p>I dati possono essere elaborati successivamente dai seguenti script: <code>scripts/graph_accelerometer.py</code> e <code>scripts/calibrate_shaper.py</code>. Entrambi accettano uno o più file CSV non elaborati come input a seconda della modalità. Lo script graph_accelerometer.py supporta diverse modalità operative:</p>
 <ul>
-<li>plotting raw accelerometer data (use <code>-r</code> parameter), only 1 input is supported;</li>
-<li>plotting a frequency response (no extra parameters required), if multiple inputs are specified, the average frequency response is computed;</li>
-<li>comparison of the frequency response between several inputs (use <code>-c</code> parameter); you can additionally specify which accelerometer axis to consider via <code>-a x</code>, <code>-a y</code> or <code>-a z</code> parameter (if none specified, the sum of vibrations for all axes is used);</li>
-<li>plotting the spectrogram (use <code>-s</code> parameter), only 1 input is supported; you can additionally specify which accelerometer axis to consider via <code>-a x</code>, <code>-a y</code> or <code>-a z</code> parameter (if none specified, the sum of vibrations for all axes is used).</li>
+<li>tracciando i dati grezzi dell'accelerometro (usa il parametro <code>-r</code>), è supportato solo 1 input;</li>
+<li>tracciando una risposta in frequenza (non sono richiesti parametri aggiuntivi), se sono specificati più ingressi, viene calcolata la risposta in frequenza media;</li>
+<li>confronto della risposta in frequenza tra più ingressi (usare il parametro <code>-c</code>); puoi inoltre specificare quale asse dell'accelerometro considerare tramite il parametro <code>-a x</code>, <code>-a y</code> o <code>-a z</code> (se non specificato, viene utilizzata la somma delle vibrazioni per tutti gli assi);</li>
+<li>tracciando lo spettrogramma (usare il parametro <code>-s</code>), è supportato solo 1 input; è inoltre possibile specificare quale asse dell'accelerometro considerare tramite il parametro <code>-a x</code>, <code>-a y</code> o <code>-a z</code> (se non specificato, viene utilizzata la somma delle vibrazioni per tutti gli assi).</li>
 </ul>
-<p>Note that graph_accelerometer.py script supports only the raw_data*.csv files and not resonances*.csv or calibration_data*.csv files.</p>
-<p>For example,</p>
+<p>Si noti che lo script graph_accelerometer.py supporta solo i file raw_data*.csv e non i file resonances*.csv o calibration_data*.csv.</p>
+<p>Per esempio,</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png -c -a z
 </code></pre></div>
 
-<p>will plot the comparison of several <code>/tmp/raw_data_x_*.csv</code> files for Z axis to <code>/tmp/resonances_x.png</code> file.</p>
-<p>The shaper_calibrate.py script accepts 1 or several inputs and can run automatic tuning of the input shaper and suggest the best parameters that work well for all provided inputs. It prints the suggested parameters to the console, and can additionally generate the chart if <code>-o output.png</code> parameter is provided, or the CSV file if <code>-c output.csv</code> parameter is specified.</p>
-<p>Providing several inputs to shaper_calibrate.py script can be useful if running some advanced tuning of the input shapers, for example:</p>
+<p>traccerà il confronto di diversi file <code>/tmp/raw_data_x_*.csv</code> per l'asse Z con il file <code>/tmp/resonances_x.png</code>.</p>
+<p>Lo script shaper_calibrate.py accetta 1 o più input e può eseguire l'ottimizzazione automatica dello shaper di input e suggerire i parametri migliori che funzionano bene per tutti gli input forniti. Stampa i parametri suggeriti sulla console e può inoltre generare il grafico se viene fornito il parametro <code>-o output.png</code>, o il file CSV se viene specificato il parametro <code>-c output.csv</code>.</p>
+<p>Fornire diversi input allo script shaper_calibrate.py può essere utile se si esegue un'ottimizzazione avanzata degli shaper di input, ad esempio:</p>
 <ul>
-<li>Running <code>TEST_RESONANCES AXIS=X OUTPUT=raw_data</code> (and <code>Y</code> axis) for a single axis twice on a bed slinger printer with the accelerometer attached to the toolhead the first time, and the accelerometer attached to the bed the second time in order to detect axes cross-resonances and attempt to cancel them with input shapers.</li>
+<li>Esecuzione di <code>TEST_RESONANCES AXIS=X OUTPUT=raw_data</code> (e asse <code>Y</code>) per un singolo asse due volte su una stampante con piatto scorrevole con l'accelerometro collegato alla testa di stampa la prima volta e l'accelerometro collegato al piatto la seconda volta in modo da rilevare le risonanze incrociate degli assi e tentare di cancellarle con gli input shaper.</li>
 <li>Esecuzione di <code>TEST_RESONANCES AXIS=Y OUTPUT=raw_data</code> due volte su un supporto da piatto con un piatto di vetro e una superficie magnetica (che è più leggera) per trovare i parametri dello shaper di input che funzionano bene per qualsiasi configurazione della superficie di stampa.</li>
 <li>Combinazione dei dati di risonanza da più punti di test.</li>
 <li>Combinando i dati di risonanza da 2 assi (ad es. su una stampante con piatto scorrevole per configurare input_shaper dell'asse X dalle risonanze degli assi X e Y per annullare le vibrazioni del <em>piatto</em> nel caso in cui l'ugello "cattura" una stampa quando si sposta nella direzione dell'asse X ).</li>

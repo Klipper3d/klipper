@@ -804,6 +804,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bed_screws" class="md-nav__link">
+    bed_screws
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configfile" class="md-nav__link">
     configfile
   </a>
@@ -1537,6 +1544,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bed_screws" class="md-nav__link">
+    bed_screws
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configfile" class="md-nav__link">
     configfile
   </a>
@@ -1818,6 +1832,14 @@
 <ul>
 <li><code>profile_name</code>、<code>mesh_min</code>、<code>mesh_max</code>、<code>probed_matrix</code>、<code>mesh_matrix</code>：关于当前活跃的 bed_mesh 配置信息。</li>
 <li><code>profiles</code>：当前定义的配置，使用 BED_MESH_PROFILE 进行设置。</li>
+</ul>
+<h2 id="bed_screws">bed_screws<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>Config_Reference.md#bed_screws</code> object:</p>
+<ul>
+<li><code>is_active</code>: Returns True if the bed screws adjustment tool is currently active.</li>
+<li><code>state</code>: The bed screws adjustment tool state. It is one of the following strings: "adjust", "fine".</li>
+<li><code>current_screw</code>: The index for the current screw being adjusted.</li>
+<li><code>accepted_screws</code>: The number of accepted screws.</li>
 </ul>
 <h2 id="configfile">configfile<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h2>
 <p><code>configfile</code> 对象中提供了以下信息（该对象始终可用）：</p>

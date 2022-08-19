@@ -1019,8 +1019,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cmd_set_nodeid-uzenet" class="md-nav__link">
-    CMD_SET_NODEID üzenet
+  <a href="#cmd_set_klipper_nodeid-uzenet" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID üzenet
   </a>
   
 </li>
@@ -1325,8 +1325,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cmd_set_nodeid-uzenet" class="md-nav__link">
-    CMD_SET_NODEID üzenet
+  <a href="#cmd_set_klipper_nodeid-uzenet" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID üzenet
   </a>
   
 </li>
@@ -1377,13 +1377,13 @@
 <h3 id="cmd_query_unassigned-uzenet">CMD_QUERY_UNASSIGNED üzenet<a class="headerlink" href="#cmd_query_unassigned-uzenet" title="Permanent link">&para;</a></h3>
 <p>Ez a parancs lekérdezi az összes olyan mikrovezérlőt, amely még nem kapott <code>canbus_nodeid</code> azonosítót. A nem hozzárendelt mikrovezérlők RESP_NEED_NODEID válaszüzenettel válaszolnak.</p>
 <p>A CMD_QUERY_UNASSIGNED üzenet formátuma: <code>&lt;1-byte message_id = 0x00&gt;</code></p>
-<h3 id="cmd_set_nodeid-uzenet">CMD_SET_NODEID üzenet<a class="headerlink" href="#cmd_set_nodeid-uzenet" title="Permanent link">&para;</a></h3>
+<h3 id="cmd_set_klipper_nodeid-uzenet">CMD_SET_KLIPPER_NODEID üzenet<a class="headerlink" href="#cmd_set_klipper_nodeid-uzenet" title="Permanent link">&para;</a></h3>
 <p>Ez a parancs hozzárendel egy <code>canbus_nodeid</code> mikrokontrollert egy adott <code>canbus_uuid</code> mikrokontrollerhez.</p>
-<p>A CMD_SET_NODEID üzenet formátuma a következő: <code>&lt;1-byte message_id = 0x01&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte canbus_nodeid&gt;</code></p>
+<p>A CMD_SET_KLIPPER_NODEID üzenet formátuma: <code>&lt;1-byte message_id = 0x01&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte canbus_nodeid&gt;.</code></p>
 <h3 id="resp_need_nodeid-uzenet">RESP_NEED_NODEID üzenet<a class="headerlink" href="#resp_need_nodeid-uzenet" title="Permanent link">&para;</a></h3>
-<p>A RESP_NEED_NODEID üzenet formátuma a következő: <code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;</code></p>
+<p>A RESP_NEED_NODEID üzenet formátuma: <code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte set_klipper_nodeid = 0x01&gt;.</code></p>
 <h2 id="adatcsomagok">Adatcsomagok<a class="headerlink" href="#adatcsomagok" title="Permanent link">&para;</a></h2>
-<p>A CMD_SET_NODEID paranccsal nodeid-t kapott mikrokontroller adatcsomagokat küldhet és fogadhat.</p>
+<p>A CMD_SET_KLIPPER_NODEID paranccsal nodeid-ot kapott mikrokontroller adatcsomagokat küldhet és fogadhat.</p>
 <p>A csomópontot használó üzenetek csomagadatai (<code>canbus_nodeid * 2 + 256</code>) egyszerűen egy pufferbe kerülnek, és amikor egy teljes <a href="Protocol.html">mcu protokoll üzenet</a> található, annak tartalmát elemezzük és feldolgozzuk. Az adatokat bájtfolyamként kezelik. Nem követelmény, hogy a Klipper üzenetblokk kezdete egyezzen a CAN-buszcsomag kezdetével.</p>
 <p>Hasonlóképpen, az MCU protokoll üzenetválaszok a mikrokontrollerről a gazdagéphez úgy kerülnek elküldésre, hogy az üzenetadatokat egy vagy több csomagba másolják a csomópontnak a CAN-buszon való átvitelére vonatkozó azonosítójával (<code>canbus_nodeid * 2 + 256 + 1</code>).</p>
 

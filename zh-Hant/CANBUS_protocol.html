@@ -1019,8 +1019,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cmd_set_nodeid" class="md-nav__link">
-    CMD_SET_NODEID 訊息
+  <a href="#cmd_set_klipper_nodeid-message" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID message
   </a>
   
 </li>
@@ -1325,8 +1325,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#cmd_set_nodeid" class="md-nav__link">
-    CMD_SET_NODEID 訊息
+  <a href="#cmd_set_klipper_nodeid-message" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID message
   </a>
   
 </li>
@@ -1377,13 +1377,13 @@
 <h3 id="cmd_query_unassigned">CMD_QUERY_UNASSIGNED 訊息<a class="headerlink" href="#cmd_query_unassigned" title="Permanent link">&para;</a></h3>
 <p>該命令查詢所有尚未被分配 <code>canbus_nodeid</code> 的微控制器。未分配的微控制器將以 RESP_NEED_NODEID 響應訊息進行迴應。</p>
 <p>CMD_QUERY_UNASSIGNED 訊息格式是：<code>&lt;1-byte message_id = 0x00&gt;</code></p>
-<h3 id="cmd_set_nodeid">CMD_SET_NODEID 訊息<a class="headerlink" href="#cmd_set_nodeid" title="Permanent link">&para;</a></h3>
+<h3 id="cmd_set_klipper_nodeid-message">CMD_SET_KLIPPER_NODEID message<a class="headerlink" href="#cmd_set_klipper_nodeid-message" title="Permanent link">&para;</a></h3>
 <p>這個命令根據微處理器給定的 <code>canbus_uuid</code> 給相應的微處理器分配一個 <code>canbus_nodeid</code>。</p>
-<p>CMD_SET_NODEID訊息格式是：<code>&lt;1位元組message_id = 0x01&gt;&lt;6位元組canbus_uuid&gt;&lt;1位元組canbus_nodeid&gt;</code></p>
+<p>The CMD_SET_KLIPPER_NODEID message format is: <code>&lt;1-byte message_id = 0x01&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte canbus_nodeid&gt;</code></p>
 <h3 id="resp_need_nodeid">RESP_NEED_NODEID 訊息<a class="headerlink" href="#resp_need_nodeid" title="Permanent link">&para;</a></h3>
-<p>RESP_NEED_NODEID訊息格式為：<code>&lt;1位元組message_id = 0x20&gt;&lt;6位元組canbus_uuid&gt;</code></p>
+<p>The RESP_NEED_NODEID message format is: <code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte set_klipper_nodeid = 0x01&gt;</code></p>
 <h2 id="_2">數據包<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>通過 CMD_SET_NODEID 命令分配了節點 ID 的微控制器可以發送和接收數據包。</p>
+<p>A micro-controller that has been assigned a nodeid via the CMD_SET_KLIPPER_NODEID command can send and receive data packets.</p>
 <p>帶有節點接收 CAN 匯流排ID（<code>canbus_nodeid * 2 + 256</code>）的訊息中的數據包被簡單地新增到一個緩衝區，當一個完整的<a href="Protocol.html">mcu 協議訊息</a>被找到時，其內容會被解析和處理。數據被視為一個位元組流-- Klipper 訊息塊的開始位置與CAN匯流排數據包的開始位置不需要對齊。</p>
 <p>類似地，mcu 協議訊息響應通過將訊息數據插入到具有節點發送 CAN 匯流排 ID 的一個或多個數據包（<code>canbus_nodeid * 2 + 256 + 1</code>）並從微控制器發送到主機。</p>
 

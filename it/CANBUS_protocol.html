@@ -739,7 +739,7 @@
   
     <li class="md-nav__item">
       <a href="Command_Templates.html" class="md-nav__link">
-        Commands templates
+        Modelli di comandi
       </a>
     </li>
   
@@ -1019,8 +1019,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#messaggio-cmd_set_nodeid" class="md-nav__link">
-    Messaggio CMD_SET_NODEID
+  <a href="#cmd_set_klipper_nodeid-messaggio" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID messaggio
   </a>
   
 </li>
@@ -1325,8 +1325,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#messaggio-cmd_set_nodeid" class="md-nav__link">
-    Messaggio CMD_SET_NODEID
+  <a href="#cmd_set_klipper_nodeid-messaggio" class="md-nav__link">
+    CMD_SET_KLIPPER_NODEID messaggio
   </a>
   
 </li>
@@ -1377,13 +1377,13 @@
 <h3 id="messaggio-cmd_query_unassigned">messaggio CMD_QUERY_UNASSIGNED<a class="headerlink" href="#messaggio-cmd_query_unassigned" title="Permanent link">&para;</a></h3>
 <p>Questo comando interroga tutti i microcontrollori a cui non è stato ancora assegnato un <code>canbus_nodeid</code>. I microcontrollori non assegnati risponderanno con un messaggio di risposta RESP_NEED_NODEID.</p>
 <p>Il formato del messaggio CMD_QUERY_UNASSIGNED è: <code>&lt;1 byte message_id = 0x00&gt;</code></p>
-<h3 id="messaggio-cmd_set_nodeid">Messaggio CMD_SET_NODEID<a class="headerlink" href="#messaggio-cmd_set_nodeid" title="Permanent link">&para;</a></h3>
+<h3 id="cmd_set_klipper_nodeid-messaggio">CMD_SET_KLIPPER_NODEID messaggio<a class="headerlink" href="#cmd_set_klipper_nodeid-messaggio" title="Permanent link">&para;</a></h3>
 <p>Questo comando assegna un <code>canbus_nodeid</code> al microcontrollore con un dato <code>canbus_uuid</code>.</p>
-<p>Il formato del messaggio CMD_SET_NODEID è: <code>&lt;1-byte message_id = 0x01&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte canbus_nodeid&gt;</code></p>
+<p>Il formato del messaggio CMD_SET_KLIPPER_NODEID è: <code>&lt;1-byte message_id = 0x01&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte canbus_nodeid&gt;</code></p>
 <h3 id="messaggio-resp_need_nodeid">Messaggio RESP_NEED_NODEID<a class="headerlink" href="#messaggio-resp_need_nodeid" title="Permanent link">&para;</a></h3>
-<p>Il formato del messaggio RESP_NEED_NODEID è: <code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;</code></p>
+<p>Il formato del messaggio RESP_NEED_NODEID è: <code>&lt;1-byte message_id = 0x20&gt;&lt;6-byte canbus_uuid&gt;&lt;1-byte set_klipper_nodeid = 0x01&gt;</code></p>
 <h2 id="pacchetti-dati">Pacchetti dati<a class="headerlink" href="#pacchetti-dati" title="Permanent link">&para;</a></h2>
-<p>Un microcontrollore a cui è stato assegnato un nodeid tramite il comando CMD_SET_NODEID può inviare e ricevere pacchetti di dati.</p>
+<p>Un microcontrollore a cui è stato assegnato un nodeid tramite il comando CMD_SET_KLIPPER_NODEID può inviare e ricevere pacchetti di dati.</p>
 <p>I dati del pacchetto nei messaggi che utilizzano l'ID bus CAN di ricezione del nodo (<code>canbus_nodeid * 2 + 256</code>) vengono semplicemente aggiunti a un buffer e quando viene trovato un <a href="Protocol.html">mcu protocol message</a> completo, il suo contenuto viene analizzato ed elaborato . I dati vengono trattati come un flusso di byte: non è necessario che l'inizio di un blocco di messaggi Klipper sia allineato con l'inizio di un pacchetto bus CAN.</p>
 <p>Allo stesso modo, le risposte ai messaggi del protocollo mcu vengono inviate dal microcontrollore all'host copiando i dati del messaggio in uno o più pacchetti con l'ID del bus CAN di trasmissione del nodo (<code>canbus_nodeid * 2 + 256 + 1</code>).</p>
 
