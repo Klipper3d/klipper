@@ -1,0 +1,47 @@
+# Perform continuous integration tests on updates and pull requests
+name: Build test
+on:
+  pull_request_review:
+    types: [submitted]
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup cache
+        uses: actions/cache@v2
+        with:
+          path: ci_cache
+          key: ${{ runner.os }}-build-${{ hashFiles('scripts/ci-install.sh') }}
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            paths:
+              - 'klippy/**'
+              - 'src/**'
+              - 'lib/**'
+              - 'test/**'
+
+      - id: should_test
+        if: steps.changes.outputs.paths == 'true' && github.event.review.state == 'approved'
+        run: |
+          echo "::set-output name=run_test::true"
+
+
+      - name: Prepare tests
+        if: steps.should_test.outputs.run_test == 'true'
+        run: ./scripts/ci-install.sh
+
+      - name: Test
+        if: steps.should_test.outputs.run_test == 'true'
+        run: ./scripts/ci-build.sh 2>&1
+
+      - name: Upload micro-controller data dictionaries
+        if: steps.should_test.outputs.run_test == 'true'
+        uses: actions/upload-artifact@v2
+        with:
+          name: data-dict
+          path: ci_build/dict

@@ -5,17 +5,21 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import display
 
+
 def load_config(config):
     return display.load_config(config)
 
+
 def load_config_prefix(config):
-    if not config.has_section('display'):
+    if not config.has_section("display"):
         raise config.error(
             "A primary [display] section must be defined in printer.cfg "
-            "to use auxilary displays")
+            "to use auxilary displays"
+        )
     name = config.get_name().split()[-1]
     if name == "display":
         raise config.error(
             "Section name [display display] is not valid. "
-            "Please choose a different postfix.")
+            "Please choose a different postfix."
+        )
     return display.load_config(config)

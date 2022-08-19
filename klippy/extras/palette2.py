@@ -23,19 +23,20 @@ COMMAND_CLEAR = [
     "O10 D1 D0 D0 DFFE1",
     "O10 D2 D0 D0 DFFE1",
     "O10 D3 D0 D0 DFFE1",
-    "O10 D4 D0 D0 D0069"]
+    "O10 D4 D0 D0 D0069",
+]
 COMMAND_FILENAME = "O51"
 COMMAND_FILENAMES_DONE = "O52"
 COMMAND_FIRMWARE = "O50"
 COMMAND_PING = "O31"
 COMMAND_SMART_LOAD_STOP = "O102 D1"
 
-HEARTBEAT_SEND = 5.
-HEARTBEAT_TIMEOUT = (HEARTBEAT_SEND * 2.) + 1.
+HEARTBEAT_SEND = 5.0
+HEARTBEAT_TIMEOUT = (HEARTBEAT_SEND * 2.0) + 1.0
 SETUP_TIMEOUT = 10
 
 SERIAL_TIMER = 0.1
-AUTOLOAD_TIMER = 5.
+AUTOLOAD_TIMER = 5.0
 
 INFO_NOT_CONNECTED = "Palette 2 is not connected, connect first"
 
@@ -46,53 +47,63 @@ class Palette2:
         self.reactor = self.printer.get_reactor()
         try:
             self.virtual_sdcard = self.printer.load_object(
-                config, "virtual_sdcard")
+                config, "virtual_sdcard"
+            )
         except config.error:
             raise self.printer.config_error(
                 "Palette 2 requires [virtual_sdcard] to work,"
-                " please add it to your config!")
+                " please add it to your config!"
+            )
         try:
-            self.pause_resume = self.printer.load_object(
-                config, "pause_resume")
+            self.pause_resume = self.printer.load_object(config, "pause_resume")
         except config.error:
             raise self.printer.config_error(
                 "Palette 2 requires [pause_resume] to work,"
-                " please add it to your config!")
-        self.gcode_move = self.printer.load_object(config, 'gcode_move')
+                " please add it to your config!"
+            )
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command(
-            "PALETTE_CONNECT", self.cmd_Connect, desc=self.cmd_Connect_Help)
+            "PALETTE_CONNECT", self.cmd_Connect, desc=self.cmd_Connect_Help
+        )
         self.gcode.register_command(
             "PALETTE_DISCONNECT",
             self.cmd_Disconnect,
-            desc=self.cmd_Disconnect_Help)
+            desc=self.cmd_Disconnect_Help,
+        )
         self.gcode.register_command(
-            "PALETTE_CLEAR", self.cmd_Clear, desc=self.cmd_Clear_Help)
+            "PALETTE_CLEAR", self.cmd_Clear, desc=self.cmd_Clear_Help
+        )
         self.gcode.register_command(
-            "PALETTE_CUT", self.cmd_Cut, desc=self.cmd_Cut_Help)
+            "PALETTE_CUT", self.cmd_Cut, desc=self.cmd_Cut_Help
+        )
         self.gcode.register_command(
             "PALETTE_SMART_LOAD",
             self.cmd_Smart_Load,
-            desc=self.cmd_Smart_Load_Help)
+            desc=self.cmd_Smart_Load_Help,
+        )
         self.serial = None
         self.serial_port = config.get("serial")
         if not self.serial_port:
             raise config.error("Invalid serial port specific for Palette 2")
         self.baud = config.getint("baud", default=115200)
         self.feedrate_splice = config.getfloat(
-            "feedrate_splice", default=0.8, minval=0., maxval=1.)
+            "feedrate_splice", default=0.8, minval=0.0, maxval=1.0
+        )
         self.feedrate_normal = config.getfloat(
-            "feedrate_normal", default=1.0, minval=0., maxval=1.)
+            "feedrate_normal", default=1.0, minval=0.0, maxval=1.0
+        )
         self.auto_load_speed = config.getint("auto_load_speed", 2)
         self.auto_cancel_variation = config.getfloat(
-            "auto_cancel_variation", default=None, minval=0.01, maxval=0.2)
+            "auto_cancel_variation", default=None, minval=0.01, maxval=0.2
+        )
 
         # Omega code matchers
         self.omega_header = [None] * 9
         omega_handlers = ["O" + str(i) for i in range(33)]
         for cmd in omega_handlers:
-            func = getattr(self, 'cmd_' + cmd, None)
-            desc = getattr(self, 'cmd_' + cmd + '_help', None)
+            func = getattr(self, "cmd_" + cmd, None)
+            desc = getattr(self, "cmd_" + cmd + "_help", None)
             if func:
                 self.gcode.register_command(cmd, func, desc=desc)
             else:
@@ -137,20 +148,24 @@ class Palette2:
             gcmd.respond_info(INFO_NOT_CONNECTED)
         return False
 
-    cmd_Connect_Help = ("Connect to the Palette 2")
+    cmd_Connect_Help = "Connect to the Palette 2"
 
     def cmd_Connect(self, gcmd):
         if self.serial:
             gcmd.respond_info(
-                "Palette 2 serial port is already active, disconnect first")
+                "Palette 2 serial port is already active, disconnect first"
+            )
             return
 
         self.signal_disconnect = False
-        logging.info("Connecting to Palette 2 on port (%s) at (%s)" %
-                     (self.serial_port, self.baud))
+        logging.info(
+            "Connecting to Palette 2 on port (%s) at (%s)"
+            % (self.serial_port, self.baud)
+        )
         try:
             self.serial = serial.Serial(
-                self.serial_port, self.baud, timeout=0, write_timeout=0)
+                self.serial_port, self.baud, timeout=0, write_timeout=0
+            )
         except SerialException:
             gcmd.respond_info("Unable to connect to the Palette 2")
             return
@@ -161,18 +176,21 @@ class Palette2:
             self.read_queue.queue.clear()
 
         self.read_timer = self.reactor.register_timer(
-            self._run_Read, self.reactor.NOW)
+            self._run_Read, self.reactor.NOW
+        )
         self.write_timer = self.reactor.register_timer(
-            self._run_Write, self.reactor.NOW)
+            self._run_Write, self.reactor.NOW
+        )
         self.heartbeat_timer = self.reactor.register_timer(
-            self._run_Heartbeat, self.reactor.NOW)
+            self._run_Heartbeat, self.reactor.NOW
+        )
 
         # Tell the device we're alive
         self.write_queue.put("\n")
         self.write_queue.put(COMMAND_FIRMWARE)
         self._wait_for_heartbeat()
 
-    cmd_Disconnect_Help = ("Disconnect from the Palette 2")
+    cmd_Disconnect_Help = "Disconnect from the Palette 2"
 
     def cmd_Disconnect(self, gcmd=None):
         self.gcode.respond_info("Disconnecting from Palette 2")
@@ -188,7 +206,7 @@ class Palette2:
         self.heartbeat = None
         self.is_printing = False
 
-    cmd_Clear_Help = ("Clear the input and output of the Palette 2")
+    cmd_Clear_Help = "Clear the input and output of the Palette 2"
 
     def cmd_Clear(self, gcmd):
         logging.info("Clearing Palette 2 input and output")
@@ -196,20 +214,21 @@ class Palette2:
             for l in COMMAND_CLEAR:
                 self.write_queue.put(l)
 
-    cmd_Cut_Help = ("Cut the outgoing filament")
+    cmd_Cut_Help = "Cut the outgoing filament"
 
     def cmd_Cut(self, gcmd):
         logging.info("Cutting outgoing filament in Palette 2")
         if self._check_P2(gcmd):
             self.write_queue.put(COMMAND_CUT)
 
-    cmd_Smart_Load_Help = ("Automatically load filament through the extruder")
+    cmd_Smart_Load_Help = "Automatically load filament through the extruder"
 
     def cmd_Smart_Load(self, gcmd):
         if self._check_P2(gcmd):
             if not self.is_loading:
                 gcmd.respond_info(
-                    "Cannot auto load when the Palette 2 is not ready")
+                    "Cannot auto load when the Palette 2 is not ready"
+                )
                 return
             self.p2cmd_O102(params=None)
 
@@ -221,33 +240,35 @@ class Palette2:
     def _wait_for_heartbeat(self):
         startTs = self.reactor.monotonic()
         currTs = startTs
-        while self.heartbeat is None and self.heartbeat < (
-                currTs - SETUP_TIMEOUT) and startTs > (
-                currTs - SETUP_TIMEOUT):
-            currTs = self.reactor.pause(currTs + 1.)
+        while (
+            self.heartbeat is None
+            and self.heartbeat < (currTs - SETUP_TIMEOUT)
+            and startTs > (currTs - SETUP_TIMEOUT)
+        ):
+            currTs = self.reactor.pause(currTs + 1.0)
 
         if self.heartbeat < (currTs - SETUP_TIMEOUT):
             self.signal_disconnect = True
-            raise self.printer.command_error(
-                "No response from Palette 2")
+            raise self.printer.command_error("No response from Palette 2")
 
     cmd_O1_help = (
-        "Initialize the print, and check connection with the Palette 2")
+        "Initialize the print, and check connection with the Palette 2"
+    )
 
     def cmd_O1(self, gcmd):
         logging.info("Initializing print with Pallete 2")
         if not self._check_P2(gcmd):
             raise self.printer.command_error(
-                "Cannot initialize print, palette 2 is not connected")
+                "Cannot initialize print, palette 2 is not connected"
+            )
 
         self.reactor.update_timer(self.heartbeat_timer, self.reactor.NOW)
         self._wait_for_heartbeat()
         self.write_queue.put(gcmd.get_commandline())
-        self.gcode.respond_info(
-            "Palette 2 waiting on user to complete setup")
+        self.gcode.respond_info("Palette 2 waiting on user to complete setup")
         self.pause_resume.send_pause_command()
 
-    cmd_O9_help = ("Reset print information")
+    cmd_O9_help = "Reset print information"
 
     def cmd_O9(self, gcmd):
         logging.info("Print finished, resetting Palette 2 state")
@@ -306,19 +327,21 @@ class Palette2:
             param_distance = gcmd.get_commandline()[8:]
         except IndexError:
             gcmd.respond_info(
-                "Incorrect number of arguments for splice command")
+                "Incorrect number of arguments for splice command"
+            )
         try:
             self.omega_splices.append((int(param_drive), param_distance))
         except ValueError:
             gcmd.respond_info("Incorrectly formatted splice command")
-        logging.debug("Omega splice command drive %s distance %s" %
-                      (param_drive, param_distance))
+        logging.debug(
+            "Omega splice command drive %s distance %s"
+            % (param_drive, param_distance)
+        )
 
     def cmd_O31(self, gcmd):
         if self._check_P2(gcmd):
             self.omega_current_ping = gcmd.get_commandline()
-            logging.debug("Omega ping command: %s" %
-                          (gcmd.get_commandline()))
+            logging.debug("Omega ping command: %s" % (gcmd.get_commandline()))
 
             self.write_queue.put(COMMAND_PING)
             self.gcode.create_gcode_command("G4", "G4", {"P": "10"})
@@ -352,14 +375,17 @@ class Palette2:
             self.write_queue.put("O30 D%d D%s" % (splice[0], splice[1]))
             self.omega_splices_counter = self.omega_splices_counter + 1
         elif n == 2:
-            logging.info("Sending current ping info %s" %
-                         self.omega_current_ping)
+            logging.info(
+                "Sending current ping info %s" % self.omega_current_ping
+            )
             self.write_queue.put(self.omega_current_ping)
         elif n == 4:
-            logging.info("Sending algorithm info %s" %
-                         self.omega_algorithms_counter)
+            logging.info(
+                "Sending algorithm info %s" % self.omega_algorithms_counter
+            )
             self.write_queue.put(
-                self.omega_algorithms[self.omega_algorithms_counter])
+                self.omega_algorithms[self.omega_algorithms_counter]
+            )
             self.omega_algorithms_counter = self.omega_algorithms_counter + 1
         elif n == 8:
             logging.info("Resending the last command to Palette 2")
@@ -371,11 +397,12 @@ class Palette2:
 
         def check_ping_variation(last_ping):
             if self.auto_cancel_variation is not None:
-                ping_max = 100. + (self.auto_cancel_variation * 100.)
-                ping_min = 100. - (self.auto_cancel_variation * 100.)
+                ping_max = 100.0 + (self.auto_cancel_variation * 100.0)
+                ping_min = 100.0 - (self.auto_cancel_variation * 100.0)
                 if last_ping < ping_min or last_ping > ping_max:
-                    logging.info("Ping variation is too high, "
-                                 "cancelling print")
+                    logging.info(
+                        "Ping variation is too high, " "cancelling print"
+                    )
                     self.gcode.run_script("CANCEL_PRINT")
 
         if len(params) > 2:
@@ -401,20 +428,24 @@ class Palette2:
             try:
                 fw = params[0][1:]
                 logging.info(
-                    "Palette 2 firmware version %s detected" % os.fwalk)
+                    "Palette 2 firmware version %s detected" % os.fwalk
+                )
             except (TypeError, IndexError):
                 logging.error("Unable to parse firmware version")
 
             if fw < "9.0.9":
                 raise self.printer.command_error(
                     "Palette 2 firmware version is too old, "
-                    "update to at least 9.0.9")
+                    "update to at least 9.0.9"
+                )
         else:
             self.files = [
-                file for (
-                    file,
-                    size) in self.virtual_sdcard.get_file_list(
-                    check_subdirs=True) if ".mcf.gcode" in file]
+                file
+                for (file, size) in self.virtual_sdcard.get_file_list(
+                    check_subdirs=True
+                )
+                if ".mcf.gcode" in file
+            ]
             for file in self.files:
                 self.write_queue.put("%s D%s" % (COMMAND_FILENAME, file))
             self.write_queue.put(COMMAND_FILENAMES_DONE)
@@ -452,8 +483,9 @@ class Palette2:
 
         def loadingOffset(params):
             self.remaining_load_length = int(params[1][1:])
-            logging.debug("Loading filamant remaining %d" %
-                          self.remaining_load_length)
+            logging.debug(
+                "Loading filamant remaining %d" % self.remaining_load_length
+            )
             if self.remaining_load_length >= 0 and self.smart_load_timer:
                 logging.info("Smart load filament is complete")
                 self.reactor.unregister_timer(self.smart_load_timer)
@@ -461,14 +493,16 @@ class Palette2:
                 self.is_loading = False
 
         def feedrateStart(params):
-            logging.info("Setting feedrate to %f for splice" %
-                         self.feedrate_splice)
+            logging.info(
+                "Setting feedrate to %f for splice" % self.feedrate_splice
+            )
             self.is_splicing = True
             self.gcode.run_script("M220 S%d" % (self.feedrate_splice * 100))
 
         def feedrateEnd(params):
-            logging.info("Setting feedrate to %f splice done" %
-                         self.feedrate_normal)
+            logging.info(
+                "Setting feedrate to %f splice done" % self.feedrate_normal
+            )
             self.is_splicing = False
             self.gcode.run_script("M220 S%d" % (self.feedrate_normal * 100))
 
@@ -495,13 +529,15 @@ class Palette2:
         if not toolhead.get_extruder().get_heater().can_extrude:
             self.write_queue.put(COMMAND_SMART_LOAD_STOP)
             self.gcode.respond_info(
-                "Unable to auto load filament, extruder is below minimum temp")
+                "Unable to auto load filament, extruder is below minimum temp"
+            )
             return
 
         if self.smart_load_timer is None:
             logging.info("Smart load starting")
             self.smart_load_timer = self.reactor.register_timer(
-                self._run_Smart_Load, self.reactor.NOW)
+                self._run_Smart_Load, self.reactor.NOW
+            )
 
     def p2cmd(self, line):
         t = line.split()
@@ -514,7 +550,7 @@ class Palette2:
                 logging.error("Omega parameters are invalid")
                 return
 
-        func = getattr(self, 'p2cmd_' + ocode, None)
+        func = getattr(self, "p2cmd_" + ocode, None)
         if func is not None:
             func(params)
 
@@ -523,8 +559,12 @@ class Palette2:
         for matcher in matchers:
             if len(params) >= matcher[1]:
                 match_params = matcher[2:]
-                res = all([match_params[i] == params[i]
-                           for i in range(len(match_params))])
+                res = all(
+                    [
+                        match_params[i] == params[i]
+                        for i in range(len(match_params))
+                    ]
+                )
                 if res:
                     matcher[0](params)
                     return True
@@ -548,9 +588,9 @@ class Palette2:
                 while True:
                     i = text_buffer.find("\n")
                     if i >= 0:
-                        line = text_buffer[0:i+1]
+                        line = text_buffer[0 : i + 1]
                         self.read_queue.put(line.strip())
-                        text_buffer = text_buffer[i+1:]
+                        text_buffer = text_buffer[i + 1 :]
                     else:
                         break
                 self.read_buffer = text_buffer
@@ -566,7 +606,7 @@ class Palette2:
 
             heartbeat_strings = [COMMAND_HEARTBEAT, "Connection Okay"]
             if not any(x in text_line for x in heartbeat_strings):
-                logging.debug("%0.3f P2 -> : %s" %(eventtime, text_line))
+                logging.debug("%0.3f P2 -> : %s" % (eventtime, text_line))
 
             # Received a heartbeat from the device
             if text_line == COMMAND_HEARTBEAT:
@@ -580,10 +620,8 @@ class Palette2:
     def _run_Heartbeat(self, eventtime):
         self.write_queue.put(COMMAND_HEARTBEAT)
         eventtime = self.reactor.pause(eventtime + 5)
-        if self.heartbeat and self.heartbeat < (
-                eventtime - HEARTBEAT_TIMEOUT):
-            logging.error(
-                "P2 has not responded to heartbeat")
+        if self.heartbeat and self.heartbeat < (eventtime - HEARTBEAT_TIMEOUT):
+            logging.error("P2 has not responded to heartbeat")
             if not self.is_printing or self.is_setup_complete:
                 self.cmd_Disconnect()
                 return self.reactor.NEVER
@@ -601,8 +639,8 @@ class Palette2:
                 l = text_line.strip()
                 if COMMAND_HEARTBEAT not in l:
                     logging.debug(
-                        "%s -> P2 : %s" %
-                        (self.reactor.monotonic(), l))
+                        "%s -> P2 : %s" % (self.reactor.monotonic(), l)
+                    )
                 terminated_line = "%s\n" % (l)
                 try:
                     self.serial.write(terminated_line.encode())
@@ -617,22 +655,27 @@ class Palette2:
             # Make sure toolhead class isn't busy
             toolhead = self.printer.lookup_object("toolhead")
             print_time, est_print_time, lookahead_empty = toolhead.check_busy(
-                eventtime)
+                eventtime
+            )
             idle_time = est_print_time - print_time
             if not lookahead_empty or idle_time < 0.5:
-                return eventtime + \
-                    max(0., min(1., print_time - est_print_time))
+                return eventtime + max(
+                    0.0, min(1.0, print_time - est_print_time)
+                )
 
             extrude = abs(self.remaining_load_length)
             extrude = min(50, extrude / 2)
             if extrude <= 10:
                 extrude = 1
-            logging.info("Smart loading %dmm filament with %dmm remaining" % (
-                extrude, abs(self.remaining_load_length)))
+            logging.info(
+                "Smart loading %dmm filament with %dmm remaining"
+                % (extrude, abs(self.remaining_load_length))
+            )
 
             self.gcode.run_script("G92 E0")
-            self.gcode.run_script("G1 E%d F%d" % (
-                extrude, self.auto_load_speed * 60))
+            self.gcode.run_script(
+                "G1 E%d F%d" % (extrude, self.auto_load_speed * 60)
+            )
             return self.reactor.NOW
         return eventtime + AUTOLOAD_TIMER
 
@@ -640,11 +683,12 @@ class Palette2:
         status = {
             "ping": None,
             "remaining_load_length": self.remaining_load_length,
-            "is_splicing": self.is_splicing
+            "is_splicing": self.is_splicing,
         }
         if self.omega_pings:
             status["ping"] = self.omega_pings[-1]
         return status
+
 
 def load_config(config):
     return Palette2(config)
