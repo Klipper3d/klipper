@@ -146,7 +146,7 @@ class TMCErrorCheck:
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         cleared_flags = 0
         count = 0
-        while 1:
+        while True:
             try:
                 val = self.mcu_tmc.get_register(reg_name)
             except self.printer.command_error as e:

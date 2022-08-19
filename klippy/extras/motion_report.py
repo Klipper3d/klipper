@@ -136,7 +136,7 @@ class DumpStepper:
     def get_step_queue(self, start_clock, end_clock):
         mcu_stepper = self.mcu_stepper
         res = []
-        while 1:
+        while True:
             data, count = mcu_stepper.dump_steps(128, start_clock, end_clock)
             if not count:
                 break
@@ -224,7 +224,7 @@ class DumpTrapQ:
     def extract_trapq(self, start_time, end_time):
         ffi_main, ffi_lib = chelper.get_ffi()
         res = []
-        while 1:
+        while True:
             data = ffi_main.new("struct pull_move[128]")
             count = ffi_lib.trapq_extract_old(
                 self.trapq, data, len(data), start_time, end_time
