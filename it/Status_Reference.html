@@ -1000,8 +1000,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#temperature-sensors" class="md-nav__link">
-    temperature sensors
+  <a href="#sensori-di-temperatura" class="md-nav__link">
+    sensori di temperatura
   </a>
   
 </li>
@@ -1021,8 +1021,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tmc-drivers" class="md-nav__link">
-    tmc drivers
+  <a href="#driver-tmc" class="md-nav__link">
+    driver tmc
   </a>
   
 </li>
@@ -1740,8 +1740,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#temperature-sensors" class="md-nav__link">
-    temperature sensors
+  <a href="#sensori-di-temperatura" class="md-nav__link">
+    sensori di temperatura
   </a>
   
 </li>
@@ -1761,8 +1761,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tmc-drivers" class="md-nav__link">
-    tmc drivers
+  <a href="#driver-tmc" class="md-nav__link">
+    driver tmc
   </a>
   
 </li>
@@ -1823,32 +1823,32 @@
 <p>Questo documento è un riferimento alle informazioni sullo stato della stampante disponibili in Klipper <a href="Command_Templates.html">macro</a>, <a href="Config_Reference.html#display">display fields</a> e tramite <a href="API_Server.html">API Server</a>.</p>
 <p>I campi in questo documento sono soggetti a modifiche: se si utilizza un attributo, assicurarsi di rivedere il <a href="Config_Changes.html">documento Modifiche alla configurazione</a> durante l'aggiornamento del software Klipper.</p>
 <h2 id="angle">angle<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#angle">angle some_name</a> objects:</p>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#angle">angle some_name</a>:</p>
 <ul>
-<li><code>temperature</code>: The last temperature reading (in Celsius) from a tle5012b magnetic hall sensor. This value is only available if the angle sensor is a tle5012b chip and if measurements are in progress (otherwise it reports <code>None</code>).</li>
+<li><code>temperature</code>: l'ultima lettura della temperatura (in gradi Celsius) da un sensore magnetico Hall tle5012b. Questo valore è disponibile solo se il sensore angolare è un chip tle5012b e se le misurazioni sono in corso (altrimenti segnala <code>None</code>).</li>
 </ul>
 <h2 id="bed_mesh">bed_mesh<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili in <a href="Config_Reference.html#bed_mesh">bed_mesh</a>:</p>
 <ul>
 <li><code>profile_name</code>, <code>mesh_min</code>, <code>mesh_max</code>, <code>probed_matrix</code>, <code>mesh_matrix</code>: informazioni sulla bed_mesh attualmente attiva.</li>
-<li><code>profiles</code>: The set of currently defined profiles as setup using BED_MESH_PROFILE.</li>
+<li><code>profiles</code>: l'insieme dei profili attualmente definiti come setup usando BED_MESH_PROFILE.</li>
 </ul>
 <h2 id="bed_screws">bed_screws<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>Config_Reference.md#bed_screws</code> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>Config_Reference.md#bed_screws</code>:</p>
 <ul>
-<li><code>is_active</code>: Returns True if the bed screws adjustment tool is currently active.</li>
-<li><code>state</code>: The bed screws adjustment tool state. It is one of the following strings: "adjust", "fine".</li>
-<li><code>current_screw</code>: The index for the current screw being adjusted.</li>
-<li><code>accepted_screws</code>: The number of accepted screws.</li>
+<li><code>is_active</code>: Restituisce True se lo strumento di regolazione delle viti del letto è attualmente attivo.</li>
+<li><code>state</code>: lo stato dello strumento di regolazione delle viti del piatto. È una delle seguenti stringhe: "adjust", "fine".</li>
+<li><code>current_screw</code>: l'indice per la vite corrente in corso di regolazione.</li>
+<li><code>accepted_screws</code>: il numero di viti accettate.</li>
 </ul>
 <h2 id="configfile">configfile<a class="headerlink" href="#configfile" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>configfile</code> (questo oggetto è sempre disponibile):</p>
 <ul>
 <li><code>settings.&lt;section&gt;.&lt;option&gt;</code>: Restituisce l'impostazione del file di configurazione data (o il valore predefinito) durante l'ultimo avvio o riavvio del software. (Qualsiasi impostazione modificata in fase di esecuzione non si rifletterà qui.)</li>
 <li><code>config.&lt;section&gt;.&lt;option&gt;</code>: Restituisce l'impostazione del file di configurazione non elaborato come letta da Klipper durante l'ultimo avvio o riavvio del software. (Qualsiasi impostazione modificata in fase di esecuzione non si rifletterà qui.) Tutti i valori vengono restituiti come stringhe.</li>
-<li><code>save_config_pending</code>: Returns true if there are updates that a <code>SAVE_CONFIG</code> command may persist to disk.</li>
-<li><code>save_config_pending_items</code>: Contains the sections and options that were changed and would be persisted by a <code>SAVE_CONFIG</code>.</li>
-<li><code>warnings</code>: A list of warnings about config options. Each entry in the list will be a dictionary containing a <code>type</code> and <code>message</code> field (both strings). Additional fields may be available depending on the type of warning.</li>
+<li><code>save_config_pending</code>: Restituisce vero se ci sono aggiornamenti che un comando <code>SAVE_CONFIG</code> potrebbe rendere persistenti sul disco.</li>
+<li><code>save_config_pending_items</code>: contiene le sezioni e le opzioni che sono state modificate e sarebbero mantenute da un <code>SAVE_CONFIG</code>.</li>
+<li><code>warnings</code>: un elenco di avvisi sulle opzioni di configurazione. Ogni voce nell'elenco sarà un dizionario contenente un campo <code>type</code> e <code>message</code> (entrambe le stringhe). Ulteriori campi potrebbero essere disponibili a seconda del tipo di avviso.</li>
 </ul>
 <h2 id="display_status">display_status<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>display_status</code> (questo oggetto è automaticamente disponibile se è definita una sezione di configurazione <a href="Config_Reference.html#display">display</a>):</p>
@@ -1864,9 +1864,9 @@
 <li><code>last_home.&lt;stepper name&gt;.mcu_position</code>: la posizione (tracciata dal microcontrollore) del motore passo-passo alla fine dell'ultimo tentativo di home. La posizione è il numero totale di passi effettuati in avanti meno il numero totale di passi effettuati in senso inverso dall'ultimo riavvio del microcontrollore.</li>
 </ul>
 <h2 id="exclude_object">exclude_object<a class="headerlink" href="#exclude_object" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Exclude_Object.html">exclude_object</a> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Exclude_Object.html">exclude_object</a>:</p>
 <ul>
-<li><code>objects</code>: An array of the known objects as provided by the <code>EXCLUDE_OBJECT_DEFINE</code> command. This is the same information provided by the <code>EXCLUDE_OBJECT VERBOSE=1</code> command. The <code>center</code> and <code>polygon</code> fields will only be present if provided in the original <code>EXCLUDE_OBJECT_DEFINE</code>Here is a JSON sample:</li>
+<li><code>objects</code>: un array di oggetti conosciuti come fornito dal comando <code>EXCLUDE_OBJECT_DEFINE</code>. Queste sono le stesse informazioni fornite dal comando <code>EXCLUDE_OBJECT VERBOSE=1</code>. I campi <code>center</code> e <code>polygon</code> saranno presenti solo se forniti nell'originale <code>EXCLUDE_OBJECT_DEFINE</code>Ecco un esempio JSON:</li>
 </ul>
 <div class="highlight"><pre><span></span><code>[
   {
@@ -1893,8 +1893,8 @@
 </code></pre></div>
 
 <ul>
-<li><code>excluded_objects</code>: An array of strings listing the names of excluded objects.</li>
-<li><code>current_object</code>: The name of the object currently being printed.</li>
+<li><code>excluded_objects</code>: un array di stringhe che elenca i nomi degli oggetti esclusi.</li>
+<li><code>current_object</code>: il nome dell'oggetto attualmente in fase di stampa.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#fan">fan</a>, <a href="Config_Reference.html#heater_fan">heater_fan some_name</a> e <a href="Config_Reference.html#controller_fan">controller_fan some_name</a>:</p>
@@ -1940,8 +1940,8 @@
 <p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#hall_filament_width_sensor">hall_filament_width_sensor</a>:</p>
 <ul>
 <li><code>is_active</code>: Restituisce True se il sensore è attualmente attivo.</li>
-<li><code>Diameter</code>: The last reading from the sensor in mm.</li>
-<li><code>Raw</code>: The last raw ADC reading from the sensor.</li>
+<li><code>Diameter</code>: l'ultima lettura dal sensore in mm.</li>
+<li><code>Raw</code>: l'ultima lettura grezza dell'ADC dal sensore.</li>
 </ul>
 <h2 id="riscaldatore">Riscaldatore<a class="headerlink" href="#riscaldatore" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili per oggetti riscaldatore come <a href="Config_Reference.html#extruder">extruder</a>, <a href="Config_Reference.html#heater_bed">heater_bed</a> e <a href="Config_Reference.html#heater_generic">heater_generic</a>:</p>
@@ -1964,16 +1964,16 @@
 <li><code>printing_time</code>: la quantità di tempo (in secondi) in cui la stampante è rimasta nello stato "Printing" (come tracciato dal modulo idle_timeout).</li>
 </ul>
 <h2 id="led">led<a class="headerlink" href="#led" title="Permanent link">&para;</a></h2>
-<p>The following information is available for each <code>[led led_name]</code>, <code>[neopixel led_name]</code>, <code>[dotstar led_name]</code>, <code>[pca9533 led_name]</code>, and <code>[pca9632 led_name]</code> config section defined in printer.cfg:</p>
+<p>Le seguenti informazioni sono disponibili per ogni sezione di configurazione <code>[led led_name]</code>, <code>[neopixel led_name]</code>, <code>[dotstar led_name]</code>, <code>[pca9533 led_name]</code> e <code>[pca9632 led_name]</code> definita in printer.cfg:</p>
 <ul>
-<li><code>color_data</code>: A list of color lists containing the RGBW values for a led in the chain. Each value is represented as a float from 0.0 to 1.0. Each color list contains 4 items (red, green, blue, white) even if the underyling LED supports fewer color channels. For example, the blue value (3rd item in color list) of the second neopixel in a chain could be accessed at <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
+<li><code>color_data</code>: un elenco di lista di colori contenenti i valori RGBW per ogni led nella catena. Ogni valore è rappresentato come un float da 0,0 a 1,0. Ciascuna lista di colori contiene 4 voci (rosso, verde, blu, bianco) anche se il LED sottostante supporta meno canali di colore. Ad esempio, è possibile accedere al valore blu (3° elemento nell'elenco dei colori) del secondo neopixel in una catena in <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
 </ul>
 <h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>manual_probe</code> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>manual_probe</code>:</p>
 <ul>
-<li><code>is_active</code>: Returns True if a manual probing helper script is currently active.</li>
-<li><code>z_position</code>: The current height of the nozzle (as the printer currently understands it).</li>
-<li><code>z_position_lower</code>: Last probe attempt just lower than the current height.</li>
+<li><code>is_active</code>: Restituisce True se è attualmente attivo uno script di supporto per il rilevamento manuale.</li>
+<li><code>z_position</code>: l'altezza corrente dell'ugello (come la sta attualmente interpretando la stampante).</li>
+<li><code>z_position_lower</code>: ultimo tentativo di sonda appena inferiore all'altezza corrente.</li>
 <li><code>z_position_upper</code>: ultimo tentativo di sonda appena maggiore dell'altezza corrente.</li>
 </ul>
 <h2 id="mcu">mcu<a class="headerlink" href="#mcu" title="Permanent link">&para;</a></h2>
@@ -1985,11 +1985,11 @@
 <li><code>last_stats.&lt;statistics_name&gt;</code>: informazioni statistiche sulla connessione del microcontrollore.</li>
 </ul>
 <h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>motion_report</code> object (this object is automatically available if any stepper config section is defined):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>motion_report</code> (questo oggetto è automaticamente disponibile se è definita una sezione di configurazione stepper):</p>
 <ul>
-<li><code>live_position</code>: The requested toolhead position interpolated to the current time.</li>
-<li><code>live_velocity</code>: The requested toolhead velocity (in mm/s) at the current time.</li>
-<li><code>live_extruder_velocity</code>: The requested extruder velocity (in mm/s) at the current time.</li>
+<li><code>live_position</code>: la posizione richiesta della testa di stampa interpolata all'ora corrente.</li>
+<li><code>live_velocity</code>: la velocità della testa di stampa richiesta (in mm/s) al momento attuale.</li>
+<li><code>live_extruder_velocity</code>: la velocità dell'estrusore richiesta (in mm/s) al momento attuale.</li>
 </ul>
 <h2 id="output_pin">output_pin<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#output_pin">output_pin some_name</a>:</p>
@@ -2014,94 +2014,94 @@
 <li><code>filename</code>, <code>total_duration</code>, <code>print_duration</code>, <code>filament_used</code>, <code>state</code>, <code>message</code>: informazioni stimate sulla stampa corrente quando è attiva una stampa da virtual_sdcard.</li>
 </ul>
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Config_Reference.html#probe">probe</a> object (this object is also available if a <a href="Config_Reference.html#bltouch">bltouch</a> config section is defined):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#probe">probe</a> (questo oggetto è disponibile anche se è definita una sezione di configurazione <a href="Config_Reference.html#bltouch">bltouch</a>):</p>
 <ul>
-<li><code>last_query</code>: Returns True if the probe was reported as "triggered" during the last QUERY_PROBE command. Note, if this is used in a macro, due to the order of template expansion, the QUERY_PROBE command must be run prior to the macro containing this reference.</li>
-<li><code>last_z_result</code>: Returns the Z result value of the last PROBE command. Note, if this is used in a macro, due to the order of template expansion, the PROBE (or similar) command must be run prior to the macro containing this reference.</li>
+<li><code>last_query</code>: Restituisce True se il probe è stato segnalato come "attivato" durante l'ultimo comando QUERY_PROBE. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando QUERY_PROBE deve essere eseguito prima della macro contenente questo riferimento.</li>
+<li><code>last_z_result</code>: Restituisce il valore del risultato Z dell'ultimo comando PROBE. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando PROBE (o simile) deve essere eseguito prima della macro contenente questo riferimento.</li>
 </ul>
 <h2 id="quad_gantry_level">quad_gantry_level<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>quad_gantry_level</code> object (this object is available if quad_gantry_level is defined):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>quad_gantry_level</code> (questo oggetto è disponibile se quad_gantry_level è definito):</p>
 <ul>
-<li><code>applied</code>: True if the gantry leveling process has been run and completed successfully.</li>
+<li><code>applied</code>: Vero se il processo di livellamento del gantry è stato eseguito e completato con successo.</li>
 </ul>
 <h2 id="query_endstops">query_endstops<a class="headerlink" href="#query_endstops" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>query_endstops</code> object (this object is available if any endstop is defined):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>query_endstops</code> (questo oggetto è disponibile se è definito un finecorsa):</p>
 <ul>
-<li><code>last_query["&lt;endstop&gt;"]</code>: Returns True if the given endstop was reported as "triggered" during the last QUERY_ENDSTOP command. Note, if this is used in a macro, due to the order of template expansion, the QUERY_ENDSTOP command must be run prior to the macro containing this reference.</li>
+<li><code>last_query["&lt;endstop&gt;"]</code>: Restituisce True se l'endstop specificato è stato segnalato come "attivato-triggered" durante l'ultimo comando QUERY_ENDSTOP. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando QUERY_ENDSTOP deve essere eseguito prima della macro contenente questo riferimento.</li>
 </ul>
 <h2 id="servo">servo<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#servo">servo some_name</a> objects:</p>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#servo">servo some_name</a>:</p>
 <ul>
-<li><code>printer["servo &lt;config_name&gt;"].value</code>: The last setting of the PWM pin (a value between 0.0 and 1.0) associated with the servo.</li>
+<li><code>printer["servo &lt;config_name&gt;"].value</code>: l'ultima impostazione del pin PWM (un valore compreso tra 0.0 e 1.0) associata al servo.</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>system_stats</code> object (this object is always available):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>system_stats</code> (questo oggetto è sempre disponibile):</p>
 <ul>
-<li><code>sysload</code>, <code>cputime</code>, <code>memavail</code>: Information on the host operating system and process load.</li>
+<li><code>sysload</code>, <code>cputime</code>, <code>memavail</code>: informazioni sul sistema operativo del host e sul carico del processo.</li>
 </ul>
-<h2 id="temperature-sensors">temperature sensors<a class="headerlink" href="#temperature-sensors" title="Permanent link">&para;</a></h2>
-<p>The following information is available in</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, and <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> objects:</p>
+<h2 id="sensori-di-temperatura">sensori di temperatura<a class="headerlink" href="#sensori-di-temperatura" title="Permanent link">&para;</a></h2>
+<p>Le seguenti informazioni sono disponibili in</p>
+<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a> e <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name </a>:</p>
 <ul>
-<li><code>temperature</code>: The last read temperature from the sensor.</li>
-<li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: The last read values from the sensor (only on bme280, htu21d, and lm75 sensors).</li>
+<li><code>temperature</code>: l'ultima temperatura letta dal sensore.</li>
+<li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: gli ultimi valori letti dal sensore (solo sui sensori bme280, htu21d e lm75).</li>
 </ul>
 <h2 id="temperature_fan">temperature_fan<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#temperature_fan">temperature_fan some_name</a> objects:</p>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#temperature_fan">temperature_fan some_name</a>:</p>
 <ul>
-<li><code>temperature</code>: The last read temperature from the sensor.</li>
-<li><code>target</code>: The target temperature for the fan.</li>
+<li><code>temperature</code>: l'ultima temperatura letta dal sensore.</li>
+<li><code>target</code>: La temperatura target per la ventola.</li>
 </ul>
 <h2 id="temperature_sensor">temperature_sensor<a class="headerlink" href="#temperature_sensor" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#temperature_sensor">temperature_sensor some_name</a> objects:</p>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#sensore_temperatura">temperature_sensor some_nome</a>:</p>
 <ul>
-<li><code>temperature</code>: The last read temperature from the sensor.</li>
-<li><code>measured_min_temp</code>, <code>measured_max_temp</code>: The lowest and highest temperature seen by the sensor since the Klipper host software was last restarted.</li>
+<li><code>temperature</code>: l'ultima temperatura letta dal sensore.</li>
+<li><code>measured_min_temp</code>, <code>measured_max_temp</code>: la temperatura più bassa e più alta vista dal sensore dall'ultimo riavvio del software host Klipper.</li>
 </ul>
-<h2 id="tmc-drivers">tmc drivers<a class="headerlink" href="#tmc-drivers" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC stepper driver</a> objects (eg, <code>[tmc2208 stepper_x]</code>):</p>
+<h2 id="driver-tmc">driver tmc<a class="headerlink" href="#driver-tmc" title="Permanent link">&para;</a></h2>
+<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC stepper driver</a> (ad esempio, <code>[tmc2208 stepper_x]</code>):</p>
 <ul>
-<li><code>mcu_phase_offset</code>: The micro-controller stepper position corresponding with the driver's "zero" phase. This field may be null if the phase offset is not known.</li>
-<li><code>phase_offset_position</code>: The "commanded position" corresponding to the driver's "zero" phase. This field may be null if the phase offset is not known.</li>
-<li><code>drv_status</code>: The results of the last driver status query. (Only non-zero fields are reported.) This field will be null if the driver is not enabled (and thus is not periodically queried).</li>
-<li><code>run_current</code>: The currently set run current.</li>
-<li><code>hold_current</code>: The currently set hold current.</li>
+<li><code>mcu_phase_offset</code>: La posizione dello stepper del microcontrollore corrispondente alla fase "zero" del driver. Questo campo può essere nullo se l'offset di fase non è noto.</li>
+<li><code>phase_offset_position</code>: La "posizione comandata" corrispondente alla fase "zero" del driver. Questo campo può essere nullo se l'offset di fase non è noto.</li>
+<li><code>drv_status</code>: i risultati dell'ultima query sullo stato del driver. (Sono riportati solo i campi diversi da zero.) Questo campo sarà nullo se il driver non è abilitato (e quindi non viene interrogato periodicamente).</li>
+<li><code>run_current</code>: La corrente di esecuzione attualmente impostata.</li>
+<li><code>hold_current</code>: La corrente di mantenimento attualmente impostata.</li>
 </ul>
 <h2 id="toolhead">toolhead<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the <code>toolhead</code> object (this object is always available):</p>
 <ul>
 <li><code>position</code>: The last commanded position of the toolhead relative to the coordinate system specified in the config file. It is possible to access the x, y, z, and e components of this position (eg, <code>position.x</code>).</li>
-<li><code>extruder</code>: The name of the currently active extruder. For example, in a macro one could use <code>printer[printer.toolhead.extruder].target</code> to get the target temperature of the current extruder.</li>
-<li><code>homed_axes</code>: The current cartesian axes considered to be in a "homed" state. This is a string containing one or more of "x", "y", "z".</li>
-<li><code>axis_minimum</code>, <code>axis_maximum</code>: The axis travel limits (mm) after homing. It is possible to access the x, y, z components of this limit value (eg, <code>axis_minimum.x</code>, <code>axis_maximum.z</code>).</li>
-<li><code>max_velocity</code>, <code>max_accel</code>, <code>max_accel_to_decel</code>, <code>square_corner_velocity</code>: The current printing limits that are in effect. This may differ from the config file settings if a <code>SET_VELOCITY_LIMIT</code> (or <code>M204</code>) command alters them at run-time.</li>
-<li><code>stalls</code>: The total number of times (since the last restart) that the printer had to be paused because the toolhead moved faster than moves could be read from the G-Code input.</li>
+<li><code>extruder</code>: il nome dell'estrusore attualmente attivo. Ad esempio, in una macro si potrebbe usare <code>printer[printer.toolhead.extruder].target</code> per ottenere la temperatura target dell'estrusore corrente.</li>
+<li><code>homed_axes</code>: Gli assi cartesiani correnti considerati in uno stato "homed". Questa è una stringa contenente uno o più di "x", "y", "z".</li>
+<li><code>axis_minimum</code>, <code>axis_maximum</code>: i limiti di corsa dell'asse (mm) dopo la corsa di homing. È possibile accedere alle componenti x, y, z di questo valore limite (ad es. <code>axis_minimum.x</code>, <code>axis_minimum.z</code>).</li>
+<li><code>max_velocity</code>, <code>max_accel</code>, <code>max_accel_to_decel</code>, <code>square_corner_velocity</code>: gli attuali limiti di stampa in vigore. Questo può differire dalle impostazioni del file di configurazione se un comando <code>SET_VELOCITY_LIMIT</code> (o <code>M204</code>) le altera in fase di esecuzione.</li>
+<li><code>stalls</code>: il numero totale di volte (dall'ultimo riavvio) che la stampante ha dovuto essere messa in pausa perché la testina si muoveva più velocemente di quanto fosse possibile leggere i movimenti dall'input del G-code.</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#dual_carriage">dual_carriage</a> on a hybrid_corexy or hybrid_corexz robot</p>
+<p>Le seguenti informazioni sono disponibili in <a href="Config_Reference.html#dual_carriage">dual_carriage</a> su una macchina hybrid_corexy o hybrid_corexz</p>
 <ul>
-<li><code>mode</code>: The current mode. Possible values are: "FULL_CONTROL"</li>
-<li><code>active_carriage</code>: The current active carriage. Possible values are: "CARRIAGE_0", "CARRIAGE_1"</li>
+<li><code>mode</code>: la modalità corrente. I valori possibili sono: "FULL_CONTROL"</li>
+<li><code>active_carriage</code>: il carrello attivo corrente. I valori possibili sono: "CARRIAGE_0", "CARRIAGE_1"</li>
 </ul>
 <h2 id="virtual_sdcard">virtual_sdcard<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a>:</p>
 <ul>
-<li><code>is_active</code>: Returns True if a print from file is currently active.</li>
-<li><code>progress</code>: An estimate of the current print progress (based of file size and file position).</li>
-<li><code>file_path</code>: A full path to the file of currently loaded file.</li>
-<li><code>file_position</code>: The current position (in bytes) of an active print.</li>
-<li><code>file_size</code>: The file size (in bytes) of currently loaded file.</li>
+<li><code>is_active</code>: Restituisce True se una stampa da file è attualmente attiva.</li>
+<li><code>progress</code>: una stima dello stato di avanzamento della stampa corrente (in base alla dimensione del file e alla posizione del file).</li>
+<li><code>file_path</code>: un percorso completo del file per il file attualmente caricato.</li>
+<li><code>file_position</code>: la posizione corrente (in byte) di una stampa attiva.</li>
+<li><code>file_size</code>: la dimensione (in byte) del file attualmente caricato.</li>
 </ul>
 <h2 id="webhooks">webhooks<a class="headerlink" href="#webhooks" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>webhooks</code> object (this object is always available):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>webhooks</code> (questo oggetto è sempre disponibile):</p>
 <ul>
-<li><code>state</code>: Returns a string indicating the current Klipper state. Possible values are: "ready", "startup", "shutdown", "error".</li>
-<li><code>state_message</code>: A human readable string giving additional context on the current Klipper state.</li>
+<li><code>state</code>: restituisce una stringa che indica lo stato corrente di Klipper. I valori possibili sono: "ready", "startup", "shutdown", "error".</li>
+<li><code>state_message</code>: una stringa leggibile dall'uomo che fornisce un contesto aggiuntivo sullo stato corrente di Klipper.</li>
 </ul>
 <h2 id="z_tilt">z_tilt<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>z_tilt</code> object (this object is available if z_tilt is defined):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>z_tilt</code> (questo oggetto è disponibile se z_tilt è definito):</p>
 <ul>
-<li><code>applied</code>: True if the z-tilt leveling process has been run and completed successfully.</li>
+<li><code>applied</code>: Vero se il processo di livellamento z-tilt è stato eseguito e completato con successo.</li>
 </ul>
 
               

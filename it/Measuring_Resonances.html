@@ -798,8 +798,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#input-shaper-re-calibration" class="md-nav__link">
-    Input Shaper re-calibration
+  <a href="#input-shaper-ricalibrazione" class="md-nav__link">
+    Input Shaper ricalibrazione
   </a>
   
 </li>
@@ -810,8 +810,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#offline-processing-of-the-accelerometer-data" class="md-nav__link">
-    Offline processing of the accelerometer data
+  <a href="#elaborazione-offline-dei-dati-dellaccelerometro" class="md-nav__link">
+    Elaborazione offline dei dati dell'accelerometro
   </a>
   
 </li>
@@ -1470,8 +1470,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#input-shaper-re-calibration" class="md-nav__link">
-    Input Shaper re-calibration
+  <a href="#input-shaper-ricalibrazione" class="md-nav__link">
+    Input Shaper ricalibrazione
   </a>
   
 </li>
@@ -1482,8 +1482,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#offline-processing-of-the-accelerometer-data" class="md-nav__link">
-    Offline processing of the accelerometer data
+  <a href="#elaborazione-offline-dei-dati-dellaccelerometro" class="md-nav__link">
+    Elaborazione offline dei dati dell'accelerometro
   </a>
   
 </li>
@@ -1756,14 +1756,14 @@ Recommended shaper is 3hump_ei @ 72.6 Hz
 
 <p>If you compare to the previously suggested parameters, the vibrations are a bit larger, but the smoothing is significantly smaller than previously, allowing larger maximum acceleration.</p>
 <p>When deciding which <code>max_smoothing</code> parameter to choose, you can use a trial-and-error approach. Try a few different values and see which results you get. Note that the actual smoothing produced by the input shaper depends, primarily, on the lowest resonance frequency of the printer: the higher the frequency of the lowest resonance - the smaller the smoothing. Therefore, if you request the script to find a configuration of the input shaper with the unrealistically small smoothing, it will be at the expense of increased ringing at the lowest resonance frequencies (which are, typically, also more prominently visible in prints). So, always double-check the projected remaining vibrations reported by the script and make sure they are not too high.</p>
-<p>Note that if you chose a good <code>max_smoothing</code> value for both of your axes, you can store it in the <code>printer.cfg</code> as</p>
+<p>Nota che se hai scelto un buon valore <code>max_smoothing</code> per entrambi gli assi, puoi salvarlo in <code>printer.cfg</code> come</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 accel_chip: ...
 probe_points: ...
 max_smoothing: 0.25  # un esempio
 </code></pre></div>
 
-<p>Then, if you <a href="#input-shaper-re-calibration">rerun</a> the input shaper auto-tuning using <code>SHAPER_CALIBRATE</code> Klipper command in the future, it will use the stored <code>max_smoothing</code> value as a reference.</p>
+<p>Quindi, se <a href="#input-shaper-re-calibration">riesegui</a> l'autotuning dello shaper di input usando il comando Klipper <code>SHAPER_CALIBRATE</code> in futuro, utilizzerà il valore <code>max_smoothing</code> memorizzato come riferimento.</p>
 <h3 id="seleziona-max_accel">Seleziona max_accel<a class="headerlink" href="#seleziona-max_accel" title="Permanent link">&para;</a></h3>
 <p>Since the input shaper can create some smoothing in parts, especially at high accelerations, you will still need to choose the <code>max_accel</code> value that does not create too much smoothing in the printed parts. A calibration script provides an estimate for <code>max_accel</code> parameter that should not create too much smoothing. Note that the <code>max_accel</code> as displayed by the calibration script is only a theoretical maximum at which the respective shaper is still able to work without producing too much smoothing. It is by no means a recommendation to set this acceleration for printing. The maximum acceleration your printer is able to sustain depends on its mechanical properties and the maximum torque of the used stepper motors. Therefore, it is suggested to set <code>max_accel</code> in <code>[printer]</code> section that does not exceed the estimated values for X and Y axes, likely with some conservative safety margin.</p>
 <p>In alternativa, segui <a href="Resonance_Compensation.html#selecting-max_accel">questa</a> parte della guida all'ottimizzazione dello input shaper e stampa il modello di test per scegliere sperimentalmente il parametro <code>max_accel</code>.</p>
@@ -1793,11 +1793,11 @@ TEST_RESONANCES AXIS=0.866025404,-0.5 OUTPUT=raw_data
 
 <p>per generare <code>/tmp/resonances.png</code> confrontando le risonanze.</p>
 <h2 id="calibrazione-automatica-input-shaper">Calibrazione automatica Input Shaper<a class="headerlink" href="#calibrazione-automatica-input-shaper" title="Permanent link">&para;</a></h2>
-<p>Besides manually choosing the appropriate parameters for the input shaper feature, it is also possible to run the auto-tuning for the input shaper directly from Klipper. Run the following command via Octoprint terminal:</p>
+<p>Oltre a scegliere manualmente i parametri appropriati per la funzione di input shaper, è anche possibile eseguire l'autotuning per l'input shaper direttamente da Klipper. Esegui il seguente comando tramite il terminale Octoprint:</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE
 </code></pre></div>
 
-<p>This will run the full test for both axes and generate the csv output (<code>/tmp/calibration_data_*.csv</code> by default) for the frequency response and the suggested input shapers. You will also get the suggested frequencies for each input shaper, as well as which input shaper is recommended for your setup, on Octoprint console. For example:</p>
+<p>Questo eseguirà il test completo per entrambi gli assi e genererà l'output csv (<code>/tmp/calibration_data_*.csv</code> per impostazione predefinita) per la risposta in frequenza e gli input shaper suggeriti. Riceverai anche le frequenze suggerite per ciascun input shaper, nonché quale input shaper è consigliato per la tua configurazione, sulla console Octoprint. Per esempio:</p>
 <div class="highlight"><pre><span></span><code>Calculating the best input shaper parameters for y axis
 Fitted shaper &#39;zv&#39; frequency = 39.0 Hz (vibrations = 13.2%, smoothing ~= 0.105)
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 5900 mm/sec^2
@@ -1812,27 +1812,27 @@ To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 2
 Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
 </code></pre></div>
 
-<p>If you agree with the suggested parameters, you can execute <code>SAVE_CONFIG</code> now to save them and restart the Klipper. Note that this will not update <code>max_accel</code> value in <code>[printer]</code> section. You should update it manually following the considerations in <a href="#selecting-max_accel">Selecting max_accel</a> section.</p>
+<p>Se sei d'accordo con i parametri suggeriti, puoi eseguire ora <code>SAVE_CONFIG</code> per salvarli e riavviare Klipper. Nota che questo non aggiornerà il valore <code>max_accel</code> nella sezione <code>[printer]</code>. Dovresti aggiornarlo manualmente seguendo le considerazioni nella sezione <a href="#selecting-max_accel">Selecting max_accel</a>.</p>
 <p>If your printer is a bed slinger printer, you can specify which axis to test, so that you can change the accelerometer mounting point between the tests (by default the test is performed for both axes):</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Y
 </code></pre></div>
 
-<p>You can execute <code>SAVE_CONFIG</code> twice - after calibrating each axis.</p>
-<p>However, if you connected two accelerometers simultaneously, you simply run <code>SHAPER_CALIBRATE</code> without specifying an axis to calibrate the input shaper for both axes in one go.</p>
-<h3 id="input-shaper-re-calibration">Input Shaper re-calibration<a class="headerlink" href="#input-shaper-re-calibration" title="Permanent link">&para;</a></h3>
-<p><code>SHAPER_CALIBRATE</code> command can be also used to re-calibrate the input shaper in the future, especially if some changes to the printer that can affect its kinematics are made. One can either re-run the full calibration using <code>SHAPER_CALIBRATE</code> command, or restrict the auto-calibration to a single axis by supplying <code>AXIS=</code> parameter, like</p>
+<p>È possibile eseguire <code>SAVE_CONFIG</code> due volte, dopo aver calibrato ciascun asse.</p>
+<p>Tuttavia, se hai collegato due accelerometri contemporaneamente, esegui semplicemente <code>SHAPER_CALIBRATE</code> senza specificare un asse per calibrare l' input shaper per entrambi gli assi in una volta sola.</p>
+<h3 id="input-shaper-ricalibrazione">Input Shaper ricalibrazione<a class="headerlink" href="#input-shaper-ricalibrazione" title="Permanent link">&para;</a></h3>
+<p>Il comando <code>SHAPER_CALIBRATE</code> può essere utilizzato anche per ricalibrare lo shaper di input in futuro, specialmente se vengono apportate alcune modifiche alla stampante che possono influire sulla sua cinematica. È possibile eseguire nuovamente la calibrazione completa utilizzando il comando <code>SHAPER_CALIBRATE</code>, o limitare l'autocalibrazione a un singolo asse fornendo il parametro <code>AXIS=</code>, come</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
 </code></pre></div>
 
-<p><strong>Warning!</strong> It is not advisable to run the shaper autocalibration very frequently (e.g. before every print, or every day). In order to determine resonance frequencies, autocalibration creates intensive vibrations on each of the axes. Generally, 3D printers are not designed to withstand a prolonged exposure to vibrations near the resonance frequencies. Doing so may increase wear of the printer components and reduce their lifespan. There is also an increased risk of some parts unscrewing or becoming loose. Always check that all parts of the printer (including the ones that may normally not move) are securely fixed in place after each auto-tuning.</p>
-<p>Also, due to some noise in measurements, it is possible that the tuning results will be slightly different from one calibration run to another one. Still, it is not expected that the noise will affect the print quality too much. However, it is still advised to double-check the suggested parameters, and print some test prints before using them to confirm they are good.</p>
-<h2 id="offline-processing-of-the-accelerometer-data">Offline processing of the accelerometer data<a class="headerlink" href="#offline-processing-of-the-accelerometer-data" title="Permanent link">&para;</a></h2>
-<p>It is possible to generate the raw accelerometer data and process it offline (e.g. on a host machine), for example to find resonances. In order to do so, run the following commands via Octoprint terminal:</p>
+<p><strong>Attenzione!</strong> Non è consigliabile eseguire l'autocalibrazione dello shaper molto frequentemente (ad es. prima di ogni stampa o ogni giorno). Per determinare le frequenze di risonanza, l'autocalibrazione crea intense vibrazioni su ciascuno degli assi. Generalmente, le stampanti 3D non sono progettate per resistere a un'esposizione prolungata a vibrazioni vicino alle frequenze di risonanza. Ciò potrebbe aumentare l'usura dei componenti della stampante e ridurne la durata. C'è anche un aumento del rischio che alcune parti si svitino o si allentino. Verificare sempre che tutte le parti della stampante (comprese quelle che normalmente potrebbero non muoversi) siano fissate saldamente in posizione dopo ogni autotuning.</p>
+<p>Inoltre, a causa di un po' di rumore nelle misurazioni, è possibile che i risultati dell'ottimizzazione siano leggermente diversi da una calibrazione all'altra. Tuttavia, non ci si aspetta che il rumore influisca troppo sulla qualità di stampa. Tuttavia, si consiglia comunque di ricontrollare i parametri suggeriti e di stampare alcune stampe di prova prima di utilizzarli per confermare che siano corretti.</p>
+<h2 id="elaborazione-offline-dei-dati-dellaccelerometro">Elaborazione offline dei dati dell'accelerometro<a class="headerlink" href="#elaborazione-offline-dei-dati-dellaccelerometro" title="Permanent link">&para;</a></h2>
+<p>È possibile generare i dati grezzi dell'accelerometro ed elaborarli offline (ad esempio su una macchina host), ad esempio per trovare risonanze. Per fare ciò, esegui i seguenti comandi tramite il terminale Octoprint:</p>
 <div class="highlight"><pre><span></span><code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0
 TEST_RESONANCES AXIS=X OUTPUT=raw_data
 </code></pre></div>
 
-<p>ignoring any errors for <code>SET_INPUT_SHAPER</code> command. For <code>TEST_RESONANCES</code> command, specify the desired test axis. The raw data will be written into <code>/tmp</code> directory on the RPi.</p>
+<p>ignorando eventuali errori per il comando <code>SET_INPUT_SHAPER</code>. Per il comando <code>TEST_RESONANCES</code>, specificare l'asse di test desiderato. I dati grezzi verranno scritti nella directory <code>/tmp</code> sull'RPi.</p>
 <p>I dati grezzi possono anche essere ottenuti eseguendo il comando <code>ACCELEROMETER_MEASURE</code> due volte durante una normale attività della stampante: prima per avviare le misurazioni, quindi per interromperle e scrivere il file di output. Fare riferimento a <a href="G-Codes.html#adxl345">G-Codes</a> per maggiori dettagli.</p>
 <p>I dati possono essere elaborati successivamente dai seguenti script: <code>scripts/graph_accelerometer.py</code> e <code>scripts/calibrate_shaper.py</code>. Entrambi accettano uno o più file CSV non elaborati come input a seconda della modalità. Lo script graph_accelerometer.py supporta diverse modalità operative:</p>
 <ul>
