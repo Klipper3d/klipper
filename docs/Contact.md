@@ -28,7 +28,7 @@ real-time.
 ## I have a question about Klipper
 
 Many questions we receive are already answered in the
-[Klipper documentation](Overview.md). Please be sure to to read the
+[Danger Klipper](Overview.md). Please be sure to to read the
 documentation and follow the directions provided there.
 
 It is also possible to search for similar questions in the
@@ -68,7 +68,7 @@ down to:
 2. Not following all the steps described in the Klipper documentation.
 
 If you are experiencing problems we recommend you carefully read the
-[Klipper documentation](Overview.md) and double check that all steps
+[Danger Klipper](Overview.md) and double check that all steps
 were followed.
 
 If you are experiencing a printing problem, then we recommend
