@@ -186,10 +186,10 @@ class EndstopPhases:
     def handle_home_rails_end(self, homing_state, rails):
         for rail in rails:
             is_primary = True
-            for stepper in rail.get_steppers():
-                sname = stepper.get_name()
+            for _stepper in rail.get_steppers():
+                sname = _stepper.get_name()
                 trig_mcu_pos = homing_state.get_trigger_position(sname)
-                self.update_stepper(stepper, trig_mcu_pos, is_primary)
+                self.update_stepper(_stepper, trig_mcu_pos, is_primary)
                 is_primary = False
 
     cmd_ENDSTOP_PHASE_CALIBRATE_help = "Calibrate stepper phase"

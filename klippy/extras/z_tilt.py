@@ -48,8 +48,9 @@ class ZAdjustHelper:
         for s in self.z_steppers:
             s.set_trapq(None)
         # Move each z stepper (sorted from lowest to highest) until they match
-        positions = [(-a, s) for a, s in zip(adjustments, self.z_steppers)]
-        positions.sort()
+        positions = sorted(
+            [(-a, s) for a, s in zip(adjustments, self.z_steppers)]
+        )
         first_stepper_offset, first_stepper = positions[0]
         z_low = curpos[2] - first_stepper_offset
         for i in range(len(positions) - 1):

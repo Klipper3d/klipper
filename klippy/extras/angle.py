@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, threading
 from . import bus, motion_report
+import numpy
 
 MIN_MSG_TIME = 0.100
 TCODE_ERROR = 0xFF
@@ -23,10 +24,6 @@ class AngleCalibration:
         if self.stepper_name is None:
             # No calibration
             return
-        try:
-            import numpy
-        except:
-            raise config.error("Angle calibration requires numpy module")
         sconfig = config.getsection(self.stepper_name)
         sconfig.getint("microsteps", note_valid=False)
         self.tmc_module = self.mcu_stepper = None
@@ -121,7 +118,6 @@ class AngleCalibration:
             angles = list(reversed(angles))
         first_step = angles.index(min(angles))
         angles = angles[first_step:] + angles[:first_step]
-        import numpy
 
         eqs = numpy.zeros((full_steps, calibration_count))
         ans = numpy.zeros((full_steps,))

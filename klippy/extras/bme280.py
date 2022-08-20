@@ -532,7 +532,7 @@ class BME280:
         return bytearray(params["response"])
 
     def write_register(self, reg_name, data):
-        if type(data) is not list:
+        if not isinstance(data, list):
             data = [data]
         reg = self.chip_registers[reg_name]
         data.insert(0, reg)

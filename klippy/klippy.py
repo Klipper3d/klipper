@@ -166,9 +166,9 @@ class Printer:
         host_version = self.start_args["software_version"]
         msg_update = []
         msg_updated = []
-        for mcu_name, mcu in self.lookup_objects("mcu"):
+        for mcu_name, _mcu in self.lookup_objects("mcu"):
             try:
-                mcu_version = mcu.get_status()["mcu_version"]
+                mcu_version = _mcu.get_status()["mcu_version"]
             except:
                 logging.exception("Unable to retrieve mcu_version from mcu")
                 continue
@@ -444,7 +444,7 @@ def main():
     gc.disable()
 
     # Start Printer() class
-    while 1:
+    while True:
         if bglogger is not None:
             bglogger.clear_rollover_info()
             bglogger.set_rollover_info("versions", versions)

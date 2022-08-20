@@ -93,7 +93,7 @@ class ReactorMutex:
             return
         g = greenlet.getcurrent()
         self.queue.append(g)
-        while 1:
+        while True:
             self.reactor.pause(self.reactor.NEVER)
             if self.next_pending and self.queue[0] is g:
                 self.next_pending = False
@@ -216,7 +216,7 @@ class SelectReactor:
             os.read(self._pipe_fds[0], 4096)
         except os.error:
             pass
-        while 1:
+        while True:
             try:
                 func, args = self._async_queue.get_nowait()
             except queue.Empty:
@@ -275,7 +275,7 @@ class SelectReactor:
     # File descriptors
     def register_fd(self, fd, read_callback, write_callback=None):
         file_handler = ReactorFileHandler(fd, read_callback, write_callback)
-        self.set_fd_wake(file_handle, True, False)
+        self.set_fd_wake(file_handler, True, False)
         return file_handler
 
     def unregister_fd(self, file_handler):
@@ -285,12 +285,12 @@ class SelectReactor:
             self._write_fds.pop(self._write_fds.index(file_handler))
 
     def set_fd_wake(self, file_handler, is_readable=True, is_writeable=False):
-        if file_hander in self._read_fds:
+        if file_handler in self._read_fds:
             if not is_readable:
                 self._read_fds.pop(self._read_fds.index(file_handler))
         elif is_readable:
             self._read_fds.append(file_handler)
-        if file_hander in self._write_fds:
+        if file_handler in self._write_fds:
             if not is_writeable:
                 self._write_fds.pop(self._write_fds.index(file_handler))
         elif is_writeable:
@@ -414,7 +414,7 @@ class EPollReactor(SelectReactor):
     def register_fd(self, fd, read_callback, write_callback=None):
         file_handler = ReactorFileHandler(fd, read_callback, write_callback)
         fds = self._fds.copy()
-        fds[fd] = callback
+        fds[fd] = file_handler
         self._fds = fds
         self._epoll.register(fd, select.EPOLLIN | select.EPOLLHUP)
         return file_handler

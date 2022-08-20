@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import mcu
 
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
@@ -69,11 +68,11 @@ class PrinterTemperatureMCU:
 
     def _mcu_identify(self):
         # Obtain mcu information
-        mcu = self.mcu_adc.get_mcu()
-        self.debug_read_cmd = mcu.lookup_query_command(
+        _mcu = self.mcu_adc.get_mcu()
+        self.debug_read_cmd = _mcu.lookup_query_command(
             "debug_read order=%c addr=%u", "debug_result val=%u"
         )
-        self.mcu_type = mcu.get_constants().get("MCU", "")
+        self.mcu_type = _mcu.get_constants().get("MCU", "")
         # Run MCU specific configuration
         cfg_funcs = [
             ("rp2040", self.config_rp2040),
@@ -98,7 +97,7 @@ class PrinterTemperatureMCU:
                 break
         logging.info(
             "mcu_temperature '%s' nominal base=%.6f slope=%.6f",
-            mcu.get_name(),
+            _mcu.get_name(),
             self.base_temperature,
             self.slope,
         )

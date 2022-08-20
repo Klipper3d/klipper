@@ -647,7 +647,7 @@ class RetryAsyncCommand:
         (cmd,) = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         first_query_time = query_time = self.reactor.monotonic()
-        while 1:
+        while True:
             params = self.completion.wait(query_time + self.RETRY_TIME)
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)
