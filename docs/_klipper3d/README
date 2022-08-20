@@ -1,4 +1,4 @@
-This directory defines the https://www.klipper3d.org/ website. The
+This directory defines the https://DangerKlippers.github.io/danger-klipper/ website. The
 site is hosted using "github pages". The
 .github/workflows/klipper3d-deploy.yaml tool uses mkdocs (
 https://www.mkdocs.org/ ) to automatically convert the markdown files

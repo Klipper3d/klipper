@@ -1,9 +1,19 @@
 /* Customization of mkdocs generated site */
 [data-md-color-scheme="slate"] {
-    --md-primary-fg-color: hsla(var(--md-hue),15%,12%,1);
-    --md-default-bg-color: hsla(var(--md-hue),17%,17%,1);
-    --md-typeset-a-color:  steelblue;
-    --md-accent-fg-color:  lightblue;
+    --md-hue: 249;
+    --md-primary-fg-color: hsla(var(--md-hue), 4%, 11%, 1);
+    --md-default-bg-color: hsla(var(--md-hue), 5%, 8%, 1);
+    --md-typeset-a-color: rgb(17, 17, 17);
+    --md-accent-fg-color: #fa0;
+}
+
+[data-md-color-scheme="slate"] img {
+    background-color: invert(var(--md-default-bg-color));
+    filter: invert(100%);
+}
+
+.md-logo img {
+    background-color: invert(var(--md-primary-fg-color)) !important;
 }
 
 img {

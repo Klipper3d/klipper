@@ -4,7 +4,7 @@
 # layout.  See that script and the README file for more details.
 
 # Site and directory configuration
-site_name: Klipper documentation
+site_name: Danger Klipper documentation
 repo_url: https://github.com/Klipper3d/klipper
 repo_name: Klipper3d/klipper
 edit_uri: blob/master/docs/
@@ -36,15 +36,15 @@ theme:
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: white
-      accent: blue
+      primary: amber
+      accent: amber
       toggle:
         icon: material/lightbulb
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: grey
-      accent: light blue
+      primary: black
+      accent: amber
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
