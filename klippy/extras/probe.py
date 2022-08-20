@@ -528,7 +528,7 @@ class ProbePointsHelper:
                 "horizontal_move_z can't be less than" " probe's z_offset"
             )
         probe.multi_probe_begin()
-        while 1:
+        while True:
             done = self._move_next()
             if done:
                 break

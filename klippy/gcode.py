@@ -192,7 +192,10 @@ class GCodeDispatch:
             )
         if not self.is_traditional_gcode(cmd):
             origfunc = func
-            func = lambda params: origfunc(self._get_extended_params(params))
+
+            def func(params):
+                return origfunc(self._get_extended_params(params))
+
         self.ready_gcode_handlers[cmd] = func
         if when_not_ready:
             self.base_gcode_handlers[cmd] = func
@@ -202,7 +205,10 @@ class GCodeDispatch:
     def register_mux_command(self, cmd, key, value, func, desc=None):
         prev = self.mux_commands.get(cmd)
         if prev is None:
-            handler = lambda gcmd: self._cmd_mux(cmd, gcmd)
+
+            def handler(gcmd):
+                return self._cmd_mux(cmd, gcmd)
+
             self.register_command(cmd, handler, desc=desc)
             self.mux_commands[cmd] = prev = (key, {})
         prev_key, prev_values = prev

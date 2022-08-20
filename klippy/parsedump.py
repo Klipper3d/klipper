@@ -26,12 +26,12 @@ def main():
     f = open(data_filename, "rb")
     fd = f.fileno()
     data = ""
-    while 1:
+    while True:
         newdata = os.read(fd, 4096)
         if not newdata:
             break
         data += newdata
-        while 1:
+        while True:
             l = mp.check_packet(data)
             if l == 0:
                 break

@@ -20,7 +20,7 @@ class error(Exception):
 # Scriptable menu element abstract baseclass
 class MenuElement(object):
     def __init__(self, manager, config, **kwargs):
-        if type(self) is MenuElement:
+        if isinstance(self, MenuElement):
             raise error("Abstract MenuElement cannot be instantiated directly")
         self._manager = manager
         self._cursor = ">"
@@ -238,7 +238,7 @@ class MenuContainer(MenuElement):
     """Menu container abstract class"""
 
     def __init__(self, manager, config, **kwargs):
-        if type(self) is MenuContainer:
+        if isinstance(self, MenuContainer):
             raise error(
                 "Abstract MenuContainer cannot be instantiated directly"
             )
@@ -1101,8 +1101,8 @@ class MenuManager:
     def aslatin(cls, s):
         if isinstance(s, str):
             return s
-        elif isinstance(s, unicode):
-            return unicode(s).encode("latin-1", "ignore")
+        elif isinstance(s, bytes):
+            return s.decode("latin-1", "ignore")
         else:
             return str(s)
 

@@ -130,7 +130,7 @@ class ConfigWrapper:
         )
 
     def getchoice(self, option, choices, default=sentinel, note_valid=True):
-        if choices and type(list(choices.keys())[0]) == int:
+        if choices and isinstance(list(choices.keys())[0], int):
             c = self.getint(option, default, note_valid=note_valid)
         else:
             c = self.get(option, default, note_valid=note_valid)
@@ -496,7 +496,7 @@ class PrinterConfig:
         svalue = str(value)
         self.autosave.fileconfig.set(section, option, svalue)
         pending = dict(self.status_save_pending)
-        if not section in pending or pending[section] is None:
+        if section not in pending or pending[section] is None:
             pending[section] = {}
         else:
             pending[section] = dict(pending[section])

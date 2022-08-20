@@ -176,7 +176,7 @@ def lookup_params(msgformat, enumerations={}):
 def lookup_output_params(msgformat):
     param_types = []
     args = msgformat
-    while 1:
+    while True:
         pos = args.find("%")
         if pos < 0:
             break
@@ -322,7 +322,7 @@ class MessageParser:
         msgseq = s[MESSAGE_POS_SEQ]
         out = ["seq: %02x" % (msgseq,)]
         pos = MESSAGE_HEADER_SIZE
-        while 1:
+        while True:
             msgid = s[pos]
             mid = self.messages_by_id.get(msgid, self.unknown)
             params, pos = mid.parse(s, pos)
@@ -418,7 +418,7 @@ class MessageParser:
         for add_name, add_enums in enumerations.items():
             enums = self.enumerations.setdefault(add_name, {})
             for enum, value in add_enums.items():
-                if type(value) == type(0):
+                if isinstance(value, type(0)):
                     # Simple enumeration
                     enums[str(enum)] = value
                     continue

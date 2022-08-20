@@ -39,7 +39,7 @@ class HostResponder:
         no_space = False
         respond_type = gcmd.get("TYPE", None)
         prefix = self.default_prefix
-        if respond_type != None:
+        if respond_type is not None:
             respond_type = respond_type.lower()
             if respond_type in respond_types:
                 prefix = respond_types[respond_type]

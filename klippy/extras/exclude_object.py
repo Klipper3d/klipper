@@ -233,14 +233,14 @@ class ExcludeObject:
     cmd_EXCLUDE_OBJECT_END_help = "Marks the end the current object"
 
     def cmd_EXCLUDE_OBJECT_END(self, gcmd):
-        if self.current_object == None and self.next_transform:
+        if self.current_object is None and self.next_transform:
             gcmd.respond_info(
                 "EXCLUDE_OBJECT_END called, but no object is"
                 " currently active"
             )
             return
         name = gcmd.get("NAME", default=None)
-        if name != None and name.upper() != self.current_object:
+        if name is not None and name.upper() != self.current_object:
             gcmd.respond_info(
                 "EXCLUDE_OBJECT_END NAME=%s does not match the"
                 " current object NAME=%s" % (name.upper(), self.current_object)
@@ -294,10 +294,10 @@ class ExcludeObject:
             obj = {"name": name.upper()}
             obj.update(parameters)
 
-            if center != None:
+            if center is not None:
                 obj["center"] = json.loads("[%s]" % center)
 
-            if polygon != None:
+            if polygon is not None:
                 obj["polygon"] = json.loads(polygon)
 
             self._add_object_definition(obj)

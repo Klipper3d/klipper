@@ -3,7 +3,10 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, zlib, logging, math
+import logging
+import math
+import os
+import zlib
 import serialhdl, msgproto, pins, chelper, clocksync
 
 
@@ -644,7 +647,7 @@ class RetryAsyncCommand:
         (cmd,) = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         first_query_time = query_time = self.reactor.monotonic()
-        while 1:
+        while True:
             params = self.completion.wait(query_time + self.RETRY_TIME)
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)

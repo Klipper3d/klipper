@@ -3,7 +3,8 @@
 # Copyright (C) 2017-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging, collections
+import logging
+import math
 import mathutil
 from . import probe
 

@@ -34,7 +34,7 @@ class QueueListener(logging.handlers.TimedRotatingFileHandler):
         self.rollover_info = {}
 
     def _bg_thread(self):
-        while 1:
+        while True:
             record = self.bg_queue.get(True)
             if record is None:
                 break

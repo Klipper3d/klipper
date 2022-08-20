@@ -18,8 +18,9 @@ json_loads_byteify = None
 if sys.version_info.major < 3:
 
     def json_loads_byteify(data, ignore_dicts=False):
-        if isinstance(data, unicode):
-            return data.encode("utf-8")
+
+        if isinstance(data, bytes):
+            return data.decode("utf-8")
         if isinstance(data, list):
             return [json_loads_byteify(i, True) for i in data]
         if isinstance(data, dict) and not ignore_dicts:
@@ -51,12 +52,14 @@ class WebRequest:
     def __init__(self, client_conn, request):
         self.client_conn = client_conn
         base_request = json.loads(request, object_hook=json_loads_byteify)
-        if type(base_request) != dict:
+        if not isinstance(base_request, dict):
             raise ValueError("Not a top-level dictionary")
         self.id = base_request.get("id", None)
         self.method = base_request.get("method")
         self.params = base_request.get("params", {})
-        if type(self.method) != str or type(self.params) != dict:
+        if not isinstance(self.method, str) or not isinstance(
+            self.params, dict
+        ):
             raise ValueError("Invalid request type")
         self.response = None
         self.is_error = False
@@ -564,11 +567,13 @@ class QueryStatusHelper:
         objects = web_request.get_dict("objects")
         # Validate subscription format
         for k, v in objects.items():
-            if type(k) != str or (v is not None and type(v) != list):
+            if not isinstance(k, str) or (
+                v is not None and not isinstance(v, list)
+            ):
                 raise web_request.error("Invalid argument")
             if v is not None:
                 for ri in v:
-                    if type(ri) != str:
+                    if not isinstance(ri, str):
                         raise web_request.error("Invalid argument")
         # Add to pending queries
         cconn = web_request.get_client_connection()

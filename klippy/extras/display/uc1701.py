@@ -4,7 +4,6 @@
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 from .. import bus
 from . import font8x14
 

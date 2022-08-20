@@ -3,7 +3,6 @@
 # Copyright (C) 2021  Fabrice Gallet <tircown@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
 
 
 class DualCarriages:
@@ -78,7 +77,7 @@ class DualCarriages:
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         index = gcmd.get_int("CARRIAGE", minval=0, maxval=1)
         if (
-            not (self.dc[0].is_active() == self.dc[1].is_active() == True)
+            not (self.dc[0].is_active() == self.dc[1].is_active())
             and self.dc[index].is_active() is False
         ):
             self.toggle_active_dc_rail(index)

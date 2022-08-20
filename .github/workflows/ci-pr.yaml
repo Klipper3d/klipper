@@ -3,7 +3,7 @@ name: black
 on: pull_request
 jobs:
   black:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Setup python
@@ -19,3 +19,7 @@ jobs:
           echo "running black..."
           black --version
           black klippy --check 
+      - name: Flake8
+        run: |
+          echo "running flake8..."
+          flake8 --config .flake8

@@ -3,7 +3,11 @@
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import collections, importlib, logging, math, multiprocessing, traceback
+import collections
+import importlib
+import math
+import multiprocessing
+import traceback
 
 shaper_defs = importlib.import_module(".shaper_defs", "extras")
 

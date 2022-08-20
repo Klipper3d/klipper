@@ -38,7 +38,7 @@ class SerialReader:
 
     def _bg_thread(self):
         response = self.ffi_main.new("struct pull_queue_message *")
-        while 1:
+        while True:
             self.ffi_lib.serialqueue_pull(self.serialqueue, response)
             count = response.len
             if count < 0:
@@ -70,7 +70,7 @@ class SerialReader:
     def _get_identify_data(self, eventtime):
         # Query the "data dictionary" from the micro-controller
         identify_data = b""
-        while 1:
+        while True:
             msg = "identify offset=%d count=%d" % (len(identify_data), 40)
             try:
                 params = self.send_with_response(msg, "identify_response")
@@ -147,7 +147,7 @@ class SerialReader:
         # Start connection attempt
         logging.info("%sStarting CAN connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
-        while 1:
+        while True:
             if self.reactor.monotonic() > start_time + 90.0:
                 self._error("Unable to connect")
             try:
@@ -185,7 +185,7 @@ class SerialReader:
     def connect_pipe(self, filename):
         logging.info("%sStarting connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
-        while 1:
+        while True:
             if self.reactor.monotonic() > start_time + 90.0:
                 self._error("Unable to connect")
             try:
@@ -203,7 +203,7 @@ class SerialReader:
         # Initial connection
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
-        while 1:
+        while True:
             if self.reactor.monotonic() > start_time + 90.0:
                 self._error("Unable to connect")
             try:
@@ -382,7 +382,7 @@ class SerialRetryCommand:
     def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
         retries = 5
         retry_delay = 0.010
-        while 1:
+        while True:
             for cmd in cmds[:-1]:
                 self.serial.raw_send(cmd, minclock, reqclock, cmd_queue)
             self.serial.raw_send_wait_ack(

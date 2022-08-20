@@ -4,7 +4,10 @@
 # Copyright (C) 2020-2021 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, time, collections, threading, multiprocessing, os
+import collections
+import logging
+import threading
+import time
 from . import bus, motion_report, adxl345
 
 MPU9250_ADDR = 0x68

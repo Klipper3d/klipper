@@ -254,7 +254,7 @@ class KeyboardReader:
             try:
                 for i in range(1, len(evalparts), 2):
                     e = eval(evalparts[i], dict(self.eval_globals))
-                    if type(e) == type(0.0):
+                    if isinstance(e, type(0.0)):
                         e = int(e)
                     evalparts[i] = str(e)
             except:

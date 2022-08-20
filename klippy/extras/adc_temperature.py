@@ -608,14 +608,20 @@ def load_config(config):
     # Register default sensors
     pheaters = config.get_printer().load_object(config, "heaters")
     for sensor_type, params in DefaultVoltageSensors:
-        func = lambda config, params=params: PrinterADCtoTemperature(
-            config, LinearVoltage(config, params)
-        )
+
+        def func(config, params=params):
+            return PrinterADCtoTemperature(
+                config, LinearVoltage(config, params)
+            )
+
         pheaters.add_sensor_factory(sensor_type, func)
     for sensor_type, params in DefaultResistanceSensors:
-        func = lambda config, params=params: PrinterADCtoTemperature(
-            config, LinearResistance(config, params)
-        )
+
+        def func(config, params=params):
+            return PrinterADCtoTemperature(
+                config, LinearResistance(config, params)
+            )
+
         pheaters.add_sensor_factory(sensor_type, func)
 
 
