@@ -8,6 +8,9 @@ All dates in this document are approximate.
 
 ## Changes
 
+20220821: The movement entries in the "menu.cfg" for 10/1/0.1 mm are
+expanded with the feedrate. For X and Y F6000. For Z F1500.
+
 20220616: It was previously possible to flash an rp2040 in bootloader
 mode by running `make flash FLASH_DEVICE=first`. The equivalent
 command is now `make flash FLASH_DEVICE=2e8a:0003`.
