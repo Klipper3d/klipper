@@ -3,6 +3,7 @@ name: Build test
 on:
   pull_request_review:
     types: [submitted]
+  
 jobs:
   build:
     runs-on: ubuntu-18.04
