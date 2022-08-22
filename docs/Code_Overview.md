@@ -327,6 +327,10 @@ The following may also be useful:
 * If submitting the module for inclusion in the main Klipper code, be
   sure to place a copyright notice at the top of the module. See the
   existing modules for the preferred format.
+* If submitting the module for inclusion in the main Klipper code, be
+  sure to append it to `klippy/extras/.gitignore` as an exclusion. A
+  helper script exists at `scripts/update_klippy_extra_gitignore.sh`
+  which allows for easy addition of the exclusion.
 
 ## Adding new kinematics
 
