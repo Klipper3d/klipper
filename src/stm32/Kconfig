@@ -107,7 +107,7 @@ config HAVE_STM32_CANBUS
     default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32F0x2
 config HAVE_STM32_FDCANBUS
     bool
-    default y if MACH_STM32G0
+    default y if MACH_STM32G0 || MACH_STM32H7
 config HAVE_STM32_USBCANBUS
     bool
     depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
@@ -351,10 +351,18 @@ choice
         select CANSERIAL
     config STM32_MMENU_CANBUS_PD0_PD1
         bool "CAN bus (on PD0/PD1)" if LOW_LEVEL_OPTIONS
-        depends on HAVE_STM32_CANBUS
+        depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
         select CANSERIAL
     config STM32_MMENU_CANBUS_PB0_PB1
         bool "CAN bus (on PB0/PB1)"
+        depends on HAVE_STM32_FDCANBUS
+        select CANSERIAL
+    config STM32_MMENU_CANBUS_PD12_PD13
+        bool "CAN bus (on PD12/PD13)"
+        depends on HAVE_STM32_FDCANBUS
+        select CANSERIAL
+    config STM32_MMENU_CANBUS_PC2_PC3
+        bool "CAN bus (on PC2/PC3)"
         depends on HAVE_STM32_FDCANBUS
         select CANSERIAL
     config STM32_USBCANBUS_PA11_PA12
@@ -377,9 +385,15 @@ choice
         depends on HAVE_STM32_CANBUS && MACH_STM32F4
     config STM32_CMENU_CANBUS_PD0_PD1
         bool "CAN bus (on PD0/PD1)"
-        depends on HAVE_STM32_CANBUS
+        depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
     config STM32_CMENU_CANBUS_PB0_PB1
         bool "CAN bus (on PB0/PB1)"
+        depends on HAVE_STM32_FDCANBUS
+    config STM32_CMENU_CANBUS_PD12_PD13
+        bool "CAN bus (on PD12/PD13)"
+        depends on HAVE_STM32_FDCANBUS
+    config STM32_CMENU_CANBUS_PC2_PC3
+        bool "CAN bus (on PC2/PC3)"
         depends on HAVE_STM32_FDCANBUS
 endchoice
 
@@ -402,5 +416,11 @@ config STM32_CANBUS_PD0_PD1
 config STM32_CANBUS_PB0_PB1
     bool
     default y if STM32_MMENU_CANBUS_PB0_PB1 || STM32_CMENU_CANBUS_PB0_PB1
+config STM32_CANBUS_PD12_PD13
+    bool
+    default y if STM32_MMENU_CANBUS_PD12_PD13 || STM32_CMENU_CANBUS_PD12_PD13
+config STM32_CANBUS_PC2_PC3
+    bool
+    default y if STM32_MMENU_CANBUS_PC2_PC3 || STM32_CMENU_CANBUS_PC2_PC3
 
 endif
