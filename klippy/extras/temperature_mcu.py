@@ -21,7 +21,8 @@ class PrinterTemperatureMCU:
         self.debug_read_cmd = None
         # Read config
         mcu_name = config.get('sensor_mcu', 'mcu')
-        self.reference_voltage = config.getfloat('reference_voltage', default=3.3)
+        self.reference_voltage = config.getfloat(
+            'reference_voltage', default=3.3)
         self.temp1 = config.getfloat('sensor_temperature1', None)
         if self.temp1 is not None:
             self.adc1 = config.getfloat('sensor_adc1', minval=0., maxval=1.)
@@ -97,16 +98,20 @@ class PrinterTemperatureMCU:
                                         % (self.mcu_type,))
     def config_rp2040(self):
         self.slope = self.reference_voltage / -0.001721
-        self.base_temperature = self.calc_base(27., 0.706 / self.reference_voltage)
+        self.base_temperature = self.calc_base(
+            27., 0.706 / self.reference_voltage)
     def config_sam3(self):
         self.slope = self.reference_voltage / .002650
-        self.base_temperature = self.calc_base(27., 0.8 / self.reference_voltage)
+        self.base_temperature = self.calc_base(
+            27., 0.8 / self.reference_voltage)
     def config_sam4(self):
         self.slope = self.reference_voltage / .004700
-        self.base_temperature = self.calc_base(27., 1.44 / self.reference_voltage)
+        self.base_temperature = self.calc_base(
+            27., 1.44 / self.reference_voltage)
     def config_same70(self):
         self.slope = self.reference_voltage / .002330
-        self.base_temperature = self.calc_base(25., 0.72 / self.reference_voltage)
+        self.base_temperature = self.calc_base(
+            25., 0.72 / self.reference_voltage)
     def config_samd21(self, addr=0x00806030):
         def get1v(val):
             if val & 0x80:
@@ -118,18 +123,22 @@ class PrinterTemperatureMCU:
         hot_temp = ((cal1 >> 12) & 0xff) + ((cal1 >> 20) & 0xf) / 10.
         room_1v = get1v((cal1 >> 24) & 0xff)
         hot_1v = get1v((cal2 >> 0) & 0xff)
-        room_adc = ((cal2 >> 8) & 0xfff) * room_1v / (self.reference_voltage * 4095.)
-        hot_adc = ((cal2 >> 20) & 0xfff) * hot_1v / (self.reference_voltage * 4095.)
+        room_adc = ((cal2 >> 8) & 0xfff)
+            * room_1v / (self.reference_voltage * 4095.)
+        hot_adc = ((cal2 >> 20) & 0xfff)
+            * hot_1v / (self.reference_voltage * 4095.)
         self.slope = (hot_temp - room_temp) / (hot_adc - room_adc)
         self.base_temperature = self.calc_base(room_temp, room_adc)
     def config_samd51(self):
         self.config_samd21(addr=0x00800100)
     def config_stm32f1(self):
         self.slope = self.reference_voltage / -.004300
-        self.base_temperature = self.calc_base(25., 1.43 / self.reference_voltage)
+        self.base_temperature = self.calc_base(
+            25., 1.43 / self.reference_voltage)
     def config_stm32f2(self):
         self.slope = self.reference_voltage / .002500
-        self.base_temperature = self.calc_base(25., .76 / self.reference_voltage)
+        self.base_temperature = self.calc_base(
+            25., .76 / self.reference_voltage)
     def config_stm32f4(self, addr1=0x1FFF7A2C, addr2=0x1FFF7A2E):
         cal_adc_30 = self.read16(addr1) / 4095.
         cal_adc_110 = self.read16(addr2) / 4095.
