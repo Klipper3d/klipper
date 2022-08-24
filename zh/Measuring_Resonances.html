@@ -778,8 +778,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing-custom-axes" class="md-nav__link">
-    Testing custom axes
+  <a href="#_11" class="md-nav__link">
+    自定义测试轴
   </a>
   
 </li>
@@ -790,7 +790,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
+  <a href="#_12" class="md-nav__link">
     输入整形器自动校准
   </a>
   
@@ -798,7 +798,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
+  <a href="#_13" class="md-nav__link">
     重新校准输入整形器
   </a>
   
@@ -1450,8 +1450,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing-custom-axes" class="md-nav__link">
-    Testing custom axes
+  <a href="#_11" class="md-nav__link">
+    自定义测试轴
   </a>
   
 </li>
@@ -1462,7 +1462,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
+  <a href="#_12" class="md-nav__link">
     输入整形器自动校准
   </a>
   
@@ -1470,7 +1470,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
+  <a href="#_13" class="md-nav__link">
     重新校准输入整形器
   </a>
   
@@ -1769,7 +1769,7 @@ max_smoothing: 0.25  # an example
 <p>或者，按照<a href="Resonance_Compensation.html#selecting-max_accel">这个</a>章节的输入整形器调整指南，打印测试模型，通过实验选择<code>max_accel</code> 参数。</p>
 <p>同样的通知也适用于带有<code>SHAPER_CALIBRATE</code> 命令的输入整形器<a href="#input-shaper-auto-calibration">自动校准</a>：在自动校准后仍需选择正确的<code>max_accel</code> 值，建议的加速度限制将不会被自动应用。</p>
 <p>如果重新校准一个整形器，并且建议的整形器配置的报告平滑度与你在以前的校准中得到的几乎相同，这个步骤可以被跳过。</p>
-<h3 id="testing-custom-axes">Testing custom axes<a class="headerlink" href="#testing-custom-axes" title="Permanent link">&para;</a></h3>
+<h3 id="_11">自定义测试轴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code> command supports custom axes. While this is not really useful for input shaper calibration, it can be used to study printer resonances in-depth and to check, for example, belt tension.</p>
 <p>To check the belt tension on CoreXY printers, execute</p>
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=1,1 OUTPUT=raw_data
@@ -1792,24 +1792,24 @@ TEST_RESONANCES AXIS=0.866025404,-0.5 OUTPUT=raw_data
 </code></pre></div>
 
 <p>以生成<code>/tmp/resonances.png</code>，对比共振的数据。</p>
-<h2 id="_11">输入整形器自动校准<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h2 id="_12">输入整形器自动校准<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
 <p>除了为输入整形器功能手动选择适当的参数外，还可以直接从Klipper运行输入整形器的自动调谐。通过Octoprint终端运行以下命令：</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE
 </code></pre></div>
 
 <p>这将为两个轴运行完整的测试，并生成用于频率响应和建议的输入整形器的csv输出（默认为<code>/tmp/calibration_data_*.csv</code> ）。在Octoprint中会提示控制台每个输入整形器的建议频率，以及为这台打印机推荐的输入整形器。例如：</p>
-<div class="highlight"><pre><span></span><code>Calculating the best input shaper parameters for y axis # 正在计算y轴的最佳输入整形参数
-Fitted shaper &#39;zv&#39; frequency = 39.0 Hz (vibrations = 13.2%, smoothing ~= 0.105) # 拟合整形“zv”
-To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 5900 mm/sec^2 # 为避免使用“zv”方法产生过度平滑，建议最大加速度&lt;=5900 mm/sec^2
-Fitted shaper &#39;mzv&#39; frequency = 36.8 Hz (vibrations = 1.7%, smoothing ~= 0.150) # 拟合整形“mzv”
-To avoid too much smoothing with &#39;mzv&#39;, suggested max_accel &lt;= 4000 mm/sec^2 # 为避免使用“mzv”方法产生过度平滑，建议最大加速度&lt;=4000 mm/sec^2
-Fitted shaper &#39;ei&#39; frequency = 36.6 Hz (vibrations = 2.2%, smoothing ~= 0.240) # 拟合整形“ei”
-To avoid too much smoothing with &#39;ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2 # 为避免使用“ei”方法产生过度平滑，建议最大加速度&lt;=2500 mm/sec^2
-Fitted shaper &#39;2hump_ei&#39; frequency = 48.0 Hz (vibrations = 0.0%, smoothing ~= 0.234) # 拟合整形“2hump_ei”
-To avoid too much smoothing with &#39;2hump_ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2 # 为避免使用“2hump_ei”方法产生过度平滑，建议最大加速度&lt;=2500 mm/sec^2
-Fitted shaper &#39;3hump_ei&#39; frequency = 59.0 Hz (vibrations = 0.0%, smoothing ~= 0.235) # 拟合整形“3hump_ei”
-To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2 # 为避免使用“3hump_ei”方法产生过度平滑，建议最大加速度&lt;=2500 mm/sec^2
-Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz # 建议shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
+<div class="highlight"><pre><span></span><code>Calculating the best input shaper parameters for y axis
+Fitted shaper &#39;zv&#39; frequency = 39.0 Hz (vibrations = 13.2%, smoothing ~= 0.105)
+To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 5900 mm/sec^2
+Fitted shaper &#39;mzv&#39; frequency = 36.8 Hz (vibrations = 1.7%, smoothing ~= 0.150)
+To avoid too much smoothing with &#39;mzv&#39;, suggested max_accel &lt;= 4000 mm/sec^2
+Fitted shaper &#39;ei&#39; frequency = 36.6 Hz (vibrations = 2.2%, smoothing ~= 0.240)
+To avoid too much smoothing with &#39;ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2
+Fitted shaper &#39;2hump_ei&#39; frequency = 48.0 Hz (vibrations = 0.0%, smoothing ~= 0.234)
+To avoid too much smoothing with &#39;2hump_ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2
+Fitted shaper &#39;3hump_ei&#39; frequency = 59.0 Hz (vibrations = 0.0%, smoothing ~= 0.235)
+To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2
+Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
 </code></pre></div>
 
 <p>如果认同建议的参数，现在可以执行<code>SAVE_CONFIG</code> 来保存设置并重新启动Klipper。 请注意，这不会更新<code>[printer]</code> 分段中的<code>max_accel</code>值。应该按照<a href="#selecting-max_accel">选择max_accel</a>章节中的注意事项手动更新它。</p>
@@ -1819,7 +1819,7 @@ Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz # 建议shaper_type_y =
 
 <p>可以在校准每个轴之后执行<code>SAVE_CONFIG</code>。</p>
 <p>然而，如果同时连接了两个加速度计，只需要运行<code>SHAPER_CALIBRATE</code> ，而不指定轴，就可以一次性校准两个轴的输入整形器。</p>
-<h3 id="_12">重新校准输入整形器<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<h3 id="_13">重新校准输入整形器<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <p><code>SHAPER_CALIBRATE</code> 命令也可以用来在将来重新校准输入整形器，特别是当打印机发生了一些可能影响其运动学的变化时。可以使用<code>SHAPER_CALIBRATE</code> 命令重新进行全面校准，或者通过提供<code>AXIS=</code> 参数将自动校准限制在一个轴上，例如</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
 </code></pre></div>

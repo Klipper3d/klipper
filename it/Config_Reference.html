@@ -544,8 +544,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#linear-delta-kinematics" class="md-nav__link">
-    Linear Delta Kinematics
+  <a href="#cinematica-delta-lineare" class="md-nav__link">
+    Cinematica Delta lineare
   </a>
   
 </li>
@@ -579,8 +579,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#polar-kinematics" class="md-nav__link">
-    Polar Kinematics
+  <a href="#cinematica-polare" class="md-nav__link">
+    Cinematica polare
   </a>
   
 </li>
@@ -776,11 +776,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#optional-g-code-features" class="md-nav__link">
-    Optional G-Code features
+  <a href="#funzionalita-opzionali-g-code" class="md-nav__link">
+    Funzionalità opzionali G-Code
   </a>
   
-    <nav class="md-nav" aria-label="Optional G-Code features">
+    <nav class="md-nav" aria-label="Funzionalità opzionali G-Code">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1417,8 +1417,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#uc1701-display" class="md-nav__link">
-    uc1701 display
+  <a href="#display-uc1701" class="md-nav__link">
+    display uc1701
   </a>
   
 </li>
@@ -1558,11 +1558,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-custom-modules" class="md-nav__link">
-    Other Custom Modules
+  <a href="#altri-moduli-personalizzati" class="md-nav__link">
+    Altri moduli personalizzati
   </a>
   
-    <nav class="md-nav" aria-label="Other Custom Modules">
+    <nav class="md-nav" aria-label="Altri moduli personalizzati">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2451,8 +2451,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#linear-delta-kinematics" class="md-nav__link">
-    Linear Delta Kinematics
+  <a href="#cinematica-delta-lineare" class="md-nav__link">
+    Cinematica Delta lineare
   </a>
   
 </li>
@@ -2486,8 +2486,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#polar-kinematics" class="md-nav__link">
-    Polar Kinematics
+  <a href="#cinematica-polare" class="md-nav__link">
+    Cinematica polare
   </a>
   
 </li>
@@ -2683,11 +2683,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#optional-g-code-features" class="md-nav__link">
-    Optional G-Code features
+  <a href="#funzionalita-opzionali-g-code" class="md-nav__link">
+    Funzionalità opzionali G-Code
   </a>
   
-    <nav class="md-nav" aria-label="Optional G-Code features">
+    <nav class="md-nav" aria-label="Funzionalità opzionali G-Code">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3324,8 +3324,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#uc1701-display" class="md-nav__link">
-    uc1701 display
+  <a href="#display-uc1701" class="md-nav__link">
+    display uc1701
   </a>
   
 </li>
@@ -3465,11 +3465,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-custom-modules" class="md-nav__link">
-    Other Custom Modules
+  <a href="#altri-moduli-personalizzati" class="md-nav__link">
+    Altri moduli personalizzati
   </a>
   
-    <nav class="md-nav" aria-label="Other Custom Modules">
+    <nav class="md-nav" aria-label="Altri moduli personalizzati">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3693,35 +3693,35 @@ position_max:
 
 <h3 id="cinematica-cartesiana">Cinematica cartesiana<a class="headerlink" href="#cinematica-cartesiana" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-cartesian.cfg">example-cartesian.cfg</a> for an example cartesian kinematics config file.</p>
-<p>Only parameters specific to cartesian printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<p>Qui sono descritti solo i parametri specifici delle stampanti cartesiane - vedere <a href="#impostazioni-cinema-comuni">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: cartesian
 max_z_velocity:
-#   This sets the maximum velocity (in mm/s) of movement along the z
-#   axis. This setting can be used to restrict the maximum speed of
-#   the z stepper motor. The default is to use max_velocity for
-#   max_z_velocity.
+#   Imposta la velocità massima (in mm/s) di movimento lungo 
+#   l&#39;asse z. Questa impostazione può essere utilizzata per limitare
+#   la velocità massima del motore passo-passo z. L&#39;impostazione
+#   predefinita è utilizzare max_velocity per max_z_velocity.
 max_z_accel:
-#   This sets the maximum acceleration (in mm/s^2) of movement along
-#   the z axis. It limits the acceleration of the z stepper motor. The
-#   default is to use max_accel for max_z_accel.
+#   Imposta l&#39;accelerazione massima (in mm/s^2) del movimento
+#   lungo l&#39;asse z. Limita l&#39;accelerazione del motore passo-passo z.
+#   L&#39;impostazione predefinita è utilizzare max_accel per max_z_accel.
 
-# The stepper_x section is used to describe the stepper controlling
-# the X axis in a cartesian robot.
+# La sezione stepper_x viene utilizzata per descrivere lo stepper
+# che controlla l&#39;asse X in un robot cartesiano.
 [stepper_x]
 
-# The stepper_y section is used to describe the stepper controlling
-# the Y axis in a cartesian robot.
+# La sezione stepper_y viene utilizzata per descrivere lo stepper
+# che controlla l&#39;asse Y in un robot cartesiano.
 [stepper_y]
 
-# The stepper_z section is used to describe the stepper controlling
-# the Z axis in a cartesian robot.
+# La sezione stepper_z viene utilizzata per descrivere lo stepper
+# che controlla l&#39;asse Z in un robot cartesiano.
 [stepper_z]
 </code></pre></div>
 
-<h3 id="linear-delta-kinematics">Linear Delta Kinematics<a class="headerlink" href="#linear-delta-kinematics" title="Permanent link">&para;</a></h3>
+<h3 id="cinematica-delta-lineare">Cinematica Delta lineare<a class="headerlink" href="#cinematica-delta-lineare" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-delta.cfg">example-delta.cfg</a> for an example linear delta kinematics config file. See the <a href="Delta_Calibrate.html">delta calibrate guide</a> for information on calibration.</p>
-<p>Only parameters specific to linear delta printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<p>Qui vengono descritti solo i parametri specifici per le stampanti delta lineari - vedere <a href="#impostazioni-cinematica-comune">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: delta
 max_z_velocity:
@@ -3798,7 +3798,7 @@ radius:
 
 <h3 id="cinematica-corexy">Cinematica CoreXY<a class="headerlink" href="#cinematica-corexy" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-corexy.cfg">example-corexy.cfg</a> for an example corexy (and h-bot) kinematics file.</p>
-<p>Only parameters specific to corexy printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<p>Qui sono descritti solo i parametri specifici per le stampanti corexy - vedere <a href="#impostazioni-cinema-comune">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: corexy
 max_z_velocity:
@@ -3826,7 +3826,7 @@ max_z_accel:
 
 <h3 id="cinematica-corexz">Cinematica CoreXZ<a class="headerlink" href="#cinematica-corexz" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-corexz.cfg">example-corexz.cfg</a> for an example corexz kinematics config file.</p>
-<p>Only parameters specific to corexz printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<p>Qui sono descritti solo i parametri specifici per le stampanti corexz - vedere <a href="#impostazioni-cinema-comune">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: corexz
 max_z_velocity:
@@ -3852,7 +3852,7 @@ max_z_accel:
 <h3 id="cinematica-hybrid-corexy">Cinematica Hybrid-CoreXY<a class="headerlink" href="#cinematica-hybrid-corexy" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-hybrid-corexy.cfg">example-hybrid-corexy.cfg</a> for an example hybrid corexy kinematics config file.</p>
 <p>This kinematic is also known as Markforged kinematic.</p>
-<p>Only parameters specific to hybrid corexy printers are described here see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<p>Qui vengono descritti solo i parametri specifici delle stampanti corexy ibride, vedere <a href="#impostazioni-cinematica-comune">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: hybrid_corexy
 max_z_velocity:
@@ -3878,7 +3878,7 @@ max_z_accel:
 <h3 id="cinematica-hybrid-corexz">Cinematica Hybrid-CoreXZ<a class="headerlink" href="#cinematica-hybrid-corexz" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-hybrid-corexz.cfg">example-hybrid-corexz.cfg</a> for an example hybrid corexz kinematics config file.</p>
 <p>This kinematic is also known as Markforged kinematic.</p>
-<p>Only parameters specific to hybrid corexy printers are described here see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<p>Qui vengono descritti solo i parametri specifici delle stampanti corexy ibride, vedere <a href="#impostazioni-cinematica-comune">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: hybrid_corexz
 max_z_velocity:
@@ -3901,10 +3901,10 @@ max_z_accel:
 [stepper_z]
 </code></pre></div>
 
-<h3 id="polar-kinematics">Polar Kinematics<a class="headerlink" href="#polar-kinematics" title="Permanent link">&para;</a></h3>
+<h3 id="cinematica-polare">Cinematica polare<a class="headerlink" href="#cinematica-polare" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-polar.cfg">example-polar.cfg</a> for an example polar kinematics config file.</p>
-<p>Only parameters specific to polar printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
-<p>POLAR KINEMATICS ARE A WORK IN PROGRESS. Moves around the 0, 0 position are known to not work properly.</p>
+<p>Qui sono descritti solo i parametri specifici per le stampanti polari - vedere <a href="#impostazioni-cinema-comuni">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
+<p>LA CINEMATICA POLARE È UN LAVORO IN CORSO. È noto che i movimenti intorno alla posizione 0, 0 non funzionano correttamente.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: polar
 max_z_velocity:
@@ -3937,7 +3937,7 @@ gear_ratio:
 
 <h3 id="rotary-delta-kinematics">Rotary delta Kinematics<a class="headerlink" href="#rotary-delta-kinematics" title="Permanent link">&para;</a></h3>
 <p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-rotary-delta.cfg">example-rotary-delta.cfg</a> for an example rotary delta kinematics config file.</p>
-<p>Only parameters specific to rotary delta printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<p>Qui vengono descritti solo i parametri specifici delle stampanti delta rotative - vedere <a href="#impostazioni-cinematica-comune">impostazioni cinematiche comuni</a> per i parametri disponibili.</p>
 <p>ROTARY DELTA KINEMATICS ARE A WORK IN PROGRESS. Homing moves may timeout and some boundary checks are not implemented.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: rotary_delta
@@ -4182,7 +4182,7 @@ max_temp:
 
 <h2 id="supporto-livellamento-del-piatto">Supporto livellamento del piatto<a class="headerlink" href="#supporto-livellamento-del-piatto" title="Permanent link">&para;</a></h2>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
-<p>Mesh Bed Leveling. One may define a bed_mesh config section to enable move transformations that offset the z axis based on a mesh generated from probed points. When using a probe to home the z-axis, it is recommended to define a safe_z_home section in printer.cfg to home toward the center of the print area.</p>
+<p>Mesh Bed Leveling. Si può definire una sezione di configurazione bed_mesh per abilitare trasformazioni di spostamento che sfalsano l'asse z in base a una mesh generata da punti sondati. Quando si utilizza una sonda per la posizione di riferimento sull'asse z, si consiglia di definire una sezione safe_z_home in printer.cfg per la posizione di riferimento verso il centro dell'area di stampa.</p>
 <p>See the <a href="Bed_Mesh.html">bed mesh guide</a> and <a href="G-Codes.html#bed_mesh">command reference</a> for additional information.</p>
 <p>Visual Examples:</p>
 <div class="highlight"><pre><span></span><code> rectangular bed, probe_count = 3, 3:
@@ -4436,7 +4436,7 @@ max_temp:
  ----------------
 </code></pre></div>
 
-<p>Where x is the 0, 0 point on the bed</p>
+<p>Dove x è il punto 0, 0 sul piatto</p>
 <div class="highlight"><pre><span></span><code>[quad_gantry_level]
 #gantry_corners:
 #   A newline separated list of X, Y coordinates describing the two
@@ -4620,7 +4620,7 @@ filename:
 #   i comandi G-Code sopra. Il valore predefinito è 600 secondi.
 </code></pre></div>
 
-<h2 id="optional-g-code-features">Optional G-Code features<a class="headerlink" href="#optional-g-code-features" title="Permanent link">&para;</a></h2>
+<h2 id="funzionalita-opzionali-g-code">Funzionalità opzionali G-Code<a class="headerlink" href="#funzionalita-opzionali-g-code" title="Permanent link">&para;</a></h2>
 <h3 id="virtual_sdcard">[virtual_sdcard]<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h3>
 <p>Una scheda SD virtuale può essere utile se la macchina host non è abbastanza veloce per eseguire bene OctoPrint. Consente al software host Klipper di stampare direttamente i file gcode archiviati in una directory sull'host utilizzando i comandi G-Code standard (ad esempio, M24).</p>
 <div class="highlight"><pre><span></span><code>[virtual_sdcard]
@@ -4649,11 +4649,11 @@ path:
 </code></pre></div>
 
 <h3 id="pause_resume">[pause_resume]<a class="headerlink" href="#pause_resume" title="Permanent link">&para;</a></h3>
-<p>Pause/Resume functionality with support of position capture and restore. See the <a href="G-Codes.html#pause_resume">command reference</a> for more information.</p>
+<p>Funzionalità di Pause/Resume con supporto di acquisizione e ripristino della posizione. Per ulteriori informazioni, vedere <a href="G-Codes.html#pause_resume">riferimento comando</a>.</p>
 <div class="highlight"><pre><span></span><code>[pause_resume]
 #recover_velocity: 50.
-#   When capture/restore is enabled, the speed at which to return to
-#   the captured position (in mm/s). Default is 50.0 mm/s.
+#   Quando si abilita pause_resume, la velocità con cui tornare alla
+#   posizione catturata (in mm/s). Il valore predefinito è 50,0 mm/s.
 </code></pre></div>
 
 <h3 id="firmware_retraction">[firmware_retraction]<a class="headerlink" href="#firmware_retraction" title="Permanent link">&para;</a></h3>
@@ -4779,14 +4779,14 @@ cs_pin:
 <p>Support for mpu9250 and mpu6050 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
 #i2c_address:
-#   Default is 104 (0x68).
+#   Il valore predefinito è 104 (0x68).
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed: 400000
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters. The default &quot;i2c_speed&quot; is 400000.
+#   Vedere la sezione &quot;impostazioni I2C comuni&quot; per una descrizione
+#   dei parametri di cui sopra. Il valore predefinito &quot;i2c_speed&quot; è 400000.
 #axes_map: x, y, z
-#   See the &quot;adxl345&quot; section for information on this parameter.
+#   Vedere la sezione &quot;adxl345&quot; per informazioni su questo parametro.
 </code></pre></div>
 
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>
@@ -5247,7 +5247,7 @@ extruder:
 </code></pre></div>
 
 <h2 id="temperature-sensors">Temperature sensors<a class="headerlink" href="#temperature-sensors" title="Permanent link">&para;</a></h2>
-<p>Klipper includes definitions for many types of temperature sensors. These sensors may be used in any config section that requires a temperature sensor (such as an <code>[extruder]</code> or <code>[heater_bed]</code> section).</p>
+<p>Klipper include definizioni per molti tipi di sensori di temperatura. Questi sensori possono essere utilizzati in qualsiasi sezione di configurazione che richieda un sensore di temperatura (come una sezione <code>[extruder]</code> o <code>[heater_bed]</code>).</p>
 <h3 id="termistori-comuni">Termistori comuni<a class="headerlink" href="#termistori-comuni" title="Permanent link">&para;</a></h3>
 <p>Termistori comuni. I seguenti parametri sono disponibili nelle sezioni del riscaldatore che utilizzano uno di questi sensori.</p>
 <div class="highlight"><pre><span></span><code>sensor_type:
@@ -5434,7 +5434,7 @@ serial_no:
 
 <h2 id="ventole">Ventole<a class="headerlink" href="#ventole" title="Permanent link">&para;</a></h2>
 <h3 id="fan">[fan]<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h3>
-<p>Print cooling fan.</p>
+<p>Ventola di raffreddamento della stampa.</p>
 <div class="highlight"><pre><span></span><code>[fan]
 pin:
 #   Pin di uscita che controlla la ventola. Questo parametro deve essere fornito.
@@ -5667,25 +5667,25 @@ pin:
 
 <h3 id="neopixel">[neopixel]<a class="headerlink" href="#neopixel" title="Permanent link">&para;</a></h3>
 <p>Supporto LED Neopixel (aka WS2812) (si può definire un numero qualsiasi di sezioni con un prefisso "neopixel"). Per ulteriori informazioni, vedere <a href="G-Codes.html#led">riferimento comando</a>.</p>
-<p>Note that the <a href="RPi_microcontroller.html">linux mcu</a> implementation does not currently support directly connected neopixels. The current design using the Linux kernel interface does not allow this scenario because the kernel GPIO interface is not fast enough to provide the required pulse rates.</p>
+<p>Si noti che l'implementazione di <a href="RPi_microcontroller.html">linux mcu</a> non supporta attualmente i neopixel collegati direttamente. L'attuale design che utilizza l'interfaccia del kernel Linux non consente questo scenario perché l'interfaccia GPIO del kernel non è sufficientemente veloce da fornire le frequenze di impulso richieste.</p>
 <div class="highlight"><pre><span></span><code>[neopixel my_neopixel]
 pin:
-#   The pin connected to the neopixel. This parameter must be
-#   provided.
+#   Il pin collegato al neopixel. Questo parametro deve essere fornito.
 #chain_count:
-#   The number of Neopixel chips that are &quot;daisy chained&quot; to the
-#   provided pin. The default is 1 (which indicates only a single
-#   Neopixel is connected to the pin).
+#   Il numero di chip Neopixel che sono &quot;collegati a margherita&quot; al
+#   pin fornito. Il valore predefinito è 1 (che indica che un solo 
+#   Neopixel è collegato al pin).
 #color_order: GRB
-#   Set the pixel order required by the LED hardware (using a string
-#   containing the letters R, G, B, W with W optional). Alternatively,
-#   this may be a comma separated list of pixel orders - one for each
-#   LED in the chain. The default is GRB.
+#   Impostare l&#39;ordine dei pixel richiesto dall&#39;hardware del LED
+#   (utilizzando una stringa contenente le lettere R, G, B, W con W
+#   opzionale). In alternativa, questo può essere un elenco separato
+#   da virgole di pixel, uno per ogni LED nella catena.
+#   L&#39;impostazione predefinita è GRB.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
-#   See the &quot;led&quot; section for information on these parameters.
+#   Vedere la sezione &quot;led&quot; per informazioni su questi parametri.
 </code></pre></div>
 
 <h3 id="dotstar">[dotstar]<a class="headerlink" href="#dotstar" title="Permanent link">&para;</a></h3>
@@ -5724,29 +5724,31 @@ clock_pin:
 </code></pre></div>
 
 <h3 id="pca9632">[pca9632]<a class="headerlink" href="#pca9632" title="Permanent link">&para;</a></h3>
-<p>PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.</p>
+<p>Supporto LED PCA9632. Il PCA9632 viene utilizzato su FlashForge Dreamer.</p>
 <div class="highlight"><pre><span></span><code>[pca9632 my_pca9632]
 #i2c_address: 98
-#   The i2c address that the chip is using on the i2c bus. This may be
-#   96, 97, 98, or 99.  The default is 98.
+#   L&#39;indirizzo i2c utilizzato dal chip sul bus i2c. Può essere 96,
+#   97, 98 o 99. Il valore predefinito è 98.
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
+#   Vedere la sezione &quot;impostazioni I2C comuni&quot; per una
+#   descrizione dei parametri di cui sopra.
 #scl_pin:
 #sda_pin:
-#   Alternatively, if the pca9632 is not connected to a hardware I2C
-#   bus, then one may specify the &quot;clock&quot; (scl_pin) and &quot;data&quot;
-#   (sda_pin) pins. The default is to use hardware I2C.
+#   In alternativa, se il pca9632 non è collegato a un bus I2C 
+#   hardware, è possibile specificare i pin &quot;clock&quot; (pin scl) e &quot;data&quot;
+#   (pin sda). L&#39;impostazione predefinita prevede l&#39;utilizzo
+#   dell&#39;hardware I2C.
 #color_order: RGBW
-#   Set the pixel order of the LED (using a string containing the
-#   letters R, G, B, W). The default is RGBW.
+#   Impostare l&#39;ordine dei pixel del LED (usando una stringa
+#   contenente le lettere R, G, B, W). L&#39;impostazione predefinita
+#   è RGBW.
 #initial_RED: 0.0
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
-#   See the &quot;led&quot; section for information on these parameters.
+#   Vedere la sezione &quot;led&quot; per informazioni su questi parametri.
 </code></pre></div>
 
 <h2 id="servocomandi-aggiuntivi-pulsanti-e-altri-pin">Servocomandi aggiuntivi, pulsanti e altri pin<a class="headerlink" href="#servocomandi-aggiuntivi-pulsanti-e-altri-pin" title="Permanent link">&para;</a></h2>
@@ -5860,8 +5862,8 @@ pins:
 <p>Uscite a pin multipli (si può definire un numero qualsiasi di sezioni con un prefisso "multi_pin"). Un output multi_pin crea un alias pin interno che può modificare più pin di output ogni volta che viene impostato il pin alias. Ad esempio, si potrebbe definire un oggetto "[multi_pin my_fan]" contenente due pin e quindi impostare "pin=multi_pin:my_fan" nella sezione "[fan]" - ad ogni cambio di ventola entrambi i pin di output verrebbero aggiornati. Questi alias non possono essere utilizzati con i pin del motore passo-passo.</p>
 <div class="highlight"><pre><span></span><code>[multi_pin my_multi_pin]
 pins:
-#   A comma separated list of pins associated with this alias. This
-#   parameter must be provided.
+#   Un elenco separato da virgole di pin associati a questo alias.
+#   Questo parametro deve essere fornito.
 </code></pre></div>
 
 <h2 id="tmc-stepper-driver-configuration">TMC stepper driver configuration<a class="headerlink" href="#tmc-stepper-driver-configuration" title="Permanent link">&para;</a></h2>
@@ -6223,31 +6225,34 @@ enable_pin:
 <p>Statically configured MCP4451 digipot connected via I2C bus (one may define any number of sections with an "mcp4451" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mcp4451 my_digipot]
 i2c_address:
-#   The i2c address that the chip is using on the i2c bus. This
-#   parameter must be provided.
+#   L&#39;indirizzo i2c utilizzato dal chip sul bus i2c. Questo parametro deve
+#   essere fornito.
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:
-#   See the &quot;common I2C settings&quot; section for a description of the
-#   above parameters.
+#   Vedere la sezione &quot;impostazioni I2C comuni&quot; per una descrizione
+#   dei parametri di cui sopra.
 #wiper_0:
 #wiper_1:
 #wiper_2:
 #wiper_3:
-#   The value to statically set the given MCP4451 &quot;wiper&quot; to. This is
-#   typically set to a number between 0.0 and 1.0 with 1.0 being the
-#   highest resistance and 0.0 being the lowest resistance. However,
-#   the range may be changed with the &#39;scale&#39; parameter (see below).
-#   If a wiper is not specified then it is left unconfigured.
+#   Il valore su cui impostare staticamente il &quot;wiper&quot; MCP4451
+#   specificato. Questo è in genere impostato su un numero compreso
+#   tra 0,0 e 1,0 con 1,0 come resistenza più alta e 0,0 come resistenza
+#   più bassa. Tuttavia, l&#39;intervallo può essere modificato con il parametro
+#   &#39;scale&#39; (vedi sotto). Se non viene specificato un wiper, non viene
+#   configurato.
 #scale:
-#   This parameter can be used to alter how the &#39;wiper_x&#39; parameters
-#   are interpreted. If provided, then the &#39;wiper_x&#39; parameters should
-#   be between 0.0 and &#39;scale&#39;. This may be useful when the MCP4451 is
-#   used to set stepper voltage references. The &#39;scale&#39; can be set to
-#   the equivalent stepper amperage if the MCP4451 were at its highest
-#   resistance, and then the &#39;wiper_x&#39; parameters can be specified
-#   using the desired amperage value for the stepper. The default is
-#   to not scale the &#39;wiper_x&#39; parameters.
+#   Questo parametro può essere utilizzato per modificare il modo in
+#   cui vengono interpretati i parametri &#39;wiper_x&#39;. Se forniti, i parametri
+#   &#39;wiper_x&#39; dovrebbero essere compresi tra 0.0 e &#39;scale&#39;. Questo può
+#   essere utile quando l&#39;MCP4451 viene utilizzato per impostare i
+#   riferimenti di tensione stepper. La &quot;scala&quot; può essere impostata
+#   sull&#39;amperaggio stepper equivalente se l&#39;MCP4451 fosse alla sua
+#   massima resistenza, quindi i parametri &quot;wiper_x&quot; possono essere
+#   specificati utilizzando il valore di amperaggio desiderato per lo
+#   stepper. L&#39;impostazione predefinita è di non ridimensionare i
+#   parametri &#39;wiper_x&#39;.
 </code></pre></div>
 
 <h3 id="mcp4728">[mcp4728]<a class="headerlink" href="#mcp4728" title="Permanent link">&para;</a></h3>
@@ -6472,7 +6477,7 @@ spi_software_miso_pin:
 ...
 </code></pre></div>
 
-<h4 id="uc1701-display">uc1701 display<a class="headerlink" href="#uc1701-display" title="Permanent link">&para;</a></h4>
+<h4 id="display-uc1701">display uc1701<a class="headerlink" href="#display-uc1701" title="Permanent link">&para;</a></h4>
 <p>Informazioni sulla configurazione dei display uc1701 (utilizzati nei display di tipo "MKS Mini 12864").</p>
 <div class="highlight"><pre><span></span><code>[display]
 lcd_type: uc1701
@@ -6907,9 +6912,9 @@ host_mcu:
 #   (True sets CFG5 high, False sets it low). The default is True.
 </code></pre></div>
 
-<h2 id="other-custom-modules">Other Custom Modules<a class="headerlink" href="#other-custom-modules" title="Permanent link">&para;</a></h2>
+<h2 id="altri-moduli-personalizzati">Altri moduli personalizzati<a class="headerlink" href="#altri-moduli-personalizzati" title="Permanent link">&para;</a></h2>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
-<p>Palette 2 multimaterial support - provides a tighter integration supporting Palette 2 devices in connected mode.</p>
+<p>Supporto multimateriale Palette 2: fornisce un'integrazione più stretta supportando i dispositivi Palette 2 in modalità connessa.</p>
 <p>This modules also requires <code>[virtual_sdcard]</code> and <code>[pause_resume]</code> for full functionality.</p>
 <p>Se si utilizza questo modulo, non utilizzare il plug-in Palette 2 per Octoprint poiché entreranno in conflitto e 1 non si inizializzerà correttamente, probabilmente interrompendo la stampa.</p>
 <p>Se utilizzi Octoprint e esegui lo streaming di gcode sulla porta seriale invece di stampare da virtual_sd, rimuovere <strong>M1</strong> e <strong>M0</strong> da <em>Pausa dei comandi</em> in <em>Impostazioni &gt; Connessione seriale &gt; Firmware e protocollo</em> eviterà la necessità per avviare la stampa sulla tavolozza 2 e riattivare la pausa in Octoprint per avviare la stampa.</p>
@@ -6929,7 +6934,7 @@ serial:
 </code></pre></div>
 
 <h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
-<p>Magnetic hall angle sensor support for reading stepper motor angle shaft measurements using a1333, as5047d, or tle5012b SPI chips. The measurements are available via the <a href="API_Server.html">API Server</a> and <a href="Debugging.html#motion-analysis-and-data-logging">motion analysis tool</a>. See the <a href="G-Codes.html#angle">G-Code reference</a> for available commands.</p>
+<p>Supporto per sensore magnetico Hall per la lettura delle misurazioni dell'angolo del motore passo-passo utilizzando i chip SPI a1333, as5047d o tle5012b. Le misurazioni sono disponibili tramite <a href="API_Server.html">Server API</a> e <a href="Debugging.html#motion-analysis-and-data-logging">strumento di analisi del movimento</a>. Vedere il <a href="G-Codes.html#angle">Riferimento G-Code</a> per i comandi disponibili.</p>
 <div class="highlight"><pre><span></span><code>[angle my_angle_sensor]
 sensor_type:
 #   The type of the magnetic hall sensor chip. Available choices are
@@ -6976,7 +6981,7 @@ cs_pin:
 
 <h3 id="impostazioni-i2c-comuni">Impostazioni I2C comuni<a class="headerlink" href="#impostazioni-i2c-comuni" title="Permanent link">&para;</a></h3>
 <p>The following parameters are generally available for devices using an I2C bus.</p>
-<p>Note that Klipper's current micro-controller support for i2c is generally not tolerant to line noise. Unexpected errors on the i2c wires may result in Klipper raising a run-time error. Klipper's support for error recovery varies between each micro-controller type. It is generally recommended to only use i2c devices that are on the same printed circuit board as the micro-controller.</p>
+<p>Si noti che l'attuale supporto del microcontrollore di Klipper per i2c generalmente non tollera il rumore di linea. Errori imprevisti sui cavi i2c possono causare la generazione di un errore di runtime da parte di Klipper. Il supporto di Klipper per il ripristino degli errori varia a seconda del tipo di microcontrollore. In genere si consiglia di utilizzare solo dispositivi i2c che si trovano sulla stessa scheda a circuito stampato del microcontrollore.</p>
 <p>La maggior parte delle implementazioni del microcontrollore Klipper supporta solo un <code>i2c_speed</code> di 100000. Il microcontrollore "linux" Klipper supporta una velocità 400000, ma deve essere <a href="RPi_microcontroller.html#optional-enbling-i2c">impostato nel sistema operativo</a> e il parametro <code>i2c_speed</code> viene altrimenti ignorato. Il microcontrollore Klipper "rp2040" supporta una velocità di 400000 tramite il parametro <code>i2c_speed</code>. Tutti gli altri microcontrollori Klipper utilizzano una frequenza di 100000 e ignorano il parametro <code>i2c_speed</code>.</p>
 <div class="highlight"><pre><span></span><code>#i2c_address:
 #   L&#39;indirizzo i2c del dispositivo. Questo deve essere specificato

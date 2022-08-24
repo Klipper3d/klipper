@@ -2068,9 +2068,9 @@
 <li><code>hold_current</code>: La corrente di mantenimento attualmente impostata.</li>
 </ul>
 <h2 id="toolhead">toolhead<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>toolhead</code> object (this object is always available):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>toolhead</code> (questo oggetto è sempre disponibile):</p>
 <ul>
-<li><code>position</code>: The last commanded position of the toolhead relative to the coordinate system specified in the config file. It is possible to access the x, y, z, and e components of this position (eg, <code>position.x</code>).</li>
+<li><code>position</code>: l'ultima posizione comandata della testa di stampa relativa al sistema di coordinate specificato nel file di configurazione. È possibile accedere alle componenti x, y, z di questa posizione (ad esempio, <code>position.x</code>).</li>
 <li><code>extruder</code>: il nome dell'estrusore attualmente attivo. Ad esempio, in una macro si potrebbe usare <code>printer[printer.toolhead.extruder].target</code> per ottenere la temperatura target dell'estrusore corrente.</li>
 <li><code>homed_axes</code>: Gli assi cartesiani correnti considerati in uno stato "homed". Questa è una stringa contenente uno o più di "x", "y", "z".</li>
 <li><code>axis_minimum</code>, <code>axis_maximum</code>: i limiti di corsa dell'asse (mm) dopo la corsa di homing. È possibile accedere alle componenti x, y, z di questo valore limite (ad es. <code>axis_minimum.x</code>, <code>axis_minimum.z</code>).</li>
