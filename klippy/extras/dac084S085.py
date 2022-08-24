@@ -6,20 +6,25 @@
 
 from . import bus
 
+
 class dac084S085:
     def __init__(self, config):
         self.spi = bus.MCU_SPI_from_config(
-            config, 1, pin_option="enable_pin", default_speed=10000000)
-        scale = config.getfloat('scale', 1., above=0.)
+            config, 1, pin_option="enable_pin", default_speed=10000000
+        )
+        scale = config.getfloat("scale", 1.0, above=0.0)
         for chan, name in enumerate("ABCD"):
-            val = config.getfloat('channel_%s' % (name,), None,
-                                   minval=0., maxval=scale)
+            val = config.getfloat(
+                "channel_%s" % (name,), None, minval=0.0, maxval=scale
+            )
             if val is not None:
-                self.set_register(chan, int(val * 255. / scale))
+                self.set_register(chan, int(val * 255.0 / scale))
+
     def set_register(self, chan, value):
-        b1 = (chan << 6) | (1 << 4) | ((value >> 4) & 0x0f)
-        b2 = (value << 4) & 0xf0
+        b1 = (chan << 6) | (1 << 4) | ((value >> 4) & 0x0F)
+        b2 = (value << 4) & 0xF0
         self.spi.spi_send([b1, b2])
+
 
 def load_config_prefix(config):
     return dac084S085(config)

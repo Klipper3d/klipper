@@ -7,11 +7,13 @@
 import os, sys, logging
 import msgproto
 
+
 def read_dictionary(filename):
-    dfile = open(filename, 'rb')
+    dfile = open(filename, "rb")
     dictionary = dfile.read()
     dfile.close()
     return dictionary
+
 
 def main():
     dict_filename, data_filename = sys.argv[1:]
@@ -21,7 +23,7 @@ def main():
     mp = msgproto.MessageParser()
     mp.process_identify(dictionary, decompress=False)
 
-    f = open(data_filename, 'rb')
+    f = open(data_filename, "rb")
     fd = f.fileno()
     data = ""
     while 1:
@@ -38,8 +40,9 @@ def main():
                 data = data[-l:]
                 continue
             msgs = mp.dump(bytearray(data[:l]))
-            sys.stdout.write('\n'.join(msgs[1:]) + '\n')
+            sys.stdout.write("\n".join(msgs[1:]) + "\n")
             data = data[l:]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

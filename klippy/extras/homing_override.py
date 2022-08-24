@@ -4,19 +4,22 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+
 class HomingOverride:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.start_pos = [config.getfloat('set_position_' + a, None)
-                          for a in 'xyz']
-        self.axes = config.get('axes', 'XYZ').upper()
-        gcode_macro = self.printer.load_object(config, 'gcode_macro')
-        self.template = gcode_macro.load_template(config, 'gcode')
+        self.start_pos = [
+            config.getfloat("set_position_" + a, None) for a in "xyz"
+        ]
+        self.axes = config.get("axes", "XYZ").upper()
+        gcode_macro = self.printer.load_object(config, "gcode_macro")
+        self.template = gcode_macro.load_template(config, "gcode")
         self.in_script = False
-        self.printer.load_object(config, 'homing')
-        self.gcode = self.printer.lookup_object('gcode')
+        self.printer.load_object(config, "homing")
+        self.gcode = self.printer.lookup_object("gcode")
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
+
     def cmd_G28(self, gcmd):
         if self.in_script:
             # Was called recursively - invoke the real G28 command
@@ -25,7 +28,7 @@ class HomingOverride:
 
         # if no axis is given as parameter we assume the override
         no_axis = True
-        for axis in 'XYZ':
+        for axis in "XYZ":
             if gcmd.get(axis, None) is not None:
                 no_axis = False
                 break
@@ -44,7 +47,7 @@ class HomingOverride:
             return
 
         # Calculate forced position (if configured)
-        toolhead = self.printer.lookup_object('toolhead')
+        toolhead = self.printer.lookup_object("toolhead")
         pos = toolhead.get_position()
         homing_axes = []
         for axis, loc in enumerate(self.start_pos):
@@ -54,12 +57,13 @@ class HomingOverride:
         toolhead.set_position(pos, homing_axes=homing_axes)
         # Perform homing
         context = self.template.create_template_context()
-        context['params'] = gcmd.get_command_parameters()
+        context["params"] = gcmd.get_command_parameters()
         try:
             self.in_script = True
             self.template.run_gcode_from_command(context)
         finally:
             self.in_script = False
+
 
 def load_config(config):
     return HomingOverride(config)

@@ -12,13 +12,14 @@ import math
 #
 # note: only IJ version available
 
+
 class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.mm_per_arc_segment = config.getfloat('resolution', 1., above=0.0)
+        self.mm_per_arc_segment = config.getfloat("resolution", 1.0, above=0.0)
 
-        self.gcode_move = self.printer.load_object(config, 'gcode_move')
-        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
+        self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command("G2", self.cmd_G2)
         self.gcode.register_command("G3", self.cmd_G3)
 
@@ -30,9 +31,9 @@ class ArcSupport:
 
     def _cmd_inner(self, gcmd, clockwise):
         gcodestatus = self.gcode_move.get_status()
-        if not gcodestatus['absolute_coordinates']:
+        if not gcodestatus["absolute_coordinates"]:
             raise gcmd.error("G2/G3 does not support relative move mode")
-        currentPos = gcodestatus['gcode_position']
+        currentPos = gcodestatus["gcode_position"]
 
         # Parse parameters
         asX = gcmd.get_float("X", currentPos[0])
@@ -40,31 +41,32 @@ class ArcSupport:
         asZ = gcmd.get_float("Z", currentPos[2])
         if gcmd.get_float("R", None) is not None:
             raise gcmd.error("G2/G3 does not support R moves")
-        asI = gcmd.get_float("I", 0.)
-        asJ = gcmd.get_float("J", 0.)
+        asI = gcmd.get_float("I", 0.0)
+        asJ = gcmd.get_float("J", 0.0)
         if not asI and not asJ:
             raise gcmd.error("G2/G3 neither I nor J given")
         asE = gcmd.get_float("E", None)
         asF = gcmd.get_float("F", None)
 
         # Build list of linear coordinates to move to
-        coords = self.planArc(currentPos, [asX, asY, asZ], [asI, asJ],
-                              clockwise)
-        e_per_move = e_base = 0.
+        coords = self.planArc(
+            currentPos, [asX, asY, asZ], [asI, asJ], clockwise
+        )
+        e_per_move = e_base = 0.0
         if asE is not None:
-            if gcodestatus['absolute_extrude']:
+            if gcodestatus["absolute_extrude"]:
                 e_base = currentPos[3]
             e_per_move = (asE - e_base) / len(coords)
 
         # Convert coords into G1 commands
         for coord in coords:
-            g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
+            g1_params = {"X": coord[0], "Y": coord[1], "Z": coord[2]}
             if e_per_move:
-                g1_params['E'] = e_base + e_per_move
-                if gcodestatus['absolute_extrude']:
+                g1_params["E"] = e_base + e_per_move
+                if gcodestatus["absolute_extrude"]:
                     e_base += e_per_move
             if asF is not None:
-                g1_params['F'] = asF
+                g1_params["F"] = asF
             g1_gcmd = self.gcode.create_gcode_command("G1", "G1", g1_params)
             self.gcode_move.cmd_G1(g1_gcmd)
 
@@ -89,19 +91,22 @@ class ArcSupport:
         center_Q = currentPos[Y_AXIS] - r_Q
         rt_X = targetPos[X_AXIS] - center_P
         rt_Y = targetPos[Y_AXIS] - center_Q
-        angular_travel = math.atan2(r_P * rt_Y - r_Q * rt_X,
-                                    r_P * rt_X + r_Q * rt_Y)
-        if angular_travel < 0.:
-            angular_travel += 2. * math.pi
+        angular_travel = math.atan2(
+            r_P * rt_Y - r_Q * rt_X, r_P * rt_X + r_Q * rt_Y
+        )
+        if angular_travel < 0.0:
+            angular_travel += 2.0 * math.pi
         if clockwise:
-            angular_travel -= 2. * math.pi
+            angular_travel -= 2.0 * math.pi
 
-        if (angular_travel == 0.
+        if (
+            angular_travel == 0.0
             and currentPos[X_AXIS] == targetPos[X_AXIS]
-            and currentPos[Y_AXIS] == targetPos[Y_AXIS]):
+            and currentPos[Y_AXIS] == targetPos[Y_AXIS]
+        ):
             # Make a circle if the angular rotation is 0 and the
             # target is current position
-            angular_travel = 2. * math.pi
+            angular_travel = 2.0 * math.pi
 
         # Determine number of segments
         linear_travel = targetPos[Z_AXIS] - currentPos[Z_AXIS]
@@ -111,7 +116,7 @@ class ArcSupport:
             mm_of_travel = math.hypot(flat_mm, linear_travel)
         else:
             mm_of_travel = math.fabs(flat_mm)
-        segments = max(1., math.floor(mm_of_travel / self.mm_per_arc_segment))
+        segments = max(1.0, math.floor(mm_of_travel / self.mm_per_arc_segment))
 
         # Generate coordinates
         theta_per_segment = angular_travel / segments
@@ -129,6 +134,7 @@ class ArcSupport:
 
         coords.append(targetPos)
         return coords
+
 
 def load_config(config):
     return ArcSupport(config)

@@ -7,7 +7,7 @@
 import sys, optparse, time, os, pty, fcntl, termios, errno
 import pysimulavr
 
-SERIALBITS = 10 # 8N1 = 1 start, 8 data, 1 stop
+SERIALBITS = 10  # 8N1 = 1 start, 8 data, 1 stop
 SIMULAVR_FREQ = 10**9
 
 # Class to read serial data from AVR serial transmit pin.
@@ -20,12 +20,14 @@ class SerialRxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         self.delay = SIMULAVR_FREQ // baud
         self.current = 0
         self.pos = -1
+
     def SetInState(self, pin):
         pysimulavr.Pin.SetInState(self, pin)
         self.state = pin.outState
         if self.pos < 0 and pin.outState == pin.LOW:
             self.pos = 0
             self.sc.Add(self)
+
     def DoStep(self, trueHwStep):
         ishigh = self.state == self.HIGH
         self.current |= ishigh << self.pos
@@ -33,12 +35,13 @@ class SerialRxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         if self.pos == 1:
             return int(self.delay * 1.5)
         if self.pos >= SERIALBITS:
-            data = bytearray([(self.current >> 1) & 0xff])
+            data = bytearray([(self.current >> 1) & 0xFF])
             self.terminal.write(data)
             self.pos = -1
             self.current = 0
             return -1
         return self.delay
+
 
 # Class to send serial data to AVR serial receive pin.
 class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
@@ -46,13 +49,14 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
         pysimulavr.Pin.__init__(self)
         pysimulavr.PySimulationMember.__init__(self)
         self.terminal = terminal
-        self.SetPin('H')
+        self.SetPin("H")
         self.sc = pysimulavr.SystemClock.Instance()
         self.delay = SIMULAVR_FREQ // baud
         self.current = 0
         self.pos = 0
         self.queue = bytearray()
         self.sc.Add(self)
+
     def DoStep(self, trueHwStep):
         if not self.pos:
             if not self.queue:
@@ -61,14 +65,15 @@ class SerialTxPin(pysimulavr.PySimulationMember, pysimulavr.Pin):
                     return self.delay * 100
                 self.queue.extend(data)
             self.current = (self.queue.pop(0) << 1) | 0x200
-        newstate = 'L'
+        newstate = "L"
         if self.current & (1 << self.pos):
-            newstate = 'H'
+            newstate = "H"
         self.SetPin(newstate)
         self.pos += 1
         if self.pos >= SERIALBITS:
             self.pos = 0
         return self.delay
+
 
 # Support for creating VCD trace files
 class Tracing:
@@ -80,36 +85,42 @@ class Tracing:
             return
         self.dman = pysimulavr.DumpManager.Instance()
         self.dman.SetSingleDeviceApp()
+
     def show_help(self):
         ostr = pysimulavr.ostringstream()
         self.dman.save(ostr)
         sys.stdout.write(ostr.str())
         sys.exit(1)
+
     def load_options(self):
         if self.dman is None:
             return
-        if self.signals.strip() == '?':
+        if self.signals.strip() == "?":
             self.show_help()
-        sigs = "\n".join(["+ " + s for s in self.signals.split(',')])
+        sigs = "\n".join(["+ " + s for s in self.signals.split(",")])
         self.dman.addDumpVCD(self.filename, sigs, "ns", False, False)
+
     def start(self):
         if self.dman is not None:
             self.dman.start()
+
     def finish(self):
         if self.dman is not None:
             self.dman.stopApplication()
+
 
 # Pace the simulation scaled to real time
 class Pacing(pysimulavr.PySimulationMember):
     def __init__(self, rate):
         pysimulavr.PySimulationMember.__init__(self)
         self.sc = pysimulavr.SystemClock.Instance()
-        self.pacing_rate = 1. / (rate * SIMULAVR_FREQ)
+        self.pacing_rate = 1.0 / (rate * SIMULAVR_FREQ)
         self.next_check_clock = 0
         self.rel_time = time.time()
-        self.best_offset = 0.
+        self.best_offset = 0.0
         self.delay = SIMULAVR_FREQ // 10000
         self.sc.Add(self)
+
     def DoStep(self, trueHwStep):
         curtime = time.time()
         clock = self.sc.GetCurrentTime()
@@ -118,19 +129,23 @@ class Pacing(pysimulavr.PySimulationMember):
         if offset > 0.000050:
             time.sleep(offset - 0.000040)
         if clock >= self.next_check_clock:
-            self.rel_time -= min(self.best_offset, 0.)
+            self.rel_time -= min(self.best_offset, 0.0)
             self.next_check_clock = clock + self.delay * 500
-            self.best_offset = -999999999.
+            self.best_offset = -999999999.0
         return self.delay
+
 
 # Forward data from a terminal device to the serial port pins
 class TerminalIO:
     def __init__(self):
         self.fd = -1
+
     def run(self, fd):
         self.fd = fd
+
     def write(self, data):
         os.write(self.fd, data)
+
     def read(self):
         try:
             return os.read(self.fd, 64)
@@ -138,6 +153,7 @@ class TerminalIO:
             if e.errno not in (errno.EAGAIN, errno.EWOULDBLOCK):
                 pysimulavr.SystemClock.Instance().stop()
         return ""
+
 
 # Support for creating a pseudo-tty for emulating a serial port
 def create_pty(ptyname):
@@ -147,16 +163,28 @@ def create_pty(ptyname):
     except os.error:
         pass
     os.symlink(os.ttyname(sfd), ptyname)
-    fcntl.fcntl(mfd, fcntl.F_SETFL
-                , fcntl.fcntl(mfd, fcntl.F_GETFL) | os.O_NONBLOCK)
+    fcntl.fcntl(
+        mfd, fcntl.F_SETFL, fcntl.fcntl(mfd, fcntl.F_GETFL) | os.O_NONBLOCK
+    )
     tcattr = termios.tcgetattr(mfd)
     tcattr[0] &= ~(
-        termios.IGNBRK | termios.BRKINT | termios.PARMRK | termios.ISTRIP |
-        termios.INLCR | termios.IGNCR | termios.ICRNL | termios.IXON)
+        termios.IGNBRK
+        | termios.BRKINT
+        | termios.PARMRK
+        | termios.ISTRIP
+        | termios.INLCR
+        | termios.IGNCR
+        | termios.ICRNL
+        | termios.IXON
+    )
     tcattr[1] &= ~termios.OPOST
     tcattr[3] &= ~(
-        termios.ECHO | termios.ECHONL | termios.ICANON | termios.ISIG |
-        termios.IEXTEN)
+        termios.ECHO
+        | termios.ECHONL
+        | termios.ICANON
+        | termios.ISIG
+        | termios.IEXTEN
+    )
     tcattr[2] &= ~(termios.CSIZE | termios.PARENB)
     tcattr[2] |= termios.CS8
     tcattr[6][termios.VMIN] = 0
@@ -164,25 +192,66 @@ def create_pty(ptyname):
     termios.tcsetattr(mfd, termios.TCSAFLUSH, tcattr)
     return mfd
 
+
 def main():
     usage = "%prog [options] <program.elf>"
     opts = optparse.OptionParser(usage)
-    opts.add_option("-m", "--machine", type="string", dest="machine",
-                    default="atmega644", help="type of AVR machine to simulate")
-    opts.add_option("-s", "--speed", type="int", dest="speed", default=16000000,
-                    help="machine speed")
-    opts.add_option("-r", "--rate", type="float", dest="pacing_rate",
-                    default=0., help="real-time pacing rate")
-    opts.add_option("-b", "--baud", type="int", dest="baud", default=250000,
-                    help="baud rate of the emulated serial port")
-    opts.add_option("-t", "--trace", type="string", dest="trace",
-                    help="signals to trace (? for help)")
-    opts.add_option("-p", "--port", type="string", dest="port",
-                    default="/tmp/pseudoserial",
-                    help="pseudo-tty device to create for serial port")
+    opts.add_option(
+        "-m",
+        "--machine",
+        type="string",
+        dest="machine",
+        default="atmega644",
+        help="type of AVR machine to simulate",
+    )
+    opts.add_option(
+        "-s",
+        "--speed",
+        type="int",
+        dest="speed",
+        default=16000000,
+        help="machine speed",
+    )
+    opts.add_option(
+        "-r",
+        "--rate",
+        type="float",
+        dest="pacing_rate",
+        default=0.0,
+        help="real-time pacing rate",
+    )
+    opts.add_option(
+        "-b",
+        "--baud",
+        type="int",
+        dest="baud",
+        default=250000,
+        help="baud rate of the emulated serial port",
+    )
+    opts.add_option(
+        "-t",
+        "--trace",
+        type="string",
+        dest="trace",
+        help="signals to trace (? for help)",
+    )
+    opts.add_option(
+        "-p",
+        "--port",
+        type="string",
+        dest="port",
+        default="/tmp/pseudoserial",
+        help="pseudo-tty device to create for serial port",
+    )
     deffile = os.path.splitext(os.path.basename(sys.argv[0]))[0] + ".vcd"
-    opts.add_option("-f", "--tracefile", type="string", dest="tracefile",
-                    default=deffile, help="filename to write signal trace to")
+    opts.add_option(
+        "-f",
+        "--tracefile",
+        type="string",
+        dest="tracefile",
+        default=deffile,
+        help="filename to write signal trace to",
+    )
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
@@ -236,10 +305,11 @@ def main():
     try:
         io.run(fd)
         trace.start()
-        sc.RunTimeRange(0x7fff0000ffff0000)
+        sc.RunTimeRange(0x7FFF0000FFFF0000)
         trace.finish()
     finally:
         os.unlink(ptyname)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

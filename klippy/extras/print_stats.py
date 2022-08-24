@@ -4,21 +4,26 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+
 class PrintStats:
     def __init__(self, config):
         printer = config.get_printer()
-        self.gcode_move = printer.load_object(config, 'gcode_move')
+        self.gcode_move = printer.load_object(config, "gcode_move")
         self.reactor = printer.get_reactor()
         self.reset()
+
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
-        cur_epos = gc_status['position'].e
-        self.filament_used += (cur_epos - self.last_epos) \
-            / gc_status['extrude_factor']
+        cur_epos = gc_status["position"].e
+        self.filament_used += (cur_epos - self.last_epos) / gc_status[
+            "extrude_factor"
+        ]
         self.last_epos = cur_epos
+
     def set_current_file(self, filename):
         self.reset()
         self.filename = filename
+
     def note_start(self):
         curtime = self.reactor.monotonic()
         if self.print_start_time is None:
@@ -30,9 +35,10 @@ class PrintStats:
             self.last_pause_time = None
         # Reset last e-position
         gc_status = self.gcode_move.get_status(curtime)
-        self.last_epos = gc_status['position'].e
+        self.last_epos = gc_status["position"].e
         self.state = "printing"
         self.error_message = ""
+
     def note_pause(self):
         if self.last_pause_time is None:
             curtime = self.reactor.monotonic()
@@ -41,13 +47,17 @@ class PrintStats:
             self._update_filament_usage(curtime)
         if self.state != "error":
             self.state = "paused"
+
     def note_complete(self):
         self._note_finish("complete")
+
     def note_error(self, message):
         self._note_finish("error", message)
+
     def note_cancel(self):
         self._note_finish("cancelled")
-    def _note_finish(self, state, error_message = ""):
+
+    def _note_finish(self, state, error_message=""):
         if self.print_start_time is None:
             return
         self.state = state
@@ -56,16 +66,17 @@ class PrintStats:
         self.total_duration = eventtime - self.print_start_time
         if self.filament_used < 0.0000001:
             # No positive extusion detected during print
-            self.init_duration = self.total_duration - \
-                self.prev_pause_duration
+            self.init_duration = self.total_duration - self.prev_pause_duration
         self.print_start_time = None
+
     def reset(self):
         self.filename = self.error_message = ""
         self.state = "standby"
-        self.prev_pause_duration = self.last_epos = 0.
-        self.filament_used = self.total_duration = 0.
+        self.prev_pause_duration = self.last_epos = 0.0
+        self.filament_used = self.total_duration = 0.0
         self.print_start_time = self.last_pause_time = None
-        self.init_duration = 0.
+        self.init_duration = 0.0
+
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration
         if self.print_start_time is not None:
@@ -81,13 +92,14 @@ class PrintStats:
                 self.init_duration = self.total_duration - time_paused
         print_duration = self.total_duration - self.init_duration - time_paused
         return {
-            'filename': self.filename,
-            'total_duration': self.total_duration,
-            'print_duration': print_duration,
-            'filament_used': self.filament_used,
-            'state': self.state,
-            'message': self.error_message
+            "filename": self.filename,
+            "total_duration": self.total_duration,
+            "print_duration": print_duration,
+            "filament_used": self.filament_used,
+            "state": self.state,
+            "message": self.error_message,
         }
+
 
 def load_config(config):
     return PrintStats(config)

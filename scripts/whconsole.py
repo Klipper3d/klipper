@@ -8,8 +8,10 @@ import sys, os, optparse, socket, fcntl, select, json, errno, time
 
 # Set a file-descriptor as non-blocking
 def set_nonblock(fd):
-    fcntl.fcntl(fd, fcntl.F_SETFL
-                , fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+    fcntl.fcntl(
+        fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
+    )
+
 
 def webhook_socket_create(uds_filename):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -22,13 +24,15 @@ def webhook_socket_create(uds_filename):
             if e.errno == errno.ECONNREFUSED:
                 time.sleep(0.1)
                 continue
-            sys.stderr.write("Unable to connect socket %s [%d,%s]\n"
-                             % (uds_filename, e.errno,
-                                errno.errorcode[e.errno]))
+            sys.stderr.write(
+                "Unable to connect socket %s [%d,%s]\n"
+                % (uds_filename, e.errno, errno.errorcode[e.errno])
+            )
             sys.exit(-1)
         break
     sys.stderr.write("Connection.\n")
     return sock
+
 
 class KeyboardReader:
     def __init__(self, uds_filename):
@@ -39,41 +43,45 @@ class KeyboardReader:
         self.poll.register(sys.stdin, select.POLLIN | select.POLLHUP)
         self.poll.register(self.webhook_socket, select.POLLIN | select.POLLHUP)
         self.kbd_data = self.socket_data = ""
+
     def process_socket(self):
         data = self.webhook_socket.recv(4096)
         if not data:
             sys.stderr.write("Socket closed\n")
             sys.exit(0)
-        parts = data.split('\x03')
+        parts = data.split("\x03")
         parts[0] = self.socket_data + parts[0]
         self.socket_data = parts.pop()
         for line in parts:
             sys.stdout.write("GOT: %s\n" % (line,))
+
     def process_kbd(self):
         data = os.read(self.kbd_fd, 4096)
-        parts = data.split('\n')
+        parts = data.split("\n")
         parts[0] = self.kbd_data + parts[0]
         self.kbd_data = parts.pop()
         for line in parts:
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
             try:
                 m = json.loads(line)
             except:
                 sys.stderr.write("ERROR: Unable to parse line\n")
                 continue
-            cm = json.dumps(m, separators=(',', ':'))
+            cm = json.dumps(m, separators=(",", ":"))
             sys.stdout.write("SEND: %s\n" % (cm,))
             self.webhook_socket.send("%s\x03" % (cm,))
+
     def run(self):
         while 1:
-            res = self.poll.poll(1000.)
+            res = self.poll.poll(1000.0)
             for fd, event in res:
                 if fd == self.kbd_fd:
                     self.process_kbd()
                 else:
                     self.process_socket()
+
 
 def main():
     usage = "%prog [options] <socket filename>"
@@ -85,5 +93,6 @@ def main():
     ml = KeyboardReader(args[0])
     ml.run()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

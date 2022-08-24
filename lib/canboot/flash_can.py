@@ -17,65 +17,67 @@ import hashlib
 import pathlib
 from typing import Dict, List, Optional, Union
 
+
 def output_line(msg: str) -> None:
     sys.stdout.write(msg + "\n")
     sys.stdout.flush()
+
 
 def output(msg: str) -> None:
     sys.stdout.write(msg)
     sys.stdout.flush()
 
+
 # Standard crc16 ccitt, take from msgproto.py in Klipper
 def crc16_ccitt(buf: Union[bytes, bytearray]) -> int:
-    crc = 0xffff
+    crc = 0xFFFF
     for data in buf:
-        data ^= crc & 0xff
-        data ^= (data & 0x0f) << 4
+        data ^= crc & 0xFF
+        data ^= (data & 0x0F) << 4
         crc = ((data << 8) | (crc >> 8)) ^ (data >> 4) ^ (data << 3)
     return crc & 0xFFFF
+
 
 logging.basicConfig(level=logging.INFO)
 CAN_FMT = "<IB3x8s"
 CAN_READER_LIMIT = 1024 * 1024
 
 # Canboot Defs
-CMD_HEADER = b'\x01\x88'
-CMD_TRAILER = b'\x99\x03'
+CMD_HEADER = b"\x01\x88"
+CMD_TRAILER = b"\x99\x03"
 BOOTLOADER_CMDS = {
-    'CONNECT': 0x11,
-    'SEND_BLOCK': 0x12,
-    'SEND_EOF': 0x13,
-    'REQUEST_BLOCK': 0x14,
-    'COMPLETE': 0x15,
-    'GET_CANBUS_ID': 0x16,
+    "CONNECT": 0x11,
+    "SEND_BLOCK": 0x12,
+    "SEND_EOF": 0x13,
+    "REQUEST_BLOCK": 0x14,
+    "COMPLETE": 0x15,
+    "GET_CANBUS_ID": 0x16,
 }
 
-ACK_SUCCESS = 0xa0
-NACK = 0xf1
+ACK_SUCCESS = 0xA0
+NACK = 0xF1
 
 # Klipper Admin Defs (for jumping to bootloader)
-KLIPPER_ADMIN_ID = 0x3f0
+KLIPPER_ADMIN_ID = 0x3F0
 KLIPPER_SET_NODE_CMD = 0x01
 KLIPPER_REBOOT_CMD = 0x02
 
 # CAN Admin Defs
-CANBUS_ID_ADMIN = 0x3f0
-CANBUS_ID_ADMIN_RESP = 0x3f1
+CANBUS_ID_ADMIN = 0x3F0
+CANBUS_ID_ADMIN_RESP = 0x3F1
 CANBUS_CMD_QUERY_UNASSIGNED = 0x00
 CANBUS_CMD_SET_NODEID = 0x11
 CANBUS_CMD_CLEAR_NODE_ID = 0x12
 CANBUS_RESP_NEED_NODEID = 0x20
 CANBUS_NODEID_OFFSET = 128
 
+
 class FlashCanError(Exception):
     pass
 
+
 class CanFlasher:
-    def __init__(
-        self,
-        node: CanNode,
-        fw_file: pathlib.Path
-    ) -> None:
+    def __init__(self, node: CanNode, fw_file: pathlib.Path) -> None:
         self.node = node
         self.fw_name = fw_file
         self.fw_sha = hashlib.sha1()
@@ -86,7 +88,7 @@ class CanFlasher:
 
     async def connect_btl(self):
         output_line("Attempting to connect to bootloader")
-        ret = await self.send_command('CONNECT')
+        ret = await self.send_command("CONNECT")
         pinfo = ret[:12]
         mcu_type = ret[12:]
         ver_bytes, start_addr, self.block_size = struct.unpack("<4sII", pinfo)
@@ -106,16 +108,13 @@ class CanFlasher:
 
     async def verify_canbus_uuid(self, uuid):
         output_line("Verifying canbus connection")
-        ret = await self.send_command('GET_CANBUS_ID')
+        ret = await self.send_command("GET_CANBUS_ID")
         mcu_uuid = sum([v << ((5 - i) * 8) for i, v in enumerate(ret[:6])])
         if mcu_uuid != uuid:
             raise FlashCanError("UUID mismatch (%s vs %s)" % (uuid, mcu_uuid))
 
     async def send_command(
-        self,
-        cmdname: str,
-        payload: bytes = b"",
-        tries: int = 5
+        self, cmdname: str, payload: bytes = b"", tries: int = 5
     ) -> bytearray:
         word_cnt = (len(payload) // 4) & 0xFF
         cmd = BOOTLOADER_CMDS[cmdname]
@@ -148,12 +147,12 @@ class CanFlasher:
                 logging.exception("Can Read Error")
             else:
                 trailer = data[-2:]
-                recd_crc, = struct.unpack("<H", data[-4:-2])
+                (recd_crc,) = struct.unpack("<H", data[-4:-2])
                 calc_crc = crc16_ccitt(data[2:-4])
                 recd_ack = data[2]
                 cmd_response = 0
                 if recd_len:
-                    cmd_response, = struct.unpack("<I", data[4:8])
+                    (cmd_response,) = struct.unpack("<I", data[4:8])
                 if trailer != CMD_TRAILER:
                     logging.info(
                         f"Command '{cmdname}': Invalid Trailer Received "
@@ -175,22 +174,23 @@ class CanFlasher:
                     # Validation passed, return payload sans command
                     if recd_len <= 4:
                         return bytearray()
-                    return data[8:recd_len + 4]
+                    return data[8 : recd_len + 4]
             tries -= 1
             # clear the read buffer
             try:
-                await self.node.read(1024, timeout=.1)
+                await self.node.read(1024, timeout=0.1)
             except asyncio.TimeoutError:
                 pass
-            await asyncio.sleep(.1)
-        raise FlashCanError("Error sending command [%s] to Can Device"
-                            % (cmdname))
+            await asyncio.sleep(0.1)
+        raise FlashCanError(
+            "Error sending command [%s] to Can Device" % (cmdname)
+        )
 
     async def send_file(self):
         last_percent = 0
         output_line("Flashing '%s'..." % (self.fw_name))
         output("\n[")
-        with open(self.fw_name, 'rb') as f:
+        with open(self.fw_name, "rb") as f:
             f.seek(0, os.SEEK_END)
             self.file_size = f.tell()
             f.seek(0)
@@ -204,15 +204,15 @@ class CanFlasher:
                 self.fw_sha.update(buf)
                 prefix = struct.pack("<I", flash_address)
                 for _ in range(3):
-                    resp = await self.send_command('SEND_BLOCK', prefix + buf)
-                    recd_addr, = struct.unpack("<I", resp)
+                    resp = await self.send_command("SEND_BLOCK", prefix + buf)
+                    (recd_addr,) = struct.unpack("<I", resp)
                     if recd_addr == flash_address:
                         break
                     logging.info(
                         f"Block write mismatch: expected: {flash_address:4X}, "
                         f"received: {recd_addr:4X}"
                     )
-                    await asyncio.sleep(.1)
+                    await asyncio.sleep(0.1)
                 else:
                     raise FlashCanError(
                         f"Flash write failed, block address 0x{recd_addr:4X}"
@@ -220,12 +220,12 @@ class CanFlasher:
                 flash_address += self.block_size
                 self.block_count += 1
                 uploaded = self.block_count * self.block_size
-                pct = int(uploaded / float(self.file_size) * 100 + .5)
+                pct = int(uploaded / float(self.file_size) * 100 + 0.5)
                 if pct >= last_percent + 2:
-                    last_percent += 2.
+                    last_percent += 2.0
                     output("#")
-            resp = await self.send_command('SEND_EOF')
-            page_count, = struct.unpack("<I", resp)
+            resp = await self.send_command("SEND_EOF")
+            (page_count,) = struct.unpack("<I", resp)
             output_line("]\n\nWrite complete: %d pages" % (page_count))
 
     async def verify_file(self):
@@ -238,27 +238,29 @@ class CanFlasher:
             for _ in range(3):
                 payload = struct.pack("<I", flash_address)
                 resp = await self.send_command("REQUEST_BLOCK", payload)
-                recd_addr, = struct.unpack("<I", resp[:4])
+                (recd_addr,) = struct.unpack("<I", resp[:4])
                 if recd_addr == flash_address:
                     break
                 logging.info(
                     f"Block read mismatch: expected: 0x{flash_address:4X}, "
                     f"received: 0x{recd_addr}"
                 )
-                await asyncio.sleep(.1)
+                await asyncio.sleep(0.1)
             else:
                 output_line("Error")
                 raise FlashCanError("Block Request Error, block: %d" % (i,))
             ver_sha.update(resp[4:])
-            pct = int(i * self.block_size / float(self.file_size) * 100 + .5)
+            pct = int(i * self.block_size / float(self.file_size) * 100 + 0.5)
             if pct >= last_percent + 2:
                 last_percent += 2
                 output("#")
         ver_hex = ver_sha.hexdigest().upper()
         fw_hex = self.fw_sha.hexdigest().upper()
         if ver_hex != fw_hex:
-            raise FlashCanError("Checksum mismatch: Expected %s, Received %s"
-                                % (fw_hex, ver_hex))
+            raise FlashCanError(
+                "Checksum mismatch: Expected %s, Received %s"
+                % (fw_hex, ver_hex)
+            )
         output_line("]\n\nVerification Complete: SHA = %s" % (ver_hex))
 
     async def finish(self):
@@ -271,14 +273,10 @@ class CanNode:
         self._reader = asyncio.StreamReader(CAN_READER_LIMIT)
         self._cansocket = cansocket
 
-    async def read(
-        self, n: int = -1, timeout: Optional[float] = 2
-    ) -> bytes:
+    async def read(self, n: int = -1, timeout: Optional[float] = 2) -> bytes:
         return await asyncio.wait_for(self._reader.read(n), timeout)
 
-    async def readexactly(
-        self, n: int, timeout: Optional[float] = 2
-    ) -> bytes:
+    async def readexactly(self, n: int, timeout: Optional[float] = 2) -> bytes:
         return await asyncio.wait_for(self._reader.readexactly(n), timeout)
 
     async def readuntil(
@@ -295,7 +293,7 @@ class CanNode:
         self,
         payload: Union[bytearray, bytes],
         resp_length: int,
-        timeout: Optional[float] = 2.
+        timeout: Optional[float] = 2.0,
     ) -> bytes:
         self.write(payload)
         return await self.readexactly(resp_length, timeout)
@@ -306,15 +304,15 @@ class CanNode:
     def close(self) -> None:
         self._reader.feed_eof()
 
+
 class CanSocket:
     def __init__(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop
-        self.cansock = socket.socket(socket.PF_CAN, socket.SOCK_RAW,
-                                     socket.CAN_RAW)
+        self.cansock = socket.socket(
+            socket.PF_CAN, socket.SOCK_RAW, socket.CAN_RAW
+        )
         self.admin_node = CanNode(CANBUS_ID_ADMIN, self)
-        self.nodes: Dict[int, CanNode] = {
-            CANBUS_ID_ADMIN_RESP: self.admin_node
-        }
+        self.nodes: Dict[int, CanNode] = {CANBUS_ID_ADMIN_RESP: self.admin_node}
 
         self.input_buffer = b""
         self.output_packets: List[bytes] = []
@@ -330,7 +328,7 @@ class CanSocket:
             # closed by the data check
             if e.errno == errno.EBADF:
                 logging.exception("Can Socket Read Error, closing")
-                data = b''
+                data = b""
             else:
                 return
         if not data:
@@ -366,8 +364,7 @@ class CanSocket:
                 length = min(len(payload), 8)
                 pkt_data = payload[:length]
                 payload = payload[length:]
-                packet = struct.pack(
-                    CAN_FMT, can_id, length, pkt_data)
+                packet = struct.pack(CAN_FMT, can_id, length, pkt_data)
                 self.output_packets.append(packet)
         if self.output_busy:
             return
@@ -398,7 +395,7 @@ class CanSocket:
         payload = bytes([CANBUS_CMD_QUERY_UNASSIGNED])
         self.admin_node.write(payload)
         curtime = self._loop.time()
-        endtime = curtime + 2.
+        endtime = curtime + 2.0
         self.uuids: List[int] = []
         while curtime < endtime:
             diff = endtime - curtime
@@ -412,7 +409,7 @@ class CanSocket:
                 continue
             app_names = {
                 KLIPPER_SET_NODE_CMD: "Klipper",
-                CANBUS_CMD_SET_NODEID: "CanBoot"
+                CANBUS_CMD_SET_NODEID: "CanBoot",
             }
             app = app_names.get(resp[7], "Unknown")
             data = resp[1:7]
@@ -449,12 +446,11 @@ class CanSocket:
             raise FlashCanError("Unable to bind socket to can0")
         self.closed = False
         self.cansock.setblocking(False)
-        self._loop.add_reader(
-            self.cansock.fileno(), self._handle_can_response)
+        self._loop.add_reader(self.cansock.fileno(), self._handle_can_response)
         self._jump_to_bootloader(uuid)
-        await asyncio.sleep(.5)
+        await asyncio.sleep(0.5)
         self._reset_nodes()
-        await asyncio.sleep(.5)
+        await asyncio.sleep(0.5)
         id_list = await self._query_uuids()
         if uuid not in id_list:
             raise FlashCanError(
@@ -462,7 +458,7 @@ class CanSocket:
             )
         node = self._set_node_id(uuid)
         flasher = CanFlasher(node, fw_path)
-        await asyncio.sleep(.5)
+        await asyncio.sleep(0.5)
         try:
             await flasher.connect_btl()
             await flasher.verify_canbus_uuid(uuid)
@@ -481,10 +477,9 @@ class CanSocket:
             raise FlashCanError("Unable to bind socket to can0")
         self.closed = False
         self.cansock.setblocking(False)
-        self._loop.add_reader(
-            self.cansock.fileno(), self._handle_can_response)
+        self._loop.add_reader(self.cansock.fileno(), self._handle_can_response)
         self._reset_nodes()
-        await asyncio.sleep(.5)
+        await asyncio.sleep(0.5)
         await self._query_uuids()
 
     def close(self):
@@ -495,6 +490,7 @@ class CanSocket:
             node.close()
         self._loop.remove_reader(self.cansock.fileno())
         self.cansock.close()
+
 
 class SerialSocket:
     def __init__(self, loop: asyncio.AbstractEventLoop):
@@ -521,10 +517,10 @@ class SerialSocket:
         if not fw_path.is_file():
             raise FlashCanError("Invalid firmware path '%s'" % (fw_path))
         import serial
+
         self.serial_error = serial.SerialException
         try:
-            serial_dev = serial.Serial(baudrate=baud, timeout=0,
-                                       exclusive=True)
+            serial_dev = serial.Serial(baudrate=baud, timeout=0, exclusive=True)
             serial_dev.port = intf
             serial_dev.open()
         except (OSError, IOError, self.serial_error) as e:
@@ -549,36 +545,41 @@ class SerialSocket:
         self.serial.close()
         self.serial = None
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Can Bootloader Flash Utility")
+    parser = argparse.ArgumentParser(description="Can Bootloader Flash Utility")
     parser.add_argument(
-        "-d", "--device", metavar='<serial device>',
-        help="Serial Device"
+        "-d", "--device", metavar="<serial device>", help="Serial Device"
     )
     parser.add_argument(
-        "-b", "--baud", default=250000, metavar='<baud rate>',
-        help="Serial baud rate"
+        "-b",
+        "--baud",
+        default=250000,
+        metavar="<baud rate>",
+        help="Serial baud rate",
     )
     parser.add_argument(
-        "-i", "--interface", default="can0", metavar='<can interface>',
-        help="Can Interface"
+        "-i",
+        "--interface",
+        default="can0",
+        metavar="<can interface>",
+        help="Can Interface",
     )
     parser.add_argument(
-        "-f", "--firmware", metavar="<klipper.bin>",
+        "-f",
+        "--firmware",
+        metavar="<klipper.bin>",
         default="~/klipper/out/klipper.bin",
-        help="Path to Klipper firmware file")
-    parser.add_argument(
-        "-u", "--uuid", metavar="<uuid>", default=None,
-        help="Can device uuid"
+        help="Path to Klipper firmware file",
     )
     parser.add_argument(
-        "-q", "--query", action="store_true",
-        help="Query Bootloader Device IDs"
+        "-u", "--uuid", metavar="<uuid>", default=None, help="Can device uuid"
     )
     parser.add_argument(
-        "-v", "--verbose", action="store_true",
-        help="Enable verbose responses"
+        "-q", "--query", action="store_true", help="Query Bootloader Device IDs"
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose responses"
     )
 
     args = parser.parse_args()
@@ -620,5 +621,5 @@ def main():
         output_line("CAN Flash Success")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

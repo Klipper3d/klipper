@@ -9,33 +9,37 @@ from . import bus
 LM75_CHIP_ADDR = 0x48
 LM75_I2C_SPEED = 100000
 LM75_REGS = {
-    'TEMP'   : 0x00,
-    'CONF'   : 0x01,
-    'THYST'  : 0x02,
-    'TOS'    : 0x03,
-    'PRODID' : 0x07    # TI LM75A chips only?
+    "TEMP": 0x00,
+    "CONF": 0x01,
+    "THYST": 0x02,
+    "TOS": 0x03,
+    "PRODID": 0x07,  # TI LM75A chips only?
 }
-LM75_REPORT_TIME = .8
+LM75_REPORT_TIME = 0.8
 # Temperature can be sampled at any time but the read aborts
 # the current conversion. Conversion time is 300ms so make
 # sure not to read too often.
-LM75_MIN_REPORT_TIME = .5
+LM75_MIN_REPORT_TIME = 0.5
+
 
 class LM75:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
-        self.i2c = bus.MCU_I2C_from_config(config, LM75_CHIP_ADDR,
-                                           LM75_I2C_SPEED)
+        self.i2c = bus.MCU_I2C_from_config(
+            config, LM75_CHIP_ADDR, LM75_I2C_SPEED
+        )
         self.mcu = self.i2c.get_mcu()
-        self.report_time = config.getfloat('lm75_report_time', LM75_REPORT_TIME,
-                                           minval=LM75_MIN_REPORT_TIME)
+        self.report_time = config.getfloat(
+            "lm75_report_time", LM75_REPORT_TIME, minval=LM75_MIN_REPORT_TIME
+        )
         self.temp = self.min_temp = self.max_temp = 0.0
         self.sample_timer = self.reactor.register_timer(self._sample_lm75)
         self.printer.add_object("lm75 " + self.name, self)
-        self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self.handle_connect
+        )
 
     def handle_connect(self):
         self._init_lm75()
@@ -60,14 +64,14 @@ class LM75:
         # Check and report the chip ID but ignore errors since many
         # chips don't have it
         try:
-            prodid = self.read_register('PRODID', 1)[0]
+            prodid = self.read_register("PRODID", 1)[0]
             logging.info("lm75: Chip ID %#x" % prodid)
         except:
             pass
 
     def _sample_lm75(self, eventtime):
         try:
-            sample = self.read_register('TEMP', 2)
+            sample = self.read_register("TEMP", 2)
             self.temp = self.degrees_from_sample(sample)
         except Exception:
             logging.exception("lm75: Error reading data")
@@ -77,7 +81,8 @@ class LM75:
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
                 "LM75 temperature %0.1f outside range of %0.1f:%.01f"
-                % (self.temp, self.min_temp, self.max_temp))
+                % (self.temp, self.min_temp, self.max_temp)
+            )
 
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
@@ -87,7 +92,7 @@ class LM75:
         # read a single register
         regs = [LM75_REGS[reg_name]]
         params = self.i2c.i2c_read(regs, read_len)
-        return bytearray(params['response'])
+        return bytearray(params["response"])
 
     def write_register(self, reg_name, data):
         if type(data) is not list:
@@ -98,7 +103,7 @@ class LM75:
 
     def get_status(self, eventtime):
         return {
-            'temperature': round(self.temp, 2),
+            "temperature": round(self.temp, 2),
         }
 
 

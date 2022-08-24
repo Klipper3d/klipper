@@ -8,6 +8,7 @@ import sys, os.path, unicodedata
 
 HaveError = False
 
+
 def report_error(filename, lineno, msg):
     global HaveError
     if not HaveError:
@@ -15,10 +16,11 @@ def report_error(filename, lineno, msg):
     HaveError = True
     sys.stderr.write("%s:%d: %s\n" % (filename, lineno + 1, msg))
 
+
 def check_file(filename):
     # Open and read file
     try:
-        f = open(filename, 'rb')
+        f = open(filename, "rb")
         data = f.read()
         f.close()
     except IOError:
@@ -27,36 +29,38 @@ def check_file(filename):
         # Empty files are okay
         return
     # Do checks
-    is_source_code = any([filename.endswith(s) for s in ['.c', '.h', '.py']])
+    is_source_code = any([filename.endswith(s) for s in [".c", ".h", ".py"]])
     lineno = 0
-    for lineno, line in enumerate(data.split(b'\n')):
+    for lineno, line in enumerate(data.split(b"\n")):
         # Verify line is valid utf-8
         try:
-            line = line.decode('utf-8')
+            line = line.decode("utf-8")
         except UnicodeDecodeError:
             report_error(filename, lineno, "Found non utf-8 character")
             continue
         # Check for control characters
         for c in line:
-            if unicodedata.category(c).startswith('C'):
+            if unicodedata.category(c).startswith("C"):
                 char_name = repr(c)
-                if c == '\t':
-                    if os.path.basename(filename).lower() == 'makefile':
+                if c == "\t":
+                    if os.path.basename(filename).lower() == "makefile":
                         continue
-                    char_name = 'tab'
-                report_error(filename, lineno, "Invalid %s character" % (
-                    char_name,))
+                    char_name = "tab"
+                report_error(
+                    filename, lineno, "Invalid %s character" % (char_name,)
+                )
                 break
         # Check for trailing space
-        if line.endswith(' ') or line.endswith('\t'):
+        if line.endswith(" ") or line.endswith("\t"):
             report_error(filename, lineno, "Line has trailing spaces")
         # Check for more than 80 characters
         if is_source_code and len(line) > 80:
             report_error(filename, lineno, "Line longer than 80 characters")
-    if not data.endswith(b'\n'):
+    if not data.endswith(b"\n"):
         report_error(filename, lineno, "No newline at end of file")
-    if data.endswith(b'\n\n'):
+    if data.endswith(b"\n\n"):
         report_error(filename, lineno, "Extra newlines at end of file")
+
 
 def main():
     files = sys.argv[1:]
@@ -66,5 +70,6 @@ def main():
         sys.stderr.write("\n\n")
         sys.exit(-1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

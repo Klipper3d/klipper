@@ -45,7 +45,8 @@ DEFAULT_SYNC_DEPS_PATH = "deps/"
 def main():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=__doc__)
+        description=__doc__,
+    )
 
     parser.add_argument(
         "--header-path",
@@ -54,7 +55,8 @@ def main():
 Path to write the generated header file to. If not specified, the path in the
 environment variable KCONFIG_AUTOHEADER is used if it is set, and 'config.h'
 otherwise.
-""")
+""",
+    )
 
     parser.add_argument(
         "--config-out",
@@ -66,7 +68,8 @@ file even if .config is outdated. The generated configuration matches what
 olddefconfig would produce. If you use sync-deps, you can include
 deps/auto.conf instead. --config-out is meant for cases where incremental build
 information isn't needed.
-""")
+""",
+    )
 
     parser.add_argument(
         "--sync-deps",
@@ -77,7 +80,10 @@ information isn't needed.
 Enable generation of symbol dependency information for incremental builds,
 optionally specifying the output directory (default: {}). See the docstring of
 Kconfig.sync_deps() in Kconfiglib for more information.
-""".format(DEFAULT_SYNC_DEPS_PATH))
+""".format(
+            DEFAULT_SYNC_DEPS_PATH
+        ),
+    )
 
     parser.add_argument(
         "--file-list",
@@ -86,7 +92,8 @@ Kconfig.sync_deps() in Kconfiglib for more information.
 Write a list of all Kconfig files to OUTPUT_FILE, with one file per line. The
 paths are relative to $srctree (or to the current directory if $srctree is
 unset). Files appear in the order they're 'source'd.
-""")
+""",
+    )
 
     parser.add_argument(
         "--env-list",
@@ -97,17 +104,18 @@ OUTPUT_FILE, with one variable per line. Each line has the format NAME=VALUE.
 Only environment variables referenced with the preprocessor $(VAR) syntax are
 included, and not variables referenced with the older $VAR syntax (which is
 only supported for backwards compatibility).
-""")
+""",
+    )
 
     parser.add_argument(
         "kconfig",
         metavar="KCONFIG",
         nargs="?",
         default="Kconfig",
-        help="Top-level Kconfig file (default: Kconfig)")
+        help="Top-level Kconfig file (default: Kconfig)",
+    )
 
     args = parser.parse_args()
-
 
     kconf = kconfiglib.Kconfig(args.kconfig, suppress_traceback=True)
     kconf.load_config()

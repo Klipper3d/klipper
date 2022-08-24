@@ -12,7 +12,8 @@ import logging
 # 3. Remove leading spaces from top-level lists so that those lists
 #    are rendered correctly.
 
-logger = logging.getLogger('mkdocs.mkdocs_hooks.transform')
+logger = logging.getLogger("mkdocs.mkdocs_hooks.transform")
+
 
 def transform(markdown: str, page, config, files):
     in_code_block = 0
@@ -20,11 +21,13 @@ def transform(markdown: str, page, config, files):
     lines = markdown.splitlines()
     for i in range(len(lines)):
         line_out = lines[i]
-        in_code_block = (in_code_block +
-            len(re.findall("\s*[`]{3,}", line_out))) % 2
+        in_code_block = (
+            in_code_block + len(re.findall("\s*[`]{3,}", line_out))
+        ) % 2
         if not in_code_block:
-            line_out = line_out.replace('](../',
-                                        f"]({config['repo_url']}blob/master/")
+            line_out = line_out.replace(
+                "](../", f"]({config['repo_url']}blob/master/"
+            )
             line_out = re.sub("\\\s*$", "<br>", line_out)
             # check that lists at level 0 are not indented
             # (no space before *|-|1.)
@@ -35,8 +38,12 @@ def transform(markdown: str, page, config, files):
             if not in_list:
                 line_out = re.sub(r"^\s+(\*|-|\d+\.) ", r"\1 ", line_out)
             if line_out != lines[i]:
-                logger.debug((f'[mkdocs_hooks] rewrite line {i+1}: '
-                        f'"{lines[i]}" -> "{line_out}"'))
+                logger.debug(
+                    (
+                        f"[mkdocs_hooks] rewrite line {i+1}: "
+                        f'"{lines[i]}" -> "{line_out}"'
+                    )
+                )
             lines[i] = line_out
     output = "\n".join(lines)
     return output
