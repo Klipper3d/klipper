@@ -1,0 +1,7 @@
+# This file describes the Python virtualenv package requirements for
+# klipper CI checks and local development.
+black==22.6.0
+flake8==5.0.4
+autopep8==1.7.0
+autoflake==1.4
+

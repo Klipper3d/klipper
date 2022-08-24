@@ -1,0 +1,13 @@
+[tool.black]
+line-length = 80
+include = '\.pyi?$'
+exclude = '''
+(
+      \.github/
+    | \.history/
+    | config/
+    | docs/
+    | lib/
+    | src/
+)
+''' 
