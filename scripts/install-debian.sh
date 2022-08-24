@@ -1,18 +1,24 @@
 #!/bin/bash
-# This script installs Klipper on an debian
+# This script installs Klipper on debian
 #
 
 PYTHONDIR="${HOME}/klippy-env"
 SYSTEMDDIR="/etc/systemd/system"
 KLIPPER_USER=$USER
 KLIPPER_GROUP=$KLIPPER_USER
-DEBIAN_VER=$(/usr/bin/lsb_release -c -s)
 
+OS_ID=$(awk -F= '$1=="ID" {print $2}' /etc/os-release)
+if [ "$OS_ID" != "debian" ]
+then
+    echo "This script supports debian not $OS_ID"
+    exit
+fi
 
 # Step 1: Install system packages
 install_packages()
 {
-    if [ "$DEBIAN_VER" = "buster" ] || [ "$DEBIAN_VER" = "stretch" ];
+    DEBIAN_CODENAME=$(awk -F= '$1=="VERSION_CODENAME" {print $2}' /etc/os-release)
+    if [ "$DEBIAN_CODENAME" = "buster" ] || [ "$DEBIAN_CODENAME" = "stretch" ]
     then
         PYTHON_DEV="python-dev"
     else
