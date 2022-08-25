@@ -86,7 +86,7 @@ extra:
     - name: Magyar
       link: /hu/
       lang: hu
-    - name: Muoversi
+    - name: Italiano
       link: /it/
       lang: it
     # Alternate language links automatically added here
