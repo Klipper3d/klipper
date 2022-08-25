@@ -1147,10 +1147,6 @@ See also: [extended g-code commands](G-Codes.md#z_thermal_adjust).
 #   temp_coeff of 0.01 mm/degC will move the Z axis downwards by 0.01 mm for
 #   every degree Celsius that the temperature sensor increases. Defaults to
 #   0.0 mm/degC, which applies no adjustment.
-temp_sensor:
-#   Temperature sensor to use for Z adjustment. Use full config section name
-#   without quoutes. E.g. temperature_sensor frame. Also compatible with
-#   temperature_fan sensors. This parameter must be provided.
 #smooth_time:
 #   Smoothing window applied to the temperature sensor, in seconds. Can reduce
 #   motor noise from excessive small corrections in response to sensor noise.
@@ -1162,6 +1158,16 @@ temp_sensor:
 #max_z_adjustment:
 #   Maximum absolute adjustment that can be applied to the Z axis [mm]. The
 #   default is 99999999.0 mm (unlimited).
+#sensor_type:
+#sensor_pin:
+#min_temp:
+#max_temp:
+#   Temperature sensor configuration.
+#   See the "extruder" section for the definition of the above
+#   parameters.
+#gcode_id:
+#   See the "heater_generic" section for the definition of this
+#   parameter.
 ```
 
 ## Customized homing
