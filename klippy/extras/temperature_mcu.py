@@ -151,8 +151,10 @@ class PrinterTemperatureMCU:
         cal_adc_30 = self.read16(0x1FFFF7B8) / 4095.
         self.base_temperature = self.calc_base(30., cal_adc_30)
     def config_stm32g0(self):
-        cal_adc_30 = self.read16(0x1FFF75A8) * 3.0 / (self.reference_voltage * 4095.)
-        cal_adc_130 = self.read16(0x1FFF75CA) * 3.0 / (self.reference_voltage * 4095.)
+        cal_adc_30 = self.read16(0x1FFF75A8)
+            * 3.0 / (self.reference_voltage * 4095.)
+        cal_adc_130 = self.read16(0x1FFF75CA)
+            * 3.0 / (self.reference_voltage * 4095.)
         self.slope = (130. - 30.) / (cal_adc_130 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
     def config_stm32h7(self):
