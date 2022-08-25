@@ -484,6 +484,8 @@ object is available if [z_thermal_adjust](Config_Reference.md#z_thermal_adjust)
 is defined).
 - `enabled`: Returns True if adjustment is enabled.
 - `temperature`: Current (smoothed) temperature of the defined sensor. [degC]
+- `measured_min_temp`: Minimum measured temperature. [degC]
+- `measured_max_temp`: Maximum measured temperature. [degC]
 - `current_z_adjust`: Last computed Z adjustment [mm].
 - `z_adjust_ref_temperature`: Current reference temperature used for calculation
   of Z `current_z_adjust` [degC].
