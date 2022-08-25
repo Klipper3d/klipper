@@ -123,7 +123,7 @@ usb_reboot_for_dfu_bootloader(void)
 static void
 check_usb_dfu_bootloader(void)
 {
-    if (!CONFIG_USBSERIAL || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
+    if (!CONFIG_USB || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
     uint32_t *sysbase = (uint32_t*)0x1fff0000;
