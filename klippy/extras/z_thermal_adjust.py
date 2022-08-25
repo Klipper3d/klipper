@@ -118,7 +118,9 @@ class ZThermalAdjuster:
         return [pos[0], pos[1], unadjusted_z, pos[3]]
 
     def get_position(self):
-        return self.calc_unadjust(self.next_transform.get_position())
+        position = self.calc_unadjust(self.next_transform.get_position())
+        self.last_position = position
+        return position
 
     def move(self, newpos, speed):
         # don't apply to extrude only moves or when disabled
