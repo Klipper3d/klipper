@@ -120,6 +120,13 @@ The following information is available in the
 - `excluded_objects`: An array of strings listing the names of excluded objects.
 - `current_object`: The name of the object currently being printed.
 
+## extruder_stepper
+
+The following information is available for extruder_stepper objects (as well as
+[extruder](Config_Reference.md#extruder) objects):
+- `pressure_advance`: The current [pressure advance](Pressure_Advance.md) value.
+- `smooth_time`: The current pressure advance smooth time.
+
 ## fan
 
 The following information is available in
