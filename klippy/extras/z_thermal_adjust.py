@@ -119,7 +119,7 @@ class ZThermalAdjuster:
 
     def get_position(self):
         position = self.calc_unadjust(self.next_transform.get_position())
-        self.last_position = position
+        self.last_position = self.calc_adjust(position)
         return position
 
     def move(self, newpos, speed):
