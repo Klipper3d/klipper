@@ -16,8 +16,7 @@ REPORT_TIME = 0.300
 CONSECUTIVE_FAULT_LIMIT = 3
 
 class SensorBase:
-    def __init__(self, config, chip_type, config_cmd=None,
-                 spi_mode=1):
+    def __init__(self, config, chip_type, config_cmd=None, spi_mode=1):
         self.printer = config.get_printer()
         self.chip_type = chip_type
         self._callback = None
