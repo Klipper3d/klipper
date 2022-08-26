@@ -759,8 +759,8 @@ be between 0.0 and 1.0, unless a 'scale' is defined in the config.
 When 'scale' is defined, then this value should be  between 0.0 and
 'scale'.
 
-If needed, this can be used in a macro to recreate `G130` used in 
-older Makerbot printers to lower the stepper current during heating 
+If needed, this can be used in a macro to recreate `G130` used in
+older Makerbot printers to lower the stepper current during heating
 (to prevent power supply brown outs)
 
 ```
