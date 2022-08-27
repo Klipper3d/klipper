@@ -59,7 +59,8 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - APBPERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->APBENR1, .rst=&RCC->APBRSTR1, .bit=bit};
     }
-    shutdown("Can't map peripheral to clock");
+    // unknown peripheral. returning .bit=0 makes this a no-op
+    return (struct cline){.en=&RCC->APBENR1, .rst=NULL, .bit=0};
 }
 
 // Return the frequency of the given peripheral clock
