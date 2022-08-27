@@ -1598,12 +1598,12 @@ shaper_freq_y: ...  # frequency for the Y mark of the test model
 <li>Prepare for test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
 <li>Disable Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Execute: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
-<li>Execute the command: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+<li>Eseguire il comando: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
 <li>Stampa il modello di test sliced con i parametri suggeriti.</li>
 </ol>
 <p>If you see no ringing at this point, then MZV shaper can be recommended for use.</p>
 <p>If you do see some ringing, re-measure the frequencies using steps (8)-(10) described in <a href="#ringing-frequency">Ringing frequency</a> section. If the frequencies differ significantly from the values you obtained earlier, a more complex input shaper configuration is needed. You can refer to Technical details of <a href="#input-shapers">Input shapers</a> section. Otherwise, proceed to the next step.</p>
-<p>Now try EI input shaper. To try it, repeat steps (1)-(6) from above, but executing at step 4 the following command instead: <code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>.</p>
+<p>Ora prova l'input shaper EI. Per provarlo, ripeti i passaggi (1)-(6) da sopra, ma eseguendo invece al passaggio 4 il seguente comando : <code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>.</p>
 <p>Compare two prints with MZV and EI input shaper. If EI shows noticeably better results than MZV, use EI shaper, otherwise prefer MZV. Note that EI shaper will cause more smoothing in printed parts (see the next section for further details). Add <code>shaper_type: mzv</code> (or ei) parameter to [input_shaper] section, e.g.:</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]
 shaper_freq_x: ...
@@ -1634,8 +1634,8 @@ shaper_type: mzv
 <p>Assuming that you have sliced the ringing model with suggested parameters, complete the following steps for each of the axes X and Y:</p>
 <ol>
 <li>Prepare for test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
-<li>Make sure Pressure Advance is disabled: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
-<li>Execute: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
+<li>Assicurati che Pressure Advance sia disabilitato: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Eseguire: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>From the existing ringing test model with your chosen input shaper select the acceleration that shows ringing sufficiently well, and set it with: <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
 <li>Calculate the necessary parameters for the <code>TUNING_TOWER</code> command to tune <code>shaper_freq_x</code> parameter as follows: start = shaper_freq_x * 83 / 132 and factor = shaper_freq_x / 66, where <code>shaper_freq_x</code> here is the current value in <code>printer.cfg</code>.</li>
 <li>Execute the command: <code>TUNING_TOWER COMMAND=SET_INPUT_SHAPER PARAMETER=SHAPER_FREQ_X START=start FACTOR=factor BAND=5</code> using <code>start</code> and <code>factor</code> values calculated at step (5).</li>
