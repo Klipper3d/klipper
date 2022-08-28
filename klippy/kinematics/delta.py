@@ -13,13 +13,13 @@ class DeltaKinematics:
     def __init__(self, toolhead, config):
         # Setup tower rails
         stepper_configs = [config.getsection('stepper_' + a) for a in 'abc']
-        rail_a = stepper.PrinterRail(
+        rail_a = stepper.LookupMultiRail(
             stepper_configs[0], need_position_minmax = False)
         a_endstop = rail_a.get_homing_info().position_endstop
-        rail_b = stepper.PrinterRail(
+        rail_b = stepper.LookupMultiRail(
             stepper_configs[1], need_position_minmax = False,
             default_position_endstop=a_endstop)
-        rail_c = stepper.PrinterRail(
+        rail_c = stepper.LookupMultiRail(
             stepper_configs[2], need_position_minmax = False,
             default_position_endstop=a_endstop)
         self.rails = [rail_a, rail_b, rail_c]
@@ -150,6 +150,7 @@ class DeltaKinematics:
             'homed_axes': '' if self.need_home else 'xyz',
             'axis_minimum': self.axes_min,
             'axis_maximum': self.axes_max,
+            'cone_start_z': self.limit_z,
         }
     def get_calibration(self):
         endstops = [rail.get_homing_info().position_endstop

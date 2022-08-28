@@ -136,7 +136,7 @@ class ControlAutoTune:
         pwm = ["pwm: %.3f %.3f" % (time, value)
                for time, value in self.pwm_samples]
         out = ["%.3f %.3f" % (time, temp) for time, temp in self.temp_samples]
-        f = open(filename, "wb")
+        f = open(filename, "w")
         f.write('\n'.join(pwm + out))
         f.close()
 

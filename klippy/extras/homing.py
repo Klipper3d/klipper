@@ -18,7 +18,8 @@ def multi_complete(printer, completions):
     cp = reactor.register_callback(lambda e: [c.wait() for c in completions])
     # If any completion indicates an error, then exit main completion early
     for c in completions:
-        reactor.register_callback(lambda e: cp.complete(1) if c.wait() else 0)
+        reactor.register_callback(
+            lambda e, c=c: cp.complete(1) if c.wait() else 0)
     return cp
 
 # Tracking of stepper positions during a homing/probing move

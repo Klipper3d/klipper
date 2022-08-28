@@ -1,5 +1,8 @@
 # Main configuration file for mkdocs generation of klipper3d.org website
 
+# Note that the build-translations.sh script expects a certain file
+# layout.  See that script and the README file for more details.
+
 # Site and directory configuration
 site_name: Klipper documentation
 repo_url: https://github.com/Klipper3d/klipper
@@ -9,7 +12,7 @@ use_directory_urls: False
 docs_dir: '../'
 site_dir: '../../site/'
 
-# Markdown document translation settings
+# Custom markdown dialect settings
 markdown_extensions:
   - toc:
       permalink: True
@@ -19,13 +22,13 @@ markdown_extensions:
   - mdx_truly_sane_lists
   - mdx_breakless_lists
 plugins:
-  - search
-  - mkdocs-simple-hooks:
-      hooks:
-        on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
-  - exclude:
-      glob:
-        - README.md
+  search:
+    lang: en
+  mkdocs-simple-hooks:
+    hooks:
+      on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
+  exclude:
+    glob: "README.md"
 
 # Website layout configuration (using mkdocs-material theme)
 theme:
@@ -49,6 +52,7 @@ theme:
   favicon: img/favicon.ico
   icon:
     repo: fontawesome/brands/github
+    alternate: material/web
   features:
       #- navigation.tabs
       #- navigation.expand
@@ -58,6 +62,7 @@ theme:
       - search.suggest
       - search.highlight
       - search.share
+  language: en
 extra_css:
   - _klipper3d/css/extra.css
 
@@ -67,6 +72,12 @@ extra:
   analytics:
     provider: google
     property: UA-138371409-1
+  # Language Selection
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    # Alternate language links automatically added here
 
 # Navigation hierarchy (this should mimic the layout of Overview.md)
 nav:
@@ -102,6 +113,7 @@ nav:
     - Multi_MCU_Homing.md
     - Slicers.md
     - Skew_Correction.md
+    - Exclude_Object.md
     - Using_PWM_Tools.md
   - Developer Documentation:
     - Code_Overview.md
@@ -123,3 +135,4 @@ nav:
     - CANBUS.md
     - TSL1401CL_Filament_Width_Sensor.md
     - Hall_Filament_Width_Sensor.md
+  - Sponsors.md

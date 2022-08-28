@@ -174,7 +174,7 @@ class Palette2:
 
     cmd_Disconnect_Help = ("Disconnect from the Palette 2")
 
-    def cmd_Disconnect(self, gmcd=None):
+    def cmd_Disconnect(self, gcmd=None):
         self.gcode.respond_info("Disconnecting from Palette 2")
         if self.serial:
             self.serial.close()
@@ -305,7 +305,7 @@ class Palette2:
             param_drive = gcmd.get_commandline()[5:6]
             param_distance = gcmd.get_commandline()[8:]
         except IndexError:
-            gmcd.respond_info(
+            gcmd.respond_info(
                 "Incorrect number of arguments for splice command")
         try:
             self.omega_splices.append((int(param_drive), param_distance))
@@ -544,13 +544,15 @@ class Palette2:
                 self.cmd_Disconnect()
                 return self.reactor.NEVER
             if len(raw_bytes):
-                text_buffer = self.read_buffer + str(raw_bytes.decode())
+                new_buffer = str(raw_bytes.decode(encoding='UTF-8',
+                                                  errors='ignore'))
+                text_buffer = self.read_buffer + new_buffer
                 while True:
                     i = text_buffer.find("\n")
                     if i >= 0:
-                        line = text_buffer[0:i+1]
+                        line = text_buffer[0:i + 1]
                         self.read_queue.put(line.strip())
-                        text_buffer = text_buffer[i+1:]
+                        text_buffer = text_buffer[i + 1:]
                     else:
                         break
                 self.read_buffer = text_buffer
@@ -566,7 +568,7 @@ class Palette2:
 
             heartbeat_strings = [COMMAND_HEARTBEAT, "Connection Okay"]
             if not any(x in text_line for x in heartbeat_strings):
-                logging.debug("%0.3f P2 -> : %s" %(eventtime, text_line))
+                logging.debug("%0.3f P2 -> : %s" % (eventtime, text_line))
 
             # Received a heartbeat from the device
             if text_line == COMMAND_HEARTBEAT:
@@ -621,7 +623,7 @@ class Palette2:
             idle_time = est_print_time - print_time
             if not lookahead_empty or idle_time < 0.5:
                 return eventtime + \
-                    max(0., min(1., print_time - est_print_time))
+                       max(0., min(1., print_time - est_print_time))
 
             extrude = abs(self.remaining_load_length)
             extrude = min(50, extrude / 2)
@@ -645,6 +647,7 @@ class Palette2:
         if self.omega_pings:
             status["ping"] = self.omega_pings[-1]
         return status
+
 
 def load_config(config):
     return Palette2(config)

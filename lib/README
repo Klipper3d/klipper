@@ -31,6 +31,11 @@ Atmel.SAMD51_DFP.1.1.96.atpack zip file found at:
   http://packs.download.atmel.com/
 version 1.1.96 (extracted on 20190110).
 
+The same70b directory contains code from the
+Atmel.SAME70_DFP.2.4.166.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 2.4.166 (extracted on 20210809).
+
 The lpc176x directory contains code from the mbed project:
   https://github.com/ARMmbed/mbed-os
 version mbed-os-5.8.3 (c05d72c3c005fbb7e92c3994c32bda45218ae7fe).
@@ -74,6 +79,11 @@ version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). It has been
 modified so that it can build outside of the pico sdk. See
 rp2040.patch for the modifications.
 
+The rp2040_flash directory contains a light-weight bootsel flash tool.
+It uses C part of the the `picoboot_connection` directory found in:
+  https://github.com/raspberrypi/picotool.git
+version v1.1.0 (55fd880c3dc029b961fc1a0967a6cfdc0af02721).
+
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
 revision 42095e522859059e8a5f4ec05c1e3def01a870a9.
@@ -112,3 +122,13 @@ has been modfied to enable the US code page (437) and enable label
 support.  The file "diskio.c" in the original archive is not included
 as it is only serves as an example for how to implement the media api
 callbacks.
+
+The canboot directory contains code from:
+  https://github.com/Arksine/CanBoot
+revision 870200826561b150137913d42fd7edc6515229ff.  The Python module,
+flash_can.py, is taken from the repo's scripts directory.  It may be
+used to upload firmware to devices flashed with the CanBoot bootloader.
+
+The can2040 directory contains code from:
+  https://github.com/KevinOConnor/can2040
+revision 9ca095c939a48391de60dd353f0cd91999bb9257.

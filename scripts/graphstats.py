@@ -161,7 +161,7 @@ def plot_system(data):
 
     # Build plot
     fig, ax1 = matplotlib.pyplot.subplots()
-    ax1.set_title("MCU bandwidth and load utilization")
+    ax1.set_title("System load utilization")
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Load (% of a core)')
     ax1.plot_date(times, sysloads, '-', label='system load',
@@ -174,19 +174,55 @@ def plot_system(data):
                   color='yellow', alpha=0.3)
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
-    ax1.legend(loc='best', prop=fontP)
+    ax1li, ax1la = ax1.get_legend_handles_labels()
+    ax2li, ax2la = ax2.get_legend_handles_labels()
+    ax1.legend(ax1li + ax2li, ax1la + ax2la, loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
     return fig
 
-def plot_frequency(data, mcu):
+def plot_mcu_frequencies(data):
     all_keys = {}
     for d in data:
         all_keys.update(d)
-    one_mcu = mcu is not None
     graph_keys = { key: ([], []) for key in all_keys
-                   if (key in ("freq", "adj") or (not one_mcu and (
-                           key.endswith(":freq") or key.endswith(":adj")))) }
+                   if (key in ("freq", "adj")
+                       or (key.endswith(":freq") or key.endswith(":adj"))) }
+    for d in data:
+        st = datetime.datetime.utcfromtimestamp(d['#sampletime'])
+        for key, (times, values) in graph_keys.items():
+            val = d.get(key)
+            if val not in (None, '0', '1'):
+                times.append(st)
+                values.append(float(val))
+    est_mhz = { key: round((sum(values)/len(values)) / 1000000.)
+                for key, (times, values) in graph_keys.items() }
+
+    # Build plot
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax1.set_title("MCU frequencies")
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Microsecond deviation')
+    for key in sorted(graph_keys):
+        times, values = graph_keys[key]
+        mhz = est_mhz[key]
+        label = "%s(%dMhz)" % (key, mhz)
+        hz = mhz * 1000000.
+        ax1.plot_date(times, [(v - hz)/mhz for v in values], '.', label=label)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
+    ax1.grid(True)
+    return fig
+
+def plot_mcu_frequency(data, mcu):
+    all_keys = {}
+    for d in data:
+        all_keys.update(d)
+    graph_keys = { key: ([], []) for key in all_keys
+                   if key in ("freq", "adj") }
     for d in data:
         st = datetime.datetime.utcfromtimestamp(d['#sampletime'])
         for key, (times, values) in graph_keys.items():
@@ -197,10 +233,7 @@ def plot_frequency(data, mcu):
 
     # Build plot
     fig, ax1 = matplotlib.pyplot.subplots()
-    if one_mcu:
-        ax1.set_title("MCU '%s' frequency" % (mcu,))
-    else:
-        ax1.set_title("MCU frequency")
+    ax1.set_title("MCU '%s' frequency" % (mcu,))
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Frequency')
     for key in sorted(graph_keys):
@@ -248,7 +281,9 @@ def plot_temperature(data, heaters):
     ax2.set_ylabel('pwm')
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
-    ax1.legend(loc='best', prop=fontP)
+    ax1li, ax1la = ax1.get_legend_handles_labels()
+    ax2li, ax2la = ax2.get_legend_handles_labels()
+    ax1.legend(ax1li + ax2li, ax1la + ax2la, loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
     return fig
@@ -282,7 +317,10 @@ def main():
     if options.heater is not None:
         fig = plot_temperature(data, options.heater)
     elif options.frequency:
-        fig = plot_frequency(data, options.mcu)
+        if options.mcu is not None:
+            fig = plot_mcu_frequency(data, options.mcu)
+        else:
+            fig = plot_mcu_frequencies(data)
     elif options.system:
         fig = plot_system(data)
     else:

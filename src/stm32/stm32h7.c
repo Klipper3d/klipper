@@ -6,8 +6,11 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
+#include "board/armcm_reset.h" // try_request_canboot
+#include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
-#include "internal.h" // enable_pclock
+#include "internal.h" // get_pclock_frequency
 #include "sched.h" // sched_main
 
 
@@ -17,75 +20,42 @@
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 4)
 
-// Enable a peripheral clock
-void
-enable_pclock(uint32_t periph_base)
+// Map a peripheral address to its enable bits
+struct cline
+lookup_clock_line(uint32_t periph_base)
 {
-    // periph_base determines in which bitfield at wich position to set a bit
-    // E.g. D2_AHB1PERIPH_BASE is the adress offset of the given bitfield
-    if (periph_base < D2_APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_APB1PERIPH_BASE) / 0x400;
-        RCC->APB1LENR |= (1<<pos); // we assume it is not in APB1HENR
-        RCC->APB1LENR;
-    } else if (periph_base < D2_AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_APB2PERIPH_BASE) / 0x400;
-        RCC->APB2ENR |= (1<<pos);
-        RCC->APB2ENR;
-    } else if (periph_base < D2_AHB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_AHB1PERIPH_BASE) / 0x400;
-        RCC->AHB1ENR |= (1<<pos);
-        RCC->AHB1ENR;
-    } else if (periph_base < D1_APB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_AHB2PERIPH_BASE) / 0x400;
-        RCC->AHB2ENR |= (1<<pos);
-        RCC->AHB2ENR;
-    } else if (periph_base < D1_AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D1_APB1PERIPH_BASE) / 0x400;
-        RCC->APB3ENR |= (1<<pos);
-        RCC->APB3ENR;
-    } else if (periph_base < D3_APB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D1_AHB1PERIPH_BASE) / 0x400;
-        RCC->AHB3ENR |= (1<<pos);
-        RCC->AHB3ENR;
-    } else if (periph_base < D3_AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D3_APB1PERIPH_BASE) / 0x400;
-        RCC->APB4ENR |= (1<<pos);
-        RCC->APB4ENR;
+    if (periph_base >= D3_AHB1PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - D3_AHB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->AHB4ENR, .rst=&RCC->AHB4RSTR, .bit=bit};
+    } else if (periph_base >= D3_APB1PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - D3_APB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB4ENR, .rst=&RCC->APB4RSTR, .bit=bit};
+    } else if (periph_base >= D1_AHB1PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - D1_AHB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->AHB3ENR, .rst=&RCC->AHB3RSTR, .bit=bit};
+    } else if (periph_base >= D1_APB1PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - D1_APB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB3ENR, .rst=&RCC->APB3RSTR, .bit=bit};
+    } else if (periph_base >= D2_AHB2PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - D2_AHB2PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->AHB2ENR, .rst=&RCC->AHB2RSTR, .bit=bit};
+    } else if (periph_base >= D2_AHB1PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - D2_AHB1PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->AHB1ENR, .rst=&RCC->AHB1RSTR, .bit=bit};
+    } else if (periph_base >= D2_APB2PERIPH_BASE) {
+        uint32_t bit = 1 << ((periph_base - D2_APB2PERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
     } else {
-        uint32_t pos = (periph_base - D3_AHB1PERIPH_BASE) / 0x400;
-        RCC->AHB4ENR |= (1<<pos);
-        RCC->AHB4ENR;
-    }
-}
-
-// Check if a peripheral clock has been enabled
-int
-is_enabled_pclock(uint32_t periph_base)
-{
-    if (periph_base < D2_APB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_APB1PERIPH_BASE) / 0x400;
-        return RCC->APB1LENR & (1<<pos); // we assume it is not in APB1HENR
-    } else if (periph_base < D2_AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_APB2PERIPH_BASE) / 0x400;
-        return RCC->APB2ENR & (1<<pos);
-    } else if (periph_base < D2_AHB2PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_AHB1PERIPH_BASE) / 0x400;
-        return RCC->AHB1ENR & (1<<pos);
-    } else if (periph_base < D1_APB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D2_AHB2PERIPH_BASE) / 0x400;
-        return RCC->AHB2ENR & (1<<pos);
-    } else if (periph_base < D1_AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D1_APB1PERIPH_BASE) / 0x400;
-        return RCC->APB3ENR & (1<<pos);
-    } else if (periph_base < D3_APB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D1_AHB1PERIPH_BASE) / 0x400;
-        return RCC->AHB3ENR & (1<<pos);
-    } else if (periph_base < D3_AHB1PERIPH_BASE) {
-        uint32_t pos = (periph_base - D3_APB1PERIPH_BASE) / 0x400;
-        return RCC->APB4ENR & (1<<pos);
-    } else {
-        uint32_t pos = (periph_base - D3_AHB1PERIPH_BASE) / 0x400;
-        return RCC->AHB4ENR & (1<<pos);
+        uint32_t offset = ((periph_base - D2_APB1PERIPH_BASE) / 0x400);
+        if (offset < 32) {
+            uint32_t bit = 1 << offset;
+            return (struct cline){
+                .en=&RCC->APB1LENR, .rst=&RCC->APB1LRSTR, .bit=bit};
+        } else {
+            uint32_t bit = 1 << (offset - 32);
+            return (struct cline){
+                .en=&RCC->APB1HENR, .rst=&RCC->APB1HRSTR, .bit=bit};
+        }
     }
 }
 
@@ -100,9 +70,9 @@ get_pclock_frequency(uint32_t periph_base)
 void
 gpio_clock_enable(GPIO_TypeDef *regs)
 {
-    uint32_t pos = ((uint32_t)regs - D3_APB1PERIPH_BASE) / 0x400;
-    RCC->APB4ENR |= (1<<pos);
-    RCC->APB4ENR;
+    uint32_t pos = ((uint32_t)regs - D3_AHB1PERIPH_BASE) / 0x400;
+    RCC->AHB4ENR |= (1<<pos);
+    RCC->AHB4ENR;
 }
 
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
@@ -208,8 +178,11 @@ clock_setup(void)
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL1)
         ;
 
+    // Set the source of FDCAN clock
+    MODIFY_REG(RCC->D2CCIP1R, RCC_D2CCIP1R_FDCANSEL, RCC_D2CCIP1R_FDCANSEL_0);
+
     // Configure HSI48 clock for USB
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         SET_BIT(RCC->CR, RCC_CR_HSI48ON);
         while((RCC->CR & RCC_CR_HSI48RDY) == 0);
         SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
@@ -224,13 +197,39 @@ clock_setup(void)
 
 
 /****************************************************************
- * USB bootloader
+ * Bootloader
  ****************************************************************/
 
-// Handle USB reboot requests
-void
-usb_request_bootloader(void)
+#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
+#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
+
+// Flag that bootloader is desired and reboot
+static void
+usb_reboot_for_dfu_bootloader(void)
 {
+    irq_disable();
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    NVIC_SystemReset();
+}
+
+// Check if rebooting into system DFU Bootloader
+static void
+check_usb_dfu_bootloader(void)
+{
+    if (!CONFIG_USB || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
+        return;
+    *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
+    uint32_t *sysbase = (uint32_t*)0x1FF09800;
+    asm volatile("mov sp, %0\n bx %1"
+                 : : "r"(sysbase[0]), "r"(sysbase[1]));
+}
+
+// Handle reboot requests
+void
+bootloader_request(void)
+{
+    try_request_canboot();
+    usb_reboot_for_dfu_bootloader();
 }
 
 
@@ -244,7 +243,13 @@ armcm_main(void)
 {
     // Run SystemInit() and then restore VTOR
     SystemInit();
+    RCC->D1CCIPR = 0x00000000;
+    RCC->D2CCIP1R = 0x00000000;
+    RCC->D2CCIP2R = 0x00000000;
+    RCC->D3CCIPR = 0x00000000;
     SCB->VTOR = (uint32_t)VectorTable;
+
+    check_usb_dfu_bootloader();
 
     clock_setup();
 

@@ -1,11 +1,12 @@
 name: klipper3d deploy
 on:
+  schedule:
+    - cron: "0 0 * * *"
   push:
     branches:
       - master
     paths:
       - docs/**
-      - mkdocs.yml
       - .github/workflows/klipper3d-deploy.yaml
 jobs:
   deploy:
@@ -24,6 +25,10 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install dependencies
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
-      - name: Build and deploy klipper3d
-        run: |
-          mkdocs gh-deploy --config-file docs/_klipper3d/mkdocs.yml --remote-branch gh-pages --force --verbose
+      - name: Build MkDocs Pages
+        run: docs/_klipper3d/build-translations.sh
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4.2.5
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: site # The folder the action should deploy.

@@ -6,11 +6,13 @@
 
 #include "board/armcm_boot.h" // armcm_main
 #include "board/irq.h" // irq_disable
-#include "board/usb_cdc.h" // usb_request_bootloader
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_COMMAND_FLAGS
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
 
+#define FREQ_PERIPH_DIV (CONFIG_MACH_SAME70 ? 2 : 1)
+#define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 
 /****************************************************************
  * watchdog handler
@@ -60,7 +62,7 @@ enable_pclock(uint32_t id)
 uint32_t
 get_pclock_frequency(uint32_t id)
 {
-    return CONFIG_CLOCK_FREQ;
+    return FREQ_PERIPH;
 }
 
 
@@ -68,12 +70,18 @@ get_pclock_frequency(uint32_t id)
  * Resets
  ****************************************************************/
 
+#if CONFIG_MACH_SAME70
+#define RST_PARAMS ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST)
+#else
+#define RST_PARAMS ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST \
+                    | RSTC_CR_PERRST)
+#endif
+
 void
 command_reset(uint32_t *args)
 {
     irq_disable();
-    RSTC->RSTC_CR = ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST
-                     | RSTC_CR_PERRST);
+    RSTC->RSTC_CR = RST_PARAMS;
     for (;;)
         ;
 }
@@ -81,12 +89,12 @@ DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 
 #if CONFIG_MACH_SAM3X || CONFIG_MACH_SAM4S
 #define EFC_HW EFC0
-#elif CONFIG_MACH_SAM4E
+#elif CONFIG_MACH_SAM4E || CONFIG_MACH_SAME70
 #define EFC_HW EFC
 #endif
 
 void noinline __aligned(16) // align for predictable flash code access
-usb_request_bootloader(void)
+bootloader_request(void)
 {
     irq_disable();
     // Request boot from ROM (instead of boot from flash)
@@ -97,8 +105,7 @@ usb_request_bootloader(void)
     while ((EFC_HW->EEFC_FSR & EEFC_FSR_FRDY) == 0)
         ;
     // Reboot
-    RSTC->RSTC_CR = ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST
-                     | RSTC_CR_PERRST);
+    RSTC->RSTC_CR = RST_PARAMS;
     for (;;)
         ;
 }

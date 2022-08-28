@@ -161,19 +161,24 @@ represent total number of steps per second on the micro-controller.
 | ------------------------------- | ----------------- | ----------------- |
 | 16Mhz AVR                       | 157K              | 99K               |
 | 20Mhz AVR                       | 196K              | 123K              |
-| Arduino Zero (SAMD21)           | 686K              | 471K              |
+| SAMD21                          | 686K              | 471K              |
 | STM32F042                       | 814K              | 578K              |
 | Beaglebone PRU                  | 866K              | 708K              |
-| "Blue Pill" (STM32F103)         | 1180K             | 818K              |
-| Arduino Due (SAM3X8E)           | 1273K             | 981K              |
-| Duet2 Maestro (SAM4S8C)         | 1690K             | 1385K             |
-| Smoothieboard (LPC1768)         | 1923K             | 1351K             |
-| Smoothieboard (LPC1769)         | 2353K             | 1622K             |
-| Raspberry Pi Pico (RP2040)      | 2400K             | 1636K             |
-| Duet2 Wifi/Eth (SAM4E8E)        | 2500K             | 1674K             |
-| Adafruit Metro M4 (SAMD51)      | 3077K             | 1885K             |
-| BigTreeTech SKR Pro (STM32F407) | 3652K             | 2459K             |
-| Fysetc Spider (STM32F446)       | 3913K             | 2634K             |
+| STM32G0B1                       | 1103K             | 790K              |
+| STM32F103                       | 1180K             | 818K              |
+| SAM3X8E                         | 1273K             | 981K              |
+| SAM4S8C                         | 1690K             | 1385K             |
+| LPC1768                         | 1923K             | 1351K             |
+| LPC1769                         | 2353K             | 1622K             |
+| RP2040                          | 2400K             | 1636K             |
+| SAM4E8E                         | 2500K             | 1674K             |
+| SAMD51                          | 3077K             | 1885K             |
+| STM32F407                       | 3652K             | 2459K             |
+| STM32F446                       | 3913K             | 2634K             |
+
+If unsure of the micro-controller on a particular board, find the
+appropriate [config file](../config/), and look for the
+micro-controller name in the comments at the top of that file.
 
 Further details on the benchmarks are available in the
 [Benchmarks document](Benchmarks.md).

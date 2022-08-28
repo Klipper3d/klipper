@@ -89,7 +89,7 @@ clock_init_internal(void)
     uint32_t fine = GET_FUSE(FUSES_DFLL48M_FINE_CAL);
     SYSCTRL->DFLLVAL.reg = (SYSCTRL_DFLLVAL_COARSE(coarse)
                             | SYSCTRL_DFLLVAL_FINE(fine));
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         // Enable USB clock recovery mode
         uint32_t mul = DIV_ROUND_CLOSEST(FREQ_MAIN, 1000);
         SYSCTRL->DFLLMUL.reg = (SYSCTRL_DFLLMUL_FSTEP(10)

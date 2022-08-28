@@ -63,7 +63,7 @@ test".
 
 In order to perform the paper test, cut a small rectangular piece of
 paper using a pair of scissors (eg, 5x3 cm). The paper generally has a
-width of around 100 microns (0.100mm). (The exact width of the paper
+thickness of around 100 microns (0.100mm). (The exact thickness of the paper
 isn't crucial.)
 
 The first step of the paper test is to inspect the printer's nozzle
@@ -74,7 +74,7 @@ or bed.
 
 If one always prints on a particular tape or printing surface then one
 may perform the paper test with that tape/surface in place. However,
-note that tape itself has a width and different tapes (or any other
+note that tape itself has a thickness and different tapes (or any other
 printing surface) will impact Z measurements. Be sure to rerun the
 paper test to measure each type of surface that is in use.
 
@@ -89,11 +89,11 @@ temperature!**
 
 When the nozzle is heated, its position (relative to the bed) changes
 due to thermal expansion. This thermal expansion is typically around a
-100 microns, which is about the same width as a typical piece of
+100 microns, which is about the same thickness as a typical piece of
 printer paper. The exact amount of thermal expansion isn't crucial,
-just as the exact width of the paper isn't crucial. Start with the
+just as the exact thickness of the paper isn't crucial. Start with the
 assumption that the two are equal (see below for a method of
-determining the difference between the two widths).
+determining the difference between the two distances).
 
 It may seem odd to calibrate the distance at room temperature when the
 goal is to have a consistent distance when heated. However, if one
@@ -180,7 +180,7 @@ command to exit the calibration tool.
 
 After successfully performing bed leveling, one may go on to calculate
 a more precise value for the combined impact of "thermal expansion",
-"width of the paper", and "amount of friction felt during the paper
+"thickness of the paper", and "amount of friction felt during the paper
 test".
 
 This type of calculation is generally not needed as most users find

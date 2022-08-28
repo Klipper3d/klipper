@@ -224,6 +224,8 @@ class TMCCommandHelper:
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
+        self.printer.register_event_handler("stepper:set_sdir_inverted",
+                                            self._handle_sync_mcu_pos)
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
@@ -306,14 +308,14 @@ class TMCCommandHelper:
             if enable_line.is_motor_enabled():
                 raise
             return
-        if not stepper.is_dir_inverted():
+        if not stepper.get_dir_inverted()[0]:
             driver_phase = 1023 - driver_phase
         phases = self._get_phases()
         phase = int(float(driver_phase) / 1024 * phases + .5) % phases
         moff = (phase - stepper.get_mcu_position()) % phases
         if self.mcu_phase_offset is not None and self.mcu_phase_offset != moff:
             logging.warning("Stepper %s phase change (was %d now %d)",
-                            self.mcu_phase_offset, moff)
+                            self.stepper_name, self.mcu_phase_offset, moff)
         self.mcu_phase_offset = moff
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
@@ -520,8 +522,9 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
     if velocity:
         stepper_name = " ".join(config.get_name().split()[1:])
-        stepper_config = config.getsection(stepper_name)
-        step_dist = stepper.parse_step_distance(stepper_config)
+        sconfig = config.getsection(stepper_name)
+        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
+        step_dist = rotation_dist / steps_per_rotation
         step_dist_256 = step_dist / (1 << fields.get_field("mres"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
         fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))

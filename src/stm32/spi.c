@@ -100,6 +100,12 @@ void
 spi_prepare(struct spi_config config)
 {
     SPI_TypeDef *spi = config.spi;
+    uint32_t cr1 = spi->CR1;
+    if (cr1 == config.spi_cr1)
+        return;
+    // The SPE bit must be disabled before changing CPOL/CPHA bits
+    spi->CR1 = cr1 & ~SPI_CR1_SPE;
+    spi->CR1; // Force flush of previous write
     spi->CR1 = config.spi_cr1;
 }
 
@@ -109,12 +115,15 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
 {
     SPI_TypeDef *spi = config.spi;
     while (len--) {
-        writeb((void *)&spi->DR, *data);
+        writeb((void*)&spi->DR, *data);
         while (!(spi->SR & SPI_SR_RXNE))
             ;
-        uint8_t rdata = readb((void *)&spi->DR);
+        uint8_t rdata = readb((void*)&spi->DR);
         if (receive_data)
             *data = rdata;
         data++;
     }
+    // Wait for any remaining SCLK updates before returning
+    while ((spi->SR & (SPI_SR_TXE|SPI_SR_BSY)) != SPI_SR_TXE)
+        ;
 }

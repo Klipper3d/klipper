@@ -10,6 +10,8 @@ import can
 CANBUS_ID_ADMIN = 0x3f0
 CMD_QUERY_UNASSIGNED = 0x00
 RESP_NEED_NODEID = 0x20
+CMD_SET_KLIPPER_NODEID = 0x01
+CMD_SET_CANBOOT_NODEID = 0x11
 
 def query_unassigned(canbus_iface):
     # Open CAN socket
@@ -37,7 +39,16 @@ def query_unassigned(canbus_iface):
         if uuid in found_ids:
             continue
         found_ids[uuid] = 1
-        sys.stdout.write("Found canbus_uuid=%012x\n" % (uuid,))
+        AppNames = {
+            CMD_SET_KLIPPER_NODEID: "Klipper",
+            CMD_SET_CANBOOT_NODEID: "CanBoot"
+        }
+        app_id = CMD_SET_KLIPPER_NODEID
+        if msg.dlc > 7:
+            app_id = msg.data[7]
+        app_name = AppNames.get(app_id, "Unknown")
+        sys.stdout.write("Found canbus_uuid=%012x, Application: %s\n"
+                         % (uuid, app_name))
     sys.stdout.write("Total %d uuids found\n" % (len(found_ids,)))
 
 def main():
