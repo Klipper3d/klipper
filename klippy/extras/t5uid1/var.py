@@ -47,7 +47,7 @@ class T5UID1_Var:
             raise config.error("Invalid address '%s' in section '%s'"
                                % (address, config.get_name()))
 
-        data_types = TYPES_LEN.keys()
+        data_types = list(TYPES_LEN.keys())
         data_types.append('str')
         if self.type == "input":
             data_types.append('none')
@@ -122,7 +122,7 @@ class T5UID1_Var:
         result = self._template.render(context)
 
         if self.data_type == "str":
-            result = bytearray(result.replace('\n', ''))
+            result = bytearray(result.replace('\n', ''), "ascii")
             target_len = self.data_len
             if target_len % 2 != 0:
                 target_len += 1
