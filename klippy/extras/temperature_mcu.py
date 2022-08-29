@@ -124,9 +124,9 @@ class PrinterTemperatureMCU:
         room_1v = get1v((cal1 >> 24) & 0xff)
         hot_1v = get1v((cal2 >> 0) & 0xff)
         room_adc = ((cal2 >> 8) & 0xfff)
-            * room_1v / (self.reference_voltage * 4095.)
+        * room_1v / (self.reference_voltage * 4095.)
         hot_adc = ((cal2 >> 20) & 0xfff)
-            * hot_1v / (self.reference_voltage * 4095.)
+        * hot_1v / (self.reference_voltage * 4095.)
         self.slope = (hot_temp - room_temp) / (hot_adc - room_adc)
         self.base_temperature = self.calc_base(room_temp, room_adc)
     def config_samd51(self):
@@ -152,9 +152,9 @@ class PrinterTemperatureMCU:
         self.base_temperature = self.calc_base(30., cal_adc_30)
     def config_stm32g0(self):
         cal_adc_30 = self.read16(0x1FFF75A8)
-            * 3.0 / (self.reference_voltage * 4095.)
+        * 3.0 / (self.reference_voltage * 4095.)
         cal_adc_130 = self.read16(0x1FFF75CA)
-            * 3.0 / (self.reference_voltage * 4095.)
+        * 3.0 / (self.reference_voltage * 4095.)
         self.slope = (130. - 30.) / (cal_adc_130 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
     def config_stm32h7(self):
