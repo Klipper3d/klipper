@@ -84,5 +84,24 @@ void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    shutdown("i2c_read not supported on stm32");
+    I2C_TypeDef *i2c = config.i2c;
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+
+    // Send start, address, reg
+    i2c->CR2 = (I2C_CR2_START | config.addr |
+               (reg_len << I2C_CR2_NBYTES_Pos));
+    while (reg_len--) {
+        i2c_wait(i2c, I2C_ISR_TXIS, timeout);
+        i2c->TXDR = *reg++;
+    }
+    i2c_wait(i2c, I2C_ISR_TC, timeout);
+
+    // send restart, read data
+    i2c->CR2 = (I2C_CR2_START | I2C_CR2_RD_WRN | config.addr |
+               (read_len << I2C_CR2_NBYTES_Pos) | I2C_CR2_AUTOEND);
+    while (read_len--) {
+        i2c_wait(i2c, I2C_ISR_RXNE, timeout);
+        *read++ = i2c->RXDR;
+    }
+    i2c_wait(i2c, I2C_ISR_STOPF, timeout);
 }
