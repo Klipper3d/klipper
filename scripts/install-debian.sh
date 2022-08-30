@@ -95,7 +95,7 @@ verify_ready()
 set -e
 
 # Find SRCDIR from the pathname of this script
-SRCDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
+SRCDIR="$( cd "$(pwd)"/.. && pwd )"
 
 # Run installation steps defined above
 verify_ready
