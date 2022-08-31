@@ -15,16 +15,27 @@
 void
 watchdog_reset(void)
 {
+#if CONFIG_MACH_STM32MP1
+    WWDG1->CR = 0x7F; // reload watchdog
+#else
     IWDG->KR = 0xAAAA;
+#endif
 }
 DECL_TASK(watchdog_reset);
 
 void
 watchdog_init(void)
 {
+#if CONFIG_MACH_STM32MP1
+    // IWDG available only for CA7 cores
+    WWDG1->CFR |= (7 << WWDG_CFR_WDGTB_Pos);
+    WWDG1->CFR |= (7 << WWDG_CFR_W_Pos);
+    WWDG1->CR = 0xFF; // set counter to max and enable watchdog; 321 ms
+#else
     IWDG->KR = 0x5555;
     IWDG->PR = 0;
     IWDG->RLR = 0x0FFF; // 410-512ms timeout (depending on stm32 chip)
     IWDG->KR = 0xCCCC;
+#endif
 }
 DECL_INIT(watchdog_init);

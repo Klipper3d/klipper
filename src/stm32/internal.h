@@ -16,6 +16,8 @@
 #include "stm32g0xx.h"
 #elif CONFIG_MACH_STM32H7
 #include "stm32h7xx.h"
+#elif CONFIG_MACH_STM32MP1
+#include "stm32mp1xx.h"
 #endif
 
 // gpio.c
