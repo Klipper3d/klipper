@@ -93,10 +93,5 @@ class mcp4018:
             self.set_dac(wiper)
             gcmd.respond_info("New value for DIGIPOT = %s, wiper = %.2f"
                                % (self.name, wiper))
-        else:
-            gcmd.respond_info("Value outside of scale"
-                              " for DIGIPOT = %s, wiper = %.2f"
-                               % (self.name, wiper))
-
 def load_config_prefix(config):
     return mcp4018(config)
