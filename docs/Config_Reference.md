@@ -320,9 +320,7 @@ radius:
 ### Deltesian Kinematics
 
 See [example-deltesian.cfg](../config/example-deltesian.cfg) for an
-example linear delta kinematics config file. See the
-[delta calibrate guide](Delta_Calibrate.md) for information on
-calibration.
+example deltesian kinematics config file.
 
 Only parameters specific to deltesian printers are described here - see
 [common kinematic settings](#common-kinematic-settings) for available
