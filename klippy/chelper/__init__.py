@@ -31,6 +31,7 @@ SOURCE_FILES = [
     "kin_corexy.c",
     "kin_corexz.c",
     "kin_delta.c",
+    "kin_deltesian.c",
     "kin_polar.c",
     "kin_rotary_delta.c",
     "kin_winch.c",
@@ -137,6 +138,11 @@ defs_kin_delta = """
         , double tower_x, double tower_y);
 """
 
+defs_kin_deltesian = """
+    struct stepper_kinematics *deltesian_stepper_alloc(double arm2
+        , double arm_x);
+"""
+
 defs_kin_polar = """
     struct stepper_kinematics *polar_stepper_alloc(char type);
 """
@@ -233,6 +239,7 @@ defs_all = [
     defs_kin_corexy,
     defs_kin_corexz,
     defs_kin_delta,
+    defs_kin_deltesian,
     defs_kin_polar,
     defs_kin_rotary_delta,
     defs_kin_winch,
