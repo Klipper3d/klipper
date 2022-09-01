@@ -753,46 +753,12 @@ The following command is available when a
 enabled.
 
 #### SET_DIGIPOT
+
 `SET_DIGIPOT DIGIPOT=config_name WIPER=<value>`: This command will
 change the current value of the digipot.  This value should typically
 be between 0.0 and 1.0, unless a 'scale' is defined in the config.
 When 'scale' is defined, then this value should be  between 0.0 and
 'scale'.
-
-If needed, this can be used in a macro to recreate `G130` used in
-older Makerbot printers to lower the stepper current during heating
-(to prevent power supply brown outs)
-
-```
-[gcode_macro G130]
-gcode:
-  M400
-  {% if ('X' in params) and ('mcp4018 x_axis_pot' in printer.configfile.config) %}
-    {% set x_value = params['X']|float %}
-    {% set x_axis_pot_scale = printer.configfile.config["mcp4018 x_axis_pot"].scale|float %}
-    SET_DIGIPOT DIGIPOT=x_axis_pot WIPER={ x_axis_pot_scale * (x_value / 127.0)}
-  {% endif %}
-  {% if ('Y' in params) and ('mcp4018 y_axis_pot' in printer.configfile.config) %}
-    {% set y_value = params['Y']|float %}
-    {% set y_axis_pot_scale = printer.configfile.config["mcp4018 y_axis_pot"].scale|float %}
-    SET_DIGIPOT DIGIPOT=y_axis_pot WIPER={ y_axis_pot_scale * (y_value / 127.0)}
-  {% endif %}
-  {% if ('Z' in params) and ('mcp4018 z_axis_pot' in printer.configfile.config) %}
-    {% set z_value = params['Z']|float %}
-    {% set z_axis_pot_scale = printer.configfile.config["mcp4018 z_axis_pot"].scale|float %}
-    SET_DIGIPOT DIGIPOT=z_axis_pot WIPER={ z_axis_pot_scale * (z_value / 127.0)}
-  {% endif %}
-  {% if ('A' in params) and ('mcp4018 a_axis_pot' in printer.configfile.config) %}
-    {% set a_value = params['A']|float %}
-    {% set a_axis_pot_scale = printer.configfile.config["mcp4018 a_axis_pot"].scale|float %}
-    SET_DIGIPOT DIGIPOT=a_axis_pot WIPER={ a_axis_pot_scale * (a_value / 127.0)}
-  {% endif %}
-  {% if ('B' in params) and ('mcp4018 b_axis_pot' in printer.configfile.config) %}
-    {% set b_value = params['B']|float %}
-    {% set b_axis_pot_scale = printer.configfile.config["mcp4018 b_axis_pot"].scale|float %}
-    SET_DIGIPOT DIGIPOT=b_axis_pot WIPER={ b_axis_pot_scale * (b_value / 127.0)}
-  {% endif %}
-```
 
 ### [led]
 
