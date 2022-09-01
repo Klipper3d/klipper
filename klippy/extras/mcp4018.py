@@ -88,16 +88,15 @@ class mcp4018:
         self.i2c.i2c_write([val])
     cmd_SET_DIGIPOT_help = "Set digipot value"
     def cmd_SET_DIGIPOT(self, gcmd):
-        wiper = gcmd.get_float('WIPER', None)
-        if (wiper is not None):
-            if (wiper >= 0.0) and (wiper <= self.scale):
-                self.set_dac(wiper)
-                gcmd.respond_info("New value for DIGIPOT = %s, wiper = %.2f"
-                                     % (self.name, wiper))
-            else:
-                gcmd.respond_info("Value outside of scale"
-                                  " for DIGIPOT = %s, wiper = %.2f"
-                                     % (self.name, wiper))
+        wiper = gcmd.get_float('WIPER', minval=0., maxval=self.scale)
+        if wiper is not None:
+            self.set_dac(wiper)
+            gcmd.respond_info("New value for DIGIPOT = %s, wiper = %.2f"
+                               % (self.name, wiper))
+        else:
+            gcmd.respond_info("Value outside of scale"
+                              " for DIGIPOT = %s, wiper = %.2f"
+                               % (self.name, wiper))
 
 def load_config_prefix(config):
     return mcp4018(config)
