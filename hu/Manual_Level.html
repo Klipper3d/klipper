@@ -661,7 +661,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágyháló
+        Ágy háló
       </a>
     </li>
   
@@ -675,7 +675,7 @@
   
     <li class="md-nav__item">
       <a href="Endstop_Phase.html" class="md-nav__link">
-        Végállás szakasz
+        Végállás fázis
       </a>
     </li>
   
@@ -1428,7 +1428,7 @@ Recv: ok
 <p>Vegye figyelembe, hogy a "percek" az "óra számlapjának perceire" utalnak. Így például 15 perc egy teljes fordulat negyedének felel meg.</p>
 <p>Ismételje meg a folyamatot többször, amíg egy jó vízszintes ágyat nem kap. Általában akkor jó, ha minden beállítás 6 percnyi fordulat alatt van.</p>
 <p>Ha olyan szondát használ, amely a nyomtatófej oldalára van szerelve (azaz X vagy Y eltolással rendelkezik), akkor vegye figyelembe, hogy az ágy dőlésének beállítása érvényteleníti a korábbi, dőlésszögű ágyon végzett szintkalibrálást. Az ágy csavarjainak beállítása után mindenképpen futtassa le a <a href="Probe_Calibrate.html">szonda kalibrálása</a> parancsot.</p>
-<p>A <code>MAX_DEVIATION</code> paraméter akkor hasznos, ha egy mentett ágyhálót használunk, hogy biztosítsuk, hogy az ágy szintje ne térjen el túlságosan attól a helytől, ahol a háló létrehozásakor volt. Például a <code>SCREWS_TILT_CALCULATE MAX_DEVIATION=0.01</code> hozzáadható a szeletelő egyéni indító G-kódjához a háló betöltése előtt. Ez megszakítja a nyomtatást, ha a beállított határértéket túllépi (ebben a példában 0,01 mm), lehetőséget adva a felhasználónak a csavarok beállítására és a nyomtatás újraindítására.</p>
+<p>A <code>MAX_DEVIATION</code> paraméter akkor hasznos, ha egy mentett ágy hálót használunk, hogy biztosítsuk, hogy az ágy szintje ne térjen el túlságosan attól a helytől, ahol a háló létrehozásakor volt. Például a <code>SCREWS_TILT_CALCULATE MAX_DEVIATION=0.01</code> hozzáadható a szeletelő egyéni indító G-kódjához a háló betöltése előtt. Ez megszakítja a nyomtatást, ha a beállított határértéket túllépi (ebben a példában 0,01 mm), lehetőséget adva a felhasználónak a csavarok beállítására és a nyomtatás újraindítására.</p>
 <p>A <code>DIRECTION</code> paraméter akkor hasznos, ha az ágy szintező csavarjait csak egy irányba tudja elfordítani. Például lehetnek olyan csavarjai, amelyek a lehető legalacsonyabb (vagy legmagasabb) pozícióban vannak meghúzva, és csak egy irányba forgathatók az ágy emeléséhez (vagy süllyesztéséhez). Ha a csavarokat csak az óramutató járásával megegyező irányban tudja elfordítani, futtassa a <code>SCREWS_TILT_CALCULATE DIRECTION=CW</code> parancsot. Ha csak az óramutató járásával ellentétes irányban tudja elforgatni őket, futtassa a <code>SCREWS_TILT_CALCULATE DIRECTION=CCW</code> parancsot. A program kiválaszt egy megfelelő referenciapontot, hogy az ágyat az összes csavar adott irányba történő elfordításával szintezhesse.</p>
 
               
@@ -1464,13 +1464,13 @@ Recv: ok
       
       
         
-        <a href="Bed_Mesh.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Ágyháló" rel="next">
+        <a href="Bed_Mesh.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Ágy háló" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Következő
               </span>
-              Ágyháló
+              Ágy háló
             </div>
           </div>
           <div class="md-footer__button md-icon">

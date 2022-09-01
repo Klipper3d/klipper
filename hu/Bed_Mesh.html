@@ -13,7 +13,7 @@
     
     
       
-        <title>Ágyháló - Klipper dokumentáció</title>
+        <title>Ágy háló - Klipper dokumentáció</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#agyhalo" class="md-skip">
+        <a href="#agy-halo" class="md-skip">
           Kihagyás
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Ágyháló
+              Ágy háló
             
           </span>
         </div>
@@ -602,12 +602,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Ágyháló
+          Ágy háló
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Bed_Mesh.html" class="md-nav__link md-nav__link--active">
-        Ágyháló
+        Ágy háló
       </a>
       
         
@@ -764,7 +764,7 @@
   
     <li class="md-nav__item">
       <a href="Endstop_Phase.html" class="md-nav__link">
-        Végállás szakasz
+        Végállás fázis
       </a>
     </li>
   
@@ -1519,8 +1519,8 @@
 </a>
 
 
-<h1 id="agyhalo">Ágyháló<a class="headerlink" href="#agyhalo" title="Permanent link">&para;</a></h1>
-<p>Az ágyháló modul használható az ágyfelület egyenetlenségeinek kiegyenlítésére, hogy jobb első réteget érjen el az egész ágyon. Meg kell jegyezni, hogy a szoftveralapú korrekció nem fog tökéletes eredményt elérni, csak megközelítő értékekkel tudatja az ágy alakját. A Bed Mesh szintén nem tudja kompenzálni a mechanikai és elektromos problémákat. Ha egy tengely ferde vagy egy szonda nem pontos, akkor a bed_mesh modul nem fog pontos eredményeket kapni a szintezésről.</p>
+<h1 id="agy-halo">Ágy háló<a class="headerlink" href="#agy-halo" title="Permanent link">&para;</a></h1>
+<p>Az ágy háló modul használható az ágyfelület egyenetlenségeinek kiegyenlítésére, hogy jobb első réteget érjen el az egész ágyon. Meg kell jegyezni, hogy a szoftveralapú korrekció nem fog tökéletes eredményt elérni, csak megközelítő értékekkel tudatja az ágy alakját. Az ágy háló szintén nem tudja kompenzálni a mechanikai és elektromos problémákat. Ha egy tengely ferde vagy egy szonda nem pontos, akkor a bed_mesh modul nem fog pontos eredményeket kapni a szintezésről.</p>
 <p>A hálókalibrálás előtt meg kell győződnie arról, hogy a szonda Z-eltolása kalibrálva van. Ha végállást használ a Z-kezdőponthoz, akkor azt is kalibrálni kell. További információkért lásd a <a href="Probe_Calibrate.html">Szonda Kalibrálás</a> és a Z_ENDSTOP_CALIBRATE című fejezetben <a href="Manual_Level.html">Kézi Szintezést</a>.</p>
 <h2 id="alapveto-konfiguracio">Alapvető konfiguráció<a class="headerlink" href="#alapveto-konfiguracio" title="Permanent link">&para;</a></h2>
 <h3 id="teglalap-alaku-agyak">Téglalap alakú ágyak<a class="headerlink" href="#teglalap-alaku-agyak" title="Permanent link">&para;</a></h3>
@@ -1658,7 +1658,7 @@ faulty_region_4_max: 45.0, 210.0
 <h2 id="agy-halo-g-kodok">Ágy háló G-kódok<a class="headerlink" href="#agy-halo-g-kodok" title="Permanent link">&para;</a></h2>
 <h3 id="kalibracio">Kalibráció<a class="headerlink" href="#kalibracio" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CALIBRATE PROFILE=&lt;name&gt; METHOD=[manual | automatic] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code> * Alapértelmezett profil: alapértelmezett<em> </em>Alapértelmezett módszer: automatikus, ha érzékelőt észlel, egyébként manuális*</p>
-<p>Elindítja a mérési eljárást az ágyháló kalibrálásához.</p>
+<p>Elindítja a mérési eljárást az ágy háló kalibrálásához.</p>
 <p>A háló a <code>PROFILE</code> paraméter által megadott profilba kerül mentésre, vagy <code>default</code>, ha nincs megadva. Ha a <code>METHOD=manual</code> paramétert választjuk, akkor kézi mérés történik. Az automatikus és a kézi mérés közötti váltáskor a generált hálópontok automatikusan kiigazításra kerülnek.</p>
 <p>Lehetőség van hálóparaméterek megadására a mért terület módosítására. A következő paraméterek állnak rendelkezésre:</p>
 <ul>
@@ -1752,13 +1752,13 @@ faulty_region_4_max: 45.0, 210.0
       
       
         
-        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Végállás szakasz" rel="next">
+        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--next" aria-label="Következő: Végállás fázis" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Következő
               </span>
-              Végállás szakasz
+              Végállás fázis
             </div>
           </div>
           <div class="md-footer__button md-icon">

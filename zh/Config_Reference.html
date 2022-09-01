@@ -3991,19 +3991,18 @@ radius:
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: winch
 
-# The stepper_a section describes the stepper connected to the first
-# cable winch. A minimum of 3 and a maximum of 26 cable winches may be
-# defined (stepper_a to stepper_z) though it is common to define 4.
+#   stepper_a 分段描述了连接到缆绳铰盘的第一个步进器。
+#   最少3个，最多26个缆绳铰盘可以被定义(stepper_a 到 stepper_z)，但通常
+#   会定义4个。
 [stepper_a]
 rotation_distance:
-#   The rotation_distance is the nominal distance (in mm) the toolhead
-#   moves towards the cable winch for each full rotation of the
-#   stepper motor. This parameter must be provided.
+#   rotation_distance 是工具头在步进电机每转一圈时向缆绳绞盘移动的额定距离（单位：mm）。
+#   必须提供这个参数。
 anchor_x:
 anchor_y:
 anchor_z:
-#   The X, Y, and Z position of the cable winch in cartesian space.
-#   These parameters must be provided.
+#   缆绳绞盘在笛卡尔空间的X、Y和Z位置。
+#   必须提供这些参数。
 </code></pre></div>
 
 <h3 id="_9">无运动学<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
@@ -5149,7 +5148,7 @@ extruder:
 </code></pre></div>
 
 <h2 id="_18">温度传感器<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
-<p>Klipper includes definitions for many types of temperature sensors. These sensors may be used in any config section that requires a temperature sensor (such as an <code>[extruder]</code> or <code>[heater_bed]</code> section).</p>
+<p>Klipper内置了许多类型的温度传感器的定义。这些传感器可用于任何需要温度传感器的配置分段（如<code>[extruder]</code> 或<code>[heater_bed]</code> 分段）。</p>
 <h3 id="_19">常见热敏电阻<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h3>
 <p>常见的热敏电阻。在使用这些传感器之一的加热器分段中可以使用以下参数。</p>
 <div class="highlight"><pre><span></span><code>sensor_type:

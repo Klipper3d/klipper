@@ -1350,11 +1350,11 @@
 <div class="highlight"><pre><span></span><code>Z_ENDSTOP_CALIBRATE
 </code></pre></div>
 
-<p>然後按照 <a href="Bed_Level.html#the-paper-test">"the paper test"</a> 中描述的步驟確定給定位置的噴嘴和床之間的實際距離。完成這些步驟後，可以“接受”該位置並將結果保存到配置文件中：</p>
+<p>然後按照<a href="Bed_Level.html#the-paper-test">"the paper test"</a>中描述的步驟確定給定位置的噴嘴和床之間的實際距離。完成這些步驟後，可以“接受”該位置並將結果保存到配置文件中：</p>
 <div class="highlight"><pre><span></span><code>SAVE_CONFIG
 </code></pre></div>
 
-<p>最好在床的 Z 軸的另一端使用 Z 限位開關。 （遠離床的歸位更加穩健，因為通常將 Z 歸位總是安全的。）但是，如果必須向床歸位，建議調整限位器以觸發小距離（例如，0.5 毫米） ) 在床上方。幾乎所有的限位開關都可以安全地按下其觸發點以外的一小段距離。完成此操作後，應該會發現“Z_ENDSTOP_CALIBRATE”命令報告了 Z position_endstop 的一個小的正值（例如，0.5mm）。在離床仍有一段距離時觸發終點止動裝置可降低意外撞床的風險。</p>
+<p>最好在床的 Z 軸的另一端使用 Z 限位開關。 （遠離床的歸位更加穩健，因為通常將 Z 歸位總是安全的。）但是，如果必須向床歸位，建議調整限位器以觸發小距離（例如，0.5 毫米） ) 在床上方。幾乎所有的限位開關都可以安全地按下其觸發點以外的一小段距離。完成此操作後，應該會發現<code>Z_ENDSTOP_CALIBRATE</code>命令報告了 Z position_endstop 的一個小的正值（例如，0.5mm）。在離床仍有一段距離時觸發終點止動裝置可降低意外撞床的風險。</p>
 <p>某些打印機能夠手動調整物理止動開關的位置。但是，建議使用 Klipper 在軟件中執行 Z 終點定位 - 一旦終點的物理位置位於方便的位置，可以通過運行 Z_ENDSTOP_CALIBRATE 或通過手動更新配置文件中的 Z position_endstop 來進行任何進一步的調整。</p>
 <h2 id="_2">調整列印調平螺絲<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>使用床身調平螺絲獲得良好床身調平的秘訣是在床身調平過程中利用打印機的高精度運動系統。這是通過將噴嘴命令到每個床螺桿附近的位置，然後調整該螺桿直到床與噴嘴之間的設定距離來完成的。 Klipper 有一個工具可以幫助解決這個問題。為了使用該工具，必須指定每個螺絲的 XY 位置。</p>
@@ -1366,7 +1366,7 @@ screw3: 150, 100
 </code></pre></div>
 
 <p>如果床底螺絲位於床底下，則指定螺絲正上方的 XY 位置。如果螺絲在床外，則指定最靠近仍在床範圍內的螺絲的 XY 位置。</p>
-<p>配置文件準備好後，運行“RESTART”以加載該配置，然後可以通過運行以下命令啟動該工具：</p>
+<p>配置文件準備好後，運行<code>RESTART</code>以加載該配置，然後可以通過運行以下命令啟動該工具：</p>
 <div class="highlight"><pre><span></span><code>BED_SCREWS_ADJUST
 </code></pre></div>
 

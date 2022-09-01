@@ -589,7 +589,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágyháló
+        Ágy háló
       </a>
     </li>
   
@@ -603,7 +603,7 @@
   
     <li class="md-nav__item">
       <a href="Endstop_Phase.html" class="md-nav__link">
-        Végállás szakasz
+        Végállás fázis
       </a>
     </li>
   
@@ -1707,7 +1707,7 @@ bossac -U -p /dev/ttyACM0 -R
 </code></pre></div>
 
 <h2 id="samd21-mikrovezerlok-arduino-zero">SAMD21 mikrovezérlők (Arduino Zero)<a class="headerlink" href="#samd21-mikrovezerlok-arduino-zero" title="Permanent link">&para;</a></h2>
-<p>A SAMD21 bootloader az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Ez általában egy dedikált SWD hardver dongle segítségével történik. Alternatívaként használhatunk egy <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi with OpenOCD</a>.</p>
+<p>A SAMD21 bootloader az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Ez általában egy dedikált SWD hardver dongle segítségével történik. Alternatívaként használhatunk egy <a href="#az-openocd-futtatasa-a-raspberry-pi-n">OpenOCD futtatást a Raspberry PI-n</a>.</p>
 <p>A bootloader OpenOCD-vel történő égetéséhez használja a következő chipkonfigurációt:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/at91samdXX.cfg]
 </code></pre></div>
@@ -1730,7 +1730,7 @@ program samd21_sam_ba.bin verify
 </code></pre></div>
 
 <h2 id="samd51-mikrovezerlok-adafruit-metro-m4-es-hasonlo">SAMD51 mikrovezérlők (Adafruit Metro-M4 és hasonló)<a class="headerlink" href="#samd51-mikrovezerlok-adafruit-metro-m4-es-hasonlo" title="Permanent link">&para;</a></h2>
-<p>A SAMD21-hez hasonlóan a SAMD51 bootloader is az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Az <a href="#running-openocd-on-the-raspberry-pi">OpenOCD on a Raspberry Pi</a> bootloader égetéséhez használja a következő chipkonfigurációt:</p>
+<p>A SAMD21-hez hasonlóan a SAMD51 bootloader is az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Az <a href="#az-openocd-futtatasa-a-raspberry-pi-n">OpenOCD futtatása a Raspberry PI-n</a> bootloader égetéséhez használja a következő chipkonfigurációt:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/atsame5x.cfg]
 </code></pre></div>
 
@@ -1771,7 +1771,7 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 <h3 id="stm32f103-hid-bootloaderrel">STM32F103 HID bootloaderrel<a class="headerlink" href="#stm32f103-hid-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>A <a href="https://github.com/Serasidis/STM32_HID_Bootloader">HID bootloader</a> egy kompakt, driver nélküli bootloader, amely képes USB-n keresztül égetni. Szintén elérhető egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">fork az SKR Mini E3 1.2 specifikus buildekkel</a>.</p>
 <p>Az általános STM32F103 alaplapok, mint például a blue pill esetében a bootloader 3,3V-os soros égetése lehetséges az stm32flash használatával, amint azt a fenti stm32duino szakaszban említettük, a kívánt hid bootloader bináris fájlnevének behelyettesítésével (azaz: hid_generic_pc13.bin a blue pillhez).</p>
-<p>Az SKR Mini E3 esetében nem lehet stm32flash-t használni, mivel a boot0 láb közvetlenül a földre van kötve, és nincs alaplapi tűkiállása. A bootloader égetéséhez ajánlott STLink V2-t használni STM32Cube programozóval. Ha nincs vagy nem fér hozzá egy STLinkhez, akkor lehetséges egy <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi és OpenOCD</a> használata is a következő chipkonfigurációval:</p>
+<p>Az SKR Mini E3 esetében nem lehet stm32flash-t használni, mivel a boot0 láb közvetlenül a földre van kötve, és nincs alaplapi tűkiállása. A bootloader égetéséhez ajánlott STLink V2-t használni STM32Cube programozóval. Ha nincs vagy nem fér hozzá egy STLinkhez, akkor lehetséges egy <a href="#az-openocd-futtatasa-a-raspberry-pi-n">OpenOCD futtatása a Raspberry PI-n</a> használata is a következő chipkonfigurációval:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/stm32f1x.cfg]
 </code></pre></div>
 

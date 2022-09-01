@@ -682,7 +682,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágyháló
+        Ágy háló
       </a>
     </li>
   
@@ -696,7 +696,7 @@
   
     <li class="md-nav__item">
       <a href="Endstop_Phase.html" class="md-nav__link">
-        Végállás szakasz
+        Végállás fázis
       </a>
     </li>
   
@@ -1409,7 +1409,7 @@
 <li>A rotation_distance kiszámítása: <code>rotation_distance = &lt;previous_rotation_distance&gt; * &lt;actual_extrude_distance&gt; / &lt;requested_extrude_distance&gt;</code> Az új rotation_distance-t három tizedesjegyre kerekítjük.</li>
 </ol>
 <p>Ha az actual_extrude_distance több mint 2 mm-rel eltér a requested_extrude_distance-tól, akkor érdemes a fenti lépéseket másodszor is elvégezni.</p>
-<p>Megjegyzés: <em>Ne</em> használjon "mérés és trimmelés" típusú módszert az X, Y vagy Z típusú tengelyek kalibrálására. A "measure and trim" módszer nem elég pontos ezekhez a tengelyekhez, és valószínűleg rosszabb konfigurációhoz vezet. Ehelyett, ha szükséges, ezeket a tengelyeket <a href="#obtaining-rotation_distance-by-inspecting-the-hardware">a szíjak, szíjtárcsák és az orsók hardverének mérésével</a> lehet meghatározni.</p>
+<p>Megjegyzés: <em>Ne</em> használjon "mérés és trimmelés" típusú módszert az X, Y vagy Z típusú tengelyek kalibrálására. A "measure and trim" módszer nem elég pontos ezekhez a tengelyekhez, és valószínűleg rosszabb konfigurációhoz vezet. Ehelyett, ha szükséges, ezeket a tengelyeket <a href="#a-forgasi_tavolsag-kinyerese-a-hardver-ellenorzesevel">a szíjak, szíjtárcsák és az orsók hardverének mérésével</a> lehet meghatározni.</p>
 <h2 id="a-rotation_distance-meghatarozasa-a-hardver-vizsgalataval">A rotation_distance meghatározása a hardver vizsgálatával<a class="headerlink" href="#a-rotation_distance-meghatarozasa-a-hardver-vizsgalataval" title="Permanent link">&para;</a></h2>
 <p>Lehetséges a rotation_distance kiszámítása a léptetőmotorok és a nyomtató kinematikájának ismeretében. Ez hasznos lehet, ha a steps_per_mm nem ismert, vagy ha új nyomtatót tervezünk.</p>
 <h3 id="szijhajtasu-tengelyek">Szíjhajtású tengelyek<a class="headerlink" href="#szijhajtasu-tengelyek" title="Permanent link">&para;</a></h3>
@@ -1432,7 +1432,7 @@
 <p>Az extruder tényleges forgatási távolsága nyomtatóról nyomtatóra változik, mivel a "szálmozgató kerék" fogazása, amely a szálakkal érintkezik, változhat. Ez még az egyes száltekercsek között is változhat. A kezdeti rotation_distance meghatározása után használja a <a href="#calibrating-rotation_distance-on-extruders">mérés és trimmelés eljárás</a> műveletet a pontosabb beállításhoz.</p>
 <h2 id="a-gear_ratio-hasznalata">A gear_ratio használata<a class="headerlink" href="#a-gear_ratio-hasznalata" title="Permanent link">&para;</a></h2>
 <p>A <code>gear_ratio</code> beállítása megkönnyítheti a <code>rotation_distance</code> konfigurálását olyan léptetőknél, amelyekhez áttétel (vagy hasonló) van csatlakoztatva. A legtöbb léptető nem rendelkezik áttétellel. Ha nem biztos benne, akkor ne állítsa be a <code>gear_ratio</code> értéket a konfigurációban.</p>
-<p>Ha <code>gear_ratio</code> be van állítva, a <code>rotation_distance</code> azt a távolságot jelöli, amelyet a tengely az áttételen lévő utolsó fogaskerék egy teljes elfordulásával megtesz. Ha például egy "5:1"-es áttételt használunk, akkor kiszámíthatjuk a rotation_distance-ot <a href="#obtaining-rotation_distance-by-inspecting-the-hardware">a hardver ismeretében</a>, majd hozzáadhatjuk a <code>gear_ratio: 5:1</code> értéket a konfigurációs fájlhoz.</p>
+<p>Ha <code>gear_ratio</code> be van állítva, a <code>rotation_distance</code> azt a távolságot jelöli, amelyet a tengely az áttételen lévő utolsó fogaskerék egy teljes elfordulásával megtesz. Ha például egy "5:1"-es áttételt használunk, akkor kiszámíthatjuk a rotation_distance-ot <a href="#a-forgasi_tavolsag-kinyerese-a-hardver-ellenorzesevel">a hardver ismeretében</a>, majd hozzáadhatjuk a <code>gear_ratio: 5:1</code> értéket a konfigurációs fájlhoz.</p>
 <p>A szíjakkal és szíjtárcsákkal megvalósított hajtóművek esetében a fogaskerekek fogainak megszámlálásával lehet meghatározni a gear_ratio-t. Ha például egy 16 fogazású szíjtárcsával rendelkező léptető meghajtja a, 80 fogazású szíjtárcsát, akkor a <code>gear_ratio: 80:16</code> értéket használjuk. Valóban, ki lehetne nyitni egy közönséges, "fogaskerékdobozt" és megszámolni a benne lévő fogakat, hogy megerősítsük a fogaskerék áttételét.</p>
 <p>Vegye figyelembe, hogy néha egy áttétel kissé eltér a hirdetett értéktől. A BMG extrudermotorok közös fogaskerekei példát mutatnak erre. A reklámok szerint "3:1", de valójában "50:17" áttételt használnak. (A közös nevező nélküli fogszámok használata javíthatja a fogaskerekek általános kopását, mivel a fogak nem mindig ugyanúgy fognak össze minden egyes fordulatnál.) A gyakori "5,18:1 bolygóműves sebességváltó", pontosabban a <code>gear_ratio: 57:11</code> értékkel van konfigurálva.</p>
 <p>Ha egy tengelyen több fogaskerék van használatban, akkor a gear_ratio-nak egy vesszővel elválasztott listát lehet megadni. Például egy "5:1" fogaskerék, amely egy 16 fogazású és egy 80 fogazású tárcsát hajt, használhatja a <code>gear_ratio: 5:1, 80:16</code> értékeket.</p>

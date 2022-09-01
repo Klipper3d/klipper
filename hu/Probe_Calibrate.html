@@ -662,7 +662,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágyháló
+        Ágy háló
       </a>
     </li>
   
@@ -676,7 +676,7 @@
   
     <li class="md-nav__item">
       <a href="Endstop_Phase.html" class="md-nav__link">
-        Végállás szakasz
+        Végállás fázis
       </a>
     </li>
   
@@ -1373,7 +1373,7 @@
 
 <p>Vegye figyelembe, hogy ha a nyomtató mozgásrendszerét, a nyomtatófej pozícióját vagy a szonda helyét megváltoztatja, az érvényteleníti a PROBE_CALIBRATE eredményeit.</p>
 <p>Ha a szonda X vagy Y eltolással rendelkezik, és az ágy dőlése megváltozik (pl. szintezőcsavarok beállításával, DELTA_CALIBRATE futtatásával, Z_TILT_ADJUST futtatásával, QUAD_GANTRY_LEVEL futtatásával vagy hasonlóval), akkor ez érvényteleníti a PROBE_CALIBRATE eredményeit. A fenti beállítások bármelyikének módosítása után újra kell kezdeni a PROBE_CALIBRATE futtatását.</p>
-<p>Ha a PROBE_CALIBRATE eredményei érvénytelenek, akkor a szondával kapott korábbi <a href="Bed_Mesh.html">ágyháló</a> eredmények is érvénytelenek. A szonda újrakalibrálása után újra kell futtatni a BED_MESH_CALIBRATE programot.</p>
+<p>Ha a PROBE_CALIBRATE eredményei érvénytelenek, akkor a szondával kapott korábbi <a href="Bed_Mesh.html">ágy háló</a> eredmények is érvénytelenek. A szonda újrakalibrálása után újra kell futtatni a BED_MESH_CALIBRATE programot.</p>
 <h2 id="ismetelt-meresi-teszt">Ismételt mérési teszt<a class="headerlink" href="#ismetelt-meresi-teszt" title="Permanent link">&para;</a></h2>
 <p>A szonda X, Y és Z eltolásának kalibrálása után érdemes ellenőrizni, hogy a szonda megismételhető mérési eredményeket szolgáltat-e. Kezdje a nyomtató alaphelyzetbe állításával, majd mozgassa a fejet az ágy közepéhez közeli pozícióba. Navigáljon az OctoPrint terminál fülre, és futtassa a <code>PROBE_ACCURACY</code> parancsot.</p>
 <p>Ez a parancs tízszer futtatja le a mérést, és az alábbiakhoz hasonló kimenetet ad:</p>

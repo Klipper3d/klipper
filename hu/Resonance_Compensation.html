@@ -591,7 +591,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágyháló
+        Ágy háló
       </a>
     </li>
   
@@ -605,7 +605,7 @@
   
     <li class="md-nav__item">
       <a href="Endstop_Phase.html" class="md-nav__link">
-        Végállás szakasz
+        Végállás fázis
       </a>
     </li>
   
@@ -1570,7 +1570,7 @@
 </li>
 </ol>
 <p>Vegye figyelembe, hogy a próbanyomaton a gyűrődésnek a fenti képen látható íves bevágások mintáját kell követnie. Ha nem így van, akkor ez a hiba nem igazán gyűrődés, és más eredetű. Vagy mechanikai, vagy extruder probléma. Ezt kell először kijavítani, mielőtt engedélyeznénk és hangolnánk a bemeneti formázókat.</p>
-<p>Ha a mérések nem megbízhatóak, mert például a rezgések közötti távolság nem stabil, az azt jelentheti, hogy a nyomtatónak több rezonanciafrekvenciája van ugyanazon a tengelyen. Megpróbálhatjuk helyette a <a href="#unreliable-measurements-of-ringing-frequencies">Megbízhatatlan mérések a gyűrődési frekvenciákról</a> szakaszban leírt hangolási eljárást követni, és még mindig kaphatunk valami infót a bemeneti alakítási technikáról.</p>
+<p>Ha a mérések nem megbízhatóak, mert például a rezgések közötti távolság nem stabil, az azt jelentheti, hogy a nyomtatónak több rezonanciafrekvenciája van ugyanazon a tengelyen. Megpróbálhatjuk helyette a <a href="#a-gyurodesi-frekvenciak-megbizhatatlan-meresei">A gyűrődési frekvenciák megbízhatatlan mérései</a> szakaszban leírt hangolási eljárást követni, és még mindig kaphatunk valami infót a bemeneti alakítási technikáról.</p>
 <p>A gyűrődési frekvencia függhet a modell ágyon belüli helyzetétől és a Z magasságtól, <em>különösen a delta nyomtatóknál</em>; ellenőrizheti, hogy a tesztmodell oldalai mentén és különböző magasságokban különböző pozíciókban lát-e különbséget a frekvenciákban. Ha ez a helyzet, akkor kiszámíthatja az X és Y tengelyen mért átlagos gyűrődési frekvenciákat.</p>
 <p>Ha a mért gyűrődési frekvencia nagyon alacsony (kb. 20-25 Hz alatti), akkor érdemes lehet a nyomtató merevítésére vagy a mozgó tömeg csökkentésére beruházni - attól függően, hogy mi alkalmazható az Ön esetében -, mielőtt a bemeneti alakítás további hangolását folytatná, és utána újra megmérné a frekvenciákat. Sok népszerű nyomtatómodell esetében gyakran már rendelkezésre áll néhány megoldás.</p>
 <p>Vegye figyelembe, hogy a gyűrődési frekvenciák változhatnak, ha a nyomtatóban olyan változtatásokat végeznek, amelyek hatással vannak a mozgó tömegre, vagy például megváltoztatják a gépváz merevségét:</p>
@@ -1614,7 +1614,7 @@ shaper_type: mzv
 <p>Néhány megjegyzés a formázó kiválasztásáról:</p>
 <ul>
 <li>Az EI-formázó alkalmasabb lehet az Y ágyas nyomtatókhoz (ha a rezonanciafrekvencia és az ebből eredő simítás lehetővé teszi): mivel több szál kerül a mozgó ágyra, az ágy tömege nő, és a rezonanciafrekvencia csökken. Mivel az EI shaper robusztusabb a rezonanciafrekvencia-változásokkal szemben, jobban működhet nagy méretű alkatrészek nyomtatásakor.</li>
-<li>A delta kinematika természetéből adódóan a rezonanciafrekvenciák a térfogat különböző részein nagymértékben eltérhetnek. Ezért az EI alakító jobban illeszkedhet a delta nyomtatókhoz, mint az MZV vagy a ZV, és megfontolandó a használata. Ha a rezonanciafrekvencia kellően nagy (50-60 Hz-nél nagyobb), akkor akár meg is próbálkozhatunk a 2HUMP_EI shaper tesztelésével (a fent javasolt teszt futtatásával a <code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI</code>), de ellenőrizze a <a href="#selecting-max_accel">lenti</a> szakaszban található megfontolásokat, mielőtt engedélyezné.</li>
+<li>A delta kinematika természetéből adódóan a rezonanciafrekvenciák a térfogat különböző részein nagymértékben eltérhetnek. Ezért az EI alakító jobban illeszkedhet a delta nyomtatókhoz, mint az MZV vagy a ZV, és megfontolandó a használata. Ha a rezonanciafrekvencia kellően nagy (50-60 Hz-nél nagyobb), akkor akár meg is próbálkozhatunk a 2HUMP_EI shaper tesztelésével (a fent javasolt teszt futtatásával a <code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI</code>), de ellenőrizze <a href="#a-max_accel-kivalasztasa">ebben a szakaszban</a> található megfontolásokat, mielőtt engedélyezné.</li>
 </ul>
 <h3 id="a-max_accel-kivalasztasa">A max_accel kiválasztása<a class="headerlink" href="#a-max_accel-kivalasztasa" title="Permanent link">&para;</a></h3>
 <p>Az előző lépésben kiválasztott formázóhoz nyomtatott tesztet kell készítenie (ha nem nyomtatja ki a <a href="#tuning">javasolt paraméterekkel</a> felszeletelt tesztmodellt a nyomás előtolás kikapcsolásával <code>SET_PRESSURE_ADVANCE ADVANCE=0</code> és a tuningtorony engedélyezésével <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code>). Vegye figyelembe, hogy nagyon nagy gyorsulásoknál a rezonanciafrekvenciától és a választott bemeneti alakítótól függően (pl. az EI alakító nagyobb simítást hoz létre, mint az MZV) a bemeneti alakítás túl nagy simítást és az alkatrészek lekerekítését okozhatja. A max_accel értéket tehát úgy kell megválasztani, hogy ezt megakadályozza. Egy másik paraméter, amely hatással lehet a simításra, az <code>square_corner_velocity</code>, ezért nem tanácsos az alapértelmezett 5 mm/sec fölé növelni, hogy megakadályozzuk a fokozott simítást.</p>
@@ -1691,12 +1691,12 @@ shaper_freq_y: 50
 shaper_type: 2hump_ei
 </code></pre></div>
 
-<p>Folytassa a hangolást a <a href="#selecting-max_accel">max_accel kiválasztása</a> szakaszban.</p>
+<p>Folytassa a hangolást a <a href="#a-max_accel-kivalasztasa">A max_accel kiválasztása</a> szakaszban.</p>
 <h2 id="hibaelharitas-es-gyik">Hibaelhárítás és GYIK<a class="headerlink" href="#hibaelharitas-es-gyik" title="Permanent link">&para;</a></h2>
 <h3 id="nem-tudok-megbizhato-mereseket-vegezni-a-rezonanciafrekvenciakrol">Nem tudok megbízható méréseket végezni a rezonanciafrekvenciákról<a class="headerlink" href="#nem-tudok-megbizhato-mereseket-vegezni-a-rezonanciafrekvenciakrol" title="Permanent link">&para;</a></h3>
-<p>Először is győződjön meg róla, hogy a gyűrődés helyett nem más probléma van a nyomtatóval. Ha a mérések nem megbízhatóak, mert például a rezgések közötti távolság nem stabil, az azt jelentheti, hogy a nyomtatónak több rezonanciafrekvenciája van ugyanazon a tengelyen. Megpróbálhatjuk követni a <a href="#unreliable-measurements-of-ringing-frequencies">Megbízhatatlan mérések a gyűrődési frekvenciákról</a> szakaszban leírt hangolási eljárást, és még mindig ki lehet hozni valamit a bemeneti alakítási technikából. Egy másik lehetőség egy gyorsulásmérő beszerelése, majd rezonanciák <a href="Measuring_Resonances.html">mérése</a> vele, és a bemeneti alakító automatikus hangolása e mérések eredményeinek felhasználásával.</p>
+<p>Először is győződjön meg róla, hogy a gyűrődés helyett nem más probléma van a nyomtatóval. Ha a mérések nem megbízhatóak, mert például a rezgések közötti távolság nem stabil, az azt jelentheti, hogy a nyomtatónak több rezonanciafrekvenciája van ugyanazon a tengelyen. Megpróbálhatjuk követni a <a href="#a-gyurodesi-frekvenciak-megbizhatatlan-meresei">A gyűrődési frekvenciák megbízhatatlan mérései</a> szakaszban leírt hangolási eljárást, és még mindig ki lehet hozni valamit a bemeneti alakítási technikából. Egy másik lehetőség egy gyorsulásmérő beszerelése, majd rezonanciák <a href="Measuring_Resonances.html">mérése</a> vele, és a bemeneti alakító automatikus hangolása e mérések eredményeinek felhasználásával.</p>
 <h3 id="az-input_shaper-engedelyezese-utan-tulsagosan-simitott-nyomtatott-alkatreszeket-kapok-es-a-finom-reszletek-elvesznek">Az [input_shaper] engedélyezése után túlságosan simított nyomtatott alkatrészeket kapok, és a finom részletek elvesznek<a class="headerlink" href="#az-input_shaper-engedelyezese-utan-tulsagosan-simitott-nyomtatott-alkatreszeket-kapok-es-a-finom-reszletek-elvesznek" title="Permanent link">&para;</a></h3>
-<p>Ellenőrizze a <a href="#selecting-max_accel">Max_accel kiválasztása</a> szakaszban található szempontokat. Ha a rezonanciafrekvencia alacsony, nem szabad túl magas max_accel értéket beállítani, vagy növelni a square_corner_velocity paramétereket. Az is lehet, hogy az EI (vagy a 2HUMP_EI és 3HUMP_EI) változók helyett jobb az MZV vagy akár a ZV bemeneti változókat választani.</p>
+<p>Ellenőrizze a <a href="#a-max_accel-kivalasztasa">Max_accel kiválasztása</a> szakaszban található szempontokat. Ha a rezonanciafrekvencia alacsony, nem szabad túl magas max_accel értéket beállítani, vagy növelni a square_corner_velocity paramétereket. Az is lehet, hogy az EI (vagy a 2HUMP_EI és 3HUMP_EI) változók helyett jobb az MZV vagy akár a ZV bemeneti változókat választani.</p>
 <h3 id="miutan-egy-ideig-sikeresen-nyomtatott-gyurodesek-nelkul-most-ugy-tunik-hogy-visszajott">Miután egy ideig sikeresen nyomtatott gyűrődések nélkül, most úgy tűnik, hogy visszajött<a class="headerlink" href="#miutan-egy-ideig-sikeresen-nyomtatott-gyurodesek-nelkul-most-ugy-tunik-hogy-visszajott" title="Permanent link">&para;</a></h3>
 <p>Lehetséges, hogy egy idő után a rezonanciafrekvenciák megváltoztak. Pl. talán a szíjak feszessége megváltozott (a szíjak lazábbak lettek) stb. Jó ötlet a <a href="#ringing-frequency">Gyűrődési frekvencia</a> szakaszban leírtak szerint ellenőrizni és újra megmérni a rezonanciafrekvenciákat, és szükség esetén frissíteni a konfigurációs fájlt.</p>
 <h3 id="tamogatott-a-kettos-kocsi-beallitasa-a-bemeneti-formazokkal">Támogatott a kettős kocsi beállítása a bemeneti formázókkal?<a class="headerlink" href="#tamogatott-a-kettos-kocsi-beallitasa-a-bemeneti-formazokkal" title="Permanent link">&para;</a></h3>
@@ -1707,7 +1707,7 @@ SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
 
 <p>És ugyanígy a 0 kocsira való visszakapcsoláskor is.</p>
 <h3 id="az-input_shaper-befolyasolja-a-nyomtatasi-idot">Az input_shaper befolyásolja a nyomtatási időt?<a class="headerlink" href="#az-input_shaper-befolyasolja-a-nyomtatasi-idot" title="Permanent link">&para;</a></h3>
-<p>Nem, a <code>input_shaper</code> funkció önmagában nincs hatással a nyomtatási időre. A <code>max_accel</code> értéke azonban bizonyosan befolyásolja (ennek a paraméternek a hangolása <a href="#selecting-max_accel">ebben a szakaszban</a> le van írva).</p>
+<p>Nem, a <code>input_shaper</code> funkció önmagában nincs hatással a nyomtatási időre. A <code>max_accel</code> értéke azonban bizonyosan befolyásolja (ennek a paraméternek a hangolása <a href="#a-max_accel-kivalasztasa">ebben a szakaszban</a> le van írva).</p>
 <h2 id="muszaki-reszletek">Műszaki részletek<a class="headerlink" href="#muszaki-reszletek" title="Permanent link">&para;</a></h2>
 <h3 id="bemeneti-valtozok">Bemeneti változók<a class="headerlink" href="#bemeneti-valtozok" title="Permanent link">&para;</a></h3>
 <p>A Klipperben használt bemeneti formázók meglehetősen szabványosak, és részletesebb áttekintést a megfelelő formázókat leíró cikkekben találhatunk. Ez a szakasz a támogatott bemeneti formázók néhány technikai szempontjának rövid áttekintését tartalmazza. Az alábbi táblázat az egyes shaperek néhány (általában hozzávetőleges) paraméterét mutatja.</p>
@@ -1786,7 +1786,7 @@ SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
     <nav class="md-footer__inner md-grid" aria-label="Élőláb">
       
         
-        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Végállás szakasz" rel="prev">
+        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Végállás fázis" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1795,7 +1795,7 @@ SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
               <span class="md-footer__direction">
                 Előző
               </span>
-              Végállás szakasz
+              Végállás fázis
             </div>
           </div>
         </a>
