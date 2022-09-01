@@ -102,6 +102,53 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM9,  GPIO('E',  6),  2, GPIO_FUNCTION(3)},
     {TIM10, GPIO('B',  8),  1, GPIO_FUNCTION(3)},
     {TIM11, GPIO('B',  9),  1, GPIO_FUNCTION(3)}
+#elif CONFIG_MACH_STM32G0
+    {TIM15, GPIO('A',  2), 1, GPIO_FUNCTION(5)},
+    {TIM15, GPIO('A',  3), 2, GPIO_FUNCTION(5)},
+    {TIM14, GPIO('A',  4), 1, GPIO_FUNCTION(4)},
+    {TIM3,  GPIO('A',  6), 1, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('A',  7), 2, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('A',  8), 1, GPIO_FUNCTION(2)},
+    {TIM1,  GPIO('A',  9), 2, GPIO_FUNCTION(2)},
+    {TIM1,  GPIO('A', 10), 3, GPIO_FUNCTION(2)},
+    {TIM1,  GPIO('A', 11), 4, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('B',  0), 3, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('B',  1), 4, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('B',  3), 2, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('B',  4), 1, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('B',  5), 2, GPIO_FUNCTION(1)},
+    {TIM4,  GPIO('B',  6), 1, GPIO_FUNCTION(9)},
+    {TIM4,  GPIO('B',  7), 2, GPIO_FUNCTION(9)},
+    {TIM4,  GPIO('B',  8), 3, GPIO_FUNCTION(9)},
+    {TIM4,  GPIO('B',  9), 4, GPIO_FUNCTION(9)},
+    {TIM15, GPIO('B', 14), 1, GPIO_FUNCTION(5)},
+    {TIM15, GPIO('B', 15), 2, GPIO_FUNCTION(5)},
+    {TIM15, GPIO('C',  1), 1, GPIO_FUNCTION(2)},
+    {TIM15, GPIO('C',  2), 2, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('C',  6), 1, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('C',  7), 2, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('C',  8), 3, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('C',  9), 4, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('C', 10), 3, GPIO_FUNCTION(2)},
+    {TIM1,  GPIO('C', 11), 4, GPIO_FUNCTION(2)},
+    {TIM14, GPIO('C', 12), 1, GPIO_FUNCTION(2)},
+    {TIM16, GPIO('D',  0), 1, GPIO_FUNCTION(2)},
+    {TIM17, GPIO('D',  1), 1, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('D', 12), 1, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('D', 13), 2, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('D', 14), 3, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('D', 15), 4, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('E',  3), 1, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('E',  4), 2, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('E',  5), 3, GPIO_FUNCTION(1)},
+    {TIM3,  GPIO('E',  6), 4, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('E',  9), 1, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('E', 11), 2, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('E', 13), 3, GPIO_FUNCTION(1)},
+    {TIM1,  GPIO('E', 14), 4, GPIO_FUNCTION(1)},
+    {TIM14, GPIO('F',  0), 1, GPIO_FUNCTION(2)},
+    {TIM15, GPIO('F', 12), 1, GPIO_FUNCTION(0)},
+    {TIM15, GPIO('F', 13), 2, GPIO_FUNCTION(0)},
 #elif CONFIG_MACH_STM32H7
     {TIM2, GPIO('A', 0),  1, GPIO_FUNCTION(1)},
     {TIM2, GPIO('A', 5),  1, GPIO_FUNCTION(1)},
@@ -234,7 +281,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val){
     }
     // Enable PWM output
     p->timer->CR1 |= TIM_CR1_CEN;
-#if CONFIG_MACH_STM32H7
+#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G0
     p->timer->BDTR |= TIM_BDTR_MOE;
 #endif
     return channel;
