@@ -9,6 +9,7 @@ CONFIG ../../config/example-corexz.cfg
 CONFIG ../../config/example-hybrid-corexy.cfg
 CONFIG ../../config/example-hybrid-corexz.cfg
 CONFIG ../../config/example-delta.cfg
+CONFIG ../../config/example-deltesian.cfg
 CONFIG ../../config/example-rotary-delta.cfg
 CONFIG ../../config/example-winch.cfg
 
