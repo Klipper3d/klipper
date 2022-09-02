@@ -6,6 +6,9 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/armcm_boot.h" // armcm_main
+#include "board/armcm_reset.h" // try_request_canboot
+#include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
@@ -36,6 +39,23 @@ DECL_INIT(watchdog_init);
 /****************************************************************
  * misc functions
  ****************************************************************/
+
+// Try to reboot into bootloader
+void
+bootloader_request(void)
+{
+    if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
+        return;
+    try_request_canboot();
+    // Disable USB and pause for 5ms so host recognizes a disconnect
+    irq_disable();
+    if (CONFIG_USB)
+        usb_disconnect();
+    // The "LPC17xx-DFU-Bootloader" will enter the bootloader if the
+    // watchdog timeout flag is set.
+    LPC_WDT->WDMOD = 0x07;
+    NVIC_SystemReset();
+}
 
 // Check if a peripheral clock has been enabled
 int
