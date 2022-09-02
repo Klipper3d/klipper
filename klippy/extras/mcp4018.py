@@ -83,6 +83,7 @@ class SoftwareI2C:
 
 class mcp4018:
     def __init__(self, config):
+        self.printer = config.get_printer()
         self.i2c = SoftwareI2C(config, 0x2F)
         self.scale = config.getfloat("scale", 1.0, above=0.0)
         self.start_value = config.getfloat(
@@ -91,6 +92,16 @@ class mcp4018:
         config.get_printer().register_event_handler(
             "klippy:connect", self.handle_connect
         )
+        # Register commands
+        self.name = config.get_name().split()[1]
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command(
+            "SET_DIGIPOT",
+            "DIGIPOT",
+            self.name,
+            self.cmd_SET_DIGIPOT,
+            desc=self.cmd_SET_DIGIPOT_help,
+        )
 
     def handle_connect(self):
         self.set_dac(self.start_value)
@@ -98,6 +109,16 @@ class mcp4018:
     def set_dac(self, value):
         val = int(value * 127.0 / self.scale + 0.5)
         self.i2c.i2c_write([val])
+
+    cmd_SET_DIGIPOT_help = "Set digipot value"
+
+    def cmd_SET_DIGIPOT(self, gcmd):
+        wiper = gcmd.get_float("WIPER", minval=0.0, maxval=self.scale)
+        if wiper is not None:
+            self.set_dac(wiper)
+            gcmd.respond_info(
+                "New value for DIGIPOT = %s, wiper = %.2f" % (self.name, wiper)
+            )
 
 
 def load_config_prefix(config):
