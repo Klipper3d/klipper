@@ -4,6 +4,7 @@
 # Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from . CatchIP import get_host_ip
 
 M73_TIMEOUT = 5.
 
@@ -11,7 +12,7 @@ class DisplayStatus:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.expire_progress = 0.
-        self.progress = self.message = None
+        self.progress = self.message = self.ip = None
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('M73', self.cmd_M73)
@@ -20,6 +21,7 @@ class DisplayStatus:
             'SET_DISPLAY_TEXT', self.cmd_SET_DISPLAY_TEXT,
             desc=self.cmd_SET_DISPLAY_TEXT_help)
     def get_status(self, eventtime):
+        self.ip = get_host_ip()
         progress = self.progress
         if progress is not None and eventtime > self.expire_progress:
             idle_timeout = self.printer.lookup_object('idle_timeout')
@@ -31,7 +33,7 @@ class DisplayStatus:
             sdcard = self.printer.lookup_object('virtual_sdcard', None)
             if sdcard is not None:
                 progress = sdcard.get_status(eventtime)['progress']
-        return { 'progress': progress, 'message': self.message }
+        return { 'progress': progress, 'message': self.message, 'ip': self.ip }
     def cmd_M73(self, gcmd):
         progress = gcmd.get_float('P', None)
         if progress is not None:
