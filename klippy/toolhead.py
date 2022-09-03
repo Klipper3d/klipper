@@ -211,7 +211,8 @@ class ToolHead:
                                             self._handle_shutdown)
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
-        self.max_accel = config.getfloat('max_accel', above=0.)
+        self.max_accel_config = config.getfloat('max_accel', above=0.)
+        self.max_accel = self.max_accel_config
         self.requested_accel_to_decel = config.getfloat(
             'max_accel_to_decel', self.max_accel * 0.5, above=0.)
         self.max_accel_to_decel = self.requested_accel_to_decel
@@ -592,7 +593,7 @@ class ToolHead:
                                   % (gcmd.get_commandline(),))
                 return
             accel = min(p, t)
-        self.max_accel = accel
+        self.max_accel = min(self.max_accel_config, accel)
         self._calc_junction_deviation()
 
 def add_printer_objects(config):
