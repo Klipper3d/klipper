@@ -2162,6 +2162,9 @@ sensor_type: BME280
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
+#bme280_report_time:
+#   Interval in seconds between readings. Default is 0.8, with minimum
+#   0.8.
 ```
 
 ### HTU21D sensor
