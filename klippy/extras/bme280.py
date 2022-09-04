@@ -89,7 +89,7 @@ class BME280:
         self.i2c = bus.MCU_I2C_from_config(
             config, default_addr=BME280_CHIP_ADDR, default_speed=100000)
         self.mcu = self.i2c.get_mcu()
-        self.report_time = config.getfloat('bme280_report_time', 
+        self.report_time = config.getfloat('bme280_report_time',
                                            BME280_MIN_REPORT_TIME,
                                            minval=BME280_MIN_REPORT_TIME)
         self.iir_filter = config.getint('bme280_iir_filter', 1)
