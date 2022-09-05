@@ -505,6 +505,10 @@ class TMCVirtualPinHelper:
 def TMCMicrostepHelper(config, mcu_tmc):
     fields = mcu_tmc.get_fields()
     stepper_name = " ".join(config.get_name().split()[1:])
+    if not config.has_section(stepper_name):
+        raise config.error(
+            "Could not find config section '[%s]' required by tmc driver"
+            % (stepper_name,))
     stepper_config = ms_config = config.getsection(stepper_name)
     if (stepper_config.get('microsteps', None, note_valid=False) is None
         and config.get('microsteps', None, note_valid=False) is not None):
