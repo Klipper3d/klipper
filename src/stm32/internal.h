@@ -30,7 +30,8 @@ extern GPIO_TypeDef * const digital_regs[];
 #define GPIO_OPEN_DRAIN 0x100
 #define GPIO_FUNCTION(fn) (2 | ((fn) << 4))
 #define GPIO_ANALOG 3
-void gpio_peripheral_speed(uint32_t gpio, uint32_t mode, int pullup, uint32_t ospeed);
+void gpio_peripheral_speed(uint32_t gpio, uint32_t mode
+                           , int pullup, uint32_t ospeed);
 void gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup);
 
 // clockline.c

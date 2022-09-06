@@ -20,7 +20,8 @@ struct sdiodev_s {
 void
 command_config_sdio(uint32_t *args)
 {
-    struct sdiodev_s *sdio = oid_alloc(args[0], command_config_sdio, sizeof(*sdio));
+    struct sdiodev_s *sdio = oid_alloc(args[0], command_config_sdio
+                                       , sizeof(*sdio));
 }
 DECL_COMMAND(command_config_sdio, "config_sdio oid=%c");
 
@@ -50,7 +51,8 @@ command_sdio_set_bus_width_and_speed(uint32_t *args)
 
     sdio_switch_bus_width_and_speed(sdio->sdio_config, width, clkdiv);
 }
-DECL_COMMAND(command_sdio_set_bus_width_and_speed, "sdio_set_bus_width_and_speed oid=%c width=%u clkdiv=%u");
+DECL_COMMAND(command_sdio_set_bus_width_and_speed
+             , "sdio_set_bus_width_and_speed oid=%c width=%u clkdiv=%u");
 
 void
 command_sdio_send_command(uint32_t *args)
@@ -62,10 +64,13 @@ command_sdio_send_command(uint32_t *args)
     struct sdiodev_s *sdio = sdiodev_oid_lookup(oid);
     uint8_t response[16];
     uint8_t response_len = 0;
-    uint8_t err = sdio_send_command(sdio->sdio_config, cmd, argument, wait, response, &response_len);
-    sendf("sdio_send_command_response oid=%c error=%c response=%*s", oid, err, response_len, response);
+    uint8_t err = sdio_send_command(sdio->sdio_config, cmd, argument, wait
+                                    , response, &response_len);
+    sendf("sdio_send_command_response oid=%c error=%c response=%*s"
+          , oid, err, response_len, response);
 }
-DECL_COMMAND(command_sdio_send_command, "sdio_send_command oid=%c cmd=%c argument=%u wait=%c");
+DECL_COMMAND(command_sdio_send_command
+             , "sdio_send_command oid=%c cmd=%c argument=%u wait=%c");
 
 void
 command_sdio_read_data(uint32_t *args)
@@ -78,21 +83,26 @@ command_sdio_read_data(uint32_t *args)
     uint32_t blocksize = args[5];
     uint32_t data_len = 0;
     struct sdiodev_s *sdio = sdiodev_oid_lookup(oid);
-    uint8_t err = sdio_prepare_data_transfer(sdio->sdio_config, 1, numblocks, blocksize);
+    uint8_t err = sdio_prepare_data_transfer(sdio->sdio_config, 1, numblocks
+                                             , blocksize);
     if (err == 0) {
-        err = sdio_send_command(sdio->sdio_config, cmd, argument, wait, NULL, NULL);
+        err = sdio_send_command(sdio->sdio_config, cmd, argument
+                                , wait, NULL, NULL);
         if (err == 0) {
             data_len = numblocks*blocksize;
             if (data_len <= sizeof(sdio->data_buffer)) {
-                err = sdio_read_data(sdio->sdio_config, sdio->data_buffer, numblocks, blocksize);
+                err = sdio_read_data(sdio->sdio_config, sdio->data_buffer
+                                     , numblocks, blocksize);
             } else {
                 data_len = 0;
             }
         }
     }
-    sendf("sdio_read_data_response oid=%c error=%c read=%u", oid, err, data_len);
+    sendf("sdio_read_data_response oid=%c error=%c read=%u"
+          , oid, err, data_len);
 }
-DECL_COMMAND(command_sdio_read_data, "sdio_read_data oid=%c cmd=%c argument=%u wait=%u numblocks=%u blocksize=%u");
+DECL_COMMAND(command_sdio_read_data, "sdio_read_data oid=%c cmd=%c " \
+             "argument=%u wait=%u numblocks=%u blocksize=%u");
 
 void
 command_sdio_write_data(uint32_t *args)
@@ -105,21 +115,26 @@ command_sdio_write_data(uint32_t *args)
     uint32_t blocksize = args[5];
     uint32_t data_len = 0;
     struct sdiodev_s *sdio = sdiodev_oid_lookup(oid);
-    uint8_t err = sdio_prepare_data_transfer(sdio->sdio_config, 0, numblocks, blocksize);
+    uint8_t err = sdio_prepare_data_transfer(sdio->sdio_config, 0
+                                             , numblocks, blocksize);
     if (err == 0) {
-        err = sdio_send_command(sdio->sdio_config, cmd, argument, wait, NULL, NULL);
+        err = sdio_send_command(sdio->sdio_config, cmd, argument
+                                , wait, NULL, NULL);
         if (err == 0) {
             data_len = numblocks*blocksize;
             if (data_len <= sizeof(sdio->data_buffer)) {
-                err = sdio_write_data(sdio->sdio_config, sdio->data_buffer, numblocks, blocksize);
+                err = sdio_write_data(sdio->sdio_config, sdio->data_buffer
+                                      , numblocks, blocksize);
             } else {
                 data_len = 0;
             }
         }
     }
-    sendf("sdio_write_data_response oid=%c error=%c write=%u", oid, err, data_len);
+    sendf("sdio_write_data_response oid=%c error=%c write=%u"
+          , oid, err, data_len);
 }
-DECL_COMMAND(command_sdio_write_data, "sdio_write_data oid=%c cmd=%c argument=%u wait=%u numblocks=%u blocksize=%u");
+DECL_COMMAND(command_sdio_write_data, "sdio_write_data oid=%c cmd=%c " \
+             "argument=%u wait=%u numblocks=%u blocksize=%u");
 
 void
 command_sdio_read_data_buffer(uint32_t *args)
@@ -135,7 +150,8 @@ command_sdio_read_data_buffer(uint32_t *args)
     }
     sendf("sdio_read_data_buffer_response oid=%c data=%*s", oid, len, buf);
 }
-DECL_COMMAND(command_sdio_read_data_buffer, "sdio_read_data_buffer oid=%c offset=%u len=%c");
+DECL_COMMAND(command_sdio_read_data_buffer
+             , "sdio_read_data_buffer oid=%c offset=%u len=%c");
 
 void
 command_sdio_write_data_buffer(uint32_t *args)
@@ -151,4 +167,5 @@ command_sdio_write_data_buffer(uint32_t *args)
         memcpy(buf, write_data, write_data_len);
     }
 }
-DECL_COMMAND(command_sdio_write_data_buffer, "sdio_write_data_buffer oid=%c offset=%u data=%*s");
+DECL_COMMAND(command_sdio_write_data_buffer
+             , "sdio_write_data_buffer oid=%c offset=%u data=%*s");
