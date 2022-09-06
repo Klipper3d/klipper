@@ -1,14 +1,15 @@
 // Code to setup gpio on stm32 chip (except for stm32f1)
 //
 // Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2022  H. Gregor Molter <gregor.molter@secretlab.de>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "internal.h" // gpio_peripheral
 
-// Set the mode and extended function of a pin
+// Set the mode, extended function and speed of a pin
 void
-gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
+gpio_peripheral_speed(uint32_t gpio, uint32_t mode, int pullup, uint32_t ospeed)
 {
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
 
@@ -33,6 +34,13 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     // stm32f4 is ~50Mhz at 40pF
     // stm32g0 is ~30Mhz at 50pF
     // stm32h7 is ~85Mhz at 50pF
-    uint32_t ospeed = CONFIG_MACH_STM32F0 ? 0x01 : 0x02;
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (ospeed << m_shift);
+}
+
+// Set the mode and extended function of a pin
+void
+gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
+{
+    uint32_t ospeed = CONFIG_MACH_STM32F0 ? 0x01 : 0x02;
+    gpio_peripheral_speed(gpio, mode, pullup, ospeed);
 }
