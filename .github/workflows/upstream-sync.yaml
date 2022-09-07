@@ -1,0 +1,138 @@
+name: "Upstream Sync"
+
+on:
+  # schedule:
+  #   - cron:  '0 0 * * *'
+  # every day at midnight
+
+  workflow_dispatch: # click the button on Github repo!
+
+# Remotes:
+# - origin: our fork
+# - klipper3d: original Klipper repository
+
+# Git references at play:
+# - prev_upstream: tag pointing to the last mainline commit that was formatted
+# - prev_upstream..klipper3d/master: the new commits that we want to rebase on top of upstream
+# - upstream: branch on our fork containing formatted klipper with new commits being rebased + formatted
+# - upstream_pr: copy of the upstream branch, allowing to edit the PR
+
+# Fetching: (trying to remain minimalist)
+# - origin/prev_upstream: single commit deep
+# - klipper3d/master: tries to select the range prev_upstream..klipper3d/master by date (--shallow-exclude not supported by github?)
+#  After tat the presence of new commits is confirmed:
+# - origin/master: single commit deep, for getting the tooling config
+# - origin/upstream: single commit deep, for rebasing on top
+
+# Workspace:
+# - Root contains scripts/python-format.sh pyproject.toml .flake8
+# - repo contains the checked out repository at prev_upstream
+
+jobs:
+  sync_latest_from_klipper3d:
+    runs-on: ubuntu-20.04
+    name: Sync latest commits from klipper3d repository
+
+    steps:
+      # Fetch origin/prev_upstream
+      - uses: actions/checkout@v2
+        with:
+          ref: prev_upstream
+          path: "repo"
+
+      # Setup klipper3d remote and fetch klipper3d/master
+      - name: "Checks for new commits"
+        id: "fetch"
+        run: |
+          cd repo
+          git remote add klipper3d https://github.com/Klipper3d/klipper.git
+          git fetch --prune --no-tags --shallow-since="$(git show -s --format=%ct prev_upstream)" klipper3d master
+          COMMITS=$(git rev-list prev_upstream..klipper3d/master)
+
+          if [ "$COMMITS" ]; then
+            echo "Upstream commits processed $(git rev-parse prev_upstream)..$(git rev-parse klipper3d/master):" >> $GITHUB_STEP_SUMMARY
+            echo "$COMMITS" | tee -a $GITHUB_STEP_SUMMARY
+            echo >> $GITHUB_STEP_SUMMARY
+            echo "::set-output name=new_commits::1"
+          else
+            echo "::set-output name=new_commits::0"
+          fi
+          cat $GITHUB_STEP_SUMMARY >> "$RUNNER_TEMP/summary"
+
+      # Fetch origin/upstream (branch on which we add rebased commits) and origin/master (for tooling configs)
+      - name: Checkout tooling configs
+        if: ${{ steps.fetch.outputs.new_commits }} == '1'
+        run: |
+          cd repo
+          git fetch --depth=1 --prune --no-tags origin master upstream
+          git --work-tree=.. checkout origin/master -- ../scripts/requirements_dev.txt ../scripts/python-format.sh ../pyproject.toml ../.flake8
+          git reset
+          echo "tooling configs checked out from: $(git rev-parse origin/master)" >> $GITHUB_STEP_SUMMARY
+          cat $GITHUB_STEP_SUMMARY >> "$RUNNER_TEMP/summary"
+
+      - name: Setup python
+        if: ${{ steps.fetch.outputs.new_commits }} == '1'
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.3
+          cache-dependency-path: scripts/requirements_dev.txt
+          cache: "pip"
+      - name: Pip install
+        if: ${{ steps.fetch.outputs.new_commits }} == '1'
+        run: pip install -r scripts/requirements_dev.txt
+
+      - name: Rebase + Formatting
+        if: ${{ steps.fetch.outputs.new_commits }} == '1'
+        run: |
+          cd repo
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          GIT_COMMIT=HEAD AMEND=Y BLACK_ARGS="--config ../pyproject.toml"\
+            git rebase prev_upstream klipper3d/master --onto=origin/upstream \
+            -Xtheirs -Xignore-all-space --exec ../scripts/python-format.sh
+          git push origin +klipper3d/master:refs/tags/prev_upstream +HEAD:refs/heads/upstream +HEAD:refs/heads/upstream_pr
+
+          echo "formatted \`upstream\` branch was: $(git rev-parse origin/upstream)" >> $GITHUB_STEP_SUMMARY
+          echo "new \`upstream\`: $(git rev-parse HEAD)" >> $GITHUB_STEP_SUMMARY
+          cd ..
+          echo "tooling sha1sums (from master):" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sha1sum scripts/python-format.sh pyproject.toml .flake8 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat $GITHUB_STEP_SUMMARY >> "$RUNNER_TEMP/summary"
+
+      - name: Create Pull Request
+        if: ${{ steps.fetch.outputs.new_commits }} == '1'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs')
+            const { repo, owner } = context.repo;
+            const result = await github.rest.pulls.create({
+              title: "[GA] Upstream changes",
+              owner,
+              repo,
+              head: "upstream_pr",
+              base: "master",
+              body: [
+                "New commits from Klipper3D.",
+                "",
+                fs.readFileSync(process.env.RUNNER_TEMP + '/summary'),
+                "",
+                "*Please don't squash me.*",
+                "When there are conflicts, this branch can be manually rebased on top of master:",
+                "```",
+                "git checkout upstream_pr",
+                "git pull -f # If your alread have an old local version of that branch",
+                "git rebase origin/master",
+                "<fix conflicts, git add [files], git rebase --contine, ...>",
+                "git push -f",
+                "```",
+              ].join("\n"),
+            });
+            github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: result.data.number,
+              labels: ["upstream"],
+            });
