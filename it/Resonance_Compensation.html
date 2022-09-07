@@ -709,8 +709,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#choosing-input-shaper" class="md-nav__link">
-    Choosing input shaper
+  <a href="#scelta-del-input-shaper" class="md-nav__link">
+    Scelta del input shaper
   </a>
   
 </li>
@@ -1409,8 +1409,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#choosing-input-shaper" class="md-nav__link">
-    Choosing input shaper
+  <a href="#scelta-del-input-shaper" class="md-nav__link">
+    Scelta del input shaper
   </a>
   
 </li>
@@ -1554,8 +1554,8 @@
 <p>First, measure the <strong>ringing frequency</strong>.</p>
 <ol>
 <li>If <code>square_corner_velocity</code> parameter was changed, revert it back to 5.0. It is not advised to increase it when using input shaper because it can cause more smoothing in parts - it is better to use higher acceleration value instead.</li>
-<li>Increase <code>max_accel_to_decel</code> by issuing the following command: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
-<li>Disable Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Aumenta <code>max_accel_to_decel</code> inserendo il seguente comando: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Disabilita la Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>If you have already added <code>[input_shaper]</code> section to the printer.cfg, execute <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code> command. If you get "Unknown command" error, you can safely ignore it at this point and continue with the measurements.</li>
 <li>Execute the command: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Basically, we try to make ringing more pronounced by setting different large values for acceleration. This command will increase the acceleration every 5 mm starting from 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 and so forth up until 7000 mm/sec^2 at the last band.</li>
 <li>Stampa il modello di test sliced con i parametri suggeriti.</li>
@@ -1563,21 +1563,21 @@
 <p>You can stop the print earlier if the ringing is clearly visible and you see that acceleration gets too high for your printer (e.g. printer shakes too much or starts skipping steps).</p>
 <ol>
 <li>Use X and Y marks at the back of the model for reference. The measurements from the side with X mark should be used for X axis <em>configuration</em>, and Y mark - for Y axis configuration. Measure the distance <em>D</em> (in mm) between several oscillations on the part with X mark, near the notches, preferably skipping the first oscillation or two. To measure the distance between oscillations more easily, mark the oscillations first, then measure the distance between the marks with a ruler or calipers:|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</li>
-<li>Count how many oscillations <em>N</em> the measured distance <em>D</em> corresponds to. If you are unsure how to count the oscillations, refer to the picture above, which shows <em>N</em> = 6 oscillations.</li>
+<li>Contare a quante oscillazioni <em>N</em> corrisponde la distanza misurata <em>D</em>. Se non sei sicuro di come contare le oscillazioni, fai riferimento all'immagine sopra, che mostra <em>N</em> = 6 oscillazioni.</li>
 <li>Compute the ringing frequency of X axis as <em>V</em> &middot; <em>N</em> / <em>D</em> (Hz), where <em>V</em> is the velocity for outer perimeters (mm/sec). For the example above, we marked 6 oscillations, and the test was printed at 100 mm/sec velocity, so the frequency is 100 * 6 / 12.14 ≈ 49.4 Hz.</li>
 <li>Do (8) - (10) for Y mark as well.</li>
 </ol>
 </li>
 </ol>
 <p>Note that ringing on the test print should follow the pattern of the curved notches, as in the picture above. If it doesn't, then this defect is not really a ringing and has a different origin - either mechanical, or an extruder issue. It should be fixed first before enabling and tuning input shapers.</p>
-<p>If the measurements are not reliable because, say, the distance between the oscillations is not stable, it might mean that the printer has several resonance frequencies on the same axis. One may try to follow the tuning process described in <a href="#unreliable-measurements-of-ringing-frequencies">Unreliable measurements of ringing frequencies</a> section instead and still get something out of the input shaping technique.</p>
+<p>Se le misurazioni non sono affidabili perché, ad esempio, la distanza tra le oscillazioni non è stabile, potrebbe significare che la stampante ha più frequenze di risonanza sullo stesso asse. Si può invece provare a seguire il processo di sintonizzazione descritto nella sezione <a href="#unreliable-measurements-of-ringing-frequencies">Misurazioni inaffidabili delle frequenze di ringing</a> e ottenere comunque qualcosa dalla tecnica di input shaping .</p>
 <p>Ringing frequency can depend on the position of the model within the buildplate and Z height, <em>especially on delta printers</em>; you can check if you see the differences in frequencies at different positions along the sides of the test model and at different heights. You can calculate the average ringing frequencies over X and Y axes if that is the case.</p>
 <p>If the measured ringing frequency is very low (below approx 20-25 Hz), it might be a good idea to invest into stiffening the printer or decreasing the moving mass - depending on what is applicable in your case - before proceeding with further input shaping tuning, and re-measuring the frequencies afterwards. For many popular printer models there are often some solutions available already.</p>
 <p>Note that the ringing frequencies can change if the changes are made to the printer that affect the moving mass or change the stiffness of the system, for example:</p>
 <ul>
-<li>Some tools are installed, removed or replaced on the toolhead that change its mass, e.g. a new (heavier or lighter) stepper motor for direct extruder or a new hotend is installed, heavy fan with a duct is added, etc.</li>
-<li>Belts are tightened.</li>
-<li>Some addons to increase frame rigidity are installed.</li>
+<li>Alcuni strumenti vengono installati, rimossi o sostituiti sulla testa di stampa che ne modificano la massa, ad es. viene installato un nuovo motore passo-passo (più pesante o più leggero) per estrusore diretto o viene installato un nuovo hotend, viene aggiunta una ventola pesante con un condotto, ecc.</li>
+<li>Le cinghie sono tese.</li>
+<li>Sono installati alcuni componenti aggiuntivi per aumentare la rigidità del telaio.</li>
 <li>Different bed is installed on a bed-slinger printer, or glass added, etc.</li>
 </ul>
 <p>If such changes are made, it is a good idea to at least measure the ringing frequencies to see if they have changed.</p>
@@ -1588,16 +1588,16 @@ shaper_freq_x: ...  # frequency for the X mark of the test model
 shaper_freq_y: ...  # frequency for the Y mark of the test model
 </code></pre></div>
 
-<p>For the example above, we get shaper_freq_x/y = 49.4.</p>
-<h3 id="choosing-input-shaper">Choosing input shaper<a class="headerlink" href="#choosing-input-shaper" title="Permanent link">&para;</a></h3>
-<p>Klipper supports several input shapers. They differ in their sensitivity to errors determining the resonance frequency and how much smoothing they cause in the printed parts. Also, some of the shapers like 2HUMP_EI and 3HUMP_EI should usually not be used with shaper_freq = resonance frequency - they are configured from different considerations to reduce several resonances at once.</p>
+<p>Per l'esempio sopra, otteniamo shaper_freq_x/y = 49.4.</p>
+<h3 id="scelta-del-input-shaper">Scelta del input shaper<a class="headerlink" href="#scelta-del-input-shaper" title="Permanent link">&para;</a></h3>
+<p>Klipper supporta diversi input shaper. Si differenziano per la loro sensibilità agli errori che determinano la frequenza di risonanza e quanto smussamento provocano nelle parti stampate. Inoltre, alcuni degli shaper come 2HUMP_EI e 3HUMP_EI di solito non dovrebbero essere usati con shaper_freq = frequenza di risonanza: sono configurati in base a diverse considerazioni per ridurre diverse risonanze contemporaneamente.</p>
 <p>For most of the printers, either MZV or EI shapers can be recommended. This section describes a testing process to choose between them, and figure out a few other related parameters.</p>
 <p>Print the ringing test model as follows:</p>
 <ol>
-<li>Restart the firmware: <code>RESTART</code></li>
-<li>Prepare for test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
-<li>Disable Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
-<li>Execute: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
+<li>Riavviare il firmware: <code>RESTART</code></li>
+<li>Prepararsi per il test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Disabilita la Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Eseguire: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Eseguire il comando: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
 <li>Stampa il modello di test sliced con i parametri suggeriti.</li>
 </ol>
@@ -1633,12 +1633,12 @@ shaper_type: mzv
 <p>Note that the precision of the resonance frequencies measurements using the ringing test model is sufficient for most purposes, so further tuning is not advised. If you still want to try to double-check your results (e.g. if you still see some ringing after printing a test model with an input shaper of your choice with the same frequencies as you have measured earlier), you can follow the steps in this section. Note that if you see ringing at different frequencies after enabling [input_shaper], this section will not help with that.</p>
 <p>Assuming that you have sliced the ringing model with suggested parameters, complete the following steps for each of the axes X and Y:</p>
 <ol>
-<li>Prepare for test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepararsi per il test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
 <li>Assicurati che Pressure Advance sia disabilitato: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Eseguire: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>From the existing ringing test model with your chosen input shaper select the acceleration that shows ringing sufficiently well, and set it with: <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
 <li>Calculate the necessary parameters for the <code>TUNING_TOWER</code> command to tune <code>shaper_freq_x</code> parameter as follows: start = shaper_freq_x * 83 / 132 and factor = shaper_freq_x / 66, where <code>shaper_freq_x</code> here is the current value in <code>printer.cfg</code>.</li>
-<li>Execute the command: <code>TUNING_TOWER COMMAND=SET_INPUT_SHAPER PARAMETER=SHAPER_FREQ_X START=start FACTOR=factor BAND=5</code> using <code>start</code> and <code>factor</code> values calculated at step (5).</li>
+<li>Eseguire il comando: <code>TUNING_TOWER COMMAND=SET_INPUT_SHAPER PARAMETER=SHAPER_FREQ_X START=start FACTOR=factor BAND=5</code> usando i valori <code>start</code> e <code>factor</code> calcolati al punto (5).</li>
 <li>Print the test model.</li>
 <li>Reset the original frequency value: <code>SET_INPUT_SHAPER SHAPER_FREQ_X=...</code>.</li>
 <li>Find the band which shows ringing the least and count its number from the bottom starting at 1.</li>
@@ -1761,7 +1761,7 @@ SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
 </table>
 <p>A note on vibration reduction: the values in the table above are approximate. If the damping ratio of the printer is known for each axis, the shaper can be configured more precisely and it will then reduce the resonances in a bit wider range of frequencies. However, the damping ratio is usually unknown and is hard to estimate without a special equipment, so Klipper uses 0.1 value by default, which is a good all-round value. The frequency ranges in the table cover a number of different possible damping ratios around that value (approx. from 0.05 to 0.2).</p>
 <p>Also note that EI, 2HUMP_EI, and 3HUMP_EI are tuned to reduce vibrations to 5%, so the values for 10% vibration tolerance are provided only for the reference.</p>
-<p><strong>How to use this table:</strong></p>
+<p><strong>Come utilizzare questa tabella:</strong></p>
 <ul>
 <li>Shaper duration affects the smoothing in parts - the larger it is, the more smooth the parts are. This dependency is not linear, but can give a sense of which shapers 'smooth' more for the same frequency. The ordering by smoothing is like this: ZV &lt; MZV &lt; ZVD ≈ EI &lt; 2HUMP_EI &lt; 3HUMP_EI. Also, it is rarely practical to set shaper_freq = resonance freq for shapers 2HUMP_EI and 3HUMP_EI (they should be used to reduce vibrations for several frequencies).</li>
 <li>One can estimate a range of frequencies in which the shaper reduces vibrations. For example, MZV with shaper_freq = 35 Hz reduces vibrations to 5% for frequencies [33.6, 36.4] Hz. 3HUMP_EI with shaper_freq = 50 Hz reduces vibrations to 5% in range [27.5, 75] Hz.</li>
