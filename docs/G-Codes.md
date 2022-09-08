@@ -746,6 +746,20 @@ scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
 
+### [mcp4018]
+
+The following command is available when a
+[mcp4018 config section](Config_Reference.md#mcp4018) is
+enabled.
+
+#### SET_DIGIPOT
+
+`SET_DIGIPOT DIGIPOT=config_name WIPER=<value>`: This command will
+change the current value of the digipot.  This value should typically
+be between 0.0 and 1.0, unless a 'scale' is defined in the config.
+When 'scale' is defined, then this value should be  between 0.0 and
+'scale'.
+
 ### [led]
 
 The following command is available when any of the
