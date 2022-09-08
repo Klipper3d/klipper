@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, collections
 import stepper
+import math
 
 
 ######################################################################
@@ -243,6 +244,9 @@ class TMCCommandHelper:
         gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
                                    self.cmd_SET_TMC_CURRENT,
                                    desc=self.cmd_SET_TMC_CURRENT_help)
+        gcode.register_mux_command("SET_TMC_WAVE", "STEPPER", self.name,
+                                   self.cmd_SET_TMC_WAVE,
+                                   desc=self.cmd_SET_TMC_WAVE_help)
     def _init_registers(self, print_time=None):
         # Send registers
         for reg_name, val in self.fields.registers.items():
@@ -284,6 +288,95 @@ class TMCCommandHelper:
         else:
             gcmd.respond_info("Run Current: %0.2fA Hold Current: %0.2fA"
                               % (prev_cur, prev_hold_cur))
+    cmd_SET_TMC_WAVE_help = "Set linearity correction for motors on TMC drivers"
+    def cmd_SET_TMC_WAVE(self, gcmd):
+        amp = gcmd.get_int('AMP', None, minval=0, maxval=255)
+        fac1000 = gcmd.get_int('FAC', None, minval=0, maxval=200)
+        if (amp is None):
+            amp = 247
+        if (fac1000 is None):
+            fac1000 = 0
+
+        if (fac1000 < 30):
+            fac1000 = 0
+
+        fac = (fac1000 + 1000) / 1000
+
+        vA = 0
+        va = 0
+        d0 = 0
+        d1 = 1
+        w = [1, 1, 1, 1]
+        x = [255, 255, 255, 255]
+        mslutregs = ["MSLUT0", "MSLUT1",
+                     "MSLUT2", "MSLUT3",
+                     "MSLUT4", "MSLUT5",
+                     "MSLUT6", "MSLUT7"]
+        s = 0
+
+        self.mcu_tmc.set_register("MSLUTSTART", (0 & 0xFF)|((amp & 0xFF) << 16))
+
+        for i in range(256):
+            if ((i & 0x1f) == 0):
+                reg = 0
+
+            if (fac == 0): # default TMC wave
+                vA = int( (amp + 1) *
+                        math.sin((2 * math.pi * i + math.pi)/1024) + 0.5 ) - 1
+            else: # corrected wave
+                vA = int( amp *
+                        math.pow(math.sin((2 * math.pi * i)/1024), fac) + 0.5)
+            # calculate delta
+            dA = vA - va
+            va = vA
+
+            b = -1
+            if (dA == d0):
+                b = 0
+            elif (dA == d1):
+                b = 1
+            else:
+                # delta < delta0 => switch wbit down
+                if (dA < d0 and dA >= -1 and dA <= 1):
+                    b = 0
+                    d0 = dA
+                    d1 = dA + 1
+                    w[s+1] = dA + 1
+                # delta > delta0 => switch wbit up
+                if (dA > d1 and dA >= 1 and dA <= 3):
+                    b = 1
+                    d0 = dA - 1
+                    d1 = dA
+                    w[s+1] = dA
+
+                if (b >= 0):
+                    x[s] = i
+                    s += 1
+            if (b < 0 or s > 3):
+                raise gcmd.error("Error setting TMC wave! " +
+                                 "Recommended to re-run with FAC=0")
+                break
+
+            if (b == 1):
+                reg |= 0x80000000
+
+            if ((i & 31) == 31):
+                self.mcu_tmc.set_register(mslutregs[i >> 5], reg)
+            else:
+                reg >>= 1
+
+        data = 0
+        data |= (w[0] & 0b11)
+        data |= (w[1] & 0b11) << 2
+        data |= (w[2] & 0b11) << 4
+        data |= (w[3] & 0b11) << 6
+        data |= (x[0] & 0xFF) << 8
+        data |= (x[1] & 0xFF) << 16
+        data |= (x[2] & 0xFF) << 24
+        self.mcu_tmc.set_register("MSLUTSEL", data)
+        gcmd.respond_info("Set linearity correction with" +
+                "START_SIN90 = %d and a factor of %.2f" % (amp, fac))
+
     # Stepper phase tracking
     def _get_phases(self):
         return (256 >> self.fields.get_field("mres")) * 4
