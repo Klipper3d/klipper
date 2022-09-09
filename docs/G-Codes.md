@@ -1216,6 +1216,15 @@ potentially dangerous behavior of your printer. Permanent changes
 should be made using the printer configuration file instead. No sanity
 checks are performed for the given values.
 
+#### SET_TMC_WAVE
+`SET_TMC_WAVE STEPPER=<name> AMP=<amplitude> FAC=<factor>`:
+This will adjust the linearity correction factor of the TMC driver, as
+per the implementation in Prusa MK3/S/S+ printers. This function updates
+the microstep look-up table in the TMC drivers (which is by default a
+sine wave), with a sine wave modified with a power function in order to
+attempt to address zero crossing point distortion.
+(SET_TMC_WAVE is not only applicable for TMC5160 and TMC2130 drivers.)
+
 ### [toolhead]
 
 The toolhead module is automatically loaded.
