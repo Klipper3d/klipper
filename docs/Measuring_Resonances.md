@@ -18,6 +18,25 @@ that it has a voltage regulator and a level shifter.
 
 ### Wiring
 
+An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrety over a long distance. If you still experience signal integrity issues (SPI/I2C errors), shorten the cable.
+
+Connect ethernet cable shielding to the controller board/RPI ground.
+
+***Double-check your wiring before powering up to prevent
+damaging your MCU/Raspberry Pi or the accelerometer.***
+
+#### SPI Accelerometers
+
+Suggested twisted pair order:
+
+```
+GND+MISO
+3.3V+MOSI
+SCLK+CS
+```
+
+##### ADXL345
+
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
 and **will not work**. The recommended connection scheme:
@@ -31,9 +50,31 @@ and **will not work**. The recommended connection scheme:
 | SDA | 19 | GPIO10 (SPI0_MOSI) |
 | SCL | 23 | GPIO11 (SPI0_SCLK) |
 
-An alternative to the ADXL345 is the MPU-9250 (or MPU-6050).  This
-accelerometer has been tested to work over I2C on the RPi at 400kbaud.
-Recommended connection scheme for I2C:
+Fritzing wiring diagrams for some of the ADXL345 boards:
+
+![ADXL345-Rpi](img/adxl345-fritzing.png)
+
+#### I2C Accelerometers
+
+Suggested twisted pair order:
+
+```
+GND+SDO
+3.3V+SDA
+GND+SCL
+```
+
+If you still experience signal integrity issues and can't shorten your cable, replacing the pull up resistors to lower resistance on SDA and SCL may help. [This document](https://www.ti.com/lit/an/slva689/slva689.pdf) explained the calculation behind choosing the right pull up resistor value. **This may cause DAMAGE to the controller/RPI and Accelerometer!!!**
+
+##### MPU-9250/MPU-6050/MPU-6500
+
+**MPU-6050 and MPU-9250 are obsolete parts! MPU-6500 are replacements of MPU-6050 at a lower failure rate.**
+
+Alternatives to the ADXL345 are MPU-9250, MPU-6050, and MPU-6500. These
+accelerometers have been tested to work over I2C on the RPi or RP2040(pico) at
+400kbaud.
+
+Recommended connection scheme for I2C on the Raspberry Pi:
 
 | MPU-9250 pin | RPi pin | RPi pin name |
 |:--:|:--:|:--:|
@@ -42,14 +83,18 @@ Recommended connection scheme for I2C:
 | SDA | 03 | GPIO02 (SDA1) |
 | SCL | 05 | GPIO03 (SCL1) |
 
+![MPU-9250 connected to RPI](img/mpu9250-PI-fritzing.png)
 
-Fritzing wiring diagrams for some of the ADXL345 boards:
+Recommended connection scheme for I2C(i2c0a) on the RP2040:
 
-![ADXL345-Rpi](img/adxl345-fritzing.png)
+| MPU-9250 pin | RP2040 pin | RPi pin name |
+|:--:|:--:|:--:|
+| 3V3 (or VCC) | 39 | VSYS |
+| GND | 38 | Ground |
+| SDA | 01 | GP0 (I2C0 SDA) |
+| SCL | 02 | GP1 (I2C0 SCL) |
 
-
-Double-check your wiring before powering up the Raspberry Pi to prevent
-damaging it or the accelerometer.
+![MPU-9250 connected to PICO](img/mpu9250-PICO-fritzing.png)
 
 ### Mounting the accelerometer
 
@@ -99,7 +144,10 @@ Afterwards, check and follow the instructions in the
 Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
 
-For the ADXL345, add the following to the printer.cfg file:
+#### Configure ADXL345 With RPi
+
+Add the following to the printer.cfg file:
+
 ```
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
@@ -115,9 +163,12 @@ probe_points:
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
-For the MPU-9250, make sure the Linux I2C driver is enabled and the baud rate is
+#### Configure MPU-9250/MPU-6050/MPU-6500 With RPi
+
+Make sure the Linux I2C driver is enabled and the baud rate is
 set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
 section for more details). Then, add the following to the printer.cfg:
+
 ```
 [mcu rpi]
 serial: /tmp/klipper_host_mcu
@@ -125,6 +176,26 @@ serial: /tmp/klipper_host_mcu
 [mpu9250]
 i2c_mcu: rpi
 i2c_bus: i2c.1
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+```
+
+#### Configure MPU-9250/MPU-6050/MPU-6500 With PICO
+
+Make sure the Linux I2C driver is enabled and the baud rate is
+set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
+section for more details). Then, add the following to the printer.cfg:
+
+```
+[mcu pico]
+serial: /dev/serial/by-id/<your PICO's serial ID>
+
+[mpu9250]
+i2c_mcu: pico
+i2c_bus: i2c1a
 
 [resonance_tester]
 accel_chip: mpu9250

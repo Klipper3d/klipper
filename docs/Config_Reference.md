@@ -1601,7 +1601,7 @@ cs_pin:
 
 ### [mpu9250]
 
-Support for mpu9250 and mpu6050 accelerometers (one may define any
+Support for mpu9250, mpu6050, and mpu6500 accelerometers (one may define any
 number of sections with an "mpu9250" prefix).
 
 ```
