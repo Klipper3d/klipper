@@ -26,20 +26,6 @@ lookup_clock_line(uint32_t periph_base)
                               0x1000);
         return (struct cline){.en=&RCC->MC_AHB4ENSETR, .rst=NULL, .bit=bit};
     }
-    else if (periph_base >= MCU_APB1_PERIPH_BASE) {
-        uint32_t bit = 1 << ((periph_base - MCU_APB1_PERIPH_BASE) / 0x1000);
-        return (struct cline){.en=&RCC->MC_APB1ENSETR, .rst=NULL, .bit=bit};
-    }
-    if (periph_base == SPI1_BASE)
-        return (struct cline){.en=&RCC->MC_APB2ENSETR,.rst=NULL,.bit=1<<8};
-    if (periph_base == SPI2_BASE)
-        return (struct cline){.en=&RCC->MC_APB1ENSETR,.rst=NULL,.bit=1<<11};
-    if (periph_base == SPI3_BASE)
-        return (struct cline){.en=&RCC->MC_APB1ENSETR,.rst=NULL,.bit=1<<12};
-    if (periph_base == SPI4_BASE)
-        return (struct cline){.en=&RCC->MC_APB2ENSETR,.rst=NULL,.bit=1<<9};
-    if (periph_base == SPI5_BASE)
-        return (struct cline){.en=&RCC->MC_AHB2ENSETR,.rst=NULL,.bit=1<<10};
     if (periph_base == USART2_BASE)
         return (struct cline){.en=&RCC->MC_APB1ENSETR,.rst=NULL,.bit=1<<14};
     if (periph_base == USART3_BASE)
@@ -77,10 +63,6 @@ static void
 clock_setup(void)
 {
     RCC->ADCCKSELR = 1; //per_ck selected for ADC
-    RCC->SPI2S1CKSELR = 3; //per_ck selected for SPI
-    RCC->SPI2S23CKSELR = 3; //per_ck selected for SPI
-    RCC->SPI45CKSELR = 2; //hsi_ker_ck selected for SPI
-    RCC->SPI6CKSELR = 2; //hsi_ker_ck selected for SPI
     RCC->UART24CKSELR = 2; //hsi_ker_ck selected for USART
     RCC->UART35CKSELR = 2; //hsi_ker_ck selected for USART
     RCC->UART78CKSELR = 2; //hsi_ker_ck selected for USART

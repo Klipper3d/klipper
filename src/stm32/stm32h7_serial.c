@@ -16,49 +16,82 @@
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
   #define GPIO_Rx GPIO('A', 10)
   #define GPIO_Tx GPIO('A', 9)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
   #define USARTx USART1
   #define USARTx_IRQn USART1_IRQn
 #elif CONFIG_STM32_SERIAL_USART1_ALT_PB7_PB6
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB7,PB6");
   #define GPIO_Rx GPIO('B', 7)
   #define GPIO_Tx GPIO('B', 6)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
   #define USARTx USART1
   #define USARTx_IRQn USART1_IRQn
 #elif CONFIG_STM32_SERIAL_USART2
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
   #define GPIO_Rx GPIO('A', 3)
   #define GPIO_Tx GPIO('A', 2)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
   #define USARTx USART2
   #define USARTx_IRQn USART2_IRQn
 #elif CONFIG_STM32_SERIAL_USART2_ALT_PD6_PD5
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD6,PD5");
   #define GPIO_Rx GPIO('D', 6)
   #define GPIO_Tx GPIO('D', 5)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx USART2
+  #define USARTx_IRQn USART2_IRQn
+#elif CONFIG_STM32_SERIAL_USART2_ALT_PF4_PF5
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PF4,PF5");
+  #define GPIO_Rx GPIO('F', 4)
+  #define GPIO_Tx GPIO('F', 5)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
   #define USARTx USART2
   #define USARTx_IRQn USART2_IRQn
 #elif CONFIG_STM32_SERIAL_USART3
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB11,PB10");
   #define GPIO_Rx GPIO('B', 11)
   #define GPIO_Tx GPIO('B', 10)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx USART3
+  #define USARTx_IRQn USART3_IRQn
+#elif CONFIG_STM32_SERIAL_USART3_ALT_PB12_PB10
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB12,PB10");
+  #define GPIO_Rx GPIO('B', 12)
+  #define GPIO_Tx GPIO('B', 10)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(8)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
 #elif CONFIG_STM32_SERIAL_USART3_ALT_PD9_PD8
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD9,PD8");
   #define GPIO_Rx GPIO('D', 9)
   #define GPIO_Tx GPIO('D', 8)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
 #elif CONFIG_STM32_SERIAL_UART4
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA1,PA0");
   #define GPIO_Rx GPIO('A', 1)
   #define GPIO_Tx GPIO('A', 0)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(8)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(8)
   #define USARTx UART4
   #define USARTx_IRQn UART4_IRQn
-  #define USARTx_FUNCTION GPIO_FUNCTION(8)
-#endif
-
-#ifndef USARTx_FUNCTION
-  #define USARTx_FUNCTION GPIO_FUNCTION(7)
+#elif CONFIG_STM32_SERIAL_UART7
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PE7,PE8");
+  #define GPIO_Rx GPIO('E', 7)
+  #define GPIO_Tx GPIO('E', 8)
+  #define USARTx_Rx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx_Tx_FUNCTION GPIO_FUNCTION(7)
+  #define USARTx UART7
+  #define USARTx_IRQn UART7_IRQn
 #endif
 
 #define CR1_FLAGS (USART_CR1_UE | USART_CR1_RE | USART_CR1_TE   \
@@ -94,12 +127,16 @@ serial_init(void)
 
     uint32_t pclk = get_pclock_frequency((uint32_t)USARTx);
     uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
+#if CONFIG_MACH_STM32H7
     USARTx->BRR = (((div / 16) << USART_BRR_DIV_MANTISSA_Pos)
                  | ((div % 16) << USART_BRR_DIV_FRACTION_Pos));
+#elif CONFIG_MACH_STM32MP1
+    USARTx->BRR = div;
+#endif
     USARTx->CR1 = CR1_FLAGS;
     armcm_enable_irq(USARTx_IRQHandler, USARTx_IRQn, 0);
 
-    gpio_peripheral(GPIO_Rx, USARTx_FUNCTION, 1);
-    gpio_peripheral(GPIO_Tx, USARTx_FUNCTION, 0);
+    gpio_peripheral(GPIO_Rx, USARTx_Rx_FUNCTION, 1);
+    gpio_peripheral(GPIO_Tx, USARTx_Tx_FUNCTION, 0);
 }
 DECL_INIT(serial_init);
