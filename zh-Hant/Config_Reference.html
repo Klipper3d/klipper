@@ -551,6 +551,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#deltesian-kinematics" class="md-nav__link">
+    Deltesian Kinematics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#corexy" class="md-nav__link">
     CoreXY 機型
   </a>
@@ -2458,6 +2465,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#deltesian-kinematics" class="md-nav__link">
+    Deltesian Kinematics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#corexy" class="md-nav__link">
     CoreXY 機型
   </a>
@@ -3587,8 +3601,7 @@ serial:
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
 #   corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta, delta,
-#   polar, winch, or none. This
-#   parameter must be specified.
+#   deltesian, polar, winch, or none. This parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
 #   print). This parameter must be specified.
@@ -3792,6 +3805,74 @@ radius:
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+</code></pre></div>
+
+<h3 id="deltesian-kinematics">Deltesian Kinematics<a class="headerlink" href="#deltesian-kinematics" title="Permanent link">&para;</a></h3>
+<p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-deltesian.cfg">example-deltesian.cfg</a> for an example deltesian kinematics config file.</p>
+<p>Only parameters specific to deltesian printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<div class="highlight"><pre><span></span><code>[printer]
+kinematics: deltesian
+max_z_velocity:
+#   For deltesian printers, this limits the maximum velocity (in mm/s) of
+#   moves with z axis movement. This setting can be used to reduce the
+#   maximum speed of up/down moves (which require a higher step rate
+#   than other moves on a deltesian printer). The default is to use
+#   max_velocity for max_z_velocity.
+#max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. Setting this may be useful if the printer can reach higher
+#   acceleration on XY moves than Z moves (eg, when using input shaper).
+#   The default is to use max_accel for max_z_accel.
+#minimum_z_position: 0
+#   The minimum Z position that the user may command the head to move
+#   to. The default is 0.
+#min_angle: 5
+#   This represents the minimum angle (in degrees) relative to horizontal
+#   that the deltesian arms are allowed to achieve. This parameter is
+#   intended to restrict the arms from becomming completely horizontal,
+#   which would risk accidental inversion of the XZ axis. The default is 5.
+#print_width:
+#   The distance (in mm) of valid toolhead X coordinates. One may use
+#   this setting to customize the range checking of toolhead moves. If
+#   a large value is specified here then it may be possible to command
+#   the toolhead into a collision with a tower. This setting usually
+#   corresponds to bed width (in mm).
+#slow_ratio: 3
+#   The ratio used to limit velocity and acceleration on moves near the
+#   extremes of the X axis. If vertical distance divided by horizontal
+#   distance exceeds the value of slow_ratio, then velocity and
+#   acceleration are limited to half their nominal values. If vertical
+#   distance divided by horizontal distance exceeds twice the value of
+#   the slow_ratio, then velocity and acceleration are limited to one
+#   quarter of their nominal values. The default is 3.
+
+# The stepper_left section is used to describe the stepper controlling
+# the left tower. This section also controls the homing parameters
+# (homing_speed, homing_retract_dist) for all towers.
+[stepper_left]
+position_endstop:
+#   Distance (in mm) between the nozzle and the bed when the nozzle is
+#   in the center of the build area and the endstops are triggered. This
+#   parameter must be provided for stepper_left; for stepper_right this
+#   parameter defaults to the value specified for stepper_left.
+arm_length:
+#   Length (in mm) of the diagonal rod that connects the tower carriage to
+#   the print head. This parameter must be provided for stepper_left; for
+#   stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
+arm_x_length:
+#   Horizontal distance between the print head and the tower when the
+#   printers is homed. This parameter must be provided for stepper_left;
+#   for stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
+
+# The stepper_right section is used to desribe the stepper controlling the
+# right tower.
+[stepper_right]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis in a deltesian robot.
+[stepper_y]
 </code></pre></div>
 
 <h3 id="corexy">CoreXY 機型<a class="headerlink" href="#corexy" title="Permanent link">&para;</a></h3>
@@ -5405,19 +5486,21 @@ serial_no:
 <p>列印冷卻風扇。</p>
 <div class="highlight"><pre><span></span><code>[fan]
 pin:
-#   控制風扇的輸出引腳。
-#   必須提供此參數。
+#   Output pin controlling the fan. This parameter must be provided.
 #max_power: 1.0
-#   引腳允許被設定的最大占空比（在0.0和1.0之間）。
-#   1.0 允許引腳被長時間完全啟用，而0.5會只允許引腳只在一半的時間裡
-#   被啟用。這個設定可以限制風扇的最大功率（平均功率）。如果這個值
-#   小於 1.0 則風速請求會被縮放到 0 和 max_power 之間（例如，如果
-#   max_power 是 0.9，請求 80% 風速速度會使風扇功率設為72%）。
-#   預設為1.0。
+#   The maximum power (expressed as a value from 0.0 to 1.0) that the
+#   pin may be set to. The value 1.0 allows the pin to be set fully
+#   enabled for extended periods, while a value of 0.5 would allow the
+#   pin to be enabled for no more than half the time. This setting may
+#   be used to limit the total power output (over extended periods) to
+#   the fan. If this value is less than 1.0 then fan speed requests
+#   will be scaled between zero and max_power (for example, if
+#   max_power is .9 and a fan speed of 80% is requested then the fan
+#   power will be set to 72%). The default is 1.0.
 #shutdown_speed: 0
-#   在微控制器進入錯誤狀態時期望的（一個在0.0和1.0之間的值）
-#   風扇速度。
-#   預設為 0。
+#   The desired fan speed (expressed as a value from 0.0 to 1.0) if
+#   the micro-controller software enters an error state. The default
+#   is 0.
 #cycle_time: 0.010
 #   The amount of time (in seconds) for each PWM power cycle to the
 #   fan. It is recommended this be 10 milliseconds or greater when
@@ -5459,6 +5542,12 @@ pin:
 #   enough for fans below 10000 RPM at 2 PPR. This must be smaller than
 #   30/(tachometer_ppr*rpm), with some margin, where rpm is the
 #   maximum speed (in RPM) of the fan.
+#enable_pin:
+#   Optional pin to enable power to the fan. This can be useful for fans
+#   with dedicated PWM inputs. Some of these fans stay on even at 0% PWM
+#   input. In such a case, the PWM pin can be used normally, and e.g. a
+#   ground-switched FET(standard fan pin) can be used to control power to
+#   the fan.
 </code></pre></div>
 
 <h3 id="heater_fan">[heater_fan]<a class="headerlink" href="#heater_fan" title="Permanent link">&para;</a></h3>
@@ -5474,18 +5563,20 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   以上參數詳見「fan」章節。
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 #heater: extruder
-#   該風扇關聯的加熱器配置分段名稱。如果提供了一個逗號分隔的
-#   加熱器列表，則風扇將會在任一加熱器被啟用時啟動。
-#   預設為&quot;extruder&quot;。
+#   Name of the config section defining the heater that this fan is
+#   associated with. If a comma separated list of heater names is
+#   provided here, then the fan will be enabled when any of the given
+#   heaters are enabled. The default is &quot;extruder&quot;.
 #heater_temp: 50.0
-#   風扇可以被禁用的最高加熱器溫度（以攝氏度為單位）。加熱器
-#   必須被降低到該溫度以下風扇才會被禁用。
-#   預設為 50 攝氏度。
+#   A temperature (in Celsius) that the heater must drop below before
+#   the fan is disabled. The default is 50 Celsius.
 #fan_speed: 1.0
-#   當相關聯的加熱器活躍時該風扇的速度（在0.0和1.0之間）。
-#   預設為 1.0
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when its associated heater is enabled. The default
+#   is 1.0
 </code></pre></div>
 
 <h3 id="controller_fan">[controller_fan]<a class="headerlink" href="#controller_fan" title="Permanent link">&para;</a></h3>
@@ -5501,25 +5592,27 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#  以上參數請見「風扇」(fan)分段。
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 #fan_speed: 1.0
-#   當一個加熱器或步進電機活躍時的風扇速度（以一個0.0到1.0
-#   的數值表示）。
-#   預設為 1.0。
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when a heater or stepper driver is active.
+#   The default is 1.0
 #idle_timeout:
-#   在步進電機或加熱器不再活躍后風扇持續執行的時間（以秒
-#   為單位）。
-#   預設為 30秒。
+#   The amount of time (in seconds) after a stepper driver or heater
+#   was active and the fan should be kept running. The default
+#   is 30 seconds.
 #idle_speed:
-#   當一個加熱器或步進電機不再活躍，但沒有達到空閑超時(
-#   idle_timeout)時的風扇速度（以一個0.0到1.0的數值表示）。
-#   預設為 fan_speed。
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when a heater or stepper driver was active and
+#   before the idle_timeout is reached. The default is fan_speed.
 #heater:
 #stepper:
-#   與這個風扇關聯的加熱器/步進驅動配置分段名稱。如果提
-#   供一個逗號分隔的加熱器/步進驅動名稱，任意一個列表中
-#   的裝置啟用時風扇將會啟動。
-#   預設加熱器是「擠出機」（extruder)，預設步進驅動是全部步進驅動。
+#   Name of the config section defining the heater/stepper that this fan
+#   is associated with. If a comma separated list of heater/stepper names
+#   is provided here, then the fan will be enabled when any of the given
+#   heaters/steppers are enabled. The default heater is &quot;extruder&quot;, the
+#   default stepper is all of them.
 </code></pre></div>
 
 <h3 id="temperature_fan">[temperature_fan]<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h3>
@@ -5536,6 +5629,7 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
+#enable_pin:
 #   See the &quot;fan&quot; section for a description of the above parameters.
 #sensor_type:
 #sensor_pin:
@@ -5588,7 +5682,8 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   以上參數介紹請見「fan」（風扇）章節。
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 </code></pre></div>
 
 <h2 id="leds">LEDs<a class="headerlink" href="#leds" title="Permanent link">&para;</a></h2>

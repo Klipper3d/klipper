@@ -551,6 +551,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#deltesian-kinematics" class="md-nav__link">
+    Deltesian Kinematics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#corexy-kinematika" class="md-nav__link">
     CoreXY Kinematika
   </a>
@@ -2458,6 +2465,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#deltesian-kinematics" class="md-nav__link">
+    Deltesian Kinematics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#corexy-kinematika" class="md-nav__link">
     CoreXY Kinematika
   </a>
@@ -3588,32 +3602,31 @@ serial:
 <p>A nyomtató szakasz a nyomtató magas szintű beállításait vezérli.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics:
-#   A használt nyomtató típusa. Ez a beállítás a következők egyike lehet:
-#   cartesian, corexy, corexz, hibrid_korexy, hibrid_corexz, rotary_delta,
-#   delta, polar, winch, vagy semmilyen. Ezt a paramétert meg kell adni.
+#   The type of printer in use. This option may be one of: cartesian,
+#   corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta, delta,
+#   deltesian, polar, winch, or none. This parameter must be specified.
 max_velocity:
-#   A nyomtatófej maximális sebessége (mm/sec-ben) a (nyomathoz
-#   viszonyítva). Ezt a paramétert meg kell adni.
+#   Maximum velocity (in mm/s) of the toolhead (relative to the
+#   print). This parameter must be specified.
 max_accel:
-#   A nyomtatófej maximális gyorsulása (mm/sec^2-en) a (nyomathoz
-#   viszonyítva). Ezt a paramétert meg kell adni.
+#   Maximum acceleration (in mm/s^2) of the toolhead (relative to the
+#   print). This parameter must be specified.
 #max_accel_to_decel:
-#   Álgyorsulás (mm/sec^2-en), amely azt szabályozza, hogy a
-#   nyomtatófej milyen gyorsan haladjon a gyorsulástól a lassításig.
-#   A rövid cikk-cakk mozgások maximális sebességének csökkentésére
-#   szolgál (és ezáltal csökkenti a nyomtató rezgését ezekből a
-#   lépésekből). Az alapértelmezett a max_accel értékének a fele.
+#   A pseudo acceleration (in mm/s^2) controlling how fast the
+#   toolhead may go from acceleration to deceleration. It is used to
+#   reduce the top speed of short zig-zag moves (and thus reduce
+#   printer vibration from these moves). The default is half of
+#   max_accel.
 #square_corner_velocity: 5.0
-#   Az a maximális sebesség (mm/sec-ben), amellyel a nyomtatófej egy
-#   90 fokos sarokban haladhat. A nullától eltérő érték csökkentheti az
-#   extruder áramlási sebességének változásait azáltal, hogy lehetővé
-#   teszi a nyomtatófej pillanatnyi sebességváltozását kanyarodás
-#   közben. Ez az érték konfigurálja a belső centripetális sebesség
-#   kanyarodási algoritmust; a 90 foknál nagyobb szögű sarkok
-#   kanyarodási sebessége nagyobb, míg a 90 foknál kisebb szögű
-#   sarkok kanyarsebessége kisebb. Ha ez nullára van állítva, akkor a
-#   nyomtatófej minden saroknál nullára lassul.
-#   Az alapértelmezett érték 5 mm/sec.
+#   The maximum velocity (in mm/s) that the toolhead may travel a 90
+#   degree corner at. A non-zero value can reduce changes in extruder
+#   flow rates by enabling instantaneous velocity changes of the
+#   toolhead during cornering. This value configures the internal
+#   centripetal velocity cornering algorithm; corners with angles
+#   larger than 90 degrees will have a higher cornering velocity while
+#   corners with angles less than 90 degrees will have a lower
+#   cornering velocity. If this is set to zero then the toolhead will
+#   decelerate to zero at each corner. The default is 5mm/s.
 </code></pre></div>
 
 <h3 id="stepper">[stepper]<a class="headerlink" href="#stepper" title="Permanent link">&para;</a></h3>
@@ -3795,6 +3808,74 @@ radius:
 #   Az a magasság (mm-ben), ameddig a fejnek el kell mozdulnia
 #   közvetlenül a szondaművelet megkezdése előtt.
 #   Az alapértelmezett érték 5.
+</code></pre></div>
+
+<h3 id="deltesian-kinematics">Deltesian Kinematics<a class="headerlink" href="#deltesian-kinematics" title="Permanent link">&para;</a></h3>
+<p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-deltesian.cfg">example-deltesian.cfg</a> for an example deltesian kinematics config file.</p>
+<p>Only parameters specific to deltesian printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<div class="highlight"><pre><span></span><code>[printer]
+kinematics: deltesian
+max_z_velocity:
+#   For deltesian printers, this limits the maximum velocity (in mm/s) of
+#   moves with z axis movement. This setting can be used to reduce the
+#   maximum speed of up/down moves (which require a higher step rate
+#   than other moves on a deltesian printer). The default is to use
+#   max_velocity for max_z_velocity.
+#max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. Setting this may be useful if the printer can reach higher
+#   acceleration on XY moves than Z moves (eg, when using input shaper).
+#   The default is to use max_accel for max_z_accel.
+#minimum_z_position: 0
+#   The minimum Z position that the user may command the head to move
+#   to. The default is 0.
+#min_angle: 5
+#   This represents the minimum angle (in degrees) relative to horizontal
+#   that the deltesian arms are allowed to achieve. This parameter is
+#   intended to restrict the arms from becomming completely horizontal,
+#   which would risk accidental inversion of the XZ axis. The default is 5.
+#print_width:
+#   The distance (in mm) of valid toolhead X coordinates. One may use
+#   this setting to customize the range checking of toolhead moves. If
+#   a large value is specified here then it may be possible to command
+#   the toolhead into a collision with a tower. This setting usually
+#   corresponds to bed width (in mm).
+#slow_ratio: 3
+#   The ratio used to limit velocity and acceleration on moves near the
+#   extremes of the X axis. If vertical distance divided by horizontal
+#   distance exceeds the value of slow_ratio, then velocity and
+#   acceleration are limited to half their nominal values. If vertical
+#   distance divided by horizontal distance exceeds twice the value of
+#   the slow_ratio, then velocity and acceleration are limited to one
+#   quarter of their nominal values. The default is 3.
+
+# The stepper_left section is used to describe the stepper controlling
+# the left tower. This section also controls the homing parameters
+# (homing_speed, homing_retract_dist) for all towers.
+[stepper_left]
+position_endstop:
+#   Distance (in mm) between the nozzle and the bed when the nozzle is
+#   in the center of the build area and the endstops are triggered. This
+#   parameter must be provided for stepper_left; for stepper_right this
+#   parameter defaults to the value specified for stepper_left.
+arm_length:
+#   Length (in mm) of the diagonal rod that connects the tower carriage to
+#   the print head. This parameter must be provided for stepper_left; for
+#   stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
+arm_x_length:
+#   Horizontal distance between the print head and the tower when the
+#   printers is homed. This parameter must be provided for stepper_left;
+#   for stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
+
+# The stepper_right section is used to desribe the stepper controlling the
+# right tower.
+[stepper_right]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis in a deltesian robot.
+[stepper_y]
 </code></pre></div>
 
 <h3 id="corexy-kinematika">CoreXY Kinematika<a class="headerlink" href="#corexy-kinematika" title="Permanent link">&para;</a></h3>
@@ -5463,70 +5544,68 @@ serial_no:
 <p>Nyomtatás hűtőventilátor.</p>
 <div class="highlight"><pre><span></span><code>[fan]
 pin:
-#   A ventilátort vezérlő kimeneti tű. Ezt a paramétert meg kell adni.
+#   Output pin controlling the fan. This parameter must be provided.
 #max_power: 1.0
-#   A maximális teljesítmény (0.0 és 1.0 közötti értékben kifejezve), amely
-#   a tűn beállítható. Az 1.0 érték lehetővé teszi, hogy a tű teljesen
-#   beállítható legyen. Hosszabb időre is engedélyezve legyen, míg a 0.5
-#   érték lehetővé teszi, hogy a tű legfeljebb az idő felére legyen
-#   engedélyezve. Ez a beállítás használható a teljes kimeneti teljesítmény
-#   korlátozására a ventilátornál (hosszabb időszakok alatt). Ha ez az érték
-#   kisebb, mint 1.0, akkor a ventilátor fordulatszám kérése nulla és a
-#   max_power között lesz skálázva (például, ha max_power .9, és a
-#   ventilátor 80%-os sebességet kér, akkor a ventilátor teljesítménye
-#   72%-ra lesz beállítva). Az alapértelmezett érték 1.0.
+#   The maximum power (expressed as a value from 0.0 to 1.0) that the
+#   pin may be set to. The value 1.0 allows the pin to be set fully
+#   enabled for extended periods, while a value of 0.5 would allow the
+#   pin to be enabled for no more than half the time. This setting may
+#   be used to limit the total power output (over extended periods) to
+#   the fan. If this value is less than 1.0 then fan speed requests
+#   will be scaled between zero and max_power (for example, if
+#   max_power is .9 and a fan speed of 80% is requested then the fan
+#   power will be set to 72%). The default is 1.0.
 #shutdown_speed: 0
-#   A kívánt ventilátorsebesség (0,0 és 1,0 közötti értékként kifejezve) ha
-#   a mikrokontroller szoftver hibaállapotba kerül.
-#   Az alapértelmezett érték 0.
+#   The desired fan speed (expressed as a value from 0.0 to 1.0) if
+#   the micro-controller software enters an error state. The default
+#   is 0.
 #cycle_time: 0.010
-#   Az az idő (másodpercben), amely alatt minden PWM ciklus kikerül a
-#   ventilátorhoz. Ajánlatos, hogy ez 10 milliszekundum vagy nagyobb
-#   legyen, a szoftveralapú PWM használata esetén.
-#   Az alapértelmezett érték 0,010 másodperc.
+#   The amount of time (in seconds) for each PWM power cycle to the
+#   fan. It is recommended this be 10 milliseconds or greater when
+#   using software based PWM. The default is 0.010 seconds.
 #hardware_pwm: False
-#   Engedélyezze ezt a hardveres PWM használatához a szoftveres PWM
-#   helyett. A legtöbb ventilátor nem működik jól a hardveres PWM-mel,
-#   ezért nem ajánlott annak engedélyezése, hacsak nincs elektromos
-#   követelmény, hogy a kapcsolás nagyon nagy sebességgel történjen.
-#   Hardveres PWM használatakor a tényleges ciklusidő a megvalósítást
-#   korlátozza, és jelentősen nagyobb mértékben eltérhet a kért
-#   ciklusidőtől. Az alapértelmezett érték False.
+#   Enable this to use hardware PWM instead of software PWM. Most fans
+#   do not work well with hardware PWM, so it is not recommended to
+#   enable this unless there is an electrical requirement to switch at
+#   very high speeds. When using hardware PWM the actual cycle time is
+#   constrained by the implementation and may be significantly
+#   different than the requested cycle_time. The default is False.
 #kick_start_time: 0.100
-#   Az idő (másodpercben), amíg a ventilátor teljes fordulatszámra pörög,
-#   amikor először engedélyezi vagy 50%-nál nagyobb mértékre növeli
-#   (segít a ventilátor működésbe hozásában).
-#   Az alapértelmezett érték 0,100 másodperc.
+#   Time (in seconds) to run the fan at full speed when either first
+#   enabling or increasing it by more than 50% (helps get the fan
+#   spinning). The default is 0.100 seconds.
 #off_below: 0.0
-#   A minimális bemeneti sebesség, amely a ventilátort működtetni fogja
-#   (kifejezve egy 0.0 és 1.0 közötti értékben). Ha az off_below-nál
-#   alacsonyabb sebességet kért, a ventilátor inkább kikapcsol. Ez a
-#   beállítás lehet használható a ventilátor leállásának megakadályozására
-#   és a kick-indítás biztosítására. Az alapértelmezett érték 0.0.
+#   The minimum input speed which will power the fan (expressed as a
+#   value from 0.0 to 1.0). When a speed lower than off_below is
+#   requested the fan will instead be turned off. This setting may be
+#   used to prevent fan stalls and to ensure kick starts are
+#   effective. The default is 0.0.
 #
-#   Ezt a beállítást mindig újra kell kalibrálni, amikor a max_power-t
-#   módosítjuk. A beállítás kalibrálásához kezdjük úgy, hogy az off_below
-#   értéke 0.0. Fokozatosan csökkentse a ventilátor fordulatszámát a
-#   legalacsonyabb érték meghatározásához. Válassza azt a bemeneti
-#   sebességet, amely megbízhatóan, leállás nélkül hajtja a ventilátort.
-#   Állítsa be az off_below-ot az ennek az értéknek megfelelő
-#   munkaszünetre (a például 12% -&gt; 0,12) vagy valamivel
-#   magasabb értéket.
+#   This setting should be recalibrated whenever max_power is adjusted.
+#   To calibrate this setting, start with off_below set to 0.0 and the
+#   fan spinning. Gradually lower the fan speed to determine the lowest
+#   input speed which reliably drives the fan without stalls. Set
+#   off_below to the duty cycle corresponding to this value (for
+#   example, 12% -&gt; 0.12) or slightly higher.
 #tachometer_pin:
-#   Tachométer bemeneti tű a ventilátor fordulatszámának ellenőrzésére.
-#   A pullup általában szükséges. Ez a paraméter opcionális.
+#   Tachometer input pin for monitoring fan speed. A pullup is generally
+#   required. This parameter is optional.
 #tachometer_ppr: 2
-#   Ha a tachometer_pin meg van adva, akkor ez az impulzusok száma per
-#   fordulatonként a tachométer jelének impulzusainak száma.
-#   Egy BLDC ventilátor esetében ez általában a pólusok számának fele.
-#   Az alapértelmezett érték 2.
-#tachometer_poll_intervall: 0.0015
-#   Ha a tachometer_pin meg van adva, ez a lekérdezési periódus a
-#   tachometer pin, másodpercben. Az alapértelmezett érték 0.0015, ami
-#   gyors. Elég gyors az 10000 RPM alatti ventilátorokhoz 2 PPR mellett.
-#   Ennek kisebbnek kell lennie, mint 30/(tachometer_ppr*rpm), némi
-#   mozgástérrel, ahol az RPM a fordulatszám.
-#   A ventilátor maximális fordulatszáma (fordulatszámban).
+#   When tachometer_pin is specified, this is the number of pulses per
+#   revolution of the tachometer signal. For a BLDC fan this is
+#   normally half the number of poles. The default is 2.
+#tachometer_poll_interval: 0.0015
+#   When tachometer_pin is specified, this is the polling period of the
+#   tachometer pin, in seconds. The default is 0.0015, which is fast
+#   enough for fans below 10000 RPM at 2 PPR. This must be smaller than
+#   30/(tachometer_ppr*rpm), with some margin, where rpm is the
+#   maximum speed (in RPM) of the fan.
+#enable_pin:
+#   Optional pin to enable power to the fan. This can be useful for fans
+#   with dedicated PWM inputs. Some of these fans stay on even at 0% PWM
+#   input. In such a case, the PWM pin can be used normally, and e.g. a
+#   ground-switched FET(standard fan pin) can be used to control power to
+#   the fan.
 </code></pre></div>
 
 <h3 id="heater_fan">[heater_fan]<a class="headerlink" href="#heater_fan" title="Permanent link">&para;</a></h3>
@@ -5542,20 +5621,20 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   A fenti paraméterek leírását lásd a „ventilátor” részben.
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 #heater: extruder
-#   A ventilátorhoz társított fűtést meghatározó konfigurációs szakasz
-#   neve. Ha itt megadja a fűtőelemek vesszővel elválasztott nevét,
-#   akkor a ventilátor engedélyezve lesz, ha valamelyik adott fűtőtest
-#   engedélyezve van. Az alapértelmezett érték az &quot;extruder&quot;.
+#   Name of the config section defining the heater that this fan is
+#   associated with. If a comma separated list of heater names is
+#   provided here, then the fan will be enabled when any of the given
+#   heaters are enabled. The default is &quot;extruder&quot;.
 #heater_temp: 50.0
-#   Az a hőmérséklet (Celsiusban), amely alá a fűtőelemnek le kell
-#   süllyednie, mielőtt a ventilátort letiltják.
-#   Az alapértelmezett érték 50 Celsius.
+#   A temperature (in Celsius) that the heater must drop below before
+#   the fan is disabled. The default is 50 Celsius.
 #fan_speed: 1.0
-#   A ventilátor sebessége (0,0 és 1,0 közötti értékként kifejezve),
-#   amelyre a ventilátor be lesz állítva, amikor a hozzá tartozó
-#   fűtőberendezés engedélyezve van. Az alapértelmezett érték 1.0
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when its associated heater is enabled. The default
+#   is 1.0
 </code></pre></div>
 
 <h3 id="controller_fan">[controller_fan]<a class="headerlink" href="#controller_fan" title="Permanent link">&para;</a></h3>
@@ -5571,28 +5650,27 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   A fenti paraméterek leírását lásd a „ventilátor” részben.
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 #fan_speed: 1.0
-#   Az a ventilátorsebesség (0,0 és 1,0 közötti értékként kifejezve),
-#   amelyre a ventilátor be lesz állítva, amikor egy fűtőelem vagy
-#   léptető meghajtó aktív. Az alapértelmezett érték 1.0
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when a heater or stepper driver is active.
+#   The default is 1.0
 #idle_timeout:
-#   Az az idő (másodpercben), miután a léptető meghajtó vagy a
-#   fűtőelem aktív volt, és a ventilátort folyamatosan működtetni kell.
-#   Az alapértelmezett érték 30 (másodperc).
+#   The amount of time (in seconds) after a stepper driver or heater
+#   was active and the fan should be kept running. The default
+#   is 30 seconds.
 #idle_speed:
-#   A ventilátor sebessége (0,0 és 1,0 közötti értékként kifejezve), amelyre
-#   a ventilátor be lesz állítva, amikor egy fűtőelem vagy léptető meghajtó
-#   aktív volt, és az idle_timeout-ban megadott idő alatt még működik.
-#   Az alapértelmezett érték a fan_speed.
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when a heater or stepper driver was active and
+#   before the idle_timeout is reached. The default is fan_speed.
 #heater:
 #stepper:
-#   A ventilátorhoz társított fűtést/lépést meghatározó konfigurációs
-#   szakasz neve. Ha itt megadja a fűtőelemek/léptetők vesszővel tagolt
-#   listáját, akkor a ventilátor engedélyezve lesz, ha az adott
-#   fűtőtestek/léptetők bármelyike engedélyezett.
-#   Az alapértelmezett fűtőelem az &quot;extruder&quot;, az alapértelmezett
-#   léptető pedig mindegyik.
+#   Name of the config section defining the heater/stepper that this fan
+#   is associated with. If a comma separated list of heater/stepper names
+#   is provided here, then the fan will be enabled when any of the given
+#   heaters/steppers are enabled. The default heater is &quot;extruder&quot;, the
+#   default stepper is all of them.
 </code></pre></div>
 
 <h3 id="temperature_fan">[temperature_fan]<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h3>
@@ -5609,46 +5687,44 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   A fenti paraméterek leírását lásd a &quot;ventilátor&quot; szakaszban.
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 #sensor_type:
 #sensor_pin:
 #control:
 #max_delta:
 #min_temp:
 #max_temp:
-#   A fenti paraméterek leírását lásd az &quot;Extruder&quot; fejezetben.
+#   See the &quot;extruder&quot; section for a description of the above parameters.
 #pid_Kp:
 #pid_Ki:
 #pid_Kd:
-#   A PID-visszacsatolásos szabályozórendszer arányos (pid_Kp), integrál
-#   (pid_Ki) és derivált (pid_Kd) beállításai. Klipper a PID-beállításokat a
-#   következő általános képlettel értékeli ki:
+#   The proportional (pid_Kp), integral (pid_Ki), and derivative
+#   (pid_Kd) settings for the PID feedback control system. Klipper
+#   evaluates the PID settings with the following general formula:
 #     fan_pwm = max_power - (Kp*e + Ki*integral(e) - Kd*derivative(e)) / 255
-#   ahol &quot;e&quot; a &quot;célhőmérséklet - mért hőmérséklet&quot; és &quot;fan_pwm&quot; a kért
-#   ventilátorsebesség, ahol 0,0 a teljes kikapcsolás és 1,0 a teljes
-#   bekapcsolás. A pid_Kp, pid_Ki és pid_Kd paramétereknek a
-#   következőknek kell lenniük kell megadni, ha a PID-szabályozási
-#   algoritmus engedélyezve van.
+#   Where &quot;e&quot; is &quot;target_temperature - measured_temperature&quot; and
+#   &quot;fan_pwm&quot; is the requested fan rate with 0.0 being full off and
+#   1.0 being full on. The pid_Kp, pid_Ki, and pid_Kd parameters must
+#   be provided when the PID control algorithm is enabled.
 #pid_deriv_time: 2.0
-#   Az az időérték (másodpercben), amely alatt a hőmérsékletmérések
-#   simításra kerülnek a PID-szabályozási algoritmus használatakor.
-#   Ez csökkentheti a a mérési zaj hatását.
-#   Az alapértelmezett érték 2 másodperc.
+#   A time value (in seconds) over which temperature measurements will
+#   be smoothed when using the PID control algorithm. This may reduce
+#   the impact of measurement noise. The default is 2 seconds.
 #target_temp: 40.0
-#   Egy hőmérséklet (Celsiusban), amely a célhőmérséklet lesz.
-#   Az alapértelmezett érték 40 fok.
+#   A temperature (in Celsius) that will be the target temperature.
+#   The default is 40 degrees.
 #max_speed: 1.0
-#   A ventilátor fordulatszáma (0,0 és 1,0 közötti értékként kifejezve),
-#   amelyre a ventilátor akkor áll be, ha az érzékelő hőmérséklete
-#   meghaladja a beállított értéket. Az alapértelmezett érték 1.0.
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when the sensor temperature exceeds the set value.
+#   The default is 1.0.
 #min_speed: 0.3
-#   A ventilátor minimális fordulatszáma (0,0 és 1,0 közötti értékként
-#   kifejezve), amely a ventilátor a PID-hőmérsékletű ventilátorok
-#   esetében beállítható. Az alapértelmezett érték 0,3.
+#   The minimum fan speed (expressed as a value from 0.0 to 1.0) that
+#   the fan will be set to for PID temperature fans.
+#   The default is 0.3.
 #gcode_id:
-#   Ha be van állítva, akkor a hőmérsékletet az M105 lekérdezésekben
-#   a megadott azonosító alapján. Az alapértelmezett beállítás szerint
-#   a hőmérsékletet nem jelentik az M105-ön keresztül.
+#   If set, the temperature will be reported in M105 queries using the
+#   given id. The default is to not report the temperature via M105.
 </code></pre></div>
 
 <h3 id="fan_generic">[fan_generic]<a class="headerlink" href="#fan_generic" title="Permanent link">&para;</a></h3>
@@ -5664,7 +5740,8 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   A fenti paraméterek leírását lásd a „ventilátor” részben.
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 </code></pre></div>
 
 <h2 id="led-ek">LED-ek<a class="headerlink" href="#led-ek" title="Permanent link">&para;</a></h2>

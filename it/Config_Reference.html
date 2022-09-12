@@ -551,6 +551,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#deltesian-kinematics" class="md-nav__link">
+    Deltesian Kinematics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cinematica-corexy" class="md-nav__link">
     Cinematica CoreXY
   </a>
@@ -2458,6 +2465,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#deltesian-kinematics" class="md-nav__link">
+    Deltesian Kinematics
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cinematica-corexy" class="md-nav__link">
     Cinematica CoreXY
   </a>
@@ -3587,34 +3601,31 @@ serial:
 <p>La sezione printer controlla le impostazioni di alto livello della stampante.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics:
-#   Il tipo di stampante in uso. Questa opzione può essere una delle
-#   seguenti: cartesian, corexy, corexz, hybrid_corexy, hybrid_corexz,
-#   rotary_delta, delta, polar, winch o none.
-#   Questo parametro deve essere specificato.
+#   The type of printer in use. This option may be one of: cartesian,
+#   corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta, delta,
+#   deltesian, polar, winch, or none. This parameter must be specified.
 max_velocity:
-#   Velocità massima (in mm/s) della testa di stampa (relativa alla
-#   stampa). Questo parametro deve essere specificato.
+#   Maximum velocity (in mm/s) of the toolhead (relative to the
+#   print). This parameter must be specified.
 max_accel:
-#   Accelerazione massima (in mm/s^2) della testina (relativa alla
-#   stampa). Questo parametro deve essere specificato.
+#   Maximum acceleration (in mm/s^2) of the toolhead (relative to the
+#   print). This parameter must be specified.
 #max_accel_to_decel:
-#   Una pseudo accelerazione (in mm/s^2) che controlla la velocità
-#   con cui la testa di stampa può passare dall&#39;accelerazione alla
-#   decelerazione. Viene utilizzato per ridurre la velocità massima di
-#   brevi movimenti a zig-zag (e quindi ridurre le vibrazioni della
-#   stampante dovute a questi movimenti). Il valore predefinito è
-#   metà di max_accel.
+#   A pseudo acceleration (in mm/s^2) controlling how fast the
+#   toolhead may go from acceleration to deceleration. It is used to
+#   reduce the top speed of short zig-zag moves (and thus reduce
+#   printer vibration from these moves). The default is half of
+#   max_accel.
 #square_corner_velocity: 5.0
-#   La velocità massima (in mm/s) alla quale la testa di stampa può
-#   viaggiare su un angolo di 90 gradi. Un valore diverso da zero può
-#   ridurre le variazioni delle portate dell&#39;estrusore consentendo
-#   variazioni istantanee della velocità della testa utensile durante le
-#   curve. Questo valore configura l&#39;algoritmo interno di curvatura
-#   della velocità centripeta; gli angoli con angoli maggiori di 90 gradi
-#   avranno una velocità in curva maggiore mentre gli angoli con angoli
-#   inferiori a 90 gradi avranno una velocità in curva inferiore. Se
-#   questo è impostato su zero, la testa decelererà fino a zero
-#   ad ogni angolo. Il valore predefinito è 5 mm/s.
+#   The maximum velocity (in mm/s) that the toolhead may travel a 90
+#   degree corner at. A non-zero value can reduce changes in extruder
+#   flow rates by enabling instantaneous velocity changes of the
+#   toolhead during cornering. This value configures the internal
+#   centripetal velocity cornering algorithm; corners with angles
+#   larger than 90 degrees will have a higher cornering velocity while
+#   corners with angles less than 90 degrees will have a lower
+#   cornering velocity. If this is set to zero then the toolhead will
+#   decelerate to zero at each corner. The default is 5mm/s.
 </code></pre></div>
 
 <h3 id="stepper">[stepper]<a class="headerlink" href="#stepper" title="Permanent link">&para;</a></h3>
@@ -3802,6 +3813,74 @@ radius:
 #   L&#39;altezza (in mm) a cui la testa deve essere comandata di
 #   spostarsi appena prima di avviare un&#39;operazione di sonda.
 #   L&#39;impostazione predefinita è 5.
+</code></pre></div>
+
+<h3 id="deltesian-kinematics">Deltesian Kinematics<a class="headerlink" href="#deltesian-kinematics" title="Permanent link">&para;</a></h3>
+<p>See <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-deltesian.cfg">example-deltesian.cfg</a> for an example deltesian kinematics config file.</p>
+<p>Only parameters specific to deltesian printers are described here - see <a href="#common-kinematic-settings">common kinematic settings</a> for available parameters.</p>
+<div class="highlight"><pre><span></span><code>[printer]
+kinematics: deltesian
+max_z_velocity:
+#   For deltesian printers, this limits the maximum velocity (in mm/s) of
+#   moves with z axis movement. This setting can be used to reduce the
+#   maximum speed of up/down moves (which require a higher step rate
+#   than other moves on a deltesian printer). The default is to use
+#   max_velocity for max_z_velocity.
+#max_z_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. Setting this may be useful if the printer can reach higher
+#   acceleration on XY moves than Z moves (eg, when using input shaper).
+#   The default is to use max_accel for max_z_accel.
+#minimum_z_position: 0
+#   The minimum Z position that the user may command the head to move
+#   to. The default is 0.
+#min_angle: 5
+#   This represents the minimum angle (in degrees) relative to horizontal
+#   that the deltesian arms are allowed to achieve. This parameter is
+#   intended to restrict the arms from becomming completely horizontal,
+#   which would risk accidental inversion of the XZ axis. The default is 5.
+#print_width:
+#   The distance (in mm) of valid toolhead X coordinates. One may use
+#   this setting to customize the range checking of toolhead moves. If
+#   a large value is specified here then it may be possible to command
+#   the toolhead into a collision with a tower. This setting usually
+#   corresponds to bed width (in mm).
+#slow_ratio: 3
+#   The ratio used to limit velocity and acceleration on moves near the
+#   extremes of the X axis. If vertical distance divided by horizontal
+#   distance exceeds the value of slow_ratio, then velocity and
+#   acceleration are limited to half their nominal values. If vertical
+#   distance divided by horizontal distance exceeds twice the value of
+#   the slow_ratio, then velocity and acceleration are limited to one
+#   quarter of their nominal values. The default is 3.
+
+# The stepper_left section is used to describe the stepper controlling
+# the left tower. This section also controls the homing parameters
+# (homing_speed, homing_retract_dist) for all towers.
+[stepper_left]
+position_endstop:
+#   Distance (in mm) between the nozzle and the bed when the nozzle is
+#   in the center of the build area and the endstops are triggered. This
+#   parameter must be provided for stepper_left; for stepper_right this
+#   parameter defaults to the value specified for stepper_left.
+arm_length:
+#   Length (in mm) of the diagonal rod that connects the tower carriage to
+#   the print head. This parameter must be provided for stepper_left; for
+#   stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
+arm_x_length:
+#   Horizontal distance between the print head and the tower when the
+#   printers is homed. This parameter must be provided for stepper_left;
+#   for stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
+
+# The stepper_right section is used to desribe the stepper controlling the
+# right tower.
+[stepper_right]
+
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis in a deltesian robot.
+[stepper_y]
 </code></pre></div>
 
 <h3 id="cinematica-corexy">Cinematica CoreXY<a class="headerlink" href="#cinematica-corexy" title="Permanent link">&para;</a></h3>
@@ -5460,71 +5539,68 @@ serial_no:
 <p>Ventola di raffreddamento della stampa.</p>
 <div class="highlight"><pre><span></span><code>[fan]
 pin:
-#   Pin di uscita che controlla la ventola. Questo parametro deve essere fornito.
+#   Output pin controlling the fan. This parameter must be provided.
 #max_power: 1.0
-#   La potenza massima (espressa come valore da 0.0 a 1.0) su cui può
-#   pin può essere impostato il pin. Il valore 1.0 consente di impostare il pin
-#   completamente abilitato per periodi prolungati, mentre un valore di 0,5
-#   consentirebbe di abilitare per non più della metà del tempo. Questa
-#   impostazione potrebbe essere utilizzata per limitare la potenza totale
-#   (per periodi prolungati) alla ventola. Se questo valore è inferiore a 1.0
-#   viene richiesta la velocità della ventola verrà scalato tra zero e
-#   max_power (ad esempio, se  max_power è .9 ed è richiesta una velocità
-#   della ventola dell&#39;80%, quindi la potenza della ventola sarà impostata
-#   su 72%). L&#39;impostazione predefinita è 1.0 .
+#   The maximum power (expressed as a value from 0.0 to 1.0) that the
+#   pin may be set to. The value 1.0 allows the pin to be set fully
+#   enabled for extended periods, while a value of 0.5 would allow the
+#   pin to be enabled for no more than half the time. This setting may
+#   be used to limit the total power output (over extended periods) to
+#   the fan. If this value is less than 1.0 then fan speed requests
+#   will be scaled between zero and max_power (for example, if
+#   max_power is .9 and a fan speed of 80% is requested then the fan
+#   power will be set to 72%). The default is 1.0.
 #shutdown_speed: 0
-#   La velocità della ventola desiderata (espressa come valore da 0,0 a 1,0)
-#   se il software del microcontrollore entra in uno stato di errore. 
-#   Il valore predefinito è 0.
+#   The desired fan speed (expressed as a value from 0.0 to 1.0) if
+#   the micro-controller software enters an error state. The default
+#   is 0.
 #cycle_time: 0.010
-#   La quantità di tempo (in secondi) per ogni ciclo di alimentazione PWM
-#   alla ventola. Si consiglia di essere pari o superiore a 10 millisecondi 
-#   quando si utilizza PWM basato su software.
-#   Il valore predefinito è 0,010 secondi.
+#   The amount of time (in seconds) for each PWM power cycle to the
+#   fan. It is recommended this be 10 milliseconds or greater when
+#   using software based PWM. The default is 0.010 seconds.
 #hardware_pwm: False
-#   Abilitare questa opzione per utilizzare PWM hardware anziché PWM
-#   software. La maggior parte delle ventole non funziona bene con
-#   PWM hardware, quindi non è consigliabile abilitarlo a meno che non
-#   vi sia un requisito elettrico per passare a velocità molto elevate.
-#   Quando si utilizza l&#39;hardware PWM, il tempo di ciclo effettivo è
-#    vincolato dall&#39;implementazione e può essere notevolmente diverso
-#    dal tempo di ciclo richiesto. L&#39;impostazione predefinita è Falso.
+#   Enable this to use hardware PWM instead of software PWM. Most fans
+#   do not work well with hardware PWM, so it is not recommended to
+#   enable this unless there is an electrical requirement to switch at
+#   very high speeds. When using hardware PWM the actual cycle time is
+#   constrained by the implementation and may be significantly
+#   different than the requested cycle_time. The default is False.
 #kick_start_time: 0.100
-#   Tempo (in secondi) per far funzionare la ventola a piena velocità
-#   quando la si abilita per la prima volta o la si aumenta di oltre
-#   il 50% (aiuta a far girare la ventola).
-#   Il valore predefinito è 0,100 secondi.
+#   Time (in seconds) to run the fan at full speed when either first
+#   enabling or increasing it by more than 50% (helps get the fan
+#   spinning). The default is 0.100 seconds.
 #off_below: 0.0
-#   La velocità minima di ingresso che alimenterà la ventola (espressa
-#   come un valore compreso tra 0,0 e 1,0). Quando viene richiesta una
-#   velocità inferiore a off_below la ventola verrà invece spenta. Questa
-#   impostazione può essere utilizzata per prevenire lo stallo della
-#   ventola e per garantire che lo siano partenze efficaci.
-#   Il valore predefinito è 0,0.
+#   The minimum input speed which will power the fan (expressed as a
+#   value from 0.0 to 1.0). When a speed lower than off_below is
+#   requested the fan will instead be turned off. This setting may be
+#   used to prevent fan stalls and to ensure kick starts are
+#   effective. The default is 0.0.
 #
-#   Questa impostazione deve essere ricalibrata ogni volta che
-#   max_power viene regolato. Per calibrare questa impostazione,
-#   inizia con off_below impostato su 0.0 e la ventola gira. Abbassare
-#   gradualmente la velocità della ventola per determinare la velocità
-#   di ingresso più bassa che aziona la ventola in modo affidabile
-#   senza stalli. Impostare off_below al duty cycle corrispondente a
-#   questo valore (ad esempio, 12% -&gt; 0,12) o leggermente superiore.
+#   This setting should be recalibrated whenever max_power is adjusted.
+#   To calibrate this setting, start with off_below set to 0.0 and the
+#   fan spinning. Gradually lower the fan speed to determine the lowest
+#   input speed which reliably drives the fan without stalls. Set
+#   off_below to the duty cycle corresponding to this value (for
+#   example, 12% -&gt; 0.12) or slightly higher.
 #tachometer_pin:
-#   Pin di ingresso contagiri per il monitoraggio della velocità della
-#   ventola. In genere è richiesto un pullup.
-#   Questo parametro è facoltativo.
+#   Tachometer input pin for monitoring fan speed. A pullup is generally
+#   required. This parameter is optional.
 #tachometer_ppr: 2
-#   Quando è specificato il pin del contagiri, questo è il numero di
-#   impulsi per giro del segnale del contagiri. Per una ventola BLDC
-#   questo è normalmente la metà del numero di poli.
-#   L&#39;impostazione predefinita è 2.
+#   When tachometer_pin is specified, this is the number of pulses per
+#   revolution of the tachometer signal. For a BLDC fan this is
+#   normally half the number of poles. The default is 2.
 #tachometer_poll_interval: 0.0015
-#   Quando viene specificato tachometer_pin, questo è il periodo
-#   di polling del pin del contagiri, in secondi.
-#   Il valore predefinito è 0,0015, che è abbastanza veloce per le
-#   ventole al di sotto di 10000 RPM a 2 PPR. Deve essere inferiore a
-#   30/(tachometer_ppr*rpm), con un certo margine, dove rpm è la
-#   velocità massima (in RPM) della ventola.
+#   When tachometer_pin is specified, this is the polling period of the
+#   tachometer pin, in seconds. The default is 0.0015, which is fast
+#   enough for fans below 10000 RPM at 2 PPR. This must be smaller than
+#   30/(tachometer_ppr*rpm), with some margin, where rpm is the
+#   maximum speed (in RPM) of the fan.
+#enable_pin:
+#   Optional pin to enable power to the fan. This can be useful for fans
+#   with dedicated PWM inputs. Some of these fans stay on even at 0% PWM
+#   input. In such a case, the PWM pin can be used normally, and e.g. a
+#   ground-switched FET(standard fan pin) can be used to control power to
+#   the fan.
 </code></pre></div>
 
 <h3 id="heater_fan">[heater_fan]<a class="headerlink" href="#heater_fan" title="Permanent link">&para;</a></h3>
@@ -5540,21 +5616,20 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   Vedere la sezione &quot;fan&quot; per una descrizione dei parametri sopra.
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 #heater: extruder
-#   Nome della sezione di configurazione che definisce il riscaldatore
-#   a cui è associato questa ventola. Se qui viene fornito un elenco di
-#   nomi di riscaldatori separati da virgole,la ventola verrà abilitata
-#   quando uno qualsiasi dei riscaldatori indicati è abilitato.
-#   L&#39;impostazione predefinita è &quot;extruder&quot;.
+#   Name of the config section defining the heater that this fan is
+#   associated with. If a comma separated list of heater names is
+#   provided here, then the fan will be enabled when any of the given
+#   heaters are enabled. The default is &quot;extruder&quot;.
 #heater_temp: 50.0
-#   Una temperatura (in gradi Celsius) sotto la quale il riscaldatore
-#   deve scendere prima che la ventola venga disattivata.
-#   L&#39;impostazione predefinita è 50 gradi Celsius.
+#   A temperature (in Celsius) that the heater must drop below before
+#   the fan is disabled. The default is 50 Celsius.
 #fan_speed: 1.0
-#   La velocità della ventola (espressa come un valore compreso
-#   tra 0,0 e 1,0) a cui verrà impostato la ventola quando viene abilitato
-#   il relativo riscaldatore. L&#39;impostazione predefinita è 1.0
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when its associated heater is enabled. The default
+#   is 1.0
 </code></pre></div>
 
 <h3 id="controller_fan">[controller_fan]<a class="headerlink" href="#controller_fan" title="Permanent link">&para;</a></h3>
@@ -5570,6 +5645,7 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
+#enable_pin:
 #   See the &quot;fan&quot; section for a description of the above parameters.
 #fan_speed: 1.0
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
@@ -5606,6 +5682,7 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
+#enable_pin:
 #   See the &quot;fan&quot; section for a description of the above parameters.
 #sensor_type:
 #sensor_pin:
@@ -5658,7 +5735,8 @@ pin:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
-#   Vedere la sezione &quot;fan&quot; per la descrizione dei parametri riportati sopra
+#enable_pin:
+#   See the &quot;fan&quot; section for a description of the above parameters.
 </code></pre></div>
 
 <h2 id="leds">LEDs<a class="headerlink" href="#leds" title="Permanent link">&para;</a></h2>

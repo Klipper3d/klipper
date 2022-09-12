@@ -1583,6 +1583,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#mcp4018" class="md-nav__link">
+    [mcp4018]
+  </a>
+  
+    <nav class="md-nav" aria-label="[mcp4018]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_digipot" class="md-nav__link">
+    SET_DIGIPOT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#led" class="md-nav__link">
     [led]
   </a>
@@ -3586,6 +3606,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#mcp4018" class="md-nav__link">
+    [mcp4018]
+  </a>
+  
+    <nav class="md-nav" aria-label="[mcp4018]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_digipot" class="md-nav__link">
+    SET_DIGIPOT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#led" class="md-nav__link">
     [led]
   </a>
@@ -4501,6 +4541,10 @@
 <p>当<a href="Config_Reference.html#manual_stepper">manual_stepper 配置分段</a>被启用时，以下命令可用。</p>
 <h4 id="manual_stepper_1">MANUAL_STEPPER<a class="headerlink" href="#manual_stepper_1" title="Permanent link">&para;</a></h4>
 <p><code>MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]] [SET_POSITION=&lt;pos&gt;] [SPEED=&lt;speed&gt;] [ACCEL=&lt;accel&gt;] [MOVE=&lt;pos&gt; [STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=0]]</code>：该命令将改变步进器的状态。使用ENABLE参数来启用/禁用步进。使用SET_POSITION参数，迫使步进认为它处于给定的位置。使用MOVE参数，要求移动到给定位置。如果指定了SPEED或者ACCEL，那么将使用给定的值而不是配置文件中指定的默认值。如果指定ACCEL为0，那么将不执行加速。如果STOP_ON_ENDSTOP=1被指定，那么如果止动器报告被触发，动作将提前结束（使用STOP_ON_ENDSTOP=2来完成动作，即使止动器没有被触发也不会出错，使用-1或-2来在止动器报告没有被触发时停止）。通常情况下，未来的G-Code命令将被安排在步进运动完成后运行，但是如果手动步进运动使用SYNC=0，那么未来的G-Code运动命令可能与步进运动平行运行。</p>
+<h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
+<p>The following command is available when a <a href="Config_Reference.html#mcp4018">mcp4018 config section</a> is enabled.</p>
+<h4 id="set_digipot">SET_DIGIPOT<a class="headerlink" href="#set_digipot" title="Permanent link">&para;</a></h4>
+<p><code>SET_DIGIPOT DIGIPOT=config_name WIPER=&lt;value&gt;</code>: This command will change the current value of the digipot. This value should typically be between 0.0 and 1.0, unless a 'scale' is defined in the config. When 'scale' is defined, then this value should be between 0.0 and 'scale'.</p>
 <h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
 <p>The following command is available when any of the <a href="Config_Reference.html#leds">led config sections</a> are enabled.</p>
 <h4 id="set_led">SET_LED<a class="headerlink" href="#set_led" title="Permanent link">&para;</a></h4>
