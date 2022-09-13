@@ -75,7 +75,7 @@ taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
 
 The stm32mp1 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeMP1
-version v1.7.0 (pre-release). Contents
+version v1.6.0 (b9a31179d5bf80b3958c3653153bfd4c3a7fc5d5). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32MP1xx/ directory.
 
 The rp2040 directory contains code from the pico sdk:

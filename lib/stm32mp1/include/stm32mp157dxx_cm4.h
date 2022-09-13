@@ -302,21 +302,20 @@ typedef struct
   __IO uint32_t CALFACT2;         /*!< ADC  Linearity Calibration Factors,                Address offset: 0xC8 */
   uint32_t      RESERVED10;       /*!< Reserved,                                                         0x0CC */
   __IO uint32_t OR;               /*!< ADC  Option Register,                             Address offset: 0x0D0 */
+  uint32_t  RESERVED11[200];       /*!< Reserved,                                                0x0D4 - 0x3F0 */
+  __IO uint32_t VERR;             /*!< ADC version register,                             Address offset: 0x3F4 */
+  __IO uint32_t IPIDR;            /*!< ADC ID register,                                  Address offset: 0x3F8 */
+  __IO uint32_t SIDR;             /*!< ADC Size ID register,                             Address offset: 0x3FC */
 } ADC_TypeDef;
 
 
 typedef struct
 {
   __IO uint32_t CSR; /*!< ADC Common status register, Address offset: ADC1/3 base address + 0x300 */
-  uint32_t RESERVED; /*!< Reserved, ADC12 base address + 0x304 */
+  uint32_t RESERVED; /*!< Reserved, ADC1/3 base address + 0x304 */
   __IO uint32_t CCR; /*!< ADC common control register, Address offset: ADC1/3 base address + 0x308 */
   __IO uint32_t CDR; /*!< ADC common regular data register for dual Address offset: ADC1/3 base address + 0x30C */
   __IO uint32_t CDR2; /*!< ADC common regular data register for 32-bit dual mode Address offset: ADC1/3 base address + 0x310 */
-  uint32_t      RESERVED1[55];     /*!< Reserved, 0x312 - 0x3EC                                                 */
-  __I uint32_t  HWCFGR0;          /*!< ADC version register,                             Address offset: 0x3F0 */
-  __I uint32_t  VERR;             /*!< ADC version register,                             Address offset: 0x3F4 */
-  __I uint32_t  IPIDR;            /*!< ADC ID register,                                  Address offset: 0x3F8 */
-  __I uint32_t  SIDR;             /*!< ADC Size ID register,                             Address offset: 0x3FC */
 } ADC_Common_TypeDef;
 
 /**
@@ -3503,9 +3502,9 @@ typedef struct
 #define ADC_MULTIMODE_SUPPORT                          /*!< ADC feature available only on specific devices: multimode available on devices with several ADC instances */
 
 /********************  Bit definition for ADC_ISR register  ********************/
-#define ADC_ISR_ADRDY_Pos                 (0U)
-#define ADC_ISR_ADRDY_Msk                 (0x1UL << ADC_ISR_ADRDY_Pos)           /*!< 0x00000001 */
-#define ADC_ISR_ADRDY                     ADC_ISR_ADRDY_Msk                     /*!< ADC Ready (ADRDY) flag  */
+#define ADC_ISR_ADRDY_Pos                  (0U)
+#define ADC_ISR_ADRDY_Msk                  (0x1UL << ADC_ISR_ADRDY_Pos)           /*!< 0x00000001 */
+#define ADC_ISR_ADRDY                      ADC_ISR_ADRDY_Msk                     /*!< ADC Ready (ADRDY) flag  */
 #define ADC_ISR_EOSMP_Pos                 (1U)
 #define ADC_ISR_EOSMP_Msk                 (0x1UL << ADC_ISR_EOSMP_Pos)          /*!< 0x00000002 */
 #define ADC_ISR_EOSMP                     ADC_ISR_EOSMP_Msk                    /*!< ADC End of Sampling flag */
@@ -3536,9 +3535,6 @@ typedef struct
 #define ADC_ISR_JQOVF_Pos                 (10U)
 #define ADC_ISR_JQOVF_Msk                 (0x1UL << ADC_ISR_JQOVF_Pos)          /*!< 0x00000400 */
 #define ADC_ISR_JQOVF                     ADC_ISR_JQOVF_Msk                    /*!< ADC Injected Context Queue Overflow flag */
-#define ADC_ISR_LDORDY_Pos                (12U)
-#define ADC_ISR_LDORDY_Msk                (0x1UL << ADC_ISR_LDORDY_Pos)         /*!< 0x00001000 */
-#define ADC_ISR_LDORDY                    ADC_ISR_LDORDY_Msk                   /*!< ADC LDO output voltage ready bit */
 
 /********************  Bit definition for ADC_IER register  ********************/
 #define ADC_IER_ADRDYIE_Pos               (0U)
@@ -3721,6 +3717,13 @@ typedef struct
 #define ADC_CFGR2_JOVSE_Msk               (0x1UL << ADC_CFGR2_JOVSE_Pos)        /*!< 0x00000002 */
 #define ADC_CFGR2_JOVSE                   ADC_CFGR2_JOVSE_Msk                  /*!< ADC Injected group oversampler enable */
 
+#define ADC_CFGR2_OVSR_Pos                (2U)
+#define ADC_CFGR2_OVSR_Msk                (0x7UL << ADC_CFGR2_OVSR_Pos)         /*!< 0x0000001C */
+#define ADC_CFGR2_OVSR                    ADC_CFGR2_OVSR_Msk                   /*!< ADC Regular group oversampler enable TO Be removed after ADC driver update*/
+#define ADC_CFGR2_OVSR_0                  (0x1UL << ADC_CFGR2_OVSR_Pos)         /*!< 0x00000004 */
+#define ADC_CFGR2_OVSR_1                  (0x2UL << ADC_CFGR2_OVSR_Pos)         /*!< 0x00000008 */
+#define ADC_CFGR2_OVSR_2                  (0x4UL << ADC_CFGR2_OVSR_Pos)         /*!< 0x00000010 */
+
 #define ADC_CFGR2_OVSS_Pos                (5U)
 #define ADC_CFGR2_OVSS_Msk                (0xFUL << ADC_CFGR2_OVSS_Pos)         /*!< 0x000001E0 */
 #define ADC_CFGR2_OVSS                    ADC_CFGR2_OVSS_Msk                   /*!< ADC Regular Oversampling shift */
@@ -3735,6 +3738,7 @@ typedef struct
 #define ADC_CFGR2_ROVSM_Pos               (10U)
 #define ADC_CFGR2_ROVSM_Msk               (0x1UL << ADC_CFGR2_ROVSM_Pos)        /*!< 0x00000400 */
 #define ADC_CFGR2_ROVSM                   ADC_CFGR2_ROVSM_Msk                  /*!< ADC Regular oversampling mode */
+
 #define ADC_CFGR2_RSHIFT1_Pos             (11U)
 #define ADC_CFGR2_RSHIFT1_Msk             (0x1UL << ADC_CFGR2_RSHIFT1_Pos)      /*!< 0x00000800 */
 #define ADC_CFGR2_RSHIFT1                 ADC_CFGR2_RSHIFT1_Msk                /*!< ADC Right-shift data after Offset 1 correction */
@@ -3748,19 +3752,19 @@ typedef struct
 #define ADC_CFGR2_RSHIFT4_Msk             (0x1UL << ADC_CFGR2_RSHIFT4_Pos)      /*!< 0x00004000 */
 #define ADC_CFGR2_RSHIFT4                 ADC_CFGR2_RSHIFT4_Msk                /*!< ADC Right-shift data after Offset 4 correction */
 
-#define ADC_CFGR2_OVSR_Pos                 (16U)
-#define ADC_CFGR2_OVSR_Msk                 (0x3FFUL << ADC_CFGR2_OVSR_Pos)      /*!< 0x03FF0000 */
-#define ADC_CFGR2_OVSR                     ADC_CFGR2_OVSR_Msk                  /*!< ADC oversampling Ratio */
-#define ADC_CFGR2_OVSR_0                   (0x001UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00010000 */
-#define ADC_CFGR2_OVSR_1                   (0x002UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00020000 */
-#define ADC_CFGR2_OVSR_2                   (0x004UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00040000 */
-#define ADC_CFGR2_OVSR_3                   (0x008UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00080000 */
-#define ADC_CFGR2_OVSR_4                   (0x010UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00100000 */
-#define ADC_CFGR2_OVSR_5                   (0x020UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00200000 */
-#define ADC_CFGR2_OVSR_6                   (0x040UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00400000 */
-#define ADC_CFGR2_OVSR_7                   (0x080UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x00800000 */
-#define ADC_CFGR2_OVSR_8                   (0x100UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x01000000 */
-#define ADC_CFGR2_OVSR_9                   (0x200UL << ADC_CFGR2_OVSR_Pos)      /*!< 0x02000000 */
+#define ADC_CFGR2_OSR_Pos                 (16U)
+#define ADC_CFGR2_OSR_Msk                 (0x3FFUL << ADC_CFGR2_OSR_Pos)        /*!< 0x03FF0000 */
+#define ADC_CFGR2_OSR                     ADC_CFGR2_OSR_Msk                    /*!< ADC oversampling Ratio */
+#define ADC_CFGR2_OSR_0                   (0x001UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00010000 */
+#define ADC_CFGR2_OSR_1                   (0x002UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00020000 */
+#define ADC_CFGR2_OSR_2                   (0x004UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00040000 */
+#define ADC_CFGR2_OSR_3                   (0x008UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00080000 */
+#define ADC_CFGR2_OSR_4                   (0x010UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00100000 */
+#define ADC_CFGR2_OSR_5                   (0x020UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00200000 */
+#define ADC_CFGR2_OSR_6                   (0x040UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00400000 */
+#define ADC_CFGR2_OSR_7                   (0x080UL << ADC_CFGR2_OSR_Pos)        /*!< 0x00800000 */
+#define ADC_CFGR2_OSR_8                   (0x100UL << ADC_CFGR2_OSR_Pos)        /*!< 0x01000000 */
+#define ADC_CFGR2_OSR_9                   (0x200UL << ADC_CFGR2_OSR_Pos)        /*!< 0x02000000 */
 
 #define ADC_CFGR2_LSHIFT_Pos              (28U)
 #define ADC_CFGR2_LSHIFT_Msk              (0xFUL << ADC_CFGR2_LSHIFT_Pos)       /*!< 0xF0000000 */
@@ -3938,190 +3942,180 @@ typedef struct
 #define ADC_PCSEL_PCSEL_19                (0x80000UL << ADC_PCSEL_PCSEL_Pos)    /*!< 0x00080000 */
 
 /********************  Bit definition for ADC_LTR1 register  ********************/
-#define ADC_LTR1_LTR1_Pos                 (0U)
-#define ADC_LTR1_LTR1_Msk                 (0x3FFFFFFUL << ADC_LTR1_LTR1_Pos)    /*!< 0x03FFFFFF */
-#define ADC_LTR1_LTR1                     ADC_LTR1_LTR1_Msk                    /*!< ADC Analog watchdog 1 lower threshold */
-#define ADC_LTR1_LTR1_0                   (0x0000001UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000001 */
-#define ADC_LTR1_LTR1_1                   (0x0000002UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000002 */
-#define ADC_LTR1_LTR1_2                   (0x0000004UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000004 */
-#define ADC_LTR1_LTR1_3                   (0x0000008UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000008 */
-#define ADC_LTR1_LTR1_4                   (0x0000010UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000010 */
-#define ADC_LTR1_LTR1_5                   (0x0000020UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000020 */
-#define ADC_LTR1_LTR1_6                   (0x0000040UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000040 */
-#define ADC_LTR1_LTR1_7                   (0x0000080UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000080 */
-#define ADC_LTR1_LTR1_8                   (0x0000100UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000100 */
-#define ADC_LTR1_LTR1_9                   (0x0000200UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000200 */
-#define ADC_LTR1_LTR1_10                  (0x0000400UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000400 */
-#define ADC_LTR1_LTR1_11                  (0x0000800UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00000800 */
-#define ADC_LTR1_LTR1_12                  (0x0001000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00001000 */
-#define ADC_LTR1_LTR1_13                  (0x0002000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00002000 */
-#define ADC_LTR1_LTR1_14                  (0x0004000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00004000 */
-#define ADC_LTR1_LTR1_15                  (0x0008000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00008000 */
-#define ADC_LTR1_LTR1_16                  (0x0010000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00010000 */
-#define ADC_LTR1_LTR1_17                  (0x0020000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00020000 */
-#define ADC_LTR1_LTR1_18                  (0x0040000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00040000 */
-#define ADC_LTR1_LTR1_19                  (0x0080000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00080000 */
-#define ADC_LTR1_LTR1_20                  (0x0100000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00100000 */
-#define ADC_LTR1_LTR1_21                  (0x0200000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00200000 */
-#define ADC_LTR1_LTR1_22                  (0x0400000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00400000 */
-#define ADC_LTR1_LTR1_23                  (0x0800000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x00800000 */
-#define ADC_LTR1_LTR1_24                  (0x1000000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x01000000 */
-#define ADC_LTR1_LTR1_25                  (0x2000000UL << ADC_LTR1_LTR1_Pos)    /*!< 0x02000000 */
+#define ADC_LTR1_LT1_Pos                  (0U)
+#define ADC_LTR1_LT1_Msk                  (0x3FFFFFFUL << ADC_LTR1_LT1_Pos)     /*!< 0x03FFFFFF */
+#define ADC_LTR1_LT1                      ADC_LTR1_LT1_Msk                     /*!< ADC Analog watchdog 1 lower threshold */
+#define ADC_LTR1_LT1_0                    (0x0000001UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000001 */
+#define ADC_LTR1_LT1_1                    (0x0000002UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000002 */
+#define ADC_LTR1_LT1_2                    (0x0000004UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000004 */
+#define ADC_LTR1_LT1_3                    (0x0000008UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000008 */
+#define ADC_LTR1_LT1_4                    (0x0000010UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000010 */
+#define ADC_LTR1_LT1_5                    (0x0000020UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000020 */
+#define ADC_LTR1_LT1_6                    (0x0000040UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000040 */
+#define ADC_LTR1_LT1_7                    (0x0000080UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000080 */
+#define ADC_LTR1_LT1_8                    (0x0000100UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000100 */
+#define ADC_LTR1_LT1_9                    (0x0000200UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000200 */
+#define ADC_LTR1_LT1_10                   (0x0000400UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000400 */
+#define ADC_LTR1_LT1_11                   (0x0000800UL << ADC_LTR1_LT1_Pos)     /*!< 0x00000800 */
+#define ADC_LTR1_LT1_12                   (0x0001000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00001000 */
+#define ADC_LTR1_LT1_13                   (0x0002000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00002000 */
+#define ADC_LTR1_LT1_14                   (0x0004000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00004000 */
+#define ADC_LTR1_LT1_15                   (0x0008000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00008000 */
+#define ADC_LTR1_LT1_16                   (0x0010000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00010000 */
+#define ADC_LTR1_LT1_17                   (0x0020000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00020000 */
+#define ADC_LTR1_LT1_18                   (0x0040000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00040000 */
+#define ADC_LTR1_LT1_19                   (0x0080000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00080000 */
+#define ADC_LTR1_LT1_20                   (0x0100000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00100000 */
+#define ADC_LTR1_LT1_21                   (0x0200000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00200000 */
+#define ADC_LTR1_LT1_22                   (0x0400000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00400000 */
+#define ADC_LTR1_LT1_23                   (0x0800000UL << ADC_LTR1_LT1_Pos)     /*!< 0x00800000 */
+#define ADC_LTR1_LT1_24                   (0x1000000UL << ADC_LTR1_LT1_Pos)     /*!< 0x01000000 */
+#define ADC_LTR1_LT1_25                   (0x2000000UL << ADC_LTR1_LT1_Pos)     /*!< 0x02000000 */
 
 /********************  Bit definition for ADC_HTR1 register  ********************/
-#define ADC_HTR1_HTR1_Pos                 (0U)
-#define ADC_HTR1_HTR1_Msk                 (0x3FFFFFFUL << ADC_HTR1_HTR1_Pos)    /*!< 0x03FFFFFF */
-#define ADC_HTR1_HTR1                     ADC_HTR1_HTR1_Msk                    /*!< ADC Analog watchdog 1 higher threshold */
-#define ADC_HTR1_HTR1_0                   (0x0000001UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000001 */
-#define ADC_HTR1_HTR1_1                   (0x0000002UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000002 */
-#define ADC_HTR1_HTR1_2                   (0x0000004UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000004 */
-#define ADC_HTR1_HTR1_3                   (0x0000008UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000008 */
-#define ADC_HTR1_HTR1_4                   (0x0000010UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000010 */
-#define ADC_HTR1_HTR1_5                   (0x0000020UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000020 */
-#define ADC_HTR1_HTR1_6                   (0x0000040UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000040 */
-#define ADC_HTR1_HTR1_7                   (0x0000080UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000080 */
-#define ADC_HTR1_HTR1_8                   (0x0000100UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000100 */
-#define ADC_HTR1_HTR1_9                   (0x0000200UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000200 */
-#define ADC_HTR1_HTR1_10                  (0x0000400UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000400 */
-#define ADC_HTR1_HTR1_11                  (0x0000800UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00000800 */
-#define ADC_HTR1_HTR1_12                  (0x0001000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00001000 */
-#define ADC_HTR1_HTR1_13                  (0x0002000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00002000 */
-#define ADC_HTR1_HTR1_14                  (0x0004000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00004000 */
-#define ADC_HTR1_HTR1_15                  (0x0008000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00008000 */
-#define ADC_HTR1_HTR1_16                  (0x0010000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00010000 */
-#define ADC_HTR1_HTR1_17                  (0x0020000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00020000 */
-#define ADC_HTR1_HTR1_18                  (0x0040000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00040000 */
-#define ADC_HTR1_HTR1_19                  (0x0080000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00080000 */
-#define ADC_HTR1_HTR1_20                  (0x0100000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00100000 */
-#define ADC_HTR1_HTR1_21                  (0x0200000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00200000 */
-#define ADC_HTR1_HTR1_22                  (0x0400000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00400000 */
-#define ADC_HTR1_HTR1_23                  (0x0800000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x00800000 */
-#define ADC_HTR1_HTR1_24                  (0x1000000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x01000000 */
-#define ADC_HTR1_HTR1_25                  (0x2000000UL << ADC_HTR1_HTR1_Pos)    /*!< 0x02000000 */
+#define ADC_HTR1_HT1         ((uint32_t) 0x03FFFFFF) /*!< ADC Analog watchdog 1 higher threshold */
+#define ADC_HTR1_HT1_0                    ((uint32_t)0x00000001)               /*!< ADC HT1 bit 0 */
+#define ADC_HTR1_HT1_1                    ((uint32_t)0x00000002)               /*!< ADC HT1 bit 1 */
+#define ADC_HTR1_HT1_2                    ((uint32_t)0x00000004)               /*!< ADC HT1 bit 2 */
+#define ADC_HTR1_HT1_3                    ((uint32_t)0x00000008)               /*!< ADC HT1 bit 3 */
+#define ADC_HTR1_HT1_4                    ((uint32_t)0x00000010)               /*!< ADC HT1 bit 4 */
+#define ADC_HTR1_HT1_5                    ((uint32_t)0x00000020)               /*!< ADC HT1 bit 5 */
+#define ADC_HTR1_HT1_6                    ((uint32_t)0x00000040)               /*!< ADC HT1 bit 6 */
+#define ADC_HTR1_HT1_7                    ((uint32_t)0x00000080)               /*!< ADC HT1 bit 7 */
+#define ADC_HTR1_HT1_8                    ((uint32_t)0x00000100)               /*!< ADC HT1 bit 8 */
+#define ADC_HTR1_HT1_9                    ((uint32_t)0x00000200)               /*!< ADC HT1 bit 9 */
+#define ADC_HTR1_HT1_10                   ((uint32_t)0x00000400)               /*!< ADC HT1 bit 10 */
+#define ADC_HTR1_HT1_11                   ((uint32_t)0x00000800)               /*!< ADC HT1 bit 11 */
+#define ADC_HTR1_HT1_12                   ((uint32_t)0x00001000)               /*!< ADC HT1 bit 12 */
+#define ADC_HTR1_HT1_13                   ((uint32_t)0x00002000)               /*!< ADC HT1 bit 13 */
+#define ADC_HTR1_HT1_14                   ((uint32_t)0x00004000)               /*!< ADC HT1 bit 14 */
+#define ADC_HTR1_HT1_15                   ((uint32_t)0x00008000)               /*!< ADC HT1 bit 15 */
+#define ADC_HTR1_HT1_16                   ((uint32_t)0x00010000)               /*!< ADC HT1 bit 16 */
+#define ADC_HTR1_HT1_17                   ((uint32_t)0x00020000)               /*!< ADC HT1 bit 17 */
+#define ADC_HTR1_HT1_18                   ((uint32_t)0x00040000)               /*!< ADC HT1 bit 18 */
+#define ADC_HTR1_HT1_19                   ((uint32_t)0x00080000)               /*!< ADC HT1 bit 19 */
+#define ADC_HTR1_HT1_20                   ((uint32_t)0x00100000)               /*!< ADC HT1 bit 20 */
+#define ADC_HTR1_HT1_21                   ((uint32_t)0x00200000)               /*!< ADC HT1 bit 21 */
+#define ADC_HTR1_HT1_22                   ((uint32_t)0x00400000)               /*!< ADC HT1 bit 22 */
+#define ADC_HTR1_HT1_23                   ((uint32_t)0x00800000)               /*!< ADC HT1 bit 23 */
+#define ADC_HTR1_HT1_24                   ((uint32_t)0x01000000)               /*!< ADC HT1 bit 24 */
+#define ADC_HTR1_HT1_25                   ((uint32_t)0x02000000)               /*!< ADC HT1 bit 25 */
 
 /********************  Bit definition for ADC_LTR2 register  ********************/
-#define ADC_LTR2_LTR2_Pos                 (0U)
-#define ADC_LTR2_LTR2_Msk                 (0x3FFFFFFUL << ADC_LTR2_LTR2_Pos)    /*!< 0x03FFFFFF */
-#define ADC_LTR2_LTR2                     ADC_LTR2_LTR1_Msk                    /*!< ADC Analog watchdog 2 lower threshold */
-#define ADC_LTR2_LTR2_0                   (0x0000001UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000001 */
-#define ADC_LTR2_LTR2_1                   (0x0000002UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000002 */
-#define ADC_LTR2_LTR2_2                   (0x0000004UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000004 */
-#define ADC_LTR2_LTR2_3                   (0x0000008UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000008 */
-#define ADC_LTR2_LTR2_4                   (0x0000010UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000010 */
-#define ADC_LTR2_LTR2_5                   (0x0000020UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000020 */
-#define ADC_LTR2_LTR2_6                   (0x0000040UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000040 */
-#define ADC_LTR2_LTR2_7                   (0x0000080UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000080 */
-#define ADC_LTR2_LTR2_8                   (0x0000100UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000100 */
-#define ADC_LTR2_LTR2_9                   (0x0000200UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000200 */
-#define ADC_LTR2_LTR2_10                  (0x0000400UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000400 */
-#define ADC_LTR2_LTR2_11                  (0x0000800UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00000800 */
-#define ADC_LTR2_LTR2_12                  (0x0001000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00001000 */
-#define ADC_LTR2_LTR2_13                  (0x0002000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00002000 */
-#define ADC_LTR2_LTR2_14                  (0x0004000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00004000 */
-#define ADC_LTR2_LTR2_15                  (0x0008000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00008000 */
-#define ADC_LTR2_LTR2_16                  (0x0010000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00010000 */
-#define ADC_LTR2_LTR2_17                  (0x0020000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00020000 */
-#define ADC_LTR2_LTR2_18                  (0x0040000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00040000 */
-#define ADC_LTR2_LTR2_19                  (0x0080000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00080000 */
-#define ADC_LTR2_LTR2_20                  (0x0100000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00100000 */
-#define ADC_LTR2_LTR2_21                  (0x0200000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00200000 */
-#define ADC_LTR2_LTR2_22                  (0x0400000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00400000 */
-#define ADC_LTR2_LTR2_23                  (0x0800000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x00800000 */
-#define ADC_LTR2_LTR2_24                  (0x1000000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x01000000 */
-#define ADC_LTR2_LTR2_25                  (0x2000000UL << ADC_LTR2_LTR2_Pos)    /*!< 0x02000000 */
+#define ADC_LTR2_LT2         ((uint32_t) 0x03FFFFFF) /*!< ADC Analog watchdog 2 lower threshold */
+#define ADC_LTR2_LT2_0                    ((uint32_t)0x00000001)               /*!< ADC LT2 bit 0 */
+#define ADC_LTR2_LT2_1                    ((uint32_t)0x00000002)               /*!< ADC LT2 bit 1 */
+#define ADC_LTR2_LT2_2                    ((uint32_t)0x00000004)               /*!< ADC LT2 bit 2 */
+#define ADC_LTR2_LT2_3                    ((uint32_t)0x00000008)               /*!< ADC LT2 bit 3 */
+#define ADC_LTR2_LT2_4                    ((uint32_t)0x00000010)               /*!< ADC LT2 bit 4 */
+#define ADC_LTR2_LT2_5                    ((uint32_t)0x00000020)               /*!< ADC LT2 bit 5 */
+#define ADC_LTR2_LT2_6                    ((uint32_t)0x00000040)               /*!< ADC LT2 bit 6 */
+#define ADC_LTR2_LT2_7                    ((uint32_t)0x00000080)               /*!< ADC LT2 bit 7 */
+#define ADC_LTR2_LT2_8                    ((uint32_t)0x00000100)               /*!< ADC LT2 bit 8 */
+#define ADC_LTR2_LT2_9                    ((uint32_t)0x00000200)               /*!< ADC LT2 bit 9 */
+#define ADC_LTR2_LT2_10                   ((uint32_t)0x00000400)               /*!< ADC LT2 bit 10 */
+#define ADC_LTR2_LT2_11                   ((uint32_t)0x00000800)               /*!< ADC LT2 bit 11 */
+#define ADC_LTR2_LT2_12                   ((uint32_t)0x00001000)               /*!< ADC LT2 bit 12 */
+#define ADC_LTR2_LT2_13                   ((uint32_t)0x00002000)               /*!< ADC LT2 bit 13 */
+#define ADC_LTR2_LT2_14                   ((uint32_t)0x00004000)               /*!< ADC LT2 bit 14 */
+#define ADC_LTR2_LT2_15                   ((uint32_t)0x00008000)               /*!< ADC LT2 bit 15 */
+#define ADC_LTR2_LT2_16                   ((uint32_t)0x00010000)               /*!< ADC LT2 bit 16 */
+#define ADC_LTR2_LT2_17                   ((uint32_t)0x00020000)               /*!< ADC LT2 bit 17 */
+#define ADC_LTR2_LT2_18                   ((uint32_t)0x00040000)               /*!< ADC LT2 bit 18 */
+#define ADC_LTR2_LT2_19                   ((uint32_t)0x00080000)               /*!< ADC LT2 bit 19 */
+#define ADC_LTR2_LT2_20                   ((uint32_t)0x00100000)               /*!< ADC LT2 bit 20 */
+#define ADC_LTR2_LT2_21                   ((uint32_t)0x00200000)               /*!< ADC LT2 bit 21 */
+#define ADC_LTR2_LT2_22                   ((uint32_t)0x00400000)               /*!< ADC LT2 bit 22 */
+#define ADC_LTR2_LT2_23                   ((uint32_t)0x00800000)               /*!< ADC LT2 bit 23 */
+#define ADC_LTR2_LT2_24                   ((uint32_t)0x01000000)               /*!< ADC LT2 bit 24 */
+#define ADC_LTR2_LT2_25                   ((uint32_t)0x02000000)               /*!< ADC LT2 bit 25 */
 
 /********************  Bit definition for ADC_HTR2 register  ********************/
-#define ADC_HTR2_HTR2_Pos                 (0U)
-#define ADC_HTR2_HTR2_Msk                 (0x3FFFFFFUL << ADC_HTR2_HTR2_Pos)    /*!< 0x03FFFFFF */
-#define ADC_HTR2_HTR2                     ADC_HTR2_HTR2_Msk                    /*!< ADC Analog watchdog 2 higher threshold */
-#define ADC_HTR2_HTR2_0                   (0x0000001UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000001 */
-#define ADC_HTR2_HTR2_1                   (0x0000002UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000002 */
-#define ADC_HTR2_HTR2_2                   (0x0000004UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000004 */
-#define ADC_HTR2_HTR2_3                   (0x0000008UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000008 */
-#define ADC_HTR2_HTR2_4                   (0x0000010UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000010 */
-#define ADC_HTR2_HTR2_5                   (0x0000020UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000020 */
-#define ADC_HTR2_HTR2_6                   (0x0000040UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000040 */
-#define ADC_HTR2_HTR2_7                   (0x0000080UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000080 */
-#define ADC_HTR2_HTR2_8                   (0x0000100UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000100 */
-#define ADC_HTR2_HTR2_9                   (0x0000200UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000200 */
-#define ADC_HTR2_HTR2_10                  (0x0000400UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000400 */
-#define ADC_HTR2_HTR2_11                  (0x0000800UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00000800 */
-#define ADC_HTR2_HTR2_12                  (0x0001000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00001000 */
-#define ADC_HTR2_HTR2_13                  (0x0002000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00002000 */
-#define ADC_HTR2_HTR2_14                  (0x0004000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00004000 */
-#define ADC_HTR2_HTR2_15                  (0x0008000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00008000 */
-#define ADC_HTR2_HTR2_16                  (0x0010000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00010000 */
-#define ADC_HTR2_HTR2_17                  (0x0020000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00020000 */
-#define ADC_HTR2_HTR2_18                  (0x0040000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00040000 */
-#define ADC_HTR2_HTR2_19                  (0x0080000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00080000 */
-#define ADC_HTR2_HTR2_20                  (0x0100000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00100000 */
-#define ADC_HTR2_HTR2_21                  (0x0200000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00200000 */
-#define ADC_HTR2_HTR2_22                  (0x0400000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00400000 */
-#define ADC_HTR2_HTR2_23                  (0x0800000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x00800000 */
-#define ADC_HTR2_HTR2_24                  (0x1000000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x01000000 */
-#define ADC_HTR2_HTR2_25                  (0x2000000UL << ADC_HTR2_HTR2_Pos)    /*!< 0x02000000 */
+#define ADC_HTR2_HT2         ((uint32_t) 0x03FFFFFF) /*!< ADC Analog watchdog 2 higher threshold */
+#define ADC_HTR2_HT2_0                    ((uint32_t)0x00000001)               /*!< ADC HT2 bit 0 */
+#define ADC_HTR2_HT2_1                    ((uint32_t)0x00000002)               /*!< ADC HT2 bit 1 */
+#define ADC_HTR2_HT2_2                    ((uint32_t)0x00000004)               /*!< ADC HT2 bit 2 */
+#define ADC_HTR2_HT2_3                    ((uint32_t)0x00000008)               /*!< ADC HT2 bit 3 */
+#define ADC_HTR2_HT2_4                    ((uint32_t)0x00000010)               /*!< ADC HT2 bit 4 */
+#define ADC_HTR2_HT2_5                    ((uint32_t)0x00000020)               /*!< ADC HT2 bit 5 */
+#define ADC_HTR2_HT2_6                    ((uint32_t)0x00000040)               /*!< ADC HT2 bit 6 */
+#define ADC_HTR2_HT2_7                    ((uint32_t)0x00000080)               /*!< ADC HT2 bit 7 */
+#define ADC_HTR2_HT2_8                    ((uint32_t)0x00000100)               /*!< ADC HT2 bit 8 */
+#define ADC_HTR2_HT2_9                    ((uint32_t)0x00000200)               /*!< ADC HT2 bit 9 */
+#define ADC_HTR2_HT2_10                   ((uint32_t)0x00000400)               /*!< ADC HT2 bit 10 */
+#define ADC_HTR2_HT2_11                   ((uint32_t)0x00000800)               /*!< ADC HT2 bit 11 */
+#define ADC_HTR2_HT2_12                   ((uint32_t)0x00001000)               /*!< ADC HT2 bit 12 */
+#define ADC_HTR2_HT2_13                   ((uint32_t)0x00002000)               /*!< ADC HT2 bit 13 */
+#define ADC_HTR2_HT2_14                   ((uint32_t)0x00004000)               /*!< ADC HT2 bit 14 */
+#define ADC_HTR2_HT2_15                   ((uint32_t)0x00008000)               /*!< ADC HT2 bit 15 */
+#define ADC_HTR2_HT2_16                   ((uint32_t)0x00010000)               /*!< ADC HT2 bit 16 */
+#define ADC_HTR2_HT2_17                   ((uint32_t)0x00020000)               /*!< ADC HT2 bit 17 */
+#define ADC_HTR2_HT2_18                   ((uint32_t)0x00040000)               /*!< ADC HT2 bit 18 */
+#define ADC_HTR2_HT2_19                   ((uint32_t)0x00080000)               /*!< ADC HT2 bit 19 */
+#define ADC_HTR2_HT2_20                   ((uint32_t)0x00100000)               /*!< ADC HT2 bit 20 */
+#define ADC_HTR2_HT2_21                   ((uint32_t)0x00200000)               /*!< ADC HT2 bit 21 */
+#define ADC_HTR2_HT2_22                   ((uint32_t)0x00400000)               /*!< ADC HT2 bit 22 */
+#define ADC_HTR2_HT2_23                   ((uint32_t)0x00800000)               /*!< ADC HT2 bit 23 */
+#define ADC_HTR2_HT2_24                   ((uint32_t)0x01000000)               /*!< ADC HT2 bit 24 */
+#define ADC_HTR2_HT2_25      ((uint32_t)0x020000000) /*!< ADC HT2 bit 25 */
 
 /********************  Bit definition for ADC_LTR3 register  ********************/
-#define ADC_LTR3_LTR3_Pos                 (0U)
-#define ADC_LTR3_LTR3_Msk                 (0x3FFFFFFUL << ADC_LTR3_LTR3_Pos)    /*!< 0x03FFFFFF */
-#define ADC_LTR3_LTR3                     ADC_LTR3_LTR3_Msk                    /*!< ADC Analog watchdog 3 lower threshold */
-#define ADC_LTR3_LTR3_0                   (0x0000001UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000001 */
-#define ADC_LTR3_LTR3_1                   (0x0000002UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000002 */
-#define ADC_LTR3_LTR3_2                   (0x0000004UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000004 */
-#define ADC_LTR3_LTR3_3                   (0x0000008UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000008 */
-#define ADC_LTR3_LTR3_4                   (0x0000010UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000010 */
-#define ADC_LTR3_LTR3_5                   (0x0000020UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000020 */
-#define ADC_LTR3_LTR3_6                   (0x0000040UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000040 */
-#define ADC_LTR3_LTR3_7                   (0x0000080UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000080 */
-#define ADC_LTR3_LTR3_8                   (0x0000100UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000100 */
-#define ADC_LTR3_LTR3_9                   (0x0000200UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000200 */
-#define ADC_LTR3_LTR3_10                  (0x0000400UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000400 */
-#define ADC_LTR3_LTR3_11                  (0x0000800UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00000800 */
-#define ADC_LTR3_LTR3_12                  (0x0001000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00001000 */
-#define ADC_LTR3_LTR3_13                  (0x0002000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00002000 */
-#define ADC_LTR3_LTR3_14                  (0x0004000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00004000 */
-#define ADC_LTR3_LTR3_15                  (0x0008000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00008000 */
-#define ADC_LTR3_LTR3_16                  (0x0010000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00010000 */
-#define ADC_LTR3_LTR3_17                  (0x0020000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00020000 */
-#define ADC_LTR3_LTR3_18                  (0x0040000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00040000 */
-#define ADC_LTR3_LTR3_19                  (0x0080000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00080000 */
-#define ADC_LTR3_LTR3_20                  (0x0100000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00100000 */
-#define ADC_LTR3_LTR3_21                  (0x0200000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00200000 */
-#define ADC_LTR3_LTR3_22                  (0x0400000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00400000 */
-#define ADC_LTR3_LTR3_23                  (0x0800000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x00800000 */
-#define ADC_LTR3_LTR3_24                  (0x1000000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x01000000 */
-#define ADC_LTR3_LTR3_25                  (0x2000000UL << ADC_LTR3_LTR3_Pos)    /*!< 0x02000000 */
+#define ADC_LTR3_LT3         ((uint32_t) 0x03FFFFFF) /*!< ADC Analog watchdog 3 lower threshold */
+#define ADC_LTR3_LT3_0                    ((uint32_t)0x00000001)               /*!< ADC LT3 bit 0 */
+#define ADC_LTR3_LT3_1                    ((uint32_t)0x00000002)               /*!< ADC LT3 bit 1 */
+#define ADC_LTR3_LT3_2                    ((uint32_t)0x00000004)               /*!< ADC LT3 bit 2 */
+#define ADC_LTR3_LT3_3                    ((uint32_t)0x00000008)               /*!< ADC LT3 bit 3 */
+#define ADC_LTR3_LT3_4                    ((uint32_t)0x00000010)               /*!< ADC LT3 bit 4 */
+#define ADC_LTR3_LT3_5                    ((uint32_t)0x00000020)               /*!< ADC LT3 bit 5 */
+#define ADC_LTR3_LT3_6                    ((uint32_t)0x00000040)               /*!< ADC LT3 bit 6 */
+#define ADC_LTR3_LT3_7                    ((uint32_t)0x00000080)               /*!< ADC LT3 bit 7 */
+#define ADC_LTR3_LT3_8                    ((uint32_t)0x00000100)               /*!< ADC LT3 bit 8 */
+#define ADC_LTR3_LT3_9                    ((uint32_t)0x00000200)               /*!< ADC LT3 bit 9 */
+#define ADC_LTR3_LT3_10                   ((uint32_t)0x00000400)               /*!< ADC LT3 bit 10 */
+#define ADC_LTR3_LT3_11                   ((uint32_t)0x00000800)               /*!< ADC LT3 bit 11 */
+#define ADC_LTR3_LT3_12                   ((uint32_t)0x00001000)               /*!< ADC LT3 bit 12 */
+#define ADC_LTR3_LT3_13                   ((uint32_t)0x00002000)               /*!< ADC LT3 bit 13 */
+#define ADC_LTR3_LT3_14                   ((uint32_t)0x00004000)               /*!< ADC LT3 bit 14 */
+#define ADC_LTR3_LT3_15                   ((uint32_t)0x00008000)               /*!< ADC LT3 bit 15 */
+#define ADC_LTR3_LT3_16                   ((uint32_t)0x00010000)               /*!< ADC LT3 bit 16 */
+#define ADC_LTR3_LT3_17                   ((uint32_t)0x00020000)               /*!< ADC LT3 bit 17 */
+#define ADC_LTR3_LT3_18                   ((uint32_t)0x00040000)               /*!< ADC LT3 bit 18 */
+#define ADC_LTR3_LT3_19                   ((uint32_t)0x00080000)               /*!< ADC LT3 bit 19 */
+#define ADC_LTR3_LT3_20                   ((uint32_t)0x00100000)               /*!< ADC LT3 bit 20 */
+#define ADC_LTR3_LT3_21                   ((uint32_t)0x00200000)               /*!< ADC LT3 bit 21 */
+#define ADC_LTR3_LT3_22                   ((uint32_t)0x00400000)               /*!< ADC LT3 bit 22 */
+#define ADC_LTR3_LT3_23                   ((uint32_t)0x00800000)               /*!< ADC LT3 bit 23 */
+#define ADC_LTR3_LT3_24                   ((uint32_t)0x01000000)               /*!< ADC LT3 bit 24*/
+#define ADC_LTR3_LT3_25                   ((uint32_t)0x02000000)               /*!< ADC LT3 bit 25 */
 
 /********************  Bit definition for ADC_HTR3 register  ********************/
-#define ADC_HTR3_HTR3_Pos                 (0U)
-#define ADC_HTR3_HTR3_Msk                 (0x3FFFFFFUL << ADC_HTR3_HTR3_Pos)    /*!< 0x03FFFFFF */
-#define ADC_HTR3_HTR3                     ADC_HTR3_HTR3_Msk                    /*!< ADC Analog watchdog 3 higher threshold */
-#define ADC_HTR3_HTR3_0                   (0x0000001UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000001 */
-#define ADC_HTR3_HTR3_1                   (0x0000002UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000002 */
-#define ADC_HTR3_HTR3_2                   (0x0000004UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000004 */
-#define ADC_HTR3_HTR3_3                   (0x0000008UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000008 */
-#define ADC_HTR3_HTR3_4                   (0x0000010UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000010 */
-#define ADC_HTR3_HTR3_5                   (0x0000020UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000020 */
-#define ADC_HTR3_HTR3_6                   (0x0000040UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000040 */
-#define ADC_HTR3_HTR3_7                   (0x0000080UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000080 */
-#define ADC_HTR3_HTR3_8                   (0x0000100UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000100 */
-#define ADC_HTR3_HTR3_9                   (0x0000200UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000200 */
-#define ADC_HTR3_HTR3_10                  (0x0000400UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000400 */
-#define ADC_HTR3_HTR3_11                  (0x0000800UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00000800 */
-#define ADC_HTR3_HTR3_12                  (0x0001000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00001000 */
-#define ADC_HTR3_HTR3_13                  (0x0002000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00002000 */
-#define ADC_HTR3_HTR3_14                  (0x0004000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00004000 */
-#define ADC_HTR3_HTR3_15                  (0x0008000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00008000 */
-#define ADC_HTR3_HTR3_16                  (0x0010000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00010000 */
-#define ADC_HTR3_HTR3_17                  (0x0020000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00020000 */
-#define ADC_HTR3_HTR3_18                  (0x0040000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00040000 */
-#define ADC_HTR3_HTR3_19                  (0x0080000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00080000 */
-#define ADC_HTR3_HTR3_20                  (0x0100000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00100000 */
-#define ADC_HTR3_HTR3_21                  (0x0200000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00200000 */
-#define ADC_HTR3_HTR3_22                  (0x0400000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00400000 */
-#define ADC_HTR3_HTR3_23                  (0x0800000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x00800000 */
-#define ADC_HTR3_HTR3_24                  (0x1000000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x01000000 */
-#define ADC_HTR3_HTR3_25                  (0x2000000UL << ADC_HTR3_HTR3_Pos)    /*!< 0x02000000 */
+#define ADC_HTR3_HT3         ((uint32_t) 0x03FFFFFF) /*!< ADC Analog watchdog 3 higher threshold */
+#define ADC_HTR3_HT3_0                    ((uint32_t)0x00000001)               /*!< ADC HT3 bit 0 */
+#define ADC_HTR3_HT3_1                    ((uint32_t)0x00000002)               /*!< ADC HT3 bit 1 */
+#define ADC_HTR3_HT3_2                    ((uint32_t)0x00000004)               /*!< ADC HT3 bit 2 */
+#define ADC_HTR3_HT3_3                    ((uint32_t)0x00000008)               /*!< ADC HT3 bit 3 */
+#define ADC_HTR3_HT3_4                    ((uint32_t)0x00000010)               /*!< ADC HT3 bit 4 */
+#define ADC_HTR3_HT3_5                    ((uint32_t)0x00000020)               /*!< ADC HT3 bit 5 */
+#define ADC_HTR3_HT3_6                    ((uint32_t)0x00000040)               /*!< ADC HT3 bit 6 */
+#define ADC_HTR3_HT3_7                    ((uint32_t)0x00000080)               /*!< ADC HT3 bit 7 */
+#define ADC_HTR3_HT3_8                    ((uint32_t)0x00000100)               /*!< ADC HT3 bit 8 */
+#define ADC_HTR3_HT3_9                    ((uint32_t)0x00000200)               /*!< ADC HT3 bit 9 */
+#define ADC_HTR3_HT3_10                   ((uint32_t)0x00000400)               /*!< ADC HT3 bit 10 */
+#define ADC_HTR3_HT3_11                   ((uint32_t)0x00000800)               /*!< ADC HT3 bit 11 */
+#define ADC_HTR3_HT3_12                   ((uint32_t)0x00001000)               /*!< ADC HT3 bit 12 */
+#define ADC_HTR3_HT3_13                   ((uint32_t)0x00002000)               /*!< ADC HT3 bit 13 */
+#define ADC_HTR3_HT3_14                   ((uint32_t)0x00004000)               /*!< ADC HT3 bit 14 */
+#define ADC_HTR3_HT3_15                   ((uint32_t)0x00008000)               /*!< ADC HT3 bit 15 */
+#define ADC_HTR3_HT3_16                   ((uint32_t)0x00010000)               /*!< ADC HT3 bit 16 */
+#define ADC_HTR3_HT3_17                   ((uint32_t)0x00020000)               /*!< ADC HT3 bit 17 */
+#define ADC_HTR3_HT3_18                   ((uint32_t)0x00040000)               /*!< ADC HT3 bit 18 */
+#define ADC_HTR3_HT3_19                   ((uint32_t)0x00080000)               /*!< ADC HT3 bit 19 */
+#define ADC_HTR3_HT3_20                   ((uint32_t)0x00100000)               /*!< ADC HT3 bit 20 */
+#define ADC_HTR3_HT3_21                   ((uint32_t)0x00200000)               /*!< ADC HT3 bit 21 */
+#define ADC_HTR3_HT3_22                   ((uint32_t)0x00400000)               /*!< ADC HT3 bit 22 */
+#define ADC_HTR3_HT3_23                   ((uint32_t)0x00800000)               /*!< ADC HT3 bit 23 */
+#define ADC_HTR3_HT3_24                   ((uint32_t)0x01000000)               /*!< ADC HT3 bit 24 */
+#define ADC_HTR3_HT3_25                   ((uint32_t)0x02000000)               /*!< ADC HT3 bit 25 */
 
 /********************  Bit definition for ADC_SQR1 register  ********************/
 #define ADC_SQR1_L_Pos                    (0U)
@@ -4787,7 +4781,6 @@ typedef struct
 #define ADC_CALFACT_CALFACT_S_8           (0x100UL << ADC_CALFACT_CALFACT_S_Pos) /*!< 0x00000100 */
 #define ADC_CALFACT_CALFACT_S_9           (0x200UL << ADC_CALFACT_CALFACT_S_Pos) /*!< 0x00000200 */
 #define ADC_CALFACT_CALFACT_S_10          (0x400UL << ADC_CALFACT_CALFACT_S_Pos) /*!< 0x00000400 */
-
 #define ADC_CALFACT_CALFACT_D_Pos         (16U)
 #define ADC_CALFACT_CALFACT_D_Msk         (0x7FFUL << ADC_CALFACT_CALFACT_D_Pos) /*!< 0x07FF0000 */
 #define ADC_CALFACT_CALFACT_D             ADC_CALFACT_CALFACT_D_Msk            /*!< ADC calibration factors in differential mode */
@@ -4845,72 +4838,72 @@ typedef struct
 
 /*************************  ADC Common registers  *****************************/
 /********************  Bit definition for ADC_CSR register  ********************/
-#define ADC_CSR_ADRDY_MST_Pos             (0U)
-#define ADC_CSR_ADRDY_MST_Msk             (0x1UL << ADC_CSR_ADRDY_MST_Pos)   /*!< 0x00000001 */
-#define ADC_CSR_ADRDY_MST                 ADC_CSR_ADRDY_MST_Msk             /*!< Master ADC ready */
-#define ADC_CSR_EOSMP_MST_Pos             (1U)
-#define ADC_CSR_EOSMP_MST_Msk             (0x1UL << ADC_CSR_EOSMP_MST_Pos) /*!< 0x00000002 */
-#define ADC_CSR_EOSMP_MST                 ADC_CSR_EOSMP_MST_Msk       /*!< End of sampling phase flag of the master ADC */
-#define ADC_CSR_EOC_MST_Pos               (2U)
-#define ADC_CSR_EOC_MST_Msk               (0x1UL << ADC_CSR_EOC_MST_Pos) /*!< 0x00000004 */
-#define ADC_CSR_EOC_MST                   ADC_CSR_EOC_MST_Msk         /*!< End of regular conversion of the master ADC */
-#define ADC_CSR_EOS_MST_Pos               (3U)
-#define ADC_CSR_EOS_MST_Msk               (0x1UL << ADC_CSR_EOS_MST_Pos) /*!< 0x00000008 */
-#define ADC_CSR_EOS_MST                   ADC_CSR_EOS_MST_Msk         /*!< End of regular sequence flag of the master ADC */
-#define ADC_CSR_OVR_MST_Pos               (4U)
-#define ADC_CSR_OVR_MST_Msk               (0x1UL << ADC_CSR_OVR_MST_Pos) /*!< 0x00000010 */
-#define ADC_CSR_OVR_MST                   ADC_CSR_OVR_MST_Msk         /*!< Overrun flag of the master ADC */
-#define ADC_CSR_JEOC_MST_Pos              (5U)
-#define ADC_CSR_JEOC_MST_Msk              (0x1UL << ADC_CSR_JEOC_MST_Pos) /*!< 0x00000020 */
-#define ADC_CSR_JEOC_MST                  ADC_CSR_JEOC_MST_Msk        /*!< End of injected conversion of the master ADC */
-#define ADC_CSR_JEOS_MST_Pos              (6U)
-#define ADC_CSR_JEOS_MST_Msk              (0x1UL << ADC_CSR_JEOS_MST_Pos) /*!< 0x00000040 */
-#define ADC_CSR_JEOS_MST                  ADC_CSR_JEOS_MST_Msk        /*!< End of injected sequence flag of the master ADC */
-#define ADC_CSR_AWD1_MST_Pos              (7U)
-#define ADC_CSR_AWD1_MST_Msk              (0x1UL << ADC_CSR_AWD1_MST_Pos)    /*!< 0x00000080 */
-#define ADC_CSR_AWD1_MST                  ADC_CSR_AWD1_MST_Msk              /*!< Analog watchdog 1 flag of the master ADC */
-#define ADC_CSR_AWD2_MST_Pos              (8U)
-#define ADC_CSR_AWD2_MST_Msk              (0x1UL << ADC_CSR_AWD2_MST_Pos)    /*!< 0x00000100 */
-#define ADC_CSR_AWD2_MST                  ADC_CSR_AWD2_MST_Msk              /*!< Analog watchdog 2 flag of the master ADC */
-#define ADC_CSR_AWD3_MST_Pos              (9U)
-#define ADC_CSR_AWD3_MST_Msk              (0x1UL << ADC_CSR_AWD3_MST_Pos)    /*!< 0x00000200 */
-#define ADC_CSR_AWD3_MST                  ADC_CSR_AWD3_MST_Msk              /*!< Analog watchdog 3 flag of the master ADC */
-#define ADC_CSR_JQOVF_MST_Pos             (10U)
-#define ADC_CSR_JQOVF_MST_Msk             (0x1UL << ADC_CSR_JQOVF_MST_Pos)   /*!< 0x00000400 */
-#define ADC_CSR_JQOVF_MST                 ADC_CSR_JQOVF_MST_Msk             /*!< Injected context queue overflow flag of the master ADC */
-#define ADC_CSR_ADRDY_SLV_Pos             (16U)
-#define ADC_CSR_ADRDY_SLV_Msk             (0x1UL << ADC_CSR_ADRDY_SLV_Pos)   /*!< 0x00010000 */
-#define ADC_CSR_ADRDY_SLV                 ADC_CSR_ADRDY_SLV_Msk             /*!< Slave ADC ready */
-#define ADC_CSR_EOSMP_SLV_Pos             (17U)
-#define ADC_CSR_EOSMP_SLV_Msk             (0x1UL << ADC_CSR_EOSMP_SLV_Pos) /*!< 0x00020000 */
-#define ADC_CSR_EOSMP_SLV                 ADC_CSR_EOSMP_SLV_Msk       /*!< End of sampling phase flag of the slave ADC */
-#define ADC_CSR_EOC_SLV_Pos               (18U)
-#define ADC_CSR_EOC_SLV_Msk               (0x1UL << ADC_CSR_EOC_SLV_Pos) /*!< 0x00040000 */
-#define ADC_CSR_EOC_SLV                   ADC_CSR_EOC_SLV_Msk         /*!< End of regular conversion of the slave ADC */
-#define ADC_CSR_EOS_SLV_Pos               (19U)
-#define ADC_CSR_EOS_SLV_Msk               (0x1UL << ADC_CSR_EOS_SLV_Pos) /*!< 0x00080000 */
-#define ADC_CSR_EOS_SLV                   ADC_CSR_EOS_SLV_Msk         /*!< End of regular sequence flag of the slave ADC */
-#define ADC_CSR_OVR_SLV_Pos               (20U)
-#define ADC_CSR_OVR_SLV_Msk               (0x1UL << ADC_CSR_OVR_SLV_Pos) /*!< 0x00100000 */
-#define ADC_CSR_OVR_SLV                   ADC_CSR_OVR_SLV_Msk         /*!< Overrun flag of the slave ADC */
-#define ADC_CSR_JEOC_SLV_Pos              (21U)
-#define ADC_CSR_JEOC_SLV_Msk              (0x1UL << ADC_CSR_JEOC_SLV_Pos) /*!< 0x00200000 */
-#define ADC_CSR_JEOC_SLV                  ADC_CSR_JEOC_SLV_Msk        /*!< End of injected conversion of the slave ADC */
-#define ADC_CSR_JEOS_SLV_Pos              (22U)
-#define ADC_CSR_JEOS_SLV_Msk              (0x1UL << ADC_CSR_JEOS_SLV_Pos) /*!< 0x00400000 */
-#define ADC_CSR_JEOS_SLV                  ADC_CSR_JEOS_SLV_Msk        /*!< End of injected sequence flag of the slave ADC */
-#define ADC_CSR_AWD1_SLV_Pos              (23U)
-#define ADC_CSR_AWD1_SLV_Msk              (0x1UL << ADC_CSR_AWD1_SLV_Pos)    /*!< 0x00800000 */
-#define ADC_CSR_AWD1_SLV                  ADC_CSR_AWD1_SLV_Msk              /*!< Analog watchdog 1 flag of the slave ADC */
-#define ADC_CSR_AWD2_SLV_Pos              (24U)
-#define ADC_CSR_AWD2_SLV_Msk              (0x1UL << ADC_CSR_AWD2_SLV_Pos)    /*!< 0x01000000 */
-#define ADC_CSR_AWD2_SLV                  ADC_CSR_AWD2_SLV_Msk              /*!< Analog watchdog 2 flag of the slave ADC */
-#define ADC_CSR_AWD3_SLV_Pos              (25U)
-#define ADC_CSR_AWD3_SLV_Msk              (0x1UL << ADC_CSR_AWD3_SLV_Pos)    /*!< 0x02000000 */
-#define ADC_CSR_AWD3_SLV                  ADC_CSR_AWD3_SLV_Msk              /*!< Analog watchdog 3 flag of the slave ADC */
-#define ADC_CSR_JQOVF_SLV_Pos             (26U)
-#define ADC_CSR_JQOVF_SLV_Msk             (0x1UL << ADC_CSR_JQOVF_SLV_Pos)   /*!< 0x04000000 */
-#define ADC_CSR_JQOVF_SLV                 ADC_CSR_JQOVF_SLV_Msk             /*!< Injected context queue overflow flag of the slave ADC */
+#define ADC_CSR_ADRDY_MST_Pos          (0U)
+#define ADC_CSR_ADRDY_MST_Msk          (0x1UL << ADC_CSR_ADRDY_MST_Pos)   /*!< 0x00000001 */
+#define ADC_CSR_ADRDY_MST              ADC_CSR_ADRDY_MST_Msk             /*!< Master ADC ready */
+#define ADC_CSR_EOSMP_MST_Pos          (1U)
+#define ADC_CSR_EOSMP_MST_Msk          (0x1UL << ADC_CSR_EOSMP_MST_Pos) /*!< 0x00000002 */
+#define ADC_CSR_EOSMP_MST              ADC_CSR_EOSMP_MST_Msk       /*!< End of sampling phase flag of the master ADC */
+#define ADC_CSR_EOC_MST_Pos      (2U)
+#define ADC_CSR_EOC_MST_Msk      (0x1UL << ADC_CSR_EOC_MST_Pos) /*!< 0x00000004 */
+#define ADC_CSR_EOC_MST          ADC_CSR_EOC_MST_Msk         /*!< End of regular conversion of the master ADC */
+#define ADC_CSR_EOS_MST_Pos      (3U)
+#define ADC_CSR_EOS_MST_Msk      (0x1UL << ADC_CSR_EOS_MST_Pos) /*!< 0x00000008 */
+#define ADC_CSR_EOS_MST          ADC_CSR_EOS_MST_Msk         /*!< End of regular sequence flag of the master ADC */
+#define ADC_CSR_OVR_MST_Pos      (4U)
+#define ADC_CSR_OVR_MST_Msk      (0x1UL << ADC_CSR_OVR_MST_Pos) /*!< 0x00000010 */
+#define ADC_CSR_OVR_MST          ADC_CSR_OVR_MST_Msk         /*!< Overrun flag of the master ADC */
+#define ADC_CSR_JEOC_MST_Pos     (5U)
+#define ADC_CSR_JEOC_MST_Msk     (0x1UL << ADC_CSR_JEOC_MST_Pos) /*!< 0x00000020 */
+#define ADC_CSR_JEOC_MST         ADC_CSR_JEOC_MST_Msk        /*!< End of injected conversion of the master ADC */
+#define ADC_CSR_JEOS_MST_Pos     (6U)
+#define ADC_CSR_JEOS_MST_Msk     (0x1UL << ADC_CSR_JEOS_MST_Pos) /*!< 0x00000040 */
+#define ADC_CSR_JEOS_MST         ADC_CSR_JEOS_MST_Msk        /*!< End of injected sequence flag of the master ADC */
+#define ADC_CSR_AWD1_MST_Pos           (7U)
+#define ADC_CSR_AWD1_MST_Msk           (0x1UL << ADC_CSR_AWD1_MST_Pos)    /*!< 0x00000080 */
+#define ADC_CSR_AWD1_MST               ADC_CSR_AWD1_MST_Msk              /*!< Analog watchdog 1 flag of the master ADC */
+#define ADC_CSR_AWD2_MST_Pos           (8U)
+#define ADC_CSR_AWD2_MST_Msk           (0x1UL << ADC_CSR_AWD2_MST_Pos)    /*!< 0x00000100 */
+#define ADC_CSR_AWD2_MST               ADC_CSR_AWD2_MST_Msk              /*!< Analog watchdog 2 flag of the master ADC */
+#define ADC_CSR_AWD3_MST_Pos           (9U)
+#define ADC_CSR_AWD3_MST_Msk           (0x1UL << ADC_CSR_AWD3_MST_Pos)    /*!< 0x00000200 */
+#define ADC_CSR_AWD3_MST               ADC_CSR_AWD3_MST_Msk              /*!< Analog watchdog 3 flag of the master ADC */
+#define ADC_CSR_JQOVF_MST_Pos          (10U)
+#define ADC_CSR_JQOVF_MST_Msk          (0x1UL << ADC_CSR_JQOVF_MST_Pos)   /*!< 0x00000400 */
+#define ADC_CSR_JQOVF_MST              ADC_CSR_JQOVF_MST_Msk             /*!< Injected context queue overflow flag of the master ADC */
+#define ADC_CSR_ADRDY_SLV_Pos          (16U)
+#define ADC_CSR_ADRDY_SLV_Msk          (0x1UL << ADC_CSR_ADRDY_SLV_Pos)   /*!< 0x00010000 */
+#define ADC_CSR_ADRDY_SLV              ADC_CSR_ADRDY_SLV_Msk             /*!< Slave ADC ready */
+#define ADC_CSR_EOSMP_SLV_Pos    (17U)
+#define ADC_CSR_EOSMP_SLV_Msk    (0x1UL << ADC_CSR_EOSMP_SLV_Pos) /*!< 0x00020000 */
+#define ADC_CSR_EOSMP_SLV        ADC_CSR_EOSMP_SLV_Msk       /*!< End of sampling phase flag of the slave ADC */
+#define ADC_CSR_EOC_SLV_Pos      (18U)
+#define ADC_CSR_EOC_SLV_Msk      (0x1UL << ADC_CSR_EOC_SLV_Pos) /*!< 0x00040000 */
+#define ADC_CSR_EOC_SLV          ADC_CSR_EOC_SLV_Msk         /*!< End of regular conversion of the slave ADC */
+#define ADC_CSR_EOS_SLV_Pos      (19U)
+#define ADC_CSR_EOS_SLV_Msk      (0x1UL << ADC_CSR_EOS_SLV_Pos) /*!< 0x00080000 */
+#define ADC_CSR_EOS_SLV          ADC_CSR_EOS_SLV_Msk         /*!< End of regular sequence flag of the slave ADC */
+#define ADC_CSR_OVR_SLV_Pos      (20U)
+#define ADC_CSR_OVR_SLV_Msk      (0x1UL << ADC_CSR_OVR_SLV_Pos) /*!< 0x00100000 */
+#define ADC_CSR_OVR_SLV          ADC_CSR_OVR_SLV_Msk         /*!< Overrun flag of the slave ADC */
+#define ADC_CSR_JEOC_SLV_Pos     (21U)
+#define ADC_CSR_JEOC_SLV_Msk     (0x1UL << ADC_CSR_JEOC_SLV_Pos) /*!< 0x00200000 */
+#define ADC_CSR_JEOC_SLV         ADC_CSR_JEOC_SLV_Msk        /*!< End of injected conversion of the slave ADC */
+#define ADC_CSR_JEOS_SLV_Pos     (22U)
+#define ADC_CSR_JEOS_SLV_Msk     (0x1UL << ADC_CSR_JEOS_SLV_Pos) /*!< 0x00400000 */
+#define ADC_CSR_JEOS_SLV         ADC_CSR_JEOS_SLV_Msk        /*!< End of injected sequence flag of the slave ADC */
+#define ADC_CSR_AWD1_SLV_Pos           (23U)
+#define ADC_CSR_AWD1_SLV_Msk           (0x1UL << ADC_CSR_AWD1_SLV_Pos)    /*!< 0x00800000 */
+#define ADC_CSR_AWD1_SLV               ADC_CSR_AWD1_SLV_Msk              /*!< Analog watchdog 1 flag of the slave ADC */
+#define ADC_CSR_AWD2_SLV_Pos           (24U)
+#define ADC_CSR_AWD2_SLV_Msk           (0x1UL << ADC_CSR_AWD2_SLV_Pos)    /*!< 0x01000000 */
+#define ADC_CSR_AWD2_SLV               ADC_CSR_AWD2_SLV_Msk              /*!< Analog watchdog 2 flag of the slave ADC */
+#define ADC_CSR_AWD3_SLV_Pos           (25U)
+#define ADC_CSR_AWD3_SLV_Msk           (0x1UL << ADC_CSR_AWD3_SLV_Pos)    /*!< 0x02000000 */
+#define ADC_CSR_AWD3_SLV               ADC_CSR_AWD3_SLV_Msk              /*!< Analog watchdog 3 flag of the slave ADC */
+#define ADC_CSR_JQOVF_SLV_Pos          (26U)
+#define ADC_CSR_JQOVF_SLV_Msk          (0x1UL << ADC_CSR_JQOVF_SLV_Pos)   /*!< 0x04000000 */
+#define ADC_CSR_JQOVF_SLV              ADC_CSR_JQOVF_SLV_Msk             /*!< Injected context queue overflow flag of the slave ADC */
 
 /********************  Bit definition for ADC_CCR register  ********************/
 #define ADC_CCR_DUAL_Pos                  (0U)
@@ -4953,9 +4946,9 @@ typedef struct
 #define ADC_CCR_VREFEN_Pos                (22U)
 #define ADC_CCR_VREFEN_Msk                (0x1UL << ADC_CCR_VREFEN_Pos)         /*!< 0x00400000 */
 #define ADC_CCR_VREFEN                    ADC_CCR_VREFEN_Msk                   /*!< VREFINT enable */
-#define ADC_CCR_TSEN_Pos                  (23U)
-#define ADC_CCR_TSEN_Msk                  (0x1UL << ADC_CCR_TSEN_Pos)      /*!< 0x00800000 */
-#define ADC_CCR_TSEN                      ADC_CCR_TSEN_Msk                /*!< Temperature sensor enable */
+#define ADC_CCR_VSENSEEN_Pos              (23U)
+#define ADC_CCR_VSENSEEN_Msk              (0x1UL << ADC_CCR_VSENSEEN_Pos)      /*!< 0x00800000 */
+#define ADC_CCR_VSENSEEN                  ADC_CCR_VSENSEEN_Msk                /*!< Temperature sensor enable */
 #define ADC_CCR_VBATEN_Pos                (24U)
 #define ADC_CCR_VBATEN_Msk                (0x1UL << ADC_CCR_VBATEN_Pos)         /*!< 0x01000000 */
 #define ADC_CCR_VBATEN                    ADC_CCR_VBATEN_Msk                   /*!< VBAT enable */
@@ -5038,23 +5031,6 @@ typedef struct
 #define ADC_CDR2_RDATA_ALT_30          (0x40000000UL << ADC_CDR2_RDATA_ALT_Pos) /*!< 0x40000000 */
 #define ADC_CDR2_RDATA_ALT_31          (0x80000000UL << ADC_CDR2_RDATA_ALT_Pos) /*!< 0x80000000 */
 
-/*****************  Bit definition for ADC_HWCFGR0 register  ******************/
-#define ADC_HWCFGR0_ADC_NUM_Pos               (0U)
-#define ADC_HWCFGR0_ADC_NUM_Msk               (0xFUL << ADC_HWCFGR0_ADC_NUM_Pos)   /*!< 0x0000000F */
-#define ADC_HWCFGR0_ADC_NUM                   ADC_HWCFGR0_ADC_NUM_Msk             /*!< Number of supported ADCs */
-#define ADC_HWCFGR0_ADC_NUM_0                 (0x1UL << ADC_HWCFGR0_ADC_NUM_Pos)   /*!< 0x00000001 */
-#define ADC_HWCFGR0_ADC_NUM_1                 (0x2UL << ADC_HWCFGR0_ADC_NUM_Pos)   /*!< 0x00000002 */
-#define ADC_HWCFGR0_ADC_NUM_2                 (0x4UL << ADC_HWCFGR0_ADC_NUM_Pos)   /*!< 0x00000004 */
-#define ADC_HWCFGR0_ADC_NUM_3                 (0x8UL << ADC_HWCFGR0_ADC_NUM_Pos)   /*!< 0x00000008 */
-
-#define ADC_HWCFGR0_FIFO_SIZE_Pos              (4U)
-#define ADC_HWCFGR0_FIFO_SIZE_Msk              (0xFUL << ADC_HWCFGR0_FIFO_SIZE_Pos)   /*!< 0x000000F0 */
-#define ADC_HWCFGR0_FIFO_SIZE                  ADC_HWCFGR0_FIFO_SIZE_Msk             /*!< FIFO size */
-#define ADC_HWCFGR0_FIFO_SIZE_0                (0x1UL << ADC_HWCFGR0_FIFO_SIZE_Pos)   /*!< 0x00000010 */
-#define ADC_HWCFGR0_FIFO_SIZE_1                (0x2UL << ADC_HWCFGR0_FIFO_SIZE_Pos)   /*!< 0x00000020 */
-#define ADC_HWCFGR0_FIFO_SIZE_2                (0x4UL << ADC_HWCFGR0_FIFO_SIZE_Pos)   /*!< 0x00000040 */
-#define ADC_HWCFGR0_FIFO_SIZE_3                (0x8UL << ADC_HWCFGR0_FIFO_SIZE_Pos)   /*!< 0x00000080 */
-
 /*****************  Bit definition for ADC_VERR register  ******************/
 #define ADC_VERR_MINREV_Pos               (0U)
 #define ADC_VERR_MINREV_Msk               (0xFUL << ADC_VERR_MINREV_Pos)        /*!< 0x0000000F */
@@ -5063,7 +5039,6 @@ typedef struct
 #define ADC_VERR_MINREV_1                 (0x2UL << ADC_VERR_MINREV_Pos)        /*!< 0x00000002 */
 #define ADC_VERR_MINREV_2                 (0x4UL << ADC_VERR_MINREV_Pos)        /*!< 0x00000004 */
 #define ADC_VERR_MINREV_3                 (0x8UL << ADC_VERR_MINREV_Pos)        /*!< 0x00000008 */
-
 #define ADC_VERR_MAJREV_Pos               (4U)
 #define ADC_VERR_MAJREV_Msk               (0xFUL << ADC_VERR_MAJREV_Pos)        /*!< 0x000000F0 */
 #define ADC_VERR_MAJREV                   ADC_VERR_MAJREV_Msk                  /*!< Major revision */

@@ -17,10 +17,18 @@
 #define OVERSAMPLES_EXPONENT 3
 #define OVERSAMPLES (1 << OVERSAMPLES_EXPONENT)
 
-// LDORDY registers are missing from CMSIS (only available on revision V!)
+// LDORDY registers are missing from CMSIS (only available on revision 1.10.0)
 #define ADC_ISR_LDORDY_Pos                 (12U)
 #define ADC_ISR_LDORDY_Msk                 (0x1UL << ADC_ISR_LDORDY_Pos)
 #define ADC_ISR_LDORDY                     ADC_ISR_LDORDY_Msk
+
+// OVSR registers are faulty for STM32MP1 in CMSIS (good from version 1.7)
+#if CONFIG_MACH_STM32MP1
+#undef ADC_CFGR2_OVSR_Pos
+#undef ADC_CFGR2_OVSR_Msk
+#define ADC_CFGR2_OVSR_Pos                 (16U)
+#define ADC_CFGR2_OVSR_Msk                 (0x3FFUL << ADC_CFGR2_OVSR_Pos)
+#endif
 
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
@@ -64,14 +72,24 @@ static const uint8_t adc_pins[] = {
     GPIO('B', 0),  //          ADC12_INP9
     GPIO('C', 0),  //        ADC123_INP10
     GPIO('C', 1),  //        ADC123_INP11
+#if CONFIG_MACH_STM32H7
     GPIO('C', 2),  //        ADC123_INP12
     GPIO('C', 3),  //         ADC12_INP13
     GPIO('A', 2),  //         ADC12_INP14
     GPIO('A', 3),  //         ADC12_INP15
     0,             //            dac_out1
     0,             //            dac_out2
+#elif CONFIG_MACH_STM32MP1
+    0,             //    VSENSE output voltage from internal temperature sensor
+    0,             //      VREF output voltage from internal reference voltage
+    0,             //      VBAT external battery voltage supply
+    0,             //          VDD core logic supply voltage
+    0,             //            dac_out1
+    0,             //            dac_out2
+#endif
     GPIO('A', 4),  //         ADC12_INP18
     GPIO('A', 5),  //         ADC12_INP19
+#if CONFIG_MACH_STM32H7
     // ADC3
     0, // PC2_C                 ADC3_INP0
     0, // PC3_C                 ADC3_INP1
@@ -93,6 +111,7 @@ static const uint8_t adc_pins[] = {
     0,             //              Vbat/4
     ADC_TEMPERATURE_PIN,//         VSENSE
     0,             //             VREFINT
+#endif
 };
 
 
@@ -115,6 +134,7 @@ gpio_adc_setup(uint32_t pin)
     // (SYSCLK 480Mhz) /HPRE(2) /CKMODE divider(4) /additional divider(2)
     // (ADC clock 30Mhz)
     ADC_TypeDef *adc;
+#if CONFIG_MACH_STM32H7
     if (chan >= 40){
         adc = ADC3;
         if (!is_enabled_pclock(ADC3_BASE)) {
@@ -123,15 +143,28 @@ gpio_adc_setup(uint32_t pin)
         MODIFY_REG(ADC3_COMMON->CCR, ADC_CCR_CKMODE_Msk,
             0b11 << ADC_CCR_CKMODE_Pos);
     } else if (chan >= 20){
+
         adc = ADC2;
         RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
         MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
             0b11 << ADC_CCR_CKMODE_Pos);
+#elif CONFIG_MACH_STM32MP1
+    if (chan >= 20){
+        RCC->MC_AHB2ENSETR |= RCC_MC_AHB2ENSETR_ADC12EN;
+        MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_PRESC_Msk,
+            1 << ADC_CCR_PRESC_Pos);
+#endif
     } else{
         adc = ADC1;
+#if CONFIG_MACH_STM32H7
         RCC->AHB1ENR |= RCC_AHB1ENR_ADC12EN;
         MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
             0b11 << ADC_CCR_CKMODE_Pos);
+#elif CONFIG_MACH_STM32MP1
+        RCC->MC_AHB2ENSETR |= RCC_MC_AHB2ENSETR_ADC12EN;
+        MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_PRESC_Msk,
+            1 << ADC_CCR_PRESC_Pos);
+#endif
     }
     chan %= 20;
 
@@ -144,9 +177,13 @@ gpio_adc_setup(uint32_t pin)
         adc->CR |= ADC_CR_ADVREGEN;
         while(!(adc->ISR & ADC_ISR_LDORDY))
             ;
+#if CONFIG_MACH_STM32H7
         // Set Boost mode for 25Mhz < ADC clock <= 50Mhz
         MODIFY_REG(adc->CR, ADC_CR_BOOST_Msk, 0b11 << ADC_CR_BOOST_Pos);
-
+#elif CONFIG_MACH_STM32MP1
+        // Set Boost mode for ADC clock > 20 Mhz
+        MODIFY_REG(adc->CR, ADC_CR_BOOST_Msk, 1 << ADC_CR_BOOST_Pos);
+#endif
         // Calibration
         // Set calibration mode to Single ended (not differential)
         MODIFY_REG(adc->CR, ADC_CR_ADCALDIF_Msk, 0);
@@ -180,7 +217,11 @@ gpio_adc_setup(uint32_t pin)
         // Disable Continuous Mode
         MODIFY_REG(adc->CFGR, ADC_CFGR_CONT_Msk, 0);
         // Set to 12 bit
+#if CONFIG_MACH_STM32H7
         MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, 0b110 << ADC_CFGR_RES_Pos);
+#elif CONFIG_MACH_STM32MP1
+        MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, 0b010 << ADC_CFGR_RES_Pos);
+#endif
         // Set hardware oversampling
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_ROVSE_Msk, ADC_CFGR2_ROVSE);
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSR_Msk,
@@ -189,12 +230,15 @@ gpio_adc_setup(uint32_t pin)
             OVERSAMPLES_EXPONENT << ADC_CFGR2_OVSS_Pos);
     }
 
+#if CONFIG_MACH_STM32H7
     if (pin == ADC_TEMPERATURE_PIN) {
         ADC3_COMMON->CCR = ADC_CCR_TSEN;
     } else {
         gpio_peripheral(pin, GPIO_ANALOG, 0);
     }
-
+#elif CONFIG_MACH_STM32MP1
+    gpio_peripheral(pin, GPIO_ANALOG, 0);
+#endif
     // Preselect (connect) channel
     adc->PCSEL |= (1 << chan);
     return (struct gpio_adc){ .adc = adc, .chan = chan };
