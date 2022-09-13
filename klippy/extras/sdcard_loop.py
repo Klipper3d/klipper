@@ -9,7 +9,8 @@ import logging
 class SDCardLoop:
     def __init__(self, config):
         printer = config.get_printer()
-        self.sdcard = printer.load_object(config, "virtual_sdcard")
+        self.sdcard = sdcard = printer.load_object(config, "virtual_sdcard")
+        self.sdcard_gcode_provider = sdcard.get_virtual_sdcard_gcode_provider()
         self.gcode = printer.lookup_object('gcode')
         self.gcode.register_command(
             "SDCARD_LOOP_BEGIN", self.cmd_SDCARD_LOOP_BEGIN,
@@ -35,13 +36,16 @@ class SDCardLoop:
         if not self.loop_desist():
             raise gcmd.error("Only permitted outside of a SD file.")
     def loop_begin(self, count):
-        if not self.sdcard.is_cmd_from_sd():
+        if (not self.sdcard.is_cmd_from_sd() or
+                not self.sdcard_gcode_provider.is_active()):
             # Can only run inside of an SD file
             return False
-        self.loop_stack.append((count, self.sdcard.get_file_position()))
+        self.loop_stack.append(
+                (count, self.sdcard_gcode_provider.get_file_position()))
         return True
     def loop_end(self):
-        if not self.sdcard.is_cmd_from_sd():
+        if (not self.sdcard.is_cmd_from_sd() or
+                not self.sdcard_gcode_provider.is_active()):
             # Can only run inside of an SD file
             return False
         # If the stack is empty, no need to skip back
@@ -50,19 +54,20 @@ class SDCardLoop:
         # Get iteration count and return position
         count, position = self.loop_stack.pop()
         if count == 0: # Infinite loop
-            self.sdcard.set_file_position(position)
+            self.sdcard_gcode_provider.set_file_position(position)
             self.loop_stack.append((0, position))
         elif count == 1: # Last repeat
             # Nothing to do
             pass
         else:
             # At the next opportunity, seek back to the start of the loop
-            self.sdcard.set_file_position(position)
+            self.sdcard_gcode_provider.set_file_position(position)
             # Decrement the count by 1, and add the position back to the stack
             self.loop_stack.append((count - 1, position))
         return True
     def loop_desist(self):
-        if self.sdcard.is_cmd_from_sd():
+        if (self.sdcard.is_cmd_from_sd() and
+                self.sdcard_gcode_provider.is_active()):
             # Can only run outside of an SD file
             return False
         logging.info("Desisting existing SD loops")
