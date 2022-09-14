@@ -409,6 +409,23 @@ restrictions:
    limit (which may skew the stall detection). The pause is necessary
    to ensure the driver's stall flag is cleared prior to homing again.
 
+An example CoreXY homing macro might look like:
+```
+[gcode_macro HOME]
+gcode:
+    G90
+    # Home Z
+    G28 Z0
+    G1 Z10 F1200
+    # Home Y
+    G28 Y0
+    G1 Y5 F1200
+    # Home X
+    G4 P2000
+    G28 X0
+    G1 X5 F1200
+```
+
 ## Querying and diagnosing driver settings
 
 The `[DUMP_TMC command](G-Codes.md#dump_tmc) is a useful tool when
