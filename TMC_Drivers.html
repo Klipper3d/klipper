@@ -1923,10 +1923,11 @@ command to set the highest sensitivity. For tmc2209:</p>
 <div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 </code></pre></div>
 
-<p>Then issue a <code>G28 X0</code> command and verify the axis does not move at
-all. If the axis does move, then issue an <code>M112</code> to halt the printer -
-something is not correct with the diag/sg_tst pin wiring or
-configuration and it must be corrected before continuing.</p>
+<p>Then issue a <code>G28 X0</code> command and verify the axis does not move at all
+or quickly stops moving. If the axis does not stop, then issue an
+<code>M112</code> to halt the printer - something is not correct with the
+diag/sg_tst pin wiring or configuration and it must be corrected
+before continuing.</p>
 <p>Next, continually decrease the sensitivity of the <code>VALUE</code> setting and
 run the <code>SET_TMC_FIELD</code> <code>G28 X0</code> commands again to find the highest
 sensitivity that results in the carriage successfully moving all the

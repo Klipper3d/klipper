@@ -1911,10 +1911,10 @@
 <li><code>current_object</code>: Az aktuálisan nyomtatott objektum neve.</li>
 </ul>
 <h2 id="extruder_stepper">extruder_stepper<a class="headerlink" href="#extruder_stepper" title="Permanent link">&para;</a></h2>
-<p>The following information is available for extruder_stepper objects (as well as <a href="Config_Reference.html#extruder">extruder</a> objects):</p>
+<p>Az alábbi információk az extruder_stepper objektumok (valamint az <a href="Config_Reference.html#extruder">extruder</a> objektumok) esetében állnak rendelkezésre:</p>
 <ul>
-<li><code>pressure_advance</code>: The current <a href="Pressure_Advance.html">pressure advance</a> value.</li>
-<li><code>smooth_time</code>: The current pressure advance smooth time.</li>
+<li><code>pressure_advance</code>: Az aktuális <a href="Pressure_Advance.html">nyomás előtolás</a> érték.</li>
+<li><code>smooth_time</code>: Az aktuális nyomás előtolásának simítási ideje.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#fan">ventilátor</a>, <a href="Config_Reference.html#heater_fan">heater_fan some_name</a> és <a href="Config_Reference.html#controller_fan">controller_fan some_name</a> objektumokban érhetők el:</p>
@@ -2094,7 +2094,7 @@
 <li><code>extruder</code>: A jelenleg aktív extruder neve. Például egy makróban használhatjuk a <code>printer[printer.toolhead.extruder].target</code> parancsot, hogy megkapjuk az aktuális extruder célhőmérsékletét.</li>
 <li><code>homed_axes</code>: Az aktuálisan "homed" állapotban lévőnek tekintett cartesian tengelyek. Ez egy karakterlánc, amely egy vagy több "X", "Y", "Z" értéket tartalmaz.</li>
 <li><code>axis_minimum</code>, <code>axis_maximum</code>: A tengely mozgásának határai (mm) a kezdőpont felvétel után. Lehetőség van e határérték X, Y, Z összetevőinek elérésére (pl. <code>axis_minimum.x</code>, <code>axis_maximum.z</code>).</li>
-<li>For Delta printers the <code>cone_start_z</code> is the max z height at maximum radius (<code>printer.toolhead.cone_start_z</code>).</li>
+<li>A Delta nyomtatók esetében a <code>cone_start_z</code> a maximális sugaraknál mért maximális Z magasság (<code>printer.toolhead.cone_start_z</code>).</li>
 <li><code>max_velocity</code>, <code>max_accel</code>, <code>max_accel_to_decel</code>, <code>square_corner_velocity</code>: Az aktuálisan érvényben lévő nyomtatási korlátok. Ez eltérhet a konfigurációs fájl beállításaitól, ha a <code>SET_VELOCITY_LIMIT</code> (vagy <code>M204</code>) parancs megváltoztatja azokat használat közben.</li>
 <li><code>stalls</code>: Az összes alkalom száma (az utolsó újraindítás óta), amikor a nyomtatót szüneteltetni kellett, mert a nyomtatófej gyorsabban mozgott, mint ahány mozdulatot a G-kód bemenetről be lehetett olvasni.</li>
 </ul>
