@@ -267,10 +267,11 @@ For tmc2130, tmc5160, and tmc2660:
 SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 ```
 
-Then issue a `G28 X0` command and verify the axis does not move at
-all. If the axis does move, then issue an `M112` to halt the printer -
-something is not correct with the diag/sg_tst pin wiring or
-configuration and it must be corrected before continuing.
+Then issue a `G28 X0` command and verify the axis does not move at all
+or quickly stops moving. If the axis does not stop, then issue an
+`M112` to halt the printer - something is not correct with the
+diag/sg_tst pin wiring or configuration and it must be corrected
+before continuing.
 
 Next, continually decrease the sensitivity of the `VALUE` setting and
 run the `SET_TMC_FIELD` `G28 X0` commands again to find the highest
