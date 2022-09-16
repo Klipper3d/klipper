@@ -1475,32 +1475,32 @@
 <p>在配置文件中定义一个宏时需要注意缩进。在定义多行的G代码序列时每行都要有适当的缩进。例如：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro blink_led]
 gcode:
-  SET_PIN PIN=my_led VALUE=1
-  G4 P2000
-  SET_PIN PIN=my_led VALUE=0
+  SET_PIN PIN=my_led VALUE=1 #亮灯
+  G4 P2000 # 等待2000毫秒
+  SET_PIN PIN=my_led VALUE=0 #关灯
 </code></pre></div>
 
 <p>请注意，<code>gcode:</code> 配置选项总是从行首开始，而 G-Code 宏中的后续行从不从行首开始。</p>
 <h2 id="_2">向宏添加描述<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>可以通过添加 <code>description:</code> 和简短的描述来帮助理解该功能。如果没有指定，默认为"G-Code macro"。例如：</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro blink_led]
-description: Blink my_led one time
+<div class="highlight"><pre><span></span><code>[gcode_macro blink_led] #闪灯
+description: Blink my_led one time # 简介：闪一下my_led
 gcode:
-  SET_PIN PIN=my_led VALUE=1
-  G4 P2000
-  SET_PIN PIN=my_led VALUE=0
+  SET_PIN PIN=my_led VALUE=1 #亮灯
+  G4 P2000 # 等待2000毫秒
+  SET_PIN PIN=my_led VALUE=0 #关灯
 </code></pre></div>
 
 <p>The terminal will display the description when you use the <code>HELP</code> command or the autocomplete function.</p>
 <h2 id="g-code">保存/恢复 G-Code 移动的状态<a class="headerlink" href="#g-code" title="Permanent link">&para;</a></h2>
 <p>不幸的是，G-Code 命令语言在使用上有些难度。移动工具头的标准机制是通过 <code>G1</code> 命令（<code>G0</code> 命令是 <code>G1</code> 的别名，它们互换使用）。然而，这个命令依赖于由<code>M82</code>、<code>M83</code>、<code>G90</code>、<code>G91</code>、<code>G92</code>, 以及先前的<code>G1</code>命令所设置的"G-Code解析状态"。在创建 G-Code 宏时，最好在发出<code>G1</code>命令之前，先明确 G-Code 解析状态。(否则，<code>G1</code> 命令就有可能提出一个不符合预期的请求。）</p>
 <p>实现这一目标的常见方法是将 <code>G1</code> 移动包装在 <code>SAVE_GCODE_STATE</code>、<code>G91</code>和<code>RESTORE_GCODE_STATE</code>中。例如：</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro MOVE_UP]
+<div class="highlight"><pre><span></span><code>[gcode_macro MOVE_UP] # 向上移动
 gcode:
-  SAVE_GCODE_STATE NAME=my_move_up_state
-  G91
-  G1 Z10 F300
-  RESTORE_GCODE_STATE NAME=my_move_up_state
+  SAVE_GCODE_STATE NAME=my_move_up_state # 保存名称为my_move_up_state的G代码状态
+  G91 # 相对模式
+  G1 Z10 F300 # 慢慢往上移动 10mm，5mm/s
+  RESTORE_GCODE_STATE NAME=my_move_up_state # 恢复名称为my_move_up_state的G代码状态
 </code></pre></div>
 
 <p><code>G91</code> 命令将G代码解析状态放入 "相对移动模式"，<code>RESTORE_GCODE_STATE</code> 命令将状态恢复到进入宏之前的状态。请确保在第一条<code>G1</code> 命令中指定一个明确的速度（通过<code>F</code> 参数）。</p>
@@ -1523,17 +1523,17 @@ gcode:
 
 <h3 id="_4">宏观参数<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>当macro被调用时，检查传递给它的参数往往是有用的。这些参数可以通过<code>params</code> 伪变量（pseudo-variable）获得。类似于以下macro：</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro SET_PERCENT]
+<div class="highlight"><pre><span></span><code>[gcode_macro SET_PERCENT] # 设置百分比
 gcode:
-  M117 Now at { params.VALUE|float * 100 }%
+  M117 Now at { params.VALUE|float * 100 }% # 现在在VALUE* 100的百分比
 </code></pre></div>
 
 <p>如果以<code>SET_PERCENT VALUE=.2</code> 的方式调用，则会评估为<code>M117 现在为 20%</code> 。需要注意的是在宏（macro）中进行评估时，参数名称始终使用大写字母，并且始终以字符串（strings）形式传递。如果执行数学运算，则必须明确地将其转换为整数（integers）或浮点数（floats）。</p>
 <p>通常使用Jinja2的<code>set</code> 指令来使用一个默认参数，并将结果分配给一个本地名称。比如说：</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro SET_BED_TEMPERATURE]
+<div class="highlight"><pre><span></span><code>[gcode_macro SET_BED_TEMPERATURE] # 设置热床温度
 gcode:
-  {% set bed_temp = params.TEMPERATURE|default(40)|float %}
-  M140 S{bed_temp}
+  {% set bed_temp = params.TEMPERATURE|default(40)|float %} # 热床温度=params.TEMPERATURE或者默认40
+  M140 S{bed_temp} # 设置热床温度为bed_temp
 </code></pre></div>
 
 <h3 id="the-rawparams-variable">The "rawparams" variable<a class="headerlink" href="#the-rawparams-variable" title="Permanent link">&para;</a></h3>
@@ -1542,7 +1542,7 @@ gcode:
 <p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for an example showing how to override the <code>M117</code> command using <code>rawparams</code>.</p>
 <h3 id="printer">"printer"变量<a class="headerlink" href="#printer" title="Permanent link">&para;</a></h3>
 <p>可以通过<code>printer</code> 的pseudo-variable来检查（和变更）打印机的当前状态。比如说：</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro slow_fan]
+<div class="highlight"><pre><span></span><code>[gcode_macro slow_fan] # 降低风速
 gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
 </code></pre></div>
@@ -1551,7 +1551,7 @@ gcode:
 <p>注意！宏会先被进行整体计算，然后所产生的命令才会被执行。如果一个宏发出的命令改变了打印机的状态，那么在评估宏的过程中，该状态改变的结果将在执行时不可见。当一个宏产生调用其他宏的命令时，这也可能导致微妙的行为，因为被调用的宏在被调用时才被评估（这是在调用宏的整体计算过程之后）。</p>
 <p>按照惯例，紧跟在<code>printer</code> 后面的名称是一个配置分段的名称。因此，例如，<code>printer.fan</code> 指的是由<code>[fan]</code> 配置分段创建的风扇对象。这条规则有一些例外 - 特别是<code>gcode_move</code> 和<code>toolhead</code> 对象。如果配置分段包含空格，那么可以通过<code>[ ]</code> 访问器访问它--例如：<code>printer["generic_heater my_chamber_heater"].temperature</code> 。</p>
 <p>请注意，Jinja2的<code>set</code> 指令可以为<code>printer</code> 层次结构中的一个对象指定一个本地名称。这可以改善宏的可读性并减少键入量。例如：</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro QUERY_HTU21D]
+<div class="highlight"><pre><span></span><code>[gcode_macro QUERY_HTU21D] # 查询HTU21D
 gcode:
     {% set sensor = printer[&quot;htu21d my_sensor&quot;] %}
     M117 Temp:{sensor.temperature} Humidity:{sensor.humidity}
@@ -1571,18 +1571,18 @@ gcode:
 <div class="highlight"><pre><span></span><code>[gcode_macro start_probe]
 variable_bed_temp: 0
 gcode:
-  # Save target temperature to bed_temp variable
+  # 保存参数到bed_temp变量
   SET_GCODE_VARIABLE MACRO=start_probe VARIABLE=bed_temp VALUE={printer.heater_bed.target}
-  # Disable bed heater
+  # 禁用热床
   M140
-  # Perform probe
+  # 进行探测
   PROBE
-  # Call finish_probe macro at completion of probe
+  # 在结束时调用finish_probe脚本
   finish_probe
 
 [gcode_macro finish_probe]
 gcode:
-  # Restore temperature
+  # 恢复热床温度
   M140 S{printer[&quot;gcode_macro start_probe&quot;].bed_temp}
 </code></pre></div>
 
@@ -1604,7 +1604,7 @@ gcode:
 </code></pre></div>
 
 <p>当上面的<code>load_filament</code> 宏执行时，它将在挤出结束后显示一个 "Load Complete!"的信息。最后一行G代码启用 "clear_display "delayed_gcode，设置为10秒后执行。</p>
-<p>The <code>initial_duration</code> config option can be set to execute the delayed_gcode on printer startup. The countdown begins when the printer enters the "ready" state. For example, the below delayed_gcode will execute 5 seconds after the printer is ready, initializing the display with a "Welcome!" message:</p>
+<p><code>initial_duration</code> 配置选项可以被设置为在打印机启动时执行 delayed_gcode。倒计时从打印机进入"ready"（准备）状态时开始。例如，下面的 delayed_gcode 将在打印机准备好后5秒执行，以 "Welcome！"的信息初始化显示屏：</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode welcome]
 initial_duration: 5.
 gcode:
@@ -1619,7 +1619,7 @@ gcode:
   UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
 </code></pre></div>
 
-<p>The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to Octoprint every 2 seconds. This can be canceled with the following gcode:</p>
+<p>上述delayed_gcode将每2秒向Octoprint发送 "// Extruder Temp: [ex0_temp]"。这可以用下面的gcode取消：</p>
 <div class="highlight"><pre><span></span><code>UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
 </code></pre></div>
 
@@ -1634,22 +1634,22 @@ gcode:
 </ul>
 <p>以下操作在菜单模板中可用：</p>
 <ul>
-<li><code>menu.back(force, update)</code>: will execute menu back command, optional boolean parameters <code>&lt;force&gt;</code> and <code>&lt;update&gt;</code>.<ul>
+<li><code>menu.back(force, update)</code>：将执行菜单返回命令，可选的布尔参数有<code>&lt;force&gt;</code>（强制）和<code>&lt;update&gt;</code>（更新）。<ul>
 <li>当 <code>&lt;force&gt;</code> 设置为 True 时，它也将停止编辑。默认值为 False。</li>
 <li>当<code>&lt;update&gt;</code> 被设置为False，那么父级容器项目就不会被更新。默认值是True。</li>
 </ul>
 </li>
-<li><code>menu.exit(force)</code> - will execute menu exit command, optional boolean parameter <code>&lt;force&gt;</code> default value False.<ul>
+<li><code>menu.exit(force)</code> - 将执行菜单退出命令，可选的布尔参数有<code>&lt;force&gt;</code>（强制）默认值 False。<ul>
 <li>当 <code>&lt;force&gt;</code> 设置为 True 时，它也将停止编辑。默认值为 False。</li>
 </ul>
 </li>
 </ul>
 <h2 id="_8">保存变量到磁盘<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
-<p>If a <a href="Config_Reference.html#save_variables">save_variables config section</a> has been enabled, <code>SAVE_VARIABLE VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code> can be used to save the variable to disk so that it can be used across restarts. All stored variables are loaded into the <code>printer.save_variables.variables</code> dict at startup and can be used in gcode macros. to avoid overly long lines you can add the following at the top of the macro:</p>
+<p>如果启用了<a href="Config_Reference.html#save_variables">save_variables配置分段</a>，<code>SAVE_VARIABLE VARIABLE=&lt;名称&gt; VALUE=&lt;值&gt;</code>可以用来将变量保存到磁盘，以便在重新启动时使用。所有存储的变量在启动时会被加载到<code>printer.save_variables.variables</code> dict 变量中，可以在G代码宏中使用。为避免行数过长，可以在宏的顶部添加以下内容：</p>
 <div class="highlight"><pre><span></span><code>{% set svv = printer.save_variables.variables %}
 </code></pre></div>
 
-<p>As an example, it could be used to save the state of 2-in-1-out hotend and when starting a print ensure that the active extruder is used, instead of T0:</p>
+<p>例如，它可以用来保存2进1出热端的状态，当开始打印时，确保使用活跃的挤出机，而不是T0：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro T1]
 gcode:
   ACTIVATE_EXTRUDER extruder=extruder1
