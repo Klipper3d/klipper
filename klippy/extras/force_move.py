@@ -83,7 +83,7 @@ class ForceMove:
         axis_r, accel_t, cruise_t, cruise_v = calc_move_time(dist, speed, accel)
         print_time = toolhead.get_last_move_time()
         self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
-                          0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
+                          0., 0., 0., 0., 0., 0., axis_r, 0., 0., 0., 0., 0., 0., cruise_v, accel)
         print_time = print_time + accel_t + cruise_t + accel_t
         stepper.generate_steps(print_time)
         self.trapq_finalize_moves(self.trapq, print_time + 99999.9)
@@ -129,8 +129,11 @@ class ForceMove:
         x = gcmd.get_float('X', curpos[0])
         y = gcmd.get_float('Y', curpos[1])
         z = gcmd.get_float('Z', curpos[2])
-        logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
-        toolhead.set_position([x, y, z, curpos[3]], homing_axes=(0, 1, 2))
+        a = gcmd.get_float('A', curpos[3])
+        b = gcmd.get_float('B', curpos[4])
+        c = gcmd.get_float('C', curpos[5])
+        logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z, a, b, c)
+        toolhead.set_position([x, y, z, a, b, c, curpos[6]], homing_axes=(0, 1, 2, 3, 4, 5))
 
 def load_config(config):
     return ForceMove(config)

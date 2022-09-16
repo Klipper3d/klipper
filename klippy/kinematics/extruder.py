@@ -222,14 +222,14 @@ class PrinterExtruder:
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
-        axis_r = move.axes_r[3]
+        axis_r = move.axes_r[6]
         if not self.heater.can_extrude:
             raise self.printer.command_error(
                 "Extrude below minimum temp\n"
                 "See the 'min_extrude_temp' config option for details")
         if (not move.axes_d[0] and not move.axes_d[1]) or axis_r < 0.:
             # Extrude only move (or retraction move) - limit accel and velocity
-            if abs(move.axes_d[3]) > self.max_e_dist:
+            if abs(move.axes_d[6]) > self.max_e_dist:
                 raise self.printer.command_error(
                     "Extrude only move too long (%.3fmm vs %.3fmm)\n"
                     "See the 'max_extrude_only_distance' config"
@@ -238,7 +238,7 @@ class PrinterExtruder:
             move.limit_speed(self.max_e_velocity * inv_extrude_r,
                              self.max_e_accel * inv_extrude_r)
         elif axis_r > self.max_extrude_ratio:
-            if move.axes_d[3] <= self.nozzle_diameter * self.max_extrude_ratio:
+            if move.axes_d[6] <= self.nozzle_diameter * self.max_extrude_ratio:
                 # Permit extrusion if amount extruded is tiny
                 return
             area = axis_r * self.filament_area
@@ -249,12 +249,12 @@ class PrinterExtruder:
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.max_extrude_ratio * self.filament_area))
     def calc_junction(self, prev_move, move):
-        diff_r = move.axes_r[3] - prev_move.axes_r[3]
+        diff_r = move.axes_r[6] - prev_move.axes_r[6]
         if diff_r:
             return (self.instant_corner_v / abs(diff_r))**2
         return move.max_cruise_v2
     def move(self, print_time, move):
-        axis_r = move.axes_r[3]
+        axis_r = move.axes_r[6]
         accel = move.accel * axis_r
         start_v = move.start_v * axis_r
         cruise_v = move.cruise_v * axis_r
@@ -264,10 +264,12 @@ class PrinterExtruder:
         # Queue movement (x is extruder movement, y is pressure advance flag)
         self.trapq_append(self.trapq, print_time,
                           move.accel_t, move.cruise_t, move.decel_t,
-                          move.start_pos[3], 0., 0.,
+                          move.start_pos[6], 0., 0.,
+                          0., 0., 0., 
                           1., can_pressure_advance, 0.,
+                          0., 0., 0., 
                           start_v, cruise_v, accel)
-        self.last_position = move.end_pos[3]
+        self.last_position = move.end_pos[6]
     def find_past_position(self, print_time):
         if self.extruder_stepper is None:
             return 0.

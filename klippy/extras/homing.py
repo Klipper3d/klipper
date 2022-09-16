@@ -48,7 +48,7 @@ class HomingMove:
     def _calc_endstop_rate(self, mcu_endstop, movepos, speed):
         startpos = self.toolhead.get_position()
         axes_d = [mp - sp for mp, sp in zip(movepos, startpos)]
-        move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        move_d = math.sqrt(sum([d*d for d in axes_d[:6]]))
         move_t = move_d / speed
         max_steps = max([(abs(s.calc_position_from_coord(startpos)
                               - s.calc_position_from_coord(movepos))
@@ -64,7 +64,7 @@ class HomingMove:
             sname = stepper.get_name()
             kin_spos[sname] += offsets.get(sname, 0) * stepper.get_step_dist()
         thpos = self.toolhead.get_position()
-        return list(kin.calc_position(kin_spos))[:3] + thpos[3:]
+        return list(kin.calc_position(kin_spos))[:6] + thpos[6:]
     def homing_move(self, movepos, speed, probe_pos=False,
                     triggered=True, check_triggered=True):
         # Notify start of homing/probing move
@@ -174,7 +174,7 @@ class Homing:
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
-        homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
+        homing_axes = [axis for axis in range(6) if forcepos[axis] is not None]
         startpos = self._fill_coord(forcepos)
         homepos = self._fill_coord(movepos)
         self.toolhead.set_position(startpos, homing_axes=homing_axes)
@@ -189,7 +189,7 @@ class Homing:
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
             axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-            move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+            move_d = math.sqrt(sum([d*d for d in axes_d[:6]]))
             retract_r = min(1., hi.retract_dist / move_d)
             retractpos = [hp - ad * retract_r
                           for hp, ad in zip(homepos, axes_d)]
@@ -256,11 +256,11 @@ class PrinterHoming:
     def cmd_G28(self, gcmd):
         # Move to origin
         axes = []
-        for pos, axis in enumerate('XYZ'):
+        for pos, axis in enumerate('XYZABC'):
             if gcmd.get(axis, None) is not None:
                 axes.append(pos)
         if not axes:
-            axes = [0, 1, 2]
+            axes = [0, 1, 2, 3, 4, 5]
         homing_state = Homing(self.printer)
         homing_state.set_axes(axes)
         kin = self.printer.lookup_object('toolhead').get_kinematics()
