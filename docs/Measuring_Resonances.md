@@ -59,20 +59,17 @@ Fritzing wiring diagrams for some of the ADXL345 boards:
 Suggested twisted pair order:
 
 ```
-GND+SDO
 3.3V+SDA
 GND+SCL
 ```
 
-If you still experience signal integrity issues and can't shorten your cable, replacing the pull up resistors to lower resistance on SDA and SCL may help. [This document](https://www.ti.com/lit/an/slva689/slva689.pdf) explained the calculation behind choosing the right pull up resistor value. **This may cause DAMAGE to the controller/RPI and Accelerometer!!!**
+##### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
 
-##### MPU-9250/MPU-6050/MPU-6500
+**MPU-9250 and MPU-9255 are obsolete parts! MPU-6500 are newer replacements at a lower failure rate.**
 
-**MPU-6050 and MPU-9250 are obsolete parts! MPU-6500 are replacements of MPU-6050 at a lower failure rate.**
-
-Alternatives to the ADXL345 are MPU-9250, MPU-6050, and MPU-6500. These
-accelerometers have been tested to work over I2C on the RPi or RP2040(pico) at
-400kbaud.
+Alternatives to the ADXL345 are MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500.
+These accelerometers have been tested to work over I2C on the RPi or RP2040(pico)
+at 400kbaud.
 
 Recommended connection scheme for I2C on the Raspberry Pi:
 
@@ -163,7 +160,7 @@ probe_points:
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
-#### Configure MPU-9250/MPU-6050/MPU-6500 With RPi
+#### Configure MPU-6000/9000 series With RPi
 
 Make sure the Linux I2C driver is enabled and the baud rate is
 set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
@@ -183,11 +180,10 @@ probe_points:
     100, 100, 20  # an example
 ```
 
-#### Configure MPU-9250/MPU-6050/MPU-6500 With PICO
+#### Configure MPU-6000/9000 series With PICO
 
-Make sure the Linux I2C driver is enabled and the baud rate is
-set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
-section for more details). Then, add the following to the printer.cfg:
+PICO I2C is set to 400000 on default. Simply add the following to the
+printer.cfg:
 
 ```
 [mcu pico]
@@ -228,6 +224,9 @@ If you get an error like `Invalid adxl345 id (got xx vs e5)`, where `xx`
 is some other ID, it is indicative of the connection problem with ADXL345,
 or the faulty sensor. Double-check the power, the wiring (that it matches
 the schematics, no wire is broken or loose, etc.), and soldering quality.
+
+**If you are using MPU-6000/9000 series accelerometer and it show up as `mpu-unknown`, use with
+caution! They are probably refurbished chips!**
 
 Next, try running `MEASURE_AXES_NOISE` in Octoprint, you should get some
 baseline numbers for the noise of accelerometer on the axes (should be
