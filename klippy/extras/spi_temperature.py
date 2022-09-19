@@ -4,7 +4,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
+import math, logging
 from . import bus
 
 
@@ -13,6 +13,7 @@ from . import bus
 ######################################################################
 
 REPORT_TIME = 0.300
+MAX_INVALID_COUNT = 3
 
 class SensorBase:
     def __init__(self, config, chip_type, config_cmd=None, spi_mode=1):
@@ -47,9 +48,10 @@ class SensorBase:
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
         self.mcu.add_config_cmd(
             "query_thermocouple oid=%u clock=%u rest_ticks=%u"
-            " min_value=%u max_value=%u" % (
+            " min_value=%u max_value=%u max_invalid_count=%u" % (
                 self.oid, clock, self._report_clock,
-                self.min_sample_value, self.max_sample_value), is_init=True)
+                self.min_sample_value, self.max_sample_value,
+                MAX_INVALID_COUNT), is_init=True)
     def _handle_spi_response(self, params):
         if params['fault']:
             self.handle_fault(params['value'], params['fault'])
@@ -60,7 +62,7 @@ class SensorBase:
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
         self._callback(last_read_time, temp)
     def report_fault(self, msg):
-        self.printer.invoke_async_shutdown(msg)
+        logging.warn(msg)
 
 
 ######################################################################
@@ -283,8 +285,8 @@ class MAX31865(SensorBase):
         rtd_reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
         adc_to_resist = rtd_reference_r / float(MAX31865_ADC_MAX)
         self.adc_to_resist_div_nominal = adc_to_resist / rtd_nominal_r
-        SensorBase.__init__(self, config, "MAX31865",
-                            self.build_spi_init(config))
+        self.config_reg = self.build_spi_init(config)
+        SensorBase.__init__(self, config, "MAX31865", self.config_reg)
     def handle_fault(self, adc, fault):
         if fault & 0x80:
             self.report_fault("Max31865 RTD input is disconnected")
@@ -303,6 +305,8 @@ class MAX31865(SensorBase):
             self.report_fault("Max31865 Overvoltage or undervoltage fault")
         if not fault & 0xfc:
             self.report_fault("Max31865 Unspecified error")
+        # Attempt to clear the fault
+        self.spi.spi_send(self.config_reg)
     def calc_temp(self, adc):
         adc = adc >> 1 # remove fault bit
         R_div_nominal = adc * self.adc_to_resist_div_nominal
