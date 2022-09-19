@@ -28,6 +28,7 @@ struct thermocouple_spi {
     uint32_t min_value;           // Min allowed ADC value
     uint32_t max_value;           // Max allowed ADC value
     struct spidev_s *spi;
+    uint8_t max_invalid, invalid_count;
     uint8_t chip_type, flags;
 };
 
@@ -75,11 +76,13 @@ command_query_thermocouple(uint32_t *args)
         return;
     spi->min_value = args[3];
     spi->max_value = args[4];
+    spi->max_invalid = args[5];
+    spi->invalid_count = 0;
     sched_add_timer(&spi->timer);
 }
 DECL_COMMAND(command_query_thermocouple,
              "query_thermocouple oid=%c clock=%u rest_ticks=%u"
-             " min_value=%u max_value=%u");
+             " min_value=%u max_value=%u max_invalid_count=%c");
 
 static void
 thermocouple_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
@@ -88,10 +91,13 @@ thermocouple_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
     sendf("thermocouple_result oid=%c next_clock=%u value=%u fault=%c",
           oid, next_begin_time, value, fault);
     /* check the result and stop if below or above allowed range */
-    if (value < spi->min_value || value > spi->max_value)
-        try_shutdown("Thermocouple ADC out of range");
-    if (fault)
+    if (fault || value < spi->min_value || value > spi->max_value) {
+        spi->invalid_count++;
+        if (spi->invalid_count < spi->max_invalid)
+            return;
         try_shutdown("Thermocouple reader fault");
+    }
+    spi->invalid_count = 0;
 }
 
 static void
