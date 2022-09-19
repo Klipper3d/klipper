@@ -1323,7 +1323,7 @@
 <div class="highlight"><pre><span></span><code>[endstop_phase]
 </code></pre></div>
 
-<p>Ezután indítsa újra a nyomtatót, és futtasson egy <code>G28</code> parancsot, amelyet egy <code>ENDSTOP_PHASE_CALIBRATE</code> parancs követ. Ezután mozgassa a szerszámfejet egy új helyre, és futtassa újra a <code>G28</code> parancsot. Próbálja meg a szerszámfejet több különböző helyre mozgatni, és minden egyes pozícióból futtassa újra a <code>G28</code> parancsot. Futtasson legalább öt <code>G28</code> parancsot.</p>
+<p>Ezután indítsa újra a nyomtatót, és futtasson egy <code>G28</code> parancsot, amelyet egy <code>ENDSTOP_PHASE_CALIBRATE</code> parancs követ. Ezután mozgassa a nyomtatófejet egy új helyre, és futtassa újra a <code>G28</code> parancsot. Próbálja meg a nyomtatófejet több különböző helyre mozgatni, és minden egyes pozícióból futtassa újra a <code>G28</code> parancsot. Futtasson legalább öt <code>G28</code> parancsot.</p>
 <p>A fentiek elvégzése után a <code>ENDSTOP_PHASE_CALIBRATE</code> parancs gyakran ugyanazt (vagy közel ugyanazt) a fázist fogja jelenteni a léptető számára. Ezt a fázist el lehet menteni a konfigurációs fájlban, hogy a jövőben minden G28 parancs ezt a fázist használja. (Így a jövőbeni kezdőpont kérési műveletek során a Klipper ugyanazt a pozíciót fogja elérni, még akkor is, ha a végállás egy kicsit korábban vagy egy kicsit később lép működésbe.)</p>
 <p>Egy adott léptetőmotor végállási fázisának elmentéséhez futtasson valami hasonlót, mint a következő:</p>
 <div class="highlight"><pre><span></span><code>ENDSTOP_PHASE_CALIBRATE STEPPER=stepper_z

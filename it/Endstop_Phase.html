@@ -640,11 +640,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#taratura-delle-fasi-di-finecorsa" class="md-nav__link">
-    Taratura delle fasi di finecorsa
+  <a href="#taratura-fasi-dei-finecorsa" class="md-nav__link">
+    Taratura fasi dei finecorsa
   </a>
   
-    <nav class="md-nav" aria-label="Taratura delle fasi di finecorsa">
+    <nav class="md-nav" aria-label="Taratura fasi dei finecorsa">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1277,11 +1277,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#taratura-delle-fasi-di-finecorsa" class="md-nav__link">
-    Taratura delle fasi di finecorsa
+  <a href="#taratura-fasi-dei-finecorsa" class="md-nav__link">
+    Taratura fasi dei finecorsa
   </a>
   
-    <nav class="md-nav" aria-label="Taratura delle fasi di finecorsa">
+    <nav class="md-nav" aria-label="Taratura fasi dei finecorsa">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1314,11 +1314,11 @@
 
 
 <h1 id="fase-di-fine-corsa">Fase di fine corsa<a class="headerlink" href="#fase-di-fine-corsa" title="Permanent link">&para;</a></h1>
-<p>Questo documento descrive il sistema di fine-corsa con regolazione della fase del passo di Klipper. Questa funzionalità può migliorare la precisione dei tradizionali interruttori di fine corsa. È più utile quando si usa un driver Trinamic per motori stepper che ha una configurazione run-time.</p>
-<p>Un tipico interruttore di fine corsa ha una precisione di circa 100 micron. (Ogni volta l'interruttore può attivarsi leggermente prima o leggermente dopo.) Sebbene si tratti di un errore relativamente piccolo, può causare artefatti indesiderati. In particolare, questa deviazione di posizione può essere evidente quando si stampa il primo strato di un oggetto. Al contrario, i motori passo-passo tipici possono ottenere una precisione significativamente maggiore.</p>
+<p>Questo documento descrive il sistema di finecorsa di Klipper regolato sulla fase degli stepper. Questa funzionalità può migliorare la precisione degli interruttori di fine corsa tradizionali. È particolarmente utile quando si utilizza un driver per motori passo-passo Trinamic con configurazione runtime.</p>
+<p>Un tipico interruttore di fine corsa ha una precisione di circa 100 micron. (Ogni volta l'interruttore può attivarsi leggermente prima o leggermente dopo.) Sebbene si tratti di un errore relativamente piccolo, può causare artefatti indesiderati. In particolare, questa deviazione di posizione può essere evidente quando si stampa il primo strato di un oggetto. Al contrario, i tipici motori passo-passo possono ottenere una precisione significativamente maggiore.</p>
 <p>Il meccanismo di fine corsa con regolazione della fase può utilizzare la precisione dei motori passo-passo per migliorare la precisione degli interruttori di fine corsa. Un motore passo-passo si muove ciclicamente attraverso una serie di fasi fino a completare quattro "passi completi". Quindi, un motore passo-passo che utilizza 16 micro-passi avrebbe 64 fasi e quando si muove in direzione positiva passerebbe in rassegna le fasi: 0, 1, 2, ... 61, 62, 63, 0, 1, 2, ecc. Fondamentalmente, quando il motore passo-passo si trova in una posizione particolare su una guida lineare, dovrebbe essere sempre nella stessa fase passo-passo. Pertanto, quando un carrello fa scattare l'interruttore di fine corsa, lo stepper che controlla quel carrello dovrebbe essere sempre nella stessa fase del motore passo-passo. Il sistema di fase finecorsa di Klipper combina la fase del motore con l'attivazione del finecorsa per migliorare la precisione.</p>
 <p>Per utilizzare questa funzionalità è necessario essere in grado di identificare la fase del motore passo-passo. Se si utilizzano i driver Trinamic TMC2130, TMC2208, TMC2224 o TMC2660 in modalità di configurazione runtime (cioè non in modalità stand-alone), Klipper può interrogare la fase stepper dal driver. (È anche possibile utilizzare questo sistema su driver stepper tradizionali se è possibile ripristinare in modo affidabile i driver stepper - vedere sotto per i dettagli.)</p>
-<h2 id="taratura-delle-fasi-di-finecorsa">Taratura delle fasi di finecorsa<a class="headerlink" href="#taratura-delle-fasi-di-finecorsa" title="Permanent link">&para;</a></h2>
+<h2 id="taratura-fasi-dei-finecorsa">Taratura fasi dei finecorsa<a class="headerlink" href="#taratura-fasi-dei-finecorsa" title="Permanent link">&para;</a></h2>
 <p>Se si utilizzano driver Trinamic per motori passo-passo in configurazione runtime, è possibile calibrare le fasi di fine corsa utilizzando il comando ENDSTOP_PHASE_CALIBRATE. Inizia aggiungendo quanto segue al file di configurazione:</p>
 <div class="highlight"><pre><span></span><code>[endstop_phase]
 </code></pre></div>
