@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, importlib
 import mcu, chelper, kinematics.extruder
+import support_6axes
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -13,6 +14,8 @@ import mcu, chelper, kinematics.extruder
 # Class to track each move request
 class Move:
     def __init__(self, toolhead, start_pos, end_pos, speed):
+        start_pos = support_6axes.Axes.extend(start_pos)
+        end_pos = support_6axes.Axes.extend(end_pos)
         self.toolhead = toolhead
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
@@ -20,7 +23,7 @@ class Move:
         self.timing_callbacks = []
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
-        self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3, 4, 5, 6)]
+        self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in range(7)]
         self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:6]]))
         if move_d < .000000001:
             # Extrude only move
