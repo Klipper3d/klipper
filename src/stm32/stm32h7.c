@@ -46,8 +46,16 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - D2_APB2PERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
     } else {
-        uint32_t bit = 1 << ((periph_base - D2_APB1PERIPH_BASE) / 0x400);
-        return (struct cline){.en=&RCC->APB1LENR,.rst=&RCC->APB1LRSTR,.bit=bit};
+        uint32_t offset = ((periph_base - D2_APB1PERIPH_BASE) / 0x400);
+        if (offset < 32) {
+            uint32_t bit = 1 << offset;
+            return (struct cline){
+                .en=&RCC->APB1LENR, .rst=&RCC->APB1LRSTR, .bit=bit};
+        } else {
+            uint32_t bit = 1 << (offset - 32);
+            return (struct cline){
+                .en=&RCC->APB1HENR, .rst=&RCC->APB1HRSTR, .bit=bit};
+        }
     }
 }
 
@@ -170,8 +178,11 @@ clock_setup(void)
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL1)
         ;
 
+    // Set the source of FDCAN clock
+    MODIFY_REG(RCC->D2CCIP1R, RCC_D2CCIP1R_FDCANSEL, RCC_D2CCIP1R_FDCANSEL_0);
+
     // Configure HSI48 clock for USB
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         SET_BIT(RCC->CR, RCC_CR_HSI48ON);
         while((RCC->CR & RCC_CR_HSI48RDY) == 0);
         SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
@@ -205,7 +216,7 @@ usb_reboot_for_dfu_bootloader(void)
 static void
 check_usb_dfu_bootloader(void)
 {
-    if (!CONFIG_USBSERIAL || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
+    if (!CONFIG_USB || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
     uint32_t *sysbase = (uint32_t*)0x1FF09800;
