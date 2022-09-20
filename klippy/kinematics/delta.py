@@ -60,7 +60,6 @@ class DeltaKinematics:
         self.limit_xy2 = -1.
         self.home_position = tuple(
             self._actuator_to_cartesian(self.abs_endstops))
-        self.home_position = (self.home_position[0], self.home_position[1], self.home_position[2], 0., 0., 0.)
         self.max_z = min([rail.get_homing_info().position_endstop
                           for rail in self.rails])
         self.min_z = config.getfloat('minimum_z_position', 0, maxval=self.max_z)
@@ -87,9 +86,9 @@ class DeltaKinematics:
                      " and %.2fmm)"
                      % (max_xy, math.sqrt(self.slow_xy2),
                         math.sqrt(self.very_slow_xy2)))
-        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0., 0., 0., 0.)
-        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0., 0., 0., 0.)
-        self.set_position([0., 0., 0., 0., 0., 0.], ())
+        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.)
+        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.)
+        self.set_position([0., 0., 0.], ())
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def _actuator_to_cartesian(self, spos):
@@ -97,15 +96,12 @@ class DeltaKinematics:
         return mathutil.trilateration(sphere_coords, self.arm2)
     def calc_position(self, stepper_positions):
         spos = [stepper_positions[rail.get_name()] for rail in self.rails]
-        bufpos = self._actuator_to_cartesian(spos)
-        logging.info('delta_calc_position_pos:{0}'.format(bufpos))
-        retpos = (bufpos[0], bufpos[1], bufpos[2], 0., 0., 0.)
-        return retpos
+        return self._actuator_to_cartesian(spos)
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:
             rail.set_position(newpos)
         self.limit_xy2 = -1.
-        if tuple(homing_axes) == (0, 1, 2, 3, 4, 5):
+        if tuple(homing_axes) == (0, 1, 2):
             self.need_home = False
     def home(self, homing_state):
         # All axes are homed simultaneously

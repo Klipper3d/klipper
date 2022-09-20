@@ -226,6 +226,7 @@ class ToolHead:
             'square_corner_velocity', 5., minval=0.)
         self.junction_deviation = 0.
         self._calc_junction_deviation()
+        self.is_6axes = config.getboolean('is_6axes', False)
         # Print time tracking
         self.buffer_time_low = config.getfloat(
             'buffer_time_low', 1.000, above=0.)

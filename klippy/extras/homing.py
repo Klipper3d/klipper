@@ -265,7 +265,10 @@ class PrinterHoming:
             if gcmd.get(axis, None) is not None:
                 axes.append(pos)
         if not axes:
-            axes = [0, 1, 2, 3, 4, 5]
+            if self.printer.lookup_object('toolhead').is_6axes:
+                axes = [0, 1, 2, 3, 4, 5]
+            else:
+                axes = [0, 1, 2]
         homing_state = Homing(self.printer)
         homing_state.set_axes(axes)
         kin = self.printer.lookup_object('toolhead').get_kinematics()
