@@ -157,7 +157,7 @@ static void
 clock_init_internal(void)
 {
     // Enable USB clock recovery mode if applicable
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         // Temporarily switch main clock to internal 32K clock
         gen_clock(CLKGEN_MAIN, GCLK_GENCTRL_SRC_OSCULP32K);
 
