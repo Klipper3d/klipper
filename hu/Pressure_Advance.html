@@ -503,14 +503,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -521,7 +521,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -591,7 +591,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1317,7 +1317,7 @@
 <div class="highlight"><pre><span></span><code>TUNING_TOWER COMMAND=SET_PRESSURE_ADVANCE PARAMETER=ADVANCE START=0 FACTOR=.020
 </code></pre></div>
 
-<p>Ezután nyomtassa ki az objektumot. Teljesen kinyomtatva a tesztnyomat így néz ki:</p>
+<p>Ezután nyomtasd ki az objektumot. Teljesen kinyomtatva a tesztnyomat így néz ki:</p>
 <p><img alt="tuning_tower" src="img/tuning_tower.jpg" /></p>
 <p>A fenti TUNING_TOWER parancs utasítja a Klippert, hogy a nyomtatás minden egyes rétegénél módosítsa a pressure_advance beállítást. A nyomtatás magasabb rétegeire nagyobb nyomáselőtolási érték lesz beállítva. Az ideális pressure_advance beállítás alatti rétegeknél a sarkoknál pattogás, az ideális beállítás feletti rétegeknél pedig lekerekített sarkok és gyenge extrudálás alakulhat ki a sarokig.</p>
 <p>A nyomtatást idő előtt megszakíthatja, ha azt észleli, hogy a sarkok már nem nyomtatnak jól (és így elkerülheti az olyan rétegek nyomtatását, amelyekről ismert, hogy az ideális pressure_advance érték felett vannak).</p>
@@ -1327,7 +1327,7 @@
 <p>Lehetőség van a START és a FACTOR egyéni beállításainak kiválasztására, ha ez segít a legjobb nyomás előtolás beállítás meghatározásában. Ennek során ügyeljen arra, hogy a TUNING_TOWER parancsot minden egyes próbanyomtatás elején ki kell adni.</p>
 <p>A tipikus nyomás előtolás értékek 0,050 és 1,000 között vannak (a legmagasabb értékek általában csak a bowdenes extrudereknél). Ha az 1,000-ig terjedő nyomás előtolással nem tapasztalható jelentős javulás, akkor a nyomás előtolás valószínűleg nem javítja a nyomatok minőségét. Térjen vissza az alapértelmezett konfigurációhoz, ahol a nyomás előtolás ki van kapcsolva.</p>
 <p>Bár ez a hangolási gyakorlat közvetlenül javítja a sarkok minőségét, érdemes megjegyezni, hogy a jó nyomás előtolási konfiguráció csökkenti a nyomat teljes terjedelmét.</p>
-<p>A teszt befejezésekor állítsa be a <code>pressure_advance = &lt;calculated_value&gt;</code> értéket a konfigurációs fájl <code>[extruder]</code> szakaszában, és adjon ki egy RESTART parancsot. A RESTART parancs törli a tesztállapotot, és visszaállítja a gyorsulási és kanyarodási sebességeket a normál értékekre.</p>
+<p>A teszt befejezésekor állítsd be a <code>pressure_advance = &lt;calculated_value&gt;</code> értéket a konfigurációs fájl <code>[extruder]</code> szakaszában, és adjon ki egy RESTART parancsot. A RESTART parancs törli a tesztállapotot, és visszaállítja a gyorsulási és kanyarodási sebességeket a normál értékekre.</p>
 <h2 id="fontos-megjegyzesek">Fontos megjegyzések<a class="headerlink" href="#fontos-megjegyzesek" title="Permanent link">&para;</a></h2>
 <ul>
 <li>A nyomás előtolás értéke az extruder, a fúvóka és a szál függvénye. Gyakori, hogy a különböző gyártóktól származó vagy különböző pigmenteket tartalmazó nyomtatószálak jelentősen eltérő nyomás előtolási értékeket igényelnek. Ezért minden nyomtatónál és minden egyes tekercs nyomtatószálnál kalibrálni kell a nyomás előtolást.</li>

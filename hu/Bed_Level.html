@@ -13,7 +13,7 @@
     
     
       
-        <title>Ágy szintezése - Klipper dokumentáció</title>
+        <title>Tárgyasztal szintezése - Klipper dokumentáció</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#agy-szintezese" class="md-skip">
+        <a href="#targyasztal-szintezese" class="md-skip">
           Kihagyás
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Ágy szintezése
+              Tárgyasztal szintezése
             
           </span>
         </div>
@@ -505,14 +505,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -532,12 +532,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Ágy szintezése
+          Tárgyasztal szintezése
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Bed_Level.html" class="md-nav__link md-nav__link--active">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
       
         
@@ -648,7 +648,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1315,25 +1315,25 @@
 </a>
 
 
-<h1 id="agy-szintezese">Ágy szintezése<a class="headerlink" href="#agy-szintezese" title="Permanent link">&para;</a></h1>
-<p>Az ágy szintezése (néha más néven "bed tramming") kritikus fontosságú a jó minőségű nyomatok előállításához. Ha az ágy nem megfelelően van "szintezve", az rossz tapadáshoz, "vetemedéshez" és finom problémákhoz vezethet a nyomtatás során. Ez a dokumentum útmutatóként szolgál az ágyszintzés Klipperben történő elvégzéséhez.</p>
-<p>Fontos megérteni az ágy szintezésének célját. Ha a nyomtatót egy <code>X0 Y0 Z10</code> pozícióba irányítjuk a nyomtatás során, akkor a cél az, hogy a nyomtató fúvókája pontosan 10 mm-re legyen a nyomtató ágyától. Továbbá, ha a nyomtatót ezután a <code>X50 Z10</code> pozícióba irányítjuk, a cél az, hogy a fúvóka pontosan 10 mm távolságot tartson az ágytól a teljes vízszintes mozgás során.</p>
+<h1 id="targyasztal-szintezese">Tárgyasztal szintezése<a class="headerlink" href="#targyasztal-szintezese" title="Permanent link">&para;</a></h1>
+<p>A tárgyasztal szintezése (néha más néven "bed tramming") kritikus fontosságú a jó minőségű nyomatok előállításához. Ha a tárgyasztal nem megfelelően van "szintezve", az rossz tapadáshoz, "vetemedéshez" és finom problémákhoz vezethet a nyomtatás során. Ez a dokumentum útmutatóként szolgál a tárgyasztal szintezés Klipperben történő elvégzéséhez.</p>
+<p>Fontos megérteni a tárgyasztal szintezésének célját. Ha a nyomtatót egy <code>X0 Y0 Z10</code> pozícióba irányítjuk a nyomtatás során, akkor a cél az, hogy a nyomtató fúvókája pontosan 10 mm-re legyen a nyomtató tárgyasztalától. Továbbá, ha a nyomtatót ezután a <code>X50 Z10</code> pozícióba irányítjuk, a cél az, hogy a fúvóka pontosan 10 mm távolságot tartson a tárgyasztaltól a teljes vízszintes mozgás során.</p>
 <p>A jó minőségű nyomatok érdekében a nyomtatót úgy kell kalibrálni, hogy a Z távolságok körülbelül 25 mikron (.025 mm) pontosságúak legyenek. Ez egy kis távolság - lényegesen kisebb, mint egy átlagos emberi hajszál szélessége. Ez a méretarány nem mérhető "szemmel". Finom hatások (mint például a hőtágulás) befolyásolják az ilyen skálán végzett méréseket. A nagy pontosság elérésének titka az ismételhető folyamat és a nyomtató saját mozgásrendszerének nagy pontosságát kihasználó szintezési módszer alkalmazása.</p>
 <h2 id="valassza-ki-a-megfelelo-kalibracios-mechanizmust">Válassza ki a megfelelő kalibrációs mechanizmust<a class="headerlink" href="#valassza-ki-a-megfelelo-kalibracios-mechanizmust" title="Permanent link">&para;</a></h2>
-<p>A különböző típusú nyomtatók különböző módszereket használnak az ágy szintezésének elvégzésére. Ezek mindegyike végső soron a "papírteszt" (lásd alább) függvénye. Az adott nyomtatótípusra vonatkozó tényleges eljárást azonban más dokumentumok írják le.</p>
-<p>A kalibrációs eszközök futtatása előtt feltétlenül futtassa le a <a href="Config_checks.html">Konfigurációs ellenőrzések dokumentumban</a> leírt ellenőrzéseket. A nyomtató alapvető mozgásának ellenőrzése szükséges az ágy szintezésének elvégzése előtt.</p>
+<p>A különböző típusú nyomtatók különböző módszereket használnak a tárgyasztal szintezésének elvégzésére. Ezek mindegyike végső soron a "papírteszt" (lásd alább) függvénye. Az adott nyomtatótípusra vonatkozó tényleges eljárást azonban más dokumentumok írják le.</p>
+<p>A kalibrációs eszközök futtatása előtt feltétlenül futtassa le a <a href="Config_checks.html">Konfigurációs ellenőrzések dokumentumban</a> leírt ellenőrzéseket. A nyomtató alapvető mozgásának ellenőrzése szükséges a tárgyasztal szintezésének elvégzése előtt.</p>
 <p>A "automatikus Z-szondával" rendelkező nyomtatók esetében a szondát mindenképpen kalibrálja a <a href="Probe_Calibrate.html">Probe Calibrate</a> dokumentumban található utasítások szerint. Delta nyomtatók esetében lásd a <a href="Delta_Calibrate.html">Delta Calibrate</a> dokumentumot. Szintezőcsavarokkal és hagyományos Z végállással rendelkező nyomtatók esetében lásd a <a href="Manual_Level.html">Manual Level</a> dokumentumot.</p>
-<p>A kalibrálás során szükség lehet arra, hogy a nyomtató Z <code>position_min</code> értékét negatív számra állítsa be (pl. <code>position_min = -2</code>). A nyomtató a kalibrációs rutinok során is végrehajtja a határérték-ellenőrzést. A negatív szám beállítása lehetővé teszi, hogy a nyomtató az ágy névleges pozíciója alá mozogjon, ami segíthet az ágy tényleges pozíciójának meghatározásakor.</p>
+<p>A kalibrálás során szükség lehet arra, hogy a nyomtató Z <code>position_min</code> értékét negatív számra állítsd be (pl. <code>position_min = -2</code>). A nyomtató a kalibrációs rutinok során is végrehajtja a határérték-ellenőrzést. A negatív szám beállítása lehetővé teszi, hogy a nyomtató a tárgyasztal névleges pozíciója alá mozogjon, ami segíthet a tárgyasztal tényleges pozíciójának meghatározásakor.</p>
 <h2 id="a-papirteszt">A "papírteszt"<a class="headerlink" href="#a-papirteszt" title="Permanent link">&para;</a></h2>
-<p>Az ágy szintezésének elsődleges mechanizmusa a "papírteszt". Ennek során egy normál "fénymásolópapírt" helyezünk a nyomtató ágya és a fúvóka közé, majd a fúvókát különböző Z magasságba állítjuk, amíg a papír előre-hátra tolása közben egy kis súrlódást nem érzünk.</p>
+<p>A tárgyasztal szintezésének elsődleges mechanizmusa a "papírteszt". Ennek során egy normál "fénymásolópapírt" helyezünk a nyomtató tárgyasztala és a fúvóka közé, majd a fúvókát különböző Z magasságba állítjuk, amíg a papír előre-hátra tolása közben egy kis súrlódást nem érzünk.</p>
 <p>Fontos megérteni a "papírtesztet" még akkor is, ha valakinek van "automatikus szintezője". Magát a szondát gyakran kalibrálni kell a jó eredmények eléréséhez. A szonda kalibrálása a "papírteszt" segítségével történik.</p>
 <p>A papírteszt elvégzéséhez vágjon ki egy kis téglalap alakú papírdarabot egy ollóval (pl. 5x3 cm). A papír vastagsága általában körülbelül 100 mikron (0,100 mm). (A papír pontos vastagsága nem döntő fontosságú.)</p>
-<p>A papírteszt első lépése a nyomtató fúvókájának és ágyának ellenőrzése. Győződjön meg róla, hogy nincs műanyag (vagy más törmelék) a fúvókán vagy az ágyon.</p>
-<p><strong>Ellenőrizze a fúvókát és az ágyat, hogy nincs-e benne/rajta műanyag!</strong></p>
-<p>Ha valaki mindig egy adott lapra vagy felületre nyomtat, akkor a papírtesztet az adott lappal/felülettel a helyén végezheti el. Vegye azonban figyelembe, hogy maga a lap vastagsággal rendelkezik, és a különböző lapok (vagy bármely más nyomtatási felület) hatással lesznek a Z mérésekre. Mindenképpen végezze el újra a papírtesztet, hogy minden egyes használt felülettípust megmérjen.</p>
+<p>A papírteszt első lépése a nyomtató fúvókájának és tárgyasztalának ellenőrzése. Győződjön meg róla, hogy nincs műanyag (vagy más törmelék) a fúvókán vagy a tárgyasztalon.</p>
+<p><strong>Ellenőrizze a fúvókát és a tárgyasztalt, hogy nincs-e benne/rajta műanyag!</strong></p>
+<p>Ha valaki mindig egy adott lapra vagy felületre nyomtat, akkor a papírtesztet az adott lappal/felülettel a helyén végezheti el. Vedd azonban figyelembe, hogy maga a lap vastagsággal rendelkezik, és a különböző lapok (vagy bármely más nyomtatási felület) hatással lesznek a Z mérésekre. Mindenképpen végezze el újra a papírtesztet, hogy minden egyes használt felülettípust megmérjen.</p>
 <p>Ha műanyag van a fúvókán, akkor melegítse fel az extrudert, és egy fém csipesszel távolítsa el a műanyagot. Várja meg, amíg az extruder teljesen lehűl szobahőmérsékletűre, mielőtt folytatja a papírtesztet. Amíg a fúvóka hűl, a fémcsipesszel távolítsa el az esetlegesen kiszivárgó műanyagot.</p>
-<p><strong>A papírtesztet mindig akkor végezze el, amikor a fúvóka és az ágy szobahőmérsékleten van!</strong></p>
-<p>A fúvóka melegítésekor a hőtágulás miatt megváltozik a helyzete (az ágyhoz képest). Ez a hőtágulás jellemzően 100 mikron körüli, ami körülbelül ugyanolyan méret, mint egy tipikus nyomtatópapír. A hőtágulás pontos mértéke nem döntő, ahogyan a papír pontos vastagsága sem döntő. Induljunk ki abból a feltételezésből, hogy a kettő egyenlő (a két távolság közötti különbség meghatározásának módszerét lásd alább).</p>
+<p><strong>A papírtesztet mindig akkor végezze el, amikor a fúvóka és a tárgyasztal szobahőmérsékleten van!</strong></p>
+<p>A fúvóka melegítésekor a hőtágulás miatt megváltozik a helyzete (a tárgyasztalhoz képest). Ez a hőtágulás jellemzően 100 mikron körüli, ami körülbelül ugyanolyan méret, mint egy tipikus nyomtatópapír. A hőtágulás pontos mértéke nem döntő, ahogyan a papír pontos vastagsága sem döntő. Induljunk ki abból a feltételezésből, hogy a kettő egyenlő (a két távolság közötti különbség meghatározásának módszerét lásd alább).</p>
 <p>Furcsának tűnhet, hogy a távolságot szobahőmérsékleten kalibráljuk, amikor a cél az, hogy melegítéskor egyenletes távolságot érjünk el. Ha azonban a fúvókát melegítve kalibráljuk, akkor hajlamos kis mennyiségű olvadt műanyagot juttatni a papírra, ami megváltoztatja az érzékelt súrlódás mértékét. Ez megnehezíti a jó kalibrációt. Ha a szintezés felfűtött állapotban történik, akkor nagymértékben megnő a megégés veszélye is. A hőtágulás mértéke stabil, így a kalibrálás során később könnyen figyelembe vehető.</p>
 <p><strong>Automatizált eszközzel határozza meg a pontos Z magasságot!</strong></p>
 <p>A Klipperben számos segédszkript áll rendelkezésre (pl. MANUAL_PROBE, Z_ENDSTOP_CALIBRATE, PROBE_CALIBRATE, DELTA_CALIBRATE). Lásd a documentumokat <a href="#choose-the-appropriate-calibration-mechanism">fentebb leírva</a>, hogy válassz közülük egyet.</p>
@@ -1344,19 +1344,19 @@ Recv: // Z position: ?????? --&gt; 5.000 &lt;-- ??????
 </code></pre></div>
 
 <p>A fúvóka aktuális magassága (ahogyan azt a nyomtató jelenleg értelmezi) a "--&gt; &lt;--" között jelenik meg. A jobb oldali szám a legutóbbi mérés magassága, amely éppen nagyobb, mint az aktuális magasság, a bal oldali pedig a legutóbbi mérés magassága, amely kisebb, mint az aktuális magasság (vagy ??????, ha nem történt kísérlet).</p>
-<p>Helyezze a papírt a fúvóka és az ágy közé. Hasznos lehet a papír egyik sarkát behajtani, hogy könnyebb legyen megfogni. (Próbálja úgy, hogy ne nyomja le az ágyat, amikor a papírt előre-hátra mozgatja).</p>
+<p>Helyezze a papírt a fúvóka és a tárgyasztal közé. Hasznos lehet a papír egyik sarkát behajtani, hogy könnyebb legyen megfogni. (Próbálja úgy, hogy ne nyomja le a tárgyasztalt, amikor a papírt előre-hátra mozgatja).</p>
 <p><img alt="paper-test" src="img/paper-test.jpg" /></p>
 <p>A TESTZ paranccsal kérheti, hogy a fúvóka közelebb menjen a papírhoz. Például:</p>
 <div class="highlight"><pre><span></span><code>TESTZ Z=-.1
 </code></pre></div>
 
-<p>A TESTZ parancs a fúvókát az aktuális pozíciójától relatív távolságra mozgatja. (Tehát a <code>Z=-.1</code> azt kéri, hogy a fúvóka 0,1 mm-rel közelebb kerüljön az ágyhoz). Miután a fúvóka megállt, tolja előre-hátra a papírt, hogy ellenőrizze, hogy a fúvóka érintkezik-e a papírral, és hogy érezze a súrlódás mértékét. Folytassa a TESTZ parancsok kiadását mindaddig, amíg a papírral való tesztelésekkor nem érez egy kis súrlódást.</p>
+<p>A TESTZ parancs a fúvókát az aktuális pozíciójától relatív távolságra mozgatja. (Tehát a <code>Z=-.1</code> azt kéri, hogy a fúvóka 0,1 mm-rel közelebb kerüljön a tárgyasztalhoz). Miután a fúvóka megállt, tolja előre-hátra a papírt, hogy ellenőrizze, hogy a fúvóka érintkezik-e a papírral, és hogy érezze a súrlódás mértékét. Folytassa a TESTZ parancsok kiadását mindaddig, amíg a papírral való tesztelésekkor nem érez egy kis súrlódást.</p>
 <p>Ha túl nagy a súrlódás, akkor egy pozitív Z értéket használhatunk a fúvóka felfelé mozgatására. Lehetőség van a <code>TESTZ Z=+</code> vagy a <code>TESTZ Z=-</code> használatára is, hogy "felezzük" az utolsó pozíciót - azaz két pozíció között félúton lévő pozícióba lépjünk. Például, ha a TESTZ parancs a következő felszólítást adná:</p>
 <div class="highlight"><pre><span></span><code>Recv: // Z position: 0.130 --&gt; 0.230 &lt;-- 0.280
 </code></pre></div>
 
 <p>Ezután egy <code>TESTZ Z=-</code> a fúvókát 0,180 Z pozícióba (a 0,130 és 0,230 közötti félútra) mozgatja. Ezt a funkciót arra lehet használni, hogy segítsen gyorsan leszűkíteni egy konzisztens súrlódást. A <code>Z=++</code> és <code>Z=--</code> parancsok használatával közvetlenül visszatérhetünk egy korábbi méréshez - például a fenti felszólítás után a <code>TESTZ Z=--</code> parancs a fúvókát a 0,130-as Z pozícióba mozgatná.</p>
-<p>Miután érzékelhető egy kis súrlódás, adja ki az ACCEPT parancsot:</p>
+<p>Miután érzékelhető egy kis súrlódás, add ki az ACCEPT parancsot:</p>
 <div class="highlight"><pre><span></span><code>ACCEPT
 </code></pre></div>
 
@@ -1364,10 +1364,10 @@ Recv: // Z position: ?????? --&gt; 5.000 &lt;-- ??????
 <p>Az érzékelt súrlódás pontos mértéke nem döntő fontosságú, ahogyan a hőtágulás mértéke és a papír pontos szélessége sem döntő fontosságú. Csak próbáljon meg minden egyes alkalommal ugyanannyi súrlódást elérni, amikor a tesztet lefuttatja.</p>
 <p>Ha a teszt során valami rosszul megy, az <code>ABORT</code> paranccsal kiléphetünk a kalibrációs eszközből.</p>
 <h2 id="a-hotagulas-meghatarozasa">A hőtágulás meghatározása<a class="headerlink" href="#a-hotagulas-meghatarozasa" title="Permanent link">&para;</a></h2>
-<p>Miután sikeresen elvégezte az ágy szintezését, pontosabb értéket lehet kiszámítani a "hőtágulás", "a papír vastagsága" és "a papírteszt során érzékelhető súrlódás" együttes hatására.</p>
+<p>Miután sikeresen elvégezte a tárgyasztal szintezését, pontosabb értéket lehet kiszámítani a "hőtágulás", "a papír vastagsága" és "a papírteszt során érzékelhető súrlódás" együttes hatására.</p>
 <p>Ilyen típusú számításokra általában nincs szükség, mivel a legtöbb felhasználó szerint az egyszerű "papírteszt" jó eredményeket ad.</p>
 <p>A számítás legegyszerűbben úgy végezhető el, ha kinyomtatunk egy olyan tesztobjektumot, amelynek minden oldalán egyenes falak vannak. Ehhez a <a href="prints/square.stl">docs/prints/square.stl</a> fájlban található nagy, üreges négyzetet használhatjuk. Az objektum szeletelésekor győződjön meg róla, hogy a szeletelő az első szinthez ugyanazt a rétegmagasságot és extrudálási szélességet használja, mint az összes további réteghez. Használjon durva rétegmagasságot (a rétegmagasságnak a fúvóka átmérőjének körülbelül 75%-ának kell lennie), és ne használjon peremet vagy szoknyát.</p>
-<p>Nyomtassa ki a tesztobjektumot, várja meg, amíg lehűl, és vegye le az ágyról. Ellenőrizze a tárgy legalsó rétegét. (Az is hasznos lehet, ha ujját vagy körmét végighúzza az alsó szélén.) Ha azt tapasztaljuk, hogy az alsó réteg a tárgy minden oldala mentén kissé kidudorodik, akkor ez azt jelzi, hogy a fúvóka kissé közelebb volt az ágyhoz, mint kellett volna. A magasság növeléséhez kiadhatunk egy <code>SET_GCODE_OFFSET Z=+.010</code> parancsot. A későbbi nyomtatásokban ellenőrizhetjük ezt a viselkedést, és szükség szerint további kiigazításokat végezhetünk. Az ilyen típusú beállítások jellemzően 10 mikronokban (.010mm) történnek.</p>
+<p>Nyomtasd ki a tesztobjektumot, várja meg, amíg lehűl, és vedd le a tárgyasztalról. Ellenőrizze a tárgy legalsó rétegét. (Az is hasznos lehet, ha ujját vagy körmét végighúzza az alsó szélén.) Ha azt tapasztaljuk, hogy az alsó réteg a tárgy minden oldala mentén kissé kidudorodik, akkor ez azt jelzi, hogy a fúvóka kissé közelebb volt a tárgyasztalhoz, mint kellett volna. A magasság növeléséhez kiadhatunk egy <code>SET_GCODE_OFFSET Z=+.010</code> parancsot. A későbbi nyomtatásokban ellenőrizhetjük ezt a viselkedést, és szükség szerint további kiigazításokat végezhetünk. Az ilyen típusú beállítások jellemzően 10 mikronokban (.010mm) történnek.</p>
 <p>Ha az alsó réteg keskenyebbnek tűnik, mint a következő rétegek, akkor a SET_GCODE_OFFSET paranccsal negatív Z-beállítást végezhetünk. Ha bizonytalanok vagyunk, akkor a Z-beállítást addig csökkenthetjük, amíg a nyomatok alsó rétege egy kis dudort nem mutat, majd addig csökkenthetjük, amíg az el nem tűnik.</p>
 <p>A legegyszerűbb módja a kívánt Z-korrigálásnak, ha létrehoz egy START_PRINT G-kód makrót. A szeletelő úgy intézi, hogy a makró minden nyomtatás kezdetekor meghívja ezt a parancsot, és hozzáad egy SET_GCODE_OFFSET parancsot. További részletekért lásd a <a href="Slicers.html">szeletelők</a> dokumentumot.</p>
 

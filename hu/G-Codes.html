@@ -503,14 +503,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -521,7 +521,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -591,7 +591,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -4287,7 +4287,7 @@
 <li>Várja meg, amíg az aktuális mozdulat befejeződik: <code>M400</code></li>
 <li>Használjon abszolút/relatív távolságokat az extrudáláshoz: <code>M82</code>, <code>M83</code></li>
 <li>Abszolút/relatív koordináták használata: <code>G90</code>, <code>G91</code></li>
-<li>Állítsa be a pozíciót: <code>G92 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;]</code></li>
+<li>Állítsd be a pozíciót: <code>G92 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;]</code></li>
 <li>A sebességtényező felülbírálási százalékának beállítása: <code>M220 S&lt;percent&gt;</code></li>
 <li>Extrudálási tényező felülbírálási százalékának beállítása: <code>M221 S&lt;percent&gt;</code></li>
 <li>Gyorsítás beállítása: <code>M204 S&lt;value&gt;</code> VAGY <code>M204 P&lt;value&gt; T&lt;value&gt;</code><ul>
@@ -4300,8 +4300,8 @@
 <li>Megjegyzés: Az M109 mindig megvárja, míg a hőmérséklet beáll a kért értékre</li>
 </ul>
 </li>
-<li>Beállítja az ágy hőmérsékletét: <code>M140 [S&lt;temperature&gt;]</code></li>
-<li>Beállítja az ágy hőmérsékletét és várakozik: <code>M190 S&lt;temperature&gt;</code><ul>
+<li>Beállítja a tárgyasztal hőmérsékletét: <code>M140 [S&lt;temperature&gt;]</code></li>
+<li>Beállítja a tárgyasztal hőmérsékletét és várakozik: <code>M190 S&lt;temperature&gt;</code><ul>
 <li>Megjegyzés: Az M190 mindig megvárja, hogy a hőmérséklet beálljon a kért értékre</li>
 </ul>
 </li>
@@ -4316,7 +4316,7 @@
 <p>Ha egy kevésbé gyakori G-kód parancsra van szükség, akkor azt egy egyéni <a href="Config_Reference.html#gcode_macro">gcode_macro config section</a> segítségével lehet megvalósítani. Például ezt használhatnánk a következőkre: <code>G12</code>, <code>G29</code>, <code>G30</code>, <code>G31</code>, <code>M42</code>, <code>M80</code>, <code>M81</code>, <code>T1</code> stb.</p>
 <h2 id="tovabbi-parancsok">További parancsok<a class="headerlink" href="#tovabbi-parancsok" title="Permanent link">&para;</a></h2>
 <p>A Klipper "kiterjesztett" G-kód parancsokat használ az általános konfigurációhoz és állapothoz. Ezek a kiterjesztett parancsok mind hasonló formátumot követnek, egy parancsnévvel kezdődnek, és egy vagy több paraméter követheti őket. Például: <code>SET_SERVO SERVO=myservo ANGLE=5.3</code>. Ebben a parancssorban a parancsok és paraméterek nagybetűvel szerepelnek, azonban a nagy- és kisbetűket nem kell figyelembe venni. (Tehát a "SET_SERVO" és a "set_servo" mindkettő ugyanazt jelenti.)</p>
-<p>Ez a szakasz a Klipper modul neve szerint van rendezve, amely általában a <a href="Config_Reference.html">nyomtató konfigurációs fájlban</a> megadott szakaszneveket követi. Vegye figyelembe, hogy egyes modulok automatikusan betöltődnek.</p>
+<p>Ez a szakasz a Klipper modul neve szerint van rendezve, amely általában a <a href="Config_Reference.html">nyomtató konfigurációs fájlban</a> megadott szakaszneveket követi. Vedd figyelembe, hogy egyes modulok automatikusan betöltődnek.</p>
 <h3 id="adxl345">[adxl345]<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#adxl345">adxl345 konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="accelerometer_measure">ACCELEROMETER_MEASURE<a class="headerlink" href="#accelerometer_measure" title="Permanent link">&para;</a></h4>
@@ -4336,13 +4336,13 @@
 <h4 id="angle_debug_write">ANGLE_DEBUG_WRITE<a class="headerlink" href="#angle_debug_write" title="Permanent link">&para;</a></h4>
 <p><code>ANGLE_DEBUG_WRITE CHIP=&lt;config_name&gt; REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Nyers "érték" írása a "register" regiszterébe. Mind az "érték", mind a "regiszter" lehet decimális vagy hexadecimális egész szám. Használja óvatosan, és hivatkozzon az érzékelő adatlapjára. Ez csak a TLE5012B chipek esetében érhető el.</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
-<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_mesh">bed_mesh konfigurációs szakasz</a> engedélyezve van (lásd még az <a href="Bed_Mesh.html">ágy háló útmutatót</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_mesh">bed_mesh konfigurációs szakasz</a> engedélyezve van (lásd még az <a href="Bed_Mesh.html">tárgyasztal háló útmutatót</a>).</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágyat a konfigurációban megadott paraméterek által generált pontok segítségével szintezi. A szintezés után egy háló generálódik, és a Z elmozdulás a hálónak megfelelően kerül beállításra. Az opcionális szintező paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual parancsot adta meg, akkor a kézi szintező eszköz aktiválódik. Az eszköz aktiválása közben elérhető további parancsok részleteit lásd a fenti MANUAL_PROBE parancsban.</p>
+<p><code>BED_MESH_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs a tárgyasztalt a konfigurációban megadott paraméterek által generált pontok segítségével szintezi. A szintezés után egy háló generálódik, és a Z elmozdulás a hálónak megfelelően kerül beállításra. Az opcionális szintező paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual parancsot adta meg, akkor a kézi szintező eszköz aktiválódik. Az eszköz aktiválása közben elérhető további parancsok részleteit lásd a fenti MANUAL_PROBE parancsban.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>: Ez a parancs az aktuális mért Z értékeket és az aktuális hálóértékeket adja ki a terminálra. A PGP=1 megadása esetén a bed_mesh által generált X, Y koordináták és a hozzájuk tartozó indexek kerülnek a terminálra.</p>
 <h4 id="bed_mesh_map">BED_MESH_MAP<a class="headerlink" href="#bed_mesh_map" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_MAP</code>: Ez a parancs a BED_MESH_OUTPUT-hoz hasonlóan a háló aktuális állapotát írja ki a terminálra. Az értékek ember által olvasható formátumban történő kiírása helyett az állapotot JSON formátumban szerializálja. Ez lehetővé teszi az OctoPrint pluginek számára, hogy könnyen rögzítsék az adatokat, és az ágy felszínét közelítő magassági térképeket hozzanak létre.</p>
+<p><code>BED_MESH_MAP</code>: Ez a parancs a BED_MESH_OUTPUT-hoz hasonlóan a háló aktuális állapotát írja ki a terminálra. Az értékek ember által olvasható formátumban történő kiírása helyett az állapotot JSON formátumban szerializálja. Ez lehetővé teszi az OctoPrint pluginek számára, hogy könnyen rögzítsék az adatokat, és a tárgyasztal felszínét közelítő magassági térképeket hozzanak létre.</p>
 <h4 id="bed_mesh_clear">BED_MESH_CLEAR<a class="headerlink" href="#bed_mesh_clear" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_CLEAR</code>: Ez a parancs törli a hálót és eltávolít minden Z-beállítást. Ajánlott ezt a parancsot befejező G-kódba tenni.</p>
 <h4 id="bed_mesh_profile">BED_MESH_PROFILE<a class="headerlink" href="#bed_mesh_profile" title="Permanent link">&para;</a></h4>
@@ -4350,9 +4350,9 @@
 <h4 id="bed_mesh_offset">BED_MESH_OFFSET<a class="headerlink" href="#bed_mesh_offset" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code>: X és/vagy Y eltolást alkalmazza a hálókereséshez. Ez a független extruderekkel rendelkező nyomtatóknál hasznos, mivel az eltolás szükséges a szerszámcsere utáni helyes Z-beállításhoz.</p>
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
-<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#bed_screws">ágyszintező csavarok konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Manual_Level.html#adjusting-bed-leveling-screws">kézi szintezés útmutatót</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#bed_screws">tárgyasztal szintező csavarok konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Manual_Level.html#adjusting-bed-leveling-screws">kézi szintezés útmutatót</a>).</p>
 <h4 id="bed_screws_adjust">BED_SCREWS_ADJUST<a class="headerlink" href="#bed_screws_adjust" title="Permanent link">&para;</a></h4>
-<p><code>BED_SCREWS_ADJUST</code>: Ez a parancs az ágy állítócsavarok beállítási eszközét hívja elő. A fúvókát különböző helyekre küldi (a konfigurációs fájlban meghatározottak szerint), és lehetővé teszi az ágy állítócsavarok beállítását, hogy az ágy állandó távolságra legyen a fúvókától.</p>
+<p><code>BED_SCREWS_ADJUST</code>: Ez a parancs a tárgyasztal állítócsavarok beállítási eszközét hívja elő. A fúvókát különböző helyekre küldi (a konfigurációs fájlban meghatározottak szerint), és lehetővé teszi a tárgyasztal állítócsavarok beállítását, hogy a tárgyasztal állandó távolságra legyen a fúvókától.</p>
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_tilt">bed_tilt konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
@@ -4374,7 +4374,7 @@
 <h3 id="delta_calibrate">[delta_calibrate]<a class="headerlink" href="#delta_calibrate" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#linear-delta-kinematics">delta_kalibrate konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Delta_Calibrate.html">delta kalibrációs útmutatót</a>).</p>
 <h4 id="delta_calibrate_1">DELTA_CALIBRATE<a class="headerlink" href="#delta_calibrate_1" title="Permanent link">&para;</a></h4>
-<p><code>DELTA_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágy hét pontját vizsgálja meg, és frissített végállások, toronyszögek és sugarak ajánlására szolgál. Az opcionális mérési paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual érték van megadva, akkor a kézi szintezés aktiválódik. Lásd a fenti MANUAL_PROBE parancsot a további parancsok részleteiért, amelyek akkor állnak rendelkezésre, amikor ez az eszköz aktív.</p>
+<p><code>DELTA_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs a tárgyasztal hét pontját vizsgálja meg, és frissített végállások, toronyszögek és sugarak ajánlására szolgál. Az opcionális mérési paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual érték van megadva, akkor a kézi szintezés aktiválódik. Lásd a fenti MANUAL_PROBE parancsot a további parancsok részleteiért, amelyek akkor állnak rendelkezésre, amikor ez az eszköz aktív.</p>
 <h4 id="delta_analyze">DELTA_ANALYZE<a class="headerlink" href="#delta_analyze" title="Permanent link">&para;</a></h4>
 <p><code>DELTA_ANALYZE</code>: Ez a parancs a fokozott delta-kalibrálás során használatos. A részletekért lásd a <a href="Delta_Calibrate.html">Delta kalibrálás</a> című dokumentumot.</p>
 <h3 id="display">[display]<a class="headerlink" href="#display" title="Permanent link">&para;</a></h3>
@@ -4487,7 +4487,7 @@
 <h4 id="get_position">GET_POSITION<a class="headerlink" href="#get_position" title="Permanent link">&para;</a></h4>
 <p><code>GET_POSITION</code>: A nyomtatófej aktuális helyzetére vonatkozó információk visszaadása. További információkért lásd a <a href="Code_Overview.html#coordinate-systems">GET_POSITION kimenet</a> fejlesztői dokumentációját.</p>
 <h4 id="set_gcode_offset">SET_GCODE_OFFSET<a class="headerlink" href="#set_gcode_offset" title="Permanent link">&para;</a></h4>
-<p><code>SET_GCODE_OFFSET [X=&lt;pos&gt;|X_ADJUST=&lt;adjust&gt;] [Y=&lt;pos&gt;|Y_ADJUST=&lt;adjust&gt;] [Z=&lt;pos&gt;|Z_ADJUST=&lt;adjust&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>: Pozíciós eltolás beállítása, amelyet a későbbi G-kód parancsokra kell alkalmazni. Ezt általában a Z ágy eltolás virtuális megváltoztatására vagy a fúvókák XY eltolásának beállítására használják extruder váltáskor. Például, ha a "SET_GCODE_OFFSET Z=0.2" parancsot küldjük, akkor a jövőbeli G-kód mozgások Z magasságához 0,2 mm-t adunk hozzá. Ha az X_ADJUST stílusparamétereket használjuk, akkor a kiigazítás hozzáadódik a meglévő eltoláshoz (pl. a "SET_GCODE_OFFSET Z=-0.2" és a "SET_GCODE_OFFSET Z_ADJUST=0.3" utána a teljes Z eltolás 0.1 lesz). Ha a "MOVE=1" van megadva, akkor a nyomtatófej mozgatása a megadott eltolás alkalmazására történik (egyébként az eltolás a következő abszolút G-kódú mozgatáskor lép hatályba, amely az adott tengelyt adja meg). Ha a "MOVE_SPEED" meg van adva, akkor a nyomtatófej mozgatása a megadott sebességgel (mm/sec-ben) történik; egyébként a nyomtatófej mozgatása az utoljára megadott G-kód sebességet fogja használni.</p>
+<p><code>SET_GCODE_OFFSET [X=&lt;pos&gt;|X_ADJUST=&lt;adjust&gt;] [Y=&lt;pos&gt;|Y_ADJUST=&lt;adjust&gt;] [Z=&lt;pos&gt;|Z_ADJUST=&lt;adjust&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>: Pozíciós eltolás beállítása, amelyet a későbbi G-kód parancsokra kell alkalmazni. Ezt általában a Z tárgyasztal eltolás virtuális megváltoztatására vagy a fúvókák XY eltolásának beállítására használják extruder váltáskor. Például, ha a "SET_GCODE_OFFSET Z=0.2" parancsot küldjük, akkor a jövőbeli G-kód mozgások Z magasságához 0,2 mm-t adunk hozzá. Ha az X_ADJUST stílusparamétereket használjuk, akkor a kiigazítás hozzáadódik a meglévő eltoláshoz (pl. a "SET_GCODE_OFFSET Z=-0.2" és a "SET_GCODE_OFFSET Z_ADJUST=0.3" utána a teljes Z eltolás 0.1 lesz). Ha a "MOVE=1" van megadva, akkor a nyomtatófej mozgatása a megadott eltolás alkalmazására történik (egyébként az eltolás a következő abszolút G-kódú mozgatáskor lép hatályba, amely az adott tengelyt adja meg). Ha a "MOVE_SPEED" meg van adva, akkor a nyomtatófej mozgatása a megadott sebességgel (mm/sec-ben) történik; egyébként a nyomtatófej mozgatása az utoljára megadott G-kód sebességet fogja használni.</p>
 <h4 id="save_gcode_state">SAVE_GCODE_STATE<a class="headerlink" href="#save_gcode_state" title="Permanent link">&para;</a></h4>
 <p><code>SAVE_GCODE_STATE [NAME=&lt;state_name&gt;]</code>: Az aktuális G-kód koordináták elemzési állapotának mentése. A G-kód állapotának mentése és visszaállítása hasznos a szkriptekben és makrókban. Ez a parancs elmenti az aktuális G-kód abszolút koordinátamódot (G90/G91), az abszolút extrudálási módot (M82/M83), az origót (G92), az eltolást (SET_GCODE_OFFSET), a sebesség felülbírálását (M220), az extruder felülbírálását (M221), a mozgási sebességet, az aktuális XYZ pozíciót és a relatív extruder "E" pozíciót. A NAME megadása esetén lehetővé teszi, hogy a mentett állapotot a megadott karakterláncnak nevezzük el. Ha a NAME nincs megadva, az alapértelmezett érték "default".</p>
 <h4 id="restore_gcode_state">RESTORE_GCODE_STATE<a class="headerlink" href="#restore_gcode_state" title="Permanent link">&para;</a></h4>
@@ -4501,7 +4501,7 @@
 <h4 id="disable_filament_width_sensor">DISABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#disable_filament_width_sensor" title="Permanent link">&para;</a></h4>
 <p><code>DISABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsolja ki a szálszélesség érzékelőt, és ne használja áramlásszabályozáshoz.</p>
 <h4 id="enable_filament_width_sensor">ENABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#enable_filament_width_sensor" title="Permanent link">&para;</a></h4>
-<p><code>ENABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsolja be a szálszélesség érzékelőt, és kezdje el használni az áramlásszabályozáshoz.</p>
+<p><code>ENABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsolja be a szálszélesség érzékelőt, és kezd el használni az áramlásszabályozáshoz.</p>
 <h4 id="query_raw_filament_width">QUERY_RAW_FILAMENT_WIDTH<a class="headerlink" href="#query_raw_filament_width" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_RAW_FILAMENT_WIDTH</code>: Visszaadja az ADC-csatorna aktuális leolvasását és a RAW-érzékelő értékét a kalibrációs pontokhoz.</p>
 <h4 id="enable_filament_width_log">ENABLE_FILAMENT_WIDTH_LOG<a class="headerlink" href="#enable_filament_width_log" title="Permanent link">&para;</a></h4>
@@ -4523,7 +4523,7 @@
 <h3 id="input_shaper">[input_shaper]<a class="headerlink" href="#input_shaper" title="Permanent link">&para;</a></h3>
 <p>A következő parancs akkor engedélyezett, ha az <a href="Config_Reference.html#input_shaper">input_shaper konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Resonance_Compensation.html">rezonancia kompenzációs útmutatót</a>).</p>
 <h4 id="set_input_shaper">SET_INPUT_SHAPER<a class="headerlink" href="#set_input_shaper" title="Permanent link">&para;</a></h4>
-<p><code>SET_INPUT_SHAPER [SHAPER_FREQ_X=&lt;shaper_freq_x&gt;] [SHAPER_FREQ_Y=&lt;shaper_freq_y&gt;] [DAMPING_RATIO_X=&lt;damping_ratio_x&gt;] [DAMPING_RATIO_Y=&lt;damping_ratio_y&gt;] [SHAPER_TYPE=&lt;shaper&gt;] [SHAPER_TYPE_X=&lt;shaper_type_x&gt;] [SHAPER_TYPE_Y=&lt;shaper_type_y&gt;]</code>: A bemeneti formáló paraméterek módosítása. Vegye figyelembe, hogy a SHAPER_TYPE paraméter visszaállítja a bemeneti formálót mind az X, mind az Y tengelyre, még akkor is, ha az [input_shaper] szakaszban különböző formálótípusok lettek beállítva. A SHAPER_TYPE nem használható együtt a SHAPER_TYPE_X és SHAPER_TYPE_Y paraméterekkel. Az egyes paraméterekkel kapcsolatos további részletekért lásd a <a href="Config_Reference.html#input_shaper">konfigurációs hivatkozást</a>.</p>
+<p><code>SET_INPUT_SHAPER [SHAPER_FREQ_X=&lt;shaper_freq_x&gt;] [SHAPER_FREQ_Y=&lt;shaper_freq_y&gt;] [DAMPING_RATIO_X=&lt;damping_ratio_x&gt;] [DAMPING_RATIO_Y=&lt;damping_ratio_y&gt;] [SHAPER_TYPE=&lt;shaper&gt;] [SHAPER_TYPE_X=&lt;shaper_type_x&gt;] [SHAPER_TYPE_Y=&lt;shaper_type_y&gt;]</code>: A bemeneti formáló paraméterek módosítása. Vedd figyelembe, hogy a SHAPER_TYPE paraméter visszaállítja a bemeneti formálót mind az X, mind az Y tengelyre, még akkor is, ha az [input_shaper] szakaszban különböző formálótípusok lettek beállítva. A SHAPER_TYPE nem használható együtt a SHAPER_TYPE_X és SHAPER_TYPE_Y paraméterekkel. Az egyes paraméterekkel kapcsolatos további részletekért lásd a <a href="Config_Reference.html#input_shaper">konfigurációs hivatkozást</a>.</p>
 <h3 id="manual_probe">[manual_probe]<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h3>
 <p>A manual_probe modul automatikusan betöltődik.</p>
 <h4 id="manual_probe_1">MANUAL_PROBE<a class="headerlink" href="#manual_probe_1" title="Permanent link">&para;</a></h4>
@@ -4589,7 +4589,7 @@
 <h3 id="probe">[probe]<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#probe">szonda konfigurációs szakasz</a> vagy a <a href="Config_Reference.html#bltouch">bltouch konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Probe_Calibrate.html">szonda kalibrációs útmutatót</a>).</p>
 <h4 id="probe_1">PROBE<a class="headerlink" href="#probe_1" title="Permanent link">&para;</a></h4>
-<p><code>PROBE [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;] [SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;] [SAMPLES_TOLERANCE_RETRIES=&lt;count&gt;] [SAMPLES_RESULT=median|average]</code>: Mozgassa a fúvókát lefelé, amíg a szonda nem érzékel. Ha bármelyik opcionális paramétert megadjuk, azok felülírják a <a href="Config_Reference.html#szonda">szonda konfigurációs szakaszában</a> megadott megfelelő beállításokat.</p>
+<p><code>PROBE [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;] [SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;] [SAMPLES_TOLERANCE_RETRIES=&lt;count&gt;] [SAMPLES_RESULT=median|average]</code>: Mozgasd a fúvókát lefelé, amíg a szonda nem érzékel. Ha bármelyik opcionális paramétert megadjuk, azok felülírják a <a href="Config_Reference.html#szonda">szonda konfigurációs szakaszában</a> megadott megfelelő beállításokat.</p>
 <h4 id="query_probe">QUERY_PROBE<a class="headerlink" href="#query_probe" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_PROBE</code>: Jelentse a szonda aktuális állapotát ("triggered" vagy "open").</p>
 <h4 id="probe_accuracy">PROBE_ACCURACY<a class="headerlink" href="#probe_accuracy" title="Permanent link">&para;</a></h4>
@@ -4616,7 +4616,7 @@
 <h4 id="test_resonances">TEST_RESONANCES<a class="headerlink" href="#test_resonances" title="Permanent link">&para;</a></h4>
 <p><code>TEST_RESONANCES AXIS=&lt;axis&gt; OUTPUT=&lt;resonances,raw_data&gt; [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;adxl345_chip_name&gt;] [POINT=x,y,z] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Lefuttatja a rezonanciatesztet a kért "tengely" összes konfigurált mérőpontjában, és méri a gyorsulást az adott tengelyhez konfigurált gyorsulásmérő chipek segítségével. A "tengely" lehet X vagy Y, vagy megadhat egy tetszőleges irányt <code>AXIS=dx,dy</code>, ahol dx és dy egy irányvektort meghatározó lebegőpontos szám (pl. <code>AXIS=X</code>, <code>AXIS=Y</code>, vagy <code>AXIS=1,-1</code> az átlós irány meghatározásához). Vegyük figyelembe, hogy az <code>AXIS=dx,dy</code> és az <code>AXIS=-dx,-dy</code> egyenértékű. Az <code>adxl345_chip_name</code> lehet egy vagy több konfigurált adxl345 chip, vesszővel elválasztva, például <code>CHIPS="adxl345, adxl345 rpi"</code>. Megjegyzendő, hogy az <code>adxl345</code> elhagyható a nevesített adxl345 chipeknél. Ha POINT van megadva, az felülírja a <code>[resonance_tester]</code> alatt konfigurált pontokat. Ha <code>INPUT_SHAPING=0</code> vagy nincs beállítva (alapértelmezett), letiltja a bemeneti alakítást a rezonancia teszteléshez, mert a rezonancia tesztelés nem érvényes a bemeneti alakító engedélyezésével. Az <code>OUTPUT</code> paraméter egy vesszővel elválasztott lista arról, hogy mely kimenetek kerülnek kiírásra. Ha <code>raw_data</code> paramétert kér, akkor a nyers gyorsulásmérő adatok egy <code>/tmp/raw_data_&lt;axis&gt;_[&lt;chip_name&gt;_][&lt;point&gt;_]&lt;name&gt;.csv</code> fájlba vagy fájlsorozatba íródnak. A (<code>&lt;point&gt;_</code> név részével, amely csak akkor generálódik, ha 1-nél több mérőpont van konfigurálva vagy POINT van megadva). Ha <code>resonances</code> van megadva, a frekvenciaválasz kiszámításra kerül (az összes mérőpontra vonatkozóan), és a <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> fájlba íródik. Ha nincs beállítva, az OUTPUT alapértelmezés szerinti <code>resonances</code>, a NAME pedig alapértelmezés szerint az aktuális időpontot jelenti "ÉÉÉÉHHNN_ÓÓPPMPMP" formátumban.</p>
 <h4 id="shaper_calibrate">SHAPER_CALIBRATE<a class="headerlink" href="#shaper_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>SHAPER_CALIBRATE [AXIS=&lt;axis&gt;] [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [MAX_SMOOTHING=&lt;max_smoothing&gt;]</code>: A <code>TEST_RESONANCES</code> paraméterhez hasonlóan lefuttatja a rezonancia tesztet a konfiguráltak szerint, és megpróbálja megtalálni a bemeneti változó optimális paramétereit a kért tengelyre (vagy mind az X, mind az Y tengelyre, ha az <code>AXIS</code> paraméter nincs beállítva). Ha a <code>MAX_SMOOTHING</code> nincs beállítva, az értékét a <code>[resonance_tester]</code> szakaszból veszi, az alapértelmezett érték pedig a be nem állított érték. Lásd a <a href="Measuring_Resonances.html#max-smoothing">Max simítás</a> a rezonanciák mérése című útmutatóban a funkció használatáról szóló további információkat. A hangolás eredményei kiíródnak a konzolra, a frekvenciaválaszok és a különböző bemeneti alakítók értékei pedig egy vagy több CSV-fájlba íródnak <code>/tmp/calibration_data_&lt;axis&gt;_&lt;name&gt;.csv</code>. Hacsak nincs megadva, a NAME alapértelmezés szerint az aktuális időpontot jelenti "YYYYMMDD_HHMMSS" formátumban. Vegye figyelembe, hogy a javasolt bemeneti változó paraméterek a <code>SAVE_CONFIG</code> parancs kiadásával megőrizhetők a konfigurációs fájlban.</p>
+<p><code>SHAPER_CALIBRATE [AXIS=&lt;axis&gt;] [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [MAX_SMOOTHING=&lt;max_smoothing&gt;]</code>: A <code>TEST_RESONANCES</code> paraméterhez hasonlóan lefuttatja a rezonancia tesztet a konfiguráltak szerint, és megpróbálja megtalálni a bemeneti változó optimális paramétereit a kért tengelyre (vagy mind az X, mind az Y tengelyre, ha az <code>AXIS</code> paraméter nincs beállítva). Ha a <code>MAX_SMOOTHING</code> nincs beállítva, az értékét a <code>[resonance_tester]</code> szakaszból veszi, az alapértelmezett érték pedig a be nem állított érték. Lásd a <a href="Measuring_Resonances.html#max-smoothing">Max simítás</a> a rezonanciák mérése című útmutatóban a funkció használatáról szóló további információkat. A hangolás eredményei kiíródnak a konzolra, a frekvenciaválaszok és a különböző bemeneti alakítók értékei pedig egy vagy több CSV-fájlba íródnak <code>/tmp/calibration_data_&lt;axis&gt;_&lt;name&gt;.csv</code>. Hacsak nincs megadva, a NAME alapértelmezés szerint az aktuális időpontot jelenti "YYYYMMDD_HHMMSS" formátumban. Vedd figyelembe, hogy a javasolt bemeneti változó paraméterek a <code>SAVE_CONFIG</code> parancs kiadásával megőrizhetők a konfigurációs fájlban.</p>
 <h3 id="respond">[respond]<a class="headerlink" href="#respond" title="Permanent link">&para;</a></h3>
 <p>A következő szabványos G-kódú parancsok állnak rendelkezésre, ha a <a href="Config_Reference.html#respond">respond konfigurációs szakasz</a> engedélyezve van:</p>
 <ul>
@@ -4639,7 +4639,7 @@
 <h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#screws_tilt_adjust">screws_tilt_adjust konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">kézi szintbeállítási útmutatót</a>).</p>
 <h4 id="screws_tilt_calculate">SCREWS_TILT_CALCULATE<a class="headerlink" href="#screws_tilt_calculate" title="Permanent link">&para;</a></h4>
-<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs az ágy csavarjainak beállítási eszközét hívja elő. A fúvókát különböző helyekre (a konfigurációs fájlban meghatározottak szerint) parancsolja a Z magasságot mérve, és kiszámítja az ágy szintjének beállításához szükséges gombfordulatok számát. Ha DIRECTION van megadva, akkor a gombfordulások mind ugyanabba az irányba, az óramutató járásával megegyező vagy az óramutató járásával ellentétes irányba fognak történni. Az opcionális szondaparaméterekkel kapcsolatos részletekért lásd a PROBE parancsot. FONTOS: A parancs használata előtt mindig ki kell adni egy G28 parancsot. Ha MAX_DEVIATION van megadva, a parancs G-kód hibát fog adni, ha a csavar magasságának az alapcsavar magasságához viszonyított bármilyen különbsége nagyobb, mint a megadott érték.</p>
+<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs a tárgyasztal csavarjainak beállítási eszközét hívja elő. A fúvókát különböző helyekre (a konfigurációs fájlban meghatározottak szerint) parancsolja a Z magasságot mérve, és kiszámítja a tárgyasztal szintjének beállításához szükséges gombfordulatok számát. Ha DIRECTION van megadva, akkor a gombfordulások mind ugyanabba az irányba, az óramutató járásával megegyező vagy az óramutató járásával ellentétes irányba fognak történni. Az opcionális szondaparaméterekkel kapcsolatos részletekért lásd a PROBE parancsot. FONTOS: A parancs használata előtt mindig ki kell adni egy G28 parancsot. Ha MAX_DEVIATION van megadva, a parancs G-kód hibát fog adni, ha a csavar magasságának az alapcsavar magasságához viszonyított bármilyen különbsége nagyobb, mint a megadott érték.</p>
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
 <p>Ha az <a href="Config_Reference.html#sdcard_loop">sdcard_loop konfigurációs szakasz</a> engedélyezve van, a következő kiterjesztett parancsok állnak rendelkezésre.</p>
 <h4 id="sdcard_loop_begin">SDCARD_LOOP_BEGIN<a class="headerlink" href="#sdcard_loop_begin" title="Permanent link">&para;</a></h4>

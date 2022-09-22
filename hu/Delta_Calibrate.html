@@ -505,14 +505,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -523,7 +523,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -604,8 +604,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agy-halo-hasznalata-a-deltan" class="md-nav__link">
-    Ágy háló használata a Deltán
+  <a href="#targyasztal-halo-hasznalata-a-deltan" class="md-nav__link">
+    Tárgyasztal háló használata a Deltán
   </a>
   
 </li>
@@ -668,7 +668,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1332,8 +1332,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agy-halo-hasznalata-a-deltan" class="md-nav__link">
-    Ágy háló használata a Deltán
+  <a href="#targyasztal-halo-hasznalata-a-deltan" class="md-nav__link">
+    Tárgyasztal háló használata a Deltán
   </a>
   
 </li>
@@ -1362,50 +1362,50 @@
 <h2 id="automatikus-vagy-kezi-szintezes">Automatikus vagy kézi szintezés<a class="headerlink" href="#automatikus-vagy-kezi-szintezes" title="Permanent link">&para;</a></h2>
 <p>A Klipper támogatja a delta paraméterek kalibrálását kézi szintezéssel vagy automatikus Z-szondával.</p>
 <p>Számos delta nyomtató készlethez automatikus Z-szondák tartoznak, amelyek nem elég pontosak (különösen a karok hosszának kis különbségei okozhatnak effektor dőlést, ami elferdítheti az automatikus szondát). Ha automatikus szondát használ, akkor először <a href="Probe_Calibrate.html">kalibrálja a szondát</a>, majd ellenőrizze a <a href="Probe_Calibrate.html#location-bias-check">szonda helyének torzítását</a>. Ha az automatikus szonda torzítása több mint 25 mikron (0.025mm), akkor helyette használjon kézi szintezést. A kézi szintezés csak néhány percet vesz igénybe, és kiküszöböli a szonda által okozott hibát.</p>
-<p>Ha olyan szondát használ, amely a fűtőberendezés oldalára van szerelve (azaz X vagy Y eltolással rendelkezik), akkor vegye figyelembe, hogy a delta-kalibrálás végrehajtása érvényteleníti a szonda kalibrálásának eredményeit. Az ilyen típusú szondák ritkán alkalmasak a delta használatára (mivel a kisebb effektor dőlés a szonda helyének torzítását eredményezi). Ha mégis használja a szondát, akkor a delta-kalibrálás után mindenképpen végezze el újra a szonda kalibrálását.</p>
+<p>Ha olyan szondát használ, amely a fűtőberendezés oldalára van szerelve (azaz X vagy Y eltolással rendelkezik), akkor vedd figyelembe, hogy a delta-kalibrálás végrehajtása érvényteleníti a szonda kalibrálásának eredményeit. Az ilyen típusú szondák ritkán alkalmasak a delta használatára (mivel a kisebb effektor dőlés a szonda helyének torzítását eredményezi). Ha mégis használja a szondát, akkor a delta-kalibrálás után mindenképpen végezze el újra a szonda kalibrálását.</p>
 <h2 id="alapveto-delta-kalibralas">Alapvető delta kalibrálás<a class="headerlink" href="#alapveto-delta-kalibralas" title="Permanent link">&para;</a></h2>
-<p>A Klipper rendelkezik egy DELTA_CALIBRATE paranccsal, amely alapvető delta-kalibrálást végezhet. Ez a parancs az ágy hét különböző pontját vizsgálja, és új értékeket számol ki a toronyszögek, a toronyvégállások és a delta-sugár számára.</p>
+<p>A Klipper rendelkezik egy DELTA_CALIBRATE paranccsal, amely alapvető delta-kalibrálást végezhet. Ez a parancs a tárgyasztal hét különböző pontját vizsgálja, és új értékeket számol ki a toronyszögek, a toronyvégállások és a delta-sugár számára.</p>
 <p>A kalibrálás elvégzéséhez meg kell adni a kiindulási delta paramétereket (karhossz, sugár és végállások), amelyeknek néhány milliméteres pontossággal kell rendelkezniük. A legtöbb delta nyomtató készlet biztosítja ezeket a paramétereket. Konfigurálja a nyomtatót ezekkel a kezdeti alapbeállításokkal, majd futtassa a DELTA_CALIBRATE parancsot az alábbiakban leírtak szerint. Ha nem állnak rendelkezésre alapértelmezett értékek, akkor keressen az interneten egy delta-kalibrálási útmutatót, amely alapvető kiindulópontot adhat.</p>
-<p>A delta-kalibrálás során előfordulhat, hogy a nyomtatónak az ágy síkja alatt kell szinteznie, amit egyébként az ágy síkjának tekinthetnénk. Jellemzően ezt a kalibrálás során a konfiguráció frissítésével engedélyezzük a <code>minimum_z_position=-5</code> értékkel. (A kalibrálás befejezése után ez a beállítás eltávolítható a konfigurációból.)</p>
-<p>A szintezést kétféleképpen lehet elvégezni: kézi szintezés (<code>DELTA_CALIBRATE METHOD=manual</code>) és automatikus szintezés (<code>DELTA_CALIBRATE</code>). A kézi szintezési módszer a fejet az ágy közelébe mozgatja, majd megvárja, hogy a felhasználó kövesse a <a href="Bed_Level.html#the-paper-test">"a papírteszt"</a> pontban leírt lépéseket, hogy meghatározza a fúvóka és az ágy közötti tényleges távolságot az adott helyen.</p>
+<p>A delta-kalibrálás során előfordulhat, hogy a nyomtatónak a tárgyasztal síkja alatt kell szinteznie, amit egyébként a tárgyasztal síkjának tekinthetnénk. Jellemzően ezt a kalibrálás során a konfiguráció frissítésével engedélyezzük a <code>minimum_z_position=-5</code> értékkel. (A kalibrálás befejezése után ez a beállítás eltávolítható a konfigurációból.)</p>
+<p>A szintezést kétféleképpen lehet elvégezni: kézi szintezés (<code>DELTA_CALIBRATE METHOD=manual</code>) és automatikus szintezés (<code>DELTA_CALIBRATE</code>). A kézi szintezési módszer a fejet a tárgyasztal közelébe mozgatja, majd megvárja, hogy a felhasználó kövesse a <a href="Bed_Level.html#the-paper-test">"a papírteszt"</a> pontban leírt lépéseket, hogy meghatározza a fúvóka és a tárgyasztal közötti tényleges távolságot az adott helyen.</p>
 <p>Az alapvető mérés elvégzéséhez győződjön meg arról, hogy a konfigurációban van-e definiálva egy [delta_calibrate] szakasz, majd futtassa az eszközt:</p>
 <div class="highlight"><pre><span></span><code>G28
 DELTA_CALIBRATE METHOD=manual
 </code></pre></div>
 
-<p>A hét pont szintezése után új delta paraméterek kerülnek kiszámításra. Mentse el és alkalmazza ezeket a paramétereket a következőt futtatva:</p>
+<p>A hét pont szintezése után új delta paraméterek kerülnek kiszámításra. Mentsd el és alkalmazza ezeket a paramétereket a következőt futtatva:</p>
 <div class="highlight"><pre><span></span><code>SAVE_CONFIG
 </code></pre></div>
 
 <p>Az alapkalibrációnak olyan delta paramétereket kell biztosítania, amelyek elég pontosak az alapvető nyomtatáshoz. Ha ez egy új nyomtató, ez egy jó alkalom néhány alapvető objektum nyomtatására és az általános működés ellenőrzésére.</p>
 <h2 id="tovabbfejlesztett-delta-kalibralas">Továbbfejlesztett delta kalibrálás<a class="headerlink" href="#tovabbfejlesztett-delta-kalibralas" title="Permanent link">&para;</a></h2>
-<p>Az alap delta-kalibrálás általában jó munkát végez a delta paraméterek kiszámításában, hogy a fúvóka a megfelelő távolságra legyen az ágytól. Nem próbálja azonban kalibrálni az X és Y dimenzió pontosságát. A méretpontosság ellenőrzésére érdemes egy kibővített delta-kalibrációt elvégezni.</p>
+<p>Az alap delta-kalibrálás általában jó munkát végez a delta paraméterek kiszámításában, hogy a fúvóka a megfelelő távolságra legyen a tárgyasztaltól. Nem próbálja azonban kalibrálni az X és Y dimenzió pontosságát. A méretpontosság ellenőrzésére érdemes egy kibővített delta-kalibrációt elvégezni.</p>
 <p>Ehhez a kalibrálási eljáráshoz ki kell nyomtatni egy tesztobjektumot, és a tesztobjektum egyes részeit digitális tolómérővel kell megmérni.</p>
 <p>A kibővített delta-kalibrálás futtatása előtt le kell futtatni az alap delta-kalibrálást (a DELTA_CALIBRATE paranccsal) és el kell menteni az eredményeket (a SAVE_CONFIG paranccsal). Győződjön meg róla, hogy a nyomtató konfigurációjában és hardverében nem történt semmilyen jelentős változás az alap delta-kalibrálás legutóbbi végrehajtása óta (ha nem biztos benne, futtassa le újra az <a href="#basic-delta-calibration">alap delta-kalibrálás</a> parancsot, beleértve a SAVE_CONFIG parancsot is, közvetlenül az alább leírt tesztobjektum nyomtatása előtt.)</p>
 <p>Használjon szeletelőt a <a href="prints/calibrate_size.stl">docs/prints/calibrate_size.stl</a> fájlból G-kód generálásához. Szeletelje az objektumot lassú sebességgel (pl. 40mm/s). Ha lehetséges, használjon merev műanyagot (pl. PLA) a tárgyhoz. A tárgy átmérője 140 mm. Ha ez túl nagy a nyomtató számára, akkor át lehet méretezni (de ügyeljen arra, hogy mind az X, és az Y tengelyt egyenletesen méretezze). Ha a nyomtató jelentősen nagyobb nyomatokat támogat, akkor a tárgy is megnövelhető. A nagyobb méret javíthatja a mérési pontosságot, de a jó tapadás fontosabb, mint a nagyobb nyomtatási méret.</p>
-<p>Nyomtassa ki a tesztobjektumot, és várja meg, amíg teljesen kihűl. Az alább leírt parancsokat ugyanazokkal a nyomtatóbeállításokkal kell futtatni, mint amelyekkel a kalibrációs tárgyat nyomtatta (ne futtassa a DELTA_CALIBRATE parancsot a nyomtatás és a mérés között, vagy ne tegyen olyat, ami egyébként megváltoztatná a nyomtató konfigurációját).</p>
-<p>Ha lehetséges, az alábbiakban leírt méréseket akkor végezze el, amikor a tárgy még mindig a nyomtatóágyhoz van rögzítve, de ne aggódjon, ha az alkatrész leválik az ágyról. Csak próbálja meg elkerülni a tárgy meghajlását a mérések elvégzésekor.</p>
-<p>Kezdje a középső oszlop és az "A" felirat melletti oszlop közötti távolság mérésével (amelynek szintén az "A" torony felé kell mutatnia).</p>
+<p>Nyomtasd ki a tesztobjektumot, és várja meg, amíg teljesen kihűl. Az alább leírt parancsokat ugyanazokkal a nyomtatóbeállításokkal kell futtatni, mint amelyekkel a kalibrációs tárgyat nyomtatta (ne futtassa a DELTA_CALIBRATE parancsot a nyomtatás és a mérés között, vagy ne tegyen olyat, ami egyébként megváltoztatná a nyomtató konfigurációját).</p>
+<p>Ha lehetséges, az alábbiakban leírt méréseket akkor végezze el, amikor a tárgy még mindig a nyomtató tárgyasztalhoz van rögzítve, de ne aggódjon, ha az alkatrész leválik a tárgyasztalról. Csak próbálja meg elkerülni a tárgy meghajlását a mérések elvégzésekor.</p>
+<p>Kezd a középső oszlop és az "A" felirat melletti oszlop közötti távolság mérésével (amelynek szintén az "A" torony felé kell mutatnia).</p>
 <p><img alt="delta-a-distance" src="img/delta-a-distance.jpg" /></p>
 <p>Ezután menjen az óramutató járásával ellentétes irányba, és mérje meg a középső oszlop és a többi oszlop közötti távolságokat (a középsőtől a "C" feliratú oszlopig terjedő távolság, a középsőtől a "B" feliratú oszlopig terjedő távolság stb.).</p>
 <p><img alt="delta_cal_e_step1" src="img/delta_cal_e_step1.png" /></p>
-<p>Adja meg ezeket a paramétereket a Klipperbe lebegőpontos számok vesszővel elválasztott listájával:</p>
+<p>Add meg ezeket a paramétereket a Klipperbe lebegőpontos számok vesszővel elválasztott listájával:</p>
 <div class="highlight"><pre><span></span><code>DELTA_ANALYZE CENTER_DISTS=&lt;a_dist&gt;,&lt;far_c_dist&gt;,&lt;b_dist&gt;,&lt;far_a_dist&gt;,&lt;c_dist&gt;,&lt;far_b_dist&gt;
 </code></pre></div>
 
-<p>Az értékeket szóközök nélkül adja meg.</p>
+<p>Az értékeket szóközök nélkül add meg.</p>
 <p>Ezután mérje meg a távolságot az "A" oszlop és a "C" címkével szemben lévő oszlop között.</p>
 <p><img alt="delta-ab-distance" src="img/delta-outer-distance.jpg" /></p>
 <p>Ezután menjünk az óramutató járásával ellentétes irányba, és mérjük meg a távolságot a "C" oszlop és a "B" oszlop között, majd a "B" oszlop és az "A" oszlop között, és így tovább.</p>
 <p><img alt="delta_cal_e_step2" src="img/delta_cal_e_step2.png" /></p>
-<p>Adja meg ezeket a paramétereket a Klippernek:</p>
+<p>Add meg ezeket a paramétereket a Klippernek:</p>
 <div class="highlight"><pre><span></span><code>DELTA_ANALYZE OUTER_DISTS=&lt;a_to_far_c&gt;,&lt;far_c_to_b&gt;,&lt;b_to_far_a&gt;,&lt;far_a_to_c&gt;,&lt;c_to_far_b&gt;,&lt;far_b_to_a&gt;
 </code></pre></div>
 
-<p>Ezen a ponton nyugodtan leveheti a tárgyat az ágyról. A végső mérések magukra az oszlopokra vonatkoznak. Mérje meg a középső oszlop méretét az "A" küllők mentén, majd a "B" küllők mentén, végül a "C" küllők mentén.</p>
+<p>Ezen a ponton nyugodtan leveheti a tárgyat a tárgyasztalról. A végső mérések magukra az oszlopokra vonatkoznak. Mérje meg a középső oszlop méretét az "A" küllők mentén, majd a "B" küllők mentén, végül a "C" küllők mentén.</p>
 <p><img alt="delta-a-pillar" src="img/delta-a-pillar.jpg" /></p>
 <p><img alt="delta_cal_e_step3" src="img/delta_cal_e_step3.png" /></p>
-<p>Adja meg őket a Klippernek:</p>
+<p>Add meg őket a Klippernek:</p>
 <div class="highlight"><pre><span></span><code>DELTA_ANALYZE CENTER_PILLAR_WIDTHS=&lt;a&gt;,&lt;b&gt;,&lt;c&gt;
 </code></pre></div>
 
@@ -1413,11 +1413,11 @@ DELTA_CALIBRATE METHOD=manual
 <p><img alt="delta-ab-pillar" src="img/delta-outer-pillar.jpg" /></p>
 <p>Ezután az óramutató járásával ellentétes irányban mérjük meg a többi külső oszlopot (a "C" küllővel szemben lévő oszlop a "B" küllővel szembeni vonal mentén, a "B" küllő a "B" küllővel szembeni vonal mentén az "A" küllővel szemben lévő oszlopig stb.).</p>
 <p><img alt="delta_cal_e_step4" src="img/delta_cal_e_step4.png" /></p>
-<p>És adja meg őket a Klippernek:</p>
+<p>És add meg őket a Klippernek:</p>
 <div class="highlight"><pre><span></span><code>DELTA_ANALYZE OUTER_PILLAR_WIDTHS=&lt;a&gt;,&lt;far_c&gt;,&lt;b&gt;,&lt;far_a&gt;,&lt;c&gt;,&lt;far_b&gt;
 </code></pre></div>
 
-<p>Ha az objektumot kisebb vagy nagyobb méretre méretezték, akkor adja meg az objektum szeletelésekor használt méretezési tényezőt:</p>
+<p>Ha az objektumot kisebb vagy nagyobb méretre méretezték, akkor add meg az objektum szeletelésekor használt méretezési tényezőt:</p>
 <div class="highlight"><pre><span></span><code>DELTA_ANALYZE SCALE=1.0
 </code></pre></div>
 
@@ -1426,7 +1426,7 @@ DELTA_CALIBRATE METHOD=manual
 <div class="highlight"><pre><span></span><code>DELTA_ANALYZE CALIBRATE=extended
 </code></pre></div>
 
-<p>Ez a parancs több percig is eltarthat. A parancs befejezése után kiszámítja a frissített delta paramétereket (delta sugár, toronyszögek, végállások és karok hossza). A SAVE_CONFIG paranccsal mentse el és alkalmazza a beállításokat:</p>
+<p>Ez a parancs több percig is eltarthat. A parancs befejezése után kiszámítja a frissített delta paramétereket (delta sugár, toronyszögek, végállások és karok hossza). A SAVE_CONFIG paranccsal mentsd el és alkalmazza a beállításokat:</p>
 <div class="highlight"><pre><span></span><code>SAVE_CONFIG
 </code></pre></div>
 
@@ -1436,9 +1436,9 @@ DELTA_CALIBRATE METHOD=manual
 <li>Ha a delta nyomtató jó méretpontossággal rendelkezik, akkor a két oszlop közötti távolságnak körülbelül 74 mm-nek kell lennie, és minden oszlop szélességének körülbelül 9 mm-nek kell lennie. (Pontosabban, a cél az, hogy a két oszlop közötti távolság mínusz az egyik oszlop szélessége pontosan 65 mm legyen.) Ha az alkatrészben méretpontatlanság van, akkor a DELTA_ANALYZE rutin új delta paramétereket számol ki a távolságmérések és a legutóbbi DELTA_CALIBRATE parancsból származó korábbi magasságmérések felhasználásával.</li>
 <li>A DELTA_ANALYZE meglepő delta paramétereket eredményezhet. Például olyan karhosszúságokat javasolhat, amelyek nem egyeznek a nyomtató tényleges karhosszúságával. Ennek ellenére a tesztek azt mutatták, hogy a DELTA_ANALYZE gyakran jobb eredményeket ad. Úgy véljük, hogy a kiszámított delta paraméterek képesek figyelembe venni a hardver máshol előforduló kisebb hibáit. Például a karhossz kis eltérései az effektor dőlését eredményezhetik, és ennek a dőlésnek egy része a karhossz paraméterek beállításával figyelembe vehető.</li>
 </ul>
-<h2 id="agy-halo-hasznalata-a-deltan">Ágy háló használata a Deltán<a class="headerlink" href="#agy-halo-hasznalata-a-deltan" title="Permanent link">&para;</a></h2>
-<p>Lehetőség van <a href="Bed_Mesh.html">ágy háló</a> használatára egy delta esetében. Fontos azonban, hogy jó deltakalibrációt érjen el, mielőtt engedélyezné az ágy hálót. A bed mesh futtatása rossz delta-kalibrációval zavaros és rossz eredményeket fog eredményezni.</p>
-<p>Vegye figyelembe, hogy a delta-kalibrálás végrehajtása érvényteleníti a korábban kapott ágy hálót. Az új delta-kalibrálás elvégzése után feltétlenül futtassa újra a BED_MESH_CALIBRATE programot.</p>
+<h2 id="targyasztal-halo-hasznalata-a-deltan">Tárgyasztal háló használata a Deltán<a class="headerlink" href="#targyasztal-halo-hasznalata-a-deltan" title="Permanent link">&para;</a></h2>
+<p>Lehetőség van <a href="Bed_Mesh.html">tárgyasztal háló</a> használatára egy delta esetében. Fontos azonban, hogy jó deltakalibrációt érjen el, mielőtt engedélyezné a tárgyasztal hálót. A bed mesh futtatása rossz delta-kalibrációval zavaros és rossz eredményeket fog eredményezni.</p>
+<p>Vedd figyelembe, hogy a delta-kalibrálás végrehajtása érvényteleníti a korábban kapott tárgyasztal hálót. Az új delta-kalibrálás elvégzése után feltétlenül futtassa újra a BED_MESH_CALIBRATE programot.</p>
 
               
             </article>
@@ -1457,7 +1457,7 @@ DELTA_CALIBRATE METHOD=manual
     <nav class="md-footer__inner md-grid" aria-label="Élőláb">
       
         
-        <a href="Bed_Level.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Ágy szintezése" rel="prev">
+        <a href="Bed_Level.html" class="md-footer__link md-footer__link--prev" aria-label="Előző: Tárgyasztal szintezése" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1466,7 +1466,7 @@ DELTA_CALIBRATE METHOD=manual
               <span class="md-footer__direction">
                 Előző
               </span>
-              Ágy szintezése
+              Tárgyasztal szintezése
             </div>
           </div>
         </a>

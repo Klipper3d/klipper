@@ -505,14 +505,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -523,7 +523,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -683,7 +683,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1394,9 +1394,9 @@ sensor_pin: ^P1.24
 control_pin: P1.26
 </code></pre></div>
 
-<p>Ha a BL-Touch-ot a Z tengely alaphelyzetbe állítására használjuk, akkor állítsuk be az <code>endstop_pin:probe:z_virtual_endstop</code>-ra és távolítsa el a <code>position_endstop</code> és a <code>[stepper_z]</code>-t a config szakaszban, majd adjuk hozzá a <code>[safe_z_home]</code> config szakaszt a Z tengely megemeléséhez, az X,Y tengelyek kezdőpont felvételére az ágy közepére való elmozduláshoz és a Z tengely kezdőpont felvételére. Például:</p>
+<p>Ha a BL-Touch-ot a Z tengely alaphelyzetbe állítására használjuk, akkor állítsuk be az <code>endstop_pin:probe:z_virtual_endstop</code>-ra és távolítsa el a <code>position_endstop</code> és a <code>[stepper_z]</code>-t a config szakaszban, majd adjuk hozzá a <code>[safe_z_home]</code> config szakaszt a Z tengely megemeléséhez, az X,Y tengelyek kezdőpont felvételére a tárgyasztal közepére való elmozduláshoz és a Z tengely kezdőpont felvételére. Például:</p>
 <div class="highlight"><pre><span></span><code>[safe_z_home]
-home_xy_position: 100, 100 # A koordinátákat az ágy közepére módosítjuk.
+home_xy_position: 100, 100 # A koordinátákat a tárgyasztal közepére módosítjuk.
 speed: 50
 z_hop: 10 # Mozgás felfelé 10mm
 z_hop_speed: 5
@@ -1408,8 +1408,8 @@ z_hop_speed: 5
 <p>Amikor bekapcsolja a nyomtatót, a BL-Touch szondának önellenőrzést kell végeznie, és néhányszor fel-le kell mozgatnia a mérőtüskét. Az önellenőrzés befejezése után a mérőtüskének vissza kell húzódnia, és a szondán lévő piros LED-nek világítania kell. Ha bármilyen hibát észlel, például a szonda pirosan villog, vagy a mérőtüske lefelé van, nem pedig behúzva, kérjük kapcsolja ki a nyomtatót, és ellenőrizze a kábelezést és a konfigurációt.</p>
 <p>Ha a fentiek rendben vannak, itt az ideje tesztelni, hogy a vezérlés megfelelően működik-e. Először futtassuk le a <code>BLTOUCH_DEBUG COMMAND=pin_down</code> parancsot a konzolban. Ellenőrizze, hogy a mérőtüske lefelé mozog-e, és hogy a BL-Touchon lévő piros LED kialszik-e. Ha nem, ellenőrizze újra a kábelezést és a konfigurációt. Ezután adjon ki egy <code>BLTOUCH_DEBUG COMMAND=pin_up</code> parancsot. Ellenőrizze, hogy a mérőtüske felfelé mozdul-e, és hogy a piros LED ismét világít-e. Ha villog, akkor valamilyen probléma van.</p>
 <p>A következő lépés annak megerősítése, hogy a mérőtüske megfelelően működik. Futtassa a <code>BLTOUCH_DEBUG COMMAND=pin_down</code> parancsot, és ellenőrizze, hogy a mérőtüske lefelé mozdul-e. Majd futtassa a <code>BLTOUCH_DEBUG COMMAND=touch_mode</code> parancsot. Futtassa a <code>QUERY_PROBE</code> parancsot, és ellenőrizze, hogy az üzenet "probe: OPEN". Ezután, miközben a körmével finoman felfelé nyomja a mérőtüskét, futtassa le újra a <code>QUERY_PROBE</code> parancsot. Ellenőrizze, hogy az üzenet a "probe: TRIGGERED". Ha bármelyik lekérdezés nem a megfelelő üzenetet írja, akkor az általában hibás bekötést vagy konfigurációt jelez (bár egyes <a href="#bl-touch-clones">klónok</a> speciális kezelést igényelhetnek). A teszt befejezésekor futtassuk le a <code>BLTOUCH_DEBUG COMMAND=pin_up</code> parancsot, és ellenőrizzük, hogy a mérőtüske felfelé mozdul.</p>
-<p>A BL-Touch vezérlő és érzékelőtüskék tesztelésének befejezése után itt az ideje a szintezés tesztelésének, de egy kis csavarral. Ahelyett, hogy a mérőtüske az ágyat érintené, a körmünkel fogjuk megérinteni. Helyezze a nyomtatófejet messze az ágytól, adjon ki egy <code>G28</code> (vagy <code>PROBE</code>, ha nem használja a probe:z_virtual_endstopot) parancsot, várjon míg a nyomtatófej elkezd lefelé mozogni, és állítsa meg a mozgást úgy, hogy nagyon óvatosan megérinti a mérőtüskét a körmével. Lehet, hogy ezt kétszer kell megtennie, mivel az alapértelmezett kezdőpont konfiguráció kétszer mér. Készüljön fel arra is, hogy kikapcsolja a nyomtatót, ha az nem áll meg, amikor megérinti a mérőtüskét.</p>
-<p>Ha ez sikerült, kezdje újra <code>G28</code> (vagy <code>PROBE</code>) parancsal, de ezúttal hagyja, hogy a mérőtüske megérintse az ágyat.</p>
+<p>A BL-Touch vezérlő és érzékelőtüskék tesztelésének befejezése után itt az ideje a szintezés tesztelésének, de egy kis csavarral. Ahelyett, hogy a mérőtüske a tárgyasztalt érintené, a körmünkel fogjuk megérinteni. Helyezze a nyomtatófejet messze a tárgyasztaltól, adjon ki egy <code>G28</code> (vagy <code>PROBE</code>, ha nem használja a probe:z_virtual_endstopot) parancsot, várjon míg a nyomtatófej elkezd lefelé mozogni, és állítsd meg a mozgást úgy, hogy nagyon óvatosan megérinti a mérőtüskét a körmével. Lehet, hogy ezt kétszer kell megtennie, mivel az alapértelmezett kezdőpont konfiguráció kétszer mér. Készüljön fel arra is, hogy kikapcsolja a nyomtatót, ha az nem áll meg, amikor megérinti a mérőtüskét.</p>
+<p>Ha ez sikerült, kezd újra <code>G28</code> (vagy <code>PROBE</code>) parancsal, de ezúttal hagyja, hogy a mérőtüske megérintse a tárgyasztalt.</p>
 <h2 id="a-bl-touch-elromlott">A BL-Touch elromlott<a class="headerlink" href="#a-bl-touch-elromlott" title="Permanent link">&para;</a></h2>
 <p>Amint a BL-Touch inkonzisztens állapotba kerül, pirosan villogni kezd. Az állapotból való kilépést a következő parancs kiadásával lehet kényszeríteni:</p>
 <p>BLTOUCH_DEBUG COMMAND=reset</p>
@@ -1417,10 +1417,10 @@ z_hop_speed: 5
 <p>Előfordulhat azonban az is, hogy a BL-Touch már nem tudja magát kalibrálni. Ez akkor fordulhat elő, ha a tetején lévő csavar rossz helyzetben van, vagy ha a mérőtüskében lévő mágneses mag elmozdult. Ha úgy mozdult felfelé, hogy a csavarhoz tapad, előfordulhat, hogy már nem tudja leengedni a tüskét. Ilyen esetben ki kell venni a csavart, és a mérőtüskét óvatosan visszatolni a helyére. Helyezze vissza a tüskét a BL-Touch-ba úgy, hogy az a kihúzott helyzetbe essen. Óvatosan tegye vissza a hernyócsavart a helyére. Meg kell találnia a megfelelő pozíciót, hogy képes legyen leengedni és felemelni a tüskét, hogy a piros LED be és kikapcsoljon. Ehhez használja a <code>reset</code>, <code>pin_up</code> és <code>pin_down</code> parancsokat.</p>
 <h2 id="bl-touch-klonok">BL-Touch "klónok"<a class="headerlink" href="#bl-touch-klonok" title="Permanent link">&para;</a></h2>
 <p>Sok BL-Touch "klón" működik megfelelően a Klipperrel az alapértelmezett konfigurációval. Néhány "klón" azonban nem támogatja a <code>QUERY_PROBE</code> parancsot, és néhány "klón" készülékek a <code>pin_up_reports_not_triggered</code> vagy a <code>pin_up_touch_mode_reports_triggered</code> parancsok használatát követelik meg.</p>
-<p>Fontos! Ne állítsa a <code>pin_up_reports_not_triggered</code> vagy a <code>pin_up_touch_mode_reports_triggered</code> értékét False értékre anélkül, hogy előbb ne követné ezeket az utasításokat. Ne állítsa egyiket sem False értékre egy valódi BL-Touch esetében. Ezek helytelen beállítása hamis értékre növelheti a mérési időt, és növelheti a nyomtató károsodásának kockázatát.</p>
+<p>Fontos! Ne állítsd a <code>pin_up_reports_not_triggered</code> vagy a <code>pin_up_touch_mode_reports_triggered</code> értékét False értékre anélkül, hogy előbb ne követné ezeket az utasításokat. Ne állítsd egyiket sem False értékre egy valódi BL-Touch esetében. Ezek helytelen beállítása hamis értékre növelheti a mérési időt, és növelheti a nyomtató károsodásának kockázatát.</p>
 <p>Néhány "klón" nem támogatja a <code>touch_mode</code> parancsot, és ennek eredményeként a <code>QUERY_PROBE</code> parancs sem működik. Ennek ellenére lehetséges, hogy ezekkel az eszközökkel még mindig lehet mérést és kezdőpont felvételt végezni. Ezeken az eszközökön a <a href="#initial-tests">kezdeti tesztek</a> során a <code>QUERY_PROBE</code> parancs nem lesz sikeres, azonban az ezt követő <code>G28</code> (vagy <code>PROBE</code>) teszt sikerül. Lehetséges, hogy ezeket a "klónokat" Klipperrel lehet használni, ha nem használjuk a <code>QUERY_PROBE</code> parancsot, és nem engedélyezzük a <code>probe_with_touch_mode</code> funkciót.</p>
 <p>Néhány "klón" eszköz nem képes elvégezni a Klipper belső érzékelő ellenőrző tesztjét. Ezeken az eszközökön a kezdőpont vagy a szonda próbálkozásai a Klipper "BLTouch failed to verify sensor state" hibát jelentenek. Ha ez bekövetkezik, akkor kézzel futtassa le a <a href="#initial-tests">kezdeti tesztek szakaszban</a> leírt lépéseket az érzékelőtüske működésének megerősítésére. Ha a <code>QUERY_PROBE</code> parancsok ebben a tesztben mindig a várt eredményt adják, és a "BLTouch failed to verify sensor state" hiba továbbra is előfordul, akkor szükséges lehet a Klipper konfigurációs fájlban a <code>pin_up_touch_mode_reports_triggered</code> értékét False-ra állítani.</p>
-<p>Néhány régi "klón" készülék nem képes jelenteni, ha sikeresen felemelte a szondát. Ezeken az eszközökön a Klipper minden egyes kezdőpont vagy mérési kísérlet után egy "BLTouch failed to raise probe" hibát jelent. Ezeket az eszközöket tesztelhetjük. Távolítsuk el a fejet az ágytól, futtassuk a <code>BLTOUCH_DEBUG COMMAND=pin_down</code> parancsot, ellenőrizzük, hogy a mérőtüske lefelé mozdult-e, futtassuk a <code>QUERY_PROBE</code> parancsot, ellenőrizzük, hogy a "probe: OPEN" értéket kapjuk, futtassuk a <code>BLTOUCH_DEBUG COMMAND=pin_up</code>, ellenőrizzük, hogy a mérőtüske felfelé mozdult-e, és futtassuk a <code>QUERY_PROBE</code>. Ha a mérőtüske továbbra is fent marad, az eszköz nem lép hibaállapotba, és az első lekérdezés a "probe: OPEN", míg a második lekérdezés a "probe: TRIGGERED", akkor ez azt jelzi, hogy a Klipper konfigurációs fájlban a <code>pin_up_reports_not_triggered</code> értékét False-ra kell állítani.</p>
+<p>Néhány régi "klón" készülék nem képes jelenteni, ha sikeresen felemelte a szondát. Ezeken az eszközökön a Klipper minden egyes kezdőpont vagy mérési kísérlet után egy "BLTouch failed to raise probe" hibát jelent. Ezeket az eszközöket tesztelhetjük. Távolítsuk el a fejet a tárgyasztaltól, futtassuk a <code>BLTOUCH_DEBUG COMMAND=pin_down</code> parancsot, ellenőrizzük, hogy a mérőtüske lefelé mozdult-e, futtassuk a <code>QUERY_PROBE</code> parancsot, ellenőrizzük, hogy a "probe: OPEN" értéket kapjuk, futtassuk a <code>BLTOUCH_DEBUG COMMAND=pin_up</code>, ellenőrizzük, hogy a mérőtüske felfelé mozdult-e, és futtassuk a <code>QUERY_PROBE</code>. Ha a mérőtüske továbbra is fent marad, az eszköz nem lép hibaállapotba, és az első lekérdezés a "probe: OPEN", míg a második lekérdezés a "probe: TRIGGERED", akkor ez azt jelzi, hogy a Klipper konfigurációs fájlban a <code>pin_up_reports_not_triggered</code> értékét False-ra kell állítani.</p>
 <h2 id="bl-touch-v3">BL-Touch v3<a class="headerlink" href="#bl-touch-v3" title="Permanent link">&para;</a></h2>
 <p>Egyes BL-Touch v3.0 és BL-Touch 3.1 eszközök esetében előfordulhat, hogy a nyomtató konfigurációs fájljában a <code>probe_with_touch_mode</code> beállítása szükséges.</p>
 <p>Ha a BL-Touch v3.0 jelkábelét egy (zajszűrő kondenzátorral ellátott) végállás csatlakozóhoz csatlakoztatja, akkor előfordulhat, hogy a BL-Touch v3.0 nem tud következetesen jelet küldeni a kezdőpont felvétel és a mérés során. Ha a <a href="#initial-tests">kezdeti tesztek szakaszban</a> található <code>QUERY_PROBE</code> parancsok mindig a várt eredményt adják, de a nyomtatófej nem mindig áll meg a G28/PROBE parancsok alatt, akkor ez erre a problémára utal. A megoldás a <code>probe_with_touch_mode: True</code> beállítása a konfigurációs fájlban.</p>
@@ -1429,11 +1429,11 @@ z_hop_speed: 5
 <h2 id="tobbszori-szuroprobaszeru-meres">Többszöri szúrópróbaszerű mérés<a class="headerlink" href="#tobbszori-szuroprobaszeru-meres" title="Permanent link">&para;</a></h2>
 <p>Alapértelmezés szerint a Klipper minden egyes méréskísérlet kezdetén kitelepíti a mérőtüskét, majd utána elrakja. A szonda ismételt be és kitelepítése megnövelheti a sok mérést tartalmazó kalibrálási folyamatok teljes időtartamát. A Klipper támogatja, hogy a mérőtüskét az egymást követő mérések között is kihelyezve hagyja, ami csökkentheti a mérések teljes idejét. Ez az üzemmód a <code>stow_on_each_sample</code> False értékre való beállításával engedélyezhető a konfigurációs fájlban.</p>
 <p>Fontos! A <code>stow_on_each_sample</code> False (Hamis) beállítása ahhoz vezethet, hogy a Klipper vízszintes nyomtatófej mozgásokat végez, miközben a szonda ki van helyezve. Győződjön meg róla, hogy minden szondázási műveletnél elegendő Z-távolság van, mielőtt ezt az értéket False értékre állítaná. Ha nincs elegendő szabad tér, akkor a vízszintes mozgások során a mérőtüske beleakadhat egy akadályba, ami a nyomtató vagy mérőeszköz károsodását eredményezheti.</p>
-<p>Fontos! Ajánlott a True értékre konfigurált <code>probe_with_touch_mode</code> használata, ha a False értékre konfigurált <code>stow_on_each_sample</code> értéket használja. Néhány "klón" eszköz nem érzékeli az ágy későbbi érintését, ha a <code>probe_with_touch_mode</code> nincs beállítva. Minden eszközön e két beállítás kombinációjának használata egyszerűsíti az eszköz jelzését, ami javíthatja az általános stabilitást.</p>
-<p>Vegye figyelembe azonban, hogy néhány "klón" eszköz és a BL-Touch v2.0 (és korábbi) csökkentett pontosságú lehet, ha a <code>probe_with_touch_mode</code> értéke True. Ezeken az eszközökön érdemes tesztelni a szonda pontosságát a <code>probe_with_touch_mode</code> beállítása előtt és után (a teszteléshez használja a <code>PROBE_ACCURACY</code> parancsot).</p>
+<p>Fontos! Ajánlott a True értékre konfigurált <code>probe_with_touch_mode</code> használata, ha a False értékre konfigurált <code>stow_on_each_sample</code> értéket használja. Néhány "klón" eszköz nem érzékeli a tárgyasztal későbbi érintését, ha a <code>probe_with_touch_mode</code> nincs beállítva. Minden eszközön e két beállítás kombinációjának használata egyszerűsíti az eszköz jelzését, ami javíthatja az általános stabilitást.</p>
+<p>Vedd figyelembe azonban, hogy néhány "klón" eszköz és a BL-Touch v2.0 (és korábbi) csökkentett pontosságú lehet, ha a <code>probe_with_touch_mode</code> értéke True. Ezeken az eszközökön érdemes tesztelni a szonda pontosságát a <code>probe_with_touch_mode</code> beállítása előtt és után (a teszteléshez használja a <code>PROBE_ACCURACY</code> parancsot).</p>
 <h2 id="a-bl-touch-eltolasok-kalibralasa">A BL-Touch eltolások kalibrálása<a class="headerlink" href="#a-bl-touch-eltolasok-kalibralasa" title="Permanent link">&para;</a></h2>
 <p>Az x_offset, y_offset és z_offset konfigurációs paraméterek beállításához kövesse a <a href="Probe_Calibrate.html">Szintező Kalibrálása</a> útmutatóban található utasításokat.</p>
-<p>Jó ötlet ellenőrizni, hogy a Z eltolás közel 1 mm. Ha nem, akkor valószínűleg felfelé vagy lefelé kell mozgatni a szondát, hogy ezt kijavítsa. Azt szeretné, hogy aktiválódjon, mielőtt a fúvóka az ágyhoz ér, hogy a fúvókához ragadt nyomtatószál vagy a meggörbült ágy ne befolyásolja a mérési műveletet. Ugyanakkor azonban azt szeretné, ha a visszahúzott pozíció a lehető legmesszebb lenne a fúvóka felett, hogy elkerülje a nyomtatott tárgyak érintkezését. Ha a szonda pozíciójáballítása megtörtént, akkor ismételje meg a kalibrálás lépéseit.</p>
+<p>Jó ötlet ellenőrizni, hogy a Z eltolás közel 1 mm. Ha nem, akkor valószínűleg felfelé vagy lefelé kell mozgatni a szondát, hogy ezt kijavítsa. Azt szeretné, hogy aktiválódjon, mielőtt a fúvóka a tárgyasztalhoz ér, hogy a fúvókához ragadt nyomtatószál vagy a meggörbült tárgyasztal ne befolyásolja a mérési műveletet. Ugyanakkor azonban azt szeretné, ha a visszahúzott pozíció a lehető legmesszebb lenne a fúvóka felett, hogy elkerülje a nyomtatott tárgyak érintkezését. Ha a szonda pozíciójáballítása megtörtént, akkor ismételje meg a kalibrálás lépéseit.</p>
 <h2 id="bl-touch-kimeneti-mod">BL-Touch kimeneti mód<a class="headerlink" href="#bl-touch-kimeneti-mod" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
@@ -1442,8 +1442,8 @@ z_hop_speed: 5
 </li>
 </ul>
 <ul>
-<li>ha önnek BL-Touch Smart V3.0-ja van, akkor a 'set_output_mode-ot: 5V' paramétert kell megadni, hogy minden egyes indításkor biztosítsa ezt a beállítást, mivel a szonda nem tudja megjegyezni a szükséges beállítást.</li>
-<li>ha önnek BL-Touch Smart V3.1-je van, akkor választhat a 'set_output_mode: 5V' vagy az üzemmód egyszeri tárolása a 'BLTOUCH_STORE MODE=5V' parancsok közül, kézzel és NEM a 'set_output_mode:' paraméter használatával.</li>
+<li>ha neked BL-Touch Smart V3.0 van, akkor a 'set_output_mode-ot: 5V' paramétert kell megadni, hogy minden egyes indításkor biztosítsd ezt a beállítást, mivel a szonda nem tudja megjegyezni a szükséges beállítást.</li>
+<li>ha neked BL-Touch Smart V3.1 van, akkor választhatsz a 'set_output_mode: 5V' vagy az üzemmód egyszeri tárolása a 'BLTOUCH_STORE MODE=5V' parancsok közül, kézzel és NEM a 'set_output_mode:' paraméter használatával.</li>
 <li>ha van más szondája is: A kimeneti üzemmód (végleges) beállításához néhány szondának van egy bekötése az alaplapon, amelyet el kell vágni, vagy egy jumperrel kell beállítani. Ebben az esetben hagyja ki teljesen a 'set_output_mode' paramétert.
 Ha V3.1 szondával rendelkezik, ne automatizálja vagy ismételje a kimeneti üzemmód tárolását, hogy elkerülje a szonda EEPROM-jának elhasználódását. A BLTouch EEPROM körülbelül 100.000 frissítésre alkalmas. A napi 100 tárolás körülbelül 3 évnyi működést jelentene, mielőtt elhasználódna. Így a kimeneti üzemmód tárolását a V3.1-ben a gyártó bonyolult műveletnek tervezte (a gyári alapértelmezett egy biztonságos OPEN DRAIN üzemmód), és nem alkalmas arra, hogy bármilyen szeletelő, makró vagy bármi más által ismételten kiadja, lehetőleg csak akkor használható, amikor először integrálják a szondát egy nyomtató alaplapjára.</li>
 </ul>

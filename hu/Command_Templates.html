@@ -503,14 +503,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -521,7 +521,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -591,7 +591,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1528,7 +1528,7 @@ gcode:
   M117 Now at { params.VALUE|float * 100 }%
 </code></pre></div>
 
-<p><code>SET_PERCENT VALUE=.2</code> értéket adna, akkor <code>M117 Most 20%-os értéken</code>. Vegye figyelembe, hogy a paraméternevek a makróban történő kiértékeléskor mindig nagybetűsek, és mindig karakterláncként kerülnek átadásra. Ha matematikai műveletet hajtunk végre, akkor azokat explicit módon egész számokká vagy lebegőszámokká kell konvertálni.</p>
+<p><code>SET_PERCENT VALUE=.2</code> értéket adna, akkor <code>M117 Most 20%-os értéken</code>. Vedd figyelembe, hogy a paraméternevek a makróban történő kiértékeléskor mindig nagybetűsek, és mindig karakterláncként kerülnek átadásra. Ha matematikai műveletet hajtunk végre, akkor azokat explicit módon egész számokká vagy lebegőszámokká kell konvertálni.</p>
 <p>Gyakori a Jinja2 <code>set</code> direktíva használata egy alapértelmezett paraméter használatához és az eredmény hozzárendelése egy helyi névhez. Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro SET_BED_TEMPERATURE]
 gcode:
@@ -1538,7 +1538,7 @@ gcode:
 
 <h3 id="a-rawparams-valtozo">A "rawparams" változó<a class="headerlink" href="#a-rawparams-valtozo" title="Permanent link">&para;</a></h3>
 <p>A futó makró teljes, be nem elemzett paraméterei a <code>rawparams</code> pszeudováltozóval érhetők el.</p>
-<p>Vegye figyelembe, hogy ez magában foglalja az eredeti parancs részét képező megjegyzéseket is.</p>
+<p>Vedd figyelembe, hogy ez magában foglalja az eredeti parancs részét képező megjegyzéseket is.</p>
 <p>A <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> fájlban található egy példa arra, hogyan lehet felülírni az <code>M117</code> parancsot a <code>rawparams</code> használatával.</p>
 <h3 id="a-nyomtato-valtozo">A "nyomtató" változó<a class="headerlink" href="#a-nyomtato-valtozo" title="Permanent link">&para;</a></h3>
 <p>A nyomtató aktuális állapotát a <code>printer</code> álváltozóval lehet ellenőrizni (és megváltoztatni). Például:</p>
@@ -1558,7 +1558,7 @@ gcode:
 </code></pre></div>
 
 <h2 id="tevekenysegek">Tevékenységek<a class="headerlink" href="#tevekenysegek" title="Permanent link">&para;</a></h2>
-<p>A nyomtató állapotának megváltoztatására néhány parancs áll rendelkezésre. Például az <code>{ action_emergency_stop() }</code> a nyomtatót leállítási állapotba helyezi. Vegye figyelembe, hogy ezek a műveletek a makró kiértékelésének időpontjában történnek, ami jelentős idővel a generált G-kód parancsok végrehajtása előtt történhet.</p>
+<p>A nyomtató állapotának megváltoztatására néhány parancs áll rendelkezésre. Például az <code>{ action_emergency_stop() }</code> a nyomtatót leállítási állapotba helyezi. Vedd figyelembe, hogy ezek a műveletek a makró kiértékelésének időpontjában történnek, ami jelentős idővel a generált G-kód parancsok végrehajtása előtt történhet.</p>
 <p>Elérhető "művelet" parancsok:</p>
 <ul>
 <li><code>action_respond_info(msg)</code>: A megadott <code>msg</code> kiírása a /tmp/printer álterminálra. Az <code>msg</code> minden egyes sora "// " előtaggal lesz elküldve.</li>
@@ -1586,7 +1586,7 @@ gcode:
   M140 S{printer[&quot;gcode_macro start_probe&quot;].bed_temp}
 </code></pre></div>
 
-<p>A SET_GCODE_VARIABLE használatakor mindenképpen vegye figyelembe a makró kiértékelésének és a parancs végrehajtásának időzítését.</p>
+<p>A SET_GCODE_VARIABLE használatakor mindenképpen vedd figyelembe a makró kiértékelésének és a parancs végrehajtásának időzítését.</p>
 <h2 id="kesleltetett-g-kodok">Késleltetett G-kódok<a class="headerlink" href="#kesleltetett-g-kodok" title="Permanent link">&para;</a></h2>
 <p>A [delayed_gcode] konfigurációs opció késleltetett G-kód szekvencia végrehajtásához használható:</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode clear_display]

@@ -501,14 +501,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -519,7 +519,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -589,7 +589,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1662,7 +1662,7 @@
 <h2 id="elerheto-vegpontok">Elérhető "végpontok"<a class="headerlink" href="#elerheto-vegpontok" title="Permanent link">&para;</a></h2>
 <p>A Klipper "végpontok" a konvenció szerint a <code>&lt;module_name&gt;/&lt;some_name&gt;</code> formájúak. Ha egy "végponthoz" intézünk kérést, a teljes nevet a kérési szótár "method" paraméterében kell megadni (pl. <code>{"method"="gcode/restart"}</code>).</p>
 <h3 id="info">infó<a class="headerlink" href="#info" title="Permanent link">&para;</a></h3>
-<p>Az "info" végpontot a Klipper rendszert és verzióinformációinak lekérdezésére használjuk. Arra is szolgál, hogy a kliens verziót a Klipper számára megadja. Például: <code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}}</code></p>
+<p>Az "info" végpontot a Klipper rendszert és verzióinformációinak lekérdezésére használjuk. Arra is szolgál, hogy a kliens verziót a Klipper számára megadd. Például: <code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}}</code></p>
 <p>Ha jelen van a "client_info" paraméter egy szótárnak kell lennie, de a szótár tetszőleges tartalmú lehet. A felhasználóknak ajánlott megadniuk az ügyfél nevét és a szoftver verzióját, amikor először csatlakoznak a Klipper API kiszolgálóhoz.</p>
 <h3 id="emergency_stop">emergency_stop<a class="headerlink" href="#emergency_stop" title="Permanent link">&para;</a></h3>
 <p>Az "emergency_stop" végpont arra szolgál, hogy utasítsa a Klippert a "shutdown" állapotba való átmenetre. Hasonlóan viselkedik, mint a G-kód <code>M112</code> parancs. Például: <code>{"id": 123, "method": "emergency_stop"}</code></p>

@@ -503,14 +503,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -521,7 +521,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -591,7 +591,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -837,8 +837,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#allitsa-be-a-g-kod-izet-marlinra" class="md-nav__link">
-    Állítsa be a G-kód ízét Marlinra
+  <a href="#allitsd-be-a-g-kod-izet-marlinra" class="md-nav__link">
+    Állítsd be a G-kód ízét Marlinra
   </a>
   
 </li>
@@ -1304,8 +1304,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#allitsa-be-a-g-kod-izet-marlinra" class="md-nav__link">
-    Állítsa be a G-kód ízét Marlinra
+  <a href="#allitsd-be-a-g-kod-izet-marlinra" class="md-nav__link">
+    Állítsd be a G-kód ízét Marlinra
   </a>
   
 </li>
@@ -1371,7 +1371,7 @@
 
 <h1 id="szeletelok">Szeletelők<a class="headerlink" href="#szeletelok" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum néhány tippet ad a Klipperrel használható "szeletelő" alkalmazás konfigurálásához. A Klipperrel együtt használt gyakori szeletelőprogramok a Slic3r, Cura, Simplify3D stb.</p>
-<h2 id="allitsa-be-a-g-kod-izet-marlinra">Állítsa be a G-kód ízét Marlinra<a class="headerlink" href="#allitsa-be-a-g-kod-izet-marlinra" title="Permanent link">&para;</a></h2>
+<h2 id="allitsd-be-a-g-kod-izet-marlinra">Állítsd be a G-kód ízét Marlinra<a class="headerlink" href="#allitsd-be-a-g-kod-izet-marlinra" title="Permanent link">&para;</a></h2>
 <p>Sok szeletelőprogram rendelkezik a "G-kód ízének" konfigurálási lehetőséggel. Az alapértelmezett gyakran a "Marlin", és ez jól működik a Klipperrel. A "Smoothieware" beállítás szintén jól működik a Klipperrel.</p>
 <h2 id="klipper-gcode_macro">Klipper gcode_macro<a class="headerlink" href="#klipper-gcode_macro" title="Permanent link">&para;</a></h2>
 <p>A szeletelők gyakran lehetővé teszik a "Start G-kód" és "End G-kód" szekvenciák konfigurálását. Ehelyett gyakran kényelmes egyéni makrókat definiálni a Klipper config fájlban - például: <code>[gcode_macro START_PRINT]</code> és <code>[gcode_macro END_PRINT]</code>. Ezután csak a START_PRINT és END_PRINT futtatását kell elvégezni a szeletelő konfigurációjában. Ha ezeket a műveleteket a Klipper konfigurációban definiáljuk, könnyebbé válhat a nyomtató indítási és befejezési lépéseinek finomhangolása, mivel a változtatások nem igényelnek újbóli szeletelést.</p>
@@ -1387,7 +1387,7 @@
 <h2 id="ne-hasznalja-az-extra-ujrainditasi-tavolsagot-a-simplify3d-nel">Ne használja az "extra újraindítási távolságot" a Simplify3d-nél<a class="headerlink" href="#ne-hasznalja-az-extra-ujrainditasi-tavolsagot-a-simplify3d-nel" title="Permanent link">&para;</a></h2>
 <p>Ez a beállítás drámai változásokat okozhat az extrudálási sebességben, ami kiválthatja a Klipper maximális extrudálási keresztmetszet ellenőrzését. Fontolja meg a Klipper <a href="Pressure_Advance.html">nyomás előtolás</a> vagy a normál Simplify3d visszahúzási beállítás használatát helyette.</p>
 <h2 id="a-preloadve-letiltasa-a-kisslicer-en">A "PreloadVE" letiltása a KISSlicer-en<a class="headerlink" href="#a-preloadve-letiltasa-a-kisslicer-en" title="Permanent link">&para;</a></h2>
-<p>Ha a KISSlicer szeletelőszoftvert használja, akkor állítsa a "PreloadVE" értéket nullára. Fontolja meg helyette a Klipper <a href="Pressure_Advance.html">nyomás előtolás</a> használatát.</p>
+<p>Ha a KISSlicer szeletelőszoftvert használja, akkor állítsd a "PreloadVE" értéket nullára. Fontolja meg helyette a Klipper <a href="Pressure_Advance.html">nyomás előtolás</a> használatát.</p>
 <h2 id="tiltja-a-fejlett-nyomas-elotolas-beallitasokat">Tiltja a "fejlett nyomás előtolás" beállításokat<a class="headerlink" href="#tiltja-a-fejlett-nyomas-elotolas-beallitasokat" title="Permanent link">&para;</a></h2>
 <p>Néhány szeletelőgép "fejlett nyomás előtolás" képességet hirdet. A Klipper használata esetén ajánlott ezeket az opciókat kikapcsolva tartani, mivel valószínűleg rossz minőségű nyomatokat eredményeznek. Fontolja meg ehelyett a Klipper <a href="Pressure_Advance.html">nyomás előtolás</a> használatát.</p>
 <p>Konkrétan ezek a szeletelő beállítások utasíthatják a firmware-t, hogy vad változtatásokat végezzen az extrudálási sebességben, abban a reményben, hogy a firmware közelíteni fogja ezeket a kéréseket, és a nyomtató nagyjából a kívánt extrudernyomást fogja elérni. A Klipper azonban pontos kinematikai számításokat és időzítést használ. Amikor a Klipper parancsot kap az extrudálási sebesség jelentős változtatására, megtervezi a sebesség, a gyorsulás és az extruder mozgásának megfelelő változásait - ami nem a szeletelő szándékában áll. A szeletelő akár túlzott extrudálási sebességet is parancsolhat, olyannyira, hogy az kiváltja a Klipper maximális extrudálási keresztmetszet ellenőrzését.</p>

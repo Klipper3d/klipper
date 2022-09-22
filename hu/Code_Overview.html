@@ -501,14 +501,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -519,7 +519,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -589,7 +589,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1432,7 +1432,7 @@
 </ul>
 </li>
 <li>A Klipper egy <a href="https://hu.wikipedia.org/wiki/Gy%C3%B6kkeres%C5%91_algoritmus">iteratív megoldót</a> használ az egyes léptetők lépésidejének létrehozásához. Hatékonysági okokból a léptető impulzusidőket C kódban generálja. A mozgásokat először egy "trapézmozgás várólistára" helyezzük: <code>ToolHead._process_moves() -&gt; trapq_append()</code> (a klippy/chelper/trapq.c-ben). A lépésidők ezután generálódnak: <code>ToolHead._process_moves() -&gt; ToolHead._update_move_time() -&gt; MCU_Stepper.generate_steps() -&gt; itersolve_generate_steps() -&gt; itersolve_gen_steps_range()</code> (a klippy/chelper/itersolve.c-ben). Az iteratív megoldó célja, hogy lépésidőket találjon egy olyan függvényt adva, amely egy időből kiszámítja a lépéshelyzetet. Ez úgy történik, hogy többször "találgatja" a különböző időket, amíg a léptető pozíció képlet vissza nem adja a léptető következő lépésének kívánt pozícióját. Az egyes találgatásokból származó visszajelzéseket a jövőbeli találgatások javítására használja, hogy a folyamat gyorsan konvergáljon a kívánt időhöz. A kinematikus léptető pozíció képletek a klippy/chelper/ könyvtárban találhatók (pl. kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).</li>
-<li>Vegye figyelembe, hogy az extruder saját kinematikai osztályban van kezelve: <code>ToolHead._process_moves() -&gt; PrinterExtruder.move()</code>. Mivel a Move() osztály pontosan megadja a mozgás idejét, és mivel a lépésimpulzusokat meghatározott időzítéssel küldi a mikrokontrollerhez, az extruder osztály által előállított léptetőmozgások szinkronban lesznek a fejmozgással, annak ellenére, hogy a kódot elkülönítve tartjuk.</li>
+<li>Vedd figyelembe, hogy az extruder saját kinematikai osztályban van kezelve: <code>ToolHead._process_moves() -&gt; PrinterExtruder.move()</code>. Mivel a Move() osztály pontosan megadja a mozgás idejét, és mivel a lépésimpulzusokat meghatározott időzítéssel küldi a mikrokontrollerhez, az extruder osztály által előállított léptetőmozgások szinkronban lesznek a fejmozgással, annak ellenére, hogy a kódot elkülönítve tartjuk.</li>
 <li>Miután az iteratív megoldó kiszámítja a lépésidőket, azok egy tömbhöz kerülnek hozzáadásra: <code>itersolve_gen_steps_range() -&gt; stepcompress_append()</code> (in klippy/chelper/stepcompress.c). A tömb (struct stepcompress.queue) minden lépéshez tárolja a mikrokontroller megfelelő óraszámláló idejét. Itt a "mikrokontroller óraszámláló" értéke közvetlenül megfelel a mikrokontroller hardveres számlálójának, a mikrokontroller utolsó bekapcsolásának időpontjához viszonyítva.</li>
 <li>A következő fontos lépés a lépések tömörítése: <code>stepcompress_flush() -&gt; compress_bisect_add()</code> (in klippy/chelper/stepcompress.c). Ez a kód generálja és kódolja a mikrokontroller "queue_step" parancsainak sorozatát, amelyek megfelelnek az előző szakaszban felépített léptető lépésidők listájának. Ezek a "queue_step" parancsok ezután sorba kerülnek, prioritást kapnak, és elküldésre kerülnek a mikrokontrollernek (a stepcompress.c:steppersync és a serialqueue.c:serialqueue kódokon keresztül).</li>
 <li>A queue_step parancsok feldolgozása a mikrokontrollerben az src/command.c állományban kezdődik, amely elemzi a parancsot és meghívja a <code>command_queue_step()</code> parancsot. A command_queue_step() kód (az src/stepper.c-ben) csak az egyes queue_step parancsok paramétereit csatolja egy-egy stepper sorba. Normál működés esetén a queue_step parancsot legalább 100ms-mal az első lépés időpontja előtt elemzi és beállítja a sorba. Végül a léptető események generálása a <code>stepper_event()</code>-ban történik. Ezt a hardveres időzítő megszakításából hívjuk meg az első lépés tervezett időpontjában. A stepper_event() kód generál egy lépésimpulzust, majd átütemezi magát a következő lépésimpulzus idejére a megadott queue_step paraméterekhez. Az egyes queue_step parancsok paraméterei a következők: "interval", "count" és "add". Magas szinten a stepper_event() a következőket hajtja végre, 'count' times: <code>do_step(); next_wake_time = last_wake_time + interval; interval += add;</code></li>
@@ -1476,7 +1476,7 @@
 <p>Ez a szakasz néhány tippet ad a Klipper mikrokontroller kódjának új architektúrára történő átviteléhez. Ez a fajta tevékenység jó beágyazott fejlesztési ismereteket és gyakorlati hozzáférést igényel a célmikrokontrollerhez.</p>
 <p>Hasznos lépések:</p>
 <ol>
-<li>Kezdje a portolás során használni kívánt harmadik féltől származó könyvtárak azonosításával. Gyakori példa erre a "CMSIS" csomagolások és a gyártó "HAL" könyvtárak. Minden harmadik féltől származó kódnak GNU GPLv3 kompatibilisnek kell lennie. A harmadik féltől származó kódot a Klipper lib/ könyvtárba kell átvinni. Frissítse a lib/README fájlt azzal az információval, hogy hol és mikor szerezte meg a könyvtárat. A kódot lehetőleg változatlanul másolja be a Klipper tárolóba, de ha bármilyen változtatásra van szükség, akkor ezeket a változtatásokat kifejezetten fel kell tüntetni a lib/README fájlban.</li>
+<li>Kezd a portolás során használni kívánt harmadik féltől származó könyvtárak azonosításával. Gyakori példa erre a "CMSIS" csomagolások és a gyártó "HAL" könyvtárak. Minden harmadik féltől származó kódnak GNU GPLv3 kompatibilisnek kell lennie. A harmadik féltől származó kódot a Klipper lib/ könyvtárba kell átvinni. Frissítse a lib/README fájlt azzal az információval, hogy hol és mikor szerezte meg a könyvtárat. A kódot lehetőleg változatlanul másolja be a Klipper tárolóba, de ha bármilyen változtatásra van szükség, akkor ezeket a változtatásokat kifejezetten fel kell tüntetni a lib/README fájlban.</li>
 <li>Hozzon létre egy új architektúra alkönyvtárat az src/ könyvtárban, és adjon hozzá kezdeti Config és Makefile támogatást. Használja a meglévő architektúrákat útmutatóként. Az src/simulator egy alapvető példát nyújt egy minimális kiindulási pontra.</li>
 <li>Az első fő kódolási feladat a kommunikációs támogatás felállítása az alaplapnak. Ez a legnehezebb lépés egy új port esetében. Ha az alapvető kommunikáció már működik, a további lépések általában sokkal könnyebbek. A kezdeti fejlesztés során jellemzően UART típusú soros eszközt használunk, mivel az ilyen típusú hardvereszközöket általában könnyebb engedélyezni és vezérelni. Ebben a fázisban bőkezűen használja az src/generic/ könyvtárban található segédkódot (ellenőrizze, hogy az src/simulator/Makefile hogyan tartalmazza a generikus C kódot a felépítésben). Ebben a fázisban szükséges definiálni a timer_read_time() funkciót is (amely visszaadja az aktuális rendszerórát), de nem szükséges a timer irq kezelésének teljes támogatása.</li>
 <li>Ismerkedjen meg a console.py eszközzel (a <a href="Debugging.html">Hibakeresési dokumentumban</a> leírtak szerint), és ellenőrizze vele a mikrokontrollerrel való kapcsolatot. Ez az eszköz lefordítja az alacsony szintű mikrokontroller kommunikációs protokollt ember által olvasható formára.</li>
@@ -1523,7 +1523,7 @@ Recv: // gcode homing: X:0.000000 Y:0.000000 Z:0.000000
 <p>Néhány dolog, amire figyelni kell a kód áttekintésekor:</p>
 <ul>
 <li>32 bites és 64 bites órajelek: A sávszélesség csökkentése és a mikrokontroller hatékonyságának javítása érdekében a mikrokontroller órajeleit 32 bites egész számokként követik. Két órajel összehasonlításakor az MCU kódban mindig a <code>timer_is_before()</code> függvényt kell használni, hogy az egész számok átfordítását megfelelően kezeljük. A gazdaszoftver a 32 bites órajeleket 64 bites órajelekké alakítja át azáltal, hogy hozzáadja az utolsó kapott MCU időbélyegző magasrendű bitjeit. Egyetlen MCU-tól érkező üzenet sem lehet 2^31 órajelnél több a jövőben vagy a múltban, így ez az átalakítás soha nem félreérthető. A gazdagép a 64 bites órajelekről 32 bites órajelekre konvertál a magasrendű bitek egyszerű lefaragásával. Annak érdekében, hogy ez az átalakítás ne legyen kétértelmű, a <strong>klippy/chelper/serialqueue.c</strong> kód addig puffereli az üzeneteket, amíg azok 2^31 órajelen belül vannak a célidőhöz képest.</li>
-<li>Több mikrovezérlő: A gazdaszoftver támogatja több mikrovezérlő használatát egyetlen nyomtatón. Ebben az esetben minden mikrokontroller "MCU órajelét" külön-külön követi. A clocksync.py kód kezeli a mikrovezérlők közötti óraeltolódást a "nyomtatási időről" az "MCU órára" történő átalakítás módjának módosításával. A másodlagos MCU-nál az ebben az átalakításban használt MCU frekvencia rendszeresen frissül, hogy figyelembe vegye a mért csúszást.</li>
+<li>Több mikrovezérlő: A gazdaszoftver támogatja több mikrovezérlő használatát egyetlen nyomtatón. Ebben az esetben minden mikrokontroller "MCU órajelét" külön-külön követi. A clocksync.py kód kezeli a mikrovezérlők közötti óraeltolódást a "nyomtatási időről" az "MCU órára" történő átalakítás módjának módosításával. A másodlagos MCU-nál az ebben az átalakításban használt MCU frekvencia rendszeresen frissül, hogy figyelembe vedd a mért csúszást.</li>
 </ul>
 
               

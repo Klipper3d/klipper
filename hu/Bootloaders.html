@@ -501,14 +501,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -519,7 +519,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -589,7 +589,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1725,7 +1725,7 @@ program samd21_sam_ba.bin verify
 <div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 --offset=0x2000 -w out/klipper.bin -v -b -R
 </code></pre></div>
 
-<p>Ezzel szemben az "Arduino M0" 16KiB bootloadert használ (az alkalmazást 16KiB kezdőcímmel kell lefordítani). Egy alkalmazás égetéséhez ezen a bootloaderen, állítsa vissza a mikrokontrollert, és futtassa a flash parancsot a bootolás első néhány másodpercében. Valami ilyesmi:</p>
+<p>Ezzel szemben az "Arduino M0" 16KiB bootloadert használ (az alkalmazást 16KiB kezdőcímmel kell lefordítani). Egy alkalmazás égetéséhez ezen a bootloaderen, állítsd vissza a mikrokontrollert, és futtassa a flash parancsot a bootolás első néhány másodpercében. Valami ilyesmi:</p>
 <div class="highlight"><pre><span></span><code>avrdude -c stk500v2 -p atmega2560 -P /dev/ttyACM0 -u -Uflash:w:out/klipper.elf.hex:i
 </code></pre></div>
 
@@ -1753,8 +1753,8 @@ at91samd bootloader 16384
 <div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
-<p>Vegye figyelembe, hogy ha Raspberry Pi-t használ a 3,3V-os soros kapcsolathoz, az stm32flash protokoll olyan soros paritásmódot használ, amelyet a Raspberry Pi "mini UART" nem támogat. Lásd <a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a> a teljes uart engedélyezéséről a Raspberry Pi GPIO tűin.</p>
-<p>Az égetés után állítsa vissza a "boot 0" és a "boot 1" értéket alacsonyra, hogy a jövőben az égetésről induló rendszer újrainduljon.</p>
+<p>Vedd figyelembe, hogy ha Raspberry Pi-t használ a 3,3V-os soros kapcsolathoz, az stm32flash protokoll olyan soros paritásmódot használ, amelyet a Raspberry Pi "mini UART" nem támogat. Lásd <a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a> a teljes uart engedélyezéséről a Raspberry Pi GPIO tűin.</p>
+<p>Az égetés után állítsd vissza a "boot 0" és a "boot 1" értéket alacsonyra, hogy a jövőben az égetésről induló rendszer újrainduljon.</p>
 <h3 id="stm32f103-stm32duino-bootloaderrel">STM32F103 stm32duino bootloaderrel<a class="headerlink" href="#stm32f103-stm32duino-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>Az "stm32duino" projekt rendelkezik USB-képes bootloaderrel. Lásd: <a href="https://github.com/rogerclarkmelbourne/STM32duino-bootloader">https://github.com/rogerclarkmelbourne/STM32duino-bootloader</a></p>
 <p>Ez a bootloader 3,3V-os soros kapcsolaton keresztül égethető valami hasonlóval:</p>
@@ -1767,7 +1767,7 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 <div class="highlight"><pre><span></span><code>dfu-util -d 1eaf:0003 -a 2 -R -D out/klipper.bin
 </code></pre></div>
 
-<p>A bootloader általában csak rövid ideig fut a rendszerindítás után. Szükség lehet arra, hogy a fenti parancsot úgy időzítsük, hogy az akkor fusson le, amikor a bootloader még aktív (a bootloader üzem közben villogtat egy a lapon lévő ledet). Alternatív megoldásként a "boot 0" csapot állítsa alacsonyra, a "boot 1" csapot pedig magasra, hogy a bootloaderben maradjon a reset után.</p>
+<p>A bootloader általában csak rövid ideig fut a rendszerindítás után. Szükség lehet arra, hogy a fenti parancsot úgy időzítsük, hogy az akkor fusson le, amikor a bootloader még aktív (a bootloader üzem közben villogtat egy a lapon lévő ledet). Alternatív megoldásként a "boot 0" csapot állítsd alacsonyra, a "boot 1" csapot pedig magasra, hogy a bootloaderben maradjon a reset után.</p>
 <h3 id="stm32f103-hid-bootloaderrel">STM32F103 HID bootloaderrel<a class="headerlink" href="#stm32f103-hid-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>A <a href="https://github.com/Serasidis/STM32_HID_Bootloader">HID bootloader</a> egy kompakt, driver nélküli bootloader, amely képes USB-n keresztül égetni. Szintén elérhető egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">fork az SKR Mini E3 1.2 specifikus buildekkel</a>.</p>
 <p>Az általános STM32F103 alaplapok, mint például a blue pill esetében a bootloader 3,3V-os soros égetése lehetséges az stm32flash használatával, amint azt a fenti stm32duino szakaszban említettük, a kívánt hid bootloader bináris fájlnevének behelyettesítésével (azaz: hid_generic_pc13.bin a blue pillhez).</p>
@@ -1775,7 +1775,7 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 <div class="highlight"><pre><span></span><code>forrás [find target/stm32f1x.cfg]
 </code></pre></div>
 
-<p>Ha szeretné, a következő paranccsal készíthet biztonsági másolatot az aktuális flash memóriáról. Vegye figyelembe, hogy ez némi időt vehet igénybe:</p>
+<p>Ha szeretné, a következő paranccsal készíthet biztonsági másolatot az aktuális flash memóriáról. Vedd figyelembe, hogy ez némi időt vehet igénybe:</p>
 <div class="highlight"><pre><span></span><code>flash read_bank 0 btt_skr_mini_e3_backup.bin
 </code></pre></div>
 
@@ -1846,11 +1846,11 @@ make
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u aabbccddeeff
 </code></pre></div>
 
-<p>Ahol <code>aabbccddeeff</code> helyébe az Ön UUID-je lép. Vegye figyelembe, hogy a <code>-i</code> és <code>-f</code> opciók elhagyhatók, ezek alapértelmezett értéke <code>can0</code> és <code>~/klipper/out/klipper.bin</code>.</p>
+<p>Ahol <code>aabbccddeeff</code> helyébe az Ön UUID-je lép. Vedd figyelembe, hogy a <code>-i</code> és <code>-f</code> opciók elhagyhatók, ezek alapértelmezett értéke <code>can0</code> és <code>~/klipper/out/klipper.bin</code>.</p>
 <p>Amikor a Klippert a CanBoot-al való használatra építi, válassza a 8 KiB-os bootloader opciót.</p>
 <h2 id="stm32f4-mikrovezerlok-skr-pro-11">STM32F4 mikrovezérlők (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-mikrovezerlok-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>Az STM32F4 mikrokontrollerek beépített rendszerbetöltővel rendelkeznek, amely képes USB-n keresztül (DFU-n keresztül), 3,3V-os soros és különböző más módszerekkel is égetni (további információkért lásd az STM AN2606 dokumentumát). Egyes STM32F4 lapok, mint például az SKR Pro 1.1, nem képesek belépni a DFU bootloaderbe. A HID bootloader elérhető az STM32F405/407 alapú lapokhoz, amennyiben a felhasználó az USB-n keresztül történő égetést részesíti előnyben az SD-kártya használatával szemben. Ne feledje, hogy szükség lehet egy, a lapjára specifikus verzió konfigurálására és építésére, egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">az SKR Pro 1.1-es verzióra vonatkozó építés elérhető itt</a>.</p>
-<p>Hacsak a lapod nem DFU-képes, a legkönnyebben elérhető égetési módszer valószínűleg a 3,3V-os soros, amely ugyanazt az eljárást követi, mint <a href="#stm32f103-micro-controllers-blue-pill-devices">az STM32F103 égetése az stm32flash segítségével</a>. Például:</p>
+<p>Hacsak a lapod nem DFU-képes, a legkönnyebben elérhető égetési módszer valószínűleg a 3,3V-os soros, amely ugyanazt az eljárást követi, mint [az STM32F103 égetése az stm32flash segítségével](#stm32f103-mikrovezerlok-(blue-pill-eszkozok). Például:</p>
 <div class="highlight"><pre><span></span><code>wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta/hid_bootloader_SKR_PRO.bin
 
 stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
@@ -1858,14 +1858,14 @@ stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
 
 <p>Ez a bootloader 16Kib-es flash memóriát igényel az STM32F4-en (az alkalmazást 16KiB kezdőcímmel kell lefordítani).</p>
 <p>Az STM32F1-hez hasonlóan az STM32F4 is a hid-flash eszközt használja a binárisok MCU-ra történő feltöltéséhez. A hid-flash elkészítésének és használatának részletei a fenti utasításokban találhatók.</p>
-<p>Szükség lehet a bootloader manuális belépésére, ez a "boot 0" alacsony, "boot 1" magas érték beállításával és az eszköz csatlakoztatásával történhet. A programozás befejezése után húzza ki az eszközt, és állítsa vissza a "boot 1" értéket alacsonyra, hogy az alkalmazás betöltődjön.</p>
+<p>Szükség lehet a bootloader manuális belépésére, ez a "boot 0" alacsony, "boot 1" magas érték beállításával és az eszköz csatlakoztatásával történhet. A programozás befejezése után húzza ki az eszközt, és állítsd vissza a "boot 1" értéket alacsonyra, hogy az alkalmazás betöltődjön.</p>
 <h2 id="lpc176x-mikrovezerlok-smoothieboards">LPC176x mikrovezérlők (Smoothieboards)<a class="headerlink" href="#lpc176x-mikrovezerlok-smoothieboards" title="Permanent link">&para;</a></h2>
 <p>Ez a dokumentum nem írja le a bootloader égetésének módszerét. Lásd: <a href="http://smoothieware.org/flashing-the-bootloader">http://smoothieware.org/flashing-the-bootloader</a> a témával kapcsolatos további információkért.</p>
 <p>A Smoothieboardok általában a következő bootloaderrel érkeznek: <a href="https://github.com/triffid/LPC17xx-DFU-Bootloader">https://github.com/triffid/LPC17xx-DFU-Bootloader</a>. Ha ezt a bootloadert használjuk, az alkalmazást 16KiB kezdőcímmel kell lefordítani. Az alkalmazás égetésének legegyszerűbb módja ezzel a bootloaderrel az alkalmazásfájl (pl. <code>out/klipper.bin</code>) másolása egy SD-kártyán lévő <code>firmware.bin</code> nevű fájlra, majd a mikrokontroller újraindítása ezzel az SD-kártyával.</p>
 <h2 id="az-openocd-futtatasa-a-raspberry-pi-n">Az OpenOCD futtatása a Raspberry PI-n<a class="headerlink" href="#az-openocd-futtatasa-a-raspberry-pi-n" title="Permanent link">&para;</a></h2>
-<p>Az OpenOCD egy olyan szoftvercsomag, amely képes alacsony szintű égetésekre és hibakeresésre. A Raspberry Pi GPIO-tűit használhatja a különböző ARM-chipekkel való kommunikációra.</p>
+<p>Az OpenOCD egy olyan szoftvercsomag, amely képes alacsony szintű égetésekre és hibakeresésre. A Raspberry Pi GPIO-tűit használhatod a különböző ARM-chipekkel való kommunikációra.</p>
 <p>Ez a szakasz leírja, hogyan lehet telepíteni és elindítani az OpenOCD-t. A következő oldalon található utasításokból származik: <a href="https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi">https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi</a></p>
-<p>Kezdje a szoftver letöltésével és fordításával (minden lépés több percet vehet igénybe, és a "make" lépés több mint 30 percet is igénybe vehet):</p>
+<p>Kezd a szoftver letöltésével és fordításával (minden lépés több percet vehet igénybe, és a "make" lépés több mint 30 percet is igénybe vehet):</p>
 <div class="highlight"><pre><span></span><code>sudo apt-get update
 sudo apt-get install autoconf libtool telnet
 mkdir ~/openocd
@@ -1898,7 +1898,7 @@ adapter_nsrst_assert_width 100
 # A chip típusának megadása
 source [find target/atsame5x.cfg]
 
-# Adja meg az adapter sebességét
+# Add meg az adapter sebességét
 adapter_khz 40
 
 # Csatlakozás a chiphez
@@ -1925,7 +1925,7 @@ sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
 <p>(A telnetből a ctrl+] billentyűkombinációval, majd a "quit" parancs futtatásával lehet kilépni.)</p>
 <h3 id="openocd-es-gdb">OpenOCD és gdb<a class="headerlink" href="#openocd-es-gdb" title="Permanent link">&para;</a></h3>
 <p>Lehetőség van az OpenOCD és a gdb használatára a Klipper hibakeresésére. A következő parancsok feltételezik, hogy a gdb egy asztali gépen fut.</p>
-<p>Adja hozzá a következőket az OpenOCD konfigurációs fájljához:</p>
+<p>Add hozzá a következőket az OpenOCD konfigurációs fájljához:</p>
 <div class="highlight"><pre><span></span><code>bindto 0.0.0.0
 gdb_port 44444
 </code></pre></div>

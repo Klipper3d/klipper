@@ -501,14 +501,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -519,7 +519,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -589,7 +589,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1300,11 +1300,11 @@
 </li>
 <li>Minden konfigurációs fájlnak <code>.cfg</code> végződéssel kell végződnie. A <code>printer</code> konfigurációs fájloknak egy évszámmal kell végződniük, amelyet a <code>.cfg</code> végződés követ (pl. <code>-2019.cfg</code>). Ebben az esetben az évszám az adott nyomtató eladásának hozzávetőleges éve.</li>
 <li>Ne használjon szóközöket vagy speciális karaktereket a konfigurációs fájlnévben. A fájlnév csak a <code>A-Z</code>, <code>a-z</code>, <code>0-9</code>, <code>-</code> és <code>karaktereket tartalmazhatja.</code>.</li>
-<li>A Klippernek hiba nélkül el kell tudnia indítani a <code>printer</code>, <code>generic</code> és <code>kit</code> példa konfigurációs fájlt. Ezeket a konfigurációs fájlokat hozzá kell adni a <a href="https://github.com/Klipper3d/klipper/blob/master/test/klippy/printers.test">test/klippy/printers.test</a> regressziós tesztesethez. Adja hozzá az új konfigurációs fájlokat ehhez a tesztesethez a megfelelő szakaszban és a szakaszon belül ábécé sorrendben.</li>
+<li>A Klippernek hiba nélkül el kell tudnia indítani a <code>printer</code>, <code>generic</code> és <code>kit</code> példa konfigurációs fájlt. Ezeket a konfigurációs fájlokat hozzá kell adni a <a href="https://github.com/Klipper3d/klipper/blob/master/test/klippy/printers.test">test/klippy/printers.test</a> regressziós tesztesethez. Add hozzá az új konfigurációs fájlokat ehhez a tesztesethez a megfelelő szakaszban és a szakaszon belül ábécé sorrendben.</li>
 <li>A példakonfigurációnak a nyomtató "stock" konfigurációjára kell vonatkoznia. (Túl sok "testreszabott" konfiguráció van ahhoz, hogy a Klipper fő tárolójában nyomon lehessen követni.) Hasonlóképpen, csak olyan nyomtatók, készletek és kártyák példakonfigurációs fájljait adjuk hozzá, amelyek népszerűek (pl. legalább 100 darabnak kell lennie belőlük aktív használatban). Fontolja meg a <a href="https://community.klipper3d.org">Klipper Community Discourse szerver</a> használatát más konfigurációkhoz.</li>
 <li>Only specify those devices present on the given printer or board. Do not specify settings specific to your particular setup.<ol>
 <li>For <code>generic</code> config files, only those devices on the mainboard should be described. For example, it would not make sense to add a display config section to a "generic" config as there is no way to know if the board will be attached to that type of display. If the board has a specific hardware port to facilitate an optional peripheral (eg, a bltouch port) then one can add a "commented out" config section for the given device.</li>
-<li>Ne adja meg a <code>pressure_advance</code> értéket egy példakonfigurációban, mivel ez az érték a szálra, nem pedig a nyomtató hardverére jellemző. Hasonlóképpen ne adjon meg <code>max_extrude_only_velocity</code> és <code>max_extrude_only_accel</code> beállításokat.</li>
+<li>Ne add meg a <code>pressure_advance</code> értéket egy példakonfigurációban, mivel ez az érték a szálra, nem pedig a nyomtató hardverére jellemző. Hasonlóképpen ne adjon meg <code>max_extrude_only_velocity</code> és <code>max_extrude_only_accel</code> beállításokat.</li>
 <li>Ne adjon meg olyan konfigurációs részt, amely állomás elérési útvonalat vagy állomáshardvert tartalmaz. Például ne adjon meg <code>[virtual_sdcard]</code> és <code>[temperature_host]</code> konfigurációs szakaszokat.</li>
 <li>Csak olyan makrókat definiáljon, amelyek az adott nyomtatóra jellemző funkciókat használják, vagy olyan g-kódokat definiáljon, amelyeket az adott nyomtatóhoz konfigurált szeletelők általában kiadnak.</li>
 </ol>

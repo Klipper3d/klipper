@@ -501,14 +501,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -519,7 +519,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -589,7 +589,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1483,7 +1483,7 @@
 <p><img alt="zigzag" src="img/zigzag.svg.png" /></p>
 <p>A fentiekben a gyorsításról lassításra történő gyakori váltás a gép rezgését okozhatja, ami a gépet terheli, és növeli a zajt. Ennek csökkentése érdekében a Klipper mind a rendszeres mozgási gyorsulást, mind pedig a virtuális "gyorsításról lassításra" sebességet követi. Ezzel a rendszerrel a nyomtató mozgásának kiegyenlítése érdekében a rövid "cikkcakkos" mozgások csúcssebessége korlátozott:</p>
 <p><img alt="smoothed" src="img/smoothed.svg.png" /></p>
-<p>Konkrétan, a kód kiszámítja, hogy mi lenne az egyes mozgások sebessége, ha az adott virtuális "gyorsulás-lassulás" sebességre korlátozódna (alapértelmezés szerint a normál gyorsulási sebesség fele). A fenti képen a szaggatott szürke vonalak ezt a virtuális gyorsulási sebességet jelölik az első mozdulatnál. Ha egy mozgás nem tudja elérni a teljes utazósebességét ezzel a virtuális gyorsulási sebességgel, akkor a végsebessége arra a maximális sebességre csökken, amelyet ezzel a virtuális gyorsulási sebességgel elérhetne. A legtöbb mozgás esetében ez a határérték a mozgás meglévő határértékeinél vagy azok felett lesz, és nem változik a viselkedés. Rövid cikk-cakk mozgások esetén azonban ez a határ csökkenti a csúcssebességet. Vegye figyelembe, hogy ez nem változtatja meg a tényleges gyorsulást a mozgáson belül. A mozgás továbbra is a normál gyorsulási sémát használja a beállított csúcssebességig.</p>
+<p>Konkrétan, a kód kiszámítja, hogy mi lenne az egyes mozgások sebessége, ha az adott virtuális "gyorsulás-lassulás" sebességre korlátozódna (alapértelmezés szerint a normál gyorsulási sebesség fele). A fenti képen a szaggatott szürke vonalak ezt a virtuális gyorsulási sebességet jelölik az első mozdulatnál. Ha egy mozgás nem tudja elérni a teljes utazósebességét ezzel a virtuális gyorsulási sebességgel, akkor a végsebessége arra a maximális sebességre csökken, amelyet ezzel a virtuális gyorsulási sebességgel elérhetne. A legtöbb mozgás esetében ez a határérték a mozgás meglévő határértékeinél vagy azok felett lesz, és nem változik a viselkedés. Rövid cikk-cakk mozgások esetén azonban ez a határ csökkenti a csúcssebességet. Vedd figyelembe, hogy ez nem változtatja meg a tényleges gyorsulást a mozgáson belül. A mozgás továbbra is a normál gyorsulási sémát használja a beállított csúcssebességig.</p>
 <h2 id="lepesek-generalasa">Lépések generálása<a class="headerlink" href="#lepesek-generalasa" title="Permanent link">&para;</a></h2>
 <p>Miután a look-ahead folyamat befejeződött, a nyomtatófej mozgása az adott mozgáshoz teljes mértékben ismert (idő, kezdő pozíció, végpozíció, sebesség minden egyes ponton), és lehetséges a lépésidők generálása a mozgáshoz. Ez a folyamat a Klipper kódban a "kinematikai osztályokon" belül történik. Ezeken a kinematikai osztályokon kívül minden milliméterben, másodpercben és cartesian koordináta térben követhető. A kinematikai osztályok feladata, hogy ebből az általános koordináta-rendszerből az adott nyomtató hardveres sajátosságaihoz igazítsák.</p>
 <p>A Klipper egy <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">iteratív megoldót</a> használ az egyes léptetők lépésidejének létrehozásához. A kód tartalmazza a képleteket a fej ideális cartesian koordinátáinak kiszámításához minden egyes időpontban, és rendelkezik a kinematikai képletekkel az ideális stepper pozíciók kiszámításához ezen cartesian koordináták alapján. Ezekkel a képletekkel a Klipper meg tudja határozni azt az ideális időt, amikor a steppernek az egyes lépéshelyzetekben kell lennie. Az adott lépéseket ezután ezekre a kiszámított időpontokra ütemezi.</p>
@@ -1544,7 +1544,7 @@ stepper_z_position = cartesian_z_position
 <p>A nyomás előtolás együttható meghatározásához lásd a <a href="Pressure_Advance.html">nyomás előtolás</a> dokumentumot.</p>
 <p>Az alapvető nyomás előtolás képlete az extruder motorjának hirtelen sebességváltozásait okozhatja. A Klipper ennek elkerülése érdekében az extruder mozgásának "simítását" alkalmazza.</p>
 <p><img alt="pressure-advance" src="img/pressure-velocity.png" /></p>
-<p>A fenti grafikon egy példát mutat két olyan extrudálási mozgásra, amelyek között a kanyarsebesség nem nulla. Vegye figyelembe, hogy a nyomás előtolás rendszer miatt a gyorsítás során további szálak kerülnek az extruderbe. Minél nagyobb a kívánt száláramlási sebesség, annál több szálat kell betolni a gyorsítás során a nyomás miatt. A fej lassítása során a plusz szál visszahúzódik (az extruder sebessége negatív lesz).</p>
+<p>A fenti grafikon egy példát mutat két olyan extrudálási mozgásra, amelyek között a kanyarsebesség nem nulla. Vedd figyelembe, hogy a nyomás előtolás rendszer miatt a gyorsítás során további szálak kerülnek az extruderbe. Minél nagyobb a kívánt száláramlási sebesség, annál több szálat kell betolni a gyorsítás során a nyomás miatt. A fej lassítása során a plusz szál visszahúzódik (az extruder sebessége negatív lesz).</p>
 <p>A "simítás" az extruder pozíciójának súlyozott átlagával történik egy kis időintervallumban (ahogyan azt a <code>pressure_advance_smooth_time</code> konfigurációs paraméter megadja). Ez az átlagolás több G-kód mozgást is átfoghat. Figyelje meg, hogy az extrudermotor az első extrudermozgás névleges kezdete előtt elkezd mozogni, és az utolsó extrudermozgás névleges vége után is mozogni fog.</p>
 <p>Kulcsképlet a "simított nyomás előtoláshoz":</p>
 <div class="highlight"><pre><span></span><code>smooth_pa_position(t) =

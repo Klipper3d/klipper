@@ -503,14 +503,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -521,7 +521,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -591,7 +591,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1342,15 +1342,15 @@
 
 
 <h1 id="ferdeseg-korrekcio">Ferdeség korrekció<a class="headerlink" href="#ferdeseg-korrekcio" title="Permanent link">&para;</a></h1>
-<p>A szoftveralapú ferdeség korrekció segíthet a nem tökéletesen szögletes nyomtatóegységből eredő méretpontatlanságok feloldásában. Vegye figyelembe, hogy ha a nyomtatója jelentősen ferde, erősen ajánlott először mechanikai eszközökkel a nyomtatót a lehető legegyenletesebbre állítani, mielőtt a szoftveralapú korrekciót alkalmazná.</p>
+<p>A szoftveralapú ferdeség korrekció segíthet a nem tökéletesen szögletes nyomtatóegységből eredő méretpontatlanságok feloldásában. Vedd figyelembe, hogy ha a nyomtatója jelentősen ferde, erősen ajánlott először mechanikai eszközökkel a nyomtatót a lehető legegyenletesebbre állítani, mielőtt a szoftveralapú korrekciót alkalmazná.</p>
 <h2 id="kalibracios-objektum-nyomtatasa">Kalibrációs objektum nyomtatása<a class="headerlink" href="#kalibracios-objektum-nyomtatasa" title="Permanent link">&para;</a></h2>
 <p>A ferdeség korrekciójának első lépése egy <a href="https://www.thingiverse.com/thing:2563185/files">kalibrációs objektum</a> nyomtatása a korrigálni kívánt sík mentén. Létezik egy másik <a href="https://www.thingiverse.com/thing:2972743">kalibrációs objektum</a> is, amely egy modell összes síkját tartalmazza. Az objektumot úgy kell tájolni, hogy az A sarok a sík origója felé legyen.</p>
 <p>Győződjön meg róla, hogy a nyomtatás során nem alkalmaz ferdeségkorrekciót. Ezt úgy teheti meg, hogy vagy eltávolítja a <code>[skew_correction]</code> modult a printer.cfg fájlból, vagy kiad egy <code>SET_SKEW CLEAR=1</code> parancsot.</p>
 <h2 id="merje-meg">Mérje meg<a class="headerlink" href="#merje-meg" title="Permanent link">&para;</a></h2>
-<p>A <code>[skew_correcton]</code> modul minden egyes korrigálandó síkhoz 3 mérést igényel; az A saroktól a C sarokig terjedő hosszúságot, a B saroktól a D sarokig terjedő hosszúságot és az A saroktól a D sarokig terjedő hosszúságot. Az AD hosszmérésnél ne vegye figyelembe a sarkokon lévő síkokat, amelyeket néhány tesztobjektum mutat.</p>
+<p>A <code>[skew_correcton]</code> modul minden egyes korrigálandó síkhoz 3 mérést igényel; az A saroktól a C sarokig terjedő hosszúságot, a B saroktól a D sarokig terjedő hosszúságot és az A saroktól a D sarokig terjedő hosszúságot. Az AD hosszmérésnél ne vedd figyelembe a sarkokon lévő síkokat, amelyeket néhány tesztobjektum mutat.</p>
 <p><img alt="skew_lengths" src="img/skew_lengths.png" /></p>
 <h2 id="konfiguralja-a-ferdeseget">Konfigurálja a ferdeséget<a class="headerlink" href="#konfiguralja-a-ferdeseget" title="Permanent link">&para;</a></h2>
-<p>Győződjön meg róla, hogy a <code>[skew_correction]</code> szerepel a printer.cfg fájlban. Most már használhatja a <code>SET_SKEW</code> gkódot a skew_correction beállításához. Például, ha az XY mentén mért hosszok a következők:</p>
+<p>Győződjön meg róla, hogy a <code>[skew_correction]</code> szerepel a printer.cfg fájlban. Most már használhatod a <code>SET_SKEW</code> G-kódot a skew_correction beállításához. Például, ha az XY mentén mért hosszok a következők:</p>
 <div class="highlight"><pre><span></span><code>Length AC = 140.4
 Length BD = 142.8
 Length AD = 99.8
@@ -1364,7 +1364,7 @@ Length AD = 99.8
 <div class="highlight"><pre><span></span><code>SET_SKEW XY=140.4,142.8,99.8 XZ=141.6,141.4,99.8 YZ=142.4,140.5,99.5
 </code></pre></div>
 
-<p>A <code>[skew_correction]</code> modul a <code>[bed_mesh]</code> modulhoz hasonló módon támogatja a profilkezelést is. Miután a <code>SET_SKEW</code> gkóddal beállította a ferdeséget, a <code>SKEW_PROFILE</code> G-kóddal elmentheti azt:</p>
+<p>A <code>[skew_correction]</code> modul a <code>[bed_mesh]</code> modulhoz hasonló módon támogatja a profilkezelést is. Miután a <code>SET_SKEW</code> G-kóddal beállította a ferdeséget, a <code>SKEW_PROFILE</code> G-kóddal elmentheti azt:</p>
 <div class="highlight"><pre><span></span><code>SKEW_PROFILE SAVE=my_skew_profile
 </code></pre></div>
 
@@ -1379,12 +1379,12 @@ Length AD = 99.8
 
 <p>A profil eltávolítása után a rendszer felszólítja, hogy adjon ki egy <code>SAVE_CONFIG</code> parancsot, hogy a módosítás mentésre kerüljön.</p>
 <h2 id="a-korrekcio-ellenorzese">A korrekció ellenőrzése<a class="headerlink" href="#a-korrekcio-ellenorzese" title="Permanent link">&para;</a></h2>
-<p>A skew_correction beállítása után újra kinyomtathatja a kalibrációs részt a korrekció engedélyezésével. A következő gkóddal ellenőrizheti a ferdeséget minden síkban. Az eredményeknek alacsonyabbaknak kell lenniük, mint a <code>GET_CURRENT_SKEW</code> segítségével jelentett eredmények.</p>
+<p>A skew_correction beállítása után újra kinyomtathatja a kalibrációs részt a korrekció engedélyezésével. A következő G-kóddal ellenőrizheti a ferdeséget minden síkban. Az eredményeknek alacsonyabbaknak kell lenniük, mint a <code>GET_CURRENT_SKEW</code> segítségével jelentett eredmények.</p>
 <div class="highlight"><pre><span></span><code>CALC_MEASURED_SKEW AC=&lt;ac_length&gt; BD=&lt;bd_length&gt; AD=&lt;ad_length&gt;
 </code></pre></div>
 
 <h2 id="ovintezkedesek">Óvintézkedések<a class="headerlink" href="#ovintezkedesek" title="Permanent link">&para;</a></h2>
-<p>A ferdeségkorrekció természetéből adódóan ajánlott a ferdeséget az indító gkódban konfigurálni, a kezdőpont felvétel és minden olyan mozgás után, amely a nyomtatási terület széléhez közelít, mint például a tisztítás vagy a fúvóka törlése. Ehhez használhatja a <code>SET_SKEW</code> vagy a <code>SKEW_PROFILE</code> gkódokat. Ajánlott továbbá a <code>SET_SKEW CLEAR=1</code> parancs kiadása a befejező G-kódban.</p>
+<p>A ferdeségkorrekció természetéből adódóan ajánlott a ferdeséget az indító G-kódban konfigurálni, a kezdőpont felvétel és minden olyan mozgás után, amely a nyomtatási terület széléhez közelít, mint például a tisztítás vagy a fúvóka törlése. Ehhez használhatod a <code>SET_SKEW</code> vagy a <code>SKEW_PROFILE</code> G-kódokat. Ajánlott továbbá a <code>SET_SKEW CLEAR=1</code> parancs kiadása a befejező G-kódban.</p>
 <p>Ne feledje! Lehetséges, hogy a <code>[skew_correction]</code> olyan korrekciót generál, amely a fejet az X és/vagy Y tengelyen a nyomtató határain túlra helyezi. A <code>[skew_correction]</code> használatakor ajánlott a nyomtatófejet a szélektől távolabb elhelyezni.</p>
 
               

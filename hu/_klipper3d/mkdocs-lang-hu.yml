@@ -105,7 +105,7 @@ nav:
       - Config_Reference.md
       - Rotation_Distance.md
     - Config_checks.md
-    - Ágy szint:
+    - Tárgyasztal szint:
       - Bed_Level.md
       - Delta_Calibrate.md
       - Probe_Calibrate.md

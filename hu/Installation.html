@@ -572,14 +572,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -590,7 +590,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -660,7 +660,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1347,10 +1347,10 @@
 <p>A legtöbb Klipper beállítást egy "nyomtató konfigurációs fájl" határozza meg, amelyet a Raspberry Pi tárol. A megfelelő konfigurációs fájlt gyakran úgy találhatjuk meg, hogy a Klipper <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config könyvtárában</a> keresünk egy "printer-" előtaggal kezdődő fájlt, amely megfelel a célnyomtatónak. A Klipper konfigurációs fájl tartalmazza a nyomtatóra vonatkozó technikai információkat, amelyekre a telepítés során szükség lesz.</p>
 <p>Ha nincs megfelelő nyomtató konfigurációs fájl a Klipper config könyvtárban, akkor keresse meg a nyomtató gyártójának weboldalát, hogy van-e megfelelő Klipper konfigurációs fájljuk.</p>
 <p>Ha nem találja a nyomtatóhoz tartozó konfigurációs fájlt, de a nyomtató vezérlőpanelének típusa ismert, akkor keressen egy megfelelő <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config fájlt</a>, amely "generic-" előtaggal kezdődik. Ezekkel a nyomtató vezérlőpanel példafájlokkal sikeresen elvégezhető a kezdeti telepítés, de a nyomtató teljes funkcionalitásának eléréséhez némi testreszabásra lesz szükség.</p>
-<p>Lehetőség van új nyomtatókonfiguráció nulláról történő meghatározására is. Ehhez azonban jelentős műszaki ismeretekre van szükség a nyomtatóval és annak elektronikájával kapcsolatban. A legtöbb felhasználónak ajánlott, hogy egy megfelelő konfigurációs fájllal kezdje. Ha új, egyéni nyomtató konfigurációs fájlt hoz létre, akkor a legközelebbi példával <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config fájl</a> kezdje, és további információkért használja a Klipper <a href="Config_Reference.html">konfigurációs hivatkozás</a> című dokumentumot.</p>
+<p>Lehetőség van új nyomtatókonfiguráció nulláról történő meghatározására is. Ehhez azonban jelentős műszaki ismeretekre van szükség a nyomtatóval és annak elektronikájával kapcsolatban. A legtöbb felhasználónak ajánlott, hogy egy megfelelő konfigurációs fájllal kezd. Ha új, egyéni nyomtató konfigurációs fájlt hoz létre, akkor a legközelebbi példával <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config fájl</a> kezd, és további információkért használja a Klipper <a href="Config_Reference.html">konfigurációs hivatkozás</a> című dokumentumot.</p>
 <h2 id="os-kepfajl-elokeszitese">OS képfájl előkészítése<a class="headerlink" href="#os-kepfajl-elokeszitese" title="Permanent link">&para;</a></h2>
-<p>Kezdje az <a href="https://github.com/guysoft/OctoPi">OctoPi</a> telepítésével a Raspberry Pi számítógépére. Használja az OctoPi v0.17.0-s vagy újabb verzióját. A kiadásokkal kapcsolatos információkért tekintse meg az <a href="https://github.com/guysoft/OctoPi/releases">OctoPi-kiadásokat</a>. Ellenőrizni kell, hogy az OctoPi elindul-e, és hogy az OctoPrint webszerver működik-e. Miután csatlakozott az OctoPrint weboldalhoz, kövesse az utasításokat az OctoPrint 1.4.2-es vagy újabb verziójára való frissítéséhez.</p>
-<p>Az OctoPi telepítése és az OctoPrint frissítése után néhány rendszerparancs futtatásához szükség lesz az "SSH" kapcsolatra a célgéphez. Ha Linux vagy MacOS asztali számítógépet használ, akkor az "SSH" szoftvernek már telepítve kell lennie az asztalon. Vannak ingyenes ssh-kliensek más asztali számítógépekhez (pl. <a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a>). Az SSH segédprogrammal csatlakozzon a Raspberry Pi-hez (ssh pi@octopi -- a jelszó "raspberry"), és futtassa a következő parancsokat:</p>
+<p>Kezd az <a href="https://github.com/guysoft/OctoPi">OctoPi</a> telepítésével a Raspberry Pi számítógépére. Használja az OctoPi v0.17.0-s vagy újabb verzióját. A kiadásokkal kapcsolatos információkért tekintse meg az <a href="https://github.com/guysoft/OctoPi/releases">OctoPi-kiadásokat</a>. Ellenőrizni kell, hogy az OctoPi elindul-e, és hogy az OctoPrint webszerver működik-e. Miután csatlakozott az OctoPrint weboldalhoz, kövesse az utasításokat az OctoPrint 1.4.2-es vagy újabb verziójára való frissítéséhez.</p>
+<p>Az OctoPi telepítése és az OctoPrint frissítése után néhány rendszerparancs futtatásához szükség lesz az "SSH" kapcsolatra a célgéphez. Ha Linux vagy MacOS asztali számítógépet használ, akkor az "SSH" szoftvernek már telepítve kell lennie a gépen. Vannak ingyenes ssh-kliensek más asztali számítógépekhez (pl. <a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a>). Az SSH segédprogrammal csatlakozzon a Raspberry Pi-hez (ssh pi@octopi -- a jelszó "raspberry"), és futtassa a következő parancsokat:</p>
 <div class="highlight"><pre><span></span><code>git clone https://github.com/Klipper3d/klipper
 ./klipper/scripts/install-octopi.sh
 </code></pre></div>
@@ -1386,14 +1386,14 @@ sudo service klipper start
 <p>Amikor először éget, győződjön meg arról, hogy az OctoPrint nincs közvetlenül csatlakoztatva a nyomtatóhoz (az OctoPrint weboldalon a "Kapcsolat" részben kattintson a "Kapcsolat bontása" gombra).</p>
 <h2 id="az-octoprint-beallitasa-a-klipper-hasznalatahoz">Az OctoPrint beállítása a Klipper használatához<a class="headerlink" href="#az-octoprint-beallitasa-a-klipper-hasznalatahoz" title="Permanent link">&para;</a></h2>
 <p>Az OctoPrint webszervert konfigurálni kell, hogy kommunikáljon a Klipper gazdagép szoftverével. Egy webböngészővel jelentkezzen be az OctoPrint weboldalra, majd konfigurálja a következő elemeket:</p>
-<p>Lépjen a Beállítások lapra (a csavarkulcs ikon az oldal tetején). A "További soros portok" részben a "Soros kapcsolat" alatt adja hozzá a "/tmp/printer" elemet. Ezután kattintson a "Mentés" gombra.</p>
-<p>Lépjen újra a Beállítások fülre, és a „Soros kapcsolat” alatt módosítsa a „Soros port” beállítást „/tmp/printer”-re.</p>
-<p>A Beállítások lapon lépjen a „Viselkedés” allapra, és válassza a „Folyamatban lévő nyomtatás törlése, de továbbra is csatlakozva maradjon a nyomtatóhoz” lehetőséget. Kattintson a "Mentés" gombra.</p>
+<p>Lépj a Beállítások lapra (a csavarkulcs ikon az oldal tetején). A "További soros portok" részben a "Soros kapcsolat" alatt add hozzá a "/tmp/printer" elemet. Ezután kattintson a "Mentés" gombra.</p>
+<p>Lépj újra a Beállítások fülre, és a „Soros kapcsolat” alatt módosítsa a „Soros port” beállítást „/tmp/printer”-re.</p>
+<p>A Beállítások lapon lépj a „Viselkedés” allapra, és válassza a „Folyamatban lévő nyomtatás törlése, de továbbra is csatlakozva maradjon a nyomtatóhoz” lehetőséget. Kattintson a "Mentés" gombra.</p>
 <p>A főoldalon, a „Kapcsolat” részben (az oldal bal felső sarkában) győződjön meg arról, hogy a „Soros Port” beállítása „/tmp/printer”, majd kattintson a „Csatlakozás” gombra. (Ha a „/tmp/printer” nem elérhető, próbálja meg újratölteni az oldalt.)</p>
-<p>A csatlakozás után lépjen a "Terminal" fülre, és írja be a "status" kifejezést (idézőjelek nélkül) a parancsbeviteli mezőbe, majd kattintson a "Küldés" gombra. A terminálablak valószínűleg hibát jelez a konfigurációs fájl megnyitásakor – ez azt jelenti, hogy az OctoPrint sikeresen kommunikál a Klipperrel. Tovább a következő részhez.</p>
+<p>A csatlakozás után lépj a "Terminal" fülre, és írja be a "status" kifejezést (idézőjelek nélkül) a parancsbeviteli mezőbe, majd kattintson a "Küldés" gombra. A terminálablak valószínűleg hibát jelez a konfigurációs fájl megnyitásakor – ez azt jelenti, hogy az OctoPrint sikeresen kommunikál a Klipperrel. Tovább a következő részhez.</p>
 <h2 id="a-klipper-beallitasa">A Klipper beállítása<a class="headerlink" href="#a-klipper-beallitasa" title="Permanent link">&para;</a></h2>
 <p>A következő lépés a <a href="#obtain-a-klipper-configuration-file">nyomtató konfigurációs fájl</a> átmásolása a Raspberry Pi-re.</p>
-<p>Vitathatatlanul a Klipper konfigurációs fájl beállításának legegyszerűbb módja egy olyan asztali szerkesztő használata, amely támogatja a fájlok szerkesztését az "scp" és/vagy "sftp" protokollokon keresztül. Vannak szabadon elérhető eszközök, amelyek támogatják ezt (pl. Notepad++, WinSCP és Cyberduck). Töltse be a nyomtató konfigurációs fájlját a szerkesztőprogramba, majd mentse el egy "printer.cfg" nevű fájlként a pi felhasználó home könyvtárába (pl. /home/pi/printer.cfg).</p>
+<p>Vitathatatlanul a Klipper konfigurációs fájl beállításának legegyszerűbb módja egy olyan asztali szerkesztő használata, amely támogatja a fájlok szerkesztését az "scp" és/vagy "sftp" protokollokon keresztül. Vannak szabadon elérhető eszközök, amelyek támogatják ezt (pl. Notepad++, WinSCP és Cyberduck). Töltse be a nyomtató konfigurációs fájlját a szerkesztőprogramba, majd mentsd el egy "printer.cfg" nevű fájlként a pi felhasználó home könyvtárába (pl. /home/pi/printer.cfg).</p>
 <p>Alternatívaként a fájlt közvetlenül a Raspberry Pi-n is lehet másolni és szerkeszteni SSH-n keresztül. Ez valahogy így nézhet ki (ügyeljünk arra, hogy a parancsot frissítsük a megfelelő nyomtató konfigurációs fájlnévvel):</p>
 <div class="highlight"><pre><span></span><code>cp ~/klipper/config/example-cartesian.cfg ~/printer.cfg
 nano ~/printer.cfg
@@ -1413,7 +1413,7 @@ serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 </code></pre></div>
 
 <p>A fájl létrehozása és szerkesztése után az OctoPrint webes terminálján ki kell adni egy "újraindítás" parancsot a konfiguráció betöltéséhez. A "status" parancs azt jelenti, hogy a nyomtató készen áll, ha a Klipper config fájl sikeresen beolvasásra került, és a mikrokontroller sikeresen meg lett találva és konfigurálva.</p>
-<p>A nyomtató konfigurációs fájljának testreszabásakor nem ritka, hogy a Klipper konfigurációs hibát jelez. Ha hiba lép fel, végezze el a szükséges javításokat a nyomtató konfigurációs fájljában, és adja ki az "újraindítás" parancsot, amíg az "állapot" nem jelzi, hogy a nyomtató készen áll.</p>
+<p>A nyomtató konfigurációs fájljának testreszabásakor nem ritka, hogy a Klipper konfigurációs hibát jelez. Ha hiba lép fel, végezze el a szükséges javításokat a nyomtató konfigurációs fájljában, és add ki az "újraindítás" parancsot, amíg az "állapot" nem jelzi, hogy a nyomtató készen áll.</p>
 <p>A Klipper az OctoPrint terminállapon keresztül jelenti a hibaüzeneteket. A "status" paranccsal a hibaüzenetek újra jelenthetők. A Klipper alapértelmezett indítószkriptje egy naplót is elhelyez a <strong>/tmp/klippy.log</strong> fájlban, amely részletesebb információkat tartalmaz.</p>
 <p>Miután a Klipper jelenti, hogy a nyomtató készen áll, folytassa a <a href="Config_checks.html">config check</a> című dokumentumal, hogy elvégezzen néhány alapvető ellenőrzést a config fájlban lévő definíciókon. További információkért lásd a fő <a href="Overview.html">dokumentációs hivatkozás</a> című rész.</p>
 

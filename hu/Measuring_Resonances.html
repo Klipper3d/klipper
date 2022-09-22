@@ -503,14 +503,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_4">
-          Ágy szint
+          Tárgyasztal szint
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Ágy szint" data-md-level="2">
+      <nav class="md-nav" aria-label="Tárgyasztal szint" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_4">
           <span class="md-nav__icon md-icon"></span>
-          Ágy szint
+          Tárgyasztal szint
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -521,7 +521,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Level.html" class="md-nav__link">
-        Ágy szintezése
+        Tárgyasztal szintezése
       </a>
     </li>
   
@@ -591,7 +591,7 @@
   
     <li class="md-nav__item">
       <a href="Bed_Mesh.html" class="md-nav__link">
-        Ágy háló
+        Tárgyasztal háló
       </a>
     </li>
   
@@ -1506,11 +1506,11 @@
 
 
 <h1 id="rezonanciak-merese">Rezonanciák mérése<a class="headerlink" href="#rezonanciak-merese" title="Permanent link">&para;</a></h1>
-<p>A Klipper beépített támogatással rendelkezik az ADXL345 gyorsulásmérőhöz, amely a nyomtató rezonanciáinak mérésére használható a különböző tengelyek esetében, és automatikus hangolással <a href="Resonance_Compensation.html">rezonancia kompenzációval</a> a rezonanciák kompenzálására. Vegye figyelembe, hogy az ADXL345 használata némi forrasztást és krimpelést igényel. Az ADXL345 közvetlenül csatlakoztatható egy Raspberry Pi-hez, vagy egy MCU-kártya SPI-interfészéhez (meglehetősen gyorsnak kell lennie).</p>
-<p>Az ADXL345 beszerzésekor vegye figyelembe, hogy számos különböző NYÁK lapkakialakítás és különböző klónok léteznek. Győződjön meg róla, hogy a kártya támogatja az SPI módot (kis számú kártya úgy tűnik, hogy szorosan konfigurálva van az I2C-re az SDO GND-re húzásával), és ha 5V-os nyomtató MCU-hoz csatlakozik ellenőrizze,hogy rendelkezik feszültségszabályozóval és szintválasztóval.</p>
+<p>A Klipper beépített támogatással rendelkezik az ADXL345 gyorsulásmérőhöz, amely a nyomtató rezonanciáinak mérésére használható a különböző tengelyek esetében, és automatikus hangolással <a href="Resonance_Compensation.html">rezonancia kompenzációval</a> a rezonanciák kompenzálására. Vedd figyelembe, hogy az ADXL345 használata némi forrasztást és krimpelést igényel. Az ADXL345 közvetlenül csatlakoztatható egy Raspberry Pi-hez, vagy egy MCU-kártya SPI-interfészéhez (meglehetősen gyorsnak kell lennie).</p>
+<p>Az ADXL345 beszerzésekor vedd figyelembe, hogy számos különböző NYÁK lapkakialakítás és különböző klónok léteznek. Győződjön meg róla, hogy a kártya támogatja az SPI módot (kis számú kártya úgy tűnik, hogy szorosan konfigurálva van az I2C-re az SDO GND-re húzásával), és ha 5V-os nyomtató MCU-hoz csatlakozik ellenőrizze,hogy rendelkezik feszültségszabályozóval és szintválasztóval.</p>
 <h2 id="telepitesi-utasitasok">Telepítési utasítások<a class="headerlink" href="#telepitesi-utasitasok" title="Permanent link">&para;</a></h2>
 <h3 id="vezetekek">Vezetékek<a class="headerlink" href="#vezetekek" title="Permanent link">&para;</a></h3>
-<p>Az ADXL345-öt SPI-n keresztül kell csatlakoztatnia a Raspberry Pi-hez. Vegye figyelembe, hogy az ADXL345 dokumentációja által javasolt I2C kapcsolatnak túl alacsony az adatforgalmi képessége, és <strong>nem fog működni</strong>. Az ajánlott kapcsolási séma:</p>
+<p>Az ADXL345-öt SPI-n keresztül kell csatlakoztatnia a Raspberry Pi-hez. Vedd figyelembe, hogy az ADXL345 dokumentációja által javasolt I2C kapcsolatnak túl alacsony az adatforgalmi képessége, és <strong>nem fog működni</strong>. Az ajánlott kapcsolási séma:</p>
 <table>
 <thead>
 <tr>
@@ -1591,10 +1591,10 @@
 <p>A gyorsulásmérőt a nyomtatófejhez kell csatlakoztatni. Meg kell tervezni egy megfelelő rögzítést, amely illeszkedik a saját 3D nyomtatóhoz. A gyorsulásmérő tengelyeit jobb a nyomtató tengelyeihez igazítani (de ha ez kényelmesebbé teszi, a tengelyek felcserélhetők - azaz nem kell az X tengelyt X-hez igazítani, és így tovább. Akkor is rendben kell lennie, ha a gyorsulásmérő Z tengelye a nyomtató X tengelye, stb).</p>
 <p>Példa az ADXL345 SmartEffectorra történő felszerelésére:</p>
 <p><img alt="ADXL345 on SmartEffector" src="img/adxl345-mount.jpg" /></p>
-<p>Vegye figyelembe, hogy egy ágycsúsztatós nyomtatónál 2 rögzítést kell tervezni: egyet a nyomtatófejhez és egyet az ágyhoz, és a méréseket kétszer kell elvégezni. További részletekért lásd a megfelelő <a href="#bed-slinger-nyomtatok">szakaszt</a>.</p>
+<p>Vedd figyelembe, hogy egy tárgyasztal csúsztatós nyomtatónál 2 rögzítést kell tervezni: egyet a nyomtatófejhez és egyet a tárgyasztalhoz, és a méréseket kétszer kell elvégezni. További részletekért lásd a megfelelő <a href="#bed-slinger-nyomtatok">szakaszt</a>.</p>
 <p><strong>Figyelem:</strong> győződjön meg arról, hogy a gyorsulásmérő és a helyére rögzítő csavarok nem érnek a nyomtató fém részeihez. Alapvetően a rögzítést úgy kell kialakítani, hogy biztosítsa a gyorsulásmérő elektromos szigetelését a nyomtató keretétől. Ennek elmulasztása földhurkot hozhat létre a rendszerben, ami károsíthatja az elektronikát.</p>
 <h3 id="szoftver-telepitese">Szoftver telepítése<a class="headerlink" href="#szoftver-telepitese" title="Permanent link">&para;</a></h3>
-<p>Vegye figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először futtassa a Raspberry Pi számítógépén a következő parancsokat:</p>
+<p>Vedd figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először futtassa a Raspberry Pi számítógépén a következő parancsokat:</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
 sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
 </code></pre></div>
@@ -1603,10 +1603,10 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v numpy
 </code></pre></div>
 
-<p>Vegye figyelembe, hogy a CPU teljesítményétől függően ez <em>sok</em> időt vehet igénybe, akár 10-20 percet is. Legyen türelmes, és várja meg a telepítés befejezését. Bizonyos esetekben, ha a kártyán túl kevés RAM van, a telepítés meghiúsulhat, és engedélyeznie kell a swapot.</p>
+<p>Vedd figyelembe, hogy a CPU teljesítményétől függően ez <em>sok</em> időt vehet igénybe, akár 10-20 percet is. Legyen türelmes, és várja meg a telepítés befejezését. Bizonyos esetekben, ha a kártyán túl kevés RAM van, a telepítés meghiúsulhat, és engedélyeznie kell a swapot.</p>
 <p>Ezután ellenőrizze és kövesse az <a href="RPi_microcontroller.html">RPi Microcontroller dokumentum</a> utasításait a "linux mcu" beállításához a Raspberry Pi-n.</p>
 <p>Győződjünk meg róla, hogy a Linux SPI-illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az SPI engedélyezésével az "Interfacing options" menüben.</p>
-<p>Az ADXL345 esetében adja hozzá a következőket a printer.cfg fájlhoz:</p>
+<p>Az ADXL345 esetében add hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -1619,7 +1619,7 @@ probe_points:
     100, 100, 20 # egy példa
 </code></pre></div>
 
-<p>Javasoljuk, hogy 1 mérőpontal kezdje, a nyomtatási ágy közepén, kissé felette.</p>
+<p>Javasoljuk, hogy 1 mérőpontal kezd, a nyomtatási tárgyasztal közepén, kissé felette.</p>
 <p>Az MPU-9250 esetében győződjön meg róla, hogy a Linux I2C illesztőprogram engedélyezve van, és az átviteli sebesség 400000-re van állítva (további részletekért lásd az <a href="RPi_microcontroller.html#optional-enabling-i2c">I2C engedélyezése</a> részt). Ezután adjuk hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
@@ -1639,7 +1639,7 @@ probe_points:
 <h3 id="a-beallitas-ellenorzese">A beállítás ellenőrzése<a class="headerlink" href="#a-beallitas-ellenorzese" title="Permanent link">&para;</a></h3>
 <p>Most már tesztelheti a kapcsolatot.</p>
 <ul>
-<li>A "nem ágyat érintő" (pl. egy gyorsulásmérő), az Octoprintben írja be a <code>ACCELEROMETER_QUERY</code> bejegyzést</li>
+<li>A "nem tárgyasztalt érintő" (pl. egy gyorsulásmérő), az Octoprintben írja be a <code>ACCELEROMETER_QUERY</code> bejegyzést</li>
 <li>A "bed-slingers" (pl. egynél több gyorsulásmérő) esetében írja be a <code>ACCELEROMETER_QUERY CHIP=&lt;chip&gt;</code> ahol <code>&lt;chip&gt;</code> a chip neve a beírt formában, pl. <code>CHIP=bed</code> (lásd: <a href="#bed-slinger-nyomtatok">bed-slinger</a>) az összes telepített gyorsulásmérő chiphez.</li>
 </ul>
 <p>A gyorsulásmérő aktuális méréseit kell látnia, beleértve a szabadesés gyorsulását is, pl.</p>
@@ -1653,7 +1653,7 @@ probe_points:
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=X
 </code></pre></div>
 
-<p>Vegye figyelembe, hogy az X tengelyen rezgéseket hoz létre. A bemeneti alakítást is letiltja, ha az korábban engedélyezve volt, mivel a rezonancia tesztelés nem érvényes a bemeneti alakító engedélyezésével.</p>
+<p>Vedd figyelembe, hogy az X tengelyen rezgéseket hoz létre. A bemeneti alakítást is letiltja, ha az korábban engedélyezve volt, mivel a rezonancia tesztelés nem érvényes a bemeneti alakító engedélyezésével.</p>
 <p><strong>Figyelem!</strong> Az első alkalommal mindenképpen figyelje meg a nyomtatót, hogy a rezgések ne legyenek túl hevesek (az <code>M112</code> paranccsal vészhelyzet esetén megszakítható a teszt; remélhetőleg azonban erre nem kerül sor). Ha a rezgések mégis túl erősek lesznek, megpróbálhat az alapértelmezettnél alacsonyabb értéket megadni az <code>accel_per_hz</code> paraméterhez a <code>[resonance_tester]</code> szakaszban, pl.</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 accel_chip: adxl345
@@ -1699,7 +1699,7 @@ max_accel: 3000 # nem haladhatja meg a becsült max_accel értéket az X és Y t
 <p>vagy választhat más konfigurációt is a generált diagramok alapján: a diagramokon a teljesítményspektrális sűrűség csúcsai megfelelnek a nyomtató rezonanciafrekvenciáinak.</p>
 <p>Megjegyzendő, hogy alternatívaként a bemeneti alakító automatikus kalibrációját a Klipperből <a href="#bemeneti-formazo-automatikus-kalibralasa">közvetlenül</a> is futtathatja, ami például a bemeneti formázó <a href="#bemeneti-formazo-ujrakalibralasa">újrakalibrálásához</a> lehet hasznos.</p>
 <h3 id="bed-slinger-nyomtatok">Bed-slinger nyomtatók<a class="headerlink" href="#bed-slinger-nyomtatok" title="Permanent link">&para;</a></h3>
-<p>Ha az Ön nyomtatója ágya Y tengelyen van, akkor meg kell változtatnia a gyorsulásmérő helyét az X és Y tengelyek mérései között: az X tengely rezonanciáit a nyomtatófejre szerelt gyorsulásmérővel, az Y tengely rezonanciáit pedig az ágyra szerelt gyorsulásmérővel kell mérnie (a szokásos nyomtató beállítással).</p>
+<p>Ha az Ön nyomtatója tárgyasztala Y tengelyen van, akkor meg kell változtatnia a gyorsulásmérő helyét az X és Y tengelyek mérései között: az X tengely rezonanciáit a nyomtatófejre szerelt gyorsulásmérővel, az Y tengely rezonanciáit pedig a tárgyasztalra szerelt gyorsulásmérővel kell mérnie (a szokásos nyomtató beállítással).</p>
 <p>Azonban két gyorsulásmérőt is csatlakoztathatsz egyszerre, bár ezeket különböző lapokhoz kell csatlakoztatni (mondjuk egy RPi és egy nyomtató MCU laphoz), vagy két különböző fizikai SPI interfészhez ugyanazon a lapon (ritkán elérhető). Ezután a következő módon lehet őket konfigurálni:</p>
 <div class="highlight"><pre><span></span><code>[adxl345 hotend]
 # Feltételezve, hogy a `hotend` chip egy RPi-hez van csatlakoztatva.
@@ -1710,7 +1710,7 @@ cs_pin: rpi:None
 cs_pin: ...  # nyomtató alaplap SPI chip kiválasztó (CS) tűje
 
 [resonance_tester]
-# Feltételezve az Y ágyas nyomtató tipikus beállítását.
+# Feltételezve az Y tárgyasztalos nyomtató tipikus beállítását.
 accel_chip_x: adxl345 hotend
 accel_chip_y: adxl345 bed
 probe_points: ...
@@ -1734,7 +1734,7 @@ A túl nagy simítás elkerülése érdekében a &#39;3hump_ei&#39; esetében ja
 Az ajánlott alakító 2hump_ei @ 45,2 Hz.
 </code></pre></div>
 
-<p>Vegye figyelembe, hogy a bejelentett <code>simítás</code> értékek absztrakt vetített értékek. Ezek az értékek különböző konfigurációk összehasonlítására használhatók: minél magasabb az érték, annál nagyobb simítást hoz létre a formázó. Ezek a simítási értékek azonban nem jelentik a simítás valódi mértékét, mivel a tényleges simítás a <a href="#a-max_accel-kivalasztasa"><code>max_accel</code></a> és <code>square_corner_velocity</code> paraméterektől függ. Ezért érdemes néhány tesztnyomatot nyomtatni, hogy lássuk, pontosan mekkora simítást hoz létre a kiválasztott konfiguráció.</p>
+<p>Vedd figyelembe, hogy a bejelentett <code>simítás</code> értékek absztrakt vetített értékek. Ezek az értékek különböző konfigurációk összehasonlítására használhatók: minél magasabb az érték, annál nagyobb simítást hoz létre a formázó. Ezek a simítási értékek azonban nem jelentik a simítás valódi mértékét, mivel a tényleges simítás a <a href="#a-max_accel-kivalasztasa"><code>max_accel</code></a> és <code>square_corner_velocity</code> paraméterektől függ. Ezért érdemes néhány tesztnyomatot nyomtatni, hogy lássuk, pontosan mekkora simítást hoz létre a kiválasztott konfiguráció.</p>
 <p>A fenti példában a javasolt alakító paraméterek nem rosszak, de mi van akkor, ha az X tengelyen kevesebb simítást szeretne elérni? Megpróbálhatja korlátozni a maximális alakító simítást a következő paranccsal:</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
 </code></pre></div>
@@ -1755,7 +1755,7 @@ Az ajánlott alakító 3hump_ei @ 72,6 Hz.
 </code></pre></div>
 
 <p>Ha összehasonlítjuk a korábban javasolt paraméterekkel, a rezgések kicsit nagyobbak, de a simítás lényegesen kisebb, mint korábban, ami nagyobb maximális gyorsulást tesz lehetővé.</p>
-<p>A <code>max_smoothing</code> paraméter kiválasztásakor a próbálgatás és a tévedés módszerét alkalmazhatjuk. Próbáljon ki néhány különböző értéket, és nézze meg, milyen eredményeket kap. Vegye figyelembe, hogy a bemeneti alakító által előállított tényleges simítás elsősorban a nyomtató legalacsonyabb rezonanciafrekvenciájától függ: minél magasabb a legalacsonyabb rezonancia frekvenciája - annál kisebb a simítás. Ezért ha azt kéri a parancsfájltól, hogy a bemeneti alakító olyan konfigurációját keresse meg, amely irreálisan kis simítással rendelkezik, akkor ez a legalacsonyabb rezonanciafrekvenciákon (amelyek jellemzően a nyomatokon is jobban láthatóak) megnövekedett rezgés árán fog történni. Ezért mindig ellenőrizze kétszeresen a szkript által jelzett vetített maradó rezgéseket, és győződjön meg róla, hogy azok nem túl magasak.</p>
+<p>A <code>max_smoothing</code> paraméter kiválasztásakor a próbálgatás és a tévedés módszerét alkalmazhatjuk. Próbáljon ki néhány különböző értéket, és nézze meg, milyen eredményeket kap. Vedd figyelembe, hogy a bemeneti alakító által előállított tényleges simítás elsősorban a nyomtató legalacsonyabb rezonanciafrekvenciájától függ: minél magasabb a legalacsonyabb rezonancia frekvenciája - annál kisebb a simítás. Ezért ha azt kéri a parancsfájltól, hogy a bemeneti alakító olyan konfigurációját keresse meg, amely irreálisan kis simítással rendelkezik, akkor ez a legalacsonyabb rezonanciafrekvenciákon (amelyek jellemzően a nyomatokon is jobban láthatóak) megnövekedett rezgés árán fog történni. Ezért mindig ellenőrizze kétszeresen a szkript által jelzett vetített maradó rezgéseket, és győződjön meg róla, hogy azok nem túl magasak.</p>
 <p>Ha mindkét tengelyhez jó <code>max_smoothing</code> értéket választott, akkor azt a <code>printer.cfg</code> állományban tárolhatja a következő módon</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 accel_chip: ...
@@ -1765,8 +1765,8 @@ max_smoothing: 0.25 # egy példa
 
 <p>Ezután, ha a jövőben <a href="#bemeneti-formazo-ujrakalibralasa">újraindítja</a> a bemeneti alakító automatikus hangolását a <code>SHAPER_CALIBRATE</code> Klipper parancs segítségével, akkor a tárolt <code>max_smoothing</code> értéket fogja referenciaként használni.</p>
 <h3 id="a-max_accel-kivalasztasa">A max_accel kiválasztása<a class="headerlink" href="#a-max_accel-kivalasztasa" title="Permanent link">&para;</a></h3>
-<p>Mivel a bemeneti alakító némi simítást okozhat az elemekben, különösen nagy gyorsulásoknál, továbbra is meg kell választani a <code>max_accel</code> értéket, amely nem okoz túl nagy simítást a nyomtatott alkatrészekben. Egy kalibrációs szkript becslést ad a <code>max_accel</code> paraméterre, amely nem okozhat túl nagy simítást. Vegye figyelembe, hogy a kalibrációs szkript által megjelenített <code>max_accel</code> csak egy elméleti maximum, amelynél az adott alakító még képes úgy dolgozni, hogy nem okoz túl nagy simítást. Semmiképpen sem ajánlott ezt a gyorsulást beállítani a nyomtatáshoz. A nyomtatója által elviselhető maximális gyorsulás a nyomtató mechanikai tulajdonságaitól és a használt léptetőmotorok maximális nyomatékától függ. Ezért javasolt a <code>max_accel</code> beállítása a <code>[nyomtató]</code> szakaszban, amely nem haladja meg az X és Y tengelyek becsült értékeit, valószínűleg némi konzervatív biztonsági tartalékkal.</p>
-<p>Alternatívaként kövesse <a href="Resonance_Compensation.html#selecting-max_accel">ezt</a> a részt a bemeneti alakító hangolási útmutatójában, és nyomtassa ki a tesztmodellt a <code>max_accel</code> paraméter kísérleti kiválasztásához.</p>
+<p>Mivel a bemeneti alakító némi simítást okozhat az elemekben, különösen nagy gyorsulásoknál, továbbra is meg kell választani a <code>max_accel</code> értéket, amely nem okoz túl nagy simítást a nyomtatott alkatrészekben. Egy kalibrációs szkript becslést ad a <code>max_accel</code> paraméterre, amely nem okozhat túl nagy simítást. Vedd figyelembe, hogy a kalibrációs szkript által megjelenített <code>max_accel</code> csak egy elméleti maximum, amelynél az adott alakító még képes úgy dolgozni, hogy nem okoz túl nagy simítást. Semmiképpen sem ajánlott ezt a gyorsulást beállítani a nyomtatáshoz. A nyomtatója által elviselhető maximális gyorsulás a nyomtató mechanikai tulajdonságaitól és a használt léptetőmotorok maximális nyomatékától függ. Ezért javasolt a <code>max_accel</code> beállítása a <code>[nyomtató]</code> szakaszban, amely nem haladja meg az X és Y tengelyek becsült értékeit, valószínűleg némi konzervatív biztonsági tartalékkal.</p>
+<p>Alternatívaként kövesse <a href="Resonance_Compensation.html#selecting-max_accel">ezt</a> a részt a bemeneti alakító hangolási útmutatójában, és nyomtasd ki a tesztmodellt a <code>max_accel</code> paraméter kísérleti kiválasztásához.</p>
 <p>Ugyanez a figyelmeztetés vonatkozik a bemeneti alakító <a href="#bemeneti-formazo-automatikus-kalibralasa">automatikus kalibrálás</a> <code>SHAPER_CALIBRATE</code> paranccsal történő használatára is: az automatikus kalibrálás után továbbra is szükséges a megfelelő <code>max_accel</code> érték kiválasztása, és a javasolt gyorsulási korlátok nem lesznek automatikusan alkalmazva.</p>
 <p>Ha a formázó újrakalibrálását végzi, és a javasolt formázó konfigurációhoz tartozó simítás majdnem megegyezik az előző kalibrálás során kapott értékkel, ez a lépés kihagyható.</p>
 <h3 id="egyeni-tengelyek-tesztelese">Egyéni tengelyek tesztelése<a class="headerlink" href="#egyeni-tengelyek-tesztelese" title="Permanent link">&para;</a></h3>
@@ -1812,8 +1812,8 @@ A túl nagy simítás elkerülése érdekében a &#39;3hump_ei&#39; esetében ja
 Ajánlott shaper_type_y = mzv, shaper_freq_y = 36,8 Hz
 </code></pre></div>
 
-<p>Ha egyetért a javasolt paraméterekkel, akkor a <code>SAVE_CONFIG</code> parancsot most végre lehet hajtani a paraméterek mentéséhez és a Klipper újraindításához. Vegye figyelembe, hogy ez nem frissíti a <code>max_accel</code> értéket a <code>[printer]</code> szakaszban. Ezt manuálisan kell frissítenie a <a href="#a-max_accel-kivalasztasa">max_accel kiválasztása</a> szakaszban leírtak szerint.</p>
-<p>Ha a nyomtatója Y tengelyén van az ágy akkor megadhatja, hogy melyik tengelyt kívánja tesztelni, így a tesztek között megváltoztathatja a gyorsulásmérő rögzítési pontját (alapértelmezés szerint a teszt mindkét tengelyen végrehajtásra kerül):</p>
+<p>Ha egyetért a javasolt paraméterekkel, akkor a <code>SAVE_CONFIG</code> parancsot most végre lehet hajtani a paraméterek mentéséhez és a Klipper újraindításához. Vedd figyelembe, hogy ez nem frissíti a <code>max_accel</code> értéket a <code>[printer]</code> szakaszban. Ezt manuálisan kell frissítenie a <a href="#a-max_accel-kivalasztasa">max_accel kiválasztása</a> szakaszban leírtak szerint.</p>
+<p>Ha a nyomtatója Y tengelyén van a tárgyasztal akkor megadhatja, hogy melyik tengelyt kívánja tesztelni, így a tesztek között megváltoztathatja a gyorsulásmérő rögzítési pontját (alapértelmezés szerint a teszt mindkét tengelyen végrehajtásra kerül):</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Y
 </code></pre></div>
 
@@ -1832,16 +1832,16 @@ Ajánlott shaper_type_y = mzv, shaper_freq_y = 36,8 Hz
 TEST_RESONANCES AXIS=X OUTPUT=raw_data
 </code></pre></div>
 
-<p>a <code>SET_INPUT_SHAPER</code> parancs hibáinak figyelmen kívül hagyása. A <code>TEST_RESONANCES</code> parancshoz adja meg a kívánt teszttengelyt. A nyers adatok az RPi <code>/tmp</code> könyvtárába kerülnek kiírásra.</p>
+<p>a <code>SET_INPUT_SHAPER</code> parancs hibáinak figyelmen kívül hagyása. A <code>TEST_RESONANCES</code> parancshoz add meg a kívánt teszttengelyt. A nyers adatok az RPi <code>/tmp</code> könyvtárába kerülnek kiírásra.</p>
 <p>A nyers adatokat úgy is megkaphatjuk, ha a <code>ACCELEROMETER_MEASURE</code> parancsot kétszer futtatjuk valamilyen normál nyomtatási tevékenység közben - először a mérések elindításához, majd azok leállításához és a kimeneti fájl írásához. További részletekért lásd a <a href="G-Codes.html#adxl345">G-kódok</a> című dokumentumot.</p>
 <p>Az adatokat később a következő szkriptekkel lehet feldolgozni: <code>scripts/graph_accelerometer.py</code> és <code>scripts/calibrate_shaper.py</code>. Mindkettő egy vagy több nyers csv-fájlt fogad el bemenetként a módtól függően. A graph_accelerometer.py szkript többféle üzemmódot támogat:</p>
 <ul>
 <li>nyers gyorsulásmérő adatok ábrázolása (használja a <code>-r</code> paramétert), csak 1 bemenet támogatott;</li>
 <li>frekvenciaválasz ábrázolása (nincs szükség további paraméterekre), ha több bemenet van megadva, az átlagos frekvenciaválasz kerül kiszámításra;</li>
-<li>több bemenet frekvenciaválaszának összehasonlítása (használja a <code>-c</code> paramétert); a <code>-a x</code>, <code>-a y</code> vagy <code>-a z</code> paraméterrel ezen felül megadhatja, hogy melyik gyorsulásmérő tengelyt vegye figyelembe (ha nincs megadva, az összes tengely rezgéseinek összegét használja);</li>
-<li>a spektrogram ábrázolása (használja a <code>-s</code> paramétert), csak 1 bemenet támogatott; a <code>-a x</code>, <code>-a y</code> vagy <code>-a z</code> paraméterrel ezen felül megadhatja, hogy melyik gyorsulásmérő tengelyt vegye figyelembe (ha nincs megadva, akkor az összes tengely rezgéseinek összegét használja).</li>
+<li>több bemenet frekvenciaválaszának összehasonlítása (használja a <code>-c</code> paramétert); a <code>-a x</code>, <code>-a y</code> vagy <code>-a z</code> paraméterrel ezen felül megadhatja, hogy melyik gyorsulásmérő tengelyt vedd figyelembe (ha nincs megadva, az összes tengely rezgéseinek összegét használja);</li>
+<li>a spektrogram ábrázolása (használja a <code>-s</code> paramétert), csak 1 bemenet támogatott; a <code>-a x</code>, <code>-a y</code> vagy <code>-a z</code> paraméterrel ezen felül megadhatja, hogy melyik gyorsulásmérő tengelyt vedd figyelembe (ha nincs megadva, akkor az összes tengely rezgéseinek összegét használja).</li>
 </ul>
-<p>Vegye figyelembe, hogy a graph_accelerometer.py szkript csak a raw_data*.csv fájlokat támogatja, a resonances*.csv vagy calibration_data*.csv fájlokat nem.</p>
+<p>Vedd figyelembe, hogy a graph_accelerometer.py szkript csak a raw_data*.csv fájlokat támogatja, a resonances*.csv vagy calibration_data*.csv fájlokat nem.</p>
 <p>Például,</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png -c -a z
 </code></pre></div>
@@ -1850,10 +1850,10 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 <p>A shaper_calibrate.py szkript 1 vagy több bemenetet fogad el, és képes a bemeneti formázó automatikus hangolására, valamint a legjobb paraméterek kiválasztására, amelyek jól működnek az összes megadott bemeneten. A javasolt paramétereket kiírja a konzolra, és emellett képes létrehozni a grafikont, ha <code>-o output.png</code> paramétert adunk meg, vagy a CSV fájlt, ha <code>-c output.csv</code> paramétert adunk meg.</p>
 <p>Több bemenet megadása a shaper_calibrate.py szkriptnek hasznos lehet, ha például a bemeneti formázók haladó hangolását végezzük:</p>
 <ul>
-<li>A <code>TEST_RESONANCES AXIS=X OUTPUT=raw_data</code> (és <code>Y</code> tengely) futtatása egy tengelyre kétszer egy Y ágyas nyomtatón úgy, hogy a gyorsulásmérő először a nyomtatófejhez, másodszor pedig az ágyhoz csatlakozik, hogy a tengelyek keresztrezonanciáit felismerjük, és megpróbáljuk azokat a bemeneti alakítókkal megszüntetni.</li>
-<li>A <code>TEST_RESONANCES AXIS=Y OUTPUT=raw_data</code> kétszeri futtatása egy üvegágyas és egy mágneses felületű (amelyik könnyebb) ágyon, hogy megtaláljuk azokat a bemeneti alakító paramétereket, amelyek jól működnek bármilyen nyomtatási felületkonfiguráció esetén.</li>
+<li>A <code>TEST_RESONANCES AXIS=X OUTPUT=raw_data</code> (és <code>Y</code> tengely) futtatása egy tengelyre kétszer egy Y tárgyasztalos nyomtatón úgy, hogy a gyorsulásmérő először a nyomtatófejhez, másodszor pedig a tárgyasztalhoz csatlakozik, hogy a tengelyek keresztrezonanciáit felismerjük, és megpróbáljuk azokat a bemeneti alakítókkal megszüntetni.</li>
+<li>A <code>TEST_RESONANCES AXIS=Y OUTPUT=raw_data</code> kétszeri futtatása egy üveg tárgyasztalos és egy mágneses felületű (amelyik könnyebb) tárgyasztalon, hogy megtaláljuk azokat a bemeneti alakító paramétereket, amelyek jól működnek bármilyen nyomtatási felületkonfiguráció esetén.</li>
 <li>A több vizsgálati pontból származó rezonanciaadatok kombinálása.</li>
-<li>A 2 tengely rezonanciaadatainak kombinálása (pl. egy Y tengelyen lévő ágyas nyomtatónál az X-tengely input_shaper konfigurálása mind az X-, mind az Y-tengely rezonanciáiból, hogy az <em>ágy</em> rezgéseit megszüntesse, ha a fúvóka 'elkap' egy nyomtatást, amikor X tengely irányában mozog).</li>
+<li>A 2 tengely rezonanciaadatainak kombinálása (pl. egy Y tengelyen lévő tárgyasztalos nyomtatónál az X-tengely input_shaper konfigurálása mind az X-, mind az Y-tengely rezonanciáiból, hogy a <em>tárgyasztal</em> rezgéseit megszüntesse, ha a fúvóka 'elkap' egy nyomtatást, amikor X tengely irányában mozog).</li>
 </ul>
 
               
