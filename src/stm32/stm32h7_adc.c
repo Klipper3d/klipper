@@ -32,13 +32,26 @@
 #define ADC_ISR_LDORDY_Msk                  (0x1UL << ADC_ISR_LDORDY_Pos)
 #define ADC_ISR_LDORDY                      ADC_ISR_LDORDY_Msk
 
-#else // stm32l4
+#elif CONFIG_MACH_STM32L4
 #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
 #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
 #define ADC_CKMODE                          (0)
 #define ADC_ATICKS                          (0b100)
 #define ADC_RES                             (0b00)
 #define ADC_TS                              (ADC12_COMMON)
+
+#define OVERSAMPLES                         (0)
+#define ADC_MEAS_DELAY                      (10)
+
+#elif CONFIG_MACH_STM32G4
+#define ADCIN_BANK_SIZE                     (19)
+#define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
+#define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADC12EN)
+#define ADC_CKMODE                          (0b11)
+#define ADC_ATICKS                          (0b100)
+#define ADC_RES                             (0b00)
+#define ADC_TS                              (ADC12_COMMON)
+#define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
 
 #define OVERSAMPLES                         (0)
 #define ADC_MEAS_DELAY                      (10)
@@ -116,6 +129,45 @@ static const uint8_t adc_pins[] = {
     0,             //              Vbat/4
     ADC_TEMPERATURE_PIN,//         VSENSE
     0,             //             VREFINT
+#elif CONFIG_MACH_STM32G4
+    0,                      // [0] vssa
+    GPIO('A', 0),           // [1]
+    GPIO('A', 1),           // [2]
+    GPIO('A', 2),           // [3]
+    GPIO('A', 3),           // [4]
+    GPIO('B', 14),          // [5]
+    GPIO('C', 0),           // [6]
+    GPIO('C', 1),           // [7]
+    GPIO('C', 2),           // [8]
+    GPIO('C', 3),           // [9]
+    GPIO('F', 0),           // [10]
+    GPIO('B', 12),          // [11]
+    GPIO('B', 1),           // [12]
+    0,                      // [13] opamp
+    GPIO('B', 11),          // [14]
+    GPIO('B', 0),           // [15]
+    ADC_TEMPERATURE_PIN,    // [16] vtemp
+    0,                      // [17] vbat/3
+    0,                      // [18] vref
+    0,                      // [0] vssa       ADC 2
+    GPIO('A', 0),           // [1]
+    GPIO('A', 1),           // [2]
+    GPIO('A', 6),           // [3]
+    GPIO('A', 7),           // [4]
+    GPIO('C', 4),           // [5]
+    GPIO('C', 0),           // [6]
+    GPIO('C', 1),           // [7]
+    GPIO('C', 2),           // [8]
+    GPIO('C', 3),           // [9]
+    GPIO('F', 1),           // [10]
+    GPIO('C', 5),           // [11]
+    GPIO('B', 2),           // [12]
+    GPIO('A', 5),           // [13]
+    GPIO('B', 11),          // [14]
+    GPIO('B', 15),          // [15]
+    0,                      // [16] opamp
+    GPIO('A', 4),           // [17]
+    0,                      // [18] opamp
 #else // stm32l4
     0,                      // vref
     GPIO('C', 0),           // ADC12_IN1 .. 16
@@ -168,7 +220,10 @@ gpio_adc_setup(uint32_t pin)
         MODIFY_REG(ADC3_COMMON->CCR, ADC_CCR_CKMODE_Msk,
             ADC_CKMODE << ADC_CCR_CKMODE_Pos);
         chan -= 2 * ADCIN_BANK_SIZE;
-    } else if (chan >= ADCIN_BANK_SIZE){
+    } else
+#endif
+#ifdef ADC2
+    if (chan >= ADCIN_BANK_SIZE){
         adc = ADC2;
         RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
         MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
