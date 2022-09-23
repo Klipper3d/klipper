@@ -1801,7 +1801,7 @@ homing_retract_dist: 0
 <div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 </code></pre></div>
 
-<p>Quindi emettere un comando <code>G28 X0</code> e verificare che l'asse non si muova affatto. Se l'asse si muove, emettere un <code>M112</code> per fermare la stampante - qualcosa non è corretto con il cablaggio o la configurazione del pin diag/sg_tst e deve essere corretto prima di continuare.</p>
+<p>Then issue a <code>G28 X0</code> command and verify the axis does not move at all or quickly stops moving. If the axis does not stop, then issue an <code>M112</code> to halt the printer - something is not correct with the diag/sg_tst pin wiring or configuration and it must be corrected before continuing.</p>
 <p>Quindi, diminuire progressivamente la sensibilità dell'impostazione <code>VALUE</code> ed eseguire nuovamente i comandi <code>SET_TMC_FIELD</code> <code>G28 X0</code> per trovare la sensibilità più alta che fa sì che il carrello si muova con successo fino all'arresto e si arresti. (Per i driver tmc2209 questo diminuirà SGTHRS, per altri conducenti aumenterà il sgt.) Assicurati di iniziare ogni tentativo con il carrello vicino al centro del binario (se necessario, emetti <code>M84</code> e quindi sposta manualmente il carrello sul centro). Dovrebbe essere possibile trovare la sensibilità più alta che si adatta in modo affidabile (le impostazioni con una sensibilità più alta comportano movimenti piccoli o nulli). Nota il valore trovato come <em>sensibilità_massima</em>. (Se si ottiene la sensibilità minima possibile (SGTHRS=0 o sgt=63) senza alcun movimento del carrello, allora qualcosa non è corretto con il cablaggio o la configurazione dei pin diag/sg_tst e deve essere corretto prima di continuare.)</p>
 <p>Quando si cerca la sensibilità_massima, può essere conveniente passare a diverse impostazioni VALUE (in modo da dividere in due il parametro VALUE). In tal caso, prepararsi a emettere un comando <code>M112</code> per arrestare la stampante, poiché un'impostazione con una sensibilità molto bassa potrebbe far "sbattere" ripetutamente l'asse contro l'estremità del binario.</p>
 <p>Assicurati di attendere un paio di secondi tra ogni tentativo di homing. Dopo che il driver TMC ha rilevato uno stallo, potrebbe volerci un po' di tempo per cancellare il suo indicatore interno ed essere in grado di rilevare un altro stallo.</p>
@@ -1847,6 +1847,22 @@ gcode:
 <li>Durante la messa a punto, assicurati che entrambi i carrelli X e Y siano vicini al centro dei loro binari prima di ogni tentativo di homing.</li>
 <li>Al termine dell'ottimizzazione, quando si esegue l'homing sia di X che Y, utilizzare le macro per assicurarsi che un asse sia homed per primo, quindi spostare il carrello lontano dal limite dell'asse, fare una pausa per almeno 2 secondi, quindi avviare l'orientamento dell'altro carrello. L'allontanamento dall'asse evita l'homing di un asse mentre l'altro viene premuto contro il limite dell'asse (cosa potrebbe distorcere il rilevamento dello stallo). La pausa è necessaria per garantire che il flag di stallo del driver sia cancellata prima del homing.</li>
 </ol>
+<p>An example CoreXY homing macro might look like:</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro HOME]
+gcode:
+    G90
+    # Home Z
+    G28 Z0
+    G1 Z10 F1200
+    # Home Y
+    G28 Y0
+    G1 Y5 F1200
+    # Home X
+    G4 P2000
+    G28 X0
+    G1 X5 F1200
+</code></pre></div>
+
 <h2 id="interrogazione-e-diagnosi-delle-impostazioni-del-driver">Interrogazione e diagnosi delle impostazioni del driver<a class="headerlink" href="#interrogazione-e-diagnosi-delle-impostazioni-del-driver" title="Permanent link">&para;</a></h2>
 <p>Il <a href="G-Codes.html#dump_tmc">comando DUMP_TMC</a> è uno strumento utile durante la configurazione e la diagnosi dei driver. Riporterà tutti i campi configurati da Klipper così come tutti i campi che possono essere interrogati dal driver.</p>
 <p>Tutti i campi riportati sono definiti nella scheda tecnica Trinamic per ciascun driver. Queste schede tecniche possono essere trovate sul <a href="https://www.trinamic.com/">sito web Trinamic</a>. Ottenere e rivedere i dati Trinamic affinché il conducente interpreti i risultati di DUMP_TMC.</p>

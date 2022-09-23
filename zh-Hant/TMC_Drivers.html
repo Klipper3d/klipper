@@ -1801,7 +1801,7 @@ homing_retract_dist: 0
 <div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 </code></pre></div>
 
-<p>然後發一個 <code>G28 X0</code>命令，確保軸完全不動。如果軸移動了，立即一個<code>M112</code>命令停止印表機-可能是diag/sg_tst引腳的接線或配置有問題，必須在繼續之前修正。</p>
+<p>Then issue a <code>G28 X0</code> command and verify the axis does not move at all or quickly stops moving. If the axis does not stop, then issue an <code>M112</code> to halt the printer - something is not correct with the diag/sg_tst pin wiring or configuration and it must be corrected before continuing.</p>
 <p>接下來，不斷降低 <code>VALUE</code> 設定的靈敏度，並再次執行 <code>SET_TMC_FIELD</code>和<code>G28 X0</code> 命令，找到能使使滑車成功地一直移動到端點並停止的最高的靈敏度。(對於TMC2209驅動，調整是減少 SGTHRS，對於其他驅動，調整是增加 sgt)。確保每次嘗試都在軌道中心附近開始（如果需要，發出<code>M84</code>，然後手動將滑車移到中心）。該方法應該可以找到可靠歸位的最高靈敏度（更高的靈敏度設定會導致滑車只動一小段或完全不動）。注意找到的值為<em>maximum_sensitivity</em>。(如果在最低靈敏度（SGTHRS=0或sgt=63）下滑車也不動，那麼diag/sg_tst 引腳的接線或配置可能有問題，必須在繼續後面操作前予以修正。）</p>
 <p>在尋找最大靈敏度時，更方便的是跳到不同的VALUE設定（比如將VALUE參數的一半）。如果這樣做，請準備好發出 <code>M112</code>命令以停止印表機，因為靈敏度很低的設定可能會導致軸反覆 "撞 "到導軌的末端。</p>
 <p>請確保在每次歸位嘗試之間等待幾秒鐘。在TMC驅動程式檢測到失速后，它可能需要一點時間來清除其內部指示器，才能夠檢測到下一次失速。</p>
@@ -1847,6 +1847,22 @@ gcode:
 <li>在調整時，確保X和Y車架在每次歸位嘗試前都接近其軌道的中心。</li>
 <li>調整完成後，當X和Y軸歸位時，使用宏來確保一個軸首先被歸位，然後將該滑車遠離軸的極限，停頓至少2秒，然後開始另一個滑車的歸位。遠離軸端點的移動可以避免一個軸被歸位，而另一個軸頂在軸的極限上（這可能使失速檢測發生偏差）。暫停是必要的，以確保驅動器的失速標誌在再次歸位之前被清除。</li>
 </ol>
+<p>An example CoreXY homing macro might look like:</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro HOME]
+gcode:
+    G90
+    # Home Z
+    G28 Z0
+    G1 Z10 F1200
+    # Home Y
+    G28 Y0
+    G1 Y5 F1200
+    # Home X
+    G4 P2000
+    G28 X0
+    G1 X5 F1200
+</code></pre></div>
+
 <h2 id="_10">查詢和診斷驅動程式設定<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
 <p>`<a href="G-Code.md#dump_tmc">DUMP_TMC 命令</a>是配置和診斷驅動程式的有效工具。它將報告所有由Klipper配置的欄位，以及所有可以從驅動中查詢到的欄位。</p>
 <p>所有報告的欄位都定義在驅動器的Trinamic數據手冊中。這些數據表可以在<a href="https://www.trinamic.com/">Trinamic網站</a>上找到。請獲取並檢視驅動器的Trinamic數據手冊來解釋DUMP_TMC的結果。</p>
