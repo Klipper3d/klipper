@@ -25,8 +25,6 @@ i2c_init(uint32_t bus, SercomI2cm *si)
     si->CTRLA.reg = 0;
     uint32_t areg = (SERCOM_I2CM_CTRLA_LOWTOUTEN
                      | SERCOM_I2CM_CTRLA_INACTOUT(3)
-                     | SERCOM_I2CM_STATUS_SEXTTOUT
-                     | SERCOM_I2CM_STATUS_MEXTTOUT
                      | SERCOM_I2CM_CTRLA_MODE(5));
     si->CTRLA.reg = areg;
     uint32_t freq = sercom_get_pclock_frequency(bus);

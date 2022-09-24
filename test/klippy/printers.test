@@ -163,6 +163,7 @@ CONFIG ../../config/printer-creality-cr6se-2020.cfg
 CONFIG ../../config/printer-creality-cr6se-2021.cfg
 CONFIG ../../config/printer-creality-ender2pro-2021.cfg
 CONFIG ../../config/printer-creality-ender3-s1-2021.cfg
+CONFIG ../../config/printer-creality-ender3-s1plus-2022.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg

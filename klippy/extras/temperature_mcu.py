@@ -72,6 +72,7 @@ class PrinterTemperatureMCU:
             ('stm32f070', self.config_stm32f070),
             ('stm32f072', self.config_stm32f0x2),
             ('stm32g0', self.config_stm32g0),
+            ('stm32l4', self.config_stm32g0),
             ('stm32h7', self.config_stm32h7),
             ('', self.config_unknown)]
         for name, func in cfg_funcs:

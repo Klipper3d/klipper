@@ -74,6 +74,9 @@ choice
     config MACH_STM32H750
         bool "STM32H750"
         select MACH_STM32H7
+    config MACH_STM32L412
+        bool "STM32L412"
+        select MACH_STM32L4
 endchoice
 
 config MACH_STM32F103x6
@@ -96,9 +99,11 @@ config MACH_STM32F0x2 # F042, F072 series
     bool
 config MACH_STM32F4x5 # F405, F407, F429 series
     bool
+config MACH_STM32L4
+    bool
 config HAVE_STM32_USBFS
     bool
-    default y if MACH_STM32F0x2 || MACH_STM32G0
+    default y if MACH_STM32F0x2 || MACH_STM32G0 || MACH_STM32L4
     default y if (MACH_STM32F103 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
 config HAVE_STM32_USBOTG
     bool
@@ -132,6 +137,7 @@ config MCU
     default "stm32g0b1xx" if MACH_STM32G0B1
     default "stm32h743xx" if MACH_STM32H743
     default "stm32h750xx" if MACH_STM32H750
+    default "stm32l412xx" if MACH_STM32L412
 
 config CLOCK_FREQ
     int
@@ -144,13 +150,14 @@ config CLOCK_FREQ
     default 180000000 if MACH_STM32F446
     default 64000000 if MACH_STM32G0
     default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
+    default 80000000 if MACH_STM32L412
 
 config FLASH_SIZE
     hex
     default 0x4000 if MACH_STM32F031
     default 0x8000 if MACH_STM32F042
     default 0x20000 if MACH_STM32F070 || MACH_STM32F072
-    default 0x10000 if MACH_STM32F103 # Flash size of stm32f103x8 (64KiB)
+    default 0x10000 if MACH_STM32F103 || MACH_STM32L412 # Flash size of stm32f103x8 (64KiB)
     default 0x40000 if MACH_STM32F2 || MACH_STM32F401
     default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x20000 if MACH_STM32G0B1
@@ -169,6 +176,7 @@ config RAM_SIZE
     default 0x4000 if MACH_STM32F070 || MACH_STM32F072
     default 0x2800 if MACH_STM32F103x6
     default 0x5000 if MACH_STM32F103 && !MACH_STM32F103x6 # Ram size of stm32f103x8
+    default 0xa000 if MACH_STM32L412
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
     default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
@@ -260,6 +268,8 @@ choice
         bool "12 MHz crystal"
     config STM32_CLOCK_REF_16M
         bool "16 MHz crystal"
+    config STM32_CLOCK_REF_20M
+        bool "20 MHz crystal"
     config STM32_CLOCK_REF_25M
         bool "25 MHz crystal"
     config STM32_CLOCK_REF_INTERNAL
@@ -268,6 +278,7 @@ endchoice
 config CLOCK_REF_FREQ
     int
     default 25000000 if STM32_CLOCK_REF_25M
+    default 20000000 if STM32_CLOCK_REF_20M
     default 16000000 if STM32_CLOCK_REF_16M
     default 12000000 if STM32_CLOCK_REF_12M
     default 1 if STM32_CLOCK_REF_INTERNAL

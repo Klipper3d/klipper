@@ -44,6 +44,27 @@ BOARD_DEFS = {
         "firmware_path": "Robin_e3.bin",
         "current_firmware_path": "Robin_e3.cur"
     },
+    'btt-octopus-f407-v1': {
+        'mcu': "stm32f407xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True
+    },
+    'btt-octopus-f429-v1': {
+        'mcu': "stm32f429xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True
+    },
+    'btt-octopus-f446-v1': {
+        'mcu': "stm32f446xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True
+    },
     'btt-skr-pro': {
         'mcu': "stm32f407xx",
         'spi_bus': "swspi",
@@ -103,6 +124,14 @@ BOARD_ALIASES = {
     'btt-skr-e3-dip': BOARD_DEFS['btt-skr-mini'],
     'btt002-v1': BOARD_DEFS['btt-skr-mini'],
     'creality-v4.2.7': BOARD_DEFS['btt-skr-mini'],
+    'btt-octopus-f407-v1.0': BOARD_DEFS['btt-octopus-f407-v1'],
+    'btt-octopus-f407-v1.1': BOARD_DEFS['btt-octopus-f407-v1'],
+    'btt-octopus-f429-v1.0': BOARD_DEFS['btt-octopus-f429-v1'],
+    'btt-octopus-f429-v1.1': BOARD_DEFS['btt-octopus-f429-v1'],
+    'btt-octopus-f446-v1.0': BOARD_DEFS['btt-octopus-f446-v1'],
+    'btt-octopus-f446-v1.1': BOARD_DEFS['btt-octopus-f446-v1'],
+    'btt-octopus-pro-f429-v1.0': BOARD_DEFS['btt-octopus-f429-v1'],
+    'btt-octopus-pro-f446-v1.0': BOARD_DEFS['btt-octopus-f446-v1'],
     'btt-skr-pro-v1.1': BOARD_DEFS['btt-skr-pro'],
     'btt-skr-pro-v1.2': BOARD_DEFS['btt-skr-pro'],
     'btt-gtr-v1': BOARD_DEFS['btt-gtr'],

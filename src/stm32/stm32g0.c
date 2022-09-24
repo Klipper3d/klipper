@@ -38,6 +38,8 @@ lookup_clock_line(uint32_t periph_base)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<13};
     if (periph_base == CRS_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<16};
+    if (periph_base == I2C3_BASE)
+        return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<23};
     if (periph_base == TIM1_BASE)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<11};
     if (periph_base == SPI1_BASE)
