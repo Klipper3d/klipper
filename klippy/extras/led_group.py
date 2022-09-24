@@ -1,15 +1,19 @@
-# Support for PWM driven LEDs
+# Support for LED groups
 #
 # Copyright (C) 2022 Julian Schill <j.schill@web.de>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 class PrinterLEDGroup:
     def __init__(self, config):
-        self.printer = printer = config.get_printer()
-        self.configLeds   = config.get('leds')
+        self.config = config
+        self.printer = config.get_printer()
+        self.configLeds = config.get('leds')
         self.configChains = self.configLeds.split('\n')
         self.leds=[]
         self.ledChains=[]
+        self.printer.register_event_handler('klippy:ready', self._handle_ready)
+
+    def _handle_ready(self):
         for chain in self.configChains:
             chain = chain.strip()
             parms = [parameter.strip() for parameter in chain.split()
@@ -41,8 +45,8 @@ class PrinterLEDGroup:
                     self.ledChains.append(ledChain)
         self.ledCount = len(self.leds)
 
-        pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds,
+        pled = self.printer.load_object(self.config, "led")
+        self.led_helper = pled.setup_helper(self.config, self.update_leds,
                                                 self.ledCount)
 
     def update_leds(self, led_state, print_time):
