@@ -1,19 +1,18 @@
+# Dockable Probe
 
-
-This document is meant to describe behavior related to dockable probes.
-These probes are typically microswitches mounted to a printed body that
+Dockable probes are typically microswitches mounted to a printed body that
 attaches to the toolhead through some means of mechanical coupling.
-This coupling is commonly done with magnets though this module can support
+This coupling is commonly done with magnets though there is support for
 a variety of designs including servo and stepper actuated couplings.
 
-# Basic Configuration
+## Basic Configuration
 
-The minimum requirements for functionality are a config section where the
-following options are specified. Some users may be transitioning from a macro
-based set of commands and many of the options for the `[probe]` config section
-are the same. The `[dockable_probe]` module is first and foremost a `[probe]`
-with additional functionality added. Any options that can be specified in
-for `[probe]` are valid for `[dockable_probe]` as well.
+To use a dockable probe the following options are required at a minimum.
+Some users may be transitioning from a macro based set of commands and
+many of the options for the `[probe]` config section are the same.
+The `[dockable_probe]` module is first and foremost a `[probe]`
+but with additional functionality. Any options that can be specified
+for `[probe]` are valid for `[dockable_probe]`.
 
 ```
 [dockable_probe]
@@ -21,389 +20,382 @@ pin:
 z_offset:
 sample_retract_dist:
 approach_position:
+dock_position:
 detach_position:
-check_open_attach:
-dock_fixed_z:
 ```
 
-Additional optional parameters are described in this guide as well as the
-required parameters. Certain optional parameters are not required, but highly recommended in order to ensure desired probe behavior is observed. Additionally
-the [probe calibrate guide](Probe_Calibrate.md) is recommended reading
-for users unfamiliar with probe setup in Klipper.
+### Attaching and Detaching Positions
 
-## Attaching and Detaching Positions
+- `dock_position: 300, 295, 0`\
+  _Required_\
+  This is the XYZ coordinates where the toolhead needs to be positioned
+  in order to attach the probe. This parameter is X, Y and, Z separated
+  by commas.
 
-```
-    dock_position: 300, 295, 0
-```
+  Many configurations have the dock attached to a moving gantry. This
+  means that Z axis positioning is irrelevant. However, it may be necessary
+  to move the gantry clear of the bed or other printer components before
+  performing docking steps. In this case, specify `z_hop` to force a Z movement.
 
-The first option to specify is the `dock_position`. This is simply the XYZ
-coordinates where the toolhead needs to be positioned in order to attach
-the probe. This parameter is X, Y and, Z separated by commas.
+  Other configurations may have the dock mounted next to the printer bed so
+  that the Z position _must_ be known prior to attaching the probe. In this
+  configuration the Z axis parameter _must_ be supplied, and the Z axis
+  _must_ be homed prior to attaching the probe.
 
-Many configurations have the dock attached to a moving gantry. This effectively
-means that Z axis positioning is irrelevant. However, it may be necessary
-to move the gantry clear of the bed or other printer components before
-performing docking steps. Automatic Z hop distances are calculated based on the
-probe `z_offset` + `sample_retract_dist` to ensure travel moves are
-safe. If a Z axis amount is specified for this type of dock, the additional
-amount will be added to the Z hop distance.
+- `approach_position: 300, 250, 0`\
+  _Required_\
+  The most common dock designs use a fork or arms that extend out from the dock.
+  In order to attach the probe to the toolhead, the toolhead must move into and
+  away from the dock to a particular position so these arms can capture the
+  probe body.
 
-Other configurations may have the dock mounted next to the printer bed so
-that the Z position _must_ be known prior to attaching the probe. If the
-probe is mounted in such a way, the Z axis parameter _must_ be supplied,
-and the Z axis _must_ be homed prior to attaching the probe.
+  As with `dock_position`, a Z position is not required but if specified the
+  toolhead will be moved to that Z location before the X, Y coordinates.
 
-```
-    approach_position: 300, 250
-```
+  For magnetically coupled probes, the `approach_position` should be far enough
+  away from the probe dock such that the magnets on the probe body are not
+  attracted to the magnets on the toolhead.
 
-The most common dock designs utilize a sort of fork or arms that extend out
-from the dock. In order to attach the probe to the toolhead, the toolhead must
-move into and away from the dock at a particular angle so that these arms can
-capture the probe body. For magnetically coupled probes, the `approach_position`
-should be defined so that it is far enough away from the probe so that the
-magnets on the probe body are not attracted to the magnets on the toolhead.
+- `detach_position: 250, 295, 0`\
+  _Required_\
+  Most probes with magnets require the toolhead to move in a direction that
+  strips the magnets off with a sliding motion. This is to prevent the magnets
+  from becoming unseated from repeated pulling and thus affecting probe accuracy.
+  The `detach_position` is typically defined as a point that is perpendicular to
+  the dock so that when the toolhead moves, the probe stays docked but cleanly
+  detaches from the toolhead mount.
 
-```
-    detach_position:  250, 295
-```
+  As with `dock_position`, a Z position is not required but if specified the
+  toolhead will be moved to that Z location before the X, Y coordinates.
 
-Most probes that use magnets require the toolhead to move in a direction that
-strips the magnets off with a sliding motion. This is to prevent the magnets
-from becoming unseated from repeated pulling and thus affecting probe accuracy.
-The `detach_position` is typically defined as a point that is perpendicular to
-the dock so that when the toolhead moves, the probe stays docked but cleanly
-detaches from the toolhead mount. For magnetically coupled probes, the
-`detach_position` should be defined so that it is far enough away from the
-probe so that the magnets on the probe body are not attracted to the magnets on
-the toolhead.
+  For magnetically coupled probes, the `detach_position` should be far enough
+  away from the probe dock such that the magnets on the probe body are not
+  attracted to the magnets on the toolhead.
 
-## Dock Z location
+- `z_hop: 15.0`\
+  _Default Value: None_\
+  Distance (in mm) to lift the Z axis prior to attaching/detaching the probe.
+  If the Z axis is already homed and the current Z position is less
+  than `z_hop`, then this will lift the head to a height of `z_hop`. If
+  the Z axis is not already homed the head is lifted by `z_hop`.
+  The default is to not implement Z hop.
 
-```
-    dock_fixed_z:   default false
-```
-There are various locations that probe docks have been mounted. It seems the
-more common locations are next to a bed or on a moving gantry. If the probe
-is "fixed" on the Z axis, meaning, it's position relative to XY plane of the
-toolhead is always the same, this option should be set to "true".
+## Position Examples
 
-An example where `dock_fixed_z: True` is a corexy printer with a bed that moves
-up and down along the Z axis with the probe dock mounted to the frame next to a
-fixed gantry. The toolhead can move to the probe dock _regardless_ of where
-the bed is positioned.
-
-Another example would be a printer with a bed that is fixed to the base of the
-printer and the gantry moves along all 3 axes. The dock is mounted to a point on
-this moving gantry. This as well would be `dock_fixed_z: True`
-
-A example where `dock_fixed_z: False` would be a i3 style printer where the dock
-is located on the moving bed. When the Z axis moves, the dock's position changes
-relative to the toolhead.
-
-Another example of `dock_fixed_z: False` is a cartesian or hbot cube printer
-where the dock is mounted next to the moving bed on the Z axis itself.
-
-Any printer where `dock_fixed_z: False` requires that the z axis be homed prior
-to moving to the dock.
+Probe mounted on frame at back of print bed at a fixed Z position. To attach
+the probe, the toolhead will move back and then forward. To detach, the toolhead
+will move back, and then to the side.
 
 ```
-    safe_z_position:    0,0
++--------+
+|   p>   |
+|   ^    |
+|        |
++--------+
 ```
-An optional parameter may be defined for homing the Z axis using the probe.
-Similar to `safe_z_home`, a set of x y coordinates may be defined to use when
-homing. If this parameter is omitted, the center of the bed will be used.
-
-## Tool Velocities
 
 ```
-    attach_speed:   default is probe speed or 5mm/s
-    detach_speed: default is probe speed or 5mm/s
-    travel_speed:   default is 50 mm/s
+approach_position: 150, 300, 5
+dock_position: 150, 330, 5
+detach_position: 170, 330
 ```
-Various optional speeds can be defined for approaching, detaching and
-traveling. If these parameters are omitted, the module will use the `speed`
-parameter of the probe if defined. If this option is not supplied, 5mm/s
-will be used.
 
-## Probe Attachment Verification
+
+Probe mounted at side of moving gantry with fixed bed. Here the probe is
+attachable regardless of the Z position. To attach the probe, the toolhead will
+move to the side and back. To detach the toolhead will move to the side and then
+forward.
+
+```
++--------+
+|        |
+| p<     |
+| v      |
++--------+
+```
+
+```
+approach_position: 50, 150
+dock_position: 10, 150
+detach_position: 10, 130
+```
+
+
+Probe mounted at side of fixed gantry with bed moving on Z. Probe is attachable
+regardless of Z but force Z hop for safety. The toolhead movement is the same
+as above.
+
+```
++--------+
+|        |
+| p<     |
+| v      |
++--------+
+```
+
+```
+approach_position: 50, 150
+dock_position: 10, 150
+detach_position: 10, 130
+z_hop: 15
+```
+
+
+Euclid style probe that requires the attach and detach movements to happen in
+opposite order. Attach: approach, move to dock, extract. Detach: move to
+extract position, move to dock, move to approach position. The approach and
+detach positions are the same, as are the extract and insert positions. The
+movements can be reordered as necessary by overriding the commands for
+extract/insert and using the same coordinates for approach and detach.
+
+```
+Attach:
++--------+
+|        |
+| p<     |
+| v      |
++--------+
+Detach:
++--------+
+|        |
+| p>     |
+| ^      |
++--------+
+```
+
+```
+approach_position: 50, 150
+dock_position: 10, 150
+detach_position: 50, 150
+z_hop: 15
+```
+
+```
+[gcode_macro MOVE_TO_EXTRACT_PROBE]
+gcode:
+    G1 X10 Y130
+
+[gcode_macro MOVE_TO_INSERT_PROBE]
+gcode:
+    G1 X10 Y130
+```
+
+### Homing
+
+No configuration specific to the dockable probe is required when using
+the probe as a virtual endstop, though it's recommended to consider
+using `[safe_z_home]` or `[homing_override]`.
+
+### Probe Attachment Verification
 
 Given the nature of this type of probe, it is necessary to verify whether or
 not it has successfully attached prior to attempting a probing move. Several
-methods can be used to verify various probe attachment states.
+methods can be used to verify probe attachment states.
+
+- `check_open_attach: False`\
+  _Default Value: False_\
+  Certain probes will report `OPEN` when they are attached and `TRIGGERED`
+  when they are detached in a non-probing state. When `check_open_attach` is
+  set to `True`, the state of the probe pin is checked after performing a
+  probe attach or detach maneuver. If the probe reports `TRIGGERED`
+  immediately after the toolhead leaves the dock radius, an error will be
+  raised and any further action will be aborted.
+
+  This is intended to prevent crashing the nozzle into the bed since it is
+  assumed if the probe pin reads `TRIGGERED` prior to probing, the probe is
+  not attached.
+
+- `probe_sense_pin:`\
+  _Default Value: None_\
+  The probe may include a separate pin for attachment verification. This is a
+  standard pin definition, similar to an endstop pin that defines how to handle
+  the input from the sensor. Much like the `check_open_attach` option, the check
+  is done immediately after the tool attaches or detaches the probe. If the
+  probe is not detected after attempting to attach it, or it remains attached
+  after attempting to detach it, an error will be raised and further
+  action aborted.
+
+- `dock_sense_pin:`\
+  _Default Value: None_\
+  Docks can have a sensor or switch incorporated into their design in
+  order to report that the probe is presently located in the dock. A
+  `dock_sense_pin` can be used to provide verification that the probe is
+  correctly positioned in the dock. This is a standard pin definition similar
+  to an endstop pin that defines how to handle the input from the sensor.
+  Prior to attempting to attach the probe, and after attempting to detach it,
+  this pin is checked. If the probe is not detected in the dock, an error will
+  be raised and further action aborted.
+
+- `dock_retries: 5`\
+  _Default Value: 0_\
+  A magnetic probe may require repeated attempts to attach or detach. If
+  `dock_retries` is specified and the probe fails to attach or detach, the
+  attach/detach action will be repeated until it succeeds. If the retry limit
+  is reached and the probe is still not in the correct state, an error will be
+  raised and further action aborted.
+
+## Tool Velocities
+
+- `attach_speed: 5.0`\
+  _Default Value: Probe `speed` or 5_\
+  Movement speed when attaching the probe during `MOVE_TO_DOCK_PROBE`.
+
+- `detach_speed: 5.0`\
+  _Default Value: Probe `speed` or 5_\
+  Movement speed when detaching the probe during `MOVE_TO_DETACH_PROBE`.
+
+- `travel_speed: 5.0`\
+  _Default Value: Probe `speed` or 5_\
+  Movement speed when approaching the probe during `MOVE_TO_APPROACH_PROBE`
+  and returning the toolhead to its previous position after attach/detach.
+
+## Dockable Probe Gcodes
+
+### General
+
+`ATTACH_PROBE`
+
+This command will move the toolhead to the dock, attach the probe, and return
+it to its previous position. If the probe is already attached, the command
+does nothing.
+
+This command will call `MOVE_TO_APPROACH_PROBE`, `MOVE_TO_DOCK_PROBE`,
+and `MOVE_TO_EXTRACT_PROBE`.
+
+`DETACH_PROBE`
+
+This command will move the toolhead to the dock, detach the probe, and return
+it to its previous position. If the probe is already detached, the command
+will do nothing.
+
+This command will call `MOVE_TO_APPROACH_PROBE`, `MOVE_TO_DOCK_PROBE`,
+and `MOVE_TO_DETACH_PROBE`.
+
+### Individual Movements
+
+These commands are useful during setup to prevent the full attach/detach
+sequence from crashing into the bed or damaging the probe/dock.
+
+If your probe has special setup/teardown steps (e.g. moving a servo),
+accommodating that could be accomplished by overriding these gcodes.
+
+`MOVE_TO_APPROACH_PROBE`
+
+This command will move the toolhead to the `approach_position`. It can be
+overridden to move a servo if that's required for attaching your probe.
+
+`MOVE_TO_DOCK_PROBE`
+
+This command will move the toolhead to the `dock_position`.
+
+`MOVE_TO_EXTRACT_PROBE`
+
+This command will move the toolhead away from the dock after attaching the probe.
+By default it's an alias for `MOVE_TO_APPROACH_PROBE`.
+
+`MOVE_TO_INSERT_PROBE`
+
+This command will move the toolhead near the dock before detaching the probe.
+By default it's an alias for `MOVE_TO_APPROACH_PROBE`.
+
+`MOVE_TO_DETACH_PROBE`
+
+This command will move the toolhead to the `detach_position`. It can be
+overridden to move a servo if that's required for detaching your probe.
+
+### Status
+
+`QUERY_DOCKABLE_PROBE`
+
+Responds in the gcode terminal with the current probe status. Valid
+states are UNKNOWN, ATTACHED, and DOCKED. This is useful during setup
+to confirm probe configuration is working as intended.
+
+`SET_DOCKABLE_PROBE AUTO_ATTACH_DETACH=0|1`
+
+Enable/Disable the automatic attaching/detaching of the probe during
+actions that require the probe.
+
+This command can be helpful in print-start macros where multiple actions will
+be performed with the probe and there's no need to detach the probe.
+For example:
 
 ```
-    check_open_attach: default false
+SET_DOCKABLE_PROBE AUTO_ATTACH_DETACH=0
+G28
+ATTACH_PROBE                             # Explicitly attach the probe
+QUAD_GANTRY_LEVEL                        # Tram the gantry parallel to the bed
+BED_MESH_CALIBRATE                       # Create a bed mesh
+DETACH_PROBE                             # Manually detach the probe
+SET_DOCKABLE_PROBE AUTO_ATTACH_DETACH=1  # Make sure the probe is attached in future
 ```
-Certain probes when wired a certain way will report `OPEN` when they are
-attached and `TRIGGERED` when they are detached in a non-probing state. The
-`check_open_attach` option when set to `true` will check the state of the
-probe pin after performing a probe attach or docking maneuver. If the probe
-reports `TRIGGERED` immediately after the toolhead leaves the dock radius, an
-error will be raised and any further action will be aborted.
-
-This is intended to prevent crashing the nozzle into the bed since it is
-assumed if the probe pin reads `TRIGGERED` prior to probing, the probe is
-not attached.
-
-```
-    probe_sense_pin:
-```
-The probe may include a separate pin for attachment verification. This is a
-standard pin definition similar to an endstop pin that defines how to handle the
-input from the sensor. Much like the `check_open_attach` option, the check is
-done immediately after the tool attaches or docks the probe. If the probe
-is not attached after attempting to attach it, or it remains attached after
-attempting to dock it, an error will be raised and further action will be
-aborted.
-
-```
-    dock_sense_pin:
-```
-Certain docks may have a sensor or switch incorporated into their design in
-order to report that the probe is presently located in the dock. A
-`dock_sense_pin` may be provided to provide verification that the probe is
-correctly positioned in the dock. This is a standard pin definition similar
-to an endstop pin that defines how to handle the input from the sensor.
-Prior to attempting to attach the probe, and after attempting to dock it,
-this pin is checked. If the probe is not stowed, an error will be raised and
-further action will be aborted.
-
-```
-    dock_retries:   0
-```
-A magnetic probe may require repeated attempts to attach. If `dock_retries` is
-specified and the probe fails to attach or detach, the attach/detach action
-will be repeated until it succeeds. If the retry limit is reached and the probe
-is still not in the correct state, an error is raised and futher actions
-are aborted.
-
-```
-    allow_delayed_detach: False
-```
-Typically, a command that requires the use of the probe will cause the probe
-to be attached and then docked when it is no longer needed. In the context
-of start gcode, a homing macro, or any sequence with multiple commands requiring
-the use of the probe, this results in the probe repeatedly being attached and
-docked between commands. If the `allow_delayed_detach` option is set to True,
-the probe will wait for a short period of time before docking at the end of
-a command. This can result in calibration macros executing faster as the probe
-has to do less traveling. If this option is used, it is recommended to add
-the manual `DETACH_PROBE` command at the end of a macro or start gcode. Often
-the _next_ command will start to execute _prior_ to the probe detaching which
-can result in a collision.
-
-
-## Custom Actions
-
-```
-    pre_attach_gcode:
-    attach_gcode:
-    post_attach_gcode:
-    pre_detach_gcode:
-    detach_gcode:
-    post_detach_gcode:
-```
-
-As universal as this module attempts to be, all use cases cannot be accounted
-for. As such several "custom" gcode command templates may be supplied to be
-executed at various times during probe maneuvers. These optional gcode sections
-may be configured like standard gcode macro command templates with the exception
-that gcode macro variables, default parameters, and rename_existing options are
-excluded.
-
-These command templates are inserted at various points of the probe execution
-flow (below) so they may be used to activate a servo or move the toolhead to
-a position that aligns cabling or tubes so that they do not snag on parts of
-the printer.
-
-
-```
-    pre_attach_gcode:
-```
-If specified, the `pre_attach_gcode` is called prior to approaching the dock.
-If a servo is needed to move the dock, this is where that command should be
-issued.
-
-
-```
-    attach_gcode:
-```
-If specified, the `attach_gcode` commands are executed immediately _after_ the
-toolhead reaches the `dock_position`. This gcode may be repeated if the probe
-fails to attach and `dock_retries` are specified.
-
-```
-    post_attach_gcode:
-```
-If specified, the `post_attach_gcode` is called immediately after leaving the
-dock, but only if the probe was successfully attached.
-
-
-```
-    pre_detach_gcode:
-```
-If specified, the `pre_detach_gcode` is called prior to approaching the dock.
-If a servo is needed to move the dock, this is where that command should be
-issued.
-
-
-```
-    detach_gcode:
-```
-If specified, the `detach_gcode` commands are executed immediately _after_ the
-toolhead reaches the `dock_position`. This gcode may be repeated if the probe
-fails to detach and `dock_retries` are specified.
-
-```
-    post_detach_gcode:
-```
-If specified, the `post_detach_gcode` is called immediately after leaving the
-dock, but only if the probe was successfully docked.
-
-## Gcode commands
-
-There are 4 gcode commands that can be used with the probe to perform various
-tasks or obtain status information.
-
-```
-    ATTACH_PROBE
-```
-This command will move the toolhead to the dock, attach the probe, and then
-return to its previous position. If the probe is already attached, the command
-will not do anything
-
-```
-    DETACH_PROBE
-```
-This command will move the toolhead to the dock, detach the probe, and then
-return to its previous position. If the probe is already detached, the command
-will not do anything
-
-```
-    GET_PROBE_STATUS
-```
-Responds in the gcode terminal with the current status the probe is in. Valid
-states are UNKNOWN, ATTACHED, and DOCKED. This is useful during configuration
-to confirm probe validation methods are working as intended.
 
 ## Typical probe execution flow
 
-    Probing is Started:
+### Probing is Started:
 
     - A gcode command requiring the use of the probe is executed.
 
-    - This triggers the probe to attach
+    - This triggers the probe to attach.
 
     - If configured, the dock sense pin is checked to see if the probe is
-      presently in the dock
-
-    - If specified, the pre-attach gcode is executed
+      presently in the dock.
 
     - The toolhead position is compared to the dock position.
 
     - If the toolhead is outside of the minimum safe radius, the toolhead is
-      commanded to move to the the approach vector, that is, a position that is
-      the minimum safe distance from the dock in line with the dock angle
+      commanded to move to the approach vector, that is, a position that is
+      the minimum safe distance from the dock in line with the dock angle.
+      (MOVE_TO_APPROACH_PROBE)
 
     - If the toolhead is inside of the minimum safe radius, the toolhead is
-      commanded to move to the nearest point on the line of the approach vector
+      commanded to move to the nearest point on the line of the approach vector.
+      (MOVE_TO_APPROACH_PROBE)
 
-    - The tool is moved along the approach vector to the dock coordinates
-
-    - If specified, the attach gcode is executed
+    - The tool is moved along the approach vector to the dock coordinates.
+    (MOVE_TO_DOCK_PROBE)
 
     - The toolhead is commanded to move out of the dock back to the minimum
       safe distance in the reverse direction along the dock angle.
+      (MOVE_TO_EXTRACT_PROBE)
 
-    - If configured, the probe is checked to see if it is attached
+    - If configured, the probe is checked to see if it is attached.
 
-    - If the probe is not attached, the module retries until it is or an error
-      is raised
+    - If the probe is not attached, the module may retry until it's attached or
+      an error is raised.
 
     - If configured, the dock sense pin is checked to see if the probe is still
-      present, the module retries until it not or an error is raised
+      present, the module may retry until the probe is absent not or an error
+      is raised.
 
-    - If specified, the post-attach gcode is executed
+    - The probe moves to the first probing point and begins probing.
 
-    - The probe moves to the first probing point and beings probing
-
-    Probing is Finished:
+### Probing is Finished:
 
     - After the probe is no longer needed, the probe is triggered to detach.
-
-    - If specified, the pre-detach gcode is executed
 
     - The toolhead position is compared to the dock position.
 
     - If the toolhead is outside of the minimum safe radius, the toolhead is
-      commanded to move to the the approach vector, that is, a position that is
-      the minimum safe distance from the dock in line with the dock angle
+      commanded to move to the approach vector, that is, a position that is
+      the minimum safe distance from the dock in line with the dock angle.
+      (MOVE_TO_APPROACH_PROBE)
 
     - If the toolhead is inside of the minimum safe radius, the toolhead is
-      commanded to move to the nearest point on the line of the approach vector
+      commanded to move to the nearest point on the line of the approach vector.
+      (MOVE_TO_APPROACH_PROBE)
 
-    - The tool is moved along the approach vector to the dock coordinates
+    - The toolhead is moved along the approach vector to the dock coordinates.
+    (MOVE_TO_DOCK_PROBE)
 
-    - If specified, the detach gcode is executed
+    - The toolhead is commanded to move along the detach vector if supplied or a
+      calculated direction based on axis parameters. (MOVE_TO_DETACH_PROBE)
 
-    - The tool is commanded to move along the detach vector if supplied or a
-      calculated direction based on axis parameters
+    - If configured, the probe is checked to see if it detached.
 
-    - If configured, the probe is checked to see if it is detached
-
-    - If the probe is not detached, the module moves the tool back to the
-      approach vector and retries until it detaches or an error is raised
+    - If the probe did not detach, the module moves the toolhead back to the
+      approach vector and may retry until it detaches or an error is raised.
 
     - If configured, the dock sense pin is checked to see if the probe is
-      present in the dock. If it is not the module moves the tool back to the
-      approach vector and retries until it detaches or an error is raised
-
-    - If specified, the post-detach gcode is executed
-
-
-# Use in macros
-
-The dockable_probe module can use a delayed detach so that it does not
-repeatedly dock and undock the probe from the toolhead while it is being
-used in the context of a homing macro or slicer start gcode. This works
-in most cases, but if a call to heat-and-wait (M109, M190) or a toolhead move
-comes too soon after probing is finished, it may result in the probe staying
-attached to the toolhead until after the heater is done heating or the gcode
-move completes. This can be avoided by placing a call to `DETACH_PROBE`
-immediately _after_ the last command requiring the probe.
-
-example 1:
-
-Gcode file from slicer
-```
-start_print b=90 e=250
-```
-
-Macro definition in Klipper
-```
-[gcode_macro start_print]
-gcode:
-    M190 S{b}           ;set bed temp and wait
-    G28                 ;home all axes
-    BED_MESH_CALIBRATE  ;generate a bed mesh
-    G28 Z0              ;rehome z axis
-    DETACH_PROBE        ;ensure probe is detached
-    M109 S{e}
-```
-
-example 2:
-
-Gcode file from slicer
-```
-M190 S[first_layer_bed_temperature]
-M109 S[first_layer_temperature]
-G28
-BED_MESH_CALIBRATE
-G28 Z0
-DETACH_PROBE
-G92 E0
-G1 X0.1 Y0 F8000 ;begin priming line
-G1 Z2.0 F3000
-```
+      present in the dock. If it is not the module moves the toolhead back to
+      the approach vector and may retry until it detaches or an error is raised.
