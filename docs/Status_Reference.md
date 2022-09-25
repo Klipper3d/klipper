@@ -484,6 +484,19 @@ object is always available):
 - `state_message`: A human readable string giving additional context
   on the current Klipper state.
 
+## z_thermal_adjust
+
+The following information is available in the `z_thermal_adjust` object (this
+object is available if [z_thermal_adjust](Config_Reference.md#z_thermal_adjust)
+is defined).
+- `enabled`: Returns True if adjustment is enabled.
+- `temperature`: Current (smoothed) temperature of the defined sensor. [degC]
+- `measured_min_temp`: Minimum measured temperature. [degC]
+- `measured_max_temp`: Maximum measured temperature. [degC]
+- `current_z_adjust`: Last computed Z adjustment [mm].
+- `z_adjust_ref_temperature`: Current reference temperature used for calculation
+  of Z `current_z_adjust` [degC].
+
 ## z_tilt
 
 The following information is available in the `z_tilt` object (this
