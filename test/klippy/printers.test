@@ -103,6 +103,7 @@ CONFIG ../../config/generic-alligator-r3.cfg
 CONFIG ../../config/generic-archim2.cfg
 CONFIG ../../config/generic-radds.cfg
 CONFIG ../../config/generic-ruramps-v1.3.cfg
+CONFIG ../../config/generic-ramps-fd-v2.2.cfg
 
 # Printers using the sam4s8c
 DICTIONARY sam4s8c.dict
