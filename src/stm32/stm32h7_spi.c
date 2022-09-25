@@ -12,7 +12,7 @@
 
 struct spi_info {
     SPI_TypeDef *spi;
-    uint8_t miso_pin, mosi_pin, sck_pin, function;
+    uint8_t miso_pin, miso_function, mosi_pin, mosi_function, sck_pin, sck_function;
 };
 
 DECL_ENUMERATION("spi_bus", "spi2", __COUNTER__);
@@ -60,26 +60,27 @@ DECL_CONSTANT_STR("BUS_PINS_spi6", "PG12,PG14,PG13");
 
 
 static const struct spi_info spi_bus[] = {
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION(5) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION(5) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(5) },
+    // SPI   MISO_PIN       MISO_FUNCTION     MOSI_PIN       MOSI_FUNCTION     SCK_PIN        SCK_FUNCTION
+    { SPI2, GPIO('B', 14), GPIO_FUNCTION(5), GPIO('B', 15), GPIO_FUNCTION(5), GPIO('B', 13), GPIO_FUNCTION(5) },
+    { SPI1, GPIO('A', 6),  GPIO_FUNCTION(5), GPIO('A', 7),  GPIO_FUNCTION(5), GPIO('A', 5),  GPIO_FUNCTION(5) },
+    { SPI1, GPIO('B', 4),  GPIO_FUNCTION(5), GPIO('B', 5),  GPIO_FUNCTION(5), GPIO('B', 3),  GPIO_FUNCTION(5) },
 #if !CONFIG_MACH_STM32F1
-    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), GPIO_FUNCTION(5) },
+    { SPI2, GPIO('C', 2),  GPIO_FUNCTION(5), GPIO('C', 3),  GPIO_FUNCTION(5), GPIO('B', 10), GPIO_FUNCTION(5) },
 #endif
 #ifdef SPI3
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
-    { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), GPIO_FUNCTION(6) },
+    { SPI3, GPIO('B', 4),  GPIO_FUNCTION(6), GPIO('B', 5),  GPIO_FUNCTION(7), GPIO('B', 3),  GPIO_FUNCTION(6) },
+    { SPI3, GPIO('C', 11), GPIO_FUNCTION(6), GPIO('C', 12), GPIO_FUNCTION(6), GPIO('C', 10), GPIO_FUNCTION(6) },
 #endif
 #ifdef SPI4
-    { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), GPIO_FUNCTION(5) },
+    { SPI4, GPIO('E', 13), GPIO_FUNCTION(5), GPIO('E', 14), GPIO_FUNCTION(5), GPIO('E', 12), GPIO_FUNCTION(5) },
 #endif
-    { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), GPIO_FUNCTION(5) },
+    { SPI2, GPIO('I', 2),  GPIO_FUNCTION(5), GPIO('I', 3),  GPIO_FUNCTION(5), GPIO('I', 1),  GPIO_FUNCTION(5) },
 #ifdef SPI5
-    { SPI5, GPIO('F', 8), GPIO('F', 9), GPIO('F', 7), GPIO_FUNCTION(5) },
-    { SPI5, GPIO('H', 7), GPIO('F', 11), GPIO('H', 6), GPIO_FUNCTION(5) },
+    { SPI5, GPIO('F', 8),  GPIO_FUNCTION(5), GPIO('F', 9),  GPIO_FUNCTION(5), GPIO('F', 7),  GPIO_FUNCTION(5) },
+    { SPI5, GPIO('H', 7),  GPIO_FUNCTION(5), GPIO('F', 11), GPIO_FUNCTION(5), GPIO('H', 6),  GPIO_FUNCTION(5) },
 #endif
 #ifdef SPI6
-    { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), GPIO_FUNCTION(5)},
+    { SPI6, GPIO('G', 12), GPIO_FUNCTION(5), GPIO('G', 14), GPIO_FUNCTION(5), GPIO('G', 13), GPIO_FUNCTION(5) },
 #endif
 };
 
@@ -93,9 +94,9 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     SPI_TypeDef *spi = spi_bus[bus].spi;
     if (!is_enabled_pclock((uint32_t)spi)) {
         enable_pclock((uint32_t)spi);
-        gpio_peripheral(spi_bus[bus].miso_pin, spi_bus[bus].function, 1);
-        gpio_peripheral(spi_bus[bus].mosi_pin, spi_bus[bus].function, 0);
-        gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].function, 0);
+        gpio_peripheral(spi_bus[bus].miso_pin, spi_bus[bus].miso_function, 1);
+        gpio_peripheral(spi_bus[bus].mosi_pin, spi_bus[bus].mosi_function, 0);
+        gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].sck_function, 0);
     }
 
     // Calculate CR1 register
