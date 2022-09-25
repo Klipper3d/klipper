@@ -11,21 +11,32 @@ class PrinterLEDGroup:
         self.configChains = self.configLeds.split('\n')
         self.leds=[]
         self.ledChains=[]
-        self.printer.register_event_handler('klippy:ready', self._handle_ready)
+        self.printer.register_event_handler('klippy:connect',
+                                                self._handle_connect)
 
-    def _handle_ready(self):
+    def _handle_connect(self):
         for chain in self.configChains:
             chain = chain.strip()
             parms = [parameter.strip() for parameter in chain.split()
                         if parameter.strip()]
             if parms:
-                ledChain     = self.printer.lookup_object(parms[0]\
+                if parms[0].startswith("led_group"):
+                    raise self.config.error(
+                        "Error in '%s': LED group of LED groups is not allowed"
+                            % (self.config.get_name(),))
+                ledChain = self.printer.lookup_object(parms[0]\
                                                 .replace(':',' '))
-                ledIndices   = ''.join(parms[1:]).strip('()').split(',')
+                chainLen = ledChain.led_helper.get_led_count()
+                ledIndices = ''.join(parms[1:]).strip('()').split(',')
                 for led in ledIndices:
                     if led:
                         if '-' in led:
                             start, stop = map(int,led.split('-'))
+                            if start > chainLen or stop > chainLen or \
+                                start < 1 or stop < 1:
+                                raise self.config.error(
+                                    "LED index out of range for '%s' in '%s'"
+                                        % (parms[0],self.config.get_name(),))
                             if stop == start:
                                 ledList = [start-1]
                             elif stop > start:
@@ -35,11 +46,14 @@ class PrinterLEDGroup:
                             for i in ledList:
                                 self.leds.append((ledChain, int(i)))
                         else:
-                            for i in led.split(','):
-                                self.leds.append((ledChain, \
-                                                (int(i)-1)))
+                            i = int(led)
+                            if i > chainLen or i < 1:
+                                raise self.config.error(
+                                    "LED index out of range for '%s' in '%s'"
+                                        % (parms[0],self.config.get_name(),))
+                            self.leds.append((ledChain, (int(i)-1)))
                     else:
-                        for i in range(ledChain.led_helper.get_led_count()):
+                        for i in range(chainLen):
                             self.leds.append((ledChain, int(i)))
                 if ledChain not in self.ledChains:
                     self.ledChains.append(ledChain)
