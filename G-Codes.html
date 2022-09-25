@@ -2211,6 +2211,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#z_thermal_adjust" class="md-nav__link">
+    [z_thermal_adjust]
+  </a>
+  
+    <nav class="md-nav" aria-label="[z_thermal_adjust]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_z_thermal_adjust" class="md-nav__link">
+    SET_Z_THERMAL_ADJUST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#z_tilt" class="md-nav__link">
     [z_tilt]
   </a>
@@ -4234,6 +4254,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#z_thermal_adjust" class="md-nav__link">
+    [z_thermal_adjust]
+  </a>
+  
+    <nav class="md-nav" aria-label="[z_thermal_adjust]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_z_thermal_adjust" class="md-nav__link">
+    SET_Z_THERMAL_ADJUST
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#z_tilt" class="md-nav__link">
     [z_tilt]
   </a>
@@ -5348,6 +5388,21 @@ enabled:</p>
 print.</p>
 <h4 id="sdcard_reset_file">SDCARD_RESET_FILE<a class="headerlink" href="#sdcard_reset_file" title="Permanent link">&para;</a></h4>
 <p><code>SDCARD_RESET_FILE</code>: Unload file and clear SD state.</p>
+<h3 id="z_thermal_adjust">[z_thermal_adjust]<a class="headerlink" href="#z_thermal_adjust" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when the
+<a href="Config_Reference.html#z_thermal_adjust">z_thermal_adjust config section</a>
+is enabled.</p>
+<h4 id="set_z_thermal_adjust">SET_Z_THERMAL_ADJUST<a class="headerlink" href="#set_z_thermal_adjust" title="Permanent link">&para;</a></h4>
+<p><code>SET_Z_THERMAL_ADJUST [ENABLE=&lt;0:1&gt;] [TEMP_COEFF=&lt;value&gt;] [REF_TEMP=&lt;value&gt;]</code>:
+Enable or disable the Z thermal adjustment with <code>ENABLE</code>. Disabling does not
+remove any adjustment already applied, but will freeze the current adjustment
+value - this prevents potentially unsafe downward Z movement. Re-enabling can
+potentially cause upward tool movement as the adjustment is updated and applied.
+<code>TEMP_COEFF</code> allows run-time tuning of the adjustment temperature coefficient
+(i.e. the <code>TEMP_COEFF</code> config parameter). <code>TEMP_COEFF</code> values are not saved to
+the config. <code>REF_TEMP</code> manually overrides the reference temperature typically
+set during homing (for use in e.g. non-standard homing routines) - will be reset
+automatically upon homing.</p>
 <h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the
 <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>

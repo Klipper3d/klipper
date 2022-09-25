@@ -702,6 +702,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#z_thermal_adjust" class="md-nav__link">
+    [z_thermal_adjust]
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2612,6 +2619,13 @@
           <li class="md-nav__item">
   <a href="#skew_correction" class="md-nav__link">
     [skew_correction]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z_thermal_adjust" class="md-nav__link">
+    [z_thermal_adjust]
   </a>
   
 </li>
@@ -4649,6 +4663,41 @@ the nature of skew correction these lengths are set via gcode. See
 <a href="Skew_Correction.html">Skew Correction</a> and
 <a href="G-Codes.html#skew_correction">Command Reference</a> for details.</p>
 <div class="highlight"><pre><span></span><code>[skew_correction]
+</code></pre></div>
+
+<h3 id="z_thermal_adjust">[z_thermal_adjust]<a class="headerlink" href="#z_thermal_adjust" title="Permanent link">&para;</a></h3>
+<p>Temperature-dependant toolhead Z position adjustment. Compensate for vertical
+toolhead movement caused by thermal expansion of the printer's frame in
+real-time using a temperature sensor (typically coupled to a vertical section
+of frame).</p>
+<p>See also: <a href="G-Codes.html#z_thermal_adjust">extended g-code commands</a>.</p>
+<div class="highlight"><pre><span></span><code>[z_thermal_adjust]
+#temp_coeff:
+#   The temperature coefficient of expansion, in mm/degC. For example, a
+#   temp_coeff of 0.01 mm/degC will move the Z axis downwards by 0.01 mm for
+#   every degree Celsius that the temperature sensor increases. Defaults to
+#   0.0 mm/degC, which applies no adjustment.
+#smooth_time:
+#   Smoothing window applied to the temperature sensor, in seconds. Can reduce
+#   motor noise from excessive small corrections in response to sensor noise.
+#   The default is 2.0 seconds.
+#z_adjust_off_above:
+#   Disables adjustments above this Z height [mm]. The last computed correction
+#   will remain applied until the toolhead moves below the specified Z height
+#   again. The default is 99999999.0 mm (always on).
+#max_z_adjustment:
+#   Maximum absolute adjustment that can be applied to the Z axis [mm]. The
+#   default is 99999999.0 mm (unlimited).
+#sensor_type:
+#sensor_pin:
+#min_temp:
+#max_temp:
+#   Temperature sensor configuration.
+#   See the &quot;extruder&quot; section for the definition of the above
+#   parameters.
+#gcode_id:
+#   See the &quot;heater_generic&quot; section for the definition of this
+#   parameter.
 </code></pre></div>
 
 <h2 id="customized-homing">Customized homing<a class="headerlink" href="#customized-homing" title="Permanent link">&para;</a></h2>
