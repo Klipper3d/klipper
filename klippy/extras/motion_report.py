@@ -193,9 +193,11 @@ class DumpTrapQ:
         out = ["Dumping trapq '%s' %d moves:" % (self.name, len(data))]
         for i, m in enumerate(data):
             out.append("move %d: pt=%.6f mt=%.6f sv=%.6f a=%.6f"
-                       " sp=(%.6f,%.6f,%.6f,%.6f,%.6f,%.6f) ar=(%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)"
+                       " sp=(%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)"
+                       " ar=(%.6f,%.6f,%.6f,%.6f,%.6f,%.6f)"
                        % (i, m.print_time, m.move_t, m.start_v, m.accel,
-                          m.start_x, m.start_y, m.start_z, m.start_a, m.start_b, m.start_c, 
+                          m.start_x, m.start_y, m.start_z,
+                          m.start_a, m.start_b, m.start_c,
                           m.x_r, m.y_r, m.z_r, m.a_r, m.b_r, m.c_r))
         logging.info('\n'.join(out))
     def get_trapq_position(self, print_time):
@@ -217,7 +219,8 @@ class DumpTrapQ:
         qtime = self.last_api_msg[0] + min(self.last_api_msg[1], 0.100)
         data, cdata = self.extract_trapq(qtime, NEVER_TIME)
         d = [(m.print_time, m.move_t, m.start_v, m.accel,
-              (m.start_x, m.start_y, m.start_z, m.start_a, m.start_b, m.start_c), 
+              (m.start_x, m.start_y, m.start_z,
+              m.start_a, m.start_b, m.start_c),
               (m.x_r, m.y_r, m.z_r, m.a_r, m.b_r, m.c_r))
              for m in data]
         if d and d[0] == self.last_api_msg:

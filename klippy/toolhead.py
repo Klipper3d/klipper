@@ -30,7 +30,8 @@ class Move:
             self.end_pos = (start_pos[0], start_pos[1], start_pos[2],
                             start_pos[3], start_pos[4], start_pos[5],
                             end_pos[6])
-            axes_d[0] = axes_d[1] = axes_d[2] = axes_d[3] = axes_d[4] = axes_d[5] = 0.
+            axes_d[0] = axes_d[1] = axes_d[2] \
+                    = axes_d[3] = axes_d[4] = axes_d[5] = 0.
             self.move_d = move_d = abs(axes_d[6])
             inv_move_d = 0.
             if move_d:
@@ -60,7 +61,8 @@ class Move:
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def move_error(self, msg="Move out of range"):
         ep = self.end_pos
-        m = "%s: %.3f %.3f %.3f %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3], ep[4], ep[5], ep[6])
+        m = "%s: %.3f %.3f %.3f %.3f %.3f %.3f [%.3f]" % \
+            (msg, ep[0], ep[1], ep[2], ep[3], ep[4], ep[5], ep[6])
         return self.toolhead.printer.command_error(m)
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
