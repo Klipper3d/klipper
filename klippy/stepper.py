@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
 import chelper
+import support_6axes
 
 class error(Exception):
     pass
@@ -132,6 +133,7 @@ class MCU_stepper:
             coord[0], coord[1], coord[2],
             coord[3], coord[4], coord[5])
     def set_position(self, coord):
+        coord = support_6axes.Axes.extend(coord)
         mcu_pos = self.get_mcu_position()
         sk = self._stepper_kinematics
         ffi_main, ffi_lib = chelper.get_ffi()
