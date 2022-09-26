@@ -410,7 +410,11 @@ class ToolHead:
         return self.reactor.NEVER
     # Movement commands
     def get_position(self):
-        return list(self.commanded_pos)
+        if self.is_6axes:
+            retpos = self.commanded_pos
+        else:
+            retpos = support_6axes.Axes.shrink(self.commanded_pos)
+        return list(retpos)
     def set_position(self, newpos, homing_axes=()):
         self.flush_step_generation()
         ffi_main, ffi_lib = chelper.get_ffi()
