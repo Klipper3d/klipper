@@ -1373,7 +1373,7 @@ iface can0 can static
     up ifconfig $IFACE txqueuelen 128
 </code></pre></div>
 
-<p>Ne feledje, hogy a "Raspberry Pi CAN sapka" is megköveteli a <a href="https://www.waveshare.com/wiki/RS485_CAN_HAT">config.txt módosítását</a>.</p>
+<p>Ne feledd, hogy a "Raspberry Pi CAN sapka" is megköveteli a <a href="https://www.waveshare.com/wiki/RS485_CAN_HAT">config.txt módosítását</a>.</p>
 <h2 id="az-ellenallasok-megszuntetese">Az ellenállások megszüntetése<a class="headerlink" href="#az-ellenallasok-megszuntetese" title="Permanent link">&para;</a></h2>
 <p>A CAN-buszon két 120 ohmos ellenállásnak kell lennie a CANH és CANL vezetékek között. Ideális esetben egy-egy ellenállás a busz mindkét végén található.</p>
 <p>Vedd figyelembe, hogy egyes eszközök beépített 120 ohmos ellenállással rendelkeznek (például a "Waveshare Raspberry Pi CAN sapka" egy beforrasztott ellenállással rendelkezik, amelyet nem lehet könnyen eltávolítani). Egyes eszközök egyáltalán nem tartalmaznak ellenállást. Más eszközök rendelkeznek egy mechanizmussal az ellenállás kiválasztására (általában egy "pin jumper" csatlakoztatásával). Mindenképpen ellenőrizze a CAN-buszon lévő összes eszköz kapcsolási rajzát, hogy a buszon két és csak két 120 Ohm-os ellenállás van-e.</p>
@@ -1383,7 +1383,7 @@ iface can0 can static
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/scripts/canbus_query.py can0
 </code></pre></div>
 
-<p>Ha nem inicializált CAN-eszközöket észlel, a fenti parancs a következő sorokat fogja jelenteni:</p>
+<p>Ha nem inicializált CAN-eszközöket észlelsz, a fenti parancs a következő sorokat fogja jelenteni:</p>
 <div class="highlight"><pre><span></span><code>Talált canbus_uuid=11aa22bb33cc, Alkalmazás: Klipper
 </code></pre></div>
 

@@ -3822,65 +3822,68 @@ radius:
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: deltesian
 max_z_velocity:
-#   For deltesian printers, this limits the maximum velocity (in mm/s) of
-#   moves with z axis movement. This setting can be used to reduce the
-#   maximum speed of up/down moves (which require a higher step rate
-#   than other moves on a deltesian printer). The default is to use
-#   max_velocity for max_z_velocity.
+#   Per le stampanti deltesiane, ciò limita la velocità massima (in mm/s)
+#   dei movimenti con movimento dell&#39;asse z. Questa impostazione può
+#   essere utilizzata per ridurre la velocità massima dei movimenti su/giù
+#   (che richiedono una velocità di incremento maggiore rispetto ad altri
+#   movimenti su una stampante deltesiana). L&#39;impostazione predefinita
+#   è utilizzare max_velocity per max_z_velocity.
 #max_z_accel:
-#   This sets the maximum acceleration (in mm/s^2) of movement along
-#   the z axis. Setting this may be useful if the printer can reach higher
-#   acceleration on XY moves than Z moves (eg, when using input shaper).
-#   The default is to use max_accel for max_z_accel.
+#   Imposta l&#39;accelerazione massima (in mm/s^2) del movimento lungo
+#   l&#39;asse z. L&#39;impostazione può essere utile se la stampante può raggiungere
+#   un&#39;accelerazione maggiore sui movimenti XY rispetto ai movimenti Z
+#   (ad esempio, quando si utilizza l&#39;input shaper). L&#39;impostazione
+#   predefinita è utilizzare max_accel per max_z_accel.
 #minimum_z_position: 0
-#   The minimum Z position that the user may command the head to move
-#   to. The default is 0.
+#   La posizione Z minima in cui l&#39;utente può comandare alla testa di
+#   spostarsi. Il valore predefinito è 0.
 #min_angle: 5
-#   This represents the minimum angle (in degrees) relative to horizontal
-#   that the deltesian arms are allowed to achieve. This parameter is
-#   intended to restrict the arms from becomming completely horizontal,
-#   which would risk accidental inversion of the XZ axis. The default is 5.
+#   Questo rappresenta l&#39;angolo minimo (in gradi) rispetto all&#39;orizzontale
+#   che le braccia deltesiane possono raggiungere. Questo parametro ha lo
+#   scopo di impedire che i bracci diventino completamente orizzontali, il
+#   che rischierebbe l&#39;inversione accidentale dell&#39;asse XZ.
+#   L&#39;impostazione predefinita è 5.
 #print_width:
-#   The distance (in mm) of valid toolhead X coordinates. One may use
-#   this setting to customize the range checking of toolhead moves. If
-#   a large value is specified here then it may be possible to command
-#   the toolhead into a collision with a tower. This setting usually
-#   corresponds to bed width (in mm).
+#   La distanza (in mm) delle coordinate X della testa utensile valide.
+#   È possibile utilizzare questa impostazione per personalizzare il
+#   controllo dell&#39;intervallo dei movimenti della testa utensile. Se
+#   qui viene specificato un valore elevato, potrebbe essere possibile
+#   comandare la collisione della testa utensile con una torre. Questa
+#   impostazione di solito corrisponde alla larghezza del piatto (in mm).
 #slow_ratio: 3
-#   The ratio used to limit velocity and acceleration on moves near the
-#   extremes of the X axis. If vertical distance divided by horizontal
-#   distance exceeds the value of slow_ratio, then velocity and
-#   acceleration are limited to half their nominal values. If vertical
-#   distance divided by horizontal distance exceeds twice the value of
-#   the slow_ratio, then velocity and acceleration are limited to one
-#   quarter of their nominal values. The default is 3.
-
-# The stepper_left section is used to describe the stepper controlling
-# the left tower. This section also controls the homing parameters
-# (homing_speed, homing_retract_dist) for all towers.
+#   Il rapporto utilizzato per limitare la velocità e l&#39;accelerazione sui
+#   movimenti vicini agli estremi dell&#39;asse X. Se la distanza verticale
+#   divisa per la distanza orizzontale supera il valore di slow_ratio, la
+#   velocità e l&#39;accelerazione sono limitate alla metà dei loro valori
+#   nominali. Se la distanza verticale divisa per la distanza orizzontale
+#   supera il doppio del valore di slow_ratio, la velocità e l&#39;accelerazione
+#   sono limitate a un quarto dei loro valori nominali.
+#   Il valore predefinito è 3.
+# la sezione stepper_left è usata per descrivere lo stepper che controlla
+# la torre di sinistra. Questa sezione controlla anche i parametri di 
+# homing (velocità di homing, homing retract_dist) per tutte le torri.
 [stepper_left]
 position_endstop:
-#   Distance (in mm) between the nozzle and the bed when the nozzle is
-#   in the center of the build area and the endstops are triggered. This
-#   parameter must be provided for stepper_left; for stepper_right this
-#   parameter defaults to the value specified for stepper_left.
+#   Distanza (in mm) tra l&#39;ugello e il piatto quando l&#39;ugello si trova al
+#   centro dell&#39;area di costruzione e vengono attivati i finecorsa. Questo
+#   parametro deve essere fornito per stepper_left; per stepper_right
+#   questo parametro è predefinito sul valore specificato per stepper_left.
 arm_length:
-#   Length (in mm) of the diagonal rod that connects the tower carriage to
-#   the print head. This parameter must be provided for stepper_left; for
-#   stepper_right, this parameter defaults to the value specified for
-#   stepper_left.
+#   Lunghezza (in mm) dell&#39;asta diagonale che collega il carrello torre
+#   alla testina di stampa. Questo parametro deve essere fornito per
+#   stepper_left; per stepper_right, questo parametro per impostazione
+#   predefinita è il valore specificato per stepper_left.
 arm_x_length:
-#   Horizontal distance between the print head and the tower when the
-#   printers is homed. This parameter must be provided for stepper_left;
-#   for stepper_right, this parameter defaults to the value specified for
-#   stepper_left.
-
-# The stepper_right section is used to desribe the stepper controlling the
-# right tower.
+#   Distanza orizzontale tra la testina di stampa e la torre quando le
+#   stampanti è in homing. Questo parametro deve essere fornito
+#   per stepper_left; per stepper_right, questo parametro per impostazione
+#   predefinita è il valore specificato per stepper_left.
+# La sezione stepper_right è usata per descrivere lo stepper che
+# controlla la torre destra.
 [stepper_right]
 
-# The stepper_y section is used to describe the stepper controlling
-# the Y axis in a deltesian robot.
+# La sezione stepper_y viene utilizzata per descrivere lo stepper che
+# controlla l&#39;asse Y in un robot deltesiano.
 [stepper_y]
 </code></pre></div>
 

@@ -1503,7 +1503,7 @@ gcode:
   RESTORE_GCODE_STATE NAME=my_move_up_state
 </code></pre></div>
 
-<p>A <code>G91</code> parancs a G-kód elemzési állapotot "relatív mozgatási módba" helyezi, a <code>RESTORE_GCODE_STATE</code> parancs pedig visszaállítja a makró belépése előtti állapotot. Ügyeljen arra, hogy az első <code>G1</code> parancsnál adjon meg explicit sebességet (az <code>F</code> paraméterrel).</p>
+<p>A <code>G91</code> parancs a G-kód elemzési állapotot "relatív mozgatási módba" helyezi, a <code>RESTORE_GCODE_STATE</code> parancs pedig visszaállítja a makró belépése előtti állapotot. Ügyelj arra, hogy az első <code>G1</code> parancsnál adjon meg explicit sebességet (az <code>F</code> paraméterrel).</p>
 <h2 id="sablon-bovites">Sablon bővítés<a class="headerlink" href="#sablon-bovites" title="Permanent link">&para;</a></h2>
 <p>A gcode_macro <code>gcode:</code> konfigurációs szakasz kiértékelése a Jinja2 sablonnyelv használatával történik. A kifejezéseket kiértékelhetjük futásidőben <code>{ }</code> karakterekbe csomagolva, vagy használhatunk feltételes utasításokat <code>{% %}</code> karakterekbe csomagolva. A szintaxissal kapcsolatos további információkért lásd a <a href="http://jinja.pocoo.org/docs/2.10/templates/">Jinja2 dokumentáció</a>.</p>
 <p>Példa egy összetett makróra:</p>

@@ -1287,7 +1287,7 @@
 
 <h1 id="pelda-konfiguraciok">Példa konfigurációk<a class="headerlink" href="#pelda-konfiguraciok" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper github tárhoz (a <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config könyvtárban</a> található) egy Klipper példakonfigurációhoz való hozzájáruláshoz tartalmaz útmutatást.</p>
-<p>Ne feledje, hogy a <a href="https://community.klipper3d.org">Klipper Community Discourse szerver</a> szintén hasznos forrás a konfigurációs fájlok kereséséhez és megosztásához.</p>
+<p>Ne feledd, hogy a <a href="https://community.klipper3d.org">Klipper Community Discourse szerver</a> szintén hasznos forrás a konfigurációs fájlok kereséséhez és megosztásához.</p>
 <h2 id="iranyelvek">Irányelvek<a class="headerlink" href="#iranyelvek" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Válassza ki a megfelelő konfigurációs fájlnév előtagot:<ol>
@@ -1311,8 +1311,8 @@
 </li>
 <li>Where possible, it is best to use the same wording, phrasing, indentation, and section ordering as the existing config files.<ol>
 <li>The top of each config file should list the type of micro-controller the user should select during "make menuconfig". It should also have a reference to "docs/Config_Reference.md".</li>
-<li>Ne másolja be a mező dokumentációját a példakonfigurációs fájlokba. (Ez karbantartási terhet jelent, mivel a dokumentáció frissítése sok helyen változtatást igényelne.)</li>
-<li>A példa konfigurációs fájlok nem tartalmazhatnak "SAVE_CONFIG" részt. Ha szükséges, másolja át a SAVE_CONFIG szakaszból a megfelelő mezőket a fő konfigurációs terület megfelelő szakaszába.</li>
+<li>Ne másold be a mező dokumentációját a példakonfigurációs fájlokba. (Ez karbantartási terhet jelent, mivel a dokumentáció frissítése sok helyen változtatást igényelne.)</li>
+<li>A példa konfigurációs fájlok nem tartalmazhatnak "SAVE_CONFIG" részt. Ha szükséges, másold át a SAVE_CONFIG szakaszból a megfelelő mezőket a fő konfigurációs terület megfelelő szakaszába.</li>
 <li>Használja a <code>field: value</code> szintaxist a <code>field=value</code> helyett.</li>
 <li>Extruder <code>rotation_distance</code> hozzáadásakor célszerű megadni a <code>gear_ratio</code> értéket, ha az extruder fogaskerékkel rendelkezik. A példakonfigurációkban szereplő rotation_distance értéktől azt várjuk, hogy korreláljon az extruderben lévő fogaskerék kerületével. Ez általában 20 és 35 mm közötti tartományban van. A <code>gear_ratio</code> megadásakor előnyösebb a mechanizmuson lévő tényleges fogaskerekek fogszámának megadása (pl. inkább <code>gear_ratio: 80:20</code>, mint <code>gear_ratio: 4:1</code>). További információkért lásd a <a href="Rotation_Distance.html#using-a-gear_ratio">forgatási távolság dokumentumot</a>.</li>
 <li>Kerülje az alapértelmezett értékre beállított mezőértékek meghatározását. Például nem szabad megadni <code>min_extrude_temp: 170</code>, mivel ez már az alapértelmezett érték.</li>

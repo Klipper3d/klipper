@@ -1443,7 +1443,7 @@ optional arguments:
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -f ~/downloads/klipper.bin /dev/ttyAMA0 btt-skr-v1.3
 </code></pre></div>
 
-<p>Ne feledje, hogy az MKS Robin E3 frissítésekor nem szükséges manuálisan futtatni a <code>update_mks_robin.py</code> fájlt, és az így kapott bináris állományt a <code>flash-sdcard.sh</code> fájlba táplálni. Ez az eljárás a feltöltési folyamat során automatikusan megtörténik.</p>
+<p>Ne feledd, hogy az MKS Robin E3 frissítésekor nem szükséges manuálisan futtatni az <code>update_mks_robin.py</code> fájlt, és az így kapott bináris állományt a <code>flash-sdcard.sh</code> fájlba táplálni. Ez az eljárás a feltöltési folyamat során automatikusan megtörténik.</p>
 <p>The <code>-c</code> option is used to perform a check or verify-only operation to test if the board is running the specified firmware correctly. This option is primarily intended for cases where a manual power-cycle is necessary to complete the flashing procedure, such as with bootloaders that use SDIO mode instead of SPI to access their SD Cards. (See Caveats below) But, it can also be used anytime to verify if the code flashed into the board matches the version in your build folder on any supported board.</p>
 <h2 id="ovintezkedesek">Óvintézkedések<a class="headerlink" href="#ovintezkedesek" title="Permanent link">&para;</a></h2>
 <ul>

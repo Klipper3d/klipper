@@ -1801,7 +1801,7 @@ homing_retract_dist: 0
 <div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 </code></pre></div>
 
-<p>Then issue a <code>G28 X0</code> command and verify the axis does not move at all or quickly stops moving. If the axis does not stop, then issue an <code>M112</code> to halt the printer - something is not correct with the diag/sg_tst pin wiring or configuration and it must be corrected before continuing.</p>
+<p>Quindi inviare un comando <code>G28 X0</code> e verificare che l'asse non si muova affatto o smetta rapidamente di muoversi. Se l'asse non si ferma, inviare un <code>M112</code> per fermare la stampante - qualcosa non è corretto con il cablaggio o la configurazione dei pin diag/sg_tst e deve essere corretto prima di continuare.</p>
 <p>Quindi, diminuire progressivamente la sensibilità dell'impostazione <code>VALUE</code> ed eseguire nuovamente i comandi <code>SET_TMC_FIELD</code> <code>G28 X0</code> per trovare la sensibilità più alta che fa sì che il carrello si muova con successo fino all'arresto e si arresti. (Per i driver tmc2209 questo diminuirà SGTHRS, per altri conducenti aumenterà il sgt.) Assicurati di iniziare ogni tentativo con il carrello vicino al centro del binario (se necessario, emetti <code>M84</code> e quindi sposta manualmente il carrello sul centro). Dovrebbe essere possibile trovare la sensibilità più alta che si adatta in modo affidabile (le impostazioni con una sensibilità più alta comportano movimenti piccoli o nulli). Nota il valore trovato come <em>sensibilità_massima</em>. (Se si ottiene la sensibilità minima possibile (SGTHRS=0 o sgt=63) senza alcun movimento del carrello, allora qualcosa non è corretto con il cablaggio o la configurazione dei pin diag/sg_tst e deve essere corretto prima di continuare.)</p>
 <p>Quando si cerca la sensibilità_massima, può essere conveniente passare a diverse impostazioni VALUE (in modo da dividere in due il parametro VALUE). In tal caso, prepararsi a emettere un comando <code>M112</code> per arrestare la stampante, poiché un'impostazione con una sensibilità molto bassa potrebbe far "sbattere" ripetutamente l'asse contro l'estremità del binario.</p>
 <p>Assicurati di attendere un paio di secondi tra ogni tentativo di homing. Dopo che il driver TMC ha rilevato uno stallo, potrebbe volerci un po' di tempo per cancellare il suo indicatore interno ed essere in grado di rilevare un altro stallo.</p>
@@ -1847,7 +1847,7 @@ gcode:
 <li>Durante la messa a punto, assicurati che entrambi i carrelli X e Y siano vicini al centro dei loro binari prima di ogni tentativo di homing.</li>
 <li>Al termine dell'ottimizzazione, quando si esegue l'homing sia di X che Y, utilizzare le macro per assicurarsi che un asse sia homed per primo, quindi spostare il carrello lontano dal limite dell'asse, fare una pausa per almeno 2 secondi, quindi avviare l'orientamento dell'altro carrello. L'allontanamento dall'asse evita l'homing di un asse mentre l'altro viene premuto contro il limite dell'asse (cosa potrebbe distorcere il rilevamento dello stallo). La pausa è necessaria per garantire che il flag di stallo del driver sia cancellata prima del homing.</li>
 </ol>
-<p>An example CoreXY homing macro might look like:</p>
+<p>Un esempio di macro homing CoreXY potrebbe essere simile a:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro HOME]
 gcode:
     G90

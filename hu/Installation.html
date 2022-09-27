@@ -1366,7 +1366,7 @@ make menuconfig
 <div class="highlight"><pre><span></span><code>make
 </code></pre></div>
 
-<p>Ha a <a href="#obtain-a-klipper-configuration-file">nyomtató konfigurációs fájl</a> tetején található megjegyzések egyéni lépéseket írnak le a "flash" végső képnek a nyomtató vezérlőpanelére történő villogtatásához, akkor kövesse ezeket a lépéseket, majd folytassa az <a href="#configuring-octoprint-to-use-klipper">OctoPrint konfigurálása</a> lépéseket.</p>
+<p>Ha a <a href="#obtain-a-klipper-configuration-file">nyomtató konfigurációs fájl</a> tetején található megjegyzések egyéni lépéseket írnak le a "flash" végső képnek a nyomtató vezérlőpanelére történő égetéséhez, akkor kövesd ezeket a lépéseket, majd folytasd az <a href="#configuring-octoprint-to-use-klipper">OctoPrint konfigurálása</a> lépésekkel.</p>
 <p>Ellenkező esetben a következő lépéseket gyakran használják a nyomtató vezérlőlapjának "flash" égetésére. Először meg kell határozni a mikrokontrollerhez csatlakoztatott soros portot. Futtassa a következőket:</p>
 <div class="highlight"><pre><span></span><code>ls /dev/serial/by-id/*
 </code></pre></div>
@@ -1389,7 +1389,7 @@ sudo service klipper start
 <p>Lépj a Beállítások lapra (a csavarkulcs ikon az oldal tetején). A "További soros portok" részben a "Soros kapcsolat" alatt add hozzá a "/tmp/printer" elemet. Ezután kattintson a "Mentés" gombra.</p>
 <p>Lépj újra a Beállítások fülre, és a „Soros kapcsolat” alatt módosítsa a „Soros port” beállítást „/tmp/printer”-re.</p>
 <p>A Beállítások lapon lépj a „Viselkedés” allapra, és válassza a „Folyamatban lévő nyomtatás törlése, de továbbra is csatlakozva maradjon a nyomtatóhoz” lehetőséget. Kattintson a "Mentés" gombra.</p>
-<p>A főoldalon, a „Kapcsolat” részben (az oldal bal felső sarkában) győződjön meg arról, hogy a „Soros Port” beállítása „/tmp/printer”, majd kattintson a „Csatlakozás” gombra. (Ha a „/tmp/printer” nem elérhető, próbálja meg újratölteni az oldalt.)</p>
+<p>A főoldalon, a „Kapcsolat” részben (az oldal bal felső sarkában) győződjön meg arról, hogy a „Soros Port” beállítása „/tmp/printer”, majd kattintson a „Csatlakozás” gombra. (Ha a „/tmp/printer” nem elérhető, próbáld meg újratölteni az oldalt.)</p>
 <p>A csatlakozás után lépj a "Terminal" fülre, és írja be a "status" kifejezést (idézőjelek nélkül) a parancsbeviteli mezőbe, majd kattintson a "Küldés" gombra. A terminálablak valószínűleg hibát jelez a konfigurációs fájl megnyitásakor – ez azt jelenti, hogy az OctoPrint sikeresen kommunikál a Klipperrel. Tovább a következő részhez.</p>
 <h2 id="a-klipper-beallitasa">A Klipper beállítása<a class="headerlink" href="#a-klipper-beallitasa" title="Permanent link">&para;</a></h2>
 <p>A következő lépés a <a href="#obtain-a-klipper-configuration-file">nyomtató konfigurációs fájl</a> átmásolása a Raspberry Pi-re.</p>
@@ -1415,7 +1415,7 @@ serial: /dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 <p>A fájl létrehozása és szerkesztése után az OctoPrint webes terminálján ki kell adni egy "újraindítás" parancsot a konfiguráció betöltéséhez. A "status" parancs azt jelenti, hogy a nyomtató készen áll, ha a Klipper config fájl sikeresen beolvasásra került, és a mikrokontroller sikeresen meg lett találva és konfigurálva.</p>
 <p>A nyomtató konfigurációs fájljának testreszabásakor nem ritka, hogy a Klipper konfigurációs hibát jelez. Ha hiba lép fel, végezze el a szükséges javításokat a nyomtató konfigurációs fájljában, és add ki az "újraindítás" parancsot, amíg az "állapot" nem jelzi, hogy a nyomtató készen áll.</p>
 <p>A Klipper az OctoPrint terminállapon keresztül jelenti a hibaüzeneteket. A "status" paranccsal a hibaüzenetek újra jelenthetők. A Klipper alapértelmezett indítószkriptje egy naplót is elhelyez a <strong>/tmp/klippy.log</strong> fájlban, amely részletesebb információkat tartalmaz.</p>
-<p>Miután a Klipper jelenti, hogy a nyomtató készen áll, folytassa a <a href="Config_checks.html">config check</a> című dokumentumal, hogy elvégezzen néhány alapvető ellenőrzést a config fájlban lévő definíciókon. További információkért lásd a fő <a href="Overview.html">dokumentációs hivatkozás</a> című rész.</p>
+<p>Miután a Klipper jelenti, hogy a nyomtató készen áll, folytasd a <a href="Config_checks.html">konfigurációs ellenőrzés</a> című dokumentumal, hogy elvégezzen néhány alapvető ellenőrzést a config fájlban lévő definíciókon. További információkért lásd a fő <a href="Overview.html">dokumentációs hivatkozás</a> című rész.</p>
 
               
             </article>

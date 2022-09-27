@@ -1718,7 +1718,7 @@ probe_points: ...
 
 <p>Ekkor a <code>TEST_RESONANCES AXIS=X</code> és <code>TEST_RESONANCES AXIS=Y</code> parancsok a megfelelő gyorsulásmérőt fogják használni minden tengelyhez.</p>
 <h3 id="max-simitas">Max simítás<a class="headerlink" href="#max-simitas" title="Permanent link">&para;</a></h3>
-<p>Ne feledje, hogy a bemeneti formázó simítást hozhat létre az alkatrészekben. A <code>calibrate_shaper.py</code> szkript vagy <code>SHAPER_CALIBRATE</code> parancs által végrehajtott bemeneti formázó automatikus hangolása nem súlyosbítja a simítást, ugyanakkor megpróbálja minimalizálni az ebből eredő rezgéseket. Néha az alakformáló frekvencia optimálistól elmaradó választását hozhatják, vagy talán egyszerűen csak kevésbé simítják az alkatrészeket a nagyobb fennmaradó rezgések rovására. Ezekben az esetekben kérheti a bemeneti formázó maximális simításának korlátozását.</p>
+<p>Ne feledd, hogy a bemeneti formázó simítást hozhat létre az alkatrészekben. A <code>calibrate_shaper.py</code> szkript vagy <code>SHAPER_CALIBRATE</code> parancs által végrehajtott bemeneti formázó automatikus hangolása nem súlyosbítja a simítást, ugyanakkor megpróbálja minimalizálni az ebből eredő rezgéseket. Néha az alakformáló frekvencia optimálistól elmaradó választását hozhatják, vagy talán egyszerűen csak kevésbé simítják az alkatrészeket a nagyobb fennmaradó rezgések rovására. Ezekben az esetekben kérheti a bemeneti formázó maximális simításának korlátozását.</p>
 <p>Nézzük meg az automatikus hangolás következő eredményeit:</p>
 <p><img alt="Resonances" src="img/calibrate-x.png" /></p>
 <div class="highlight"><pre><span></span><code>Illesztett alakító &#39;zv&#39; frekvencia = 57,8 Hz (rezgések = 20,3%, simítás ~= 0,053)
@@ -1771,7 +1771,7 @@ max_smoothing: 0.25 # egy példa
 <p>Ha a formázó újrakalibrálását végzi, és a javasolt formázó konfigurációhoz tartozó simítás majdnem megegyezik az előző kalibrálás során kapott értékkel, ez a lépés kihagyható.</p>
 <h3 id="egyeni-tengelyek-tesztelese">Egyéni tengelyek tesztelése<a class="headerlink" href="#egyeni-tengelyek-tesztelese" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code> parancs támogatja az egyéni tengelyeket. Bár ez nem igazán hasznos a bemeneti alakító kalibrálásához, a nyomtató rezonanciáinak alapos tanulmányozására és például a szíjfeszítés ellenőrzésére használható.</p>
-<p>A CoreXY nyomtatókon a szíjfeszítés ellenőrzéséhez hajtsa végre a következőt</p>
+<p>A CoreXY nyomtatókon a szíjfeszítés ellenőrzéséhez hajtsd végre a következőt</p>
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=1,1 OUTPUT=raw_data
 TEST_RESONANCES AXIS=1,-1 OUTPUT=raw_data
 </code></pre></div>
@@ -1781,7 +1781,7 @@ TEST_RESONANCES AXIS=1,-1 OUTPUT=raw_data
 </code></pre></div>
 
 <p>amely a rezonanciákat összehasonlítva <code>/tmp/resonances.png</code> képet hoz létre.</p>
-<p>Az alapértelmezett toronyelhelyezésű Delta nyomtatók esetében (A torony ~= 210 fok, B ~= 330 fok és C ~= 90 fok), hajtsa végre a következőt</p>
+<p>Az alapértelmezett toronyelhelyezésű Delta nyomtatók esetében (A torony ~= 210 fok, B ~= 330 fok és C ~= 90 fok), hajtsd végre a következőt</p>
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=0,1 OUTPUT=raw_data
 TEST_RESONANCES AXIS=-0.866025404,-0.5 OUTPUT=raw_data
 TEST_RESONANCES AXIS=0.866025404,-0.5 OUTPUT=raw_data
