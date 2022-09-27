@@ -40,9 +40,6 @@ class VirtualSD:
         self.gcode.register_command(
             "SDCARD_PRINT_FILE", self.cmd_SDCARD_PRINT_FILE,
             desc=self.cmd_SDCARD_PRINT_FILE_help)
-        self.gcode.register_command(
-            "LAYER", self.cmd_LAYER,
-            desc=self.cmd_LAYER_help)
     def handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True
@@ -152,12 +149,6 @@ class VirtualSD:
             filename = filename[1:]
         self._load_file(gcmd, filename, check_subdirs=True)
         self.do_resume()
-    cmd_LAYER_help = "Pass the current layer and the total layers count " \
-                     "by your Slicer"
-    def cmd_LAYER(self, gcmd):
-        total = gcmd.get_int("TOTAL", self.print_stats.layer_total, minval=0)
-        current = gcmd.get_int("CURRENT", 0, minval=0)
-        self.print_stats.set_layer(total, current)
     def cmd_M20(self, gcmd):
         # List SD card
         files = self.get_file_list()
