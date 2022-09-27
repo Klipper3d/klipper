@@ -746,6 +746,20 @@ scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
 
+### [mcp4018]
+
+The following command is available when a
+[mcp4018 config section](Config_Reference.md#mcp4018) is
+enabled.
+
+#### SET_DIGIPOT
+
+`SET_DIGIPOT DIGIPOT=config_name WIPER=<value>`: This command will
+change the current value of the digipot.  This value should typically
+be between 0.0 and 1.0, unless a 'scale' is defined in the config.
+When 'scale' is defined, then this value should be  between 0.0 and
+'scale'.
+
 ### [led]
 
 The following command is available when any of the
@@ -1272,6 +1286,24 @@ print.
 information in the sliced gcode. Add `LAYER [TOTAL=<total_layer_count>]`
 to your slicer start gcode section and `LAYER [CURRENT=<current_layer>]`
 at the layer change gcode section.
+
+### [z_thermal_adjust]
+
+The following commands are available when the
+[z_thermal_adjust config section](Config_Reference.md#z_thermal_adjust)
+is enabled.
+
+#### SET_Z_THERMAL_ADJUST
+`SET_Z_THERMAL_ADJUST [ENABLE=<0:1>] [TEMP_COEFF=<value>] [REF_TEMP=<value>]`:
+Enable or disable the Z thermal adjustment with `ENABLE`. Disabling does not
+remove any adjustment already applied, but will freeze the current adjustment
+value - this prevents potentially unsafe downward Z movement. Re-enabling can
+potentially cause upward tool movement as the adjustment is updated and applied.
+`TEMP_COEFF` allows run-time tuning of the adjustment temperature coefficient
+(i.e. the `TEMP_COEFF` config parameter). `TEMP_COEFF` values are not saved to
+the config. `REF_TEMP` manually overrides the reference temperature typically
+set during homing (for use in e.g. non-standard homing routines) - will be reset
+automatically upon homing.
 
 ### [z_tilt]
 

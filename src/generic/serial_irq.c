@@ -79,6 +79,9 @@ console_task(void)
     if (ret > 0)
         command_dispatch(receive_buf, pop_count);
     if (ret) {
+        if (CONFIG_SERIAL_BOOTLOADER_SIDECHANNEL && ret < 0 && pop_count == 32
+            && !memcmp(receive_buf, " \x1c Request Serial Bootloader!! ~", 32))
+            bootloader_request();
         console_pop_input(pop_count);
         if (ret > 0)
             command_send_ack();

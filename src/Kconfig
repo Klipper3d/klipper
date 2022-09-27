@@ -44,6 +44,8 @@ source "src/simulator/Kconfig"
 # Generic configuration options for serial ports
 config SERIAL
     bool
+config SERIAL_BOOTLOADER_SIDECHANNEL
+    bool
 config SERIAL_BAUD
     depends on SERIAL
     int "Baud rate for serial port" if LOW_LEVEL_OPTIONS

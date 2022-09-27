@@ -8,8 +8,6 @@
 #include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
-#include "board/armcm_reset.h" // try_request_canboot
-#include "board/irq.h" // irq_disable
 #include "board/misc.h" // timer_read_time
 #include "byteorder.h" // cpu_to_le32
 #include "command.h" // DECL_CONSTANT_STR
@@ -246,20 +244,12 @@ usb_set_configure(void)
     usb_irq_enable();
 }
 
+// Force a USB disconnect (used during reboot into bootloader)
 void
-bootloader_request(void)
+usb_disconnect(void)
 {
-    if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
-        return;
-    try_request_canboot();
-    // Disable USB and pause for 5ms so host recognizes a disconnect
-    irq_disable();
     sie_cmd_write(SIE_CMD_SET_DEVICE_STATUS, 0);
     udelay(5000);
-    // The "LPC17xx-DFU-Bootloader" will enter the bootloader if the
-    // watchdog timeout flag is set.
-    LPC_WDT->WDMOD = 0x07;
-    NVIC_SystemReset();
 }
 
 

@@ -217,6 +217,8 @@ class HandleStepQ:
             inv_freq = tdiff / cdiff
         step_dist = jmsg['step_distance']
         step_pos = jmsg['start_position']
+        if not step_data[0][0]:
+            step_data[0] = (0., step_pos, step_pos)
         for interval, raw_count, add in jmsg['data']:
             qs_dist = step_dist
             count = raw_count
@@ -316,6 +318,8 @@ class HandleStepPhase:
         if cdiff:
             inv_freq = tdiff / cdiff
         step_pos = jmsg['start_mcu_position']
+        if not step_data[0][0]:
+            step_data[0] = (0., step_pos)
         for interval, raw_count, add in jmsg['data']:
             qs_dist = 1
             count = raw_count
