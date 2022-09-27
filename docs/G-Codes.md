@@ -894,7 +894,7 @@ The print_stats module is automatically loaded.
 
 #### SET_PRINT_STATS_INFO
 `SET_PRINT_STATS_INFO [TOTAL_LAYER=<total_layer_count>] [CURRENT_LAYER=
-<current_layer>]`: Pass slicer info like layer act and total to Klipper. 
+<current_layer>]`: Pass slicer info like layer act and total to Klipper.
 Add `SET_PRINT_STATS_INFO [TOTAL_LAYER=<total_layer_count>]` to your
 slicer start gcode section and `SET_PRINT_STATS_INFO [CURRENT_LAYER=
 <current_layer>]` at the layer change gcode section to pass layer
