@@ -108,7 +108,7 @@ BOARD_DEFS = {
 BOARD_ALIASES = {
     'btt-skr-v1.1': BOARD_DEFS['generic-lpc1768'],
     'btt-skr-v1.3': BOARD_DEFS['generic-lpc1768'],
-    'btt-skr-v1.4': BOARD_DEFS['generic-lpc1768'],
+    'btt-skr-v1.4': BOARD_DEFS['generic-lpc1769'],
     'mks-sgenl-v1': BOARD_DEFS['generic-lpc1768'],
     'mks-sbase': BOARD_DEFS['generic-lpc1768'],
     'smoothieboard-v1': BOARD_DEFS['generic-lpc1769'],
