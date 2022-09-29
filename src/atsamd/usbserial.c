@@ -181,7 +181,7 @@ bootloader_request(void)
     irq_disable();
 #if CONFIG_MACH_SAMD21
     writel((void*)0x20007FFC, 0x07738135);
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
     writel((void*)(HSRAM_ADDR + HSRAM_SIZE - 4), 0xf01669ef);
 #endif
     NVIC_SystemReset();
@@ -253,7 +253,7 @@ usbserial_init(void)
     USB->DEVICE.INTENSET.reg = USB_DEVICE_INTENSET_EORST;
 #if CONFIG_MACH_SAMD21
     armcm_enable_irq(USB_Handler, USB_IRQn, 1);
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
     armcm_enable_irq(USB_Handler, USB_0_IRQn, 1);
     armcm_enable_irq(USB_Handler, USB_1_IRQn, 1);
     armcm_enable_irq(USB_Handler, USB_2_IRQn, 1);

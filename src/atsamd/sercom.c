@@ -127,7 +127,7 @@ static const struct sercom_pad sercom_pads[] = {
     { 5, GPIO('B', 3), 1, 'D'},
     { 5, GPIO('B', 0), 2, 'D'},
     { 5, GPIO('B', 1), 3, 'D'},
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
     { 0, GPIO('A', 8), 0, 'C'},
     { 0, GPIO('A', 9), 1, 'C'},
     { 0, GPIO('A', 10), 2, 'C'},
