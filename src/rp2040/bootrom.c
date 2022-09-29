@@ -15,13 +15,23 @@
 // to (especially for the flash functions) call while the XIP layer
 // is unavailable.
 
+static __always_inline void *rom_hword_as_ptr(uint16_t rom_address) {
+#if defined(__GNUC__) && (__GNUC__ >= 12)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+  return (void *)(uintptr_t)*(uint16_t *)(uintptr_t)rom_address;
+#pragma GCC diagnostic pop
+#else
+  return (void *)(uintptr_t)*(uint16_t *)(uintptr_t)rom_address;
+#endif
+}
+
 static void * _ramfunc
 rom_func_lookup(uint32_t code)
 {
   // Table and lookup function are provided by the BOOTROM
-  void *(*fn)(uint16_t *, uint32_t) =
-      (void *)(uintptr_t)(*(uint16_t *)0x18);
-  uint16_t *table = (uint16_t *)(uintptr_t)(*(uint16_t *)0x14);
+  void *(*fn)(uint16_t *, uint32_t) = rom_hword_as_ptr(0x18);
+  uint16_t *table = rom_hword_as_ptr(0x14);
   return fn(table, code);
 }
 
