@@ -9,6 +9,7 @@ MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
 
 CFLAGS-$(CONFIG_MACH_SAMD21) += -mcpu=cortex-m0plus -Ilib/samd21/samd21a/include
 CFLAGS-$(CONFIG_MACH_SAMD51) += -mcpu=cortex-m4 -Ilib/samd51/samd51a/include
+CFLAGS-$(CONFIG_MACH_SAMD51) += -Ilib/same54/include
 CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
