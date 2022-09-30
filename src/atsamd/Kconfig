@@ -68,6 +68,9 @@ config MACH_SAME51
 config MACH_SAME54
     bool
     select MACH_SAMX5
+config HAVE_SAMD_CANBUS
+    bool
+    default y if MACH_SAME51 || MACH_SAME54
 
 config MCU
     string
@@ -159,6 +162,48 @@ choice
     config ATSAMD_SERIAL
         bool "Serial"
         select SERIAL
+    config ATSAMD_MMENU_CANBUS_PA23_PA22
+        bool "CAN bus (on PA23/PA22)"
+        depends on HAVE_SAMD_CANBUS
+        select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PA25_PA24
+        bool "CAN bus (on PA25/PA24)"
+        depends on HAVE_SAMD_CANBUS
+        select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PB13_PB12
+        bool "CAN bus (on PB13/PB12)"
+        depends on HAVE_SAMD_CANBUS
+        select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PB15_PB14
+        bool "CAN bus (on PB15/PB14)"
+        depends on HAVE_SAMD_CANBUS
+        select CANSERIAL
+    config ATSAMD_USBCANBUS
+        bool "USB to CAN bus bridge"
+        depends on HAVE_SAMD_CANBUS
+        select USBCANBUS
 endchoice
+choice
+    prompt "CAN bus interface" if USBCANBUS
+    config ATSAMD_CMENU_CANBUS_PA23_PA22
+        bool "CAN bus (on PA23/PA22)"
+    config ATSAMD_CMENU_CANBUS_PB13_PB12
+        bool "CAN bus (on PB13/PB12)"
+    config ATSAMD_CMENU_CANBUS_PB15_PB14
+        bool "CAN bus (on PB15/PB14)"
+endchoice
+
+config ATSAMD_CANBUS_PA23_PA22
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PA23_PA22 || ATSAMD_CMENU_CANBUS_PA23_PA22
+config ATSAMD_CANBUS_PA25_PA24
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PA25_PA24
+config ATSAMD_CANBUS_PB13_PB12
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PB13_PB12 || ATSAMD_CMENU_CANBUS_PB13_PB12
+config ATSAMD_CANBUS_PB15_PB14
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PB15_PB14 || ATSAMD_CMENU_CANBUS_PB15_PB14
 
 endif
