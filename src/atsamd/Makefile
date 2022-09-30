@@ -3,7 +3,7 @@
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
 
-dirs-y += src/atsamd src/generic
+dirs-y += src/atsamd src/generic lib/fast-hash
 
 MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
 
@@ -11,7 +11,7 @@ CFLAGS-$(CONFIG_MACH_SAMD21) += -mcpu=cortex-m0plus -Ilib/samd21/samd21a/include
 CFLAGS-$(CONFIG_MACH_SAMD51) += -Ilib/samd51/samd51a/include
 CFLAGS-$(CONFIG_MACH_SAME51) += -Ilib/same51/include
 CFLAGS-$(CONFIG_MACH_SAMX5) += -mcpu=cortex-m4 -Ilib/same54/include
-CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
+CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core -Ilib/fast-hash
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
@@ -22,6 +22,10 @@ src-y += atsamd/main.c atsamd/gpio.c generic/crc16_ccitt.c
 src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
 src-$(CONFIG_USBSERIAL) += atsamd/usbserial.c atsamd/chipid.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += atsamd/serial.c generic/serial_irq.c
+canbus-src-y := generic/canserial.c ../lib/fast-hash/fasthash.c
+canbus-src-y += atsamd/fdcan.c atsamd/chipid.c
+src-$(CONFIG_USBCANBUS) += $(canbus-src-y) atsamd/usbserial.c generic/usb_canbus.c
+src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c
 src-$(CONFIG_HAVE_GPIO_ADC) += atsamd/adc.c
 src-$(CONFIG_HAVE_GPIO_I2C) += atsamd/i2c.c
 src-$(CONFIG_HAVE_GPIO_SPI) += atsamd/spi.c
