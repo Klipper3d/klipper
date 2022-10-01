@@ -69,16 +69,17 @@ class PrintStats:
     def cmd_SET_PRINT_STATS_INFO(self, gcmd):
         total_layer = gcmd.get_int("TOTAL_LAYER", self.info_total_layer, \
                                    minval=0)
-        current_layer = gcmd.get_int("CURRENT_LAYER", 0, minval=0)
+        current_layer = gcmd.get_int("CURRENT_LAYER", self.info_current_layer, \
+                                     minval=0)
         if total_layer == 0:
             self.info_total_layer = None
             self.info_current_layer = None
-        else:
+        elif total_layer != self.info_total_layer:
             self.info_total_layer = total_layer
-            if current_layer < total_layer:
-                self.info_current_layer = current_layer
-            else:
-                self.info_current_layer = total_layer
+            self.info_current_layer = 0
+
+        if current_layer != self.info_current_layer:
+            self.info_current_layer = min(current_layer, self.info_total_layer)
     def reset(self):
         self.filename = self.error_message = ""
         self.state = "standby"
