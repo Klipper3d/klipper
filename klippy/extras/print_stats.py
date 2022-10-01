@@ -78,11 +78,10 @@ class PrintStats:
             self.info_total_layer = total_layer
             self.info_current_layer = 0
 
-        if current_layer != self.info_current_layer:
-            if current_layer < total_layer:
-                self.info_current_layer = current_layer
-            else:
-                self.info_current_layer = total_layer
+        if self.info_total_layer is not None and \
+                current_layer is not None and \
+                current_layer != self.info_current_layer:
+            self.info_current_layer = min(current_layer, self.info_total_layer)
     def reset(self):
         self.filename = self.error_message = ""
         self.state = "standby"
