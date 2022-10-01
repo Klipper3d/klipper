@@ -1712,7 +1712,7 @@ bossac -U -p /dev/ttyACM0 -R
 <div class="highlight"><pre><span></span><code>forrás [find target/at91samdXX.cfg]
 </code></pre></div>
 
-<p>Szerezzen be egy bootloadert - például:</p>
+<p>Szerezz be egy bootloadert - például:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/ArduinoCore-samd/raw/1.8.3/bootloaders/zero/samd21_sam_ba.bin&#39;
 </code></pre></div>
 
@@ -1734,7 +1734,7 @@ program samd21_sam_ba.bin verify
 <div class="highlight"><pre><span></span><code>forrás [find target/atsame5x.cfg]
 </code></pre></div>
 
-<p>Szerezzen be egy bootloadert. Számos bootloader elérhető a <a href="https://github.com/adafruit/uf2-samdx1/releases/latest">https://github.com/adafruit/uf2-samdx1/releases/latest</a> oldalon. Például:</p>
+<p>Szerezz be egy bootloadert. Számos bootloader elérhető a <a href="https://github.com/adafruit/uf2-samdx1/releases/latest">https://github.com/adafruit/uf2-samdx1/releases/latest</a> oldalon. Például:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/adafruit/uf2-samdx1/releases/download/v3.7.0/bootloader-itsybitsy_m4-v3.7.0.bin&#39;
 </code></pre></div>
 
@@ -1767,7 +1767,7 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 <div class="highlight"><pre><span></span><code>dfu-util -d 1eaf:0003 -a 2 -R -D out/klipper.bin
 </code></pre></div>
 
-<p>A bootloader általában csak rövid ideig fut a rendszerindítás után. Szükség lehet arra, hogy a fenti parancsot úgy időzítsük, hogy az akkor fusson le, amikor a bootloader még aktív (a bootloader üzem közben villogtat egy a lapon lévő ledet). Alternatív megoldásként a "boot 0" csapot állítsd alacsonyra, a "boot 1" csapot pedig magasra, hogy a bootloaderben maradjon a reset után.</p>
+<p>A bootloader általában csak rövid ideig fut a rendszerindítás után. Szükség lehet arra, hogy a fenti parancsot úgy időzítsük, hogy az akkor fusson le, amikor a bootloader még aktív (a bootloader üzem közben villogtat egy a lapon lévő ledet). Alternatív megoldásként a "boot 0" csapot állítsd alacsonyra, a "boot 1" csapot pedig magasra, hogy a bootloaderben maradj a reset után.</p>
 <h3 id="stm32f103-hid-bootloaderrel">STM32F103 HID bootloaderrel<a class="headerlink" href="#stm32f103-hid-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>A <a href="https://github.com/Serasidis/STM32_HID_Bootloader">HID bootloader</a> egy kompakt, driver nélküli bootloader, amely képes USB-n keresztül égetni. Szintén elérhető egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">fork az SKR Mini E3 1.2 specifikus buildekkel</a>.</p>
 <p>Az általános STM32F103 alaplapok, mint például a blue pill esetében a bootloader 3,3V-os soros égetése lehetséges az stm32flash használatával, amint azt a fenti stm32duino szakaszban említettük, a kívánt hid bootloader bináris fájlnevének behelyettesítésével (azaz: hid_generic_pc13.bin a blue pillhez).</p>

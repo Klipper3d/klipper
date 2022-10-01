@@ -1671,7 +1671,7 @@ shaper_type: mzv
 </ol>
 <p>Lényegében a gyűrődési tesztmodellt TUNING_TOWER segítségével nyomtatjuk ki, 2HUMP_EI shaperrel, shaper_freq = 60 Hz, 50 Hz és 40 Hz.</p>
 <p>Ha egyik modell sem mutat javulást a gyűrődésben, akkor sajnos úgy tűnik, hogy a bemeneti alakítási technikák nem segíthetnek az Ön esetében.</p>
-<p>Máskülönben előfordulhat, hogy az összes modell nem mutat gyűrődést, vagy néhány modell gyűrődést mutat, néhány pedig nem annyira. Válassza ki azt a tesztmodellt, amelyik a legmagasabb frekvenciával készült, és még mindig jó javulást mutat a gyűrődések tekintetében. Ha például a 40 Hz-es és az 50 Hz-es modellek szinte egyáltalán nem mutatnak gyűrődést, a 60 Hz-es modell pedig már némileg több gyűrődést mutat, maradjon az 50 Hz-esnél.</p>
+<p>Máskülönben előfordulhat, hogy az összes modell nem mutat gyűrődést, vagy néhány modell gyűrődést mutat, néhány pedig nem annyira. Válassza ki azt a tesztmodellt, amelyik a legmagasabb frekvenciával készült, és még mindig jó javulást mutat a gyűrődések tekintetében. Ha például a 40 Hz-es és az 50 Hz-es modellek szinte egyáltalán nem mutatnak gyűrődést, a 60 Hz-es modell pedig már némileg több gyűrődést mutat, maradj az 50 Hz-esnél.</p>
 <p>Most ellenőrizze, hogy az EI alakító elég jó lenne-e az Ön esetében. Válassza ki az EI alakító frekvenciáját az Ön által választott 2HUMP_EI alakító frekvenciája alapján:</p>
 <ul>
 <li>A 2HUMP_EI 60 Hz-es formázó esetében használjon EI formázót shaper_freq = 50 Hz-es frekvenciával.</li>
@@ -1684,7 +1684,7 @@ shaper_type: mzv
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
 </ol>
 <p>a korábban meghatározott shaper_freq_x=... és shaper_freq_y=... értékek megadásával.</p>
-<p>Ha az EI alakító a 2HUMP_EI alakítóhoz hasonlóan jó eredményeket mutat, maradjon az EI alakító és a korábban meghatározott frekvencia mellett, ellenkező esetben használja a 2HUMP_EI alakítót a megfelelő frekvenciával. Add hozzá az eredményeket a <code>printer.cfg</code> fájlhoz, pl. a következő módon.</p>
+<p>Ha az EI alakító a 2HUMP_EI alakítóhoz hasonlóan jó eredményeket mutat, maradj az EI alakító és a korábban meghatározott frekvencia mellett, ellenkező esetben használja a 2HUMP_EI alakítót a megfelelő frekvenciával. Add hozzá az eredményeket a <code>printer.cfg</code> fájlhoz, pl. a következő módon.</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]
 shaper_freq_x: 50
 shaper_freq_y: 50

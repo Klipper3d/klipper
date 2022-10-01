@@ -1411,12 +1411,12 @@
 <li>Győződjön meg róla, hogy a <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a> változatlan kódját futtatja. Ha a kódot módosították, vagy más forrásból származik, akkor a hiba bejelentése előtt reprodukálnia kell a problémát a <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a> nem módosított kóddal.</li>
 <li>Ha lehetséges, futtasson egy <code>M112</code> parancsot az OctoPrint konzoljában közvetlenül a nemkívánatos esemény bekövetkezése után. Ennek hatására a Klipper "leállítási állapotba" kerül, és további hibakeresési információk íródnak a naplófájlba.</li>
 <li>
-<p>Szerezze be a Klipper naplófájlt az eseményből. A naplófájlt úgy alakították ki, hogy választ adjon a Klipper fejlesztőinek a szoftverrel és környezetével kapcsolatos gyakori kérdéseire (szoftver verzió, hardvertípus, konfiguráció, eseményidőzítés és több száz egyéb kérdés).</p>
+<p>Szerezd be a Klipper naplófájlt az eseményből. A naplófájlt úgy alakították ki, hogy választ adjon a Klipper fejlesztőinek a szoftverrel és környezetével kapcsolatos gyakori kérdéseire (szoftver verzió, hardvertípus, konfiguráció, eseményidőzítés és több száz egyéb kérdés).</p>
 <ol>
 <li>A Klipper naplófájlja a <code>/tmp/klippy.log</code> címen található a Klipper "gazdagépen" (vagyis a Raspberry Pi-n).</li>
 <li>Egy "SCP" vagy "SFTP" segédprogram szükséges a naplófájlnak az asztali számítógépre való másolásához. Az "SCP" segédprogram alapfelszereltségként jár a Linux és MacOS asztali számítógépekhez. Más asztali számítógépekhez szabadon elérhető SCP segédprogramok is léteznek (pl. WinSCP). Ha olyan grafikus SCP segédprogramot használ, amely nem tudja közvetlenül másolni a <code>/tmp/klippy.log</code>, akkor kattintson többször a <code>...</code> vagy <code>parent folder</code>, amíg el nem jutunk a gyökérkönyvtárba, kattintsunk a <code>tmp</code> mappára, majd válasszuk ki a <code>klippy.log</code> fájlt.</li>
 <li>Másolja a naplófájlt az asztalára, hogy csatolni tudja egy problémajelentéshez.</li>
-<li>Ne módosítsa a naplófájlt semmilyen módon; ne adjon meg egy részletet a naplóból. Csak a teljes, változatlan naplófájl nyújtja a szükséges információkat.</li>
+<li>Ne módosítsa a naplófájlt semmilyen módon; ne adj meg egy részletet a naplóból. Csak a teljes, változatlan naplófájl nyújtja a szükséges információkat.</li>
 <li>
 <p>Ha a naplófájl nagyon nagy (pl. 2 MB-nál nagyobb), akkor szükség lehet a napló zip vagy gzip tömörítésére.</p>
 </li>

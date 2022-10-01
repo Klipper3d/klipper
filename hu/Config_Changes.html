@@ -1303,7 +1303,7 @@
 <p>20210929: Klipper v0.10.0 megjelent.</p>
 <p>20210903: Az alapértelmezett <a href="Config_Reference.html#extruder"><code>smooth_time</code></a> a fűtőberendezésekhez 1 másodpercre változott (2 másodpercről). A legtöbb nyomtatónál ez stabilabb hőmérséklet-szabályozást eredményez.</p>
 <p>20210830: Az alapértelmezett adxl345 név mostantól "adxl345". Az <code>ACCELEROMETER_MEASURE</code> és <code>ACCELEROMETER_QUERY</code> alapértelmezett CHIP paramétere mostantól szintén "adxl345".</p>
-<p>20210830: Az adxl345 ACCELEROMETER_MEASURE parancs már nem támogatja a RATE paramétert. A lekérdezési sebesség módosításához frissítse a printer.cfg fájlt, és adjon ki egy RESTART parancsot.</p>
+<p>20210830: Az adxl345 ACCELEROMETER_MEASURE parancs már nem támogatja a RATE paramétert. A lekérdezési sebesség módosításához frissítse a printer.cfg fájlt, és adj ki egy RESTART parancsot.</p>
 <p>20210821: A <code>printer.configfile.settings</code> több konfigurációs beállítása mostantól listaként lesz jelentve a nyers karakterláncok helyett. Ha a tényleges nyers karakterláncra van szükség, használja helyette a <code>printer.configfile.config</code>-t.</p>
 <p>20210819: Bizonyos esetekben egy <code>G28</code> célbaérési mozgás olyan pozícióban végződhet, amely névlegesen az érvényes mozgási tartományon kívül esik. Ritka helyzetekben ez zavaró "Move out of range" hibákat eredményezhet a kezdőpont felvétele után. Ha ez előfordul, módosítsa az indítási szkripteket úgy, hogy a nyomtatófej a kezdőpont felvétel után azonnal érvényes pozícióba kerüljön.</p>
 <p>20210814: Az atmega168 és atmega328 csak analóg pszeudo-tüskéi PE0/PE1-ről PE2/PE3-ra lettek átnevezve.</p>
