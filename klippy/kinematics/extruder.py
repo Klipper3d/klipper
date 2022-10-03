@@ -164,7 +164,7 @@ class PrinterExtruder:
         # Setup kinematic checks
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
-            'filament_diameter', minval=self.nozzle_diameter)
+            'filament_diameter', minval=self.nozzle_diameter*.95)
         self.filament_area = math.pi * (filament_diameter * .5)**2
         def_max_cross_section = 4. * self.nozzle_diameter**2
         def_max_extrude_ratio = def_max_cross_section / self.filament_area
