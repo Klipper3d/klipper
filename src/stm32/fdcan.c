@@ -46,10 +46,10 @@
 
 #if !(CONFIG_STM32_CANBUS_PB0_PB1 || CONFIG_STM32_CANBUS_PC2_PC3)
  #define SOC_CAN FDCAN1
- #define MSG_RAM fdcan_ram->fdcan1
+ #define MSG_RAM (((FDCAN_RAM_TypeDef*)SRAMCAN_BASE)->fdcan1)
 #else
  #define SOC_CAN FDCAN2
- #define MSG_RAM fdcan_ram->fdcan2
+ #define MSG_RAM (((FDCAN_RAM_TypeDef*)SRAMCAN_BASE)->fdcan2)
 #endif
 
 #if CONFIG_MACH_STM32G0
@@ -87,8 +87,6 @@ typedef struct {
     FDCAN_MSG_RAM_TypeDef fdcan1;
     FDCAN_MSG_RAM_TypeDef fdcan2;
 } FDCAN_RAM_TypeDef;
-
-FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
 
 
 /****************************************************************
@@ -154,7 +152,8 @@ canbus_set_filter(uint32_t id)
     SOC_CAN->RXGFC = ((id ? 3 : 1) << FDCAN_RXGFC_LSS_Pos
                       | 0x02 << FDCAN_RXGFC_ANFS_Pos);
 #elif CONFIG_MACH_STM32H7
-    SOC_CAN->SIDFC |= (id ? 3 : 1) << FDCAN_SIDFC_LSS_Pos;
+    uint32_t flssa = (uint32_t)MSG_RAM.FLS - SRAMCAN_BASE;
+    SOC_CAN->SIDFC = flssa | ((id ? 3 : 1) << FDCAN_SIDFC_LSS_Pos);
     SOC_CAN->GFC = 0x02 << FDCAN_GFC_ANFS_Pos;
 #endif
 
@@ -279,25 +278,12 @@ can_init(void)
     SOC_CAN->NBTP = btr;
 
 #if CONFIG_MACH_STM32H7
-    /*
-        The Message RAM of STM32H7 is settable
-        So we set it to be consistent with STM32G0
-     */
-    uint32_t flssa = (uint32_t)&MSG_RAM - (uint32_t)&fdcan_ram->fdcan1;
-    uint32_t f0sa = flssa +
-                    (((uint32_t)MSG_RAM.RXF0 - (uint32_t)MSG_RAM.FLS) / 4);
-    uint32_t tbsa = f0sa +
-                    (((uint32_t)MSG_RAM.TXFIFO - (uint32_t)MSG_RAM.RXF0) / 4);
-
-    SOC_CAN->SIDFC = flssa << FDCAN_SIDFC_FLSSA_Pos;
-
-    SOC_CAN->RXF0C = ((f0sa << FDCAN_RXF0C_F0SA_Pos)
-                      | (3 << FDCAN_RXF0C_F0S_Pos));
-    SOC_CAN->RXESC = ((7 << FDCAN_RXESC_F1DS_Pos)
-                      | (7 << FDCAN_RXESC_F0DS_Pos));
-
-    SOC_CAN->TXBC = ((tbsa << FDCAN_TXBC_TBSA_Pos)
-                     | (3 << FDCAN_TXBC_TFQS_Pos));
+    /* Setup message RAM addresses */
+    uint32_t f0sa = (uint32_t)MSG_RAM.RXF0 - SRAMCAN_BASE;
+    SOC_CAN->RXF0C = f0sa | (ARRAY_SIZE(MSG_RAM.RXF0) << FDCAN_RXF0C_F0S_Pos);
+    SOC_CAN->RXESC = (7 << FDCAN_RXESC_F1DS_Pos) | (7 << FDCAN_RXESC_F0DS_Pos);
+    uint32_t tbsa = (uint32_t)MSG_RAM.TXFIFO - SRAMCAN_BASE;
+    SOC_CAN->TXBC = tbsa | (ARRAY_SIZE(MSG_RAM.TXFIFO) << FDCAN_TXBC_TFQS_Pos);
     SOC_CAN->TXESC = 7 << FDCAN_TXESC_TBDS_Pos;
 #endif
 
