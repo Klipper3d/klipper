@@ -46,10 +46,10 @@
 
 #if !(CONFIG_STM32_CANBUS_PB0_PB1 || CONFIG_STM32_CANBUS_PC2_PC3)
  #define SOC_CAN FDCAN1
- #define MSG_RAM (((FDCAN_RAM_TypeDef*)SRAMCAN_BASE)->fdcan1)
+ #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan1)
 #else
  #define SOC_CAN FDCAN2
- #define MSG_RAM (((FDCAN_RAM_TypeDef*)SRAMCAN_BASE)->fdcan2)
+ #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan2)
 #endif
 
 #if CONFIG_MACH_STM32G0
@@ -65,28 +65,28 @@
  * Message ram layout
  ****************************************************************/
 
-typedef struct {
-    __IO uint32_t id_section;
-    __IO uint32_t dlc_section;
-    __IO uint32_t data[64 / 4];
-} FDCAN_FIFO_TypeDef;
+struct fdcan_fifo {
+    uint32_t id_section;
+    uint32_t dlc_section;
+    uint32_t data[64 / 4];
+};
 
 #define FDCAN_XTD (1<<30)
 #define FDCAN_RTR (1<<29)
 
-typedef struct {
-    __IO uint32_t FLS[28]; // Filter list standard
-    __IO uint32_t FLE[16]; // Filter list extended
-    FDCAN_FIFO_TypeDef RXF0[3];
-    FDCAN_FIFO_TypeDef RXF1[3];
-    __IO uint32_t TEF[6]; // Tx event FIFO
-    FDCAN_FIFO_TypeDef TXFIFO[3];
-} FDCAN_MSG_RAM_TypeDef;
+struct fdcan_msg_ram {
+    uint32_t FLS[28]; // Filter list standard
+    uint32_t FLE[16]; // Filter list extended
+    struct fdcan_fifo RXF0[3];
+    struct fdcan_fifo RXF1[3];
+    uint32_t TEF[6]; // Tx event FIFO
+    struct fdcan_fifo TXFIFO[3];
+};
 
-typedef struct {
-    FDCAN_MSG_RAM_TypeDef fdcan1;
-    FDCAN_MSG_RAM_TypeDef fdcan2;
-} FDCAN_RAM_TypeDef;
+struct fdcan_ram_layout {
+    struct fdcan_msg_ram fdcan1;
+    struct fdcan_msg_ram fdcan2;
+};
 
 
 /****************************************************************
@@ -105,7 +105,7 @@ canbus_send(struct canbus_msg *msg)
         return -1;
 
     uint32_t w_index = ((txfqs & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos);
-    FDCAN_FIFO_TypeDef *txfifo = &MSG_RAM.TXFIFO[w_index];
+    struct fdcan_fifo *txfifo = &MSG_RAM.TXFIFO[w_index];
     uint32_t ids;
     if (msg->id & CANMSG_ID_EFF)
         ids = (msg->id & 0x1fffffff) | FDCAN_XTD;
@@ -116,6 +116,7 @@ canbus_send(struct canbus_msg *msg)
     txfifo->dlc_section = (msg->dlc & 0x0f) << 16;
     txfifo->data[0] = msg->data32[0];
     txfifo->data[1] = msg->data32[1];
+    barrier();
     SOC_CAN->TXBAR = ((uint32_t)1 << w_index);
     return CANMSG_DATA_LEN(msg);
 }
@@ -158,6 +159,7 @@ canbus_set_filter(uint32_t id)
 #endif
 
     /* Leave the initialisation mode for the filter */
+    barrier();
     SOC_CAN->CCCR &= ~FDCAN_CCCR_CCE;
     SOC_CAN->CCCR &= ~FDCAN_CCCR_INIT;
 }
@@ -175,7 +177,7 @@ CAN_IRQHandler(void)
         if (rxf0s & FDCAN_RXF0S_F0FL) {
             // Read and ack data packet
             uint32_t idx = (rxf0s & FDCAN_RXF0S_F0GI) >> FDCAN_RXF0S_F0GI_Pos;
-            FDCAN_FIFO_TypeDef *rxf0 = &MSG_RAM.RXF0[idx];
+            struct fdcan_fifo *rxf0 = &MSG_RAM.RXF0[idx];
             uint32_t ids = rxf0->id_section;
             struct canbus_msg msg;
             if (ids & FDCAN_XTD)
@@ -186,6 +188,7 @@ CAN_IRQHandler(void)
             msg.dlc = (rxf0->dlc_section >> 16) & 0x0f;
             msg.data32[0] = rxf0->data[0];
             msg.data32[1] = rxf0->data[1];
+            barrier();
             SOC_CAN->RXF0A = idx;
 
             // Process packet
@@ -295,7 +298,7 @@ can_init(void)
     canbus_set_filter(0);
 
     /*##-3- Configure Interrupts #################################*/
-    armcm_enable_irq(CAN_IRQHandler, CAN_IT0_IRQn, 0);
+    armcm_enable_irq(CAN_IRQHandler, CAN_IT0_IRQn, 1);
     SOC_CAN->ILE = FDCAN_ILE_EINT0;
     SOC_CAN->IE = FDCAN_IE_RF0NE | FDCAN_IE_TC;
 }
