@@ -1,51 +1,22 @@
-// Serial over CAN emulation for STM32 boards.
+// FDCAN support on stm32 chips
 //
+// Copyright (C) 2021-2022  Kevin O'Connor <kevin@koconnor.net>
 // Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
 // Copyright (C) 2020 Pontus Borg <glpontus@gmail.com>
-// Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <string.h> // memcpy
-#include "autoconf.h" // CONFIG_MACH_STM32F1
-#include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
 #include "generic/canserial.h" // CANBUS_ID_ADMIN
-#include "generic/serial_irq.h" // serial_rx_byte
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
-typedef struct
-{
-  __IO uint32_t id_section;
-  __IO uint32_t dlc_section;
-  __IO uint32_t data[64 / 4];
-}FDCAN_FIFO_TypeDef;
 
-#define FDCAN_XTD (1<<30)
-#define FDCAN_RTR (1<<29)
-
-typedef struct
-{
-  __IO uint32_t FLS[28]; // Filter list standard
-  __IO uint32_t FLE[16]; // Filter list extended
-  FDCAN_FIFO_TypeDef RXF0[3];
-  FDCAN_FIFO_TypeDef RXF1[3];
-  __IO uint32_t TEF[6]; // Tx event FIFO
-  FDCAN_FIFO_TypeDef TXFIFO[3];
-}FDCAN_MSG_RAM_TypeDef;
-
-typedef struct
-{
-  FDCAN_MSG_RAM_TypeDef fdcan1;
-  FDCAN_MSG_RAM_TypeDef fdcan2;
-}FDCAN_RAM_TypeDef;
-
-FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
-
-#define FDCAN_IE_TC        (FDCAN_IE_TCE | FDCAN_IE_TCFE | FDCAN_IE_TFEE)
+/****************************************************************
+ * Pin configuration
+ ****************************************************************/
 
 #if CONFIG_STM32_CANBUS_PA11_PA12
  DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PA12");
@@ -89,9 +60,42 @@ FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
  #define CAN_FUNCTION  GPIO_FUNCTION(9) // Alternative function mapping number
 #endif
 
-#ifndef SOC_CAN
- #error No known CAN device for configured MCU
-#endif
+
+/****************************************************************
+ * Message ram layout
+ ****************************************************************/
+
+typedef struct {
+    __IO uint32_t id_section;
+    __IO uint32_t dlc_section;
+    __IO uint32_t data[64 / 4];
+} FDCAN_FIFO_TypeDef;
+
+#define FDCAN_XTD (1<<30)
+#define FDCAN_RTR (1<<29)
+
+typedef struct {
+    __IO uint32_t FLS[28]; // Filter list standard
+    __IO uint32_t FLE[16]; // Filter list extended
+    FDCAN_FIFO_TypeDef RXF0[3];
+    FDCAN_FIFO_TypeDef RXF1[3];
+    __IO uint32_t TEF[6]; // Tx event FIFO
+    FDCAN_FIFO_TypeDef TXFIFO[3];
+} FDCAN_MSG_RAM_TypeDef;
+
+typedef struct {
+    FDCAN_MSG_RAM_TypeDef fdcan1;
+    FDCAN_MSG_RAM_TypeDef fdcan2;
+} FDCAN_RAM_TypeDef;
+
+FDCAN_RAM_TypeDef *fdcan_ram = (FDCAN_RAM_TypeDef *)(SRAMCAN_BASE);
+
+
+/****************************************************************
+ * CANbus code
+ ****************************************************************/
+
+#define FDCAN_IE_TC        (FDCAN_IE_TCE | FDCAN_IE_TCFE | FDCAN_IE_TFEE)
 
 // Transmit a packet
 int
