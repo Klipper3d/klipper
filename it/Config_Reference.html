@@ -5165,7 +5165,7 @@ z_offset:
 </code></pre></div>
 
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
-<p>Support for cartesian printers with dual carriages on a single axis. The active carriage is set via the SET_DUAL_CARRIAGE extended g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will activate the carriage defined in this section (CARRIAGE=0 will return activation to the primary carriage). Dual carriage support is typically combined with extra extruders - the SET_DUAL_CARRIAGE command is often called at the same time as the ACTIVATE_EXTRUDER command. Be sure to park the carriages during deactivation.</p>
+<p>Supporto per stampanti cartesiane con doppi carrelli su un unico asse. Il carrello attivo viene impostato tramite il comando G-code esteso SET_DUAL_CARRIAGE. Il comando "SET_DUAL_CARRIAGE CARRIAGE=1" attiverà il carrello definito in questa sezione (CARRIAGE=0 riporterà l'attivazione al carrello principale). Il supporto del doppio carrello è in genere combinato con estrusori extra: il comando SET_DUAL_CARRIAGE viene spesso chiamato contemporaneamente al comando ACTIVATE_EXTRUDER. Assicurati di parcheggiare i carrelli durante la disattivazione.</p>
 <p>Vedere <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-idex.cfg">sample-idex.cfg</a> per un esempio di configurazione.</p>
 <div class="highlight"><pre><span></span><code>[dual_carriage]
 axis:
