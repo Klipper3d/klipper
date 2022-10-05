@@ -330,8 +330,12 @@ The following information is available in the `print_stats` object
 [virtual_sdcard](Config_Reference.md#virtual_sdcard) config section is
 defined):
 - `filename`, `total_duration`, `print_duration`, `filament_used`,
-  `state`, `message`: Estimated information about the current print
-  when a virtual_sdcard print is active.
+  `state`, `message`: Estimated information about the current print when a
+  virtual_sdcard print is active.
+- `info.total_layer`: The total layer value of the last `SET_PRINT_STATS_INFO
+   TOTAL_LAYER=<value>` G-Code command.
+- `info.current_layer`: The current layer value of the last
+  `SET_PRINT_STATS_INFO CURRENT_LAYER=<value>` G-Code command.
 
 ## probe
 
