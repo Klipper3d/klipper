@@ -2178,8 +2178,12 @@ is defined):</p>
 defined):</p>
 <ul>
 <li><code>filename</code>, <code>total_duration</code>, <code>print_duration</code>, <code>filament_used</code>,
-  <code>state</code>, <code>message</code>: Estimated information about the current print
-  when a virtual_sdcard print is active.</li>
+  <code>state</code>, <code>message</code>: Estimated information about the current print when a
+  virtual_sdcard print is active.</li>
+<li><code>info.total_layer</code>: The total layer value of the last <code>SET_PRINT_STATS_INFO
+   TOTAL_LAYER=&lt;value&gt;</code> G-Code command.</li>
+<li><code>info.current_layer</code>: The current layer value of the last
+  <code>SET_PRINT_STATS_INFO CURRENT_LAYER=&lt;value&gt;</code> G-Code command.</li>
 </ul>
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the

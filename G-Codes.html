@@ -1759,6 +1759,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    [print_stats]
+  </a>
+  
+    <nav class="md-nav" aria-label="[print_stats]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_print_stats_info" class="md-nav__link">
+    SET_PRINT_STATS_INFO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#probe" class="md-nav__link">
     [probe]
   </a>
@@ -3802,6 +3822,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    [print_stats]
+  </a>
+  
+    <nav class="md-nav" aria-label="[print_stats]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_print_stats_info" class="md-nav__link">
+    SET_PRINT_STATS_INFO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#probe" class="md-nav__link">
     [probe]
   </a>
@@ -5054,6 +5094,15 @@ PAUSE. It is recommended to add this to your start gcode to make sure
 the paused state is fresh for each print.</p>
 <h4 id="cancel_print">CANCEL_PRINT<a class="headerlink" href="#cancel_print" title="Permanent link">&para;</a></h4>
 <p><code>CANCEL_PRINT</code>: Cancels the current print.</p>
+<h3 id="print_stats">[print_stats]<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
+<p>The print_stats module is automatically loaded.</p>
+<h4 id="set_print_stats_info">SET_PRINT_STATS_INFO<a class="headerlink" href="#set_print_stats_info" title="Permanent link">&para;</a></h4>
+<p><code>SET_PRINT_STATS_INFO [TOTAL_LAYER=&lt;total_layer_count&gt;] [CURRENT_LAYER=
+&lt;current_layer&gt;]</code>: Pass slicer info like layer act and total to Klipper.
+Add <code>SET_PRINT_STATS_INFO [TOTAL_LAYER=&lt;total_layer_count&gt;]</code> to your
+slicer start gcode section and <code>SET_PRINT_STATS_INFO [CURRENT_LAYER=
+&lt;current_layer&gt;]</code> at the layer change gcode section to pass layer
+information from your slicer to Klipper.</p>
 <h3 id="probe">[probe]<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when a
 <a href="Config_Reference.html#probe">probe config section</a> or
