@@ -888,6 +888,18 @@ the paused state is fresh for each print.
 #### CANCEL_PRINT
 `CANCEL_PRINT`: Cancels the current print.
 
+### [print_stats]
+
+The print_stats module is automatically loaded.
+
+#### SET_PRINT_STATS_INFO
+`SET_PRINT_STATS_INFO [TOTAL_LAYER=<total_layer_count>] [CURRENT_LAYER=
+<current_layer>]`: Pass slicer info like layer act and total to Klipper.
+Add `SET_PRINT_STATS_INFO [TOTAL_LAYER=<total_layer_count>]` to your
+slicer start gcode section and `SET_PRINT_STATS_INFO [CURRENT_LAYER=
+<current_layer>]` at the layer change gcode section to pass layer
+information from your slicer to Klipper.
+
 ### [probe]
 
 The following commands are available when a
