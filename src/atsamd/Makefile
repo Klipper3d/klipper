@@ -4,8 +4,6 @@
 CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/atsamd src/generic
-dirs-$(CONFIG_MACH_SAMD21) += lib/samd21/samd21a/gcc
-dirs-$(CONFIG_MACH_SAMD51) += lib/samd51/samd51a/gcc
 
 MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
 
