@@ -130,6 +130,20 @@ def flash_bossac(device, binfile, extra_flags=[]):
         except subprocess.CalledProcessError as e:
             pass
 
+# Invoke the stm32flash program
+def call_stm32flash(flags, binfile, device, sudo):
+    args = ["stm32flash"] + flags + ["-w", binfile] + [device]
+    if sudo:
+        args.insert(0, "sudo")
+    sys.stderr.write(" ".join(args) + '\n\n')
+    res = subprocess.call(args)
+    if res != 0:
+        raise error("Error running stm32flash")
+
+# Flash via a call to stm32flash
+def flash_stm32flash(device, binfile, extra_flags=[], sudo=True):
+    call_stm32flash(["-v"] + extra_flags, binfile, device, sudo)
+
 # Invoke the dfu-util program
 def call_dfuutil(flags, binfile, sudo):
     args = ["dfu-util"] + flags + ["-D", binfile]
@@ -277,6 +291,9 @@ def flash_stm32f1(options, binfile):
     try:
         if options.start == 0x8000800:
             flash_hidflash(options.device, binfile, options.sudo)
+        elif options.start == 0x8000000:
+            flash_stm32flash(options.device, binfile, ["-b", "115200"],
+                             options.sudo)
         else:
             flash_dfuutil(options.device, binfile, ["-R", "-a", "2"],
                           options.sudo)
