@@ -1176,8 +1176,8 @@ gcode:
 #   found in the normal g-code input. See docs/Command_Templates.md
 #   for G-Code format. If a G28 is contained in this list of commands
 #   then it will invoke the normal homing procedure for the printer.
-#   The commands listed here must home all axes. This parameter must
-#   be provided.
+#   The commands listed here must be able to home each axis configured
+#   under axes: below. This parameter must be provided.
 #axes: xyz
 #   The axes to override. For example, if this is set to "z" then the
 #   override script will only be run when the z axis is homed (eg, via
