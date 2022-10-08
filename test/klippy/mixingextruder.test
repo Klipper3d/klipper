@@ -1,0 +1,91 @@
+# Extruder tests
+DICTIONARY atmega2560.dict
+CONFIG mixingextruder.cfg
+
+G28
+
+M83
+
+MIXING_STATUS EXTRUDER=mixingextruder
+MIXING_STATUS EXTRUDER=mixingextruder1
+MIXING_STATUS EXTRUDER=mixingextruder2
+MIXING_STATUS EXTRUDER=mixingextruder3
+
+# Check switch to mixingextruder+positive extrude
+ACTIVATE_EXTRUDER EXTRUDER=mixingextruder
+
+Check_Stepper_Pos A=0 B=0 C=0
+
+G1 E4
+M400
+
+MIXING_STATUS EXTRUDER=mixingextruder
+
+Check_Stepper_Pos A=133 B=133 C=133
+
+# Check switch mixingextruder+positive extrude
+ACTIVATE_EXTRUDER EXTRUDER=mixingextruder1
+
+G1 E4
+M400
+
+MIXING_STATUS EXTRUDER=mixingextruder1
+
+# A=400+133
+Check_Stepper_Pos A=534 B=133 C=133
+
+# Check switch mixingextruder+negative extrude
+ACTIVATE_EXTRUDER EXTRUDER=mixingextruder2
+
+G1 E-4
+M400
+
+MIXING_STATUS EXTRUDER=mixingextruder2
+
+# B=133-400
+Check_Stepper_Pos A=534 B=-267 C=133
+
+#reset
+G1 E4
+ACTIVATE_EXTRUDER EXTRUDER=mixingextruder1
+G1 E-4.01
+ACTIVATE_EXTRUDER EXTRUDER=mixingextruder
+G1 X0 Y0 Z0 E-4
+M400
+Check_Stepper_Pos A=0 B=0 C=0
+
+#checking gradient handling
+ADD_MIXING_GRADIENT EXTRUDER=mixingextruder START_HEIGHT=0 END_HEIGHT=10 START=mixingextruder1 END=mixingextruder2
+SET_MIXING_GRADIENT EXTRUDER=mixingextruder METHOD=linear ENABLE=true
+MIXING_STATUS EXTRUDER=mixingextruder
+G1 E1.01
+G1 Z5
+G1 E1
+G1 Z10
+G1 E1
+MIXING_STATUS EXTRUDER=mixingextruder
+M400
+Check_Stepper_Pos A=150 B=150 C=0
+
+SET_MIXING_GRADIENT EXTRUDER=mixingextruder ENABLE=0
+MIXING_STATUS EXTRUDER=mixingextruder
+
+G1 E0:0:1.5
+
+M400
+Check_Stepper_Pos A=150 B=150 C=150
+
+G1 E1:0.5:1.5
+
+M400
+Check_Stepper_Pos A=250 B=200 C=300
+
+G1 E-2.5:-2:-3
+
+M400
+Check_Stepper_Pos A=0 B=0 C=0
+
+G1 E7.5
+
+M400
+Check_Stepper_Pos A=250 B=200 C=300

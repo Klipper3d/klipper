@@ -426,6 +426,59 @@ This command is deprecated and will be removed in the near future.
 #### SYNC_STEPPER_TO_EXTRUDER
 This command is deprecated and will be removed in the near future.
 
+### [mixing_extruder]
+
+The following commands are available when a
+[mixingextruder config section](Config_Reference.md#mixingextruder) is
+enabled:
+
+#### ACTIVATE_EXTRUDER
+`ACTIVATE_EXTRUDER EXTRUDER=<mixingextruder>`: This command activates
+  the specified mixing extruder. Subsequent G1 commands use the mixing
+  defined for that mixing extruder.
+
+#### SET_MIXING_EXTRUDER
+`SET_MIXING_EXTRUDER STEPPER=<stepper> SCALE=<scale>`: Set a scale for
+a given stepper.
+
+#### SAVE_MIXING_EXTRUDERS
+`SAVE_MIXING_EXTRUDERS [EXTRUDER=<target>]`: Saves the previous set
+scales to a given target mixing extruder. If the target is is not given,
+save it at the currently active mixing extruder. For example with a 2in-iout
+extruder to set the mix for "mixingextruder3" to 75%/25% one would use:
+`SET_MIXING_EXTRUDER STEPPER=0 SCALE=75`
+`SET_MIXING_EXTRUDER STEPPER=1 SCALE=25`
+`SAVE_MIXING_EXTRUDERS EXTRUDER=3`
+
+#### ADD_MIXING_GRADIENT
+`ADD_MIXING_GRADIENT EXTRUDER=<mixingextruder> START=<start_source>
+END=<end_source> START_HEIGHT=<start> END_HEIGHT=<end>`: Configures
+(adds) a gradient for the given mixing extruder. The sources are
+references to (other) mixing extruders. For example if with a 2in-1out
+extruder "mixingextruder2" is set mix 100%/0% and "mixingextruder3"
+is set to 0%/100%
+`ADD_MIXING_GRADIENT EXTRUDER=mixingextruder START=2 END=3
+START_HEIGHT=10 END_HEIGHT=20`
+`ADD_MIXING_GRADIENT EXTRUDER=mixingextruder START=3 END=2
+START_HEIGHT=20 END_HEIGHT=30`
+would setup a gradient for "mixingextruder" which is constant 100%/0%
+between heights 0mm and 10mm, then linearly interpolates to 0%/100% at
+height 20mm and back to 100%/0% at height 30mm and stays that for all
+heights above.
+
+#### RESET_MIXING_GRADIENT
+`RESET_MIXING_GRADIENT EXTRUDER=<mixingextruder>`: Reset/remove all
+gradients for the given mixing extruder.
+
+#### SET_MIXING_GRADIENT
+`SET_MIXING_GRADIENT EXTRUDER=<mixingextruder> [ENABLE=<enable>]
+[METHOD=<method>]`: Enable/disable the gradient at the given mixing
+extruder and set the gradient method.
+
+#### MIXING_STATUS
+`MIXING_STATUS EXTRUDER=<mixingextruder>`: Returns the configuration
+and status of the given mixing extruder.
+
 ### [fan_generic]
 
 The following command is available when a

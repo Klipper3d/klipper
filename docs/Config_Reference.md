@@ -2081,6 +2081,29 @@ printer kinematics.
 #   MANUAL_STEPPER movement commands.
 ```
 
+### [mixing_extruder]
+
+A mixing printhead which has <n>in-1out mixing nozzle. When specified
+16 virtual mixingextruders are created ("mixingextruder",
+"mixingextruder1", ... "mixingextruder15"). They can be activated like
+the standard extruders with "ACTIVATE_EXTRUDER EXTRUDER=mixingextruder" and
+"MIXING_STATUS EXTRUDER=mixingextruder" provides some statistics.
+When activated additional g-code are available. See
+[G-Codes](G-Codes.md#mixing_extruder) for
+a detailed description of the additional commands.
+
+```
+[mixing_extruder]
+#steppers:
+#   Which steppers feed into the hotend/nozzle. provide a comma
+#   separated list, eg. "extruder,extruder1,extruder2".
+#   This configuration is required.
+#extruder_name:
+#   Which
+#   The default is the extruder associated with the first stepper in the
+#   "steppers" list
+```
+
 ## Custom heaters and sensors
 
 ### [verify_heater]
