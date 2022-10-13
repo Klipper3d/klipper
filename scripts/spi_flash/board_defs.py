@@ -89,8 +89,9 @@ BOARD_DEFS = {
     },
     'btt-skr-3': {
         'mcu': 'stm32h743xx',
-        'spi_bus': 'spi3a',
-        'cs_pin': 'PA15',
+        'spi_bus': 'swspi',
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': 'PC11',
         'skip_verify': True
     },
     'creality-v4.2.2': {
