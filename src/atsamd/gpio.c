@@ -46,7 +46,7 @@ gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
 #define NUM_PORT 2
 DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 32);
 DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 32);
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
 #define NUM_PORT 4
 DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 32);
 DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 32);
