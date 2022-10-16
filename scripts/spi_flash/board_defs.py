@@ -28,7 +28,8 @@ BOARD_DEFS = {
     },
     'btt-skr-mini-v3': {
         'mcu': "stm32g0b1xx",
-        'spi_bus': "spi1",
+        'spi_bus': "swspi",
+        'spi_pins': "PA6,PA7,PA5",
         "cs_pin": "PA4"
     },
     'flyboard-mini': {
