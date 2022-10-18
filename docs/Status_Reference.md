@@ -441,7 +441,7 @@ The following information is available in the `toolhead` object
   to access the x, y, z, and e components of this position (eg,
   `position.x`).
 - `extruder`: The name of the currently active extruder. For example,
-  in a macro one could use `printer[printer.toolhead.extruder].target`
+  in a macro one could use `printer.toolhead.extruder.target`
   to get the target temperature of the current extruder.
 - `homed_axes`: The current cartesian axes considered to be in a
   "homed" state. This is a string containing one or more of "x", "y",
