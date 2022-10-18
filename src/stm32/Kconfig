@@ -139,15 +139,28 @@ config MCU
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
 
+choice
+    prompt "MPU Frequency" if MACH_STM32F446
+    config CLOCK_FREQ_180MHZ
+        bool "180MHz"
+    config CLOCK_FREQ_168MHZ
+        bool "168MHz"
+    config CLOCK_FREQ_144MHZ
+        bool "144MHz"
+    config CLOCK_FREQ_120MHZ
+        bool "120MHz"
+endchoice
+
 config CLOCK_FREQ
     int
     default 48000000 if MACH_STM32F0
     default 64000000 if MACH_STM32F103 && STM32_CLOCK_REF_INTERNAL
     default 72000000 if MACH_STM32F103
-    default 120000000 if MACH_STM32F207
+    default 120000000 if MACH_STM32F207 || CLOCK_FREQ_120MHZ
     default 84000000 if MACH_STM32F401
-    default 168000000 if MACH_STM32F4x5
-    default 180000000 if MACH_STM32F446
+    default 144000000 if CLOCK_FREQ_144MHZ
+    default 168000000 if MACH_STM32F4x5 || CLOCK_FREQ_168MHZ
+    default 180000000 if MACH_STM32F446 || CLOCK_FREQ_180MHZ
     default 64000000 if MACH_STM32G0
     default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
     default 80000000 if MACH_STM32L412
