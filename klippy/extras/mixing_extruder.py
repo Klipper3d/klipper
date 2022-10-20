@@ -86,6 +86,9 @@ class MixingExtruder:
             gcode.register_command("SAVE_MIXING_EXTRUDERS",
                                    self.cmd_SAVE_MIXING_EXTRUDERS,
                                    desc=self.cmd_SAVE_MIXING_EXTRUDERS_help)
+            gcode.register_command("MIXING_STATUS",
+                                   self.cmd_MIXING_STATUS,
+                                   desc=self.cmd_MIXING_STATUS_help)
         gcode.register_mux_command("ADD_MIXING_GRADIENT", "EXTRUDER",
                                    self.name, self.cmd_ADD_MIXING_GRADIENT,
                                    desc=self.cmd_ADD_MIXING_GRADIENT_help)
@@ -95,9 +98,6 @@ class MixingExtruder:
         gcode.register_mux_command("SET_MIXING_GRADIENT", "EXTRUDER",
                                    self.name, self.cmd_SET_MIXING_GRADIENT,
                                    desc=self.cmd_SET_MIXING_GRADIENT_help)
-        gcode.register_mux_command("MIXING_STATUS", "EXTRUDER",
-                                   self.name, self.cmd_MIXING_STATUS,
-                                   desc=self.cmd_MIXING_STATUS_help)
     def _init_mixings(self, idx, steppers_count):
         if idx == 0:
             return [1. / steppers_count for p in range(steppers_count)]
@@ -194,8 +194,8 @@ class MixingExtruder:
                       mixing_ticks=",".join("%d" % (
                                             stepper.stepper.get_mcu_position())
                                             for stepper in self.steppers),
-                      mixing_extruders=",".join(stepper.name
-                                                for stepper in self.steppers))
+                      mixing_steppers=",".join(stepper.name
+                                               for stepper in self.steppers))
         for i, gradient in enumerate(self.gradients):
             status.update({"mixing_gradient%d" % (i): ",".join(
                 "%s:%s" % (k, v)
@@ -327,7 +327,13 @@ class MixingExtruder:
     cmd_MIXING_STATUS_help = "Display the status of the given mixingextruder"
     def cmd_MIXING_STATUS(self, gcmd):
         eventtime = self.printer.get_reactor().monotonic()
-        status = self.get_status(eventtime)
+        mixingextruder = self
+        extruder = gcmd.get('EXTRUDER', None)
+        if extruder:
+            idx = self._to_idx(extruder)
+            if idx >= 0:
+                mixingextruder = self.mixing_extruders[idx]
+        status = mixingextruder.get_status(eventtime)
         gcmd.respond_info(", ".join("%s=%s" % (k, v)
                                     for k, v in status.items()))
 
