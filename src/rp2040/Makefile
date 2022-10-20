@@ -10,7 +10,6 @@ CFLAGS += -Ilib/rp2040 -Ilib/rp2040/cmsis_include -Ilib/fast-hash -Ilib/can2040
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 CFLAGS_klipper.elf += -T $(OUT)src/rp2040/rp2040_link.ld
-$(OUT)klipper.elf: $(OUT)stage2.o $(OUT)src/rp2040/rp2040_link.ld
 
 # Add source files
 src-y += rp2040/main.c rp2040/gpio.c rp2040/adc.c generic/crc16_ccitt.c
@@ -28,7 +27,14 @@ src-$(CONFIG_USBCANBUS) += ../lib/fast-hash/fasthash.c rp2040/usbserial.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += rp2040/hard_pwm.c
 src-$(CONFIG_HAVE_GPIO_SPI) += rp2040/spi.c
 src-$(CONFIG_HAVE_GPIO_I2C) += rp2040/i2c.c
-
+ifeq ($(CONFIG_USE_BOOTLOADER), y)
+$(OUT)klipper.elf: $(OUT)src/rp2040/rp2040_link.ld
+target-y += $(OUT)klipper.bin
+$(OUT)klipper.bin: $(OUT)klipper.elf
+	@echo "  Creating hex file $@"
+	$(Q)$(OBJCOPY) -O binary $< $@
+else
+$(OUT)klipper.elf: $(OUT)stage2.o $(OUT)src/rp2040/rp2040_link.ld
 # rp2040 stage2 building
 STAGE2_FILE := $(shell echo $(CONFIG_RP2040_STAGE2_FILE))
 $(OUT)stage2.o: lib/rp2040/boot_stage2/$(STAGE2_FILE) $(OUT)autoconf.h
@@ -59,3 +65,4 @@ lib/rp2040_flash/rp2040_flash:
 flash: $(OUT)klipper.uf2 lib/rp2040_flash/rp2040_flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.uf2
+endif

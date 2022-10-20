@@ -154,6 +154,10 @@ config FLASH_START
     default 0x2000 if FLASH_START_2000
     default 0x0000
 
+config BOOTLOADER_START
+   hex
+   default 0x0
+
 choice
     prompt "Communication interface"
     config ATSAMD_USB

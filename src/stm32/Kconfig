@@ -250,6 +250,10 @@ config FLASH_START
     default 0x8020200 if STM32_FLASH_START_20200
     default 0x8000000
 
+config BOOTLOADER_START
+   hex
+   default 0x8000000
+
 config ARMCM_RAM_VECTORTABLE
     bool
     default y if MACH_STM32F0 && FLASH_START != 0x8000000

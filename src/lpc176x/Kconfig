@@ -63,6 +63,10 @@ config FLASH_START
     default 0x4000 if SMOOTHIEWARE_BOOTLOADER
     default 0x0000
 
+config BOOTLOADER_START
+   hex
+   default 0x0
+
 choice
     prompt "Communication interface"
     config LPC_USB

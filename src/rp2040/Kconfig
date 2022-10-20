@@ -27,8 +27,12 @@ config CLOCK_FREQ
     int
     default 12000000
 
+config USE_BOOTLOADER
+   bool "Use CanBoot bootloader"
+
 config FLASH_SIZE
     hex
+    default 0x1FC000 if USE_BOOTLOADER
     default 0x200000
 
 config RAM_START
@@ -45,8 +49,12 @@ config STACK_SIZE
 
 config FLASH_START
     hex
+    default 0x10004000 if USE_BOOTLOADER
     default 0x10000000
 
+config BOOTLOADER_START
+    hex
+    default 0x10000100
 
 ######################################################################
 # Bootloader options

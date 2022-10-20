@@ -70,6 +70,10 @@ config FLASH_START
     default 0x400000 if MACH_SAM4 || MACH_SAME70
     default 0x80000
 
+config BOOTLOADER_START
+   hex
+   default 0x0
+
 config FLASH_SIZE
     hex
     default 0x80000
