@@ -56,6 +56,8 @@ communication with the Klipper developers.
   tools such as lasers or spindles.
 - [Exclude Object](Exclude_Object.md): The guide to the Exclude Objecs
   implementation.
+- [IDEX printers](Dual_Carriage.md): Guide on setting up and calibrating
+  an IDEX printer.
 
 ## Developer Documentation
 
