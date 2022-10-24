@@ -1,0 +1,81 @@
+# Kconfig settings for Huada HC32F460 processor
+
+if MACH_HC32F460
+
+config HC32F460_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_BITBANGING
+    select HAVE_STRICT_TIMING
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_BOTH_EDGE
+
+config BOARD_DIRECTORY
+    string
+    default "hc32f460"
+
+
+config LCD_DRIVE_INVERT
+    bool
+    default y if HC32F460_FLASH_START_0x8000
+    default n
+
+######################################################################
+# Communication interface
+######################################################################
+
+choice
+    prompt "Communication interface"
+    config HC32F460_SERIAL_PA15_PA9
+        bool "Serial (PA15/PA09 connected to CH340)"
+        select SERIAL
+    config HC32F460_SERIAL_PC0_PC1
+        bool "Serial (PC0/PC1 connected to LCD pins 7 and 8)"
+        select SERIAL
+endchoice
+
+
+######################################################################
+# Bootloader
+######################################################################
+choice
+    prompt "Bootloader offset"
+    config HC32F460_FLASH_START_0xC000
+        bool "48KiB bootloader (Voxelab FFP0173 V1.0.3)"
+    config HC32F460_FLASH_START_0x8000
+        bool "32KiB bootloader (Voxelab FFP0234 V1.0.0)"
+        select LCD_DRIVE_INVERT
+endchoice
+
+config FLASH_SIZE
+    hex
+    default 0x40000
+
+config FLASH_START
+    hex
+    default 0x8000 if HC32F460_FLASH_START_0x8000
+    default 0xC000
+
+config RAM_SIZE
+    hex
+    default 0x8000
+
+config RAM_START
+    hex
+    default 0x1fff8000
+
+config STACK_SIZE
+    int
+    default 1024
+
+config CLOCK_FREQ
+    int
+    default 168000000
+
+config MCU
+    string
+    default "HC32F460"
+
+endif
