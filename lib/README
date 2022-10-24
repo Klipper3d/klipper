@@ -146,6 +146,7 @@ used to upload firmware to devices flashed with the CanBoot bootloader.
 
 The can2040 directory contains code from:
   https://github.com/KevinOConnor/can2040
+revision aff2940f1fa5b0c9822a7694403ec9d70710193d.
 
 The Huada HC32F460 directory contains code from:
   https://www.hdsc.com.cn/Category83-1490
