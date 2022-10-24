@@ -5,11 +5,11 @@ Currently supports all features of both printers except SD cards
 and dual extruders (single extruder is supported on a 2X).
 
 Changes include:
-1 - Documents what is necessary to flash the MCU (57600 baud and correct 
+* Documents what is necessary to flash the MCU (57600 baud and correct 
     avrdude protocol)
-2 - Adds support for MCU reset (toggle connection baud rate to 57600)
-3 - Adds support for ADS1118 and k-type thermocouples
-4 - Adds support for hardware blinking of the LEDs
+* Adds support for MCU reset (toggle connection baud rate to 57600)
+* Adds support for ADS1118 and k-type thermocouples
+* Adds support for hardware blinking of the LEDs
 
 /config/printer-makerbot-replicator2.cfg can be used as a starting point 
 for both 2 and 2x printers.  The included printer.cfg changes the origin
@@ -19,10 +19,10 @@ updating position_min, position_max, position_endstop, and bed_screws
 values for the x and y axix
 
 TODOs:
-fix buttons (right arrow does nothing)
-look at capabilities of the on board sd card
-add support for dual extruders
-fix configuration for heated bed sensor
+*fix buttons (right arrow does nothing)
+*look at capabilities of the on board sd card
+*add support for dual extruders
+*fix configuration for heated bed sensor
 
 *************************************************************************
 Welcome to the Klipper project!
