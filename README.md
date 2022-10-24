@@ -10,6 +10,7 @@ Changes include:
 * Adds support for MCU reset (toggle connection baud rate to 57600)
 * Adds support for ADS1118 and k-type thermocouples
 * Adds support for hardware blinking of the LEDs
+* Adds example g code macros to emulate some original Makerbot behaviors
 
 /config/printer-makerbot-replicator2.cfg can be used as a starting point 
 for both 2 and 2x printers.  The included printer.cfg changes the origin
