@@ -1,5 +1,30 @@
-Fork of Klipper3d/klipper - Adding support for Makerbot Replicator2/2X (Mightyboard rev h and g). Currently supports all features of both printers except for dual extruders (single extruder is supported on a 2X).
+Fork of Klipper3d/klipper
 
+Adds support for Makerbot Replicator2/2X (Mightyboard rev h and g). 
+Currently supports all features of both printers except SD cards 
+and dual extruders (single extruder is supported on a 2X).
+
+Changes include:
+1 - Documents what is necessary to flash the MCU (57600 baud and correct 
+    avrdude protocol)
+2 - Adds support for MCU reset (toggle connection baud rate to 57600)
+3 - Adds support for ADS1118 and k-type thermocouples
+4 - Adds support for hardware blinking of the LEDs
+
+/config/printer-makerbot-replicator2.cfg can be used as a starting point 
+for both 2 and 2x printers.  The included printer.cfg changes the origin
+(0,0) to be in the center of the build plate to be consistent with other 
+corexy printers.  Keeping the original Replicator origin requires 
+updating position_min, position_max, position_endstop, and bed_screws 
+values for the x and y axix
+
+TODOs:
+fix buttons (right arrow does nothing)
+look at capabilities of the on board sd card
+add support for dual extruders
+fix configuration for heated bed sensor
+
+*************************************************************************
 Welcome to the Klipper project!
 
 [![Klipper](docs/img/klipper-logo-small.png)](https://www.klipper3d.org/)
