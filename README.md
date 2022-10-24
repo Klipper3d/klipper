@@ -19,10 +19,10 @@ updating position_min, position_max, position_endstop, and bed_screws
 values for the x and y axix
 
 TODOs:
-*fix buttons (right arrow does nothing)
-*look at capabilities of the on board sd card
-*add support for dual extruders
-*fix configuration for heated bed sensor
+* fix buttons (right arrow does nothing)
+* look at capabilities of the on board sd card
+* add support for dual extruders
+* fix configuration for heated bed sensor
 
 *************************************************************************
 Welcome to the Klipper project!
