@@ -31,4 +31,5 @@ $(OUT)klipper.elf.hex: $(OUT)klipper.elf
 flash: $(OUT)klipper.elf.hex
 	@echo "  Flashing $< to $(FLASH_DEVICE) via avrdude"
 	$(Q)if [ -z $(FLASH_DEVICE) ]; then echo "Please specify FLASH_DEVICE"; exit 1; fi
-	$(Q)avrdude -p$(CONFIG_MCU) -c$(CONFIG_AVRDUDE_PROTOCOL) -P"$(FLASH_DEVICE)" -D -U"flash:w:$(<):i"
+	#$(Q)avrdude -p$(CONFIG_MCU) -c$(CONFIG_AVRDUDE_PROTOCOL) -P"$(FLASH_DEVICE)" -D -U"flash:w:$(<):i"
+	$(Q)avrdude -p$(CONFIG_MCU) -c stk500v1 -P"$(FLASH_DEVICE)" -D -U"flash:w:$(<):i" -b 57600
