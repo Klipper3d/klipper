@@ -556,7 +556,7 @@ class MCU:
                     or self._serialport.startswith("/tmp/klipper_host_")):
                 self._baud = config.getint('baud', 250000, minval=2400)
         # Restarts
-        restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
+        restart_methods = [None, 'mightyboard', 'arduino', 'cheetah', 'command', 'rpi_usb']
         self._restart_method = 'command'
         if self._baud:
             rmethods = {m: m for m in restart_methods}
@@ -885,6 +885,10 @@ class MCU:
             or (self._is_shutdown and not force)):
             return
         self._emergency_stop_cmd.send()
+    def _restart_mightyboard(self):
+        logging.info("Attempting MCU '%s' reset", self._name)
+        self._disconnect()
+        serialhdl.mightyboard_reset(self._serialport, self._reactor)       
     def _restart_arduino(self):
         logging.info("Attempting MCU '%s' reset", self._name)
         self._disconnect()
@@ -927,6 +931,8 @@ class MCU:
             self._restart_via_command()
         elif self._restart_method == 'cheetah':
             self._restart_cheetah()
+        elif self._restart_method == 'mightyboard':
+            self._restart_mightyboard()            
         else:
             self._restart_arduino()
     def _firmware_restart_bridge(self):

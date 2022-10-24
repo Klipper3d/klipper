@@ -371,6 +371,15 @@ def cheetah_reset(serialport, reactor):
     reactor.pause(reactor.monotonic() + 0.100)
     ser.close()
 
+# Attempt a reset by toggling baud rate to 57600.  Used by the 
+# mightyboard rev g and h (Makerbot Replicator 2(x))
+def mightyboard_reset(serialport, reactor):
+    # Try opening the port at 57600
+    ser = serial.Serial(serialport, 57600, timeout=0, exclusive=True)
+    ser.read(1)
+    reactor.pause(reactor.monotonic() + 0.100)
+    ser.close()
+
 # Attempt an arduino style reset on a serial port
 def arduino_reset(serialport, reactor):
     # First try opening the port at a different baud
