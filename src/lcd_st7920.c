@@ -102,16 +102,20 @@ void
 command_config_st7920(uint32_t *args)
 {
     struct st7920 *s = oid_alloc(args[0], command_config_st7920, sizeof(*s));
+#if (CONFIG_LCD_DRIVE_INVERT)
+    s->sclk = gpio_out_setup(args[2], 1);
+    s->sid = gpio_out_setup(args[3], 1);
+    gpio_out_setup(args[1], 0);
+#else
     s->sclk = gpio_out_setup(args[2], 0);
     s->sid = gpio_out_setup(args[3], 0);
     gpio_out_setup(args[1], 1);
+#endif
 
-    if (!CONFIG_HAVE_STRICT_TIMING) {
-        s->sync_wait_ticks = args[4];
-        s->cmd_wait_ticks = args[5];
-        return;
-    }
-
+#if (!CONFIG_HAVE_STRICT_TIMING)
+    s->sync_wait_ticks = args[4];
+    s->cmd_wait_ticks = args[5];
+#else
     // Calibrate cmd_wait_ticks
     st7920_xmit_byte(s, SYNC_CMD);
     st7920_xmit_byte(s, 0x20);
@@ -127,6 +131,7 @@ command_config_st7920(uint32_t *args)
     uint32_t cmd_delay_ticks = args[5];
     if (cmd_delay_ticks > diff)
         s->cmd_wait_ticks = cmd_delay_ticks - diff;
+#endif
 }
 DECL_COMMAND(command_config_st7920,
              "config_st7920 oid=%c cs_pin=%u sclk_pin=%u sid_pin=%u"
