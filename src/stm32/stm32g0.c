@@ -8,6 +8,7 @@
 #include "board/armcm_boot.h" // armcm_main
 #include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
@@ -37,14 +38,31 @@ lookup_clock_line(uint32_t periph_base)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<13};
     if (periph_base == CRS_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<16};
+    if (periph_base == I2C3_BASE)
+        return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<23};
+    if (periph_base == TIM1_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<11};
     if (periph_base == SPI1_BASE)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<12};
     if (periph_base == USART1_BASE)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<14};
+    if (periph_base == TIM14_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<15};
+    if (periph_base == TIM15_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<16};
+    if (periph_base == TIM16_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<17};
+    if (periph_base == TIM17_BASE)
+        return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<18};
     if (periph_base == ADC1_BASE)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<20};
-    uint32_t bit = 1 << ((periph_base - APBPERIPH_BASE) / 0x400);
-    return (struct cline){.en=&RCC->APBENR1, .rst=&RCC->APBRSTR1, .bit=bit};
+    if (periph_base >= APBPERIPH_BASE && periph_base <= LPTIM1_BASE)
+    {
+        uint32_t bit = 1 << ((periph_base - APBPERIPH_BASE) / 0x400);
+        return (struct cline){.en=&RCC->APBENR1, .rst=&RCC->APBRSTR1, .bit=bit};
+    }
+    // unknown peripheral. returning .bit=0 makes this a no-op
+    return (struct cline){.en=&RCC->APBENR1, .rst=NULL, .bit=0};
 }
 
 // Return the frequency of the given peripheral clock
@@ -103,7 +121,7 @@ clock_setup(void)
 
 
 /****************************************************************
- * USB bootloader
+ * Bootloader
  ****************************************************************/
 
 #define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
@@ -122,7 +140,7 @@ usb_reboot_for_dfu_bootloader(void)
 static void
 check_usb_dfu_bootloader(void)
 {
-    if (!CONFIG_USBSERIAL || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
+    if (!CONFIG_USB || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
     uint32_t *sysbase = (uint32_t*)0x1fff0000;
@@ -132,7 +150,7 @@ check_usb_dfu_bootloader(void)
 
 // Handle USB reboot requests
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
     try_request_canboot();
     usb_reboot_for_dfu_bootloader();

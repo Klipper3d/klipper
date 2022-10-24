@@ -6,7 +6,7 @@
 
 #include "board/armcm_boot.h" // armcm_main
 #include "board/irq.h" // irq_disable
-#include "board/usb_cdc.h" // usb_request_bootloader
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_COMMAND_FLAGS
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
@@ -94,7 +94,7 @@ DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 #endif
 
 void noinline __aligned(16) // align for predictable flash code access
-usb_request_bootloader(void)
+bootloader_request(void)
 {
     irq_disable();
     // Request boot from ROM (instead of boot from flash)

@@ -4,9 +4,9 @@ This document describes Klipper's CAN bus support.
 
 ## Device Hardware
 
-Klipper currently only supports CAN on stm32 chips. In addition, the
-micro-controller chip must support CAN and it must be on a board that
-has a CAN transceiver.
+Klipper currently supports CAN on stm32, same5x, and rp2040 chips. In
+addition, the micro-controller chip must be on a board that has a CAN
+transceiver.
 
 To compile for CAN, run `make menuconfig` and select "CAN bus" as the
 communication interface. Finally, compile the micro-controller code
@@ -73,7 +73,7 @@ powered and wired correctly, and then run:
 If uninitialized CAN devices are detected the above command will
 report lines like the following:
 ```
-Found canbus_uuid=11aa22bb33cc
+Found canbus_uuid=11aa22bb33cc, Application: Klipper
 ```
 
 Each device will have a unique identifier. In the above example,
@@ -118,7 +118,13 @@ Some important notes when using this mode:
   menuconfig" and the bus speed specified in Linux is ignored.
 
 * Whenever the "bridge mcu" is reset, Linux will disable the
-  corresponding `can0` interface. Generally, this may require running
-  commands such as "ip up" to restart the interface. Thus, Klipper
-  FIRMWARE_RESTART commands (or regular RESTART after a config change)
-  may require restarting the `can0` interface.
+  corresponding `can0` interface. To ensure proper handling of
+  FIRMWARE_RESTART and RESTART commands, it is recommended to replace
+  `auto` with `allow-hotplug` in the `/etc/network/interfaces.d/can0`
+  file. For example:
+```
+allow-hotplug can0
+iface can0 can static
+    bitrate 500000
+    up ifconfig $IFACE txqueuelen 128
+```

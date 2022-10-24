@@ -4,8 +4,12 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h" // CONFIG_CANBUS_FREQUENCY
 #include "canbus.h" // canbus_send
 #include "canserial.h" // canserial_send
+#include "command.h" // DECL_CONSTANT
+
+DECL_CONSTANT("CANBUS_FREQUENCY", CONFIG_CANBUS_FREQUENCY);
 
 int
 canserial_send(struct canbus_msg *msg)

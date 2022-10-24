@@ -9,6 +9,7 @@ CONFIG ../../config/example-corexz.cfg
 CONFIG ../../config/example-hybrid-corexy.cfg
 CONFIG ../../config/example-hybrid-corexz.cfg
 CONFIG ../../config/example-delta.cfg
+CONFIG ../../config/example-deltesian.cfg
 CONFIG ../../config/example-rotary-delta.cfg
 CONFIG ../../config/example-winch.cfg
 
@@ -29,6 +30,7 @@ CONFIG ../../config/printer-anycubic-4maxpro-2.0-2021.cfg
 CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
 CONFIG ../../config/printer-anycubic-kossel-2016.cfg
 CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
+CONFIG ../../config/printer-bq-hephestos-2014.cfg
 CONFIG ../../config/printer-creality-cr10-v3-2020.cfg
 CONFIG ../../config/printer-creality-cr10s-2017.cfg
 CONFIG ../../config/printer-creality-cr20-2018.cfg
@@ -161,13 +163,14 @@ CONFIG ../../config/printer-creality-cr6se-2020.cfg
 CONFIG ../../config/printer-creality-cr6se-2021.cfg
 CONFIG ../../config/printer-creality-ender2pro-2021.cfg
 CONFIG ../../config/printer-creality-ender3-s1-2021.cfg
-CONFIG ../../config/printer-creality-ender3-s1pro-2022.cfg
+CONFIG ../../config/printer-creality-ender3-s1plus-2022.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-creality-ender5pro-2020.cfg
 CONFIG ../../config/printer-creality-ender6-2020.cfg
 CONFIG ../../config/printer-creality-sermoonD1-2021.cfg
+CONFIG ../../config/printer-creality-sermoonV1-2022.cfg
 CONFIG ../../config/printer-elegoo-neptune2-2021.cfg
 CONFIG ../../config/printer-eryone-er20-2021.cfg
 CONFIG ../../config/printer-flsun-q5-2020.cfg
@@ -214,6 +217,8 @@ CONFIG ../../config/printer-biqu-bx-2021.cfg
 
 # Printers using the stm32g0b1
 DICTIONARY stm32g0b1.dict
+CONFIG ../../config/generic-bigtreetech-manta-m4p.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m8p.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 
 # Printers using the rp2040

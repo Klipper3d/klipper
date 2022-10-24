@@ -216,10 +216,10 @@ clock_r = re.compile(r"^clocksync state: mcu_freq=(?P<freq>[0-9]+) .*"
                      + r" (?P<sc>[0-9]+) (?P<f>[^ ]+)\)")
 repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
 clock_s = r"(?P<clock>[0-9]+)"
-repl_clock_r = re.compile(r"clock=" + clock_s + r"(?: |$)")
+repl_clock_r = re.compile(r"clock=" + clock_s)
 repl_uart_r = re.compile(r"tmcuart_(?:response|send) oid=[0-9]+"
                          + r" (?:read|write)=(?P<msg>(?:'[^']*'"
-                         + r'|"[^"]*"))(?: |$)')
+                         + r'|"[^"]*"))')
 
 # MCU shutdown message parsing
 class MCUStream:
@@ -240,12 +240,12 @@ class MCUStream:
         if seq is not None:
             line = repl_seq_r.sub(r"\g<0>(%d)" % (seq,), line)
         def clock_update(m):
-            return m.group(0).rstrip() + "(%.6f) " % (
+            return m.group(0).rstrip() + "(%.6f)" % (
                 self.trans_clock(int(m.group('clock')), ts),)
         line = repl_clock_r.sub(clock_update, line)
         def uart_update(m):
             msg = TMCUartHelper().parse_msg(ast.literal_eval(m.group('msg')))
-            return m.group(0).rstrip() + "%s " % (msg,)
+            return m.group(0).rstrip() + msg
         line = repl_uart_r.sub(uart_update, line)
         if self.name != 'mcu':
             line = "mcu '%s': %s" % (self.name, line)
