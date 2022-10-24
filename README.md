@@ -1,3 +1,5 @@
+Fork of Klipper3d/klipper - Adding support for Makerbot Replicator2/2X (Mightyboard rev h and g). Currently supports all features of both printers except for dual extruders (single extruder is supported on a 2X).
+
 Welcome to the Klipper project!
 
 [![Klipper](docs/img/klipper-logo-small.png)](https://www.klipper3d.org/)
