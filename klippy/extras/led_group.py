@@ -8,9 +8,10 @@ class PrinterLEDGroup:
         self.config = config
         self.printer = config.get_printer()
         self.config_leds = config.get('leds')
+        self.printer_led = self.printer.lookup_object('led')
         self.config_chains = self.config_leds.split('\n')
         self.leds=[]
-        self.led_chains=[]
+        self.led_helpers=[]
         self.printer.register_event_handler('klippy:connect',
                                                 self._handle_connect)
 
@@ -20,19 +21,14 @@ class PrinterLEDGroup:
             parms = [parameter.strip() for parameter in chain.split()
                         if parameter.strip()]
             if parms:
-                if parms[0].startswith("led_group"):
-                    raise self.config.error(
-                        "Error in '%s': LED group of LED groups is not allowed"
-                            % (self.config.get_name(),))
-                led_chain = self.printer.lookup_object(parms[0]\
-                                                .replace(':',' '))
-                chain_len = led_chain.led_helper.get_led_count()
+                led_helper = self.printer_led.lookup_led_helper(parms[0])
+                led_count = led_helper.get_led_count()
                 led_indices = ''.join(parms[1:]).strip('()').split(',')
                 for led in led_indices:
                     if led:
                         if '-' in led:
                             start, stop = map(int,led.split('-'))
-                            if start > chain_len or stop > chain_len or \
+                            if start > led_count or stop > led_count or \
                                 start < 1 or stop < 1:
                                 raise self.config.error(
                                     "LED index out of range for '%s' in '%s'"
@@ -44,19 +40,19 @@ class PrinterLEDGroup:
                             else:
                                 led_list = list(reversed(range(stop-1, start)))
                             for i in led_list:
-                                self.leds.append((led_chain, int(i)))
+                                self.leds.append((led_helper, int(i)))
                         else:
                             i = int(led)
-                            if i > chain_len or i < 1:
+                            if i > led_count or i < 1:
                                 raise self.config.error(
                                     "LED index out of range for '%s' in '%s'"
                                         % (parms[0],self.config.get_name(),))
-                            self.leds.append((led_chain, (int(i)-1)))
+                            self.leds.append((led_helper, (int(i)-1)))
                     else:
-                        for i in range(chain_len):
-                            self.leds.append((led_chain, int(i)))
-                if led_chain not in self.led_chains:
-                    self.led_chains.append(led_chain)
+                        for i in range(led_count):
+                            self.leds.append((led_helper, int(i)))
+                if led_helper not in self.led_helpers:
+                    self.led_helpers.append(led_helper)
         self.ledCount = len(self.leds)
 
         pled = self.printer.load_object(self.config, "led")
@@ -64,10 +60,10 @@ class PrinterLEDGroup:
                                                 self.ledCount)
 
     def update_leds(self, led_state, print_time):
-        for i, (chain, index) in enumerate(self.leds):
-            chain.led_helper.set_color(index+1, led_state[i])
-        for chain in self.led_chains:
-            chain.led_helper.check_transmit(print_time)
+        for i, (led_helper, index) in enumerate(self.leds):
+            led_helper.set_color(index+1, led_state[i])
+        for led_helper in self.led_helpers:
+            led_helper.check_transmit(print_time)
 
     def get_status(self, eventtime=None):
         return self.led_helper.get_status(eventtime)

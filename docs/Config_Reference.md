@@ -2838,8 +2838,10 @@ chain.
 #leds:
 #   A list of LEDs to put in the group. Every chain in a new line with the chain
 #   name, optionally followed by the index range in brackets. Ranges can be
-#   combined by separating them with a comma. Example:
-#   neopixel:my_neopixel (2-4,6-7,10)
+#   combined by separating them with a comma. LEDs are indexed in the order they
+#   are configured. Example:
+#   my_neopixel (2-4,6-7,10)
+#   my_dotstar
 ```
 ## Additional servos, buttons, and other pins
 

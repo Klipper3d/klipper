@@ -78,6 +78,7 @@ class LEDHelper:
 # Main LED tracking code
 class PrinterLED:
     def __init__(self, config):
+        self.config = config
         self.printer = config.get_printer()
         self.led_helpers = {}
         self.active_templates = {}
@@ -94,8 +95,14 @@ class PrinterLED:
     def setup_helper(self, config, update_func, led_count=1):
         led_helper = LEDHelper(config, update_func, led_count)
         name = config.get_name().split()[-1]
+        if name in self.led_helpers:
+            raise self.config.error("LED name '%s' is not unique." % (name,))
         self.led_helpers[name] = led_helper
         return led_helper
+    def lookup_led_helper(self, name):
+        if name in self.led_helpers:
+            return self.led_helpers[name]
+        raise self.config.error("Unknown LED '%s'" % (name,))
     def _activate_timer(self):
         if self.render_timer is not None or not self.active_templates:
             return
