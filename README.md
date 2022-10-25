@@ -19,17 +19,15 @@ Changes include:
 
 /config/printer-makerbot-replicator2.cfg can be used as a starting point 
 for both 2 and 2x printers.  The included printer.cfg changes the origin
-(0,0) to be in the center of the build plate to be consistent with other 
-corexy printers.  Keeping the original Replicator origin requires 
-updating position_min, position_max, position_endstop, and bed_screws 
-values for the x and y axix
+(0,0) to be in the left front of the build plate to be consistent with other 
+cartesian printers.  Keeping the original Replicator origin (which resembles
+a delta printer) requires updating position_min, position_max,
+position_endstop, and bed_screws values for the x and y axix
 
 TODOs:
-* NOTE: ADS1118 SUPORT IS NOT COMMITTED YET - WILL BE DONE SOON
 * fix buttons (right arrow does nothing)
 * look at capabilities of the on board sd card
 * add support for dual extruders
-* fix configuration for heated bed sensor
 * add documentation for configuring slicers (rep2 specifics)
 
 Installation
