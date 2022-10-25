@@ -163,6 +163,7 @@ CONFIG ../../config/printer-creality-cr6se-2020.cfg
 CONFIG ../../config/printer-creality-cr6se-2021.cfg
 CONFIG ../../config/printer-creality-ender2pro-2021.cfg
 CONFIG ../../config/printer-creality-ender3-s1-2021.cfg
+CONFIG ../../config/printer-creality-ender3-s1plus-2022.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
@@ -181,6 +182,10 @@ CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1.1-2021.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
+
+# Printers using the stm32f401
+DICTIONARY stm32f401.dict
+CONFIG ../../config/printer-artillery-sidewinder-x2-2022.cfg
 
 # Printers using the stm32f405
 DICTIONARY stm32f405.dict
@@ -216,6 +221,8 @@ CONFIG ../../config/printer-biqu-bx-2021.cfg
 
 # Printers using the stm32g0b1
 DICTIONARY stm32g0b1.dict
+CONFIG ../../config/generic-bigtreetech-manta-m4p.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m8p.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 
 # Printers using the rp2040

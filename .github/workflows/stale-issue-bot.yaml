@@ -326,7 +326,7 @@ jobs:
                 state: 'closed'
               });
             }
-  # Lock closed issues after 6 months of inactivity.
+  # Lock closed issues after 6 months of inactivity and PRs after 1 year.
   lock:
     name: Lock Closed Issues
     if: github.repository == 'Klipper3d/klipper'
@@ -334,6 +334,7 @@ jobs:
     steps:
     - uses: dessant/lock-threads@v3
       with:
-        process-only: 'issues'
         issue-inactive-days: '180'
         issue-lock-reason: ''
+        pr-inactive-days: '365'
+        pr-lock-reason: ''

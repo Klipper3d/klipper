@@ -21,7 +21,7 @@ static const uint8_t adc_pins[] = {
     GPIO('B', 2), GPIO('B', 3), GPIO('B', 4), GPIO('B', 5), GPIO('B', 6),
     GPIO('B', 7), GPIO('A', 8), GPIO('A', 9), GPIO('A', 10), GPIO('A', 11)
 };
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
 
 #define SAMD51_ADC_SYNC(ADC, BIT) \
     while(ADC->SYNCBUSY.reg & ADC_SYNCBUSY_ ## BIT)
@@ -53,7 +53,7 @@ static struct gpio_adc gpio_adc_pin_to_struct(uint8_t pin)
     }
 #if CONFIG_MACH_SAMD21
     Adc* reg = ADC;
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
     Adc* reg = (chan < 16 ? ADC0 : ADC1);
     chan %= 16;
 #endif
@@ -85,7 +85,7 @@ adc_init(void)
     ADC->SAMPCTRL.reg = 63;
     ADC->CTRLA.reg = ADC_CTRLA_ENABLE;
 
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
     // Enable adc clock
     enable_pclock(ADC0_GCLK_ID, ID_ADC0);
     enable_pclock(ADC1_GCLK_ID, ID_ADC1);

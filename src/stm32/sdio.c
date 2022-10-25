@@ -6,7 +6,7 @@
 
 #include "board/io.h" // readb, writeb
 #include "command.h" // shutdown
-#include "gpio.h" // sdio_setup
+#include "sdio.h" // sdio_setup
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 #include "generic/armcm_timer.h" // udelay
@@ -60,6 +60,8 @@ static const struct sdio_info sdio_bus[] = {
       GPIO('C', 9), GPIO('C', 10), GPIO('C', 11), SDIO_FUNCTION },
 };
 
+#define SDIO_CLK_FREQ 48000000
+#define SDIO_INIT_CLK 400000
 #define SDIO_MAX_TIMEOUT 500 // Wait for at least 500ms before a timeout occurs
 #define CLKCR_CLEAR_MASK (SDIO_CLKCR_CLKDIV | SDIO_CLKCR_PWRSAV | \
     SDIO_CLKCR_BYPASS | SDIO_CLKCR_WIDBUS | SDIO_CLKCR_NEGEDGE | \
@@ -69,7 +71,6 @@ static const struct sdio_info sdio_bus[] = {
 #define CMD_CLEAR_MASK (SDIO_CMD_CMDINDEX | SDIO_CMD_WAITRESP | \
     SDIO_CMD_WAITINT | SDIO_CMD_WAITPEND | SDIO_CMD_CPSMEN | \
     SDIO_CMD_SDIOSUSPEND)
-#define SDIO_INIT_CLK_DIV 0x76
 #define SDIO_CLOCK_BYPASS_DISABLE 0
 #define SDIO_CLOCK_EDGE_RISING 0
 #define SDIO_CLOCK_POWER_SAVE_DISABLE 0
@@ -96,26 +97,24 @@ sdio_setup(uint32_t bus)
         // Enable clock
         enable_pclock((uint32_t)sdio);
         // Initialize pins
-        gpio_peripheral_speed(
-            sdio_bus[bus].dat0_pin, sdio_bus[bus].function, 1, 0x03);
-        gpio_peripheral_speed(
-            sdio_bus[bus].dat1_pin, sdio_bus[bus].function, 1, 0x03);
-        gpio_peripheral_speed(
-            sdio_bus[bus].dat2_pin, sdio_bus[bus].function, 1, 0x03);
-        gpio_peripheral_speed(
-            sdio_bus[bus].dat3_pin, sdio_bus[bus].function, 1, 0x03);
-        gpio_peripheral_speed(
-            sdio_bus[bus].cmd_pin, sdio_bus[bus].function, 1, 0x03);
-        gpio_peripheral_speed(
-            sdio_bus[bus].clk_pin, sdio_bus[bus].function, 1, 0x03);
+        gpio_peripheral(
+            sdio_bus[bus].dat0_pin, sdio_bus[bus].function|GPIO_HIGH_SPEED, 1);
+        gpio_peripheral(
+            sdio_bus[bus].dat1_pin, sdio_bus[bus].function|GPIO_HIGH_SPEED, 1);
+        gpio_peripheral(
+            sdio_bus[bus].dat2_pin, sdio_bus[bus].function|GPIO_HIGH_SPEED, 1);
+        gpio_peripheral(
+            sdio_bus[bus].dat3_pin, sdio_bus[bus].function|GPIO_HIGH_SPEED, 1);
+        gpio_peripheral(
+            sdio_bus[bus].cmd_pin, sdio_bus[bus].function|GPIO_HIGH_SPEED, 1);
+        gpio_peripheral(
+            sdio_bus[bus].clk_pin, sdio_bus[bus].function|GPIO_HIGH_SPEED, 1);
     }
 
-    // Setup SDIO with 1 bit width first and slow clock <400 kHz
-    uint32_t sdio_confreg = SDIO_CLOCK_EDGE_RISING | \
-        SDIO_CLOCK_BYPASS_DISABLE | SDIO_CLOCK_POWER_SAVE_DISABLE | \
-        SDIO_BUS_WIDE_1B | SDIO_HARDWARE_FLOW_CONTROL_DISABLE | \
-        SDIO_INIT_CLK_DIV;
-    MODIFY_REG(sdio->CLKCR, CLKCR_CLEAR_MASK, sdio_confreg);
+    struct sdio_config sdio_config = { .sdio = sdio };
+
+    // Setup SDIO with 1 bit width first and slow clock ~400 kHz
+    sdio_set_speed(sdio_config, SDIO_INIT_CLK);
 
     // Disable clk
     CLEAR_BIT(sdio->CLKCR, SDIO_CLKCR_CLKEN);
@@ -126,7 +125,7 @@ sdio_setup(uint32_t bus)
     // Enable Clk
     SET_BIT(sdio->CLKCR, SDIO_CLKCR_CLKEN);
 
-    return (struct sdio_config){ .sdio = sdio };
+    return sdio_config;
 }
 
 uint32_t
@@ -275,7 +274,7 @@ sdio_get_dctrl_blocksize(uint32_t value)
 
 uint8_t
 sdio_prepare_data_transfer(struct sdio_config sdio_config, uint8_t read,
-    uint32_t numblocks, uint32_t blocksize)
+    uint32_t numblocks, uint32_t blocksize, uint32_t timeout)
 {
     SDIO_TypeDef *sdio = sdio_config.sdio;
     uint32_t dctrl_blocksize = sdio_get_dctrl_blocksize(blocksize);
@@ -286,8 +285,7 @@ sdio_prepare_data_transfer(struct sdio_config sdio_config, uint8_t read,
         return SDIO_WRONG_BLOCKSIZE;
 
     sdio->DCTRL = 0;
-    // Wait max SD card clock cycles to get the data
-    sdio->DTIMER = 0xFFFFFFFFU;
+    sdio->DTIMER = timeout;
     sdio->DLEN = numblocks*blocksize;
     MODIFY_REG(sdio->DCTRL, DCTRL_CLEAR_MASK, reg);
     return SDIO_OK;
@@ -386,7 +384,6 @@ sdio_write_data(struct sdio_config sdio_config, uint8_t *data,
         return SDIO_WRITE_UNDERRUN;
     }
 
-    sdio->ICR = SDIO_STATIC_FLAGS;
     return SDIO_OK;
 }
 
@@ -404,16 +401,14 @@ sdio_send_cmd(struct sdio_config sdio_config, uint8_t cmd, uint32_t argument,
 }
 
 void
-sdio_switch_bus_width_and_speed(struct sdio_config sdio_config, uint8_t width,
-    uint8_t clkdiv)
+sdio_set_speed(struct sdio_config sdio_config, uint32_t speed)
 {
     SDIO_TypeDef *sdio = sdio_config.sdio;
 
-    if ((width == 1) || (width == 4)) {
-        uint32_t sdio_confreg = SDIO_CLOCK_EDGE_RISING | \
-            SDIO_CLOCK_BYPASS_DISABLE | SDIO_CLOCK_POWER_SAVE_DISABLE | \
-            ((width == 4) ? SDIO_BUS_WIDE_4B : SDIO_BUS_WIDE_1B) | \
-            SDIO_HARDWARE_FLOW_CONTROL_ENABLE | (clkdiv & 0xFF);
-        MODIFY_REG(sdio->CLKCR, CLKCR_CLEAR_MASK, sdio_confreg);
-    }
+    uint8_t clkdiv = (SDIO_CLK_FREQ/speed)-2;
+
+    uint32_t sdio_confreg = SDIO_CLOCK_EDGE_RISING | \
+        SDIO_CLOCK_BYPASS_DISABLE | SDIO_CLOCK_POWER_SAVE_DISABLE | \
+        SDIO_BUS_WIDE_1B | SDIO_HARDWARE_FLOW_CONTROL_DISABLE | (clkdiv & 0xFF);
+    MODIFY_REG(sdio->CLKCR, CLKCR_CLEAR_MASK, sdio_confreg);
 }

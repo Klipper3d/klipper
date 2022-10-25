@@ -64,14 +64,15 @@ class PrinterTemperatureMCU:
         cfg_funcs = [
             ('rp2040', self.config_rp2040),
             ('sam3', self.config_sam3), ('sam4', self.config_sam4),
-            ('same70', self.config_same70),
-            ('samd21', self.config_samd21), ('samd51', self.config_samd51),
+            ('same70', self.config_same70), ('samd21', self.config_samd21),
+            ('samd51', self.config_samd51), ('same5', self.config_samd51),
             ('stm32f1', self.config_stm32f1), ('stm32f2', self.config_stm32f2),
             ('stm32f4', self.config_stm32f4),
             ('stm32f042', self.config_stm32f0x2),
             ('stm32f070', self.config_stm32f070),
             ('stm32f072', self.config_stm32f0x2),
             ('stm32g0', self.config_stm32g0),
+            ('stm32l4', self.config_stm32g0),
             ('stm32h7', self.config_stm32h7),
             ('', self.config_unknown)]
         for name, func in cfg_funcs:

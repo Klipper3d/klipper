@@ -92,7 +92,7 @@ def check_need_convert(board_name, config):
 
 ###########################################################
 #
-# SPI / SDIO FLash Implementation
+# SPI / SDIO Flash Implementation
 #
 ###########################################################
 
@@ -118,22 +118,19 @@ SW_SPI_BUS_CMD = "spi_set_software_bus oid=%d " \
 SPI_SEND_CMD = "spi_send oid=%c data=%*s"
 SPI_XFER_CMD = "spi_transfer oid=%c data=%*s"
 SPI_XFER_RESPONSE = "spi_transfer_response oid=%c response=%*s"
-SDIO_CFG_CMD = "config_sdio oid=%d"
+SDIO_CFG_CMD = "config_sdio oid=%d blocksize=%u"
 SDIO_BUS_CMD = "sdio_set_bus oid=%d sdio_bus=%s"
 SDIO_SEND_CMD = "sdio_send_command oid=%c cmd=%c argument=%u wait=%c"
 SDIO_SEND_CMD_RESPONSE = "sdio_send_command_response oid=%c error=%c " \
     "response=%*s"
-SDIO_READ_DATA="sdio_read_data oid=%c cmd=%c argument=%u wait=%u " \
-    "numblocks=%u blocksize=%u"
+SDIO_READ_DATA="sdio_read_data oid=%c cmd=%c argument=%u"
 SDIO_READ_DATA_RESPONSE="sdio_read_data_response oid=%c error=%c read=%u"
-SDIO_WRITE_DATA="sdio_write_data oid=%c cmd=%c argument=%u wait=%u " \
-    "numblocks=%u blocksize=%u"
+SDIO_WRITE_DATA="sdio_write_data oid=%c cmd=%c argument=%u"
 SDIO_WRITE_DATA_RESPONSE="sdio_write_data_response oid=%c error=%c write=%u"
 SDIO_READ_DATA_BUFFER="sdio_read_data_buffer oid=%c offset=%u len=%c"
 SDIO_READ_DATA_BUFFER_RESPONSE="sdio_read_data_buffer_response oid=%c data=%*s"
 SDIO_WRITE_DATA_BUFFER="sdio_write_data_buffer oid=%c offset=%u data=%*s"
-SDIO_SET_BUS_WIDTH_AND_SPEED="sdio_set_bus_width_and_speed oid=%c width=%u " \
-    "clkdiv=%u"
+SDIO_SET_SPEED="sdio_set_speed oid=%c speed=%u"
 
 FINALIZE_CFG_CMD = "finalize_config crc=%d"
 
@@ -170,19 +167,16 @@ class SDIODirect:
             self.oid)
         self._sdio_write_data_buffer = mcu.CommandWrapper(ser,
             SDIO_WRITE_DATA_BUFFER)
-        self._sdio_set_bus_width_and_speed = mcu.CommandWrapper(ser,
-            SDIO_SET_BUS_WIDTH_AND_SPEED)
+        self._sdio_set_speed = mcu.CommandWrapper(ser, SDIO_SET_SPEED)
 
     def sdio_send_cmd(self, cmd, argument, wait):
         return self._sdio_send_cmd.send([self.oid, cmd, argument, wait])
 
-    def sdio_read_data(self, cmd, argument, wait, numblocks, blocksize):
-        return self._sdio_read_data.send([self.oid, cmd, argument, wait,
-            numblocks, blocksize])
+    def sdio_read_data(self, cmd, argument):
+        return self._sdio_read_data.send([self.oid, cmd, argument])
 
-    def sdio_write_data(self, cmd, argument, wait, numblocks, blocksize):
-        return self._sdio_write_data.send([self.oid, cmd, argument, wait,
-            numblocks, blocksize])
+    def sdio_write_data(self, cmd, argument):
+        return self._sdio_write_data.send([self.oid, cmd, argument])
 
     def sdio_read_data_buffer(self, offset, length=32):
         return self._sdio_read_data_buffer.send([self.oid, offset, length])
@@ -190,9 +184,8 @@ class SDIODirect:
     def sdio_write_data_buffer(self, offset, data):
         return self._sdio_write_data_buffer.send([self.oid, offset, data])
 
-    def sdio_set_bus_width_and_speed(self, width, clkdiv=0):
-        return self._sdio_set_bus_width_and_speed.send(
-            [self.oid, width, clkdiv])
+    def sdio_set_speed(self, speed):
+        return self._sdio_set_speed.send([self.oid, speed])
 
 
 # FatFs Constants. Enums are implemented as lists. The item's index is its value
@@ -478,7 +471,8 @@ class SDCardFile:
             self.fhdl = None
             if ret != 0:
                 logging.info("flash_sdcard: Error closing sd file '%s', "
-                             "returned %d" % (self.path, FRESULT[ret]))
+                             "returned %d"
+                             % (self.path, FRESULT[ret]))
 
     def __enter__(self):
         self.open()
@@ -850,7 +844,6 @@ class SDCardSPI:
             if err_msgs:
                 raise OSError("\n".join(err_msgs))
 
-
 class SDCardSDIO:
     def __init__(self, ser):
         self.sdio = SDIODirect(ser)
@@ -944,27 +937,8 @@ class SDCardSDIO:
                 self.rca << 16, tries=1):
                 raise OSError("flash_sdcard: failed to select the card")
 
-            # Set SDIO clk speed to approx 1 MHz with bus width=1
-            self.sdio.sdio_set_bus_width_and_speed(1, 0x2e)
-
-            #
-            # Next lines may be used to drive the SDIO with 4 data lines.
-            # However, I had some issues with SD cards and the overall transfer
-            # time is not affected much.
-            #
-
-            # Set block size to 512 (CMD16)
-            #if not self._check_command(check_for_ocr_errors, 'SET_BLOCKLEN',
-            #     SECTOR_SIZE, tries=5):
-            #     raise OSError("flash_sdcard: failed to set block size")
-
-            # Switch to 4 bit buswidth mode for faster transfers
-            #if not self._check_command(check_for_ocr_errors, 'SET_BUS_WIDTH',
-            #    2, is_app_cmd=1, tries=1):
-            #    logging.warning("Unable to enable wide (4-Bit) bus width mode."
-            #                    " Staying at single bit mode.")
-            #else:
-            #    self.sdio.sdio_set_bus_width_and_speed(4)
+            # Set SDIO clk speed to approx. 1 MHz
+            self.sdio.sdio_set_speed(1000000)
 
             if self._check_command(check_for_ocr_errors, 'SET_BLOCKLEN',
                 SECTOR_SIZE, tries=5):
@@ -1122,7 +1096,7 @@ class SDCardSDIO:
                     offset = sector * SECTOR_SIZE
 
                 params = self.sdio.sdio_read_data(
-                    SD_COMMANDS['READ_SINGLE_BLOCK'], offset, 1, 1, SECTOR_SIZE)
+                    SD_COMMANDS['READ_SINGLE_BLOCK'], offset)
                 if params['error'] != 0:
                     raise OSError(
                         'Read data failed. Error code=%d' %(params['error'],) )
@@ -1170,7 +1144,7 @@ class SDCardSDIO:
             for i in range(0, SECTOR_SIZE, CHUNKSIZE):
                 self.sdio.sdio_write_data_buffer(i, outbuf[i:i+CHUNKSIZE])
             params = self.sdio.sdio_write_data(
-                SD_COMMANDS['WRITE_BLOCK'], offset, 1, 1, SECTOR_SIZE)
+                SD_COMMANDS['WRITE_BLOCK'], offset)
             if (params['error'] != 0) or (params['write'] != SECTOR_SIZE):
                 raise OSError(
                     "flash_sdcard: Error writing to sector %d"% (sector,))
@@ -1185,6 +1159,13 @@ class SDCardSDIO:
                 raise OSError("flash_sdcard: Write error."
                               " Card is not in transfer state: 0x%02X"
                               % (((status[3]>>1) & 0x0F)))
+
+SDIO_WARNING = """
+This board requires a manual reboot to complete the flash process.
+If the board's bootloader uses SDIO mode for its SDCard, then a full
+power cycle is required.  Please perform the power cycle now and then
+rerun this utility with the 'check' option to verify flash.
+"""
 
 class MCUConnection:
     def __init__(self, k_reactor, device, baud, board_cfg):
@@ -1354,7 +1335,7 @@ class MCUConnection:
         if bus not in bus_enums:
             raise SPIFlashError("Invalid SDIO Bus: %s" % (bus,))
         bus_cmd = SDIO_BUS_CMD % (SDIO_OID, bus)
-        sdio_cfg_cmd = SDIO_CFG_CMD % (SDIO_OID)
+        sdio_cfg_cmd = SDIO_CFG_CMD % (SDIO_OID, SECTOR_SIZE)
         cfg_cmds = [ALLOC_OIDS_CMD % (1,), sdio_cfg_cmd, bus_cmd]
         for cmd in cfg_cmds:
             self._serial.send(cmd)
@@ -1425,6 +1406,9 @@ class MCUConnection:
         return sd_chksm
 
     def verify_flash(self, req_chksm, old_dictionary, req_dictionary):
+        if bool(self.board_config.get('skip_verify', False)):
+            output_line(SDIO_WARNING)
+            return
         output("Verifying Flash...")
         validation_passed = False
         msgparser = self._serial.get_msgparser()
@@ -1499,6 +1483,7 @@ class SPIFlash:
         self.firmware_checksum = None
         self.task_complete = False
         self.need_upload = True
+        self.need_verify = True
         self.old_dictionary = None
         self.new_dictionary = None
         if args['klipper_dict_path'] is not None:
@@ -1528,7 +1513,7 @@ class SPIFlash:
                 raise SPIFlashError("Unable to reconnect")
         output_line("Done")
 
-    def run_reset(self, eventtime):
+    def run_reset_upload(self, eventtime):
         # Reset MCU to default state if necessary
         self.mcu_conn.connect()
         if self.mcu_conn.check_need_restart():
@@ -1537,6 +1522,16 @@ class SPIFlash:
         else:
             self.need_upload = False
             self.run_sdcard_upload(eventtime)
+
+    def run_reset_verify(self, eventtime):
+        # Reset MCU to default state if necessary
+        self.mcu_conn.connect()
+        if self.mcu_conn.check_need_restart():
+            self.mcu_conn.reset()
+            self.task_complete = True
+        else:
+            self.need_verify = False
+            self.run_verify(eventtime)
 
     def run_sdcard_upload(self, eventtime):
         # Reconnect and upload
@@ -1557,7 +1552,8 @@ class SPIFlash:
 
     def run_verify(self, eventtime):
         # Reconnect and verify
-        self.mcu_conn.connect()
+        if not self.mcu_conn.connected:
+            self.mcu_conn.connect()
         self.mcu_conn.configure_mcu()
         self.mcu_conn.verify_flash(self.firmware_checksum, self.old_dictionary,
                                    self.new_dictionary)
@@ -1584,12 +1580,18 @@ class SPIFlash:
             self.mcu_conn = k_reactor = None
 
     def run(self):
-        self.run_reactor_task(self.run_reset)
-        self._wait_for_reconnect()
-        if self.need_upload:
-            self.run_reactor_task(self.run_sdcard_upload)
+        if not bool(self.board_config.get('verify_only', False)):
+            self.run_reactor_task(self.run_reset_upload)
             self._wait_for_reconnect()
-        self.run_reactor_task(self.run_verify)
+            if self.need_upload:
+                self.run_reactor_task(self.run_sdcard_upload)
+                self._wait_for_reconnect()
+            self.run_reactor_task(self.run_verify)
+        else:
+            self.run_reactor_task(self.run_reset_verify)
+            if self.need_verify:
+                self._wait_for_reconnect()
+                self.run_reactor_task(self.run_verify)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -1614,6 +1616,9 @@ def main():
         "-d", "--dict_path", metavar="<klipper.dict>", type=str,
         default=None, help="Klipper firmware dictionary")
     parser.add_argument(
+        "-c","--check", action="store_true",
+        help="Perform flash check/verify only")
+    parser.add_argument(
         "device", metavar="<device>", help="Device Serial Port")
     parser.add_argument(
         "board", metavar="<board>", help="Board Type")
@@ -1631,6 +1636,10 @@ def main():
     flash_args['baud'] = args.baud
     flash_args['klipper_bin_path'] = args.klipper_bin_path
     flash_args['klipper_dict_path'] = args.dict_path
+    flash_args['verify_only'] = args.check
+    if args.check:
+        # override board_defs setting when doing verify-only:
+        flash_args['skip_verify'] = False
     check_need_convert(args.board, flash_args)
     fatfs_lib.check_fatfs_build(output)
     try:
