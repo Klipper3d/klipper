@@ -112,7 +112,9 @@ static const uint8_t adc_pins[] = {
     GPIO('H', 2),  //          ADC3_INP13
     GPIO('H', 3),  //          ADC3_INP14
     GPIO('H', 4),  //          ADC3_INP15
+#ifndef STM32H723xx
     GPIO('H', 5),  //          ADC3_INP16
+#endif
     0,             //              Vbat/4
     ADC_TEMPERATURE_PIN,//         VSENSE
     0,             //             VREFINT
