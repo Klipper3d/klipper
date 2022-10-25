@@ -61,7 +61,7 @@ ADS1118_MULT = .0078125
 
 class ADS1118(SensorBase):
     def __init__(self, config, chip_type):
-        SensorBase.__init__(self, config, "ADS1118")
+        SensorBase.__init__(self, config, chip_type)
     def calc_temp_ads1118(self, adc, cold_junction, fault):
         logging.debug("calc temp called")
         logging.debug("adc %u", adc)
