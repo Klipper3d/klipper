@@ -18,7 +18,9 @@ that it has a voltage regulator and a level shifter.
 
 ### Wiring
 
-An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrety over a long distance. If you still experience signal integrity issues (SPI/I2C errors), shorten the cable.
+An ethernet cable with shielded twisted pairs (cat5e or better) is recommended
+for signal integrety over a long distance. If you still experience signal integrity
+issues (SPI/I2C errors), shorten the cable.
 
 Connect ethernet cable shielding to the controller board/RPI ground.
 
@@ -36,6 +38,10 @@ SCLK+CS
 ```
 
 ##### ADXL345
+
+
+**Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and
+configuration will vary according to your specific board and avaliable pins.**
 
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
@@ -195,6 +201,9 @@ i2c_bus: i2c1a
 accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
+
+[static_digital_output pico_3V3pwm] # Improve power stability
+pin: pico:gpio23
 ```
 
 Restart Klipper via the `RESTART` command.
