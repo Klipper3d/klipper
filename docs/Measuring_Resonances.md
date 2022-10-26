@@ -65,8 +65,6 @@ GND+SCL
 
 ##### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
 
-**MPU-9250 and MPU-9255 are obsolete parts! MPU-6500 are newer replacements at a lower failure rate.**
-
 Alternatives to the ADXL345 are MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500.
 These accelerometers have been tested to work over I2C on the RPi or RP2040(pico)
 at 400kbaud.
@@ -75,7 +73,7 @@ Recommended connection scheme for I2C on the Raspberry Pi:
 
 | MPU-9250 pin | RPi pin | RPi pin name |
 |:--:|:--:|:--:|
-| 3V3 (or VCC) | 01 | 3.3v DC power |
+| VCC | 01 | 3.3v DC power |
 | GND | 09 | Ground |
 | SDA | 03 | GPIO02 (SDA1) |
 | SCL | 05 | GPIO03 (SCL1) |
@@ -86,7 +84,7 @@ Recommended connection scheme for I2C(i2c0a) on the RP2040:
 
 | MPU-9250 pin | RP2040 pin | RPi pin name |
 |:--:|:--:|:--:|
-| 3V3 (or VCC) | 39 | VSYS |
+| VCC | 39 | 3v3 |
 | GND | 38 | Ground |
 | SDA | 01 | GP0 (I2C0 SDA) |
 | SCL | 02 | GP1 (I2C0 SCL) |
@@ -138,10 +136,10 @@ Afterwards, check and follow the instructions in the
 [RPi Microcontroller document](RPi_microcontroller.md) to setup the
 "linux mcu" on the Raspberry Pi.
 
+#### Configure ADXL345 With RPi
+
 Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
-
-#### Configure ADXL345 With RPi
 
 Add the following to the printer.cfg file:
 
