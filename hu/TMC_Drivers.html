@@ -1841,7 +1841,7 @@ gcode:
 <p>Vedd figyelembe, hogy ha a motorvezérlő áramát a kezdőpont felvétel során megváltoztatják, akkor a hangolási folyamatot újra el kell végezni.</p>
 <h3 id="tippek-corexy-gepek-szenzor-nelkuli-kezdopont-felvetelehez">Tippek CoreXY gépek szenzor nélküli kezdőpont felvételéhez<a class="headerlink" href="#tippek-corexy-gepek-szenzor-nelkuli-kezdopont-felvetelehez" title="Permanent link">&para;</a></h3>
 <p>A CoreXY nyomtató X és Y kocsiknál érzékelő nélküli kezdőpont felvételre is van lehetőség. A Klipper a <code>[stepper_x]</code> léptetőt használja az X kocsi kezdőpont felvételekor az elakadások érzékelésére, az Y kocsi kezdőpont felvételekor pedig a <code>[stepper_y]</code> léptetőt.</p>
-<p>Használja a fent leírt hangolási útmutatót, hogy megtalálja a megfelelő "elakadás érzékenységet" az egyes kocsikhoz, de vedd figyelembe a következő korlátozásokat:</p>
+<p>Használd a fent leírt hangolási útmutatót, hogy megtalálja a megfelelő "elakadás érzékenységet" az egyes kocsikhoz, de vedd figyelembe a következő korlátozásokat:</p>
 <ol>
 <li>Ha a CoreXY-n érzékelő nélküli kezdőpont felvételt használ, győződjön meg róla, hogy egyik léptetőhöz sincs beállítva <code>hold_current</code>.</li>
 <li>A hangolás során győződjön meg arról, hogy az X és az Y kocsik a sínek közepénél vannak-e minden egyes kezdőpont felvételi kísérlet előtt.</li>

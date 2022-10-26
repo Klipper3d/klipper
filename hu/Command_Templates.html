@@ -1491,7 +1491,7 @@ gcode:
   SET_PIN PIN=my_led VALUE=0
 </code></pre></div>
 
-<p>A terminál megjeleníti a leírást, ha a <code>HELP</code> parancsot vagy az automatikus kitöltés funkciót használja.</p>
+<p>A terminál megjeleníti a leírást, ha a <code>HELP</code> parancsot vagy az automatikus kitöltés funkciót használod.</p>
 <h2 id="allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz">Állapot mentése/visszaállítása G-kódos mozgásokhoz<a class="headerlink" href="#allapot-mentesevisszaallitasa-g-kodos-mozgasokhoz" title="Permanent link">&para;</a></h2>
 <p>Sajnos a G-kód parancsnyelv használata kihívást jelenthet. A nyomtatófej mozgatásának szabványos mechanizmusa a <code>G1</code> parancson keresztül történik (a <code>G0</code> parancs a <code>G1</code> parancs álnevének tekinthető, és felcserélhető vele). Ez a parancs azonban a "G-kód elemzési állapotára" támaszkodik: <code>M82</code>, <code>M83</code>, <code>G90</code> általi beállításra, <code>G91</code>, <code>G92</code> és a korábbi <code>G1</code> parancsok is. Egy G-kód makró létrehozásakor célszerű mindig kifejezetten beállítani a G-kód elemzési állapotát a <code>G1</code> parancs kiadása előtt. (Ellenkező esetben fennáll annak a veszélye, hogy a <code>G1</code> parancs nemkívánatos kérést fog végrehajtani.)</p>
 <p>Ennek egyik gyakori módja, hogy a <code>G1</code> mozdulatokat <code>SAVE_GCODE_STATE</code>-be csomagoljuk, <code>G91</code>, és <code>RESTORE_GCODE_STATE</code>-ba. Például:</p>
@@ -1649,7 +1649,7 @@ gcode:
 <div class="highlight"><pre><span></span><code>{% set svv = printer.save_variables.variables %}
 </code></pre></div>
 
-<p>Példaként a 2 az 1-ben nyomtatófej állapotának mentésére használható, és nyomtatás indításakor győződjön meg arról, hogy az aktív fejet használja a T0 helyett:</p>
+<p>Példaként a 2 az 1-ben nyomtatófej állapotának mentésére használható, és nyomtatás indításakor győződjön meg arról, hogy az aktív fejet használd a T0 helyett:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro T1]
 gcode:
   ACTIVATE_EXTRUDER extruder=extruder1

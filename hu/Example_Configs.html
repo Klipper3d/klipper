@@ -1299,7 +1299,7 @@
 </ol>
 </li>
 <li>Minden konfigurációs fájlnak <code>.cfg</code> végződéssel kell végződnie. A <code>printer</code> konfigurációs fájloknak egy évszámmal kell végződniük, amelyet a <code>.cfg</code> végződés követ (pl. <code>-2019.cfg</code>). Ebben az esetben az évszám az adott nyomtató eladásának hozzávetőleges éve.</li>
-<li>Ne használjon szóközöket vagy speciális karaktereket a konfigurációs fájlnévben. A fájlnév csak a <code>A-Z</code>, <code>a-z</code>, <code>0-9</code>, <code>-</code> és <code>karaktereket tartalmazhatja.</code>.</li>
+<li>Ne használj szóközöket vagy speciális karaktereket a konfigurációs fájlnévben. A fájlnév csak a <code>A-Z</code>, <code>a-z</code>, <code>0-9</code>, <code>-</code> és <code>karaktereket tartalmazhatja.</code>.</li>
 <li>A Klippernek hiba nélkül el kell tudnia indítani a <code>printer</code>, <code>generic</code> és <code>kit</code> példa konfigurációs fájlt. Ezeket a konfigurációs fájlokat hozzá kell adni a <a href="https://github.com/Klipper3d/klipper/blob/master/test/klippy/printers.test">test/klippy/printers.test</a> regressziós tesztesethez. Add hozzá az új konfigurációs fájlokat ehhez a tesztesethez a megfelelő szakaszban és a szakaszon belül ábécé sorrendben.</li>
 <li>A példakonfigurációnak a nyomtató "stock" konfigurációjára kell vonatkoznia. (Túl sok "testreszabott" konfiguráció van ahhoz, hogy a Klipper fő tárolójában nyomon lehessen követni.) Hasonlóképpen, csak olyan nyomtatók, készletek és kártyák példakonfigurációs fájljait adjuk hozzá, amelyek népszerűek (pl. legalább 100 darabnak kell lennie belőlük aktív használatban). Fontolja meg a <a href="https://community.klipper3d.org">Klipper Community Discourse szerver</a> használatát más konfigurációkhoz.</li>
 <li>Only specify those devices present on the given printer or board. Do not specify settings specific to your particular setup.<ol>
@@ -1313,14 +1313,14 @@
 <li>The top of each config file should list the type of micro-controller the user should select during "make menuconfig". It should also have a reference to "docs/Config_Reference.md".</li>
 <li>Ne másold be a mező dokumentációját a példakonfigurációs fájlokba. (Ez karbantartási terhet jelent, mivel a dokumentáció frissítése sok helyen változtatást igényelne.)</li>
 <li>A példa konfigurációs fájlok nem tartalmazhatnak "SAVE_CONFIG" részt. Ha szükséges, másold át a SAVE_CONFIG szakaszból a megfelelő mezőket a fő konfigurációs terület megfelelő szakaszába.</li>
-<li>Használja a <code>field: value</code> szintaxist a <code>field=value</code> helyett.</li>
+<li>Használd a <code>field: value</code> szintaxist a <code>field=value</code> helyett.</li>
 <li>Extruder <code>rotation_distance</code> hozzáadásakor célszerű megadni a <code>gear_ratio</code> értéket, ha az extruder fogaskerékkel rendelkezik. A példakonfigurációkban szereplő rotation_distance értéktől azt várjuk, hogy korreláljon az extruderben lévő fogaskerék kerületével. Ez általában 20 és 35 mm közötti tartományban van. A <code>gear_ratio</code> megadásakor előnyösebb a mechanizmuson lévő tényleges fogaskerekek fogszámának megadása (pl. inkább <code>gear_ratio: 80:20</code>, mint <code>gear_ratio: 4:1</code>). További információkért lásd a <a href="Rotation_Distance.html#using-a-gear_ratio">forgatási távolság dokumentumot</a>.</li>
 <li>Kerülje az alapértelmezett értékre beállított mezőértékek meghatározását. Például nem szabad megadni <code>min_extrude_temp: 170</code>, mivel ez már az alapértelmezett érték.</li>
 <li>Ahol lehetséges, a sorok száma nem haladhatja meg a 80 oszlopot.</li>
 <li>Kerülje el az attribúciós vagy revíziós üzenetek hozzáadását a konfigurációs fájlokhoz. (Például kerülje az olyan sorok hozzáadását, mint a "this file was created by ..."). Helyezze el az attribúciót és a változtatási előzményeket a git commit üzenetben.</li>
 </ol>
 </li>
-<li>Ne használjon semmilyen elavult funkciót a példakonfigurációs fájlban.</li>
+<li>Ne használj semmilyen elavult funkciót a példakonfigurációs fájlban.</li>
 <li>Ne tiltson le egy alapértelmezett biztonsági rendszert egy példakonfig-fájlban. Például egy konfiguráció nem adhat meg egy egyéni <code>max_extrude_cross_section</code> értéket. Ne engedélyezze a hibakeresési funkciókat. Például ne legyen <code>force_move</code> config szakasz.</li>
 <li>A Klipper által támogatott összes ismert kártya az alapértelmezett 250000-es soros adatátvitelt tudja használni. Ne javasoljon eltérő adatátvitel beállítását egy példa konfigurációs fájlban.</li>
 </ol>

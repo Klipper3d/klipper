@@ -1363,8 +1363,8 @@
 <h2 id="gazdagep-hardver">Gazdagép Hardver<a class="headerlink" href="#gazdagep-hardver" title="Permanent link">&para;</a></h2>
 <p>A CAN-busz használatához szükség van egy host-adapterre. Jelenleg két elterjedt lehetőség van:</p>
 <ol>
-<li>Használjon egy <a href="https://www.waveshare.com/rs485-can-hat.htm">Waveshare Raspberry Pi CAN sapkát</a> vagy annak számos klónja közül egyet.</li>
-<li>Használjon USB CAN-adaptert (például <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>). Számos különböző USB-CAN adapter áll rendelkezésre - az adapter kiválasztásakor javasoljuk, hogy ellenőrizze, hogy képes-e a <a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a> futtatására. (Sajnos azt tapasztaltuk, hogy néhány USB-adapter hibás firmware-t futtat, és le van zárva, ezért vásárlás előtt ellenőrizze.)</li>
+<li>Használj egy <a href="https://www.waveshare.com/rs485-can-hat.htm">Waveshare Raspberry Pi CAN sapkát</a> vagy annak számos klónja közül egyet.</li>
+<li>Használj USB CAN-adaptert (például <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>). Számos különböző USB-CAN adapter áll rendelkezésre - az adapter kiválasztásakor javasoljuk, hogy ellenőrizze, hogy képes-e a <a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a> futtatására. (Sajnos azt tapasztaltuk, hogy néhány USB-adapter hibás firmware-t futtat, és le van zárva, ezért vásárlás előtt ellenőrizze.)</li>
 </ol>
 <p>Az adapter használatához a gazdagép operációs rendszert is konfigurálni kell. Ez általában úgy történik, hogy létrehozunk egy új <code>/etc/network/interfaces.d/can0</code> nevű fájlt a következő tartalommal:</p>
 <div class="highlight"><pre><span></span><code>auto can0

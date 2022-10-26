@@ -1626,7 +1626,7 @@
 <p>Az "avrdude" program a leggyakrabban használt eszköz az atmega chipek égetésére (mind a bootloader, mind az alkalmazások égetésére).</p>
 <h3 id="atmega2560">Atmega2560<a class="headerlink" href="#atmega2560" title="Permanent link">&para;</a></h3>
 <p>Ez a chip jellemzően az "Arduino Mega" chipben található, és nagyon gyakori a 3D nyomtató lapokban.</p>
-<p>Magának a bootloadernek az égetéséhez használjon valami olyasmit, mint:</p>
+<p>Magának a bootloadernek az égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex&#39;
 
 avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m -U lfuse:w:0xFF:m
@@ -1634,13 +1634,13 @@ avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U flash:w:stk500boot_v2
 avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 </code></pre></div>
 
-<p>Egy alkalmazás égetéséhez használjon valami olyasmit, mint:</p>
+<p>Egy alkalmazás égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>avrdude -cwiring -patmega2560 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 </code></pre></div>
 
 <h3 id="atmega1280">Atmega1280<a class="headerlink" href="#atmega1280" title="Permanent link">&para;</a></h3>
 <p>Ez a chip jellemzően az "Arduino Mega" korábbi verzióiban található.</p>
-<p>Magának a bootloadernek az égetéséhez használjon valami olyasmit, mint:</p>
+<p>Magának a bootloadernek az égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex&#39;
 
 avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m -U lfuse:w:0xFF:m
@@ -1648,13 +1648,13 @@ avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U flash:w:ATmegaBOOT_16
 avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 </code></pre></div>
 
-<p>Egy alkalmazás égetéséhez használjon valami olyasmit, mint:</p>
+<p>Egy alkalmazás égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1280 -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
 </code></pre></div>
 
 <h3 id="atmega1284p">Atmega1284p<a class="headerlink" href="#atmega1284p" title="Permanent link">&para;</a></h3>
 <p>Ez a chip gyakran megtalálható a "Melzi" stílusú 3D nyomtató alaplapokban.</p>
-<p>Magának a bootloadernek az égetéséhez használjon valami olyasmit, mint:</p>
+<p>Magának a bootloadernek az égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex&#39;
 
 avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m -U lfuse:w:0xFF:m
@@ -1662,11 +1662,11 @@ avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atm
 avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 </code></pre></div>
 
-<p>Egy alkalmazás égetéséhez használjon valami olyasmit, mint:</p>
+<p>Egy alkalmazás égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 </code></pre></div>
 
-<p>Megjegyzendő, hogy számos "Melzi" stílusú alaplap előre betöltött bootloaderrel érkezik, amely 57600-as átviteli sebesség használatával működik. Ebben az esetben egy alkalmazás égetéséhez használjon helyette valami ilyesmit:</p>
+<p>Megjegyzendő, hogy számos "Melzi" stílusú alaplap előre betöltött bootloaderrel érkezik, amely 57600-as átviteli sebesség használatával működik. Ebben az esetben egy alkalmazás égetéséhez használj helyette valami ilyesmit:</p>
 <div class="highlight"><pre><span></span><code>avrdude -carduino -patmega1284p -P/dev/ttyACM0 -b57600 -D -Uflash:w:out/klipper.elf.hex:i
 </code></pre></div>
 
@@ -1677,7 +1677,7 @@ avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 </code></pre></div>
 
 <h3 id="atmega168">Atmega168<a class="headerlink" href="#atmega168" title="Permanent link">&para;</a></h3>
-<p>Az atmega168 korlátozott flash-tárhellyel rendelkezik. Ha bootloadert használ, ajánlott az Optiboot bootloadert használni. A bootloader égetéséhez használjon valami hasonlót:</p>
+<p>Az atmega168 korlátozott flash-tárhellyel rendelkezik. Ha bootloadert használ, ajánlott az Optiboot bootloadert használni. A bootloader égetéséhez használj valami hasonlót:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega168.hex&#39;
 
 avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0x04:m -U hfuse:w:0xDD:m -U lfuse:w:0xFF:m
@@ -1685,7 +1685,7 @@ avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmeg
 avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 </code></pre></div>
 
-<p>Az Optiboot bootloaderrel történő alkalmazás égetéséhez használjon valami hasonlót:</p>
+<p>Az Optiboot bootloaderrel történő alkalmazás égetéséhez használj valami hasonlót:</p>
 <div class="highlight"><pre><span></span><code>avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 </code></pre></div>
 
@@ -1693,7 +1693,7 @@ avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 <p>A SAM3 MCU-val nem szokás bootloadert használni. Maga a chip rendelkezik egy ROM-mal, amely lehetővé teszi a flash programozását 3,3V-os soros portról vagy USB-ről.</p>
 <p>A ROM engedélyezéséhez az "erase" csapot magasan kell tartani a visszaállítás során, ami törli a flash tartalmát, és a ROM-ot elindítja. Egy Arduino Due-n ez a szekvencia úgy valósítható meg, hogy a "programozó usb port" (a tápegységhez legközelebbi USB port) 1200-as baud sebességet állít be.</p>
 <p>A <a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a> alatti kód használható a SAM3 programozásához. Az 1.9-es vagy újabb verzió használata ajánlott.</p>
-<p>Egy alkalmazás égetéséhez használjon valami olyasmit, mint:</p>
+<p>Egy alkalmazás égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
 bossac -U -p /dev/ttyACM0 -R
 </code></pre></div>
@@ -1702,7 +1702,7 @@ bossac -U -p /dev/ttyACM0 -R
 <p>A SAM4 MCU-val nem szokás bootloadert használni. Maga a chip rendelkezik egy ROM-mal, amely lehetővé teszi a flash programozását 3,3V-os soros portról vagy USB-ről.</p>
 <p>A ROM engedélyezéséhez az "erase" csapot magasan kell tartani a visszaállítás során, ami törli a flash tartalmát, és a ROM-ot elindítja.</p>
 <p>A <a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a> kód használható a SAM4 programozásához. Szükséges az <code>1.8.0</code> vagy magasabb verzió használata.</p>
-<p>Egy alkalmazás égetéséhez használjon valami olyasmit, mint:</p>
+<p>Egy alkalmazás égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
 </code></pre></div>
 
@@ -1721,7 +1721,7 @@ bossac -U -p /dev/ttyACM0 -R
 program samd21_sam_ba.bin verify
 </code></pre></div>
 
-<p>A SAMD21 leggyakoribb bootloadere az "Arduino Zero" -ban található. Ez egy 8KiB-es bootloadert használ (az alkalmazást 8KiB kezdőcímmel kell lefordítani). Ebbe a bootloaderbe a reset gombra való dupla kattintással lehet belépni. Egy alkalmazás égetéséhez használjon valami hasonlót:</p>
+<p>A SAMD21 leggyakoribb bootloadere az "Arduino Zero" -ban található. Ez egy 8KiB-es bootloadert használ (az alkalmazást 8KiB kezdőcímmel kell lefordítani). Ebbe a bootloaderbe a reset gombra való dupla kattintással lehet belépni. Egy alkalmazás égetéséhez használj valami hasonlót:</p>
 <div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 --offset=0x2000 -w out/klipper.bin -v -b -R
 </code></pre></div>
 
@@ -1744,7 +1744,7 @@ program bootloader-itsybitsy_m4-v3.7.0.bin verify
 at91samd bootloader 16384
 </code></pre></div>
 
-<p>A SAMD51 16KiB-es bootloadert használ (az alkalmazást 16KiB kezdőcímmel kell lefordítani). Egy alkalmazás égetéséhez használjon valami hasonlót:</p>
+<p>A SAMD51 16KiB-es bootloadert használ (az alkalmazást 16KiB kezdőcímmel kell lefordítani). Egy alkalmazás égetéséhez használj valami hasonlót:</p>
 <div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 --offset=0x4000 -w out/klipper.bin -v -b -R
 </code></pre></div>
 
@@ -1883,7 +1883,7 @@ make install
 <div class="highlight"><pre><span></span><code>nano ~/openocd/openocd.cfg
 </code></pre></div>
 
-<p>Használjon a következőhöz hasonló konfigurációt:</p>
+<p>Használj a következőhöz hasonló konfigurációt:</p>
 <div class="highlight"><pre><span></span><code># RPi tűket használ: GPIO25 az SWDCLK-hoz, GPIO24 az SWDIO-hoz, GPIO18 az nRST-hez.
 forrás [find interface/raspberrypi2-native.cfg]
 bcm2835gpio_swd_nums 25 24
