@@ -15,6 +15,7 @@ Changes include:
 * Adds support for MCU reset (toggle connection baud rate to 57600)
 * Adds support for ADS1118 and k-type thermocouples
 * Adds support for hardware blinking of the LEDs (not committed yet)
+* Adds support for multiple buttons with same action in display
 * Adds example g code macros to emulate some original Makerbot behaviors
 
 /config/printer-makerbot-replicator2-2012.cfg can be used as a starting point 
@@ -25,7 +26,6 @@ a delta printer) requires updating position_min, position_max,
 position_endstop, and bed_screws values for the x and y axix
 
 TODOs:
-* fix buttons (right arrow does nothing)
 * look at capabilities of the on board sd card
 * add support for dual extruders
 * add documentation for configuring slicers (rep2 specifics)
