@@ -3553,29 +3553,29 @@ lcd_type:
 #   entries from one detent, try changing this. Allowed values are 2
 #   (half-stepping) or 4 (full-stepping). The default is 4.
 #click_pin:
-#   The pin connected to 'enter' button or encoder 'click'. This
-#   parameter must be provided when using menu. The presence of an
-#   'analog_range_click_pin' config parameter turns this parameter
+#   A comma separated list of pins connected to 'enter' button or encoder
+#   'click'. This parameter must be provided when using menu. The presence
+#   of an 'analog_range_click_pin' config parameter turns this parameter
 #   from digital to analog.
 #back_pin:
-#   The pin connected to 'back' button. This parameter is optional,
-#   menu can be used without it. The presence of an
-#   'analog_range_back_pin' config parameter turns this parameter from
-#   digital to analog.
+#   A comma separated list of pins connected to 'back' button. This
+#   parameter is optional, menu can be used without it. The presence
+#   of an 'analog_range_back_pin' config parameter turns this
+#   parameter from digital to analog.
 #up_pin:
-#   The pin connected to 'up' button. This parameter must be provided
-#   when using menu without encoder. The presence of an
+#   A comma separated list of pins connected to 'up' button. This parameter
+#   must be provided when using menu without encoder. The presence of an
 #   'analog_range_up_pin' config parameter turns this parameter from
 #   digital to analog.
 #down_pin:
-#   The pin connected to 'down' button. This parameter must be
-#   provided when using menu without encoder. The presence of an
+#   A comma separated list of pins connected to 'down' button. This parameter
+#   must be provided when using menu without encoder. The presence of an
 #   'analog_range_down_pin' config parameter turns this parameter from
 #   digital to analog.
 #kill_pin:
-#   The pin connected to 'kill' button. This button will call
-#   emergency stop. The presence of an 'analog_range_kill_pin' config
-#   parameter turns this parameter from digital to analog.
+#   A comma separated list of pins connected to 'kill' button. This button
+#   will call emergency stop. The presence of an 'analog_range_kill_pin'
+#   config parameter turns this parameter from digital to analog.
 #analog_pullup_resistor: 4700
 #   The resistance (in ohms) of the pullup attached to the analog
 #   button. The default is 4700 ohms.
