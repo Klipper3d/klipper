@@ -1358,7 +1358,7 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper CAN busz támogatását írja le.</p>
 <h2 id="eszkoz-hardver">Eszköz Hardver<a class="headerlink" href="#eszkoz-hardver" title="Permanent link">&para;</a></h2>
-<p>A Klipper jelenleg támogatja a CAN-t az STM32 és RP2040 chipeken. Ezenkívül a mikrokontroller chipnek olyan lapkán kell lennie, amely rendelkezik CAN csatlakozóval.</p>
+<p>Klipper currently supports CAN on stm32, same5x, and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
 <p>A CAN-hez való fordításhoz futtassa a <code>make menuconfig</code> parancsot, és válassza a "CAN busz" kommunikációs interfészt. Végül fordítsa le a mikrokontroller kódját, és égesse a céllapra.</p>
 <h2 id="gazdagep-hardver">Gazdagép Hardver<a class="headerlink" href="#gazdagep-hardver" title="Permanent link">&para;</a></h2>
 <p>A CAN-busz használatához szükség van egy host-adapterre. Jelenleg két elterjedt lehetőség van:</p>

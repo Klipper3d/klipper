@@ -1358,7 +1358,7 @@
 <h1 id="can">CAN 匯流排<a class="headerlink" href="#can" title="Permanent link">&para;</a></h1>
 <p>本文件描述了 Klipper 的 CAN 匯流排支援。</p>
 <h2 id="_1">裝置硬體<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>Klipper currently supports CAN on stm32 and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
+<p>Klipper currently supports CAN on stm32, same5x, and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
 <p>要針對 CAN 進行編譯，請執行 <code>make menuconfig</code>並選擇"CAN Bus"作為通訊介面。最後，編譯微控制器程式碼並將其刷寫到目標控制版上。</p>
 <h2 id="_2">主機硬體<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>爲了使用 CAN 匯流排，主機需要一個適配器。目前有兩種常見的選擇：</p>

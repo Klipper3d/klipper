@@ -1358,7 +1358,7 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>Questo documento descrive il supporto del CAN bus di Klipper.</p>
 <h2 id="hardware-del-dispositivo">Hardware del dispositivo<a class="headerlink" href="#hardware-del-dispositivo" title="Permanent link">&para;</a></h2>
-<p>Klipper attualmente supporta CAN sui chip stm32 e rp2040. Inoltre, il chip del microcontrollore deve trovarsi su una scheda dotata di un ricetrasmettitore CAN.</p>
+<p>Klipper currently supports CAN on stm32, same5x, and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
 <p>Per compilare per CAN, eseguire <code>make menuconfig</code> e selezionare "CAN bus" come interfaccia di comunicazione. Infine, compila il codice del microcontrollore e flashalo sulla scheda di destinazione.</p>
 <h2 id="hardware-host">Hardware Host<a class="headerlink" href="#hardware-host" title="Permanent link">&para;</a></h2>
 <p>Per utilizzare un bus CAN, è necessario disporre di un adattatore sul host. Attualmente ci sono due opzioni comuni:</p>
