@@ -43,11 +43,10 @@ class MenuKeys:
         self.register_button(config, 'kill_pin', self.kill_callback)
 
     def register_button(self, config, name, callback, push_only=True):
-        #pin = config.get(name, None)
-        pin_list = config.getlist(name)
+        pin_list = config.getlist(name, None)
+        if pin_list is None:
+            return
         for pin in pin_list:
-        #if pin is None:
-            #return
             buttons = self.printer.lookup_object("buttons")
             if config.get('analog_range_' + name, None) is None:
                 if push_only:
@@ -58,7 +57,8 @@ class MenuKeys:
             amin, amax = config.getfloatlist('analog_range_' + name, count=2)
             pullup = config.getfloat('analog_pullup_resistor', 4700., above=0.)
             if push_only:
-                buttons.register_adc_button_push(pin, amin, amax, pullup, callback)
+                buttons.register_adc_button_push(pin, amin, amax, pullup, 
+                                                 callback)
             else:
                 buttons.register_adc_button(pin, amin, amax, pullup, callback)
 
