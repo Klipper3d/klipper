@@ -5,7 +5,7 @@ Currently supports all features of both printers except SD cards
 and dual extruders (single extruder is supported on a 2X).
 
 Please watch or star this repo if you are interested.  The more
-people use this the better the chances of getting it included
+people that use this the better the chances of getting it included
 upstream.  Feel free to file issues in this repo for questions or
 problems (DON'T USE ISSUES IN UPSTREAM FOR THIS)
 
@@ -14,10 +14,10 @@ Changes include:
     avrdude protocol)
 * Adds support for MCU reset (toggle connection baud rate to 57600)
 * Adds support for ADS1118 and k-type thermocouples
-* Adds support for hardware blinking of the LEDs
+* Adds support for hardware blinking of the LEDs (not committed yet)
 * Adds example g code macros to emulate some original Makerbot behaviors
 
-/config/printer-makerbot-replicator2.cfg can be used as a starting point 
+/config/printer-makerbot-replicator2-2012.cfg can be used as a starting point 
 for both 2 and 2x printers.  The included printer.cfg changes the origin
 (0,0) to be in the left front of the build plate to be consistent with other 
 cartesian printers.  Keeping the original Replicator origin (which resembles
@@ -34,7 +34,7 @@ Installation
 
 Clone this repo and do the normal installation steps.
 
-Copy /config/printer-makerbot-replicator2.cfg to printer.cfg.  Edit this
+Copy /config/printer-makerbot-replicator2-2012.cfg to printer.cfg.  Edit this
 file to add/remove features specific to your printer (e.g. remove HBP,
 change the HBP sensor to match what you have, change x,y, and z limits).
 
@@ -53,9 +53,8 @@ h printers that have atmega2560 instead of atmega1280.  If you have
 one of these please let me know so I can get a known working config.
 I believe you should be able to get this working by changing the MCU
 processor in make menuconfig and editing src/arv/Makefile and changing
-the last line from "-C stk500v1" to "-C stk500v2".  However I don't
-believe software reset will work and some code will need to be written
-to support this.
+the last line from "-C stk500v1" to "-C stk500v2".  Software reset
+should work but needs to be tested to confirm.
 
 *************************************************************************
 Welcome to the Klipper project!
