@@ -54,9 +54,11 @@ serial:
 #   method needed for some Fysetc Cheetah boards. The 'rpi_usb' method
 #   is useful on Raspberry Pi boards with micro-controllers powered
 #   over USB - it briefly disables power to all USB ports to
-#   accomplish a micro-controller reset. The 'command' method involves
-#   sending a Klipper command to the micro-controller so that it can
-#   reset itself. The default is 'arduino' if the micro-controller
+#   accomplish a micro-controller reset. The 'mightyboard' method
+#   is useful on mightyboard rev g and h - it changes the baud rate
+#   to 57600 which resets the micro-controller. The 'command' method
+#   involves sending a Klipper command to the micro-controller so that
+#   it can reset itself. The default is 'arduino' if the micro-controller
 #   communicates over a serial port, 'command' otherwise.
 ```
 
