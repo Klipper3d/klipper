@@ -83,13 +83,16 @@ DECL_COMMAND(command_query_ads1118,
 
 static void
 ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
-                     , uint32_t value, uint32_t value2, uint8_t fault, uint8_t oid)
+                     , uint32_t value, uint32_t value2, uint8_t fault
+                     , uint8_t oid)
 {
     sendf("ads1118_result oid=%c next_clock=%u value=%u value2=%u fault=%c",
           oid, next_begin_time, value, value2, fault);
     /* check the result and stop if below or above allowed range */
     if (value < spi->min_value || value > spi->max_value)
-        sendf("thermocouple_out_of_range oid=%c next_clock=%u value=%u min=%u max=%u", oid, next_begin_time, value, spi->min_value, spi->max_value);
+        sendf("thermocouple_out_of_range oid=%c next_clock=%u value=%u "
+               "min=%u max=%u", oid, next_begin_time, value, spi->min_value,
+               spi->max_value);
         //try_shutdown("Thermocouple ADC out of range");
 }
 
@@ -148,17 +151,21 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
         uint32_t value1 = value >> 2;
         ads_cj = value1;
         spi->cold_junction = value1;
-        sendf("thermocouple_result_0 oid=%c next_clock=%u value=%u state=%c", oid, next_begin_time, value1, spi->state);
+        sendf("thermocouple_result_0 oid=%c next_clock=%u value=%u state=%c",
+               oid, next_begin_time, value1, spi->state);
     }
     if (spi->state == 2) {
-        sendf("thermocouple_result_1 oid=%c next_clock=%u value=%u state=%c", oid, next_begin_time, value, spi->state);
+        sendf("thermocouple_result_1 oid=%c next_clock=%u value=%u state=%c",
+               oid, next_begin_time, value, spi->state);
 
         // need to know if the cold_junction value has been read
         // error condition if we don't have a recent reading
-        ads1118_respond(spi, next_begin_time, value, spi->cold_junction, 0, oid);
+        ads1118_respond(spi, next_begin_time, value, spi->cold_junction, 0,
+                        oid);
     }
     if (spi->state == 3) {
-        sendf("thermocouple_result_2 oid=%c next_clock=%u value=%u state=%c", oid, next_begin_time, value, spi->state);
+        sendf("thermocouple_result_2 oid=%c next_clock=%u value=%u state=%c",
+               oid, next_begin_time, value, spi->state);
 
         //can't send this until we figure out how to set multiple oids
         //thermocouple_respond_ads1118(spi, next_begin_time, result, 0, oid);
@@ -192,7 +199,8 @@ ads1118_task(void)
             break;
         case TS_CHIP_ADS1118B:
             ads1118_respond(spi, next_begin_time, ads_t1, ads_cj, 0, oid);
-            sendf("thermocouple_result_2a oid=%c value=%u value2=%u state=%c", oid, ads_t1, ads_cj, spi->state);
+            sendf("thermocouple_result_2a oid=%c value=%u value2=%u state=%c",
+                   oid, ads_t1, ads_cj, spi->state);
             //thermocouple_handle_ads1118(spi, next_begin_time, oid);
             break;
         }

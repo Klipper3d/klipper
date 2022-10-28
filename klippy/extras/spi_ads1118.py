@@ -27,7 +27,6 @@ class SensorBase:
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
         self.min_sample_value = min(adc_range)
         self.max_sample_value = max(adc_range)
-        logging.debug("setup_minmax %u %u %u %u", min_temp, max_temp, min(adc_range), max(adc_range))
     def setup_callback(self, cb):
         self._callback = cb
     def get_report_time_delta(self):
@@ -44,7 +43,8 @@ class SensorBase:
                 self.oid, clock, self._report_clock,
                 self.min_sample_value, self.max_sample_value), is_init=True)
     def _handle_spi_response(self, params):
-        temp = self.calc_temp_ads1118(params['value'], params['value2'], params['fault'])
+        temp = self.calc_temp_ads1118(params['value'], params['value2'],
+                                      params['fault'])
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
@@ -100,7 +100,8 @@ class ADS1118A(ADS1118):
 class ADS1118B(ADS1118):
     def __init__(self, config):
         ADS1118.__init__(self, config, "ADS1118B")
-        pins = config.get_printer().lookup_object("pins").lookup_pin(config.get("sensor_pin"))
+        pins = config.get_printer().lookup_object("pins").lookup_pin(
+                                              config.get("sensor_pin"))
         self.mcu = mcu = pins['chip']
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
@@ -175,7 +176,8 @@ def typek_to_mv(degc):
     elif 0 < degc <= 1372:
         c = tab2
     else:
-        raise ValueError("Temperature specified is out of range for Type K thermocouple")
+        raise ValueError("Temperature specified is out of range " +
+                          "for Type K thermocouple")
 
     e = 0
     for p in range(0, len(c)):
@@ -236,7 +238,8 @@ def mv_to_typek(mv):
     elif 20.644 < mv <= 54.886:
         c = tab3
     else:
-        raise ValueError("Voltage specified is out of range for Type K thermocouple")
+        raise ValueError("Voltage specified is out of range for " +
+                          "Type K thermocouple")
 
     t = 0.0
     for p in range(0, len(c)):
