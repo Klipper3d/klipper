@@ -59,7 +59,7 @@ class MenuKeys:
                 pullup = config.getfloat('analog_pullup_resistor', 4700.,
                                           above=0.)
                 if push_only:
-                    buttons.register_adc_button_push(pin, amin, amax, pullup, 
+                    buttons.register_adc_button_push(pin, amin, amax, pullup,
                                                      callback)
                 else:
                     buttons.register_adc_button(pin, amin, amax, pullup,
