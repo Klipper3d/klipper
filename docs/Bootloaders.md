@@ -410,8 +410,8 @@ onto which the klipper.bin file can be copied.
 
 ### STM32F103/STM32F0x2 with CanBoot bootloader
 
-The [CanBoot](https://github.com/Arksine/CanBoot) bootloader provides an option
-for uploading Klipper firmware over the CANBUS.  The bootloader itself is
+The [CanBoot](https://github.com/Arksine/CanBoot) bootloader provides an options
+for uploading Klipper firmware over CAN, USB, and UART.  The bootloader itself is
 derived from Klipper's source code.  Currently CanBoot supports the STM32F103,
 STM32F042, and STM32F072 models.
 
