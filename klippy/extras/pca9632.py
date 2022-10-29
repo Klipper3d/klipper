@@ -61,11 +61,15 @@ class PCA9632:
         self.reg_write(PCA9632_PWM1, led1, minclock=minclock)
         self.reg_write(PCA9632_PWM2, led2, minclock=minclock)
         self.reg_write(PCA9632_PWM3, led3, minclock=minclock)
+        self.reg_write(0x07 , color[4], minclock=minclock)
 
         LEDOUT = (LED_PWM << PCA9632_LED0 if led0 else 0)
         LEDOUT |= (LED_PWM << PCA9632_LED1 if led1 else 0)
         LEDOUT |= (LED_PWM << PCA9632_LED2 if led2 else 0)
         LEDOUT |= (LED_PWM << PCA9632_LED3 if led3 else 0)
+        if color[4] > 0:
+            self.reg_write(0x08, 128, minclock=minclock)
+            LEDOUT = LEDOUT | (LEDOUT >> 1)
         self.reg_write(PCA9632_LEDOUT, LEDOUT, minclock=minclock)
     def get_status(self, eventtime):
         return self.led_helper.get_status(eventtime)
