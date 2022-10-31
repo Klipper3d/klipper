@@ -68,7 +68,7 @@ void
 USARTx_IRQHandler(void)
 {
     uint32_t isr = USARTx->ISR;
-    if (isr & (USART_ISR_RXNE_RXFNE | USART_ISR_ORE))
+    if (isr & USART_ISR_RXNE_RXFNE)
         serial_rx_byte(USARTx->RDR);
     //USART_ISR_TXE_TXFNF only works with Fifo mode disabled
     if (isr & USART_ISR_TXE_TXFNF && USARTx->CR1 & USART_CR1_TXEIE) {
@@ -96,6 +96,7 @@ serial_init(void)
     uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
     USARTx->BRR = (((div / 16) << USART_BRR_DIV_MANTISSA_Pos)
                  | ((div % 16) << USART_BRR_DIV_FRACTION_Pos));
+    USARTx->CR3 = USART_CR3_OVRDIS; // disable the ORE ISR
     USARTx->CR1 = CR1_FLAGS;
     armcm_enable_irq(USARTx_IRQHandler, USARTx_IRQn, 0);
 
