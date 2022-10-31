@@ -66,7 +66,7 @@ void
 USARTx_IRQHandler(void)
 {
     uint32_t sr = USARTx->ISR;
-    if (sr & (USART_ISR_RXNE | USART_ISR_ORE))
+    if (sr & USART_ISR_RXNE)
         serial_rx_byte(USARTx->RDR);
     if (sr & USART_ISR_TXE && USARTx->CR1 & USART_CR1_TXEIE) {
         uint8_t data;
@@ -93,6 +93,7 @@ serial_init(void)
     uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
     USARTx->BRR = (((div / 16) << USART_BRR_DIV_MANTISSA_Pos)
                    | ((div % 16) << USART_BRR_DIV_FRACTION_Pos));
+    USARTx->CR3 = USART_CR3_OVRDIS; // disable the ORE ISR
     USARTx->CR1 = CR1_FLAGS;
     armcm_enable_irq(USARTx_IRQHandler, USARTx_IRQn, 0);
 
