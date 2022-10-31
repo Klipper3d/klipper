@@ -21,7 +21,8 @@ class LEDHelper:
         green = config.getfloat('initial_GREEN', 0., minval=0., maxval=1.)
         blue = config.getfloat('initial_BLUE', 0., minval=0., maxval=1.)
         white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
-        self.led_state = [(red, green, blue, white)] * led_count
+        blink = config.getfloat('initial_BLINK', 0., minval=0., maxval=1.)
+        self.led_state = [(red, green, blue, white, blink)] * led_count
         # Register commands
         name = config.get_name().split()[-1]
         gcode = self.printer.lookup_object('gcode')
@@ -56,10 +57,11 @@ class LEDHelper:
         green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
         blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
         white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
+        blink = gcmd.get_float('BLINK', 0., minval=0., maxval=1.)
         index = gcmd.get_int('INDEX', None, minval=1, maxval=self.led_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
         sync = gcmd.get_int('SYNC', 1)
-        color = (red, green, blue, white)
+        color = (red, green, blue, white, blink)
         # Update and transmit data
         def lookahead_bgfunc(print_time):
             self.set_color(index, color)
