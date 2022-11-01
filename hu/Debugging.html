@@ -1398,7 +1398,7 @@
 <h1 id="hibakereses">Hibakeresés<a class="headerlink" href="#hibakereses" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper hibakeresési eszközeinek egy részét ismerteti.</p>
 <h2 id="a-regresszios-tesztek-futtatasa">A regressziós tesztek futtatása<a class="headerlink" href="#a-regresszios-tesztek-futtatasa" title="Permanent link">&para;</a></h2>
-<p>A Klipper GitHub fő tárolója a "github actions" -t használja egy sor regressziós teszt futtatásához. Hasznos lehet néhány ilyen tesztet helyben futtatni.</p>
+<p>A Klipper GitHub fő tárolója a "github actions" -t használd egy sor regressziós teszt futtatásához. Hasznos lehet néhány ilyen tesztet helyben futtatni.</p>
 <p>A forráskód "whitespace check" a következővel futtatható:</p>
 <div class="highlight"><pre><span></span><code>./scripts/check_whitespace.sh
 </code></pre></div>
@@ -1488,7 +1488,7 @@ cp /tmp/klippy.log .
 <p>A szkript kinyeri a nyomtató konfigurációs fájlját, és kinyeri az MCU leállítási adatait. Az MCU leállításából származó információsor (ha van ilyen) időbélyegek szerint át lesz rendezve, hogy segítse az ok-okozati forgatókönyvek diagnosztizálását.</p>
 <h2 id="teszteles-simulavr-rel">Tesztelés simulavr-rel<a class="headerlink" href="#teszteles-simulavr-rel" title="Permanent link">&para;</a></h2>
 <p>A <a href="http://www.nongnu.org/simulavr/">simulavr</a> eszköz lehetővé teszi egy Atmel ATmega mikrokontroller szimulálását. Ez a szakasz leírja, hogyan lehet teszt G-kód fájlokat futtatni a simulavr segítségével. Javasoljuk, hogy ezt egy asztali gépen futtassuk (nem Raspberry Pi), mivel a hatékony futtatáshoz erős CPU-ra van szükség.</p>
-<p>A simulavr használatához töltse le a simulavr csomagot, és fordítsa le python támogatással. Vedd figyelembe, hogy a build rendszernek telepítenie kell néhány csomagot (például a swig-et) ahhoz, hogy a python modult fel tudja építeni.</p>
+<p>A simulavr használatához töltse le a simulavr csomagot, és fordítsd le python támogatással. Vedd figyelembe, hogy a build rendszernek telepítenie kell néhány csomagot (például a swig-et) ahhoz, hogy a python modult fel tudja építeni.</p>
 <div class="highlight"><pre><span></span><code>git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr
 make python
@@ -1512,7 +1512,7 @@ sudo dpkg -i build/debian/python3-simulavr*.deb
 make menuconfig
 </code></pre></div>
 
-<p>és fordítsa le a mikrokontroller szoftvert egy AVR atmega644p számára, és válassza a SIMULAVR szoftver emulációs támogatást. Ezután lefordíthatjuk a Klippert (futtassuk <code>make</code>), majd indítsuk el a szimulációt a következőkkel:</p>
+<p>és fordítsd le a mikrokontroller szoftvert egy AVR atmega644p számára, és válaszd a SIMULAVR szoftver emulációs támogatást. Ezután lefordíthatjuk a Klippert (futtassuk <code>make</code>), majd indítsuk el a szimulációt a következőkkel:</p>
 <div class="highlight"><pre><span></span><code>PYTHONPATH=/path/to/simulavr/build/pysimulavr/ ./scripts/avrsim.py out/klipper.elf
 </code></pre></div>
 

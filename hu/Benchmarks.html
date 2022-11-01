@@ -1096,8 +1096,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32h7-step-rate-benchmark" class="md-nav__link">
-    STM32H7 step rate benchmark
+  <a href="#stm32h7-lepesszam-referencia" class="md-nav__link">
+    STM32H7 lépésszám referencia
   </a>
   
 </li>
@@ -1465,8 +1465,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32h7-step-rate-benchmark" class="md-nav__link">
-    STM32H7 step rate benchmark
+  <a href="#stm32h7-lepesszam-referencia" class="md-nav__link">
+    STM32H7 lépésszám referencia
   </a>
   
 </li>
@@ -1555,7 +1555,7 @@
 <p>Ez a szakasz ismerteti a Klipper mikrokontroller lépési sebességreferencia létrehozására használt mechanizmust.</p>
 <p>A referenciamutatók elsődleges célja, hogy következetes mechanizmust biztosítsanak a szoftveren belüli kódolási változtatások hatásának mérésére. Másodlagos cél, hogy magas szintű mérőszámokat biztosítson a chipek és a szoftverplatformok teljesítményének összehasonlításához.</p>
 <p>A lépésszám-összehasonlítás célja a hardver és a szoftver által elérhető maximális lépésszám meghatározása. Ez az összehasonlító lépési sebesség a mindennapi használat során nem érhető el, mivel a Klippernek más feladatokat is el kell látnia (pl. mcu/host kommunikáció, hőmérséklet leolvasás, végállás ellenőrzés) minden valós használat során.</p>
-<p>Általában a referencia-tesztekhez használt tűket úgy választják ki, hogy LED-eket vagy más ártalmatlan eszközöket működtessen. <strong>A referencia futtatása előtt mindig ellenőrizze, hogy a konfigurált tűk meghajtása biztonságos-e.</strong> Nem ajánlott a tényleges léptetők használata a referencia során.</p>
+<p>Általában a referencia-tesztekhez használt tűket úgy választják ki, hogy LED-eket vagy más ártalmatlan eszközöket működtessen. <strong>A referencia futtatása előtt mindig ellenőrizd, hogy a konfigurált tűk meghajtása biztonságos-e.</strong> Nem ajánlott a tényleges léptetők használata a referencia során.</p>
 <h3 id="leptetoaranyos-referenciaertek-teszt">Léptetőarányos referenciaérték teszt<a class="headerlink" href="#leptetoaranyos-referenciaertek-teszt" title="Permanent link">&para;</a></h3>
 <p>A teszt a console.py eszközzel történik (a <Debugging.md> című fejezetben leírtak szerint). A mikrokontrollert az adott hardverplatformhoz konfiguráljuk (lásd alább), majd a következőket vágjuk ki és illesszük be a console.py terminálablakba:</p>
 <div class="highlight"><pre><span></span><code>SET start_clock {clock+freq}
@@ -1590,7 +1590,7 @@ queue_step oid=2 interval=3000 count=1 add=0
 <div class="highlight"><pre><span></span><code>ECHO A teszt eredménye: {&quot;%.0fK&quot; % (3. * freq / ticks / 1000.)}
 </code></pre></div>
 
-<p>A referenciaértékeket a TMC vezérlők számára megfelelő paraméterekkel futtatjuk. Az olyan mikrovezérlők esetében, amelyek támogatják a <code>STEPPER_BOTH_EDGE=1</code> (amint azt az <code>MCU config</code> sorban a konzolnál console.py első indításakor) a <code>step_pulse_duration=0</code> és <code>invert_step=-1</code> használatával engedélyezzük az optimalizált lépést a lépésimpulzus mindkét élére. Más mikrovezérlők esetében használja a 100ns-nak megfelelő <code>step_pulse_duration</code> értéket.</p>
+<p>A referenciaértékeket a TMC vezérlők számára megfelelő paraméterekkel futtatjuk. Az olyan mikrovezérlők esetében, amelyek támogatják a <code>STEPPER_BOTH_EDGE=1</code> (amint azt az <code>MCU config</code> sorban a konzolnál console.py első indításakor) a <code>step_pulse_duration=0</code> és <code>invert_step=-1</code> használatával engedélyezzük az optimalizált lépést a lépésimpulzus mindkét élére. Más mikrovezérlők esetében használd a 100ns-nak megfelelő <code>step_pulse_duration</code> értéket.</p>
 <h3 id="avr-lepesi-sebesseg-referenciaertek">AVR lépési sebesség referenciaérték<a class="headerlink" href="#avr-lepesi-sebesseg-referenciaertek" title="Permanent link">&para;</a></h3>
 <p>Az AVR chipeknél a következő konfigurációs sorrend használatos:</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
@@ -1833,8 +1833,8 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
-<h3 id="stm32h7-step-rate-benchmark">STM32H7 step rate benchmark<a class="headerlink" href="#stm32h7-step-rate-benchmark" title="Permanent link">&para;</a></h3>
-<p>The following configuration sequence is used on a STM32H743VIT6:</p>
+<h3 id="stm32h7-lepesszam-referencia">STM32H7 lépésszám referencia<a class="headerlink" href="#stm32h7-lepesszam-referencia" title="Permanent link">&para;</a></h3>
+<p>A következő konfigurációs sorrendet egy STM32H743VIT6 esetében használjuk:</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
 config_stepper oid=0 step_pin=PD4 dir_pin=PD3 invert_step=-1 step_pulse_ticks=0
 config_stepper oid=1 step_pin=PA15 dir_pin=PA8 invert_step=-1 step_pulse_ticks=0
@@ -1842,7 +1842,7 @@ config_stepper oid=2 step_pin=PE2 dir_pin=PE3 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 </code></pre></div>
 
-<p>The test was last run on commit <code>00191b5c</code> with gcc version <code>arm-none-eabi-gcc (15:8-2019-q3-1+b1) 8.3.1 20190703 (release) [gcc-8-branch revision 273027]</code>.</p>
+<p>A teszt utoljára <code>00191b5c</code> véglegesítéssel futott a gcc <code>arm-none-eabi-gcc (15:8-2019-q3-1+b1) 8.3.1 20190703 (release) [gcc-8-branch revision 273027]</code> véglegesítéssel.</p>
 <table>
 <thead>
 <tr>

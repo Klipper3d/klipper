@@ -1622,7 +1622,7 @@
 <p>Ez a dokumentum megpróbálja leírni a gyakori bootloadereket, a bootloader égetéséhez szükséges lépéseket és az alkalmazás égetéséhez szükséges lépéseket. Ez a dokumentum nem tekintélyes hivatkozás. A Klipper fejlesztői által összegyűjtött hasznos információk gyűjteményének szánjuk.</p>
 <h2 id="avr-mikrovezerlok">AVR mikrovezérlők<a class="headerlink" href="#avr-mikrovezerlok" title="Permanent link">&para;</a></h2>
 <p>Általánosságban az Arduino projekt jó referencia a 8 bites Atmel Atmega mikrovezérlők bootloadereiről és a égetési eljárásokról. Különösen a "boards.txt" fájl: <a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt">https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt</a> hasznos referencia.</p>
-<p>A bootloader égetéséhez az AVR chipekhez külső hardveres égető eszközre van szükség (amely SPI segítségével kommunikál a chippel). Ez az eszköz megvásárolható (például keressen rá az interneten az "avr isp", "arduino isp" vagy "usb tiny isp" szavakra). Az is lehetséges, hogy egy másik Arduino vagy Raspberry Pi segítségével égessen egy AVR bootloadert (például keressen rá az interneten a "program an avr using raspberry pi" kifejezésre). Az alábbi példákat egy "AVR ISP Mk2" típusú eszköz használatát feltételezve írtuk.</p>
+<p>A bootloader égetéséhez az AVR chipekhez külső hardveres égető eszközre van szükség (amely SPI segítségével kommunikál a chippel). Ez az eszköz megvásárolható (például keressen rá az interneten az "avr isp", "arduino isp" vagy "usb tiny isp" szavakra). Az is lehetséges, hogy egy másik Arduino vagy Raspberry Pi segítségével égess egy AVR bootloadert (például keressen rá az interneten a "program an avr using raspberry pi" kifejezésre). Az alábbi példákat egy "AVR ISP Mk2" típusú eszköz használatát feltételezve írtuk.</p>
 <p>Az "avrdude" program a leggyakrabban használt eszköz az atmega chipek égetésére (mind a bootloader, mind az alkalmazások égetésére).</p>
 <h3 id="atmega2560">Atmega2560<a class="headerlink" href="#atmega2560" title="Permanent link">&para;</a></h3>
 <p>Ez a chip jellemzően az "Arduino Mega" chipben található, és nagyon gyakori a 3D nyomtató lapokban.</p>
@@ -1708,7 +1708,7 @@ bossac -U -p /dev/ttyACM0 -R
 
 <h2 id="samd21-mikrovezerlok-arduino-zero">SAMD21 mikrovezérlők (Arduino Zero)<a class="headerlink" href="#samd21-mikrovezerlok-arduino-zero" title="Permanent link">&para;</a></h2>
 <p>A SAMD21 bootloader az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Ez általában egy dedikált SWD hardver dongle segítségével történik. Alternatívaként használhatunk egy <a href="#az-openocd-futtatasa-a-raspberry-pi-n">OpenOCD futtatást a Raspberry PI-n</a>.</p>
-<p>A bootloader OpenOCD-vel történő égetéséhez használja a következő chipkonfigurációt:</p>
+<p>A bootloader OpenOCD-vel történő égetéséhez használd a következő chipkonfigurációt:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/at91samdXX.cfg]
 </code></pre></div>
 
@@ -1730,7 +1730,7 @@ program samd21_sam_ba.bin verify
 </code></pre></div>
 
 <h2 id="samd51-mikrovezerlok-adafruit-metro-m4-es-hasonlo">SAMD51 mikrovezérlők (Adafruit Metro-M4 és hasonló)<a class="headerlink" href="#samd51-mikrovezerlok-adafruit-metro-m4-es-hasonlo" title="Permanent link">&para;</a></h2>
-<p>A SAMD21-hez hasonlóan a SAMD51 bootloader is az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Az <a href="#az-openocd-futtatasa-a-raspberry-pi-n">OpenOCD futtatása a Raspberry PI-n</a> bootloader égetéséhez használja a következő chipkonfigurációt:</p>
+<p>A SAMD21-hez hasonlóan a SAMD51 bootloader is az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Az <a href="#az-openocd-futtatasa-a-raspberry-pi-n">OpenOCD futtatása a Raspberry PI-n</a> bootloader égetéséhez használd a következő chipkonfigurációt:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/atsame5x.cfg]
 </code></pre></div>
 
@@ -1763,7 +1763,7 @@ at91samd bootloader 16384
 stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
-<p>Ez a bootloader 8KiB-es flash memóriát használ (az alkalmazást 8KiB kezdőcímmel kell lefordítani). Égessen egy alkalmazást valami ilyesmivel:</p>
+<p>Ez a bootloader 8KiB-es flash memóriát használ (az alkalmazást 8KiB kezdőcímmel kell lefordítani). Égess egy alkalmazást valami ilyesmivel:</p>
 <div class="highlight"><pre><span></span><code>dfu-util -d 1eaf:0003 -a 2 -R -D out/klipper.bin
 </code></pre></div>
 
@@ -1847,7 +1847,7 @@ make
 </code></pre></div>
 
 <p>Ahol <code>aabbccddeeff</code> helyébe az Ön UUID-je lép. Vedd figyelembe, hogy a <code>-i</code> és <code>-f</code> opciók elhagyhatók, ezek alapértelmezett értéke <code>can0</code> és <code>~/klipper/out/klipper.bin</code>.</p>
-<p>Amikor a Klippert a CanBoot-al való használatra építi, válassza a 8 KiB-os bootloader opciót.</p>
+<p>Amikor a Klippert a CanBoot-al való használatra készíted, válaszd a 8 KiB-os bootloader opciót.</p>
 <h2 id="stm32f4-mikrovezerlok-skr-pro-11">STM32F4 mikrovezérlők (SKR Pro 1.1)<a class="headerlink" href="#stm32f4-mikrovezerlok-skr-pro-11" title="Permanent link">&para;</a></h2>
 <p>Az STM32F4 mikrokontrollerek beépített rendszerbetöltővel rendelkeznek, amely képes USB-n keresztül (DFU-n keresztül), 3,3V-os soros és különböző más módszerekkel is égetni (további információkért lásd az STM AN2606 dokumentumát). Egyes STM32F4 lapok, mint például az SKR Pro 1.1, nem képesek belépni a DFU bootloaderbe. A HID bootloader elérhető az STM32F405/407 alapú lapokhoz, amennyiben a felhasználó az USB-n keresztül történő égetést részesíti előnyben az SD-kártya használatával szemben. Ne feledd, hogy szükség lehet egy, az alaplapodnak specifikus verzió konfigurálására és szerkesztésére, egy <a href="https://github.com/Arksine/STM32_HID_Bootloader/releases/latest">az SKR Pro 1.1-es lapra vonatkozó verzió elérhető itt</a>.</p>
 <p>Hacsak a lapod nem DFU-képes, a legkönnyebben elérhető égetési módszer valószínűleg a 3,3V-os soros, amely ugyanazt az eljárást követi, mint [az STM32F103 égetése az stm32flash segítségével](#stm32f103-mikrovezerlok-(blue-pill-eszkozok). Például:</p>
@@ -1908,7 +1908,7 @@ reset halt
 </code></pre></div>
 
 <h3 id="a-raspberry-pi-es-a-celchip-osszekotese">A Raspberry Pi és a célchip összekötése<a class="headerlink" href="#a-raspberry-pi-es-a-celchip-osszekotese" title="Permanent link">&para;</a></h3>
-<p>Kapcsolja ki mind a Raspberry Pi-t, mind a célchipet a kábelezés előtt! Ellenőrizze, hogy a célchip 3,3V-ot használ-e a Raspberry Pi csatlakoztatása előtt!</p>
+<p>Kapcsolja ki mind a Raspberry Pi-t, mind a célchipet a kábelezés előtt! Ellenőrizd, hogy a célchip 3,3V-ot használ-e a Raspberry Pi csatlakoztatása előtt!</p>
 <p>Csatlakoztassa a célchip GND, SWDCLK, SWDIO és RST értékeit a Raspberry Pi GND, GPIO25, GPIO24 és GPIO18 értékéhez.</p>
 <p>Ezután kapcsolja be a Raspberry Pi-t, és táplálja a célchipet.</p>
 <h3 id="openocd-futtatasa">OpenOCD futtatása<a class="headerlink" href="#openocd-futtatasa" title="Permanent link">&para;</a></h3>
@@ -1917,7 +1917,7 @@ reset halt
 sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
 </code></pre></div>
 
-<p>A fentieknek hatására az OpenOCD-nek ki kell adnia néhány szöveges üzenetet, majd várnia kell (nem szabad azonnal visszatérnie az Unix shell prompthoz). Ha az OpenOCD magától kilép, vagy ha továbbra is szöveges üzeneteket ad ki, akkor ellenőrizze kétszer a kábelezést.</p>
+<p>A fentieknek hatására az OpenOCD-nek ki kell adnia néhány szöveges üzenetet, majd várnia kell (nem szabad azonnal visszatérnie az Unix shell prompthoz). Ha az OpenOCD magától kilép, vagy ha továbbra is szöveges üzeneteket ad ki, akkor ellenőrizd kétszer a kábelezést.</p>
 <p>Ha az OpenOCD fut és stabilan működik, akkor telneten keresztül parancsokat küldhetünk neki. Nyissunk egy másik SSH munkamenetet, és futtassuk a következőket:</p>
 <div class="highlight"><pre><span></span><code>telnet 127.0.0.1 4444
 </code></pre></div>

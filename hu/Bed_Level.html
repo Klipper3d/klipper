@@ -556,8 +556,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#valassza-ki-a-megfelelo-kalibracios-mechanizmust" class="md-nav__link">
-    Válassza ki a megfelelő kalibrációs mechanizmust
+  <a href="#valaszd-ki-a-megfelelo-kalibracios-mechanizmust" class="md-nav__link">
+    Válaszd ki a megfelelő kalibrációs mechanizmust
   </a>
   
 </li>
@@ -1278,8 +1278,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#valassza-ki-a-megfelelo-kalibracios-mechanizmust" class="md-nav__link">
-    Válassza ki a megfelelő kalibrációs mechanizmust
+  <a href="#valaszd-ki-a-megfelelo-kalibracios-mechanizmust" class="md-nav__link">
+    Válaszd ki a megfelelő kalibrációs mechanizmust
   </a>
   
 </li>
@@ -1319,7 +1319,7 @@
 <p>A tárgyasztal szintezése (néha más néven "bed tramming") kritikus fontosságú a jó minőségű nyomatok előállításához. Ha a tárgyasztal nem megfelelően van "szintezve", az rossz tapadáshoz, "vetemedéshez" és finom problémákhoz vezethet a nyomtatás során. Ez a dokumentum útmutatóként szolgál a tárgyasztal szintezés Klipperben történő elvégzéséhez.</p>
 <p>Fontos megérteni a tárgyasztal szintezésének célját. Ha a nyomtatót egy <code>X0 Y0 Z10</code> pozícióba irányítjuk a nyomtatás során, akkor a cél az, hogy a nyomtató fúvókája pontosan 10 mm-re legyen a nyomtató tárgyasztalától. Továbbá, ha a nyomtatót ezután a <code>X50 Z10</code> pozícióba irányítjuk, a cél az, hogy a fúvóka pontosan 10 mm távolságot tartson a tárgyasztaltól a teljes vízszintes mozgás során.</p>
 <p>A jó minőségű nyomatok érdekében a nyomtatót úgy kell kalibrálni, hogy a Z távolságok körülbelül 25 mikron (.025 mm) pontosságúak legyenek. Ez egy kis távolság - lényegesen kisebb, mint egy átlagos emberi hajszál szélessége. Ez a méretarány nem mérhető "szemmel". Finom hatások (mint például a hőtágulás) befolyásolják az ilyen skálán végzett méréseket. A nagy pontosság elérésének titka az ismételhető folyamat és a nyomtató saját mozgásrendszerének nagy pontosságát kihasználó szintezési módszer alkalmazása.</p>
-<h2 id="valassza-ki-a-megfelelo-kalibracios-mechanizmust">Válassza ki a megfelelő kalibrációs mechanizmust<a class="headerlink" href="#valassza-ki-a-megfelelo-kalibracios-mechanizmust" title="Permanent link">&para;</a></h2>
+<h2 id="valaszd-ki-a-megfelelo-kalibracios-mechanizmust">Válaszd ki a megfelelő kalibrációs mechanizmust<a class="headerlink" href="#valaszd-ki-a-megfelelo-kalibracios-mechanizmust" title="Permanent link">&para;</a></h2>
 <p>A különböző típusú nyomtatók különböző módszereket használnak a tárgyasztal szintezésének elvégzésére. Ezek mindegyike végső soron a "papírteszt" (lásd alább) függvénye. Az adott nyomtatótípusra vonatkozó tényleges eljárást azonban más dokumentumok írják le.</p>
 <p>A kalibrációs eszközök futtatása előtt feltétlenül futtassa le a <a href="Config_checks.html">Konfigurációs ellenőrzések dokumentumban</a> leírt ellenőrzéseket. A nyomtató alapvető mozgásának ellenőrzése szükséges a tárgyasztal szintezésének elvégzése előtt.</p>
 <p>A "automatikus Z-szondával" rendelkező nyomtatók esetében a szondát mindenképpen kalibrálja a <a href="Probe_Calibrate.html">Probe Calibrate</a> dokumentumban található utasítások szerint. Delta nyomtatók esetében lásd a <a href="Delta_Calibrate.html">Delta Calibrate</a> dokumentumot. Szintezőcsavarokkal és hagyományos Z végállással rendelkező nyomtatók esetében lásd a <a href="Manual_Level.html">Manual Level</a> dokumentumot.</p>
@@ -1328,11 +1328,11 @@
 <p>A tárgyasztal szintezésének elsődleges mechanizmusa a "papírteszt". Ennek során egy normál "fénymásolópapírt" helyezünk a nyomtató tárgyasztala és a fúvóka közé, majd a fúvókát különböző Z magasságba állítjuk, amíg a papír előre-hátra tolása közben egy kis súrlódást nem érzünk.</p>
 <p>Fontos megérteni a "papírtesztet" még akkor is, ha valakinek van "automatikus szintezője". Magát a szondát gyakran kalibrálni kell a jó eredmények eléréséhez. A szonda kalibrálása a "papírteszt" segítségével történik.</p>
 <p>A papírteszt elvégzéséhez vágjon ki egy kis téglalap alakú papírdarabot egy ollóval (pl. 5x3 cm). A papír vastagsága általában körülbelül 100 mikron (0,100 mm). (A papír pontos vastagsága nem döntő fontosságú.)</p>
-<p>A papírteszt első lépése a nyomtató fúvókájának és tárgyasztalának ellenőrzése. Győződjön meg róla, hogy nincs műanyag (vagy más törmelék) a fúvókán vagy a tárgyasztalon.</p>
-<p><strong>Ellenőrizze a fúvókát és a tárgyasztalt, hogy nincs-e benne/rajta műanyag!</strong></p>
-<p>Ha valaki mindig egy adott lapra vagy felületre nyomtat, akkor a papírtesztet az adott lappal/felülettel a helyén végezheti el. Vedd azonban figyelembe, hogy maga a lap vastagsággal rendelkezik, és a különböző lapok (vagy bármely más nyomtatási felület) hatással lesznek a Z mérésekre. Mindenképpen végezze el újra a papírtesztet, hogy minden egyes használt felülettípust megmérjen.</p>
+<p>A papírteszt első lépése a nyomtató fúvókájának és tárgyasztalának ellenőrzése. Győződj meg róla, hogy nincs műanyag (vagy más törmelék) a fúvókán vagy a tárgyasztalon.</p>
+<p><strong>Ellenőrizd a fúvókát és a tárgyasztalt, hogy nincs-e benne/rajta műanyag!</strong></p>
+<p>Ha valaki mindig egy adott lapra vagy felületre nyomtat, akkor a papírtesztet az adott lappal/felülettel a helyén végezheti el. Vedd azonban figyelembe, hogy maga a lap vastagsággal rendelkezik, és a különböző lapok (vagy bármely más nyomtatási felület) hatással lesznek a Z mérésekre. Mindenképpen végezd el újra a papírtesztet, hogy minden egyes használt felülettípust megmérj.</p>
 <p>Ha műanyag van a fúvókán, akkor melegítse fel az extrudert, és egy fém csipesszel távolítsa el a műanyagot. Várja meg, amíg az extruder teljesen lehűl szobahőmérsékletűre, mielőtt folytatja a papírtesztet. Amíg a fúvóka hűl, a fémcsipesszel távolítsa el az esetlegesen kiszivárgó műanyagot.</p>
-<p><strong>A papírtesztet mindig akkor végezze el, amikor a fúvóka és a tárgyasztal szobahőmérsékleten van!</strong></p>
+<p><strong>A papírtesztet mindig akkor végezd el, amikor a fúvóka és a tárgyasztal szobahőmérsékleten van!</strong></p>
 <p>A fúvóka melegítésekor a hőtágulás miatt megváltozik a helyzete (a tárgyasztalhoz képest). Ez a hőtágulás jellemzően 100 mikron körüli, ami körülbelül ugyanolyan méret, mint egy tipikus nyomtatópapír. A hőtágulás pontos mértéke nem döntő, ahogyan a papír pontos vastagsága sem döntő. Induljunk ki abból a feltételezésből, hogy a kettő egyenlő (a két távolság közötti különbség meghatározásának módszerét lásd alább).</p>
 <p>Furcsának tűnhet, hogy a távolságot szobahőmérsékleten kalibráljuk, amikor a cél az, hogy melegítéskor egyenletes távolságot érjünk el. Ha azonban a fúvókát melegítve kalibráljuk, akkor hajlamos kis mennyiségű olvadt műanyagot juttatni a papírra, ami megváltoztatja az érzékelt súrlódás mértékét. Ez megnehezíti a jó kalibrációt. Ha a szintezés felfűtött állapotban történik, akkor nagymértékben megnő a megégés veszélye is. A hőtágulás mértéke stabil, így a kalibrálás során később könnyen figyelembe vehető.</p>
 <p><strong>Automatizált eszközzel határozza meg a pontos Z magasságot!</strong></p>
@@ -1350,7 +1350,7 @@ Recv: // Z position: ?????? --&gt; 5.000 &lt;-- ??????
 <div class="highlight"><pre><span></span><code>TESTZ Z=-.1
 </code></pre></div>
 
-<p>A TESTZ parancs a fúvókát az aktuális pozíciójától relatív távolságra mozgatja. (Tehát a <code>Z=-.1</code> azt kéri, hogy a fúvóka 0,1 mm-rel közelebb kerüljön a tárgyasztalhoz). Miután a fúvóka megállt, tolja előre-hátra a papírt, hogy ellenőrizze, hogy a fúvóka érintkezik-e a papírral, és hogy érezze a súrlódás mértékét. Folytassa a TESTZ parancsok kiadását mindaddig, amíg a papírral való tesztelésekkor nem érez egy kis súrlódást.</p>
+<p>A TESTZ parancs a fúvókát az aktuális pozíciójától relatív távolságra mozgatja. (Tehát a <code>Z=-.1</code> azt kéri, hogy a fúvóka 0,1 mm-rel közelebb kerüljön a tárgyasztalhoz). Miután a fúvóka megállt, tolja előre-hátra a papírt, hogy ellenőrizd, hogy a fúvóka érintkezik-e a papírral, és hogy érezze a súrlódás mértékét. Folytassa a TESTZ parancsok kiadását mindaddig, amíg a papírral való tesztelésekkor nem érez egy kis súrlódást.</p>
 <p>Ha túl nagy a súrlódás, akkor egy pozitív Z értéket használhatunk a fúvóka felfelé mozgatására. Lehetőség van a <code>TESTZ Z=+</code> vagy a <code>TESTZ Z=-</code> használatára is, hogy "felezzük" az utolsó pozíciót - azaz két pozíció között félúton lévő pozícióba lépjünk. Például, ha a TESTZ parancs a következő felszólítást adná:</p>
 <div class="highlight"><pre><span></span><code>Recv: // Z position: 0.130 --&gt; 0.230 &lt;-- 0.280
 </code></pre></div>
@@ -1366,8 +1366,8 @@ Recv: // Z position: ?????? --&gt; 5.000 &lt;-- ??????
 <h2 id="a-hotagulas-meghatarozasa">A hőtágulás meghatározása<a class="headerlink" href="#a-hotagulas-meghatarozasa" title="Permanent link">&para;</a></h2>
 <p>Miután sikeresen elvégezte a tárgyasztal szintezését, pontosabb értéket lehet kiszámítani a "hőtágulás", "a papír vastagsága" és "a papírteszt során érzékelhető súrlódás" együttes hatására.</p>
 <p>Ilyen típusú számításokra általában nincs szükség, mivel a legtöbb felhasználó szerint az egyszerű "papírteszt" jó eredményeket ad.</p>
-<p>A számítás legegyszerűbben úgy végezhető el, ha kinyomtatunk egy olyan tesztobjektumot, amelynek minden oldalán egyenes falak vannak. Ehhez a <a href="prints/square.stl">docs/prints/square.stl</a> fájlban található nagy, üreges négyzetet használhatjuk. Az objektum szeletelésekor győződjön meg róla, hogy a szeletelő az első szinthez ugyanazt a rétegmagasságot és extrudálási szélességet használja, mint az összes további réteghez. Használj durva rétegmagasságot (a rétegmagasságnak a fúvóka átmérőjének körülbelül 75%-ának kell lennie), és ne használj peremet vagy szoknyát.</p>
-<p>Nyomtasd ki a tesztobjektumot, várja meg, amíg lehűl, és vedd le a tárgyasztalról. Ellenőrizze a tárgy legalsó rétegét. (Az is hasznos lehet, ha ujját vagy körmét végighúzza az alsó szélén.) Ha azt tapasztaljuk, hogy az alsó réteg a tárgy minden oldala mentén kissé kidudorodik, akkor ez azt jelzi, hogy a fúvóka kissé közelebb volt a tárgyasztalhoz, mint kellett volna. A magasság növeléséhez kiadhatunk egy <code>SET_GCODE_OFFSET Z=+.010</code> parancsot. A későbbi nyomtatásokban ellenőrizhetjük ezt a viselkedést, és szükség szerint további kiigazításokat végezhetünk. Az ilyen típusú beállítások jellemzően 10 mikronokban (.010mm) történnek.</p>
+<p>A számítás legegyszerűbben úgy végezhető el, ha kinyomtatunk egy olyan tesztobjektumot, amelynek minden oldalán egyenes falak vannak. Ehhez a <a href="prints/square.stl">docs/prints/square.stl</a> fájlban található nagy, üreges négyzetet használhatjuk. Az objektum szeletelésekor győződj meg róla, hogy a szeletelő az első szinthez ugyanazt a rétegmagasságot és extrudálási szélességet használja, mint az összes további réteghez. Használj durva rétegmagasságot (a rétegmagasságnak a fúvóka átmérőjének körülbelül 75%-ának kell lennie), és ne használj peremet vagy szoknyát.</p>
+<p>Nyomtasd ki a tesztobjektumot, várja meg, amíg lehűl, és vedd le a tárgyasztalról. Ellenőrizd a tárgy legalsó rétegét. (Az is hasznos lehet, ha ujját vagy körmét végighúzza az alsó szélén.) Ha azt tapasztaljuk, hogy az alsó réteg a tárgy minden oldala mentén kissé kidudorodik, akkor ez azt jelzi, hogy a fúvóka kissé közelebb volt a tárgyasztalhoz, mint kellett volna. A magasság növeléséhez kiadhatunk egy <code>SET_GCODE_OFFSET Z=+.010</code> parancsot. A későbbi nyomtatásokban ellenőrizhetjük ezt a viselkedést, és szükség szerint további kiigazításokat végezhetünk. Az ilyen típusú beállítások jellemzően 10 mikronokban (.010mm) történnek.</p>
 <p>Ha az alsó réteg keskenyebbnek tűnik, mint a következő rétegek, akkor a SET_GCODE_OFFSET paranccsal negatív Z-beállítást végezhetünk. Ha bizonytalanok vagyunk, akkor a Z-beállítást addig csökkenthetjük, amíg a nyomatok alsó rétege egy kis dudort nem mutat, majd addig csökkenthetjük, amíg az el nem tűnik.</p>
 <p>A legegyszerűbb módja a kívánt Z-korrigálásnak, ha létrehoz egy START_PRINT G-kód makrót. A szeletelő úgy intézi, hogy a makró minden nyomtatás kezdetekor meghívja ezt a parancsot, és hozzáad egy SET_GCODE_OFFSET parancsot. További részletekért lásd a <a href="Slicers.html">szeletelők</a> dokumentumot.</p>
 

@@ -1143,30 +1143,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#flashing-boards-that-use-sdio" class="md-nav__link">
-    Flashing Boards that use SDIO
+  <a href="#sdio-val-egeto-alaplapok" class="md-nav__link">
+    SDIO-val égető alaplapok
   </a>
   
-    <nav class="md-nav" aria-label="Flashing Boards that use SDIO">
+    <nav class="md-nav" aria-label="SDIO-val égető alaplapok">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-separate-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on Separate Power Supply
+  <a href="#sdio-programozas-rpi-vel-kulon-tapegyseggel" class="md-nav__link">
+    SDIO programozás RPi-vel külön tápegységgel
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-the-same-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on the Same Power Supply
+  <a href="#sdio-programozas-rpi-vel-ugyanazon-tapegyseggel" class="md-nav__link">
+    SDIO programozás RPi-vel ugyanazon tápegységgel
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-to-spi-pin-mapping" class="md-nav__link">
-    SDIO to SPI Pin Mapping
+  <a href="#sdio-bol-spi-re-labkiosztas" class="md-nav__link">
+    SDIO-ból SPI-re lábkiosztás
   </a>
   
 </li>
@@ -1345,30 +1345,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#flashing-boards-that-use-sdio" class="md-nav__link">
-    Flashing Boards that use SDIO
+  <a href="#sdio-val-egeto-alaplapok" class="md-nav__link">
+    SDIO-val égető alaplapok
   </a>
   
-    <nav class="md-nav" aria-label="Flashing Boards that use SDIO">
+    <nav class="md-nav" aria-label="SDIO-val égető alaplapok">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-separate-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on Separate Power Supply
+  <a href="#sdio-programozas-rpi-vel-kulon-tapegyseggel" class="md-nav__link">
+    SDIO programozás RPi-vel külön tápegységgel
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-the-same-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on the Same Power Supply
+  <a href="#sdio-programozas-rpi-vel-ugyanazon-tapegyseggel" class="md-nav__link">
+    SDIO programozás RPi-vel ugyanazon tápegységgel
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-to-spi-pin-mapping" class="md-nav__link">
-    SDIO to SPI Pin Mapping
+  <a href="#sdio-bol-spi-re-labkiosztas" class="md-nav__link">
+    SDIO-ból SPI-re lábkiosztás
   </a>
   
 </li>
@@ -1418,21 +1418,21 @@ sudo service klipper start
 <h2 id="fejlett-felhasznalas">Fejlett felhasználás<a class="headerlink" href="#fejlett-felhasznalas" title="Permanent link">&para;</a></h2>
 <p>A fenti parancsok feltételezik, hogy az MCU az alapértelmezett 250000-es átviteli sebességgel csatlakozik, és a firmware a <code>~/klipper/out/klipper.bin</code> címen található. A <code>flash-sdcard.sh</code> szkript lehetőséget biztosít ezen alapértelmezések megváltoztatására. Az összes opciót a súgó képernyőn lehet megtekinteni:</p>
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
-SD Card upload utility for Klipper
+SD-kártya feltöltő segédprogram Klipperhez
 
-usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
+használat: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
                        &lt;device&gt; &lt;board&gt;
 
-positional arguments:
-  &lt;device&gt;        device serial port
-  &lt;board&gt;         board type
+pozicionális argumentumok:
+  &lt;device&gt;         eszköz soros port
+  &lt;board&gt;          alaplap típus
 
-optional arguments:
-  -h              show this message
-  -l              list available boards
-  -c              run flash check/verify only (skip upload)
-  -b &lt;baud&gt;       serial baud rate (default is 250000)
-  -f &lt;firmware&gt;   path to klipper.bin
+opcionális argumentumok:
+  -h              mutatja az üzenetet
+  -l              listázza a rendelkezésre álló kártyákat
+  -c              csak a flash ellenőrzés/ellenőrzés futtatása (a feltöltést kihagyja)
+  -b &lt;baud&gt;       soros átviteli sebesség (alapértelmezett 250000)
+  -f &lt;firmware&gt;   a klipper.bin elérési útja
 </code></pre></div>
 
 <p>Ha az alaplapod olyan firmware-vel égetted, amely egyéni átviteli sebesség mellett csatlakozik, akkor a <code>-b</code> opció megadásával frissítheted:</p>
@@ -1444,12 +1444,12 @@ optional arguments:
 </code></pre></div>
 
 <p>Ne feledd, hogy az MKS Robin E3 frissítésekor nem szükséges manuálisan futtatni az <code>update_mks_robin.py</code> fájlt, és az így kapott bináris állományt a <code>flash-sdcard.sh</code> fájlba táplálni. Ez az eljárás a feltöltési folyamat során automatikusan megtörténik.</p>
-<p>The <code>-c</code> option is used to perform a check or verify-only operation to test if the board is running the specified firmware correctly. This option is primarily intended for cases where a manual power-cycle is necessary to complete the flashing procedure, such as with bootloaders that use SDIO mode instead of SPI to access their SD Cards. (See Caveats below) But, it can also be used anytime to verify if the code flashed into the board matches the version in your build folder on any supported board.</p>
+<p>A <code>-c</code> opcióval egy ellenőrző vagy csak ellenőrzésre szolgáló műveletet végezhetsz, amellyel tesztelheted, hogy a kártya helyesen futtatja-e a megadott firmware-t. Ezt az opciót elsősorban olyan esetekre szánjuk, amikor kézi bekapcsolás szükséges az égetési eljárás befejezéséhez, például olyan bootloaderek esetében, amelyek SDIO módot használnak SPI helyett az SD-kártyák elérésekor. (Lásd a figyelmeztetéseket alább.) De bármikor használható annak ellenőrzésére is, hogy a kártyára égetett kód megegyezik-e a build mappában lévő verzióval bármely támogatott kártyán.</p>
 <h2 id="ovintezkedesek">Óvintézkedések<a class="headerlink" href="#ovintezkedesek" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Ahogy a bevezetőben említettük, ez a módszer csak a firmware frissítésére alkalmas. A kezdeti égetési eljárást kézzel kell elvégezni az alaplapra vonatkozó utasítások szerint.</li>
 <li>Bár lehetséges a soros adatátvitelt vagy a csatlakozási interfészt (pl. USB-ről UART-ra) módosító készlet égetése, az ellenőrzés mindig sikertelen lesz, mivel a szkript nem tud újra csatlakozni az MCU-hoz az aktuális verzió ellenőrzéséhez.</li>
-<li>Only boards that use SPI for SD Card communication are supported. Boards that use SDIO, such as the Flymaker Flyboard and MKS Robin Nano V1/V2, will not work in SDIO mode. However, it's usually possible to flash such boards using Software SPI mode instead. But if the board's bootloader only uses SDIO mode to access the SD Card, a power-cycle of the board and SD Card will be necessary so that the mode can switch from SPI back to SDIO to complete reflashing. Such boards should be defined with <code>skip_verify</code> enabled to skip the verify step immediately after flashing. Then after the manual power-cycle, you can rerun the exact same <code>./scripts/flash-sdcard.sh</code> command, but add the <code>-c</code> option to complete the check/verify operation. See <a href="#flashing-boards-that-use-sdio">Flashing Boards that use SDIO</a> for examples.</li>
+<li>Csak az SD-kártya SPI kommunikációt használó alaplapok támogatottak. Az SDIO-t használó alaplapok, mint például a Flymaker Flyboard és az MKS Robin Nano V1/V2, nem működnek SDIO módban. Az ilyen alaplapok azonban általában a szoftveres SPI mód használatával égethetők. Ha azonban az alaplap bootloadere csak SDIO módot használ az SD-kártya eléréséhez, akkor az alaplap és az SD-kártya bekapcsolása szükséges ahhoz, hogy az SPI-ről vissza tudjon állni SDIO módra az újrafrissítés befejezéséhez. Az ilyen alaplapokat a <code>skip_verify</code> engedélyezésével kell definiálni, hogy az égetés után azonnal kihagyható legyen a verify lépés. Ezután a kézi bekapcsolás után újra lefuttathatod pontosan ugyanazt a <code>./scripts/flash-sdcard.sh</code> parancsot, de hozzáadhatod a <code>-c</code> opciót az ellenőrzés/ellenőrzés művelet befejezéséhez. Példákért lásd az <a href="#flashing-boards-that-use-sdio">SDIO-val égető alaplapok</a> részt.</li>
 </ul>
 <h2 id="alaplap-definiciok">Alaplap definíciók<a class="headerlink" href="#alaplap-definiciok" title="Permanent link">&para;</a></h2>
 <p>A legtöbb általános alaplapnak rendelkezésre kell állnia, azonban szükség esetén új alaplap definíciót is hozzáadhat. Az alaplapdefiníciók a <code>~/klipper/scripts/spi_flash/board_defs.py</code> állományban találhatók. A definíciókat például lexikonban tároljuk:</p>
@@ -1469,14 +1469,14 @@ optional arguments:
 <li><code>spi_bus</code>: Az SD-kártyához csatlakoztatott SPI-busz. Ezt a tábla kapcsolási rajzából kell visszakeresni. Ez a mező kötelező.</li>
 <li><code>cs_pin</code>: Az SD-kártyához csatlakoztatott chipkiválasztó tű. Ezt a kártya kapcsolási rajzából kell visszakeresni. Ez a mező kötelező.</li>
 <li><code>firmware_path</code>: Az SD-kártyán lévő elérési útvonal, ahová a firmware-t át kell vinni. Az alapértelmezett érték <code>firmware.bin</code>.</li>
-<li><code>current_firmware_path</code>: The path on the SD Card where the renamed firmware file is located after a successful flash. The default is <code>firmware.cur</code>.</li>
-<li><code>skip_verify</code>: This defines a boolean value which tells the scripts to skip the firmware verification step during the flashing process. The default is <code>False</code>. It can be set to <code>True</code> for boards that require a manual power-cycle to complete flashing. To verify the firmware afterward, run the script again with the <code>-c</code> option to perform the verification step. <a href="#caveats">See caveats with SDIO cards</a></li>
+<li><code>current_firmware_path</code>: Az SD-kártyán lévő elérési útvonal, ahol az átnevezett firmware fájl található a sikeres égetés után. Az alapértelmezett név: <code>firmware.cur</code>.</li>
+<li><code>skip_verify</code>: Ez egy logikai értéket határoz meg, amely a szkripteknek azt mondja meg, hogy hagyja ki a firmware ellenőrzésének lépését az égetési folyamat során. Az alapértelmezett érték <code>False</code>. Ez az érték <code>True</code> értékre állítható olyan kártyák esetében, amelyeknél az égetés befejezéséhez kézi bekapcsolás szükséges. A firmware utólagos ellenőrzéséhez futtasd újra a szkriptet a <code>-c</code> opcióval, hogy elvégezd az ellenőrzési lépést. <a href="#caveats">Lásd az SDIO kártyákkal kapcsolatos figyelmeztetéseket</a></li>
 </ul>
-<p>If software SPI is required, the <code>spi_bus</code> field should be set to <code>swspi</code> and the following additional field should be specified:</p>
+<p>Ha szoftveres SPI-re van szükség, az <code>spi_bus</code> mezőt <code>swspi</code> és a következő kiegészítő mezőt kell megadni:</p>
 <ul>
 <li><code>spi_pins</code>: Ennek 3 vesszővel elválasztott tűnek kell lennie, amelyek <code>miso,mosi,sclk</code> formátumban csatlakoznak az SD-kártyához.</li>
 </ul>
-<p>It should be exceedingly rare that Software SPI is necessary, typically only boards with design errors or boards that normally only support SDIO mode for their SD Card will require it. The <code>btt-skr-pro</code> board definition provides an example of the former, and the <code>btt-octopus-f446-v1</code> board definition provides an example of the latter.</p>
+<p>Rendkívül ritkán van szükség a szoftveres SPI-re, jellemzően csak a tervezési hibás vagy az SD-kártyájuk SDIO módját támogató kártyáknál lesz rá szükség. A <code>btt-skr-pro</code> alaplap definíciója az előbbire ad példát, a <code>btt-octopus-f446-v1</code> alaplap definíciója pedig az utóbbira.</p>
 <p>Egy új alaplap definíció létrehozása előtt ellenőrizni kell, hogy egy meglévő alaplap definíció megfelel-e az új alaplap számára szükséges kritériumoknak. Ha ez a helyzet, akkor egy <code>BOARD_ALIAS</code> adható meg. Például a következő álnév adható hozzá <code>az én-új alaplapom</code> álneveként a <code>generic-lpc1768</code> meghatározásához:</p>
 <div class="highlight"><pre><span></span><code><span class="n">BOARD_ALIASES</span> <span class="o">=</span> <span class="p">{</span>
     <span class="o">...&lt;</span><span class="n">previous</span> <span class="n">aliases</span><span class="o">&gt;</span><span class="p">,</span>
@@ -1485,11 +1485,11 @@ optional arguments:
 </code></pre></div>
 
 <p>Ha új alaplap definícióra van szükséged, és nem tetszik a fent leírt eljárás, akkor ajánlott, hogy a <a href="Contact.html#discord">Klipper Közösségi Discord</a> segítségével kérj egyet.</p>
-<h2 id="flashing-boards-that-use-sdio">Flashing Boards that use SDIO<a class="headerlink" href="#flashing-boards-that-use-sdio" title="Permanent link">&para;</a></h2>
-<p><a href="#caveats">As mentioned in the Caveats</a>, boards whose bootloader uses SDIO mode to access their SD Card require a power-cycle of the board, and specifically the SD Card itself, in order to switch from the SPI Mode used while writing the file to the SD Card back to SDIO mode for the bootloader to flash it into the board. These board definitions will use the <code>skip_verify</code> flag, which tells the flashing tool to stop after writing the firmware to the SD Card so that the board can be manually power-cycled and the verification step deferred until that's complete.</p>
-<p>There are two scenarios -- one with the RPi Host running on a separate power supply and the other when the RPi Host is running on the same power supply as the main board being flashed. The difference is whether or not it's necessary to also shutdown the RPi and then <code>ssh</code> again after the flashing is complete in order to do the verification step, or if the verification can be done immediately. Here's examples of the two scenarios:</p>
-<h3 id="sdio-programming-with-rpi-on-separate-power-supply">SDIO Programming with RPi on Separate Power Supply<a class="headerlink" href="#sdio-programming-with-rpi-on-separate-power-supply" title="Permanent link">&para;</a></h3>
-<p>A typical session with the RPi on a Separate Power Supply looks like the following. You will, of course, need to use your proper device path and board name:</p>
+<h2 id="sdio-val-egeto-alaplapok">SDIO-val égető alaplapok<a class="headerlink" href="#sdio-val-egeto-alaplapok" title="Permanent link">&para;</a></h2>
+<p><a href="#caveats">Ahogyan a figyelmeztetések</a> is említik, azok az alaplapok, amelyek bootloadere SDIO módot használ az SD-kártyához való hozzáféréshez, az alaplapot, és különösen magát az SD-kártyát ki kell kapcsolni, hogy a fájl SD-kártyára írása közben használt SPI módból vissza lehessen váltani SDIO módba, hogy a bootloader be tudja égetni az alaplapra. Ezek az alaplap definíciók a <code>skip_verify</code> flag-et használják, amely azt mondja az égető eszköznek, hogy álljon le a firmware SD-kártyára írása után, hogy az alaplapot kézzel lehessen bekapcsolni, és az ellenőrzés lépését elhalasztani, amíg ez be nem fejeződik.</p>
+<p>Két forgatókönyv van -- az egyik, amikor az RPi Gazdagép külön tápegységről megy, a másik, amikor az RPi Gazdagép ugyanazon tápegységről megy, mint az égetni kívánt alaplap. A különbség az, hogy az égetés befejezése után le kell-e kapcsolni az RPi-t is, majd újra <code>ssh</code>, hogy elvégezhessük az ellenőrző lépést, vagy az ellenőrzés azonnal elvégezhető. Íme példák a két forgatókönyvre:</p>
+<h3 id="sdio-programozas-rpi-vel-kulon-tapegyseggel">SDIO programozás RPi-vel külön tápegységgel<a class="headerlink" href="#sdio-programozas-rpi-vel-kulon-tapegyseggel" title="Permanent link">&para;</a></h3>
+<p>Egy tipikus munkamenet az RPi-vel egy különálló tápegységen a következőképpen néz ki. Természetesen a megfelelő eszköz elérési útvonalát és az alaplap nevét kell használnod:</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 cd ~/klipper
 git pull
@@ -1502,8 +1502,8 @@ make
 sudo service klipper start
 </code></pre></div>
 
-<h3 id="sdio-programming-with-rpi-on-the-same-power-supply">SDIO Programming with RPi on the Same Power Supply<a class="headerlink" href="#sdio-programming-with-rpi-on-the-same-power-supply" title="Permanent link">&para;</a></h3>
-<p>A typical session with the RPi on the Same Power Supply looks like the following. You will, of course, need to use your proper device path and board name:</p>
+<h3 id="sdio-programozas-rpi-vel-ugyanazon-tapegyseggel">SDIO programozás RPi-vel ugyanazon tápegységgel<a class="headerlink" href="#sdio-programozas-rpi-vel-ugyanazon-tapegyseggel" title="Permanent link">&para;</a></h3>
+<p>Egy tipikus munkamenet az RPi-vel ugyanazon a tápegységen a következőképpen néz ki. Természetesen a megfelelő eszköz elérési útvonalát és az alaplap nevét kell használnod:</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 cd ~/klipper
 git pull
@@ -1519,16 +1519,16 @@ cd ~/klipper
 sudo service klipper start
 </code></pre></div>
 
-<p>In this case, since the RPi Host is being restarted, which will restart the <code>klipper</code> service, it's necessary to stop <code>klipper</code> again before doing the verification step and restart it after verification is complete.</p>
-<h3 id="sdio-to-spi-pin-mapping">SDIO to SPI Pin Mapping<a class="headerlink" href="#sdio-to-spi-pin-mapping" title="Permanent link">&para;</a></h3>
-<p>If your board's schematic uses SDIO for its SD Card, you can map the pins as described in the chart below to determine the compatible Software SPI pins to assign in the <code>board_defs.py</code> file:</p>
+<p>Ebben az esetben, mivel az RPi Gazdagép újraindul, ami újraindítja a <code>klipper</code> szolgáltatást, az ellenőrzés lépése előtt újra le kell állítani a <code>klipper</code> szolgáltatást, és az ellenőrzés befejezése után újra kell indítani.</p>
+<h3 id="sdio-bol-spi-re-labkiosztas">SDIO-ból SPI-re lábkiosztás<a class="headerlink" href="#sdio-bol-spi-re-labkiosztas" title="Permanent link">&para;</a></h3>
+<p>Ha az alaplap kapcsolási rajza SDIO-t használ az SD-kártyához, akkor az alábbi táblázatban leírtak szerint lekérheted a tűket, hogy meghatározhasd a <code>board_defs.py</code> fájlban hozzárendelendő kompatibilis szoftver SPI tűit:</p>
 <table>
 <thead>
 <tr>
-<th align="center">SD Card Pin</th>
-<th align="center">Micro SD Card Pin</th>
-<th align="center">SDIO Pin Name</th>
-<th align="center">SPI Pin Name</th>
+<th align="center">SD-kártya tű</th>
+<th align="center">Micro SD-kártya tű</th>
+<th align="center">SDIO tű neve</th>
+<th align="center">SPI tű neve</th>
 </tr>
 </thead>
 <tbody>
@@ -1594,7 +1594,7 @@ sudo service klipper start
 </tr>
 </tbody>
 </table>
-<p>* None (PU) indicates an unused pin with a pull-up resistor</p>
+<p>* None (PU) egy nem használt, felhúzási ellenállással ellátott tűt jelez.</p>
 
               
             </article>

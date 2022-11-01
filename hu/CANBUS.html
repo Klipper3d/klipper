@@ -1358,13 +1358,13 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper CAN busz támogatását írja le.</p>
 <h2 id="eszkoz-hardver">Eszköz Hardver<a class="headerlink" href="#eszkoz-hardver" title="Permanent link">&para;</a></h2>
-<p>Klipper currently supports CAN on stm32, same5x, and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
-<p>A CAN-hez való fordításhoz futtassa a <code>make menuconfig</code> parancsot, és válassza a "CAN busz" kommunikációs interfészt. Végül fordítsa le a mikrokontroller kódját, és égesse a céllapra.</p>
+<p>A Klipper jelenleg támogatja a CAN-t az stm32, same5x és rp2040 chipeken. Ezenkívül a mikrokontroller chipnek olyan lapkán kell lennie, amely rendelkezik CAN csatlakozással.</p>
+<p>A CAN-hez való fordításhoz futtassa a <code>make menuconfig</code> parancsot, és válaszd a "CAN busz" kommunikációs interfészt. Végül fordítsd le a mikrokontroller kódját, és égesd a céllapra.</p>
 <h2 id="gazdagep-hardver">Gazdagép Hardver<a class="headerlink" href="#gazdagep-hardver" title="Permanent link">&para;</a></h2>
 <p>A CAN-busz használatához szükség van egy host-adapterre. Jelenleg két elterjedt lehetőség van:</p>
 <ol>
 <li>Használj egy <a href="https://www.waveshare.com/rs485-can-hat.htm">Waveshare Raspberry Pi CAN sapkát</a> vagy annak számos klónja közül egyet.</li>
-<li>Használj USB CAN-adaptert (például <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>). Számos különböző USB-CAN adapter áll rendelkezésre - az adapter kiválasztásakor javasoljuk, hogy ellenőrizze, hogy képes-e a <a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a> futtatására. (Sajnos azt tapasztaltuk, hogy néhány USB-adapter hibás firmware-t futtat, és le van zárva, ezért vásárlás előtt ellenőrizze.)</li>
+<li>Használj USB CAN-adaptert (például <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>). Számos különböző USB-CAN adapter áll rendelkezésre - az adapter kiválasztásakor javasoljuk, hogy ellenőrizd, hogy képes-e a <a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a> futtatására. (Sajnos azt tapasztaltuk, hogy néhány USB-adapter hibás firmware-t futtat, és le van zárva, ezért vásárlás előtt ellenőrizd.)</li>
 </ol>
 <p>Az adapter használatához a gazdagép operációs rendszert is konfigurálni kell. Ez általában úgy történik, hogy létrehozunk egy új <code>/etc/network/interfaces.d/can0</code> nevű fájlt a következő tartalommal:</p>
 <div class="highlight"><pre><span></span><code>auto can0
@@ -1376,10 +1376,10 @@ iface can0 can static
 <p>Ne feledd, hogy a "Raspberry Pi CAN sapka" is megköveteli a <a href="https://www.waveshare.com/wiki/RS485_CAN_HAT">config.txt módosítását</a>.</p>
 <h2 id="az-ellenallasok-megszuntetese">Az ellenállások megszüntetése<a class="headerlink" href="#az-ellenallasok-megszuntetese" title="Permanent link">&para;</a></h2>
 <p>A CAN-buszon két 120 ohmos ellenállásnak kell lennie a CANH és CANL vezetékek között. Ideális esetben egy-egy ellenállás a busz mindkét végén található.</p>
-<p>Vedd figyelembe, hogy egyes eszközök beépített 120 ohmos ellenállással rendelkeznek (például a "Waveshare Raspberry Pi CAN sapka" egy beforrasztott ellenállással rendelkezik, amelyet nem lehet könnyen eltávolítani). Egyes eszközök egyáltalán nem tartalmaznak ellenállást. Más eszközök rendelkeznek egy mechanizmussal az ellenállás kiválasztására (általában egy "pin jumper" csatlakoztatásával). Mindenképpen ellenőrizze a CAN-buszon lévő összes eszköz kapcsolási rajzát, hogy a buszon két és csak két 120 Ohm-os ellenállás van-e.</p>
+<p>Vedd figyelembe, hogy egyes eszközök beépített 120 ohmos ellenállással rendelkeznek (például a "Waveshare Raspberry Pi CAN sapka" egy beforrasztott ellenállással rendelkezik, amelyet nem lehet könnyen eltávolítani). Egyes eszközök egyáltalán nem tartalmaznak ellenállást. Más eszközök rendelkeznek egy mechanizmussal az ellenállás kiválasztására (általában egy "pin jumper" csatlakoztatásával). Mindenképpen ellenőrizd a CAN-buszon lévő összes eszköz kapcsolási rajzát, hogy a buszon két és csak két 120 Ohm-os ellenállás van-e.</p>
 <p>Az ellenállások értékének teszteléséhez a nyomtatót áramtalaníthatja, és egy multi-méterrel ellenőrizheti a CANH és CANL vezetékek közötti ellenállást. Egy helyesen bekötött CAN-buszon ~60 ohmot kell mérnie.</p>
 <h2 id="a-canbus_uuid-keresese-uj-mikrovezerlokhoz">A canbus_uuid keresése új mikrovezérlőkhöz<a class="headerlink" href="#a-canbus_uuid-keresese-uj-mikrovezerlokhoz" title="Permanent link">&para;</a></h2>
-<p>A CAN-buszon lévő minden mikrovezérlőhöz egyedi azonosítót rendelnek a gyári chipazonosító alapján, amely minden mikrovezérlőbe kódolva van. Az egyes mikrokontrollerek eszközazonosítójának megtalálásához győződjön meg arról, hogy a hardver megfelelően van bekapcsolva és bekötve, majd futtassa le:</p>
+<p>A CAN-buszon lévő minden mikrovezérlőhöz egyedi azonosítót rendelnek a gyári chipazonosító alapján, amely minden mikrovezérlőbe kódolva van. Az egyes mikrokontrollerek eszközazonosítójának megtalálásához győződj meg arról, hogy a hardver megfelelően van bekapcsolva és bekötve, majd futtassa le:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ~/klipper/scripts/canbus_query.py can0
 </code></pre></div>
 

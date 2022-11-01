@@ -2046,8 +2046,8 @@
 <p>A következő információk a <code>print_stats</code> objektumban érhetők el (ez az objektum automatikusan elérhető, ha a <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> config szakasz definiálva van):</p>
 <ul>
 <li><code>filename</code>, <code>total_duration</code>, <code>print_duration</code>, <code>filament_used</code>, <code>state</code>, <code>message</code>: Becsült információ az aktuális nyomtatásról, ha egy virtual_sdcard nyomtatás aktív.</li>
-<li><code>info.total_layer</code>: The total layer value of the last <code>SET_PRINT_STATS_INFO TOTAL_LAYER=&lt;value&gt;</code> G-Code command.</li>
-<li><code>info.current_layer</code>: The current layer value of the last <code>SET_PRINT_STATS_INFO CURRENT_LAYER=&lt;value&gt;</code> G-Code command.</li>
+<li><code>info.total_layer</code>: Az utolsó <code>SET_PRINT_STATS_INFO TOTAL_LAYER=&lt;value&gt;</code> G-kódú parancs.</li>
+<li><code>info.current_layer</code>: Az aktuális réteg értéke az utolsó <code>SET_PRINT_STATS_INFO CURRENT_LAYER=&lt;value&gt;</code> G-kódú parancs.</li>
 </ul>
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#probe">szonda</a> objektumban érhetők el (ez az objektum akkor is elérhető, ha egy <a href="Config_Reference.html#bltouch">bltouch</a> konfigurációs szakasz van definiálva):</p>
@@ -2136,14 +2136,14 @@
 <li><code>state_message</code>: Egy ember által olvasható karakterlánc, amely további kontextust ad az aktuális Klipper állapotról.</li>
 </ul>
 <h2 id="z_thermal_adjust">z_thermal_adjust<a class="headerlink" href="#z_thermal_adjust" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>z_thermal_adjust</code> object (this object is available if <a href="Config_Reference.html#z_thermal_adjust">z_thermal_adjust</a> is defined).</p>
+<p>A következő információk a <code>z_thermal_adjust</code> parancsal érhetők el (ez a parancs akkor érhető el, ha a <a href="Config_Reference.html#z_thermal_adjust">z_thermal_adjust</a> definiálva van).</p>
 <ul>
-<li><code>enabled</code>: Returns True if adjustment is enabled.</li>
-<li><code>temperature</code>: Current (smoothed) temperature of the defined sensor. [degC]</li>
-<li><code>measured_min_temp</code>: Minimum measured temperature. [degC]</li>
-<li><code>measured_max_temp</code>: Maximum measured temperature. [degC]</li>
-<li><code>current_z_adjust</code>: Last computed Z adjustment [mm].</li>
-<li><code>z_adjust_ref_temperature</code>: Current reference temperature used for calculation of Z <code>current_z_adjust</code> [degC].</li>
+<li><code>enabled</code>: True értéket ad vissza, ha a beállítás engedélyezve van.</li>
+<li><code>temperature</code>: A meghatározott érzékelő aktuális (simított) hőmérséklete. [°C]</li>
+<li><code>measured_min_temp</code>: Minimális mért hőmérséklet. [°C]</li>
+<li><code>measured_max_temp</code>: Maximális mért hőmérséklet. [°C]</li>
+<li><code>current_z_adjust</code>: Utolsó számított Z-beállítás [mm].</li>
+<li><code>z_adjust_ref_temperature</code>: A Z kiszámításához használt aktuális referencia-hőmérséklet <code>current_z_adjust</code> [°C].</li>
 </ul>
 <h2 id="z_tilt">z_tilt<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>z_tilt</code> objektumban érhetők el (ez az objektum akkor érhető el, ha a z_tilt definiálva van):</p>
