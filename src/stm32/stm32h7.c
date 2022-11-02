@@ -148,6 +148,9 @@ clock_setup(void)
             ;
     }
 
+    SCB_EnableICache();
+    SCB_EnableDCache();
+
     // Set flash latency according to clock frequency (pg.159)
     uint32_t flash_acr_latency = (CONFIG_CLOCK_FREQ > 450000000) ?
         FLASH_ACR_LATENCY_4WS : FLASH_ACR_LATENCY_2WS;
