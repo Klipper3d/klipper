@@ -48,19 +48,19 @@ static const uint8_t adc_gpio[] = {
     GPIO('A', 7),   // Chan 7
     GPIO('B', 0),   // Chan 8
     GPIO('B', 1),   // Chan 9
-    GPIO('C', 0),   // Chan 10
-    GPIO('C', 1),   // Chan 11
+    GPIO('C', 0),   // Chan 10  // TBed  on TriGorilla
+    GPIO('C', 1),   // Chan 11  // THead on TriGorilla
     GPIO('C', 2),   // Chan 12
     GPIO('C', 3),   // Chan 13
-    GPIO('C', 4),   // Chan 14  // TBed
-    GPIO('C', 5),   // Chan 15  // THead
+    GPIO('C', 4),   // Chan 14  // TBed  on aquilla
+    GPIO('C', 5),   // Chan 15  // THead on aquilla
 };
 
 
 struct gpio_adc
 gpio_adc_setup(uint32_t gpio)
 {
-    // Find pin in adc_pins table to validate
+    // validate pin in adc_pins table
     int chan;
     for (chan=0; ; chan++)
     {
@@ -80,7 +80,7 @@ gpio_adc_setup(uint32_t gpio)
     uint8_t sampleTime[ADC1_CH_COUNT] = { TIMEOUT_VAL };   // all channels
     stc_adc_ch_cfg_t stcAdcChan;
     stcAdcChan.u32Channel   = 1 << chan;
-    stcAdcChan.u8Sequence   = ADC_SEQ_A;    // all conversions are done here
+    stcAdcChan.u8Sequence   = ADC_SEQ_A;    // all conversions are in SEQ A
     stcAdcChan.pu8SampTime  = sampleTime;
     ADC_AddAdcChannel(M4_ADC1, &stcAdcChan);
 
@@ -138,16 +138,17 @@ gpio_adc_cancel_sample(struct gpio_adc g)
 void
 adc_init(void)
 {
-    // The PCLK4 is 84MHz (168MHz / 2 from the bootloader setup)
-    //     PCLK2 (ADC clock) is 168/4 = 42MHz
+    //  PCLK2 (ADC clock) is 'divide by 4', Max ADC clock is 60MHz
     stc_adc_init_t stcAdcInit = {0};
     stcAdcInit.enResolution = AdcResolution;  // see define above
     stcAdcInit.enDataAlign  = AdcDataAlign_Right;
     stcAdcInit.enAutoClear  = AdcClren_Disable;
     stcAdcInit.enScanMode   = AdcMode_SAOnce;
 
+    // power-on ADC
     PWC_Fcg3PeriphClockCmd(PWC_FCG3_PERIPH_ADC1, Enable);
 
+    // only using ADC1
     ADC_Init(M4_ADC1, &stcAdcInit);
 }
 

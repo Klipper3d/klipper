@@ -8,6 +8,9 @@
 #include "sched.h"
 #include "hc32f460_gpio.h"
 
+
+#if CONFIG_LED_TASK
+
 // CPU LED @ PA3    - use for debug or task
 #define  CPULED_PORT    (PortA)
 #define  CPULED_PIN     (Pin03)
@@ -29,7 +32,7 @@ led_INIT(void)
     PORT_Init(CPULED_PORT, CPULED_PIN, &stcPortInit);
 }
 DECL_INIT(led_INIT);
-
+#endif
 
 /****************************************************************
  * Startup
