@@ -16,11 +16,28 @@ config BOARD_DIRECTORY
     string
     default "hc32f460"
 
+choice   # different vendors have different bootloaders and circuitry
+    prompt "Mainboard hint"
+    config ANYCUBIC_KOBRA
+        bool "Anycubic Trigorilla_Pro_A_V1.0.4"
+    config VOXELAB_AQUILA_X1
+        bool "FFP0234_Aquila_X1_Main_Board_V1.0.0"
+    config VOXELAB_AQUILA
+        bool "FFP0173_Aquila_Main_Board_V1.0.3"
+endchoice
+
 
 config LCD_DRIVE_INVERT
+    depends on VOXELAB_AQUILA_X1
     bool
-    default y if HC32F460_FLASH_START_0x8000
-    default n
+    default y
+
+
+config LED_TASK 
+    depends on VOXELAB_AQUILA_X1 || VOXELAB_AQUILA
+    prompt "Use LED to show task activity"
+    bool 
+    default y
 
 ######################################################################
 # Communication interface
@@ -28,40 +45,37 @@ config LCD_DRIVE_INVERT
 
 choice
     prompt "Communication interface"
+    config HC32F460_SERIAL_PA3_PA2
+        bool "Serial (PA3 & PA2) - Anycube"
+        select SERIAL
     config HC32F460_SERIAL_PA15_PA9
-        bool "Serial (PA15/PA09 connected to CH340)"
+        bool "Serial (PA15 & PA09) - Voxelab"
         select SERIAL
     config HC32F460_SERIAL_PC0_PC1
-        bool "Serial (PC0/PC1 connected to LCD pins 7 and 8)"
+        depends on VOXELAB_AQUILA
+        bool "Serial (PC0 & PC1) - on LCD connector"
         select SERIAL
 endchoice
 
 
 ######################################################################
 # Bootloader
+# bootloader moves code and then VTOR.RESET points here:
 ######################################################################
-choice
-    prompt "Bootloader offset"
-    config HC32F460_FLASH_START_0xC000
-        bool "48KiB bootloader (Voxelab FFP0173 V1.0.3)"
-    config HC32F460_FLASH_START_0x8000
-        bool "32KiB bootloader (Voxelab FFP0234 V1.0.0)"
-        select LCD_DRIVE_INVERT
-endchoice
-
 config FLASH_SIZE
     hex
     default 0x40000
 
 config FLASH_START
     hex
-    default 0x8000 if HC32F460_FLASH_START_0x8000
-    default 0xC000
+    default 0x8000 if ANYCUBIC_KOBRA || VOXELAB_AQUILA_X1
+    default 0xC000 if VOXELAB_AQUILA
 
 config RAM_SIZE
     hex
     default 0x8000
 
+# use the fast RAM in the HC32F460
 config RAM_START
     hex
     default 0x1fff8000
@@ -70,9 +84,12 @@ config STACK_SIZE
     int
     default 1024
 
+
 config CLOCK_FREQ
     int
-    default 168000000
+    default 200000000 if ANYCUBIC_KOBRA
+    default 168000000 if VOXELAB_AQUILA || VOXELAB_AQUILA_X1
+
 
 config MCU
     string
