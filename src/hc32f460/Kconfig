@@ -33,10 +33,10 @@ config LCD_DRIVE_INVERT
     default y
 
 
-config LED_TASK 
+config LED_TASK
     depends on VOXELAB_AQUILA_X1 || VOXELAB_AQUILA
     prompt "Use LED to show task activity"
-    bool 
+    bool
     default y
 
 ######################################################################
