@@ -1520,11 +1520,11 @@
 
 
 <h1 id="targyasztal-halo">Tárgyasztal háló<a class="headerlink" href="#targyasztal-halo" title="Permanent link">&para;</a></h1>
-<p>A tárgyasztal háló modul használható a tárgyasztal felület egyenetlenségeinek kiegyenlítésére, hogy jobb első réteget érj el az egész tárgyasztalon. Meg kell jegyezni, hogy a szoftveralapú korrekció nem fog tökéletes eredményt elérni, csak megközelítő értékekkel tudatja a tárgyasztal alakját. A tárgyasztal háló szintén nem tudja kompenzálni a mechanikai és elektromos problémákat. Ha egy tengely ferde vagy egy szonda nem pontos, akkor a bed_mesh modul nem fog pontos eredményeket kapni a szintezésről.</p>
+<p>A tárgyasztal háló modul használható a tárgyasztal felület egyenetlenségeinek kiegyenlítésére, hogy jobb első réteget kapj az egész tárgyasztalon. Meg kell jegyezni, hogy a szoftveralapú korrekció nem fog tökéletes eredményt elérni, csak megközelítő értékekkel tudatja a tárgyasztal alakját. A tárgyasztal háló szintén nem tudja kompenzálni a mechanikai és elektromos problémákat. Ha egy tengely ferde vagy egy szonda nem pontos, akkor a bed_mesh modul nem fog pontos eredményeket kapni a szintezésről.</p>
 <p>A hálókalibrálás előtt meg kell győződnie arról, hogy a szonda Z-eltolása kalibrálva van. Ha végállást használ a Z-kezdőponthoz, akkor azt is kalibrálni kell. További információkért lásd a <a href="Probe_Calibrate.html">Szonda Kalibrálás</a> és a Z_ENDSTOP_CALIBRATE című fejezetben <a href="Manual_Level.html">Kézi Szintezést</a>.</p>
 <h2 id="alapveto-konfiguracio">Alapvető konfiguráció<a class="headerlink" href="#alapveto-konfiguracio" title="Permanent link">&para;</a></h2>
 <h3 id="teglalap-alaku-targyasztalok">Téglalap alakú tárgyasztalok<a class="headerlink" href="#teglalap-alaku-targyasztalok" title="Permanent link">&para;</a></h3>
-<p>Ez a példa egy 250 mm x 220 mm-es téglalap alakú tárgyasztalu nyomtatót és egy 24 mm-es x-eltolású és 5 mm-es y-eltolású szondát mutat.</p>
+<p>Ez a példa egy 250 mm x 220 mm-es téglalap alakú tárgyasztalú nyomtatót és egy 24 mm-es x-eltolású és 5 mm-es y-eltolású szondát mutat.</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -1538,7 +1538,7 @@ probe_count: 5, 3
 <li><code>horizontal_move_z: 5</code> <em>Alapértelmezett érték: 5</em> A Z koordináta, amelyre a szonda a mérőpontok közötti utazás előtt emelkedik.</li>
 <li><code>mesh_min: 35, 6</code> <em>Ajánlott</em> Az első, az origóhoz legközelebbi koordináta. Ez a koordináta a szonda helyéhez képest relatív.</li>
 <li><code>mesh_max: 240, 198</code> <em>Ajánlott</em> Az origótól legtávolabb eső mért koordináta. Ez nem feltétlenül az utolsó mért pont, mivel a mérés cikcakkos módon történik. A <code>mesh_min</code> koordinátához hasonlóan ez a koordináta is a szonda helyéhez van viszonyítva.</li>
-<li><code>probe_count: 5, 3</code> <em>Alapértelmezett érték: 3,3</em> Az egyes tengelyeken mérendő pontok száma, X, Y egész értékben megadva. Ebben a példában az X tengely mentén 5 pont lesz mérve, az Y tengely mentén 3 pont, összesen 15 mért pont. Vedd figyelembe, hogy ha négyzetrácsot szeretne, például 3x3, akkor ezt egyetlen egész számértékként is megadhatja, amelyet mindkét tengelyre használ, azaz <code>probe_count: 3</code>. Vedd figyelembe, hogy egy hálóhoz mindkét tengely mentén legalább 3 darab mérési számra van szükség.</li>
+<li><code>probe_count: 5, 3</code> <em>Alapértelmezett érték: 3,3</em> Az egyes tengelyeken mérendő pontok száma, X, Y egész értékben megadva. Ebben a példában az X tengely mentén 5 pont lesz mérve, az Y tengely mentén 3 pont, összesen 15 mért pont. Vedd figyelembe, hogy ha négyzetrácsot szeretnél, például 3x3, akkor ezt egyetlen egész számértékként is megadhatod, amelyet mindkét tengelyre használ, azaz <code>probe_count: 3</code>. Vedd figyelembe, hogy egy hálóhoz mindkét tengely mentén legalább 3 darab mérési számra van szükség.</li>
 </ul>
 <p>Az alábbi ábra azt mutatja, hogy a <code>mesh_min</code>, <code>mesh_max</code> és <code>probe_count</code> opciók hogyan használhatók a mérőpontok létrehozására. A nyilak jelzik a mérési eljárás irányát, kezdve a <code>mesh_min</code> ponttól. Hivatkozásképpen, amikor a szonda a <code>mesh_min</code> pontnál van, a fúvóka a (11, 1) pontnál lesz, és amikor a szonda a <code>mesh_max</code> pontnál van, a fúvóka a (206, 193) pontnál lesz.</p>
 <p><img alt="bedmesh_rect_basic" src="img/bedmesh_rect_basic.svg" /></p>
@@ -1554,7 +1554,7 @@ round_probe_count: 5
 
 <ul>
 <li><code>mesh_radius: 75</code> <em>Required</em> A vizsgált háló sugara mm-ben, a <code>mesh_origin</code>-hez képest. Vedd figyelembe, hogy a szonda eltolásai korlátozzák a háló sugarának méretét. Ebben a példában a 76-nál nagyobb sugár a szerszámot a nyomtató hatótávolságán kívülre helyezné.</li>
-<li><code>mesh_origin: 0, 0</code> <em>Alapértelmezett érték: 0, 0</em> A háló középpontja. Ez a koordináta a szonda helyéhez képest relatív. Bár az alapértelmezett érték 0, 0 hasznos lehet az origó beállítása, ha a tárgyasztal nagyobb részét szeretné megmérni. Lásd az alábbi ábrát.</li>
+<li><code>mesh_origin: 0, 0</code> <em>Alapértelmezett érték: 0, 0</em> A háló középpontja. Ez a koordináta a szonda helyéhez képest relatív. Bár az alapértelmezett érték 0, 0 hasznos lehet az origó beállítása, ha a tárgyasztal nagyobb részét szeretnéd megmérni. Lásd az alábbi ábrát.</li>
 <li><code>round_probe_count: 5</code> <em>Alapértelmezett érték: 5</em> Ez egy egész szám, amely meghatározza az X és Y tengely mentén mért pontok maximális számát. A "maximális" alatt a háló origója mentén mért pontok számát értjük. Ennek az értéknek páratlan számnak kell lennie, mivel a háló középpontját kell megvizsgálni.</li>
 </ul>
 <p>Az alábbi ábra mutatja, hogyan generálódnak a mért pontok. Mint látható, a <code>mesh_origin</code> (-10, 0) értékre állítása lehetővé teszi, hogy nagyobb, 85-ös hálósugarat adjunk meg.</p>

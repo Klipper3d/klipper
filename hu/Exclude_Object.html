@@ -1343,7 +1343,7 @@
 <p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
 section</a> (also see the <a href="G-Codes.html#exclude-object">command
 reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
-<p>Más 3D nyomtatók firmware opcióitól eltérően a Klippert futtató nyomtató komponenscsomagot használ, és a felhasználók számos lehetőség közül választhatnak. Ezért az egységes felhasználói élmény biztosítása érdekében az <code>[exclude_object]</code> modul egyfajta szerződést vagy API-t hoz létre. A szerződés tartalmazza a gcode fájl tartalmát, a modul belső állapotának vezérlését, és azt, hogy ez az állapot hogyan kerül a kliensek rendelkezésre bocsátásra.</p>
+<p>Más 3D nyomtatók firmware opcióitól eltérően a Klippert futtató nyomtató komponenscsomagot használ, és a felhasználók számos lehetőség közül választhatnak. Ezért az egységes felhasználói élmény biztosítása érdekében az <code>[exclude_object]</code> modul egyfajta szerződést vagy API-t hoz létre. A szerződés tartalmazza a G-kód fájl tartalmát, a modul belső állapotának vezérlését és azt, hogy ez az állapot hogyan kerül a kliensek rendelkezésre bocsátásra.</p>
 <h2 id="munkafolyamat-attekintese">Munkafolyamat áttekintése<a class="headerlink" href="#munkafolyamat-attekintese" title="Permanent link">&para;</a></h2>
 <p>Egy tipikus munkafolyamat egy fájl nyomtatásához így nézhet ki:</p>
 <ol>

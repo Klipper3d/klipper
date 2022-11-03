@@ -1510,7 +1510,7 @@
 <p>Az ADXL345 beszerzésekor vedd figyelembe, hogy számos különböző NYÁK lapkakialakítás és különböző klónok léteznek. Győződj meg róla, hogy a kártya támogatja az SPI módot (kis számú kártya úgy tűnik, hogy szorosan konfigurálva van az I2C-re az SDO GND-re húzásával), és ha 5V-os nyomtató MCU-hoz csatlakozik ellenőrizd,hogy rendelkezik feszültségszabályozóval és szintválasztóval.</p>
 <h2 id="telepitesi-utasitasok">Telepítési utasítások<a class="headerlink" href="#telepitesi-utasitasok" title="Permanent link">&para;</a></h2>
 <h3 id="vezetekek">Vezetékek<a class="headerlink" href="#vezetekek" title="Permanent link">&para;</a></h3>
-<p>Az ADXL345-öt SPI-n keresztül kell csatlakoztatnia a Raspberry Pi-hez. Vedd figyelembe, hogy az ADXL345 dokumentációja által javasolt I2C kapcsolatnak túl alacsony az adatforgalmi képessége, és <strong>nem fog működni</strong>. Az ajánlott kapcsolási séma:</p>
+<p>Az ADXL345-öt SPI-n keresztül kell csatlakoztatnod a Raspberry Pi-hez. Vedd figyelembe, hogy az ADXL345 dokumentációja által javasolt I2C kapcsolatnak túl alacsony az adatforgalmi képessége, és <strong>nem fog működni</strong>. Az ajánlott kapcsolási séma:</p>
 <table>
 <thead>
 <tr>
@@ -1735,7 +1735,7 @@ Az ajánlott alakító 2hump_ei @ 45,2 Hz.
 </code></pre></div>
 
 <p>Vedd figyelembe, hogy a bejelentett <code>simítás</code> értékek absztrakt vetített értékek. Ezek az értékek különböző konfigurációk összehasonlítására használhatók: minél magasabb az érték, annál nagyobb simítást hoz létre a formázó. Ezek a simítási értékek azonban nem jelentik a simítás valódi mértékét, mivel a tényleges simítás a <a href="#a-max_accel-kivalasztasa"><code>max_accel</code></a> és <code>square_corner_velocity</code> paraméterektől függ. Ezért érdemes néhány tesztnyomatot nyomtatni, hogy lássuk, pontosan mekkora simítást hoz létre a kiválasztott konfiguráció.</p>
-<p>A fenti példában a javasolt alakító paraméterek nem rosszak, de mi van akkor, ha az X tengelyen kevesebb simítást szeretne elérni? Megpróbálhatod korlátozni a maximális alakító simítást a következő paranccsal:</p>
+<p>A fenti példában a javasolt alakító paraméterek nem rosszak, de mi van akkor, ha az X tengelyen kevesebb simítást szeretnél elérni? Megpróbálhatod korlátozni a maximális alakító simítást a következő paranccsal:</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
 </code></pre></div>
 
@@ -1813,7 +1813,7 @@ Ajánlott shaper_type_y = mzv, shaper_freq_y = 36,8 Hz
 </code></pre></div>
 
 <p>Ha egyetért a javasolt paraméterekkel, akkor a <code>SAVE_CONFIG</code> parancsot most végre lehet hajtani a paraméterek mentéséhez és a Klipper újraindításához. Vedd figyelembe, hogy ez nem frissíti a <code>max_accel</code> értéket a <code>[printer]</code> szakaszban. Ezt manuálisan kell frissítenie a <a href="#a-max_accel-kivalasztasa">max_accel kiválasztása</a> szakaszban leírtak szerint.</p>
-<p>Ha a nyomtatója Y tengelyén van a tárgyasztal akkor megadhatja, hogy melyik tengelyt kívánja tesztelni, így a tesztek között megváltoztathatja a gyorsulásmérő rögzítési pontját (alapértelmezés szerint a teszt mindkét tengelyen végrehajtásra kerül):</p>
+<p>Ha a nyomtatója Y tengelyén van a tárgyasztal akkor megadhatod, hogy melyik tengelyt kívánod tesztelni, így a tesztek között megváltoztathatja a gyorsulásmérő rögzítési pontját (alapértelmezés szerint a teszt mindkét tengelyen végrehajtásra kerül):</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Y
 </code></pre></div>
 

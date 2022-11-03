@@ -1347,11 +1347,11 @@
 <p>Ez a dokumentum a Klipperben található "automatikus z szonda" X, Y és Z eltolásának kalibrálási módszerét írja le. Ez azon felhasználók számára hasznos, akiknek van egy <code>[probe]</code> vagy <code>[bltouch]</code> szakasz a konfigurációs fájljukban.</p>
 <h2 id="a-szonda-x-es-y-eltolasanak-kalibralasa">A szonda X és Y eltolásának kalibrálása<a class="headerlink" href="#a-szonda-x-es-y-eltolasanak-kalibralasa" title="Permanent link">&para;</a></h2>
 <p>Az X és Y eltolás kalibrálásához navigálj az OctoPrint "Control" fülre, állítsd be a nyomtatót, majd az OctoPrint léptető gombjaival mozgasd a fejet a tárgyasztal közepéhez közeli pozícióba.</p>
-<p>Helyezzen egy darab kék festőszalagot (vagy hasonlót) a tárgyasztalra a szonda alá. Navigálj az OctoPrint "Terminal" fülre, és adj ki egy PROBE parancsot:</p>
+<p>Helyezz egy darab kék festőszalagot (vagy hasonlót) a tárgyasztalra a szonda alá. Navigálj az OctoPrint "Terminal" fülre, és adj ki egy PROBE parancsot:</p>
 <div class="highlight"><pre><span></span><code>PROBE
 </code></pre></div>
 
-<p>Helyezzen egy jelet a szalagra közvetlenül a szonda alatt (vagy hasonló módszerrel jegyezze fel a helyet a tárgyasztalon).</p>
+<p>Tegyél egy jelet a szalagra közvetlenül a szonda alatt (vagy hasonló módszerrel jelöld fel a helyet a tárgyasztalon).</p>
 <p>Adj ki egy <code>GET_POSITION</code> parancsot, és rögzítsd a parancs által jelentett nyomtatófej X-Y pozícióját. Például, ha a következőket látjuk:</p>
 <div class="highlight"><pre><span></span><code>Recv: // toolhead: X:46.500000 Y:27.000000 Z:15.000000 E:0.000000
 </code></pre></div>

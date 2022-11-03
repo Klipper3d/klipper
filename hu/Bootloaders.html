@@ -1775,7 +1775,7 @@ stm32flash -w generic_boot20_pc13.bin -v -g 0 /dev/ttyAMA0
 <div class="highlight"><pre><span></span><code>forrás [find target/stm32f1x.cfg]
 </code></pre></div>
 
-<p>Ha szeretné, a következő paranccsal készíthet biztonsági másolatot az aktuális flash memóriáról. Vedd figyelembe, hogy ez némi időt vehet igénybe:</p>
+<p>Ha szeretnéd, a következő paranccsal készíthet biztonsági másolatot az aktuális flash memóriáról. Vedd figyelembe, hogy ez némi időt vehet igénybe:</p>
 <div class="highlight"><pre><span></span><code>flash read_bank 0 btt_skr_mini_e3_backup.bin
 </code></pre></div>
 
@@ -1908,9 +1908,9 @@ reset halt
 </code></pre></div>
 
 <h3 id="a-raspberry-pi-es-a-celchip-osszekotese">A Raspberry Pi és a célchip összekötése<a class="headerlink" href="#a-raspberry-pi-es-a-celchip-osszekotese" title="Permanent link">&para;</a></h3>
-<p>Kapcsolja ki mind a Raspberry Pi-t, mind a célchipet a kábelezés előtt! Ellenőrizd, hogy a célchip 3,3V-ot használ-e a Raspberry Pi csatlakoztatása előtt!</p>
+<p>Kapcsold ki mind a Raspberry Pi-t, mind a célchipet a kábelezés előtt! Ellenőrizd, hogy a célchip 3,3V-ot használ-e a Raspberry Pi csatlakoztatása előtt!</p>
 <p>Csatlakoztassa a célchip GND, SWDCLK, SWDIO és RST értékeit a Raspberry Pi GND, GPIO25, GPIO24 és GPIO18 értékéhez.</p>
-<p>Ezután kapcsolja be a Raspberry Pi-t, és táplálja a célchipet.</p>
+<p>Ezután kapcsold be a Raspberry Pi-t, és táplálja a célchipet.</p>
 <h3 id="openocd-futtatasa">OpenOCD futtatása<a class="headerlink" href="#openocd-futtatasa" title="Permanent link">&para;</a></h3>
 <p>Futtassa az OpenOCD-t:</p>
 <div class="highlight"><pre><span></span><code>cd ~/openocd/

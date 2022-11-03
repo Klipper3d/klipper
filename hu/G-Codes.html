@@ -4363,7 +4363,7 @@
 <li>Move (G0 or G1): <code>G1 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;]</code></li>
 <li>Tartózkodás: <code>G4 P&lt;milliszekundum&gt;</code></li>
 <li>Ugrás a forrásra: <code>G28 [X] [Y] [Z]</code></li>
-<li>Kapcsolja ki a motorokat: <code>M18</code> vagy <code>M84</code></li>
+<li>Kapcsold ki a motorokat: <code>M18</code> vagy <code>M84</code></li>
 <li>Várja meg, amíg az aktuális mozdulat befejeződik: <code>M400</code></li>
 <li>Használj abszolút/relatív távolságokat az extrudáláshoz: <code>M82</code>, <code>M83</code></li>
 <li>Abszolút/relatív koordináták használata: <code>G90</code>, <code>G91</code></li>
@@ -4579,9 +4579,9 @@
 <h4 id="reset_filament_width_sensor">RESET_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#reset_filament_width_sensor" title="Permanent link">&para;</a></h4>
 <p><code>RESET_FILAMENT_WIDTH_SENSOR</code>: Törli az összes érzékelő leolvasását. Hasznos nyomtatószál csere után.</p>
 <h4 id="disable_filament_width_sensor">DISABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#disable_filament_width_sensor" title="Permanent link">&para;</a></h4>
-<p><code>DISABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsolja ki a szálszélesség érzékelőt, és ne használd áramlásszabályozáshoz.</p>
+<p><code>DISABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsold ki a szálszélesség érzékelőt, és ne használd áramlásszabályozáshoz.</p>
 <h4 id="enable_filament_width_sensor">ENABLE_FILAMENT_WIDTH_SENSOR<a class="headerlink" href="#enable_filament_width_sensor" title="Permanent link">&para;</a></h4>
-<p><code>ENABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsolja be a szálszélesség érzékelőt, és kezd el használni az áramlásszabályozáshoz.</p>
+<p><code>ENABLE_FILAMENT_WIDTH_SENSOR</code>: Kapcsold be a szálszélesség érzékelőt, és kezd el használni az áramlásszabályozáshoz.</p>
 <h4 id="query_raw_filament_width">QUERY_RAW_FILAMENT_WIDTH<a class="headerlink" href="#query_raw_filament_width" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_RAW_FILAMENT_WIDTH</code>: Visszaadja az ADC-csatorna aktuális leolvasását és a RAW-érzékelő értékét a kalibrációs pontokhoz.</p>
 <h4 id="enable_filament_width_log">ENABLE_FILAMENT_WIDTH_LOG<a class="headerlink" href="#enable_filament_width_log" title="Permanent link">&para;</a></h4>
@@ -4591,9 +4591,9 @@
 <h3 id="heaters">[heaters]<a class="headerlink" href="#heaters" title="Permanent link">&para;</a></h3>
 <p>A fűtőmodul automatikusan betöltődik, ha a konfigurációs fájlban van fűtőelem definiálva.</p>
 <h4 id="turn_off_heaters">TURN_OFF_HEATERS<a class="headerlink" href="#turn_off_heaters" title="Permanent link">&para;</a></h4>
-<p><code>TURN_OFF_HEATERS</code>: Kapcsolja ki az összes fűtőberendezést.</p>
+<p><code>TURN_OFF_HEATERS</code>: Kapcsold ki az összes fűtőberendezést.</p>
 <h4 id="temperature_wait">TEMPERATURE_WAIT<a class="headerlink" href="#temperature_wait" title="Permanent link">&para;</a></h4>
-<p><code>TEMPERATURE_WAIT SENSOR=&lt;config_name&gt; [MINIMUM=&lt;target&gt;] [MAXIMUM=&lt;target&gt;]</code>: Várjon, amíg az adott hőmérséklet-érzékelő a megadott MINIMUM értéken vagy a megadott MINIMUM érték felett és/vagy a megadott MAXIMUM értéken vagy az alatt van.</p>
+<p><code>TEMPERATURE_WAIT SENSOR=&lt;config_name&gt; [MINIMUM=&lt;target&gt;] [MAXIMUM=&lt;target&gt;]</code>: Várj, amíg az adott hőmérséklet-érzékelő a megadott MINIMUM értéken vagy a megadott MINIMUM érték felett és/vagy a megadott MAXIMUM értéken vagy az alatt van.</p>
 <h4 id="set_heater_temperature">SET_HEATER_TEMPERATURE<a class="headerlink" href="#set_heater_temperature" title="Permanent link">&para;</a></h4>
 <p><code>SET_HEATER_TEMPERATURE HEATER=&lt;heater_name&gt; [TARGET=&lt;target_temperature&gt;]</code>: A fűtőtest célhőmérsékletének beállítása. Ha nincs megadva célhőmérséklet, akkor az érték 0.</p>
 <h3 id="idle_timeout">[idle_timeout]<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h3>

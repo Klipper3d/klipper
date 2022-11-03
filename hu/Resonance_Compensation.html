@@ -1595,7 +1595,7 @@ shaper_freq_y: ...  # a tesztmodell Y jelének frekvenciája
 <p>Nyomtasd ki a gyűrődési tesztmodellt az alábbiak szerint:</p>
 <ol>
 <li>Indítsa újra a firmware-t: <code>RESTART</code></li>
-<li>Készüljön fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Készülj fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
 <li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Add ki a parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Add ki a parancsot: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
@@ -1633,7 +1633,7 @@ shaper_type: mzv
 <p>Megjegyzendő, hogy a rezonanciafrekvenciák mérésének pontossága a gyűrődési tesztmodell segítségével a legtöbb célra elegendő, így további hangolás nem javasolt. Ha mégis meg akarja próbálni kétszeresen ellenőrizni az eredményeit (például ha még mindig lát némi gyűrődést, miután kinyomtatott egy tesztmodellt egy tetszőleges bemeneti alakítóval, ugyanazokkal a frekvenciákkal, mint amiket korábban mért), akkor kövesse az ebben a szakaszban leírt lépéseket. Vedd figyelembe, hogy ha az [input_shaper] engedélyezése után különböző frekvenciákon lát gyűrődést, ez a szakasz nem fog segíteni.</p>
 <p>Feltételezve, hogy felszeletelte a gyűrődési modellt a javasolt paraméterekkel, hajtsd végre a következő lépéseket az X és Y tengelyek mindegyikén:</p>
 <ol>
-<li>Készüljön fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Készülj fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
 <li>Győződj meg róla, hogy a Pressure Advance ki van kapcsolva: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Add ki a parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>A meglévő gyűrődési tesztmodellből a kiválasztott bemeneti alakítóval válaszd ki azt a gyorsulást, amely kellően jól mutatja a gyűrődést, és állítsd be a következővel: <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
