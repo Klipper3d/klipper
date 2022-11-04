@@ -468,6 +468,13 @@ on a hybrid_corexy or hybrid_corexz robot
 - `active_carriage`: The current active carriage.
 Possible values are: "CARRIAGE_0", "CARRIAGE_1"
 
+## virtual_pins
+
+The following information is available in the
+[virtual_pins](Config_Reference.md#virtual_pins) object:
+- `pins`: Returns a dictionary containing the pin name and the value.
+  Additional fields may be available depending on the type of pin.
+
 ## virtual_sdcard
 
 The following information is available in the

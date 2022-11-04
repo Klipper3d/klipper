@@ -1562,6 +1562,13 @@ Marlin/RepRapFirmware compatible M486 G-Code macro.
 [exclude_object]
 ```
 
+### [virtual_pins]
+
+Enables support for virtual pins, unseful for testing purposes.
+
+See the [command reference](G-Codes.md#virtual_pins) for additional
+information.
+
 ## Resonance compensation
 
 ### [input_shaper]

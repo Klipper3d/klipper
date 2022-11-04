@@ -278,3 +278,15 @@ using gtkwave with:
 ```
 gtkwave avrsim.vcd
 ```
+
+### Using virtual-pins
+
+The AVR atmega644p has a total of 40 pins, but only 30 of those can actually be
+used in Klipper (with 8 ADC capable).
+
+If you need more pins, you can use add a
+[virtual_pins config section](Config_Reference.md#virtual_pins) and start using
+`virtual_pin:<name>` as the pin name.
+
+The virtual pins can be modified at run-time using the
+[SET_VIRTUAL_PIN command](G-Codes.md#set_virtual_pin).

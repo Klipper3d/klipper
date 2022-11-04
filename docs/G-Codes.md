@@ -1270,6 +1270,16 @@ three possible combinations of options:
   You can simply count bands or read tuning tower labels to determine
   the optimum value.
 
+### [virtual_pins]
+
+The following command is available when a
+[virtual_pins config section](Config_Reference.md#virtual_pins) is
+enabled.
+
+#### SET_VIRTUAL_PIN
+`SET_VIRTUAL_PIN PIN=<virtual_pin_name> VALUE=<value>`: This will
+alter the value of the specified virtual pin.
+
 ### [virtual_sdcard]
 
 Klipper supports the following standard G-Code commands if the
