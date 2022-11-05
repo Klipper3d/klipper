@@ -863,6 +863,11 @@ WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
 be created with a log of all temperature samples taken during the
 test.
 
+#### SET_HEATER_PID
+`SET_HEATER_PID HEATER=<config_name> KP=<kp> KI=<ki> KD=<kd>`: Will
+allow one to manually change PID parameters of heaters without a 
+reload of the firmware.
+
 ### [pause_resume]
 
 The following commands are available when the

@@ -74,6 +74,13 @@ class Heater:
             self.cmd_SET_HEATER_TEMPERATURE,
             desc=self.cmd_SET_HEATER_TEMPERATURE_help,
         )
+        gcode.register_mux_command(
+            "SET_HEATER_PID",
+            "HEATER",
+            self.name,
+            self.cmd_SET_HEATER_PID,
+            desc=self.cmd_SET_HEATER_PID_help,
+        )
 
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.0:
@@ -179,6 +186,21 @@ class Heater:
         temp = gcmd.get_float("TARGET", 0.0)
         pheaters = self.printer.lookup_object("heaters")
         pheaters.set_temperature(self, temp)
+
+    cmd_SET_HEATER_PID_help = "Sets a heater PID parameter"
+
+    def cmd_SET_HEATER_PID(self, gcmd):
+        if not isinstance(self.control, ControlPID):
+            raise gcmd.error("Not a PID controlled heater")
+        kp = gcmd.get_float("KP", None)
+        if kp is not None:
+            self.control.Kp = kp / PID_PARAM_BASE
+        ki = gcmd.get_float("KI", None)
+        if ki is not None:
+            self.control.Ki = ki / PID_PARAM_BASE
+        kd = gcmd.get_float("KD", None)
+        if kd is not None:
+            self.control.Kd = kd / PID_PARAM_BASE
 
 
 ######################################################################
