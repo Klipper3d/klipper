@@ -380,7 +380,7 @@ The following information is available in
 
 The following information is available in the `system_stats` object
 (this object is always available):
-- `sysload`, `cputime`, `memavail`: Information on the host operating
+- `sysload`, `cputime`, `unixtime`, `memavail`: Information on the host operating
   system and process load.
 
 ## temperature sensors

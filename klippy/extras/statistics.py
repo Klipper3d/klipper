@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, time, logging
+import os, time, calendar, logging
 
 class PrinterSysStats:
     def __init__(self, config):
@@ -29,8 +29,9 @@ class PrinterSysStats:
         if pdiff > 0.:
             self.total_process_time += pdiff
         self.last_load_avg = os.getloadavg()[0]
-        msg = "sysload=%.2f cputime=%.3f" % (self.last_load_avg,
-                                             self.total_process_time)
+        msg = "sysload=%.2f cputime=%.3f unixtime=%d" % (self.last_load_avg,
+                                             self.total_process_time,
+                                             calendar.timegm(time.gmtime()))
         # Get available system memory
         if self.mem_file is not None:
             try:
@@ -47,6 +48,7 @@ class PrinterSysStats:
     def get_status(self, eventtime):
         return {'sysload': self.last_load_avg,
                 'cputime': self.total_process_time,
+                'unixtime': calendar.timegm(time.gmtime()),
                 'memavail': self.last_mem_avail}
 
 class PrinterStats:
