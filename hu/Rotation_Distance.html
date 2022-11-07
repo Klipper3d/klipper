@@ -1395,7 +1395,7 @@
 </code></pre></div>
 
 <p>A <code>&lt;full_steps_per_rotation&gt;</code> beállítást a léptetőmotor típusa határozza meg. A legtöbb léptetőmotor "1,8 fokos lépésszögű" és ezért 200 teljes lépés/fordulat (360 osztva 1,8-al az a 200). Egyes léptetőmotorok "0,9 fokos lépésszögűek" és így 400 teljes lépést tesznek meg fordulatonként. Más léptetőmotorok ritkábbak. Ha bizonytalan vagy, ne állítsd be a full_steps_per_rotation értéket a konfigurációs fájlban, és használd a 200-at a fenti képletben.</p>
-<p>A <code>&lt;mikrolépések&gt;</code> beállítást a léptetőmotor-meghajtó határozza meg. A legtöbb meghajtó 16 mikrolépést használ. Ha bizonytalan vagy, állítsd be a <code>microsteps: 16</code> a konfigurációban, és használd a 16-ot a fenti képletben.</p>
+<p>A <code>&lt;microsteps&gt;</code> beállítást a léptetőmotor-meghajtó határozza meg. A legtöbb meghajtó 16 mikrolépést használ. Ha bizonytalan vagy, állítsd be a <code>microsteps: 16</code> a konfigurációban, és használd a 16-ot a fenti képletben.</p>
 <p>Szinte minden nyomtatónak egész számot kell megadnia a <code>rotation_distance</code> X, Y és Z típusú tengelyeknél. Ha a fenti képlet olyan rotation_distance-ot eredményez, amely 0,01 egész számon belül van, akkor kerekítse a végső értéket erre az egész számra.</p>
 <h2 id="a-rotation_distance-kalibralasa-extrudereken">A rotation_distance kalibrálása extrudereken<a class="headerlink" href="#a-rotation_distance-kalibralasa-extrudereken" title="Permanent link">&para;</a></h2>
 <p>Egy extruder esetében a <code>rotation_distance</code> az a távolság, amelyet a nyomtatószál léptetőmotor egy teljes fordulatán megtesz. Ennek a beállításnak a pontos értékét a "mérés és igazítás" eljárással lehet a legjobban meghatározni.</p>
@@ -1403,9 +1403,9 @@
 <p>Ezután a következő eljárást alkalmazd a "mérés és igazítás" elvégzéséhez:</p>
 <ol>
 <li>Győződj meg arról, hogy az extruderben van-e nyomtatószál, a hotend megfelelő hőmérsékletre van-e melegítve, és a nyomtató készen áll-e az extrudálásra.</li>
-<li>Jelölje meg a nyomtatószálat egy jelölővel az extrudertest bemenő nyílásától kb. 70 mm-re. Ezután egy digitális tolómérővel mérd meg a lehető legpontosabban ennek a jelölésnek a tényleges távolságát. Ezt jegyezze fel <code>&lt;initial_mark_distance&gt;</code>.</li>
+<li>Jelöld meg a nyomtatószálat egy jelölővel az extrudertest bemenő nyílásától kb. 70 mm-re. Ezután egy digitális tolómérővel mérd meg a lehető legpontosabban ennek a jelölésnek a tényleges távolságát. Ezt jegyezd fel <code>&lt;initial_mark_distance&gt;</code>.</li>
 <li>Extrudáljon 50 mm nyomtatószálat a következő parancsokkal: <code>G91</code>, majd <code>G1 E50 F60</code>. Az 50 mm-t jegyezze meg <code>&lt;requested_extrude_distance&gt;</code>. Várja meg, amíg az extruder befejezi a mozgást (ez körülbelül 50 másodpercig tart). Fontos, hogy lassú extrudálási sebességet használj ehhez a teszthez, mivel a gyorsabb sebesség magas nyomást okozhat az extruderben, ami torzítja az eredményeket. (Ne használod az "extrude gombot" a grafikus előlapon ehhez a teszthez, mivel azok gyors ütemben extrudálnak.)</li>
-<li>A digitális tolómérővel mérd meg az extruder teste és a szálon lévő jelölés közötti új távolságot. Ezt jegyezze fel <code>&lt;subsequent_mark_distance&gt;</code>. Ezután számítsa ki: <code>actual_extrude_distance = &lt;initial_mark_distance&gt; - &lt;subsequent_mark_distance&gt;</code></li>
+<li>Digitális tolómérővel mérd meg az extruder teste és a szálon lévő jelölés közötti új távolságot. Ezt jegyezd fel <code>&lt;subsequent_mark_distance&gt;</code>. Ezután számítsd ki: <code>actual_extrude_distance = &lt;initial_mark_distance&gt; - &lt;subsequent_mark_distance&gt;</code></li>
 <li>A rotation_distance kiszámítása: <code>rotation_distance = &lt;previous_rotation_distance&gt; * &lt;actual_extrude_distance&gt; / &lt;requested_extrude_distance&gt;</code> Az új rotation_distance-t három tizedesjegyre kerekítjük.</li>
 </ol>
 <p>Ha az actual_extrude_distance több mint 2 mm-rel eltér a requested_extrude_distance-tól, akkor érdemes a fenti lépéseket másodszor is elvégezni.</p>

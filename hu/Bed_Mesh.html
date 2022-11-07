@@ -1534,8 +1534,8 @@ probe_count: 5, 3
 </code></pre></div>
 
 <ul>
-<li><code>sebesség: 120</code> * Alapértelmezett érték: 50* A sebesség, amellyel a fej a pontok között mozog.</li>
-<li><code>horizontal_move_z: 5</code> <em>Alapértelmezett érték: 5</em> A Z koordináta, amelyre a szonda a mérőpontok közötti utazás előtt emelkedik.</li>
+<li><code>speed: 120</code> * Default Value: 50* A sebesség, amellyel a fej a pontok között mozog.</li>
+<li><code>horizontal_move_z: 5</code> <em>Default Value: 5</em> A Z koordináta, amelyre a szonda a mérőpontok közötti utazás előtt emelkedik.</li>
 <li><code>mesh_min: 35, 6</code> <em>Ajánlott</em> Az első, az origóhoz legközelebbi koordináta. Ez a koordináta a szonda helyéhez képest relatív.</li>
 <li><code>mesh_max: 240, 198</code> <em>Ajánlott</em> Az origótól legtávolabb eső mért koordináta. Ez nem feltétlenül az utolsó mért pont, mivel a mérés cikcakkos módon történik. A <code>mesh_min</code> koordinátához hasonlóan ez a koordináta is a szonda helyéhez van viszonyítva.</li>
 <li><code>probe_count: 5, 3</code> <em>Alapértelmezett érték: 3,3</em> Az egyes tengelyeken mérendő pontok száma, X, Y egész értékben megadva. Ebben a példában az X tengely mentén 5 pont lesz mérve, az Y tengely mentén 3 pont, összesen 15 mért pont. Vedd figyelembe, hogy ha négyzetrácsot szeretnél, például 3x3, akkor ezt egyetlen egész számértékként is megadhatod, amelyet mindkét tengelyre használ, azaz <code>probe_count: 3</code>. Vedd figyelembe, hogy egy hálóhoz mindkét tengely mentén legalább 3 darab mérési számra van szükség.</li>

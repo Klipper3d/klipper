@@ -1472,7 +1472,7 @@
 <h2 id="g-kod-makro-elnevezese">G-kód makró elnevezése<a class="headerlink" href="#g-kod-makro-elnevezese" title="Permanent link">&para;</a></h2>
 <p>A G-kódos makronév esetében a nagy és kisbetűs írásmód nem fontos - a MY_MACRO és a my_macro ugyanúgy kiértékelődik, és kicsi vagy nagybetűvel is meghívható. Ha a makronévben számokat használunk, akkor azoknak a név végén kell állniuk (pl. a TEST_MACRO25 érvényes, de a MACRO25_TEST3 nem).</p>
 <h2 id="a-g-kod-formazasa-a-konfiguracioban">A G-kód formázása a konfigurációban<a class="headerlink" href="#a-g-kod-formazasa-a-konfiguracioban" title="Permanent link">&para;</a></h2>
-<p>A behúzás fontos, amikor makrót definiál a konfigurációs fájlban. Többsoros G-kód szekvencia megadásához fontos, hogy minden sorban megfelelő behúzás legyen. Például:</p>
+<p>A behúzás fontos, amikor makrót definiálsz a konfigurációs fájlban. Többsoros G-kód szekvencia megadásához fontos, hogy minden sorban megfelelő behúzás legyen. Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro blink_led]
 gcode:
   SET_PIN PIN=my_led VALUE=1
@@ -1505,7 +1505,7 @@ gcode:
 
 <p>A <code>G91</code> parancs a G-kód elemzési állapotot "relatív mozgatási módba" helyezi, a <code>RESTORE_GCODE_STATE</code> parancs pedig visszaállítja a makró belépése előtti állapotot. Ügyelj arra, hogy az első <code>G1</code> parancsnál adj meg explicit sebességet (az <code>F</code> paraméterrel).</p>
 <h2 id="sablon-bovites">Sablon bővítés<a class="headerlink" href="#sablon-bovites" title="Permanent link">&para;</a></h2>
-<p>A gcode_macro <code>gcode:</code> konfigurációs szakasz kiértékelése a Jinja2 sablonnyelv használatával történik. A kifejezéseket kiértékelhetjük futásidőben <code>{ }</code> karakterekbe csomagolva, vagy használhatunk feltételes utasításokat <code>{% %}</code> karakterekbe csomagolva. A szintaxissal kapcsolatos további információkért lásd a <a href="http://jinja.pocoo.org/docs/2.10/templates/">Jinja2 dokumentáció</a>.</p>
+<p>A gcode_macro <code>gcode:</code> konfigurációs szakasz kiértékelése a Jinja2 sablonnyelv használatával történik. A kifejezéseket kiértékelhetjük futásidőben <code>{ }</code> karakterekbe csomagolva, vagy használhatunk feltételes utasításokat <code>{% %}</code> karakterekbe csomagolva. A szintaxissal kapcsolatos további információkért lásd a <a href="http://jinja.pocoo.org/docs/2.10/templates/">Jinja2 dokumentációt</a>.</p>
 <p>Példa egy összetett makróra:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro clean_nozzle]
 gcode:

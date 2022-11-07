@@ -1346,11 +1346,11 @@
 <h2 id="z-vegallas-kalibralasa">Z végállás kalibrálása<a class="headerlink" href="#z-vegallas-kalibralasa" title="Permanent link">&para;</a></h2>
 <p>A pontos Z végállás pozíciója kritikus fontosságú a jó minőségű nyomatok elkészítéséhez.</p>
 <p>Vedd figyelembe azonban, hogy maga a Z végálláskapcsoló pontossága korlátozó tényező lehet. Ha Trinamic léptetőmotor-meghajtókat használunk, akkor fontoljuk meg a <a href="Endstop_Phase.html">végstop fázis</a> érzékelés engedélyezését a kapcsoló pontosságának javítása érdekében.</p>
-<p>A Z végpont kalibrálásának végrehajtásához kapcsold be a nyomtatót, utasítsa a fejet, hogy mozogjon egy Z pozícióba, amely legalább öt milliméterrel a tárgyasztal felett van (ha még nincs), utasítsa a fejet, hogy mozogjon egy X-Y pozícióba, közel a nyomtató közepéhez a tárgyasztalra, majd navigálj az OctoPrint terminál fülre, és futtassa:</p>
+<p>A Z végpont kalibrálásának végrehajtásához kapcsold be a nyomtatót, utasítsd a fejet, hogy mozogjon egy Z pozícióba, amely legalább öt milliméterrel a tárgyasztal felett van (ha még nincs), utasítsd a fejet, hogy mozogjon egy X-Y pozícióba, közel a nyomtató közepéhez a tárgyasztalra, majd navigálj az OctoPrint terminál fülre, és futtasd:</p>
 <div class="highlight"><pre><span></span><code>Z_ENDSTOP_CALIBRATE
 </code></pre></div>
 
-<p>Ezután kövesse a <a href="Bed_Level.html#the-paper-test">"a papírteszt"</a> pontban leírt lépéseket a fúvóka és a tárgyasztal közötti tényleges távolság meghatározásához az adott helyen. Ha ezek a lépések befejeződtek, akkor <code>ACCEPT</code> és elmentheti az eredményeket a config fájlba a következővel:</p>
+<p>Ezután kövesd a <a href="Bed_Level.html#the-paper-test">"a papírteszt"</a> pontban leírt lépéseket a fúvóka és a tárgyasztal közötti tényleges távolság meghatározásához az adott helyen. Ha ezek a lépések befejeződtek, akkor <code>ACCEPT</code> és elmentheted az eredményeket a config fájlba a következővel:</p>
 <div class="highlight"><pre><span></span><code>SAVE_CONFIG
 </code></pre></div>
 
@@ -1366,7 +1366,7 @@ screw3: 150, 100
 </code></pre></div>
 
 <p>Ha egy tárgyasztal csavar a tárgyasztal alatt van, akkor add meg az X-Y pozíciót közvetlenül a csavar felett. Ha a csavar a tárgyasztalon kívül van, akkor add meg a csavarhoz legközelebbi X-Y-pozíciót, amely még a tárgyasztal hatótávolságán belül van.</p>
-<p>Miután a konfigurációs fájl készen áll, futtassa a <code>RESTART</code> parancsot a konfiguráció betöltéséhez, majd elindíthatja az eszközt a következő futtatásával:</p>
+<p>Miután a konfigurációs fájl készen áll, futtasd a <code>RESTART</code> parancsot a konfiguráció betöltéséhez, majd elindíthatod az eszközt a következő futtatásával:</p>
 <div class="highlight"><pre><span></span><code>BED_SCREWS_ADJUST
 </code></pre></div>
 

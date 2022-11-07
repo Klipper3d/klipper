@@ -872,11 +872,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#a-gcode-fajl" class="md-nav__link">
-    A GCode fájl
+  <a href="#a-g-kod-fajl" class="md-nav__link">
+    A G-kód fájl
   </a>
   
-    <nav class="md-nav" aria-label="A GCode fájl">
+    <nav class="md-nav" aria-label="A G-kód fájl">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1296,11 +1296,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#a-gcode-fajl" class="md-nav__link">
-    A GCode fájl
+  <a href="#a-g-kod-fajl" class="md-nav__link">
+    A G-kód fájl
   </a>
   
-    <nav class="md-nav" aria-label="A GCode fájl">
+    <nav class="md-nav" aria-label="A G-kód fájl">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1356,7 +1356,7 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <li>Az ügyfél megkapja a Klipper frissített állapotát, és ezt az információt felhasználhatja az objektum állapotának megjelenítéséhez a felhasználói felületen.</li>
 <li>A nyomtatás befejezésekor az <code>[exclude_object]</code> állapot továbbra is elérhető marad, amíg egy másik művelet vissza nem állítja.</li>
 </ol>
-<h2 id="a-gcode-fajl">A GCode fájl<a class="headerlink" href="#a-gcode-fajl" title="Permanent link">&para;</a></h2>
+<h2 id="a-g-kod-fajl">A G-kód fájl<a class="headerlink" href="#a-g-kod-fajl" title="Permanent link">&para;</a></h2>
 <p>Az objektumok kizárásához szükséges speciális G-kód feldolgozás nem illeszkedik a Klipper alapvető tervezési céljaihoz. Ezért ez a modul megköveteli a fájl feldolgozását, mielőtt a Klippernek nyomtatásra elküldi. A fájl Klipper számára történő előkészítésére két lehetőség egy utófeldolgozó szkript használata a szeletelőben, vagy a fájl feltöltéskor történő feldolgozása a middleware segítségével. Egy referencia utófeldolgozó szkript elérhető futtatható és python könyvtárként is, lásd <a href="https://github.com/kageurufu/cancelobject-preprocessor">az objektum előfeldolgozó törlése</a>.</p>
 <h3 id="objektum-meghatarozasok">Objektum meghatározások<a class="headerlink" href="#objektum-meghatarozasok" title="Permanent link">&para;</a></h3>
 <p>Az <code>EXCLUDE_OBJECT_DEFINE</code> parancsot arra használjuk, hogy a G-kód fájlban lévő minden egyes objektumról összefoglalót adjunk a nyomtatáshoz. A fájlban lévő objektumok összefoglalóját adja meg. Az objektumokat nem kell definiálni ahhoz, hogy más parancsok hivatkozhassanak rájuk. Ennek a parancsnak az elsődleges célja, hogy információt szolgáltasson a felhasználói felületnek anélkül, hogy a teljes G-kód fájlt elemeznie kellene.</p>

@@ -1357,7 +1357,7 @@
 
 <p>A fentiek letöltik a Klippert, telepítenek néhány rendszerösszetevőt, beállítják a Klippert, hogy a rendszer indulásakor fusson, és elindítja a Klipper gazdagép szoftverét. Internetkapcsolatra lesz szükség, és néhány percet is igénybe vehet.</p>
 <h2 id="a-mikrokontroller-felepitese-es-egetese">A mikrokontroller felépítése és égetése<a class="headerlink" href="#a-mikrokontroller-felepitese-es-egetese" title="Permanent link">&para;</a></h2>
-<p>A mikrokontroller kódjának lefordításához futtassa ezeket a parancsokat a Raspberry Pi-n:</p>
+<p>A mikrokontroller kódjának lefordításához futtasd ezeket a parancsokat a Raspberry Pi-n:</p>
 <div class="highlight"><pre><span></span><code>cd ~/klipper/
 make menuconfig
 </code></pre></div>
@@ -1371,18 +1371,18 @@ make menuconfig
 <div class="highlight"><pre><span></span><code>ls /dev/serial/by-id/*
 </code></pre></div>
 
-<p>Valami hasonlót kell kapnia az alábbiakhoz:</p>
+<p>Az alábbiakhoz hasonlót kell kapnod:</p>
 <div class="highlight"><pre><span></span><code>/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 </code></pre></div>
 
-<p>Gyakori, hogy minden nyomtatónak saját egyedi soros port neve van. Ezt az egyedi nevet használjuk a mikrokontroller égetésére. Lehetséges, hogy a fenti kimenetben több sor is található – ha igen, válaszd ki a mikrovezérlőnek megfelelő sort (további információért lásd a <a href="FAQ.html#wheres-my-serial-port">GYIK</a> részt).</p>
+<p>Gyakori, hogy minden nyomtatónak saját egyedi soros port neve van. Ezt az egyedi nevet használjuk a mikrokontroller égetésére. Lehetséges, hogy a fenti kimenetben több sor is található – ha igen, válaszd ki a mikrovezérlőnek megfelelő sort (további információkért lásd a <a href="FAQ.html#wheres-my-serial-port">GYIK</a> részt).</p>
 <p>Az általános mikrokontrollereknél a kódot valami hasonlóval lehet égetni:</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 sudo service klipper start
 </code></pre></div>
 
-<p>Feltétlenül frissítse a FLASH_DEVICE eszközt a nyomtató egyedi soros portjának nevével.</p>
+<p>Feltétlenül frissítd a FLASH_DEVICE eszközt a nyomtató egyedi soros portjának nevével.</p>
 <p>Amikor először égetsz, győződj meg arról, hogy az OctoPrint nincs közvetlenül csatlakoztatva a nyomtatóhoz (az OctoPrint weboldalon a "Kapcsolat" részben kattints a "Kapcsolat bontása" gombra).</p>
 <h2 id="az-octoprint-beallitasa-a-klipper-hasznalatahoz">Az OctoPrint beállítása a Klipper használatához<a class="headerlink" href="#az-octoprint-beallitasa-a-klipper-hasznalatahoz" title="Permanent link">&para;</a></h2>
 <p>Az OctoPrint webszervert konfigurálni kell, hogy kommunikáljon a Klipper gazdagép szoftverével. Egy webböngészővel jelentkezz be az OctoPrint weboldalra, majd konfiguráld a következő elemeket:</p>
@@ -1403,7 +1403,7 @@ nano ~/printer.cfg
 <div class="highlight"><pre><span></span><code>ls /dev/serial/by-id/*
 </code></pre></div>
 
-<p>Valami hasonlót kell kapnia az alábbiakhoz:</p>
+<p>Az alábbiakhoz hasonlót kell kapnod:</p>
 <div class="highlight"><pre><span></span><code>/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 </code></pre></div>
 

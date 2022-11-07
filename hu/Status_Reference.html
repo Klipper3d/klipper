@@ -1873,7 +1873,7 @@
 <p>A következő információk a <code>configfile</code> objektumban találhatók (ez az objektum mindig elérhető):</p>
 <ul>
 <li><code>settings.&lt;section&gt;.&lt;option&gt;</code>: Visszaadja az adott konfigurációs fájl beállítását (vagy alapértelmezett értékét) a szoftver utolsó indítása vagy újraindítása során. (A használat közben megváltoztatott beállítások nem jelennek meg itt.)</li>
-<li><code>config.&lt;section&gt;.&lt;option&gt;</code>: Visszaadja az adott nyers konfigurációs fájl beállítását, ahogyan azt a Klipper a legutóbbi szoftverindítás vagy újraindítás során beolvasta. (A működés közben megváltoztatott beállítások nem jelennek meg itt.) Minden értéket stringként ad vissza.</li>
+<li><code>config.&lt;section&gt;.&lt;option&gt;</code>: Visszaadja az adott nyers konfigurációs fájl beállítását, ahogyan azt a Klipper a legutóbbi szoftverindítás vagy újraindítás során beolvasta. (A működés közben megváltoztatott beállítások nem jelennek meg itt.) Minden értéket string-ként ad vissza.</li>
 <li><code>save_config_pending</code>: True értéket ad, ha vannak olyan frissítések, amelyeket a <code>SAVE_CONFIG</code> parancs a lemezen is megőrizhet.</li>
 <li><code>save_config_pending_items</code>: Tartalmazza azokat a szakaszokat és opciókat, amelyeket megváltoztattak, és amelyeket egy <code>SAVE_CONFIG</code> elmenthetne.</li>
 <li><code>figyelmeztetések</code>: A konfigurációs beállításokkal kapcsolatos figyelmeztetések listája. A lista minden egyes bejegyzése egy szótár lesz, amely tartalmaz egy <code>type</code> és egy <code>message</code> mezőt (mindkettő karakterlánc). A figyelmeztetés típusától függően további mezők is rendelkezésre állhatnak.</li>
@@ -1881,7 +1881,7 @@
 <h2 id="display_status">display_status<a class="headerlink" href="#display_status" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>display_status</code> objektumban érhetők el (ez az objektum automatikusan elérhető, ha a <a href="Config_Reference.html#display">kijelző</a> konfigurációs szakasz definiálva van):</p>
 <ul>
-<li><code>progress</code>: A legutóbbi <code>M73</code> G-kód parancs progress értéke (vagy <code>virtual_sdcard.progress</code>, ha nem érkezett legutóbbi <code>M73</code>).</li>
+<li><code>progress</code>: A legutóbbi <code>M73</code> G-kód parancs előrehaladási érték (vagy <code>virtual_sdcard.progress</code>, ha nem érkezett legutóbbi <code>M73</code>).</li>
 <li><code>message</code>: Az utolsó <code>M117</code> G-kódú parancsban szereplő üzenet.</li>
 </ul>
 <h2 id="endstop_phase">endstop_phase<a class="headerlink" href="#endstop_phase" title="Permanent link">&para;</a></h2>

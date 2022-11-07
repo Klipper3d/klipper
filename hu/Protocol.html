@@ -1530,7 +1530,7 @@ queue_step oid=7 interval=11717 count=4 add=1281
 
 <p>A fenti egy "állapot" válaszüzenetet küld, amely két egész paramétert ("óra" és "állapot") tartalmaz. A mikrovezérlő szerkesztő automatikusan megtalálja az összes sendf() hívást, és kódolókat generál hozzájuk. A sendf() függvény első paramétere írja le a választ, és formátuma megegyezik a parancsdeklarációkkal.</p>
 <p>A gazdagép gondoskodhat arról, hogy minden válaszhoz visszahívási funkciót regisztráljon. Tehát valójában a parancsok lehetővé teszik a gazdagép számára, hogy meghívja a C függvényeket a mikrovezérlőben, a válaszok pedig lehetővé teszik, hogy a mikrovezérlő szoftvere kódot hívjon meg a gazdagépben.</p>
-<p>A sendf() makró csak parancs vagy feladatkezelőkből hívható meg, és nem hívható meg megszakításokból vagy időzítőkből. A kódnak nem kell sendf()-t kiadnia a kapott parancsra válaszul, nincs korlátozva a sendf() meghívásának száma, és a sendf()-t bármikor meghívhatja egy feladatkezelőből.</p>
+<p>A sendf() makró csak parancs vagy feladatkezelőkből hívható meg, és nem hívható meg megszakításokból vagy időzítőkből. A kódnak nem kell sendf()-t kiadnia a kapott parancsra válaszul, nincs korlátozva a sendf() meghívásának száma, és a sendf()-t bármikor meghívhatod egy feladatkezelőből.</p>
 <h4 id="kimeneti-valaszok">Kimeneti válaszok<a class="headerlink" href="#kimeneti-valaszok" title="Permanent link">&para;</a></h4>
 <p>A hibakeresés egyszerűsítése érdekében van egy output() C függvény is. Például:</p>
 <div class="highlight"><pre><span></span><code>output(&quot;The value of %u is %s with size %u.&quot;, x, buf, buf_len);

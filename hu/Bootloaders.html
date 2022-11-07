@@ -1622,11 +1622,11 @@
 <p>Ez a dokumentum megpróbálja leírni a gyakori bootloadereket, a bootloader égetéséhez szükséges lépéseket és az alkalmazás égetéséhez szükséges lépéseket. Ez a dokumentum nem tekintélyes hivatkozás. A Klipper fejlesztői által összegyűjtött hasznos információk gyűjteményének szánjuk.</p>
 <h2 id="avr-mikrovezerlok">AVR mikrovezérlők<a class="headerlink" href="#avr-mikrovezerlok" title="Permanent link">&para;</a></h2>
 <p>Általánosságban az Arduino projekt jó referencia a 8 bites Atmel Atmega mikrovezérlők bootloadereiről és a égetési eljárásokról. Különösen a "boards.txt" fájl: <a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt">https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt</a> hasznos referencia.</p>
-<p>A bootloader égetéséhez az AVR chipekhez külső hardveres égető eszközre van szükség (amely SPI segítségével kommunikál a chippel). Ez az eszköz megvásárolható (például keressen rá az interneten az "avr isp", "arduino isp" vagy "usb tiny isp" szavakra). Az is lehetséges, hogy egy másik Arduino vagy Raspberry Pi segítségével égess egy AVR bootloadert (például keressen rá az interneten a "program an avr using raspberry pi" kifejezésre). Az alábbi példákat egy "AVR ISP Mk2" típusú eszköz használatát feltételezve írtuk.</p>
+<p>A bootloader égetéséhez az AVR chipekhez külső hardveres égető eszközre van szükség (amely SPI segítségével kommunikál a chippel). Ez az eszköz megvásárolható (például keress rá az interneten az "avr isp", "arduino isp" vagy "usb tiny isp" szavakra). Az is lehetséges, hogy egy másik Arduino vagy Raspberry Pi segítségével égess egy AVR bootloadert (például keress rá az interneten a "program an avr using raspberry pi" kifejezésre). Az alábbi példákat egy "AVR ISP Mk2" típusú eszköz használatát feltételezve írtuk.</p>
 <p>Az "avrdude" program a leggyakrabban használt eszköz az atmega chipek égetésére (mind a bootloader, mind az alkalmazások égetésére).</p>
 <h3 id="atmega2560">Atmega2560<a class="headerlink" href="#atmega2560" title="Permanent link">&para;</a></h3>
 <p>Ez a chip jellemzően az "Arduino Mega" chipben található, és nagyon gyakori a 3D nyomtató lapokban.</p>
-<p>Magának a bootloadernek az égetéséhez használj valami olyasmit, mint:</p>
+<p>A bootloader égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex&#39;
 
 avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m -U lfuse:w:0xFF:m
@@ -1640,7 +1640,7 @@ avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 
 <h3 id="atmega1280">Atmega1280<a class="headerlink" href="#atmega1280" title="Permanent link">&para;</a></h3>
 <p>Ez a chip jellemzően az "Arduino Mega" korábbi verzióiban található.</p>
-<p>Magának a bootloadernek az égetéséhez használj valami olyasmit, mint:</p>
+<p>A bootloader égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex&#39;
 
 avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m -U lfuse:w:0xFF:m
@@ -1654,7 +1654,7 @@ avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 
 <h3 id="atmega1284p">Atmega1284p<a class="headerlink" href="#atmega1284p" title="Permanent link">&para;</a></h3>
 <p>Ez a chip gyakran megtalálható a "Melzi" stílusú 3D nyomtató alaplapokban.</p>
-<p>Magának a bootloadernek az égetéséhez használj valami olyasmit, mint:</p>
+<p>A bootloader égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex&#39;
 
 avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m -U lfuse:w:0xFF:m

@@ -1422,7 +1422,7 @@
 make
 </code></pre></div>
 
-<p>Ha a fentiek megtörténtek, a Klipper futtatása batch üzemmódban is lehetséges (a python virtuális környezet és a printer.cfg) fájl létrehozásához szükséges lépéseket lásd <a href="Installation.html">Telepítés</a>:</p>
+<p>Ha a fentiek megtörténtek, a Klipper futtatása batch üzemmódban is lehetséges (a <a href="Installation.html">Telepítés</a> python virtuális környezet és a printer.cfg) fájl létrehozásához szükséges lépéseket lásd:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/klippy.py ~/printer.cfg -i test.gcode -o test.serial -v -d out/klipper.dict
 </code></pre></div>
 
@@ -1431,7 +1431,7 @@ make
 </code></pre></div>
 
 <p>Az eredményül kapott <strong>test.txt</strong> fájl a mikrokontroller parancsok ember által olvasható listáját tartalmazza.</p>
-<p>A kötegelt üzemmód letilt bizonyos válasz/kérési parancsokat a működés érdekében. Ennek eredményeképpen a tényleges parancsok és a fenti kimenet között némi eltérés lesz. A generált adatok teszteléshez és ellenőrzéshez hasznosak; nem használhatóak valódi mikrokontrollerhez való elküldésre.</p>
+<p>A kötegelt üzemmód letilt bizonyos válasz/kérés parancsokat a működés érdekében. Ennek eredményeképpen a tényleges parancsok és a fenti kimenet között némi eltérés lesz. A generált adatok teszteléshez és ellenőrzéshez hasznosak; nem használhatóak valódi mikrokontrollerhez való elküldésre.</p>
 <h2 id="mozgaselemzes-es-adatnaplozas">Mozgáselemzés és adatnaplózás<a class="headerlink" href="#mozgaselemzes-es-adatnaplozas" title="Permanent link">&para;</a></h2>
 <p>A Klipper támogatja a belső mozgástörténet naplózását, amely később elemezhető. Ennek a funkciónak a használatához a Klippert az <a href="API_Server.html">API Szerver</a> engedélyezésével kell elindítani.</p>
 <p>Az adatnaplózást a <code>data_logger.py</code> eszközzel lehet engedélyezni. Például:</p>
@@ -1487,7 +1487,7 @@ cp /tmp/klippy.log .
 
 <p>A szkript kinyeri a nyomtató konfigurációs fájlját, és kinyeri az MCU leállítási adatait. Az MCU leállításából származó információsor (ha van ilyen) időbélyegek szerint át lesz rendezve, hogy segítse az ok-okozati forgatókönyvek diagnosztizálását.</p>
 <h2 id="teszteles-simulavr-rel">Tesztelés simulavr-rel<a class="headerlink" href="#teszteles-simulavr-rel" title="Permanent link">&para;</a></h2>
-<p>A <a href="http://www.nongnu.org/simulavr/">simulavr</a> eszköz lehetővé teszi egy Atmel ATmega mikrokontroller szimulálását. Ez a szakasz leírja, hogyan lehet teszt G-kód fájlokat futtatni a simulavr segítségével. Javasoljuk, hogy ezt egy asztali gépen futtassuk (nem Raspberry Pi), mivel a hatékony futtatáshoz erős CPU-ra van szükség.</p>
+<p>A <a href="http://www.nongnu.org/simulavr/">simulavr</a> eszköz lehetővé teszi egy Atmel ATmega mikrokontroller szimulálását. Ez a szakasz leírja, hogyan lehet teszt G-kód fájlokat futtatni a simulavr segítségével. Javasoljuk, hogy ezt egy asztali gépen futtasd (nem Raspberry Pi), mivel a hatékony futtatáshoz erős CPU-ra van szükség.</p>
 <p>A simulavr használatához töltse le a simulavr csomagot, és fordítsd le python támogatással. Vedd figyelembe, hogy a build rendszernek telepítenie kell néhány csomagot (például a swig-et) ahhoz, hogy a python modult fel tudja építeni.</p>
 <div class="highlight"><pre><span></span><code>git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr
@@ -1507,7 +1507,7 @@ make cfgclean python debian
 sudo dpkg -i build/debian/python3-simulavr*.deb
 </code></pre></div>
 
-<p>A Klipper lefordításához a simulavr-ben való használathoz futtassa a következőt:</p>
+<p>A Klipper lefordításához a simulavr-ben való használathoz futtasd a következőt:</p>
 <div class="highlight"><pre><span></span><code>cd /path/to/klipper
 make menuconfig
 </code></pre></div>
@@ -1525,7 +1525,7 @@ make menuconfig
 </code></pre></div>
 
 <h3 id="a-simulavr-hasznalata-gtkwave-vel">A simulavr használata gtkwave-vel<a class="headerlink" href="#a-simulavr-hasznalata-gtkwave-vel" title="Permanent link">&para;</a></h3>
-<p>A simulavr egyik hasznos funkciója, hogy képes jelhullámgeneráló fájlokat létrehozni az események pontos időzítésével. Ehhez kövesse a fenti utasításokat, de futtassa az avrsim.py programot a következő parancssorral:</p>
+<p>A simulavr egyik hasznos funkciója, hogy képes jelhullámgeneráló fájlokat létrehozni az események pontos időzítésével. Ehhez kövesd a fenti utasításokat, de futtasd az avrsim.py programot a következő parancssorral:</p>
 <div class="highlight"><pre><span></span><code>PYTHONPATH=/path/to/simulavr/src/python/ ./scripts/avrsim.py out/klipper.elf -t PORTA.PORT,PORTC.PORT
 </code></pre></div>
 

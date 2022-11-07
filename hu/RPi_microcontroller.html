@@ -1390,7 +1390,7 @@
 <p><strong>Figyelmeztetés</strong>: Ha a platformod egy <em>Beaglebone</em>, és helyesen követted a telepítés lépéseit, a Linux MCU már telepítve és konfigurálva van a rendszeredhez.</p>
 <h2 id="az-rc-szkript-telepitese">Az rc szkript telepítése<a class="headerlink" href="#az-rc-szkript-telepitese" title="Permanent link">&para;</a></h2>
 <p>Ha a gazdagépet másodlagos MCU-ként szeretnéd használni, a klipper_mcu folyamatnak a klippy folyamat előtt kell futnia.</p>
-<p>A Klipper telepítése után telepítse a szkriptet. run:</p>
+<p>A Klipper telepítése után telepítsd a szkriptet. run:</p>
 <div class="highlight"><pre><span></span><code>cd ~/klipper/
 sudo cp &quot;./scripts/klipper-mcu-start.sh&quot; /etc/init.d/klipper_mcu
 sudo update-rc.d klipper_mcu defaults
@@ -1403,18 +1403,18 @@ make menuconfig
 </code></pre></div>
 
 <p>A menüben állítsd be a "Mikrokontroller architektúra" értéket "Linux process,"-re, majd mentsd és lépj ki.</p>
-<p>Az új mikrokontroller kódjának elkészítéséhez és telepítéséhez futtassa a következőt:</p>
+<p>Az új mikrokontroller kódjának elkészítéséhez és telepítéséhez futtasd a következőt:</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 make flash
 sudo service klipper start
 </code></pre></div>
 
-<p>Ha a klippy.log a <code>/tmp/klipper_host_mcu</code>-hoz való kapcsolódási kísérletnél "Permission denied" hibát jelez, akkor a felhasználót hozzá kell adnia a tty csoporthoz. A következő parancs hozzáadja a "pi" felhasználót a tty csoporthoz:</p>
+<p>Ha a klippy.log a <code>/tmp/klipper_host_mcu</code>-hoz való kapcsolódási kísérletnél "Permission denied" hibát jelez, akkor a felhasználót hozzá kell adni a tty csoporthoz. A következő parancs hozzáadja a "pi" felhasználót a tty csoporthoz:</p>
 <div class="highlight"><pre><span></span><code>sudo usermod -a -G tty pi
 </code></pre></div>
 
 <h2 id="hatralevo-konfiguracio">Hátralevő konfiguráció<a class="headerlink" href="#hatralevo-konfiguracio" title="Permanent link">&para;</a></h2>
-<p>Fejezze be a telepítést a Klipper másodlagos MCU konfigurálásával a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-raspberry-pi.cfg">RaspberryPi minta konfiguráció</a> és a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-multi-mcu.cfg">Multi MCU minta konfiguráció</a> utasításai szerint.</p>
+<p>Fejezd be a telepítést a Klipper másodlagos MCU konfigurálásával a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-raspberry-pi.cfg">RaspberryPi minta konfiguráció</a> és a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-multi-mcu.cfg">Multi MCU minta konfiguráció</a> utasításai szerint.</p>
 <h2 id="valaszthato-spi-engedelyezese">Választható: SPI engedélyezése<a class="headerlink" href="#valaszthato-spi-engedelyezese" title="Permanent link">&para;</a></h2>
 <p>Győződjünk meg róla, hogy a Linux SPI-illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az SPI engedélyezésével az "Interfacing options" menüben.</p>
 <h2 id="valaszthato-i2c-engedelyezese">Választható: I2C engedélyezése<a class="headerlink" href="#valaszthato-i2c-engedelyezese" title="Permanent link">&para;</a></h2>

@@ -1345,12 +1345,12 @@
 <p>A szoftveralapú ferdeség korrekció segíthet a nem tökéletesen szögletes nyomtatóegységből eredő méretpontatlanságok feloldásában. Vedd figyelembe, hogy ha a nyomtatód jelentősen ferde, erősen ajánlott először mechanikai eszközökkel a nyomtatót a lehető legegyenletesebbre állítani, mielőtt a szoftveralapú korrekciót alkalmaznád.</p>
 <h2 id="kalibracios-objektum-nyomtatasa">Kalibrációs objektum nyomtatása<a class="headerlink" href="#kalibracios-objektum-nyomtatasa" title="Permanent link">&para;</a></h2>
 <p>A ferdeség korrekciójának első lépése egy <a href="https://www.thingiverse.com/thing:2563185/files">kalibrációs objektum</a> nyomtatása a korrigálni kívánt sík mentén. Létezik egy másik <a href="https://www.thingiverse.com/thing:2972743">kalibrációs objektum</a> is, amely egy modell összes síkját tartalmazza. Az objektumot úgy kell tájolni, hogy az A sarok a sík origója felé legyen.</p>
-<p>Győződj meg róla, hogy a nyomtatás során nem alkalmaz ferdeségkorrekciót. Ezt úgy teheti meg, hogy vagy eltávolítja a <code>[skew_correction]</code> modult a printer.cfg fájlból, vagy kiadsz egy <code>SET_SKEW CLEAR=1</code> parancsot.</p>
+<p>Győződj meg róla, hogy a nyomtatás során nem alkalmazol ferdeségkorrekciót. Ezt úgy teheted meg, hogy eltávolítod a <code>[skew_correction]</code> modult a printer.cfg fájlból, vagy kiadsz egy <code>SET_SKEW CLEAR=1</code> parancsot.</p>
 <h2 id="merd-meg">Mérd meg<a class="headerlink" href="#merd-meg" title="Permanent link">&para;</a></h2>
 <p>A <code>[skew_correcton]</code> modul minden egyes korrigálandó síkhoz 3 mérést igényel; az A saroktól a C sarokig terjedő hosszúságot, a B saroktól a D sarokig terjedő hosszúságot és az A saroktól a D sarokig terjedő hosszúságot. Az AD hosszmérésnél ne vedd figyelembe a sarkokon lévő síkokat, amelyeket néhány tesztobjektum mutat.</p>
 <p><img alt="skew_lengths" src="img/skew_lengths.png" /></p>
 <h2 id="konfigurald-a-ferdeseget">Konfiguráld a ferdeséget<a class="headerlink" href="#konfigurald-a-ferdeseget" title="Permanent link">&para;</a></h2>
-<p>Győződj meg róla, hogy a <code>[skew_correction]</code> szerepel a printer.cfg fájlban. Most már használhatod a <code>SET_SKEW</code> G-kódot a skew_correction beállításához. Például, ha az XY mentén mért hosszok a következők:</p>
+<p>Győződj meg róla, hogy a <code>[skew_correction]</code> szerepel a printer.cfg fájlban. Most már használhatod a <code>SET_SKEW</code> G-kódot a skew_correction beállításához. Például, ha az X-Y mentén mért hosszok a következők:</p>
 <div class="highlight"><pre><span></span><code>Length AC = 140.4
 Length BD = 142.8
 Length AD = 99.8
@@ -1360,11 +1360,11 @@ Length AD = 99.8
 <div class="highlight"><pre><span></span><code>SET_SKEW XY=140.4,142.8,99.8
 </code></pre></div>
 
-<p>Az XZ és YZ méréseket is hozzáadhatja a G-kódhoz:</p>
+<p>Az XZ és YZ méréseket is hozzáadhatod a G-kódhoz:</p>
 <div class="highlight"><pre><span></span><code>SET_SKEW XY=140.4,142.8,99.8 XZ=141.6,141.4,99.8 YZ=142.4,140.5,99.5
 </code></pre></div>
 
-<p>A <code>[skew_correction]</code> modul a <code>[bed_mesh]</code> modulhoz hasonló módon támogatja a profilkezelést is. Miután a <code>SET_SKEW</code> G-kóddal beállította a ferdeséget, a <code>SKEW_PROFILE</code> G-kóddal elmentheti azt:</p>
+<p>A <code>[skew_correction]</code> modul a <code>[bed_mesh]</code> modulhoz hasonló módon támogatja a profilkezelést is. Miután a <code>SET_SKEW</code> G-kóddal beállítottad a ferdeséget, a <code>SKEW_PROFILE</code> G-kóddal elmentheted azt:</p>
 <div class="highlight"><pre><span></span><code>SKEW_PROFILE SAVE=my_skew_profile
 </code></pre></div>
 

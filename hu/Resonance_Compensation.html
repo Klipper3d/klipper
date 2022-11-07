@@ -1537,10 +1537,10 @@
 <p>A Klipper támogatja a bemeneti formázást. Egy olyan technikát, amely a nyomatok csengésének (más néven visszhang, szellemkép vagy hullámzás) csökkentésére használható. A gyűrődés egy felületi nyomtatási hiba, amikor jellemzően az olyan elemek, mint az élek, finom 'visszhangként' ismétlődnek a nyomtatott felületen:</p>
 <p>|<img alt="Ringing test" src="img/ringing-test.jpg" />|<img alt="3D Benchy" src="img/ringing-3dbenchy.jpg" />|</p>
 <p>A gyűrődést a nyomtatási irány gyors változása miatt fellépő mechanikus rezgések okozzák. Vedd figyelembe, hogy a gyűrődés általában mechanikai eredetű: nem elég merev nyomtatókeret, nem feszes vagy túlságosan rugós szíjak, a mechanikus alkatrészek beállítási problémái, nagy mozgó tömeg stb. Ezeket kell először ellenőrizni és lehetőség szerint javítani.</p>
-<p>A <a href="https://en.wikipedia.org/wiki/Input_shaping">Bemeneti formázás</a> egy olyan nyílt hurkú vezérlési technika, amely olyan utasító jelet hoz létre, amely megszünteti a saját rezgéseit. A bemeneti alakítás némi hangolást és méréseket igényel, mielőtt engedélyezhető lenne. A csengésen kívül a Bemeneti formázás általában csökkenti a nyomtató rezgéseit és rázkódását, és javíthatja a Trinamic léptető meghajtók StealthChop üzemmódjának megbízhatóságát is.</p>
+<p>A <a href="https://en.wikipedia.org/wiki/Input_shaping">Bemeneti formázás</a> egy olyan nyílt hurkú vezérlési technika, amely olyan utasító jelet hoz létre, amely megszünteti a saját rezgéseit. A bemeneti alakítás némi hangolást és méréseket igényel, mielőtt engedélyezhető lenne. A csengésen kívül a bemeneti formázás általában csökkenti a nyomtató rezgéseit és rázkódását, és javíthatja a Trinamic léptető meghajtók StealthChop üzemmódjának megbízhatóságát is.</p>
 <h2 id="hangolas">Hangolás<a class="headerlink" href="#hangolas" title="Permanent link">&para;</a></h2>
 <p>Az alaphangoláshoz a nyomtató gyűrődési frekvenciájának mérése szükséges egy tesztmodell nyomtatásával.</p>
-<p>Szeletelje fel a <a href="prints/ringing_tower.stl">docs/prints/ringing_tower.stl</a> fájlban található gyűrődési tesztmodellt a szeletelőben:</p>
+<p>Szeleteld fel a <a href="prints/ringing_tower.stl">docs/prints/ringing_tower.stl</a> fájlban található gyűrődési tesztmodellt a szeletelőben:</p>
 <ul>
 <li>A javasolt rétegmagasság 0,2 vagy 0,25 mm.</li>
 <li>A kitöltő és a felső rétegek 0-ra állíthatók.</li>
@@ -1548,7 +1548,7 @@
 <li>A <strong>külső</strong> kerületeknél használj kellően nagy sebességet, körülbelül 80-100 mm/sec.</li>
 <li>Győződj meg róla, hogy a minimális rétegidő <strong>legfeljebb</strong> 3 másodperc.</li>
 <li>Győződj meg róla, hogy a szeletelőben a "dinamikus gyorsításvezérlés" ki van kapcsolva.</li>
-<li>Ne fordítsd el a modellt. A modell hátulján X és Y jelölések vannak. Figyelje meg a jelek szokatlan elhelyezkedését a nyomtató tengelyeihez képest. Ez nem hiba. A jelölések később a hangolási folyamat során referenciaként használhatók, mert megmutatják, hogy a mérések melyik tengelynek felelnek meg.</li>
+<li>Ne fordítsd el a modellt. A modell hátulján X és Y jelölések vannak. Figyeld meg a jelek szokatlan elhelyezkedését a nyomtató tengelyeihez képest. Ez nem hiba. A jelölések később a hangolási folyamat során referenciaként használhatók, mert megmutatják, hogy a mérések melyik tengelynek felelnek meg.</li>
 </ul>
 <h3 id="gyurodesi-frekvencia">Gyűrődési frekvencia<a class="headerlink" href="#gyurodesi-frekvencia" title="Permanent link">&para;</a></h3>
 <p>Először is mérd meg a <strong>gyűrődési frekvenciát</strong>.</p>

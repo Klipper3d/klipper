@@ -5000,7 +5000,7 @@ pins:
 
 <h2 id="targyasztal-szintezo-hardver">Tárgyasztal szintező hardver<a class="headerlink" href="#targyasztal-szintezo-hardver" title="Permanent link">&para;</a></h2>
 <h3 id="probe">[probe]<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h3>
-<p>Z magasságmérő szonda. Ezt a szakaszt a Z magasságmérő hardver engedélyezéséhez lehet definiálni. Ha ez a szakasz engedélyezve van, a PROBE és a QUERY_PROBE kiterjesztett <a href="G-Codes.html#probe">G-kód parancsok</a> elérhetővé válnak. Lásd még a <a href="Probe_Calibrate.html">szonda kalibrálási útmutatót</a>. A szondaszekció létrehoz egy virtuális "probe:z_virtual_endstop" tűt is. A stepper_z endstop_pin-t erre a virtuális tűre állíthatjuk a cartesian stílusú nyomtatókon, amelyek a szondát használják a Z végállás helyett. Ha a "probe:z_virtual_endstop" típust használjuk, akkor ne definiáljunk position_endsto-pot a stepper_z konfigurációs szakaszban.</p>
+<p>Z magasságmérő szonda. Ezt a szakaszt a Z magasságmérő hardver engedélyezéséhez lehet definiálni. Ha ez a szakasz engedélyezve van, a PROBE és a QUERY_PROBE kiterjesztett <a href="G-Codes.html#probe">G-kód parancsok</a> elérhetővé válnak. Lásd még a <a href="Probe_Calibrate.html">szonda kalibrálási útmutatót</a>. A szondaszekció létrehoz egy virtuális "probe:z_virtual_endstop" tűt is. A stepper_z endstop_pin-t erre a virtuális tűre állíthatjuk a cartesian stílusú nyomtatókon, amelyek a szondát használják a Z végállás helyett. Ha a "probe:z_virtual_endstop" típust használjuk, akkor ne definiáljunk position_endstop-ot a stepper_z konfigurációs szakaszban.</p>
 <div class="highlight"><pre><span></span><code>[probe]
 pin:
 #   Szonda érzékelési tű. Ha a tű más mikrokontrolleren van, mint a Z

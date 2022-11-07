@@ -1309,7 +1309,7 @@
 <div class="highlight"><pre><span></span><code>SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
 </code></pre></div>
 
-<p>Ezzel a paranccsal a fúvóka lassabban halad át a kanyarokon, hogy kiemelje az extrudernyomás hatását. Ezután a direkt extruderrel rendelkező nyomtatók esetében futtassa az alábbi parancsot:</p>
+<p>Ezzel a paranccsal a fúvóka lassabban halad át a kanyarokon, hogy kiemelje az extrudernyomás hatását. Ezután a direkt extruderrel rendelkező nyomtatók esetében futtasd az alábbi parancsot:</p>
 <div class="highlight"><pre><span></span><code>TUNING_TOWER COMMAND=SET_PRESSURE_ADVANCE PARAMETER=ADVANCE START=0 FACTOR=.005
 </code></pre></div>
 
@@ -1320,7 +1320,7 @@
 <p>Ezután nyomtasd ki az objektumot. Teljesen kinyomtatva a tesztnyomat így néz ki:</p>
 <p><img alt="tuning_tower" src="img/tuning_tower.jpg" /></p>
 <p>A fenti TUNING_TOWER parancs utasítja a Klippert, hogy a nyomtatás minden egyes rétegénél módosítsa a pressure_advance beállítást. A nyomtatás magasabb rétegeire nagyobb nyomáselőtolási érték lesz beállítva. Az ideális pressure_advance beállítás alatti rétegeknél a sarkoknál pattogás, az ideális beállítás feletti rétegeknél pedig lekerekített sarkok és gyenge extrudálás alakulhat ki a sarokig.</p>
-<p>A nyomtatást idő előtt megszakíthatja, ha azt észleli, hogy a sarkok már nem nyomtatnak jól (és így elkerülheti az olyan rétegek nyomtatását, amelyekről ismert, hogy az ideális pressure_advance érték felett vannak).</p>
+<p>A nyomtatást idő előtt megszakíthatod, ha azt észleled, hogy a sarkok már nem nyomtatódnak jól (és így elkerülheted az olyan rétegek nyomtatását, amelyekről ismert, hogy az ideális pressure_advance érték felett vannak).</p>
 <p>Ellenőrizd az objektumot, majd digitális tolómérővel mérd meg azt a magasságot, amely a legjobb minőségű sarkokkal rendelkezik. Ha kétségeid vannak, válaszd az alacsonyabb magasságot.</p>
 <p><img alt="tune_pa" src="img/tune_pa.jpg" /></p>
 <p>A pressure_advance értéket ezután a következőképpen lehet kiszámítani: <code>pressure_advance = &lt;start&gt; + &lt;measured_height&gt; * &lt;factor&gt;</code>. (Például <code>0 + 12,90 * .020</code> lenne <code>.258</code>.)</p>
