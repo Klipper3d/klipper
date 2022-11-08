@@ -50,7 +50,6 @@ CONFIG ../../config/printer-mtw-create-2015.cfg
 CONFIG ../../config/printer-robo3d-r2-2017.cfg
 CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
 CONFIG ../../config/printer-sovol-sv01-2020.cfg
-CONFIG ../../config/printer-sovol-sv04-2022.cfg
 CONFIG ../../config/printer-sunlu-s8-2020.cfg
 CONFIG ../../config/printer-tevo-flash-2018.cfg
 CONFIG ../../config/printer-tevo-tarantula-pro-2020.cfg
@@ -177,6 +176,7 @@ CONFIG ../../config/printer-eryone-er20-2021.cfg
 CONFIG ../../config/printer-flsun-q5-2020.cfg
 CONFIG ../../config/printer-flsun-qqs-2020.cfg
 CONFIG ../../config/printer-fokoos-odin5-f3-2021.cfg
+CONFIG ../../config/printer-sovol-sv04-2022.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-tronxy-x5sa-pro-2020.cfg
 CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
