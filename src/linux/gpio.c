@@ -147,11 +147,11 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     memset(&req, 0, sizeof(req));
     req.lines = 1;
     req.flags = GPIOHANDLE_REQUEST_INPUT;
-#if defined(GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP)
+#if defined(GPIOHANDLE_REQUEST_BIAS_PULL_UP)
     if (pull_up > 0) {
-        req.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP;
+        req.flags |= GPIOHANDLE_REQUEST_BIAS_PULL_UP;
     } else if (pull_up < 0) {
-        req.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN;
+        req.flags |= GPIOHANDLE_REQUEST_BIAS_PULL_DOWN;
     }
 #endif
     req.lineoffsets[0] = g.line->offset;
