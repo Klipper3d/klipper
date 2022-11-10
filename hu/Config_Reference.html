@@ -3645,7 +3645,7 @@ max_accel:
 </code></pre></div>
 
 <h3 id="stepper">[stepper]<a class="headerlink" href="#stepper" title="Permanent link">&para;</a></h3>
-<p>Léptetőmotor meghatározások. A különböző nyomtatótípusok (a [printer] config szakasz "kinematika" opciója által meghatározottak szerint) eltérő neveket igényelnek a léptető számára (pl. <code>stepper_x</code> vs <code>stepper_a</code>). Az alábbiakban a stepperek általános definíciói következnek.</p>
+<p>Léptetőmotor meghatározások. A különböző nyomtatótípusok (a [printer] config szakasz "kinematika" opciója által meghatározottak szerint) eltérő neveket igényelnek a léptető számára (pl. <code>stepper_x</code> vs <code>stepper_a</code>). Az alábbiakban a stepper-ek általános definíciói következnek.</p>
 <p>A <code>rotation_distance</code> paraméter kiszámításával kapcsolatos információkért lásd a <a href="Rotation_Distance.html">forgatási távolság dokumentumot</a>. A több mikrovezérlővel történő kezdőpont felvétellel kapcsolatos információkért lásd a <a href="Multi_MCU_Homing.html">Multi-MCU kezdőpont</a> dokumentumot.</p>
 <div class="highlight"><pre><span></span><code>[stepper_x]
 step_pin:
@@ -3722,7 +3722,7 @@ position_max:
 
 <h3 id="cartesian-kinematika">Cartesian Kinematika<a class="headerlink" href="#cartesian-kinematika" title="Permanent link">&para;</a></h3>
 <p>Lásd <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-cartesian.cfg">example-cartesian.cfg</a> egy példa cartesian kinematika konfigurációs fájlhoz.</p>
-<p>Itt csak a cartesian nyomtatókra jellemző paraméterek kerülnek leírásra. A rendelkezésre álló paramétereket lásd a <a href="#common-kinematic-settings">általános kinematikai beállítások</a> pontban.</p>
+<p>Itt csak a cartesian nyomtatókra jellemző paraméterek kerülnek leírásra. A rendelkezésre álló paramétereket lásd az <a href="#common-kinematic-settings">általános kinematikai beállítások</a> pontban.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: cartesian
 max_z_velocity:
@@ -3749,7 +3749,7 @@ max_z_accel:
 </code></pre></div>
 
 <h3 id="linearis-delta-kinematika">Lineáris delta kinematika<a class="headerlink" href="#linearis-delta-kinematika" title="Permanent link">&para;</a></h3>
-<p>Lásd az <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-delta.cfg">example-delta.cfg</a> példát a lineáris delta kinematika konfigurációs fájljához. A kalibrálással kapcsolatos információkért lásd a <a href="Delta_Calibrate.html">delta kalibrációs útmutató</a> dokumentumot.</p>
+<p>Lásd az <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-delta.cfg">example-delta.cfg</a> példát a lineáris delta kinematika konfigurációs fájljához. A kalibrálással kapcsolatos információkért lásd a <a href="Delta_Calibrate.html">delta kalibrációs</a> dokumentumot.</p>
 <p>Itt csak a lineáris delta nyomtatókra jellemző paraméterek kerülnek leírásra. A rendelkezésre álló paramétereket lásd az <a href="#common-kinematic-settings">általános kinematikai beállítások</a> pontban.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: delta

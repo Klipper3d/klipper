@@ -1314,17 +1314,17 @@
 <li>Ne másold be a mező dokumentációját a példakonfigurációs fájlokba. (Ez karbantartási terhet jelent, mivel a dokumentáció frissítése sok helyen változtatást igényelne.)</li>
 <li>A példa konfigurációs fájlok nem tartalmazhatnak "SAVE_CONFIG" részt. Ha szükséges, másold át a SAVE_CONFIG szakaszból a megfelelő mezőket a fő konfigurációs terület megfelelő szakaszába.</li>
 <li>Használd a <code>field: value</code> szintaxist a <code>field=value</code> helyett.</li>
-<li>Extruder <code>rotation_distance</code> hozzáadásakor célszerű megadni a <code>gear_ratio</code> értéket, ha az extruder fogaskerékkel rendelkezik. A példakonfigurációkban szereplő rotation_distance értéktől azt várjuk, hogy korreláljon az extruderben lévő fogaskerék kerületével. Ez általában 20 és 35 mm közötti tartományban van. A <code>gear_ratio</code> megadásakor előnyösebb a mechanizmuson lévő tényleges fogaskerekek fogszámának megadása (pl. inkább <code>gear_ratio: 80:20</code>, mint <code>gear_ratio: 4:1</code>). További információkért lásd a <a href="Rotation_Distance.html#using-a-gear_ratio">forgatási távolság dokumentumot</a>.</li>
-<li>Kerülje az alapértelmezett értékre beállított mezőértékek meghatározását. Például nem szabad megadni <code>min_extrude_temp: 170</code>, mivel ez már az alapértelmezett érték.</li>
+<li>Extruder <code>rotation_distance</code> hozzáadásakor célszerű megadni a <code>gear_ratio</code> értéket, ha az extruder fogaskerékkel rendelkezik. A példakonfigurációkban szereplő rotation_distance értéktől azt várjuk, hogy korreláljon az extruder-ben lévő fogaskerék kerületével. Ez általában 20 és 35 mm közötti tartományban van. A <code>gear_ratio</code> megadásakor előnyösebb a mechanizmuson lévő tényleges fogaskerekek fogszámának megadása (pl. inkább <code>gear_ratio: 80:20</code>, mint <code>gear_ratio: 4:1</code>). További információkért lásd a <a href="Rotation_Distance.html#using-a-gear_ratio">forgatási távolság dokumentumot</a>.</li>
+<li>Kerüld az alapértelmezett értékre beállított mezőértékek meghatározását. Például nem szabad megadni <code>min_extrude_temp: 170</code>, mivel ez már az alapértelmezett érték.</li>
 <li>Ahol lehetséges, a sorok száma nem haladhatja meg a 80 oszlopot.</li>
-<li>Kerülje el az attribúciós vagy revíziós üzenetek hozzáadását a konfigurációs fájlokhoz. (Például kerülje az olyan sorok hozzáadását, mint a "this file was created by ..."). Helyezd el az attribúciót és a változtatási előzményeket a git commit üzenetben.</li>
+<li>Kerüld el az attribúciós vagy revíziós üzenetek hozzáadását a konfigurációs fájlokhoz. (Például kerüld az olyan sorok hozzáadását, mint a "this file was created by ..."). Helyezd el az attribúciót és a változtatási előzményeket a git commit üzenetben.</li>
 </ol>
 </li>
 <li>Ne használj semmilyen elavult funkciót a példakonfigurációs fájlban.</li>
-<li>Ne tiltson le egy alapértelmezett biztonsági rendszert egy példakonfig-fájlban. Például egy konfiguráció nem adhat meg egy egyéni <code>max_extrude_cross_section</code> értéket. Ne engedélyezd a hibakeresési funkciókat. Például ne legyen <code>force_move</code> config szakasz.</li>
-<li>A Klipper által támogatott összes ismert kártya az alapértelmezett 250000-es soros adatátvitelt tudja használni. Ne javasoljon eltérő adatátvitel beállítását egy példa konfigurációs fájlban.</li>
+<li>Ne tilts le egy alapértelmezett biztonsági rendszert egy példakonfig-fájlban. Például egy konfiguráció nem adhat meg egy egyéni <code>max_extrude_cross_section</code> értéket. Ne engedélyezd a hibakeresési funkciókat. Például ne legyen <code>force_move</code> config szakasz.</li>
+<li>A Klipper által támogatott összes ismert kártya az alapértelmezett 250000-es soros adatátvitelt tudja használni. Ne javasolj eltérő adatátvitel beállítását egy példa konfigurációs fájlban.</li>
 </ol>
-<p>A példa konfigurációs fájlok elküldése egy github "pull request" létrehozásával történik. Kérjük, kövesse a <a href="CONTRIBUTING.html">közreműködő dokumentum</a> utasításait is.</p>
+<p>A példa konfigurációs fájlok elküldése egy GitHub "pull request" létrehozásával történik. Kérjük, kövesd a <a href="CONTRIBUTING.html">közreműködő dokumentum</a> utasításait is.</p>
 
               
             </article>

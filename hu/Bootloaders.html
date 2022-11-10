@@ -1677,7 +1677,7 @@ avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 </code></pre></div>
 
 <h3 id="atmega168">Atmega168<a class="headerlink" href="#atmega168" title="Permanent link">&para;</a></h3>
-<p>Az atmega168 korlátozott flash-tárhellyel rendelkezik. Ha bootloadert használ, ajánlott az Optiboot bootloadert használni. A bootloader égetéséhez használj valami hasonlót:</p>
+<p>Az atmega168 korlátozott flash-tárhellyel rendelkezik. Ha bootloader-t használ, ajánlott az Optiboot bootloader-t használni. A bootloader égetéséhez használj valami hasonlót:</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega168.hex&#39;
 
 avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0x04:m -U hfuse:w:0xDD:m -U lfuse:w:0xFF:m
@@ -1685,13 +1685,13 @@ avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U flash:w:optiboot_atmeg
 avrdude -cavrispv2 -patmega168 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 </code></pre></div>
 
-<p>Az Optiboot bootloaderrel történő alkalmazás égetéséhez használj valami hasonlót:</p>
+<p>Az Optiboot bootloader-el történő alkalmazás égetéséhez használj valami hasonlót:</p>
 <div class="highlight"><pre><span></span><code>avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 </code></pre></div>
 
 <h2 id="sam3-mikrovezerlok-arduino-due">SAM3 mikrovezérlők (Arduino Due)<a class="headerlink" href="#sam3-mikrovezerlok-arduino-due" title="Permanent link">&para;</a></h2>
 <p>A SAM3 MCU-val nem szokás bootloadert használni. Maga a chip rendelkezik egy ROM-mal, amely lehetővé teszi a flash programozását 3,3V-os soros portról vagy USB-ről.</p>
-<p>A ROM engedélyezéséhez az "erase" csapot magasan kell tartani a visszaállítás során, ami törli a flash tartalmát, és a ROM-ot elindítja. Egy Arduino Due-n ez a szekvencia úgy valósítható meg, hogy a "programozó usb port" (a tápegységhez legközelebbi USB port) 1200-as baud sebességet állít be.</p>
+<p>A ROM engedélyezéséhez az "erase" tűt magasan kell tartani a visszaállítás során, ami törli a flash tartalmát, és a ROM-ot elindítja. Az Arduino Due-n ezt a sorrendet úgy lehet elérni, hogy 1200-as adatátviteli sebességet állítunk be a "programozási usb-porton" (a tápegységhez legközelebbi USB-porton).</p>
 <p>A <a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a> alatti kód használható a SAM3 programozásához. Az 1.9-es vagy újabb verzió használata ajánlott.</p>
 <p>Egy alkalmazás égetéséhez használj valami olyasmit, mint:</p>
 <div class="highlight"><pre><span></span><code>bossac -U -p /dev/ttyACM0 -a -e -w out/klipper.bin -v -b
@@ -1708,7 +1708,7 @@ bossac -U -p /dev/ttyACM0 -R
 
 <h2 id="samd21-mikrovezerlok-arduino-zero">SAMD21 mikrovezérlők (Arduino Zero)<a class="headerlink" href="#samd21-mikrovezerlok-arduino-zero" title="Permanent link">&para;</a></h2>
 <p>A SAMD21 bootloader az ARM Serial Wire Debug (SWD) interfészen keresztül töltődik fel. Ez általában egy dedikált SWD hardver dongle segítségével történik. Alternatívaként használhatunk egy <a href="#az-openocd-futtatasa-a-raspberry-pi-n">OpenOCD futtatást a Raspberry PI-n</a>.</p>
-<p>A bootloader OpenOCD-vel történő égetéséhez használd a következő chipkonfigurációt:</p>
+<p>A bootloader OpenOCD-vel történő égetéséhez használd a következő chip konfigurációt:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/at91samdXX.cfg]
 </code></pre></div>
 

@@ -1452,7 +1452,7 @@ opcionális argumentumok:
 <li>Csak az SD-kártya SPI kommunikációt használó alaplapok támogatottak. Az SDIO-t használó alaplapok, mint például a Flymaker Flyboard és az MKS Robin Nano V1/V2, nem működnek SDIO módban. Az ilyen alaplapok azonban általában a szoftveres SPI mód használatával égethetők. Ha azonban az alaplap bootloadere csak SDIO módot használ az SD-kártya eléréséhez, akkor az alaplap és az SD-kártya bekapcsolása szükséges ahhoz, hogy az SPI-ről vissza tudjon állni SDIO módra az újrafrissítés befejezéséhez. Az ilyen alaplapokat a <code>skip_verify</code> engedélyezésével kell definiálni, hogy az égetés után azonnal kihagyható legyen a verify lépés. Ezután a kézi bekapcsolás után újra lefuttathatod pontosan ugyanazt a <code>./scripts/flash-sdcard.sh</code> parancsot, de hozzáadhatod a <code>-c</code> opciót az ellenőrzés/ellenőrzés művelet befejezéséhez. Példákért lásd az <a href="#flashing-boards-that-use-sdio">SDIO-val égető alaplapok</a> részt.</li>
 </ul>
 <h2 id="alaplap-definiciok">Alaplap definíciók<a class="headerlink" href="#alaplap-definiciok" title="Permanent link">&para;</a></h2>
-<p>A legtöbb általános alaplapnak rendelkezésre kell állnia, azonban szükség esetén új alaplap definíciót is hozzáadhat. Az alaplapdefiníciók a <code>~/klipper/scripts/spi_flash/board_defs.py</code> állományban találhatók. A definíciókat például lexikonban tároljuk:</p>
+<p>A legtöbb általános alaplapnak rendelkezésre kell állnia, azonban szükség esetén új alaplap definíciót is hozzáadhatsz. Az alaplap-definíciók a <code>~/klipper/scripts/spi_flash/board_defs.py</code> állományban találhatók. A definíciókat például lexikonban tároljuk:</p>
 <div class="highlight"><pre><span></span><code><span class="n">BOARD_DEFS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;generic-lpc1768&#39;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s1">&#39;mcu&#39;</span><span class="p">:</span> <span class="s2">&quot;lpc1768&quot;</span><span class="p">,</span>
@@ -1468,7 +1468,7 @@ opcionális argumentumok:
 <li><code>mcu</code>: Az mcu típusa. Ezt a készlet <code>make menuconfig</code> segítségével történő konfigurálása után a <code>cat .config | grep CONFIG_MCU</code> futtatásával lehet visszakeresni. Ez a mező kötelezően kitöltendő.</li>
 <li><code>spi_bus</code>: Az SD-kártyához csatlakoztatott SPI-busz. Ezt a tábla kapcsolási rajzából kell visszakeresni. Ez a mező kötelező.</li>
 <li><code>cs_pin</code>: Az SD-kártyához csatlakoztatott chipkiválasztó tű. Ezt a kártya kapcsolási rajzából kell visszakeresni. Ez a mező kötelező.</li>
-<li><code>firmware_path</code>: Az SD-kártyán lévő elérési útvonal, ahová a firmware-t át kell vinni. Az alapértelmezett érték <code>firmware.bin</code>.</li>
+<li><code>firmware_path</code>: Az SD-kártyán lévő elérési útvonal, ahová a firmware-t át kell vinni. Az alapértelmezett <code>firmware.bin</code>.</li>
 <li><code>current_firmware_path</code>: Az SD-kártyán lévő elérési útvonal, ahol az átnevezett firmware fájl található a sikeres égetés után. Az alapértelmezett név: <code>firmware.cur</code>.</li>
 <li><code>skip_verify</code>: Ez egy logikai értéket határoz meg, amely a szkripteknek azt mondja meg, hogy hagyja ki a firmware ellenőrzésének lépését az égetési folyamat során. Az alapértelmezett érték <code>False</code>. Ez az érték <code>True</code> értékre állítható olyan kártyák esetében, amelyeknél az égetés befejezéséhez kézi bekapcsolás szükséges. A firmware utólagos ellenőrzéséhez futtasd újra a szkriptet a <code>-c</code> opcióval, hogy elvégezd az ellenőrzési lépést. <a href="#caveats">Lásd az SDIO kártyákkal kapcsolatos figyelmeztetéseket</a></li>
 </ul>
@@ -1477,10 +1477,10 @@ opcionális argumentumok:
 <li><code>spi_pins</code>: Ennek 3 vesszővel elválasztott tűnek kell lennie, amelyek <code>miso,mosi,sclk</code> formátumban csatlakoznak az SD-kártyához.</li>
 </ul>
 <p>Rendkívül ritkán van szükség a szoftveres SPI-re, jellemzően csak a tervezési hibás vagy az SD-kártyájuk SDIO módját támogató kártyáknál lesz rá szükség. A <code>btt-skr-pro</code> alaplap definíciója az előbbire ad példát, a <code>btt-octopus-f446-v1</code> alaplap definíciója pedig az utóbbira.</p>
-<p>Egy új alaplap definíció létrehozása előtt ellenőrizni kell, hogy egy meglévő alaplap definíció megfelel-e az új alaplap számára szükséges kritériumoknak. Ha ez a helyzet, akkor egy <code>BOARD_ALIAS</code> adható meg. Például a következő álnév adható hozzá <code>az én-új alaplapom</code> álneveként a <code>generic-lpc1768</code> meghatározásához:</p>
+<p>Egy új alaplap definíció létrehozása előtt ellenőrizni kell, hogy egy meglévő alaplap definíció megfelel-e az új alaplap számára szükséges kritériumoknak. Ha ez a helyzet, akkor egy <code>BOARD_ALIAS</code> adható meg. Például a következő álnév adható hozzá <code>my-new-board</code> álneveként a <code>generic-lpc1768</code> meghatározásához:</p>
 <div class="highlight"><pre><span></span><code><span class="n">BOARD_ALIASES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="o">...&lt;</span><span class="n">previous</span> <span class="n">aliases</span><span class="o">&gt;</span><span class="p">,</span>
-    <span class="s1">&#39;my-new-board&#39;</span><span class="p">:</span> <span class="n">BOARD_DEFS</span><span class="p">[</span><span class="s1">&#39;generic-lpc1768&#39;</span><span class="p">],</span>
+     <span class="o">...&lt;</span><span class="n">previous</span> <span class="n">aliases</span><span class="o">&gt;</span><span class="p">,</span>
+     <span class="s1">&#39;my-new-board&#39;</span><span class="p">:</span> <span class="n">BOARD_DEFS</span><span class="p">[</span><span class="s1">&#39;generic-lpc1768&#39;</span><span class="p">],</span>
 <span class="p">}</span>
 </code></pre></div>
 

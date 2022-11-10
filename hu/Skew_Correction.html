@@ -1369,7 +1369,7 @@ Length AD = 99.8
 </code></pre></div>
 
 <p>A parancs után a rendszer felszólítja a <code>SAVE_CONFIG</code> G-kód kiadását a profil tartós tárolóba történő mentéséhez. Ha nincs <code>my_skew_profile</code> nevű profil, akkor egy új profil jön létre. Ha a megnevezett profil létezik, akkor azt felülírja.</p>
-<p>Ha már van mentett profilja, betöltheti azt:</p>
+<p>Ha már van mentett profilod, betöltheted azt:</p>
 <div class="highlight"><pre><span></span><code>SKEW_PROFILE LOAD=my_skew_profile
 </code></pre></div>
 
@@ -1377,9 +1377,9 @@ Length AD = 99.8
 <div class="highlight"><pre><span></span><code>SKEW_PROFILE REMOVE=my_skew_profile
 </code></pre></div>
 
-<p>A profil eltávolítása után a rendszer felszólítja, hogy adj ki egy <code>SAVE_CONFIG</code> parancsot, hogy a módosítás mentésre kerüljön.</p>
+<p>A profil eltávolítása után a rendszer felszólít, hogy adj ki egy <code>SAVE_CONFIG</code> parancsot a módosítások mentéséhez.</p>
 <h2 id="a-korrekcio-ellenorzese">A korrekció ellenőrzése<a class="headerlink" href="#a-korrekcio-ellenorzese" title="Permanent link">&para;</a></h2>
-<p>A skew_correction beállítása után újra kinyomtathatja a kalibrációs részt a korrekció engedélyezésével. A következő G-kóddal ellenőrizheti a ferdeséget minden síkban. Az eredményeknek alacsonyabbaknak kell lenniük, mint a <code>GET_CURRENT_SKEW</code> segítségével jelentett eredmények.</p>
+<p>A skew_correction beállítása után újra kinyomtathatod a kalibrációs tárgyat a korrekció engedélyezésével. A következő G-kóddal ellenőrizheted a ferdeséget minden síkban. Az eredményeknek alacsonyabbaknak kell lenniük, mint a <code>GET_CURRENT_SKEW</code> segítségével jelentett eredmények.</p>
 <div class="highlight"><pre><span></span><code>CALC_MEASURED_SKEW AC=&lt;ac_length&gt; BD=&lt;bd_length&gt; AD=&lt;ad_length&gt;
 </code></pre></div>
 

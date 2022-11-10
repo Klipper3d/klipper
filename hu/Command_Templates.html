@@ -1522,13 +1522,13 @@ gcode:
 </code></pre></div>
 
 <h3 id="makro-parameterek">Makró paraméterek<a class="headerlink" href="#makro-parameterek" title="Permanent link">&para;</a></h3>
-<p>Gyakran hasznos a makrónak a meghívásakor átadott paraméterek vizsgálata. Ezek a paraméterek a <code>params</code> álváltozóval érhetők el. Például, ha a makró:</p>
+<p>Gyakran hasznos a makrónak a meghívásakor átadott paraméterek vizsgálata. Ezek a paraméterek a <code>params</code> pszeudo változóval érhetők el. Például, ha a makró:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro SET_PERCENT]
 gcode:
   M117 Now at { params.VALUE|float * 100 }%
 </code></pre></div>
 
-<p><code>SET_PERCENT VALUE=.2</code> értéket adna, akkor <code>M117 Most 20%-os értéken</code>. Vedd figyelembe, hogy a paraméternevek a makróban történő kiértékeléskor mindig nagybetűsek, és mindig karakterláncként kerülnek átadásra. Ha matematikai műveletet hajtunk végre, akkor azokat explicit módon egész számokká vagy lebegőszámokká kell konvertálni.</p>
+<p><code>SET_PERCENT VALUE=.2</code> értéket adsz, akkor <code>M117 Most 20%-os értéken van</code>. Vedd figyelembe, hogy a paraméternevek a makróban történő kiértékeléskor mindig nagybetűsek, és mindig karakterláncként kerülnek átadásra. Ha matematikai műveletet hajtunk végre, akkor azokat explicit módon egész számokká vagy lebegőszámokká kell konvertálni.</p>
 <p>Gyakori a Jinja2 <code>set</code> direktíva használata egy alapértelmezett paraméter használatához és az eredmény hozzárendelése egy helyi névhez. Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro SET_BED_TEMPERATURE]
 gcode:
@@ -1550,7 +1550,7 @@ gcode:
 <p>A rendelkezésre álló mezők a <a href="Status_Reference.html">Referencia állapot</a> dokumentumban vannak meghatározva.</p>
 <p>Fontos! A makrók először teljes egészében kiértékelésre kerülnek, és csak ezután kerülnek végrehajtásra a kapott parancsok. Ha egy makró olyan parancsot ad ki, amely megváltoztatja a nyomtató állapotát, az állapotváltozás eredményei nem lesznek láthatóak a makró kiértékelése során. Ez akkor is furcsa viselkedést eredményezhet, ha egy makró más makrókat, hívó parancsokat generál, mivel a meghívott makró a meghíváskor kerül kiértékelésre (ami a hívó makró teljes kiértékelése után történik).</p>
 <p>A konvenció szerint a <code>printer</code> után közvetlenül következő név a config szakasz neve. Így például a <code>printer.fan</code> a <code>[fan]</code> config szakasz által létrehozott ventilátor objektumra utal. Van néhány kivétel ez alól a szabály alól. Nevezetesen a <code>gcode_move</code> és a <code>toolhead</code> objektumok. Ha a config szakasz szóközöket tartalmaz, akkor a <code>[ ]</code> jellel lehet elérni. Például: <code>printer["generic_heater my_chamber_heater"].temperature</code>.</p>
-<p>Vegyük észre, hogy a Jinja2 <code>set</code> direktíva a <code>printer</code> hierarchiában lévő objektumhoz rendelhet helyi nevet. Ez olvashatóbbá teheti a makrókat és csökkentheti a gépelést. Például:</p>
+<p>Vegyük figyelembe, hogy a Jinja2 <code>set</code> direktíva a <code>printer</code> hierarchiában lévő objektumhoz rendelhet helyi nevet. Ez olvashatóbbá teheti a makrókat és csökkentheti a gépelést. Például:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro QUERY_HTU21D]
 gcode:
     {% set sensor = printer[&quot;htu21d my_sensor&quot;] %}

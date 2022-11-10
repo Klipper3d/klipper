@@ -1011,8 +1011,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#a-regresszios-tesztek-futtatasa" class="md-nav__link">
-    A regressziós tesztek futtatása
+  <a href="#regresszios-tesztek-futtatasa" class="md-nav__link">
+    Regressziós tesztek futtatása
   </a>
   
 </li>
@@ -1317,8 +1317,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#a-regresszios-tesztek-futtatasa" class="md-nav__link">
-    A regressziós tesztek futtatása
+  <a href="#regresszios-tesztek-futtatasa" class="md-nav__link">
+    Regressziós tesztek futtatása
   </a>
   
 </li>
@@ -1397,8 +1397,8 @@
 
 <h1 id="hibakereses">Hibakeresés<a class="headerlink" href="#hibakereses" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper hibakeresési eszközeinek egy részét ismerteti.</p>
-<h2 id="a-regresszios-tesztek-futtatasa">A regressziós tesztek futtatása<a class="headerlink" href="#a-regresszios-tesztek-futtatasa" title="Permanent link">&para;</a></h2>
-<p>A Klipper GitHub fő tárolója a "github actions" -t használd egy sor regressziós teszt futtatásához. Hasznos lehet néhány ilyen tesztet helyben futtatni.</p>
+<h2 id="regresszios-tesztek-futtatasa">Regressziós tesztek futtatása<a class="headerlink" href="#regresszios-tesztek-futtatasa" title="Permanent link">&para;</a></h2>
+<p>A Klipper GitHub fő tárolója a "github actions"-t használja egy sor regressziós teszt futtatásához. Hasznos lehet néhány ilyen tesztet helyben futtatni.</p>
 <p>A forráskód "whitespace check" a következővel futtatható:</p>
 <div class="highlight"><pre><span></span><code>./scripts/check_whitespace.sh
 </code></pre></div>
@@ -1409,12 +1409,12 @@
 </code></pre></div>
 
 <h2 id="parancsok-kezi-kuldese-a-mikrokontrollernek">Parancsok kézi küldése a mikrokontrollernek<a class="headerlink" href="#parancsok-kezi-kuldese-a-mikrokontrollernek" title="Permanent link">&para;</a></h2>
-<p>Normális esetben a G-kód parancsokat a klippy.py folyamat fordítja Klipper mikrokontroller parancsokra. Azonban az is lehetséges, hogy manuálisan küldjük el ezeket az MCU-parancsokat (a Klipper forráskódjában a DECL_COMMAND() makróval jelölt függvények). Ehhez futtassa a következőket:</p>
+<p>Normális esetben a G-kód parancsokat a klippy.py folyamat fordítja Klipper mikrokontroller parancsokra. Azonban az is lehetséges, hogy manuálisan küldjük el ezeket az MCU-parancsokat (a Klipper forráskódjában a DECL_COMMAND() makróval jelölt függvények). Ehhez futtasd a következőket:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/console.py /tmp/pseudoserial
 </code></pre></div>
 
-<p>Az eszközön belül a "HELP" parancsban talál további információkat a funkcióiról.</p>
-<p>Néhány parancssori opció is rendelkezésre áll. További információkért futtassa a: <code>~/klippy-env/bin/python ./klippy/console.py --help</code> parancsot</p>
+<p>Az eszközön belül a "HELP" parancsban találsz további információkat a funkcióiról.</p>
+<p>Néhány parancssori opció is rendelkezésre áll. További információkért futtasd a: <code>~/klippy-env/bin/python ./klippy/console.py --help</code> parancsot</p>
 <h2 id="a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra">A G-kód fájlok lefordítása mikrokontroller-parancsokra<a class="headerlink" href="#a-g-kod-fajlok-leforditasa-mikrokontroller-parancsokra" title="Permanent link">&para;</a></h2>
 <p>A Klippy gazdagép kódja futhat kötegelt üzemmódban, hogy előállítsa a G-kód fájlhoz tartozó alacsony szintű mikrokontroller-parancsokat. Ezeknek az alacsony szintű parancsoknak a vizsgálata hasznos, amikor megpróbálod megérteni az alacsony szintű hardver műveleteit. Az is hasznos lehet, hogy összehasonlítsuk a mikrokontroller-parancsok közötti különbséget egy kódváltás után.</p>
 <p>A Klippy futtatásához ebben a kötegelt üzemmódban egy egyszeri lépés szükséges a mikrokontroller "adatszótár" létrehozásához. Ez a mikrokontroller kódjának lefordításával történik, hogy megkapjuk az <strong>out/klipper.dict</strong> fájlt:</p>
@@ -1476,7 +1476,7 @@ sudo apt-get install python-matplotlib
 </code></pre></div>
 
 <p>Ezután megtekinthetjük az eredményül kapott <strong>loadgraph.png</strong> fájlt.</p>
-<p>Különböző grafikonok készíthetők. További információért futtassa: <code>~/klipper/scripts/graphstats.py --help</code></p>
+<p>Különböző grafikonok készíthetők. További információért futtasd: <code>~/klipper/scripts/graphstats.py --help</code></p>
 <h2 id="informaciok-kinyerese-a-klippylog-fajlbol">Információk kinyerése a klippy.log fájlból<a class="headerlink" href="#informaciok-kinyerese-a-klippylog-fajlbol" title="Permanent link">&para;</a></h2>
 <p>A Klippy naplófájl (/tmp/klippy.log) szintén tartalmaz hibakeresési információkat. Van egy logextract.py szkript, amely hasznos lehet egy mikrokontroller leállásának vagy hasonló problémának az elemzésekor. Általában valami ilyesmivel futtatható:</p>
 <div class="highlight"><pre><span></span><code>mkdir work_directory

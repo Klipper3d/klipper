@@ -1739,10 +1739,10 @@
 <ol>
 <li>Válaszd ki a kezdőpont felvételi sebességet.</li>
 <li>Konfiguráld a <code>printer.cfg</code> fájlt, hogy engedélyezd az érzékelő nélküli kezdőpont felvételt.</li>
-<li>Keresse meg a legnagyobb érzékenységű StallGuard beállítást, amely sikeresen felveszi a kezdőpontot.</li>
-<li>Keresse meg a legalacsonyabb érzékenységű StallGuard-beállítást, amely egyetlen érintéssel sikeres megállást jelez.</li>
-<li>Frissítse a <code>printer.cfg</code> állományt a kívánt StallGuard beállítással.</li>
-<li>Hozzon létre vagy frissítse a <code>printer.cfg</code> makrókat, hogy kéznél legyenek.</li>
+<li>Keresd meg a legnagyobb érzékenységű StallGuard beállítást, amely sikeresen felveszi a kezdőpontot.</li>
+<li>Keresd meg a legalacsonyabb érzékenységű StallGuard-beállítást, amely egyetlen érintéssel sikeres megállást jelez.</li>
+<li>Frissítsd a <code>printer.cfg</code> állományt a kívánt StallGuard beállítással.</li>
+<li>Hozd létre vagy frissítsd a <code>printer.cfg</code> makróit, hogy kéznél legyenek.</li>
 </ol>
 <h4 id="valaszd-ki-a-kezdopont-felveteli-sebesseget">Válaszd ki a kezdőpont felvételi sebességet<a class="headerlink" href="#valaszd-ki-a-kezdopont-felveteli-sebesseget" title="Permanent link">&para;</a></h4>
 <p>A kezdőpont felvételi sebesség fontos választás az érzékelő nélküli kezdőpont felvétel során. Ajánlott lassú állítási sebességet használni, hogy a kocsi ne gyakoroljon túlzott erőt a keretre, amikor a sín végével érintkezik. A TMC motorvezérlők azonban nagyon lassú sebességeknél nem képesek megbízhatóan érzékelni az elakadást.</p>
@@ -1755,7 +1755,7 @@ homing_speed: 20
 
 <h4 id="a-printercfg-beallitasa-erzekelo-nelkuli-kezdopont-felvetelhez">A printer.cfg beállítása érzékelő nélküli kezdőpont felvételhez<a class="headerlink" href="#a-printercfg-beallitasa-erzekelo-nelkuli-kezdopont-felvetelhez" title="Permanent link">&para;</a></h4>
 <p>A <code>homing_retract_dist</code> beállítást nullára kell állítani a <code>stepper_x</code> config szakaszban a második kezdőpont felvételi mozdulat letiltásához. A második kezdőpont felvételi kísérlet nem ad hozzáadott értéket az érzékelő nélküli kezdőpont felvételhez, nem fog megbízhatóan működni, és összezavarja a hangolási folyamatot.</p>
-<p>Győződj meg róla, hogy a konfiguráció TMC motorvezérlő részlegében nincs megadva <code>hold_current</code> beállítás. (Ha hold_current használatban van, akkor a kapcsolat létrejötte után a motor megáll, miközben a kocsi a sín végéhez van nyomva, és az áram csökkentése ebben a helyzetben a kocsi mozgását okozhatja. Ez rossz teljesítményt eredményez, és összezavarja a hangolási folyamatot.)</p>
+<p>Győződj meg róla, hogy a konfiguráció TMC motorvezérlő részlegében nincs megadva <code>hold_current</code> beállítás. (Ha hold_current használatban van, akkor a kapcsolat létrejötte után a motor megáll, miközben a kocsi a sín végéhez van nyomva, és az áram csökkentése ebben a helyzetben a kocsi elmozdulhat. Ez rossz teljesítményt eredményez, és összezavarja a hangolási folyamatot.)</p>
 <p>Szükséges a szenzor nélküli kezdőpont felvételi tűk konfigurálása és a kezdeti "StallGuard" beállítások konfigurálása. Egy TMC2209 példakonfiguráció egy X tengelyhez így nézhet ki:</p>
 <div class="highlight"><pre><span></span><code>[tmc2209 stepper_x]
 diag_pin: ^PA1       # A TMC DIAG tűhöz csatlakoztatott MCU tűre állítva.
