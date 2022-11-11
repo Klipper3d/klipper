@@ -1,7 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Test console for webhooks interface
 #
-# Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2020 Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2022 John Unland
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, optparse, socket, fcntl, select, json, errno, time
@@ -81,7 +82,6 @@ def main():
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-
     ml = KeyboardReader(args[0])
     ml.run()
 

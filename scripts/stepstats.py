@@ -1,7 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to calculate stats for each stepper from a log of messages
 #
-# Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016 Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2022 John Unland
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse
@@ -32,9 +33,9 @@ def main():
             so = steppers[args['oid']]
             so[2] += 1
             so[{'0': 3, '1': 4}[so[1]]] += int(args['count'])
-    for oid, so in sorted([(int(i[0]), i[1]) for i in steppers.items()]):
-        print "oid:%3d dir_cmds:%6d queue_cmds:%7d (%8d -%8d = %8d)" % (
-            oid, so[0], so[2], so[4], so[3], so[4]-so[3])
+    for oid, so in sorted([(int(i[0]), i[1]) for i in list(steppers.items())]):
+        print("oid:%3d dir_cmds:%6d queue_cmds:%7d (%8d -%8d = %8d)" % (
+            oid, so[0], so[2], so[4], so[3], so[4]-so[3]))
 
 if __name__ == '__main__':
     main()

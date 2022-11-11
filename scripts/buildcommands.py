@@ -1,7 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to handle build time requests embedded in C code.
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021 Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2022 John Unland
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
@@ -42,7 +43,7 @@ class HandleCallList:
         pass
     def generate_code(self, options):
         code = []
-        for funcname, funcs in self.call_lists.items():
+        for funcname, funcs in list(self.call_lists.items()):
             func_code = ['    extern void %s(void);\n    %s();' % (f, f)
                          for f in funcs]
             if funcname == 'ctr_run_taskfuncs':
@@ -224,7 +225,7 @@ class Handle_arm_irq:
         max_irq = max(self.irqs.keys())
         table = ["    DefaultHandler,\n"] * (max_irq + armcm_offset + 1)
         defs = []
-        for num, func in self.irqs.items():
+        for num, func in list(self.irqs.items()):
             if num < 1 - armcm_offset:
                 error("Invalid IRQ %d (%s)" % (num, func))
             defs.append("extern void %s(void);\n" % (func,))
@@ -295,18 +296,20 @@ class HandleCommandGeneration:
     def update_data_dictionary(self, data):
         # Handle message ids over 96 (they are decoded as negative numbers)
         msg_to_tag = {msg: msgid if msgid < 96 else msgid - 128
-                      for msg, msgid in self.msg_to_id.items()}
+                      for msg, msgid in list(self.msg_to_id.items())}
         command_tags = [msg_to_tag[msg]
-                        for msgname, msg in self.messages_by_name.items()
+                        for msgname, msg in list(self.messages_by_name.items())
                         if msgname in self.commands]
         response_tags = [msg_to_tag[msg]
-                         for msgname, msg in self.messages_by_name.items()
+                         for msgname, msg in list(self.messages_by_name.items())
                          if msgname not in self.commands]
-        data['commands'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+        data['commands'] = { msg: msgtag for msg,
+                             msgtag in list(msg_to_tag.items())
                              if msgtag in command_tags }
-        data['responses'] = { msg: msgtag for msg, msgtag in msg_to_tag.items()
+        data['responses'] = { msg: msgtag for msg,
+                              msgtag in list(msg_to_tag.items())
                               if msgtag in response_tags }
-        output = {msg: msgtag for msg, msgtag in msg_to_tag.items()
+        output = {msg: msgtag for msg, msgtag in list(msg_to_tag.items())
                   if msgtag not in command_tags and msgtag not in response_tags}
         if output:
             data['output'] = output
@@ -386,7 +389,7 @@ ctr_lookup_output(const char *str)
     def generate_commands_code(self):
         cmd_by_id = {
             self.msg_to_id[self.messages_by_name.get(msgname, msgname)]: cmd
-            for msgname, cmd in self.commands.items()
+            for msgname, cmd in list(self.commands.items())
         }
         max_cmd_msgid = max(cmd_by_id.keys())
         index = []
@@ -416,7 +419,7 @@ const uint8_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
         return fmt % (externs, index)
     def generate_param_code(self):
         sorted_param_types = sorted(
-            [(i, a) for a, i in self.all_param_types.items()])
+            [(i, a) for a, i in list(self.all_param_types.items())])
         params = ['']
         for paramid, argtypes in sorted_param_types:
             params.append(
@@ -595,7 +598,8 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     # Parse request file
-    ctr_dispatch = { k: v for h in Handlers for k, v in h.ctr_dispatch.items() }
+    ctr_dispatch = { k: v for h in Handlers for k,
+                     v in list(h.ctr_dispatch.items()) }
     f = open(incmdfile, 'r')
     data = f.read()
     f.close()
