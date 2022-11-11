@@ -31,6 +31,16 @@ Atmel.SAMD51_DFP.1.1.96.atpack zip file found at:
   http://packs.download.atmel.com/
 version 1.1.96 (extracted on 20190110).
 
+The same51 directory contains code from the
+Atmel.SAME51_DFP.1.1.139.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.1.139 (extracted on 20220929).
+
+The same54 directory contains code from the
+Atmel.SAME54_DFP.1.1.134.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.1.134 (extracted on 20221005).
+
 The same70b directory contains code from the
 Atmel.SAME70_DFP.2.4.166.atpack zip file found at:
   http://packs.download.atmel.com/
@@ -136,4 +146,4 @@ used to upload firmware to devices flashed with the CanBoot bootloader.
 
 The can2040 directory contains code from:
   https://github.com/KevinOConnor/can2040
-revision 9ca095c939a48391de60dd353f0cd91999bb9257.
+revision aff2940f1fa5b0c9822a7694403ec9d70710193d.
