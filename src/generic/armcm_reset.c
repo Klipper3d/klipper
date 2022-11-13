@@ -17,10 +17,10 @@
 static void
 canboot_reset(uint64_t req_signature)
 {
-    if (!(CONFIG_FLASH_START & 0x00FFFFFF))
+    if (CONFIG_FLASH_START == CONFIG_FLASH_BOOT_ADDRESS)
         // No bootloader
         return;
-    uint32_t *bl_vectors = (uint32_t *)(CONFIG_FLASH_START & 0xFF000000);
+    uint32_t *bl_vectors = (uint32_t *)CONFIG_FLASH_BOOT_ADDRESS;
     uint64_t *boot_sig = (uint64_t *)(bl_vectors[1] - 9);
     uint64_t *req_sig = (uint64_t *)bl_vectors[0];
     if (boot_sig == (void *)ALIGN((size_t)boot_sig, 8) &&
