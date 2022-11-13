@@ -164,6 +164,10 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743
 
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x8000000
+
 config RAM_START
     hex
     default 0x20000000
