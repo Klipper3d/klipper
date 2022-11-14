@@ -80,8 +80,9 @@ class SafeZHoming:
             # Perform Z Hop again for pressure-based probes
             if self.z_hop:
                 pos = toolhead.get_position()
-                toolhead.manual_move([None, None, pos[2] + self.z_hop],
-                                     self.z_hop_speed)
+                if pos[2] < self.z_hop:
+                    toolhead.manual_move([None, None, self.z_hop],
+                                         self.z_hop_speed)
             # Move XY back to previous positions
             if self.move_to_previous:
                 toolhead.manual_move(prevpos[:2], self.speed)
