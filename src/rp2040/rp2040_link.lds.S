@@ -23,8 +23,10 @@ SECTIONS
         _text_vectortable_start = .;
         KEEP(*(.vector_table))
         _text_vectortable_end = .;
-        *(.text .text.*)
-        *(.rodata .rodata*)
+        *(.text.ResetHandler)
+        *(.text.reset_handler_stage_two)
+        *(.text.memcpy)
+        *(.text.memset)
     } > rom
 
     . = ALIGN(4);
@@ -34,6 +36,8 @@ SECTIONS
     {
         . = ALIGN(4);
         _data_start = .;
+        *(.text .text.*)
+        *(.rodata .rodata*)
         *(.ramfunc .ramfunc.*);
         *(.data .data.*);
         . = ALIGN(4);

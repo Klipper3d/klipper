@@ -164,7 +164,7 @@ clock_setup(void)
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
-void
+void noinline
 armcm_main(void)
 {
     clock_setup();
