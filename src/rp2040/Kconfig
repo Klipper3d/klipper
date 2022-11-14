@@ -70,6 +70,11 @@ config FLASH_START
     hex
     default 0x10004000 if RP2040_FLASH_START_4000
     default 0x10000100
+config RP2040_BINARY_START
+    hex
+    default 0x10004000 if RP2040_FLASH_START_4000
+    default 0x10000000
+
 
 choice
     prompt "Flash chip" if LOW_LEVEL_OPTIONS && RP2040_HAVE_STAGE2
