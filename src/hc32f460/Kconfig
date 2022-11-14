@@ -66,10 +66,14 @@ config FLASH_SIZE
     hex
     default 0x40000
 
-config FLASH_BOOT_ADDRESS
+config FLASH_START 
     hex
     default 0x8000 if ANYCUBIC_KOBRA || VOXELAB_AQUILA_X1
     default 0xC000 if VOXELAB_AQUILA
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
 
 config RAM_SIZE
     hex
