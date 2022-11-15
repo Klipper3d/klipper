@@ -1406,7 +1406,7 @@ speed: 50.
 screw_thread: CW-M3
 </code></pre></div>
 
-<p>Az 1. csavar mindig a referenciapont a többi csavar számára, így a rendszer feltételezi, hogy az 1. csavar a megfelelő magasságban van. Először mindig futtassa le a <code>G28</code> G-kódot, majd futtassa le a <code>SCREWS_TILT_CALCULATE</code> parancsot. Ennek a következőhöz hasonló kimenetet kell eredményeznie:</p>
+<p>Az 1. csavar mindig a referenciapont a többi csavar számára, így a rendszer feltételezi, hogy az 1. csavar a megfelelő magasságban van. Először mindig futtasd le a <code>G28</code> G-kódot, majd futtasd le a <code>SCREWS_TILT_CALCULATE</code> parancsot. Ennek a következőhöz hasonló kimenetet kell eredményeznie:</p>
 <div class="highlight"><pre><span></span><code>Send: G28
 Recv: ok
 Send: SCREWS_TILT_CALCULATE
@@ -1429,7 +1429,7 @@ Recv: ok
 <p>Ismételd meg a folyamatot többször, amíg egy jó vízszintes tárgyasztalt nem kapsz. Általában akkor jó, ha minden beállítás 6 percnyi fordulat alatt van.</p>
 <p>Ha olyan szondát használsz, amely a nyomtatófej oldalára van szerelve (azaz X vagy Y eltolással rendelkezik), akkor vedd figyelembe, hogy a tárgyasztal dőlésének beállítása érvényteleníti a korábbi, dőlésszögű tárgyasztalon végzett szintkalibrálást. A tárgyasztal csavarjainak beállítása után mindenképpen futtasd le a <a href="Probe_Calibrate.html">szonda kalibrálása</a> parancsot.</p>
 <p>A <code>MAX_DEVIATION</code> paraméter akkor hasznos, ha egy mentett tárgyasztal hálót használunk, hogy biztosítsuk, hogy a tárgyasztal szintje ne térjen el túlságosan attól a helytől, ahol a háló létrehozásakor volt. Például a <code>SCREWS_TILT_CALCULATE MAX_DEVIATION=0.01</code> hozzáadható a szeletelő egyéni indító G-kódjához a háló betöltése előtt. Ez megszakítja a nyomtatást, ha a beállított határértéket túllépi (ebben a példában 0,01 mm), lehetőséget adva a felhasználónak a csavarok beállítására és a nyomtatás újraindítására.</p>
-<p>A <code>DIRECTION</code> paraméter akkor hasznos, ha a tárgyasztal szintező csavarjait csak egy irányba tudja elfordítani. Például lehetnek olyan csavarjai, amelyek a lehető legalacsonyabb (vagy legmagasabb) pozícióban vannak meghúzva, és csak egy irányba forgathatók a tárgyasztal emeléséhez (vagy süllyesztéséhez). Ha a csavarokat csak az óramutató járásával megegyező irányban tudja elfordítani, futtassa a <code>SCREWS_TILT_CALCULATE DIRECTION=CW</code> parancsot. Ha csak az óramutató járásával ellentétes irányban tudja elforgatni őket, futtassa a <code>SCREWS_TILT_CALCULATE DIRECTION=CCW</code> parancsot. A program kiválaszt egy megfelelő referenciapontot, hogy a tárgyasztalt az összes csavar adott irányba történő elfordításával szintezhesse.</p>
+<p>A <code>DIRECTION</code> paraméter akkor hasznos, ha a tárgyasztal szintező csavarjait csak egy irányba tudod elfordítani. Például lehetnek olyan csavarjaid, amelyek a lehető legalacsonyabb (vagy legmagasabb) pozícióban vannak meghúzva, és csak egy irányba forgathatók a tárgyasztal emeléséhez (vagy süllyesztéséhez). Ha a csavarokat csak az óramutató járásával megegyező irányban tudod elfordítani, futtasd a <code>SCREWS_TILT_CALCULATE DIRECTION=CW</code> parancsot. Ha csak az óramutató járásával ellentétes irányban tudod elforgatni őket, futtasd a <code>SCREWS_TILT_CALCULATE DIRECTION=CCW</code> parancsot. A program kiválaszt egy megfelelő referenciapontot, hogy a tárgyasztalt az összes csavar adott irányba történő elfordításával szintezhesd.</p>
 
               
             </article>
