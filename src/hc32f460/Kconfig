@@ -46,6 +46,7 @@ config LED_TASK
 choice
     prompt "Communication interface"
     config HC32F460_SERIAL_PA3_PA2
+        depends on ANYCUBIC_KOBRA
         bool "Serial (PA3 & PA2) - Anycube"
         select SERIAL
     config HC32F460_SERIAL_PA15_PA9
