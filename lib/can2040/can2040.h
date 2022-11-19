@@ -63,12 +63,11 @@ struct can2040 {
 
     // Input data state
     uint32_t parse_state;
-    uint32_t parse_crc;
+    uint32_t parse_crc, parse_crc_bits, parse_crc_pos;
     struct can2040_msg parse_msg;
 
     // Reporting
     uint32_t report_state;
-    uint32_t report_eof_key;
 
     // Transmits
     uint32_t tx_state;
