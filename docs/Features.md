@@ -12,7 +12,7 @@ Klipper has several compelling features:
   kinematic estimations (such as the Bresenham algorithm) - instead it
   calculates precise step times based on the physics of acceleration
   and the physics of the machine kinematics. More precise stepper
-  movement translates to quieter and more stable printer operation.
+  movement provides quieter and more stable printer operation.
 
 * Best in class performance. Klipper is able to achieve high stepping
   rates on both new and old micro-controllers. Even old 8bit
@@ -52,6 +52,13 @@ Klipper has several compelling features:
   from simple kinematic equations. This makes porting Klipper to new
   types of robots easier and it keeps timing precise even with complex
   kinematics (no "line segmentation" is needed).
+
+* Klipper is hardware agnostic. One should get the same precise timing
+  independent of the low-level electronics hardware. The Klipper
+  micro-controller code is designed to faithfully follow the schedule
+  provided by the Klipper host software (or prominently alert the user
+  if it is unable to). This makes it easier to use available hardware,
+  to upgrade to new hardware, and to have confidence in the hardware.
 
 * Portable code. Klipper works on ARM, AVR, and PRU based
   micro-controllers. Existing "reprap" style printers can run Klipper
