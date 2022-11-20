@@ -231,6 +231,15 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 DICTIONARY rp2040.dict
 CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
 
+# Voxelab Printers using the hc32f460
+DICTIONARY hc32f460-voxelab.dict
+CONFIG ../../config/printer-voxelab-aquila-2021.cfg
+CONFIG ../../config/printer-voxelab-aquila-x1-2021.cfg
+
+# Anycubic Printers using trigorilla board with the hc32f460
+DICTIONARY hc32f460-trigorilla.dict
+CONFIG ../../config/printer-anycubic-kobra-2022.cfg
+
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
 CONFIG ../../config/generic-cramps.cfg
