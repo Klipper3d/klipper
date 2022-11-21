@@ -71,6 +71,7 @@ DICTIONARY atmega1284p.dict
 CONFIG ../../config/generic-melzi.cfg
 CONFIG ../../config/printer-anet-a4-2018.cfg
 CONFIG ../../config/printer-anet-a8-2017.cfg
+CONFIG ../../config/printer-anet-a8-2019.cfg
 CONFIG ../../config/printer-anet-e10-2018.cfg
 CONFIG ../../config/printer-anet-e16-2019.cfg
 CONFIG ../../config/printer-creality-cr10-2017.cfg
@@ -176,7 +177,7 @@ CONFIG ../../config/printer-eryone-er20-2021.cfg
 CONFIG ../../config/printer-flsun-q5-2020.cfg
 CONFIG ../../config/printer-flsun-qqs-2020.cfg
 CONFIG ../../config/printer-fokoos-odin5-f3-2021.cfg
-CONFIG ../../config/printer-geeetech-301.cfg
+CONFIG ../../config/printer-geeetech-301-2019.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-tronxy-x5sa-pro-2020.cfg
 CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
