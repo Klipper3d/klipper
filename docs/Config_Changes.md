@@ -8,10 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
-20221114: Previously, with safe_z_home, it was possible that the
+20221122: Previously, with safe_z_home, it was possible that the
 z_hop after the g28 homing would go in the negative z direction.
 Now, a z_hop is performed after g28 only if it results in a positive
-hop, mirroring the behavior of the z_hop the occurs before
+hop, mirroring the behavior of the z_hop that occurs before
 the g28 homing.
 
 20220616: It was previously possible to flash an rp2040 in bootloader
