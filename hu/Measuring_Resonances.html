@@ -1619,7 +1619,7 @@ probe_points:
     100, 100, 20 # egy példa
 </code></pre></div>
 
-<p>Javasoljuk, hogy 1 mérőpontal kezd, a nyomtatási tárgyasztal közepén, kissé felette.</p>
+<p>Javasoljuk, hogy 1 mérőponttal kezd, a nyomtatási tárgyasztal közepén, kissé felette.</p>
 <p>Az MPU-9250 esetében győződj meg róla, hogy a Linux I2C illesztőprogram engedélyezve van, és az átviteli sebesség 400000-re van állítva (további részletekért lásd az <a href="RPi_microcontroller.html#optional-enabling-i2c">I2C engedélyezése</a> részt). Ezután adjuk hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
@@ -1634,34 +1634,34 @@ probe_points:
     100, 100, 20  # an example
 </code></pre></div>
 
-<p>Indítsa újra a Klippert a <code>RESTART</code> paranccsal.</p>
+<p>Indítsd újra a Klippert a <code>RESTART</code> paranccsal.</p>
 <h2 id="a-rezonanciak-merese">A rezonanciák mérése<a class="headerlink" href="#a-rezonanciak-merese" title="Permanent link">&para;</a></h2>
 <h3 id="a-beallitas-ellenorzese">A beállítás ellenőrzése<a class="headerlink" href="#a-beallitas-ellenorzese" title="Permanent link">&para;</a></h3>
-<p>Most már tesztelheti a kapcsolatot.</p>
+<p>Most már tesztelheted a kapcsolatot.</p>
 <ul>
 <li>A "nem tárgyasztalt érintő" (pl. egy gyorsulásmérő), az Octoprintbe írd be az <code>ACCELEROMETER_QUERY</code> parancsot</li>
-<li>A "bed-slingers" (pl. egynél több gyorsulásmérő) esetében írd be az <code>ACCELEROMETER_QUERY CHIP=&lt;chip&gt;</code> ahol <code>&lt;chip&gt;</code> a chip neve a beírt formában, pl. <code>CHIP=bed</code> (lásd: <a href="#bed-slinger-nyomtatok">bed-slinger nyomtatók</a>) az összes telepített gyorsulásmérő chiphez.</li>
+<li>A "bed-slingers" (pl. egynél több gyorsulásmérő) esetében írd be az <code>ACCELEROMETER_QUERY CHIP=&lt;chip&gt;</code> ahol <code>&lt;chip&gt;</code> a chip neve a beírt formában, pl. <code>CHIP=bed</code> (lásd: <a href="#bed-slinger-nyomtatok">bed-slinger nyomtatók</a>) az összes telepített gyorsulásmérő chip-hez.</li>
 </ul>
 <p>A gyorsulásmérő aktuális méréseit kell látnia, beleértve a szabadesés gyorsulását is, pl.</p>
 <div class="highlight"><pre><span></span><code>Visszahívás: // adxl345 értékek (x, y, z): 470.719200, 941.438400, 9728.196800
 </code></pre></div>
 
-<p>Ha olyan hibát kap, mint <code>Invalid adxl345 id (got xx vs e5)</code>, ahol <code>xx</code> valami más azonosító, azaz ADXL345-öt érintő kapcsolati problémára vagy a hibás érzékelőre utal. Ellenőrizd kétszer is a tápellátást, a kábelezést (hogy megfelel-e a kapcsolási rajzoknak, nincs-e törött vagy laza vezeték stb.) és a forrasztás minőségét.</p>
-<p>Ezután próbáld meg futtatni a <code>MEASURE_AXES_NOISE</code> parancsot az Octoprintben, így kaphatsz néhány alapszámot a gyorsulásmérő zajára a tengelyeken (valahol a ~1-100-as tartományban kell lennie). A túl magas tengelyzaj (pl. 1000 és több) az érzékelő problémáira, a tápellátásával kapcsolatos problémákra vagy a 3D nyomtató túl zajos, kiegyensúlyozatlan ventilátoraira utalhat.</p>
+<p>Ha olyan hibát kapsz, mint <code>Invalid adxl345 id (got xx vs e5)</code>, ahol <code>xx</code> valami más azonosító, azaz ADXL345-öt érintő kapcsolati problémára vagy a hibás érzékelőre utal. Ellenőrizd kétszer is a tápellátást, a kábelezést (hogy megfelel-e a kapcsolási rajzoknak, nincs-e törött vagy laza vezeték stb.) és a forrasztás minőségét.</p>
+<p>Ezután próbáld meg futtatni a <code>MEASURE_AXES_NOISE</code> parancsot az Octoprint-ben, így kaphatsz néhány alapszámot a gyorsulásmérő zajára a tengelyeken (valahol a ~1-100-as tartományban kell lennie). A túl magas tengelyzaj (pl. 1000 és több) az érzékelő problémáira, a tápellátásával kapcsolatos problémákra vagy a 3D nyomtató túl zajos, kiegyensúlyozatlan ventilátoraira utalhat.</p>
 <h3 id="a-rezonanciak-merese_1">A rezonanciák mérése<a class="headerlink" href="#a-rezonanciak-merese_1" title="Permanent link">&para;</a></h3>
-<p>Most már lefuttathat néhány valós tesztet. Futtassa a következő parancsot:</p>
+<p>Most már lefuttathatsz néhány valós tesztet. Futtasd a következő parancsot:</p>
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=X
 </code></pre></div>
 
 <p>Vedd figyelembe, hogy az X tengelyen rezgéseket hoz létre. A bemeneti alakítást is letiltja, ha az korábban engedélyezve volt, mivel a rezonancia tesztelés nem érvényes a bemeneti alakító engedélyezésével.</p>
-<p><strong>Figyelem!</strong> Az első alkalommal mindenképpen figyelje meg a nyomtatót, hogy a rezgések ne legyenek túl hevesek (az <code>M112</code> paranccsal vészhelyzet esetén megszakítható a teszt; remélhetőleg azonban erre nem kerül sor). Ha a rezgések mégis túl erősek lesznek, megpróbálhat az alapértelmezettnél alacsonyabb értéket megadni az <code>accel_per_hz</code> paraméterhez a <code>[resonance_tester]</code> szakaszban, pl.</p>
+<p><strong>Figyelem!</strong> Az első alkalommal mindenképpen figyeld meg a nyomtatót, hogy a rezgések ne legyenek túl hevesek (az <code>M112</code> paranccsal vészhelyzet esetén megszakítható a teszt; remélhetőleg azonban erre nem kerül sor). Ha a rezgések mégis túl erősek lesznek, megpróbálhatsz az alapértelmezettnél alacsonyabb értéket megadni az <code>accel_per_hz</code> paraméterhez a <code>[resonance_tester]</code> szakaszban, pl.</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 accel_chip: adxl345
 accel_per_hz: 50  # default is 75
 probe_points: ...
 </code></pre></div>
 
-<p>Ha az X tengelyen működik, futtassa az Y tengelyen is:</p>
+<p>Ha az X tengelyen működik, futtasd az Y tengelyen is:</p>
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=Y
 </code></pre></div>
 

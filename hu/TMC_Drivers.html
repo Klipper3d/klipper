@@ -888,15 +888,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#keresse-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van" class="md-nav__link">
-    Keresse meg a legalacsonyabb érzékenységet, amely egyetlen érintéssel kezdőponton van
+  <a href="#keresd-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van" class="md-nav__link">
+    Keresd meg a legalacsonyabb érzékenységet, amely egyetlen érintéssel kezdőponton van
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#frissitse-a-printercfg-fajlt-az-erzekenysegi-ertekkel" class="md-nav__link">
-    Frissítse a printer.cfg fájlt az érzékenységi értékkel
+  <a href="#frissitsd-a-printercfg-fajlt-az-erzekenysegi-ertekkel" class="md-nav__link">
+    Frissítsd a printer.cfg fájlt az érzékenységi értékkel
   </a>
   
 </li>
@@ -1547,15 +1547,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#keresse-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van" class="md-nav__link">
-    Keresse meg a legalacsonyabb érzékenységet, amely egyetlen érintéssel kezdőponton van
+  <a href="#keresd-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van" class="md-nav__link">
+    Keresd meg a legalacsonyabb érzékenységet, amely egyetlen érintéssel kezdőponton van
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#frissitse-a-printercfg-fajlt-az-erzekenysegi-ertekkel" class="md-nav__link">
-    Frissítse a printer.cfg fájlt az érzékenységi értékkel
+  <a href="#frissitsd-a-printercfg-fajlt-az-erzekenysegi-ertekkel" class="md-nav__link">
+    Frissítsd a printer.cfg fájlt az érzékenységi értékkel
   </a>
   
 </li>
@@ -1802,15 +1802,15 @@ homing_retract_dist: 0
 </code></pre></div>
 
 <p>Ezután adj ki egy <code>G28 X0</code> parancsot, és ellenőrizd, hogy a tengely egyáltalán nem mozog, vagy gyorsan megáll. Ha a tengely nem áll meg, akkor adj ki egy <code>M112</code> parancsot a nyomtató megállítására. Valami nem stimmel a diag/sg_tst pin kábelezésével vagy konfigurációjával, és a folytatás előtt ki kell javítani.</p>
-<p>Ezután folyamatosan csökkentse a <code>VALUE</code> beállítás érzékenységét, és futtassa le újra a <code>SET_TMC_FIELD</code> <code>G28 X0</code> parancsokat, hogy megtalálja a legnagyobb érzékenységet, amely a kocsi sikeres mozgását eredményezi a végállásig és a megállásig. (A TMC2209 motorvezérlők esetében ez az SGTHRS csökkentése, más vezérlők esetében az sgt növelése lesz.) Ügyelj arra, hogy minden kísérletet úgy kezdj, hogy a kocsi a sín közepéhez közel legyen (ha szükséges, adj ki egy <code>M84</code> parancsot, majd kézzel mozgasd a kocsit középállásba). Meg kell találni a legnagyobb érzékenységet, amely megbízhatóan jelzi a végállást (a nagyobb érzékenységű beállítások kicsi vagy semmilyen mozgást nem eredményeznek). Jegyezze fel a kapott értéket <em>maximum_sensitivity</em> néven. (Ha a lehető legkisebb érzékenységet (SGTHRS=0 vagy sgt=63) kapjuk a kocsi elmozdulása nélkül, akkor valami nincs rendben a diag/sg_tst tűk bekötésével vagy konfigurációjával, és a folytatás előtt ki kell javítani.)</p>
+<p>Ezután folyamatosan csökkentsd a <code>VALUE</code> beállítás érzékenységét, és futtasd le újra a <code>SET_TMC_FIELD</code> <code>G28 X0</code> parancsokat, hogy megtaláld a legnagyobb érzékenységet, amely a kocsi sikeres mozgását eredményezi a végállásig és a megállásig. (A TMC2209 motorvezérlők esetében ez az SGTHRS csökkentése, más vezérlők esetében az sgt növelése lesz.) Ügyelj arra, hogy minden kísérletet úgy kezdj, hogy a kocsi a sín közepéhez közel legyen (ha szükséges, adj ki egy <code>M84</code> parancsot, majd kézzel mozgasd a kocsit középállásba). Meg kell találni a legnagyobb érzékenységet, amely megbízhatóan jelzi a végállást (a nagyobb érzékenységű beállítások kicsi vagy semmilyen mozgást nem eredményeznek). Jegyezd fel a kapott értéket <em>maximum_sensitivity</em> néven. (Ha a lehető legkisebb érzékenységet (SGTHRS=0 vagy sgt=63) kapjuk a kocsi elmozdulása nélkül, akkor valami nincs rendben a diag/sg_tst tűk bekötésével vagy konfigurációjával, és a folytatás előtt ki kell javítani.)</p>
 <p>A maximum_sensitivity keresésekor kényelmes lehet a különböző VALUE beállításokra ugrani (a VALUE paraméter kettéosztása érdekében). Ha ezt tesszük, akkor készüljünk fel arra, hogy a nyomtató leállításához adjunk ki egy <code>M112</code> parancsot, mivel egy nagyon alacsony érzékenységű beállítás miatt a tengely többször "beleütközhet" a sín végébe.</p>
 <p>Ügyelj arra, hogy várj néhány másodpercet minden egyes végállási kísérlet között. Miután a TMC motorvezérlő érzékeli az elakadást, eltarthat egy kis ideig, amíg a belső visszajelzője törlődik, és képes lesz egy újabb megállást érzékelni.</p>
 <p>Ha a hangolási tesztek során a <code>G28 X0</code> parancs nem mozdul el egészen a tengelyhatárig, akkor óvatosan kell eljárni a szabályos mozgatási parancsok kiadásával (pl. <code>G1</code>). A Klipper nem fogja helyesen értelmezni a kocsi helyzetét, és a mozgatási parancs nemkívánatos és zavaros eredményeket okozhat.</p>
-<h4 id="keresse-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van">Keresse meg a legalacsonyabb érzékenységet, amely egyetlen érintéssel kezdőponton van<a class="headerlink" href="#keresse-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van" title="Permanent link">&para;</a></h4>
-<p>Ha a kapott <em>maximum_sensitivity</em> értékkel állítja be a tengelyt a sín végére, és egy "egyszeri érintéssel" áll meg, azaz nem szabad, hogy "kattogó" vagy "csattanó" hangot halljon. (Ha a maximális érzékenység mellett csattanó vagy kattogó hang hallatszik, akkor a homing_speed túl alacsony, a meghajtóáram túl alacsony, vagy az érzékelő nélküli kezdőpont felvétel nem jó választás a tengely számára.)</p>
-<p>A következő lépés az, hogy a kocsit ismét a sín közepére mozgatjuk, csökkentjük az érzékenységet, és futtatjuk a <code>SET_TMC_FIELD</code> <code>G28 X0</code> parancsokat. A cél most az, hogy megtaláljuk a legkisebb érzékenységet, amely még mindig azt eredményezi, hogy a kocsi egy "egyetlen érintéssel" sikeresen célba ér. Vagyis nem "bumm" vagy "csatt" a sín végének érintésekor. Jegyezze meg a talált értéket <em>minimum_sensitivity</em>.</p>
-<h4 id="frissitse-a-printercfg-fajlt-az-erzekenysegi-ertekkel">Frissítse a printer.cfg fájlt az érzékenységi értékkel<a class="headerlink" href="#frissitse-a-printercfg-fajlt-az-erzekenysegi-ertekkel" title="Permanent link">&para;</a></h4>
-<p>A <em>maximum_sensitivity</em> és <em>minimum_sensitivity</em> megállapítása után számológép segítségével kapjuk meg az ajánlott érzékenységet a <em>minimum_sensitivity + (maximum_sensitivity - minimum_sensitivity)/3</em> képlettel. Az ajánlott érzékenységnek a minimális és maximális értékek közötti tartományban kell lennie, de valamivel közelebb a minimális értékhez. A végső értéket kerekítse a legközelebbi egész értékre.</p>
+<h4 id="keresd-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van">Keresd meg a legalacsonyabb érzékenységet, amely egyetlen érintéssel kezdőponton van<a class="headerlink" href="#keresd-meg-a-legalacsonyabb-erzekenyseget-amely-egyetlen-erintessel-kezdoponton-van" title="Permanent link">&para;</a></h4>
+<p>Ha a kapott <em>maximum_sensitivity</em> értékkel állítod be a tengelyt a sín végére, és egy "egyszeri érintéssel" áll meg, azaz nem szabad, hogy "kattogó" vagy "csattanó" hangot hallj. (Ha a maximális érzékenység mellett csattanó vagy kattogó hang hallatszik, akkor a homing_speed túl alacsony, a meghajtóáram túl alacsony, vagy az érzékelő nélküli kezdőpont felvétel nem jó választás a tengely számára.)</p>
+<p>A következő lépés az, hogy a kocsit ismét a sín közepére mozgatjuk, csökkentjük az érzékenységet, és futtatjuk a <code>SET_TMC_FIELD</code> <code>G28 X0</code> parancsokat. A cél most az, hogy megtaláljuk a legkisebb érzékenységet, amely még mindig azt eredményezi, hogy a kocsi egy "egyetlen érintéssel" sikeresen célba ér. Vagyis nem "bumm" vagy "csatt" a sín végének érintésekor. Jegyezd meg a talált értéket <em>minimum_sensitivity</em>.</p>
+<h4 id="frissitsd-a-printercfg-fajlt-az-erzekenysegi-ertekkel">Frissítsd a printer.cfg fájlt az érzékenységi értékkel<a class="headerlink" href="#frissitsd-a-printercfg-fajlt-az-erzekenysegi-ertekkel" title="Permanent link">&para;</a></h4>
+<p>A <em>maximum_sensitivity</em> és <em>minimum_sensitivity</em> megállapítása után számológép segítségével kapjuk meg az ajánlott érzékenységet a <em>minimum_sensitivity + (maximum_sensitivity - minimum_sensitivity)/3</em> képlettel. Az ajánlott érzékenységnek a minimális és maximális értékek közötti tartományban kell lennie, de valamivel közelebb a minimális értékhez. A végső értéket kerekítsd a legközelebbi egész értékre.</p>
 <p>A TMC2209 esetében ezt a konfigurációban a <code>driver_SGTHRS</code>, más TMC motorvezérlők esetében a <code>driver_SGT</code> értékkel kell beállítani.</p>
 <p>Ha a <em>maximum_sensitivity</em> és <em>minimum_sensitivity</em> közötti tartomány kicsi (pl. 5-nél kisebb), akkor ez instabil kezdőpont felvételt eredményezhet. A gyorsabb kezdőpont felvételi sebesség növelheti a hatótávolságot és stabilabbá teheti a működést.</p>
 <p>Vedd figyelembe, hogy ha bármilyen változás történik a motorvezérlő áramában, az indítási sebességben vagy a nyomtató hardverén, akkor a hangolási folyamatot újra el kell végezni.</p>

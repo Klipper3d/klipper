@@ -1669,7 +1669,7 @@
 <h3 id="register_remote_method">register_remote_method<a class="headerlink" href="#register_remote_method" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont lehetővé teszi az ügyfelek számára, hogy regisztrálják a klipperből hívható metódusokat. Siker esetén egy üres objektumot ad vissza.</p>
 <p>Például: <code>{"id": 123, "method": "register_remote_method", "params": {"response_template": {"action": "run_paneldue_beep"}, "remote_method": "paneldue_beep"}}}</code> fog visszatérni: <code>{"id": 123, "result": {}}</code></p>
-<p>A távoli <code>paneldue_beep</code> metódus mostantól hívható a Klipperből. Vegyük figyelembe, hogy ha a metódus paramétereket vesz fel, akkor azokat kulcsszavas argumentumként kell megadni. Az alábbiakban egy példa látható arra, hogyan hívható meg egy gcode_macro-ból:</p>
+<p>A távoli <code>paneldue_beep</code> metódus mostantól hívható a Klipper-ből. Vegyük figyelembe, hogy ha a metódus paramétereket vesz fel, akkor azokat kulcsszavas argumentumként kell megadni. Az alábbiakban egy példa látható arra, hogyan hívható meg egy gcode_macro-ból:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro PANELDUE_BEEP]
 gcode:
   {action_call_remote_method(&quot;paneldue_beep&quot;, frequency=300, duration=1.0)}
@@ -1682,7 +1682,7 @@ gcode:
 <p>Ez a végpont lehetővé teszi a nyomtató objektumokból származó információk lekérdezését. Például: <code>{"id": 123, "method": "objects/query", "params": {"objects": {"toolhead": ["position"], "webhooks": null}}}}</code> might return: <code>{"id": 123, "result": {"status": {"webhooks": {"state": "ready", "state_message": "Printer is ready"}, "toolhead": {"position": [0.0, 0.0, 0.0, 0.0, 0.0]}}, "eventtime": 3051555.377933684}}</code></p>
 <p>A kérés "objects" paraméterének egy szótárnak kell lennie, amely a lekérdezendő nyomtató objektumokat tartalmazza. A kulcs a nyomtató objektum nevét tartalmazza, az érték pedig vagy "null" (az összes mező lekérdezése), vagy a mezőnevek listája.</p>
 <p>A válaszüzenet tartalmaz egy "status" mezőt, amely egy szótárat tartalmaz a lekérdezett információkkal. A kulcs a nyomtató objektum nevét tartalmazza, az érték pedig a mezőit tartalmazó szótár. A válaszüzenet tartalmaz egy "eventtime" mezőt is, amely a lekérdezés időpontjának időbélyegét tartalmazza.</p>
-<p>A rendelkezésre álló mezők a <a href="Status_Reference.html">Állapothivatkozás</a> dokumentumban vannak dokumentálva.</p>
+<p>A rendelkezésre álló mezők az <a href="Status_Reference.html">Állapothivatkozás</a> dokumentumban vannak dokumentálva.</p>
 <h3 id="objectssubscribe">objects/subscribe<a class="headerlink" href="#objectssubscribe" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont lehetővé teszi a nyomtató objektumokból származó információk lekérdezését, majd előjegyzését. A végpont kérése és válasza megegyezik a "objects/query" végponttal. Például: <code>{"id": 123, "method": "objects/subscribe", "params": {"objects":{"toolhead": ["position"], "webhooks": ["state"]}, "response_template":{}}}</code> might return: <code>{"id": 123, "result": {"status": {"webhooks": {"state": "ready"}, "toolhead": {"position": [0.0, 0.0, 0.0, 0.0, 0.0]}}, "eventtime": 3052153.382083195}}</code> és az ezt követő aszinkron üzeneteket eredményez, mint például: <code>{"params": {"status": {"webhooks": {"state": "shutdown"}}, "eventtime": 3052165.418815847}}</code></p>
 <h3 id="gcodehelp">gcode/help<a class="headerlink" href="#gcodehelp" title="Permanent link">&para;</a></h3>
