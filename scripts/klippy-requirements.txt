@@ -4,7 +4,7 @@
 #   pip install -r klippy-requirements.txt
 cffi==1.14.6
 pyserial==3.4
-greenlet==1.1.2
+greenlet==2.0.1
 Jinja2==2.11.3
 python-can==3.3.4
 markupsafe==1.1.1
