@@ -26,8 +26,8 @@ position_endstop, and bed_screws values for the x and y axix
 
 TODOs:
 * look at capabilities of the on board sd card
-* ads1118 - add support for min/max temp checking
 * ads1118 - test error conditions and make sure they are handled
+* ads1118 - look at new code in spi_temperature for faults and pull in
 * add documentation for configuring slicers (rep2 specifics)
 
 Installation
