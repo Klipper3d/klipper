@@ -24,14 +24,21 @@ struct thermocouple_spi {
     uint32_t rest_time;
     uint32_t min_value;           // Min allowed ADC value
     uint32_t max_value;           // Max allowed ADC value
-    uint32_t cold_junction;
+    uint32_t value;
     struct spidev_s *spi;
-    uint8_t chip_type, flags, state;
+    uint8_t chip_type, flags;
 };
 
 enum {
     TS_PENDING = 1,
 };
+
+uint32_t ads_cj;
+uint32_t ads_t1;
+uint32_t ads_t2;
+uint16_t cj_loop;
+uint8_t has_b;
+uint8_t state;
 
 static struct task_wake thermocouple_wake;
 
@@ -51,12 +58,18 @@ command_config_ads1118(uint32_t *args)
     uint8_t chip_type = args[2];
     if (chip_type > TS_CHIP_ADS1118B)
         shutdown("Invalid thermocouple chip type");
+
+    struct thermocouple_spi *spi = oid_alloc(
+        args[0], command_config_ads1118, sizeof(*spi));
+    spi->timer.func = thermocouple_event;
+    // only ads1118a communicates to the chip via spi
     if (chip_type == TS_CHIP_ADS1118A) {
-        struct thermocouple_spi *spi = oid_alloc(
-            args[0], command_config_ads1118, sizeof(*spi));
-        spi->timer.func = thermocouple_event;
         spi->spi = spidev_oid_lookup(args[1]);
-        spi->chip_type = chip_type;
+    }
+    spi->chip_type = chip_type;
+
+    if (chip_type == TS_CHIP_ADS1118B) {
+        has_b = 1;
     }
 }
 DECL_COMMAND(command_config_ads1118,
@@ -65,6 +78,8 @@ DECL_COMMAND(command_config_ads1118,
 void
 command_query_ads1118(uint32_t *args)
 {
+    sendf("ads1118_query oid=%c type=%c",
+          args[0], args[1]);
     struct thermocouple_spi *spi = oid_lookup(
         args[0], command_config_ads1118);
 
@@ -89,89 +104,88 @@ ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
     sendf("ads1118_result oid=%c next_clock=%u value=%u value2=%u fault=%c",
           oid, next_begin_time, value, value2, fault);
     /* check the result and stop if below or above allowed range */
-    //if (value < spi->min_value || value > spi->max_value)
-        //sendf("thermocouple_out_of_range oid=%c next_clock=%u value=%u "
-        //       "min=%u max=%u", oid, next_begin_time, value, spi->min_value,
-        //       spi->max_value);
+    if (value < spi->min_value || value > spi->max_value) {
+        sendf("thermocouple_out_of_range oid=%c next_clock=%u value=%u "
+               "min=%u max=%u", oid, next_begin_time, value, spi->min_value,
+               spi->max_value);
         //try_shutdown("Thermocouple ADC out of range");
+    }
 }
-
-uint32_t ads_cj;
-uint32_t ads_t1;
 
 static void
 thermocouple_handle_ads1118(struct thermocouple_spi *spi
                              , uint32_t next_begin_time, uint8_t oid)
 {
-    // dout goes low if data is ready to read.
-    // only read the temperature on every N cycles (10x less than that others)
-    // only read 2nd thermocouple if configured
-    // when initializing, detect if other oids with same chip are configured
-    // store all three setting in the spi record, send therm1 and therm2 values
-    // only upon successful read
     uint8_t msg[4];
-    if (spi->state <= 1) {
-        // current reading should be 2 (AIN0, AIN1)
-        // set next reading to 3 (AIN2, AIN3)
-        // start conversion, AIN2, AIN3, .256V, single shot
-        msg[0] = 0b10111101;
-        // 64 SPS, ADC mode, pullup disabled, update config, reserved
-        msg[1] = 0b01100010;
-        msg[2] = msg[0];
-        msg[3] = msg[1];
-        spi->state = 2;
-    } else if (spi->state == 2) {
-        // current reading should be 3 (AIN2, AIN3)
-        // set next reading to be 1 (cold junction)
+    uint8_t cur_state = state;
+    uint8_t next_state;
+
+    next_state = cur_state + 1;
+    // only set next_state to 3 (ads1118b) if configured
+    if (cur_state == 2 && !has_b) {
+        next_state = 4;
+    }
+
+    // loop around to state 1, but only read the cold junction every 10th iteration
+    if (next_state == 4) {
+        next_state = 1;
+        cj_loop += 1;
+        if (cj_loop < 9) {
+            next_state = 2;
+        } else {
+            cj_loop = 0;
+        }
+    }
+
+    // set the ads1118 to read the next_state
+    if (next_state == 1) {
+        // set next reading to be cold junction
         // start conversion, AIN0, AIN1, .256V, single shot
         msg[0] = 0b10001101;
         // 64 SPS, cold junction mode, pullup disabled, update config, reserved
         msg[1] = 0b01110010;
-        msg[2] = msg[0];
-        msg[3] = msg[1];
-        spi->state = 3;
-    } else if (spi->state == 3) {
-        // current reading should be 1 (cold junction)
-        // set next reading to 2 (AIN0, AIN1)
+    } else if (next_state == 2) {
+        // set next reading to ADS1118A (AIN0, AIN1)
         // start conversion, AIN0, AIN1, .256V, single shot
         msg[0] = 0b10001101;
         // 64 SPS, ADC mode, pullup disabled, update config, reserved
         msg[1] = 0b01100010;
-        msg[2] = msg[0];
-        msg[3] = msg[1];
-        spi->state = 1;
+    } else if (next_state == 3) {
+        // set next reading to ADS1118B (AIN2, AIN3)
+        // start conversion, AIN2, AIN3, .256V, single shot
+        msg[0] = 0b10111101;
+        // 64 SPS, ADC mode, pullup disabled, update config, reserved
+        msg[1] = 0b01100010;
     }
+    // send message twice
+    msg[2] = msg[0];
+    msg[3] = msg[1];
 
     spidev_transfer(spi->spi, 1, sizeof(msg), msg);
     uint32_t value;
     memcpy(&value, msg, sizeof(value));
     value = be32_to_cpu(value) >> 16;
 
-    if (spi->state == 1) {
+    // value will be for the cur_state
+    if (cur_state == 0) {
+        // init - read cold junction next time around
+    } else if (cur_state == 1) {
         uint32_t value1 = value >> 2;
         ads_cj = value1;
-        spi->cold_junction = value1;
-        //sendf("thermocouple_result_0 oid=%c next_clock=%u value=%u state=%c",
-        //       oid, next_begin_time, value1, spi->state);
-    }
-    if (spi->state == 2) {
-        //sendf("thermocouple_result_1 oid=%c next_clock=%u value=%u state=%c",
-        //       oid, next_begin_time, value, spi->state);
+        sendf("thermocouple_result_cj oid=%c next_clock=%u value=%u state=%c",
+               oid, next_begin_time, value1, state);
+    } else if (cur_state == 2) {
+        sendf("thermocouple_result_ads1118a oid=%c next_clock=%u value=%u state=%c",
+               oid, next_begin_time, value, state);
 
-        // need to know if the cold_junction value has been read
-        // error condition if we don't have a recent reading
-        ads1118_respond(spi, next_begin_time, value, spi->cold_junction, 0,
-                        oid);
-    }
-    if (spi->state == 3) {
-        //sendf("thermocouple_result_2 oid=%c next_clock=%u value=%u state=%c",
-        //       oid, next_begin_time, value, spi->state);
-
-        //can't send this until we figure out how to set multiple oids
-        //thermocouple_respond_ads1118(spi, next_begin_time, result, 0, oid);
         ads_t1 = value;
-    }
+    } else if (cur_state == 3) {
+        sendf("thermocouple_result_ads1118b oid=%c next_clock=%u value=%u state=%c",
+               oid, next_begin_time, value, state);
 
+        ads_t2 = value;
+    }
+    state = next_state;
 
     // Kill after data send, host decode an error
     //if (value & 0x04)
@@ -196,12 +210,16 @@ ads1118_task(void)
         switch (spi->chip_type) {
         case TS_CHIP_ADS1118A:
             thermocouple_handle_ads1118(spi, next_begin_time, oid);
+            if (ads_t1 > 0) {
+                ads1118_respond(spi, next_begin_time, ads_t1, ads_cj, 0, oid);
+                ads_t1 = 0;
+            }
             break;
         case TS_CHIP_ADS1118B:
-            ads1118_respond(spi, next_begin_time, ads_t1, ads_cj, 0, oid);
-            sendf("thermocouple_result_2a oid=%c value=%u value2=%u state=%c",
-                   oid, ads_t1, ads_cj, spi->state);
-            //thermocouple_handle_ads1118(spi, next_begin_time, oid);
+            if (ads_t2 > 0) {
+                ads1118_respond(spi, next_begin_time, ads_t2, ads_cj, 0, oid);
+                ads_t2 = 0;
+            }
             break;
         }
     }

@@ -22,11 +22,10 @@ class SensorBase:
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
     def setup_minmax(self, min_temp, max_temp):
-        # max_temp = calc using calc_adc(max_temp) and calc_cj(??)
-        # min_temp = calc using calc_adc(min_temp) and calc_cj(min_temp)
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
         self.min_sample_value = min(adc_range)
         self.max_sample_value = max(adc_range)
+        logging.debug("min_sample_value  %u", min(adc_range))
     def setup_callback(self, cb):
         self._callback = cb
     def get_report_time_delta(self):
@@ -63,21 +62,22 @@ class ADS1118(SensorBase):
     def __init__(self, config, chip_type):
         SensorBase.__init__(self, config, chip_type)
     def calc_temp_ads1118(self, adc, cold_junction, fault):
-        logging.debug("calc temp called")
-        logging.debug("adc %u", adc)
-        logging.debug("cold_junction %u", cold_junction)
+        #logging.debug("calc temp called")
+        #logging.debug("adc %u", adc)
+        #logging.debug("cold_junction %u", cold_junction)
         # Fix sign bit:
         if adc & 0x8000:
             adc = adc - (1 << 16)
-        logging.debug("adc1 after fixing sign bit %u", adc)
+        #logging.debug("adc1 after fixing sign bit %u", adc)
         # Convert to mv
         adc = adc * ADS1118_MULT
-        logging.debug("adc in mv %.3f", adc)
+        #logging.debug("adc in mv %.3f", adc)
         temp = mv_to_typek( typek_to_mv(cold_junction * .03125) + adc)
-        logging.debug("temp = %.2f", temp)
+        #logging.debug("temp = %.2f", temp)
         return temp
     def calc_adc(self, temp):
-        temp = typek_to_mv(temp)
+        # assume cold junction is at room temperature
+        temp = typek_to_mv(temp) - typek_to_mv(20)
         return temp
 
 class ADS1118A(ADS1118):
@@ -85,11 +85,6 @@ class ADS1118A(ADS1118):
         ADS1118.__init__(self, config, "ADS1118A")
         self.spi = bus.MCU_SPI_from_config(
             config, 1, pin_option="sensor_pin", default_speed=4000000)
-        # configure for continuous cold junction conversions first so mcu can
-        # get that on it's first read
-        #  no effect, AIN0 and AIN1, .256V, continuous conversion
-        #  64 sps, ADC mode, pullup disabled, update config, reserved
-        self.spi.spi_send([0b00001100, 0b01100010])
         self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
@@ -106,21 +101,19 @@ class ADS1118B(ADS1118):
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
         mcu.register_response(self._handle_spi_response,
-                              "ads1118b_result", oid)
-        #mcu.register_config_callback(self._build_config)
+                              "ads1118_result", oid)
+        mcu.register_config_callback(self._build_config)
     def _build_config(self):
         self.mcu.add_config_cmd(
-            "config_ads1118b oid=%u thermocouple_type=%s" % (
-                0, self.chip_type))
+            "config_ads1118 oid=%u spi_oid=%u thermocouple_type=%s" % (
+                self.oid, 0, self.chip_type))
         clock = self.mcu.get_query_slot(self.oid)
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
         self.mcu.add_config_cmd(
-            "query_ads1118b oid=%u clock=%u rest_ticks=%u"
+            "query_ads1118 oid=%u clock=%u rest_ticks=%u"
             " min_value=%u max_value=%u" % (
                 self.oid, clock, self._report_clock,
                 self.min_sample_value, self.max_sample_value), is_init=True)
-
-
 
 ######################################################################
 # Sensor registration
