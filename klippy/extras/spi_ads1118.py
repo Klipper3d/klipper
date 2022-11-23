@@ -25,7 +25,6 @@ class SensorBase:
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
         self.min_sample_value = min(adc_range)
         self.max_sample_value = max(adc_range)
-        logging.debug("min_sample_value  %u", min(adc_range))
     def setup_callback(self, cb):
         self._callback = cb
     def get_report_time_delta(self):
@@ -76,9 +75,13 @@ class ADS1118(SensorBase):
         #logging.debug("temp = %.2f", temp)
         return temp
     def calc_adc(self, temp):
-        # assume cold junction is at room temperature
-        temp = typek_to_mv(temp) - typek_to_mv(20)
-        return temp
+        # determine the unscaled adc value for a particular temperature
+        # to use for min/max checking.  We don't want to have to use
+        # floating point on the mcu. Assume cold junction is at room
+        # temperature.
+        # todo - get room temperature from heaters.py
+        adc = (typek_to_mv(temp) - typek_to_mv(25)) / ADS1118_MULT
+        return adc
 
 class ADS1118A(ADS1118):
     def __init__(self, config):
