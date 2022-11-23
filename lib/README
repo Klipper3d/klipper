@@ -90,7 +90,7 @@ taken from the Drivers/CMSIS/Device/ST/STM32L4xx/ directory.
 
 The stm32h7 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeH7
-version v1.7.0 (79196b09acfb720589f58e93ccf956401b18a191). Contents
+version v1.9.0 (ccb11556044540590ca6e45056e6b65cdca2deb2). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
 
 The rp2040 directory contains code from the pico sdk:
