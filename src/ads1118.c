@@ -22,8 +22,8 @@ DECL_ENUMERATION("thermocouple_type", "ADS1118B", TS_CHIP_ADS1118B);
 struct thermocouple_spi {
     struct timer timer;
     uint32_t rest_time;
-    uint32_t min_value;           // Min allowed ADC value
-    uint32_t max_value;           // Max allowed ADC value
+    int16_t min_value;           // Min allowed ADC value
+    int16_t max_value;           // Max allowed ADC value
     uint32_t value;
     struct spidev_s *spi;
     uint8_t chip_type, flags;
@@ -33,10 +33,11 @@ enum {
     TS_PENDING = 1,
 };
 
+
 uint32_t ads_cj;
 uint32_t ads_t1;
 uint32_t ads_t2;
-uint16_t cj_loop;
+uint8_t cj_loop;
 uint8_t has_b;
 uint8_t state;
 
@@ -104,11 +105,12 @@ ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
     sendf("ads1118_result oid=%c next_clock=%u value=%u value2=%u fault=%c",
           oid, next_begin_time, value, value2, fault);
     /* check the result and stop if below or above allowed range */
-    if (value < spi->min_value || value > spi->max_value) {
-        sendf("thermocouple_out_of_range oid=%c next_clock=%u value=%u "
-               "min=%u max=%u", oid, next_begin_time, value, spi->min_value,
+    int16_t valueS = (int16_t)value;
+    if (valueS < spi->min_value || valueS > spi->max_value) {
+        sendf("thermocouple_out_of_range oid=%c next_clock=%u value=%hi "
+               "min=%hi max=%hi", oid, next_begin_time, valueS, spi->min_value,
                spi->max_value);
-        //try_shutdown("Thermocouple ADC out of range");
+        try_shutdown("Thermocouple ADC out of range");
     }
 }
 
@@ -175,7 +177,7 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
         sendf("thermocouple_result_cj oid=%c next_clock=%u value=%u state=%c",
                oid, next_begin_time, value1, state);
     } else if (cur_state == 2) {
-        sendf("thermocouple_result_ads1118a oid=%c next_clock=%u value=%u state=%c",
+        sendf("thermocouple_result_ads1118a_new oid=%c next_clock=%u value=%u state=%c",
                oid, next_begin_time, value, state);
 
         ads_t1 = value;
