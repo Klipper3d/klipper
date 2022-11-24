@@ -280,7 +280,7 @@ gpio_adc_sample(struct gpio_adc g)
     if (adc->ISR & ADC_ISR_EOC && adc->SQR1 == (g.chan << ADC_SQR1_SQ1_Pos))
         return 0;
     // Conversion started but not ready or wrong channel
-    if (adc->CR & ADC_CR_ADSTART)
+    if (adc->CR & ADC_CR_ADSTART || adc->ISR & ADC_ISR_EOC)
         return timer_from_us(10);
     // Start sample
     adc->SQR1 = (g.chan << ADC_SQR1_SQ1_Pos);
