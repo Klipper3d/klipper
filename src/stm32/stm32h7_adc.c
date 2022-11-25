@@ -28,7 +28,6 @@
   // Number of samples is 2^OVERSAMPLES_EXPONENT (exponent can be 0-10)
   #define OVERSAMPLES_EXPONENT 3
   #define OVERSAMPLES (1 << OVERSAMPLES_EXPONENT)
-  #define ADC_MEAS_DELAY  (1 + 2.3666*OVERSAMPLES)
 
   // LDORDY registers are missing from CMSIS (only available on revision V!)
   #define ADC_ISR_LDORDY_Pos                  (12U)
@@ -44,7 +43,6 @@
   #define ADC_TS                              (ADC12_COMMON)
 
   #define OVERSAMPLES                         (0)
-  #define ADC_MEAS_DELAY                      (10)
 
 #elif CONFIG_MACH_STM32G4
   #define ADCIN_BANK_SIZE                     (19)
@@ -57,7 +55,6 @@
   #define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
 
   #define OVERSAMPLES                         (0)
-  #define ADC_MEAS_DELAY                      (10)
 #endif
 
 #define ADC_TEMPERATURE_PIN 0xfe
@@ -361,20 +358,19 @@ uint32_t
 gpio_adc_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
-    // Conversion ready
-    // EOC flag is cleared by hardware when reading DR
-    // the channel condition only works if this ist the only channel
-    // on the sequence and length set to 1 (ADC_SQR1_L = 0000)
-    if (adc->ISR & ADC_ISR_EOC && adc->SQR1 == (g.chan << ADC_SQR1_SQ1_Pos))
-        return 0;
-    // Conversion started but not ready or wrong channel
-    if (adc->CR & ADC_CR_ADSTART)
-        return timer_from_us(10);
+    uint32_t cr = adc->CR;
+    if (cr & ADC_CR_ADSTART)
+        goto need_delay;
+    if (adc->ISR & ADC_ISR_EOC) {
+        if (adc->SQR1 == (g.chan << ADC_SQR1_SQ1_Pos))
+            return 0;
+        goto need_delay;
+    }
     // Start sample
     adc->SQR1 = (g.chan << ADC_SQR1_SQ1_Pos);
-    adc->CR |= ADC_CR_ADSTART;
-    // Should take 2.3666us, add 1us for clock synchronisation etc.
-    return timer_from_us(ADC_MEAS_DELAY);
+    adc->CR = cr | ADC_CR_ADSTART;
+need_delay:
+    return timer_from_us(20);
 }
 
 // Read a value; use only after gpio_adc_sample() returns zero
@@ -391,9 +387,12 @@ gpio_adc_cancel_sample(struct gpio_adc g)
 {
     ADC_TypeDef *adc = g.adc;
     irqstatus_t flag = irq_save();
-    // ADSTART is not as long true as SR_STRT on stm32f4
-    if ((adc->CR & ADC_CR_ADSTART || adc->ISR & ADC_ISR_EOC)
-        && adc->SQR1 == (g.chan << ADC_SQR1_SQ1_Pos))
-        gpio_adc_read(g);
+    if (adc->SQR1 == (g.chan << ADC_SQR1_SQ1_Pos)) {
+        uint32_t cr = adc->CR;
+        if (cr & ADC_CR_ADSTART)
+            adc->CR = (cr & ~ADC_CR_ADSTART) | ADC_CR_ADSTP;
+        if (adc->ISR & ADC_ISR_EOC)
+            gpio_adc_read(g);
+    }
     irq_restore(flag);
 }
