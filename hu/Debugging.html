@@ -1462,7 +1462,7 @@ sudo apt-get install python-matplotlib
 </code></pre></div>
 
 <p>Számos matplotlib opció áll rendelkezésre; néhány példa: "color", "label", "alpha" és "linestyle".</p>
-<p>A <code>motan_graph.py</code> eszköz számos más parancssori opciót is támogat a <code>--help</code> opcióval megtekintheti a listát. Kényelmes lehet magát a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/motan/motan_graph.py">motan_graph.py</a> szkriptet is megtekinteni/módosítani.</p>
+<p>A <code>motan_graph.py</code> eszköz számos más parancssori opciót is támogat a <code>--help</code> opcióval megtekintheted a listát. Kényelmes lehet magát a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/motan/motan_graph.py">motan_graph.py</a> szkriptet is megtekinteni/módosítani.</p>
 <p>A <code>data_logger.py</code> eszköz által előállított nyers adatnaplók az <a href="API_Server.html">API Szerver</a> című dokumentumban leírt formátumot követik. Hasznos lehet az adatokat egy Unix-paranccsal megvizsgálni, mint például a következő: <code>gunzip &lt; mylog.json.gz | tr '\03' '\n' | less</code></p>
 <h2 id="terhelesi-grafikonok-generalasa">Terhelési grafikonok generálása<a class="headerlink" href="#terhelesi-grafikonok-generalasa" title="Permanent link">&para;</a></h2>
 <p>A Klippy naplófájl (/tmp/klippy.log) tárolja a sávszélességre, a mikrokontroller terhelésre és a gazdagép pufferterhelésre vonatkozó statisztikákat. Hasznos lehet ezeket a statisztikákat grafikusan ábrázolni a nyomtatás után.</p>
@@ -1488,7 +1488,7 @@ cp /tmp/klippy.log .
 <p>A szkript kinyeri a nyomtató konfigurációs fájlját, és kinyeri az MCU leállítási adatait. Az MCU leállításából származó információsor (ha van ilyen) időbélyegek szerint át lesz rendezve, hogy segítse az ok-okozati forgatókönyvek diagnosztizálását.</p>
 <h2 id="teszteles-simulavr-rel">Tesztelés simulavr-rel<a class="headerlink" href="#teszteles-simulavr-rel" title="Permanent link">&para;</a></h2>
 <p>A <a href="http://www.nongnu.org/simulavr/">simulavr</a> eszköz lehetővé teszi egy Atmel ATmega mikrokontroller szimulálását. Ez a szakasz leírja, hogyan lehet teszt G-kód fájlokat futtatni a simulavr segítségével. Javasoljuk, hogy ezt egy asztali gépen futtasd (nem Raspberry Pi), mivel a hatékony futtatáshoz erős CPU-ra van szükség.</p>
-<p>A simulavr használatához töltse le a simulavr csomagot, és fordítsd le python támogatással. Vedd figyelembe, hogy a build rendszernek telepítenie kell néhány csomagot (például a swig-et) ahhoz, hogy a python modult fel tudja építeni.</p>
+<p>A simulavr használatához töltsd le a simulavr csomagot, és fordítsd le python támogatással. Vedd figyelembe, hogy a build rendszernek telepítenie kell néhány csomagot (például a swig-et) ahhoz, hogy a python modult fel tudja építeni.</p>
 <div class="highlight"><pre><span></span><code>git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr
 make python

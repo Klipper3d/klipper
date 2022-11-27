@@ -1696,8 +1696,8 @@ shaper_type_y: mzv
 max_accel: 3000 # nem haladhatja meg a becsült max_accel értéket az X és Y tengelyeknél.
 </code></pre></div>
 
-<p>vagy választhat más konfigurációt is a generált diagramok alapján: a diagramokon a teljesítményspektrális sűrűség csúcsai megfelelnek a nyomtató rezonanciafrekvenciáinak.</p>
-<p>Megjegyzendő, hogy alternatívaként a bemeneti alakító automatikus kalibrációját a Klipperből <a href="#bemeneti-formazo-automatikus-kalibralasa">közvetlenül</a> is futtathatja, ami például a bemeneti formázó <a href="#bemeneti-formazo-ujrakalibralasa">újrakalibrálásához</a> lehet hasznos.</p>
+<p>vagy választhatsz más konfigurációt is a generált diagramok alapján: a diagramokon a teljesítményspektrális sűrűség csúcsai megfelelnek a nyomtató rezonanciafrekvenciáinak.</p>
+<p>Megjegyzendő, hogy alternatívaként a bemeneti alakító automatikus kalibrációját a Klipper-ből <a href="#bemeneti-formazo-automatikus-kalibralasa">közvetlenül</a> is futtathatod, ami például a bemeneti formázó <a href="#bemeneti-formazo-ujrakalibralasa">újrakalibrálásához</a> lehet hasznos.</p>
 <h3 id="bed-slinger-nyomtatok">Bed-slinger nyomtatók<a class="headerlink" href="#bed-slinger-nyomtatok" title="Permanent link">&para;</a></h3>
 <p>Ha a nyomtatód tárgyasztala Y tengelyen van, akkor meg kell változtatnod a gyorsulásmérő helyét az X és Y tengelyek mérései között: az X tengely rezonanciáit a nyomtatófejre szerelt gyorsulásmérővel, az Y tengely rezonanciáit pedig a tárgyasztalra szerelt gyorsulásmérővel kell mérned (a szokásos nyomtató beállítással).</p>
 <p>Azonban két gyorsulásmérőt is csatlakoztathatsz egyszerre, bár ezeket különböző lapokhoz kell csatlakoztatni (mondjuk egy RPi és egy nyomtató MCU laphoz), vagy két különböző fizikai SPI interfészhez ugyanazon a lapon (ritkán elérhető). Ezután a következő módon lehet őket konfigurálni:</p>
@@ -1718,7 +1718,7 @@ probe_points: ...
 
 <p>Ekkor a <code>TEST_RESONANCES AXIS=X</code> és <code>TEST_RESONANCES AXIS=Y</code> parancsok a megfelelő gyorsulásmérőt fogják használni minden tengelyhez.</p>
 <h3 id="max-simitas">Max simítás<a class="headerlink" href="#max-simitas" title="Permanent link">&para;</a></h3>
-<p>Ne feledd, hogy a bemeneti formázó simítást hozhat létre az alkatrészekben. A <code>calibrate_shaper.py</code> szkript vagy <code>SHAPER_CALIBRATE</code> parancs által végrehajtott bemeneti formázó automatikus hangolása nem súlyosbítja a simítást, ugyanakkor megpróbálja minimalizálni az ebből eredő rezgéseket. Néha az alakformáló frekvencia optimálistól elmaradó választását hozhatják, vagy talán egyszerűen csak kevésbé simítják az alkatrészeket a nagyobb fennmaradó rezgések rovására. Ezekben az esetekben kérheti a bemeneti formázó maximális simításának korlátozását.</p>
+<p>Ne feledd, hogy a bemeneti formázó simítást hozhat létre az alkatrészekben. A <code>calibrate_shaper.py</code> szkript vagy <code>SHAPER_CALIBRATE</code> parancs által végrehajtott bemeneti formázó automatikus hangolása nem súlyosbítja a simítást, ugyanakkor megpróbálja minimalizálni az ebből eredő rezgéseket. Néha az alakformáló frekvencia optimálistól elmaradó választását hozhatja, vagy talán egyszerűen csak kevésbé simítja az alkatrészeket a nagyobb fennmaradó rezgések rovására. Ezekben az esetekben kérheted a bemeneti formázó maximális simításának korlátozását.</p>
 <p>Nézzük meg az automatikus hangolás következő eredményeit:</p>
 <p><img alt="Resonances" src="img/calibrate-x.png" /></p>
 <div class="highlight"><pre><span></span><code>Illesztett alakító &#39;zv&#39; frekvencia = 57,8 Hz (rezgések = 20,3%, simítás ~= 0,053)

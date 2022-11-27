@@ -1805,7 +1805,7 @@ Info : Listening on port 3333 for gdb connections</code>
 Ezt követően elengedheti a reset gombot.</li>
 </ul>
 <p>Ez a bootloader 2KiB-os flash memóriát igényel (az alkalmazást 2KiB kezdőcímmel kell lefordítani).</p>
-<p>A hid-flash program egy bináris fájl feltöltésére szolgál a bootloaderre. Ezt a szoftvert a következő parancsokkal telepítheti:</p>
+<p>A hid-flash program egy bináris fájl feltöltésére szolgál a bootloader-re. Ezt a szoftvert a következő parancsokkal telepítheted:</p>
 <div class="highlight"><pre><span></span><code>sudo apt install libusb-1.0
 cd ~/klipper/lib/hidflash
 make
@@ -1823,7 +1823,7 @@ make
 <div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=/dev/ttyACM0
 </code></pre></div>
 
-<p>Szükség lehet a bootloader manuális belépésére, ezt a "boot 0" alacsony és "boot 1" magas értékek beállításával lehet megtenni. Az SKR Mini E3 esetében a "Boot 1" nem áll rendelkezésre, ezért a PA2 tű alacsonyra állításával lehet elvégezni, ha a "hid_btt_skr_mini_e3.bin" fájlt égetjük. Ez a tű az SKR Mini E3 "PIN" dokumentumban "TX0"-ként van jelölve a TFT fejlécen. A PA2 mellett van egy földelt tű, amellyel a PA2-t alacsonyra húzhatja.</p>
+<p>Szükség lehet a bootloader manuális belépésére, ezt a "boot 0" alacsony és "boot 1" magas értékek beállításával lehet megtenni. Az SKR Mini E3 esetében a "Boot 1" nem áll rendelkezésre, ezért a PA2 tű alacsonyra állításával lehet elvégezni, ha a "hid_btt_skr_mini_e3.bin" fájlt égetjük. Ez a tű az SKR Mini E3 "PIN" dokumentumban "TX0"-ként van jelölve a TFT fejlécen. A PA2 mellett van egy földelt tű, amellyel a PA2 alacsonyra húzhatja.</p>
 <h3 id="stm32f103stm32f072-msc-bootloaderrel">STM32F103/STM32F072 MSC bootloaderrel<a class="headerlink" href="#stm32f103stm32f072-msc-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>Az <a href="https://github.com/Telekatz/MSC-stm32f103-bootloader">MSC bootloader</a> egy USB-n keresztül égethető, driver nélküli bootloader.</p>
 <p>Lehetőség van a bootloader 3,3V-os soros égetésére az stm32flash használatával, ahogyan azt a fenti stm32duino szakaszban említettük, a kívánt MSC bootloader bináris fájlnevének behelyettesítésével (azaz: MSCboot-Bluepill.bin a Bluepill-hez).</p>
@@ -1857,8 +1857,8 @@ stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
 <p>Ez a bootloader 16Kib-es flash memóriát igényel az STM32F4-en (az alkalmazást 16KiB kezdőcímmel kell lefordítani).</p>
-<p>Az STM32F1-hez hasonlóan az STM32F4 is a hid-flash eszközt használja a binárisok MCU-ra történő feltöltéséhez. A hid-flash elkészítésének és használatának részletei a fenti utasításokban találhatók.</p>
-<p>Szükség lehet a bootloader manuális belépésére, ez a "boot 0" alacsony, "boot 1" magas érték beállításával és az eszköz csatlakoztatásával történhet. A programozás befejezése után húzza ki az eszközt, és állítsd vissza a "boot 1" értéket alacsonyra, hogy az alkalmazás betöltődjön.</p>
+<p>Az STM32F1-hez hasonlóan az STM32F4 is a hid-flash eszközt használd a binárisok MCU-ra történő feltöltéséhez. A hid-flash elkészítésének és használatának részletei a fenti utasításokban találhatók.</p>
+<p>Szükség lehet a bootloader manuális belépésére, ez a "boot 0" alacsony, "boot 1" magas érték beállításával és az eszköz csatlakoztatásával történhet. A programozás befejezése után húzd ki az eszközt, és állítsd vissza a "boot 1" értéket alacsonyra, hogy az alkalmazás betöltődjön.</p>
 <h2 id="lpc176x-mikrovezerlok-smoothieboards">LPC176x mikrovezérlők (Smoothieboards)<a class="headerlink" href="#lpc176x-mikrovezerlok-smoothieboards" title="Permanent link">&para;</a></h2>
 <p>Ez a dokumentum nem írja le a bootloader égetésének módszerét. Lásd: <a href="http://smoothieware.org/flashing-the-bootloader">http://smoothieware.org/flashing-the-bootloader</a> a témával kapcsolatos további információkért.</p>
 <p>A Smoothieboardok általában a következő bootloaderrel érkeznek: <a href="https://github.com/triffid/LPC17xx-DFU-Bootloader">https://github.com/triffid/LPC17xx-DFU-Bootloader</a>. Ha ezt a bootloadert használjuk, az alkalmazást 16KiB kezdőcímmel kell lefordítani. Az alkalmazás égetésének legegyszerűbb módja ezzel a bootloaderrel az alkalmazásfájl (pl. <code>out/klipper.bin</code>) másolása egy SD-kártyán lévő <code>firmware.bin</code> nevű fájlra, majd a mikrokontroller újraindítása ezzel az SD-kártyával.</p>
