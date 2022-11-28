@@ -24,8 +24,6 @@ struct thermocouple_spi {
     int16_t chan_b_min_value;           // Min allowed ADC value
     int16_t chan_b_max_value;           // Max allowed ADC value
     int16_t adc_chan_a_mv, adc_chan_b_mv, cj_temp;
-    bool new_reading_chan_a;
-    bool new_reading_chan_b;
     struct spidev_s *spi;
     uint8_t max_invalid, invalid_count;
     uint8_t flags;
@@ -65,7 +63,8 @@ command_config_ads1118(uint32_t *args)
     sched_add_timer(&spi->timer);
 }
 DECL_COMMAND(command_config_ads1118,
-             "config_ads1118 oid=%c spi_oid=%c clock=%u rest_ticks=%u max_invalid_count=%c");
+             "config_ads1118 oid=%c spi_oid=%c clock=%u rest_ticks=%u "
+             "max_invalid_count=%c");
 
 void
 command_config_ads1118_channel(uint32_t *args)
@@ -80,11 +79,12 @@ command_config_ads1118_channel(uint32_t *args)
         spi->chan_b_oid = args[0];
         spi->chan_b_min_value = args[2];
         spi->chan_b_max_value = args[3];
-    }
-    // todo - pin out of range - only 0,1 supported
+    } else
+        shutdown("Invalid ADS1118 pin number");
 }
 DECL_COMMAND(command_config_ads1118_channel,
-             "config_ads1118_channel oid=%c pin_number=%c min_sample_value=%hi max_sample_value=%hi parent_oid=%c");
+             "config_ads1118_channel oid=%c pin_number=%c min_sample_value=%hi "
+             " max_sample_value=%hi parent_oid=%c");
 
 static void
 ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
@@ -107,13 +107,13 @@ static void
 thermocouple_handle_ads1118(struct thermocouple_spi *spi
                              , uint32_t next_begin_time, uint8_t oid)
 {
-    //todo - check if conversion is ready before reading
     uint8_t msg[4];
     uint8_t cur_state = spi->state;
     uint8_t next_state;
 
     next_state = cur_state + 1;
     // only set next_state to 3 (ads1118b) if configured
+    // todo clean this up
     if (cur_state == 1 && !(spi->chan_a_oid == 0)) {
         next_state = 1;
     }
@@ -173,28 +173,16 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
         //if (value && 0x2000)
             //value = value - (1 << 14);
         spi->cj_temp = (int16_t)value;
-        output("ads1118_result oid=%c cj_temp=%hi",
-          oid, spi->cj_temp);
     } else if (cur_state == 2) {
         spi->adc_chan_a_mv = (int16_t)value;
         spi->new_reading_chan_a = true;
-        output("ads1118_result_a oid=%c adc_mv=%hi",
-          oid, spi->adc_chan_a_mv);
-        //todo - set fault somewhere for overrange, underrange, open circuit
-        if (spi->new_reading_chan_a) {
-            ads1118_respond(spi, next_begin_time, spi->adc_chan_a_mv, spi->cj_temp, 0, spi->chan_a_oid, spi->chan_a_min_value, spi->chan_a_max_value);
-            spi->new_reading_chan_a = false;
-        }
+        ads1118_respond(spi, next_begin_time, spi->adc_chan_a_mv, spi->cj_temp,
+            0, spi->chan_a_oid, spi->chan_a_min_value, spi->chan_a_max_value);
     } else if (cur_state == 3) {
         spi->adc_chan_b_mv = (int16_t)value;
         spi->new_reading_chan_b = true;
-        output("ads1118_result_b oid=%c adc_mv=%hi",
-          oid, spi->adc_chan_b_mv);
-        //todo - set fault somewhere for overrange, underrange, open circuit
-        if (spi->new_reading_chan_b) {
-            ads1118_respond(spi, next_begin_time, spi->adc_chan_b_mv, spi->cj_temp, 0, spi->chan_b_oid, spi->chan_b_min_value, spi->chan_b_max_value);
-            spi->new_reading_chan_b = false;
-        }
+        ads1118_respond(spi, next_begin_time, spi->adc_chan_b_mv, spi->cj_temp,
+            0, spi->chan_b_oid, spi->chan_b_min_value, spi->chan_b_max_value);
     }
     spi->state = next_state;
 }
