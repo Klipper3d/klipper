@@ -1,8 +1,10 @@
 # Support for multiple type k thermocouples on an ADS1118 adc
 #
 # Copyright (C) 2022  Jacob Dockter <dockterj@gmail.com>
+# Largely based on code from klippy/extras/spi_temperature.py
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+#todo remove logging
 import logging
 import math
 from . import bus
@@ -41,13 +43,16 @@ class SensorBase:
                 self.oid, clock, self._report_clock,
                 self.min_sample_value, self.max_sample_value), is_init=True)
     def _handle_spi_response(self, params):
-        temp = self.calc_temp_ads1118(params['value'], params['value2'],
+        if params['fault']:
+            self.handle_fault(params['adc_mv'], params['cj_temp'], params['fault'])
+            return
+        temp = self.calc_temp(params['adc_mv'], params['cj_temp'],
                                       params['fault'])
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
         self._callback(last_read_time, temp)
-    def fault(self, msg):
+    def report_fault(self, msg):
         self.printer.invoke_async_shutdown(msg)
 
 
@@ -56,32 +61,57 @@ class SensorBase:
 ######################################################################
 
 ADS1118_MULT = .0078125
+ADS1118_CJ_MULT = .03125
 
 class ADS1118(SensorBase):
     def __init__(self, config, chip_type):
         SensorBase.__init__(self, config, chip_type)
-    def calc_temp_ads1118(self, adc, cold_junction, fault):
-        #logging.debug("calc temp called")
-        #logging.debug("adc %u", adc)
-        #logging.debug("cold_junction %u", cold_junction)
-        # Fix sign bit:
-        if adc & 0x8000:
-            adc = adc - (1 << 16)
-        #logging.debug("adc1 after fixing sign bit %u", adc)
-        # Convert to mv
-        adc = adc * ADS1118_MULT
-        #logging.debug("adc in mv %.3f", adc)
-        temp = mv_to_typek( typek_to_mv(cold_junction * .03125) + adc)
-        #logging.debug("temp = %.2f", temp)
-        return temp
+    def handle_fault(self, adc_mv, cj_temp, fault):
+        if fault & 0:
+            self.report_fault("ADS1118: Cold Junction Range Fault")
+        if fault & 0:
+            self.report_fault("ADS1118: Thermocouple Range Fault")
+        if fault & 0:
+            self.report_fault("ADS1118: Cold Junction High Fault")
+        if fault & 0:
+            self.report_fault("Max31856: Cold Junction Low Fault")
+        if fault & 0:
+            self.report_fault("Max31856: Thermocouple High Fault")
+        if fault & 0:
+            self.report_fault("Max31856: Thermocouple Low Fault")
+        if fault & 0:
+            self.report_fault("Max31856: Over/Under Voltage Fault")
+        if fault & 0:
+            self.report_fault("Max31856: Thermocouple Open Fault")
+    def calc_temp(self, adc_mv, cj_temp, fault):
+        try:
+            logging.debug("calc temp called")
+            logging.debug("adc_mv %hi", adc_mv)
+            logging.debug("cj_temp %u", cj_temp)
+            ## Fix sign bit:
+            ##if adc & 0x8000:
+                ##adc = adc - (1 << 16)
+            ##logging.debug("adc1 after fixing sign bit %u", adc)
+            # Convert to mv
+            adc_mv = adc_mv * ADS1118_MULT
+            logging.debug("adc_mv in mv %.3f", adc_mv)
+            temp = mv_to_typek( typek_to_mv(cj_temp * ADS1118_CJ_MULT) + adc_mv)
+            logging.debug("temp = %.2f", temp)
+            return temp
+        except ValueError as err:
+            self.report_fault(err)
     def calc_adc(self, temp):
-        # determine the unscaled adc value for a particular temperature
-        # to use for min/max checking.  We don't want to have to use
-        # floating point on the mcu. Assume cold junction is at room
-        # temperature.
-        # todo - get room temperature from heaters.py
-        adc = (typek_to_mv(temp) - typek_to_mv(25)) / ADS1118_MULT
-        return adc
+        try:
+            # determine the unscaled adc value for a particular temperature
+            # to use for min/max checking.  We don't want to have to use
+            # floating point on the mcu. Assume cold junction is at room
+            # temperature.
+            # todo - get room temperature from heaters.py
+            # todo - reset min and max based on changed cj_value
+            adc = (typek_to_mv(temp) - typek_to_mv(25)) / ADS1118_MULT
+            return adc
+        except ValueError as err:
+            self.report_fault(err)
 
 class ADS1118A(ADS1118):
     def __init__(self, config):
@@ -98,6 +128,7 @@ class ADS1118A(ADS1118):
 class ADS1118B(ADS1118):
     def __init__(self, config):
         ADS1118.__init__(self, config, "ADS1118B")
+        #todo - why do I need this? - this is the only change for B channel
         pins = config.get_printer().lookup_object("pins").lookup_pin(
                                               config.get("sensor_pin"))
         self.mcu = mcu = pins['chip']
@@ -107,6 +138,7 @@ class ADS1118B(ADS1118):
                               "ads1118_result", oid)
         mcu.register_config_callback(self._build_config)
     def _build_config(self):
+        #todo - only difference is sending 0 for spi_oid
         self.mcu.add_config_cmd(
             "config_ads1118 oid=%u spi_oid=%u thermocouple_type=%s" % (
                 self.oid, 0, self.chip_type))
@@ -133,9 +165,13 @@ def load_config(config):
     for name, klass in Sensors.items():
         pheaters.add_sensor_factory(name, klass)
 
+######################################################################
+# Type K thermocouple conversions
+# based on GPLv3 code from:
+# github.com/wjasper/Linux_Drivers/blob/master/USB/python/thermocouple.py
+######################################################################
+
 def typek_to_mv(degc):
-    """
-    """
     tab1 = [
         0.000000000000E+00,
         0.394501280250E-01,
@@ -184,10 +220,7 @@ def typek_to_mv(degc):
 
     return e
 
-
 def mv_to_typek(mv):
-    """
-    """
     tab1 = [
         0.0000000E+00,
         2.5173462E+01,
