@@ -27,7 +27,7 @@ struct thermocouple_spi {
     struct spidev_s *spi;
     uint8_t max_invalid, invalid_count;
     uint8_t flags;
-    uint8_t state, cj_loop;
+    uint8_t state, cj_skip_count;
 };
 
 enum {
@@ -112,29 +112,24 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     uint8_t next_state;
 
     next_state = cur_state + 1;
-    // only set next_state to 2 or 3 if those channels are configured
-    if (cur_state == 1 && !(spi->chan_a_oid == 0)) {
-        if (spi->chan_b_oid == 0) {
-            next_state = 1;
-        }
-    }
-    if (cur_state == 2 && !(spi->chan_b_oid == 0)) {
-        next_state = 4;
-    }
 
-    // if sensor 1 and sensor 2 are not enabled, next state = 1
+    // only set next_state to 2 or 3 if those channels are configured
+    if (spi->chan_a_oid == 0 && spi->chan_b_oid == 0) 
+        next_state = 1;
+    else if (cur_state == 1 && spi->chan_a_oid == 0)
+        next_state = 3;
+    else if (cur_state == 2 && spi->chan_b_oid == 0)
+        next_state = 4;
 
     // loop around to state 1, but only read the cold junction every 10th
-    // or 20th  iteration
-    // todo - fix this
+    // iteration
     if (next_state == 4) {
         next_state = 1;
-        spi->cj_loop += 1;
-        if (spi->cj_loop < 9) {
+        spi->cj_skip_count += 1;
+        if (spi->cj_skip_count < 9)
             next_state = 2;
-        } else {
-            spi->cj_loop = 0;
-        }
+        else
+            spi->cj_skip_count = 0;
     }
 
     // set the ads1118 to read the next_state
@@ -172,12 +167,7 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     } else if (cur_state == 1) {
         // cold junction temperature is returned in a 14 bit
         // signed (two's compliment) int
-        // todo - test conversion for negative cj_temp values
-        //value = value >> 2;
-        //if (value && 0x2000)
-            //value = value - (1 << 14);
-        spi->cj_temp = (int16_t)value / 4;
-	output("cj_temp %hi", spi->cj_temp);
+        spi->cj_temp = ((int16_t)value) / 4;
     } else if (cur_state == 2) {
         spi->adc_chan_a_mv = (int16_t)value;
         ads1118_respond(spi, next_begin_time, spi->adc_chan_a_mv, spi->cj_temp,
