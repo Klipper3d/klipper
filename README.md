@@ -1,7 +1,14 @@
 Fork of Klipper3d/klipper
 
-Adds support for Makerbot Replicator2/2X (Mightyboard rev h and g). 
-Currently supports all features of both printers except SD cards. 
+This fork adds support for Makerbot Replicator2/2X
+(Mightyboard rev h and g) and some clones.
+
+Currently, no clones have example config files or instructions
+for flashing Klipper.  If you have a Replicator clone that
+uses k type thermocouples and/or an ADS1118 adc chip and
+want to get Klipper running on it let me know and submit
+a sample config file and flashing instructions and I will
+include them in this repo.
 
 Please watch or star this repo if you are interested.  The more
 people that use this the better the chances of getting it included
@@ -25,9 +32,11 @@ a delta printer) requires updating position_min, position_max,
 position_endstop, and bed_screws values for the x and y axix
 
 TODOs:
-* look at capabilities of the on board sd card
-* ads1118 - test error conditions and make sure they are handled
-* ads1118 - look at new code in spi_temperature for faults and pull in
+* ads1118 - test error conditions and make sure they are handled.
+Add handling for faults (ADS1118 doesn't provide many fault codes
+but the software can generate some).
+* eliminate the need for dummy pins (spi_software_miso_pin for
+the display).
 * add documentation for configuring slicers (rep2 specifics)
 
 Installation
