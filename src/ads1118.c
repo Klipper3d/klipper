@@ -112,17 +112,21 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     uint8_t next_state;
 
     next_state = cur_state + 1;
-    // only set next_state to 3 (ads1118b) if configured
-    // todo clean this up
+    // only set next_state to 2 or 3 if those channels are configured
     if (cur_state == 1 && !(spi->chan_a_oid == 0)) {
-        next_state = 1;
+        if (spi->chan_b_oid == 0) {
+            next_state = 1;
+        }
     }
     if (cur_state == 2 && !(spi->chan_b_oid == 0)) {
         next_state = 4;
     }
 
+    // if sensor 1 and sensor 2 are not enabled, next state = 1
+
     // loop around to state 1, but only read the cold junction every 10th
     // or 20th  iteration
+    // todo - fix this
     if (next_state == 4) {
         next_state = 1;
         spi->cj_loop += 1;
@@ -169,18 +173,17 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
         // cold junction temperature is returned in a 14 bit
         // signed (two's compliment) int
         // todo - test conversion for negative cj_temp values
-        value = value >> 2;
+        //value = value >> 2;
         //if (value && 0x2000)
             //value = value - (1 << 14);
-        spi->cj_temp = (int16_t)value;
+        spi->cj_temp = (int16_t)value / 4;
+	output("cj_temp %hi", spi->cj_temp);
     } else if (cur_state == 2) {
         spi->adc_chan_a_mv = (int16_t)value;
-        spi->new_reading_chan_a = true;
         ads1118_respond(spi, next_begin_time, spi->adc_chan_a_mv, spi->cj_temp,
             0, spi->chan_a_oid, spi->chan_a_min_value, spi->chan_a_max_value);
     } else if (cur_state == 3) {
         spi->adc_chan_b_mv = (int16_t)value;
-        spi->new_reading_chan_b = true;
         ads1118_respond(spi, next_begin_time, spi->adc_chan_b_mv, spi->cj_temp,
             0, spi->chan_b_oid, spi->chan_b_min_value, spi->chan_b_max_value);
     }
