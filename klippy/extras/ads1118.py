@@ -3,8 +3,6 @@
 # Copyright (C) 2022  Jacob Dockter <dockterj@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-#todo remove logging
-import logging
 import math
 import pins
 from . import bus
@@ -34,15 +32,18 @@ class ADS1118(object):
         clock = self._mcu.get_query_slot(self._oid)
         self._report_clock = self._mcu.seconds_to_clock(REPORT_TIME)
         self._mcu.add_config_cmd(
-            "config_ads1118 oid=%u spi_oid=%u clock=%u rest_ticks=%u max_invalid_count=%u" % (
-                self._oid, self._spi.get_oid(), clock, self._report_clock, MAX_INVALID_COUNT))
+            "config_ads1118 oid=%u spi_oid=%u clock=%u rest_ticks=%u " \
+            "max_invalid_count=%u" % (self._oid, self._spi.get_oid(),
+            clock, self._report_clock, MAX_INVALID_COUNT))
     def get_mcu(self):
         return self._mcu
-    def config_channel(self, oid, pin_number, min_sample_value, max_sample_value):
-        logging.debug("%u, %u, %hi, %hi", oid, pin_number, min_sample_value, max_sample_value)
+    def config_channel(self, oid, pin_number, min_sample_value,
+        max_sample_value):
         self._mcu.add_config_cmd(
-            "config_ads1118_channel oid=%u pin_number=%u min_sample_value=%hi max_sample_value=%hi parent_oid=%u" % (
-                oid, int(pin_number), min_sample_value, max_sample_value, self._oid))
+            "config_ads1118_channel oid=%u pin_number=%u " \
+                "min_sample_value=%hi max_sample_value=%hi parent_oid=%u"
+                % (oid, int(pin_number), min_sample_value, max_sample_value,
+                self._oid))
 
 ######################################################################
 # ADS1118_Thermocouple
@@ -76,13 +77,14 @@ class ADS1118_Thermocouple(object):
     def setup_callback(self, cb):
         self._callback = cb
     def get_report_time_delta(self):
-        #todo can this be moved to ADS1118?
         return REPORT_TIME
     def _build_config(self):
-        self._parent.config_channel(self._oid, self._pin, self.min_sample_value, self.max_sample_value)
+        self._parent.config_channel(self._oid, self._pin, self.min_sample_value,
+            self.max_sample_value)
     def _handle_spi_response(self, params):
         if params['fault']:
-            self.handle_fault(params['adc_mv'], params['cj_temp'], params['fault'])
+            self.handle_fault(params['adc_mv'], params['cj_temp'],
+                params['fault'])
             return
         temp = self.calc_temp(params['adc_mv'], params['cj_temp'],
                                       params['fault'])
@@ -93,6 +95,7 @@ class ADS1118_Thermocouple(object):
     def report_fault(self, msg):
         self.printer.invoke_async_shutdown(msg)
     def handle_fault(self, adc_mv, cj_temp, fault):
+        #todo - no faults are currently implemented in ads1118.c
         if fault & 0:
             self.report_fault("ADS1118: Cold Junction Range Fault")
         if fault & 0:
@@ -111,18 +114,8 @@ class ADS1118_Thermocouple(object):
             self.report_fault("Max31856: Thermocouple Open Fault")
     def calc_temp(self, adc_mv, cj_temp, fault):
         try:
-            logging.debug("calc temp called")
-            logging.debug("adc_mv %hi", adc_mv)
-            logging.debug("cj_temp %u", cj_temp)
-            ## Fix sign bit:
-            ##if adc & 0x8000:
-                ##adc = adc - (1 << 16)
-            ##logging.debug("adc1 after fixing sign bit %u", adc)
-            # Convert to mv
             adc_mv = adc_mv * ADS1118_MULT
-            logging.debug("adc_mv in mv %.3f", adc_mv)
             temp = mv_to_typek( typek_to_mv(cj_temp * ADS1118_CJ_MULT) + adc_mv)
-            logging.debug("temp = %.2f", temp)
             return temp
         except ValueError as err:
             self.report_fault(err)
@@ -132,8 +125,6 @@ class ADS1118_Thermocouple(object):
             # to use for min/max checking.  We don't want to have to use
             # floating point on the mcu. Assume cold junction is at room
             # temperature.
-            # todo - get room temperature from heaters.py
-            # todo - reset min and max based on changed cj_value
             adc = (typek_to_mv(temp) - typek_to_mv(25)) / ADS1118_MULT
             return adc
         except ValueError as err:
