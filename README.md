@@ -1,5 +1,13 @@
 Fork of Klipper3d/klipper
 
+**************
+Please note - 2022-11-28 breaking change for config
+ads1118 support is now configured in a different way.
+If upgrading from a previous date please look at
+config/printer-makerbot-replicator2-2012.cfg
+and search for ads1118 to see how this is now configured.
+**************
+
 This fork adds support for Makerbot Replicator2/2X
 (Mightyboard rev h and g) and some clones.
 
