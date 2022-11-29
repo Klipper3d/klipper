@@ -83,7 +83,8 @@ class ADS1118_Thermocouple(object):
         try:
             adc_mv = adc_mv * ADS1118_MULT
             if self._type == "typek":
-                temp = mv_to_typek( typek_to_mv(cj_temp * ADS1118_CJ_MULT) + adc_mv)
+                temp = mv_to_typek( typek_to_mv(cj_temp * ADS1118_CJ_MULT)
+                       + adc_mv)
             return temp
         except ValueError as err:
             self.report_fault(err)
