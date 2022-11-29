@@ -601,6 +601,8 @@ class BedMeshCalibrate:
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self._profile_name = gcmd.get('PROFILE', "default")
+        if not self._profile_name.strip():
+            raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.bedmesh.set_mesh(None)
         self.update_config(gcmd)
         self.probe_helper.start_probe(gcmd)
@@ -1229,6 +1231,10 @@ class ProfileManager:
         for key in options:
             name = gcmd.get(key, None)
             if name is not None:
+                if not name.strip():
+                    raise gcmd.error(
+                        "Value for parameter '%s' must be specified" % (key)
+                    )
                 if name == "default" and key == 'SAVE':
                     gcmd.respond_info(
                         "Profile 'default' is reserved, please choose"

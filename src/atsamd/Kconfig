@@ -91,6 +91,10 @@ config FLASH_SIZE
     default 0x80000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19 || MACH_SAME51J19
     default 0x100000 if MACH_SAMD51P20 || MACH_SAME54P20
 
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
+
 config RAM_START
     hex
     default 0x20000000
