@@ -114,7 +114,7 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     next_state = cur_state + 1;
 
     // only set next_state to 2 or 3 if those channels are configured
-    if (spi->chan_a_oid == 0 && spi->chan_b_oid == 0) 
+    if (spi->chan_a_oid == 0 && spi->chan_b_oid == 0)
         next_state = 1;
     else if (cur_state == 1 && spi->chan_a_oid == 0)
         next_state = 3;
