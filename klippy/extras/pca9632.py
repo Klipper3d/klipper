@@ -37,7 +37,7 @@ class PCA9632:
         self.color_map = ["RGBW".index(c) for c in color_order]
         self.prev_regs = {}
         pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds, 1)
+        self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)
         printer.register_event_handler("klippy:connect", self.handle_connect)
     def reg_write(self, reg, val, minclock=0):
         if self.prev_regs.get(reg) == val:
