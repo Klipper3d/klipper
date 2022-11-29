@@ -1310,7 +1310,7 @@
   kinematic estimations (such as the Bresenham algorithm) - instead it
   calculates precise step times based on the physics of acceleration
   and the physics of the machine kinematics. More precise stepper
-  movement translates to quieter and more stable printer operation.</li>
+  movement provides quieter and more stable printer operation.</li>
 </ul>
 <ul>
 <li>Best in class performance. Klipper is able to achieve high stepping
@@ -1358,6 +1358,14 @@
   kinematics (no "line segmentation" is needed).</li>
 </ul>
 <ul>
+<li>Klipper is hardware agnostic. One should get the same precise timing
+  independent of the low-level electronics hardware. The Klipper
+  micro-controller code is designed to faithfully follow the schedule
+  provided by the Klipper host software (or prominently alert the user
+  if it is unable to). This makes it easier to use available hardware,
+  to upgrade to new hardware, and to have confidence in the hardware.</li>
+</ul>
+<ul>
 <li>Portable code. Klipper works on ARM, AVR, and PRU based
   micro-controllers. Existing "reprap" style printers can run Klipper
   without hardware modification - just add a Raspberry Pi. Klipper's
@@ -1385,9 +1393,10 @@
 <h2 id="additional-features">Additional features<a class="headerlink" href="#additional-features" title="Permanent link">&para;</a></h2>
 <p>Klipper supports many standard 3d printer features:</p>
 <ul>
-<li>Works with Octoprint. This allows the printer to be controlled using
+<li>Several web interfaces available. Works with Mainsail, Fluidd,
+  OctoPrint and others. This allows the printer to be controlled using
   a regular web-browser. The same Raspberry Pi that runs Klipper can
-  also run Octoprint.</li>
+  also run the web interface.</li>
 </ul>
 <ul>
 <li>Standard G-Code support. Common g-code commands that are produced by
@@ -1400,7 +1409,8 @@
 </ul>
 <ul>
 <li>Support for cartesian, delta, corexy, corexz, hybrid-corexy,
-  hybrid-corexz, rotary delta, polar, and cable winch style printers.</li>
+  hybrid-corexz, deltesian, rotary delta, polar, and cable winch style
+  printers.</li>
 </ul>
 <ul>
 <li>Automatic bed leveling support. Klipper can be configured for basic
@@ -1414,6 +1424,10 @@
   perform basic height calibration as well as an enhanced X and Y
   dimension calibration. The calibration can be done with a Z height
   probe or via manual probing.</li>
+</ul>
+<ul>
+<li>Run-time "exclude object" support. When configured, this module may
+  facilitate canceling of just one object in a multi-part print.</li>
 </ul>
 <ul>
 <li>Support for common temperature sensors (eg, common thermistors,
@@ -1435,7 +1449,7 @@
 <li>Support for run-time configuration of TMC2130, TMC2208/TMC2224,
   TMC2209, TMC2660, and TMC5160 stepper motor drivers. There is also
   support for current control of traditional stepper drivers via
-  AD5206, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
+  AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
 </ul>
 <ul>
 <li>Support for common LCD displays attached directly to the printer. A
@@ -1460,8 +1474,8 @@
   filament width sensors.</li>
 </ul>
 <ul>
-<li>Support for measuring and recording acceleration using an adxl345
-  accelerometer.</li>
+<li>Support for measuring and recording acceleration using an adxl345,
+  mpu9250, and mpu6050 accelerometers.</li>
 </ul>
 <ul>
 <li>Support for limiting the top speed of short "zigzag" moves to reduce
