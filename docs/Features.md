@@ -78,9 +78,10 @@ Klipper has several compelling features:
 
 Klipper supports many standard 3d printer features:
 
-* Works with Octoprint. This allows the printer to be controlled using
+* Several web interfaces available. Works with Mainsail, Fluidd,
+  OctoPrint and others. This allows the printer to be controlled using
   a regular web-browser. The same Raspberry Pi that runs Klipper can
-  also run Octoprint.
+  also run the web interface.
 
 * Standard G-Code support. Common g-code commands that are produced by
   typical "slicers" (SuperSlicer, Cura, PrusaSlicer, etc.) are
@@ -90,7 +91,8 @@ Klipper supports many standard 3d printer features:
   extruders on independent carriages (IDEX) are also supported.
 
 * Support for cartesian, delta, corexy, corexz, hybrid-corexy,
-  hybrid-corexz, rotary delta, polar, and cable winch style printers.
+  hybrid-corexz, deltesian, rotary delta, polar, and cable winch style
+  printers.
 
 * Automatic bed leveling support. Klipper can be configured for basic
   bed tilt detection or full mesh bed leveling. If the bed uses
@@ -102,6 +104,9 @@ Klipper supports many standard 3d printer features:
   perform basic height calibration as well as an enhanced X and Y
   dimension calibration. The calibration can be done with a Z height
   probe or via manual probing.
+
+* Run-time "exclude object" support. When configured, this module may
+  facilitate canceling of just one object in a multi-part print.
 
 * Support for common temperature sensors (eg, common thermistors,
   AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856,
@@ -119,7 +124,7 @@ Klipper supports many standard 3d printer features:
 * Support for run-time configuration of TMC2130, TMC2208/TMC2224,
   TMC2209, TMC2660, and TMC5160 stepper motor drivers. There is also
   support for current control of traditional stepper drivers via
-  AD5206, MCP4451, MCP4728, MCP4018, and PWM pins.
+  AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.
 
 * Support for common LCD displays attached directly to the printer. A
   default menu is also available. The contents of the display and menu
@@ -139,8 +144,8 @@ Klipper supports many standard 3d printer features:
 * Support for filament presence sensors, filament motion sensors, and
   filament width sensors.
 
-* Support for measuring and recording acceleration using an adxl345
-  accelerometer.
+* Support for measuring and recording acceleration using an adxl345,
+  mpu9250, and mpu6050 accelerometers.
 
 * Support for limiting the top speed of short "zigzag" moves to reduce
   printer vibration and noise. See the [kinematics](Kinematics.md)
