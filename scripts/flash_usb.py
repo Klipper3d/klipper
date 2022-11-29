@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Tool to enter a USB bootloader and flash Klipper
 #
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, re, subprocess, optparse, time, fcntl, termios, struct

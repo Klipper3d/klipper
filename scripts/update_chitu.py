@@ -1,15 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Encodes STM32 firmwares to be flashable from SD card by Chitu motherboards.
 # Relocate firmware to 0x08008800!
 
 # Copied from Marlin and modified.
 # Licensed under GPL-3.0
 
-import os
-import struct
-import uuid
-import sys
-import hashlib
+import os, struct, uuid, sys, hashlib
 
 def calculate_crc(contents, seed):
     accumulating_xor_value = seed;
@@ -62,7 +58,6 @@ def xor_block(r0, r1, block_number, block_size, file_key):
 
         #increment the loop_counter
         loop_counter = loop_counter + 1
-
 
 def encode_file(input, output_file, file_length):
     input_file = bytearray(input.read())
