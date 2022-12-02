@@ -88,7 +88,6 @@ DECL_COMMAND(command_config_ads1118_channel,
 
 #define ADS1118_COLD_JUNCTION_HIGH_FAULT 0x01;
 #define ADS1118_COLD_JUNCTION_LOW_FAULT 0x02;
-#define ADS1118_THERMOCOUPLE_OPEN_FAULT 0x04;
 
 static void
 ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
@@ -110,6 +109,9 @@ ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
             return;
         try_shutdown("Thermocouple reader fault");
     }
+    //todo - need to track faults per channel, we don't want to reset
+    //       fault count for pin 2 just because a good reading came
+    //       from pin 1
     spi->invalid_count = 0;
 }
 
