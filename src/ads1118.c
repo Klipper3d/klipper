@@ -86,15 +86,25 @@ DECL_COMMAND(command_config_ads1118_channel,
              "config_ads1118_channel oid=%c pin_number=%c min_sample_value=%hi "
              " max_sample_value=%hi parent_oid=%c");
 
+#define ADS1118_COLD_JUNCTION_HIGH_FAULT 0x01;
+#define ADS1118_COLD_JUNCTION_LOW_FAULT 0x02;
+#define ADS1118_THERMOCOUPLE_OPEN_FAULT 0x04;
+
 static void
 ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
                      , int16_t adc_mv, int16_t cj_temp, uint8_t fault
                      , uint8_t oid, int16_t min_value, int16_t max_value)
 {
+    if (spi->cj_temp > 4000)
+        fault |= ADS1118_COLD_JUNCTION_HIGH_FAULT;
+    if (spi->cj_temp < -1280)
+        fault |= ADS1118_COLD_JUNCTION_LOW_FAULT;
+
     sendf("ads1118_result oid=%c next_clock=%u adc_mv=%hi cj_temp=%hi fault=%c",
           oid, next_begin_time, adc_mv, cj_temp, fault);
     /* check the result and stop if below or above allowed range */
     if (fault || adc_mv < min_value || adc_mv > max_value) {
+        //output fault data as a warning?
         spi->invalid_count++;
         if (spi->invalid_count < spi->max_invalid)
             return;
@@ -111,6 +121,7 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     uint8_t cur_state = spi->state;
     uint8_t next_state;
 
+    //todo check if conversion is available, if not set fault
     next_state = cur_state + 1;
 
     // only set next_state to 2 or 3 if those channels are configured
