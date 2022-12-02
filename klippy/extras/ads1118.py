@@ -1,4 +1,4 @@
-# Support for multiple type k thermocouples on an ADS1118 adc
+# Support for thermocouples on an ADS1118 adc
 #
 # Copyright (C) 2022  Jacob Dockter <dockterj@gmail.com>
 #

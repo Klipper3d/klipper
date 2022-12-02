@@ -3,7 +3,7 @@
 # Copyright (C) 2022  Jacob Dockter <dockterj@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
+import math, logging
 import pins
 from . import bus
 
@@ -19,6 +19,10 @@ MAX_INVALID_COUNT = 3
 
 ADS1118_MULT = .0078125
 ADS1118_CJ_MULT = .03125
+
+ADS1118_COLD_JUNCTION_HIGH_FAULT = 0x01
+ADS1118_COLD_JUNCTION_LOW_FAULT = 0x02
+ADS1118_THERMOCOUPLE_OPEN_FAULT = 0x04
 
 class ADS1118_Thermocouple(object):
     def __init__(self, config):
@@ -60,25 +64,12 @@ class ADS1118_Thermocouple(object):
         last_read_time  = self._mcu.clock_to_print_time(last_read_clock)
         self._callback(last_read_time, temp)
     def report_fault(self, msg):
-        self.printer.invoke_async_shutdown(msg)
+        logging.warn(msg)
     def handle_fault(self, adc_mv, cj_temp, fault):
-        #todo - no faults are currently implemented in ads1118.c
-        if fault & 0:
-            self.report_fault("ADS1118: Cold Junction Range Fault")
-        if fault & 0:
-            self.report_fault("ADS1118: Thermocouple Range Fault")
-        if fault & 0:
+        if fault & ADS1118_COLD_JUNCTION_HIGH_FAULT:
             self.report_fault("ADS1118: Cold Junction High Fault")
-        if fault & 0:
+        if fault & ADS1118_COLD_JUNCTION_LOW_FAULT:
             self.report_fault("Max31856: Cold Junction Low Fault")
-        if fault & 0:
-            self.report_fault("Max31856: Thermocouple High Fault")
-        if fault & 0:
-            self.report_fault("Max31856: Thermocouple Low Fault")
-        if fault & 0:
-            self.report_fault("Max31856: Over/Under Voltage Fault")
-        if fault & 0:
-            self.report_fault("Max31856: Thermocouple Open Fault")
     def calc_temp(self, adc_mv, cj_temp, fault):
         try:
             adc_mv = adc_mv * ADS1118_MULT
