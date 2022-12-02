@@ -13,6 +13,20 @@ def read_dictionary(filename):
     dfile.close()
     return dictionary
 
+# bytes to string differ between python 2 & 3
+# http://python3porting.com/problems.html#binary-data-in-python-2-and-python-3
+if sys.version_info[0] < 3:
+    def decode(x):
+        return x
+    def encode(x):
+        return x
+else:
+    def decode(x):
+        return x.decode('ISO-8859-1')
+    def encode(x):
+        return x.encode('ISO-8859-1')
+
+
 def main():
     dict_filename, data_filename = sys.argv[1:]
 
@@ -28,7 +42,7 @@ def main():
         newdata = os.read(fd, 4096)
         if not newdata:
             break
-        data += newdata
+        data += decode(newdata)
         while 1:
             l = mp.check_packet(data)
             if l == 0:
@@ -37,7 +51,8 @@ def main():
                 logging.error("Invalid data")
                 data = data[-l:]
                 continue
-            msgs = mp.dump(bytearray(data[:l]))
+            ba =bytearray(encode(data[:l]))
+            msgs = mp.dump(ba)
             sys.stdout.write('\n'.join(msgs[1:]) + '\n')
             data = data[l:]
 
