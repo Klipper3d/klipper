@@ -92,8 +92,8 @@ class ScrewsTiltAdjust:
                 self.gcode.respond_info(
                     "%s : x=%.1f, y=%.1f, z=%.5f" %
                     (name + ' (base)', coord[0], coord[1], z))
-                self.results.append({'name':name + ' (base)', 'x':coord[0],
-                    'y':coord[1], 'z':z})
+                self.results.append({'name': name + ' (base)', 'x': coord[0],
+                    'y': coord[1], 'z': z})
             else:
                 # Calculate how knob must be adjusted for other positions
                 diff = z_base - z
@@ -114,8 +114,8 @@ class ScrewsTiltAdjust:
                 self.gcode.respond_info(
                     "%s : x=%.1f, y=%.1f, z=%.5f : adjust %s %02d:%02d" %
                     (name, coord[0], coord[1], z, sign, full_turns, minutes))
-                self.results.append({'name':name, 'x':coord[0], 'y':coord[1],
-                    'z':z, 'sign':sign,
+                self.results.append({'name': name, 'x': coord[0], 'y': coord[1],
+                    'z': z, 'sign': sign,
                     'adjust':"%02d:%02d" % (full_turns, minutes)})
         if self.max_diff and any((d > self.max_diff) for d in screw_diff):
             self.max_diff_error = True
