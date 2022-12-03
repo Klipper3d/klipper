@@ -130,7 +130,7 @@ clock_setup(void)
                        ((CONFIG_CLOCK_FREQ>30000000) ? FLASH_ACR_LATENCY_1WS :
                                                     FLASH_ACR_LATENCY_0WS)))));
     FLASH->ACR = (latency | FLASH_ACR_ICEN | FLASH_ACR_DCEN
-                  | FLASH_ACR_PRFTEN);
+                  | FLASH_ACR_PRFTEN | FLASH_ACR_DBG_SWEN);
 
     enable_pclock(PWR_BASE);
     PWR->CR3 |= PWR_CR3_APC; // allow gpio pullup/down
