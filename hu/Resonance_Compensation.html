@@ -1650,7 +1650,7 @@ shaper_type: mzv
 <h3 id="nyomas-elotolas">Nyomás előtolás<a class="headerlink" href="#nyomas-elotolas" title="Permanent link">&para;</a></h3>
 <p>Ha Pressure Advance-t használ, akkor lehet, hogy újra kell hangolni. Kövesse az <a href="Pressure_Advance.html#tuning-pressure-advance">utasításokat</a> az új érték megtalálásához, ha az eltér az előzőtől. A Pressure Advance beállítása előtt mindenképpen indítsa újra a Klippert.</p>
 <h3 id="a-gyurodesi-frekvenciak-megbizhatatlan-meresei">A gyűrődési frekvenciák megbízhatatlan mérései<a class="headerlink" href="#a-gyurodesi-frekvenciak-megbizhatatlan-meresei" title="Permanent link">&para;</a></h3>
-<p>Ha nem tudja mérni a gyűrődési frekvenciákat, pl. ha a rezgések közötti távolság nem stabil, akkor még mindig kihasználhatod a bemeneti alakítási technikákat, de az eredmények nem biztos, hogy olyan jók lesznek, mint a frekvenciák megfelelő mérésével. Valamint egy kicsit több hangolást és a tesztmodell nyomtatását igényli. Megjegyzendő, hogy egy másik lehetőség egy gyorsulásmérő beszerzése és felszerelése, valamint a rezonanciák mérése (lásd a <a href="Measuring_Resonances.html">dokumentumot</a>, amely leírja a szükséges hardvert és a beállítási folyamatot) - de ez a lehetőség némi kézügyességet, krimpelést és forrasztást igényel.</p>
+<p>Ha nem tudod mérni a gyűrődési frekvenciákat, pl. ha a rezgések közötti távolság nem stabil, akkor még mindig kihasználhatod a bemeneti alakítási technikákat, de az eredmények nem biztos, hogy olyan jók lesznek, mint a frekvenciák megfelelő mérésével. Valamint egy kicsit több hangolást és a tesztmodell nyomtatását igényli. Megjegyzendő, hogy egy másik lehetőség egy gyorsulásmérő beszerzése és felszerelése, valamint a rezonanciák mérése (lásd a <a href="Measuring_Resonances.html">dokumentumot</a>, amely leírja a szükséges hardvert és a beállítási folyamatot) - de ez a lehetőség némi kézügyességet, krimpelést és forrasztást igényel.</p>
 <p>A hangoláshoz adjunk hozzá üres <code>[input_shaper]</code> szakaszt a <code>printer.cfg</code> fájlhoz. Ezután, feltételezve, hogy a javasolt paraméterekkel felszeletelte a gyűrődési modellt, nyomtasd ki 3-szor az alábbiak szerint. Első alkalommal, a nyomtatás előtt futtassa le a</p>
 <ol>
 <li><code>RESTART</code></li>
@@ -1659,7 +1659,7 @@ shaper_type: mzv
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
 </ol>
-<p>és nyomtasd ki a modellt. Ezután nyomtasd ki a modellt újra, de a nyomtatás előtt futtassa az alábbiakat</p>
+<p>és nyomtasd ki a modellt. Ezután nyomtasd ki a modellt újra, de a nyomtatás előtt futtasd az alábbiakat</p>
 <ol>
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=50 SHAPER_FREQ_Y=50</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
@@ -1669,8 +1669,8 @@ shaper_type: mzv
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=40 SHAPER_FREQ_Y=40</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
 </ol>
-<p>Lényegében a gyűrődési tesztmodellt TUNING_TOWER segítségével nyomtatjuk ki, 2HUMP_EI shaperrel, shaper_freq = 60 Hz, 50 Hz és 40 Hz.</p>
-<p>Ha egyik modell sem mutat javulást a gyűrődésben, akkor sajnos úgy tűnik, hogy a bemeneti alakítási technikák nem segíthetnek az Ön esetében.</p>
+<p>Lényegében a gyűrődési tesztmodellt TUNING_TOWER segítségével nyomtatjuk ki, 2HUMP_EI shaper-el, shaper_freq = 60 Hz, 50 Hz és 40 Hz.</p>
+<p>Ha egyik modell sem mutat javulást a gyűrődésben, akkor sajnos úgy tűnik, hogy a bemeneti alakítási technikák nem segíthetnek a Te esetedben.</p>
 <p>Máskülönben előfordulhat, hogy az összes modell nem mutat gyűrődést, vagy néhány modell gyűrődést mutat, néhány pedig nem annyira. Válaszd ki azt a tesztmodellt, amelyik a legmagasabb frekvenciával készült, és még mindig jó javulást mutat a gyűrődések tekintetében. Ha például a 40 Hz-es és az 50 Hz-es modellek szinte egyáltalán nem mutatnak gyűrődést, a 60 Hz-es modell pedig már némileg több gyűrődést mutat, maradj az 50 Hz-esnél.</p>
 <p>Most ellenőrizd, hogy az EI alakító elég jó lenne-e az esetedben. Válaszd ki az EI alakító frekvenciáját az általad választott 2HUMP_EI alakító frekvenciája alapján:</p>
 <ul>
@@ -1700,7 +1700,7 @@ shaper_type: 2hump_ei
 <h3 id="miutan-egy-ideig-sikeresen-nyomtatott-gyurodesek-nelkul-most-ugy-tunik-hogy-visszajott">Miután egy ideig sikeresen nyomtatott gyűrődések nélkül, most úgy tűnik, hogy visszajött<a class="headerlink" href="#miutan-egy-ideig-sikeresen-nyomtatott-gyurodesek-nelkul-most-ugy-tunik-hogy-visszajott" title="Permanent link">&para;</a></h3>
 <p>Lehetséges, hogy egy idő után a rezonanciafrekvenciák megváltoztak. Pl. talán a szíjak feszessége megváltozott (a szíjak lazábbak lettek) stb. Jó ötlet a <a href="#ringing-frequency">Gyűrődési frekvencia</a> szakaszban leírtak szerint ellenőrizni és újra megmérni a rezonanciafrekvenciákat, és szükség esetén frissíteni a konfigurációs fájlt.</p>
 <h3 id="tamogatott-a-kettos-kocsi-beallitasa-a-bemeneti-formazokkal">Támogatott a kettős kocsi beállítása a bemeneti formázókkal?<a class="headerlink" href="#tamogatott-a-kettos-kocsi-beallitasa-a-bemeneti-formazokkal" title="Permanent link">&para;</a></h3>
-<p>Nincs külön támogatás a bemeneti formázókkal ellátott kettős kocsikhoz, de ez nem jelenti azt, hogy ez a beállítás nem fog működni. A hangolást kétszer kell lefuttatni mindkét kocsira, és az X- és Y-tengelyek gyűrődési frekvenciáit mindkét kocsira függetlenül kell kiszámítani. Ezután a 0. kocsira vonatkozó értékeket tegye az [input_shaper] szakaszba, és a kocsik váltásakor menet közben változtassa meg az értékeket, például valamilyen makró segítségével:</p>
+<p>Nincs külön támogatás a bemeneti formázókkal ellátott kettős kocsikhoz, de ez nem jelenti azt, hogy ez a beállítás nem fog működni. A hangolást kétszer kell lefuttatni mindkét kocsira, és az X- és Y-tengelyek gyűrődési frekvenciáit mindkét kocsira függetlenül kell kiszámítani. Ezután a 0 kocsira vonatkozó értékeket tedd az [input_shaper] szakaszba, és a kocsik váltásakor menet közben változtasd meg az értékeket, például valamilyen makró segítségével:</p>
 <div class="highlight"><pre><span></span><code>SET_DUAL_CARRIAGE CARRIAGE=1
 SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
 </code></pre></div>
@@ -1710,7 +1710,7 @@ SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
 <p>Nem, a <code>input_shaper</code> funkció önmagában nincs hatással a nyomtatási időre. A <code>max_accel</code> értéke azonban bizonyosan befolyásolja (ennek a paraméternek a hangolása <a href="#a-max_accel-kivalasztasa">ebben a szakaszban</a> le van írva).</p>
 <h2 id="muszaki-reszletek">Műszaki részletek<a class="headerlink" href="#muszaki-reszletek" title="Permanent link">&para;</a></h2>
 <h3 id="bemeneti-valtozok">Bemeneti változók<a class="headerlink" href="#bemeneti-valtozok" title="Permanent link">&para;</a></h3>
-<p>A Klipperben használt bemeneti formázók meglehetősen szabványosak, és részletesebb áttekintést a megfelelő formázókat leíró cikkekben találhatunk. Ez a szakasz a támogatott bemeneti formázók néhány technikai szempontjának rövid áttekintését tartalmazza. Az alábbi táblázat az egyes shaperek néhány (általában hozzávetőleges) paraméterét mutatja.</p>
+<p>A Klipper-ben használt bemeneti formázók meglehetősen szabványosak, és részletesebb áttekintést a megfelelő formázókat leíró cikkekben találhatunk. Ez a szakasz a támogatott bemeneti formázók néhány technikai szempontjának rövid áttekintését tartalmazza. Az alábbi táblázat az egyes shaperek néhány (általában hozzávetőleges) paraméterét mutatja.</p>
 <table>
 <thead>
 <tr>

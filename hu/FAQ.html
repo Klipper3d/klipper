@@ -512,8 +512,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#hogyan-tavolitsam-el-a-klippert" class="md-nav__link">
-    Hogyan távolítsam el a klippert?
+  <a href="#hogyan-tavolitsam-el-a-klipper-t" class="md-nav__link">
+    Hogyan távolítsam el a Klipper-t?
   </a>
   
 </li>
@@ -1582,8 +1582,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#hogyan-tavolitsam-el-a-klippert" class="md-nav__link">
-    Hogyan távolítsam el a klippert?
+  <a href="#hogyan-tavolitsam-el-a-klipper-t" class="md-nav__link">
+    Hogyan távolítsam el a Klipper-t?
   </a>
   
 </li>
@@ -1680,7 +1680,7 @@ baud: 250000
 <p>Ezt általában a gazdagép és a mikrokontroller közötti USB-kapcsolat hardverhibái okozzák. Amit keresni kell:</p>
 <ul>
 <li>Használj jó minőségű USB-kábelt a gazdagép és a mikrokontroller között. Győződj meg róla, hogy a csatlakozók biztonságosan csatlakoznak.</li>
-<li>Ha Raspberry Pi-t használ, használj <a href="https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#power-supply">jó minőségű tápegységet</a> a Raspberry Pi számára, és egy <a href="https://forums.raspberrypi.com/viewtopic.php?p=589877#p589877">jó minőségű USB-kábellel</a> csatlakoztassa a tápegységet a Pihez. Ha az OctoPrint "feszültség alatt" figyelmeztetéseket kap, az a tápegységgel függ össze, és ezt meg kell javítani.</li>
+<li>Ha Raspberry Pi-t használsz, használj <a href="https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#power-supply">jó minőségű tápegységet</a> a Raspberry Pi számára, és egy <a href="https://forums.raspberrypi.com/viewtopic.php?p=589877#p589877">jó minőségű USB-kábellel</a> csatlakoztasd a tápegységet a Pi-hez. Ha az OctoPrint "alulfeszültség" figyelmeztetéseket kapsz, az a tápegységgel függ össze, és ezt ki kell javítani.</li>
 <li>Győződj meg róla, hogy a nyomtató áramellátása nincs túlterhelve. (A mikrovezérlő USB-chip áramellátásának ingadozása a chip újraindítását eredményezheti.)</li>
 <li>Ellenőrizd, hogy a léptető, fűtő és egyéb nyomtatóvezetékek nem szakadtak vagy rongálódtak. (A nyomtató mozgása megterhelheti a hibás vezetéket, ami érintkezési hibákhoz, rövidzárlathoz vagy túlzott zajkeltéshez vezethet.)</li>
 <li>Jelentéseket kaptunk magas USB-zajról, amikor a nyomtató, és a gazdagép 5V-os tápellátása keveredik. (Ha azt tapasztalod, hogy a mikrokontroller bekapcsol, amikor a gazdagép tápellátása be van kapcsolva, vagy az USB-kábel be van dugva, akkor ez azt jelzi, hogy az 5V-os tápegységek keverednek.) Segíthet, ha úgy konfigurálod a mikrokontrollert, hogy csak az egyik forrásból származó áramot használod. (Alternatív megoldásként, ha a mikrokontroller lapja nem tudja konfigurálni az áramforrását, módosíthatunk egy USB-kábelt úgy, hogy az ne szállítson 5V-os áramot a gazdagép és a mikrokontroller között.)</li>
@@ -1702,17 +1702,17 @@ baud: 250000
 <p>A zavar elkerülése érdekében a Klipper alapkódja a mikrokontroller által meghatározott szabványos tű neveket használja.</p>
 <h2 id="az-eszkozomet-egy-adott-tipusu-mikrokontroller-tuhoz-kell-csatlakoztatnom">Az eszközömet egy adott típusú mikrokontroller tűhöz kell csatlakoztatnom?<a class="headerlink" href="#az-eszkozomet-egy-adott-tipusu-mikrokontroller-tuhoz-kell-csatlakoztatnom" title="Permanent link">&para;</a></h2>
 <p>Ez az eszköz típusától és a tű típusától függ:</p>
-<p>ADC tűk (vagy analóg tűk): Termisztorok és hasonló "analóg" érzékelők esetén az eszközt a mikrokontroller egy "analóg" vagy "ADC" -képes tűjére kell csatlakoztatni. Ha a Klippert olyan tű használatára konfigurálod, amely nem analóg képes, a Klipper egy "Nem érvényes ADC tű" hibát fog jelenteni.</p>
+<p>ADC tűk (vagy analóg tűk): Termisztorok és hasonló "analóg" érzékelők esetén az eszközt a mikrokontroller egy "analóg" vagy "ADC" -képes tűjére kell csatlakoztatni. Ha a Klipper-t olyan tű használatára konfigurálod, amely nem analóg képes, a Klipper egy "Nem érvényes ADC tű" hibát fog jelenteni.</p>
 <p>PWM tűk (vagy időzítő tűk): A Klipper alapértelmezés szerint nem használ hardveres PWM-et egyetlen eszköz esetében sem. Tehát általában a fűtőtesteket, ventilátorokat és hasonló eszközöket bármelyik általános célú IO tűre lehet vezetékezni. A ventilátorok és az output_pin eszközök azonban opcionálisan úgy konfigurálhatók, hogy <code>hardware_pwm: True</code> értéket használnak, amely esetben a mikrokontrollernek támogatnia kell a hardveres PWM-et a tűn (ellenkező esetben a Klipper egy "Not a valid PWM pin" hibát fog jelezni).</p>
 <p>IRQ-tűk (vagy megszakítási tűk): A Klipper nem használ hardveres megszakításokat az IO tűkön, ezért soha nem szükséges egy eszközt ezen mikrokontroller tűk egyikére vezetni.</p>
 <p>SPI-tűk: A hardveres SPI használatakor a tűket a mikrokontroller SPI-képes tűihez kell csatlakoztatni. A legtöbb eszköz azonban konfigurálható a "szoftveres SPI" használatára, amely esetben bármely általános célú IO-tű használható.</p>
 <p>I2C tűk: I2C használatakor a tűket a mikrokontroller I2C-képes tűihez kell csatlakoztatni.</p>
 <p>Más eszközök bármelyik általános célú IO tűre csatlakoztathatók. Például léptetők, fűtők, ventilátorok, Z-szondák, szervók, LED-ek, közös hd44780/st7920 LCD-kijelzők, a Trinamic UART vezérlővonal bármely általános célú IO-tűhöz csatlakoztatható.</p>
 <h2 id="hogyan-tudom-torolni-az-m109m190-varakozas-a-homersekletre-kerest">Hogyan tudom törölni az M109/M190 "várakozás a hőmérsékletre" kérést?<a class="headerlink" href="#hogyan-tudom-torolni-az-m109m190-varakozas-a-homersekletre-kerest" title="Permanent link">&para;</a></h2>
-<p>Navigálj az OctoPrint terminál fülre, és adj ki egy M112 parancsot a terminálmezőben. Az M112 parancs hatására a Klipper "leállítás" állapotba kerül, és az OctoPrint megszakítja a kapcsolatot a Klipperrel. Navigálj az OctoPrint csatlakozási területére, és kattints a "Kapcsolódás" gombra, hogy az OctoPrint újra csatlakozzon. Navigálj vissza a terminál fülre, és adj ki egy FIRMWARE_RESTART parancsot a Klipper hibaállapotának törléséhez. E műveletsor befejezése után az előző fűtéskérés törlődik, és új nyomtatás indítható.</p>
+<p>Navigálj az OctoPrint terminál fülre, és adj ki egy M112 parancsot a terminálmezőben. Az M112 parancs hatására a Klipper "leállítás" állapotba kerül, és az OctoPrint megszakítja a kapcsolatot a Klipper-el. Navigálj az OctoPrint csatlakozási területére, és kattints a "Kapcsolódás" gombra, hogy az OctoPrint újra csatlakozzon. Navigálj vissza a terminál fülre, és adj ki egy FIRMWARE_RESTART parancsot a Klipper hibaállapotának törléséhez. E műveletsor befejezése után az előző fűtéskérés törlődik, és új nyomtatás indítható.</p>
 <h2 id="meg-tudom-allapitani-hogy-a-nyomtato-vesztett-e-lepeseket">Meg tudom állapítani, hogy a nyomtató vesztett-e lépéseket?<a class="headerlink" href="#meg-tudom-allapitani-hogy-a-nyomtato-vesztett-e-lepeseket" title="Permanent link">&para;</a></h2>
-<p>Bizonyos értelemben igen. Indítsa el a nyomtatót, adj ki egy <code>GET_POSITION</code> parancsot, indítsa el a nyomtatást, indítsa el újra, és adj ki egy újabb <code>GET_POSITION</code> parancsot. Ezután hasonlítsa össze az <code>mcu:</code> sorban szereplő értékeket.</p>
-<p>Ez hasznos lehet a beállítások, például a léptetőmotorok áramának, gyorsulásának és sebességének beállításához anélkül, hogy ténylegesen nyomtatnod kellene valamit és pazarolnod kellene a szálakat: csak futtass néhány nagy sebességű mozgást a <code>GET_POSITION</code> parancsok között.</p>
+<p>Bizonyos értelemben igen. Indítsd el a nyomtatót, adj ki egy <code>GET_POSITION</code> parancsot, indítsd el a nyomtatást, kezdőpont felvétel újra, és adj ki egy újabb <code>GET_POSITION</code> parancsot. Ezután hasonlítsd össze az <code>mcu:</code> sorban szereplő értékeket.</p>
+<p>Ez hasznos lehet a beállítások, például a léptetőmotorok áramának, gyorsulásának és sebességének beállításához anélkül, hogy ténylegesen nyomtatnod kellene valamit és pazarolnod kellene az anyagot: csak futtass néhány nagy sebességű mozgást a <code>GET_POSITION</code> parancsok között.</p>
 <p>Vedd figyelembe, hogy a végálláskapcsolók maguk is hajlamosak kissé eltérő pozícióban kioldani, így a néhány mikrolépésnyi különbség valószínűleg a végállás pontatlanságának eredménye. Maga a léptetőmotor csak 4 teljes lépésenként képes lépéseket veszíteni. (Tehát, ha 16 mikrolépést használunk, akkor a léptető egy elvesztett lépése azt eredményezi, hogy az "mcu:" lépésszámláló 64 mikrolépés többszörösével téved.)</p>
 <h2 id="miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat">Miért jelent hibát a Klipper? Elrontotta a nyomtatásomat!<a class="headerlink" href="#miert-jelent-hibat-a-klipper-elrontotta-a-nyomtatasomat" title="Permanent link">&para;</a></h2>
 <p>Rövid válasz: A nyomtatóink problémákat észlelnek, hogy a mögöttes problémát orvosolni lehessen, és kiváló minőségű nyomatokat kaphassunk. Semmiképpen sem szeretnénk, ha a nyomtatóink csendben rossz minőségű nyomatokat készítenének.</p>
@@ -1720,7 +1720,7 @@ baud: 250000
 <p>Van néhány kapcsolódó kérdés: Miért nem szünetelteti a Klipper a nyomtatást? Nem jelent figyelmeztetést helyette? A nyomtatás előtt nem ellenőrzi a hibákat? Figyelmen kívül hagyja a hibákat a felhasználó által begépelt parancsokban? stb. Jelenleg a Klipper a G-kód protokollt használva olvassa a parancsokat, és sajnos a G-kód parancsprotokoll nem elég rugalmas ahhoz, hogy ezek az alternatívák ma már praktikusak legyenek. A fejlesztők érdeklődnek a felhasználói élmény javítása iránt a rendellenes események során, de ez várhatóan jelentős infrastrukturális munkát igényel (beleértve a G-kódtól való eltávolodást).</p>
 <h2 id="hogyan-frissithetek-a-legujabb-szoftverre">Hogyan frissíthetek a legújabb szoftverre?<a class="headerlink" href="#hogyan-frissithetek-a-legujabb-szoftverre" title="Permanent link">&para;</a></h2>
 <p>A szoftver frissítésének első lépése a legfrissebb <a href="Config_Changes.html">konfigurációs változások</a> dokumentum áttekintése. Alkalmanként olyan változások történnek a szoftverben, amelyek miatt a felhasználóknak frissíteniük kell a beállításaikat a szoftverfrissítés részeként. A frissítés előtt érdemes átnézni ezt a dokumentumot.</p>
-<p>Ha készen áll a frissítésre, az általános módszer az, hogy SSH-t használunk a Raspberry Pi-n, és futtatjuk:</p>
+<p>Ha készen állsz a frissítésre, az általános módszer az, hogy SSH-t használunk a Raspberry Pi-n, és futtatjuk:</p>
 <div class="highlight"><pre><span></span><code>cd ~/klipper
 git pull
 ~/klipper/scripts/install-octopi.sh
@@ -1742,11 +1742,11 @@ git pull
 sudo service klipper restart
 </code></pre></div>
 
-<p>Ha e parancs használata után a szoftver arra figyelmeztet, hogy a mikrokontrollert újra kell égetni, vagy más szokatlan hiba lép fel, akkor kövesse a fent leírt teljes frissítési lépéseket.</p>
+<p>Ha e parancs használata után a szoftver arra figyelmeztet, hogy a mikrokontrollert újra kell égetni, vagy más szokatlan hiba lép fel, akkor kövesd a fent leírt teljes frissítési lépéseket.</p>
 <p>Ha továbbra is fennállnak a hibák, akkor ellenőrizd a <a href="Config_Changes.html">konfigurációs változások</a> dokumentumot, mivel lehet, hogy módosítani kell a nyomtató konfigurációját.</p>
 <p>Ne feledd, hogy a RESTART és FIRMWARE_RESTART G-kód parancsok nem töltenek be új szoftvert a fenti "sudo service klipper restart" és "make flash" parancsok szükségesek a szoftverváltás érvénybe lépéséhez.</p>
-<h2 id="hogyan-tavolitsam-el-a-klippert">Hogyan távolítsam el a klippert?<a class="headerlink" href="#hogyan-tavolitsam-el-a-klippert" title="Permanent link">&para;</a></h2>
-<p>A firmware oldalon semmi különösnek nem kell történnie. Csak kövesse az új firmware égetési utasításait.</p>
+<h2 id="hogyan-tavolitsam-el-a-klipper-t">Hogyan távolítsam el a Klipper-t?<a class="headerlink" href="#hogyan-tavolitsam-el-a-klipper-t" title="Permanent link">&para;</a></h2>
+<p>A firmware oldalon semmi különösnek nem kell történnie. Csak kövesd az új firmware égetési utasításait.</p>
 <p>A Raspberry Pi oldalon egy eltávolító szkript elérhető a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/klipper-uninstall.sh">scripts/klipper-uninstall.sh</a> alatt. Például:</p>
 <div class="highlight"><pre><span></span><code>sudo ~/klipper/scripts/klipper-uninstall.sh
 rm -rf ~/klippy-env ~/klipper

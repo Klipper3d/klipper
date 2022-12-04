@@ -1521,7 +1521,7 @@
 
 <h1 id="targyasztal-halo">Tárgyasztal háló<a class="headerlink" href="#targyasztal-halo" title="Permanent link">&para;</a></h1>
 <p>A tárgyasztal háló modul használható a tárgyasztal felület egyenetlenségeinek kiegyenlítésére, hogy jobb első réteget kapj az egész tárgyasztalon. Meg kell jegyezni, hogy a szoftveralapú korrekció nem fog tökéletes eredményt elérni, csak megközelítő értékekkel tudatja a tárgyasztal alakját. A tárgyasztal háló szintén nem tudja kompenzálni a mechanikai és elektromos problémákat. Ha egy tengely ferde vagy egy szonda nem pontos, akkor a bed_mesh modul nem fog pontos eredményeket kapni a szintezésről.</p>
-<p>A hálókalibrálás előtt meg kell győződnie arról, hogy a szonda Z-eltolása kalibrálva van. Ha végállást használ a Z-kezdőponthoz, akkor azt is kalibrálni kell. További információkért lásd a <a href="Probe_Calibrate.html">Szonda Kalibrálás</a> és a Z_ENDSTOP_CALIBRATE című fejezetben <a href="Manual_Level.html">Kézi Szintezést</a>.</p>
+<p>A hálókalibrálás előtt meg kell győződnöd arról, hogy a szonda Z-eltolása kalibrálva van. Ha végállást használsz a Z-kezdőponthoz, akkor azt is kalibrálni kell. További információkért lásd a <a href="Probe_Calibrate.html">Szonda Kalibrálás</a> és a Z_ENDSTOP_CALIBRATE című fejezetben a <a href="Manual_Level.html">Kézi Szintezést</a>.</p>
 <h2 id="alapveto-konfiguracio">Alapvető konfiguráció<a class="headerlink" href="#alapveto-konfiguracio" title="Permanent link">&para;</a></h2>
 <h3 id="teglalap-alaku-targyasztalok">Téglalap alakú tárgyasztalok<a class="headerlink" href="#teglalap-alaku-targyasztalok" title="Permanent link">&para;</a></h3>
 <p>Ez a példa egy 250 mm x 220 mm-es téglalap alakú tárgyasztalú nyomtatót és egy 24 mm-es x-eltolású és 5 mm-es y-eltolású szondát mutat.</p>
@@ -1538,7 +1538,7 @@ probe_count: 5, 3
 <li><code>horizontal_move_z: 5</code> <em>Alapértelmezett érték: 5</em> A Z koordináta, amelyre a szonda a mérőpontok közötti utazás előtt emelkedik.</li>
 <li><code>mesh_min: 35, 6</code> <em>Ajánlott</em> Az első, az origóhoz legközelebbi koordináta. Ez a koordináta a szonda helyéhez képest relatív.</li>
 <li><code>mesh_max: 240, 198</code> <em>Ajánlott</em> Az origótól legtávolabb eső mért koordináta. Ez nem feltétlenül az utolsó mért pont, mivel a mérés cikcakkos módon történik. A <code>mesh_min</code> koordinátához hasonlóan ez a koordináta is a szonda helyéhez van viszonyítva.</li>
-<li><code>probe_count: 5, 3</code> <em>Alapértelmezett érték: 3,3</em> Az egyes tengelyeken mérendő pontok száma, X, Y egész értékben megadva. Ebben a példában az X tengely mentén 5 pont lesz mérve, az Y tengely mentén 3 pont, összesen 15 mért pont. Vedd figyelembe, hogy ha négyzetrácsot szeretnél, például 3x3, akkor ezt egyetlen egész számértékként is megadhatod, amelyet mindkét tengelyre használ, azaz <code>probe_count: 3</code>. Vedd figyelembe, hogy egy hálóhoz mindkét tengely mentén legalább 3 darab mérési számra van szükség.</li>
+<li><code>probe_count: 5, 3</code> <em>Alapértelmezett érték: 3,3</em> Az egyes tengelyeken mérendő pontok száma, X, Y egész értékben megadva. Ebben a példában az X tengely mentén 5 pont lesz mérve, az Y tengely mentén 3 pont, összesen 15 mért pont. Vedd figyelembe, hogy ha négyzetrácsot szeretnél, például 3x3, akkor ezt egyetlen egész számértékként is megadhatod, amelyet mindkét tengelyre használsz, azaz <code>probe_count: 3</code>. Vedd figyelembe, hogy egy hálóhoz mindkét tengely mentén legalább 3 darab mérési számra van szükség.</li>
 </ul>
 <p>Az alábbi ábra azt mutatja, hogy a <code>mesh_min</code>, <code>mesh_max</code> és <code>probe_count</code> opciók hogyan használhatók a mérőpontok létrehozására. A nyilak jelzik a mérési eljárás irányát, kezdve a <code>mesh_min</code> ponttól. Hivatkozásképpen, amikor a szonda a <code>mesh_min</code> pontnál van, a fúvóka a (11, 1) pontnál lesz, és amikor a szonda a <code>mesh_max</code> pontnál van, a fúvóka a (206, 193) pontnál lesz.</p>
 <p><img alt="bedmesh_rect_basic" src="img/bedmesh_rect_basic.svg" /></p>
@@ -1658,7 +1658,7 @@ faulty_region_4_max: 45.0, 210.0
 <h2 id="targyasztal-halo-g-kodok">Tárgyasztal háló G-kódok<a class="headerlink" href="#targyasztal-halo-g-kodok" title="Permanent link">&para;</a></h2>
 <h3 id="kalibracio">Kalibráció<a class="headerlink" href="#kalibracio" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CALIBRATE PROFILE=&lt;name&gt; METHOD=[manual | automatic] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code> * Alapértelmezett profil: alapértelmezett<em> </em>Alapértelmezett módszer: automatikus, ha érzékelőt észlel, egyébként manuális*</p>
-<p>Elindítja a mérési eljárást a tárgyasztal háló kalibrálásához.</p>
+<p>Mérési eljárást indítása a tárgyasztal háló kalibrálásához.</p>
 <p>A háló a <code>PROFILE</code> paraméter által megadott profilba kerül mentésre, vagy <code>default</code>, ha nincs megadva. Ha a <code>METHOD=manual</code> paramétert választjuk, akkor kézi mérés történik. Az automatikus és a kézi mérés közötti váltáskor a generált hálópontok automatikusan kiigazításra kerülnek.</p>
 <p>Lehetőség van hálóparaméterek megadására a mért terület módosítására. A következő paraméterek állnak rendelkezésre:</p>
 <ul>

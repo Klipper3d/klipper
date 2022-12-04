@@ -955,15 +955,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#folyamatosan-kap-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat" class="md-nav__link">
-    Folyamatosan kap "Nem tudom olvasni a tmc uart 'stepper_x' regiszter IFCNT" hibákat?
+  <a href="#folyamatosan-kapsz-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat" class="md-nav__link">
+    Folyamatosan kapsz "Nem tudom olvasni a tmc uart 'stepper_x' regiszter IFCNT" hibákat?
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#folyamatosan-kap-nem-lehet-irni-tmc-spi-stepper_x-register-hibat" class="md-nav__link">
-    Folyamatosan kap "Nem lehet írni tmc spi "stepper_x" register ..." hibát?
+  <a href="#folyamatosan-kapsz-nem-lehet-irni-tmc-spi-stepper_x-register-hibat" class="md-nav__link">
+    Folyamatosan kapsz "Nem lehet írni tmc spi "stepper_x" register ..." hibát?
   </a>
   
 </li>
@@ -998,8 +998,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#a-tmc-hibat-jelent-uv_cp1undervoltage" class="md-nav__link">
-    A TMC hibát jelent: ... uv_cp=1(Undervoltage!)
+  <a href="#a-tmc-hibat-jelent-uv_cp1alulfeszultseg" class="md-nav__link">
+    A TMC hibát jelent: ... uv_cp=1(Alulfeszültség!)
   </a>
   
 </li>
@@ -1614,15 +1614,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#folyamatosan-kap-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat" class="md-nav__link">
-    Folyamatosan kap "Nem tudom olvasni a tmc uart 'stepper_x' regiszter IFCNT" hibákat?
+  <a href="#folyamatosan-kapsz-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat" class="md-nav__link">
+    Folyamatosan kapsz "Nem tudom olvasni a tmc uart 'stepper_x' regiszter IFCNT" hibákat?
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#folyamatosan-kap-nem-lehet-irni-tmc-spi-stepper_x-register-hibat" class="md-nav__link">
-    Folyamatosan kap "Nem lehet írni tmc spi "stepper_x" register ..." hibát?
+  <a href="#folyamatosan-kapsz-nem-lehet-irni-tmc-spi-stepper_x-register-hibat" class="md-nav__link">
+    Folyamatosan kapsz "Nem lehet írni tmc spi "stepper_x" register ..." hibát?
   </a>
   
 </li>
@@ -1657,8 +1657,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#a-tmc-hibat-jelent-uv_cp1undervoltage" class="md-nav__link">
-    A TMC hibát jelent: ... uv_cp=1(Undervoltage!)
+  <a href="#a-tmc-hibat-jelent-uv_cp1alulfeszultseg" class="md-nav__link">
+    A TMC hibát jelent: ... uv_cp=1(Alulfeszültség!)
   </a>
   
 </li>
@@ -1703,12 +1703,12 @@
 <p>Ezen a dokumentumon kívül feltétlenül tekintsd át a <a href="Config_Reference.html#tmc-motorvezerlo-konfiguracioja">TMC motorvezérlő konfigurációs hivatkozást</a>.</p>
 <h2 id="motoraram-hangolasa">Motoráram hangolása<a class="headerlink" href="#motoraram-hangolasa" title="Permanent link">&para;</a></h2>
 <p>A nagyobb meghajtóáram növeli a pozicionálási pontosságot és a nyomatékot. A nagyobb áram azonban növeli a léptetőmotor és a motorvezérlő által termelt hőt is. Ha a motorvezérlő túlságosan felmelegszik, akkor kikapcsolja magát, és a Klipper hibát jelez. Ha a léptetőmotor túlságosan felmelegszik, veszít a nyomatékból és a pozícionálási pontosságból. (Ha nagyon felforrósodik, akkor a hozzáérő vagy a közelében lévő műanyag alkatrészeket is megolvaszthatja.)</p>
-<p>Általános hangolási tippként, előnyben részesítheti a magasabb áramértékeket, amíg a léptetőmotor nem melegszik túlságosan, és a motorvezérlő nem jelez figyelmeztetéseket vagy hibákat. Általánosságban elmondható, hogy a léptetőmotor nem baj, ha melegszik, de nem szabad annyira felforrósodnia, hogy érintése fájdalmas legyen.</p>
+<p>Általános hangolási tippként, előnyben részesítheted a magasabb áramértékeket, amíg a léptetőmotor nem melegszik túlságosan, és a motorvezérlő nem jelez figyelmeztetéseket vagy hibákat. Általánosságban elmondható, hogy a léptetőmotor nem baj, ha melegszik, de nem szabad annyira felforrósodnia, hogy érintése fájdalmas legyen.</p>
 <h2 id="inkabb-ne-adj-meg-hold_current-erteket">Inkább ne adj meg hold_current értéket<a class="headerlink" href="#inkabb-ne-adj-meg-hold_current-erteket" title="Permanent link">&para;</a></h2>
 <p>Ha beállítunk egy <code>hold_current</code> értéket, akkor a TMC motorvezérlő csökkentheti a léptetőmotor áramát, amikor azt érzékeli, hogy a léptető nem mozog. A motoráram megváltoztatása azonban önmagában is motormozgást eredményezhet. Ez bekövetkezhet a "rögzítő erők" miatt a léptetőmotoron belül (a rotorban lévő állandó mágnes az állórészben lévő vasfogak felé húz) vagy a tengelykocsira ható külső erők miatt.</p>
 <p>A legtöbb léptetőmotornak a normál nyomtatás során nem jelent jelentős előnyt az áram csökkentése, mivel kevés nyomtatási művelet hagyja a léptetőmotort elég hosszú ideig üresen ahhoz, hogy aktiválja a <code>hold_current</code> funkciót. És nem valószínű, hogy az ember finom nyomtatási műveleteket akarna bevezetni abba a néhány nyomtatási mozdulatba, amely elég hosszú ideig hagyja üresen a léptetőmotort.</p>
 <p>Ha csökkenteni szeretnéd a motorok áramát a nyomtatási indítási rutinok során, akkor fontold meg a <a href="G-Codes.html#set_tmc_current">SET_TMC_CURRENT</a> parancsok kiadását egy <a href="Slicers.html#klipper-gcode_macro">START_PRINT makróban</a>, hogy beállítsd az áramot a normál nyomtatási mozgások előtt és után.</p>
-<p>Néhány olyan, dedikált Z-motorral rendelkező nyomtató, amely a normál nyomtatási műveletek során (nincs bed_mesh, nincs bed_tilt, nincs Z skew_correction, nincs "vase mode" nyomtatás stb.) üresjáratban van, azt tapasztalhatja, hogy a Z motorok hűvösebbek a <code>hold_current</code> beállítással. Ha ezt használod, akkor mindenképpen vedd figyelembe ezt a fajta parancs nélküli Z tengelymozgást tárgyasztal kiegyenlítése, tárgyasztal szintezése, szondakalibrálás és hasonlók során. A <code>driver_TPOWERDOWN</code> és <code>driver_IHOLDDELAY</code> értékeket is ennek megfelelően kell kalibrálni. Ha bizonytalan vagy, inkább ne add meg a <code>hold_current</code> értéket.</p>
+<p>Néhány olyan, dedikált Z-motorral rendelkező nyomtató, amely a normál nyomtatási műveletek során (nincs bed_mesh, nincs bed_tilt, nincs Z skew_correction, nincs "vase mode" nyomtatás stb.) üresjáratban van, azt tapasztalhatod, hogy a Z motorok hűvösebbek a <code>hold_current</code> beállítással. Ha ezt használod, akkor mindenképpen vedd figyelembe ezt a fajta parancs nélküli Z tengelymozgást tárgyasztal kiegyenlítése, tárgyasztal szintezése, szondakalibrálás és hasonlók során. A <code>driver_TPOWERDOWN</code> és <code>driver_IHOLDDELAY</code> értékeket is ennek megfelelően kell kalibrálni. Ha bizonytalan vagy, inkább ne add meg a <code>hold_current</code> értéket.</p>
 <h2 id="spreadcycle-vs-stealthchop-mod-beallitasa">"SpreadCycle" vs "StealthChop" mód beállítása<a class="headerlink" href="#spreadcycle-vs-stealthchop-mod-beallitasa" title="Permanent link">&para;</a></h2>
 <p>Alapértelmezés szerint a Klipper a TMC motorvezérlőket "SpreadCycle" üzemmódba helyezi. Ha a motorvezérlő támogatja a "StealthChop" módot, akkor azt a <code>stealthchop_threshold hozzáadásával lehet engedélyezni: 999999</code> a TMC konfigurációs szakaszához.</p>
 <p>Általában a SpreadCycle üzemmód nagyobb nyomatékot és nagyobb helymeghatározási pontosságot biztosít, mint a StealthChop üzemmód. A StealthChop üzemmód azonban néhány nyomtatónál lényegesen kisebb hallható zajjal járhat.</p>
@@ -1771,7 +1771,7 @@ homing_retract_dist: 0
 <p>Egy TMC2130 vagy TMC5160 konfiguráció például így nézhet ki:</p>
 <div class="highlight"><pre><span></span><code>[tmc2130 stepper_x]
 diag1_pin: ^!PA1 # A TMC DIAG1 tűhöz csatlakoztatott tű (vagy használd a diag0_pin / DIAG0 tűt)
-driver_SGT: -64  # -64 a legérzékenyebb érték, 63 a legkevésbé érzékeny.
+driver_SGT: -64    # -64 a legérzékenyebb érték, 63 a legkevésbé érzékeny.
 ...
 
 [stepper_x]
@@ -1782,11 +1782,11 @@ homing_retract_dist: 0
 
 <p>Egy TMC2660 konfiguráció így nézhet ki:</p>
 <div class="highlight"><pre><span></span><code>[tmc2660 stepper_x]
-driver_SGT: -64      # -64 a legérzékenyebb érték, 63 a legkevésbé érzékeny.
+driver_SGT: -64           # -64 a legérzékenyebb érték, 63 a legkevésbé érzékeny.
 ...
 
 [stepper_x]
-endstop_pin: ^PA1    # A TMC SG_TST tűjéhez csatlakoztatott tű.
+endstop_pin: ^PA1       # A TMC SG_TST tűjéhez csatlakoztatott tű.
 homing_retract_dist: 0
 ...
 </code></pre></div>
@@ -1821,20 +1821,20 @@ homing_retract_dist: 0
 <p>Egy példamakró így nézhet ki:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro SENSORLESS_HOME_X]
 gcode:
-    {% set HOME_CUR = 0.700 %}
-    {% set driver_config = printer.configfile.settings[&#39;tmc2209 stepper_x&#39;] %}
-    {% set RUN_CUR = driver_config.run_current %}
-    # Állítsuk be az áramot az érzékelő nélküli kezdőpont felvételhez
-    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR}
-    # Szünet annak biztosítására, hogy a meghajtó leállási jelzője törlődjön.
-    G4 P2000
-    # Kezdőpont
-    G28 X0
-    # Elmozdulás
-    G90
-    G1 X5 F1200
-    # Állítsd be az áramerősséget nyomtatás közben
-    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR}
+         {% set HOME_CUR = 0.700 %}
+         {% set driver_config = printer.configfile.settings[&#39;tmc2209 stepper_x&#39;] %}
+         {% set RUN_CUR = driver_config.run_current %}
+         # Állítsuk be az áramot az érzékelő nélküli kezdőpont felvételhez
+         SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR}
+         # Szünet annak biztosítására, hogy a meghajtó leállási jelzője törlődjön.
+         G4 P2000
+         # Kezdőpont
+         G28 X0
+         # Elmozdulás
+         G90
+         G1 X5 F1200
+         # Állítsd be az áramerősséget nyomtatás közben
+         SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR}
 </code></pre></div>
 
 <p>Az így kapott makró meghívható a <a href="Config_Reference.html#homing_override">homing_override konfigurációs szakasz</a> vagy a <a href="Slicers.html#klipper-gcode_macro">START_PRINT makró</a> segítségével.</p>
@@ -1843,7 +1843,7 @@ gcode:
 <p>A CoreXY nyomtató X és Y kocsiknál érzékelő nélküli kezdőpont felvételre is van lehetőség. A Klipper a <code>[stepper_x]</code> léptetőt használja az X kocsi kezdőpont felvételekor az elakadások érzékelésére, az Y kocsi kezdőpont felvételekor pedig a <code>[stepper_y]</code> léptetőt.</p>
 <p>Használd a fent leírt hangolási útmutatót, hogy megtaláld a megfelelő "elakadás érzékenységet" az egyes kocsikhoz, de vedd figyelembe a következő korlátozásokat:</p>
 <ol>
-<li>Ha a CoreXY-n érzékelő nélküli kezdőpont felvételt használ, győződj meg róla, hogy egyik léptetőhöz sincs beállítva <code>hold_current</code>.</li>
+<li>Ha a CoreXY-n érzékelő nélküli kezdőpont felvételt használsz, győződj meg róla, hogy egyik léptetőhöz sincs beállítva <code>hold_current</code>.</li>
 <li>A hangolás során győződj meg arról, hogy az X és az Y kocsik a sínek közepénél vannak-e minden egyes kezdőpont felvételi kísérlet előtt.</li>
 <li>A hangolás befejezése után az X és Y kezdőpont felvételét makrók segítségével biztosítsd, hogy először az egyik tengely vegye fel a kezdőpontot, majd mozgasd el a kocsit a tengelyhatártól, tarts legalább 2 másodperc szünetet, majd kezd el a másik kocsi kezdőpont felvételét. A tengelytől való eltávolodással elkerülhető, hogy az egyik tengelyt akkor indítsuk el, amikor a másik a tengelyhatárhoz van nyomva (ami eltorzíthatja az akadásérzékelést). A szünetre azért van szükség, hogy a meghajtó az újraindítás előtt törölje az elakadás érzékelő puffert.</li>
 </ol>
@@ -1874,17 +1874,17 @@ gcode:
 <h2 id="gyakori-kerdesek">Gyakori kérdések<a class="headerlink" href="#gyakori-kerdesek" title="Permanent link">&para;</a></h2>
 <h3 id="hasznalhatom-a-stealthchop-uzemmodot-nyomas-elotolassal-rendelkezo-extruderen">Használhatom a StealthChop üzemmódot nyomás előtolással rendelkező extruderen?<a class="headerlink" href="#hasznalhatom-a-stealthchop-uzemmodot-nyomas-elotolassal-rendelkezo-extruderen" title="Permanent link">&para;</a></h3>
 <p>Sokan sikeresen használják a "StealthChop" üzemmódot a Klipper nyomás előtolással. A Klipper <a href="Kinematics.html#pressure-advance">simított nyomás előtolása</a>, amely nem vezet be pillanatnyi sebesség változást.</p>
-<p>A "StealthChop" üzemmód azonban alacsonyabb motornyomatékot és/vagy nagyobb motorhőt eredményezhet. Lehet, hogy ez az üzemmód megfelelő az Ön adott nyomtatója számára, de az is lehet, hogy nem.</p>
-<h3 id="folyamatosan-kap-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat">Folyamatosan kap "Nem tudom olvasni a tmc uart 'stepper_x' regiszter IFCNT" hibákat?<a class="headerlink" href="#folyamatosan-kap-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat" title="Permanent link">&para;</a></h3>
+<p>A "StealthChop" üzemmód azonban alacsonyabb motornyomatékot és/vagy nagyobb motorhőt eredményezhet. Lehet, hogy ez az üzemmód megfelelő a Te nyomtatód számára, de az is lehet, hogy nem.</p>
+<h3 id="folyamatosan-kapsz-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat">Folyamatosan kapsz "Nem tudom olvasni a tmc uart 'stepper_x' regiszter IFCNT" hibákat?<a class="headerlink" href="#folyamatosan-kapsz-nem-tudom-olvasni-a-tmc-uart-stepper_x-regiszter-ifcnt-hibakat" title="Permanent link">&para;</a></h3>
 <p>Ez akkor fordul elő, ha a Klipper nem tud kommunikálni egy TMC2208 vagy TMC2209 meghajtóval.</p>
 <p>Győződj meg róla, hogy a motor tápellátása engedélyezve van, mivel a léptetőmotor-meghajtónak általában motoráramra van szüksége, mielőtt kommunikálni tudna a mikrokontrollerrel.</p>
-<p>Ha ez a hiba a Klipper első égetése után jelentkezik, akkor a léptető meghajtó korábban olyan állapotba programozódott, amely nem kompatibilis a Klipperrel. Az állapot visszaállításához néhány másodpercre távolítsa el a nyomtatót az áramellátástól (fizikailag húzza ki az USB-t és a hálózati csatlakozót).</p>
+<p>Ha ez a hiba a Klipper első égetése után jelentkezik, akkor a léptető meghajtó korábban olyan állapotba programozódott, amely nem kompatibilis a Klipper-el. Az állapot visszaállításához néhány másodpercre vedd el a nyomtató áramellátását (fizikailag húzza ki az USB-t és a hálózati csatlakozót).</p>
 <p>Ellenkező esetben ez a hiba általában az UART tű helytelen vezetékezésének vagy az UART tűbeállítások helytelen Klipper konfigurációjának eredménye.</p>
-<h3 id="folyamatosan-kap-nem-lehet-irni-tmc-spi-stepper_x-register-hibat">Folyamatosan kap "Nem lehet írni tmc spi "stepper_x" register ..." hibát?<a class="headerlink" href="#folyamatosan-kap-nem-lehet-irni-tmc-spi-stepper_x-register-hibat" title="Permanent link">&para;</a></h3>
+<h3 id="folyamatosan-kapsz-nem-lehet-irni-tmc-spi-stepper_x-register-hibat">Folyamatosan kapsz "Nem lehet írni tmc spi "stepper_x" register ..." hibát?<a class="headerlink" href="#folyamatosan-kapsz-nem-lehet-irni-tmc-spi-stepper_x-register-hibat" title="Permanent link">&para;</a></h3>
 <p>Ez akkor fordul elő, ha a Klipper nem tud kommunikálni egy TMC2208 vagy TMC2209 motorvezérlővel.</p>
 <p>Győződj meg róla, hogy a motor tápellátása engedélyezve van, mivel a léptetőmotor-meghajtónak általában motoráramra van szüksége, mielőtt kommunikálni tudna a mikrokontrollerrel.</p>
 <p>Ellenkező esetben ez a hiba általában a helytelen SPI vezetékezés, az SPI beállítások helytelen Klipper-konfigurációja vagy az SPI buszon lévő eszközök hiányos konfigurációjának eredménye.</p>
-<p>Ne feledd, hogy ha a motorvezérlő egy megosztott SPI buszon van több eszközzel, akkor győződj meg róla, hogy teljes mértékben konfiguráld a Klipperben lévő megosztott SPI busz minden eszközét. Ha egy megosztott SPI buszon lévő eszköz nincs konfigurálva, akkor előfordulhat, hogy helytelenül reagál a nem erre szánt parancsokra, és meghiúsul a kívánt eszközzel folytatott kommunikáció. Ha van olyan eszköz egy megosztott SPI buszon, amelyet nem lehet konfigurálni a Klipperben, akkor a <a href="Config_Reference.html#static_digital_output">static_digital_output konfigurációs szakasz</a> segítségével állítsd magasra a nem használt eszköz CS tűjét (hogy ne kísérelje meg használni az SPI buszt). A tábla vázlata gyakran hasznos referencia annak megállapításához, hogy mely eszközök vannak egy SPI buszon és a hozzájuk tartozó tűkön.</p>
+<p>Ne feledd, hogy ha a motorvezérlő egy megosztott SPI buszon van több eszközzel, akkor győződj meg róla, hogy teljes mértékben konfiguráld a Klipper-ben lévő megosztott SPI busz minden eszközét. Ha egy megosztott SPI buszon lévő eszköz nincs konfigurálva, akkor előfordulhat, hogy helytelenül reagál a nem erre szánt parancsokra, és meghiúsul a kívánt eszközzel folytatott kommunikáció. Ha van olyan eszköz egy megosztott SPI buszon, amelyet nem lehet konfigurálni a Klipper-ben, akkor a <a href="Config_Reference.html#static_digital_output">static_digital_output konfigurációs szakasz</a> segítségével állítsd magasra a nem használt eszköz CS tűjét (hogy ne kísérelje meg használni az SPI buszt). A tábla vázlata gyakran hasznos referencia annak megállapításához, hogy mely eszközök vannak egy SPI buszon és a hozzájuk tartozó tűkön.</p>
 <h3 id="miert-kaptam-egy-tmc-jelentes-hiba-hibauzenetet">Miért kaptam egy "TMC jelentés hiba: ..." hibaüzenetet?<a class="headerlink" href="#miert-kaptam-egy-tmc-jelentes-hiba-hibauzenetet" title="Permanent link">&para;</a></h3>
 <p>Az ilyen típusú hiba azt jelzi, hogy a TMC motorvezérlő hibát észlelt, és letiltotta magát. Vagyis a meghajtó abbahagyta a pozícióját, és figyelmen kívül hagyta a mozgási parancsokat. Ha a Klipper azt észleli, hogy egy aktív motorvezérlő letiltotta magát, a nyomtatót "leállítás" állapotba állítja.</p>
 <p>Az is lehetséges, hogy a <strong>TMC hiba</strong> leállítása SPI hibák miatt következik be, amelyek megakadályozzák a motorvezérlőkkel való kommunikációt (TMC2130, TMC5160 vagy TMC2660). Ebben az esetben gyakori, hogy a jelentett motorvezérlő állapota <code>000000000</code> vagy <code>ffffffffff</code> - például: <code>TMC hibát jelent: DRV_STATUS: ffffffff ...</code> VAGY <code>TMC jelentések hiba: READRSP@RDSEL2: 00000000 ...</code>. Az ilyen hiba oka lehet egy SPI vezetékezési probléma, vagy lehet a visszaállítás, vagy a TMC motorvezérlő.</p>
@@ -1893,10 +1893,10 @@ gcode:
 <p>Ez azt jelzi, hogy a motorvezérlő kikapcsolta magát, mert túlmelegedett. A tipikus megoldások a léptetőmotor áramának csökkentése, a motorvezérlő és/vagy a léptetőmotor hűtése.</p>
 <h4 id="a-tmc-hibat-jelent-shorttognd-vagy-lowsideshort">A TMC hibát jelent: <code>... ShortToGND</code> VAGY <code>LowSideShort</code><a class="headerlink" href="#a-tmc-hibat-jelent-shorttognd-vagy-lowsideshort" title="Permanent link">&para;</a></h4>
 <p>Ez azt jelzi, hogy a motorvezérlő letiltotta magát, mert nagyon magas áramot érzékelt a meghajtón keresztül. Ez azt jelezheti, hogy meglazult vagy rövidre zárt vezeték van a léptetőmotorban vagy magához a léptetőmotorhoz futó vezeték hibás.</p>
-<p>Ez a hiba akkor is előfordulhat, ha StealthChop üzemmódot használ, és a TMC motorvezérlő nem képes pontosan megjósolni a motor mechanikai terhelését. (Ha a motorvezérlő rosszul jósol, akkor előfordulhat, hogy túl nagy áramot küld a motoron keresztül, és ezzel kiváltja saját túláram-érzékelését). Ennek teszteléséhez kapcsold ki a StealthChop üzemmódot, és ellenőrizd, hogy a hibák továbbra is előfordulnak-e.</p>
+<p>Ez a hiba akkor is előfordulhat, ha StealthChop üzemmódot használsz, és a TMC motorvezérlő nem képes pontosan megjósolni a motor mechanikai terhelését. (Ha a motorvezérlő rosszul jósol, akkor előfordulhat, hogy túl nagy áramot küld a motoron keresztül, és ezzel kiváltja saját túláram-érzékelését). Ennek teszteléséhez kapcsold ki a StealthChop üzemmódot, és ellenőrizd, hogy a hibák továbbra is előfordulnak-e.</p>
 <h4 id="a-tmc-hibat-jelent-reset1reset-vagy-cs_actual0reset-vagy-se0reset">A TMC hibát jelent: <code>... reset=1(Reset)</code> VAGY <code>CS_ACTUAL=0(Reset?)</code> VAGY <code>SE=0(Reset?)</code><a class="headerlink" href="#a-tmc-hibat-jelent-reset1reset-vagy-cs_actual0reset-vagy-se0reset" title="Permanent link">&para;</a></h4>
 <p>Ez azt jelzi, hogy a motorvezérlő a nyomtatás közepén visszaállította magát. Ennek oka lehet feszültség vagy vezetékezési probléma.</p>
-<h4 id="a-tmc-hibat-jelent-uv_cp1undervoltage">A TMC hibát jelent: <code>... uv_cp=1(Undervoltage!)</code><a class="headerlink" href="#a-tmc-hibat-jelent-uv_cp1undervoltage" title="Permanent link">&para;</a></h4>
+<h4 id="a-tmc-hibat-jelent-uv_cp1alulfeszultseg">A TMC hibát jelent: <code>... uv_cp=1(Alulfeszültség!)</code><a class="headerlink" href="#a-tmc-hibat-jelent-uv_cp1alulfeszultseg" title="Permanent link">&para;</a></h4>
 <p>Ez azt jelzi, hogy a motorvezérlő alacsony feszültséget észlelt, és letiltotta magát. Ennek oka lehet vezetékezési vagy tápellátási probléma.</p>
 <h3 id="hogyan-tudom-beallitani-a-spreadcyclecoolstepetc-uzemmodot-a-motorvezerloimhez">Hogyan tudom beállítani a spreadCycle/coolStep/etc. üzemmódot a motorvezérlőimhez?<a class="headerlink" href="#hogyan-tudom-beallitani-a-spreadcyclecoolstepetc-uzemmodot-a-motorvezerloimhez" title="Permanent link">&para;</a></h3>
 <p>A <a href="https://www.trinamic.com/">Trinamic weboldal</a> tartalmaz útmutatókat a motorvezérlők konfigurálásához. Ezek az útmutatók gyakran technikai jellegűek, alacsony szintűek, és speciális hardvert igényelhetnek. Ettől függetlenül ez a legjobb információforrás.</p>

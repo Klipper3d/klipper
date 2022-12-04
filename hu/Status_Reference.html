@@ -2040,7 +2040,7 @@
 <h2 id="pause_resume">pause_resume<a class="headerlink" href="#pause_resume" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#pause_resume">pause_resume</a> objektumban érhetők el:</p>
 <ul>
-<li><code>is_paused</code>: True, ha egy PAUSE parancsot hajtottak végre a megfelelő RESUME parancs nélkül.</li>
+<li><code>is_paused</code>: True, ha egy PAUSE parancsot hajtottunk végre a megfelelő RESUME parancs nélkül.</li>
 </ul>
 <h2 id="print_stats">print_stats<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>print_stats</code> objektumban érhetők el (ez az objektum automatikusan elérhető, ha a <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> config szakasz definiálva van):</p>
@@ -2063,7 +2063,7 @@
 <h2 id="query_endstops">query_endstops<a class="headerlink" href="#query_endstops" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>query_endstops</code> objektumban érhetők el (ez az objektum akkor érhető el, ha bármilyen végálláskapcsoló definiálva van):</p>
 <ul>
-<li><code>last_query["&lt;endstop&gt;"]</code>: True értéket ad, ha az adott végálláskapcsolót az utolsó QUERY_ENDSTOP parancs során "triggered" -ként jelentették. Megjegyzés: ha ezt egy makróban használjuk, a sablon bővítési sorrendje miatt a QUERY_ENDSTOP parancsot akkor ezt a hivatkozást tartalmazó makró előtt kell lefuttatni.</li>
+<li><code>last_query["&lt;endstop&gt;"]</code>: True értéket ad, ha az adott végálláskapcsolót az utolsó QUERY_ENDSTOP parancs során "triggered" -ként jelenti. Megjegyzés: ha ezt egy makróban használjuk, a sablon bővítési sorrendje miatt a QUERY_ENDSTOP parancsot akkor ezt a hivatkozást tartalmazó makró előtt kell lefuttatni.</li>
 </ul>
 <h2 id="servo">servo<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#servo">szervó some_name</a> objektumokban érhetők el:</p>
@@ -2124,7 +2124,7 @@
 <p>A következő információk a <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> objektumban érhetők el:</p>
 <ul>
 <li><code>is_active</code>: True értéket ad, ha a fájlból való nyomtatás aktív.</li>
-<li><code>progressz</code>: A nyomtatás aktuális előrehaladásának becslése (a fájlméret és a fájl pozíciója alapján).</li>
+<li><code>progress</code>: A nyomtatás aktuális előrehaladásának becslése (a fájlméret és a fájl pozíciója alapján).</li>
 <li><code>file_path</code>: Az aktuálisan betöltött fájl teljes elérési útja.</li>
 <li><code>file_position</code>: Az aktív nyomtatás aktuális pozíciója (bájtokban).</li>
 <li><code>file_size</code>: Az aktuálisan betöltött fájl mérete (bájtokban).</li>

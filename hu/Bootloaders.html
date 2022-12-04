@@ -1802,7 +1802,7 @@ Info : stm32f1x.cpu: hardware has 6 breakpoints, 4 watchpoints
 Info : stm32f1x.cpu: external reset detected
 Info : starting gdb server for stm32f1x.cpu on 3333
 Info : Listening on port 3333 for gdb connections</code>
-Ezt követően elengedheti a reset gombot.</li>
+Ezt követően elengedheted a reset gombot.</li>
 </ul>
 <p>Ez a bootloader 2KiB-os flash memóriát igényel (az alkalmazást 2KiB kezdőcímmel kell lefordítani).</p>
 <p>A hid-flash program egy bináris fájl feltöltésére szolgál a bootloader-re. Ezt a szoftvert a következő parancsokkal telepítheted:</p>
@@ -1909,10 +1909,10 @@ reset halt
 
 <h3 id="a-raspberry-pi-es-a-celchip-osszekotese">A Raspberry Pi és a célchip összekötése<a class="headerlink" href="#a-raspberry-pi-es-a-celchip-osszekotese" title="Permanent link">&para;</a></h3>
 <p>Kapcsold ki mind a Raspberry Pi-t, mind a célchipet a kábelezés előtt! Ellenőrizd, hogy a célchip 3,3V-ot használ-e a Raspberry Pi csatlakoztatása előtt!</p>
-<p>Csatlakoztassa a célchip GND, SWDCLK, SWDIO és RST értékeit a Raspberry Pi GND, GPIO25, GPIO24 és GPIO18 értékéhez.</p>
-<p>Ezután kapcsold be a Raspberry Pi-t, és táplálja a célchipet.</p>
+<p>Csatlakoztasd a célchip GND, SWDCLK, SWDIO és RST tűit a Raspberry Pi GND, GPIO25, GPIO24 és GPIO18 tűihez.</p>
+<p>Ezután kapcsold be a Raspberry Pi-t, és adj áramot a cél chip-nek.</p>
 <h3 id="openocd-futtatasa">OpenOCD futtatása<a class="headerlink" href="#openocd-futtatasa" title="Permanent link">&para;</a></h3>
-<p>Futtassa az OpenOCD-t:</p>
+<p>Futtasd az OpenOCD-t:</p>
 <div class="highlight"><pre><span></span><code>cd ~/openocd/
 sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
 </code></pre></div>
@@ -1922,7 +1922,7 @@ sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
 <div class="highlight"><pre><span></span><code>telnet 127.0.0.1 4444
 </code></pre></div>
 
-<p>(A telnetből a ctrl+] billentyűkombinációval, majd a "quit" parancs futtatásával lehet kilépni.)</p>
+<p>(A telnet-ből a ctrl+] billentyűkombinációval, majd a "quit" parancs futtatásával lehet kilépni.)</p>
 <h3 id="openocd-es-gdb">OpenOCD és gdb<a class="headerlink" href="#openocd-es-gdb" title="Permanent link">&para;</a></h3>
 <p>Lehetőség van az OpenOCD és a gdb használatára a Klipper hibakeresésére. A következő parancsok feltételezik, hogy a gdb egy asztali gépen fut.</p>
 <p>Add hozzá a következőket az OpenOCD konfigurációs fájljához:</p>
@@ -1930,7 +1930,7 @@ sudo ~/openocd/install/bin/openocd -f ~/openocd/openocd.cfg
 gdb_port 44444
 </code></pre></div>
 
-<p>Indítsa újra az OpenOCD-t a Raspberry Pi-n, majd futtassa a következő Unix parancsot az asztali gépen:</p>
+<p>Indítsd újra az OpenOCD-t a Raspberry Pi-n, majd futtasd a következő Unix parancsot az asztali gépen:</p>
 <div class="highlight"><pre><span></span><code>cd /path/to/klipper/
 gdb out/klipper.elf
 </code></pre></div>
@@ -1939,7 +1939,7 @@ gdb out/klipper.elf
 <div class="highlight"><pre><span></span><code>target remote octopi:44444
 </code></pre></div>
 
-<p>(Cserélje ki a "octopi" -t a Raspberry Pi gazdagép nevére.) Ha a gdb fut, lehetőség van töréspontok beállítására és a regiszterek vizsgálatára.</p>
+<p>(Cseréld ki az "octopi" -t a Raspberry Pi gazdagép nevére.) Ha a gdb fut, lehetőség van töréspontok beállítására és a regiszterek vizsgálatára.</p>
 
               
             </article>
