@@ -2213,10 +2213,10 @@ ADCs with thermocouples.  This module provides two pins
 that correspond to MUX configurations (pin_0 reads AIN0 and AIN1
 differentially and pin_1 reads AIN2 and AIN3 differentially).
 These pins can be utilized by thermocouples (e.g.
-[ads1118_typek](#ads1118_typek)).  Cold junction temperatures
-are sampled automatically and compensation is applied. Be sure
-to place the sensor section in the config file above its first
-use in a heater section.
+[ads1118_typek](#ADS1118-with-thermocouple-temperature-sensors)).
+Cold junction temperatures are sampled automatically and
+compensation is applied. Be sure to place the sensor section in
+the config file above its first use in a heater section.
 
 ```
 [ads1118]
@@ -2379,6 +2379,7 @@ sensor_pin:
 #   chips. The defaults for each parameter are next to the parameter
 #   name in the above list.
 ```
+
 ### ADS1118 with thermocouple temperature sensors
 
 ADS1118 serial peripheral interface (SPI) ADCs with one or two
