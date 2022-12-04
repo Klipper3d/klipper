@@ -3646,10 +3646,9 @@ spi_software_sclk_pin:
 spi_software_mosi_pin:
 spi_software_miso_pin:
 #   The pins connected to the shift register controlling the display.
-#   The spi_software_miso_pin needs to be set to an unused pin of the
-#   printer mainboard as the shift register does not have a MISO pin,
-#   but the software spi implementation requires this pin to be
-#   configured.
+#   The spi_software_miso_pin is not used and can be left out of
+#   the spi configuration.  However, for backwards compatibility,
+#   this pin can be set to an unused pin of the printer mainboard.
 #hd44780_protocol_init: True
 #   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
 #   This is necessary on real hd44780 devices. However, one may need
