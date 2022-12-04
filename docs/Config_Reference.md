@@ -2209,6 +2209,34 @@ section.
 #   least two measurements must be provided.
 ```
 
+### [ads1118]
+
+ADS1118 serial peripheral interface (SPI) temperature based
+ADCs with thermocouples.  This module provides two pins
+that correspond to MUX configurations (pin_0 reads AIN0 and AIN1
+differentially and pin_1 reads AIN2 and AIN3 differentially).
+These pins can be utilized by thermocouples (e.g.
+[ads1118_typek](#ADS1118-with-thermocouple-temperature-sensors)).
+Cold junction temperatures are sampled automatically and
+compensation is applied. Be sure to place the sensor section in
+the config file above its first use in a heater section.
+
+```
+[ads1118]
+sensor_pin:
+#   The chip select line for the sensor chip. This parameter must be
+#   provided.
+#spi_speed: 4000000
+#   The SPI speed (in hz) to use when communicating with the chip.
+#   The default is 4000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+```
+
 ### [heater_generic]
 
 Generic heaters (one may define any number of sections with a
@@ -2353,6 +2381,23 @@ sensor_pin:
 #   The above parameters control the sensor parameters of MAX31865
 #   chips. The defaults for each parameter are next to the parameter
 #   name in the above list.
+```
+
+### ADS1118 with thermocouple temperature sensors
+
+ADS1118 serial peripheral interface (SPI) ADCs with one or two
+type K thermocouples.  The following parameters are available in
+heater sections that use this sensor.  Cold junction
+temperature compensation is automatically provided by the
+[ads1118](#ads1118) module.
+
+```
+sensor_type: ads1118_typek
+sensor_pin:
+#   Hareware mux channel the thermocopule is connected to.  The
+#   "[ads1118]" module creates two pins (ads1118:pin_0 and
+#   ads1118:pin_1). pin_0 reads thermocouples connected to AIN0 and
+#   AIN1.  pin_1 reads thermocouples connected to AIN2 and AIN3.
 ```
 
 ### BMP280/BME280/BME680 temperature sensor
