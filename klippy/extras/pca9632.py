@@ -14,6 +14,8 @@ PCA9632_PWM0 = 0x02
 PCA9632_PWM1 = 0x03
 PCA9632_PWM2 = 0x04
 PCA9632_PWM3 = 0x05
+PCA9632_GRPPWM = 0x06
+PCA9632_GRPFREQ = 0x07
 PCA9632_LEDOUT = 0x08
 
 LED_PWM = 0x02
@@ -35,7 +37,7 @@ class PCA9632:
         self.color_map = ["RGBW".index(c) for c in color_order]
         self.prev_regs = {}
         pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds, 1)
+        self.led_helper = pled.setup_helper(config, self.update_leds, 1, True)
         printer.register_event_handler("klippy:connect", self.handle_connect)
     def reg_write(self, reg, val, minclock=0):
         if self.prev_regs.get(reg) == val:
@@ -46,8 +48,10 @@ class PCA9632:
     def handle_connect(self):
         #Configure MODE1
         self.reg_write(PCA9632_MODE1, 0x00)
-        #Configure MODE2 (DIMMING, INVERT, CHANGE ON STOP,TOTEM)
-        self.reg_write(PCA9632_MODE2, 0x15)
+        #Configure MODE2 (BLINKING, INVERT, CHANGE ON STOP,TOTEM)
+        self.reg_write(PCA9632_MODE2, 0x35)
+        #Configure duty cycle for blink
+        self.reg_write(PCA9632_GRPPWM, 128)
 
         self.update_leds(self.led_helper.get_status()['color_data'], None)
     def update_leds(self, led_state, print_time):
@@ -61,11 +65,14 @@ class PCA9632:
         self.reg_write(PCA9632_PWM1, led1, minclock=minclock)
         self.reg_write(PCA9632_PWM2, led2, minclock=minclock)
         self.reg_write(PCA9632_PWM3, led3, minclock=minclock)
+        self.reg_write(PCA9632_GRPFREQ , color[4], minclock=minclock)
 
         LEDOUT = (LED_PWM << PCA9632_LED0 if led0 else 0)
         LEDOUT |= (LED_PWM << PCA9632_LED1 if led1 else 0)
         LEDOUT |= (LED_PWM << PCA9632_LED2 if led2 else 0)
         LEDOUT |= (LED_PWM << PCA9632_LED3 if led3 else 0)
+        if color[4] > 0:
+            LEDOUT = LEDOUT | (LEDOUT >> 1)
         self.reg_write(PCA9632_LEDOUT, LEDOUT, minclock=minclock)
     def get_status(self, eventtime):
         return self.led_helper.get_status(eventtime)

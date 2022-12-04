@@ -54,9 +54,11 @@ serial:
 #   method needed for some Fysetc Cheetah boards. The 'rpi_usb' method
 #   is useful on Raspberry Pi boards with micro-controllers powered
 #   over USB - it briefly disables power to all USB ports to
-#   accomplish a micro-controller reset. The 'command' method involves
-#   sending a Klipper command to the micro-controller so that it can
-#   reset itself. The default is 'arduino' if the micro-controller
+#   accomplish a micro-controller reset. The 'mightyboard' method
+#   is useful on mightyboard rev g and h - it changes the baud rate
+#   to 57600 which resets the micro-controller. The 'command' method
+#   involves sending a Klipper command to the micro-controller so that
+#   it can reset itself. The default is 'arduino' if the micro-controller
 #   communicates over a serial port, 'command' otherwise.
 ```
 
@@ -1640,13 +1642,14 @@ cs_pin:
 
 ### [mpu9250]
 
-Support for mpu9250 and mpu6050 accelerometers (one may define any
-number of sections with an "mpu9250" prefix).
+Support for MPU-9250, MPU-9255, MPU-9255, MPU-6050, and MPU-6500
+accelerometers (one may define any number of sections with an
+"mpu9250" prefix).
 
 ```
 [mpu9250 my_accelerometer]
 #i2c_address:
-#   Default is 104 (0x68).
+#   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed: 400000
@@ -3553,29 +3556,29 @@ lcd_type:
 #   entries from one detent, try changing this. Allowed values are 2
 #   (half-stepping) or 4 (full-stepping). The default is 4.
 #click_pin:
-#   The pin connected to 'enter' button or encoder 'click'. This
-#   parameter must be provided when using menu. The presence of an
-#   'analog_range_click_pin' config parameter turns this parameter
-#   from digital to analog.
+#   A comma separated list of pins connected to the 'enter' button or
+#   encoder 'click'. This parameter must be provided when using menu.
+#   The presence of an 'analog_range_click_pin' config parameter turns
+#   this parameter from digital to analog.
 #back_pin:
-#   The pin connected to 'back' button. This parameter is optional,
-#   menu can be used without it. The presence of an
-#   'analog_range_back_pin' config parameter turns this parameter from
-#   digital to analog.
+#   A comma separated list of pins connected to the 'back' button. This
+#   parameter is optional, menu can be used without it. The presence
+#   of an 'analog_range_back_pin' config parameter turns this
+#   parameter from digital to analog.
 #up_pin:
-#   The pin connected to 'up' button. This parameter must be provided
-#   when using menu without encoder. The presence of an
-#   'analog_range_up_pin' config parameter turns this parameter from
-#   digital to analog.
+#   A comma separated list of pins connected to the 'up' button. This
+#   parameter must be provided when using menu without encoder. The
+#   presence of an 'analog_range_up_pin' config parameter turns this
+#   parameter from digital to analog.
 #down_pin:
-#   The pin connected to 'down' button. This parameter must be
-#   provided when using menu without encoder. The presence of an
-#   'analog_range_down_pin' config parameter turns this parameter from
-#   digital to analog.
+#   A comma separated list of pins connected to the 'down' button. This
+#   parameter must be provided when using menu without encoder. The
+#   presence of an 'analog_range_down_pin' config parameter turns this
+#   parameter from digital to analog.
 #kill_pin:
-#   The pin connected to 'kill' button. This button will call
-#   emergency stop. The presence of an 'analog_range_kill_pin' config
-#   parameter turns this parameter from digital to analog.
+#   A comma separated list of pins connected to 'kill' button. This button
+#   will call emergency stop. The presence of an 'analog_range_kill_pin'
+#   config parameter turns this parameter from digital to analog.
 #analog_pullup_resistor: 4700
 #   The resistance (in ohms) of the pullup attached to the analog
 #   button. The default is 4700 ohms.
