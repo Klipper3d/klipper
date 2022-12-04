@@ -2384,7 +2384,7 @@ sensor_pin:
 
 ADS1118 serial peripheral interface (SPI) ADCs with one or two
 type K thermocouples.  The following parameters are available in
-heater sections that use one of these sensor types.  Cold junction
+heater sections that use this sensor.  Cold junction
 temperature compensation is automatically provided by the
 [ads1118](#ads1118) module.
 
