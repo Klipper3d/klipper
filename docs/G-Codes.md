@@ -767,22 +767,23 @@ The following command is available when any of the
 
 #### SET_LED
 `SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
-LED output. Each color `<value>` must be between 0.0 and 1.0. The
-WHITE option is only valid on RGBW LEDs. If the LED supports multiple
-chips in a daisy-chain then one may specify INDEX to alter the color
-of just the given chip (1 for the first chip, 2 for the second,
-etc.). If INDEX is not provided then all LEDs in the daisy-chain will
-be set to the provided color. If TRANSMIT=0 is specified then the
-color change will only be made on the next SET_LED command that does
-not specify TRANSMIT=0; this may be useful in combination with the
-INDEX parameter to batch multiple updates in a daisy-chain. By
-default, the SET_LED command will sync it's changes with other ongoing
-gcode commands.  This can lead to undesirable behavior if LEDs are
-being set while the printer is not printing as it will reset the idle
-timeout. If careful timing is not needed, the optional SYNC=0
-parameter can be specified to apply the changes without resetting the
-idle timeout.
+WHITE=<value> BLINK=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`:
+This sets the LED output. Each color `<value>` must be between 0.0
+and 1.0. The WHITE option is only valid on RGBW LEDs. The BLINK
+option is only valid on devices that support hardware blinking.
+If the LED supports multiple chips in a daisy-chain then one may
+specify INDEX to alter the color of just the given chip (1 for the
+first chip, 2 for the second, etc.). If INDEX is not provided then
+all LEDs in the daisy-chain will be set to the provided color. If
+TRANSMIT=0 is specified then the color change will only be made on
+the next SET_LED command that does not specify TRANSMIT=0; this may
+be useful in combination with the INDEX parameter to batch multiple
+updates in a daisy-chain. By default, the SET_LED command will sync
+it's changes with other ongoing gcode commands.  This can lead to
+undesirable behavior if LEDs are being set while the printer is not
+printing as it will reset the idle timeout. If careful timing is not
+needed, the optional SYNC=0 parameter can be specified to apply the
+changes without resetting the idle timeout.
 
 #### SET_LED_TEMPLATE
 `SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
@@ -792,9 +793,9 @@ idle timeout.
 `[display_template my_led_template]` config section then one could
 assign `TEMPLATE=my_led_template` here. The display_template should
 produce a comma separated string containing four floating point
-numbers corresponding to red, green, blue, and white color settings.
-The template will be continuously evaluated and the LED will be
-automatically set to the resulting colors. One may set
+numbers corresponding to red, green, blue, white, and blink color
+settings. The template will be continuously evaluated and the LED
+will be automatically set to the resulting colors. One may set
 display_template parameters to use during template evaluation
 (parameters will be parsed as Python literals). If INDEX is not
 specified then all chips in the LED's daisy-chain will be set to the
