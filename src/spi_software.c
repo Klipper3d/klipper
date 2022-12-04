@@ -14,6 +14,11 @@ struct spi_software {
     struct gpio_in miso;
     struct gpio_out mosi, sclk;
     uint8_t mode;
+    uint8_t flags;
+};
+
+enum {
+    SF_HAVE_MOSI = 1, SF_HAVE_MISO = 2
 };
 
 void
@@ -25,8 +30,16 @@ command_spi_set_software_bus(uint32_t *args)
 
     struct spidev_s *spi = spidev_oid_lookup(args[0]);
     struct spi_software *ss = alloc_chunk(sizeof(*ss));
-    ss->miso = gpio_in_setup(args[1], 1);
-    ss->mosi = gpio_out_setup(args[2], 0);
+
+    if (args[1] != args[0])
+        ss->flags |= SF_HAVE_MISO;
+    if (args[2] != args[0])
+        ss->flags |= SF_HAVE_MOSI;
+    
+    if (ss->flags & SF_HAVE_MISO)
+        ss->miso = gpio_in_setup(args[1], 1);
+    if (ss->flags & SF_HAVE_MOSI)
+        ss->mosi = gpio_out_setup(args[2], 0);
     ss->sclk = gpio_out_setup(args[3], 0);
     ss->mode = mode;
     spidev_set_software_bus(spi, ss);
@@ -52,24 +65,32 @@ spi_software_transfer(struct spi_software *ss, uint8_t receive_data
             if (ss->mode & 0x01) {
                 // MODE 1 & 3
                 gpio_out_toggle(ss->sclk);
-                gpio_out_write(ss->mosi, outbuf & 0x80);
+                if (ss->flags & SF_HAVE_MOSI)
+                    gpio_out_write(ss->mosi, outbuf & 0x80);
                 outbuf <<= 1;
                 gpio_out_toggle(ss->sclk);
-                inbuf <<= 1;
-                inbuf |= gpio_in_read(ss->miso);
+                if (ss->flags & SF_HAVE_MISO) {
+                    inbuf <<= 1;
+                    inbuf |= gpio_in_read(ss->miso);
+                }
             } else {
                 // MODE 0 & 2
-                gpio_out_write(ss->mosi, outbuf & 0x80);
+                if (ss->flags & SF_HAVE_MOSI)
+                    gpio_out_write(ss->mosi, outbuf & 0x80);
                 outbuf <<= 1;
                 gpio_out_toggle(ss->sclk);
-                inbuf <<= 1;
-                inbuf |= gpio_in_read(ss->miso);
+                if (ss->flags & SF_HAVE_MISO) {
+                    inbuf <<= 1;
+                    inbuf |= gpio_in_read(ss->miso);
+                }
                 gpio_out_toggle(ss->sclk);
             }
         }
 
-        if (receive_data)
-            *data = inbuf;
-        data++;
+        if (ss->flags & SF_HAVE_MISO) {
+            if (receive_data)
+                *data = inbuf;
+            data++;
+        }
     }
 }

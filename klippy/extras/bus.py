@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import mcu
+import logging
 
 def resolve_bus_name(mcu, param, bus):
     # Find enumerations for the given bus
@@ -106,7 +107,7 @@ class MCU_SPI:
 # Helper to setup an spi bus from settings in a config section
 def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
                         default_speed=100000, share_type=None,
-                        cs_active_high=False):
+                        cs_active_high=False, has_soft_mosi=True, has_soft_miso=True):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     cs_pin = config.get(pin_option)
@@ -119,21 +120,42 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
     mcu = cs_pin_params['chip']
     speed = config.getint('spi_speed', default_speed, minval=100000)
     if config.get('spi_software_sclk_pin', None) is not None:
-        sw_pin_names = ['spi_software_%s_pin' % (name,)
-                        for name in ['miso', 'mosi', 'sclk']]
-        sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
-                         for name in sw_pin_names]
+
+
+        sw_pin_params = {'miso': {'required':has_soft_miso},
+                         'mosi': {'required':has_soft_mosi},
+                         'sclk': {'required':True}}
+        sw_pins = {}
+
+        for name in sw_pin_params:
+            sw_pin_params[name].update(
+                                {'name':'spi_software_%s_pin' % (name,)})
+        for (name, value) in sw_pin_params.items():
+            if value['required']:
+                sw_pins.update({name: 
+                               ppins.lookup_pin(config.get(value['name']),
+                                                share_type=value['name'])})
+        // if miso or mosi are not used set them to sclk so spi_software.c
+        // will ignore them
+        for (name, value) in sw_pin_params.items():
+            if not value['required']:
+                sw_pins.update({name: 
+                               ppins.lookup_pin(config.get(value['name'],
+                                                           default=sw_pins['sclk']),
+                                                share_type=value['name'])})
+
         for pin_params in sw_pin_params:
             if pin_params['chip'] != mcu:
                 raise ppins.error("%s: spi pins must be on same mcu" % (
                     config.get_name(),))
-        sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
+        sw_pins = tuple(sw_pins_out)
         bus = None
+        logging.debug(sw_pins)
     else:
         bus = config.get('spi_bus', None)
         sw_pins = None
     # Create MCU_SPI object
-    return MCU_SPI(mcu, bus, pin, mode, speed, sw_pins, cs_active_high)
+    return MCU_SPI(mcu, bus, cs_pin_params['pin'], mode, speed, sw_pins, cs_active_high)
 
 
 ######################################################################
