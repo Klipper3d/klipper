@@ -2760,6 +2760,7 @@ the [command reference](G-Codes.md#led) for more information.
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
+#initial_BLINK: 0.0
 #   Sets the initial LED color. Each value should be between 0.0 and
 #   1.0. The default for each color is 0.
 ```
@@ -2866,6 +2867,7 @@ PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
 #initial_GREEN: 0.0
 #initial_BLUE: 0.0
 #initial_WHITE: 0.0
+#initial_BLINK: 0.0
 #   See the "led" section for information on these parameters.
 ```
 
