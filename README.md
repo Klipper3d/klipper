@@ -1,15 +1,14 @@
 Fork of Klipper3d/klipper
 
-**************
-Please note - 2022-11-28 breaking change for config
-ads1118 support is now configured in a different way.
-If upgrading from a previous date please look at
-config/printer-makerbot-replicator2-2012.cfg
-and search for ads1118 to see how this is now configured.
-**************
-
 This fork adds support for Makerbot Replicator2/2X
 (Mightyboard rev h and g) and some clones.
+
+STATUS - I would consider master to be at a late beta stage.
+Everything that can be supported is at this point and all
+features are working.  This has been tested on a small number
+of printers and more wide spread testing would be appreciated.
+The example config file will be updated to incorporate
+setting hold currents while pre-heating.
 
 Currently, no clones have example config files or instructions
 for flashing Klipper.  If you have a Replicator clone that
@@ -32,26 +31,26 @@ Changes include:
 * Adds support for multiple buttons with same action in display
 * Adds example g code macros to emulate some original Makerbot behaviors
 
-/config/printer-makerbot-replicator2-2012.cfg can be used as a starting point 
-for both 2 and 2x printers.  The included printer.cfg changes the origin
-(0,0) to be in the left front of the build plate to be consistent with other 
-cartesian printers.  Keeping the original Replicator origin (which resembles
-a delta printer) requires updating position_min, position_max,
-position_endstop, and bed_screws values for the x and y axix
+/config/printer-makerbot-replicator2x-2012.cfg can be used as a starting point 
+for both 2 and 2x printers.  Replicator2 printers can simply delete or comment
+the second extruder and the heated bed plate settings. The included
+printer.cfg changes the origin (0,0) to be in the left front of the build
+plate to be consistent with other cartesian printers.  Keeping the original
+Replicator origin (which resembles a delta printer) requires updating
+position_min, position_max, position_endstop, and bed_screws values for the
+x and y axix
 
 TODOs:
-* ads1118 - test error conditions and make sure they are handled.
-Add handling for faults (ADS1118 doesn't provide many fault codes
-but the software can generate some).
 * eliminate the need for dummy pins (spi_software_miso_pin for
-the display).
+the display).  This is almost done and won't change printer
+behaviour, it simply is to cosmetically clean up configs.
 * add documentation for configuring slicers (rep2 specifics)
 
 Installation
 
 Clone this repo and do the normal installation steps.
 
-Copy /config/printer-makerbot-replicator2-2012.cfg to printer.cfg.  Edit this
+Copy /config/printer-makerbot-replicator2x-2012.cfg to printer.cfg.  Edit this
 file to add/remove features specific to your printer (e.g. remove HBP,
 change the HBP sensor to match what you have, change x,y, and z limits).
 
@@ -60,7 +59,8 @@ an atmega1280, 16mhz, and uart0.  (see below for note about atmega2560).
 
 Run make flash.  This should flash your mightyboard.  If not, I have
 found times where I needed to power the mightboard off and back on
-before it would flash.
+or attempt to connect and disconnect with Klipper (i.e. connect at a
+speed other than 57600 first) before it would flash.
 
 At this point you should have Klipper running on your Replicator.
 Follow the normal Klipper documentation for further tuning.
