@@ -120,37 +120,31 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
     mcu = cs_pin_params['chip']
     speed = config.getint('spi_speed', default_speed, minval=100000)
     if config.get('spi_software_sclk_pin', None) is not None:
-
-
-        sw_pin_params = {'miso': {'required':has_soft_miso},
-                         'mosi': {'required':has_soft_mosi},
-                         'sclk': {'required':True}}
-        sw_pins = {}
-
-        for name in sw_pin_params:
-            sw_pin_params[name].update(
-                                {'name':'spi_software_%s_pin' % (name,)})
-        for (name, value) in sw_pin_params.items():
+        sw_pins = {'sclk':{'required':True},
+                   'miso':{'required':has_soft_miso},
+                   'mosi':{'required':has_soft_mosi}}
+        for (name,value) in sw_pins.items():
+            config_name = 'spi_software_%s_pin' % (name,)
             if value['required']:
-                sw_pins.update({name: 
-                               ppins.lookup_pin(config.get(value['name']),
-                                                share_type=value['name'])})
-        // if miso or mosi are not used set them to sclk so spi_software.c
-        // will ignore them
-        for (name, value) in sw_pin_params.items():
-            if not value['required']:
-                sw_pins.update({name: 
-                               ppins.lookup_pin(config.get(value['name'],
-                                                           default=sw_pins['sclk']),
-                                                share_type=value['name'])})
-
-        for pin_params in sw_pin_params:
-            if pin_params['chip'] != mcu:
+                sw_pins.update(
+                    {name: ppins.lookup_pin(config.get(config_name),
+                             share_type=config_name)})
+            else:
+                sw_pins.update(
+                    {name: ppins.lookup_pin(config.get(config_name,
+                                    default='dummy'),
+                             share_type=config_name)})
+                if sw_pins[name]['pin'] == 'dummy':
+                    sw_pins[name]['pin'] = sw_pins['sclk']['pin']
+                    sw_pins[name]['chip'] = sw_pins['sclk']['chip']
+            if sw_pins[name]['chip'] != mcu:
                 raise ppins.error("%s: spi pins must be on same mcu" % (
                     config.get_name(),))
-        sw_pins = tuple(sw_pins_out)
+
+        sw_pins = tuple([sw_pins['miso']['pin'],
+                             sw_pins['mosi']['pin'],
+                             sw_pins['sclk']['pin']])
         bus = None
-        logging.debug(sw_pins)
     else:
         bus = config.get('spi_bus', None)
         sw_pins = None
