@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import mcu
-import logging
 
 def resolve_bus_name(mcu, param, bus):
     # Find enumerations for the given bus
@@ -149,7 +148,7 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
         bus = config.get('spi_bus', None)
         sw_pins = None
     # Create MCU_SPI object
-    return MCU_SPI(mcu, bus, cs_pin_params['pin'], mode, speed, sw_pins, cs_active_high)
+    return MCU_SPI(mcu, bus, pin, mode, speed, sw_pins, cs_active_high)
 
 
 ######################################################################
