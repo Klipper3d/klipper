@@ -106,7 +106,8 @@ class MCU_SPI:
 # Helper to setup an spi bus from settings in a config section
 def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
                         default_speed=100000, share_type=None,
-                        cs_active_high=False):
+                        cs_active_high=False, has_soft_mosi=True,
+                        has_soft_miso=True):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     cs_pin = config.get(pin_option)
@@ -119,15 +120,30 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
     mcu = cs_pin_params['chip']
     speed = config.getint('spi_speed', default_speed, minval=100000)
     if config.get('spi_software_sclk_pin', None) is not None:
-        sw_pin_names = ['spi_software_%s_pin' % (name,)
-                        for name in ['miso', 'mosi', 'sclk']]
-        sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
-                         for name in sw_pin_names]
-        for pin_params in sw_pin_params:
-            if pin_params['chip'] != mcu:
+        sw_pins = {'sclk':{'required':True},
+                   'miso':{'required':has_soft_miso},
+                   'mosi':{'required':has_soft_mosi}}
+        for (name,value) in sw_pins.items():
+            config_name = 'spi_software_%s_pin' % (name,)
+            if value['required']:
+                sw_pins.update(
+                    {name: ppins.lookup_pin(config.get(config_name),
+                             share_type=config_name)})
+            else:
+                sw_pins.update(
+                    {name: ppins.lookup_pin(config.get(config_name,
+                                    default='dummy'),
+                             share_type=config_name)})
+                if sw_pins[name]['pin'] == 'dummy':
+                    sw_pins[name]['pin'] = sw_pins['sclk']['pin']
+                    sw_pins[name]['chip'] = sw_pins['sclk']['chip']
+            if sw_pins[name]['chip'] != mcu:
                 raise ppins.error("%s: spi pins must be on same mcu" % (
                     config.get_name(),))
-        sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
+
+        sw_pins = tuple([sw_pins['miso']['pin'],
+                             sw_pins['mosi']['pin'],
+                             sw_pins['sclk']['pin']])
         bus = None
     else:
         bus = config.get('spi_bus', None)
