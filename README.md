@@ -29,6 +29,7 @@ Changes include:
 * Adds support for ADS1118 and k-type thermocouples (one or two extruders)
 * Adds support for hardware blinking of the LEDs
 * Adds support for multiple buttons with same action in display
+* Removes the need for specifying dummy pins for software spi devices
 * Adds example g code macros to emulate some original Makerbot behaviors
 
 /config/printer-makerbot-replicator2x-2012.cfg can be used as a starting point 
@@ -39,12 +40,6 @@ plate to be consistent with other cartesian printers.  Keeping the original
 Replicator origin (which resembles a delta printer) requires updating
 position_min, position_max, position_endstop, and bed_screws values for the
 x and y axix
-
-TODOs:
-* eliminate the need for dummy pins (spi_software_miso_pin for
-the display).  This is almost done and won't change printer
-behaviour, it simply is to cosmetically clean up configs.
-* add documentation for configuring slicers (rep2 specifics)
 
 Installation
 
