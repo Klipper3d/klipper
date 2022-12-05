@@ -63,7 +63,7 @@ CONFIG ../../config/printer-wanhao-duplicator-9-2018.cfg
 
 # Printers using the atmega1280
 DICTIONARY atmega1280.dict
-CONFIG ../../config/printer-makerbot-replicator2-2012.cfg
+CONFIG ../../config/printer-makerbot-replicator2x-2012.cfg
 CONFIG ../../config/generic-mightyboard.cfg
 CONFIG ../../config/generic-minitronics1.cfg
 
