@@ -35,7 +35,7 @@ command_spi_set_software_bus(uint32_t *args)
         ss->flags |= SF_HAVE_MISO;
     if (args[2] != args[0])
         ss->flags |= SF_HAVE_MOSI;
-    
+
     if (ss->flags & SF_HAVE_MISO)
         ss->miso = gpio_in_setup(args[1], 1);
     if (ss->flags & SF_HAVE_MOSI)

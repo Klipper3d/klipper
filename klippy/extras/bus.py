@@ -106,7 +106,8 @@ class MCU_SPI:
 # Helper to setup an spi bus from settings in a config section
 def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
                         default_speed=100000, share_type=None,
-                        cs_active_high=False, has_soft_mosi=True, has_soft_miso=True):
+                        cs_active_high=False, has_soft_mosi=True,
+                        has_soft_miso=True):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     cs_pin = config.get(pin_option)
