@@ -30,6 +30,22 @@ def get_zvd_shaper(shaper_freq, damping_ratio):
     T = [0., .5*t_d, t_d]
     return (A, T)
 
+def get_zvdd_shaper(shaper_freq, damping_ratio):
+    df = math.sqrt(1. - damping_ratio**2)
+    K = math.exp(-damping_ratio * math.pi / df)
+    t_d = 1. / (shaper_freq * df)
+    A = [1., 3.*K, 3.*K**2, K**3]
+    T = [0., .5*t_d, t_d, 1.5*t_d]
+    return (A, T)
+
+def get_zvddd_shaper(shaper_freq, damping_ratio):
+    df = math.sqrt(1. - damping_ratio**2)
+    K = math.exp(-damping_ratio * math.pi / df)
+    t_d = 1. / (shaper_freq * df)
+    A = [1., 4.*K, 6.*K**2, 4.*K**3, K**4]
+    T = [0., .5*t_d, t_d, 1.5*t_d, 2.*t_d]
+    return (A, T)
+
 def get_mzv_shaper(shaper_freq, damping_ratio):
     df = math.sqrt(1. - damping_ratio**2)
     K = math.exp(-.75 * damping_ratio * math.pi / df)
@@ -96,6 +112,8 @@ INPUT_SHAPERS = [
     InputShaperCfg('zv', get_zv_shaper, min_freq=21.),
     InputShaperCfg('mzv', get_mzv_shaper, min_freq=23.),
     InputShaperCfg('zvd', get_zvd_shaper, min_freq=29.),
+    InputShaperCfg('zvdd', get_zvdd_shaper, min_freq=29.),
+    InputShaperCfg('zvddd', get_zvddd_shaper, min_freq=29.),
     InputShaperCfg('ei', get_ei_shaper, min_freq=29.),
     InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=39.),
     InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=48.),
