@@ -79,7 +79,10 @@ class SafeZHoming:
             self.prev_G28(g28_gcmd)
             # Perform Z Hop again for pressure-based probes
             if self.z_hop:
-                toolhead.manual_move([None, None, self.z_hop], self.z_hop_speed)
+                pos = toolhead.get_position()
+                if pos[2] < self.z_hop:
+                    toolhead.manual_move([None, None, self.z_hop],
+                                         self.z_hop_speed)
             # Move XY back to previous positions
             if self.move_to_previous:
                 toolhead.manual_move(prevpos[:2], self.speed)

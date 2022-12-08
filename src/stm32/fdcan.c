@@ -22,6 +22,10 @@
  DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PA12");
  #define GPIO_Rx GPIO('A', 11)
  #define GPIO_Tx GPIO('A', 12)
+#elif CONFIG_STM32_CANBUS_PA11_PB9
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PB9");
+ #define GPIO_Rx GPIO('A', 11)
+ #define GPIO_Tx GPIO('B', 9)
 #elif CONFIG_STM32_CANBUS_PB8_PB9
  DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB8,PB9");
  #define GPIO_Rx GPIO('B', 8)
@@ -55,7 +59,7 @@
 #if CONFIG_MACH_STM32G0
  #define CAN_IT0_IRQn  TIM16_FDCAN_IT0_IRQn
  #define CAN_FUNCTION  GPIO_FUNCTION(3) // Alternative function mapping number
-#elif CONFIG_MACH_STM32H7
+#elif CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
  #define CAN_IT0_IRQn  FDCAN1_IT0_IRQn
  #define CAN_FUNCTION  GPIO_FUNCTION(9) // Alternative function mapping number
 #endif
@@ -152,7 +156,7 @@ canbus_set_filter(uint32_t id)
 #if CONFIG_MACH_STM32G0
     SOC_CAN->RXGFC = ((id ? 3 : 1) << FDCAN_RXGFC_LSS_Pos
                       | 0x02 << FDCAN_RXGFC_ANFS_Pos);
-#elif CONFIG_MACH_STM32H7
+#elif CONFIG_MACH_STM32H7 || CONFIG_MAC_STM32G4
     uint32_t flssa = (uint32_t)MSG_RAM.FLS - SRAMCAN_BASE;
     SOC_CAN->SIDFC = flssa | ((id ? 3 : 1) << FDCAN_SIDFC_LSS_Pos);
     SOC_CAN->GFC = 0x02 << FDCAN_GFC_ANFS_Pos;
@@ -280,7 +284,7 @@ can_init(void)
 
     SOC_CAN->NBTP = btr;
 
-#if CONFIG_MACH_STM32H7
+#if CONFIG_MACH_STM32H7 || CONFIG_MAC_STM32G4
     /* Setup message RAM addresses */
     uint32_t f0sa = (uint32_t)MSG_RAM.RXF0 - SRAMCAN_BASE;
     SOC_CAN->RXF0C = f0sa | (ARRAY_SIZE(MSG_RAM.RXF0) << FDCAN_RXF0C_F0S_Pos);
