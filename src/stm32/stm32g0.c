@@ -183,8 +183,11 @@ armcm_main(void)
 
     check_usb_dfu_bootloader();
 
-    // Set flash latency
-    FLASH->ACR = (2<<FLASH_ACR_LATENCY_Pos) | FLASH_ACR_ICEN | FLASH_ACR_PRFTEN;
+    // Set flash latency, cache and prefetch; use reset value as base
+    uint32_t acr = 0x00040600;
+    acr = (acr & ~FLASH_ACR_LATENCY) | (2<<FLASH_ACR_LATENCY_Pos);
+    acr |= FLASH_ACR_ICEN | FLASH_ACR_PRFTEN;
+    FLASH->ACR = acr;
 
     // Configure main clock
     clock_setup();
