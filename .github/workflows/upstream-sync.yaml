@@ -90,6 +90,9 @@ jobs:
           GIT_COMMIT=HEAD AMEND=Y BLACK_ARGS="--config ../pyproject.toml"\
             git rebase prev_upstream klipper3d/master --onto=origin/upstream \
             -Xtheirs -Xignore-all-space --exec ../scripts/python-format.sh
+          git checkout origin/master .github
+          git add .github
+          git commit --amend --no-edit
           git push origin +klipper3d/master:refs/tags/prev_upstream +HEAD:refs/heads/upstream +HEAD:refs/heads/upstream_pr
 
           echo "formatted \`upstream\` branch was: $(git rev-parse origin/upstream)" >> $GITHUB_STEP_SUMMARY
