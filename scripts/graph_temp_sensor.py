@@ -1,12 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Tool to graph temperature sensor ADC resolution
 #
-# Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2020 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, optparse
 import matplotlib
-
 
 ######################################################################
 # Dummy config / printer / etc. class emulation
@@ -44,7 +43,6 @@ class DummyConfig:
     # Emulate mcu_adc class
     def setup_adc_callback(self, time, callback):
         pass
-
 
 ######################################################################
 # Plotting
@@ -97,7 +95,6 @@ def plot_resistance(config, sensors):
     ax.grid(True)
     fig.tight_layout()
     return fig
-
 
 ######################################################################
 # Startup

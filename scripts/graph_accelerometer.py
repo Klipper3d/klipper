@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Generate adxl345 accelerometer graphs
 #
-# Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020 Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2020 Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import importlib, optparse, os, sys
