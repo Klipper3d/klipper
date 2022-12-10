@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Shaper auto-calibration script
 #
-# Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
-# Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2020 Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
