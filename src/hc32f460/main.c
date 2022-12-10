@@ -6,7 +6,7 @@
 
 #include "autoconf.h" // CONFIG_MACH_AVR
 #include "sched.h"
-
+#include "system_hc32f460.h"
 
 
 /****************************************************************
