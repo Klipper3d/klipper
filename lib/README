@@ -78,6 +78,11 @@ The stm32g0 directory contains code from:
 version v1.4.1 (5cb06333a6a43cefbe145f10a5aa98d3cc4cffee). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32G0xx/ directory.
 
+The stm32g4 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeG4
+version v1.4.0 (e762fe2ce800cf6c18a1868a3aabc7e9351751bd). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32G4xx/ directory.
+
 The stm32l4 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeL4
 version v1.17.0 (5e1553e07706491bd11f4edd304e093b6e4b83a4). Contents
@@ -85,7 +90,7 @@ taken from the Drivers/CMSIS/Device/ST/STM32L4xx/ directory.
 
 The stm32h7 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeH7
-version v1.7.0 (79196b09acfb720589f58e93ccf956401b18a191). Contents
+version v1.9.0 (ccb11556044540590ca6e45056e6b65cdca2deb2). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
 
 The rp2040 directory contains code from the pico sdk:

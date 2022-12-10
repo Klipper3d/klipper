@@ -68,6 +68,12 @@ choice
     config MACH_STM32G0B1
         bool "STM32G0B1"
         select MACH_STM32G0
+    config MACH_STM32G431
+        bool "STM32G431"
+        select MACH_STM32G4
+    config MACH_STM32H723
+        bool "STM32H723"
+        select MACH_STM32H7
     config MACH_STM32H743
         bool "STM32H743"
         select MACH_STM32H7
@@ -93,6 +99,8 @@ config MACH_STM32F4
     bool
 config MACH_STM32G0
     bool
+config MACH_STM32G4
+    bool
 config MACH_STM32H7
     bool
 config MACH_STM32F0x2 # F042, F072 series
@@ -103,7 +111,7 @@ config MACH_STM32L4
     bool
 config HAVE_STM32_USBFS
     bool
-    default y if MACH_STM32F0x2 || MACH_STM32G0 || MACH_STM32L4
+    default y if MACH_STM32F0x2 || MACH_STM32G0 || MACH_STM32L4 || MACH_STM32G4
     default y if (MACH_STM32F103 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
 config HAVE_STM32_USBOTG
     bool
@@ -113,7 +121,7 @@ config HAVE_STM32_CANBUS
     default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32F0x2
 config HAVE_STM32_FDCANBUS
     bool
-    default y if MACH_STM32G0 || MACH_STM32H7
+    default y if MACH_STM32G0 || MACH_STM32H7 || MACH_STM32G4
 config HAVE_STM32_USBCANBUS
     bool
     depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
@@ -135,6 +143,8 @@ config MCU
     default "stm32f429xx" if MACH_STM32F429
     default "stm32f446xx" if MACH_STM32F446
     default "stm32g0b1xx" if MACH_STM32G0B1
+    default "stm32g431xx" if MACH_STM32G431
+    default "stm32h723xx" if MACH_STM32H723
     default "stm32h743xx" if MACH_STM32H743
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
@@ -149,6 +159,7 @@ config CLOCK_FREQ
     default 168000000 if MACH_STM32F4x5
     default 180000000 if MACH_STM32F446
     default 64000000 if MACH_STM32G0
+    default 150000000 if MACH_STM32G431
     default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
     default 80000000 if MACH_STM32L412
 
@@ -158,9 +169,9 @@ config FLASH_SIZE
     default 0x8000 if MACH_STM32F042
     default 0x20000 if MACH_STM32F070 || MACH_STM32F072
     default 0x10000 if MACH_STM32F103 || MACH_STM32L412 # Flash size of stm32f103x8 (64KiB)
-    default 0x40000 if MACH_STM32F2 || MACH_STM32F401
+    default 0x40000 if MACH_STM32F2 || MACH_STM32F401 || MACH_STM32H723
     default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446
-    default 0x20000 if MACH_STM32G0B1
+    default 0x20000 if MACH_STM32G0B1 || MACH_STM32G431
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743
 
@@ -179,6 +190,7 @@ config RAM_SIZE
     default 0x4000 if MACH_STM32F070 || MACH_STM32F072
     default 0x2800 if MACH_STM32F103x6
     default 0x5000 if MACH_STM32F103 && !MACH_STM32F103x6 # Ram size of stm32f103x8
+    default 0x8000 if MACH_STM32G431
     default 0xa000 if MACH_STM32L412
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
@@ -231,7 +243,7 @@ choice
     config STM32_FLASH_START_4000
         bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F401 || MACH_STM32F4x5 || MACH_STM32F103 || MACH_STM32F072
     config STM32_FLASH_START_20000
-        bool "128KiB bootloader (SKR SE BX v2.0)" if MACH_STM32H743
+        bool "128KiB bootloader (SKR SE BX v2.0)" if MACH_STM32H743 || MACH_STM32H723
 
     config STM32_FLASH_START_0000
         bool "No bootloader"
@@ -310,7 +322,7 @@ choice
         select USBSERIAL
     config STM32_USB_PB14_PB15
         bool "USB (on PB14/PB15)"
-        depends on MACH_STM32H7
+        depends on MACH_STM32H743 || MACH_STM32H750
         select USBSERIAL
     config STM32_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"
@@ -322,7 +334,10 @@ choice
         bool "Serial (on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS
         select SERIAL
     config STM32_SERIAL_USART2_ALT_PA15_PA14
-        bool "Serial (on USART2 PA15/PA14)" if LOW_LEVEL_OPTIONS && MACH_STM32F0
+        bool "Serial (on USART2 PA15/PA14)" if LOW_LEVEL_OPTIONS && (MACH_STM32F0 || MACH_STM32G4)
+        select SERIAL
+    config STM32_SERIAL_USART2_ALT_PB4_PB3
+        bool "Serial (on USART2 PB4/PB3)" if LOW_LEVEL_OPTIONS && MACH_STM32G4
         select SERIAL
     config STM32_SERIAL_USART2_ALT_PD6_PD5
         bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
@@ -346,6 +361,10 @@ choice
     config STM32_CANBUS_PA11_PA12_REMAP
         bool "CAN bus (on PA9/PA10)" if LOW_LEVEL_OPTIONS
         depends on HAVE_STM32_CANBUS && MACH_STM32F042
+        select CANSERIAL
+    config STM32_CANBUS_PA11_PB9
+        bool "CAN bus (on PA11/PB9)"
+        depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
         select CANSERIAL
     config STM32_MMENU_CANBUS_PB8_PB9
         bool "CAN bus (on PB8/PB9)" if LOW_LEVEL_OPTIONS
