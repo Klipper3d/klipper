@@ -6,8 +6,10 @@
 
 #include <stdint.h> // uint32_t
 #include "board/misc.h" // bootloader_request
+#include "generic/armcm_reset.h" // try_request_canboot
 #include "hardware/structs/clocks.h" // clock_hw_t
 #include "hardware/structs/pll.h" // pll_hw_t
+#include "hardware/structs/psm.h" // psm_hw
 #include "hardware/structs/resets.h" // sio_hw
 #include "hardware/structs/watchdog.h" // watchdog_hw
 #include "hardware/structs/xosc.h" // xosc_hw
@@ -29,6 +31,7 @@ DECL_TASK(watchdog_reset);
 void
 watchdog_init(void)
 {
+    psm_hw->wdsel = PSM_WDSEL_BITS & ~(PSM_WDSEL_ROSC_BITS|PSM_WDSEL_XOSC_BITS);
     watchdog_reset();
     watchdog_hw->ctrl = (WATCHDOG_CTRL_PAUSE_DBG0_BITS
                          | WATCHDOG_CTRL_PAUSE_DBG1_BITS
@@ -45,6 +48,8 @@ DECL_INIT(watchdog_init);
 void
 bootloader_request(void)
 {
+    watchdog_hw->ctrl = 0;
+    try_request_canboot();
     // Use the bootrom-provided code to reset into BOOTSEL mode
     reset_to_usb_boot(0, 0);
 }

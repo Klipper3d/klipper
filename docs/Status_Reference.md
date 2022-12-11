@@ -120,6 +120,13 @@ The following information is available in the
 - `excluded_objects`: An array of strings listing the names of excluded objects.
 - `current_object`: The name of the object currently being printed.
 
+## extruder_stepper
+
+The following information is available for extruder_stepper objects (as well as
+[extruder](Config_Reference.md#extruder) objects):
+- `pressure_advance`: The current [pressure advance](Pressure_Advance.md) value.
+- `smooth_time`: The current pressure advance smooth time.
+
 ## fan
 
 The following information is available in
@@ -323,8 +330,12 @@ The following information is available in the `print_stats` object
 [virtual_sdcard](Config_Reference.md#virtual_sdcard) config section is
 defined):
 - `filename`, `total_duration`, `print_duration`, `filament_used`,
-  `state`, `message`: Estimated information about the current print
-  when a virtual_sdcard print is active.
+  `state`, `message`: Estimated information about the current print when a
+  virtual_sdcard print is active.
+- `info.total_layer`: The total layer value of the last `SET_PRINT_STATS_INFO
+   TOTAL_LAYER=<value>` G-Code command.
+- `info.current_layer`: The current layer value of the last
+  `SET_PRINT_STATS_INFO CURRENT_LAYER=<value>` G-Code command.
 
 ## probe
 
@@ -476,6 +487,19 @@ object is always available):
   state. Possible values are: "ready", "startup", "shutdown", "error".
 - `state_message`: A human readable string giving additional context
   on the current Klipper state.
+
+## z_thermal_adjust
+
+The following information is available in the `z_thermal_adjust` object (this
+object is available if [z_thermal_adjust](Config_Reference.md#z_thermal_adjust)
+is defined).
+- `enabled`: Returns True if adjustment is enabled.
+- `temperature`: Current (smoothed) temperature of the defined sensor. [degC]
+- `measured_min_temp`: Minimum measured temperature. [degC]
+- `measured_max_temp`: Maximum measured temperature. [degC]
+- `current_z_adjust`: Last computed Z adjustment [mm].
+- `z_adjust_ref_temperature`: Current reference temperature used for calculation
+  of Z `current_z_adjust` [degC].
 
 ## z_tilt
 

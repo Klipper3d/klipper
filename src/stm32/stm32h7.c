@@ -83,10 +83,11 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 static void
 clock_setup(void)
 {
+#if !CONFIG_MACH_STM32H723
     // Ensure USB OTG ULPI is not enabled
     CLEAR_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSULPIEN);
     CLEAR_BIT(RCC->AHB1LPENR, RCC_AHB1LPENR_USB2OTGHSULPILPEN);
-
+#endif
     // Set this despite correct defaults.
     // "The software has to program the supply configuration in PWR control
     // register 3" (pg. 259)
@@ -143,10 +144,17 @@ clock_setup(void)
     // Enable VOS0 (overdrive)
     if (CONFIG_CLOCK_FREQ > 400000000) {
         RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+#if !CONFIG_MACH_STM32H723
         SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
+#else
+        PWR->CR3 |= PWR_CR3_BYPASS;
+#endif
         while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
             ;
     }
+
+    SCB_EnableICache();
+    SCB_EnableDCache();
 
     // Set flash latency according to clock frequency (pg.159)
     uint32_t flash_acr_latency = (CONFIG_CLOCK_FREQ > 450000000) ?

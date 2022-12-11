@@ -54,7 +54,6 @@ class SaveVariables:
             msg = "Unable to save variable"
             logging.exception(msg)
             raise gcmd.error(msg)
-        gcmd.respond_info("Variable Saved")
         self.loadVariables()
     def get_status(self, eventtime):
         return {'variables': self.allVariables}

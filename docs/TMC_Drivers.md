@@ -267,10 +267,11 @@ For tmc2130, tmc5160, and tmc2660:
 SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 ```
 
-Then issue a `G28 X0` command and verify the axis does not move at
-all. If the axis does move, then issue an `M112` to halt the printer -
-something is not correct with the diag/sg_tst pin wiring or
-configuration and it must be corrected before continuing.
+Then issue a `G28 X0` command and verify the axis does not move at all
+or quickly stops moving. If the axis does not stop, then issue an
+`M112` to halt the printer - something is not correct with the
+diag/sg_tst pin wiring or configuration and it must be corrected
+before continuing.
 
 Next, continually decrease the sensitivity of the `VALUE` setting and
 run the `SET_TMC_FIELD` `G28 X0` commands again to find the highest
@@ -407,6 +408,23 @@ restrictions:
    avoids homing one axis while the other is pressed against the axis
    limit (which may skew the stall detection). The pause is necessary
    to ensure the driver's stall flag is cleared prior to homing again.
+
+An example CoreXY homing macro might look like:
+```
+[gcode_macro HOME]
+gcode:
+    G90
+    # Home Z
+    G28 Z0
+    G1 Z10 F1200
+    # Home Y
+    G28 Y0
+    G1 Y5 F1200
+    # Home X
+    G4 P2000
+    G28 X0
+    G1 X5 F1200
+```
 
 ## Querying and diagnosing driver settings
 

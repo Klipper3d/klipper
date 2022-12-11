@@ -14,6 +14,7 @@ config LPC_SELECT
     select HAVE_CHIPID
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_BOTH_EDGE
+    select SERIAL_BOOTLOADER_SIDECHANNEL
 
 config BOARD_DIRECTORY
     string
@@ -40,6 +41,10 @@ config CLOCK_FREQ
 config FLASH_SIZE
     hex
     default 0x80000
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
 
 config RAM_START
     hex

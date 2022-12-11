@@ -9,6 +9,10 @@
 #include "samd21.h"
 #elif CONFIG_MACH_SAMD51
 #include "samd51.h"
+#elif CONFIG_MACH_SAME51
+#include "same51.h"
+#elif CONFIG_MACH_SAME54
+#include "same54.h"
 #endif
 
 #define GPIO(PORT, NUM) (((PORT)-'A') * 32 + (NUM))
@@ -18,7 +22,7 @@
 #define GET_FUSE(REG)                                           \
     ((*((uint32_t*)(REG##_ADDR)) & (REG##_Msk)) >> (REG##_Pos))
 
-void enable_pclock(uint32_t pclk_id, uint32_t pm_id);
+void enable_pclock(uint32_t pclk_id, int32_t pm_id);
 uint32_t get_pclock_frequency(uint32_t pclk_id);
 void gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up);
 
