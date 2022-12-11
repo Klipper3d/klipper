@@ -447,7 +447,7 @@
       
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    準備操作系統映象
+    準備作業系統映象
   </a>
   
 </li>
@@ -1298,7 +1298,7 @@
       
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    準備操作系統映象
+    準備作業系統映象
   </a>
   
 </li>
@@ -1348,7 +1348,7 @@
 <p>如果 Klipper 配置目錄中沒有合適的打印機配置文件，請嘗試搜索打印機製造商的網站，看看他們是否有合適的 Klipper 配置文件。</p>
 <p>如果找不到打印機的配置文件，但打印機控制板的類型已知，則查找以“generic-”前綴開頭的合適的 <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config file</a>。這些示例打印機板文件應該允許您成功完成初始安裝，但需要進行一些自定義才能獲得完整的打印機功能。</p>
 <p>也可以從頭開始定義新的打印機配置。但是，這需要有關打印機及其電子設備的大量技術知識。建議大多數用戶從適當的配置文件開始。如果創建新的自定義打印機配置文件，請從最接近的示例 <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config file</a> 開始，並使用 Klipper <a href="Config_Reference.html">config reference</a> 獲取更多信息。</p>
-<h2 id="_2">準備操作系統映象<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h2 id="_2">準備作業系統映象<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>先在樹莓派上安裝 <a href="https://github.com/guysoft/OctoPi">OctoPi</a>。請使用OctoPi v0.17.0或更高版本，檢視 <a href="https://github.com/guysoft/OctoPi/releases">Octopi 發行版</a>來獲取最新發布版本。安裝完系統后，請先驗證 OctoPi 能正常啟動，並且 OctoPrint 網路伺服器正常執行。連線到 OctoPrint 網頁后，按照提示將 OctoPrint 更新到v1.4.2或更高版本。</p>
 <p>在安裝 OctoPi 和升級 OctoPrint后，用 ssh 進入目標裝置，以執行少量的系統命令。如果使用Linux或MacOS系統，那麼 "ssh"軟體應該已經預裝在系統上。有一些免費的ssh客戶端可用於其他操作系統（例如，<a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a>）。使用ssh工具連線到Raspberry Pi（ssh pi@octopi --密碼是 "raspberry"），並執行以下命令：</p>
 <div class="highlight"><pre><span></span><code>git clone https://github.com/Klipper3d/klipper
