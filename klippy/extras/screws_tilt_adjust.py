@@ -93,7 +93,7 @@ class ScrewsTiltAdjust:
                     "%s : x=%.1f, y=%.1f, z=%.5f" %
                     (name + ' (base)', coord[0], coord[1], z))
                 self.results.append({'name': name + ' (base)', 'x': coord[0],
-                    'y': coord[1], 'z': z})
+                    'y': coord[1], 'z': z, 'sign': 'CW', 'adjust':'00:00'})
             else:
                 # Calculate how knob must be adjusted for other positions
                 diff = z_base - z
