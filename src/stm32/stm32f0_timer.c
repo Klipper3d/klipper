@@ -20,14 +20,17 @@
  ****************************************************************/
 
 // Use 32bit TIM2 timer if available (otherwise use 16bit TIM3 timer)
-#ifdef TIM2
-#define TIMx TIM2
-#define TIMx_IRQn TIM2_IRQn
-#define HAVE_TIMER_32BIT 1
-#else
-#define TIMx TIM3
-#define TIMx_IRQn TIM3_IRQn
-#define HAVE_TIMER_32BIT 0
+#if defined(TIM2)
+  #define TIMx TIM2
+  #define TIMx_IRQn TIM2_IRQn
+  #define HAVE_TIMER_32BIT 1
+#elif defined(TIM3)
+  #define TIMx TIM3
+  #define TIMx_IRQn TIM3_IRQn
+  #define HAVE_TIMER_32BIT 0
+  #ifdef TIM4
+    #define TIM3_IRQn TIM3_TIM4_IRQn
+  #endif
 #endif
 
 static inline uint32_t
