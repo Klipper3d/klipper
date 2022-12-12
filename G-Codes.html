@@ -4817,8 +4817,9 @@ clears any error state from the micro-controller.</p>
 <a href="Config_Reference.html#gcode_arcs">gcode_arcs config section</a> is
 enabled:</p>
 <ul>
-<li>Controlled Arc Move (G2 or G3): <code>G2 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;]
-  [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;</code></li>
+<li>Arc Move Clockwise (G2), Arc Move Counter-clockwise (G3): <code>G2|G3 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;]
+  [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;|I&lt;value&gt; K&lt;value&gt;|J&lt;value&gt; K&lt;value&gt;</code></li>
+<li>Arc Plane Select: G17 (XY plane), G18 (XZ plane), G19 (YZ plane)</li>
 </ul>
 <h3 id="gcode_macro">[gcode_macro]<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h3>
 <p>The following command is available when a
