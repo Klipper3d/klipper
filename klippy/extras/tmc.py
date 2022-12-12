@@ -501,6 +501,20 @@ class TMCVirtualPinHelper:
 # Config reading helpers
 ######################################################################
 
+# Helper to initialize the wave table from config or defaults
+def TMCWaveTableHelper(config, mcu_tmc):
+    set_config_field = mcu_tmc.get_fields().set_config_field
+    set_config_field(config, "mslut0", 0xAAAAB554)
+    set_config_field(config, "mslut1", 0x4A9554AA)
+    set_config_field(config, "mslut2", 0x24492929)
+    set_config_field(config, "mslut3", 0x10104222)
+    set_config_field(config, "mslut4", 0xFBFFFFFF)
+    set_config_field(config, "mslut5", 0xB5BB777D)
+    set_config_field(config, "mslut6", 0x49295556)
+    set_config_field(config, "mslut7", 0x00404222)
+    set_config_field(config, "mslutsel", 0xFFFF8056)
+    set_config_field(config, "mslutstart", 0x00F70000)
+
 # Helper to configure and query the microstep settings
 def TMCMicrostepHelper(config, mcu_tmc):
     fields = mcu_tmc.get_fields()
