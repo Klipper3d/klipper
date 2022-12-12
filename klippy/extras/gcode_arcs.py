@@ -7,7 +7,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
-from gcode import Coord
+
 # Coordinates created by this are converted into G1 commands.
 #
 # supports XY, XZ & YZ planes with remaining axis as helical
@@ -39,6 +39,8 @@ class ArcSupport:
         self.gcode.register_command("G18", self.cmd_G18)
         self.gcode.register_command("G19", self.cmd_G19)
 
+        self.Coord = self.gcode.Coord
+
         # backwards compatibility, prior implementation only supported XY
         self.plane = ARC_PLANE_X_Y
 
@@ -64,10 +66,10 @@ class ArcSupport:
         currentPos = gcodestatus['gcode_position']
 
         # Parse parameters
-        asTarget = Coord(x=gcmd.get_float("X", currentPos[0]),
-                         y=gcmd.get_float("Y", currentPos[1]),
-                         z=gcmd.get_float("Z", currentPos[2]),
-                         e=None)
+        asTarget = self.Coord(x=gcmd.get_float("X", currentPos[0]),
+                              y=gcmd.get_float("Y", currentPos[1]),
+                              z=gcmd.get_float("Z", currentPos[2]),
+                              e=None)
 
         if gcmd.get_float("R", None) is not None:
             raise gcmd.error("G2/G3 does not support R moves")
@@ -170,7 +172,7 @@ class ArcSupport:
             c[alpha_axis] = center_P + r_P
             c[beta_axis] = center_Q + r_Q
             c[helical_axis] = currentPos[helical_axis] + dist_Helical
-            coords.append(Coord(*c))
+            coords.append(self.Coord(*c))
 
         coords.append(targetPos)
         return coords
