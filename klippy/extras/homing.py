@@ -266,6 +266,9 @@ class PrinterHoming:
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         try:
             kin.home(homing_state)
+            axes_str = "".join([a for (a, i) in zip("xyz", [0, 1, 2])
+                                if i in axes])
+            self.printer.send_event("homing:homed", axes_str)
         except self.printer.command_error:
             if self.printer.is_shutdown():
                 raise self.printer.command_error(
