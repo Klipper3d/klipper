@@ -19,7 +19,6 @@
   #define RCC_AHBENR_ADCEN                    (RCC_AHB1ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
   #define ADC_ATICKS                          (0b101)
-  #define ADC_RES                             (0b110)
   #define ADC_TS                              (ADC3_COMMON)
   #if CONFIG_MACH_STM32H723
     #define PCSEL                               PCSEL_RES0
@@ -30,7 +29,6 @@
   #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
   #define ADC_CKMODE                          (0)
   #define ADC_ATICKS                          (0b100)
-  #define ADC_RES                             (0b00)
   #define ADC_TS                              (ADC12_COMMON)
 #elif CONFIG_MACH_STM32G4
   #define ADCIN_BANK_SIZE                     (19)
@@ -38,7 +36,6 @@
   #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
   #define ADC_ATICKS                          (0b100)
-  #define ADC_RES                             (0b00)
   #define ADC_TS                              (ADC12_COMMON)
   #define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
 #endif
@@ -231,13 +228,6 @@ gpio_adc_setup(uint32_t pin)
 
     // Enable the ADC
     if (!(adc->CR & ADC_CR_ADEN)) {
-        // STM32H723 ADC3 and ADC1/2 registers are slightly different
-        uint8_t is_stm32h723_adc3 = 0;
-#if CONFIG_MACH_STM32H723
-        if (adc == ADC3) {
-            is_stm32h723_adc3 = 1;
-        }
-#endif
         // Pwr
         // Exit deep power down
         MODIFY_REG(adc->CR, ADC_CR_DEEPPWD_Msk, 0);
@@ -287,10 +277,11 @@ gpio_adc_setup(uint32_t pin)
                    | (aticks << 18) | (aticks << 21) | (aticks << 24)
                    | (aticks << 27));
 
-        // Set to 12 bit
-        if (!is_stm32h723_adc3) {
-            MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, ADC_RES<<ADC_CFGR_RES_Pos);
-        }
+        // The stm32h7 chips need to be set to 12bit samples
+#if CONFIG_MACH_STM32H7
+        if (!(CONFIG_MACH_STM32H723 && adc == ADC3))
+            adc->CFGR = ADC_CFGR_JQDIS | (0b110 << ADC_CFGR_RES_Pos);
+#endif
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
