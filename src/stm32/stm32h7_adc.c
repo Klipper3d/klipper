@@ -296,15 +296,9 @@ gpio_adc_setup(uint32_t pin)
                    | (aticks << 9)  | (aticks << 12) | (aticks << 15)
                    | (aticks << 18) | (aticks << 21) | (aticks << 24)
                    | (aticks << 27));
-        // Disable Continuous Mode
-        MODIFY_REG(adc->CFGR, ADC_CFGR_CONT_Msk, 0);
+
         // Set to 12 bit
-        if (is_stm32h723_adc3) {
-#ifdef ADC3_CFGR_RES
-            MODIFY_REG(adc->CFGR, ADC3_CFGR_RES_Msk, 0 << ADC3_CFGR_RES_Pos);
-            MODIFY_REG(adc->CFGR, ADC3_CFGR_ALIGN_Msk, 0<<ADC3_CFGR_ALIGN_Pos);
-#endif
-        } else {
+        if (!is_stm32h723_adc3) {
             MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, ADC_RES<<ADC_CFGR_RES_Pos);
         }
 #if CONFIG_MACH_STM32H7
@@ -321,8 +315,6 @@ gpio_adc_setup(uint32_t pin)
         }
         MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSS_Msk,
             OVERSAMPLES_EXPONENT << ADC_CFGR2_OVSS_Pos);
-#else // stm32l4
-        adc->CFGR |= ADC_CFGR_JQDIS | ADC_CFGR_OVRMOD;
 #endif
     }
 
