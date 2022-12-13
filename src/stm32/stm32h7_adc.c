@@ -14,7 +14,6 @@
 #include "sched.h" // sched_shutdown
 
 #if CONFIG_MACH_STM32H7
-  #define ADCIN_BANK_SIZE                     (20)
   #define RCC_AHBENR_ADC                      (RCC->AHB1ENR)
   #define RCC_AHBENR_ADCEN                    (RCC_AHB1ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
@@ -24,14 +23,12 @@
     #define PCSEL                               PCSEL_RES0
   #endif
 #elif CONFIG_MACH_STM32L4
-  #define ADCIN_BANK_SIZE                     (19)
   #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
   #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
   #define ADC_CKMODE                          (0)
   #define ADC_ATICKS                          (0b100)
   #define ADC_TS                              (ADC12_COMMON)
 #elif CONFIG_MACH_STM32G4
-  #define ADCIN_BANK_SIZE                     (19)
   #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
   #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
@@ -44,6 +41,8 @@
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 
 DECL_CONSTANT("ADC_MAX", 4095);
+
+#define ADCIN_BANK_SIZE 20
 
 // GPIOs like A0_C are not covered!
 // This always gives the pin connected to the positive channel
@@ -137,6 +136,7 @@ static const uint8_t adc_pins[] = {
     ADC_TEMPERATURE_PIN,    // [16] vtemp
     0,                      // [17] vbat/3
     0,                      // [18] vref
+    0,
     0,                      // [0] vssa       ADC 2
     GPIO('A', 0),           // [1]
     GPIO('A', 1),           // [2]
