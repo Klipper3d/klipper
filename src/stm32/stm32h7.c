@@ -208,7 +208,7 @@ clock_setup(void)
  * Bootloader
  ****************************************************************/
 
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
+#define USB_BOOT_FLAG_ADDR (0x24000000 + 0x8000) // Place flag in "AXI SRAM"
 #define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
 
 // Flag that bootloader is desired and reboot
@@ -216,6 +216,7 @@ static void
 usb_reboot_for_dfu_bootloader(void)
 {
     irq_disable();
+    SCB_DisableDCache();
     *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
     NVIC_SystemReset();
 }
