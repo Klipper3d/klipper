@@ -209,31 +209,22 @@ gpio_adc_setup(uint32_t pin)
 
     // Enable the ADC
     if (!(adc->CR & ADC_CR_ADEN)) {
-        // Pwr
-        // Exit deep power down
-        MODIFY_REG(adc->CR, ADC_CR_DEEPPWD_Msk, 0);
-        // Switch on voltage regulator
-        adc->CR |= ADC_CR_ADVREGEN;
-        // Wait for voltage regulator to stabilize
+        // Switch on voltage regulator and wait for it to stabilize
+        adc->CR = ADC_CR_ADVREGEN;
         uint32_t end = timer_read_time() + timer_from_us(20);
         while (timer_is_before(timer_read_time(), end))
             ;
 
+        // Perform adc calibration
+        uint32_t cr = ADC_CR_ADVREGEN | ADC_CR_ADCAL;
+#if CONFIG_MACH_STM32H7
         // Set boost mode on stm32h7 (adc clock is at 25Mhz)
-#ifdef ADC_CR_BOOST
-        MODIFY_REG(adc->CR, ADC_CR_BOOST_Msk, 0b10 << ADC_CR_BOOST_Pos);
+        cr |= 0b10 << ADC_CR_BOOST_Pos;
+        // Use linear calibration on stm32h7
+        cr |= ADC_CR_ADCALLIN;
 #endif
-
-        // Calibration
-        // Set calibration mode to Single ended (not differential)
-        MODIFY_REG(adc->CR, ADC_CR_ADCALDIF_Msk, 0);
-        // Enable linearity calibration
-#ifdef ADC_CR_ADCALLIN
-        MODIFY_REG(adc->CR, ADC_CR_ADCALLIN_Msk, ADC_CR_ADCALLIN);
-#endif
-        // Start the calibration
-        MODIFY_REG(adc->CR, ADC_CR_ADCAL_Msk, ADC_CR_ADCAL);
-        while(adc->CR & ADC_CR_ADCAL)
+        adc->CR = cr;
+        while (adc->CR & ADC_CR_ADCAL)
             ;
 
         // Enable ADC
@@ -265,8 +256,8 @@ gpio_adc_setup(uint32_t pin)
         gpio_peripheral(pin, GPIO_ANALOG, 0);
     }
 
-    // Preselect (connect) channel
-#ifdef ADC_PCSEL_PCSEL
+    // Setup preselect (connect) channel on stm32h7
+#if CONFIG_MACH_STM32H7
     adc->PCSEL |= (1 << chan);
 #endif
     return (struct gpio_adc){ .adc = adc, .chan = chan };
