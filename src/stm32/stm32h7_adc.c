@@ -12,21 +12,6 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
-#if CONFIG_MACH_STM32H7
-  #define ADC_CKMODE                          (0b11)
-  #define ADC_ATICKS                          (0b101)
-  #if CONFIG_MACH_STM32H723
-    #define PCSEL                               PCSEL_RES0
-  #endif
-#elif CONFIG_MACH_STM32L4
-  #define ADC_CKMODE                          (0)
-  #define ADC_ATICKS                          (0b100)
-#elif CONFIG_MACH_STM32G4
-  #define ADC_CKMODE                          (0b11)
-  #define ADC_ATICKS                          (0b100)
-  #define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
-#endif
-
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 
@@ -169,9 +154,20 @@ static const uint8_t adc_pins[] = {
 #endif
 };
 
+// ADC timing
+#define ADC_CKMODE 0b11
+#define ADC_ATICKS (CONFIG_MACH_STM32H7 ? 0b101 : 0b100)
+// stm32h7: clock=25Mhz, Tsamp=64.5, Tconv=71, total=2.84us
+// stm32h723 adc3: clock=50Mhz, Tsamp=92.5, Tconv=105, total=2.1us
+// stm32l4: clock=20Mhz, Tsamp=47.5, Tconv=60, total=3.0us
+// stm32g4: clock=37.5Mhz, Tsamp=47.5, Tconv=60, total=1.6us
 
-// ADC timing:
-// ADC clock=30Mhz, Tconv=6.5, Tsamp=64.5, total=2.3666us*OVERSAMPLES
+// Handle register name differences between chips
+#if CONFIG_MACH_STM32H723
+  #define PCSEL PCSEL_RES0
+#elif CONFIG_MACH_STM32G4
+  #define ADC_CCR_TSEN ADC_CCR_VSENSESEL
+#endif
 
 struct gpio_adc
 gpio_adc_setup(uint32_t pin)
@@ -185,9 +181,7 @@ gpio_adc_setup(uint32_t pin)
             break;
     }
 
-    // Determine which ADC block to use, enable peripheral clock
-    // (SYSCLK 480Mhz) /HPRE(2) /CKMODE divider(4) /additional divider(2)
-    // (ADC clock 30Mhz)
+    // Determine which ADC block to use and enable its clock
     ADC_TypeDef *adc;
     ADC_Common_TypeDef *adc_common;
 #ifdef ADC3
@@ -225,9 +219,9 @@ gpio_adc_setup(uint32_t pin)
         while (timer_is_before(timer_read_time(), end))
             ;
 
-        // Set Boost mode for 25Mhz < ADC clock <= 50Mhz
+        // Set boost mode on stm32h7 (adc clock is at 25Mhz)
 #ifdef ADC_CR_BOOST
-        MODIFY_REG(adc->CR, ADC_CR_BOOST_Msk, 0b11 << ADC_CR_BOOST_Pos);
+        MODIFY_REG(adc->CR, ADC_CR_BOOST_Msk, 0b10 << ADC_CR_BOOST_Pos);
 #endif
 
         // Calibration
@@ -250,19 +244,14 @@ gpio_adc_setup(uint32_t pin)
         while(!(adc->ISR & ADC_ISR_ADRDY))
            ;
 
-        // Set 64.5 ADC clock cycles sample time for every channel
-        // (Reference manual pg.940)
+        // Set ADC clock cycles sample time for every channel
         uint32_t aticks = ADC_ATICKS;
-        // Channel 0-9
-        adc->SMPR1 = (aticks        | (aticks << 3)  | (aticks << 6)
-                   | (aticks << 9)  | (aticks << 12) | (aticks << 15)
-                   | (aticks << 18) | (aticks << 21) | (aticks << 24)
-                   | (aticks << 27));
-        // Channel 10-19
-        adc->SMPR2 = (aticks        | (aticks << 3)  | (aticks << 6)
-                   | (aticks << 9)  | (aticks << 12) | (aticks << 15)
-                   | (aticks << 18) | (aticks << 21) | (aticks << 24)
-                   | (aticks << 27));
+        uint32_t av = (aticks           | (aticks << 3)  | (aticks << 6)
+                       | (aticks << 9)  | (aticks << 12) | (aticks << 15)
+                       | (aticks << 18) | (aticks << 21) | (aticks << 24)
+                       | (aticks << 27));
+        adc->SMPR1 = av;
+        adc->SMPR2 = av;
 
         // The stm32h7 chips need to be set to 12bit samples
 #if CONFIG_MACH_STM32H7
