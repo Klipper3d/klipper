@@ -24,11 +24,6 @@
   #if CONFIG_MACH_STM32H723
     #define PCSEL                               PCSEL_RES0
   #endif
-
-  // Number of samples is 2^OVERSAMPLES_EXPONENT (exponent can be 0-10)
-  #define OVERSAMPLES_EXPONENT 3
-  #define OVERSAMPLES (1 << OVERSAMPLES_EXPONENT)
-
 #elif CONFIG_MACH_STM32L4
   #define ADCIN_BANK_SIZE                     (19)
   #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
@@ -37,9 +32,6 @@
   #define ADC_ATICKS                          (0b100)
   #define ADC_RES                             (0b00)
   #define ADC_TS                              (ADC12_COMMON)
-
-  #define OVERSAMPLES                         (0)
-
 #elif CONFIG_MACH_STM32G4
   #define ADCIN_BANK_SIZE                     (19)
   #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
@@ -49,8 +41,6 @@
   #define ADC_RES                             (0b00)
   #define ADC_TS                              (ADC12_COMMON)
   #define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
-
-  #define OVERSAMPLES                         (0)
 #endif
 
 #define ADC_TEMPERATURE_PIN 0xfe
@@ -301,21 +291,6 @@ gpio_adc_setup(uint32_t pin)
         if (!is_stm32h723_adc3) {
             MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, ADC_RES<<ADC_CFGR_RES_Pos);
         }
-#if CONFIG_MACH_STM32H7
-        // Set hardware oversampling
-        MODIFY_REG(adc->CFGR2, ADC_CFGR2_ROVSE_Msk, ADC_CFGR2_ROVSE);
-        if (is_stm32h723_adc3) {
-#ifdef ADC3_CFGR2_OVSR
-            MODIFY_REG(adc->CFGR2, ADC3_CFGR2_OVSR_Msk,
-                       (OVERSAMPLES_EXPONENT - 1) << ADC3_CFGR2_OVSR_Pos);
-#endif
-        } else {
-            MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSR_Msk,
-                       (OVERSAMPLES - 1) << ADC_CFGR2_OVSR_Pos);
-        }
-        MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSS_Msk,
-            OVERSAMPLES_EXPONENT << ADC_CFGR2_OVSS_Pos);
-#endif
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
