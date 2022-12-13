@@ -1,34 +1,27 @@
-// ADC functions on STM32H7
+// Analog to digital (ADC) on stm32h7 and similar chips
 //
 // Copyright (C) 2020 Konstantin Vogel <konstantin.vogel@gmx.net>
+// Copyright (C) 2022  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
-#include "compiler.h" // ARRAY_SIZE
-#include "generic/armcm_timer.h" // udelay
 #include "gpio.h" // gpio_adc_setup
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
 #if CONFIG_MACH_STM32H7
-  #define RCC_AHBENR_ADC                      (RCC->AHB1ENR)
-  #define RCC_AHBENR_ADCEN                    (RCC_AHB1ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
   #define ADC_ATICKS                          (0b101)
   #if CONFIG_MACH_STM32H723
     #define PCSEL                               PCSEL_RES0
   #endif
 #elif CONFIG_MACH_STM32L4
-  #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
-  #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
   #define ADC_CKMODE                          (0)
   #define ADC_ATICKS                          (0b100)
 #elif CONFIG_MACH_STM32G4
-  #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
-  #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
   #define ADC_ATICKS                          (0b100)
   #define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
@@ -198,28 +191,25 @@ gpio_adc_setup(uint32_t pin)
     ADC_TypeDef *adc;
     ADC_Common_TypeDef *adc_common;
 #ifdef ADC3
-    if (chan >= 2 * ADCIN_BANK_SIZE){
+    if (chan >= 2 * ADCIN_BANK_SIZE) {
         chan -= 2 * ADCIN_BANK_SIZE;
         adc = ADC3;
         adc_common = ADC3_COMMON;
-        if (!is_enabled_pclock(ADC3_BASE)) {
-            enable_pclock(ADC3_BASE);
-        }
     } else
 #endif
 #ifdef ADC2
-    if (chan >= ADCIN_BANK_SIZE){
+    if (chan >= ADCIN_BANK_SIZE) {
         chan -= ADCIN_BANK_SIZE;
         adc = ADC2;
         adc_common = ADC12_COMMON;
-        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
     } else
 #endif
     {
         adc = ADC1;
         adc_common = ADC12_COMMON;
-        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
     }
+    if (!is_enabled_pclock((uint32_t)adc_common))
+        enable_pclock((uint32_t)adc_common);
     MODIFY_REG(adc_common->CCR, ADC_CCR_CKMODE_Msk,
                ADC_CKMODE << ADC_CCR_CKMODE_Pos);
 
