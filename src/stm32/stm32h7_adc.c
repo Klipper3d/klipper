@@ -18,7 +18,6 @@
   #define RCC_AHBENR_ADCEN                    (RCC_AHB1ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
   #define ADC_ATICKS                          (0b101)
-  #define ADC_TS                              (ADC3_COMMON)
   #if CONFIG_MACH_STM32H723
     #define PCSEL                               PCSEL_RES0
   #endif
@@ -27,13 +26,11 @@
   #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
   #define ADC_CKMODE                          (0)
   #define ADC_ATICKS                          (0b100)
-  #define ADC_TS                              (ADC12_COMMON)
 #elif CONFIG_MACH_STM32G4
   #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
   #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADC12EN)
   #define ADC_CKMODE                          (0b11)
   #define ADC_ATICKS                          (0b100)
-  #define ADC_TS                              (ADC12_COMMON)
   #define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
 #endif
 
@@ -199,32 +196,32 @@ gpio_adc_setup(uint32_t pin)
     // (SYSCLK 480Mhz) /HPRE(2) /CKMODE divider(4) /additional divider(2)
     // (ADC clock 30Mhz)
     ADC_TypeDef *adc;
+    ADC_Common_TypeDef *adc_common;
 #ifdef ADC3
     if (chan >= 2 * ADCIN_BANK_SIZE){
+        chan -= 2 * ADCIN_BANK_SIZE;
         adc = ADC3;
+        adc_common = ADC3_COMMON;
         if (!is_enabled_pclock(ADC3_BASE)) {
             enable_pclock(ADC3_BASE);
         }
-        MODIFY_REG(ADC3_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
-        chan -= 2 * ADCIN_BANK_SIZE;
     } else
 #endif
 #ifdef ADC2
     if (chan >= ADCIN_BANK_SIZE){
-        adc = ADC2;
-        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
-        MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
         chan -= ADCIN_BANK_SIZE;
+        adc = ADC2;
+        adc_common = ADC12_COMMON;
+        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
     } else
 #endif
     {
         adc = ADC1;
+        adc_common = ADC12_COMMON;
         RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
-        MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
     }
+    MODIFY_REG(adc_common->CCR, ADC_CCR_CKMODE_Msk,
+               ADC_CKMODE << ADC_CCR_CKMODE_Pos);
 
     // Enable the ADC
     if (!(adc->CR & ADC_CR_ADEN)) {
@@ -285,7 +282,7 @@ gpio_adc_setup(uint32_t pin)
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
-        ADC_TS->CCR |= ADC_CCR_TSEN;
+        adc_common->CCR |= ADC_CCR_TSEN;
     } else {
         gpio_peripheral(pin, GPIO_ANALOG, 0);
     }
