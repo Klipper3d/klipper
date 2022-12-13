@@ -29,11 +29,6 @@
   #define OVERSAMPLES_EXPONENT 3
   #define OVERSAMPLES (1 << OVERSAMPLES_EXPONENT)
 
-  // LDORDY registers are missing from CMSIS (only available on revision V!)
-  #define ADC_ISR_LDORDY_Pos                  (12U)
-  #define ADC_ISR_LDORDY_Msk                  (0x1UL << ADC_ISR_LDORDY_Pos)
-  #define ADC_ISR_LDORDY                      ADC_ISR_LDORDY_Msk
-
 #elif CONFIG_MACH_STM32L4
   #define ADCIN_BANK_SIZE                     (19)
   #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
@@ -258,18 +253,10 @@ gpio_adc_setup(uint32_t pin)
         MODIFY_REG(adc->CR, ADC_CR_DEEPPWD_Msk, 0);
         // Switch on voltage regulator
         adc->CR |= ADC_CR_ADVREGEN;
-#ifdef ADC_ISR_LDORDY
-        if (is_stm32h723_adc3 == 0) {
-            while(!(adc->ISR & ADC_ISR_LDORDY))
-                ;
-        } else
-#endif
-        {
-            // stm32h723 ADC3 & stm32l4 lacks ldordy, delay to spec instead
-            uint32_t end = timer_read_time() + timer_from_us(20);
-            while (timer_is_before(timer_read_time(), end))
-                ;
-        }
+        // Wait for voltage regulator to stabilize
+        uint32_t end = timer_read_time() + timer_from_us(20);
+        while (timer_is_before(timer_read_time(), end))
+            ;
 
         // Set Boost mode for 25Mhz < ADC clock <= 50Mhz
 #ifdef ADC_CR_BOOST
