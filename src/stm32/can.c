@@ -92,7 +92,7 @@
 
 // Transmit a packet
 int
-canbus_send(struct canbus_msg *msg)
+canhw_send(struct canbus_msg *msg)
 {
     uint32_t tsr = SOC_CAN->TSR;
     if (!(tsr & (CAN_TSR_TME0|CAN_TSR_TME1|CAN_TSR_TME2))) {
@@ -129,7 +129,7 @@ canbus_send(struct canbus_msg *msg)
 
 // Setup the receive packet filter
 void
-canbus_set_filter(uint32_t id)
+canhw_set_filter(uint32_t id)
 {
     /* Select the start slave bank */
     SOC_CAN->FMR |= CAN_FMR_FINIT;
@@ -268,7 +268,7 @@ can_init(void)
         ;
 
     /*##-2- Configure the CAN Filter #######################################*/
-    canbus_set_filter(0);
+    canhw_set_filter(0);
 
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CAN_RX0_IRQn, 0);
