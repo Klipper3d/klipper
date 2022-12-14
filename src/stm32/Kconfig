@@ -248,7 +248,7 @@ choice
     config STM32_FLASH_START_0000
         bool "No bootloader"
 endchoice
-config FLASH_START
+config FLASH_APPLICATION_ADDRESS
     hex
     default 0x8000800 if STM32_FLASH_START_800
     default 0x8001000 if STM32_FLASH_START_1000
@@ -266,7 +266,7 @@ config FLASH_START
 
 config ARMCM_RAM_VECTORTABLE
     bool
-    default y if MACH_STM32F0 && FLASH_START != 0x8000000
+    default y if MACH_STM32F0 && FLASH_APPLICATION_ADDRESS != 0x8000000
     default n
 
 
