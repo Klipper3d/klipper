@@ -210,20 +210,26 @@ gpio_adc_setup(uint32_t pin)
     // Enable the ADC
     if (!(adc->CR & ADC_CR_ADEN)) {
         // Switch on voltage regulator and wait for it to stabilize
-        adc->CR = ADC_CR_ADVREGEN;
+        uint32_t cr = ADC_CR_ADVREGEN;
+        adc->CR = cr;
         uint32_t end = timer_read_time() + timer_from_us(20);
         while (timer_is_before(timer_read_time(), end))
             ;
 
-        // Perform adc calibration
-        uint32_t cr = ADC_CR_ADVREGEN | ADC_CR_ADCAL;
+        // Setup chip specific flags
 #if CONFIG_MACH_STM32H7
-        // Set boost mode on stm32h7 (adc clock is at 25Mhz)
-        cr |= 0b10 << ADC_CR_BOOST_Pos;
-        // Use linear calibration on stm32h7
-        cr |= ADC_CR_ADCALLIN;
+        if (!(CONFIG_MACH_STM32H723 && adc == ADC3)) {
+            // Use linear calibration on stm32h7
+            cr |= ADC_CR_ADCALLIN;
+            // Set boost mode on stm32h7 (adc clock is at 25Mhz)
+            cr |= 0b10 << ADC_CR_BOOST_Pos;
+            // Set 12bit samples on the stm32h7
+            adc->CFGR = ADC_CFGR_JQDIS | (0b110 << ADC_CFGR_RES_Pos);
+        }
 #endif
-        adc->CR = cr;
+
+        // Perform adc calibration
+        adc->CR = cr | ADC_CR_ADCAL;
         while (adc->CR & ADC_CR_ADCAL)
             ;
 
@@ -242,12 +248,6 @@ gpio_adc_setup(uint32_t pin)
                        | (aticks << 27));
         adc->SMPR1 = av;
         adc->SMPR2 = av;
-
-        // The stm32h7 chips need to be set to 12bit samples
-#if CONFIG_MACH_STM32H7
-        if (!(CONFIG_MACH_STM32H723 && adc == ADC3))
-            adc->CFGR = ADC_CFGR_JQDIS | (0b110 << ADC_CFGR_RES_Pos);
-#endif
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
