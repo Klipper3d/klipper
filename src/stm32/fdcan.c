@@ -101,7 +101,7 @@ struct fdcan_ram_layout {
 
 // Transmit a packet
 int
-canbus_send(struct canbus_msg *msg)
+canhw_send(struct canbus_msg *msg)
 {
     uint32_t txfqs = SOC_CAN->TXFQS;
     if (txfqs & FDCAN_TXFQS_TFQF)
@@ -136,7 +136,7 @@ can_filter(uint32_t index, uint32_t id)
 
 // Setup the receive packet filter
 void
-canbus_set_filter(uint32_t id)
+canhw_set_filter(uint32_t id)
 {
     if (!CONFIG_CANBUS_FILTER)
         return;
@@ -299,7 +299,7 @@ can_init(void)
     SOC_CAN->CCCR &= ~FDCAN_CCCR_INIT;
 
     /*##-2- Configure the CAN Filter #######################################*/
-    canbus_set_filter(0);
+    canhw_set_filter(0);
 
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CAN_IT0_IRQn, 1);
