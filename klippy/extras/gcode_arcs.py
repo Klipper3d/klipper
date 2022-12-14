@@ -84,7 +84,7 @@ class ArcSupport:
             asPlanar = [ gcmd.get_float(a, 0.) for i,a in enumerate('JK') ]
             axes = (Y_AXIS, Z_AXIS, X_AXIS)
 
-        if not asPlanar[0] or not asPlanar[1]:
+        if not (asPlanar[0] or asPlanar[1]):
             raise gcmd.error("G2/G3 requires IJ, IK or JK parameters")
 
         asE = gcmd.get_float("E", None)
