@@ -70,7 +70,7 @@ choice
     config LPC_FLASH_START_0000
         bool "No bootloader"
 endchoice
-config FLASH_START
+config FLASH_APPLICATION_ADDRESS
     hex
     default 0x4000 if LPC_FLASH_START_4000
     default 0x0000

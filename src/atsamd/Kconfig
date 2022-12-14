@@ -110,6 +110,32 @@ config STACK_SIZE
     int
     default 512
 
+
+######################################################################
+# Bootloader
+######################################################################
+
+choice
+    prompt "Bootloader offset"
+    config SAMD_FLASH_START_2000
+        depends on MACH_SAMD21
+        bool "8KiB bootloader (Arduino Zero)"
+    config SAMD_FLASH_START_4000
+        bool "16KiB bootloader (Arduino M0)"
+    config SAMD_FLASH_START_0000
+        bool "No bootloader"
+endchoice
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x4000 if SAMD_FLASH_START_4000
+    default 0x2000 if SAMD_FLASH_START_2000
+    default 0x0000
+
+
+######################################################################
+# Clock
+######################################################################
+
 choice
     prompt "Clock Reference"
     config CLOCK_REF_X32K
@@ -141,22 +167,10 @@ config CLOCK_FREQ
     default 200000000 if SAMD51_FREQ_200
     default 120000000 if MACH_SAMX5
 
-choice
-    prompt "Bootloader offset"
-    config FLASH_START_2000
-        depends on MACH_SAMD21
-        bool "8KiB bootloader (Arduino Zero)"
-    config FLASH_START_4000
-        bool "16KiB bootloader (Arduino M0)"
-    config FLASH_START_0000
-        bool "No bootloader"
-endchoice
 
-config FLASH_START
-    hex
-    default 0x4000 if FLASH_START_4000
-    default 0x2000 if FLASH_START_2000
-    default 0x0000
+######################################################################
+# Communication inteface
+######################################################################
 
 choice
     prompt "Communication interface"
