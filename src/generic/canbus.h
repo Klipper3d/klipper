@@ -22,6 +22,8 @@ int canhw_send(struct canbus_msg *msg);
 void canhw_set_filter(uint32_t id);
 
 // canbus.c
+int canbus_send(struct canbus_msg *msg);
+void canbus_set_filter(uint32_t id);
 void canbus_notify_tx(void);
 void canbus_process_data(struct canbus_msg *msg);
 
