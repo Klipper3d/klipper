@@ -205,7 +205,7 @@ usbcan_task(void)
             msg.data32[0] = gs->data32[0];
             msg.data32[1] = gs->data32[1];
             if (host_status & HS_TX_HW) {
-                ret = canbus_send(&msg);
+                ret = canhw_send(&msg);
                 if (ret < 0)
                     return;
                 UsbCan.host_status = host_status = host_status & ~HS_TX_HW;
@@ -254,7 +254,7 @@ usbcan_task(void)
 DECL_TASK(usbcan_task);
 
 int
-canserial_send(struct canbus_msg *msg)
+canbus_send(struct canbus_msg *msg)
 {
     int ret = drain_hw_queue();
     if (ret < 0)
@@ -270,7 +270,7 @@ retry_later:
 }
 
 void
-canserial_set_filter(uint32_t id)
+canbus_set_filter(uint32_t id)
 {
     UsbCan.assigned_id = id;
 }
