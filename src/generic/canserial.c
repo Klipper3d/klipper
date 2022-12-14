@@ -10,7 +10,7 @@
 #include "board/io.h" // readb
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // console_sendf
-#include "canbus.h" // canbus_set_uuid
+#include "canbus.h" // canbus_send
 #include "canserial.h" // canserial_notify_tx
 #include "command.h" // DECL_CONSTANT
 #include "fasthash.h" // fasthash64
@@ -68,7 +68,7 @@ canserial_tx_task(void)
             break;
         msg.dlc = now;
         memcpy(msg.data, &CanData.transmit_buf[tpos], now);
-        int ret = canserial_send(&msg);
+        int ret = canbus_send(&msg);
         if (ret <= 0)
             break;
         tpos += now;
@@ -152,7 +152,7 @@ can_process_query_unassigned(struct canbus_msg *msg)
     send.data[7] = CANBUS_CMD_SET_KLIPPER_NODEID;
     // Send with retry
     for (;;) {
-        int ret = canserial_send(&send);
+        int ret = canbus_send(&send);
         if (ret >= 0)
             return;
     }
@@ -162,7 +162,7 @@ static void
 can_id_conflict(void)
 {
     CanData.assigned_id = 0;
-    canserial_set_filter(CanData.assigned_id);
+    canbus_set_filter(CanData.assigned_id);
     shutdown("Another CAN node assigned this ID");
 }
 
@@ -175,7 +175,7 @@ can_process_set_klipper_nodeid(struct canbus_msg *msg)
     if (can_check_uuid(msg)) {
         if (newid != CanData.assigned_id) {
             CanData.assigned_id = newid;
-            canserial_set_filter(CanData.assigned_id);
+            canbus_set_filter(CanData.assigned_id);
         }
     } else if (newid == CanData.assigned_id) {
         can_id_conflict();

@@ -254,7 +254,7 @@ usbcan_task(void)
 DECL_TASK(usbcan_task);
 
 int
-canserial_send(struct canbus_msg *msg)
+canbus_send(struct canbus_msg *msg)
 {
     int ret = drain_hw_queue();
     if (ret < 0)
@@ -270,7 +270,7 @@ retry_later:
 }
 
 void
-canserial_set_filter(uint32_t id)
+canbus_set_filter(uint32_t id)
 {
     UsbCan.assigned_id = id;
 }
