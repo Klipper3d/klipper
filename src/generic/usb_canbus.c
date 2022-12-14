@@ -205,7 +205,7 @@ usbcan_task(void)
             msg.data32[0] = gs->data32[0];
             msg.data32[1] = gs->data32[1];
             if (host_status & HS_TX_HW) {
-                ret = canbus_send(&msg);
+                ret = canhw_send(&msg);
                 if (ret < 0)
                     return;
                 UsbCan.host_status = host_status = host_status & ~HS_TX_HW;
