@@ -1,4 +1,4 @@
-# Kconfig settings for STM32 processors
+# Kconfig settings for RP2040 processors
 
 if MACH_RP2040
 
