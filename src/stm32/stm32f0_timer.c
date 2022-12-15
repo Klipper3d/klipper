@@ -28,9 +28,11 @@
   #define TIMx TIM3
   #define TIMx_IRQn TIM3_IRQn
   #define HAVE_TIMER_32BIT 0
-  #ifdef TIM4
-    #define TIM3_IRQn TIM3_TIM4_IRQn
-  #endif
+#endif
+
+// Some chips have slightly different register names
+#if CONFIG_MACH_STM32G0B0
+  #define TIM3_IRQn TIM3_TIM4_IRQn
 #endif
 
 static inline uint32_t
