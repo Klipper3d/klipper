@@ -128,36 +128,12 @@ clock_setup(void)
  * Bootloader
  ****************************************************************/
 
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
-#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
-
-// Flag that bootloader is desired and reboot
-static void
-usb_reboot_for_dfu_bootloader(void)
-{
-    irq_disable();
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
-    NVIC_SystemReset();
-}
-
-// Check if rebooting into system DFU Bootloader
-static void
-check_usb_dfu_bootloader(void)
-{
-    if (!CONFIG_USB || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
-        return;
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
-    uint32_t *sysbase = (uint32_t*)0x1fff0000;
-    asm volatile("mov sp, %0\n bx %1"
-                 : : "r"(sysbase[0]), "r"(sysbase[1]));
-}
-
 // Handle USB reboot requests
 void
 bootloader_request(void)
 {
     try_request_canboot();
-    usb_reboot_for_dfu_bootloader();
+    dfu_reboot();
 }
 
 
@@ -185,7 +161,7 @@ armcm_main(void)
     RCC->APBENR1 = 0x00000000;
     RCC->APBENR2 = 0x00000000;
 
-    check_usb_dfu_bootloader();
+    dfu_reboot_check();
 
     // Set flash latency, cache and prefetch; use reset value as base
     uint32_t acr = 0x00040600;
