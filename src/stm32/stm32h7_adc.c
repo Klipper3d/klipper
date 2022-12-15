@@ -35,6 +35,7 @@
   #define ADC_ISR_LDORDY                      ADC_ISR_LDORDY_Msk
 
 #elif CONFIG_MACH_STM32L4
+  #define ADCIN_BANK_SIZE                     (19)
   #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
   #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
   #define ADC_CKMODE                          (0)
