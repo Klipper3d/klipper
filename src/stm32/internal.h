@@ -40,6 +40,10 @@ void gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup);
 void enable_pclock(uint32_t periph_base);
 int is_enabled_pclock(uint32_t periph_base);
 
+// dfu_reboot.c
+void dfu_reboot(void);
+void dfu_reboot_check(void);
+
 // stm32??.c
 struct cline { volatile uint32_t *en, *rst; uint32_t bit; };
 struct cline lookup_clock_line(uint32_t periph_base);
