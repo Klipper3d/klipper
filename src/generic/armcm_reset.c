@@ -23,14 +23,16 @@ canboot_reset(uint64_t req_signature)
     uint32_t *bl_vectors = (uint32_t *)CONFIG_FLASH_BOOT_ADDRESS;
     uint64_t *boot_sig = (uint64_t *)(bl_vectors[1] - 9);
     uint64_t *req_sig = (uint64_t *)bl_vectors[0];
-    if (boot_sig == (void *)ALIGN((size_t)boot_sig, 8) &&
-        *boot_sig == CANBOOT_SIGNATURE &&
-        req_sig == (void *)ALIGN((size_t)req_sig, 8))
-    {
-        irq_disable();
-        *req_sig = req_signature;
-        NVIC_SystemReset();
-    }
+    if (boot_sig != (void*)ALIGN((size_t)boot_sig, 8)
+        || *boot_sig != CANBOOT_SIGNATURE
+        || req_sig != (void*)ALIGN((size_t)req_sig, 8))
+        return;
+    irq_disable();
+    *req_sig = req_signature;
+#if __CORTEX_M >= 7
+    SCB_CleanDCache_by_Addr((void*)req_sig, sizeof(*req_sig));
+#endif
+    NVIC_SystemReset();
 }
 
 void
