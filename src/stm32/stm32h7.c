@@ -216,8 +216,9 @@ static void
 usb_reboot_for_dfu_bootloader(void)
 {
     irq_disable();
-    SCB_DisableDCache();
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
+    uint64_t *bflag = (void*)USB_BOOT_FLAG_ADDR;
+    *bflag = USB_BOOT_FLAG;
+    SCB_CleanDCache_by_Addr((void*)bflag, sizeof(*bflag));
     NVIC_SystemReset();
 }
 
