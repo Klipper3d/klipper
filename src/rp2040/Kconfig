@@ -1,4 +1,4 @@
-# Kconfig settings for STM32 processors
+# Kconfig settings for RP2040 processors
 
 if MACH_RP2040
 
@@ -66,7 +66,7 @@ choice
     config RP2040_FLASH_START_4000
         bool "16KiB bootloader"
 endchoice
-config FLASH_START
+config FLASH_APPLICATION_ADDRESS
     hex
     default 0x10004000 if RP2040_FLASH_START_4000
     default 0x10000100

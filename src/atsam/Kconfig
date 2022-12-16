@@ -65,11 +65,6 @@ config CLOCK_FREQ
     default 120000000 if MACH_SAM4
     default 300000000 if MACH_SAME70
 
-config FLASH_START
-    hex
-    default 0x400000 if MACH_SAM4 || MACH_SAME70
-    default 0x80000
-
 config FLASH_SIZE
     hex
     default 0x80000
@@ -92,6 +87,11 @@ config RAM_SIZE
 config STACK_SIZE
     int
     default 512
+
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x400000 if MACH_SAM4 || MACH_SAME70
+    default 0x80000
 
 choice
     prompt "Communication interface"

@@ -32,12 +32,16 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - AHBPERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHBENR, .rst=&RCC->AHBRSTR, .bit=bit};
     }
+#if defined(FDCAN1_BASE) || defined(FDCAN2_BASE)
     if ((periph_base == FDCAN1_BASE) || (periph_base == FDCAN2_BASE))
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<12};
+#endif
     if (periph_base == USB_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<13};
+#ifdef CRS_BASE
     if (periph_base == CRS_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<16};
+#endif
     if (periph_base == I2C3_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<23};
     if (periph_base == TIM1_BASE)
@@ -56,8 +60,8 @@ lookup_clock_line(uint32_t periph_base)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<18};
     if (periph_base == ADC1_BASE)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<20};
-    if (periph_base >= APBPERIPH_BASE && periph_base <= LPTIM1_BASE)
-    {
+    if (periph_base >= APBPERIPH_BASE
+        && periph_base < APBPERIPH_BASE + 32*0x400) {
         uint32_t bit = 1 << ((periph_base - APBPERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->APBENR1, .rst=&RCC->APBRSTR1, .bit=bit};
     }
@@ -183,8 +187,11 @@ armcm_main(void)
 
     check_usb_dfu_bootloader();
 
-    // Set flash latency
-    FLASH->ACR = (2<<FLASH_ACR_LATENCY_Pos) | FLASH_ACR_ICEN | FLASH_ACR_PRFTEN;
+    // Set flash latency, cache and prefetch; use reset value as base
+    uint32_t acr = 0x00040600;
+    acr = (acr & ~FLASH_ACR_LATENCY) | (2<<FLASH_ACR_LATENCY_Pos);
+    acr |= FLASH_ACR_ICEN | FLASH_ACR_PRFTEN;
+    FLASH->ACR = acr;
 
     // Configure main clock
     clock_setup();
