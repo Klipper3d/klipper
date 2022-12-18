@@ -68,7 +68,7 @@ config FLASH_SIZE
     hex
     default 0x40000
 
-config FLASH_START
+config FLASH_APPLICATION_ADDRESS
     hex
     default 0x8000 if ANYCUBIC_KOBRA || VOXELAB_AQUILA_X1 || CREALITY_ENDER2_PRO
     default 0xC000 if VOXELAB_AQUILA
