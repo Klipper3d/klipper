@@ -14,6 +14,7 @@ config ATSAMD_SELECT
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
 
 config HAVE_SERCOM
     depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI

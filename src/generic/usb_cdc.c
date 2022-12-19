@@ -446,6 +446,8 @@ static uint8_t line_control_state;
 static void
 check_reboot(void)
 {
+    if (!CONFIG_HAVE_BOOTLOADER_REQUEST)
+        return;
     if (line_coding.dwDTERate == 1200 && !(line_control_state & 0x01))
         // A baud of 1200 is an Arduino style request to enter the bootloader
         bootloader_request();
