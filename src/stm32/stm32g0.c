@@ -36,14 +36,18 @@ lookup_clock_line(uint32_t periph_base)
     if ((periph_base == FDCAN1_BASE) || (periph_base == FDCAN2_BASE))
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<12};
 #endif
+#ifdef USB_BASE
     if (periph_base == USB_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<13};
+#endif
 #ifdef CRS_BASE
     if (periph_base == CRS_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<16};
 #endif
+#ifdef I2C3_BASE
     if (periph_base == I2C3_BASE)
         return (struct cline){.en=&RCC->APBENR1,.rst=&RCC->APBRSTR1,.bit=1<<23};
+#endif
     if (periph_base == TIM1_BASE)
         return (struct cline){.en=&RCC->APBENR2,.rst=&RCC->APBRSTR2,.bit=1<<11};
     if (periph_base == SPI1_BASE)
@@ -106,8 +110,11 @@ clock_setup(void)
     }
     pllcfgr |= (pll_freq/pll_base) << RCC_PLLCFGR_PLLN_Pos;
     pllcfgr |= (pll_freq/CONFIG_CLOCK_FREQ - 1) << RCC_PLLCFGR_PLLR_Pos;
-    pllcfgr |= (pll_freq/FREQ_USB - 1) << RCC_PLLCFGR_PLLQ_Pos;
-    RCC->PLLCFGR = pllcfgr | RCC_PLLCFGR_PLLREN | RCC_PLLCFGR_PLLQEN;
+#ifdef RCC_PLLCFGR_PLLQ
+    pllcfgr |= ((pll_freq/FREQ_USB - 1) << RCC_PLLCFGR_PLLQ_Pos)
+            | RCC_PLLCFGR_PLLQEN;
+#endif
+    RCC->PLLCFGR = pllcfgr | RCC_PLLCFGR_PLLREN;
     RCC->CR |= RCC_CR_PLLON;
 
     // Wait for PLL lock
@@ -119,8 +126,10 @@ clock_setup(void)
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != (2 << RCC_CFGR_SWS_Pos))
         ;
 
+#ifdef USB_BASE
     // Use PLLQCLK for USB (setting USBSEL=2 works in practice)
     RCC->CCIPR2 = 2 << RCC_CCIPR2_USBSEL_Pos;
+#endif
 }
 
 
