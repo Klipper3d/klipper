@@ -315,7 +315,7 @@ class BedMeshCalibrate:
         # floor distances down to next hundredth
         x_dist = math.floor(x_dist * 100) / 100
         y_dist = math.floor(y_dist * 100) / 100
-        if x_dist <= 1. or y_dist <= 1.:
+        if x_dist < 1. or y_dist < 1.:
             raise error("bed_mesh: min/max points too close together")
 
         if self.radius is not None:
