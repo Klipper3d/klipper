@@ -31,7 +31,7 @@
 void
 dfu_reboot(void)
 {
-    if (!CONFIG_STM32_DFU_ROM_ADDRESS)
+    if (!CONFIG_STM32_DFU_ROM_ADDRESS || !CONFIG_HAVE_BOOTLOADER_REQUEST)
         return;
     irq_disable();
     uint64_t *bflag = (void*)USB_BOOT_FLAG_ADDR;
@@ -46,7 +46,7 @@ dfu_reboot(void)
 void
 dfu_reboot_check(void)
 {
-    if (!CONFIG_STM32_DFU_ROM_ADDRESS)
+    if (!CONFIG_STM32_DFU_ROM_ADDRESS || !CONFIG_HAVE_BOOTLOADER_REQUEST)
         return;
     if (*(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
         return;
