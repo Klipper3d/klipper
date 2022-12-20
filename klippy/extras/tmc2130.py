@@ -55,8 +55,19 @@ Fields["MSLUT4"] = { "mslut4": 0xffffffff }
 Fields["MSLUT5"] = { "mslut5": 0xffffffff }
 Fields["MSLUT6"] = { "mslut6": 0xffffffff }
 Fields["MSLUT7"] = { "mslut7": 0xffffffff }
-Fields["MSLUTSEL"] = { "mslutsel": 0xffffffff }
-Fields["MSLUTSTART"] = { "mslutstart": 0xffffffff }
+Fields["MSLUTSEL"] = {
+    "x3":                       0xFF << 24,
+    "x2":                       0xFF << 16,
+    "x1":                       0xFF << 8,
+    "w3":                       0x03 << 6,
+    "w2":                       0x03 << 4,
+    "w1":                       0x03 << 2,
+    "w0":                       0x03 << 0,
+}
+Fields["MSLUTSTART"] = {
+    "start_sin":                0xFF << 0,
+    "start_sin90":              0xFF << 16,
+}
 Fields["MSCNT"] = { "mscnt": 0x3ff }
 Fields["MSCURACT"] = { "cur_a": 0x1ff, "cur_b": 0x1ff << 16 }
 Fields["CHOPCONF"] = {

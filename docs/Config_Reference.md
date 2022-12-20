@@ -3081,8 +3081,15 @@ run_current:
 #driver_MSLUT5: 3048961917
 #driver_MSLUT6: 1227445590
 #driver_MSLUT7: 4211234
-#driver_MSLUTSEL: 4294934614
-#driver_MSLUTSTART: 16187392
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
 #   These fields control the Microstep Table registers directly. The optimal
 #   wave table is specific to each motor and might vary with current. An
 #   optimal configuration will have minimal print artifacts caused by
@@ -3353,8 +3360,15 @@ run_current:
 #driver_MSLUT5: 3048961917
 #driver_MSLUT6: 1227445590
 #driver_MSLUT7: 4211234
-#driver_MSLUTSEL: 4294934614
-#driver_MSLUTSTART: 16187392
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
 #   These fields control the Microstep Table registers directly. The optimal
 #   wave table is specific to each motor and might vary with current. An
 #   optimal configuration will have minimal print artifacts caused by
