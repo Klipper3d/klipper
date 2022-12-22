@@ -4877,10 +4877,10 @@ cs_pin:
 </code></pre></div>
 
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
-<p>Support for mpu9250 and mpu6050 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
+<p>Support for MPU-9250, MPU-9255, MPU-9255, MPU-6050, and MPU-6500 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
 #i2c_address:
-#   Default is 104 (0x68).
+#   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed: 400000

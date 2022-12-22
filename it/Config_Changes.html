@@ -1287,6 +1287,7 @@
 <p>Questo documento copre le modifiche software recenti al file di configurazione che non sono compatibili con le versioni precedenti. È una buona idea rivedere questo documento durante l'aggiornamento del software Klipper.</p>
 <p>Tutte le date in questo documento sono approssimative.</p>
 <h2 id="cambiamenti">Cambiamenti<a class="headerlink" href="#cambiamenti" title="Permanent link">&para;</a></h2>
+<p>20221122: Previously, with safe_z_home, it was possible that the z_hop after the g28 homing would go in the negative z direction. Now, a z_hop is performed after g28 only if it results in a positive hop, mirroring the behavior of the z_hop that occurs before the g28 homing.</p>
 <p>20220616: in precedenza era possibile eseguire il flashing di un rp2040 in modalità bootloader eseguendo <code>make flash FLASH_DEVICE=first</code>. Il comando equivalente è ora <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
 <p>20220612: Il microcontrollore rp2040 ora ha una soluzione alternativa per l'errata USB "rp2040-e5". Ciò dovrebbe rendere più affidabili le connessioni USB iniziali. Tuttavia, potrebbe comportare un cambiamento nel comportamento del pin gpio15. È improbabile che il cambiamento di comportamento di gpio15 sia evidente.</p>
 <p>20220407: l'opzione di configurazione temperature_fan <code>pid_integral_max</code> è stata rimossa (era deprecata su 20210612).</p>

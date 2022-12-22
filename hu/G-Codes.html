@@ -4556,7 +4556,8 @@
 <h3 id="gcode_arcs">[gcode_arcs]<a class="headerlink" href="#gcode_arcs" title="Permanent link">&para;</a></h3>
 <p>A következő szabványos G-kód parancsok elérhetők, ha a <a href="Config_Reference.html#gcode_arcs">gcode_arcs config section</a> engedélyezve van:</p>
 <ul>
-<li>Vezérelt ívmozgás (G2 vagy G3): <code>G2 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;</code></li>
+<li>Arc Move Clockwise (G2), Arc Move Counter-clockwise (G3): <code>G2|G3 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;|I&lt;value&gt; K&lt;value&gt;|J&lt;value&gt; K&lt;value&gt;</code></li>
+<li>Arc Plane Select: G17 (XY plane), G18 (XZ plane), G19 (YZ plane)</li>
 </ul>
 <h3 id="gcode_macro">[gcode_macro]<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h3>
 <p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#gcode_macro">gcode_macro konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Command_Templates.html">parancssablonok útmutatóját</a>).</p>

@@ -4922,17 +4922,17 @@ cs_pin:
 </code></pre></div>
 
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
-<p>Supporto per accelerometri mpu9250 e mpu6050 (si può definire un numero qualsiasi di sezioni con un prefisso "mpu9250").</p>
+<p>Support for MPU-9250, MPU-9255, MPU-9255, MPU-6050, and MPU-6500 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
 #i2c_address:
-#   Il valore predefinito è 104 (0x68).
+#   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed: 400000
-#   Vedere la sezione &quot;impostazioni I2C comuni&quot; per una descrizione
-#   dei parametri di cui sopra. Il valore predefinito &quot;i2c_speed&quot; è 400000.
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters. The default &quot;i2c_speed&quot; is 400000.
 #axes_map: x, y, z
-#   Vedere la sezione &quot;adxl345&quot; per informazioni su questo parametro.
+#   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
 
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>

@@ -1300,13 +1300,14 @@
 <h1 id="_1">功能<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>Klipper 有几个引人注目的功能：</p>
 <ul>
-<li>高精度步进运动。Klipper使用一个应用处理器（例如低成本的树莓派）来计算打印机运动。应用处理器决定何时对每个步进电机发出步进信号，压缩这些事件，并将它们发送到微控制器。微处理器将会把每个事件按请求时间执行。每一个步进事件被以25毫秒或更高的精度安排。软件不进行运动估计，例如 Bresenham算法，而是通过加速度与机械运动物理计算精确的步进时间。更精准的步进电机运动意味着打印机更安静和稳定的运行。</li>
+<li>High precision stepper movement. Klipper utilizes an application processor (such as a low-cost Raspberry Pi) when calculating printer movements. The application processor determines when to step each stepper motor, it compresses those events, transmits them to the micro-controller, and then the micro-controller executes each event at the requested time. Each stepper event is scheduled with a precision of 25 micro-seconds or better. The software does not use kinematic estimations (such as the Bresenham algorithm) - instead it calculates precise step times based on the physics of acceleration and the physics of the machine kinematics. More precise stepper movement provides quieter and more stable printer operation.</li>
 <li>同类项目中最佳的性能。 Klipper 能够在新旧微控制器上实现高步进速率。即使是旧的 8 位微控制器也可以发送超过每秒 175K 步的速率。在较新的微控制器上，每秒数百万步也可以实现。更高的步进速率可以实现更高的打印速度。步进事件计时即使在高速下也能保持精确，提高了整体稳定性。</li>
 <li>Klipper 支持带有多个微控制器的打印机。例如，一个微控制器可以被用来控制挤出机，而另一个用来控制加热器，并使用第三个来控制其他的打印机组件。Klipper 主机程序实现了时钟同步，解决了微处理器之间的时钟漂移。 启用多个控制器只需要在配置文件中添加几行，不需要任何特殊代码。</li>
 <li>通过简单的配置文件进行配置。修改设置不需要重新刷写微控制器。Klipper 的所有配置都被存储在一个易编辑的配置文件中，大大减少了配置与维护硬件的难度。</li>
 <li>Klipper 支持“平滑提前压力”--一种考虑了挤出机内压力影响的机制。这项技术可以减少喷嘴溢料并改善转角的打印质量。Klipper 的实现不会引入瞬间挤出机速度变化，改善了整体稳定性和稳健性。</li>
 <li>支持使用“输入整形”来减少振动对打印质量的影响。这项功能可以减少或消除打印件的“振纹(ringing)”（又名“ghosting”，“echoing”，或“rippling”）。在一些情况下它可以在保持打印质量的同时提高打印速度。</li>
 <li>Klipper 使用“迭代求解器”从简单的运动学方程中计算精准的步进时间。这降低了移植Klipper到新的机械结构的难度并保证了精确的步进计时（而不需要“线段化”）。</li>
+<li>Klipper is hardware agnostic. One should get the same precise timing independent of the low-level electronics hardware. The Klipper micro-controller code is designed to faithfully follow the schedule provided by the Klipper host software (or prominently alert the user if it is unable to). This makes it easier to use available hardware, to upgrade to new hardware, and to have confidence in the hardware.</li>
 <li>易移植的代码。Klipper 可以在 ARM，AVR，和PRU架构的微控制器上运行。现有的“reprap”类打印机不需要改动任何硬件就可以运行 Klipper，只需要加一个树莓派。Klipper 的内部代码结构使它能够被简单的移植到其他架构。</li>
 <li>简洁的代码。大部分 Klipper 代码使用一个极高级编程语言（Python），这包括了运动算法，G代码解析，加热，温度传感器算法和其他，降低了开发新功能的难度。</li>
 <li>自定义可编程脚本。可以在打印机配置文件中定义新的G代码命令（而不需要修改任何代码）。这些命令都是可编程的，可以能根据打印机的状态做出不同的响应。</li>
@@ -1315,21 +1316,22 @@
 <h2 id="_2">其他功能<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>Klipper 支持许多标准的 3d 打印机功能：</p>
 <ul>
-<li>兼容Octoprint。这使得打印机可以通过普通浏览器来控制。运行Klipper的树莓派可以同时用来运行Octoprint。</li>
+<li>Several web interfaces available. Works with Mainsail, Fluidd, OctoPrint and others. This allows the printer to be controlled using a regular web-browser. The same Raspberry Pi that runs Klipper can also run the web interface.</li>
 <li>标准 G 代码支持。支持由常见“切片软件”（SuperSlicer、Cura、PrusaSlicer 等）生成的通用 G 代码命令。</li>
 <li>支持多挤出机。包括对共享热端的挤出机（多进一出）和多头（IDEX）的支持。</li>
-<li>支持笛卡尔、三角洲、CoreXY、CoreXZ、混合CoreXY、混合CoreXZ、旋转三角洲、极坐标和缆绳铰盘式打印机。</li>
+<li>Support for cartesian, delta, corexy, corexz, hybrid-corexy, hybrid-corexz, deltesian, rotary delta, polar, and cable winch style printers.</li>
 <li>自动床面平整支持。Klipper可以被配置为基本的床身倾斜检测或网床调平。如果床铺使用多个Z步进器，那么Klipper也可以通过独立操纵Z步进器来调平。支持大多数Z高度探头，包括BL-Touch探头和伺服激活的探头。</li>
 <li>支持自动delta校准。校准工具可以进行基本的高度校准，以及增强的X和Y尺寸校准。校准可以用Z型高度探头或通过手动探测来完成。</li>
+<li>Run-time "exclude object" support. When configured, this module may facilitate canceling of just one object in a multi-part print.</li>
 <li>支持常见的温度传感器（例如，常见的热敏电阻、AD595、AD597、AD849x、PT100、PT1000、MAX6675、MAX31855、MAX31856、MAX31865、BME280、HTU21D、DS18B20和LM75）。还可以配置自定义热敏电阻和自定义模拟温度传感器。还可以监测微控制器和 Raspberry Pi 内部的温度传感器。</li>
 <li>默认启用基本加热器保护。</li>
 <li>支持标准风扇、喷嘴风扇和温控风扇。不需要在打印机闲置时保持风扇运转。可以在带有转速表的风扇上监测风扇速度。</li>
-<li>支持TMC2130、TMC2208/TMC2224、TMC2209、TMC2660和TMC5160步进电机驱动器的运行时配置。还支持通过AD5206、MCP4451、MCP4728、MCP4018和PWM引脚对传统步进驱动器进行电流控制。</li>
+<li>Support for run-time configuration of TMC2130, TMC2208/TMC2224, TMC2209, TMC2660, and TMC5160 stepper motor drivers. There is also support for current control of traditional stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
 <li>支持直接连接到打印机的普通LCD显示器。还提供了一个默认的菜单。显示器和菜单的内容可以通过配置文件完全定制。</li>
 <li>恒定加速和“look-ahead”（前瞻）支持。所有打印机移动将从静止逐渐加速到巡航速度，然后减速回到静止。对传入的 G 代码移动命令流进行排队和分析 - 将优化类似方向上的移动之间的加速度，以减少打印停顿并改善整体打印时间。</li>
 <li>Klipper 实现了一种“步进相位限位”算法，可以提高典型限位开关的精度。如果调整得当，它可以提高打印件首层和打印床的附着力。</li>
 <li>支持打印丝存在传感器、打印丝运动传感器和打印丝宽度传感器。</li>
-<li>支持使用 adxl345 加速度计测量和记录加速度。</li>
+<li>Support for measuring and recording acceleration using an adxl345, mpu9250, and mpu6050 accelerometers.</li>
 <li>支持限制短距离“之”字形移动的最高速度，以减少打印机的振动和噪音。更多信息见<a href="Kinematics.html">运动学</a>文档。</li>
 <li>许多常见的打印机都有样本配置文件。查看<a href="https://github.com/Klipper3d/klipper/blob/master/config/">配置文件夹</a>中的列表。</li>
 </ul>

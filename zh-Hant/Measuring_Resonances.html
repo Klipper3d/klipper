@@ -713,6 +713,52 @@
     接線
   </a>
   
+    <nav class="md-nav" aria-label="接線">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spi-accelerometers" class="md-nav__link">
+    SPI Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="SPI Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    ADXL345
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c-accelerometers" class="md-nav__link">
+    I2C Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="I2C Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -726,6 +772,33 @@
   <a href="#_5" class="md-nav__link">
     軟體設定
   </a>
+  
+    <nav class="md-nav" aria-label="軟體設定">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-rpi" class="md-nav__link">
+    Configure ADXL345 With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-rpi" class="md-nav__link">
+    Configure MPU-6000/9000 series With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-pico" class="md-nav__link">
+    Configure MPU-6000/9000 series With PICO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1385,6 +1458,52 @@
     接線
   </a>
   
+    <nav class="md-nav" aria-label="接線">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spi-accelerometers" class="md-nav__link">
+    SPI Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="SPI Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    ADXL345
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c-accelerometers" class="md-nav__link">
+    I2C Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="I2C Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1398,6 +1517,33 @@
   <a href="#_5" class="md-nav__link">
     軟體設定
   </a>
+  
+    <nav class="md-nav" aria-label="軟體設定">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-rpi" class="md-nav__link">
+    Configure ADXL345 With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-rpi" class="md-nav__link">
+    Configure MPU-6000/9000 series With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-pico" class="md-nav__link">
+    Configure MPU-6000/9000 series With PICO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1510,6 +1656,18 @@
 <p>採購 ADXL345 時，請注意有各種不同的 PCB 板設計和它們的不同克隆。確保電路板支持 SPI 模式（通過將 SDO 拉至 GND 來為 I2C 硬配置少數電路板），如果要連接到 5V 打印機 MCU，它有一個穩壓器和電平轉換器。</p>
 <h2 id="_2">安裝指南<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <h3 id="_3">接線<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrety over a long distance. If you still experience signal integrity issues (SPI/I2C errors), shorten the cable.</p>
+<p>Connect ethernet cable shielding to the controller board/RPI ground.</p>
+<p><strong><em>Double-check your wiring before powering up to prevent damaging your MCU/Raspberry Pi or the accelerometer.</em></strong></p>
+<h4 id="spi-accelerometers">SPI Accelerometers<a class="headerlink" href="#spi-accelerometers" title="Permanent link">&para;</a></h4>
+<p>Suggested twisted pair order:</p>
+<div class="highlight"><pre><span></span><code>GND+MISO
+3.3V+MOSI
+SCLK+CS
+</code></pre></div>
+
+<h5 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h5>
+<p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and configuration will vary according to your specific board and avaliable pins.</strong></p>
 <p>我們需要將ADXL345連線到樹莓派的SPI介面。注意，儘管ADXL345文件推薦使用I2C，但其數據吞吐能力不足，<strong>不能</strong>實現共振測量的要求。推薦的接線圖為：</p>
 <table>
 <thead>
@@ -1552,7 +1710,17 @@
 </tr>
 </tbody>
 </table>
-<p>An alternative to the ADXL345 is the MPU-9250 (or MPU-6050). This accelerometer has been tested to work over I2C on the RPi at 400kbaud. Recommended connection scheme for I2C:</p>
+<p>部分ADXL345開發板的Fritzing接線圖如下：</p>
+<p><img alt="ADXL345-樹莓派" src="img/adxl345-fritzing.png" /></p>
+<h4 id="i2c-accelerometers">I2C Accelerometers<a class="headerlink" href="#i2c-accelerometers" title="Permanent link">&para;</a></h4>
+<p>Suggested twisted pair order:</p>
+<div class="highlight"><pre><span></span><code>3.3V+SDA
+GND+SCL
+</code></pre></div>
+
+<h5 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" title="Permanent link">&para;</a></h5>
+<p>Alternatives to the ADXL345 are MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500. These accelerometers have been tested to work over I2C on the RPi or RP2040(pico) at 400kbaud.</p>
+<p>Recommended connection scheme for I2C on the Raspberry Pi:</p>
 <table>
 <thead>
 <tr>
@@ -1563,7 +1731,7 @@
 </thead>
 <tbody>
 <tr>
-<td align="center">3V3 或 VCC</td>
+<td align="center">VCC</td>
 <td align="center">01</td>
 <td align="center">3.3v 直流（DC）電源</td>
 </tr>
@@ -1584,9 +1752,40 @@
 </tr>
 </tbody>
 </table>
-<p>部分ADXL345開發板的Fritzing接線圖如下：</p>
-<p><img alt="ADXL345-樹莓派" src="img/adxl345-fritzing.png" /></p>
-<p>為避免損害樹莓派或加速度感測器，請再三確認接線正確再對樹莓派上電。</p>
+<p><img alt="MPU-9250 connected to RPI" src="img/mpu9250-PI-fritzing.png" /></p>
+<p>Recommended connection scheme for I2C(i2c0a) on the RP2040:</p>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 pin</th>
+<th align="center">RP2040 pin</th>
+<th align="center">樹莓派引腳名稱</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">VCC</td>
+<td align="center">39</td>
+<td align="center">3v3</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">地（GND）</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">01</td>
+<td align="center">GP0 (I2C0 SDA)</td>
+</tr>
+<tr>
+<td align="center">SCL</td>
+<td align="center">02</td>
+<td align="center">GP1 (I2C0 SCL)</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="MPU-9250 connected to PICO" src="img/mpu9250-PICO-fritzing.png" /></p>
 <h3 id="_4">固定加速度感測器<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>加速度感測器應固定在列印頭上。應根據印表機的情況設計合適的固定件。推薦將加速度的測量軸與印表機執行軸的方向進行對齊。然而，如果軸對齊極其麻煩，可以將印表機的軸使用其他測量軸對齊，比如印表機+X對應感測器-X，甚至印表機+X對應感測器-Z等。</p>
 <p>下面是ADXL345固定到SmartEffector的示例：</p>
@@ -1605,8 +1804,9 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
 
 <p>Note that, depending on the performance of the CPU, it may take <em>a lot</em> of time, up to 10-20 minutes. Be patient and wait for the completion of the installation. On some occasions, if the board has too little RAM the installation may fail and you will need to enable swap.</p>
 <p>之後，參考<a href="RPi_microcontroller.html">樹莓派作為微控制器文件</a>的指引完成「LINUX微處理器」的設定。</p>
+<h4 id="configure-adxl345-with-rpi">Configure ADXL345 With RPi<a class="headerlink" href="#configure-adxl345-with-rpi" title="Permanent link">&para;</a></h4>
 <p>通過執行<code>sudo raspi-config</code> 后的 "Interfacing options"菜單中啟用 SPI 以確保Linux SPI 驅動已啟用。</p>
-<p>For the ADXL345, add the following to the printer.cfg file:</p>
+<p>在printer.cfg附上下面的內容：</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -1620,7 +1820,8 @@ probe_points:
 </code></pre></div>
 
 <p>建議在測試開始前，用探針在熱床中央進行一次探測，觸發后稍微上移。</p>
-<p>For the MPU-9250, make sure the Linux I2C driver is enabled and the baud rate is set to 400000 (see <a href="RPi_microcontroller.html#optional-enabling-i2c">Enabling I2C</a> section for more details). Then, add the following to the printer.cfg:</p>
+<h4 id="configure-mpu-60009000-series-with-rpi">Configure MPU-6000/9000 series With RPi<a class="headerlink" href="#configure-mpu-60009000-series-with-rpi" title="Permanent link">&para;</a></h4>
+<p>Make sure the Linux I2C driver is enabled and the baud rate is set to 400000 (see <a href="RPi_microcontroller.html#optional-enabling-i2c">Enabling I2C</a> section for more details). Then, add the following to the printer.cfg:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -1632,6 +1833,24 @@ i2c_bus: i2c.1
 accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
+</code></pre></div>
+
+<h4 id="configure-mpu-60009000-series-with-pico">Configure MPU-6000/9000 series With PICO<a class="headerlink" href="#configure-mpu-60009000-series-with-pico" title="Permanent link">&para;</a></h4>
+<p>PICO I2C is set to 400000 on default. Simply add the following to the printer.cfg:</p>
+<div class="highlight"><pre><span></span><code>[mcu pico]
+serial: /dev/serial/by-id/&lt;your PICO&#39;s serial ID&gt;
+
+[mpu9250]
+i2c_mcu: pico
+i2c_bus: i2c1a
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+
+[static_digital_output pico_3V3pwm] # Improve power stability
+pin: pico:gpio23
 </code></pre></div>
 
 <p>通過<code>RESTART</code>命令重啟Klipper。</p>
@@ -1647,6 +1866,7 @@ probe_points:
 </code></pre></div>
 
 <p>如果輸出類似 <code>Invalid adxl345 id (got xx vs e5)</code>，其中'xx'為e5以外ID，這表示出現連線問題（如，連線錯誤、線纜電阻過大、干擾等），或感測器錯誤（如，殘次感測器 或 錯誤的感測器）。請在此檢查電源，接線（再三確定接線正確，沒有破損、鬆動的電線）或焊接問題。</p>
+<p><strong>If you are using MPU-6000/9000 series accelerometer and it show up as <code>mpu-unknown</code>, use with caution! They are probably refurbished chips!</strong></p>
 <p>下一步，在Octoprint中輸入 <code>MEASURE_AXES_NOISE</code>，之後將會顯示各個軸的基準測量噪聲（其值應在1-100之間）。如果軸的噪聲極高（例如 1000 或更高）可能意味著3D印表機上存在感測器問題、電源問題或不平衡的風扇。</p>
 <h3 id="_8">測量共振值<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>現在可以執行進行實測。執行以下命令:</p>

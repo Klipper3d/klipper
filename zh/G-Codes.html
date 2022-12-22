@@ -4556,7 +4556,8 @@
 <h3 id="gcode_arcs">[gcode_arcs]<a class="headerlink" href="#gcode_arcs" title="Permanent link">&para;</a></h3>
 <p>如果启用了<a href="Config_Reference.html#gcode_arcs">gcode_arcs 配置分段</a>，下列标准G代码命令可用：</p>
 <ul>
-<li>受控弧线移动（G2或G3）。<code>G2 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;</code> 。</li>
+<li>Arc Move Clockwise (G2), Arc Move Counter-clockwise (G3): <code>G2|G3 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;|I&lt;value&gt; K&lt;value&gt;|J&lt;value&gt; K&lt;value&gt;</code></li>
+<li>Arc Plane Select: G17 (XY plane), G18 (XZ plane), G19 (YZ plane)</li>
 </ul>
 <h3 id="gcode_macro">[gcode_macro]<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h3>
 <p>当<a href="Config_Reference.html#gcode_macro">gcode_macro配置分段</a>被启用时，以下命令可用（也可参见<a href="Command_Templates.html">命令模板指南</a>）：</p>

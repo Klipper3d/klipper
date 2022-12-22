@@ -713,6 +713,52 @@
     Vezetékek
   </a>
   
+    <nav class="md-nav" aria-label="Vezetékek">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spi-accelerometers" class="md-nav__link">
+    SPI Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="SPI Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    ADXL345
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c-accelerometers" class="md-nav__link">
+    I2C Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="I2C Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -726,6 +772,33 @@
   <a href="#szoftver-telepitese" class="md-nav__link">
     Szoftver telepítése
   </a>
+  
+    <nav class="md-nav" aria-label="Szoftver telepítése">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-rpi" class="md-nav__link">
+    Configure ADXL345 With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-rpi" class="md-nav__link">
+    Configure MPU-6000/9000 series With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-pico" class="md-nav__link">
+    Configure MPU-6000/9000 series With PICO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1385,6 +1458,52 @@
     Vezetékek
   </a>
   
+    <nav class="md-nav" aria-label="Vezetékek">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spi-accelerometers" class="md-nav__link">
+    SPI Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="SPI Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    ADXL345
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c-accelerometers" class="md-nav__link">
+    I2C Accelerometers
+  </a>
+  
+    <nav class="md-nav" aria-label="I2C Accelerometers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1398,6 +1517,33 @@
   <a href="#szoftver-telepitese" class="md-nav__link">
     Szoftver telepítése
   </a>
+  
+    <nav class="md-nav" aria-label="Szoftver telepítése">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-rpi" class="md-nav__link">
+    Configure ADXL345 With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-rpi" class="md-nav__link">
+    Configure MPU-6000/9000 series With RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-60009000-series-with-pico" class="md-nav__link">
+    Configure MPU-6000/9000 series With PICO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1510,6 +1656,18 @@
 <p>Az ADXL345 beszerzésekor vedd figyelembe, hogy számos különböző NYÁK lapkakialakítás és különböző klónok léteznek. Győződj meg róla, hogy a kártya támogatja az SPI módot (kis számú kártya úgy tűnik, hogy szorosan konfigurálva van az I2C-re az SDO GND-re húzásával), és ha 5V-os nyomtató MCU-hoz csatlakozik ellenőrizd,hogy rendelkezik feszültségszabályozóval és szintválasztóval.</p>
 <h2 id="telepitesi-utasitasok">Telepítési utasítások<a class="headerlink" href="#telepitesi-utasitasok" title="Permanent link">&para;</a></h2>
 <h3 id="vezetekek">Vezetékek<a class="headerlink" href="#vezetekek" title="Permanent link">&para;</a></h3>
+<p>An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrety over a long distance. If you still experience signal integrity issues (SPI/I2C errors), shorten the cable.</p>
+<p>Connect ethernet cable shielding to the controller board/RPI ground.</p>
+<p><strong><em>Double-check your wiring before powering up to prevent damaging your MCU/Raspberry Pi or the accelerometer.</em></strong></p>
+<h4 id="spi-accelerometers">SPI Accelerometers<a class="headerlink" href="#spi-accelerometers" title="Permanent link">&para;</a></h4>
+<p>Suggested twisted pair order:</p>
+<div class="highlight"><pre><span></span><code>GND+MISO
+3.3V+MOSI
+SCLK+CS
+</code></pre></div>
+
+<h5 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h5>
+<p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and configuration will vary according to your specific board and avaliable pins.</strong></p>
 <p>Az ADXL345-öt SPI-n keresztül kell csatlakoztatnod a Raspberry Pi-hez. Vedd figyelembe, hogy az ADXL345 dokumentációja által javasolt I2C kapcsolatnak túl alacsony az adatforgalmi képessége, és <strong>nem fog működni</strong>. Az ajánlott kapcsolási séma:</p>
 <table>
 <thead>
@@ -1552,7 +1710,17 @@
 </tr>
 </tbody>
 </table>
-<p>Az ADXL345 alternatívája az MPU-9250 (vagy MPU-6050). Ezt a gyorsulásmérőt úgy tesztelték, hogy az RPi-n 400kbaud-on keresztül I2C-n keresztül működik. Ajánlott csatlakozási séma az I2C-hez:</p>
+<p>Fritzing kapcsolási rajzok néhány ADXL345 laphoz:</p>
+<p><img alt="ADXL345-Rpi" src="img/adxl345-fritzing.png" /></p>
+<h4 id="i2c-accelerometers">I2C Accelerometers<a class="headerlink" href="#i2c-accelerometers" title="Permanent link">&para;</a></h4>
+<p>Suggested twisted pair order:</p>
+<div class="highlight"><pre><span></span><code>3.3V+SDA
+GND+SCL
+</code></pre></div>
+
+<h5 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" title="Permanent link">&para;</a></h5>
+<p>Alternatives to the ADXL345 are MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500. These accelerometers have been tested to work over I2C on the RPi or RP2040(pico) at 400kbaud.</p>
+<p>Recommended connection scheme for I2C on the Raspberry Pi:</p>
 <table>
 <thead>
 <tr>
@@ -1563,7 +1731,7 @@
 </thead>
 <tbody>
 <tr>
-<td align="center">3V3 (or VCC)</td>
+<td align="center">VCC</td>
 <td align="center">01</td>
 <td align="center">3.3v DC feszültség</td>
 </tr>
@@ -1584,9 +1752,40 @@
 </tr>
 </tbody>
 </table>
-<p>Fritzing kapcsolási rajzok néhány ADXL345 laphoz:</p>
-<p><img alt="ADXL345-Rpi" src="img/adxl345-fritzing.png" /></p>
-<p>A Raspberry Pi bekapcsolása előtt ellenőrizd kétszer is a vezetékeket, nehogy megsérüljön a Raspberry Pi vagy a gyorsulásmérő.</p>
+<p><img alt="MPU-9250 connected to RPI" src="img/mpu9250-PI-fritzing.png" /></p>
+<p>Recommended connection scheme for I2C(i2c0a) on the RP2040:</p>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 tű</th>
+<th align="center">RP2040 pin</th>
+<th align="center">RPi tű név</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">VCC</td>
+<td align="center">39</td>
+<td align="center">3v3</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">Föld</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">01</td>
+<td align="center">GP0 (I2C0 SDA)</td>
+</tr>
+<tr>
+<td align="center">SCL</td>
+<td align="center">02</td>
+<td align="center">GP1 (I2C0 SCL)</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="MPU-9250 connected to PICO" src="img/mpu9250-PICO-fritzing.png" /></p>
 <h3 id="a-gyorsulasmero-felszerelese">A gyorsulásmérő felszerelése<a class="headerlink" href="#a-gyorsulasmero-felszerelese" title="Permanent link">&para;</a></h3>
 <p>A gyorsulásmérőt a nyomtatófejhez kell csatlakoztatni. Meg kell tervezni egy megfelelő rögzítést, amely illeszkedik a saját 3D nyomtatódhoz. A gyorsulásmérő tengelyeit jobb a nyomtató tengelyeihez igazítani (de ha ez kényelmesebbé teszi, a tengelyek felcserélhetők - azaz nem kell az X tengelyt X-hez igazítani, és így tovább. Akkor is jónak kell lennie, ha a gyorsulásmérő Z tengelye a nyomtató X tengelye, stb).</p>
 <p>Példa az ADXL345 SmartEffectorra történő felszerelésére:</p>
@@ -1605,8 +1804,9 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
 
 <p>Vedd figyelembe, hogy a CPU teljesítményétől függően ez <em>sok</em> időt vehet igénybe, akár 10-20 percet is. Legyen türelmes, és várja meg a telepítés befejezését. Bizonyos esetekben, ha a kártyán túl kevés RAM van, a telepítés meghiúsulhat, és engedélyeznie kell a swapot.</p>
 <p>Ezután ellenőrizd és kövesd az <a href="RPi_microcontroller.html">RPi Microcontroller dokumentum</a> utasításait a "linux mcu" beállításához a Raspberry Pi-n.</p>
+<h4 id="configure-adxl345-with-rpi">Configure ADXL345 With RPi<a class="headerlink" href="#configure-adxl345-with-rpi" title="Permanent link">&para;</a></h4>
 <p>Győződjünk meg róla, hogy a Linux SPI-illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az SPI engedélyezésével az "Interfacing options" menüben.</p>
-<p>Az ADXL345 esetében add hozzá a következőket a printer.cfg fájlhoz:</p>
+<p>Adja hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -1620,7 +1820,8 @@ probe_points:
 </code></pre></div>
 
 <p>Javasoljuk, hogy 1 mérőponttal kezd, a nyomtatási tárgyasztal közepén, kissé felette.</p>
-<p>Az MPU-9250 esetében győződj meg róla, hogy a Linux I2C illesztőprogram engedélyezve van, és az átviteli sebesség 400000-re van állítva (további részletekért lásd az <a href="RPi_microcontroller.html#optional-enabling-i2c">I2C engedélyezése</a> részt). Ezután adjuk hozzá a következőket a printer.cfg fájlhoz:</p>
+<h4 id="configure-mpu-60009000-series-with-rpi">Configure MPU-6000/9000 series With RPi<a class="headerlink" href="#configure-mpu-60009000-series-with-rpi" title="Permanent link">&para;</a></h4>
+<p>Make sure the Linux I2C driver is enabled and the baud rate is set to 400000 (see <a href="RPi_microcontroller.html#optional-enabling-i2c">Enabling I2C</a> section for more details). Then, add the following to the printer.cfg:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
 serial: /tmp/klipper_host_mcu
 
@@ -1632,6 +1833,24 @@ i2c_bus: i2c.1
 accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
+</code></pre></div>
+
+<h4 id="configure-mpu-60009000-series-with-pico">Configure MPU-6000/9000 series With PICO<a class="headerlink" href="#configure-mpu-60009000-series-with-pico" title="Permanent link">&para;</a></h4>
+<p>PICO I2C is set to 400000 on default. Simply add the following to the printer.cfg:</p>
+<div class="highlight"><pre><span></span><code>[mcu pico]
+serial: /dev/serial/by-id/&lt;your PICO&#39;s serial ID&gt;
+
+[mpu9250]
+i2c_mcu: pico
+i2c_bus: i2c1a
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+
+[static_digital_output pico_3V3pwm] # Improve power stability
+pin: pico:gpio23
 </code></pre></div>
 
 <p>Indítsd újra a Klippert a <code>RESTART</code> paranccsal.</p>
@@ -1647,6 +1866,7 @@ probe_points:
 </code></pre></div>
 
 <p>Ha olyan hibát kapsz, mint <code>Invalid adxl345 id (got xx vs e5)</code>, ahol <code>xx</code> valami más azonosító, azaz ADXL345-öt érintő kapcsolati problémára vagy a hibás érzékelőre utal. Ellenőrizd kétszer is a tápellátást, a kábelezést (hogy megfelel-e a kapcsolási rajzoknak, nincs-e törött vagy laza vezeték stb.) és a forrasztás minőségét.</p>
+<p><strong>If you are using MPU-6000/9000 series accelerometer and it show up as <code>mpu-unknown</code>, use with caution! They are probably refurbished chips!</strong></p>
 <p>Ezután próbáld meg futtatni a <code>MEASURE_AXES_NOISE</code> parancsot az Octoprint-ben, így kaphatsz néhány alapszámot a gyorsulásmérő zajára a tengelyeken (valahol a ~1-100-as tartományban kell lennie). A túl magas tengelyzaj (pl. 1000 és több) az érzékelő problémáira, a tápellátásával kapcsolatos problémákra vagy a 3D nyomtató túl zajos, kiegyensúlyozatlan ventilátoraira utalhat.</p>
 <h3 id="a-rezonanciak-merese_1">A rezonanciák mérése<a class="headerlink" href="#a-rezonanciak-merese_1" title="Permanent link">&para;</a></h3>
 <p>Most már lefuttathatsz néhány valós tesztet. Futtasd a következő parancsot:</p>

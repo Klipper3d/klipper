@@ -4832,17 +4832,17 @@ cs_pin:
 </code></pre></div>
 
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
-<p>Support for mpu9250 and mpu6050 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
+<p>Support for MPU-9250, MPU-9255, MPU-9255, MPU-6050, and MPU-6500 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
 #i2c_address:
-#   默认为104 (0x68)。
+#   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed: 400000
-#   参见 &quot;常见的I2C设置 &quot;一节，了解关于上述参数的描述。
-#   默认的 &quot;i2c_speed &quot;是400000。
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters. The default &quot;i2c_speed&quot; is 400000.
 #axes_map: x, y, z
-#   参见 &quot;adxl345 &quot;部分关于这个参数的信息。
+#   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
 
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>

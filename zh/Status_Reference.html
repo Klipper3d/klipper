@@ -993,6 +993,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#screws_tilt_adjust" class="md-nav__link">
+    screws_tilt_adjust
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#servo" class="md-nav__link">
     servo
   </a>
@@ -1747,6 +1754,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#screws_tilt_adjust" class="md-nav__link">
+    screws_tilt_adjust
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#servo" class="md-nav__link">
     servo
   </a>
@@ -2064,6 +2078,20 @@
 <p><code>query_endstops</code> 对象提供以下信息（如果定义了任何限位，则该对象可用）：</p>
 <ul>
 <li><code>last_query["&lt;限位&gt;"]</code>：如果在最后一次 QUERY_ENDSTOP 命令中，给定的 endstop 处于“触发”状态，则返回 True。注意，如果在宏中使用，由于模板扩展的顺序，QUERY_ENDSTOP 命令必须在包含这个引用的宏之前运行。</li>
+</ul>
+<h2 id="screws_tilt_adjust">screws_tilt_adjust<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>screws_tilt_adjust</code> object:</p>
+<ul>
+<li><code>error</code>: Returns True if the most recent <code>SCREWS_TILT_CALCULATE</code> command included the <code>MAX_DEVIATION</code> parameter and any of the probed screw points exceeded the specified <code>MAX_DEVIATION</code>.</li>
+<li><code>results</code>: A list of the probed screw locations. Each entry in the list will be a dictionary containing the following keys:<ul>
+<li><code>name</code>: The name of the screw as specified in the config file.</li>
+<li><code>x</code>: The X coordinate of the screw as specified in the config file.</li>
+<li><code>y</code>: The Y coordinate of the screw as specified in the config file.</li>
+<li><code>z</code>: The measured Z height of the screw location.</li>
+<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise. The base screw will not have a <code>sign</code> key.</li>
+<li><code>adjust</code>: The number of screw turns to adjust the screw, given in the format "HH:MM," where "HH" is the number of full screw turns and "MM" is the number of "minutes of a clock face" representing a partial screw turn. (E.g. "01:15" would mean to turn the screw one and a quarter revolutions.)</li>
+</ul>
+</li>
 </ul>
 <h2 id="servo">servo<a class="headerlink" href="#servo" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#servo">servo some_name</a> 对象提供了以下信息：</p>

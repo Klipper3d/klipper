@@ -1287,6 +1287,7 @@
 <p>Ez a dokumentum a konfigurációs fájl legújabb szoftveres változtatásait tartalmazza, amelyek nem kompatibilisek visszafelé. A Klipper szoftver frissítésekor érdemes áttanulmányozni ezt a dokumentumot.</p>
 <p>A dokumentumban szereplő valamennyi dátum hozzávetőleges.</p>
 <h2 id="valtozasok">Változások<a class="headerlink" href="#valtozasok" title="Permanent link">&para;</a></h2>
+<p>20221122: Previously, with safe_z_home, it was possible that the z_hop after the g28 homing would go in the negative z direction. Now, a z_hop is performed after g28 only if it results in a positive hop, mirroring the behavior of the z_hop that occurs before the g28 homing.</p>
 <p>20220616: Korábban egy rp2040-et bootloader módban lehetett égetni a <code>make flash FLASH_DEVICE=first</code> futtatásával. Az ezzel egyenértékű parancs mostantól <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
 <p>20220612: Az rp2040 mikrokontroller mostantól rendelkezik a "rp2040-e5" USB hiba elhárításával. Ez megbízhatóbbá teszi a kezdeti USB-kapcsolatokat. Ez azonban a GPIO15 tű viselkedésének megváltozását eredményezheti. Nem valószínű, hogy a GPIO15 viselkedésének változása észrevehető lesz.</p>
 <p>20220407: A temperature_fan <code>pid_integral_max</code> konfigurációs opciót eltávolítottuk (a 20210612-es verzióval elavult).</p>
