@@ -1,0 +1,229 @@
+## Hey - Here is the set up for the Soval SV01 for Klipper - dont forget to use the slicer and change your start and end codes to suit have a read up on the Klipper page under slicer settings 
+## this config only has the set up for the end G code - Which is simply END_PRINT
+## Remeber when you flash the BTT E3 V3.0 that you can not directly flash the board and you will need to SSH in to your Pi to do so and create the file and pop this on a CD card formated in FAT32
+## Copy and paste the config file in to your Klipper file under machine settings - if you dont have Printer Config File you can just create one called printer.cfg
+## you can remove the timelapse if you dont have this set up by adding ## to the start like so ##[include timelapse.cfg]
+## Dont forget to change the USB line to suit your boards usb you can do this in Putty or Terminal by logging in to your pi using SSH pi@192.?.?.? change to your ip address - if you dont now how to find this then open terminal and type arp- a this will give you a list of all the ip addresses connected to yout network 
+## my sovol is stock other than the BTT Board 
+## On the Bltouch i have changed the line to pin_up_touch_mode_reports_triggered: True  you may need to change to False depending on your Sensor - mine was a cheap one, the pin out for the touch didnt work when using the BTT tech board with the BL Touch so please check the pin configuration below and match up to suit
+## remember to follow the Klipper documentation !! 
+
+
+[include mainsail.cfg]
+
+[include timelapse.cfg]
+
+
+[gcode_macro Mesh_Bed_Scan]
+gcode:
+    BED_MESH_CALIBRATE
+
+
+[stepper_x]
+step_pin: PB13
+dir_pin: !PB12
+enable_pin: !PB14
+microsteps: 16
+rotation_distance: 40
+endstop_pin: ^PC0
+position_endstop: 0
+position_max: 280
+homing_speed: 50
+
+[tmc2209 stepper_x]
+uart_pin: PC11
+tx_pin: PC10
+uart_address: 0
+run_current: 0.580
+hold_current: 0.500
+stealthchop_threshold: 999999
+
+[stepper_y]
+step_pin: PB10
+dir_pin: !PB2
+enable_pin: !PB11
+microsteps: 16
+rotation_distance: 40
+endstop_pin: ^PC1
+position_endstop: 0
+position_max: 240
+homing_speed: 50
+
+[tmc2209 stepper_y]
+uart_pin: PC11
+tx_pin: PC10
+uart_address: 2
+run_current: 0.580
+hold_current: 0.500
+stealthchop_threshold: 999999
+
+
+[stepper_z]
+step_pin: PB0
+dir_pin: PC5
+enable_pin: !PB1
+microsteps: 16
+rotation_distance: 8
+endstop_pin: probe:z_virtual_endstop
+position_min: -25
+position_max: 300
+
+[tmc2209 stepper_z]
+uart_pin: PC11
+tx_pin: PC10
+uart_address: 1
+run_current: 0.580
+hold_current: 0.500
+stealthchop_threshold: 999999
+
+[extruder]
+step_pin: PB3
+dir_pin: PB4
+enable_pin: !PD1
+microsteps: 16
+rotation_distance: 7.680
+nozzle_diameter: 0.400
+filament_diameter: 1.750
+heater_pin: PC8
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PA0
+control: pid
+pid_Kp: 31.147
+pid_Ki: 2.076
+pid_Kd: 116.803
+min_temp: 0
+max_temp: 265
+
+[tmc2209 extruder]
+uart_pin: PC11
+tx_pin: PC10
+uart_address: 3
+run_current: 0.650
+stealthchop_threshold: 999999
+
+[heater_bed]
+heater_pin: PC9
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PC4
+control: pid
+pid_Kp: 72.174
+pid_Ki: 1.816
+pid_Kd: 717.224
+min_temp: 0
+max_temp: 110
+
+
+
+[heater_fan controller_fan]
+pin: PB15
+heater: heater_bed
+heater_temp: 45.0
+
+[heater_fan nozzle_cooling_fan]
+pin: PC7
+
+[fan]
+pin: PC6
+
+[printer]
+kinematics: cartesian
+max_velocity: 300
+max_accel: 3000
+max_z_velocity: 5
+max_z_accel: 100
+
+[bed_screws]
+screw1: 38,35
+screw2: 242,35
+screw3: 242,214
+screw4: 38,214
+
+[screws_tilt_adjust]
+screw1: 69,43
+screw1_name: front left screw
+screw2: 276,43
+screw2_name: front right screw
+screw3: 276,217
+screw3_name: rear right screw
+screw4: 69,217
+screw4_name: rear left screw
+horizontal_move_z: 10.
+speed: 50.
+screw_thread: CW-M4
+
+
+[bltouch]
+sensor_pin: PC2
+control_pin: PA1
+x_offset: -24.0
+y_offset: -2
+#z_offset: 0
+samples: 3
+pin_up_touch_mode_reports_triggered: True
+
+[safe_z_home]
+#home_xy_position: 173.0,128.5
+home_xy_position: 100,100
+speed: 50
+z_hop: 10
+z_hop_speed: 5
+
+[bed_mesh]
+speed: 150
+horizontal_move_z: 5
+mesh_min: 20,20
+mesh_max: 240,204
+probe_count: 8,6
+algorithm: bicubic
+mesh_pps: 0
+
+
+[mcu]
+serial:  /dev/serial/by-id/usb-Klipper_stm32g0b1xx_55001E000750434E37343120-if00
+
+[gcode_macro END_PRINT]
+gcode:
+    # Turn off bed, extruder, and fan
+    M140 S0
+    M104 S0
+    M106 S0
+    # Move nozzle away from print while retracting
+    G91
+    G1 X-2 Y-2 E-3 F300
+    # Raise nozzle by 10mm
+    G1 Z10 F3000
+    G90
+    # Disable steppers
+    M84
+
+[board_pins]
+aliases:
+    # EXP1 header
+    EXP1_1=PB5,  EXP1_3=PA9,   EXP1_5=PA10, EXP1_7=PB8, EXP1_9=<GND>,
+    EXP1_2=PA15, EXP1_4=<RST>, EXP1_6=PB9,  EXP1_8=PD6, EXP1_10=<5V>
+
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+#*# [bltouch]
+#*# z_offset = 3.601
+#*#
+#*# [bed_mesh default]
+#*# version = 1
+#*# points =
+#*# 	  0.107500, 0.033333, -0.034167, -0.095833, -0.119167, -0.089167, -0.077500, -0.047500
+#*# 	  0.170833, 0.106667, -0.030000, -0.055833, 0.054167, -0.045833, 0.021667, 0.011667
+#*# 	  0.160833, 0.018333, -0.043333, -0.057500, -0.070000, -0.080000, -0.095833, -0.003333
+#*# 	  0.134167, 0.079167, -0.010833, -0.019167, -0.106667, -0.037500, -0.037500, 0.023333
+#*# 	  0.175000, 0.109167, 0.006667, -0.020000, -0.041667, 0.021667, 0.053333, 0.089167
+#*# 	  0.220000, 0.110000, 0.034167, -0.005000, -0.032500, -0.003333, 0.045000, 0.115833
+#*# x_count = 8
+#*# y_count = 6
+#*# mesh_x_pps = 0
+#*# mesh_y_pps = 0
+#*# algo = bicubic
+#*# tension = 0.2
+#*# min_x = 20.0
+#*# max_x = 239.94
+#*# min_y = 20.0
+#*# max_y = 203.95
