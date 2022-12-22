@@ -171,6 +171,27 @@ Fields["IOIN"] = {
 Fields["LOST_STEPS"] = {
     "lost_steps":               0xfffff << 0
 }
+Fields["MSLUT0"] = { "mslut0": 0xffffffff }
+Fields["MSLUT1"] = { "mslut1": 0xffffffff }
+Fields["MSLUT2"] = { "mslut2": 0xffffffff }
+Fields["MSLUT3"] = { "mslut3": 0xffffffff }
+Fields["MSLUT4"] = { "mslut4": 0xffffffff }
+Fields["MSLUT5"] = { "mslut5": 0xffffffff }
+Fields["MSLUT6"] = { "mslut6": 0xffffffff }
+Fields["MSLUT7"] = { "mslut7": 0xffffffff }
+Fields["MSLUTSEL"] = {
+    "x3":                       0xFF << 24,
+    "x2":                       0xFF << 16,
+    "x1":                       0xFF << 8,
+    "w3":                       0x03 << 6,
+    "w2":                       0x03 << 4,
+    "w1":                       0x03 << 2,
+    "w0":                       0x03 << 0,
+}
+Fields["MSLUTSTART"] = {
+    "start_sin":                0xFF << 0,
+    "start_sin90":              0xFF << 16,
+}
 Fields["MSCNT"] = {
     "mscnt":                    0x3ff << 0
 }
@@ -299,6 +320,7 @@ class TMC5160:
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_status = cmdhelper.get_status
         # Setup basic register values
+        tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         #   CHOPCONF
         set_config_field = self.fields.set_config_field
