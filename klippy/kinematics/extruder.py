@@ -15,7 +15,13 @@ class ExtruderStepper:
         self.config_smooth_time = config.getfloat(
                 'pressure_advance_smooth_time', 0.040, above=0., maxval=.200)
         # Setup stepper
-        self.stepper = stepper.PrinterStepper(config)
+        if config.get('endstop_pin', None) is not None:
+            self.rail = stepper.PrinterRail(config)
+            self.steppers = self.rail.get_steppers()
+        else:
+            self.rail = stepper.PrinterStepper(config)
+            self.steppers = [self.rail]
+        self.stepper = self.steppers[0]
         ffi_main, ffi_lib = chelper.get_ffi()
         self.sk_extruder = ffi_main.gc(ffi_lib.extruder_stepper_alloc(),
                                        ffi_lib.free)
