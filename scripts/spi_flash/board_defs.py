@@ -110,9 +110,14 @@ BOARD_DEFS = {
         'mcu': "stm32f405xx",
         'spi_bus': "spi1",
         "cs_pin": "PA4"
+    },
+    'fysetc-cheetah': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "spi1",
+        "cs_pin": "PA4",
+        "current_firmware_path": "OLD.BIN"
     }
 }
-
 ###########################################################
 #
 # Board Definition Aliases
@@ -151,6 +156,7 @@ BOARD_ALIASES = {
     'btt-skr-pro-v1.2': BOARD_DEFS['btt-skr-pro'],
     'btt-gtr-v1': BOARD_DEFS['btt-gtr'],
     'mks-robin-e3d': BOARD_DEFS['mks-robin-e3'],
+    'fysetc-cheetah-v2': BOARD_DEFS['fysetc-cheetah'],
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
