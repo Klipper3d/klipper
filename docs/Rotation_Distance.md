@@ -75,8 +75,8 @@ Then use the following procedure to "measure and trim":
    `rotation_distance = <previous_rotation_distance> * <actual_extrude_distance> / <requested_extrude_distance>`
    Round the new rotation_distance to three decimal places.
 
-If the actual_extrude_distance differs from requested_extrude_distance
-by more than about 2mm then it is a good idea to perform the steps
+If the `actual_extrude_distance` differs from `requested_extrude_distance`
+by more than about 20mm then it is a good idea to perform the steps
 above a second time.
 
 Note: Do *not* use a "measure and trim" type of method to calibrate x,
