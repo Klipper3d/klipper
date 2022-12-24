@@ -43,7 +43,11 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID, 'pid_v': ControlVelocityPID}
+        algos = {
+            'watermark': ControlBangBang,
+            'pid': ControlPID,
+            'pid_v': ControlVelocityPID,
+        }
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         # Setup output heater pin
@@ -187,17 +191,17 @@ class ControlPID:
         self.int_sum = 0.
 
     def temperature_update(self, read_time, temp, target_temp):
-        # calculate the error 
+        # calculate the error
         err = target_temp - temp
         # calculate the current integral amount using the Trapezoidal rule
         ic =  ((self.prev_err + err) / 2.) * self.dt
         i = self.int_sum + ic
-        # calculate the current derivative using a modified moving average, 
-        # and derivative on measurement, to account for derivative kick 
-        # when the set point changes  
+        # calculate the current derivative using a modified moving average,
+        # and derivative on measurement, to account for derivative kick
+        # when the set point changes
         dc = -(temp - self.prev_temp) / self.dt
-        dc = ((self.smooth - 1.) * self.prev_der + dc)/self.smooth  
-        # calculate the output 
+        dc = ((self.smooth - 1.) * self.prev_der + dc)/self.smooth
+        # calculate the output
         o = self.Kp * err + self.Ki * i + self.Kd * dc
         # calculate the saturated output
         so = max(0., min(self.heater_max_power, o))
@@ -250,11 +254,11 @@ class ControlVelocityPID:
         self.t.append(temp)
 
         # calculate the derivatives using a modified moving average,
-        # also account for derivative and proportional kick 
+        # also account for derivative and proportional kick
         d1 = self.t[-1] - self.t[-2]
-        self.d1 = ((self.smooth - 1.) * self.d1 + d1)/self.smooth 
+        self.d1 = ((self.smooth - 1.) * self.d1 + d1)/self.smooth
         d2 = (self.t[-1] - 2.*self.t[-2] + self.t[-3])/self.dt
-        self.d2 = ((self.smooth - 1.) * self.d2 + d2)/self.smooth 
+        self.d2 = ((self.smooth - 1.) * self.d2 + d2)/self.smooth
 
         # calcualte the output
         p = self.Kp * -self.d1
@@ -262,12 +266,12 @@ class ControlVelocityPID:
         d = self.Kd * -self.d2
         self.pwm = max(0., min(self.heater_max_power, self.pwm + p + i + d))
 
-        # ensure no weird artifacts 
+        # ensure no weird artifacts
         if target_temp == 0.:
             self.d1 = 0.
             self.d2 = 0.
             self.pwm = 0.
-            
+
         # update the heater
         self.heater.set_pwm(read_time, self.pwm)
 

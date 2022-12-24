@@ -804,8 +804,8 @@ sensor_pin:
 #   is 1 seconds.
 control:
 #   Control algorithm (either pid, pid_v or watermark). This parameter must
-#   be provided. pid_v should only be used on well calibrated heaters with 
-#   low to moderate noise.  
+#   be provided. pid_v should only be used on well calibrated heaters with
+#   low to moderate noise.
 pid_Kp:
 pid_Ki:
 pid_Kd:
