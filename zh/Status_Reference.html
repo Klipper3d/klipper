@@ -2164,10 +2164,10 @@
 <li><code>state_message</code>：提供了一个包含当前 Klipper 状态和上下文的可读字符串。</li>
 </ul>
 <h2 id="z_thermal_adjust">z_thermal_adjust<a class="headerlink" href="#z_thermal_adjust" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>z_thermal_adjust</code> object (this object is available if <a href="Config_Reference.html#z_thermal_adjust">z_thermal_adjust</a> is defined).</p>
+<p><code>z_thermal_adjust</code> 对象提供以下信息（如果定义了<a href="Config_Reference.html#z_thermal_adjust">z_thermal_adjust</a>配置分段，该对象就可用）。</p>
 <ul>
-<li><code>enabled</code>: Returns True if adjustment is enabled.</li>
-<li><code>temperature</code>: Current (smoothed) temperature of the defined sensor. [degC]</li>
+<li><code>enabled</code>：如果启用调整，则返回 True。</li>
+<li><code>temperature</code>：定义传感器的当前（平滑后的）温度。 [摄氏度]</li>
 <li><code>measured_min_temp</code>: Minimum measured temperature. [degC]</li>
 <li><code>measured_max_temp</code>: Maximum measured temperature. [degC]</li>
 <li><code>current_z_adjust</code>: Last computed Z adjustment [mm].</li>

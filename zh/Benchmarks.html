@@ -1096,8 +1096,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32h7-step-rate-benchmark" class="md-nav__link">
-    STM32H7 step rate benchmark
+  <a href="#stm32h7" class="md-nav__link">
+    STM32H7 步进率基准测试
   </a>
   
 </li>
@@ -1465,8 +1465,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stm32h7-step-rate-benchmark" class="md-nav__link">
-    STM32H7 step rate benchmark
+  <a href="#stm32h7" class="md-nav__link">
+    STM32H7 步进率基准测试
   </a>
   
 </li>
@@ -1833,8 +1833,8 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
-<h3 id="stm32h7-step-rate-benchmark">STM32H7 step rate benchmark<a class="headerlink" href="#stm32h7-step-rate-benchmark" title="Permanent link">&para;</a></h3>
-<p>The following configuration sequence is used on a STM32H743VIT6:</p>
+<h3 id="stm32h7">STM32H7 步进率基准测试<a class="headerlink" href="#stm32h7" title="Permanent link">&para;</a></h3>
+<p>在STM32H743VIT6上使用以下配置序列：</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
 config_stepper oid=0 step_pin=PD4 dir_pin=PD3 invert_step=-1 step_pulse_ticks=0
 config_stepper oid=1 step_pin=PA15 dir_pin=PA8 invert_step=-1 step_pulse_ticks=0
@@ -1842,7 +1842,7 @@ config_stepper oid=2 step_pin=PE2 dir_pin=PE3 invert_step=-1 step_pulse_ticks=0
 finalize_config crc=0
 </code></pre></div>
 
-<p>The test was last run on commit <code>00191b5c</code> with gcc version <code>arm-none-eabi-gcc (15:8-2019-q3-1+b1) 8.3.1 20190703 (release) [gcc-8-branch revision 273027]</code>.</p>
+<p>该测试最后一次运行基于提交 <code>00191b5c</code>，gcc 版本为 <code>arm-none-eabi-gcc (15:8-2019-q3-1+b1) 8.3.1 20190703 (release) [gcc-8-branch revision 273027]</code>。</p>
 <table>
 <thead>
 <tr>
