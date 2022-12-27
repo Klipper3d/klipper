@@ -29,6 +29,7 @@ class HallFilamentWidthSensor:
         self.min_diameter = (self.nominal_filament_dia
                              - self.measurement_max_difference)
         self.diameter =self.nominal_filament_dia
+        self.fast_dia =self.nominal_filament_dia
         self.is_active =config.getboolean('enable', False)
         self.runout_dia=config.getfloat('min_diameter', 1.0)
         self.is_log =config.getboolean('logging', False)
@@ -95,6 +96,7 @@ class HallFilamentWidthSensor:
           ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
            -self.rawdia1)+self.dia1,2)
         self.diameter=(5.0 * self.diameter + diameter_new)/6
+        self.fast_dia=diameter_new
 
     def update_filament_array(self, last_epos):
         # Fill array
@@ -125,7 +127,7 @@ class HallFilamentWidthSensor:
         self.update_filament_array(last_epos)
         # Check runout
         self.runout_helper.note_filament_present(
-            self.diameter > self.runout_dia)
+            self.fast_dia > self.runout_dia)
         # Does filament exists
         if self.diameter > 0.5:
             if len(self.filament_array) > 0:
