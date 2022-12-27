@@ -213,7 +213,8 @@ class HallFilamentWidthSensor:
         return {'Diameter': self.diameter,
                 'Raw':(self.lastFilamentWidthReading+
                  self.lastFilamentWidthReading2),
-                'is_active':self.is_active}
+                'is_active':self.is_active,
+                'filament_detected': (self.fast_dia > self.runout_dia)}
     def cmd_log_enable(self, gcmd):
         self.is_log = True
         gcmd.respond_info("Filament width logging Turned On")
