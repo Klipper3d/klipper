@@ -129,7 +129,7 @@ class HallFilamentWidthSensor:
         self.runout_helper.note_filament_present(
             self.fast_dia > self.runout_dia)
         # Does filament exists
-        if self.diameter > 0.5:
+        if self.fast_dia > self.runout_dia:
             if len(self.filament_array) > 0:
                 # Get first position in filament array
                 pending_position = self.filament_array[0][0]
@@ -162,7 +162,7 @@ class HallFilamentWidthSensor:
 
     def cmd_M407(self, gcmd):
         response = ""
-        if self.diameter > 0:
+        if self.diameter > self.runout_dia:
             response += ("Filament dia (measured mm): "
                          + str(self.diameter))
         else:
