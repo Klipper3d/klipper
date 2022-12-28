@@ -1,0 +1,57 @@
+# Extruder tests
+DICTIONARY atmega2560.dict
+CONFIG mixing_extruder.cfg
+
+G28
+
+M83
+
+MIXING_STATUS
+
+# Check switch to mixingextruder+positive extrude
+SET_MIXING_EXTRUDER PRESET=0 ENABLE=1
+
+Check_Stepper_Pos A=0 B=0 C=0
+
+G1 E4.8
+M400
+
+MIXING_STATUS
+
+Check_Stepper_Pos A=160 B=160 C=160
+
+# Check switch negative extrude
+SET_MIXING_EXTRUDER FACTORS=0:0.5:0.5
+G1 E-1.2
+M400
+
+MIXING_STATUS
+
+# B=133-400
+Check_Stepper_Pos A=160 B=100 C=100
+
+# Check extended G1 and reset
+G1 X0 Y0 Z0 E-1.6:-1:-1
+M400
+Check_Stepper_Pos A=0 B=0 C=0
+
+# Check enable/disable
+SET_MIXING_EXTRUDER ENABLE=0
+G1 E1.2
+M400
+Check_Stepper_Pos A=120 B=0 C=0
+G1 E-1.2
+M400
+Check_Stepper_Pos A=0 B=0 C=0
+SET_MIXING_EXTRUDER ENABLE=1
+
+# Check M163, M164, M165
+M163 S0 P1
+M163 S1 P3
+M163 S2 P6
+M164 S1
+M165 S1
+
+G1 E1.2
+M400
+Check_Stepper_Pos A=12 B=36 C=72

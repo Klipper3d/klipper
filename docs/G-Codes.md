@@ -426,6 +426,25 @@ This command is deprecated and will be removed in the near future.
 #### SYNC_STEPPER_TO_EXTRUDER
 This command is deprecated and will be removed in the near future.
 
+### [mixing_extruder]
+
+The following commands are available when a
+[mixingextruder config section](Config_Reference.md#mixingextruder) is
+enabled:
+
+#### SET_MIXING_EXTRUDER
+`SET_MIXING_EXTRUDER FACTORS=<factor1>[:<factor2>[:<factor3>...]] [ENABLE=[0|1]]`:
+This command activates the specified mixing extruder. Subsequent G1 commands
+use the mixing defined by the factors. FACTOR defines the mixing by providing
+a number of positive values. The number of values should correspond to the
+number of steppers defined in the configuration. The values are normalized
+internally to add up to 1 and the extrusion of the corresponding stepper is
+multiplied by that value. If ENABLED is omitted the current mixing state is
+not changed.
+
+#### MIXING_STATUS
+`MIXING_STATUS`: Displays current mixing status.
+
 ### [fan_generic]
 
 The following command is available when a
