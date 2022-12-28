@@ -445,6 +445,24 @@ not changed.
 #### MIXING_STATUS
 `MIXING_STATUS`: Displays current mixing status.
 
+#### ADD_MIXING_GRADIENT
+`ADD_MIXING_GRADIENT START_FACTORS=<s1>[,<s2>[,<s3>...]]
+END_FACTORS=<e1>[,<e2>[,<e3>...]] START_HEIGHT=<start> END_HEIGHT=<end>`:
+Adds a gradient configuration. The START_FACTORS define the mixing below and
+up to the START_HEIGHT. The END_FACTORS respectively the mixing from the
+END_HEIGHT onward. The mixing in between is linearly interpolated.
+
+#### SET_MIXING_GRADIENT
+`SET_MIXING_GRADIENT ENABLE=[0|1] [METHOD=[linear|spherical]]
+[VECTOR=<x>,<y>,<z>]`: Turn on/off gradient handling and select which gradient
+method should be used (METHOD). All previously added gradients are used when
+enabled. The VECTOR configures the parameter for the METHOD: eg. for linear
+VECTOR defines the up direction and for spherical it defines the origin of the
+spheres.
+
+#### RESET_MIXING_GRADIENT
+`RESET_MIXING_GRADIENT`: Remove all configured gradients and disable gradient handling.
+
 ### [fan_generic]
 
 The following command is available when a

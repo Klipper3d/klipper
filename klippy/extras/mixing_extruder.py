@@ -186,7 +186,150 @@ class MixingExtruder(object):
                                     for k, v in status.items()))
 
 
+class GradientMixingExtruder(MixingExtruder):
+    def __init__(self, config, **kwargs):
+        super(GradientMixingExtruder, self).__init__(config, **kwargs)
+        self._gradient_enabled = False
+        # assumed to be sorted list of ((start, middle, end), (ref1, ref2))
+        self._gradients = []
+        self._gradient_method = 'linear'
+        self._gradient_vector = (0., 0., 1.)
+
+        # Register commands
+        gcode = self.printer.lookup_object('gcode')
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
+        self.normal_transform = None
+
+        gcode.register_command("ADD_MIXING_GRADIENT",
+                               self.cmd_ADD_MIXING_GRADIENT,
+                               desc=self.cmd_ADD_MIXING_GRADIENT_help)
+        gcode.register_command("SET_MIXING_GRADIENT",
+                               self.cmd_SET_MIXING_GRADIENT,
+                               desc=self.cmd_SET_MIXING_GRADIENT_help)
+        gcode.register_command("RESET_MIXING_GRADIENT",
+                               self.cmd_RESET_MIXING_GRADIENT,
+                               desc=self.cmd_RESET_MIXING_GRADIENT_help)
+    def _enable_gradient(self):
+        if self.normal_transform:
+            return
+        if not self._enabled:
+            self._init_mixing()
+        nt = self.gcode_move.set_move_transform(self, force=True)
+        self.normal_transform = nt
+        gcode_pos = self.gcode_move.get_status()['gcode_position']
+        self._apply_mixing(self._get_gradient(gcode_pos))
+    def _disable_gradient(self):
+        if not self.normal_transform:
+            return
+        self.gcode_move.set_move_transform(self.normal_transform, force=True)
+        self.normal_transform = None
+    def _get_gradient(self, pos):
+        mixing = self._mixing
+        for heights, refs in self._gradients:
+            start, _, end = heights
+            start_mix, end_mix = refs
+            if self._gradient_method == 'linear':
+                zpos = sum(pos[i]*self._gradient_vector[i] for i in range(3))
+                if zpos <= start:
+                    return start_mix
+                if zpos >= end:
+                    mixing = end_mix
+                    continue
+                w = (zpos - start) / (end - start)
+                return list(((1. - w) * s + w * e)
+                            for s, e in zip(start_mix, end_mix))
+            if self._gradient_method == 'spherical':
+                dist = math.sqrt(sum((x-self._gradient_vector[i])**2
+                                     for i, x in enumerate(pos)))
+                if dist <= start:
+                    return start_mix
+                if dist >= end:
+                    mixing = end_mix
+                    continue
+                w = (dist - start) / (end - start)
+                mix = list(((1. - w) * s + w * e)
+                           for s, e in zip(start_mix, end_mix))
+                return mix
+        return mixing
+    def get_position(self):
+        self.normal_transform.get_position()
+    def move(self, newpos, speed):
+        gcode_pos = self.gcode_move.get_status()['gcode_position']
+        self._apply_mixing(self._get_gradient(gcode_pos))
+        self.normal_transform.move(newpos, speed)
+    def get_status(self, eventtime):
+        status = super(GradientMixingExtruder, self).get_status(eventtime)
+        for i, gradient in enumerate(self._gradients):
+            status.update({"mixing_gradient%d" % (i): ",".join(
+                "%s:%s" % (k, v)
+                for k, v in dict(
+                    heights="%.1f-(%.1f)-%.1f" % gradient[0],
+                    mixings="%s-%s" % tuple(
+                        "/".join("%.1f" % (x) for x in m)
+                        for m in gradient[1]),
+                    method=self._gradient_method,
+                    vector="/".join("%.1f" % (x)
+                                    for x in self._gradient_vector),
+                    enabled=str(self._gradient_enabled)).items())})
+        return status
+    def _check_scales(self, gcmd, s):
+        try:
+            scales = s.replace(',', ':').split(':')
+            if len(scales) != len(self._mixing):
+                raise gcmd.error("Could not configure gradient: invalid scales")
+            return tuple(float(scales[i]) for i in range(len(scales)))
+        except Exception:
+            raise gcmd.error(
+                "Could not configure gradient: could not parse scales")
+    cmd_ADD_MIXING_GRADIENT_help = "Add mixing gradient"
+    def cmd_ADD_MIXING_GRADIENT(self, gcmd):
+        start_scales = self._check_scales(gcmd,gcmd.get('START_FACTORS'))
+        end_scales = self._check_scales(gcmd, gcmd.get('END_FACTORS'))
+        start_height = gcmd.get_float('START_HEIGHT', minval=0.)
+        end_height = gcmd.get_float('END_HEIGHT', minval=0.)
+        if start_height > end_height:
+            start_height, end_height = end_height, start_height
+            start_scales, end_scales = end_scales, start_scales
+        for gradient in self._gradients:
+            s, _, e = gradient[0]
+            if e > start_height and end_height > s:
+                raise gcmd.error(
+                    "Could not configure gradient: overlapping starts/ends")
+        self._gradients.append((
+            (start_height,
+             (start_height + end_height) / 2,
+             end_height),
+            (start_scales, end_scales)))
+        self._gradients.sort(key=lambda x: x[0][0])
+    cmd_SET_MIXING_GRADIENT_help = "Turn no/off gradient mixing"
+    def cmd_SET_MIXING_GRADIENT(self, gcmd):
+        method = gcmd.get('METHOD', '')
+        if method in ["linear", "spherical"]:
+            self._gradient_method = method
+        try:
+            vector = gcmd.get('VECTOR', '0,0,1').split(',')
+            self._gradient_vector = tuple(float(vector[i]) for i in range(3))
+        except Exception:
+            raise gcmd.error(
+                "Could not configure gradient: invalid vector")
+        try:
+            enable = gcmd.get_int('ENABLE', 1, minval=0, maxval=1) == 1
+        except Exception:
+            enable = gcmd.get('ENABLE', '').lower() == 'true'
+        if enable:
+            self._enable_gradient()
+        else:
+            self._disable_gradient()
+        self._gradient_enabled = enable
+    cmd_RESET_MIXING_GRADIENT_help = "Clear mixing gradient info"
+    def cmd_RESET_MIXING_GRADIENT(self, gcmd):
+        self._gradient_enabled, self._gradients, self._gradient_method = \
+            False, [], 'linear'
+        self._disable_gradient()
+
+
 def load_config(config):
-    mixingextruder = MixingExtruder(config.getsection('mixing_extruder'))
+    mixingextruder = GradientMixingExtruder(
+        config.getsection('mixing_extruder'))
     logging.info("Added mixing extruders")
     return mixingextruder
