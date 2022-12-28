@@ -278,7 +278,7 @@ class ControlVelocityPID:
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
-                or abs(self.prev_der) > PID_SETTLE_SLOPE)
+                or abs(self.d1) > PID_SETTLE_SLOPE)
 
 
 ######################################################################
