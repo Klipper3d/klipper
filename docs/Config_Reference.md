@@ -1640,7 +1640,7 @@ cs_pin:
 
 ### [mpu9250]
 
-Support for MPU-9250, MPU-9255, MPU-9255, MPU-6050, and MPU-6500
+Support for MPU-9250, MPU-9255, MPU-6515, MPU-6050, and MPU-6500
 accelerometers (one may define any number of sections with an
 "mpu9250" prefix).
 
