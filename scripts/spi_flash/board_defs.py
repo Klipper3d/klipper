@@ -118,6 +118,7 @@ BOARD_DEFS = {
         "current_firmware_path": "OLD.BIN"
     }
 }
+
 ###########################################################
 #
 # Board Definition Aliases
