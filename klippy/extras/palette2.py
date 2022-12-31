@@ -221,9 +221,9 @@ class Palette2:
     def _wait_for_heartbeat(self):
         startTs = self.reactor.monotonic()
         currTs = startTs
-        while self.heartbeat is None and self.heartbeat < (
-                currTs - SETUP_TIMEOUT) and startTs > (
-                currTs - SETUP_TIMEOUT):
+        while self.heartbeat is None or (self.heartbeat < (
+            currTs - SETUP_TIMEOUT) and startTs > (
+                currTs - SETUP_TIMEOUT)):
             currTs = self.reactor.pause(currTs + 1.)
 
         if self.heartbeat < (currTs - SETUP_TIMEOUT):
@@ -401,7 +401,7 @@ class Palette2:
             try:
                 fw = params[0][1:]
                 logging.info(
-                    "Palette 2 firmware version %s detected" % os.fwalk)
+                    "Palette 2 firmware version %s detected" % fw)
             except (TypeError, IndexError):
                 logging.error("Unable to parse firmware version")
 
@@ -583,7 +583,7 @@ class Palette2:
         self.write_queue.put(COMMAND_HEARTBEAT)
         eventtime = self.reactor.pause(eventtime + 5)
         if self.heartbeat and self.heartbeat < (
-                eventtime - HEARTBEAT_TIMEOUT):
+            eventtime - HEARTBEAT_TIMEOUT):
             logging.error(
                 "P2 has not responded to heartbeat")
             if not self.is_printing or self.is_setup_complete:
@@ -612,6 +612,7 @@ class Palette2:
                     logging.error("Unable to communicate with the Palette 2")
                     self.signal_disconnect = True
                     return self.reactor.NEVER
+                return eventtime + SERIAL_TIMER
         return eventtime + SERIAL_TIMER
 
     def _run_Smart_Load(self, eventtime):
