@@ -431,8 +431,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#i-found-a-bug-in-the-klipper-software" class="md-nav__link">
-    I found a bug in the Klipper software
+  <a href="#ho-trovato-un-bug-nel-software-klipper" class="md-nav__link">
+    Ho trovato un bug nel software Klipper
   </a>
   
 </li>
@@ -1344,8 +1344,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#i-found-a-bug-in-the-klipper-software" class="md-nav__link">
-    I found a bug in the Klipper software
+  <a href="#ho-trovato-un-bug-nel-software-klipper" class="md-nav__link">
+    Ho trovato un bug nel software Klipper
   </a>
   
 </li>
@@ -1415,29 +1415,29 @@
 <p>Se si verifica un problema di stampa, si consiglia di ispezionare attentamente l'hardware della stampante (tutti i giunti, i cavi, le viti, ecc.) e verificare che non vi siano anomalie. Scopriamo che la maggior parte dei problemi di stampa non sono correlati al software Klipper. Se trovi un problema con l'hardware della stampante, probabilmente otterrai una risposta migliore cercando in un forum generale di stampa 3D o in un forum dedicato all'hardware della tua stampante.</p>
 <p>È anche possibile cercare problemi simili in <a href="#community-forum">Klipper Community Forum</a>.</p>
 <p>Se sei interessato a condividere le tue conoscenze ed esperienze con altri utenti di Klipper, puoi unirti al <a href="#community-forum">Klipper Community Forum</a> o <a href="#discord-chat">Klipper Discord Chat</a>. Entrambe sono comunità in cui gli utenti di Klipper possono discutere di Klipper con altri utenti.</p>
-<h2 id="i-found-a-bug-in-the-klipper-software">I found a bug in the Klipper software<a class="headerlink" href="#i-found-a-bug-in-the-klipper-software" title="Permanent link">&para;</a></h2>
+<h2 id="ho-trovato-un-bug-nel-software-klipper">Ho trovato un bug nel software Klipper<a class="headerlink" href="#ho-trovato-un-bug-nel-software-klipper" title="Permanent link">&para;</a></h2>
 <p>Klipper è un progetto open-source ed apprezziamo quando i collaboratori diagnosticano errori nel software.</p>
-<p>Problems should be reported in the <a href="#community-forum">Klipper Community Forum</a>.</p>
+<p>I problemi devono essere segnalati nel <a href="#community-forum">Klipper Community Forum</a>.</p>
 <p>Ci sono informazioni importanti che saranno necessarie per correggere un bug. Per favore segui questi passaggi:</p>
 <ol>
-<li>Make sure you are running unmodified code from <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a>. If the code has been modified or is obtained from another source, then you should reproduce the problem on the unmodified code from <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a> prior to reporting.</li>
-<li>If possible, run an <code>M112</code> command immediately after the undesirable event occurs. This causes Klipper to go into a "shutdown state" and it will cause additional debugging information to be written to the log file.</li>
+<li>Assicurati di eseguire codice non modificato da <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a>. Se il codice è stato modificato o è stato ottenuto da un'altra fonte, è necessario riprodurre il problema sul codice non modificato da <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a> prima della segnalazione.</li>
+<li>Se possibile, eseguire un comando <code>M112</code> immediatamente dopo che si è verificato l'evento indesiderato. Ciò fa sì che Klipper entri in uno "shutdown state" e causerà la scrittura di ulteriori informazioni di debug nel file di registro.</li>
 <li>Ottieni il log file di Klipper dell'evento. Il file di registro è stato progettato per rispondere alle domande più comuni degli sviluppatori di Klipper sul software e sul suo ambiente (versione del software, tipo di hardware, configurazione, tempistica degli eventi e centinaia di altre domande).<ol>
 <li>Il log file di Klipper si trova in <code>/tmp/klippy.log</code> sul computer "host" di Klipper (il Raspberry Pi).</li>
 <li>Un comando o utility "scp" o "sftp" è necessario per copiare questo file di registro sul computer desktop. L'utilità "scp" viene fornita di serie con i desktop Linux e MacOS. Ci sono utilità scp disponibili gratuitamente per altri desktop (ad es. WinSCP). Se si utilizza un'interfaccia grafica scp che non può copiare direttamente <code>/tmp/klippy.log</code>, fare clic ripetutamente su <code>..</code> o <code>cartella principale</code> fino ad arrivare alla directory principale, fare clic sulla cartella <code>tmp</code>, quindi seleziona il file <code>klippy.log</code>.</li>
 <li>Copia il lof file sul desktop in modo che possa essere allegato a una segnalazione di problema.</li>
 <li>Non modificare in alcun modo il log file; non editare o ritagliare il log file. Solo il file di log completo non modificato fornisce le informazioni necessarie.</li>
-<li>It is a good idea to compress the log file with zip or gzip.</li>
+<li>È una buona idea comprimere il file di registro con zip o gzip.</li>
 </ol>
 </li>
-<li>Open a new topic on the <a href="#community-forum">Klipper Community Forum</a> and provide a clear description of the problem. Other Klipper contributors will need to understand what steps were taken, what the desired outcome was, and what outcome actually occurred. The compressed Klipper log file should be attached to that topic.</li>
+<li>Apri un nuovo topic sul <a href="#community-forum">Klipper Community Forum</a> e fornisci una descrizione chiara del problema. Altri contributori di Klipper dovranno capire quali passi sono stati compiuti, quale era il risultato desiderato e quale risultato si è effettivamente verificato. Il file di registro compresso di Klipper dovrebbe essere allegato a quel topic.</li>
 </ol>
 <h2 id="sto-apportando-modifiche-che-vorrei-includere-in-klipper">Sto apportando modifiche che vorrei includere in Klipper<a class="headerlink" href="#sto-apportando-modifiche-che-vorrei-includere-in-klipper" title="Permanent link">&para;</a></h2>
 <p>Klipper è un software open-source e apprezziamo i nuovi contributi.</p>
 <p>I nuovi contributi (sia per il codice che per la documentazione) vengono inviati tramite Github Pull Requests. Vedere [<a href="CONTRIBUTING.html">CONTRIBUTING document</a> per informazioni importanti.</p>
-<p>There are several <a href="Overview.html#developer-documentation">documents for developers</a>. If you have questions on the code then you can also ask in the <a href="#community-forum">Klipper Community Forum</a> or on the <a href="#discord-chat">Klipper Community Discord</a>.</p>
+<p>Ci sono diversi <a href="Overview.html#developer-documentation">documenti per sviluppatori</a>. Se hai domande sul codice, puoi anche chiedere nel <a href="#community-forum">Klipper Community Forum</a> o nella <a href="#discord-chat">Klipper Community Discord</a>.</p>
 <h2 id="klipper-github">Klipper github<a class="headerlink" href="#klipper-github" title="Permanent link">&para;</a></h2>
-<p>Klipper github may be used by contributors to share the status of their work to improve Klipper. It is expected that the person opening a github ticket is actively working on the given task and will be the one performing all the work necessary to accomplish it. The Klipper github is not used for requests, nor to report bugs, nor to ask questions. Use the <a href="#community-forum">Klipper Community Forum</a> or the <a href="#discord-chat">Klipper Community Discord</a> instead.</p>
+<p>Klipper github può essere utilizzato dai contributori per condividere lo stato del loro lavoro per migliorare Klipper. Ci si aspetta che la persona che apre un ticket github stia lavorando attivamente all'attività specificata e sarà quella che eseguirà tutto il lavoro necessario per realizzarla. Il github di Klipper non viene utilizzato per richieste, né per segnalare bug, né per porre domande. Usa invece il <a href="#community-forum">Klipper Community Forum</a> o la <a href="#discord-chat">Klipper Community Discord</a>.</p>
 
               
             </article>

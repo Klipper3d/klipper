@@ -1358,7 +1358,7 @@
 <h1 id="can">CAN 总线<a class="headerlink" href="#can" title="Permanent link">&para;</a></h1>
 <p>本文档描述了 Klipper 的 CAN 总线支持。</p>
 <h2 id="_1">硬件设备<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<p>Klipper currently supports CAN on stm32, same5x, and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
+<p>Klipper目前支持在stm32、same5x和rp2040芯片上使用CAN总线。此外，微控制器芯片必须和一个CAN收发器相连。</p>
 <p>要针对 CAN 进行编译，请运行 <code>make menuconfig</code>并选择"CAN Bus"作为通信接口。最后，编译微控制器代码并将其刷写到目标控制版上。</p>
 <h2 id="_2">主机硬件<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>为了使用 CAN 总线，主机需要一个适配器。目前有两种常见的选择：</p>

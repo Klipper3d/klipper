@@ -431,8 +431,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#i-found-a-bug-in-the-klipper-software" class="md-nav__link">
-    I found a bug in the Klipper software
+  <a href="#talaltam-egy-hibat-a-klipper-szoftverben" class="md-nav__link">
+    Találtam egy hibát a Klipper szoftverben
   </a>
   
 </li>
@@ -1344,8 +1344,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#i-found-a-bug-in-the-klipper-software" class="md-nav__link">
-    I found a bug in the Klipper software
+  <a href="#talaltam-egy-hibat-a-klipper-szoftverben" class="md-nav__link">
+    Találtam egy hibát a Klipper szoftverben
   </a>
   
 </li>
@@ -1389,7 +1389,7 @@
 <li><a href="#kerdesem-van-a-klipperrel-kapcsolatban">Kérdésem van a Klipperrel kapcsolatban</a></li>
 <li><a href="#van-egy-funkciokerelmem">Van egy funkciókérelmem</a></li>
 <li><a href="#segitseg-nem-mukodik">Segítség! Nem működik!</a></li>
-<li><a href="#i-found-a-bug-in-the-klipper-software">I found a bug in the Klipper software</a></li>
+<li><a href="#i-found-a-bug-in-the-klipper-software">Találtam egy hibát a Klipper szoftverben</a></li>
 <li><a href="#valtoztatasokat-vegzek-amelyeket-szeretnek-a-klipperbe-beepiteni">Változtatásokat végzek, amelyeket szeretnék a Klipperbe beépíteni</a></li>
 <li><a href="#klipper-github">Klipper github</a></li>
 </ol>
@@ -1415,27 +1415,27 @@
 <p>Ha nyomtatási problémát tapasztalsz, akkor javasoljuk, hogy alaposan vizsgáld meg a nyomtató hardverét (minden illesztést, vezetéket, csavart stb.), és győződj meg arról, hogy semmi rendellenes nincs. Úgy találjuk, hogy a legtöbb nyomtatási probléma nem a Klipper szoftverrel kapcsolatos. Ha a nyomtató hardverével kapcsolatos problémát találsz, akkor valószínűleg jobb választ kapsz, ha egy általános 3D-nyomtatási fórumon vagy egy, a nyomtató hardverével foglalkozó fórumon keresel.</p>
 <p>A <a href="#kozossegi-forum">Klipper Közösségi Fórumban</a> is kereshetsz hasonló kérdéseket.</p>
 <p>Ha szeretnéd megosztani tudásodat és tapasztalataidat más Klipper felhasználókkal, akkor csatlakozhatsz a <a href="#kozossegi-forum">Klipper Közösségi Fórum</a> vagy a <a href="#discord-cseveges">Discord Csevegés</a>-hez. Mindkettő olyan közösség, ahol a Klipper felhasználók megvitathatják a Klippert más felhasználókkal.</p>
-<h2 id="i-found-a-bug-in-the-klipper-software">I found a bug in the Klipper software<a class="headerlink" href="#i-found-a-bug-in-the-klipper-software" title="Permanent link">&para;</a></h2>
+<h2 id="talaltam-egy-hibat-a-klipper-szoftverben">Találtam egy hibát a Klipper szoftverben<a class="headerlink" href="#talaltam-egy-hibat-a-klipper-szoftverben" title="Permanent link">&para;</a></h2>
 <p>A Klipper egy nyílt forráskódú projekt, és nagyra értékeljük, ha a munkatársak diagnosztizálják a szoftver hibáit.</p>
-<p>Problems should be reported in the <a href="#community-forum">Klipper Community Forum</a>.</p>
+<p>A problémákat a <a href="#community-forum">Klipper Közösségi Fórumban</a> kell jelenteni.</p>
 <p>Fontos információkra lesz szükség a hiba kijavításához. Kérjük, kövesd az alábbi lépéseket:</p>
 <ol>
-<li>Make sure you are running unmodified code from <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a>. If the code has been modified or is obtained from another source, then you should reproduce the problem on the unmodified code from <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a> prior to reporting.</li>
-<li>If possible, run an <code>M112</code> command immediately after the undesirable event occurs. This causes Klipper to go into a "shutdown state" and it will cause additional debugging information to be written to the log file.</li>
+<li>Győződj meg róla, hogy a <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a> változatlan kódját futtatod. Ha a kódot módosították, vagy más forrásból származik, akkor a hiba bejelentése előtt reprodukálnod kell a problémát a <a href="https://github.com/Klipper3d/klipper">https://github.com/Klipper3d/klipper</a> nem módosított kóddal.</li>
+<li>Ha lehetséges, futtass egy <code>M112</code> parancsot közvetlenül a nemkívánatos esemény bekövetkezése után. Ennek hatására a Klipper "leállási állapotba" kerül, és további hibakeresési információk íródnak a naplófájlba.</li>
 <li>Szerezd be a Klipper naplófájlt az eseményből. A naplófájlt úgy alakították ki, hogy választ adjon a Klipper fejlesztőinek a szoftverrel és környezetével kapcsolatos gyakori kérdéseire (szoftver verzió, hardvertípus, konfiguráció, eseményidőzítés és több száz egyéb kérdés).<ol>
 <li>A Klipper naplófájlja a <code>/tmp/klippy.log</code> címen található a Klipper "gazdagépen" (vagyis a Raspberry Pi-n).</li>
 <li>Egy "SCP" vagy "SFTP" segédprogram szükséges a naplófájlnak az asztali számítógépre való másolásához. Az "SCP" segédprogram alapfelszereltségként jár a Linux és MacOS asztali számítógépekhez. Más asztali számítógépekhez szabadon elérhető SCP segédprogramok is léteznek (pl. WinSCP). Ha olyan grafikus SCP segédprogramot használsz, amely nem tudja közvetlenül másolni a <code>/tmp/klippy.log</code>, akkor kattints többször a <code>...</code> vagy <code>parent folder</code>, amíg el nem jutunk a gyökérkönyvtárba, kattintsunk a <code>tmp</code> mappára, majd válasszuk ki a <code>klippy.log</code> fájlt.</li>
 <li>Másold a naplófájlt az asztalára, hogy csatolni tudd egy problémajelentéshez.</li>
 <li>Ne módosítsd a naplófájlt semmilyen módon; ne adj meg egy részletet a naplóból. Csak a teljes, változatlan naplófájl nyújtja a szükséges információkat.</li>
-<li>It is a good idea to compress the log file with zip or gzip.</li>
+<li>Jó ötlet a naplófájlt zip vagy gzip segítségével tömöríteni.</li>
 </ol>
 </li>
-<li>Open a new topic on the <a href="#community-forum">Klipper Community Forum</a> and provide a clear description of the problem. Other Klipper contributors will need to understand what steps were taken, what the desired outcome was, and what outcome actually occurred. The compressed Klipper log file should be attached to that topic.</li>
+<li>Nyiss egy új témát a <a href="#community-forum">Klipper Közösségi Fórumon</a>, és írd le a problémát. A többi Klipper hozzászólónak meg kell értenie, hogy milyen lépéseket tettek, mi volt a kívánt eredmény, és mi történt valójában. A tömörített Klipper naplófájlt csatolni kell a témához.</li>
 </ol>
 <h2 id="valtoztatasokat-vegzek-amelyeket-szeretnek-a-klipperbe-beepiteni">Változtatásokat végzek, amelyeket szeretnék a Klipperbe beépíteni<a class="headerlink" href="#valtoztatasokat-vegzek-amelyeket-szeretnek-a-klipperbe-beepiteni" title="Permanent link">&para;</a></h2>
 <p>A Klipper nyílt forráskódú szoftver, és örömmel fogadjuk az új hozzájárulásokat.</p>
 <p>Az új hozzájárulásokat (mind a kódot, mind a dokumentációt illetően) a GitHub Pull Requests-en keresztül küldheted be. Lásd a <a href="CONTRIBUTING.html">CONTRIBUTING dokumentumot</a> a fontos információkért.</p>
-<p>There are several <a href="Overview.html#developer-documentation">documents for developers</a>. If you have questions on the code then you can also ask in the <a href="#community-forum">Klipper Community Forum</a> or on the <a href="#discord-chat">Klipper Community Discord</a>.</p>
+<p>Számos <a href="Overview.html#developer-documentation">dokumentum fejlesztőknek</a>. Ha kérdésed van a kóddal kapcsolatban, akkor a <a href="#community-forum">Klipper Közösségi Fórum</a> vagy a <a href="#discord-chat">Klipper Közösségi Discord</a> oldalon is felteheted.</p>
 <h2 id="klipper-github">Klipper github<a class="headerlink" href="#klipper-github" title="Permanent link">&para;</a></h2>
 <p>Klipper github may be used by contributors to share the status of their work to improve Klipper. It is expected that the person opening a github ticket is actively working on the given task and will be the one performing all the work necessary to accomplish it. The Klipper github is not used for requests, nor to report bugs, nor to ask questions. Use the <a href="#community-forum">Klipper Community Forum</a> or the <a href="#discord-chat">Klipper Community Discord</a> instead.</p>
 

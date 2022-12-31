@@ -2060,7 +2060,7 @@
 <p><code>print_stats</code> 对象提供了以下信息（如果定义了 <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> 配置分段，则此对象自动可用）：</p>
 <ul>
 <li><code>filename</code>、<code>total_duration</code>、<code>print_duration</code>、<code>filament_used</code>、<code>state</code>、<code>message</code>：virtual_sdcard 打印处于活动状态时有关当前打印的估测。</li>
-<li><code>info.total_layer</code>: The total layer value of the last <code>SET_PRINT_STATS_INFO TOTAL_LAYER=&lt;value&gt;</code> G-Code command.</li>
+<li><code>info.total_layer</code>：最后一条<code>SET_PRINT_STATS_INFO TOTAL_LAYER=&lt;值&gt;</code> G-Code命令的总层值。</li>
 <li><code>info.current_layer</code>: The current layer value of the last <code>SET_PRINT_STATS_INFO CURRENT_LAYER=&lt;value&gt;</code> G-Code command.</li>
 </ul>
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
@@ -2168,10 +2168,10 @@
 <ul>
 <li><code>enabled</code>：如果启用调整，则返回 True。</li>
 <li><code>temperature</code>：定义传感器的当前（平滑后的）温度。 [摄氏度]</li>
-<li><code>measured_min_temp</code>: Minimum measured temperature. [degC]</li>
-<li><code>measured_max_temp</code>: Maximum measured temperature. [degC]</li>
-<li><code>current_z_adjust</code>: Last computed Z adjustment [mm].</li>
-<li><code>z_adjust_ref_temperature</code>: Current reference temperature used for calculation of Z <code>current_z_adjust</code> [degC].</li>
+<li><code>measured_min_temp</code>：最小测量温度。[摄氏度]</li>
+<li><code>measured_max_temp</code>：最大测量温度。[摄氏度]</li>
+<li><code>current_z_adjust</code>：上次计算的z调整[mm]。</li>
+<li><code>z_adjust_ref_temperature</code>：用于计算Z <code>current_z_adjust</code>的当前参考温度[degC]。</li>
 </ul>
 <h2 id="z_tilt">z_tilt<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h2>
 <p><code>z_tilt</code> 对象提供了以下信息（如果定义了 z_tilt，则该对象可用）：</p>

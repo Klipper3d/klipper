@@ -2080,16 +2080,16 @@
 <li><code>last_query["&lt;endstop&gt;"]</code>: Restituisce True se l'endstop specificato è stato segnalato come "attivato-triggered" durante l'ultimo comando QUERY_ENDSTOP. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando QUERY_ENDSTOP deve essere eseguito prima della macro contenente questo riferimento.</li>
 </ul>
 <h2 id="screws_tilt_adjust">screws_tilt_adjust<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>screws_tilt_adjust</code> object:</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>screws_tilt_adjust</code>:</p>
 <ul>
-<li><code>error</code>: Returns True if the most recent <code>SCREWS_TILT_CALCULATE</code> command included the <code>MAX_DEVIATION</code> parameter and any of the probed screw points exceeded the specified <code>MAX_DEVIATION</code>.</li>
-<li><code>results</code>: A list of the probed screw locations. Each entry in the list will be a dictionary containing the following keys:<ul>
-<li><code>name</code>: The name of the screw as specified in the config file.</li>
-<li><code>x</code>: The X coordinate of the screw as specified in the config file.</li>
-<li><code>y</code>: The Y coordinate of the screw as specified in the config file.</li>
-<li><code>z</code>: The measured Z height of the screw location.</li>
-<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise. The base screw will not have a <code>sign</code> key.</li>
-<li><code>adjust</code>: The number of screw turns to adjust the screw, given in the format "HH:MM," where "HH" is the number of full screw turns and "MM" is the number of "minutes of a clock face" representing a partial screw turn. (E.g. "01:15" would mean to turn the screw one and a quarter revolutions.)</li>
+<li><code>error</code>: restituisce True se il comando <code>SCREWS_TILT_CALCULATE</code> più recente includeva il parametro <code>MAX_DEVIATION</code> e uno qualsiasi dei punti della vite rilevati superava il <code>MAX_DEVIATION</code> specificato.</li>
+<li><code>results</code>: un elenco delle posizioni delle viti rilevate. Ogni voce nell'elenco sarà un dizionario contenente le seguenti chiavi:<ul>
+<li><code>name</code>: il nome della vite come specificato nel file di configurazione.</li>
+<li><code>x</code>: la coordinata X della vite come specificato nel file di configurazione.</li>
+<li><code>y</code>: la coordinata Y della vite come specificato nel file di configurazione.</li>
+<li><code>z</code>: L'altezza Z misurata della posizione della vite.</li>
+<li><code>sign</code>: Una stringa che specifica la direzione da girare per avvitare per la regolazione necessaria. O "CW" per senso orario o "CCW" per senso antiorario. La vite di base non avrà una chiave di "segno".</li>
+<li><code>adjust</code>: il numero di giri di vite per regolare la vite, dato nel formato "HH:MM", dove "HH" è il numero di giri di vite completi e "MM" è il numero di "minuti di un quadrante di orologio" che rappresenta un giro di vite parziale. (Es. "01:15" significherebbe girare la vite di un giro e un quarto.)</li>
 </ul>
 </li>
 </ul>
