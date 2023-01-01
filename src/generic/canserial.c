@@ -7,6 +7,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_HAVE_BOOTLOADER_REQUEST
 #include "board/io.h" // readb
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // console_sendf
@@ -185,7 +186,7 @@ can_process_set_klipper_nodeid(struct canbus_msg *msg)
 static void
 can_process_request_bootloader(struct canbus_msg *msg)
 {
-    if (!can_check_uuid(msg))
+    if (!CONFIG_HAVE_BOOTLOADER_REQUEST || !can_check_uuid(msg))
         return;
     bootloader_request();
 }
