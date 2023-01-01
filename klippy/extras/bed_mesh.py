@@ -295,7 +295,7 @@ class BedMeshCalibrate:
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
         self._generate_points(config.error)
-        if self.relative_reference_index >= len(self.points):    
+        if self.relative_reference_index >= len(self.points):
             raise config.error("Invalid relative_reference_index")
         self._profile_name = None
         self.orig_points = self.points
