@@ -14,9 +14,17 @@ mkdir -p ${BUILD_DIR} ${CACHE_DIR}
 ######################################################################
 # Install system dependencies
 ######################################################################
+PYTHON_PKG="python2-dev"
+if test -f /etc/os-release; then
+    . /etc/os-release
+    ubuntu_year=$(echo $VERSION_ID | cut -f 1 -d '.')
+    if [ $ubuntu_year -le 18 ]; then
+        PYTHON_PKG="python-dev"
+    fi
+fi
 
 echo -e "\n\n=============== Install system dependencies\n\n"
-PKGS="virtualenv python-dev libffi-dev build-essential"
+PKGS="virtualenv $PYTHON_PKG libffi-dev build-essential"
 PKGS="${PKGS} gcc-avr avr-libc"
 PKGS="${PKGS} libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi"
 PKGS="${PKGS} pv libmpfr-dev libgmp-dev libmpc-dev texinfo bison flex"
