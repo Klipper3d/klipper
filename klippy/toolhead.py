@@ -481,6 +481,7 @@ class ToolHead:
         except DripModeEndSignal as e:
             self.move_queue.reset()
             self.trapq_finalize_moves(self.trapq, self.reactor.NEVER)
+            self.extruder.update_move_time(flush_time=self.reactor.NEVER)
         # Exit "Drip" state
         self.flush_step_generation()
     # Misc commands
