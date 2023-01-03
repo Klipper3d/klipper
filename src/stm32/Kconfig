@@ -65,6 +65,14 @@ choice
         bool "STM32F072"
         select MACH_STM32F0
         select MACH_STM32F0x2
+    config MACH_STM32G070
+        bool "STM32G070"
+        select MACH_STM32G0
+        select MACH_STM32G07x
+    config MACH_STM32G071
+        bool "STM32G071"
+        select MACH_STM32G0
+        select MACH_STM32G07x
     config MACH_STM32G0B0
         bool "STM32G0B0"
         select MACH_STM32G0
@@ -103,6 +111,8 @@ config MACH_STM32F2
 config MACH_STM32F4
     bool
 config MACH_STM32G0
+    bool
+config MACH_STM32G07x
     bool
 config MACH_STM32G0Bx
     bool
@@ -149,6 +159,8 @@ config MCU
     default "stm32f407xx" if MACH_STM32F407
     default "stm32f429xx" if MACH_STM32F429
     default "stm32f446xx" if MACH_STM32F446
+    default "stm32g070xx" if MACH_STM32G070
+    default "stm32g071xx" if MACH_STM32G071
     default "stm32g0b0xx" if MACH_STM32G0B0
     default "stm32g0b1xx" if MACH_STM32G0B1
     default "stm32g431xx" if MACH_STM32G431
@@ -203,6 +215,7 @@ config RAM_SIZE
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
     default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
+    default 0x9000 if MACH_STM32G07x
     default 0x24000 if MACH_STM32G0Bx
     default 0x20000 if MACH_STM32H7
 
