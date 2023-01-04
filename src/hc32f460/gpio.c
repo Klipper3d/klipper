@@ -50,6 +50,8 @@ gpio_peripheral(uint32_t gpio, int func, int pull_up)
     stcPortInit.enPinOType      = Pin_OType_Cmos;
     stcPortInit.enPinSubFunc    = Disable;
 
+    // make the port GPIO and disable the sub functionality
+    PORT_SetFunc(GPIO2PORT(gpio), GPIO2BIT(gpio), Func_Gpio, Disable);
     PORT_Init(GPIO2PORT(gpio), GPIO2BIT(gpio), &stcPortInit);
 
     irq_restore(flag);
