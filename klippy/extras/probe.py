@@ -49,7 +49,7 @@ class PrinterProbe:
         self.samples_retries = config.getint('samples_tolerance_retries', 0,
                                              minval=0)
         self.samples_discard = config.getint('samples_discard_first', 0,
-                                             above=-1)
+                                             minval=0)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register homing event handlers
@@ -157,7 +157,7 @@ class PrinterProbe:
         samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
                                        self.samples_retries, minval=0)
         samples_discard_first = gcmd.get_int("SAMPLES_DISCARD_FIRST",
-                                             self.samples_discard, above=-1)
+                                             self.samples_discard, minval=0)
         samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
         must_notify_multi_probe = not self.multi_probe_pending
         if must_notify_multi_probe:
@@ -215,7 +215,7 @@ class PrinterProbe:
         sample_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST",
                                              self.sample_retract_dist, above=0.)
         samples_discard_first = gcmd.get_int("SAMPLES_DISCARD_FIRST",
-                                             self.samples_discard, above=-1)
+                                             self.samples_discard, minval=0)
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
         gcmd.respond_info("PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f"
