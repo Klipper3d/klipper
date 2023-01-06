@@ -390,6 +390,7 @@ object:
     and "MM" is the number of "minutes of a clock face" representing
     a partial screw turn. (E.g. "01:15" would mean to turn the screw
     one and a quarter revolutions.)
+  - `is_base`: Returns True if this is the base screw.
 
 ## servo
 
