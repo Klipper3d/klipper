@@ -332,7 +332,7 @@ class ToolHead:
         if self.special_queuing_state:
             self._update_drip_move_time(next_move_time)
         self._update_move_time(next_move_time)
-        self.last_kin_move_time = next_move_time
+        self.last_kin_move_time = max(self.last_kin_move_time, next_move_time)
     def flush_step_generation(self):
         # Transition from "Flushed"/"Priming"/main state to "Flushed" state
         self.move_queue.flush()
