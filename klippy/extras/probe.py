@@ -170,7 +170,7 @@ class PrinterProbe:
             # Probe position
             pos = self._probe(speed)
             # Discard the first readings (probably at most one)
-            if discards <= samples_discard_first:
+            if discards < samples_discard_first:
                 gcmd.respond_info("Probe sample discarded")
                 discards += 1
             else:
@@ -179,10 +179,13 @@ class PrinterProbe:
               z_positions = [p[2] for p in positions]
               if max(z_positions) - min(z_positions) > samples_tolerance:
                   if retries >= samples_retries:
-                      raise gcmd.error("Probe samples exceed samples_tolerance")
-                  gcmd.respond_info("Probe samples exceed tolerance. Retrying...")
+                      raise gcmd.error(
+                                "Probe samples exceed samples_tolerance")
+                  gcmd.respond_info(
+                      "Probe samples exceed tolerance. Retrying...")
                   retries += 1
                   positions = []
+                  # Do not reset discards as they are done once per probe
             # Retract
             if len(positions) < sample_count:
                 self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
@@ -232,7 +235,7 @@ class PrinterProbe:
             # Probe position
             pos = self._probe(speed)
             # Discard the first readings (probably at most one)
-            if discards <= samples_discard_first:
+            if discards < samples_discard_first:
                 gcmd.respond_info("Probe sample discarded")
                 discards += 1
             else:
