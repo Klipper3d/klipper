@@ -28,6 +28,12 @@ def enter_bootloader(device):
 def translate_serial_to_tty(device):
     ttyname = os.path.realpath(device)
     if not os.path.exists('/dev/serial/by-path/'):
+        if os.path.basename(ttyname).startswith("tty."):
+            fname = os.path.dirname(ttyname) + "/cu." + os.path.basename(ttyname).split(".", 1)[1]
+            if os.path.exists(fname):
+                return ttyname, fname
+        elif os.path.basename(ttyname).startswith("cu."):
+            return ttyname, ttyname
         raise error("Unable to find serial 'by-path' folder")
     for fname in os.listdir('/dev/serial/by-path/'):
         fname = '/dev/serial/by-path/' + fname

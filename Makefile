@@ -18,8 +18,15 @@ LD=$(CROSS_PREFIX)ld
 OBJCOPY=$(CROSS_PREFIX)objcopy
 OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
-CPP=cpp
 PYTHON=python3
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+# cpp on MacOS forces a specific input directory, so directly use clang instead
+CPP=clang -E
+else
+CPP=cpp
+endif
 
 # Source files
 src-y =
@@ -65,7 +72,7 @@ $(OUT)%.o: %.c $(OUT)autoconf.h
 
 $(OUT)%.ld: %.lds.S $(OUT)autoconf.h
 	@echo "  Preprocessing $@"
-	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
+	$(Q)$(CPP) -I $(OUT) -P -MD -MT $@ $< -o $@
 
 $(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
@@ -118,13 +125,18 @@ menuconfig:
 ################ Generic rules
 
 # Make definitions
-.PHONY : all clean distclean olddefconfig menuconfig create-board-link FORCE
+.PHONY : all clean libclean distclean olddefconfig menuconfig create-board-link FORCE
 .DELETE_ON_ERROR:
 
 all: $(target-y)
 
 clean:
 	$(Q)rm -rf $(OUT)
+
+libclean:
+	$(Q)make -C lib/bossac/ clean
+	$(Q)make -C lib/rp2040_flash/ clean
+	$(Q)make -C lib/hidflash/ clean
 
 distclean: clean
 	$(Q)rm -f .config .config.old
