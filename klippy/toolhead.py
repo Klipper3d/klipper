@@ -341,8 +341,14 @@ class ToolHead:
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.move_queue.set_flush_time(self.buffer_time_high)
         self.idle_flush_print_time = 0.
-        flush_time = self.last_kin_move_time + self.kin_flush_delay
-        flush_time = max(flush_time, self.print_time - self.kin_flush_delay)
+        # Determine actual last "itersolve" flush time
+        lastf = self.print_time - self.kin_flush_delay
+        # Calculate flush time that includes kinematic scan windows
+        flush_time = max(lastf, self.last_kin_move_time + self.kin_flush_delay)
+        if flush_time > self.print_time:
+            # Flush in small time chunks
+            self._update_move_time(flush_time)
+        # Flush kinematic scan windows and step buffers
         self.force_flush_time = max(self.force_flush_time, flush_time)
         self._update_move_time(max(self.print_time, self.force_flush_time))
     def _flush_lookahead(self):
