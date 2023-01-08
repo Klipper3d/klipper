@@ -1,13 +1,14 @@
 // Code to setup clocks and gpio on stm32f1
 //
-// Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2022  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
-#include "board/usb_cdc.h" // usb_request_bootloader
+#include "board/misc.h" // bootloader_request
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
@@ -212,7 +213,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 
 
 /****************************************************************
- * USB bootloader
+ * Bootloader
  ****************************************************************/
 
 // Reboot into USB "HID" bootloader
@@ -239,10 +240,11 @@ usb_stm32duino_bootloader(void)
     NVIC_SystemReset();
 }
 
-// Handle USB reboot requests
+// Handle reboot requests
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
+    try_request_canboot();
     if (CONFIG_STM32_FLASH_START_800)
         usb_hid_bootloader();
     else if (CONFIG_STM32_FLASH_START_2000)

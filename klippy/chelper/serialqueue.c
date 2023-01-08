@@ -49,7 +49,7 @@ struct serialqueue {
     int receive_waiting;
     // Baud / clock tracking
     int receive_window;
-    double baud_adjust, idle_time;
+    double bittime_adjust, idle_time;
     struct clock_estimate ce;
     double last_receive_sent_time;
     // Retransmit support
@@ -136,6 +136,23 @@ kick_bg_thread(struct serialqueue *sq)
         report_errno("pipe write", ret);
 }
 
+// Minimum number of bits in a canbus message
+#define CANBUS_PACKET_BITS ((1 + 11 + 3 + 4) + (16 + 2 + 7 + 3))
+#define CANBUS_IFS_BITS 4
+
+// Determine minimum time needed to transmit a given number of bytes
+static double
+calculate_bittime(struct serialqueue *sq, uint32_t bytes)
+{
+    if (sq->serial_fd_type == SQT_CAN) {
+        uint32_t pkts = DIV_ROUND_UP(bytes, 8);
+        uint32_t bits = bytes * 8 + pkts * CANBUS_PACKET_BITS - CANBUS_IFS_BITS;
+        return sq->bittime_adjust * bits;
+    } else {
+        return sq->bittime_adjust * bytes;
+    }
+}
+
 // Update internal state when the receive sequence increases
 static void
 update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
@@ -192,7 +209,7 @@ update_receive_seq(struct serialqueue *sq, double eventtime, uint64_t rseq)
     } else {
         struct queue_message *sent = list_first_entry(
             &sq->sent_queue, struct queue_message, node);
-        double nr = eventtime + sq->rto + sent->len * sq->baud_adjust;
+        double nr = eventtime + sq->rto + calculate_bittime(sq, sent->len);
         pollreactor_update_timer(sq->pr, SQPT_RETRANSMIT, nr);
     }
 }
@@ -251,7 +268,7 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
         qm->sent_time = (rseq > sq->retransmit_seq
                          ? sq->last_receive_sent_time : 0.);
         qm->receive_time = get_monotonic(); // must be time post read()
-        qm->receive_time -= sq->baud_adjust * len;
+        qm->receive_time -= calculate_bittime(sq, len);
         list_add_tail(&qm->node, &sq->receive_queue);
         must_wake = 1;
     }
@@ -407,8 +424,8 @@ retransmit_event(struct serialqueue *sq, double eventtime)
     }
     sq->retransmit_seq = sq->send_seq;
     sq->rtt_sample_seq = 0;
-    sq->idle_time = eventtime + buflen * sq->baud_adjust;
-    double waketime = eventtime + first_buflen * sq->baud_adjust + sq->rto;
+    sq->idle_time = eventtime + calculate_bittime(sq, buflen);
+    double waketime = eventtime + sq->rto + calculate_bittime(sq, first_buflen);
 
     pthread_mutex_unlock(&sq->lock);
     return waketime;
@@ -416,7 +433,8 @@ retransmit_event(struct serialqueue *sq, double eventtime)
 
 // Construct a block of data to be sent to the serial port
 static int
-build_and_send_command(struct serialqueue *sq, uint8_t *buf, double eventtime)
+build_and_send_command(struct serialqueue *sq, uint8_t *buf, int pending
+                       , double eventtime)
 {
     int len = MESSAGE_HEADER_SIZE;
     while (sq->ready_bytes) {
@@ -463,17 +481,15 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, double eventtime)
     buf[len - MESSAGE_TRAILER_SYNC] = MESSAGE_SYNC;
 
     // Store message block
-    if (eventtime > sq->idle_time)
-        sq->idle_time = eventtime;
-    sq->idle_time += len * sq->baud_adjust;
+    double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
+    idletime += calculate_bittime(sq, pending + len);
     struct queue_message *out = message_alloc();
     memcpy(out->msg, buf, len);
     out->len = len;
     out->sent_time = eventtime;
-    out->receive_time = sq->idle_time;
+    out->receive_time = idletime;
     if (list_empty(&sq->sent_queue))
-        pollreactor_update_timer(sq->pr, SQPT_RETRANSMIT
-                                 , sq->idle_time + sq->rto);
+        pollreactor_update_timer(sq->pr, SQPT_RETRANSMIT, idletime + sq->rto);
     if (!sq->rtt_sample_seq)
         sq->rtt_sample_seq = sq->send_seq;
     sq->send_seq++;
@@ -484,7 +500,7 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, double eventtime)
 
 // Determine the time the next serial data should be sent
 static double
-check_send_command(struct serialqueue *sq, double eventtime)
+check_send_command(struct serialqueue *sq, int pending, double eventtime)
 {
     if (sq->send_seq - sq->receive_seq >= MAX_PENDING_BLOCKS
         && sq->receive_seq != (uint64_t)-1)
@@ -501,7 +517,7 @@ check_send_command(struct serialqueue *sq, double eventtime)
 
     // Check for stalled messages now ready
     double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
-    idletime += MESSAGE_MIN * sq->baud_adjust;
+    idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
     uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
     uint64_t min_stalled_clock = MAX_CLOCK, min_ready_clock = MAX_CLOCK;
     struct command_queue *cq;
@@ -525,9 +541,10 @@ check_send_command(struct serialqueue *sq, double eventtime)
             struct queue_message *qm = list_first_entry(
                 &cq->ready_queue, struct queue_message, node);
             uint64_t req_clock = qm->req_clock;
+            double bgtime = pending ? idletime : sq->idle_time;
             double bgoffset = MIN_REQTIME_DELTA + MIN_BACKGROUND_DELTA;
             if (req_clock == BACKGROUND_PRIORITY_CLOCK)
-                req_clock = clock_from_time(&sq->ce, sq->idle_time + bgoffset);
+                req_clock = clock_from_time(&sq->ce, bgtime + bgoffset);
             if (req_clock < min_ready_clock)
                 min_ready_clock = req_clock;
         }
@@ -561,18 +578,21 @@ command_event(struct serialqueue *sq, double eventtime)
     int buflen = 0;
     double waketime;
     for (;;) {
-        waketime = check_send_command(sq, eventtime);
+        waketime = check_send_command(sq, buflen, eventtime);
         if (waketime != PR_NOW || buflen + MESSAGE_MAX > sizeof(buf)) {
             if (buflen) {
                 // Write message blocks
                 do_write(sq, buf, buflen);
                 sq->bytes_write += buflen;
+                double idletime = (eventtime > sq->idle_time
+                                   ? eventtime : sq->idle_time);
+                sq->idle_time = idletime + calculate_bittime(sq, buflen);
                 buflen = 0;
             }
             if (waketime != PR_NOW)
                 break;
         }
-        buflen += build_and_send_command(sq, &buf[buflen], eventtime);
+        buflen += build_and_send_command(sq, &buf[buflen], buflen, eventtime);
     }
     pthread_mutex_unlock(&sq->lock);
     return waketime;
@@ -847,10 +867,15 @@ exit:
 }
 
 void __visible
-serialqueue_set_baud_adjust(struct serialqueue *sq, double baud_adjust)
+serialqueue_set_wire_frequency(struct serialqueue *sq, double frequency)
 {
     pthread_mutex_lock(&sq->lock);
-    sq->baud_adjust = baud_adjust;
+    if (sq->serial_fd_type == SQT_CAN) {
+        sq->bittime_adjust = 1. / frequency;
+    } else {
+        // An 8N1 serial line is 10 bits per byte (1 start, 8 data, 1 stop)
+        sq->bittime_adjust = 10. / frequency;
+    }
     pthread_mutex_unlock(&sq->lock);
 }
 

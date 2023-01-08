@@ -58,9 +58,12 @@ functions are declared using the DECL_COMMAND() macro (see the
 
 Task, init, and command functions always run with interrupts enabled
 (however, they can temporarily disable interrupts if needed). These
-functions should never pause, delay, or do any work that lasts more
-than a few micro-seconds. These functions schedule work at specific
-times by scheduling timers.
+functions should avoid long pauses, delays, or do work that lasts a
+significant time. (Long delays in these "task" functions result in
+scheduling jitter for other "tasks" - delays over 100us may become
+noticeable, delays over 500us may result in command retransmissions,
+delays over 100ms may result in watchdog reboots.) These functions
+schedule work at specific times by scheduling timers.
 
 Timer functions are scheduled by calling sched_add_timer() (located in
 **src/sched.c**). The scheduler code will arrange for the given

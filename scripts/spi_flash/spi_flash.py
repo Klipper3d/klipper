@@ -95,7 +95,7 @@ def check_need_convert(board_name, config):
 
 SPI_OID = 0
 SPI_MODE = 0
-SD_SPI_SPEED = 4000000
+SD_SPI_SPEED = 400000
 # MCU Command Constants
 RESET_CMD = "reset"
 GET_CFG_CMD = "get_config"
@@ -104,7 +104,10 @@ GET_CFG_RESPONSES = ( # Supported responses (sorted by newer revisions first).
     "config is_config=%c crc=%u move_count=%hu is_shutdown=%c"  # Original
 )
 ALLOC_OIDS_CMD = "allocate_oids count=%d"
-SPI_CFG_CMD = "config_spi oid=%d pin=%s"
+SPI_CFG_CMDS = (
+    "config_spi oid=%d pin=%s cs_active_high=%d",   # 7793784
+    "config_spi oid=%d pin=%s"                      # Original
+)
 SPI_BUS_CMD = "spi_set_bus oid=%d spi_bus=%s mode=%d rate=%d"
 SW_SPI_BUS_CMD = "spi_set_software_bus oid=%d " \
     "miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
@@ -114,6 +117,9 @@ SPI_XFER_RESPONSE = "spi_transfer_response oid=%c response=%*s"
 FINALIZE_CFG_CMD = "finalize_config crc=%d"
 
 class SPIFlashError(Exception):
+    pass
+
+class MCUConfigError(SPIFlashError):
     pass
 
 class SPIDirect:
@@ -794,6 +800,7 @@ class MCUConnection:
         self.connected = False
         self.enumerations = {}
         self.raw_dictionary = None
+        self.proto_error = None
 
     def connect(self):
         output("Connecting to MCU..")
@@ -821,6 +828,7 @@ class MCUConnection:
                 % (build_mcu_type, mcu_type))
         self.enumerations = msgparser.get_enumerations()
         self.raw_dictionary = msgparser.get_raw_data_dictionary()
+        self.proto_error = msgparser.error
 
     def _do_serial_connect(self, eventtime):
         endtime = eventtime + 60.
@@ -857,8 +865,7 @@ class MCUConnection:
         self._serial.disconnect()
         self.connected = False
 
-    def check_need_restart(self):
-        output("Checking Current MCU Configuration...")
+    def get_mcu_config(self):
         # Iterate through backwards compatible response strings
         for response in GET_CFG_RESPONSES:
             try:
@@ -870,7 +877,11 @@ class MCUConnection:
                 if response == GET_CFG_RESPONSES[-1]:
                     raise err
                 output("Trying fallback...")
-        params = get_cfg_cmd.send()
+        return get_cfg_cmd.send()
+
+    def check_need_restart(self):
+        output("Checking Current MCU Configuration...")
+        params = self.get_mcu_config()
         output_line("Done")
         if params['is_config'] or params['is_shutdown']:
             output_line("MCU needs restart: is_config=%d, is_shutdown=%d"
@@ -903,18 +914,30 @@ class MCUConnection:
             bus_cmd = SPI_BUS_CMD % (SPI_OID, bus, SPI_MODE, SD_SPI_SPEED)
         if cs_pin not in pin_enums:
             raise SPIFlashError("Invalid CS Pin: %s" % (cs_pin,))
-        cfg_cmds = [
-            ALLOC_OIDS_CMD % (1),
-            SPI_CFG_CMD % (SPI_OID, cs_pin),
-            bus_cmd,
+        cfg_cmds = [ALLOC_OIDS_CMD % (1,), bus_cmd]
+        self._serial.send(cfg_cmds[0])
+        spi_cfg_cmds = [
+            SPI_CFG_CMDS[0] % (SPI_OID, cs_pin, False),
+            SPI_CFG_CMDS[1] % (SPI_OID, cs_pin),
         ]
+        for cmd in spi_cfg_cmds:
+            try:
+                self._serial.send(cmd)
+            except self.proto_error:
+                if cmd == spi_cfg_cmds[-1]:
+                    raise
+            else:
+                cfg_cmds.insert(1, cmd)
+                break
+        self._serial.send(bus_cmd)
         config_crc = zlib.crc32('\n'.join(cfg_cmds).encode()) & 0xffffffff
-        cfg_cmds.append(FINALIZE_CFG_CMD % (config_crc,))
-        for cmd in cfg_cmds:
-            self._serial.send(cmd)
+        self._serial.send(FINALIZE_CFG_CMD % (config_crc,))
+        config = self.get_mcu_config()
+        if not config["is_config"] or config["is_shutdown"]:
+            raise MCUConfigError("Failed to configure MCU")
+        printfunc("Initializing SD Card and Mounting file system...")
         self.fatfs = FatFS(self._serial)
         self.reactor.pause(self.reactor.monotonic() + .5)
-        printfunc("Initializing SD Card and Mounting file system...")
         try:
             self.fatfs.mount(printfunc)
         except OSError:
@@ -1084,7 +1107,14 @@ class SPIFlash:
         if not self.mcu_conn.connected:
             self.mcu_conn.connect()
         self.old_dictionary = self.mcu_conn.raw_dictionary
-        self.mcu_conn.configure_mcu(printfunc=output_line)
+        try:
+            self.mcu_conn.configure_mcu(printfunc=output_line)
+        except MCUConfigError:
+            output_line("MCU configuration failed, attempting restart")
+            self.need_upload = True
+            self.mcu_conn.reset()
+            self.task_complete = True
+            return
         self.firmware_checksum = self.mcu_conn.sdcard_upload()
         self.mcu_conn.reset()
         self.task_complete = True

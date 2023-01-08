@@ -1,0 +1,5 @@
+# Tests for various temperature sensors
+DICTIONARY linuxprocess.dict
+CONFIG linuxtest.cfg
+
+G4 P1000

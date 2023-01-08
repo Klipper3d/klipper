@@ -39,7 +39,8 @@ def resolve_bus_name(mcu, param, bus):
 
 # Helper code for working with devices connected to an MCU via an SPI bus
 class MCU_SPI:
-    def __init__(self, mcu, bus, pin, mode, speed, sw_pins=None):
+    def __init__(self, mcu, bus, pin, mode, speed, sw_pins=None,
+                 cs_active_high=False):
         self.mcu = mcu
         self.bus = bus
         # Config SPI object (set all CS pins high before spi_set_bus commands)
@@ -47,7 +48,8 @@ class MCU_SPI:
         if pin is None:
             mcu.add_config_cmd("config_spi_without_cs oid=%d" % (self.oid,))
         else:
-            mcu.add_config_cmd("config_spi oid=%d pin=%s" % (self.oid, pin))
+            mcu.add_config_cmd("config_spi oid=%d pin=%s cs_active_high=%d"
+                               % (self.oid, pin, cs_active_high))
         # Generate SPI bus config message
         if sw_pins is not None:
             self.config_fmt = (
@@ -103,7 +105,8 @@ class MCU_SPI:
 
 # Helper to setup an spi bus from settings in a config section
 def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
-                        default_speed=100000, share_type=None):
+                        default_speed=100000, share_type=None,
+                        cs_active_high=False):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     cs_pin = config.get(pin_option)
@@ -130,7 +133,7 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
         bus = config.get('spi_bus', None)
         sw_pins = None
     # Create MCU_SPI object
-    return MCU_SPI(mcu, bus, pin, mode, speed, sw_pins)
+    return MCU_SPI(mcu, bus, pin, mode, speed, sw_pins, cs_active_high)
 
 
 ######################################################################

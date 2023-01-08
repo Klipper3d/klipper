@@ -6,6 +6,7 @@
 
 #include <string.h> // memmove
 #include "autoconf.h" // CONFIG_USB_VENDOR_ID
+#include "board/misc.h" // console_sendf
 #include "board/pgm.h" // PROGMEM
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "byteorder.h" // cpu_to_le16
@@ -447,7 +448,7 @@ check_reboot(void)
 {
     if (line_coding.dwDTERate == 1200 && !(line_control_state & 0x01))
         // A baud of 1200 is an Arduino style request to enter the bootloader
-        usb_request_bootloader();
+        bootloader_request();
 }
 
 static void

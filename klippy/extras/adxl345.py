@@ -30,7 +30,7 @@ Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
 # Helper class to obtain measurements
-class ADXL345QueryHelper:
+class AccelQueryHelper:
     def __init__(self, printer, cconn):
         self.printer = printer
         self.cconn = cconn
@@ -101,15 +101,18 @@ class ADXL345QueryHelper:
         write_proc.start()
 
 # Helper class for G-Code commands
-class ADXLCommandHelper:
+class AccelCommandHelper:
     def __init__(self, config, chip):
         self.printer = config.get_printer()
         self.chip = chip
         self.bg_client = None
-        self.name = config.get_name().split()[-1]
+        name_parts = config.get_name().split()
+        self.base_name = name_parts[0]
+        self.name = name_parts[-1]
         self.register_commands(self.name)
-        if self.name == "adxl345":
-            self.register_commands(None)
+        if len(name_parts) == 1:
+            if self.name == "adxl345" or not config.has_section("adxl345"):
+                self.register_commands(None)
     def register_commands(self, name):
         # Register commands
         gcode = self.printer.lookup_object('gcode')
@@ -130,20 +133,20 @@ class ADXLCommandHelper:
         if self.bg_client is None:
             # Start measurements
             self.bg_client = self.chip.start_internal_client()
-            gcmd.respond_info("adxl345 measurements started")
+            gcmd.respond_info("accelerometer measurements started")
             return
         # End measurements
         name = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not name.replace('-', '').replace('_', '').isalnum():
-            raise gcmd.error("Invalid adxl345 NAME parameter")
+            raise gcmd.error("Invalid NAME parameter")
         bg_client = self.bg_client
         self.bg_client = None
         bg_client.finish_measurements()
         # Write data to file
-        if self.name == "adxl345":
-            filename = "/tmp/adxl345-%s.csv" % (name,)
+        if self.base_name == self.name:
+            filename = "/tmp/%s-%s.csv" % (self.base_name, name)
         else:
-            filename = "/tmp/adxl345-%s-%s.csv" % (self.name, name,)
+            filename = "/tmp/%s-%s-%s.csv" % (self.base_name, self.name, name)
         bg_client.write_to_file(filename)
         gcmd.respond_info("Writing raw accelerometer data to %s file"
                           % (filename,))
@@ -154,18 +157,18 @@ class ADXLCommandHelper:
         aclient.finish_measurements()
         values = aclient.get_samples()
         if not values:
-            raise gcmd.error("No adxl345 measurements found")
+            raise gcmd.error("No accelerometer measurements found")
         _, accel_x, accel_y, accel_z = values[-1]
-        gcmd.respond_info("adxl345 values (x, y, z): %.6f, %.6f, %.6f"
+        gcmd.respond_info("accelerometer values (x, y, z): %.6f, %.6f, %.6f"
                           % (accel_x, accel_y, accel_z))
-    cmd_ACCELEROMETER_DEBUG_READ_help = "Query adxl345 register (for debugging)"
+    cmd_ACCELEROMETER_DEBUG_READ_help = "Query register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
-        reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
-        gcmd.respond_info("ADXL345 REG[0x%x] = 0x%x" % (reg, val))
-    cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set adxl345 register (for debugging)"
+        gcmd.respond_info("Accelerometer REG[0x%x] = 0x%x" % (reg, val))
+    cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
-        reg = gcmd.get("REG", minval=29, maxval=57, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
 
@@ -226,7 +229,7 @@ SAMPLES_PER_BLOCK = 10
 class ADXL345:
     def __init__(self, config):
         self.printer = config.get_printer()
-        ADXLCommandHelper(config, self)
+        AccelCommandHelper(config, self)
         self.query_rate = 0
         am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
               '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
@@ -432,7 +435,7 @@ class ADXL345:
         web_request.send({'header': hdr})
     def start_internal_client(self):
         cconn = self.api_dump.add_internal_client()
-        return ADXL345QueryHelper(self.printer, cconn)
+        return AccelQueryHelper(self.printer, cconn)
 
 def load_config(config):
     return ADXL345(config)

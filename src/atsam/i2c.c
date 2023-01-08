@@ -11,35 +11,62 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
-// I2C pin definitions
-DECL_ENUMERATION_RANGE("i2c_bus", "twi0", 0, 2);
-#if CONFIG_MACH_SAM3X
-#define TWI0_SCL_GPIO GPIO('A', 18)
-#define TWI0_SDA_GPIO GPIO('A', 17)
-#define TWI1_SCL_GPIO GPIO('B', 13)
-#define TWI1_SDA_GPIO GPIO('B', 12)
-DECL_CONSTANT_STR("BUS_PINS_twi0", "PA18,PA17");
-DECL_CONSTANT_STR("BUS_PINS_twi1", "PB13,PB12");
-#elif CONFIG_MACH_SAM4
-#define TWI0_SCL_GPIO GPIO('A', 4)
-#define TWI0_SDA_GPIO GPIO('A', 3)
-#define TWI1_SCL_GPIO GPIO('B', 5)
-#define TWI1_SDA_GPIO GPIO('B', 4)
-DECL_CONSTANT_STR("BUS_PINS_twi0", "PA4,PA3");
-DECL_CONSTANT_STR("BUS_PINS_twi1", "PB5,PB4");
+#if CONFIG_MACH_SAME70
+#include "same70_i2c.h" // Fixes for upstream header changes
 #endif
 
+struct twi_info {
+    void *dev;
+    uint32_t dev_id;
+    uint8_t scl_pin, sda_pin, periph;
+};
+
+// I2C pin definitions
+#if CONFIG_MACH_SAM3X
+DECL_ENUMERATION_RANGE("i2c_bus", "twi0", 0, 2);
+DECL_CONSTANT_STR("BUS_PINS_twi0", "PA18,PA17");
+DECL_CONSTANT_STR("BUS_PINS_twi1", "PB13,PB12");
+#define PRD_CALC_NUM 4
+#elif CONFIG_MACH_SAM4
+DECL_ENUMERATION_RANGE("i2c_bus", "twi0", 0, 2);
+DECL_CONSTANT_STR("BUS_PINS_twi0", "PA4,PA3");
+DECL_CONSTANT_STR("BUS_PINS_twi1", "PB5,PB4");
+#define PRD_CALC_NUM 4
+#elif CONFIG_MACH_SAME70
+DECL_ENUMERATION_RANGE("i2c_bus", "twihs0", 0,3);
+DECL_CONSTANT_STR("BUS_PINS_twihs0", "PA4,PA3");
+DECL_CONSTANT_STR("BUS_PINS_twihs1", "PB5,PB4");
+DECL_CONSTANT_STR("BUS_PINS_twihs2", "PD28,PD27");
+#define PRD_CALC_NUM 3
+#endif
+
+static const struct twi_info twi_bus[] = {
+#if CONFIG_MACH_SAM3X
+    { TWI0, ID_TWI0, GPIO('A', 18), GPIO('A', 17), 'A'},
+    { TWI1, ID_TWI1, GPIO('B', 13), GPIO('B', 12), 'A'},
+#elif CONFIG_MACH_SAM4
+    { TWI0, ID_TWI0, GPIO('A', 4), GPIO('A', 3), 'A'},
+    { TWI1, ID_TWI1, GPIO('B', 5), GPIO('B', 4), 'A'},
+#elif CONFIG_MACH_SAME70
+    { TWIHS0, ID_TWIHS0, GPIO('A', 4), GPIO('A', 3), 'A'},
+    { TWIHS1, ID_TWIHS1, GPIO('B', 5), GPIO('B', 4), 'A'},
+    { TWIHS2, ID_TWIHS2, GPIO('D', 28), GPIO('D', 27), 'C'},
+#endif
+};
+
 static void
-i2c_init(Twi *p_twi, uint32_t rate)
+init_pins(uint32_t bus)
 {
-    enable_pclock(p_twi == TWI0 ? ID_TWI0 : ID_TWI1);
-    if (p_twi == TWI0) {
-        gpio_peripheral(TWI0_SCL_GPIO, 'A', 1);
-        gpio_peripheral(TWI0_SDA_GPIO, 'A', 1);
-    } else {
-        gpio_peripheral(TWI1_SCL_GPIO, 'A', 1);
-        gpio_peripheral(TWI1_SDA_GPIO, 'A', 1);
-    }
+    const struct twi_info *si = &twi_bus[bus];
+    gpio_peripheral(si->scl_pin, si->periph, 1);
+    gpio_peripheral(si->sda_pin, si->periph, 1);
+    enable_pclock(si->dev_id);
+}
+
+static void
+i2c_init(uint32_t bus, uint32_t rate)
+{
+    Twi *p_twi = twi_bus[bus].dev;
     p_twi->TWI_IDR = 0xFFFFFFFF;
     (void)p_twi->TWI_SR;
     p_twi->TWI_CR = TWI_CR_SWRST;
@@ -48,9 +75,9 @@ i2c_init(Twi *p_twi, uint32_t rate)
     p_twi->TWI_CR = TWI_CR_SVDIS;
     p_twi->TWI_CR = TWI_CR_MSEN;
 
-    uint32_t pclk = get_pclock_frequency(p_twi == TWI0 ? ID_TWI0 : ID_TWI1);
+    uint32_t pclk = get_pclock_frequency(twi_bus[bus].dev_id);
     uint32_t cldiv = 0, chdiv = 0, ckdiv = 0;
-    cldiv = pclk / ((rate > 384000 ? 384000 : rate) * 2) - 4;
+    cldiv = pclk / ((rate > 384000 ? 384000 : rate) * 2) - PRD_CALC_NUM;
 
     while ((cldiv > 255) && (ckdiv < 7)) {
         ckdiv++;
@@ -58,7 +85,7 @@ i2c_init(Twi *p_twi, uint32_t rate)
     }
 
     if (rate > 348000) {
-        chdiv = pclk / ((2 * rate - 384000) * 2) - 4;
+        chdiv = pclk / ((2 * rate - 384000) * 2) - PRD_CALC_NUM;
         while ((chdiv > 255) && (ckdiv < 7)) {
             ckdiv++;
             chdiv /= 2;
@@ -91,10 +118,11 @@ addr_to_u32(uint8_t addr_len, uint8_t *addr)
 struct i2c_config
 i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 {
-    if (bus > 1 || rate > 400000)
+    if (bus >= ARRAY_SIZE(twi_bus)  || rate > 400000)
         shutdown("Invalid i2c_setup parameters!");
-    Twi *p_twi = (bus == 0) ? TWI0 : TWI1;
-    i2c_init(p_twi, rate);
+    Twi *p_twi = twi_bus[bus].dev;
+    init_pins(bus);
+    i2c_init(bus, rate);
     return (struct i2c_config){ .twi=p_twi, .addr=addr};
 }
 

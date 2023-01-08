@@ -134,10 +134,6 @@ config FLASH_START
     default 0x2000 if FLASH_START_2000
     default 0x0000
 
-config USBSERIAL
-    bool
-config SERIAL
-    bool
 choice
     prompt "Communication interface"
     config ATSAMD_USB
