@@ -30,6 +30,22 @@ SCALE_Z  = 0.003906 * FREEFALL_ACCEL # 1 / 256 (at 3.3V) mg/LSB
 Accel_Measurement = collections.namedtuple(
     'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
 
+# To find transformation values these resources can be used:
+# - https://www.andre-gaschler.com/rotationconverter/
+# - https://ninja-calc.mbedded.ninja/calculators/mathematics/geometry/3d-rotations
+# - https://danceswithcode.net/engineeringnotes/rotations_in_3d/demo3D/rotations_in_3d_tool.html
+
+# Simple (aka slow) no-deps implementation.
+# Could be replaced with `np.matmul(np.array(transform_float_list).reshape(3,3),input_data)`.
+def mat33_vec3_mul(m,v):
+    r = [0,0,0]
+
+    for i in range(3):
+        for j in range(3):
+            r[i] += v[j]*m[i*3+j]
+
+    return r
+
 # Helper class to obtain measurements
 class AccelQueryHelper:
     def __init__(self, printer, cconn):
@@ -238,6 +254,8 @@ class ADXL345:
         if any([a not in am for a in axes_map]):
             raise config.error("Invalid adxl345 axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
+        axes_transform = config.getfloatlist('axes_transform',None,count=9)
+        self.axes_transform = axes_transform
         self.data_rate = config.getint('rate', 3200)
         if self.data_rate not in QUERY_RATES:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
@@ -301,6 +319,7 @@ class ADXL345:
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
+        axes_transform = self.axes_transform
         last_sequence = self.last_sequence
         time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
         # Process every message in raw_samples
@@ -323,9 +342,14 @@ class ADXL345:
                 rz = ((zlow | ((xzhigh & 0xe0) << 3) | ((yzhigh & 0xe0) << 6))
                       - ((yzhigh & 0x40) << 7))
                 raw_xyz = (rx, ry, rz)
+
                 x = round(raw_xyz[x_pos] * x_scale, 6)
                 y = round(raw_xyz[y_pos] * y_scale, 6)
                 z = round(raw_xyz[z_pos] * z_scale, 6)
+
+                if axes_transform:
+                    (x,y,z) = mat33_vec3_mul(axes_transform,(x,y,z))
+
                 ptime = round(time_base + (msg_cdiff + i) * inv_freq, 6)
                 samples[count] = (ptime, x, y, z)
                 count += 1
