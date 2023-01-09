@@ -19,7 +19,7 @@ DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PD2", GPIO('D', 2), 1);
-DECL_ENUMERATION_RANGE("pin", "PH2", GPIO('H', 2), 1);
+DECL_ENUMERATION_RANGE("pin", "PH2", PortH * 16 + 2, 1);    // H: special case
 
 
 // HC32F460 ports are in one M4_PORT - offset by 0x10
