@@ -8,3 +8,4 @@ greenlet==1.1.2
 Jinja2==2.11.3
 python-can==3.3.4
 markupsafe==1.1.1
+git+https://github.com/ibash/Geometry3D@377da7a#egg=Geometry3D
