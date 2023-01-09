@@ -62,6 +62,7 @@ height.
 The pressure_advance value can then be calculated as `pressure_advance
 = <start> + <measured_height> * <factor>`. (For example, `0 + 12.90 *
 .020` would be `.258`.)
+REMEMBER THAT IF YOU HAVE DIRECT DRIVE TO CHANGE FACTOR TO 0.005
 
 It is possible to choose custom settings for START and FACTOR if that
 helps identify the best pressure advance setting. When doing this, be
