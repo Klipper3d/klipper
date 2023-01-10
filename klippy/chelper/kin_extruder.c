@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <math.h> // tanh
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
 #include <string.h> // memset
@@ -111,11 +112,58 @@ pa_range_integrate(struct move *m, int axis, double move_time, double hst
     }
 }
 
+struct pressure_advance_params {
+    union {
+        struct {
+            double pressure_advance;
+        };
+        struct {
+            double linear_advance, linear_offset, linearization_velocity;
+        };
+        double params[3];
+    };
+};
+
+typedef double (*pressure_advance_func)(
+        double, double, struct pressure_advance_params *pa_params);
+
 struct extruder_stepper {
     struct stepper_kinematics sk;
-    double pressure_advance, time_offset;
-    double half_smooth_time, inv_half_smooth_time2;
+    struct pressure_advance_params pa_params;
+    pressure_advance_func pa_func;
+    double time_offset, half_smooth_time, inv_half_smooth_time2;
 };
+
+double __visible
+pressure_advance_linear_model_func(double position, double pa_velocity
+                                   , struct pressure_advance_params *pa_params)
+{
+    return position + pa_velocity * pa_params->pressure_advance;
+}
+
+double __visible
+pressure_advance_tanh_model_func(double position, double pa_velocity
+                                 , struct pressure_advance_params *pa_params)
+{
+    position += pa_params->linear_advance * pa_velocity;
+    if (pa_params->linear_offset) {
+        double rel_velocity = pa_velocity / pa_params->linearization_velocity;
+        position += pa_params->linear_offset * tanh(rel_velocity);
+    }
+    return position;
+}
+
+double __visible
+pressure_advance_recipr_model_func(double position, double pa_velocity
+                                   , struct pressure_advance_params *pa_params)
+{
+    position += pa_params->linear_advance * pa_velocity;
+    if (pa_params->linear_offset) {
+        double rel_velocity = pa_velocity / pa_params->linearization_velocity;
+        position += pa_params->linear_offset * (1. - 1. / (1. + rel_velocity));
+    }
+    return position;
+}
 
 static double
 extruder_calc_position(struct stepper_kinematics *sk, struct move *m
@@ -148,11 +196,11 @@ extruder_calc_position(struct stepper_kinematics *sk, struct move *m
         e_pos.axis[i] += m->start_pos.axis[i];
     }
     double position = e_pos.x + e_pos.y + e_pos.z;
+    if (!hst)
+        return position;
     double pa_velocity = pa_vel.x + pa_vel.y + pa_vel.z;
-    if (hst) {
-        position += es->pressure_advance * pa_velocity;
-    }
-    return position;
+    if (pa_velocity < 0.) pa_velocity = 0.;
+    return es->pa_func(position, pa_velocity, &es->pa_params);
 }
 
 static void
@@ -169,20 +217,30 @@ extruder_note_generation_time(struct extruder_stepper *es)
 
 void __visible
 extruder_set_pressure_advance(struct stepper_kinematics *sk
-                              , double pressure_advance, double smooth_time
-                              , double time_offset)
+                              , int n_params, double params[]
+                              , double smooth_time, double time_offset)
 {
     struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
     double hst = smooth_time * .5;
     es->half_smooth_time = hst;
     es->time_offset = time_offset;
     extruder_note_generation_time(es);
-    if (! hst) {
-        es->pressure_advance = 0.;
+    if (! hst)
         return;
-    }
     es->inv_half_smooth_time2 = 1. / (hst * hst);
-    es->pressure_advance = pressure_advance;
+    memset(&es->pa_params, 0, sizeof(es->pa_params));
+    if (n_params < 0 || n_params > ARRAY_SIZE(es->pa_params.params))
+        return;
+    memcpy(&es->pa_params, params, n_params * sizeof(params[0]));
+}
+
+void __visible
+extruder_set_pressure_advance_model_func(struct stepper_kinematics *sk
+                                         , pressure_advance_func func)
+{
+    struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
+    memset(&es->pa_params, 0, sizeof(es->pa_params));
+    es->pa_func = func;
 }
 
 struct stepper_kinematics * __visible
@@ -191,6 +249,7 @@ extruder_stepper_alloc(void)
     struct extruder_stepper *es = malloc(sizeof(*es));
     memset(es, 0, sizeof(*es));
     es->sk.calc_position_cb = extruder_calc_position;
+    es->pa_func = pressure_advance_tanh_model_func;
     es->sk.active_flags = AF_X | AF_Y | AF_Z;
     return &es->sk;
 }
