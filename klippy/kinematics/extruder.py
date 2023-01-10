@@ -6,13 +6,113 @@
 import math, logging
 import stepper, chelper
 
+class PALinearModel:
+    name = 'linear'
+    def __init__(self, config=None, other=None):
+        self.pressure_advance = 0.
+        if config:
+            self.pressure_advance = config.getfloat(
+                    'pressure_advance', self.pressure_advance, minval=0.)
+        elif other:
+            self.pressure_advance = other.pressure_advance
+    def get_from_gcmd(self, gcmd):
+        new_model = PALinearModel(config=None, other=self)
+        new_model.pressure_advance = gcmd.get_float(
+                'ADVANCE', self.pressure_advance, minval=0.)
+        return new_model
+    def enabled(self):
+        return self.pressure_advance > 0.
+    def get_pa_params(self):
+        return (self.pressure_advance,)
+    def get_status(self, eventtime):
+        return {'pressure_advance': self.pressure_advance}
+    def get_msg(self):
+        return 'pressure_advance: %.6f' % (self.pressure_advance,)
+    def get_func(self):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.pressure_advance_linear_model_func
+
+class PANonLinearModel:
+    def __init__(self, config=None, other=None):
+        self.linear_advance = 0.
+        self.linear_offset = 0.
+        self.linearization_velocity = 0.
+        if config:
+            self.linear_advance = config.getfloat('linear_advance',
+                                                  0., minval=0.)
+            self.linear_offset = config.getfloat('linear_offset',
+                                                  0., minval=0.)
+            if self.linear_offset:
+                self.linearization_velocity = config.getfloat(
+                        'linearization_velocity', above=0.)
+            else:
+                self.linearization_velocity = config.getfloat(
+                        'linearization_velocity', 0., minval=0.)
+        elif other:
+            self.linear_advance = other.linear_advance
+            self.linear_offset = other.linear_offset
+            self.linearization_velocity = other.linearization_velocity
+    def get_from_gcmd(self, gcmd):
+        new_model = self.__class__(config=None, other=self)
+        new_model.linear_advance = gcmd.get_float(
+                'ADVANCE', self.linear_advance, minval=0.)
+        new_model.linear_offset = gcmd.get_float(
+                'OFFSET', self.linear_offset, minval=0.)
+        new_model.linearization_velocity = gcmd.get_float(
+                'VELOCITY', self.linearization_velocity)
+        if new_model.linear_offset and new_model.linearization_velocity <= 0.:
+            raise gcmd.error('VELOCITY must be set to a positive value '
+                             'when OFFSET is non-zero')
+        return new_model
+    def enabled(self):
+        return self.linear_advance > 0. or self.linear_offset > 0.
+    def get_pa_params(self):
+        # The order must match the order of parameters in the
+        # pressure_advance_params struct in kin_extruder.c
+        return (self.linear_advance, self.linear_offset,
+                self.linearization_velocity)
+    def get_status(self, eventtime):
+        return {'linear_advance': self.linear_advance,
+                'linear_offset': self.linear_offset,
+                'linearization_velocity': self.linearization_velocity}
+    def get_msg(self):
+        return ('linear_advance: %.6f\n'
+                'linear_offset: %.6f\n'
+                'linearization_velocity: %.6f' % (
+                    self.linear_advance,
+                    self.linear_offset,
+                    self.linearization_velocity))
+    def get_func(self):
+        return None
+
+class PATanhModel(PANonLinearModel):
+    name = 'tanh'
+    def __init__(self, config=None, other=None):
+        PANonLinearModel.__init__(self, config, other)
+    def get_func(self):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.pressure_advance_tanh_model_func
+
+class PAReciprModel(PANonLinearModel):
+    name = 'recipr'
+    def __init__(self, config=None, other=None):
+        PANonLinearModel.__init__(self, config, other)
+    def get_func(self):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.pressure_advance_recipr_model_func
+
 class ExtruderStepper:
+    pa_models = {PALinearModel.name: PALinearModel,
+                 PATanhModel.name: PATanhModel,
+                 PAReciprModel.name: PAReciprModel}
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
-        self.pressure_advance = self.pressure_advance_smooth_time = 0.
+        self.pa_model = config.getchoice('pressure_advance_model',
+                                         self.pa_models,
+                                         PALinearModel.name)(config)
+        self.pressure_advance_smooth_time = 0.
         self.pressure_advance_time_offset = 0.
-        self.config_pa = config.getfloat('pressure_advance', 0., minval=0.)
         self.config_smooth_time = config.getfloat(
                 'pressure_advance_smooth_time', 0.040, above=0., maxval=.200)
         self.config_time_offset = config.getfloat(
@@ -23,6 +123,8 @@ class ExtruderStepper:
         self.sk_extruder = ffi_main.gc(ffi_lib.extruder_stepper_alloc(),
                                        ffi_lib.free)
         self.stepper.set_stepper_kinematics(self.sk_extruder)
+        ffi_lib.extruder_set_pressure_advance_model_func(
+                self.sk_extruder, self.pa_model.get_func())
         self.motion_queue = None
         # Register commands
         self.printer.register_event_handler("klippy:connect",
@@ -50,13 +152,16 @@ class ExtruderStepper:
     def _handle_connect(self):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_step_generator(self.stepper.generate_steps)
-        self._set_pressure_advance(self.config_pa, self.config_smooth_time,
-                                   self.config_time_offset)
+        self._update_pressure_advance(self.pa_model,
+                                      self.config_smooth_time,
+                                      self.config_time_offset)
     def get_status(self, eventtime):
-        return {'pressure_advance': self.pressure_advance,
-                'smooth_time': self.pressure_advance_smooth_time,
-                'time_offset': self.pressure_advance_time_offset,
-                'motion_queue': self.motion_queue}
+        sts = {'pressure_advance_model': self.pa_model.name,
+               'smooth_time': self.pressure_advance_smooth_time,
+               'time_offset': self.pressure_advance_time_offset,
+               'motion_queue': self.motion_queue}
+        sts.update(self.pa_model.get_status(eventtime))
+        return sts
     def find_past_position(self, print_time):
         mcu_pos = self.stepper.get_past_mcu_position(print_time)
         return self.stepper.mcu_to_commanded_position(mcu_pos)
@@ -74,23 +179,28 @@ class ExtruderStepper:
         self.stepper.set_position(extruder.last_position)
         self.stepper.set_trapq(extruder.get_trapq())
         self.motion_queue = extruder_name
-    def _set_pressure_advance(self, pressure_advance,
-                              smooth_time, time_offset):
+    def _update_pressure_advance(self, pa_model, smooth_time, time_offset):
         old_smooth_time = self.pressure_advance_smooth_time
-        if not self.pressure_advance:
+        if not self.pa_model.enabled():
             old_smooth_time = 0.
         old_time_offset = self.pressure_advance_time_offset
         new_smooth_time = smooth_time
-        if not pressure_advance:
+        if not pa_model.enabled():
             new_smooth_time = 0.
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.note_step_generation_scan_time(
                 new_smooth_time * .5 + abs(time_offset),
                 old_delay=(old_smooth_time * .5 + abs(old_time_offset)))
         ffi_main, ffi_lib = chelper.get_ffi()
-        espa = ffi_lib.extruder_set_pressure_advance
-        espa(self.sk_extruder, pressure_advance, new_smooth_time, time_offset)
-        self.pressure_advance = pressure_advance
+        if self.pa_model.name != pa_model.name:
+            pa_func = pa_model.get_func()
+            ffi_lib.extruder_set_pressure_advance_model_func(self.sk_extruder,
+                                                             pa_func)
+        pa_params = pa_model.get_pa_params()
+        ffi_lib.extruder_set_pressure_advance(
+                self.sk_extruder, len(pa_params), pa_params,
+                new_smooth_time, time_offset)
+        self.pa_model = pa_model
         self.pressure_advance_smooth_time = smooth_time
         self.pressure_advance_time_offset = time_offset
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
@@ -103,19 +213,25 @@ class ExtruderStepper:
             raise gcmd.error("Unable to infer active extruder stepper")
         extruder.extruder_stepper.cmd_SET_PRESSURE_ADVANCE(gcmd)
     def cmd_SET_PRESSURE_ADVANCE(self, gcmd):
-        pressure_advance = gcmd.get_float('ADVANCE', self.pressure_advance,
-                                          minval=0.)
+        pa_model_name = gcmd.get('MODEL', self.pa_model.name)
+        if pa_model_name not in self.pa_models:
+            raise gcmd.error("Invalid MODEL='%s' choice" % (pa_model_name,))
+        if pa_model_name != self.pa_model.name:
+            pa_model = self.pa_models[pa_model_name]().get_from_gcmd(gcmd)
+        else:
+            pa_model = self.pa_model.get_from_gcmd(gcmd)
         smooth_time = gcmd.get_float('SMOOTH_TIME',
                                      self.pressure_advance_smooth_time,
                                      minval=0., maxval=.200)
         time_offset = gcmd.get_float('TIME_OFFSET',
                                      self.pressure_advance_time_offset,
                                      minval=-0.2, maxval=0.2)
-        self._set_pressure_advance(pressure_advance, smooth_time, time_offset)
-        msg = ("pressure_advance: %.6f\n"
-               "pressure_advance_smooth_time: %.6f\n"
-               "pressure_advance_time_offset: %.6f"
-               % (pressure_advance, smooth_time, time_offset))
+        self._update_pressure_advance(pa_model, smooth_time, time_offset)
+        msg = ("pressure_advance_model: %s\n" % (pa_model.name,) +
+               pa_model.get_msg() +
+               "\npressure_advance_smooth_time: %.6f"
+               "\npressure_advance_time_offset: %.6f"
+               % (smooth_time, time_offset))
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcmd.respond_info(msg, log=False)
     cmd_SET_E_ROTATION_DISTANCE_help = "Set extruder rotation distance"
