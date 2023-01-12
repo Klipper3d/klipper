@@ -29,9 +29,14 @@
   // Transfer memory is accessed with 32bits and contains 32bits of data
   typedef volatile uint32_t epmword_t;
   #define WSIZE 4
-  #define USBx_IRQn USB_UCPD1_2_IRQn
+  #define USBx_IRQn USB_IRQn
+#endif
 
-  // The stm32g0 has slightly different register names
+// The stm32g0 has slightly different register names
+#if CONFIG_MACH_STM32G0
+  #if CONFIG_MACH_STM32G0B1
+    #define USB_IRQn USB_UCPD1_2_IRQn
+  #endif
   #define USB USB_DRD_FS
   #define USB_PMAADDR USB_DRD_PMAADDR
   #define USB_EPADDR_FIELD USB_CHEP_ADDR

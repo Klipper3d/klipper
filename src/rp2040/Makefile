@@ -9,9 +9,10 @@ CFLAGS += -mcpu=cortex-m0plus -mthumb -Ilib/cmsis-core
 CFLAGS += -Ilib/rp2040 -Ilib/rp2040/cmsis_include -Ilib/fast-hash -Ilib/can2040
 
 # Add source files
-src-y += rp2040/main.c rp2040/gpio.c rp2040/adc.c generic/crc16_ccitt.c
+src-y += rp2040/main.c rp2040/watchdog.c rp2040/gpio.c
+src-y += rp2040/adc.c rp2040/timer.c rp2040/bootrom.c
 src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
-src-y += generic/timer_irq.c rp2040/timer.c rp2040/bootrom.c
+src-y += generic/timer_irq.c generic/crc16_ccitt.c
 src-$(CONFIG_USBSERIAL) += rp2040/usbserial.c generic/usb_cdc.c
 src-$(CONFIG_USBSERIAL) += rp2040/chipid.c
 src-$(CONFIG_SERIAL) += rp2040/serial.c generic/serial_irq.c
@@ -44,7 +45,7 @@ $(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/rp2040/elf2uf2/elf2uf2
 	@echo "  Creating uf2 file $@"
 	$(Q)$(OUT)lib/rp2040/elf2uf2/elf2uf2 $< $@
 
-target-$(CONFIG_RP2040_HAVE_STAGE2) += $(OUT)klipper.uf2
+rptarget-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)klipper.uf2
 rplink-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)src/rp2040/rp2040_link.ld
 stage2-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)stage2.o
 
@@ -53,10 +54,11 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating bin file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
 
-target-$(CONFIG_RP2040_HAVE_BOOTLOADER) += $(OUT)klipper.bin
+rptarget-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)klipper.bin
 rplink-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)src/generic/armcm_link.ld
 
 # Set klipper.elf linker rules
+target-y += $(rptarget-y)
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs -T $(rplink-y)
 OBJS_klipper.elf += $(stage2-y)
 $(OUT)klipper.elf: $(stage2-y) $(rplink-y)
@@ -66,6 +68,6 @@ lib/rp2040_flash/rp2040_flash:
 	@echo "  Building rp2040_flash"
 	$(Q)make -C lib/rp2040_flash rp2040_flash
 
-flash: $(OUT)klipper.uf2 lib/rp2040_flash/rp2040_flash
+flash: $(rptarget-y) lib/rp2040_flash/rp2040_flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
-	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.uf2
+	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(rptarget-y)

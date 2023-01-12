@@ -44,7 +44,7 @@ DECL_INIT(watchdog_init);
 void
 bootloader_request(void)
 {
-    if (!CONFIG_SMOOTHIEWARE_BOOTLOADER)
+    if (!CONFIG_FLASH_APPLICATION_ADDRESS)
         return;
     try_request_canboot();
     // Disable USB and pause for 5ms so host recognizes a disconnect

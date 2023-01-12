@@ -7,7 +7,6 @@
 #include <avr/interrupt.h> // USB_COM_vect
 #include <string.h> // NULL
 #include "autoconf.h" // CONFIG_MACH_at90usb1286
-#include "board/misc.h" // bootloader_request
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "pgm.h" // READP
@@ -177,11 +176,6 @@ usb_set_configure(void)
     UECFG0X = EP_TYPE_BULK_IN;
     UECFG1X = EP_SIZE(USB_CDC_EP_BULK_IN_SIZE) | EP_DOUBLE_BUFFER;
     UEIENX = 1<<TXINE;
-}
-
-void
-bootloader_request(void)
-{
 }
 
 #if CONFIG_MACH_at90usb1286

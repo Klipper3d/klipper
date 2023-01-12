@@ -8,6 +8,13 @@ All dates in this document are approximate.
 
 ## Changes
 
+20230103: It is now possible with the flash-sdcard.sh script to flash
+both variants of the Bigtreetech SKR-2, STM32F407 and STM32F429.
+This means that the original tag of btt-skr2 now has changed to either
+btt-skr-2-f407 or btt-skr-2-f429.
+
+20221128: Klipper v0.11.0 released.
+
 20221122: Previously, with safe_z_home, it was possible that the
 z_hop after the g28 homing would go in the negative z direction.
 Now, a z_hop is performed after g28 only if it results in a positive
