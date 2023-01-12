@@ -225,14 +225,22 @@ CONFIG ../../config/generic-fysetc-s6-v2.cfg
 CONFIG ../../config/generic-fysetc-spider.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
 
+# Printers using the stm32h723
+DICTIONARY stm32h723.dict
+CONFIG ../../config/generic-bigtreetech-octopus-max-ez.cfg
+
 # Printers using the stm32h743
 DICTIONARY stm32h743.dict
 CONFIG ../../config/printer-biqu-bx-2021.cfg
+CONFIG ../../config/generic-bigtreetech-skr-3.cfg
 
 # Printers using the stm32g0b1
 DICTIONARY stm32g0b1.dict
 CONFIG ../../config/generic-bigtreetech-manta-m4p.cfg
-CONFIG ../../config/generic-bigtreetech-manta-m8p.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m5p.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m8p-v1.0.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m8p-v1.1.cfg
+CONFIG ../../config/generic-bigtreetech-manta-e3ez.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 
 # Printers using the rp2040
