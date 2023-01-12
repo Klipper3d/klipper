@@ -156,11 +156,12 @@ static const uint8_t adc_pins[] = {
 
 // ADC timing
 #define ADC_CKMODE 0b11
-#define ADC_ATICKS (CONFIG_MACH_STM32H7 ? 0b101 : 0b100)
-// stm32h7: clock=25Mhz, Tsamp=64.5, Tconv=71, total=2.84us
-// stm32h723 adc3: clock=50Mhz, Tsamp=92.5, Tconv=105, total=2.1us
-// stm32l4: clock=20Mhz, Tsamp=47.5, Tconv=60, total=3.0us
-// stm32g4: clock=37.5Mhz, Tsamp=47.5, Tconv=60, total=1.6us
+#define ADC_ATICKS 0b110
+#define ADC_ATICKS_H723_ADC3 0b111
+// stm32h7: clock=25Mhz, Tsamp=387.5, Tconv=394, total=15.76us
+// stm32h723 adc3: clock=50Mhz, Tsamp=640.5, Tconv=653, total=13.06us
+// stm32l4: clock=20Mhz, Tsamp=247.5, Tconv=260, total=13.0us
+// stm32g4: clock=37.5Mhz, Tsamp=247.5, Tconv=260, total=6.933us
 
 // Handle register name differences between chips
 #if CONFIG_MACH_STM32H723
@@ -217,8 +218,11 @@ gpio_adc_setup(uint32_t pin)
             ;
 
         // Setup chip specific flags
+        uint32_t aticks = ADC_ATICKS;
 #if CONFIG_MACH_STM32H7
-        if (!(CONFIG_MACH_STM32H723 && adc == ADC3)) {
+        if (CONFIG_MACH_STM32H723 && adc == ADC3) {
+            aticks = ADC_ATICKS_H723_ADC3;
+        } else {
             // Use linear calibration on stm32h7
             cr |= ADC_CR_ADCALLIN;
             // Set boost mode on stm32h7 (adc clock is at 25Mhz)
@@ -241,7 +245,6 @@ gpio_adc_setup(uint32_t pin)
            ;
 
         // Set ADC clock cycles sample time for every channel
-        uint32_t aticks = ADC_ATICKS;
         uint32_t av = (aticks           | (aticks << 3)  | (aticks << 6)
                        | (aticks << 9)  | (aticks << 12) | (aticks << 15)
                        | (aticks << 18) | (aticks << 21) | (aticks << 24)
