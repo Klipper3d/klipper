@@ -9,6 +9,10 @@
 serial: /dev/serial/by-id/usb-Klipper_Klipper_firmware_12345-if00
 #canbus_uuid: 0e0d81e4210c
 
+[temperature_sensor EBB_NTC]
+sensor_type: Generic 3950
+sensor_pin: EBBCan:PA2
+
 [adxl345]
 cs_pin: EBBCan:PB12
 spi_software_sclk_pin: EBBCan:PB10
@@ -24,7 +28,7 @@ microsteps: 16
 rotation_distance: 33.500
 nozzle_diameter: 0.400
 filament_diameter: 1.750
-heater_pin: EBBCan:PA2
+heater_pin: EBBCan:PB13
 sensor_type: EPCOS 100K B57560G104F
 sensor_pin: EBBCan:PA3
 control: pid
@@ -46,6 +50,14 @@ uart_pin: EBBCan:PA15
 run_current: 0.650
 stealthchop_threshold: 999999
 
+# [tmc2240 extruder]
+# cs_pin: EBBCan:PA15
+# spi_software_sclk_pin: EBBCan:PB10
+# spi_software_mosi_pin: EBBCan:PB11
+# spi_software_miso_pin: EBBCan:PB2
+# run_current: 0.650
+# stealthchop_threshold: 999999
+
 [fan]
 pin: EBBCan:PA0
 
@@ -54,6 +66,11 @@ pin: EBBCan:PA1
 heater: extruder
 heater_temp: 50.0
 
+#[heater_fan 4W_FAN0]
+#pin: EBBCan:PB14
+#tachometer_pin: EBBCan:PB15
+#tachometer_ppr: 1
+
 #[neopixel hotend_rgb]
 #pin: EBBCan:PD3
 
@@ -61,8 +78,15 @@ heater_temp: 50.0
 #sensor_pin: ^EBBCan:PB8
 #control_pin: EBBCan:PB9
 
-#[filament_switch_sensor switch_sensor]
-#switch_pin: EBBCan:PB4
+## NPN and PNP proximity switch types can be set by jumper
+#[probe]
+#pin: ^EBBCan:PC13
 
-#[filament_motion_sensor motion_sensor]
-#switch_pin: ^EBBCan:PB3
+#[output_pin PB5]
+#pin: EBBCan:PB5
+
+#[output_pin PB7]
+#pin: EBBCan:PB7
+
+#[output_pin PB6]
+#pin: EBBCan:PB6
