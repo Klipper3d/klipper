@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240123: The output_pin SET_PIN CYCLE_TIME parameter has been
+removed. Use the new
+[pwm_cycle_time](Config_Reference.md#pwm_cycle_time) module if it is
+necessary to dynamically change a pwm pin's cycle time.
+
 20240123: The output_pin `maximum_mcu_duration` parameter is
 deprecated. Use a [pwm_tool config section](Config_Reference.md#pwm_tool)
 instead. The option will be removed in the near future.
