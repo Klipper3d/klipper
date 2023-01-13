@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240123: The output_pin `static_value` parameter is deprecated.
+Replace with `value` and `shutdown_value` parameters.  The option will
+be removed in the near future.
+
 20231216: The `[hall_filament_width_sensor]` is changed to trigger filament runout
 when the thickness of the filament exceeds `max_diameter`. The maximum diameter
 defaults to `default_nominal_filament_diameter + max_difference`. See
