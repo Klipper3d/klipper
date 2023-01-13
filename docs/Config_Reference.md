@@ -3096,11 +3096,6 @@ pin:
 #   If this is true, the value fields should be between 0 and 1; if it
 #   is false the value fields should be either 0 or 1. The default is
 #   False.
-#static_value:
-#   If this is set, then the pin is assigned to this value at startup
-#   and the pin can not be changed during runtime. A static pin uses
-#   slightly less ram in the micro-controller. The default is to use
-#   runtime configuration of pins.
 #value:
 #   The value to initially set the pin to during MCU configuration.
 #   The default is 0 (for low voltage).
@@ -3133,6 +3128,8 @@ pin:
 #   then the 'value' parameter can be specified using the desired
 #   amperage for the stepper. The default is to not scale the 'value'
 #   parameter.
+#static_value:
+#   This option is deprecated and should no longer be specified.
 ```
 
 ### [pwm_tool]
