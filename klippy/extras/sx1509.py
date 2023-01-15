@@ -183,7 +183,7 @@ class SX1509_pwm(object):
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
-    def set_pwm(self, print_time, value, cycle_time=None):
+    def set_pwm(self, print_time, value):
         self._sx1509.set_register(self._i_on_reg, ~int(255 * value)
                                   if not self._invert
                                   else int(255 * value) & 0xFF)

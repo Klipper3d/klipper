@@ -381,9 +381,9 @@ class MCU_pwm:
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
-        self._last_clock = self._last_cycle_ticks = 0
+        self._last_clock = 0
         self._pwm_max = 0.
-        self._set_cmd = self._set_cycle_ticks = None
+        self._set_cmd = None
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
@@ -441,40 +441,21 @@ class MCU_pwm:
         self._mcu.add_config_cmd(
             "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
             % (self._oid, cycle_ticks))
-        self._last_cycle_ticks = cycle_ticks
+        self._pwm_max = float(cycle_ticks)
         svalue = int(self._start_value * cycle_ticks + 0.5)
         self._mcu.add_config_cmd(
             "queue_digital_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
-        self._set_cycle_ticks = self._mcu.lookup_command(
-            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=cmd_queue)
-    def set_pwm(self, print_time, value, cycle_time=None):
-        clock = self._mcu.print_time_to_clock(print_time)
-        minclock = self._last_clock
-        self._last_clock = clock
+    def set_pwm(self, print_time, value):
         if self._invert:
             value = 1. - value
-        if self._hardware_pwm:
-            v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-            self._set_cmd.send([self._oid, clock, v],
-                               minclock=minclock, reqclock=clock)
-            return
-        # Soft pwm update
-        if cycle_time is None:
-            cycle_time = self._cycle_time
-        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
-        if cycle_ticks != self._last_cycle_ticks:
-            if cycle_ticks >= 1<<31:
-                raise self._mcu.get_printer().command_error(
-                    "PWM cycle time too large")
-            self._set_cycle_ticks.send([self._oid, cycle_ticks],
-                                       minclock=minclock, reqclock=clock)
-            self._last_cycle_ticks = cycle_ticks
-        on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
-        self._set_cmd.send([self._oid, clock, on_ticks],
-                           minclock=minclock, reqclock=clock)
+        v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
+        clock = self._mcu.print_time_to_clock(print_time)
+        self._set_cmd.send([self._oid, clock, v],
+                           minclock=self._last_clock, reqclock=clock)
+        self._last_clock = clock
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):
