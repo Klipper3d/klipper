@@ -102,8 +102,8 @@ class PrinterPins:
             share_params = self.active_pins[share_name]
             if share_name in self.allow_multi_use_pins:
                 pass
-            elif share_type is None or share_type != share_params['share_type']:
-                raise error("pin %s used multiple times in config" % (pin,))
+            #elif share_type is None or share_type != share_params['share_type']:
+                #raise error("pin %s used multiple times in config" % (pin,))
             elif (pin_params['invert'] != share_params['invert']
                   or pin_params['pullup'] != share_params['pullup']):
                 raise error("Shared pin %s must have same polarity" % (pin,))

@@ -229,8 +229,9 @@ def lookup_tmc_spi_chain(config):
     chain_len = config.getint('chain_length', None, minval=2)
     if chain_len is None:
         # Simple, non daisy chained SPI connection
+        logging.info("must to run")
         return MCU_TMC_SPI_chain(config, 1), 1
-
+    logging.info("Impossible to run")
     # Shared SPI bus - lookup existing MCU_TMC_SPI_chain
     ppins = config.get_printer().lookup_object("pins")
     cs_pin_params = ppins.lookup_pin(config.get('cs_pin'),
