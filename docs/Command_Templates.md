@@ -11,9 +11,9 @@ lower case. If any numbers are used in the macro name then they must
 all be at the end of the name (eg, TEST_MACRO25 is valid, but
 MACRO25_TEST3 is not).
 
-Also note that macros with names similar to TEST_MACRO25 will fail to
-be parsed if they are followed by comments (e.g. `TEST_MACRO25; GCODE comment`),
-with a `Malformed command` error.
+Also note that macros with names not similar to "T0" will fail to
+be parsed if they are followed by comments (e.g. "MACRONAME; a comment"),
+and will raise a malformed command error.
 
 ## Formatting of G-Code in the config
 
