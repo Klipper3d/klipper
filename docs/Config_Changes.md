@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20230202: The format of the `printer.screws_tilt_adjust` status
+information has changed. The information is now stored as a dictionary of
+screws with the resulting measurements. See the
+[status reference](Status_Reference.md#screws_tilt_adjust) for details.
+
 20230201:  The `[bed_mesh]` module no longer loads the `default` profile
 on startup.  It is recommended that users who use the `default` profile
 add `BED_MESH_PROFILE LOAD=default` to their `START_PRINT` macro (or
