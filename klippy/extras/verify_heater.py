@@ -31,7 +31,8 @@ class HeaterCheck:
         self.last_target = self.goal_temp = self.error = 0.
         self.goal_systime = self.printer.get_reactor().NEVER
         self.check_timer = None
-        self.use_temperature_delta = config.getboolean('use_temperature_delta', True)
+        self.use_temperature_delta = config.getboolean('use_temperature_delta',
+                                                        True)
     def handle_connect(self):
         if self.printer.get_start_args().get('debugoutput') is not None:
             # Disable verify_heater if outputting to a debug file
@@ -60,7 +61,8 @@ class HeaterCheck:
         if ( self.use_temperature_delta ):
             self.error += (target - self.hysteresis) - temp
         if not self.approaching_target:
-            if not self.use_temperature_delta and temp < (target - self.hysteresis):
+            delta = target - self.hysteresis
+            if not self.use_temperature_delta and temp < delta:
                 self.error += 1.
                 logging.info("Heater %s not heating as expected. cumulative errors: %.3f - max_errors: %.3f", self.heater_name, self.error, self.max_error)
             if target != self.last_target:
