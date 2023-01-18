@@ -1,67 +1,23 @@
-// ADC functions on STM32H7
+// Analog to digital (ADC) on stm32h7 and similar chips
 //
 // Copyright (C) 2020 Konstantin Vogel <konstantin.vogel@gmx.net>
+// Copyright (C) 2022  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
-#include "compiler.h" // ARRAY_SIZE
-#include "generic/armcm_timer.h" // udelay
 #include "gpio.h" // gpio_adc_setup
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
-
-#if CONFIG_MACH_STM32H7
-  #define ADCIN_BANK_SIZE                     (20)
-  #define RCC_AHBENR_ADC                      (RCC->AHB1ENR)
-  #define RCC_AHBENR_ADCEN                    (RCC_AHB1ENR_ADC12EN)
-  #define ADC_CKMODE                          (0b11)
-  #define ADC_ATICKS                          (0b101)
-  #define ADC_RES                             (0b110)
-  #define ADC_TS                              (ADC3_COMMON)
-  #if CONFIG_MACH_STM32H723
-    #define PCSEL                               PCSEL_RES0
-  #endif
-
-  // Number of samples is 2^OVERSAMPLES_EXPONENT (exponent can be 0-10)
-  #define OVERSAMPLES_EXPONENT 3
-  #define OVERSAMPLES (1 << OVERSAMPLES_EXPONENT)
-
-  // LDORDY registers are missing from CMSIS (only available on revision V!)
-  #define ADC_ISR_LDORDY_Pos                  (12U)
-  #define ADC_ISR_LDORDY_Msk                  (0x1UL << ADC_ISR_LDORDY_Pos)
-  #define ADC_ISR_LDORDY                      ADC_ISR_LDORDY_Msk
-
-#elif CONFIG_MACH_STM32L4
-  #define ADCIN_BANK_SIZE                     (19)
-  #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
-  #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADCEN)
-  #define ADC_CKMODE                          (0)
-  #define ADC_ATICKS                          (0b100)
-  #define ADC_RES                             (0b00)
-  #define ADC_TS                              (ADC12_COMMON)
-
-  #define OVERSAMPLES                         (0)
-
-#elif CONFIG_MACH_STM32G4
-  #define ADCIN_BANK_SIZE                     (19)
-  #define RCC_AHBENR_ADC                      (RCC->AHB2ENR)
-  #define RCC_AHBENR_ADCEN                    (RCC_AHB2ENR_ADC12EN)
-  #define ADC_CKMODE                          (0b11)
-  #define ADC_ATICKS                          (0b100)
-  #define ADC_RES                             (0b00)
-  #define ADC_TS                              (ADC12_COMMON)
-  #define ADC_CCR_TSEN                        (ADC_CCR_VSENSESEL)
-
-  #define OVERSAMPLES                         (0)
-#endif
 
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 
 DECL_CONSTANT("ADC_MAX", 4095);
+
+#define ADCIN_BANK_SIZE 20
 
 // GPIOs like A0_C are not covered!
 // This always gives the pin connected to the positive channel
@@ -155,6 +111,7 @@ static const uint8_t adc_pins[] = {
     ADC_TEMPERATURE_PIN,    // [16] vtemp
     0,                      // [17] vbat/3
     0,                      // [18] vref
+    0,
     0,                      // [0] vssa       ADC 2
     GPIO('A', 0),           // [1]
     GPIO('A', 1),           // [2]
@@ -197,9 +154,21 @@ static const uint8_t adc_pins[] = {
 #endif
 };
 
+// ADC timing
+#define ADC_CKMODE 0b11
+#define ADC_ATICKS 0b110
+#define ADC_ATICKS_H723_ADC3 0b111
+// stm32h7: clock=25Mhz, Tsamp=387.5, Tconv=394, total=15.76us
+// stm32h723 adc3: clock=50Mhz, Tsamp=640.5, Tconv=653, total=13.06us
+// stm32l4: clock=20Mhz, Tsamp=247.5, Tconv=260, total=13.0us
+// stm32g4: clock=37.5Mhz, Tsamp=247.5, Tconv=260, total=6.933us
 
-// ADC timing:
-// ADC clock=30Mhz, Tconv=6.5, Tsamp=64.5, total=2.3666us*OVERSAMPLES
+// Handle register name differences between chips
+#if CONFIG_MACH_STM32H723
+  #define PCSEL PCSEL_RES0
+#elif CONFIG_MACH_STM32G4
+  #define ADC_CCR_TSEN ADC_CCR_VSENSESEL
+#endif
 
 struct gpio_adc
 gpio_adc_setup(uint32_t pin)
@@ -213,140 +182,85 @@ gpio_adc_setup(uint32_t pin)
             break;
     }
 
-    // Determine which ADC block to use, enable peripheral clock
-    // (SYSCLK 480Mhz) /HPRE(2) /CKMODE divider(4) /additional divider(2)
-    // (ADC clock 30Mhz)
+    // Determine which ADC block to use and enable its clock
     ADC_TypeDef *adc;
+    ADC_Common_TypeDef *adc_common;
 #ifdef ADC3
-    if (chan >= 2 * ADCIN_BANK_SIZE){
-        adc = ADC3;
-        if (!is_enabled_pclock(ADC3_BASE)) {
-            enable_pclock(ADC3_BASE);
-        }
-        MODIFY_REG(ADC3_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
+    if (chan >= 2 * ADCIN_BANK_SIZE) {
         chan -= 2 * ADCIN_BANK_SIZE;
+        adc = ADC3;
+        adc_common = ADC3_COMMON;
     } else
 #endif
 #ifdef ADC2
-    if (chan >= ADCIN_BANK_SIZE){
-        adc = ADC2;
-        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
-        MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
+    if (chan >= ADCIN_BANK_SIZE) {
         chan -= ADCIN_BANK_SIZE;
+        adc = ADC2;
+        adc_common = ADC12_COMMON;
     } else
 #endif
     {
         adc = ADC1;
-        RCC_AHBENR_ADC |= RCC_AHBENR_ADCEN;
-        MODIFY_REG(ADC12_COMMON->CCR, ADC_CCR_CKMODE_Msk,
-            ADC_CKMODE << ADC_CCR_CKMODE_Pos);
+        adc_common = ADC12_COMMON;
     }
+    if (!is_enabled_pclock((uint32_t)adc_common))
+        enable_pclock((uint32_t)adc_common);
+    MODIFY_REG(adc_common->CCR, ADC_CCR_CKMODE_Msk,
+               ADC_CKMODE << ADC_CCR_CKMODE_Pos);
 
     // Enable the ADC
     if (!(adc->CR & ADC_CR_ADEN)) {
-        // STM32H723 ADC3 and ADC1/2 registers are slightly different
-        uint8_t is_stm32h723_adc3 = 0;
-#if CONFIG_MACH_STM32H723
-        if (adc == ADC3) {
-            is_stm32h723_adc3 = 1;
+        // Switch on voltage regulator and wait for it to stabilize
+        uint32_t cr = ADC_CR_ADVREGEN;
+        adc->CR = cr;
+        uint32_t end = timer_read_time() + timer_from_us(20);
+        while (timer_is_before(timer_read_time(), end))
+            ;
+
+        // Setup chip specific flags
+        uint32_t aticks = ADC_ATICKS;
+#if CONFIG_MACH_STM32H7
+        if (CONFIG_MACH_STM32H723 && adc == ADC3) {
+            aticks = ADC_ATICKS_H723_ADC3;
+        } else {
+            // Use linear calibration on stm32h7
+            cr |= ADC_CR_ADCALLIN;
+            // Set boost mode on stm32h7 (adc clock is at 25Mhz)
+            cr |= 0b10 << ADC_CR_BOOST_Pos;
+            // Set 12bit samples on the stm32h7
+            adc->CFGR = ADC_CFGR_JQDIS | (0b110 << ADC_CFGR_RES_Pos);
         }
 #endif
-        // Pwr
-        // Exit deep power down
-        MODIFY_REG(adc->CR, ADC_CR_DEEPPWD_Msk, 0);
-        // Switch on voltage regulator
-        adc->CR |= ADC_CR_ADVREGEN;
-#ifdef ADC_ISR_LDORDY
-        if (is_stm32h723_adc3 == 0) {
-            while(!(adc->ISR & ADC_ISR_LDORDY))
-                ;
-        } else
-#endif
-        {
-            // stm32h723 ADC3 & stm32l4 lacks ldordy, delay to spec instead
-            uint32_t end = timer_read_time() + timer_from_us(20);
-            while (timer_is_before(timer_read_time(), end))
-                ;
-        }
 
-        // Set Boost mode for 25Mhz < ADC clock <= 50Mhz
-#ifdef ADC_CR_BOOST
-        MODIFY_REG(adc->CR, ADC_CR_BOOST_Msk, 0b11 << ADC_CR_BOOST_Pos);
-#endif
-
-        // Calibration
-        // Set calibration mode to Single ended (not differential)
-        MODIFY_REG(adc->CR, ADC_CR_ADCALDIF_Msk, 0);
-        // Enable linearity calibration
-#ifdef ADC_CR_ADCALLIN
-        MODIFY_REG(adc->CR, ADC_CR_ADCALLIN_Msk, ADC_CR_ADCALLIN);
-#endif
-        // Start the calibration
-        MODIFY_REG(adc->CR, ADC_CR_ADCAL_Msk, ADC_CR_ADCAL);
-        while(adc->CR & ADC_CR_ADCAL)
+        // Perform adc calibration
+        adc->CR = cr | ADC_CR_ADCAL;
+        while (adc->CR & ADC_CR_ADCAL)
             ;
 
         // Enable ADC
-        // "Clear the ADRDY bit in the ADC_ISR register by writing ‘1’"
-        adc->ISR |= ADC_ISR_ADRDY;
+        adc->ISR = ADC_ISR_ADRDY;
         adc->ISR; // Dummy read to make sure write is flushed
         adc->CR |= ADC_CR_ADEN;
-        while(!(adc->ISR & ADC_ISR_ADRDY))
+        while (!(adc->ISR & ADC_ISR_ADRDY))
            ;
 
-        // Set 64.5 ADC clock cycles sample time for every channel
-        // (Reference manual pg.940)
-        uint32_t aticks = ADC_ATICKS;
-        // Channel 0-9
-        adc->SMPR1 = (aticks        | (aticks << 3)  | (aticks << 6)
-                   | (aticks << 9)  | (aticks << 12) | (aticks << 15)
-                   | (aticks << 18) | (aticks << 21) | (aticks << 24)
-                   | (aticks << 27));
-        // Channel 10-19
-        adc->SMPR2 = (aticks        | (aticks << 3)  | (aticks << 6)
-                   | (aticks << 9)  | (aticks << 12) | (aticks << 15)
-                   | (aticks << 18) | (aticks << 21) | (aticks << 24)
-                   | (aticks << 27));
-        // Disable Continuous Mode
-        MODIFY_REG(adc->CFGR, ADC_CFGR_CONT_Msk, 0);
-        // Set to 12 bit
-        if (is_stm32h723_adc3) {
-#ifdef ADC3_CFGR_RES
-            MODIFY_REG(adc->CFGR, ADC3_CFGR_RES_Msk, 0 << ADC3_CFGR_RES_Pos);
-            MODIFY_REG(adc->CFGR, ADC3_CFGR_ALIGN_Msk, 0<<ADC3_CFGR_ALIGN_Pos);
-#endif
-        } else {
-            MODIFY_REG(adc->CFGR, ADC_CFGR_RES_Msk, ADC_RES<<ADC_CFGR_RES_Pos);
-        }
-#if CONFIG_MACH_STM32H7
-        // Set hardware oversampling
-        MODIFY_REG(adc->CFGR2, ADC_CFGR2_ROVSE_Msk, ADC_CFGR2_ROVSE);
-        if (is_stm32h723_adc3) {
-#ifdef ADC3_CFGR2_OVSR
-            MODIFY_REG(adc->CFGR2, ADC3_CFGR2_OVSR_Msk,
-                       (OVERSAMPLES_EXPONENT - 1) << ADC3_CFGR2_OVSR_Pos);
-#endif
-        } else {
-            MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSR_Msk,
-                       (OVERSAMPLES - 1) << ADC_CFGR2_OVSR_Pos);
-        }
-        MODIFY_REG(adc->CFGR2, ADC_CFGR2_OVSS_Msk,
-            OVERSAMPLES_EXPONENT << ADC_CFGR2_OVSS_Pos);
-#else // stm32l4
-        adc->CFGR |= ADC_CFGR_JQDIS | ADC_CFGR_OVRMOD;
-#endif
+        // Set ADC clock cycles sample time for every channel
+        uint32_t av = (aticks           | (aticks << 3)  | (aticks << 6)
+                       | (aticks << 9)  | (aticks << 12) | (aticks << 15)
+                       | (aticks << 18) | (aticks << 21) | (aticks << 24)
+                       | (aticks << 27));
+        adc->SMPR1 = av;
+        adc->SMPR2 = av;
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
-        ADC_TS->CCR |= ADC_CCR_TSEN;
+        adc_common->CCR |= ADC_CCR_TSEN;
     } else {
         gpio_peripheral(pin, GPIO_ANALOG, 0);
     }
 
-    // Preselect (connect) channel
-#ifdef ADC_PCSEL_PCSEL
+    // Setup preselect (connect) channel on stm32h7
+#if CONFIG_MACH_STM32H7
     adc->PCSEL |= (1 << chan);
 #endif
     return (struct gpio_adc){ .adc = adc, .chan = chan };

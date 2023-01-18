@@ -49,6 +49,7 @@
 
 #if CONFIG_MACH_STM32F0
  #define SOC_CAN CAN
+ #define FILTER_CAN CAN
  #define CAN_RX0_IRQn  CEC_CAN_IRQn
  #define CAN_RX1_IRQn  CEC_CAN_IRQn
  #define CAN_TX_IRQn   CEC_CAN_IRQn
@@ -58,6 +59,7 @@
 
 #if CONFIG_MACH_STM32F1
  #define SOC_CAN CAN1
+ #define FILTER_CAN CAN1
  #define CAN_RX0_IRQn  CAN1_RX0_IRQn
  #define CAN_RX1_IRQn  CAN1_RX1_IRQn
  #define CAN_TX_IRQn   CAN1_TX_IRQn
@@ -69,12 +71,14 @@
  #if (CONFIG_STM32_CANBUS_PA11_PA12 || CONFIG_STM32_CANBUS_PB8_PB9 \
      || CONFIG_STM32_CANBUS_PD0_PD1 || CONFIG_STM32_CANBUS_PI9_PH13)
   #define SOC_CAN CAN1
+  #define FILTER_CAN CAN1
   #define CAN_RX0_IRQn  CAN1_RX0_IRQn
   #define CAN_RX1_IRQn  CAN1_RX1_IRQn
   #define CAN_TX_IRQn   CAN1_TX_IRQn
   #define CAN_SCE_IRQn  CAN1_SCE_IRQn
  #elif CONFIG_STM32_CANBUS_PB5_PB6 || CONFIG_STM32_CANBUS_PB12_PB13
   #define SOC_CAN CAN2
+  #define FILTER_CAN CAN1
   #define CAN_RX0_IRQn  CAN2_RX0_IRQn
   #define CAN_RX1_IRQn  CAN2_RX1_IRQn
   #define CAN_TX_IRQn   CAN2_TX_IRQn
@@ -131,32 +135,37 @@ canhw_send(struct canbus_msg *msg)
 void
 canhw_set_filter(uint32_t id)
 {
+    CAN_TypeDef *fcan = FILTER_CAN;
     /* Select the start slave bank */
-    SOC_CAN->FMR |= CAN_FMR_FINIT;
+    uint32_t fmr = fcan->FMR;
+    if (FILTER_CAN != SOC_CAN)
+        // Using CAN2 with filter on CAN1 - assign CAN2 to first filter
+        fmr &= ~CAN_FMR_CAN2SB;
+    fcan->FMR = fmr | CAN_FMR_FINIT;
     /* Initialisation mode for the filter */
-    SOC_CAN->FA1R = 0;
+    fcan->FA1R = 0;
 
     if (CONFIG_CANBUS_FILTER) {
         uint32_t mask = CAN_TI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
-        SOC_CAN->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
-        SOC_CAN->sFilterRegister[0].FR2 = mask;
-        SOC_CAN->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
-        SOC_CAN->sFilterRegister[1].FR2 = mask;
-        SOC_CAN->sFilterRegister[2].FR1 = id << CAN_RI0R_STID_Pos;
-        SOC_CAN->sFilterRegister[2].FR2 = mask;
+        fcan->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
+        fcan->sFilterRegister[0].FR2 = mask;
+        fcan->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
+        fcan->sFilterRegister[1].FR2 = mask;
+        fcan->sFilterRegister[2].FR1 = id << CAN_RI0R_STID_Pos;
+        fcan->sFilterRegister[2].FR2 = mask;
     } else {
-        SOC_CAN->sFilterRegister[0].FR1 = 0;
-        SOC_CAN->sFilterRegister[0].FR2 = 0;
+        fcan->sFilterRegister[0].FR1 = 0;
+        fcan->sFilterRegister[0].FR2 = 0;
         id = 0;
     }
 
     /* 32-bit scale for the filter */
-    SOC_CAN->FS1R = (1<<0) | (1<<1) | (1<<2);
+    fcan->FS1R = (1<<0) | (1<<1) | (1<<2);
 
     /* Filter activation */
-    SOC_CAN->FA1R = (1<<0) | (id ? (1<<1) | (1<<2) : 0);
+    fcan->FA1R = (1<<0) | (id ? (1<<1) | (1<<2) : 0);
     /* Leave the initialisation mode for the filter */
-    SOC_CAN->FMR &= ~CAN_FMR_FINIT;
+    fcan->FMR = fmr & ~CAN_FMR_FINIT;
 }
 
 // This function handles CAN global interrupts
@@ -241,7 +250,11 @@ compute_btr(uint32_t pclock, uint32_t bitrate)
 void
 can_init(void)
 {
+    // Enable clock
     enable_pclock((uint32_t)SOC_CAN);
+    if (FILTER_CAN != SOC_CAN)
+        // Also enable CAN1 clock if using CAN2 with filter on CAN1
+        enable_pclock((uint32_t)FILTER_CAN);
 
     gpio_peripheral(GPIO_Rx, CAN_FUNCTION, 1);
     gpio_peripheral(GPIO_Tx, CAN_FUNCTION, 0);
