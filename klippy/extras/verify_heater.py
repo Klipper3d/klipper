@@ -64,7 +64,9 @@ class HeaterCheck:
             delta = target - self.hysteresis
             if not self.use_temperature_delta and temp < delta:
                 self.error += 1.
-                logging.info("Heater %s not heating as expected. cumulative errors: %.3f - max_errors: %.3f", self.heater_name, self.error, self.max_error)
+                logging.info("Heater %s not heating as expected. \
+                                errors: %.3f - max_errors: %.3f", 
+                                self.heater_name, self.error, self.max_error)
             if target != self.last_target:
                 # Target changed - reset checks
                 logging.info("Heater %s approaching new target of %.3f",
