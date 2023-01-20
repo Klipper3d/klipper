@@ -19,9 +19,9 @@ def parse_log(logname, opts):
         for header in f:
             if not header.startswith('#'):
                 break
-        if not header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
+            if not header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
             # Raw accelerometer data
-            return np.loadtxt(logname, comments='#', delimiter=',')
+                return np.loadtxt(logname, comments='#', delimiter=',')
     # Power spectral density data or shaper calibration data
     opts.error("File %s does not contain raw accelerometer data and therefore "
                "is not supported by graph_accelerometer.py script. Please use "
