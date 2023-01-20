@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Main code for host side printer firmware
 #
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
