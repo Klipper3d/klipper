@@ -96,7 +96,7 @@ class DisplayBase:
         return (self.ui_top_left[0] + c * ST7789V_FONT_WIDTH,
                 self.ui_top_left[1] + r * ST7789V_FONT_HEIGHT)
     def _rowmajor_bitmap_to_image(self, b, width=8):
-        return Image.frombytes('1', (width, len(b) / (width / 8)), b)
+        return Image.frombytes('1', (int(width), int(len(b) / (width / 8))), b)
     def rgb_to_565(self, rgb):
         r = rgb[0] >> 3 & 0x1f
         g = rgb[1] >> 2 & 0x3f
