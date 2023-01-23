@@ -324,7 +324,7 @@ class ST7789V(DisplayBase):
             self.spi.spi_send(data, reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.set_cs(old_cs)
     def write_data(self, data):
-        if data is None or len(data) == 0:
+        if data is None or len(list(data)) == 0:
             return
         old_cs = self.cs_pin_state
         self.set_cs(0)
@@ -333,7 +333,7 @@ class ST7789V(DisplayBase):
         # a 3 byte command prefix, a 3 byte header, and a 2 byte trailer.
         # 56 + 3 + 3 + 2 = 64 bytes. The MCU's USB code accepts only up to 64.
         max_length = 56
-        while len(data) > 0:
+        while len(list(data)) > 0:
             datapart = data[:max_length]
             self.spi.spi_send(datapart, reqclock=BACKGROUND_PRIORITY_CLOCK)
             data = data[max_length:]
