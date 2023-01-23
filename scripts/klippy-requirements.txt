@@ -8,5 +8,5 @@ greenlet==1.1.2
 Jinja2==2.11.3
 python-can==3.3.4
 Pillow==5.4.1
-numpy==1.16.2
+numpy==1.23.4
 markupsafe==1.1.1
