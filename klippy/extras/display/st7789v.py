@@ -225,7 +225,7 @@ class DisplayBase:
         if x + len(data) > width:
             data = data[:width - min(x, width)]
         for i, char in enumerate(data):
-            self.vram.paste(self.font[ord(char)], self.ui_c_r_to_x_y(x + i, y))
+            self.vram.paste(self.font[char], self.ui_c_r_to_x_y(x + i, y))
         self._invalidate(
             self.ui_c_r_to_x_y(x, y),
             (len(data) * ST7789V_FONT_WIDTH, ST7789V_FONT_HEIGHT))
