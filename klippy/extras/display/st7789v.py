@@ -275,7 +275,7 @@ class DisplayBase:
         logo_width = ST7789V_COLS / 2
         if self.logo is None:
             self.logo = logo.make_logo(logo_width)
-        x_pos = (ST7789V_COLS - logo_width) / 2
+        x_pos = int((ST7789V_COLS - logo_width) / 2)
         y_pos = 0
         self.vram.paste(self.logo, box=(x_pos, y_pos), mask=self.logo)
         self._invalidate((x_pos, y_pos), self.logo.size)
