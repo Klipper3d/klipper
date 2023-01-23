@@ -15,4 +15,4 @@ def make_logo(width):
             os.path.join(os.path.dirname(__file__),
                          '../../../docs/img/klipper-logo.png'))
     new_height = int(LOGO_IMAGE.height / float(LOGO_IMAGE.width) * width)
-    return LOGO_IMAGE.resize((width, new_height), resample=Image.LANCZOS)
+    return LOGO_IMAGE.resize((int(width), new_height), resample=Image.LANCZOS)
