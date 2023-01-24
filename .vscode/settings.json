@@ -1,3 +1,0 @@
-{
-    "cmake.sourceDirectory": "${workspaceFolder}/lib/rp2040/boot_stage2"   
-}
