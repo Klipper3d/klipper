@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import traceback, logging, ast, copy
+import traceback, logging, ast, copy, time, calendar
 import jinja2
 
 
@@ -181,6 +181,7 @@ class GCodeMacro:
         kwparams.update(self.template.create_template_context())
         kwparams['params'] = gcmd.get_command_parameters()
         kwparams['rawparams'] = gcmd.get_raw_command_parameters()
+        kwparams['unixtime'] = calendar.timegm(time.gmtime())
         self.in_script = True
         try:
             self.template.run_gcode_from_command(kwparams)

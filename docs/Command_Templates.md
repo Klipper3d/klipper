@@ -138,6 +138,32 @@ Note that this will include any comments that were part of the original command.
 See the [sample-macros.cfg](../config/sample-macros.cfg) file for an example
 showing how to override the `M117` command using `rawparams`.
 
+### The "unixtime" variable
+
+The time in seconds since the beginning of the unix epoch (00:00:00 UTC 1st of
+January 1970) can be accessed via the `unixtime` pseudo-variable.
+It can be used to track the time that has passed between multiple macro calls.
+
+Note that all macro variables get evaluated when the macro gets called. Thus
+using multiple `unixtime` variables in the same `gcode_macro` will always
+yield the same value.
+
+Example:
+
+```
+[gcode_macro start_timer]
+gcode:
+  SET_GCODE_VARIABLE MACRO=end_timer VARIABLE=start VALUE=unixtime
+
+[gcode_macro end_timer]
+variable_start = -1
+gcode:
+  {% if variable_start >= 0 %}
+    {action_respond_info("%d seconds have passed" % (unixtime - start))}
+    SET_GCODE_VARIABLE MACRO=end_timer VARIABLE=start VALUE=-1
+  {% endif %}
+```
+
 ### The "printer" Variable
 
 It is possible to inspect (and alter) the current state of the printer
