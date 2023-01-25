@@ -1662,7 +1662,7 @@
 <h2 id="endpoint">可用的"endpoint"<a class="headerlink" href="#endpoint" title="Permanent link">&para;</a></h2>
 <p>By convention, Klipper "endpoints" are of the form <code>&lt;module_name&gt;/&lt;some_name&gt;</code>. When making a request to an "endpoint", the full name must be set in the "method" parameter of the request dictionary (eg, <code>{"method"="gcode/restart"}</code>).</p>
 <h3 id="_3">信息<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<p>The "info" endpoint is used to obtain system and version information from Klipper. It is also used to provide the client's version information to Klipper. For example: <code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}</code></p>
+<p>“info” 用于从Klipper获取系统和版本信息。同时也被用来向Klipper提供客户端的版本信息。比如说<code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}</code></p>
 <p>If present, the "client_info" parameter must be a dictionary, but that dictionary may have arbitrary contents. Clients are encouraged to provide the name of the client and its software version when first connecting to the Klipper API server.</p>
 <h3 id="emergency_stop">emergency_stop<a class="headerlink" href="#emergency_stop" title="Permanent link">&para;</a></h3>
 <p>The "emergency_stop" endpoint is used to instruct Klipper to transition to a "shutdown" state. It behaves similarly to the G-Code <code>M112</code> command. For example: <code>{"id": 123, "method": "emergency_stop"}</code></p>
@@ -1675,7 +1675,7 @@ gcode:
   {action_call_remote_method(&quot;paneldue_beep&quot;, frequency=300, duration=1.0)}
 </code></pre></div>
 
-<p>When the PANELDUE_BEEP gcode macro is executed, Klipper would send something like the following over the socket: <code>{"action": "run_paneldue_beep", "params": {"frequency": 300, "duration": 1.0}}</code></p>
+<p>当PANELDUE_BEEP gcode宏被执行时，Klipper将通过套接字发送类似以下内容：<code>{"action": "run_paneldue_beep", "params": {"frequency": 300, "duration": 1.0}}</code></p>
 <h3 id="objectslist">objects/list<a class="headerlink" href="#objectslist" title="Permanent link">&para;</a></h3>
 <p>This endpoint queries the list of available printer "objects" that one may query (via the "objects/query" endpoint). For example: <code>{"id": 123, "method": "objects/list"}</code> might return: <code>{"id": 123, "result": {"objects": ["webhooks", "configfile", "heaters", "gcode_move", "query_endstops", "idle_timeout", "toolhead", "extruder"]}}</code></p>
 <h3 id="objectsquery">objects/query<a class="headerlink" href="#objectsquery" title="Permanent link">&para;</a></h3>
