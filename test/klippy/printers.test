@@ -119,6 +119,11 @@ CONFIG ../../config/printer-modix-big60-2020.cfg
 DICTIONARY samd51p20.dict
 CONFIG ../../config/generic-duet3-mini.cfg
 
+# Printers using the SAM E70
+DICTIONARY same70q20b.dict
+CONFIG ../../config/generic-duet3-6hc.cfg
+CONFIG ../../config/generic-duet3-6xd.cfg
+
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
