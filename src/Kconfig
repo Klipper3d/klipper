@@ -93,6 +93,17 @@ config CANBUS_FREQUENCY
 config CANBUS_FILTER
     bool
     default y if CANSERIAL
+config CANBUS_UUID
+    hex "Device UUID" if LOW_LEVEL_OPTIONS && CANBUS
+    default 0x00
+    help
+        Specify a fixed UUID for the device.
+        Note the endian-swap: 
+        .cfg files take UUIDs LSB-first, whereas this field
+        takes them MSB first
+        So FEEDDEADBEEF in the .cfg appears as 0xEFBEADDEEDFE here.
+        Maximum 6 bytes.
+        0x00 to use the standard ChipID algorithm instead.
 
 # Support setting gpio state at startup
 config INITIAL_PINS

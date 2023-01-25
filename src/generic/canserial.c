@@ -19,47 +19,6 @@
 
 #define CANBUS_UUID_LEN 6
 
-//#define UUID_EBB42_V_1_0 
-//#define UUID_M8P_V_1_0
-#define UUID_M8P_V_1_1
-
-#if defined UUID_EBB42_V_1_0 || defined UUID_M8P_V_1_0 || defined UUID_M8P_V_1_1
-
-#define CANBUS_UUID_FIXED
-
-#define MANUFACTURER_PANTHEON_DESIGN 0xA1
-
-#define DEVICE_TYPE_MAINBOARD 0x01
-#define MODEL_MANTA_M8P 0x01
-#define REVISION_MANTA_M8P_V_1_0 0x01
-#define REVISION_MANTA_M8P_V_1_1 0x02
-
-#define DEVICE_TYPE_PRINTHEAD 0x02
-#define MODEL_EBB 0x01
-#define REVISION_EBB_V_1_0 0x01
-
-#if defined UUID_M8P_V_1_1
-const uint8_t CANBUS_UUID[CANBUS_UUID_LEN] =\
-                            { MANUFACTURER_PANTHEON_DESIGN,\
-                            DEVICE_TYPE_MAINBOARD,\
-                            MODEL_MANTA_M8P,\
-                            REVISION_MANTA_M8P_V_1_1,\
-                            0x00,\
-                            0x00 };
-#endif
-
-#if defined UUID_EBB42_V_1_0
-const uint8_t CANBUS_UUID[CANBUS_UUID_LEN] =\
-                            { MANUFACTURER_PANTHEON_DESIGN,\
-                            DEVICE_TYPE_PRINTHEAD,\
-                            MODEL_EBB,\
-                            REVISION_EBB_V_1_0,\
-                            0x00,\
-                            0x00 };
-#endif // defined UUID_EBB42_V_1_0
-
-#endif // defined UUID_EBB42_V_1_0 || defined UUID_M8P_V_1_0 || defined UUID_M8P_V_1_1
-
 // Global storage
 static struct canbus_data {
     uint32_t assigned_id;
@@ -371,8 +330,9 @@ DECL_COMMAND_FLAGS(command_get_canbus_id, HF_IN_SHUTDOWN, "get_canbus_id");
 void
 canserial_set_uuid(uint8_t *raw_uuid, uint32_t raw_uuid_len)
 {
-    #if defined CANBUS_UUID_FIXED
-    memcpy(CanData.uuid, CANBUS_UUID, sizeof(CanData.uuid));
+    #if CONFIG_CANBUS_UUID
+    uint64_t uuid = CONFIG_CANBUS_UUID;
+    memcpy(CanData.uuid, &uuid, sizeof(CanData.uuid));
     #else
     uint64_t hash = fasthash64(raw_uuid, raw_uuid_len, 0xA16231A7);
     memcpy(CanData.uuid, &hash, sizeof(CanData.uuid));
