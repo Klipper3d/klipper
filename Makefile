@@ -8,7 +8,7 @@
 OUT=out/
 
 # Kconfig includes
-export KCONFIG_CONFIG     := $(CURDIR)/.config
+export KCONFIG_CONFIG     ?:= $(CURDIR)/.config
 -include $(KCONFIG_CONFIG)
 
 # Common command definitions
