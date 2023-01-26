@@ -116,6 +116,14 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
+    },
+        'mellow-fly-super8-v1': {
+        'mcu': "stm32f407xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'current_firmware_path': "FLY.CUR",
+        'skip_verify': True
     }
 }
 
