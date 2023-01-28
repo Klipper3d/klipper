@@ -1,0 +1,1711 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Versions - Documentation Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#versions" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="." title="Documentation Klipper" class="md-header__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Versions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Effacer" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentation Klipper" class="md-nav__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentation Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Vue d'ensemble
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caractéristiques
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Foire Aux Questions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Versions
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Releases.html" class="md-nav__link md-nav__link--active">
+        Versions
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-0110" class="md-nav__link">
+    Klipper 0.11.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-0100" class="md-nav__link">
+    Klipper 0.10.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-090" class="md-nav__link">
+    Klipper 0.9.0
+  </a>
+  
+    <nav class="md-nav" aria-label="Klipper 0.9.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#klipper-091" class="md-nav__link">
+    Klipper 0.9.1
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-080" class="md-nav__link">
+    Klipper 0.8.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-070" class="md-nav__link">
+    Klipper 0.7.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-060" class="md-nav__link">
+    Klipper 0.6.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-050" class="md-nav__link">
+    Klipper 0.5.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-040" class="md-nav__link">
+    Klipper 0.4.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-030" class="md-nav__link">
+    Klipper 0.3.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-020" class="md-nav__link">
+    Klipper 0.2.0
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Changements de configuration
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contact
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation et configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation et configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation et configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Référence de configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Référence de configuration" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Référence de configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Référence de configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Distance de rotation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Contrôles de la configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Nivellement du lit
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Nivellement du lit" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Nivellement du lit
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Nivellement du lit
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Étalonnage Delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Étalonnage de la sonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Nivellement manuel
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Maillage du Bed
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Phase de fin de course
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensation de résonance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensation de résonance" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensation de résonance
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensation de résonance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Mesurer la résonance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Avance à la pression
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Modèles de commandes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Modèles de commandes" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Modèles de commandes
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Modèles de commandes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Référence des états
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Pilotes de moteur pas à pas TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Mise à l'origine et Palpage multi contrôleurs
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correction de l'équerrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclure des objets
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilisation des outils PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentation pour les développeurs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentation pour les développeurs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentation pour les développeurs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Aperçu du code
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinématiques
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocole
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Serveur API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Commandes MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocole CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Débogage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Tests
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuer à Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Packager Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documents spécifiques à certains appareils
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documents spécifiques à certains appareils" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documents spécifiques à certains appareils
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Exemples de configurations
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Mises à jour via la carte SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrôleur RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Chargeurs de démarrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Capteur de largeur de filament TSL1401CL
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Détecteur de largeur de filament à effet hall
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-0110" class="md-nav__link">
+    Klipper 0.11.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-0100" class="md-nav__link">
+    Klipper 0.10.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-090" class="md-nav__link">
+    Klipper 0.9.0
+  </a>
+  
+    <nav class="md-nav" aria-label="Klipper 0.9.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#klipper-091" class="md-nav__link">
+    Klipper 0.9.1
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-080" class="md-nav__link">
+    Klipper 0.8.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-070" class="md-nav__link">
+    Klipper 0.7.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-060" class="md-nav__link">
+    Klipper 0.6.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-050" class="md-nav__link">
+    Klipper 0.5.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-040" class="md-nav__link">
+    Klipper 0.4.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-030" class="md-nav__link">
+    Klipper 0.3.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-020" class="md-nav__link">
+    Klipper 0.2.0
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Releases.md" title="Editer cette page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="versions">Versions<a class="headerlink" href="#versions" title="Permanent link">&para;</a></h1>
+<p>Historique de versions de Klipper. Merci de vous référer a la ressource <a href="Installation.html">installation</a> pour plus d'information sur l'installation de Klipper.</p>
+<h2 id="klipper-0110">Klipper 0.11.0<a class="headerlink" href="#klipper-0110" title="Permanent link">&para;</a></h2>
+<p>Disponible le 28/11/2022. Changements majeurs dans cette version :</p>
+<ul>
+<li>Optimisation du pilote de moteur pas à pas trinamic "pas sur les deux côtés" ("step on both edges").</li>
+<li>Prise en charge de Python3. Le code hôte Klipper fonctionnera avec Python2 ou Python3.</li>
+<li>Prise en charge améliorée du bus CAN. Prise en charge du bus CAN sur les puces rp2040, stm32g0, stm32h7, same51 et same54. Prise en charge du mode "pont USB vers bus CAN".</li>
+<li>Prise en charge du chargeur de démarrage CanBoot.</li>
+<li>Prise en charge des accéléromètres mpu9250 et mpu6050.</li>
+<li>Amélioration de la gestion des erreurs pour les capteurs de température max31856, max31855, max31865 et max6675.</li>
+<li>Il est désormais possible de configurer les LED pour qu'elles se mettent à jour pendant les longues commandes G-Code à l'aide de la prise en charge du "modèle" de LED.</li>
+<li>Plusieurs améliorations sur le microcontrôleur. Nouvelle prise en charge des puces stm32h743, stm32h750, stm32l412, stm32g0b1, same70, same51 et same54. Prise en charge des lectures i2c sur atsamd et stm32f0. Prise en charge pwm matérielle sur stm32. Envoi d'événements basé sur le signal Linux mcu. Nouveau support rp2040 pour "make flash", i2c et rp2040-e5 USB errata.</li>
+<li>Nouveaux modules ajoutés : angle, dac084S085, exclude_object, led, mpu9250, pca9632, smart_effector, z_thermal_adjust. Nouvelle cinématique "deltésienne" ajoutée. Nouvel outil dump_mcu ajouté.</li>
+<li>Plusieurs corrections de bogues et nettoyages de code.</li>
+</ul>
+<h2 id="klipper-0100">Klipper 0.10.0<a class="headerlink" href="#klipper-0100" title="Permanent link">&para;</a></h2>
+<p>Disponible le 29/09/2021. Changements majeurs dans cette version :</p>
+<ul>
+<li>Prise en charge de la mise à l'origine "Multi-MCU". Il est désormais possible de câbler un pilote de moteur pas à pas et sa fin de course sur des microcontrôleurs séparés. Cela simplifie le câblage des sondes Z sur les "cartes de tête d'outil".</li>
+<li>Klipper a maintenant un <a href="https://discord.klipper3d.org">Serveur Discord</a> et un <a href="https://community.klipper3d.org">Serveur Discourse</a>.</li>
+<li>Le <a href="https://www.klipper3d.org">site Web de Klipper</a> utilise désormais l'infrastructure "mkdocs". Il existe également un projet <a href="https://github.com/Klipper3d/klipper-translations">Klipper Translations</a>.</li>
+<li>Prise en charge automatisée du flash du micrologiciel via une carte SD sur de nombreuses cartes.</li>
+<li>Nouveau support cinématique pour les imprimantes "Hybrid CoreXY" et "Hybrid CoreXZ".</li>
+<li>Klipper utilise maintenant <code>rotation_distance</code> pour configurer les distances de déplacement du moteur pas à pas.</li>
+<li>Le code hôte principal de Klipper peut désormais communiquer directement avec les microcontrôleurs via le bus CAN.</li>
+<li>Nouveau système "d'analyse de mouvement". Les mises à jour des mouvements internes de Klipper et les résultats des capteurs peuvent être suivis et enregistrés pour analyse.</li>
+<li>Les pilotes de moteur pas à pas Trinamic sont désormais surveillés en permanence pour les conditions d'erreur.</li>
+<li>Prise en charge du microcontrôleur rp2040 (cartes Raspberry Pi Pico).</li>
+<li>Le système "make menuconfig" utilise maintenant kconfiglib.</li>
+<li>De nombreux modules supplémentaires ajoutés : ds18b20, duplicate_pin_override, filament_motion_sensor, palette2, motion_report, pca9533, pulse_counter, save_variables, sdcard_loop, temperature_host, temperature_mcu</li>
+<li>Plusieurs corrections de bogues et nettoyages de code.</li>
+</ul>
+<h2 id="klipper-090">Klipper 0.9.0<a class="headerlink" href="#klipper-090" title="Permanent link">&para;</a></h2>
+<p>Disponible le 20/10/2020. Changements majeurs dans cette version :</p>
+<ul>
+<li>Prise en charge de "Input Shaping" - un mécanisme pour contrer la résonance de l'imprimante. Il peut réduire ou éliminer les "ondulations" dans les impressions.</li>
+<li>Nouveau système "Smooth Pressure Advance". Cela implémente "Pressure Advance" sans introduire de changements de vitesse instantanés. Il est désormais possible de régler l'avance de pression à l'aide d'une méthode "Tour de réglage".</li>
+<li>Nouveau serveur API "webhooks". Fournit une interface JSON programmable à Klipper.</li>
+<li>L'écran LCD et le menu sont désormais configurables à l'aide du langage Jinja2.</li>
+<li>Les pilotes de moteur pas à pas TMC2208 peuvent désormais être utilisés en mode "standalone" avec Klipper.</li>
+<li>Prise en charge améliorée du BL-Touch v3.</li>
+<li>Identification USB améliorée. Klipper dispose désormais de son propre code d'identification USB et les micro-contrôleurs peuvent désormais signaler leurs numéros de série lors de l'identification USB.</li>
+<li>Nouveau support cinématique pour les imprimantes "Rotary Delta" et "CoreXZ".</li>
+<li>Améliorations du microcontrôleur : prise en charge de stm32f070, prise en charge de stm32f207, prise en charge des broches GPIO sur "Linux MCU", prise en charge du "chargeur de démarrage HID" stm32, prise en charge du chargeur de démarrage Chitu, prise en charge du chargeur de démarrage MKS Robin.</li>
+<li>Amélioration de la gestion des événements Python pour "garbage collection".</li>
+<li>Nombreux modules supplémentaires ajoutés : adc_scaled, adxl345, bme280, display_status, extruder_stepper, fan_generic, hall_filament_width_sensor, htu21d, homing_heaters, input_shaper, lm75, print_stats, resonance_tester, shaper_calibrate, query_adc, graph_accelerometer, graph_extruder, graph_motion, graph_shaper, graph_temp_sensor, whconsole</li>
+<li>Plusieurs corrections de bogues et nettoyages de code.</li>
+</ul>
+<h3 id="klipper-091">Klipper 0.9.1<a class="headerlink" href="#klipper-091" title="Permanent link">&para;</a></h3>
+<p>Disponible le 28/10/2020. Version contenant uniquement des corrections de bogues.</p>
+<h2 id="klipper-080">Klipper 0.8.0<a class="headerlink" href="#klipper-080" title="Permanent link">&para;</a></h2>
+<p>Disponible le 21/10/2019. Changements majeurs dans cette version :</p>
+<ul>
+<li>Prise en charge du nouveau modèle de commande G-Code. Le G-Code dans le fichier de configuration est maintenant évalué avec le langage Jinja2.</li>
+<li>Améliorations de la gestion des pilotes pas à pas Trinamic :<ul>
+<li>Nouvelle prise en charge pour les pilotes TMC2209 et TMC5160.</li>
+<li>Commandes G-Code DUMP_TMC, SET_TMC_CURRENT et INIT_TMC améliorées.</li>
+<li>Prise en charge améliorée de la gestion TMC UART avec un multiplexage analogique.</li>
+</ul>
+</li>
+<li>Prise en charge améliorée de la mise à l'origine, du sondage et de la mise à niveau du lit :<ul>
+<li>Nouveaux modules manual_probe, bed_screws, screw_tilt_adjust, skew_correction, safe_z_home ajoutés.</li>
+<li>Sondage multi-échantillons amélioré avec une logique de médiane, de moyenne et de nouvel essai.</li>
+<li>Documentation améliorée pour le BL-Touch, l'étalonnage de la sonde, l'étalonnage de la fin de course, l'étalonnage des imprimantes delta, la mise à l'origine sans capteur et l'étalonnage de la phase de fin de course.</li>
+<li>Prise en charge améliorée de la mise à l'origine sur un axe Z de grande taille.</li>
+</ul>
+</li>
+<li>De nombreuses améliorations du micro-contrôleur Klipper :<ul>
+<li>Klipper porté sur : SAM3X8C, SAM4S8C, SAMD51, STM32F042, STM32F4</li>
+<li>Nouvelles implémentations des pilotes USB CDC sur SAM3X, SAM4, STM32F4.</li>
+<li>Prise en charge améliorée du flashage de Klipper via USB.</li>
+<li>Prise en charge du SPI logiciel.</li>
+<li>Filtrage de température grandement amélioré sur le capteur LPC176x.</li>
+<li>Les paramètres de démarrage des broches de sortie peuvent être configurés dans le micro-contrôleur.</li>
+</ul>
+</li>
+<li>Nouveau site web avec la documentation Klipper : <a href="http://klipper3d.org/">http://klipper3d.org/</a><ul>
+<li>Klipper a maintenant un logo.</li>
+</ul>
+</li>
+<li>Support expérimental pour la cinématique polaire et "treuil à câble".</li>
+<li>Le fichier de configuration peut maintenant inclure d'autres fichiers de configuration.</li>
+<li>De nombreux modules supplémentaires ajoutés : board_pins, controller_fan, delay_gcode, dotstar, filament_switch_sensor, firmware_retraction, gcode_arcs, gcode_button, heater_generic, manual_stepper, mcp4018, mcp4728, neopixel, pause_resume, respond, temperature_sensor tsl1401cl_filament_width_sensor, tuning_tower</li>
+<li>De nombreuses commandes supplémentaires ajoutées : RESTORE_GCODE_STATE, SAVE_GCODE_STATE, SET_GCODE_VARIABLE, SET_HEATER_TEMPERATURE, SET_IDLE_TIMEOUT, SET_TEMPERATURE_FAN_TARGET</li>
+<li>Plusieurs corrections de bogues et nettoyages de code.</li>
+</ul>
+<h2 id="klipper-070">Klipper 0.7.0<a class="headerlink" href="#klipper-070" title="Permanent link">&para;</a></h2>
+<p>Disponible le 20/12/2018. Changements majeurs dans cette version :</p>
+<ul>
+<li>Klipper prend désormais en charge le nivellement du lit par maillage</li>
+<li>Nouvel étalonnage des imprimantes delta "amélioré" (étalonne les dimensions d'impression x/y sur les imprimantes delta)</li>
+<li>Gestion de la configuration pendant l'exécution des pilotes de moteur pas à pas Trinamic (tmc2130, tmc2208, tmc2660)</li>
+<li>Prise en charge améliorée des capteurs de température : MAX6675, MAX31855, MAX31856, MAX31865, thermistances personnalisées, capteurs de style pt100</li>
+<li>Plusieurs nouveaux modules : temperature_fan, sx1509, force_move, mcp4451, z_tilt, quad_gantry_level, endstop_phase, bltouch</li>
+<li>Plusieurs nouvelles commandes ajoutées : SAVE_CONFIG, SET_PRESSURE_ADVANCE, SET_GCODE_OFFSET, SET_VELOCITY_LIMIT, STEPPER_BUZZ, TURN_OFF_HEATERS, M204, macros g-code personnalisées</li>
+<li>Prise en charge étendue de l'écran LCD :<ul>
+<li>Prise en charge des menus d'exécution</li>
+<li>Nouvelles icônes d'affichage</li>
+<li>Prise en charge des écrans "uc1701" et "ssd1306"</li>
+</ul>
+</li>
+<li>Prise en charge de nouveaux micro-contrôleurs :<ul>
+<li>Klipper porté sur : LPC176x (Smoothieboards), SAM4E8E (Duet2), SAMD21 (Arduino Zero), STM32F103 (appareils "Blue pill"), atmega32u4</li>
+<li>Nouveau pilote CDC USB générique implémenté sur AVR, LPC176x, SAMD21 et STM32F103</li>
+<li>Améliorations des performances sur les processeurs ARM</li>
+</ul>
+</li>
+<li>Le code cinématique a été réécrit pour utiliser un "solveur itératif"</li>
+<li>Nouveaux tests automatisés pour le logiciel hôte Klipper</li>
+<li>De nombreux nouveaux exemples de fichiers de configuration pour les imprimantes les plus courantes</li>
+<li>Mises à jour de la documentation pour les chargeurs de démarrage, l'analyse comparative, le portage des micro-contrôleurs, les vérifications de configuration, le mappage des broches, les paramètres du trancheur, le packaging, et plus</li>
+<li>Plusieurs corrections de bogues et nettoyages de code</li>
+</ul>
+<h2 id="klipper-060">Klipper 0.6.0<a class="headerlink" href="#klipper-060" title="Permanent link">&para;</a></h2>
+<p>Disponible le 31/03/2018. Changements majeurs dans cette version :</p>
+<ul>
+<li>Vérifications améliorées des défaillances matérielles des éléments chauffants et des thermistances</li>
+<li>Prise en charge des sondes Z</li>
+<li>Première prise en charge de l'étalonnage automatique des paramètres sur les deltas (via une nouvelle commande delta_calibrate)</li>
+<li>Première prise en charge de la compensation d'inclinaison du lit (via la commande bed_tilt_calibrate)</li>
+<li>Première prise en charge de la « mise à l'origine 'sûre' » et des surcharges des mises à l'origine</li>
+<li>Prise en charge de l'affichage de l'état sur les écrans RepRapDiscount style 2004 et 12864</li>
+<li>Nouvelles améliorations pour la multi-extrusion :<ul>
+<li>Prise en charge des chauffages partagés</li>
+<li>Prise en charge des chariots doubles (IDEX)</li>
+</ul>
+</li>
+<li>Prise en charge de la configuration de plusieurs steppers par axe (par exemple, double Z)</li>
+<li>Prise en charge des broches de sortie numériques et pwm personnalisées (avec une nouvelle commande SET_PIN)</li>
+<li>Prise en charge d'une "carte SD virtuelle" qui permet d'imprimer directement depuis Klipper (aide sur les machines trop lentes pour bien exécuter OctoPrint)</li>
+<li>Prise en charge du réglage de différentes longueurs de bras sur chaque tour d'une delta</li>
+<li>Prise en charge des commandes G-Code M220/M221 (remplacement du facteur de vitesse/remplacement du facteur d'extrusion)</li>
+<li>Plusieurs mises à jour de la documentation :<ul>
+<li>De nombreux nouveaux exemples de fichiers de configuration pour les imprimantes les plus courantes</li>
+<li>Nouvel exemple de configuration multi-MCU</li>
+<li>Nouvel exemple de configuration du capteur bltouch</li>
+<li>Nouveaux documents sur la FAQ, la vérification de la configuration et le G-Code</li>
+</ul>
+</li>
+<li>Prise en charge des tests d'intégration continue sur tous les commits github</li>
+<li>Plusieurs corrections de bogues et nettoyages de code</li>
+</ul>
+<h2 id="klipper-050">Klipper 0.5.0<a class="headerlink" href="#klipper-050" title="Permanent link">&para;</a></h2>
+<p>Disponible le 25/10/2017. Changements majeurs dans cette version :</p>
+<ul>
+<li>Prise en charge des imprimantes avec plusieurs extrudeuses.</li>
+<li>Prise en charge pour l'exécution sur le PRU Beaglebone. Prise en charge de la carte Replicape.</li>
+<li>Prise en charge de l'exécution du code du microcontrôleur dans un processus Linux en temps réel.</li>
+<li>Prise en charge de plusieurs microcontrôleurs. (Par exemple, on pourrait contrôler une extrudeuse avec un microcontrôleur et le reste de l'imprimante avec un autre.) Une synchronisation d'horloge logicielle est mise en œuvre pour coordonner les actions entre les microcontrôleurs.</li>
+<li>Améliorations des performances des moteurs pas à pas (AVR 20Mhz jusqu'à 189K pas par seconde).</li>
+<li>Prise en charge du contrôle des servos et prise en charge de la définition des ventilateurs de refroidissement des buses.</li>
+<li>Plusieurs corrections de bogues et nettoyages de code</li>
+</ul>
+<h2 id="klipper-040">Klipper 0.4.0<a class="headerlink" href="#klipper-040" title="Permanent link">&para;</a></h2>
+<p>Disponible le 03/05/2017. Changements majeurs dans cette version :</p>
+<ul>
+<li>Installation améliorée sur les machines Raspberry Pi. La majeure partie de l'installation est maintenant scriptée.</li>
+<li>Prise en charge des imprimantes corexy</li>
+<li>Mises à jour de la documentation : nouveau document cinématique, nouveau guide de réglage Pressure Advance, nouveaux exemples de fichiers de configuration, et plus</li>
+<li>Améliorations des performances des moteurs pas à pas (AVR 20Mhz sur 175K pas par seconde, Arduino Due sur 460K)</li>
+<li>Prise en charge des réinitialisations automatiques du microcontrôleur. Prise en charge des réinitialisations via basculement de l'alimentation USB sur Raspberry Pi.</li>
+<li>L'algorithme d'avance de pression fonctionne désormais avec anticipation pour réduire les changements de pression dans les virages.</li>
+<li>Prise en charge de la limitation de la vitesse maximale des mouvements courts en zigzag</li>
+<li>Prise en charge des capteurs AD595</li>
+<li>Plusieurs corrections de bogues et nettoyages de code</li>
+</ul>
+<h2 id="klipper-030">Klipper 0.3.0<a class="headerlink" href="#klipper-030" title="Permanent link">&para;</a></h2>
+<p>Disponible le 23/12/2016. Changements majeurs dans cette version :</p>
+<ul>
+<li>Documentation améliorée</li>
+<li>Prise en charge des imprimantes avec cinématique delta</li>
+<li>Prise en charge du microcontrôleur Arduino Due (ARM cortex-M3)</li>
+<li>Prise en charge des microcontrôleurs AVR basés sur USB</li>
+<li>Prise en charge de l'algorithme "d'avance de pression" - il réduit le suintement pendant les impressions.</li>
+<li>Nouvelle fonctionnalité "butée de fin de course basée sur la phase de moteurs pas à pas" - permet une plus grande précision sur la prise d'origine de la fin de course.</li>
+<li>Prise en charge des commandes "g-code étendu" telles que "help", "restart" et "status".</li>
+<li>Prise en charge du rechargement de la configuration Klipper et du redémarrage du logiciel hôte en émettant une commande "restart" depuis le terminal.</li>
+<li>Améliorations des performances des moteurs pas à pas (AVR 20Mhz jusqu'à 158K pas par seconde).</li>
+<li>Gestion des erreurs améliorée. La plupart des erreurs sont maintenant affichées via le terminal avec une aide sur la façon de les résoudre.</li>
+<li>Plusieurs corrections de bogues et nettoyages de code</li>
+</ul>
+<h2 id="klipper-020">Klipper 0.2.0<a class="headerlink" href="#klipper-020" title="Permanent link">&para;</a></h2>
+<p>Première version de Klipper. Disponible le 25/05/2016. Les principales fonctionnalités disponibles dans la version initiale incluent :</p>
+<ul>
+<li>Prise en charge de base des imprimantes cartésiennes (moteurs pas à pas, extrudeur, lit chauffant, ventilateur de refroidissement).</li>
+<li>Prise en charge des commandes g-code de base. Prise en charge de l'interfaçage avec OctoPrint.</li>
+<li>Accélération et gestion de l'anticipation</li>
+<li>Prise en charge des microcontrôleurs AVR via des ports série standard</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Retour en haut de la page
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Pied de page">
+      
+        
+        <a href="FAQ.html" class="md-footer__link md-footer__link--prev" aria-label="Précédent: Foire Aux Questions" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Précédent
+              </span>
+              Foire Aux Questions
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Config_Changes.html" class="md-footer__link md-footer__link--next" aria-label="Suivant: Changements de configuration" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Suivant
+              </span>
+              Changements de configuration
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copier dans le presse-papier", "clipboard.copied": "Copi\u00e9 dans le presse-papier", "search.config.lang": "fr", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Rechercher", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.term.missing": "Non trouv\u00e9", "select.version.title": "S\u00e9lectionner la version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

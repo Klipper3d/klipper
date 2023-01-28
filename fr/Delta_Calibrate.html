@@ -1,0 +1,1525 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Étalonnage Delta - Documentation Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#etalonnage-delta" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="." title="Documentation Klipper" class="md-header__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Étalonnage Delta
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Effacer" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentation Klipper" class="md-nav__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentation Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Vue d'ensemble
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caractéristiques
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Foire Aux Questions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Changements de configuration
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contact
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation et configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation et configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation et configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Référence de configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Référence de configuration" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Référence de configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Référence de configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Distance de rotation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Contrôles de la configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Nivellement du lit
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Nivellement du lit" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Nivellement du lit
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Nivellement du lit
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Étalonnage Delta
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Delta_Calibrate.html" class="md-nav__link md-nav__link--active">
+        Étalonnage Delta
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sondage-automatique-vs-manuel" class="md-nav__link">
+    Sondage automatique vs manuel
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etalonnage-delta-de-base" class="md-nav__link">
+    Étalonnage Delta de base
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etalonnage-delta-avance" class="md-nav__link">
+    Étalonnage Delta avancé
+  </a>
+  
+    <nav class="md-nav" aria-label="Étalonnage Delta avancé">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-complementaires" class="md-nav__link">
+    Notes complémentaires
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utilisation-dun-maillage-du-lit-sur-une-delta" class="md-nav__link">
+    Utilisation d'un maillage du lit sur une Delta
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Étalonnage de la sonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Nivellement manuel
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Maillage du Bed
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Phase de fin de course
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensation de résonance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensation de résonance" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensation de résonance
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensation de résonance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Mesurer la résonance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Avance à la pression
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Modèles de commandes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Modèles de commandes" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Modèles de commandes
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Modèles de commandes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Référence des états
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Pilotes de moteur pas à pas TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Mise à l'origine et Palpage multi contrôleurs
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correction de l'équerrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclure des objets
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilisation des outils PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentation pour les développeurs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentation pour les développeurs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentation pour les développeurs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Aperçu du code
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinématiques
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocole
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Serveur API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Commandes MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocole CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Débogage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Tests
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuer à Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Packager Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documents spécifiques à certains appareils
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documents spécifiques à certains appareils" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documents spécifiques à certains appareils
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Exemples de configurations
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Mises à jour via la carte SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrôleur RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Chargeurs de démarrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Capteur de largeur de filament TSL1401CL
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Détecteur de largeur de filament à effet hall
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sondage-automatique-vs-manuel" class="md-nav__link">
+    Sondage automatique vs manuel
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etalonnage-delta-de-base" class="md-nav__link">
+    Étalonnage Delta de base
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etalonnage-delta-avance" class="md-nav__link">
+    Étalonnage Delta avancé
+  </a>
+  
+    <nav class="md-nav" aria-label="Étalonnage Delta avancé">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-complementaires" class="md-nav__link">
+    Notes complémentaires
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utilisation-dun-maillage-du-lit-sur-une-delta" class="md-nav__link">
+    Utilisation d'un maillage du lit sur une Delta
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Delta_Calibrate.md" title="Editer cette page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="etalonnage-delta">Étalonnage Delta<a class="headerlink" href="#etalonnage-delta" title="Permanent link">&para;</a></h1>
+<p>Ce document décrit le système de calibration automatique de Klipper pour les imprimantes de type "delta".</p>
+<p>L'étalonnage Delta consiste à trouver les positions pour les butées de tour, les angles de tour, le rayon Delta et les longueurs de bras Delta. Ces paramètres contrôlent le mouvement de l'imprimante sur une imprimante Delta. Chacun de ces paramètres a un impact non linéaire et il est difficile de les calibrer manuellement. En revanche, le code d'étalonnage logiciel peut fournir d'excellents résultats en quelques minutes seulement. Aucun matériel spécial n'est nécessaire.</p>
+<p>L'étalonnage Delta dépend de la précision des interrupteurs de fin de course de chaque tour. Si l'on utilise des pilotes de moteur pas à pas Trinamic, envisagez d'activer la détection de <a href="Endstop_Phase.html">phase d'arrêt</a> pour améliorer la précision de ces commutateurs.</p>
+<h2 id="sondage-automatique-vs-manuel">Sondage automatique vs manuel<a class="headerlink" href="#sondage-automatique-vs-manuel" title="Permanent link">&para;</a></h2>
+<p>Klipper prend en charge l'étalonnage des paramètres delta via une méthode de sondage manuelle ou via une sonde Z automatique.</p>
+<p>Un certain nombre de kits d'imprimantes delta sont livrés avec des sondes Z automatiques qui ne sont pas suffisamment précises (en particulier, de petites différences de longueur de bras peuvent provoquer une inclinaison de l'effecteur qui peut fausser une sonde automatique). Si vous utilisez une sonde automatique, <a href="Probe_Calibrate.html">étalonnez d'abord la sonde</a>, puis recherchez un <a href="Probe_Calibrate.html#location-bias-check">le biais d'emplacement de la sonde</a>. Si la sonde automatique a un biais de plus de 25 microns (0,025 mm), utilisez plutôt une sonde manuelle. Le sondage manuel ne prend que quelques minutes et élimine les erreurs introduites par la sonde.</p>
+<p>Si vous utilisez une sonde montée sur le côté de l'extrémité chaude (c'est-à-dire qu'elle a un décalage X ou Y), notez que l'exécution de l'étalonnage delta invalidera les résultats de l'étalonnage de la sonde. Ces types de sondes sont rarement adaptés à une utilisation sur une delta (car une inclinaison mineure de l'effecteur entraînera un biais de localisation de la sonde). Si vous utilisez quand même la sonde, assurez-vous de relancer l'étalonnage de la sonde après tout étalonnage delta.</p>
+<h2 id="etalonnage-delta-de-base">Étalonnage Delta de base<a class="headerlink" href="#etalonnage-delta-de-base" title="Permanent link">&para;</a></h2>
+<p>Klipper a une commande DELTA_CALIBRATE qui peut effectuer un étalonnage Delta de base. Cette commande sonde sept points différents sur le lit et calcule de nouvelles valeurs pour les angles de la tour, les butées de la tour et le rayon delta.</p>
+<p>Afin d'effectuer cet étalonnage, les paramètres delta initiaux (longueurs de bras, rayon et positions de butée) doivent être fournis et ils doivent avoir une précision de quelques millimètres. La plupart des kits d'imprimante delta fournissent ces paramètres - configurez l'imprimante avec ces valeurs par défaut, puis exécutez la commande DELTA_CALIBRATE comme décrit ci-dessous. Si aucune valeur par défaut n'est disponible, recherchez en ligne un guide d'étalonnage delta qui peut fournir un point de départ de base.</p>
+<p>Au cours du processus d'étalonnage Delta, il peut être nécessaire que l'imprimante sonde 'en dessous' de ce qui serait autrement considéré comme le plan du lit. Il est courant d'autoriser cela lors de l'étalonnage en mettant à jour la configuration de sorte que la position <code>minimum_z_position=-5</code> de l'imprimante. (Une fois l'étalonnage terminé, on peut supprimer ce paramètre de la configuration.)</p>
+<p>Il existe deux façons d'effectuer le sondage : le sondage manuel (<code>DELTA_CALIBRATE METHOD=manual</code>) et le sondage automatique (<code>DELTA_CALIBRATE</code>). La méthode de sondage manuel déplacera la tête près du lit, puis attendra que l'utilisateur suive les étapes décrites dans <a href="Bed_Level.html#the-paper-test">"the paper test"</a> pour déterminer la distance réelle entre la buse et lit à l'endroit indiqué.</p>
+<p>Pour effectuer le sondage initial, assurez-vous que la configuration a une section [delta_calibrate] définie, puis exécutez l'outil :</p>
+<div class="highlight"><pre><span></span><code>G28
+DELTA_CALIBRATE METHOD=manual
+</code></pre></div>
+
+<p>Après avoir sondé les sept points, de nouveaux paramètres Delta seront calculés. Enregistrez et appliquez ces paramètres en exécutant :</p>
+<div class="highlight"><pre><span></span><code>SAVE_CONFIG
+</code></pre></div>
+
+<p>L'étalonnage initial doit fournir des paramètres Delta suffisamment précis pour une impression. S'il s'agit d'une nouvelle imprimante, c'est le bon moment pour imprimer certains objets simples et vérifier son bon fonctionnement.</p>
+<h2 id="etalonnage-delta-avance">Étalonnage Delta avancé<a class="headerlink" href="#etalonnage-delta-avance" title="Permanent link">&para;</a></h2>
+<p>L'étalonnage Delta de base fait généralement un bon travail de calcul des paramètres delta de sorte que la buse soit à la bonne distance du lit. Cependant, il n'essaye pas de calibrer la précision dimensionnelle X et Y. L'étalonnage delta amélioré permet de vérifier la précision dimensionnelle.</p>
+<p>Cette procédure d'étalonnage nécessite l'impression d'un objet de test et la mesure de parties de cet objet de test avec un pied à coulisse.</p>
+<p>Avant d'exécuter un étalonnage delta avancé, il faut exécuter l'étalonnage delta de base (via la commande DELTA_CALIBRATE) et enregistrer les résultats (via la commande SAVE_CONFIG). Assurez-vous qu'il n'y a eu aucun changement notable dans la configuration de l'imprimante ni dans le matériel depuis le dernier étalonnage delta de base (en cas de doute, réexécutez l'<a href="#basic-delta-calibration">étalonnage delta de base</a>, y compris SAVE_CONFIG, juste avant l'impression l'objet de test décrit ci-dessous.)</p>
+<p>Utilisez un trancheur pour générer le G-Code à partir du fichier <a href="prints/calibrate_size.stl">docs/prints/calibrate_size.stl</a>. Tranchez l'objet en utilisant une vitesse lente (par exemple, 40 mm/s). Si possible, utilisez un plastique rigide (comme le PLA) pour l'objet. L'objet a un diamètre de 140 mm. Si c'est trop grand pour l'imprimante, il est possible de le réduire (mais assurez-vous de mettre uniformément à l'échelle les axes X et Y). Si l'imprimante prend en charge des impressions beaucoup plus grandes, cet objet peut également être agrandi. Une taille plus grande peut améliorer la précision de la mesure, mais une bonne adhérence de l'impression est plus importante qu'une taille d'impression plus grande.</p>
+<p>Imprimez l'objet à tester et attendez qu'il refroidisse complètement. Les commandes décrites ci-dessous doivent être exécutées avec les mêmes paramètres d'imprimante que ceux utilisés pour imprimer l'objet de calibrage (ne pas exécuter DELTA_CALIBRATE entre l'impression et la mesure, ou faire quelque chose d'autre qui changerait la configuration de l'imprimante).</p>
+<p>Si possible, effectuez les mesures décrites ci-dessous pendant que l'objet est toujours attaché au lit d'impression, mais ne vous inquiétez pas si la pièce se détache du lit - essayez simplement d'éviter de tordre l'objet lors de l'exécution des mesures.</p>
+<p>Commencez par mesurer la distance entre le pilier central et le pilier à côté de l'étiquette "A" (qui doit également pointer vers la tour "A").</p>
+<p><img alt="delta-a-distance" src="img/delta-a-distance.jpg" /></p>
+<p>Ensuite, allez dans le sens inverse des aiguilles d'une montre et mesurez les distances entre le pilier central et les autres piliers (distance du centre au pilier en face de l'étiquette C, distance du centre au pilier avec l'étiquette B, etc.).</p>
+<p><img alt="delta_cal_e_step1" src="img/delta_cal_e_step1.png" /></p>
+<p>Entrez ces paramètres dans Klipper avec une liste de nombres réels (/!\ utilisez le point comme séparateur décimal) séparés par des virgules :</p>
+<div class="highlight"><pre><span></span><code>DELTA_ANALYZE CENTER_DISTS=&lt;a_dist&gt;,&lt;far_c_dist&gt;,&lt;b_dist&gt;,&lt;far_a_dist&gt;,&lt;c_dist&gt;,&lt;far_b_dist&gt;
+</code></pre></div>
+
+<p>Fournissez les valeurs sans espaces entre chaque valeurs.</p>
+<p>Mesurez ensuite la distance entre le pilier A et le pilier en face de l'étiquette C.</p>
+<p><img alt="delta-ab-distance" src="img/delta-outer-distance.jpg" /></p>
+<p>Ensuite, dans le sens antihoraire, mesurez la distance entre le pilier en face de C et le pilier B, la distance entre le pilier B et le pilier en face de A, et ainsi de suite.</p>
+<p><img alt="delta_cal_e_step2" src="img/delta_cal_e_step2.png" /></p>
+<p>Saisissez ces paramètres dans Klipper :</p>
+<div class="highlight"><pre><span></span><code>DELTA_ANALYZE OUTER_DISTS=&lt;a_to_far_c&gt;,&lt;far_c_to_b&gt;,&lt;b_to_far_a&gt;,&lt;far_a_to_c&gt;,&lt;c_to_far_b&gt;,&lt;far_b_to_a&gt;
+</code></pre></div>
+
+<p>À ce stade, vous pouvez retirer l'objet du lit. Les mesures finales concernent les piliers eux-mêmes. Mesurez la taille du pilier central le long du rayon A, puis du rayon B, puis du rayon C.</p>
+<p><img alt="delta-a-pillar" src="img/delta-a-pillar.jpg" /></p>
+<p><img alt="delta_cal_e_step3" src="img/delta_cal_e_step3.png" /></p>
+<p>Saisissez-les dans Klipper :</p>
+<div class="highlight"><pre><span></span><code>DELTA_ANALYZE CENTER_PILLAR_WIDTHS=&lt;a&gt;,&lt;b&gt;,&lt;c&gt;
+</code></pre></div>
+
+<p>Les mesures finales concernent les piliers extérieurs. Commencez par mesurer la distance du pilier A le long de la ligne allant de A au pilier en face de C.</p>
+<p><img alt="delta-ab-pillar" src="img/delta-outer-pillar.jpg" /></p>
+<p>Ensuite, dans le sens antihoraire, mesurez les piliers extérieurs restants (pilier en face de C le long de la ligne vers B, pilier B le long de la ligne vers le pilier en face de A, etc.).</p>
+<p><img alt="delta_cal_e_step4" src="img/delta_cal_e_step4.png" /></p>
+<p>Et entrez-les dans Klipper :</p>
+<div class="highlight"><pre><span></span><code>DELTA_ANALYZE OUTER_PILLAR_WIDTHS=&lt;a&gt;,&lt;far_c&gt;,&lt;b&gt;,&lt;far_a&gt;,&lt;c&gt;,&lt;far_b&gt;
+</code></pre></div>
+
+<p>Si l'objet a été mis à l'échelle à une taille plus petite ou plus grande, indiquez le facteur d'échelle utilisé lors du découpage de l'objet :</p>
+<div class="highlight"><pre><span></span><code>DELTA_ANALYZE SCALE=1.0
+</code></pre></div>
+
+<p>(Une valeur d'échelle de 2,0 signifierait que l'objet est deux fois sa taille d'origine, 0,5 serait la moitié de sa taille d'origine.)</p>
+<p>Enfin, effectuez l'étalonnage delta amélioré en exécutant :</p>
+<div class="highlight"><pre><span></span><code>DELTA_ANALYZE CALIBRATE=extended
+</code></pre></div>
+
+<p>Cette commande peut prendre plusieurs minutes. Une fois terminé, elle calculera les paramètres delta mis à jour (rayon delta, angles de tour, positions de butée et longueurs de bras). Utilisez la commande SAVE_CONFIG pour enregistrer et appliquer les paramètres :</p>
+<div class="highlight"><pre><span></span><code>SAVE_CONFIG
+</code></pre></div>
+
+<p>La commande SAVE_CONFIG enregistre à la fois les paramètres delta mis à jour et les informations des mesures de distance. Les futures commandes DELTA_CALIBRATE utiliseront également ces informations de distance. N'essayez pas de ressaisir les mesures de distance brutes après avoir exécuté SAVE_CONFIG, car cette commande modifie la configuration de l'imprimante et les mesures brutes ne s'appliquent plus.</p>
+<h3 id="notes-complementaires">Notes complémentaires<a class="headerlink" href="#notes-complementaires" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Si l'imprimante Delta a une bonne précision dimensionnelle, la distance entre deux piliers doit être d'environ 74 mm et la largeur de chaque pilier doit être d'environ 9 mm. (Plus précisément, l'objectif est que la distance entre deux piliers moins la largeur de l'un des piliers soit exactement de 65 mm.) S'il y a une inexactitude dimensionnelle dans la pièce, la routine DELTA_ANALYZE calculera de nouveaux paramètres delta en utilisant à la fois les mesures de distance et les mesures de hauteur précédentes de la dernière commande DELTA_CALIBRATE.</li>
+<li>DELTA_ANALYZE peut génerer des paramètres delta surprenants. Par exemple, il peut suggérer des longueurs de bras qui ne correspondent pas aux longueurs de bras réelles de l'imprimante. Malgré cela, les tests ont montré que DELTA_ANALYZE produit souvent de bons résultats. Les paramètres delta calculés sont capables de tenir compte de légères erreurs ailleurs dans le matériel. Par exemple, de petites différences de longueur de bras peuvent entraîner une inclinaison de l'effecteur et une partie de cette inclinaison peut être prise en compte en ajustant les paramètres de longueur de bras.</li>
+</ul>
+<h2 id="utilisation-dun-maillage-du-lit-sur-une-delta">Utilisation d'un maillage du lit sur une Delta<a class="headerlink" href="#utilisation-dun-maillage-du-lit-sur-une-delta" title="Permanent link">&para;</a></h2>
+<p>Il est possible d'utiliser le <a href="Bed_Mesh.html">maillage du lit</a> sur une Delta. Cependant, il est important d'obtenir un bon étalonnage Delta avant d'activer un maillage du lit. L'exécution d'un maillage du lit avec un mauvais calibrage delta entraînera des résultats médiocres.</p>
+<p>Notez que l'exécution de l'étalonnage delta invalidera tout maillage de lit précédemment obtenu. Après avoir effectué un nouvel étalonnage delta, assurez-vous de relancer BED_MESH_CALIBRATE.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Retour en haut de la page
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Pied de page">
+      
+        
+        <a href="Bed_Level.html" class="md-footer__link md-footer__link--prev" aria-label="Précédent: Nivellement du lit" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Précédent
+              </span>
+              Nivellement du lit
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Probe_Calibrate.html" class="md-footer__link md-footer__link--next" aria-label="Suivant: Étalonnage de la sonde" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Suivant
+              </span>
+              Étalonnage de la sonde
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copier dans le presse-papier", "clipboard.copied": "Copi\u00e9 dans le presse-papier", "search.config.lang": "fr", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Rechercher", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.term.missing": "Non trouv\u00e9", "select.version.title": "S\u00e9lectionner la version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

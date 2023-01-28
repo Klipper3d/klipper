@@ -1,0 +1,1638 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Cinématiques - Documentation Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cinematiques" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="." title="Documentation Klipper" class="md-header__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cinématiques
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Effacer" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentation Klipper" class="md-nav__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentation Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Vue d'ensemble
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caractéristiques
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Foire Aux Questions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Changements de configuration
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contact
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation et configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation et configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation et configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Référence de configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Référence de configuration" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Référence de configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Référence de configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Distance de rotation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Contrôles de la configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Nivellement du lit
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Nivellement du lit" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Nivellement du lit
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Nivellement du lit
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Étalonnage Delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Étalonnage de la sonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Nivellement manuel
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Maillage du Bed
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Phase de fin de course
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensation de résonance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensation de résonance" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensation de résonance
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensation de résonance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Mesurer la résonance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Avance à la pression
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Modèles de commandes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Modèles de commandes" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Modèles de commandes
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Modèles de commandes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Référence des états
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Pilotes de moteur pas à pas TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Mise à l'origine et Palpage multi contrôleurs
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correction de l'équerrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclure des objets
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilisation des outils PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentation pour les développeurs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentation pour les développeurs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentation pour les développeurs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Aperçu du code
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Cinématiques
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Kinematics.html" class="md-nav__link md-nav__link--active">
+        Cinématiques
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#acceleration" class="md-nav__link">
+    Accélération
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generateur-de-trapezoides" class="md-nav__link">
+    Générateur de trapézoïdes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#projection" class="md-nav__link">
+    Projection
+  </a>
+  
+    <nav class="md-nav" aria-label="Projection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lissage-de-la-projection" class="md-nav__link">
+    Lissage de la projection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etapes-de-la-generation" class="md-nav__link">
+    Étapes de la génération
+  </a>
+  
+    <nav class="md-nav" aria-label="Étapes de la génération">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#robots-cartesiens" class="md-nav__link">
+    Robots cartésiens
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#robots-corexy" class="md-nav__link">
+    Robots CoreXY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#robots-delta" class="md-nav__link">
+    Robots Delta
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limites-dacceleration-du-moteur-pas-a-pas" class="md-nav__link">
+    Limites d'accélération du moteur pas à pas
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cinematique-de-lextrudeuse" class="md-nav__link">
+    Cinématique de l'extrudeuse
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avance-a-la-pression" class="md-nav__link">
+    Avance à la pression
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocole
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Serveur API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Commandes MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocole CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Débogage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Tests
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuer à Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Packager Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documents spécifiques à certains appareils
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documents spécifiques à certains appareils" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documents spécifiques à certains appareils
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Exemples de configurations
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Mises à jour via la carte SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrôleur RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Chargeurs de démarrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Capteur de largeur de filament TSL1401CL
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Détecteur de largeur de filament à effet hall
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#acceleration" class="md-nav__link">
+    Accélération
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generateur-de-trapezoides" class="md-nav__link">
+    Générateur de trapézoïdes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#projection" class="md-nav__link">
+    Projection
+  </a>
+  
+    <nav class="md-nav" aria-label="Projection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lissage-de-la-projection" class="md-nav__link">
+    Lissage de la projection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etapes-de-la-generation" class="md-nav__link">
+    Étapes de la génération
+  </a>
+  
+    <nav class="md-nav" aria-label="Étapes de la génération">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#robots-cartesiens" class="md-nav__link">
+    Robots cartésiens
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#robots-corexy" class="md-nav__link">
+    Robots CoreXY
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#robots-delta" class="md-nav__link">
+    Robots Delta
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limites-dacceleration-du-moteur-pas-a-pas" class="md-nav__link">
+    Limites d'accélération du moteur pas à pas
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cinematique-de-lextrudeuse" class="md-nav__link">
+    Cinématique de l'extrudeuse
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avance-a-la-pression" class="md-nav__link">
+    Avance à la pression
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Kinematics.md" title="Editer cette page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="cinematiques">Cinématiques<a class="headerlink" href="#cinematiques" title="Permanent link">&para;</a></h1>
+<p>Ce document donne un aperçu de la façon dont Klipper implémente le mouvement du robot (sa <a href="https://en.wikipedia.org/wiki/Kinematics">cinématique</a>). Ce contenu peut intéresser aussi bien les développeurs travaillant sur le logiciel Klipper que les utilisateurs intéressés à mieux comprendre la mécanique de leurs machines.</p>
+<h2 id="acceleration">Accélération<a class="headerlink" href="#acceleration" title="Permanent link">&para;</a></h2>
+<p>Klipper met en œuvre un schéma d'accélération constante chaque fois que la tête d'impression change de vitesse - la vitesse est progressivement modifiée pour atteindre la nouvelle vitesse au lieu d'être brusquement atteinte. Klipper applique toujours l'accélération entre la tête de l'outil et l'impression. Le filament sortant de l'extrudeuse peut être assez fragile - des secousses rapides et/ou des changements de débit de l'extrudeuse entraînent une qualité médiocre et une mauvaise adhérence du lit. Même en l'absence d'extrusion, si la tête d'impression se trouve au même niveau que l'impression, des secousses rapides de la tête peuvent perturber le filament récemment déposé. Limiter les changements de vitesse de la tête d'impression (par rapport à l'impression) réduit les risques de perturbation de l'impression.</p>
+<p>Il est également important de limiter l'accélération afin que les moteurs pas à pas ne perdent pas de pas et ne soumettent pas la machine à des contraintes excessives. Klipper limite le couple de chaque moteur pas à pas en limitant l'accélération de la tête d'impression. Le fait d'imposer une accélération à la tête d'impression limite naturellement aussi le couple des moteurs pas à pas qui déplacent la tête d'impression (l'inverse n'est pas toujours vrai).</p>
+<p>Klipper met en œuvre une accélération constante. La formule clé de l'accélération constante est la suivante :</p>
+<div class="highlight"><pre><span></span><code>velocity(time) = start_velocity + accel*time
+</code></pre></div>
+
+<h2 id="generateur-de-trapezoides">Générateur de trapézoïdes<a class="headerlink" href="#generateur-de-trapezoides" title="Permanent link">&para;</a></h2>
+<p>Klipper utilise un "générateur de trapèze" traditionnel pour modéliser le mouvement de chaque déplacement - chaque déplacement a une vitesse de départ, il accélère jusqu'à une vitesse de croisière à une accélération constante, il se déplace à une vitesse constante, puis décélère jusqu'à la vitesse finale en utilisant une décélération constante.</p>
+<p><img alt="trapezoid" src="img/trapezoid.svg.png" /></p>
+<p>On l'appelle "générateur de trapèze" parce que le diagramme de vitesse du mouvement ressemble à un trapèze.</p>
+<p>La vitesse de croisière est toujours supérieure ou égale à la fois à la vitesse de départ et à la vitesse d'arrivée. La phase d'accélération peut être de durée nulle (si la vitesse de départ est égale à la vitesse de croisière), la phase de croisière peut être de durée nulle (si le mouvement commence immédiatement à décélérer après l'accélération), et/ou la phase de décélération peut être de durée nulle (si la vitesse finale est égale à la vitesse de croisière).</p>
+<p><img alt="trapezoids" src="img/trapezoids.svg.png" /></p>
+<h2 id="projection">Projection<a class="headerlink" href="#projection" title="Permanent link">&para;</a></h2>
+<p>Le système de projection "look-ahead" est utilisé pour déterminer les vitesses lors des virages entre les mouvements.</p>
+<p>Considérons les deux mouvements suivants contenus dans un plan XY :</p>
+<p><img alt="corner" src="img/corner.svg.png" /></p>
+<p>Dans la situation ci-dessus, il est possible de décélérer complètement après le premier mouvement et d'accélérer complètement au début du mouvement suivant, mais ce n'est pas idéal car toutes ces accélérations et décélérations augmenteraient considérablement le temps d'impression et les changements fréquents dans le flux de l'extrudeuse entraîneraient une mauvaise qualité d'impression.</p>
+<p>Pour résoudre ce problème, le mécanisme de projection "look-ahead" met en file d'attente plusieurs mouvements entrants et analyse les angles entre les mouvements pour déterminer une vitesse raisonnable pouvant être obtenue pendant la "jonction" entre deux mouvements. Si le déplacement suivant est presque dans la même direction, la tête ne doit ralentir que légèrement (voire pas du tout).</p>
+<p><img alt="lookahead" src="img/lookahead.svg.png" /></p>
+<p>Toutefois, si le mouvement suivant forme un angle aigu (la tête va se déplacer dans une direction presque inverse lors du mouvement suivant), seule une petite vitesse de jonction est autorisée.</p>
+<p><img alt="lookahead" src="img/lookahead-slow.svg.png" /></p>
+<p>Les vitesses de jonction sont déterminées en utilisant "l'accélération centripète approximative". Best <a href="https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/">décrit par l'auteur</a>. Cependant, dans Klipper, les vitesses de jonction sont configurées en spécifiant la vitesse souhaitée pour un angle de 90° (la "vitesse de l'angle carré"), et les vitesses de jonction des autres angles en sont dérivées.</p>
+<p>Formule clé pour la projection :</p>
+<div class="highlight"><pre><span></span><code>end_velocity^2 = start_velocity^2 + 2*accel*move_distance
+</code></pre></div>
+
+<h3 id="lissage-de-la-projection">Lissage de la projection<a class="headerlink" href="#lissage-de-la-projection" title="Permanent link">&para;</a></h3>
+<p>Klipper met également en œuvre un mécanisme permettant de lisser les mouvements de courts déplacements en "zigzag". Considérons les mouvements suivants :</p>
+<p><img alt="zigzag" src="img/zigzag.svg.png" /></p>
+<p>Dans l'exemple ci-dessus, les passages fréquents de l'accélération à la décélération peuvent faire vibrer la machine provoquant des contraintes sur la machine et augmentant le bruit. Pour réduire ce phénomène, Klipper suit à la fois l'accélération des mouvements réguliers et un taux virtuel "d'accélération à décélération". Grâce à ce système, la vitesse maximale de ces courts mouvements en "zigzag" est limitée pour lisser le mouvement de l'imprimante :</p>
+<p><img alt="smoothed" src="img/smoothed.svg.png" /></p>
+<p>Plus précisément, le code calcule ce que serait la vitesse de chaque mouvement s'il était limité à ce taux virtuel "d'accélération à décélération" (la moitié du taux d'accélération normal par défaut). Dans l'image ci-dessus, les lignes grises en pointillés représentent ce taux d'accélération virtuel pour le premier déplacement. Si un déplacement ne peut atteindre sa vitesse de croisière maximale en utilisant ce taux d'accélération virtuel, sa vitesse maximale est réduite à la vitesse maximale obtenu avec ce taux d'accélération virtuel. Pour la plupart des mouvements, la limite sera égale ou supérieure aux limites existantes du mouvement et aucun changement de comportement n'est induit. En revanche, pour les déplacements courts en zigzag, cette limite réduit la vitesse maximale. Notez que cela ne modifie pas l'accélération réelle du mouvement - le mouvement continue d'utiliser le schéma d'accélération normal jusqu'à sa vitesse maximale ajustée.</p>
+<h2 id="etapes-de-la-generation">Étapes de la génération<a class="headerlink" href="#etapes-de-la-generation" title="Permanent link">&para;</a></h2>
+<p>Une fois le processus d'anticipation terminé, le mouvement de la tête d'impression du mouvement donné est entièrement connu (temps, position de départ, position finale, vitesse à chaque point) et il est possible de générer les durées de pas du mouvement. Ce processus est effectué dans les "classes cinématiques" du code Klipper. En dehors de ces classes cinématiques, tout est suivi en millimètres, en secondes et dans un espace de coordonnées cartésiennes. C'est la tâche des classes cinématiques de convertir ce système de coordonnées générique aux spécificités matérielles de l'imprimante particulière.</p>
+<p>Klipper utilise un <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">solveur itératif</a> pour générer les durés de pas pour chaque moteur. Le code contient les formules permettant de calculer les coordonnées cartésiennes idéales de la tête à chaque instant, ainsi que les formules cinématiques permettant de calculer les positions idéales des moteurs à partir de ces coordonnées cartésiennes. Grâce à ces formules, Klipper peut déterminer le moment idéal où le moteur doit se trouver à chaque position de pas. Les étapes données sont alors programmées à ces moments calculés.</p>
+<p>La formule clé déterminant la distance qu'un mouvement doit parcourir sous une accélération constante est la suivante :</p>
+<div class="highlight"><pre><span></span><code>move_distance = (start_velocity + .5 * accel * move_time) * move_time
+</code></pre></div>
+
+<p>et la formule clé d'un mouvement à vitesse constante est :</p>
+<div class="highlight"><pre><span></span><code>move_distance = cruise_velocity * move_time
+</code></pre></div>
+
+<p>Les formules clés permettant de déterminer la coordonnée cartésienne d'un déplacement en fonction de la distance du déplacement sont les suivantes :</p>
+<div class="highlight"><pre><span></span><code>cartesian_x_position = start_x + move_distance * total_x_movement / total_movement
+cartesian_y_position = start_y + move_distance * total_y_movement / total_movement
+cartesian_z_position = start_z + move_distance * total_z_movement / total_movement
+</code></pre></div>
+
+<h3 id="robots-cartesiens">Robots cartésiens<a class="headerlink" href="#robots-cartesiens" title="Permanent link">&para;</a></h3>
+<p>La génération de pas des imprimantes cartésiennes est le cas le plus simple. Le mouvement sur chaque axe est directement lié au mouvement dans l'espace cartésien.</p>
+<p>Formules clés :</p>
+<div class="highlight"><pre><span></span><code>stepper_x_position = cartesian_x_position
+stepper_y_position = cartesian_y_position
+stepper_z_position = cartesian_z_position
+</code></pre></div>
+
+<h3 id="robots-corexy">Robots CoreXY<a class="headerlink" href="#robots-corexy" title="Permanent link">&para;</a></h3>
+<p>La génération de pas d'une machine CoreXY n'est qu'un peu plus complexe que les robots cartésiens de base. Les formules clés sont les suivantes :</p>
+<div class="highlight"><pre><span></span><code>stepper_a_position = cartesian_x_position + cartesian_y_position
+stepper_b_position = cartesian_x_position - cartesian_y_position
+stepper_z_position = cartesian_z_position
+</code></pre></div>
+
+<h3 id="robots-delta">Robots Delta<a class="headerlink" href="#robots-delta" title="Permanent link">&para;</a></h3>
+<p>La génération de pas d'un robot delta est basée sur le théorème de Pythagore :</p>
+<div class="highlight"><pre><span></span><code>stepper_position = (sqrt(arm_length^2
+
+                         - (cartesian_x_position - tower_x_position)^2
+                         - (cartesian_y_position - tower_y_position)^2)
+                    + cartesian_z_position)
+</code></pre></div>
+
+<h3 id="limites-dacceleration-du-moteur-pas-a-pas">Limites d'accélération du moteur pas à pas<a class="headerlink" href="#limites-dacceleration-du-moteur-pas-a-pas" title="Permanent link">&para;</a></h3>
+<p>Avec la cinématique delta, il est possible qu'un mouvement accélèrant dans l'espace cartésien nécessite une accélération sur un moteur pas à pas particulier supérieure à l'accélération du mouvement. Cela peut se produire lorsque le bras d'un moteur pas à pas est plus horizontal que vertical et que la ligne de mouvement passe près de la tour de ce moteur pas à pas. Bien que ces mouvements puissent nécessiter une accélération du moteur pas à pas supérieure à l'accélération maximale du mouvement configuré de l'imprimante, la masse effective déplacée par ce moteur pas à pas serait plus faible. Ainsi, l'accélération plus élevée du moteur pas à pas n'entraîne pas un couple beaucoup plus élevé et est donc considérée comme inoffensive.</p>
+<p>Cependant, afin d'éviter les cas extrêmes, Klipper applique un plafond maximal à l'accélération du moteur de trois fois l'accélération de déplacement maximale configurée de l'imprimante. (De même, la vitesse maximale du moteur est limitée à trois fois la vitesse de déplacement maximale). Afin de faire respecter cette limite, les mouvements situés à l'extrémité de l'enveloppe de construction (où le bras du stepper peut être presque horizontal) auront une accélération et une vitesse maximales inférieures.</p>
+<h3 id="cinematique-de-lextrudeuse">Cinématique de l'extrudeuse<a class="headerlink" href="#cinematique-de-lextrudeuse" title="Permanent link">&para;</a></h3>
+<p>Klipper implémente le mouvement de l'extrudeuse dans sa propre classe cinématique. Comme la durée et la vitesse de chaque mouvement de la tête d'impression sont entièrement connus pour chaque mouvement, il est possible de calculer les durées de pas de l'extrudeuse indépendamment des calculs de durées de pas du mouvement de la tête d'impression.</p>
+<p>Le mouvement de base de l'extrudeuse est simple à calculer. La génération de durée de pas utilise les mêmes formules que celles utilisées par les robots cartésiens :</p>
+<div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
+</code></pre></div>
+
+<h3 id="avance-a-la-pression">Avance à la pression<a class="headerlink" href="#avance-a-la-pression" title="Permanent link">&para;</a></h3>
+<p>L'expérimentation a montré qu'il est possible d'améliorer la modélisation de l'extrudeuse au-delà de la formule de base de l'extrudeuse. Dans le cas idéal, au fur et à mesure qu'un mouvement d'extrusion progresse, le même volume de filament devrait être déposé à chaque point du mouvement et il ne devrait pas y avoir de volume extrudé après le mouvement. Malheureusement, il est courant de constater que les formules d'extrusion de base font que trop peu de filament sort de l'extrudeuse au début des mouvements d'extrusion et qu'un excès de filament est extrudé après la fin de l'extrusion. Ce phénomène est souvent appelé "suintement".</p>
+<p><img alt="suintement" src="img/ooze.svg.png" /></p>
+<p>Le système d'"avance à la pression" tente de tenir compte de ce phénomène en utilisant un modèle différent pour l'extrudeuse. Au lieu de croire naïvement que chaque mm^3 de filament introduit dans l'extrudeuse entraînera la sortie immédiate de cette quantité de mm^3, est utilisé un modèle basé sur la pression. La pression augmente lorsque le filament est poussé dans l'extrudeuse (comme dans la <a href="https://en.wikipedia.org/wiki/Hooke%27s_law">loi de Hooke</a>) et la pression nécessaire pour extruder est dominée par le débit à travers l'orifice de la buse (comme dans la <a href="https://en.wikipedia.org/wiki/Poiseuille_law">loi de Poiseuille</a>). L'idée principale est que la relation entre le filament, la pression et le débit peut être modélisée par un coefficient linéaire :</p>
+<div class="highlight"><pre><span></span><code>pa_position = nominal_position + pressure_advance_coefficient * nominal_velocity
+</code></pre></div>
+
+<p>Voir le document <a href="Pressure_Advance.html">avance à la pression</a> pour savoir comment déterminer ce coefficient d'avance à la pression.</p>
+<p>La formule de base de l'avance à la pression peut entraîner des changements brusques de la vitesse du moteur de l'extrudeuse. Klipper met en œuvre un "lissage" du mouvement de l'extrudeuse pour éviter cela.</p>
+<p><img alt="pressure-advance" src="img/pressure-velocity.png" /></p>
+<p>Le graphique ci-dessus montre un exemple de deux mouvements d'extrusion avec une vitesse de virage non nulle entre eux. Notez que le système d'avance à la pression fait que du filament supplémentaire est poussé dans l'extrudeuse pendant l'accélération. Plus le débit de filament souhaité est élevé, plus il faut pousser de filament dans l'extrudeuse pendant l'accélération pour tenir compte de la pression. Pendant la décélération de la tête, le filament supplémentaire est rétracté (l'extrudeuse aura une vitesse négative).</p>
+<p>Le "lissage" est implémenté en utilisant une moyenne pondérée de la position de l'extrudeuse sur une très courte période de temps (comme spécifié par le paramètre de configuration <code>pressure_advance_smooth_time</code>). Cette moyenne peut s'étendre sur plusieurs mouvements du g-code. Notez comment le moteur de l'extrudeuse commencera à bouger avant le début nominal du premier mouvement d'extrusion et continuera à bouger après la fin nominale du dernier mouvement d'extrusion.</p>
+<p>Formule clé pour "l'avance à la pression lissée" :</p>
+<div class="highlight"><pre><span></span><code>smooth_pa_position(t) =
+    ( definitive_integral(pa_position(x) * (smooth_time/2 - abs(t - x)) * dx,
+                          from=t-smooth_time/2, to=t+smooth_time/2)
+     / (smooth_time/2)^2 )
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Retour en haut de la page
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Pied de page">
+      
+        
+        <a href="Code_Overview.html" class="md-footer__link md-footer__link--prev" aria-label="Précédent: Aperçu du code" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Précédent
+              </span>
+              Aperçu du code
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Protocol.html" class="md-footer__link md-footer__link--next" aria-label="Suivant: Protocole" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Suivant
+              </span>
+              Protocole
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copier dans le presse-papier", "clipboard.copied": "Copi\u00e9 dans le presse-papier", "search.config.lang": "fr", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Rechercher", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.term.missing": "Non trouv\u00e9", "select.version.title": "S\u00e9lectionner la version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

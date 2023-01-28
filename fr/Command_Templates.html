@@ -1,0 +1,1751 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Modèles de commandes - Documentation Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#modeles-de-commandes" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="." title="Documentation Klipper" class="md-header__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Modèles de commandes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Effacer" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentation Klipper" class="md-nav__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentation Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Vue d'ensemble
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caractéristiques
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Foire Aux Questions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Changements de configuration
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contact
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation et configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation et configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation et configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Référence de configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Référence de configuration" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Référence de configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Référence de configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Distance de rotation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Contrôles de la configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Nivellement du lit
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Nivellement du lit" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Nivellement du lit
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Nivellement du lit
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Étalonnage Delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Étalonnage de la sonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Nivellement manuel
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Maillage du Bed
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Phase de fin de course
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensation de résonance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensation de résonance" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensation de résonance
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Compensation de résonance
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Mesurer la résonance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Avance à la pression
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Modèles de commandes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Modèles de commandes" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Modèles de commandes
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Modèles de commandes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Command_Templates.html" class="md-nav__link md-nav__link--active">
+        Modèles de commandes
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#nommage-des-macros-de-g-code" class="md-nav__link">
+    Nommage des macros de G-code
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formatage-du-g-code-dans-la-config" class="md-nav__link">
+    Formatage du G-Code dans la config
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ajouter-une-description-a-votre-macro" class="md-nav__link">
+    Ajouter une description à votre macro
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enregistrerrestaurer-letat-pour-les-deplacements-g-code" class="md-nav__link">
+    Enregistrer/Restaurer l'état pour les déplacements G-Code
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extension-du-modele" class="md-nav__link">
+    Extension du modèle
+  </a>
+  
+    <nav class="md-nav" aria-label="Extension du modèle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametres-de-macro" class="md-nav__link">
+    Paramètres de macro
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#la-variable-rawparams" class="md-nav__link">
+    La variable "rawparams"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#la-variable-printer" class="md-nav__link">
+    La variable "printer"
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actions" class="md-nav__link">
+    Actions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    Variables
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcodes-retardes" class="md-nav__link">
+    Gcodes retardés
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modeles-de-menus" class="md-nav__link">
+    Modèles de menus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enregistrer-les-variables-sur-le-disque" class="md-nav__link">
+    Enregistrer les variables sur le disque
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Référence des états
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Pilotes de moteur pas à pas TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Mise à l'origine et Palpage multi contrôleurs
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correction de l'équerrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclure des objets
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilisation des outils PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentation pour les développeurs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentation pour les développeurs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentation pour les développeurs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Aperçu du code
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinématiques
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocole
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Serveur API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Commandes MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocole CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Débogage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Tests
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuer à Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Packager Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documents spécifiques à certains appareils
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documents spécifiques à certains appareils" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documents spécifiques à certains appareils
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Exemples de configurations
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Mises à jour via la carte SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrôleur RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Chargeurs de démarrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Capteur de largeur de filament TSL1401CL
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Détecteur de largeur de filament à effet hall
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#nommage-des-macros-de-g-code" class="md-nav__link">
+    Nommage des macros de G-code
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formatage-du-g-code-dans-la-config" class="md-nav__link">
+    Formatage du G-Code dans la config
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ajouter-une-description-a-votre-macro" class="md-nav__link">
+    Ajouter une description à votre macro
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enregistrerrestaurer-letat-pour-les-deplacements-g-code" class="md-nav__link">
+    Enregistrer/Restaurer l'état pour les déplacements G-Code
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extension-du-modele" class="md-nav__link">
+    Extension du modèle
+  </a>
+  
+    <nav class="md-nav" aria-label="Extension du modèle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametres-de-macro" class="md-nav__link">
+    Paramètres de macro
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#la-variable-rawparams" class="md-nav__link">
+    La variable "rawparams"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#la-variable-printer" class="md-nav__link">
+    La variable "printer"
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actions" class="md-nav__link">
+    Actions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    Variables
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcodes-retardes" class="md-nav__link">
+    Gcodes retardés
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modeles-de-menus" class="md-nav__link">
+    Modèles de menus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enregistrer-les-variables-sur-le-disque" class="md-nav__link">
+    Enregistrer les variables sur le disque
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Command_Templates.md" title="Editer cette page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="modeles-de-commandes">Modèles de commandes<a class="headerlink" href="#modeles-de-commandes" title="Permanent link">&para;</a></h1>
+<p>Ce document fournit des informations sur l'implémentation des séquences de commandes G-Code dans les sections de configuration gcode_macro (et similaires).</p>
+<h2 id="nommage-des-macros-de-g-code">Nommage des macros de G-code<a class="headerlink" href="#nommage-des-macros-de-g-code" title="Permanent link">&para;</a></h2>
+<p>La casse n'est pas importante pour le nom de la macro G-Code - MA_MACRO et ma_macro évalueront la même chose et peuvent être appelées en majuscules ou en minuscules. Si des nombres sont utilisés dans le nom de la macro, ils doivent tous se trouver à la fin du nom (par exemple, TEST_MACRO25 est valide, mais MACRO25_TEST3 ne l'est pas).</p>
+<h2 id="formatage-du-g-code-dans-la-config">Formatage du G-Code dans la config<a class="headerlink" href="#formatage-du-g-code-dans-la-config" title="Permanent link">&para;</a></h2>
+<p>L'indentation est importante lors de la définition d'une macro dans le fichier de configuration. Pour spécifier une séquence G-Code multiligne, il est important que chaque ligne ait une indentation appropriée. Par exemple :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro blink_led]
+gcode:
+  SET_PIN PIN=my_led VALUE=1
+  G4 P2000
+  SET_PIN PIN=my_led VALUE=0
+</code></pre></div>
+
+<p>L'option de configuration <code>gcode:</code> commence toujours au début de la ligne et les lignes suivantes de la macro G-Code ne commencent jamais au début.</p>
+<h2 id="ajouter-une-description-a-votre-macro">Ajouter une description à votre macro<a class="headerlink" href="#ajouter-une-description-a-votre-macro" title="Permanent link">&para;</a></h2>
+<p>Pour vous aider à identifier la fonctionnalité, une courte description peut être ajoutée. Ajoutez <code>description :</code> avec un texte court pour décrire la fonctionnalité. La valeur par défaut est "Macro G-Code". Par exemple :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro blink_led]
+description: Blink my_led one time
+gcode:
+  SET_PIN PIN=my_led VALUE=1
+  G4 P2000
+  SET_PIN PIN=my_led VALUE=0
+</code></pre></div>
+
+<p>Le terminal affichera la description lorsque vous utiliserez la commande <code>HELP</code> ou la fonction de saisie semi-automatique.</p>
+<h2 id="enregistrerrestaurer-letat-pour-les-deplacements-g-code">Enregistrer/Restaurer l'état pour les déplacements G-Code<a class="headerlink" href="#enregistrerrestaurer-letat-pour-les-deplacements-g-code" title="Permanent link">&para;</a></h2>
+<p>Le langage de commande G-Code peut être difficile à utiliser. Le mécanisme standard pour déplacer la tête d'outil se fait via la commande <code>G1</code> (la commande <code>G0</code> est un alias pour <code>G1</code> et elle peut être utilisée à la place de G1 et inversement). Cependant, cette commande repose sur la configuration "G-Code parsing state" définie par <code>M82</code>, <code>M83</code>, <code>G90</code>, <code>G91</code>, <code>G92</code> et les commandes précédentes <code>G1</code>. Lors de la création d'une macro G-Code, il est conseillé de toujours définir explicitement l'état d'analyse du G-Code avant d'émettre une commande <code>G1</code>. (Sinon, il y a un risque que la commande <code>G1</code> fasse une demande indésirable.)</p>
+<p>Une façon courante d'y parvenir consiste à encapsuler les mouvements <code>G1</code> avec <code>SAVE_GCODE_STATE</code>, <code>G91</code> et <code>RESTORE_GCODE_STATE</code>. Par exemple :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro MOVE_UP]
+gcode:
+  SAVE_GCODE_STATE NAME=my_move_up_state
+  G91
+  G1 Z10 F300
+  RESTORE_GCODE_STATE NAME=my_move_up_state
+</code></pre></div>
+
+<p>La commande <code>G91</code> place l'état d'analyse du G-Code en "mode de déplacement relatif" et la commande <code>RESTORE_GCODE_STATE</code> restaure l'état tel qu'il était avant d'entrer dans la macro. Veillez à spécifier une vitesse explicite (via le paramètre <code>F</code>) sur la première commande <code>G1</code>.</p>
+<h2 id="extension-du-modele">Extension du modèle<a class="headerlink" href="#extension-du-modele" title="Permanent link">&para;</a></h2>
+<p>La section de configuration gcode_macro <code>gcode:</code> est évaluée à l'aide du langage Jinja2. On peut évaluer des expressions au moment de l'exécution en les entourant des caractères <code>{ }</code> ou utiliser des instructions conditionnelles avec des commande entourées par <code>{% %}</code>. Voir la <a href="http://jinja.pocoo.org/docs/2.10/templates/">documentation Jinja2</a> pour plus d'informations sur la syntaxe.</p>
+<p>Un exemple de macro complexe :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro clean_nozzle]
+gcode:
+  {% set wipe_count = 8 %}
+  SAVE_GCODE_STATE NAME=clean_nozzle_state
+  G90
+  G0 Z15 F300
+  {% for wipe in range(wipe_count) %}
+    {% for coordinate in [(275, 4),(235, 4)] %}
+      G0 X{coordinate[0]} Y{coordinate[1] + 0.25 * wipe} Z9.7 F12000
+    {% endfor %}
+  {% endfor %}
+  RESTORE_GCODE_STATE NAME=clean_nozzle_state
+</code></pre></div>
+
+<h3 id="parametres-de-macro">Paramètres de macro<a class="headerlink" href="#parametres-de-macro" title="Permanent link">&para;</a></h3>
+<p>Il est souvent utile d'inspecter les paramètres passés à la macro lorsqu'elle est appelée. Ces paramètres sont disponibles via la pseudo-variable <code>params</code>. Par exemple, si la macro :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro SET_PERCENT]
+gcode:
+  M117 Now at { params.VALUE|float * 100 }%
+</code></pre></div>
+
+<p>a été appelé avec <code>SET_PERCENT VALUE=.2</code>, il sera évalué à <code>M117 Maintenant à 20 %</code>. Les noms de paramètres sont toujours en majuscules lorsqu'ils sont évalués dans la macro et sont toujours transmis sous forme de chaînes. Si vous effectuez des calculs, ils doivent être explicitement convertis en nombres entiers ou flottants.</p>
+<p>Il est courant d'utiliser la directive Jinja2 <code>set</code> pour affecter un paramètre à une variable locale. Par exemple :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro SET_BED_TEMPERATURE]
+gcode:
+  {% set bed_temp = params.TEMPERATURE|default(40)|float %}
+  M140 S{bed_temp}
+</code></pre></div>
+
+<h3 id="la-variable-rawparams">La variable "rawparams"<a class="headerlink" href="#la-variable-rawparams" title="Permanent link">&para;</a></h3>
+<p>Les paramètres complets non analysés pour la macro en cours d'exécution sont accessibles via la pseudo-variable <code>rawparams</code>.</p>
+<p>Notez que cela inclura tous les commentaires qui faisaient partie de la commande d'origine.</p>
+<p>Voir le fichier <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> pour un exemple montrant comment remplacer la commande <code>M117</code> à l'aide de <code>rawparams</code>.</p>
+<h3 id="la-variable-printer">La variable "printer"<a class="headerlink" href="#la-variable-printer" title="Permanent link">&para;</a></h3>
+<p>Il est possible d'inspecter (et de modifier) l'état actuel de l'imprimante via la pseudo-variable <code>printer</code>. Par exemple :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro slow_fan]
+gcode:
+  M106 S{ printer.fan.speed * 0.9 * 255}
+</code></pre></div>
+
+<p>Les champs disponibles sont définis dans le document <a href="Status_Reference.html">Status Reference</a>.</p>
+<p>Important ! Les macros sont d'abord évaluées dans leur intégralité et ce n'est qu'ensuite que les commandes résultantes sont exécutées. Si une macro émet une commande qui modifie l'état de l'imprimante, les résultats de ce changement d'état ne seront pas visibles lors de l'évaluation de la macro. Cela peut également entraîner un comportement subtil lorsqu'une macro génère des commandes qui appellent d'autres macros, car la macro appelée est évaluée lorsqu'elle est invoquée (c'est-à-dire après l'évaluation complète de la macro appelante).</p>
+<p>Par convention, le nom suivant immédiatement <code>printer</code> est le nom d'une section de configuration. Ainsi, par exemple, <code>printer.fan</code> fait référence à l'objet ventilateur créé par la section de configuration <code>[fan]</code>. Il existe quelques exceptions à cette règle, notamment les objets <code>gcode_move</code> et <code>toolhead</code>. Si la section de configuration contient des espaces, on peut y accéder via l'accesseur <code>[ ]</code> - par exemple : <code>printer["generic_heater my_chamber_heater"].temperature</code>.</p>
+<p>Notez que la directive Jinja2 <code>set</code> permet d'affecter un objet dans la hiérarchie <code>printer</code> à une variable locale. Cela peut rendre les macros plus lisibles et réduire la saisie. Par exemple :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro QUERY_HTU21D]
+gcode:
+    {% set sensor = printer[&quot;htu21d my_sensor&quot;] %}
+    M117 Temp:{sensor.temperature} Humidity:{sensor.humidity}
+</code></pre></div>
+
+<h2 id="actions">Actions<a class="headerlink" href="#actions" title="Permanent link">&para;</a></h2>
+<p>Certaines commandes disponibles peuvent modifier l'état de l'imprimante. Par exemple, <code>{ action_emergency_stop() }</code> entraînera l'arrêt de l'imprimante. Ces actions sont executées au moment où la macro est évaluée, ce qui peut prendre beaucoup de temps avant que les commandes g-code générées ne soient exécutées.</p>
+<p>Commandes "action" disponibles :</p>
+<ul>
+<li><code>action_respond_info(msg)</code> : affiche le <code>msg</code> donné dans le pseudo-terminal /tmp/printer. Chaque ligne de <code>msg</code> sera envoyée avec un préfixe "//".</li>
+<li><code>action_raise_error(msg)</code> : termine la macro actuelle (et toutes les macros appelantes) et écrit le <code>msg</code> donné sur le pseudo-terminal /tmp/printer. La première ligne de <code>msg</code> sera envoyée avec un préfixe "!!" et les lignes suivantes auront un préfixe "//".</li>
+<li><code>action_emergency_stop(msg)</code> : Arrête l'imprimante. Le paramètre <code>msg</code> est facultatif, il peut être utile de décrire la raison de l'arrêt.</li>
+<li><code>action_call_remote_method(method_name)</code> : appelle une méthode enregistrée par un client distant. Si la méthode prend des paramètres, ils doivent être fournis via des arguments de mots-clés, c’est-à-dire : <code>action_call_remote_method(« print_stuff », my_arg="hello_world »)</code></li>
+</ul>
+<h2 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">&para;</a></h2>
+<p>La commande SET_GCODE_VARIABLE peut être utile pour enregistrer l'état entre les appels de macro. Les noms de variables ne doivent pas contenir de caractères majuscules. Par exemple :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro start_probe]
+variable_bed_temp: 0
+gcode:
+  # Save target temperature to bed_temp variable
+  SET_GCODE_VARIABLE MACRO=start_probe VARIABLE=bed_temp VALUE={printer.heater_bed.target}
+  # Disable bed heater
+  M140
+  # Perform probe
+  PROBE
+  # Call finish_probe macro at completion of probe
+  finish_probe
+
+[gcode_macro finish_probe]
+gcode:
+  # Restore temperature
+  M140 S{printer[&quot;gcode_macro start_probe&quot;].bed_temp}
+</code></pre></div>
+
+<p>Assurez-vous de prendre en compte le moment de l'évaluation de la macro et de l'exécution de la commande lors de l'utilisation de SET_GCODE_VARIABLE.</p>
+<h2 id="gcodes-retardes">Gcodes retardés<a class="headerlink" href="#gcodes-retardes" title="Permanent link">&para;</a></h2>
+<p>L'option de configuration [delayed_gcode] peut être utilisée pour exécuter une séquence gcode retardée :</p>
+<div class="highlight"><pre><span></span><code>[delayed_gcode clear_display]
+gcode:
+  M117
+
+[gcode_macro load_filament]
+gcode:
+ G91
+ G1 E50
+ G90
+ M400
+ M117 Load Complete!
+ UPDATE_DELAYED_GCODE ID=clear_display DURATION=10
+</code></pre></div>
+
+<p>Lorsque la macro <code>load_filament</code> ci-dessus s'exécute, elle affiche un message "Load Complete!" une fois l'extrusion terminée. La dernière ligne de gcode active le delay_gcode "clear_display", configuré pour s'exécuter en 10 secondes.</p>
+<p>L'option de configuration <code>initial_duration</code> peut être définie pour exécuter le delay_gcode au démarrage de l'imprimante. Le compte à rebours commence lorsque l'imprimante passe à l'état "prêt". Par exemple, le delay_gcode ci-dessous s'exécutera 5 secondes après que l'imprimante soit prête, initialisant l'affichage avec "Welcome!" :</p>
+<div class="highlight"><pre><span></span><code>[delayed_gcode welcome]
+initial_duration: 5.
+gcode:
+  M117 Welcome!
+</code></pre></div>
+
+<p>Il est possible qu'un gcode retardé se répète en le mettant à jour dans l'option gcode :</p>
+<div class="highlight"><pre><span></span><code>[delayed_gcode report_temp]
+initial_duration: 2.
+gcode:
+  {action_respond_info(&quot;Extruder Temp: %.1f&quot; % (printer.extruder0.temperature))}
+  UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
+</code></pre></div>
+
+<p>Le delay_gcode ci-dessus enverra "// Extruder Temp : [ex0_temp]" à Octoprint toutes les 2 secondes. Cela peut être annulé avec le gcode suivant :</p>
+<div class="highlight"><pre><span></span><code>UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
+</code></pre></div>
+
+<h2 id="modeles-de-menus">Modèles de menus<a class="headerlink" href="#modeles-de-menus" title="Permanent link">&para;</a></h2>
+<p>Si une <a href="Config_Reference.html#display">section display_config</a> est activée, il est alors possible de personnaliser le menu avec les sections de configuration <a href="Config_Reference.html#menu">menu</a>.</p>
+<p>Les attributs en lecture seule suivants sont disponibles dans les modèles de menu :</p>
+<ul>
+<li><code>menu.width</code> - largeur de l’élément (nombre de colonnes d’affichage)</li>
+<li><code>menu.ns</code> - espace de noms de l'élément</li>
+<li><code>menu.event</code> - nom de l'événement qui a déclenché le script</li>
+<li><code>menu.input</code> - valeur d'entrée, uniquement disponible dans le contexte du script d'entrée</li>
+</ul>
+<p>Les actions suivantes sont disponibles dans les modèles de menu :</p>
+<ul>
+<li><code>menu.back(force, update)</code> : exécutera la commande de retour du menu, paramètres booléens facultatifs <code>&lt;force&gt;</code> et <code>&lt;update&gt;</code>.<ul>
+<li>Lorsque <code>&lt;force&gt;</code> est défini sur True, l'édition s'arrête également. La valeur par défaut est False.</li>
+<li>Lorsque <code>&lt;update&gt;</code> est défini sur False, les éléments de conteneur parent ne sont pas mis à jour. La valeur par défaut est True.</li>
+</ul>
+</li>
+<li><code>menu.exit(force)</code> - exécutera la commande de sortie du menu, paramètre booléen facultatif <code>&lt;force&gt;</code> valeur par défaut False.<ul>
+<li>Lorsque <code>&lt;force&gt;</code> est défini sur True, l'édition s'arrête également. La valeur par défaut est False.</li>
+</ul>
+</li>
+</ul>
+<h2 id="enregistrer-les-variables-sur-le-disque">Enregistrer les variables sur le disque<a class="headerlink" href="#enregistrer-les-variables-sur-le-disque" title="Permanent link">&para;</a></h2>
+<p>Si une <a href="Config_Reference.html#save_variables">section de configuration save_variables</a> a été activée, <code>SAVE_VARIABLE VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code> peut être utilisé pour enregistrer la variable sur le disque afin qu'elle puisse être utilisée à travers les redémarrages. Toutes les variables stockées sont chargées dans le dictionnaire <code>printer.save_variables.variables</code> au démarrage et peuvent être utilisées dans les macros gcode. pour éviter les lignes trop longues, vous pouvez ajouter ce qui suit en haut de la macro :</p>
+<div class="highlight"><pre><span></span><code>{% set svv = printer.save_variables.variables %}
+</code></pre></div>
+
+<p>Par exemple, il pourrait être utilisé pour enregistrer l'état d'un extrudeur cyclope lors du démarrage d'une impression, assurez-vous que l'extrudeuse active est utilisée, au lieu de T0 :</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro T1]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder1
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE=&#39;&quot;extruder1&quot;&#39;
+
+[gcode_macro T0]
+gcode:
+  ACTIVATE_EXTRUDER extruder=extruder
+  SAVE_VARIABLE VARIABLE=currentextruder VALUE=&#39;&quot;extruder&quot;&#39;
+
+[gcode_macro START_GCODE]
+gcode:
+  {% set svv = printer.save_variables.variables %}
+  ACTIVATE_EXTRUDER extruder={svv.currentextruder}
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Retour en haut de la page
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Pied de page">
+      
+        
+        <a href="G-Codes.html" class="md-footer__link md-footer__link--prev" aria-label="Précédent: G-Codes" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Précédent
+              </span>
+              G-Codes
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Status_Reference.html" class="md-footer__link md-footer__link--next" aria-label="Suivant: Référence des états" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Suivant
+              </span>
+              Référence des états
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copier dans le presse-papier", "clipboard.copied": "Copi\u00e9 dans le presse-papier", "search.config.lang": "fr", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Rechercher", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.term.missing": "Non trouv\u00e9", "select.version.title": "S\u00e9lectionner la version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1854 @@
+
+<!doctype html>
+<html lang="fr" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Compensation de résonance - Documentation Klipper</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-138371409-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
+  <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#compensation-de-resonance" class="md-skip">
+          Aller au contenu
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="En-tête">
+    <a href="." title="Documentation Klipper" class="md-header__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentation Klipper
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Compensation de résonance
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sélectionner la langue">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Rechercher" placeholder="Rechercher" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Effacer" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initialisation de la recherche
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Documentation Klipper" class="md-nav__button md-logo" aria-label="Documentation Klipper" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Documentation Klipper
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Aller au dépôt" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Vue d'ensemble
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Caractéristiques
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Foire Aux Questions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Versions
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Changements de configuration
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Contact
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation et configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation et configuration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation et configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Référence de configuration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Référence de configuration" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Référence de configuration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Référence de configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Distance de rotation
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Contrôles de la configuration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Nivellement du lit
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Nivellement du lit" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Nivellement du lit
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Nivellement du lit
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Étalonnage Delta
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Étalonnage de la sonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Nivellement manuel
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Maillage du Bed
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Phase de fin de course
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Compensation de résonance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Compensation de résonance" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Compensation de résonance
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Compensation de résonance
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Resonance_Compensation.html" class="md-nav__link md-nav__link--active">
+        Compensation de résonance
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reglages" class="md-nav__link">
+    Réglages
+  </a>
+  
+    <nav class="md-nav" aria-label="Réglages">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#frequence-de-resonance" class="md-nav__link">
+    Fréquence de résonance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-de-linput-shaper" class="md-nav__link">
+    Configuration de l'"input shaper"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choix-de-linput-shaper" class="md-nav__link">
+    Choix de l'"input shaper"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selection-de-max_accel" class="md-nav__link">
+    Sélection de max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reglage-fin-des-frequences-de-resonance" class="md-nav__link">
+    Réglage fin des fréquences de résonance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avance-de-pression-pa" class="md-nav__link">
+    Avance de pression (PA)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mesures-peu-fiables-des-frequences-de-resonance" class="md-nav__link">
+    Mesures peu fiables des fréquences de résonance
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#depannage-et-faq" class="md-nav__link">
+    Dépannage et FAQ
+  </a>
+  
+    <nav class="md-nav" aria-label="Dépannage et FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#je-narrive-pas-a-obtenir-de-mesures-fiables-des-frequences-de-resonance" class="md-nav__link">
+    Je n'arrive pas à obtenir de mesures fiables des fréquences de résonance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apres-avoir-active-input_shaper-jobtiens-des-pieces-imprimees-trop-lissees-et-les-details-fins-sont-perdus" class="md-nav__link">
+    Après avoir activé [input_shaper], j'obtiens des pièces imprimées trop lissées et les détails fins sont perdus
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apres-avoir-reussi-a-imprimer-pendant-un-certain-temps-sans-resonance-elle-semble-revenir" class="md-nav__link">
+    Après avoir réussi à imprimer pendant un certain temps sans résonance, elle semble revenir
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#la-configuration-a-double-chariot-est-elle-prise-en-charge-avec-linput-shaper" class="md-nav__link">
+    La configuration à double chariot est-elle prise en charge avec l'input shaper ?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper-affecte-t-il-le-temps-dimpression" class="md-nav__link">
+    input_shaper affecte-t-il le temps d'impression ?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#details-techniques" class="md-nav__link">
+    Détails techniques
+  </a>
+  
+    <nav class="md-nav" aria-label="Détails techniques">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shapers" class="md-nav__link">
+    Input shapers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Mesurer la résonance
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Avance à la pression
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Modèles de commandes
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Modèles de commandes" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Modèles de commandes
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Modèles de commandes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Référence des états
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        Pilotes de moteur pas à pas TMC
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Mise à l'origine et Palpage multi contrôleurs
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicers
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Correction de l'équerrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Exclure des objets
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Utilisation des outils PWM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Documentation pour les développeurs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documentation pour les développeurs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Documentation pour les développeurs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Aperçu du code
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Cinématiques
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protocole
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        Serveur API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        Commandes MCU
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        Protocole CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Débogage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Tests
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Contribuer à Klipper
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Packager Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Documents spécifiques à certains appareils
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Documents spécifiques à certains appareils" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Documents spécifiques à certains appareils
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Exemples de configurations
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        Mises à jour via la carte SD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        Microcontrôleur RPi
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Chargeurs de démarrage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        Capteur de largeur de filament TSL1401CL
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Détecteur de largeur de filament à effet hall
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Sponsors
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table des matières">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table des matières
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reglages" class="md-nav__link">
+    Réglages
+  </a>
+  
+    <nav class="md-nav" aria-label="Réglages">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#frequence-de-resonance" class="md-nav__link">
+    Fréquence de résonance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-de-linput-shaper" class="md-nav__link">
+    Configuration de l'"input shaper"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choix-de-linput-shaper" class="md-nav__link">
+    Choix de l'"input shaper"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selection-de-max_accel" class="md-nav__link">
+    Sélection de max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reglage-fin-des-frequences-de-resonance" class="md-nav__link">
+    Réglage fin des fréquences de résonance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avance-de-pression-pa" class="md-nav__link">
+    Avance de pression (PA)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mesures-peu-fiables-des-frequences-de-resonance" class="md-nav__link">
+    Mesures peu fiables des fréquences de résonance
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#depannage-et-faq" class="md-nav__link">
+    Dépannage et FAQ
+  </a>
+  
+    <nav class="md-nav" aria-label="Dépannage et FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#je-narrive-pas-a-obtenir-de-mesures-fiables-des-frequences-de-resonance" class="md-nav__link">
+    Je n'arrive pas à obtenir de mesures fiables des fréquences de résonance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apres-avoir-active-input_shaper-jobtiens-des-pieces-imprimees-trop-lissees-et-les-details-fins-sont-perdus" class="md-nav__link">
+    Après avoir activé [input_shaper], j'obtiens des pièces imprimées trop lissées et les détails fins sont perdus
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apres-avoir-reussi-a-imprimer-pendant-un-certain-temps-sans-resonance-elle-semble-revenir" class="md-nav__link">
+    Après avoir réussi à imprimer pendant un certain temps sans résonance, elle semble revenir
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#la-configuration-a-double-chariot-est-elle-prise-en-charge-avec-linput-shaper" class="md-nav__link">
+    La configuration à double chariot est-elle prise en charge avec l'input shaper ?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input_shaper-affecte-t-il-le-temps-dimpression" class="md-nav__link">
+    input_shaper affecte-t-il le temps d'impression ?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#details-techniques" class="md-nav__link">
+    Détails techniques
+  </a>
+  
+    <nav class="md-nav" aria-label="Détails techniques">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shapers" class="md-nav__link">
+    Input shapers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Resonance_Compensation.md" title="Editer cette page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="compensation-de-resonance">Compensation de résonance<a class="headerlink" href="#compensation-de-resonance" title="Permanent link">&para;</a></h1>
+<p>Klipper prend en charge la mise en forme de l'entrée, une technique utilisée pour réduire l'effet de résonance (également connu sous le nom d'écho, d'image fantôme ou d'ondulation) dans les impressions. La résonance est un défaut d'impression de surface lorsque des éléments tels que des bords se répètent sur une surface imprimée sous forme d'un "écho" subtil :</p>
+<p>|<img alt="Test de résonance" src="img/ringing-test.jpg" />|<img alt="3D Benchy" src="img/ringing-3dbenchy.jpg" />|</p>
+<p>La résonance est causée par des vibrations mécaniques dans l'imprimante dues à des changements rapides de direction durant une impression. Notez que la résonance a généralement des origines mécaniques : cadre de l'imprimante insuffisamment rigide, courroies non tendues ou trop élastiques, problèmes d'alignement des pièces mécaniques, masse mobile importante, etc. Ces problèmes doivent être vérifiés et corrigés en premier lieu, si possible.</p>
+<p>La <a href="https://en.wikipedia.org/wiki/Input_shaping">mise en forme de l'entrée</a> est une technique de contrôle en boucle ouverte qui crée un signal de commande annulant ses propres vibrations. La mise en forme de l'entrée nécessite quelques réglages et mesures avant de pouvoir être activée. Outre la résonance, la mise en forme de l'entrée réduit généralement les vibrations et les secousses de l'imprimante en général, et peut également améliorer la fiabilité du mode stealthChop des pilotes Trinamic.</p>
+<h2 id="reglages">Réglages<a class="headerlink" href="#reglages" title="Permanent link">&para;</a></h2>
+<p>Le réglage de base nécessite de mesurer les fréquences de résonance de l'imprimante en imprimant un modèle de test.</p>
+<p>Tranchez le modèle de test de résonance, qui se trouve dans <a href="prints/ringing_tower.stl">docs/prints/ringing_tower.stl</a>, dans le trancheur :</p>
+<ul>
+<li>La hauteur de couche suggérée est de 0,2 ou 0,25 mm.</li>
+<li>Les couches de remplissage et de finition peuvent être réglées sur 0.</li>
+<li>Utilisez 1-2 périmètres, ou mieux encore le mode vase avec 1-2 mm de base.</li>
+<li>Utilisez une vitesse suffisamment élevée, environ 80-100 mm/s, pour les périmètres <strong>externes</strong>.</li>
+<li>Veillez à ce que le temps de pause minimum soit <strong>au maximum</strong> de 3 secondes.</li>
+<li>Assurez-vous que le "contrôle d'accélération" est désactivé dans le trancheur.</li>
+<li>Ne tournez pas le modèle. Le modèle comporte des marques X et Y à l'arrière du modèle. Notez l'emplacement inhabituel des marques par rapport aux axes de l'imprimante - il ne s'agit pas d'une erreur. Les marques peuvent être utilisées plus tard dans le processus de réglage comme référence, car elles indiquent à quel axe correspondent les mesures.</li>
+</ul>
+<h3 id="frequence-de-resonance">Fréquence de résonance<a class="headerlink" href="#frequence-de-resonance" title="Permanent link">&para;</a></h3>
+<p>Tout d'abord, mesurez la <strong>fréquence de résonance</strong>.</p>
+<ol>
+<li>Si le paramètre <code>square_corner_velocity</code> a été modifié, remettez-le à 5.0. Il n'est pas conseillé de l'augmenter lors de l'utilisation de l'input shaper car cela peut provoquer plus de lissage dans les pièces - il est préférable d'utiliser une valeur d'accélération plus élevée à la place.</li>
+<li>Augmentez <code>max_accel_to_decel</code> en lançant la commande suivante : <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Désactivez l'avance de pression : <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Si vous avez déjà ajouté la section <code>[input_shaper]</code> au printer.cfg, exécutez la commande <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>. Si vous obtenez l'erreur "Unknown command", vous pouvez l'ignorer à ce stade et continuer les mesures.</li>
+<li>Exécutez la commande : <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Dans la pratique, nous essayons de rendre la résonance plus prononcée en définissant différentes valeurs élevées pour l'accélération. Cette commande augmentera l'accélération tous les 5 mm à partir de 1500 mm/sec² : 1500 mm/sec², 2000 mm/sec², 2500 mm/sec² et ainsi de suite jusqu'à 7000 mm/sec² pour la dernière bande.</li>
+<li>Imprimez le modèle de test tranché avec les paramètres suggérés.</li>
+<li>
+<p>Vous pouvez arrêter l'impression plus tôt si la résonance est clairement visible et si vous constatez que l'accélération devient trop forte pour votre imprimante (par exemple, l'imprimante tremble trop ou commence à sauter des pas).</p>
+<ol>
+<li>Utilisez les marques X et Y à l'arrière du modèle comme référence. Les mesures du côté avec la marque X doivent être utilisées pour la <em>configuration</em> de l'axe X, et la marque Y - pour la configuration de l'axe Y. Mesurez la distance <em>D</em> (en mm) entre plusieurs oscillations sur la pièce avec la marque X, près des encoches, en sautant de préférence la ou les deux premières oscillations. Pour mesurer plus facilement la distance entre les oscillations, marquez d'abord les oscillations, puis mesurez la distance entre les marques avec une règle ou un pied à coulisse :|<img alt="Marques de résonances" src="img/ringing-mark.jpg" />|<img alt="Mesure de la résonance" src="img/ringing-measure.jpg" />|</li>
+<li>Comptez le nombre d'oscillations <em>N</em> correspondant à la distance mesurée <em>D</em>. Si vous ne savez pas comment compter les oscillations, reportez-vous à l'image ci-dessus, qui montre <em>N</em> = 6 oscillations.</li>
+<li>Calculer la fréquence de résonance de l'axe X comme <em>V</em> &middot; <em>N</em> / <em>D</em> (Hz), où <em>V</em> est la vitesse des périmètres extérieurs (mm/s). Pour l'exemple ci-dessus, nous avons marqué 6 oscillations, et le test a été imprimé à une vitesse de 100 mm/s, donc la fréquence est 100 * 6 / 12,14 ≈ 49,4 Hz.</li>
+<li>Faites (8) - (10) pour la marque Y également.</li>
+</ol>
+</li>
+</ol>
+<p>Notez que la résonanc sur l'impression de test devrait correspondre au modèle des encoches courbes, comme dans l'image ci-dessus. Si ce n'est pas le cas, alors ce défaut n'est pas vraiment une résonance et a probablement une origine différente - soit mécanique, soit un problème d'extrudeuse. Ce problème doit être résolu avant d'activer et de régler les façonneurs d'entrée.</p>
+<p>Si les mesures ne sont pas fiables parce que, par exemple, la distance entre les oscillations n'est pas stable, cela peut signifier que l'imprimante a plusieurs fréquences de résonance sur le même axe. On peut essayer de suivre le processus de réglage décrit dans la section <a href="#unreliable-measurements-of-ringing-frequencies">Mesures peu fiables des fréquences de résonance</a> à la place et obtenir quand même quelque chose de la technique de mise en forme de l'entrée.</p>
+<p>La fréquence de résonance peut dépendre de la position du modèle sur la plaque de construction et de la hauteur Z, <em>surtout sur les imprimantes delta</em> ; vous pouvez vérifier si vous observez des différences de fréquences à différentes positions le long des côtés du modèle de test et à différentes hauteurs. Vous pouvez calculer les fréquences de résonance moyennes sur les axes X et Y si c'est le cas.</p>
+<p>Si la fréquence de résonance mesurée est très basse (inférieure à 20-25 Hz environ), il peut être judicieux d'investir dans le raidissement de l'imprimante ou la réduction de la masse mobile - selon ce qui est applicable dans votre cas - avant de poursuivre le réglage de la mise en forme de l'entrée et de mesurer à nouveau les fréquences par la suite. Pour de nombreux modèles d'imprimantes populaires, il existe souvent des solutions déjà disponibles.</p>
+<p>Les fréquences de résonance peuvent changer si des modifications sont apportées à l'imprimante qui affectent la masse en mouvement ou modifient la rigidité du système, par exemple :</p>
+<ul>
+<li>Si la tête d'impression est modifiée, par ex. changement de moteur pas à pas (plus lourd ou plus léger) pour une extrusion directe, remplacement de la tête de l'outil (plus ou moins lourde), ajout d'un ventilateur plus lourd, etc.</li>
+<li>La tension des courroies a été modifiée.</li>
+<li>Des pièces conçues pour augmenter la rigidité du cadre sont installées.</li>
+<li>Un plateau différent est installé sur une imprimante à lit mobile, ou une plaque de verre est ajoutée, etc.</li>
+</ul>
+<p>Si de tels changements sont apportés, Il est conseillé de mesurer au moins les fréquences de résonance pour vérifier s'il y a eu un changement ou pas.</p>
+<h3 id="configuration-de-linput-shaper">Configuration de l'"input shaper"<a class="headerlink" href="#configuration-de-linput-shaper" title="Permanent link">&para;</a></h3>
+<p>Une fois les fréquences de résonance des axes X et Y mesurées, vous pouvez ajouter la section suivante à votre <code>printer.cfg</code> :</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: ...    # frequence pour la marque X sur le modèle de test
+shaper_freq_y: ...    # frequence pour la marque Y sur le modèle de test
+</code></pre></div>
+
+<p>Pour l'exemple ci-dessus, nous obtenons shaper_freq_x/y = 49,4.</p>
+<h3 id="choix-de-linput-shaper">Choix de l'"input shaper"<a class="headerlink" href="#choix-de-linput-shaper" title="Permanent link">&para;</a></h3>
+<p>Klipper prend en charge plusieurs type d'"input shaper". Ils diffèrent par leur sensibilité aux erreurs déterminant la fréquence de résonance et le degré de lissage qu'ils provoquent dans les pièces imprimées. De plus, certains de ces "input shaper" comme 2HUMP_EI et 3HUMP_EI ne doivent généralement pas être utilisés avec shaper_freq = fréquence de résonance - ils sont configurés à partir de différentes considérations pour réduire plusieurs résonances à la fois (ndt : le 2HUMP_EI est à utiliser lorsque deux pics de résonance sont détectés, le 3HUMP_EI est à utiliser lorsque trois pics de résonance sont détectés).</p>
+<p>Pour la plupart des imprimantes, les shapers MZV ou EI peuvent être recommandés. Cette section décrit un processus de test pour choisir entre eux et déterminer quelques autres paramètres connexes.</p>
+<p>Imprimez le modèle de test de résonance comme suit :</p>
+<ol>
+<li>Redémarrez le micrologiciel : <code>RESTART</code></li>
+<li>Préparez-vous pour le test : <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Désactivez l'avance de pression : <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Exécutez : <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
+<li>Exécutez la commande : <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+<li>Imprimez le modèle de test tranché avec les paramètres suggérés.</li>
+</ol>
+<p>Si vous ne voyez pas de résonance à ce stade, l'utilisation de l'"input shaper" MZV peut être recommandée.</p>
+<p>Si vous voyez une résonance, mesurez à nouveau les fréquences en suivant les étapes (8) à (10) décrites dans la section <a href="#ringing-frequency">Fréquence de résonance</a>. Si les fréquences diffèrent considérablement des valeurs obtenues précédemment, une configuration d'input shaper plus complexe est nécessaire. Vous pouvez vous référer aux détails techniques de la section <a href="#input-shapers">Input shapers</a>. Sinon, passez à l'étape suivante.</p>
+<p>Essayez l'input shaper EI. Pour l'essayer, répétez les étapes (1) à (6) ci-dessus, mais en exécutant à l'étape 4 la commande suivante à la place : <code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>.</p>
+<p>Comparez deux impressions avec les input shaper MZV et EI. Si EI montre des résultats sensiblement meilleurs que MZV, utilisez EI, sinon préférez MZV. Notez que le input shaper EI provoquera plus de lissage dans les pièces imprimées (voir la section suivante pour plus de détails). Ajoutez le paramètre <code>shaper_type: mzv</code> (ou ei) à la section [input_shaper], par exemple :</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: ...
+shaper_freq_y: ...
+shaper_type: mzv
+</code></pre></div>
+
+<p>Quelques notes sur le choix de l'input shaper :</p>
+<ul>
+<li>L' input shaper EI peut être plus adapté aux imprimantes à lit mobile (si la fréquence de résonance et le lissage résultant le permettent) : plus le filament est déposé sur le lit en mouvement, plus la masse du lit augmente et la fréquence de résonance diminue. Étant donné que le input shaper EI est plus robuste aux changements de fréquence de résonance, il peut mieux fonctionner lors de l'impression de grandes pièces.</li>
+<li>En raison de la nature de la cinématique delta, les fréquences de résonance peuvent différer considérablement dans différentes parties du volume de construction. Par conséquent, l'input shaper EI peut être mieux adapté aux imprimantes delta plutôt que MZV ou ZV. Si la fréquence de résonance est suffisamment grande (plus de 50-60 Hz), alors on peut même essayer de tester 2HUMP_EI (en exécutant le test suggéré ci-dessus avec <code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI</code>), mais vérifiez les considérations dans la <a href="#selecting-max_accel">section ci-dessous</a> avant de l'activer.</li>
+</ul>
+<h3 id="selection-de-max_accel">Sélection de max_accel<a class="headerlink" href="#selection-de-max_accel" title="Permanent link">&para;</a></h3>
+<p>Vous devriez obtenir le test imprimé avec l'input shaper choisi à l'étape précédente (si vous ne le faites pas, imprimez le modèle de test découpé avec les <a href="#tuning">paramètres suggérés</a> avec l'avance de pression désactivée <code>SET_PRESSURE_ADVANCE ADVANCE=0</code> et avec la tour de réglage activée comme <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code>). Notez qu'à des accélérations très élevées, selon la fréquence de résonance et l'input shaper choisi (par exemple, le shaper EI crée plus de lissage que MZV), cela peut provoquer trop de lissage et d'arrondi des pièces. Ainsi, max_accel doit être choisi de manière à l'éviter. Un autre paramètre ayant un impact sur le lissage est <code>square_corner_velocity</code>, il n'est donc pas conseillé de l'augmenter au-dessus de la valeur par défaut de 5 mm/s pour éviter un lissage accru.</p>
+<p>Afin de sélectionner une valeur max_accel appropriée, inspectez le modèle pour l'input shaper choisi. Tout d'abord, notez à quelle accélération la résonance est encore faible - convenant également à l'imprimante.</p>
+<p>Ensuite, vérifiez le lissage. Pour vous aider, le modèle de test a un petit espace dans la paroi (0,15 mm) :</p>
+<p><img alt="Ecart de test" src="img/smoothing-test.png" /></p>
+<p>À mesure que l'accélération augmente, le lissage augmente également et l'espacement réel dans l'impression s'élargit :</p>
+<p><img alt="Lissage de l'input shaper" src="img/shaper-smoothing.jpg" /></p>
+<p>Sur cette image, l'accélération augmente de gauche à droite, et l'écart commence à croître à partir de 3500 mm/s² (5ème bande à partir de la gauche). Dans ce cas, la valeur pour max_accel = 3000 (mm/s²) permet d'éviter un lissage excessif.</p>
+<p>Notez l'accélération lorsque l'écart est encore très faible dans votre test d'impression. Si vous voyez des renflements, mais aucun espace dans le mur, même à des accélérations élevées, cela peut être dû à une avance de pression (PA) désactivée, en particulier sur les extrudeurs de type Bowden. Si tel est le cas, vous devrez peut-être répéter l'impression avec le PA activé. Cela peut également être le résultat d'un flux de filament mal calibré (trop élevé), il faut donc vérifier cela aussi.</p>
+<p>Choisissez la valeur minimale des deux valeurs d'accélération (de la résonance et du lissage) et affectez-là à <code>max_accel</code> dans printer.cfg.</p>
+<p>Notez qu'il peut arriver - en particulier à des fréquences de résonance basses - que l'input shaper EI provoque trop de lissage, même à des accélérations faibles. Dans ce cas, MZV peut être un meilleur choix, car il peut permettre des valeurs d'accélération plus élevées.</p>
+<p>À des fréquences de résonance très basses (~ 25 Hz et moins), même l'input shaper MZV peut créer trop de lissage. Si tel est le cas, vous pouvez également essayer de répéter les étapes de la section <a href="#choosing-input-shaper">Choix de l'input shaper</a> avec l'input shaper ZV, en utilisant la commande <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code> à la place. L'input shaper ZV devrait montrer encore moins de lissage que MZV, mais il est plus sensible aux erreurs de mesure des fréquences de résonance.</p>
+<p>Si une fréquence de résonance est trop faible (inférieure à 20-25 Hz), il peut être judicieux d'augmenter la rigidité de l'imprimante ou de réduire la masse en mouvement. Sinon, l'accélération et la vitesse d'impression peuvent être limitées en raison d'un lissage trop important qui remplacera la résonance.</p>
+<h3 id="reglage-fin-des-frequences-de-resonance">Réglage fin des fréquences de résonance<a class="headerlink" href="#reglage-fin-des-frequences-de-resonance" title="Permanent link">&para;</a></h3>
+<p>Notez que la précision des mesures des fréquences de résonance à l'aide du modèle de test de résonance est suffisante dans la plupart des cas, donc un réglage supplémentaire n'est pas utile. Si vous voulez toujours essayer de revérifier vos résultats (par exemple, si vous voyez toujours une résonance après avoir imprimé un modèle de test avec un input shaper de votre choix avec les fréquences mesurées précédemment), vous pouvez suivre les étapes de cette section. Notez que si vous voyez une résonance à différentes fréquences après avoir activé [input_shaper], cette section ne vous aidera pas.</p>
+<p>En considérant que vous avez tranché le modèle de résonance avec les paramètres suggérés, effectuez les étapes suivantes pour chacun des axes X et Y :</p>
+<ol>
+<li>Préparez-vous pour le test : <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Assurez-vous que l'avance de pression est désactivée : <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Exécutez : <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
+<li>À partir du modèle de test de résonance imprimé avec l'input shaper choisi, sélectionnez l'accélération montrant suffisamment bien la résonance et définissez-la avec : <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
+<li>Calculez les paramètres nécessaires pour que la commande <code>TUNING_TOWER</code> règle le paramètre <code>shaper_freq_x</code> comme suit : start = shaper_freq_x * 83 / 132 et factor = shaper_freq_x / 66, où <code>shaper_freq_x</code> est la valeur indiquée dans <code>printer.cfg</code>.</li>
+<li>Exécutez la commande : <code>TUNING_TOWER COMMAND=SET_INPUT_SHAPER PARAMETER=SHAPER_FREQ_X START=start FACTOR=factor BAND=5</code> en utilisant les valeurs <code>start</code> et <code>factor</code> calculées à l'étape (5).</li>
+<li>Imprimez le modèle de test.</li>
+<li>Remettez la valeur de fréquence d'origine : <code>SET_INPUT_SHAPER SHAPER_FREQ_X=...</code>.</li>
+<li>Trouvez la bande résonnant le moins et comptez son numéro à partir du bas en commençant à 1.</li>
+<li>Calculez la nouvelle valeur shaper_freq_x selon la formule : ancien shaper_freq_x * (39 + 5 * #band-number) / 66.</li>
+</ol>
+<p>Répétez ces étapes pour l'axe Y de la même manière, en remplaçant les références à l'axe X par l'axe Y (par exemple, remplacez <code>shaper_freq_x</code> par <code>shaper_freq_y</code> dans les formules et dans la commande <code>TUNING_TOWER</code>).</p>
+<p>A titre d'exemple, supposons que vous ayez mesuré la fréquence de résonance pour l'un des axes à 45 Hz. Cela donne les valeurs start = 45 * 83 / 132 = 28,30 et factor = 45 / 66 = 0,6818 pour la commande <code>TUNING_TOWER</code>. Supposons maintenant qu'après l'impression du modèle de test, la quatrième bande à partir du bas donne le moins de résonance. Cela donne le shaper_freq_ mis à jour égal à 45 * (39 + 5 * 4) / 66 ≈ 40,23.</p>
+<p>Une fois les deux nouveaux paramètres <code>shaper_freq_x</code> et <code>shaper_freq_y</code> calculés, vous pouvez mettre à jour la section <code>[input_shaper]</code> dans <code>printer.cfg</code> avec le nouveau <code>shaper_freq_x</code> et <code>shaper_freq_y</code>.</p>
+<h3 id="avance-de-pression-pa">Avance de pression (PA)<a class="headerlink" href="#avance-de-pression-pa" title="Permanent link">&para;</a></h3>
+<p>Si vous utilisiez l'avance de pression, il pourra être nécessaire de la réajuster. Suivez les <a href="Pressure_Advance.html#tuning-pressure-advance">instructions</a> pour trouver la nouvelle valeur, si elle diffère de la précédente. Assurez-vous de redémarrer Klipper avant de régler l'avance de pression.</p>
+<h3 id="mesures-peu-fiables-des-frequences-de-resonance">Mesures peu fiables des fréquences de résonance<a class="headerlink" href="#mesures-peu-fiables-des-frequences-de-resonance" title="Permanent link">&para;</a></h3>
+<p>Si vous ne parvenez pas à mesurer les fréquences de résonance, par ex. si la distance entre les oscillations n'est pas stable, vous pouvez toujours profiter des techniques de l'input shaper, mais les résultats peuvent ne pas être aussi bons qu'avec des mesures appropriées des fréquences, et nécessiteront un peu plus de réglages et d'impressions du modèle de test. Notez qu'une autre possibilité est d'acheter et d'installer un accéléromètre et de mesurer les résonances avec (reportez-vous à la <a href="Measuring_Resonances.html">documentation</a> décrivant le matériel requis et le processus de configuration) - mais cette option nécessite quelques soudures et un peu de sertissage.</p>
+<p>Pour le réglage, ajoutez une section <code>[input_shaper]</code> vide à votre <code>printer.cfg</code>. Ensuite, en supposant que vous avez tranché le modèle de résonance avec les paramètres suggérés, imprimez le modèle de test 3 fois comme suit. Première fois, avant l'impression, exécutez</p>
+<ol>
+<li><code>RESTART</code></li>
+<li><code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>et imprimez le modèle. Ensuite, imprimez à nouveau le modèle, mais avant d'imprimer, exécutez à la place</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=50 SHAPER_FREQ_Y=50</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>Imprimez ensuite le modèle pour la 3ème fois, mais exécutez maintenant</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=40 SHAPER_FREQ_Y=40</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>Dans la pratique nous imprimons le modèle de test de résonance avec TUNING_TOWER en utilisant l'input shaper 2HUMP_EI avec shaper_freq = 60 Hz, 50 Hz et 40 Hz.</p>
+<p>Si aucun des modèles ne démontre d'amélioration de la résonance, aucune des techniques d'input shaper ne pourra vous aider.</p>
+<p>Sinon, il se peut que tous les modèles n'affichent aucune résonance, ou que certains affichent la résonance et d'autres pas trop. Choisissez le modèle de test avec la fréquence la plus élevée qui montre encore de bonnes améliorations dans la résonance. Par exemple, si les modèles 40 Hz et 50 Hz n'affichent presque aucune résonance et que le modèle 60 Hz affiche déjà un peu plus de résonance, restez à 50 Hz.</p>
+<p>Vérifiez maintenant si l'input shaper EI peut fonctionner dans votre cas. Choisissez la fréquence de l'input shaper EI en fonction de la fréquence de l'input shaper 2HUMP_EI que vous avez choisie :</p>
+<ul>
+<li>Pour l'input shaper 2HUMP_EI 60 Hz, utilisez l'input shaper EI avec shaper_freq = 50 Hz.</li>
+<li>Pour l'input shaper 2HUMP_EI 50 Hz, utilisez l'input shaper EI avec shaper_freq = 40 Hz.</li>
+<li>Pour l'input shaper 2HUMP_EI à 40 Hz, utilisez l'input shaper EI avec shaper_freq = 33 Hz.</li>
+</ul>
+<p>Imprimez le modèle de test une fois de plus, en exécutant</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=EI SHAPER_FREQ_X=... SHAPER_FREQ_Y=...</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>en fournissant le shaper_freq_x=... et shaper_freq_y=... comme déterminé précédemment.</p>
+<p>Si l'input shaper EI montre de bons résultats comparables à ceux de l'input shaper 2HUMP_EI, restez avec l'input shaper EI et la fréquence déterminée précédemment, sinon utilisez l'input shaper 2HUMP_EI avec la fréquence correspondante. Ajoutez les résultats à <code>printer.cfg</code> comme, par ex.</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: 50
+shaper_freq_y: 50
+shaper_type: 2hump_ei
+</code></pre></div>
+
+<p>Continuez le réglage avec la section <a href="#selecting-max_accel">Choix de l'accélération maximale</a>.</p>
+<h2 id="depannage-et-faq">Dépannage et FAQ<a class="headerlink" href="#depannage-et-faq" title="Permanent link">&para;</a></h2>
+<h3 id="je-narrive-pas-a-obtenir-de-mesures-fiables-des-frequences-de-resonance">Je n'arrive pas à obtenir de mesures fiables des fréquences de résonance<a class="headerlink" href="#je-narrive-pas-a-obtenir-de-mesures-fiables-des-frequences-de-resonance" title="Permanent link">&para;</a></h3>
+<p>En premier lieu, assurez-vous qu'il ne s'agit pas d'un autre problème avec l'imprimante plutôt que de la résonance. Si les mesures ne sont pas fiables parce que, par exemple, la distance entre les oscillations n'est pas stable, cela peut signifier que l'imprimante a plusieurs fréquences de résonance sur le même axe. On peut essayer de suivre le processus de réglage décrit dans la section <a href="#unreliable-measurements-of-ringing-frequencies">Mesures non fiables des fréquences de résonance</a> et tirer encore quelque chose de la technique de l'input shaper. Une autre possibilité consiste à installer un accéléromètre, à <a href="Measuring_Resonances.html">mesurer</a> les résonances avec celui-ci et à régler automatiquement l'input shaper en utilisant les résultats de ces mesures.</p>
+<h3 id="apres-avoir-active-input_shaper-jobtiens-des-pieces-imprimees-trop-lissees-et-les-details-fins-sont-perdus">Après avoir activé [input_shaper], j'obtiens des pièces imprimées trop lissées et les détails fins sont perdus<a class="headerlink" href="#apres-avoir-active-input_shaper-jobtiens-des-pieces-imprimees-trop-lissees-et-les-details-fins-sont-perdus" title="Permanent link">&para;</a></h3>
+<p>Vérifiez les informations dans la section <a href="#selecting-max_accel">Choix de l'accélération maximale</a>. Si la fréquence de résonance est faible, il ne faut pas définir une valeur trop élevée pour max_accel ou augmenter les paramètres square_corner_velocity. Il peut également être préférable de choisir un input shaper de type MZV ou même ZV plutôt que EI (ou des shapers 2HUMP_EI et 3HUMP_EI).</p>
+<h3 id="apres-avoir-reussi-a-imprimer-pendant-un-certain-temps-sans-resonance-elle-semble-revenir">Après avoir réussi à imprimer pendant un certain temps sans résonance, elle semble revenir<a class="headerlink" href="#apres-avoir-reussi-a-imprimer-pendant-un-certain-temps-sans-resonance-elle-semble-revenir" title="Permanent link">&para;</a></h3>
+<p>Il est possible qu'après un certain temps, les fréquences de résonance aient changé. Par exemple. peut-être que la tension des courroies a changé (les courroies sont devenues plus lâches), etc. Il est bon de vérifier et de mesurer à nouveau les fréquences de résonance comme décrit dans la section <a href="#ringing-frequency">Fréquence de résonance</a> et de mettre à jour votre fichier de configuration si nécessaire .</p>
+<h3 id="la-configuration-a-double-chariot-est-elle-prise-en-charge-avec-linput-shaper">La configuration à double chariot est-elle prise en charge avec l'input shaper ?<a class="headerlink" href="#la-configuration-a-double-chariot-est-elle-prise-en-charge-avec-linput-shaper" title="Permanent link">&para;</a></h3>
+<p>Il n'y a pas de support dédié pour les doubles chariots avec l'input shaper, mais cela ne signifie pas que cette configuration ne fonctionnera pas. Il faut exécuter le réglage deux fois pour chacun des chariots et calculer les fréquences de résonance des axes X et Y de chacun des chariots indépendamment. Ensuite, placez les valeurs du chariot 0 dans la section [input_shaper] et modifiez les valeurs à la volée lors du changement de chariot, par ex. dans le cadre d'une macro :</p>
+<div class="highlight"><pre><span></span><code>SET_DUAL_CARRIAGE CARRIAGE=1
+SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
+</code></pre></div>
+
+<p>Et pareil lors du retour au chariot 0.</p>
+<h3 id="input_shaper-affecte-t-il-le-temps-dimpression">input_shaper affecte-t-il le temps d'impression ?<a class="headerlink" href="#input_shaper-affecte-t-il-le-temps-dimpression" title="Permanent link">&para;</a></h3>
+<p>Non, la fonctionnalité <code>input_shaper</code> n'a pratiquement aucun impact sur les temps d'impression. Cependant, la valeur de <code>max_accel</code> en a un (réglage de ce paramètre décrit dans <a href="#selecting-max_accel">cette section</a>).</p>
+<h2 id="details-techniques">Détails techniques<a class="headerlink" href="#details-techniques" title="Permanent link">&para;</a></h2>
+<h3 id="input-shapers">Input shapers<a class="headerlink" href="#input-shapers" title="Permanent link">&para;</a></h3>
+<p>Les input shaper utilisés dans Klipper sont plutôt standards, et on peut en trouver un aperçu plus détaillé dans les articles décrivant les input shaper correspondants. Cette section contient un bref aperçu de certains aspects techniques des input shapers pris en charge. Le tableau ci-dessous montre certains paramètres (généralement approximatifs) pour chaque input shaper.</p>
+<table>
+<thead>
+<tr>
+<th align="center">Input <br> shaper</th>
+<th align="center">Durée de <br> l'input shaper</th>
+<th align="center">Réduction des vibrations 20x <br> (5 % de tolérance aux vibrations)</th>
+<th align="center">Réduction des vibrations 10x <br> (tolérance aux vibrations de 10 %)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">ZV</td>
+<td align="center">0,5 / shaper_freq</td>
+<td align="center">N/A</td>
+<td align="center">± 5% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">MZV</td>
+<td align="center">0,75 / shaper_freq</td>
+<td align="center">± 4% shaper_freq</td>
+<td align="center">-10%...+15% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">ZVD</td>
+<td align="center">1 / shaper_freq</td>
+<td align="center">± 15% shaper_freq</td>
+<td align="center">± 22% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">EI</td>
+<td align="center">1 / shaper_freq</td>
+<td align="center">± 20% shaper_freq</td>
+<td align="center">± 25% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">2HUMP_EI</td>
+<td align="center">1,5 / shaper_freq</td>
+<td align="center">± 35% shaper_freq</td>
+<td align="center">± 40 shaper_freq</td>
+</tr>
+<tr>
+<td align="center">3HUMP_EI</td>
+<td align="center">2 / shaper_freq</td>
+<td align="center">-45...+50% shaper_freq</td>
+<td align="center">-50%...+55% shaper_freq</td>
+</tr>
+</tbody>
+</table>
+<p>Remarque concernant l'atténuation des vibrations : les valeurs du tableau ci-dessus sont approximatives. Si le taux d'amortissement de l'imprimante est connu pour chaque axe, l'input shaper peut être configuré plus précisément ce qui réduira alors les résonances dans une plage de fréquences un peu plus large. Cependant, le taux d'amortissement est généralement inconnu et difficile à estimer sans équipement spécial. Klipper utilise donc la valeur 0,1 par défaut, ce qui est une bonne valeur globale. Les gammes de fréquences du tableau couvrent un certain nombre de différents rapports d'amortissement possibles autour de cette valeur (environ de 0,05 à 0,2).</p>
+<p>Notez également que EI, 2HUMP_EI et 3HUMP_EI sont réglés pour réduire les vibrations à 5 %, les valeurs pour une tolérance de vibration de 10 % sont fournies uniquement à titre indicatif.</p>
+<p><strong>Comment utiliser ce tableau :</strong></p>
+<ul>
+<li>La durée de l'input shaper affecte le lissage des pièces - plus elle est grande, plus les pièces sont lisses. Cette dépendance n'est pas linéaire, mais peut donner une idée des input shapers qui "lissent" le plus pour une même fréquence. L'ordre par lissage est le suivant : ZV &lt; MZV &lt; ZVD ≈ EI &lt; 2HUMP_EI &lt; 3HUMP_EI. De plus, il est rarement pratique de régler shaper_freq = fréquence de résonance des types 2HUMP_EI et 3HUMP_EI (utilisés pour réduire les vibrations sur plusieurs fréquences).</li>
+<li>On peut estimer une gamme de fréquences pour laquelle l'input shaper réduit les vibrations. Par exemple, MZV avec shaper_freq = 35 Hz réduit les vibrations à 5 % pour les fréquences [33,6, 36,4] Hz. 3HUMP_EI avec shaper_freq = 50 Hz réduit les vibrations à 5 % dans la plage [27,5 - 75] Hz.</li>
+<li>On peut utiliser ce tableau pour vérifier quel input shaper choisir pour la réduction des vibrations de plusieurs fréquences. Par exemple, si on a des résonances à 35 Hz et 60 Hz sur le même axe : a) EI doit avoir shaper_freq = 35 / (1 - 0.2) = 43.75 Hz, ce qui réduirait les résonances jusqu'à 43.75 * (1 + 0,2) = 52,5 Hz, donc ce n'est pas suffisant ; b) Le 2HUMP_EI doit avoir shaper_freq = 35 / (1 - 0,35) = 53,85 Hz ce qui réduira les vibrations jusqu'à 53,85 * (1 + 0,35) = 72,7 Hz - c'est donc une configuration acceptable. Essayez toujours d'utiliser le plus haut shaper_freq possible pour un input shaper donné (peut-être avec une certaine marge de sécurité, donc dans cet exemple shaper_freq ≈ 50-52 Hz fonctionnerait mieux), et essayez d'utiliser un input shaper avec une durée aussi petite que possible.</li>
+<li>Si l'on a besoin de réduire les vibrations de plusieurs fréquences très différentes (par exemple, 30 Hz et 100 Hz), le tableau ci-dessus ne fournit pas suffisamment d'informations. Dans ce cas, on peut avoir plus de chance avec le script <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/graph_shaper.py">scripts/graph_shaper.py</a>, qui est plus flexible.</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Retour en haut de la page
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Pied de page">
+      
+        
+        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--prev" aria-label="Précédent: Phase de fin de course" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Précédent
+              </span>
+              Phase de fin de course
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Measuring_Resonances.html" class="md-footer__link md-footer__link--next" aria-label="Suivant: Mesurer la résonance" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Suivant
+              </span>
+              Mesurer la résonance
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "Copier dans le presse-papier", "clipboard.copied": "Copi\u00e9 dans le presse-papier", "search.config.lang": "fr", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Rechercher", "search.result.placeholder": "Taper pour d\u00e9marrer la recherche", "search.result.none": "Aucun document trouv\u00e9", "search.result.one": "1 document trouv\u00e9", "search.result.other": "# documents trouv\u00e9s", "search.result.more.one": "1 de plus sur cette page", "search.result.more.other": "# de plus sur cette page", "search.result.term.missing": "Non trouv\u00e9", "select.version.title": "S\u00e9lectionner la version"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

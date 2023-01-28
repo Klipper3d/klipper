@@ -89,6 +89,9 @@ extra:
     - name: Italiano
       link: /it/
       lang: it
+    - name: Français
+      link: /fr/
+      lang: fr
     # Alternate language links automatically added here
 
 # Navigation hierarchy (this should mimic the layout of Overview.md)
