@@ -94,7 +94,6 @@ class BedMesh:
         self.bmc = BedMeshCalibrate(config, self)
         self.z_mesh = None
         self.toolhead = None
-        self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
         self.fade_start = config.getfloat('fade_start', 1.)
         self.fade_end = config.getfloat('fade_end', 0.)
         self.fade_dist = self.fade_end - self.fade_start
@@ -251,7 +250,7 @@ class BedMesh:
             gcmd.respond_info("Bed has not been probed")
         else:
             self.z_mesh.print_probed_matrix(gcmd.respond_info)
-            self.z_mesh.print_mesh(gcmd.respond_raw, self.horizontal_move_z)
+            self.z_mesh.print_mesh(gcmd.respond_raw, self.bmc.probe_helper.horizontal_move_z)
     cmd_BED_MESH_MAP_help = "Serialize mesh and output to terminal"
     def cmd_BED_MESH_MAP(self, gcmd):
         if self.z_mesh is not None:

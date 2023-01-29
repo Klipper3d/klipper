@@ -366,7 +366,7 @@ class ProbePointsHelper:
         self.speed = config.getfloat('speed', 50., above=0.)
         self.use_offsets = False
         # Internal probing state
-        self.lift_speed = self.speed
+        self.lift_speed = config.getfloat('probe_speed', 5.)
         self.probe_offsets = (0., 0., 0.)
         self.results = []
     def minimum_points(self,n):
@@ -383,11 +383,7 @@ class ProbePointsHelper:
     def _move_next(self):
         toolhead = self.printer.lookup_object('toolhead')
         # Lift toolhead
-        speed = self.lift_speed
-        if not self.results:
-            # Use full speed to first probe position
-            speed = self.speed
-        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
+        toolhead.manual_move([None, None, self.horizontal_move_z], self.lift_speed)
         # Check if done probing
         if len(self.results) >= len(self.probe_points):
             toolhead.get_last_move_time()
