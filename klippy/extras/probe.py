@@ -114,7 +114,7 @@ class PrinterProbe:
         return self.lift_speed
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
-    def _probe(self, speed):
+    def _probe(self, speed, mark_discarded=False):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
         if 'z' not in toolhead.get_status(curtime)['homed_axes']:
@@ -129,8 +129,10 @@ class PrinterProbe:
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
             raise self.printer.command_error(reason)
-        self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-                                % (epos[0], epos[1], epos[2]))
+        description = "probe at %.3f,%.3f is z=%.6f" % tuple(epos[:3])
+        if mark_discarded:
+            description += " (discarded)"
+        self.gcode.respond_info(description)
         return epos[:3]
     def _move(self, coord, speed):
         self.printer.lookup_object('toolhead').manual_move(coord, speed)
@@ -163,30 +165,25 @@ class PrinterProbe:
         if must_notify_multi_probe:
             self.multi_probe_begin()
         probexy = self.printer.lookup_object('toolhead').get_position()[:2]
-        retries = 0
-        discards = 0
-        positions = []
+        retries, discards, positions = 0, 0, []
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(speed)
+            discard_sample = discards < samples_discard_first
+            pos = self._probe(speed, discard_sample)
             # Discard the first readings (probably at most one)
-            if discards < samples_discard_first:
-                gcmd.respond_info("Probe sample discarded")
+            if discard_sample:
                 discards += 1
             else:
-              positions.append(pos)
-              # Check samples tolerance
-              z_positions = [p[2] for p in positions]
-              if max(z_positions) - min(z_positions) > samples_tolerance:
-                  if retries >= samples_retries:
-                      raise gcmd.error(
-                                "Probe samples exceed samples_tolerance")
-                  gcmd.respond_info(
-                      "Probe samples exceed tolerance. Retrying...")
-                  retries += 1
-                  positions = []
-                  # Do not reset discards as they are done once per probe
-            # Retract
+                positions.append(pos)
+                # Check samples tolerance
+                z_positions = [p[2] for p in positions]
+                if max(z_positions) - min(z_positions) > samples_tolerance:
+                    if retries >= samples_retries:
+                        raise gcmd.error("Probe samples exceed samples_tolerance")
+                    gcmd.respond_info("Probe samples exceed tolerance. Retrying...")
+                    retries += 1
+                    positions = []
+            # Retract - do not reset discards as they are done once per probe
             if len(positions) < sample_count:
                 self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
         if must_notify_multi_probe:
@@ -229,17 +226,16 @@ class PrinterProbe:
                              speed, lift_speed))
         # Probe bed sample_count times
         self.multi_probe_begin()
-        discards = 0
-        positions = []
+        discards, positions = 0, []
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(speed)
+            discard_sample = discards < samples_discard_first
+            pos = self._probe(speed, discard_sample)
             # Discard the first readings (probably at most one)
-            if discards < samples_discard_first:
-                gcmd.respond_info("Probe sample discarded")
+            if discard_sample:
                 discards += 1
             else:
-              positions.append(pos)
+                positions.append(pos)
             # Retract
             liftpos = [None, None, pos[2] + sample_retract_dist]
             self._move(liftpos, lift_speed)
