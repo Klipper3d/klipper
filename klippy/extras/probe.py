@@ -407,12 +407,10 @@ class ProbePointsHelper:
         self.results = []
         if probe is None or method != 'automatic':
             # Manual probe
-            self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
             self._manual_probe_start()
             return
         # Perform automatic probing
-        self.lift_speed = probe.get_lift_speed(gcmd)
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise gcmd.error("horizontal_move_z can't be less than"
