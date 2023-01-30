@@ -152,6 +152,7 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
 CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
+CONFIG ../../config/printer-sunlu-t3-2022.cfg
 
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f103-serial.dict
