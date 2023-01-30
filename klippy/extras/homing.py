@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
 
-HOMING_START_DELAY = 0.001
+HOMING_START_DELAY = 0.005
 ENDSTOP_SAMPLE_TIME = .000015
 ENDSTOP_SAMPLE_COUNT = 4
 
@@ -96,9 +96,10 @@ class HomingMove:
             error = "Error during homing move: %s" % (str(e),)
         # Wait for endstops to trigger
         trigger_times = {}
+        retry = False
         move_end_print_time = self.toolhead.get_last_move_time()
         for mcu_endstop, name in self.endstops:
-            trigger_time = mcu_endstop.home_wait(move_end_print_time)
+            trigger_time, retry = mcu_endstop.home_wait(move_end_print_time)
             if trigger_time > 0.:
                 trigger_times[name] = trigger_time
             elif trigger_time < 0. and error is None:
@@ -136,7 +137,7 @@ class HomingMove:
                 error = str(e)
         if error is not None:
             raise self.printer.command_error(error)
-        return trigpos
+        return trigpos, retry
     def check_no_movement(self):
         if self.printer.get_start_args().get('debuginput') is not None:
             return None
@@ -170,7 +171,26 @@ class Homing:
         return thcoord
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
-    def home_rails(self, rails, forcepos, movepos):
+    def retry_home_rails(self, rails, forcepos, movepos):
+        self.retries += 1
+        if self.retries > 5:
+            raise self.printer.command_error("Homing Failed after 5 retries")
+        hi = rails[0].get_homing_info()
+        # Retract
+        startpos = self._fill_coord(forcepos)
+        homepos = self._fill_coord(movepos)
+        axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+        move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        retract_r = min(1., hi.retract_dist*4 / move_d)
+        retractpos = [hp - ad * retract_r
+                        for hp, ad in zip(homepos, axes_d)]
+        logging.info(f"homing retry: retractpos {retractpos} forcepos {forcepos} movepos {movepos}")
+        self.toolhead.flush_step_generation()
+        self.toolhead.move(retractpos, hi.retract_speed)
+        return self.home_rails(rails, forcepos, movepos, first_try=False)
+    def home_rails(self, rails, forcepos, movepos, first_try=True):
+        if first_try:
+            self.retries = 0
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
@@ -182,9 +202,12 @@ class Homing:
         endstops = [es for rail in rails for es in rail.get_endstops()]
         hi = rails[0].get_homing_info()
         hmove = HomingMove(self.printer, endstops)
-        hmove.homing_move(homepos, hi.speed)
+        epos, retry = hmove.homing_move(homepos, hi.speed)
+        if retry:
+            return self.retry_home_rails(rails, forcepos, movepos)
         # Perform second home
         if hi.retract_dist:
+            logging.info("attempting second move")
             # Retract
             startpos = self._fill_coord(forcepos)
             homepos = self._fill_coord(movepos)
@@ -194,12 +217,15 @@ class Homing:
             retractpos = [hp - ad * retract_r
                           for hp, ad in zip(homepos, axes_d)]
             self.toolhead.move(retractpos, hi.retract_speed)
+            logging.info(f"retracted to {retractpos}")
             # Home again
             startpos = [rp - ad * retract_r
                         for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(startpos)
             hmove = HomingMove(self.printer, endstops)
-            hmove.homing_move(homepos, hi.second_homing_speed)
+            epos, retry = hmove.homing_move(homepos, hi.second_homing_speed)
+            if retry:
+                return self.retry_home_rails(rails, forcepos, movepos)
             if hmove.check_no_movement() is not None:
                 raise self.printer.command_error(
                     "Endstop %s still triggered after retract"
@@ -221,6 +247,7 @@ class Homing:
             for axis in homing_axes:
                 homepos[axis] = newpos[axis]
             self.toolhead.set_position(homepos)
+        logging.info(f"homing finished")
 
 class PrinterHoming:
     def __init__(self, config):
@@ -243,7 +270,7 @@ class PrinterHoming:
         endstops = [(mcu_probe, "probe")]
         hmove = HomingMove(self.printer, endstops)
         try:
-            epos = hmove.homing_move(pos, speed, probe_pos=True)
+            epos, retry = hmove.homing_move(pos, speed, probe_pos=True)
         except self.printer.command_error:
             if self.printer.is_shutdown():
                 raise self.printer.command_error(

@@ -5,7 +5,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, json, collections
-from . import probe
+import numpy as np
+from . import probe, load_cell_probe
 
 PROFILE_VERSION = 1
 PROFILE_OPTIONS = {
@@ -297,10 +298,26 @@ class BedMeshCalibrate:
         self._generate_points(config.error)
         self._profile_name = None
         self.orig_points = self.points
-        self.probe_helper = probe.ProbePointsHelper(
+        self.screws = []
+        self.linear_model = None
+        if config.has_section('load_cell_probe'):
+            _probe = load_cell_probe
+        else:
+            _probe = probe
+        self.probe_helper = _probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points())
         self.probe_helper.minimum_points(3)
         self.probe_helper.use_xy_offsets(True)
+        for i in range(99):
+            prefix = f"screw{i+1}"
+            if config.get(prefix, None) is None:
+                break
+            self.screws.append(config.getfloatlist(prefix, count=2))
+        self.screw_pitch = config.getchoice('screw_thread', {'M3': 0.5, 'M4': 0.7, 'M5': 0.8}, default='M3')
+        if config.getboolean('invert_direction', False):
+            self.screw_pitch *= -1
+        if 0 < len(self.screws) < 3:
+            raise config.error("bed_screws: Must have at least three screws")
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
@@ -724,6 +741,38 @@ class BedMeshCalibrate:
         self.bedmesh.set_mesh(z_mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         self.bedmesh.save_profile(self._profile_name)
+        self.calculate_screw_rotations(z_mesh)
+    def calculate_screw_rotations(self, z_mesh):
+        if not self.screws:
+            return
+        mesh_values = np.array(z_mesh.get_probed_matrix())
+        mesh_points = []
+        for y, Y in enumerate(mesh_values):
+            for x, X in enumerate(Y):
+                mesh_points.append(
+                    [1,
+                    z_mesh.mesh_x_min + x*z_mesh.probe_x_dist,
+                    z_mesh.mesh_y_min + y*z_mesh.probe_y_dist])
+        mesh_values = mesh_values.flatten()
+        mesh_points = np.array(mesh_points)
+        self.linear_model, r, rank, s = np.linalg.lstsq(mesh_points, mesh_values, rcond=-1)
+        logging.info(f"run lstsq with {mesh_points} {mesh_values} got n {self.linear_model}")
+        offset = self.calc_z(*self.screws[0])
+        res = []
+        for i, screw in enumerate(self.screws[1:]):
+            d = self.calc_z(*screw) - offset
+            res.append([screw, -d/self.screw_pitch])
+            logging.info(f"Rotate screw{i+1} {res[i][0]} {abs(res[i][1]):.2}x {'CW' if res[i][1] >= 0 else 'CCW'}")
+    def calc_z(self, x, y):
+        return self.linear_model[0] + self.linear_model[1]*x + self.linear_model[2]*y
+    def apply_screw_rotations(self):
+        values = self.bedmesh.z_mesh.probed_matrix
+        for y, Y in enumerate(values):
+            for x, X in enumerate(Y):
+                values[y][x] -= self.calc_z(
+                    self.bedmesh.z_mesh.mesh_x_min + x*self.bedmesh.z_mesh.probe_x_dist,
+                    self.bedmesh.z_mesh.mesh_y_min + y*self.bedmesh.z_mesh.probe_y_dist)
+        self.bedmesh.z_mesh.build_mesh(values)
     def _dump_points(self, probed_pts, corrected_pts, offsets):
         # logs generated points with offset applied, points received
         # from the finalize callback, and the list of corrected points
@@ -847,6 +896,10 @@ class ZMesh:
                            (self.mesh_x_count - 1)
         self.mesh_y_dist = (self.mesh_y_max - self.mesh_y_min) / \
                            (self.mesh_y_count - 1)
+        self.probe_x_dist = (self.mesh_x_max - self.mesh_x_min) / \
+                            (params['x_count'] - 1)
+        self.probe_y_dist = (self.mesh_y_max - self.mesh_y_min) / \
+                            (params['y_count'] - 1)
     def get_mesh_matrix(self):
         if self.mesh_matrix is not None:
             return [[round(z, 6) for z in line]

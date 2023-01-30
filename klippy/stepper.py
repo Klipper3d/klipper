@@ -197,6 +197,34 @@ class MCU_stepper:
             raise error("Internal error in stepcompress")
         self._set_mcu_position(last_pos)
         self._mcu.get_printer().send_event("stepper:sync_mcu_position", self)
+    def note_load_cell_probing_end(self):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ret = ffi_lib.stepcompress_reset(self._stepqueue, 0)
+        if ret:
+            raise error("Internal error in stepcompress")
+        data = (self._reset_cmd_tag, self._oid, 0)
+        ret = ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
+        self.query_mcu_position_to_setpoint()
+    def query_mcu_position_to_setpoint(self):
+        if self._mcu.is_fileoutput():
+            return
+        params = self._get_position_cmd.send([self._oid])
+        last_pos = params['pos']
+        if self._invert_dir:
+            last_pos = -last_pos
+        print_time = self._mcu.estimated_print_time(params['#receive_time'])
+        clock = self._mcu.print_time_to_clock(print_time)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, clock,
+                                                     last_pos)
+        if ret:
+            raise error("Internal error in stepcompress")
+        mcu_pos_dist = self.mcu_to_commanded_position(last_pos)
+        kin = self._mcu.get_printer().lookup_object('toolhead').get_kinematics()
+        kin_pos = {s.get_name(): s.get_commanded_position() for s in kin.get_steppers()}
+        kin_pos[self._name] = mcu_pos_dist
+        pos = kin.calc_position(kin_pos)
+        ffi_lib.itersolve_set_position(self._stepper_kinematics, pos[0], pos[1], pos[2])
     def get_trapq(self):
         return self._trapq
     def set_trapq(self, tq):

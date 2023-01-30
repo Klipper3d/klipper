@@ -219,7 +219,7 @@ class MCU_endstop:
             return home_end_time
         params = self._query_cmd.send([self._oid])
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
-        return self._mcu.clock_to_print_time(next_clock - self._rest_ticks)
+        return self._mcu.clock_to_print_time(next_clock - self._rest_ticks), False
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():

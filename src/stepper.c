@@ -327,6 +327,26 @@ stepper_stop(struct trsync_signal *tss, uint8_t reason)
     }
 }
 
+// Stop all moves for a given stepper (caller must disable IRQs)
+void
+stepper_manual_stop(uint32_t oid)
+{
+    struct stepper *s = stepper_oid_lookup(oid);
+    sched_del_timer(&s->time);
+    s->next_step_time = s->time.waketime = 0;
+    s->position = -stepper_get_position(s);
+    s->count = 0;
+    s->flags = (s->flags & (SF_INVERT_STEP|SF_SINGLE_SCHED)) | SF_NEED_RESET;
+    gpio_out_write(s->dir_pin, 0);
+    if (!(HAVE_EDGE_OPTIMIZATION && s->flags & SF_SINGLE_SCHED))
+        gpio_out_write(s->step_pin, s->flags & SF_INVERT_STEP);
+    while (!move_queue_empty(&s->mq)) {
+        struct move_node *mn = move_queue_pop(&s->mq);
+        struct stepper_move *m = container_of(mn, struct stepper_move, node);
+        move_free(m);
+    }
+}
+
 // Set the stepper to stop on a "trigger event" (used in homing)
 void
 command_stepper_stop_on_trigger(uint32_t *args)
