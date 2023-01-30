@@ -1250,6 +1250,9 @@ This enables the use of a load cell for homing and probing (e.g. mesh leveling).
 A QUERY_LOAD_CELL_PROBE command can be used to print out measurements.
 This can be useful for setting the initial values for the gain, threshold, and 'invert'.
 Afterwards a QUERY_LOAD_CELL_PROBE_END command stops the sampling.
+All probing or homing moves should be issued with low acceleration and low square-corner-velocity
+to prevent false triggers. Use a command like this 
+"SET_VELOCITY_LIMIT ACCEL=100 SQUARE_CORNER_VELOCITY=0.1"
 
 To use the load cell as a z endstop set the following config option in the stepper_z section
 ```
