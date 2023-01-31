@@ -28,11 +28,6 @@ repo include:
 - PowerSpec Ultra 3D
 - Monoprice Inventor 1
 
-Please watch or star this repo if you are interested.  The more
-people that use this the better the chances of getting it included
-upstream.  Feel free to file issues in this repo for questions or
-problems (DON'T USE ISSUES IN UPSTREAM FOR THIS)
-
 **Changes include:**
 * Documents what is necessary to flash the MCU (57600 baud and correct 
     avrdude protocol)
@@ -84,6 +79,10 @@ should work but needs to be tested to confirm.
 * There is no specific error for a disconnected thermocouple however
 the printer will shut down if a thermocouple is not attached (this
 triggers a temperature out of range error).
+* Please watch or star this repo if you are interested.  The more
+people that use this the better the chances of getting it included
+upstream.  Feel free to file issues in this repo for questions or
+problems (DON'T USE ISSUES IN UPSTREAM FOR THIS)
 
 *************************************************************************
 # Welcome to the Klipper project!
