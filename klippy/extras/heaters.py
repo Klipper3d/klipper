@@ -16,7 +16,7 @@ AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
 
 class Heater:
-    def __init__(self, config, sensor):
+    def __init__(self, config, sensor, secondary_sensor=None):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         # Setup sensor
@@ -26,6 +26,7 @@ class Heater:
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         self.pwm_delay = self.sensor.get_report_time_delta()
+        self.secondary_sensor = secondary_sensor
         # Setup temperature checks
         self.min_extrude_temp = config.getfloat(
             'min_extrude_temp', 170.,
@@ -259,10 +260,18 @@ class PrinterHeaters:
         heater_name = config.get_name().split()[-1]
         if heater_name in self.heaters:
             raise config.error("Heater %s already registered" % (heater_name,))
-        # Setup sensor
+        # Setup 1st sensor
         sensor = self.setup_sensor(config)
+        # Setup 2nd sensor
+        secondary_sensor_name = config.get('secondary_sensor_name', None)
+        if secondary_sensor_name is not None:
+            full_name = "temperature_sensor " + secondary_sensor_name
+            secondary_sensor = self.printer.lookup_object(full_name)
+        else:
+            secondary_sensor = None
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
+        heater = Heater(config, sensor, secondary_sensor)
+        self.heaters[heater_name] = heater
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
