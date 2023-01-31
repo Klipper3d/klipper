@@ -33,7 +33,7 @@ people that use this the better the chances of getting it included
 upstream.  Feel free to file issues in this repo for questions or
 problems (DON'T USE ISSUES IN UPSTREAM FOR THIS)
 
-###Changes include:
+**Changes include:**
 * Documents what is necessary to flash the MCU (57600 baud and correct 
     avrdude protocol)
 * Adds support for MCU reset (toggle connection baud rate to 57600)
@@ -54,6 +54,8 @@ x and y axix
 
 # Installation
 
+(Add specific steps for cloning this repo manually and/or using KIUAH)
+
 Clone this repo and do the normal installation steps.
 
 Copy /config/printer-makerbot-replicator2x-2012.cfg to printer.cfg.  Edit this
@@ -71,13 +73,17 @@ speed other than 57600 first) before it would flash.
 At this point you should have Klipper running on your Replicator.
 Follow the normal Klipper documentation for further tuning.
 
-NOTE:  The Sailfish firmware has profiles for mightyboard rev g and rev
+# Notes
+* The Sailfish firmware has profiles for mightyboard rev g and rev
 h printers that have atmega2560 instead of atmega1280.  If you have
 one of these please let me know so I can get a known working config.
 I believe you should be able to get this working by changing the MCU
 processor in make menuconfig and editing src/arv/Makefile and changing
 the last line from "-C stk500v1" to "-C stk500v2".  Software reset
 should work but needs to be tested to confirm.
+* There is no specific error for a disconnected thermocouple however
+the printer will shut down if a thermocouple is not attached (this
+triggers a temperature out of range error).
 
 # *************************************************************************
 Welcome to the Klipper project!
