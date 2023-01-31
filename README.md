@@ -19,13 +19,13 @@ include them in this repo.
 
 Printers that may use ADS1118 ADCs and may work with this
 repo include:
-FlashForge DreamerNX
-FlashForge Dreamer
-FlashForge Inventor
-Dremel 3D20
-Dremel 3D40
-PowerSpec Ultra 3D
-Monoprice Inventor 1
+* FlashForge DreamerNX
+* FlashForge Dreamer
+* FlashForge Inventor
+* Dremel 3D20
+* Dremel 3D40
+* PowerSpec Ultra 3D
+* Monoprice Inventor 1
 
 Please watch or star this repo if you are interested.  The more
 people that use this the better the chances of getting it included
