@@ -44,9 +44,13 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = {'watermark': ControlBangBang, 'pid': ControlPID,
+                 'dual_loop_pid': ControlDualLoopPID}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
+        if isinstance(self.control, ControlDualLoopPID) and \
+                self.secondary_sensor is None:
+            raise config.error("dual_loop_pid requires a secondary sensor")
         # Setup output heater pin
         heater_pin = config.get('heater_pin')
         ppins = self.printer.lookup_object('pins')
@@ -81,7 +85,13 @@ class Heater:
             time_diff = read_time - self.last_temp_time
             self.last_temp = temp
             self.last_temp_time = read_time
-            self.control.temperature_update(read_time, temp, self.target_temp)
+            if self.secondary_sensor is not None:
+                status = self.secondary_sensor.get_status(read_time)
+                secondary_temp = status['temperature']
+            else:
+                secondary_temp = None
+            self.control.temperature_update(read_time, temp, self.target_temp,
+                                            secondary_temp=secondary_temp)
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
@@ -153,7 +163,7 @@ class ControlBangBang:
         self.heater_max_power = heater.get_max_power()
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
-    def temperature_update(self, read_time, temp, target_temp):
+    def temperature_update(self, read_time, temp, target_temp, *args, **kwargs):
         if self.heating and temp >= target_temp+self.max_delta:
             self.heating = False
         elif not self.heating and temp <= target_temp-self.max_delta:
@@ -174,49 +184,109 @@ PID_SETTLE_DELTA = 1.
 PID_SETTLE_SLOPE = .1
 
 class ControlPID:
-    def __init__(self, heater, config):
+    def __init__(self, heater, config, pid_kp_arg_name='pid_kp',
+                 pid_ki_arg_name='pid_ki', pid_kd_arg_name='pid_kd'):
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
-        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
-        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
-        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self._Kp = config.getfloat(pid_kp_arg_name) / PID_PARAM_BASE
+        self._Ki = config.getfloat(pid_ki_arg_name) / PID_PARAM_BASE
+        self._Kd = config.getfloat(pid_kd_arg_name) / PID_PARAM_BASE
         self.min_deriv_time = heater.get_smooth_time()
         self.temp_integ_max = 0.
-        if self.Ki:
-            self.temp_integ_max = self.heater_max_power / self.Ki
+        if self._Ki:
+            self.temp_integ_max = self.heater_max_power / self._Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
-    def temperature_update(self, read_time, temp, target_temp):
+
+    def calculate_output(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
         temp_diff = temp - self.prev_temp
         if time_diff >= self.min_deriv_time:
             temp_deriv = temp_diff / time_diff
         else:
-            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
+            temp_deriv = (self.prev_temp_deriv
+                          * (self.min_deriv_time - time_diff)
                           + temp_diff) / self.min_deriv_time
         # Calculate accumulated temperature "error"
         temp_err = target_temp - temp
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
-        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
-        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
-        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
+        co = self._Kp * temp_err + self._Ki * temp_integ - self._Kd * temp_deriv
         bounded_co = max(0., min(self.heater_max_power, co))
-        self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
+
+        return co, bounded_co
+
+    def temperature_update(self, read_time, temp, target_temp, *args, **kwargs):
+        _, bounded_co = self.calculate_output(read_time, temp, target_temp)
+        self.heater.set_pwm(read_time, bounded_co)
+
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+
+    @property
+    def Kp(self):
+        return self._Kp * PID_PARAM_BASE
+
+    @property
+    def Ki(self):
+        return self._Ki * PID_PARAM_BASE
+
+    @property
+    def Kd(self):
+        return self._Kd * PID_PARAM_BASE
+
+    @Kp.setter
+    def Kp(self, value):
+        self._Kp = value / PID_PARAM_BASE
+
+    @Ki.setter
+    def Ki(self, value):
+        self._Ki = value / PID_PARAM_BASE
+
+    @Kd.setter
+    def Kd(self, value):
+        self._Kd = value / PID_PARAM_BASE
+
+class ControlDualLoopPID:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+
+        self.primary_pid = ControlPID(heater, config, 'primary_pid_kp',
+                                      'primary_pid_ki', 'primary_pid_kd')
+        self.secondary_pid = ControlPID(heater, config, 'secondary_pid_kp',
+                                        'secondary_pid_ki', 'secondary_pid_kd')
+        arg_name = 'secondary_max_temp_target'
+        self.sec_max_temp_target = config.getfloat(arg_name)
+
+    def temperature_update(self, read_time, primary_temp, target_temp,
+                           secondary_temp, *args, **kwargs):
+
+        pco, _ = self.primary_pid.calculate_output(read_time,
+                                                   primary_temp, target_temp)
+        sco, _ = self.secondary_pid.calculate_output(read_time,
+                                                     secondary_temp,
+                                                     self.sec_max_temp_target)
+
+        co = min(pco, sco)
+        bounded_co = max(0., min(self.heater_max_power, co))
+        self.heater.set_pwm(read_time, bounded_co)
+
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        return self.primary_pid.check_busy(eventtime, smoothed_temp,
+                                           target_temp)
 
 
 ######################################################################
