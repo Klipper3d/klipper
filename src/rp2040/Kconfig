@@ -14,6 +14,7 @@ config RP2040_SELECT
     select HAVE_CHIPID
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
 
 config BOARD_DIRECTORY
     string
@@ -66,7 +67,7 @@ choice
     config RP2040_FLASH_START_4000
         bool "16KiB bootloader"
 endchoice
-config FLASH_START
+config FLASH_APPLICATION_ADDRESS
     hex
     default 0x10004000 if RP2040_FLASH_START_4000
     default 0x10000100

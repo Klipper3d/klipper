@@ -4,7 +4,6 @@ mainmenu "Klipper Firmware Configuration"
 
 config LOW_LEVEL_OPTIONS
     bool "Enable extra low-level configuration options"
-    default n
     help
         Enable low-level configuration options that (if modified) may
         result in a build that does not function correctly.
@@ -43,8 +42,6 @@ source "src/simulator/Kconfig"
 
 # Generic configuration options for serial ports
 config SERIAL
-    bool
-config SERIAL_BOOTLOADER_SIDECHANNEL
     bool
 config SERIAL_BAUD
     depends on SERIAL
@@ -111,31 +108,24 @@ config INITIAL_PINS
 # if the hardware does not support the feature.
 config HAVE_GPIO
     bool
-    default n
 config HAVE_GPIO_ADC
     bool
-    default n
 config HAVE_GPIO_SPI
     bool
-    default n
 config HAVE_GPIO_I2C
     bool
-    default n
 config HAVE_GPIO_HARD_PWM
     bool
-    default n
 config HAVE_GPIO_BITBANGING
     bool
-    default n
 config HAVE_STRICT_TIMING
     bool
-    default n
 config HAVE_CHIPID
     bool
-    default n
 config HAVE_STEPPER_BOTH_EDGE
     bool
-    default n
+config HAVE_BOOTLOADER_REQUEST
+    bool
 
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler

@@ -14,7 +14,7 @@ config LPC_SELECT
     select HAVE_CHIPID
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_BOTH_EDGE
-    select SERIAL_BOOTLOADER_SIDECHANNEL
+    select HAVE_BOOTLOADER_REQUEST
 
 config BOARD_DIRECTORY
     string
@@ -70,7 +70,7 @@ choice
     config LPC_FLASH_START_0000
         bool "No bootloader"
 endchoice
-config FLASH_START
+config FLASH_APPLICATION_ADDRESS
     hex
     default 0x4000 if LPC_FLASH_START_4000
     default 0x0000
