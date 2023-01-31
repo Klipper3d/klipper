@@ -1,4 +1,4 @@
-Fork of Klipper3d/klipper
+# Fork of Klipper3d/klipper
 
 This fork adds support for Makerbot Replicator2/2X
 (Mightyboard rev h and g) and some clones.
@@ -19,13 +19,13 @@ include them in this repo.
 
 Printers that may use ADS1118 ADCs and may work with this
 repo include:
-* FlashForge DreamerNX
-* FlashForge Dreamer
-* FlashForge Inventor
-* Dremel 3D20
-* Dremel 3D40
-* PowerSpec Ultra 3D
-* Monoprice Inventor 1
+- FlashForge DreamerNX
+- FlashForge Dreamer
+- FlashForge Inventor
+- Dremel 3D20
+- Dremel 3D40
+- PowerSpec Ultra 3D
+- Monoprice Inventor 1
 
 Please watch or star this repo if you are interested.  The more
 people that use this the better the chances of getting it included
@@ -51,7 +51,7 @@ Replicator origin (which resembles a delta printer) requires updating
 position_min, position_max, position_endstop, and bed_screws values for the
 x and y axix
 
-Installation
+# Installation
 
 Clone this repo and do the normal installation steps.
 
