@@ -794,6 +794,13 @@ sensor_type:
 sensor_pin:
 #   Analog input pin connected to the sensor. This parameter must be
 #   provided.
+#secondary_sensor_name:
+#   The temperature_sensor name of a second sensor to use for temperature
+#   control. This sensor will limit the heater power to not allow the
+#   temperature to exceed the 'secondary_max_temp_target' value.
+#   This sensor will work alongside the dual_loop_pid control algorithm.
+#secondary_max_temp_target:
+#   The maximum temperature target that the secondary sensor will allow.
 #pullup_resistor: 4700
 #   The resistance (in ohms) of the pullup attached to the thermistor.
 #   This parameter is only valid when the sensor is a thermistor. The
@@ -803,8 +810,8 @@ sensor_pin:
 #   be smoothed to reduce the impact of measurement noise. The default
 #   is 1 seconds.
 control:
-#   Control algorithm (either pid or watermark). This parameter must
-#   be provided.
+#   Control algorithm (either pid, dual_loop_pid or watermark). This
+#   parameter must be provided.
 pid_Kp:
 pid_Ki:
 pid_Kd:
@@ -817,6 +824,23 @@ pid_Kd:
 #   off and 1.0 being full on. Consider using the PID_CALIBRATE
 #   command to obtain these parameters. The pid_Kp, pid_Ki, and pid_Kd
 #   parameters must be provided for PID heaters.
+#primary_pid_kp:
+#primary_pid_ki:
+#primary_pid_kd:
+#secondary_pid_kp:
+#secondary_pid_ki:
+#secondary_pid_kd:
+#   On 'dual_loop_pid' control use two PID loops to control the
+#   temperature. The primary PID loop controls the temperature
+#   directly. The secondary PID loop controls the power to the primary
+#   PID loop. This allows the primary PID loop to be tuned for
+#   temperature control, while the secondary PID loop can be tuned for
+#   power control, not exceeding the temperature limit set on
+#   'secondary_max_temp_target'.
+#   The primary sensor is positioned close where the temperature
+#   measurament should be more accurate (e.g. on the bed surface). The
+#   secondary sensor is positioned where the temperature measurament
+#   should not exceed a limit (e.g. on the silicone heater).
 #max_delta: 2.0
 #   On 'watermark' controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater
