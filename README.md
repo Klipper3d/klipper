@@ -71,6 +71,11 @@ I believe you should be able to get this working by changing the MCU
 processor in make menuconfig and editing src/arv/Makefile and changing
 the last line from "-C stk500v1" to "-C stk500v2".  Software reset
 should work but needs to be tested to confirm.
+* The generic-mightyboard.cfg in the main repo should NOT be use
+for these printers.  That config file is for the original
+Makerbot Replicator and clones and does not work with printers
+that have ADS1118 adc and thermocouples.  Make sure to use the
+config file specific for the rep2x as a basis for these printers.
 * There is no specific error for a disconnected thermocouple however
 the printer will shut down if a thermocouple is not attached (this
 triggers a temperature out of range error).
