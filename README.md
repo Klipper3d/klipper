@@ -1,15 +1,16 @@
-# Fork of Klipper3d/klipper
+# Mightyboard Rev G and H support - Fork of Klipper3d/klipper
 
 This fork adds support for Makerbot Replicator2/2X
-(Mightyboard rev h and g) and some clones.
+(Mightyboard rev g and h) and some clones.
 
-STATUS - I would consider master to be at a late beta stage.
+**STATUS** - I would consider master to be at a late beta stage.
 Everything that can be supported is at this point and all
 features are working.  This has been tested on a small number
 of printers and more wide spread testing would be appreciated.
 The example config file will be updated to incorporate
 setting hold currents while pre-heating.
 
+**Supported clones**
 Currently, no clones have example config files or instructions
 for flashing Klipper.  If you have a Replicator clone that
 uses k type thermocouples and/or an ADS1118 adc chip and
@@ -32,7 +33,7 @@ people that use this the better the chances of getting it included
 upstream.  Feel free to file issues in this repo for questions or
 problems (DON'T USE ISSUES IN UPSTREAM FOR THIS)
 
-Changes include:
+###Changes include:
 * Documents what is necessary to flash the MCU (57600 baud and correct 
     avrdude protocol)
 * Adds support for MCU reset (toggle connection baud rate to 57600)
@@ -78,7 +79,7 @@ processor in make menuconfig and editing src/arv/Makefile and changing
 the last line from "-C stk500v1" to "-C stk500v2".  Software reset
 should work but needs to be tested to confirm.
 
-*************************************************************************
+# *************************************************************************
 Welcome to the Klipper project!
 
 [![Klipper](docs/img/klipper-logo-small.png)](https://www.klipper3d.org/)
