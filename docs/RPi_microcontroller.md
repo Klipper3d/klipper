@@ -46,6 +46,7 @@ To build and install the new micro-controller code, run:
 sudo service klipper stop
 make flash
 sudo service klipper start
+sudo systemctl start klipper-mcu.service
 ```
 
 If klippy.log reports a "Permission denied" error when attempting to
