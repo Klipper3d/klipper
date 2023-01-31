@@ -40,12 +40,7 @@ repo include:
 
 /config/printer-makerbot-replicator2x-2012.cfg can be used as a starting point 
 for both 2 and 2x printers.  Replicator2 printers can simply delete or comment
-the second extruder and the heated bed plate settings. The included
-printer.cfg changes the origin (0,0) to be in the left front of the build
-plate to be consistent with other cartesian printers.  Keeping the original
-Replicator origin (which resembles a delta printer) requires updating
-position_min, position_max, position_endstop, and bed_screws values for the
-x and y axix
+the second extruder and the heated bed plate settings.
 
 # Installation
 
@@ -79,6 +74,12 @@ should work but needs to be tested to confirm.
 * There is no specific error for a disconnected thermocouple however
 the printer will shut down if a thermocouple is not attached (this
 triggers a temperature out of range error).
+* The included
+printer.cfg changes the origin (0,0) to be in the left front of the build
+plate to be consistent with other cartesian printers.  Keeping the original
+Replicator origin (which resembles a delta printer) requires updating
+position_min, position_max, position_endstop, and bed_screws values for the
+x and y axix
 * Please watch or star this repo if you are interested.  The more
 people that use this the better the chances of getting it included
 upstream.  Feel free to file issues in this repo for questions or
