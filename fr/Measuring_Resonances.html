@@ -1658,7 +1658,7 @@
 
 
 <h1 id="mesurer-la-resonance">Mesurer la résonance<a class="headerlink" href="#mesurer-la-resonance" title="Permanent link">&para;</a></h1>
-<p>Klipper prend en charge l’accéléromètre ADXL345, qui peut être utilisé pour mesurer les fréquences de résonance de l’imprimante sur différents axes, et le réglage automatique <a href="Resonance_Compensation.html">input shapers</a> pour limiter les résonances. Notez que l’utilisation de l’ADXL345 nécessite un peu de soudure et de sertissage. L’ADXL345 peut être connecté directement à un Raspberry Pi, ou à une interface SPI d’une carte MCU (qui doit être rapide).</p>
+<p>Klipper prend en charge l’accéléromètre ADXL345, utilisé pour mesurer les fréquences de résonance de l’imprimante sur différents axes ainsi que le réglage automatique des <a href="Resonance_Compensation.html">formateurs d'entrée ( aka input shapers)</a> pour limiter les résonances. Notez que l’utilisation de l’ADXL345 nécessite un peu de soudure et de sertissage. L’ADXL345 peut être connecté directement à un Raspberry Pi, ou à une interface SPI d’une carte MCU (qui devra être rapide).</p>
 <p>Lors de l’approvisionnement en ADXL345, sachez qu’il existe une variété de conceptions de cartes PCB différentes et différents clones. Assurez-vous que la carte prend en charge le mode SPI (un petit nombre de cartes semble être configurée en dur pour I2C avec SDO raccordé au GND) et, si elle doit être connectée à un microcontrôleur d’imprimante 5V, qu’elle dispose d’un régulateur de tension et d’un décalage de niveau.</p>
 <h2 id="instructions-dinstallation">Instructions d’installation<a class="headerlink" href="#instructions-dinstallation" title="Permanent link">&para;</a></h2>
 <h3 id="cablage">Câblage<a class="headerlink" href="#cablage" title="Permanent link">&para;</a></h3>
@@ -1674,7 +1674,7 @@ SCLK+CS
 
 <h5 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h5>
 <p><strong>Remarque : de nombreux microcontrôleurs fonctionnent avec un ADXL345 en mode SPI (par exemple, Pi Pico), le câblage et la configuration varient en fonction de votre carte ADXL et des broches disponibles. sur votre MCU</strong></p>
-<p>Vous devez connecter ADXL345 à votre Raspberry Pi via SPI. Notez que la connexion I2C, suggérée par la documentation ADXL345, a un débit trop faible et <strong> ne fonctionnera pas</strong>. Le schéma de connexion recommandé :</p>
+<p>Vous devez connecter votre ADXL345 à votre Raspberry Pi via SPI. Notez que la connexion I2C, suggérée par la documentation ADXL345, possède un débit trop faible et <strong> ne fonctionnera pas</strong>. Le schéma de connexion recommandé :</p>
 <table>
 <thead>
 <tr>
