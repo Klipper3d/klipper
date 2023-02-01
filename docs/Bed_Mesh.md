@@ -255,8 +255,8 @@ fade_target: 0
   example,  lets assume your homing position on the bed is an outlier, its
   .2 mm lower than the average probed height of the bed.  If the `fade_target`
   is 0, fade will shrink the print by an average of .2 mm across the bed.  By
-  setting the `fade_target` to .2, the homed area will expand by .2 mm, however
-  the rest of the bed will have an accurately sized.  Generally its a good idea
+  setting the `fade_target` to .2, the homed area will expand by .2 mm, however,
+  the rest of the bed will be accurately sized.  Generally its a good idea
   to leave `fade_target` out of the configuration so the average height of the
   mesh is used, however it may be desirable to manually adjust the fade target
   if one wants to print on a specific portion of the bed.
