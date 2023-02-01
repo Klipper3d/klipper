@@ -337,6 +337,14 @@ config STM32F0_TRIM
         Default is 16 (use factory default). Each increment increases
         the clock rate by ~240KHz.
 
+choice
+    prompt "I2C Clock Speed" if LOW_LEVEL_OPTIONS
+    config STM32_I2C_CLOCK_100kHz
+        bool "100 kHz"
+    config STM32_I2C_Clock_400kHz
+        bool "400 kHz"
+endchoice
+
 
 ######################################################################
 # Communication inteface
