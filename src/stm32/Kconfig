@@ -341,7 +341,7 @@ choice
     prompt "I2C Clock Speed" if LOW_LEVEL_OPTIONS
     config STM32_I2C_CLOCK_100kHz
         bool "100 kHz"
-    config STM32_I2C_Clock_400kHz
+    config STM32_I2C_CLOCK_400kHz
         bool "400 kHz"
 endchoice
 
