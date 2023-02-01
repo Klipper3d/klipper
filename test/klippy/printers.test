@@ -41,6 +41,7 @@ CONFIG ../../config/printer-flashforge-creator-pro-2018.cfg
 CONFIG ../../config/printer-hiprecy-leo-2019.cfg
 CONFIG ../../config/printer-longer-lk4-pro-2019.cfg
 CONFIG ../../config/printer-lulzbot-mini1-2016.cfg
+CONFIG ../../config/printer-lulzbot-mini2-2018.cfg
 CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
 CONFIG ../../config/printer-lulzbot-taz6-dual-v3-2017.cfg
 CONFIG ../../config/printer-makergear-m2-2012.cfg
@@ -119,6 +120,11 @@ CONFIG ../../config/printer-modix-big60-2020.cfg
 DICTIONARY samd51p20.dict
 CONFIG ../../config/generic-duet3-mini.cfg
 
+# Printers using the SAM E70
+DICTIONARY same70q20b.dict
+CONFIG ../../config/generic-duet3-6hc.cfg
+CONFIG ../../config/generic-duet3-6xd.cfg
+
 # Printers using the lpc176x
 DICTIONARY lpc176x.dict
 CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
@@ -147,6 +153,7 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
 CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
+CONFIG ../../config/printer-sunlu-t3-2022.cfg
 
 # Printers using the stm32f103 via serial
 DICTIONARY stm32f103-serial.dict
