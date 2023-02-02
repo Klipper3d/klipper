@@ -259,6 +259,11 @@ class Printer:
             (lambda e: self.invoke_shutdown(msg)))
     def register_event_handler(self, event, callback):
         self.event_handlers.setdefault(event, []).append(callback)
+    def unregister_event_handler(self, event, callbacks):
+        handlers = self.event_handlers.setdefault(event, [])
+        for callback in callbacks:
+            if callback in handlers:
+                handlers.remove(callback)
     def send_event(self, event, *params):
         return [cb(*params) for cb in self.event_handlers.get(event, [])]
     def request_exit(self, result):
