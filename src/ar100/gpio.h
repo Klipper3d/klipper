@@ -17,6 +17,11 @@ struct gpio_in {
 
 extern volatile uint32_t data_regs[8];
 
+
+struct gpio_in gpio_in_setup(uint8_t pin, int8_t pull_up);
+void gpio_in_reset(struct gpio_in pin, int8_t pull_up);
+uint8_t gpio_in_read(struct gpio_in pin);
+
 struct gpio_out gpio_out_setup(uint8_t pin, uint8_t val);
 void gpio_out_write(struct gpio_out pin, uint8_t val);
 void gpio_out_reset(struct gpio_out pin, uint8_t val);
