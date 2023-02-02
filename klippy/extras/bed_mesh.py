@@ -5,7 +5,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, json, collections
-import numpy as np
 from . import probe, load_cell_probe
 
 PROFILE_VERSION = 1
@@ -852,10 +851,6 @@ class ZMesh:
                            (self.mesh_x_count - 1)
         self.mesh_y_dist = (self.mesh_y_max - self.mesh_y_min) / \
                            (self.mesh_y_count - 1)
-        self.probe_x_dist = (self.mesh_x_max - self.mesh_x_min) / \
-                            (params['x_count'] - 1)
-        self.probe_y_dist = (self.mesh_y_max - self.mesh_y_min) / \
-                            (params['y_count'] - 1)
     def get_mesh_matrix(self):
         if self.mesh_matrix is not None:
             return [[round(z, 6) for z in line]

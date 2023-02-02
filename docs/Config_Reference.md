@@ -1248,13 +1248,16 @@ See also: [extended g-code commands](G-Codes.md#z_thermal_adjust).
 
 This enables the use of a load cell for homing and probing (e.g. mesh leveling).
 A QUERY_LOAD_CELL_PROBE command can be used to print out measurements.
-This can be useful for setting the initial values for the gain, threshold, and 'invert'.
+This can be useful for setting the initial values for the gain, threshold
+and 'invert'.
 Afterwards a QUERY_LOAD_CELL_PROBE_END command stops the sampling.
-All probing or homing moves should be issued with low acceleration and low square-corner-velocity
-to prevent false triggers. Use a command like this 
+
+All probing or homing moves should be issued with low acceleration and low
+square-corner-velocity to prevent false triggers. Use a command like this
 "SET_VELOCITY_LIMIT ACCEL=100 SQUARE_CORNER_VELOCITY=0.1"
 
-To use the load cell as a z endstop set the following config option in the stepper_z section
+To use the load cell as a z endstop set the following config option in the
+stepper_z section
 ```
 endstop_pin: load_cell_probe:z_virtual_endstop
 ```
@@ -1266,7 +1269,8 @@ adc: my_load_cell:None
 #   for the 'mcu' specify a configured load cell adc.
 force_threshold: 70000
 #   The force limit sets the force at which the axis stops moving.
-#   During initial setup, a manual force can be applied to find a reasonable value for this.
+#   During initial setup, a manual force can be applied to find a reasonable
+#   value for this.
 #   Use a QUERY_LOAD_CELL_PROBE command to print out measured values.
 #   If there are false triggers/retries this should be increased,
 #   some deformation is expected and does not impact the accuracy.
@@ -1280,9 +1284,9 @@ force_threshold: 70000
 
 ## HX711
 
-The HX711 chip is a popular load cell adc, unless this came with your printer you may have to
-solder a harware jumper to enable the 80sps mode. Otherwise it will only output 20 samples per second
-which won't work well.
+The HX711 chip is a popular load cell adc, unless this came with your printer,
+you may have to solder a hardware jumper to enable the 80sps mode.
+Otherwise it will only output 20 samples per seconds which won't work well.
 
 ```
 [hx711 my_load_cell]
@@ -1291,7 +1295,8 @@ sck_pin: mcu2:PE0
 gain: 128
 #   Gain can be 32, 64, 128.
 #   Reduce this if the measurements are reaching their limits.
-#   when reducing the gain, the force_threshold in load_cell_probe should be reduced as well.
+#   when reducing the gain, the force_threshold in load_cell_probe should be
+#   reduced as well.
 ```
 
 ## Customized homing
