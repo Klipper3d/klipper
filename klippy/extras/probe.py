@@ -132,21 +132,21 @@ class PrinterProbe:
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
-		if 'z' not in toolhead.get_status(curtime)['homed_axes']:
+        if 'z' not in toolhead.get_status(curtime)['homed_axes']:
             raise self.printer.command_error("Must home before probe")
         phoming = self.printer.lookup_object('homing')
         pos = toolhead.get_position()
         pos[2] = self.z_position
         #for BD sensor
-		if self.I2C_BD_receive_cmd3 is not None:
-			toolhead.wait_moves()
-			pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
-			intd=int(pr['response'])
-			strd=str(intd/100.0)
-			pos[2]=intd/100.0
-			self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-									% (pos[0], pos[1], pos[2]))
-			return pos[:3]
+        if self.I2C_BD_receive_cmd3 is not None:
+            toolhead.wait_moves()
+            pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
+            intd=int(pr['response'])
+            strd=str(intd/100.0)
+            pos[2]=intd/100.0
+            self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
+                                    % (pos[0], pos[1], pos[2]))
+            return pos[:3]
         try:
             epos = phoming.probing_move(self.mcu_probe, pos, speed)
         except self.printer.command_error as e:

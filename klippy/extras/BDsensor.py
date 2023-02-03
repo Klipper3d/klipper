@@ -47,12 +47,12 @@ def calc_move_time(dist, speed, accel):
 # I2C BD_SENSOR
 ######################################################################
 
-# Helper code for working with 
+# Helper code for working with
 # devices connected to an MCU via an i2c software bus
 
 class MCU_I2C_BD:
     def __init__(self,mcu,   sda_pin,scl_pin, delay_t):
-        self.mcu = mcu    
+        self.mcu = mcu
         self.oid = self.mcu.create_oid()
         # Generate I2C bus config message
         self.config_fmt = (
@@ -137,8 +137,9 @@ class BDsensorEndstopWrapper:
         self.mcu.register_config_callback(self.build_config)
     def build_config(self):
        self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
-           "I2C_BD_receive oid=%c data=%*s",
-           "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)
+            "I2C_BD_receive oid=%c data=%*s",
+            "I2C_BD_receive_response oid=%c response=%*s",
+            oid=self.oid, cq=self.cmd_queue)
 
     def _force_enable(self,stepper):
         toolhead = self.printer.lookup_object('toolhead')
@@ -158,7 +159,7 @@ class BDsensorEndstopWrapper:
          prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
          prev_trapq = stepper.set_trapq(self.trapq)
          stepper.set_position((0., 0., 0.))
-         axis_r, accel_t, cruise_t, cruise_v 
+         axis_r, accel_t, cruise_t, cruise_v
             = calc_move_time(dist, speed, accel)
          print_time = toolhead.get_last_move_time()
          self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
@@ -178,7 +179,7 @@ class BDsensorEndstopWrapper:
             kin = toolhead.get_kinematics()
             for stepper in kin.get_steppers():
                 if stepper.is_active_axis('z'):
-                    self.bd_sensor.I2C_BD_send("1019")#CMD_START_CALIBRATE=1019 
+                    self.bd_sensor.I2C_BD_send("1019")
                     distance = 0.5#gcmd.get_float('DISTANCE')
                     speed = 10#gcmd.get_float('VELOCITY', above=0.)
                     accel = 2000#gcmd.get_float('ACCEL', 0., minval=0.)
@@ -198,11 +199,11 @@ class BDsensorEndstopWrapper:
                         toolhead.wait_moves()
                        # toolhead.dwell(0.5)
                         ncount=ncount+1
-                        
+
                         if ncount>=40: 
                             self.bd_sensor.I2C_BD_send("1021")
                             break
-        if  CMD_BD == -5:                           
+        if  CMD_BD == -5:                       
             self.bd_sensor.I2C_BD_send("1017")#tart read raw calibrate data
             ncount1=0
             while 1:

@@ -73,7 +73,7 @@ class DisplayGroup:
         self.mcu = mcu.get_printer_mcu(printer, 'mcu')
         self.oid = self.mcu.create_oid()
         self.cmd_queue = self.mcu.alloc_command_queue()
-		self.I2C_BD_receive_cmd = None
+        self.I2C_BD_receive_cmd = None
         self.mcu.register_config_callback(self.build_config)
 
         gcode_macro = printer.load_object(config, 'gcode_macro')
@@ -83,12 +83,12 @@ class DisplayGroup:
             if c.get('text'):
                 template = gcode_macro.load_template(c, 'text')
                 self.data_items.append((row, col, template))
-	def build_config(self):
-		if self.BD_display is not None:
-			self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
-				"I2C_BD_receive2 oid=%c data=%*s",
-				"I2C_BD_receive2_response oid=%c response=%*s",
-				oid=self.oid, cq=self.cmd_queue)
+    def build_config(self):
+        if self.BD_display is not None:
+            self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
+                "I2C_BD_receive2 oid=%c data=%*s",
+                "I2C_BD_receive2_response oid=%c response=%*s",
+                oid=self.oid, cq=self.cmd_queue)
     def show(self, display, templates, eventtime):
         context = self.data_items[0][2].create_template_context(eventtime)
         context['draw_progress_bar'] = display.draw_progress_bar
