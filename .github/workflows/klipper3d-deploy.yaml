@@ -28,7 +28,7 @@ jobs:
       - name: Build MkDocs Pages
         run: docs/_klipper3d/build-translations.sh
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4.2.5
+        uses: JamesIves/github-pages-deploy-action@v4.4.0
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: site # The folder the action should deploy.
