@@ -40,7 +40,7 @@ uint16_t Get_Distane_data(void)
 
 }
 
-int BD_i2c_init(uint32_t _sda,uint32_t _scl,uint32_t delays) 
+int BD_i2c_init(uint32_t _sda,uint32_t _scl,uint32_t delays)
 {
     sda_pin=_sda;
     scl_pin =_scl;
@@ -95,10 +95,10 @@ unsigned short BD_Add_OddEven(unsigned short byte)
 unsigned short BD_Check_OddEven(unsigned short byte)
 {
     unsigned char i;
-    unsigned char n;  
-    unsigned char r;  
+    unsigned char n;
+    unsigned char r;
     n =0;
-    for(i=0;i<10;i++) 
+    for(i=0;i<10;i++)
     {
         if(((byte >>i)&0x01) == 0x01)
         {
@@ -128,7 +128,7 @@ void BD_I2C_start(void)
     BD_setLow(scl_gpio);
     ndelay_bd(delay_m);
 }
-void  BD_i2c_stop(void) 
+void  BD_i2c_stop(void)
 {
     ndelay_bd(delay_m);
     sda_gpio=gpio_out_setup(sda_pin, 1);
@@ -162,13 +162,13 @@ uint16_t BD_i2c_read(void)
         b <<= 1;
         ndelay_bd(delay_m);
         BD_setHigh(scl_gpio);
-        if (gpio_in_read(sda_gpio_in)) 
+        if (gpio_in_read(sda_gpio_in))
             b |= 1;
         ndelay_bd(delay_m);
         BD_setLow(scl_gpio);
     }
     BD_i2c_stop();
-    if (BD_Check_OddEven(b) && (b & 0x3FF) < 1020)      
+    if (BD_Check_OddEven(b) && (b & 0x3FF) < 1020)
         b = (b & 0x3FF);
     if(b>1024)
         b=1024;
@@ -178,7 +178,6 @@ uint16_t BD_i2c_read(void)
 
 void BD_i2c_write(unsigned int addr)
 {
- 
     BD_I2C_start();
     //// write
     BD_setLow(sda_gpio);
@@ -190,12 +189,12 @@ void BD_i2c_write(unsigned int addr)
     ndelay_bd(delay_m);
     for (int i=10; i >=0; i--) 
     {
-        if ((addr>>i)&0x01) 
+        if ((addr>>i)&0x01)
         {
             BD_setHigh(sda_gpio);
         }
         else
-            BD_setLow(sda_gpio); 
+            BD_setLow(sda_gpio);
         BD_setHigh(scl_gpio);
         ndelay_bd(delay_m);
         BD_setLow(scl_gpio);
@@ -207,8 +206,7 @@ void BD_i2c_write(unsigned int addr)
 uint32_t INT_to_String(uint32_t BD_z1,uint8_t*data)
 {
     uint32_t BD_z=BD_z1;
-
-    uint32_t len=0,j=0; 
+    uint32_t len=0,j=0;
     if(BD_z>1000)
     {
         j=BD_z/1000;

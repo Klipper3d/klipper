@@ -200,10 +200,10 @@ class BDsensorEndstopWrapper:
                        # toolhead.dwell(0.5)
                         ncount=ncount+1
 
-                        if ncount>=40: 
+                        if ncount>=40:
                             self.bd_sensor.I2C_BD_send("1021")
                             break
-        if  CMD_BD == -5:                       
+        if  CMD_BD == -5:
             self.bd_sensor.I2C_BD_send("1017")#tart read raw calibrate data
             ncount1=0
             while 1:
