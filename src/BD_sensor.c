@@ -187,7 +187,7 @@ void BD_i2c_write(unsigned int addr)
     addr=BD_Add_OddEven(addr);
     ///write address
     ndelay_bd(delay_m);
-    for (int i=10; i >=0; i--) 
+    for (int i=10; i >=0; i--)
     {
         if ((addr>>i)&0x01)
         {
