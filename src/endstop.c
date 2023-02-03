@@ -17,22 +17,23 @@ struct endstop {
     uint32_t rest_time, sample_time, nextwake;
     struct trsync *ts;
     uint8_t flags, sample_count, trigger_count, trigger_reason;
-	uint8_t type;// mark for bed distance sensor
+	uint8_t type;
 };
 
 enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1 };
 
 static uint_fast8_t endstop_oversample_event(struct timer *t);
-//mark for bed distance sensor
-uint8_t read_endstop_pin(struct endstop *e)
+
+static uint8_t 
+read_endstop_pin(struct endstop *e)
 {
 	uint8_t state_e=0;
-	if(e->type==2)// for Bed Distance sensor 
+	if(e->type==2)// for Bed Distance sensor
 	{
 		uint16_t tm=Get_Distane_data();
 		state_e=(tm>=0.01)?0:1;
 	}
-	else	
+	else
 		state_e=gpio_in_read(e->pin);
 	return state_e;
 }
@@ -82,7 +83,7 @@ command_config_endstop(uint32_t *args)
 {
     struct endstop *e = oid_alloc(args[0], command_config_endstop, sizeof(*e));
     e->pin = gpio_in_setup(args[1], args[2]);
-	e->type = args[2];	
+	e->type = args[2];
 }
 DECL_COMMAND(command_config_endstop, "config_endstop oid=%c pin=%c pull_up=%c");
 

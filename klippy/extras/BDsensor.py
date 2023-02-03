@@ -1,6 +1,5 @@
 #import libraries
 #/home/pi/klippy-env/bin/pip2 install RPi.GPIO
-#import RPi.GPIO as GPIO 
 import time
 import logging
 from . import probe
@@ -48,54 +47,46 @@ def calc_move_time(dist, speed, accel):
 # I2C BD_SENSOR
 ######################################################################
 
-# Helper code for working with devices connected to an MCU via an i2c software bus
+# Helper code for working with 
+# devices connected to an MCU via an i2c software bus
 
 class MCU_I2C_BD:
     def __init__(self,mcu,   sda_pin,scl_pin, delay_t):
-        
-        self.mcu = mcu
-     
-        # Config  
+        self.mcu = mcu    
         self.oid = self.mcu.create_oid()
-
         # Generate I2C bus config message
-
         self.config_fmt = (
-            "config_I2C_BD oid=%d sda_pin=%s scl_pin=%s delay=%s" % (self.oid, sda_pin,scl_pin, delay_t))
-        
+            "config_I2C_BD oid=%d sda_pin=%s scl_pin=%s delay=%s"
+            % (self.oid, sda_pin,scl_pin, delay_t))
         self.cmd_queue = mcu.alloc_command_queue()
         mcu.register_config_callback(self.build_config)
         self.I2C_BD_send_cmd = self.I2C_BD_receive_cmd = None
-      
-    def build_config(self):      
+    def build_config(self):
         self.mcu.add_config_cmd(self.config_fmt)
         self.I2C_BD_send_cmd = self.mcu.lookup_command(
             "I2C_BD_send oid=%c data=%*s", cq=self.cmd_queue)
         self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
             "I2C_BD_receive oid=%c data=%*s",
-            "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)   
+            "I2C_BD_receive_response oid=%c response=%*s",
+             oid=self.oid, cq=self.cmd_queue)
     def get_oid(self):
-        return self.oid       
+        return self.oid
     def get_mcu(self):
         return self.mcu
     def get_command_queue(self):
-        return self.cmd_queue    
-    def I2C_BD_send(self, data):  
+        return self.cmd_queue
+    def I2C_BD_send(self, data):
         self.I2C_BD_send_cmd.send([self.oid, data])
     def I2C_BD_receive(self,  data):
         return self.I2C_BD_receive_cmd.send([self.oid, data])
-       # return self.I2C_BD_receive_cmd.send([self.oid, data],minclock=minclock, reqclock=reqclock)
 
-
-       
-# Helper to setup an spi bus from settings in a config section
 def MCU_BD_I2C_from_config(mcu,config):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
-  
-    
     # Create MCU_SPI object
-    return MCU_I2C_BD(mcu,config.get('sda_pin'),config.get('scl_pin'),config.get('delay'))
+    pin_sda=config.get('sda_pin')
+    pin_scl=config.get('scl_pin')
+    return MCU_I2C_BD(mcu,pin_sda,pin_scl,config.get('delay'))
 
 # BDsensor wrapper that enables probe specific features
 class BDsensorEndstopWrapper:
@@ -113,15 +104,13 @@ class BDsensorEndstopWrapper:
         ppins = self.printer.lookup_object('pins')
         pin = config.get('sda_pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
-      #  self.mcu = pin_params['chip']
-        self.mcu = mcu.get_printer_mcu(self.printer, 'mcu')      
+        self.mcu = mcu.get_printer_mcu(self.printer, 'mcu')
         pin_params['pullup']=2
         self.mcu_endstop = self.mcu.setup_pin('endstop', pin_params)
         self.printer.register_event_handler('klippy:mcu_identify',
                                             self._handle_mcu_identify)
         self.oid = self.mcu.create_oid()
         self.cmd_queue = self.mcu.alloc_command_queue()
-        
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -130,13 +119,12 @@ class BDsensorEndstopWrapper:
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc(b'x'), ffi_lib.free)
 
-        self.bd_sensor=MCU_BD_I2C_from_config(self.mcu,config) 
+        self.bd_sensor=MCU_BD_I2C_from_config(self.mcu,config)
         self.distance=5;
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('M102', self.cmd_M102)
 
-        
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -146,13 +134,11 @@ class BDsensorEndstopWrapper:
         self.query_endstop = self.mcu_endstop.query_endstop
         # multi probes state
         self.multi = 'OFF'
-
         self.mcu.register_config_callback(self.build_config)
-        
-    def build_config(self):      
+    def build_config(self):
        self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
            "I2C_BD_receive oid=%c data=%*s",
-           "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue) 
+           "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)
 
     def _force_enable(self,stepper):
         toolhead = self.printer.lookup_object('toolhead')
@@ -172,7 +158,8 @@ class BDsensorEndstopWrapper:
          prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
          prev_trapq = stepper.set_trapq(self.trapq)
          stepper.set_position((0., 0., 0.))
-         axis_r, accel_t, cruise_t, cruise_v = calc_move_time(dist, speed, accel)
+         axis_r, accel_t, cruise_t, cruise_v 
+            = calc_move_time(dist, speed, accel)
          print_time = toolhead.get_last_move_time()
          self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
                            0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
@@ -183,34 +170,24 @@ class BDsensorEndstopWrapper:
          stepper.set_stepper_kinematics(prev_sk)
          toolhead.note_kinematic_activity(print_time)
          toolhead.dwell(accel_t + cruise_t + accel_t)
-        
     def cmd_M102(self, gcmd, wait=False):
         # Set Extruder Temperature
         CMD_BD = gcmd.get_int('S', None)
         toolhead = self.printer.lookup_object('toolhead')
-        if CMD_BD == -6:            
+        if CMD_BD == -6:
             kin = toolhead.get_kinematics()
             for stepper in kin.get_steppers():
-                if stepper.is_active_axis('z'):                    
-                    self.bd_sensor.I2C_BD_send("1019") #CMD_START_CALIBRATE=1019 
-                  #  toolhead.dwell(1) 
-                  #  stepper = self._lookup_stepper(gcod)
+                if stepper.is_active_axis('z'):
+                    self.bd_sensor.I2C_BD_send("1019")#CMD_START_CALIBRATE=1019 
                     distance = 0.5#gcmd.get_float('DISTANCE')
                     speed = 10#gcmd.get_float('VELOCITY', above=0.)
                     accel = 2000#gcmd.get_float('ACCEL', 0., minval=0.)
-                    #logging.info("FORCE_MOVE %s distance=%.3f velocity=%.3f accel=%.3f",
-                    #             stepper.get_name(), distance, speed, accel)
-                    #print"self.distance===%.3f"%self.distance
                     self.distance=0.1
                     self._force_enable(stepper)
-                   # self.manual_move(stepper, self.distance, speed)
-                  #  self.manual_move(stepper, -self.distance, speed)
-                   # toolhead.dwell(1)
                     toolhead.wait_moves()
                     ncount=0
 
                     while 1:
-                        #self.bd_sensor.I2C_BD_send(str(ncount))                        
                         toolhead.dwell(0.5)
                         self.bd_sensor.I2C_BD_send(str(ncount))
                         toolhead.dwell(0.5)
@@ -226,7 +203,7 @@ class BDsensorEndstopWrapper:
                             self.bd_sensor.I2C_BD_send("1021")
                             break
         if  CMD_BD == -5:                           
-            self.bd_sensor.I2C_BD_send("1017")#1017 // start reading raw calibration data
+            self.bd_sensor.I2C_BD_send("1017")#tart read raw calibrate data
             ncount1=0
             while 1:
                 pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
@@ -236,9 +213,9 @@ class BDsensorEndstopWrapper:
                 gcmd.respond_raw(strd)
                 toolhead.dwell(0.1)
                 ncount1=ncount1+1
-                if ncount1>=40: 
+                if ncount1>=40:
                     break
-        if  CMD_BD == -1:                           
+        if  CMD_BD == -1:
             self.bd_sensor.I2C_BD_send("1016")#1016 // // read sensor version
             ncount1=0
             x=[]
@@ -253,19 +230,18 @@ class BDsensorEndstopWrapper:
                 x.append(intd)
                 toolhead.dwell(0.3)
                 ncount1=ncount1+1
-                if ncount1>=20: 
-                    self.bd_sensor.I2C_BD_send("1018")#1018   // finish reading   data  
+                if ncount1>=20:
+                    self.bd_sensor.I2C_BD_send("1018")#1018// finish reading
                     res = ''.join(map(chr, x))
                     gcmd.respond_raw(res)
                     break
-        
-        if  CMD_BD == -2:    # gcode M102 S-2 read distance data
+        if  CMD_BD == -2:# gcode M102 S-2 read distance data
             self.bd_sensor.I2C_BD_send("1015")#1015   read distance data
             pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
             intd=int(pr['response'])
             strd=str(intd)
             gcmd.respond_raw(strd)
-        self.bd_sensor.I2C_BD_send("1018")#1018               
+        self.bd_sensor.I2C_BD_send("1018")
     def _handle_mcu_identify(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
@@ -306,10 +282,7 @@ class BDsensorEndstopWrapper:
     def get_position_endstop(self):
         return self.position_endstop
 
-   
 def load_config(config):
     bdl=BDsensorEndstopWrapper(config)
     config.get_printer().add_object('probe', probe.PrinterProbe(config, bdl))
     return bdl
-
-

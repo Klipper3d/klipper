@@ -48,15 +48,14 @@ class PrinterProbe:
                                                  minval=0.)
         self.samples_retries = config.getint('samples_tolerance_retries', 0,
                                              minval=0)
-        #for Bed Distance Sensor                                     
-        self.BD_sensor = config.get('sda_pin', None)                                       
+        #for Bed Distance Sensor
+        self.BD_sensor = config.get('sda_pin', None)
         self.mcu =self.mcu_probe.get_mcu()
         self.oid = self.mcu.create_oid()
-        self.cmd_queue = self.mcu.alloc_command_queue()  
+        self.cmd_queue = self.mcu.alloc_command_queue()
         self.I2C_BD_send_cmd3 = None
         self.I2C_BD_receive_cmd3 = None
         self.mcu.register_config_callback(self.build_config)
-        
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register homing event handlers
@@ -83,15 +82,15 @@ class PrinterProbe:
         self.gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                     self.cmd_Z_OFFSET_APPLY_PROBE,
                                     desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
-        
-    def build_config(self): 
+    def build_config(self):
         if self.BD_sensor is not None:
             self.I2C_BD_send_cmd3 = self.mcu.lookup_command(
                 "I2C_BD_send oid=%c data=%*s", cq=self.cmd_queue)
             self.I2C_BD_receive_cmd3 = self.mcu.lookup_query_command(
                 "I2C_BD_receive oid=%c data=%*s",
-                "I2C_BD_receive_response oid=%c response=%*s", oid=self.oid, cq=self.cmd_queue)                
-                                    
+                "I2C_BD_receive_response oid=%c response=%*s",
+                oid=self.oid, cq=self.cmd_queue)
+
     def _handle_homing_move_begin(self, hmove):
         if self.mcu_probe in hmove.get_mcu_endstops():
             self.mcu_probe.probe_prepare(hmove)
@@ -138,19 +137,17 @@ class PrinterProbe:
         phoming = self.printer.lookup_object('homing')
         pos = toolhead.get_position()
         pos[2] = self.z_position
-        
         #for BD sensor
         if self.I2C_BD_receive_cmd3 is not None:
-			toolhead.wait_moves()
+		    toolhead.wait_moves()
 			pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
 			intd=int(pr['response'])
 			strd=str(intd/100.0)
 			pos[2]=intd/100.0
 			self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-				% (pos[0], pos[1], pos[2]))
+			                        % (pos[0], pos[1], pos[2]))
 			return pos[:3]
-			
-        try:        
+        try:
             epos = phoming.probing_move(self.mcu_probe, pos, speed)
         except self.printer.command_error as e:
             reason = str(e)
@@ -459,7 +456,7 @@ class ProbePointsHelper:
                 break
             pos = probe.run_probe(gcmd)
             self.results.append(pos)
-        if probe.I2C_BD_send_cmd3 is not None:    
+        if probe.I2C_BD_send_cmd3 is not None:
             probe.I2C_BD_send_cmd3.send([probe.oid, "1018"])
         probe.multi_probe_end()
     def _manual_probe_start(self):
