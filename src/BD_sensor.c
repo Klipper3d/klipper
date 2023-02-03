@@ -40,8 +40,6 @@ uint16_t Get_Distane_data(void)
 
 }
 
-
-#if 0
 int BD_i2c_init(uint32_t _sda,uint32_t _scl,uint32_t delays)
 {
     sda_pin=_sda;
@@ -376,4 +374,3 @@ DECL_COMMAND(command_config_I2C_BD,
 
  }
  DECL_TASK(bd_sensor_task);
- #endif
