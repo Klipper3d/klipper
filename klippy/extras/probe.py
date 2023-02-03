@@ -142,15 +142,14 @@ class PrinterProbe:
         #for BD sensor
         if self.I2C_BD_receive_cmd3 is not None:
 			toolhead.wait_moves()
-            pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])      
-            intd=int(pr['response'])
-            strd=str(intd/100.0)   
-            pos[2]=intd/100.0
-            #print"_probe0_x:%.3f,y:%.3f,z:%.3f"%(pos[0],pos[1],pos[2])
-            self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-                                % (pos[0], pos[1], pos[2]))
-            return pos[:3]
-            
+			pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
+			intd=int(pr['response'])
+			strd=str(intd/100.0)
+			pos[2]=intd/100.0
+			self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
+				% (pos[0], pos[1], pos[2]))
+			return pos[:3]
+			
         try:        
             epos = phoming.probing_move(self.mcu_probe, pos, speed)
         except self.printer.command_error as e:
