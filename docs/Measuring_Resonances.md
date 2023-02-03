@@ -19,7 +19,7 @@ that it has a voltage regulator and a level shifter.
 ### Wiring
 
 An ethernet cable with shielded twisted pairs (cat5e or better) is recommended
-for signal integrety over a long distance. If you still experience signal integrity
+for signal integrity over a long distance. If you still experience signal integrity
 issues (SPI/I2C errors), shorten the cable.
 
 Connect ethernet cable shielding to the controller board/RPI ground.
