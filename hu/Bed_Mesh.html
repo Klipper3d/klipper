@@ -726,6 +726,19 @@
     Profilok
   </a>
   
+    <nav class="md-nav" aria-label="Profilok">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loading-the-default-profile" class="md-nav__link">
+    Loading the default profile
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1480,6 +1493,19 @@
     Profilok
   </a>
   
+    <nav class="md-nav" aria-label="Profilok">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loading-the-default-profile" class="md-nav__link">
+    Loading the default profile
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1694,6 +1720,15 @@ faulty_region_4_max: 45.0, 210.0
 <p>Meg kell jegyezni, hogy minden alkalommal, amikor a BED_MESH_CALIBRATE használatba kerül, az aktuális állapot automatikusan az <em>alapértelmezett</em> profilba kerül mentésre. Ha ez a profil létezik, akkor a Klipper indításakor automatikusan betöltődik. Ha ez a viselkedés nem kívánatos, a <em>default</em> profil a következőképpen távolítható el:</p>
 <p><code>BED_MESH_PROFILE REMOVE=default</code></p>
 <p>Bármely más elmentett profil ugyanígy eltávolítható, a <em>default</em> helyettesítve az eltávolítani kívánt névvel.</p>
+<h4 id="loading-the-default-profile">Loading the default profile<a class="headerlink" href="#loading-the-default-profile" title="Permanent link">&para;</a></h4>
+<p>Previous versions of <code>bed_mesh</code> always loaded the profile named <em>default</em> on startup if it was present. This behavior has been removed in favor of allowing the user to determine when a profile is loaded. If a user wishes to load the <code>default</code> profile it is recommended to add <code>BED_MESH_PROFILE LOAD=default</code> to either their <code>START_PRINT</code> macro or their slicer's "Start G-Code" configuration, whichever is applicable.</p>
+<p>Alternatively the old behavior of loading a profile at startup can be restored with a <code>[delayed_gcode]</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[delayed_gcode bed_mesh_init]</span>
+<span class="na">initial_duration</span><span class="o">:</span><span class="w"> </span><span class="s">.01</span>
+<span class="na">gcode</span><span class="o">:</span>
+<span class="w">  </span><span class="na">BED_MESH_PROFILE LOAD</span><span class="o">=</span><span class="s">default</span>
+</code></pre></div>
+
 <h3 id="kimenet">Kimenet<a class="headerlink" href="#kimenet" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_OUTPUT PGP=[0 | 1]</code></p>
 <p>Az aktuális hálóállapotot adja ki a terminálra. Vegyük észre, hogy maga a háló is kimenetre kerül</p>

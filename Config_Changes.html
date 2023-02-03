@@ -1295,6 +1295,10 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20230202: The format of the <code>printer.screws_tilt_adjust</code> status
+information has changed. The information is now stored as a dictionary of
+screws with the resulting measurements. See the
+<a href="Status_Reference.html#screws_tilt_adjust">status reference</a> for details.</p>
 <p>20230201:  The <code>[bed_mesh]</code> module no longer loads the <code>default</code> profile
 on startup.  It is recommended that users who use the <code>default</code> profile
 add <code>BED_MESH_PROFILE LOAD=default</code> to their <code>START_PRINT</code> macro (or

@@ -726,6 +726,19 @@
     配置
   </a>
   
+    <nav class="md-nav" aria-label="配置">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loading-the-default-profile" class="md-nav__link">
+    Loading the default profile
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1480,6 +1493,19 @@
     配置
   </a>
   
+    <nav class="md-nav" aria-label="配置">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loading-the-default-profile" class="md-nav__link">
+    Loading the default profile
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1694,6 +1720,15 @@ faulty_region_4_max: 45.0, 210.0
 <p>請注意，每次執行 BED_MESH_CALIBRATE 后，目前狀態會被儲存到 <em>default</em> 配置。如果這個配置在配置檔案中存在，它會在 Klipper 啟動時自動載入。如果不希望這種行為，可以通過以下命令刪除 <em>default</em> 配置：</p>
 <p><code>BED_MESH_PROFILE REMOVE=default</code></p>
 <p>任何其他儲存的配置也可以用相同的方式刪除，用你想刪除的配置名稱替換<em>default</em>。</p>
+<h4 id="loading-the-default-profile">Loading the default profile<a class="headerlink" href="#loading-the-default-profile" title="Permanent link">&para;</a></h4>
+<p>Previous versions of <code>bed_mesh</code> always loaded the profile named <em>default</em> on startup if it was present. This behavior has been removed in favor of allowing the user to determine when a profile is loaded. If a user wishes to load the <code>default</code> profile it is recommended to add <code>BED_MESH_PROFILE LOAD=default</code> to either their <code>START_PRINT</code> macro or their slicer's "Start G-Code" configuration, whichever is applicable.</p>
+<p>Alternatively the old behavior of loading a profile at startup can be restored with a <code>[delayed_gcode]</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[delayed_gcode bed_mesh_init]</span>
+<span class="na">initial_duration</span><span class="o">:</span><span class="w"> </span><span class="s">.01</span>
+<span class="na">gcode</span><span class="o">:</span>
+<span class="w">  </span><span class="na">BED_MESH_PROFILE LOAD</span><span class="o">=</span><span class="s">default</span>
+</code></pre></div>
+
 <h3 id="_13">輸出<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_OUTPUT PGP=[0 | 1]</code></p>
 <p>將目前網格狀態輸出到終端。請注意，輸出的是網格本身</p>

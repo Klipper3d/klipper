@@ -1293,6 +1293,9 @@
 <p>本文档涵盖了软件更新中对配置文件不向后兼容的部分。在升级 Klipper 时，最好也查看一下这份文档。</p>
 <p>文档的所有日期都是大概时间。</p>
 <h2 id="_2">变更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>20230201: The <code>[bed_mesh]</code> module no longer loads the <code>default</code> profile on startup. It is recommended that users who use the <code>default</code> profile add <code>BED_MESH_PROFILE LOAD=default</code> to their <code>START_PRINT</code> macro (or to their slicer's "Start G-Code" configuration when applicable).</p>
+<p>20230103: It is now possible with the flash-sdcard.sh script to flash both variants of the Bigtreetech SKR-2, STM32F407 and STM32F429. This means that the original tag of btt-skr2 now has changed to either btt-skr-2-f407 or btt-skr-2-f429.</p>
+<p>20221128: Klipper v0.11.0 released.</p>
 <p>20221122：原先使用safe_z_home时，g28归位后的 z_hop 有可能会向负Z方向移动。现在，g28之后的 z_hop 只有在产生抬升（正方向）时才会被执行，这镜像了 g28 归位之前发生的 z_hop 的行为。</p>
 <p>20220616：以前可以通过运行<code>make flash FLASH_DEVICE=first</code>在引导程序模式下刷写rp2040。新的等效命令是<code>make flash FLASH_DEVICE=2e8a:0003</code>。</p>
 <p>20220612: 实现了rp2040上"rp2040-e5"USB数据错误的一个解决办法。这应该使最初的 USB 连接更加可靠。然而，它可能会导致gpio15引脚的行为发生变化。gpio15的行为变化不太可能有明显影响。</p>

@@ -1293,6 +1293,9 @@
 <p>Ez a dokumentum a konfigurációs fájl legújabb szoftveres változtatásait tartalmazza, amelyek nem kompatibilisek visszafelé. A Klipper szoftver frissítésekor érdemes áttanulmányozni ezt a dokumentumot.</p>
 <p>A dokumentumban szereplő valamennyi dátum hozzávetőleges.</p>
 <h2 id="valtozasok">Változások<a class="headerlink" href="#valtozasok" title="Permanent link">&para;</a></h2>
+<p>20230201: The <code>[bed_mesh]</code> module no longer loads the <code>default</code> profile on startup. It is recommended that users who use the <code>default</code> profile add <code>BED_MESH_PROFILE LOAD=default</code> to their <code>START_PRINT</code> macro (or to their slicer's "Start G-Code" configuration when applicable).</p>
+<p>20230103: It is now possible with the flash-sdcard.sh script to flash both variants of the Bigtreetech SKR-2, STM32F407 and STM32F429. This means that the original tag of btt-skr2 now has changed to either btt-skr-2-f407 or btt-skr-2-f429.</p>
+<p>20221128: Klipper v0.11.0 released.</p>
 <p>20221122: Previously, with safe_z_home, it was possible that the z_hop after the g28 homing would go in the negative z direction. Now, a z_hop is performed after g28 only if it results in a positive hop, mirroring the behavior of the z_hop that occurs before the g28 homing.</p>
 <p>20220616: Korábban egy rp2040-et bootloader módban lehetett égetni a <code>make flash FLASH_DEVICE=first</code> futtatásával. Az ezzel egyenértékű parancs mostantól <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
 <p>20220612: Az rp2040 mikrokontroller mostantól rendelkezik a "rp2040-e5" USB hiba elhárításával. Ez megbízhatóbbá teszi a kezdeti USB-kapcsolatokat. Ez azonban a GPIO15 tű viselkedésének megváltozását eredményezheti. Nem valószínű, hogy a GPIO15 viselkedésének változása észrevehető lesz.</p>

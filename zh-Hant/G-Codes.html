@@ -4641,7 +4641,8 @@
 <h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#output_pin">output_pin config section</a> 時，以下命令可用。</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
-<p><code>SET_PIN PIN=config_name VALUE=&lt;值&gt; CYCLE_TIME=&lt;週期時間&gt;</code>: 注意 - 硬體PWM目前不支援CYCLE_TIME參數，將使用配置中定義的週期時間。</p>
+<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>: Set the pin to the given output <code>VALUE</code>. VALUE should be 0 or 1 for "digital" output pins. For PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and <code>scale</code> if a scale is configured in the output_pin config section.</p>
+<p>Some pins (currently only "soft PWM" pins) support setting an explicit cycle time using the CYCLE_TIME parameter (specified in seconds). Note that the CYCLE_TIME parameter is not stored between SET_PIN commands (any SET_PIN command without an explicit CYCLE_TIME parameter will use the <code>cycle_time</code> specified in the output_pin config section).</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
 <p>啟用 <a href="Config_Reference.html#palette2">palette2 config section</a> 時，以下命令可用。</p>
 <p>Palette列印通過在GCode檔案中嵌入特殊的OCodes（Omega Codes）來工作:</p>

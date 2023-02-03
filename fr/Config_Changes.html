@@ -1293,6 +1293,9 @@
 <p>Ce document couvre les modifications logicielles apportées au fichier de configuration qui ne sont pas rétro compatibles. Il est conseillé de consulter ce document lors de la mise à jour du logiciel Klipper.</p>
 <p>Toutes les dates de ce document sont approximatives.</p>
 <h2 id="changements">Changements<a class="headerlink" href="#changements" title="Permanent link">&para;</a></h2>
+<p>20230201: The <code>[bed_mesh]</code> module no longer loads the <code>default</code> profile on startup. It is recommended that users who use the <code>default</code> profile add <code>BED_MESH_PROFILE LOAD=default</code> to their <code>START_PRINT</code> macro (or to their slicer's "Start G-Code" configuration when applicable).</p>
+<p>20230103: It is now possible with the flash-sdcard.sh script to flash both variants of the Bigtreetech SKR-2, STM32F407 and STM32F429. This means that the original tag of btt-skr2 now has changed to either btt-skr-2-f407 or btt-skr-2-f429.</p>
+<p>20221128: Klipper v0.11.0 released.</p>
 <p>20221122 : Auparavant, avec safe_z_home, il était possible que le z_hop après la mise à l'origine g28 aille dans une direction z négative. Maintenant, un saut en z n'est effectué après g28 que s'il résulte en un saut positif, reflétant le comportement du saut en z se produisant avant la mise à l'origine g28.</p>
 <p>20220616 : Il était auparavant possible de flasher un rp2040 en mode bootloader en exécutant <code>make flash FLASH_DEVICE=first</code>. La commande équivalente est maintenant <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
 <p>20220612 : Le micro-contrôleur rp2040 a maintenant une solution de contournement pour l'errata USB "rp2040-e5". Cela devrait rendre les premières connexions USB plus fiables. Cependant, cela peut entraîner un changement de comportement de la broche gpio15. Il est peu probable que le changement de comportement de la gpio15 soit perceptible.</p>

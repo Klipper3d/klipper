@@ -1398,8 +1398,8 @@
 <p>Ha a gazdagépet másodlagos MCU-ként szeretnéd használni, a klipper_mcu folyamatnak a klippy folyamat előtt kell futnia.</p>
 <p>A Klipper telepítése után telepítsd a szkriptet. run:</p>
 <div class="highlight"><pre><span></span><code>cd ~/klipper/
-sudo cp &quot;./scripts/klipper-mcu-start.sh&quot; /etc/init.d/klipper_mcu
-sudo update-rc.d klipper_mcu defaults
+sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
+sudo systemctl enable klipper-mcu.service
 </code></pre></div>
 
 <h2 id="a-mikrokontroller-kodjanak-elkeszitese">A mikrokontroller kódjának elkészítése<a class="headerlink" href="#a-mikrokontroller-kodjanak-elkeszitese" title="Permanent link">&para;</a></h2>

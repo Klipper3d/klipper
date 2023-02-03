@@ -2244,20 +2244,17 @@ object:</p>
 <li><code>error</code>: Returns True if the most recent <code>SCREWS_TILT_CALCULATE</code>
   command included the <code>MAX_DEVIATION</code> parameter and any of the probed
   screw points exceeded the specified <code>MAX_DEVIATION</code>.</li>
-<li><code>results</code>: A list of the probed screw locations. Each entry in
-  the list will be a dictionary containing the following keys:<ul>
-<li><code>name</code>: The name of the screw as specified in the config file.</li>
-<li><code>x</code>: The X coordinate of the screw as specified in the config file.</li>
-<li><code>y</code>: The Y coordinate of the screw as specified in the config file.</li>
+<li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
 <li><code>z</code>: The measured Z height of the screw location.</li>
 <li><code>sign</code>: A string specifying the direction to turn to screw for the
   necessary adjustment. Either "CW" for clockwise or "CCW" for
-  counterclockwise. The base screw will not have a <code>sign</code> key.</li>
+  counterclockwise.</li>
 <li><code>adjust</code>: The number of screw turns to adjust the screw, given in
   the format "HH:MM," where "HH" is the number of full screw turns
   and "MM" is the number of "minutes of a clock face" representing
   a partial screw turn. (E.g. "01:15" would mean to turn the screw
   one and a quarter revolutions.)</li>
+<li><code>is_base</code>: Returns True if this is the base screw.</li>
 </ul>
 </li>
 </ul>

@@ -1398,8 +1398,8 @@
 <p>如果你想把主机作为一个辅助MCU，klipper_mcu进程必须在klippy进程之前运行。</p>
 <p>安装 Klipper 后，运行以下命令来安装脚本：</p>
 <div class="highlight"><pre><span></span><code>cd ~/klipper/
-sudo cp &quot;./scripts/klipper-mcu-start.sh&quot; /etc/init.d/klipper_mcu
-sudo update-rc.d klipper_mcu defaults
+sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
+sudo systemctl enable klipper-mcu.service
 </code></pre></div>
 
 <h2 id="_1">构建微控制器代码<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>

@@ -4928,7 +4928,7 @@ cs_pin:
 </code></pre></div>
 
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
-<p>Support for MPU-9250, MPU-9255, MPU-9255, MPU-6050, and MPU-6500 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
+<p>Support for MPU-9250, MPU-9255, MPU-6515, MPU-6050, and MPU-6500 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
 #i2c_address:
 #   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
@@ -6041,47 +6041,67 @@ pins:
 <p>Configurare un driver per motore passo-passo TMC2130 tramite bus SPI. Per utilizzare questa funzione, definire una sezione di configurazione con un prefisso "tmc2130" seguito dal nome della sezione di configurazione dello stepper corrispondente (ad esempio, "[tmc2130 stepper_x]").</p>
 <div class="highlight"><pre><span></span><code>[tmc2130 stepper_x]
 cs_pin:
-#   Il pin collegato al pin di selezione del chip TMC2130.
-#   Questo pin verrà impostato su basso all&#39;inizio dei messaggi SPI e
-#   portato su alto al termine del messaggio. Questo parametro deve
-#   essere fornito.
-
+#   The pin corresponding to the TMC2130 chip select line. This pin
+#   will be set to low at the start of SPI messages and raised to high
+#   after the message completes. This parameter must be provided.
 #spi_speed:
 #spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   Vedere la sezione &quot;impostazioni comuni SPIi&quot; per una descrizione
-#   dei parametri di cui sopra.
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters.
 #chain_position:
 #chain_length:
-#   Questi parametri configurano una daisy chain SPI. I due parametri
-#   definiscono la posizione dello stepper nella catena e la lunghezza totale
-#   della catena. La posizione 1 corrisponde allo stepper che si collega al
-#   segnale MOSI. L&#39;impostazione predefinita è di non utilizzare un
-#   collegamento a margherita SPI.
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
 #interpolate: True
-#   Se True, abilita l&#39;interpolazione del passo (il driver eseguirà un passo
-#   intero attraverso 256 micropassi). Questa interpolazione introduce una
-#   piccola deviazione posizionale sistemica - vedi TMC_Drivers.md per i
-#   dettagli. L&#39;impostazione predefinita è True.
+#   If true, enable step interpolation (the driver will internally
+#   step at a rate of 256 micro-steps). This interpolation does
+#   introduce a small systemic positional deviation - see
+#   TMC_Drivers.md for details. The default is True.
 run_current:
-#   La quantità di corrente (in ampere RMS) con cui configurare il driver e
-utilizzare durante il movimento passo-passo. Questo parametro deve
-essere fornito.
+#   The amount of current (in amps RMS) to configure the driver to use
+#   during stepper movement. This parameter must be provided.
 #hold_current:
-#   La quantità di corrente (in ampere RMS) con cui configurare il driver da
-#   utilizzare quando lo stepper non è in movimento. L&#39;impostazione di
-#   hold_current non è consigliata (consultare TMC_Drivers.md per i
-#   dettagli). L&#39;impostazione predefinita è di non ridurre la corrente.
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.110
-#   La resistenza (in ohm) del resistore di rilevamento del motore.
-#   Il valore predefinito è 0,110 ohm.
+#   The resistance (in ohms) of the motor sense resistor. The default
+#   is 0.110 ohms.
 #stealthchop_threshold: 0
-#   La velocità (in mm/s) su cui impostare la soglia &quot;stealthChop&quot;. Se
-#   impostata, la modalità &quot;stealthChop&quot; sarà abilitata se la velocità del
-#   motore passo-passo è inferiore a questo valore. Il valore predefinito
-#   è 0, che disabilita la modalità &quot;stealthChop&quot;.
+#   The velocity (in mm/s) to set the &quot;stealthChop&quot; threshold to. When
+#   set, &quot;stealthChop&quot; mode will be enabled if the stepper motor
+#   velocity is below this value. The default is 0, which disables
+#   &quot;stealthChop&quot; mode.
+#driver_MSLUT0: 2863314260
+#driver_MSLUT1: 1251300522
+#driver_MSLUT2: 608774441
+#driver_MSLUT3: 269500962
+#driver_MSLUT4: 4227858431
+#driver_MSLUT5: 3048961917
+#driver_MSLUT6: 1227445590
+#driver_MSLUT7: 4211234
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
+#   These fields control the Microstep Table registers directly. The optimal
+#   wave table is specific to each motor and might vary with current. An
+#   optimal configuration will have minimal print artifacts caused by
+#   non-linear stepper movement. The values specified above are the default
+#   values used by the driver. The value must be specified as a decimal integer
+#   (hex form is not supported). In order to compute the wave table fields,
+#   see the tmc2130 &quot;Calculation Sheet&quot; from the Trinamic website.
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 0
 #driver_TBL: 1
@@ -6093,21 +6113,20 @@ essere fornito.
 #driver_PWM_GRAD: 4
 #driver_PWM_AMPL: 128
 #driver_SGT: 0
-#   Impostare il registro dato durante la configurazione del chip
-#   TMC2130. Può essere utilizzato per impostare parametri motore
-#   personalizzati. I valori predefiniti per ciascun parametro sono
-#   accanto al nome del parametro nell&#39;elenco precedente.
+#   Set the given register during the configuration of the TMC2130
+#   chip. This may be used to set custom motor parameters. The
+#   defaults for each parameter are next to the parameter name in the
+#   above list.
 #diag0_pin:
 #diag1_pin:
-#   Il pin del microcontrollore collegato a una delle linee DIAG del
-#   chip TMC2130. È necessario specificare un solo pin diag. Il pin è
-#   &quot;attivo basso&quot; ed è quindi normalmente preceduto da &quot;^!&quot;.
-#   L&#39;impostazione di questo crea un pin virtuale
-#   &quot;tmc2130_stepper_x:virtual_endstop&quot; che può essere utilizzato
-#   come endstop_pin dello stepper. In questo modo si abilita
-#   l&#39;&quot;homing sensorless&quot;. (Assicurarsi di impostare anche driver_SGT
-#   su un valore di sensibilità appropriato.) L&#39;impostazione predefinita
-#   è di non abilitare l&#39;homing sensorless.
+#   The micro-controller pin attached to one of the DIAG lines of the
+#   TMC2130 chip. Only a single diag pin should be specified. The pin
+#   is &quot;active low&quot; and is thus normally prefaced with &quot;^!&quot;. Setting
+#   this creates a &quot;tmc2130_stepper_x:virtual_endstop&quot; virtual pin
+#   which may be used as the stepper&#39;s endstop_pin. Doing this enables
+#   &quot;sensorless homing&quot;. (Be sure to also set driver_SGT to an
+#   appropriate sensitivity value.) The default is to not enable
+#   sensorless homing.
 </code></pre></div>
 
 <h3 id="tmc2208">[tmc2208]<a class="headerlink" href="#tmc2208" title="Permanent link">&para;</a></h3>
@@ -6282,45 +6301,65 @@ run_current:
 <p>Configurare un driver per motore passo-passo TMC5160 tramite bus SPI. Per utilizzare questa funzione, definire una sezione di configurazione con un prefisso "tmc5160" seguito dal nome della sezione di configurazione dello stepper corrispondente (ad esempio, "[tmc5160 stepper_x]").</p>
 <div class="highlight"><pre><span></span><code>[tmc5160 stepper_x]
 cs_pin:
-#   Il pin corrispondente al pin di selezione del chip TMC5160.
-Questo pin verrà impostato su basso all&#39;inizio dei messaggi SPI e
-portato su alto al termine del messaggio.
-Questo parametro deve essere fornito.
+#   The pin corresponding to the TMC5160 chip select line. This pin
+#   will be set to low at the start of SPI messages and raised to high
+#   after the message completes. This parameter must be provided.
 #spi_speed:
 #spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
-#   Vedere la sezione &quot;impostazioni SPI comuni&quot; per una 
-#   descrizione dei parametri di cui sopra.
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters.
 #chain_position:
 #chain_length:
-#   Questi parametri configurano una daisy chain SPI. I due 
-#   parametri definiscono la posizione dello stepper nella catena
-#   e la lunghezza totale della catena. La posizione 1 corrisponde
-#   allo stepper che si collega al segnale MOSI. L&#39;impostazione 
-#   predefinita è di non utilizzare un collegamento a margherita SPI.
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
 #interpolate: True
-#   Se true, abilita l&#39;interpolazione del passo (il driver eseguirà un 
-#   passo interno con 256 micropassi).
-#   L&#39;impostazione predefinita è True.
+#   If true, enable step interpolation (the driver will internally
+#   step at a rate of 256 micro-steps). The default is True.
 run_current:
-#   La quantità di corrente (in ampere RMS) per configurare il driver 
-#   da utilizzare durante il movimento. 
-#   Questo parametro deve essere fornito.
+#   The amount of current (in amps RMS) to configure the driver to use
+#   during stepper movement. This parameter must be provided.
 #hold_current:
-#   La quantità di corrente (in ampere RMS) per configurare il driver
-#   da utilizzare quando lo stepper non è in movimento. L&#39;impostazione
-#   di hold_current non è consigliata (consultare TMC_Drivers.md per i 
-#   dettagli). L&#39;impostazione predefinita è di non ridurre la corrente.
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
 #sense_resistor: 0.075
-#   La resistenza (in ohm) del resistore di rilevamento del motore.
-#   Il valore predefinito è 0,075 ohm.
+#   The resistance (in ohms) of the motor sense resistor. The default
+#   is 0.075 ohms.
 #stealthchop_threshold: 0
-#   La velocità (in mm/s) su cui impostare la soglia &quot;stealthChop&quot;. Se
-#   impostata, la modalità &quot;stealthChop&quot; sarà abilitata se la velocità del
-#   motore passo-passo è inferiore a questo valore. Il valore predefinito
-#   è 0, che disabilita la modalità &quot;stealthChop&quot;.
+#   The velocity (in mm/s) to set the &quot;stealthChop&quot; threshold to. When
+#   set, &quot;stealthChop&quot; mode will be enabled if the stepper motor
+#   velocity is below this value. The default is 0, which disables
+#   &quot;stealthChop&quot; mode.
+#driver_MSLUT0: 2863314260
+#driver_MSLUT1: 1251300522
+#driver_MSLUT2: 608774441
+#driver_MSLUT3: 269500962
+#driver_MSLUT4: 4227858431
+#driver_MSLUT5: 3048961917
+#driver_MSLUT6: 1227445590
+#driver_MSLUT7: 4211234
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
+#   These fields control the Microstep Table registers directly. The optimal
+#   wave table is specific to each motor and might vary with current. An
+#   optimal configuration will have minimal print artifacts caused by
+#   non-linear stepper movement. The values specified above are the default
+#   values used by the driver. The value must be specified as a decimal integer
+#   (hex form is not supported). In order to compute the wave table fields,
+#   see the tmc2130 &quot;Calculation Sheet&quot; from the Trinamic website.
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2
@@ -6349,20 +6388,20 @@ run_current:
 #driver_SEDN: 0
 #driver_SEIMIN: 0
 #driver_SFILT: 0
-#   Impostare il registro dato durante la configurazione del chip
-#   TMC5160. Può essere utilizzato per impostare parametri motore 
-#   personalizzati. I valori predefiniti per ciascun parametro sono
-#   accanto al nome del parametro nell&#39;elenco precedente.
+#   Set the given register during the configuration of the TMC5160
+#   chip. This may be used to set custom motor parameters. The
+#   defaults for each parameter are next to the parameter name in the
+#   above list.
 #diag0_pin:
 #diag1_pin:
-#   Il pin del microcontrollore collegato a una delle linee DIAG del chip
-#   TMC5160. È necessario specificare un solo pin diag. Il pin è &quot;attivo
-#   basso&quot; ed è quindi normalmente preceduto da &quot;^!&quot;. L&#39;impostazione
-#   di questo crea un pin virtuale &quot;tmc5160_stepper_x:virtual_endstop&quot;
-#   che può essere utilizzato come endstop_pin dello stepper. In questo
-#   modo si abilita l&#39;&quot;homing sensorless&quot;. (Assicurarsi di impostare anche
-#   driver_SGT su un valore di sensibilità appropriato.) L&#39;impostazione
-#   predefinita è di non abilitare l&#39;homing sensorless.
+#   The micro-controller pin attached to one of the DIAG lines of the
+#   TMC5160 chip. Only a single diag pin should be specified. The pin
+#   is &quot;active low&quot; and is thus normally prefaced with &quot;^!&quot;. Setting
+#   this creates a &quot;tmc5160_stepper_x:virtual_endstop&quot; virtual pin
+#   which may be used as the stepper&#39;s endstop_pin. Doing this enables
+#   &quot;sensorless homing&quot;. (Be sure to also set driver_SGT to an
+#   appropriate sensitivity value.) The default is to not enable
+#   sensorless homing.
 </code></pre></div>
 
 <h2 id="configurazione-della-corrente-del-motore-passo-passo-a-run-time">Configurazione della corrente del motore passo-passo a run-time<a class="headerlink" href="#configurazione-della-corrente-del-motore-passo-passo-a-run-time" title="Permanent link">&para;</a></h2>

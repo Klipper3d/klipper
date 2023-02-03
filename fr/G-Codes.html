@@ -4641,7 +4641,8 @@
 <h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
 <p>La commande suivante est disponible lorsqu'une section <a href="Config_Reference.html#output_pin">output_pin config</a> est activée.</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
-<p><code>SET_PIN PIN=nom_de_la_configuration VALUE=&lt;valeur&gt; CYCLE_TIME=&lt;durée_du_cycle&gt;</code> : Note - le PWM matériel ne supporte pas actuellement le paramètre CYCLE_TIME et utilisera la durée de cycle définie dans la configuration.</p>
+<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>: Set the pin to the given output <code>VALUE</code>. VALUE should be 0 or 1 for "digital" output pins. For PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and <code>scale</code> if a scale is configured in the output_pin config section.</p>
+<p>Some pins (currently only "soft PWM" pins) support setting an explicit cycle time using the CYCLE_TIME parameter (specified in seconds). Note that the CYCLE_TIME parameter is not stored between SET_PIN commands (any SET_PIN command without an explicit CYCLE_TIME parameter will use the <code>cycle_time</code> specified in the output_pin config section).</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
 <p>Les commandes suivantes sont disponibles lorsque la section <a href="Config_Reference.html#palette2">palette2 config</a> est activée.</p>
 <p>Les impressions avec Palette fonctionnent en intégrant des OCodes (Omega Codes) spéciaux dans le fichier GCode :</p>
