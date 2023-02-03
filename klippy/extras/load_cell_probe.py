@@ -19,7 +19,6 @@ class LoadCellProbe:
         pin_name = config.get('adc')
         ppins = self.printer.lookup_object('pins')
         ppins.register_chip('load_cell_probe', self)
-
         self._adc = ppins.setup_pin('adc', pin_name)
         self._mcu = self._adc.mcu
         self._oid = self._mcu.create_oid()
@@ -239,16 +238,6 @@ class ProbePointsHelper:
         self.lcp.baseline = []
         self.retries = 0
         self.results = []
-        spacing = [None, None]
-        i = 0
-        while spacing[0] is None or spacing[1] is None:
-            sx = abs(self.probe_points[i][0] - self.probe_points[i+1][0])
-            sy = abs(self.probe_points[i][1] - self.probe_points[i+1][1])
-            if sx > 0.0001 and not spacing[0]:
-                spacing[0] = sx
-            if sy > 0.0001 and not spacing[1]:
-                spacing[1] = sy
-            i+=1
         while 1:
             done = self._move_next()
             if done:
