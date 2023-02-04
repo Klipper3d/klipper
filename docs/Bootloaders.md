@@ -388,10 +388,9 @@ which you can use to pull PA2 low.
 
 ### STM32F103/STM32F072 with MSC bootloader
 
-The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader) is a
-driver-less bootloader capable of flashing over USB.
+The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader) is a driverless bootloader capable of flashing over USB.
 
-It is possible to flash the bootloader via 3.3v serial using stm32flash as noted
+It is possible to flash the bootloader via 3.3V serial using stm32flash as noted
 in the stm32duino section above, substituting the file name for the desired
 MSC bootloader binary (ie: MSCboot-Bluepill.bin for the blue pill).
 
