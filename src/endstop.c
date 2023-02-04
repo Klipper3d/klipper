@@ -30,7 +30,7 @@ read_endstop_pin(struct endstop *e)
 {
     if(e->type==2)// for Bed Distance sensor
     {
-        return BD_Data;//(BD_Data>=0.01)?0:1;
+        return BD_Data?0:1;
     }
     else
         return gpio_in_read(e->pin);
