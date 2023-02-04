@@ -382,13 +382,14 @@ make flash FLASH_DEVICE=/dev/ttyACM0
 It may be necessary to manually enter the bootloader, this can be done by
 setting "boot 0" low and "boot 1" high.  On the SKR Mini E3 "Boot 1" is
 not available, so it may be done by setting pin PA2 low if you flashed
-"hid_btt_skr_mini_e3.bin".  This pin is labeld "TX0" on the TFT header in
+"hid_btt_skr_mini_e3.bin".  This pin is labeled "TX0" on the TFT header in
 the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
 which you can use to pull PA2 low.
 
 ### STM32F103/STM32F072 with MSC bootloader
 
-The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader) is a driverless bootloader capable of flashing over USB.
+The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader) is a
+driver-less bootloader capable of flashing over USB.
 
 It is possible to flash the bootloader via 3.3v serial using stm32flash as noted
 in the stm32duino section above, substituting the file name for the desired
@@ -419,7 +420,7 @@ It is recommended to use a ST-Link Programmer to flash CanBoot, however it
 should be possible to flash using `stm32flash` on STM32F103 devices, and
 `dfu-util` on STM32F042/STM32F072 devices.  See the previous sections in this
 document for instructions on these flashing methods, substituting `canboot.bin`
-for the file name where appropriate.  The CanBoot repo linked above provides
+for the file name where appropriate.  The CanBoot repository linked above provides
 instructions for building the bootloader.
 
 The first time CanBoot has been flashed it should detect that no application
@@ -448,7 +449,7 @@ When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.
 
 ## STM32F4 micro-controllers (SKR Pro 1.1)
 
-STM32F4 microcontrollers come equipped with a built-in system bootloader
+STM32F4 micro-controllers come equipped with a built-in system bootloader
 capable of flashing over USB (via DFU), 3.3v Serial, and various other
 methods (see STM Document AN2606 for more information).  Some
 STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
@@ -458,8 +459,8 @@ Note that you may need to configure and build a version specific to your
 board, a [build for the SKR Pro 1.1 is available here](
   https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
 
-Unless your board is DFU capable the most accessable flashing method
-is likely via 3.3v serial, which follows the same procedure as
+Unless your board is DFU capable the most accessible flashing method
+is likely via 3.3V serial, which follows the same procedure as
 [flashing the STM32F103 using stm32flash](#stm32f103-micro-controllers-blue-pill-devices).
 For example:
 ```
