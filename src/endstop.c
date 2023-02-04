@@ -10,7 +10,7 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
 #include "trsync.h" // trsync_do_trigger
-#include "BD_sensor.h"
+
 struct endstop {
     struct timer time;
     struct gpio_in pin;
@@ -23,6 +23,7 @@ struct endstop {
 enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1 };
 
 static uint_fast8_t endstop_oversample_event(struct timer *t);
+uint16_t BD_Data=0;
 
 static uint8_t
 read_endstop_pin(struct endstop *e)
@@ -30,8 +31,8 @@ read_endstop_pin(struct endstop *e)
     uint8_t state_e=0;
     if(e->type==2)// for Bed Distance sensor
     {
-        uint16_t tm=Get_Distane_data();
-        state_e=(tm>=0.01)?0:1;
+       // uint16_t tm=Get_Distane_data();
+        state_e=(BD_Data>=0.01)?0:1;
     }
     else
         state_e=gpio_in_read(e->pin);

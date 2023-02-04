@@ -24,7 +24,7 @@
 
 
 uint32_t sda_pin=0,scl_pin=0,delay_m=200;
-uint16_t BD_Data=0;
+extern uint16_t BD_Data;
 uint16_t BD_read_flag=1018,BD_read_lock=0;
 
 struct gpio_out sda_gpio, scl_gpio;
