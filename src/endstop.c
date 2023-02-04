@@ -28,15 +28,12 @@ uint16_t BD_Data=0;
 static uint8_t
 read_endstop_pin(struct endstop *e)
 {
-    uint8_t state_e=0;
     if(e->type==2)// for Bed Distance sensor
     {
-       // uint16_t tm=Get_Distane_data();
-        state_e=(BD_Data>=0.01)?0:1;
+        return BD_Data;//(BD_Data>=0.01)?0:1;
     }
     else
-        state_e=gpio_in_read(e->pin);
-    return state_e;
+        return gpio_in_read(e->pin);
 }
 
 // Timer callback for an end stop
