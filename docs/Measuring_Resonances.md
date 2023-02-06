@@ -68,11 +68,10 @@ Pico to your Raspberry Pi via USB. This makes it easy to reuse the
 accelerometer on other Klipper devices, as you can connect via USB instead
 of GPIO.
 
-Please be particularly careful with your ADXL345. You want one without a
-level shifter and without being forced into I2C mode. For more details,
+In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V
+only. Depending on the board's layout, a level shifter may be present, which
+makes 5V dangerous for your RPi. For more details,
 see [this discourse post](https://klipper.discourse.group/t/raspberry-pi-pico-adxl345-portable-resonance-measurement/1757).
-
-Note that we do not hook up the INT1 or INT2 pins on the ADXL345.
 
 | ADXL345 pin | Pico pin | Pico pin name |
 |:--:|:--:|:--:|
@@ -203,20 +202,16 @@ make clean
 make menuconfig
 ```
 ![Pico menuconfig](img/klipper_pico_menuconfig.png)
-```
-make
-```
 
 Now, while holding down the `BOOTSEL` button on the Pico, connect the Pico to
-the Raspberry Pi via USB. A new block device should appear. If you have no
-other block devices, this will be `/dev/sda`. You should now copy the klipper
-firmware to the pico.
+the Raspberry Pi via USB. Compile and flash the firmware.
+```
+make flash FLASH_DEVICE=first
+```
 
-```
-sudo mount /dev/sda1 /mnt
-sudo cp out/klipper.uf2 /mnt
-sudo umount /mnt
-```
+If that fails, you will be told which `FLASH_DEVICE` to use. In this example,
+that's ```make flash FLASH_DEVICE=2e8a:0003```.
+![Determine flash device](img/flash_rp2040_FLASH_DEVICE.png)
 
 ##### Configure the Connection
 
