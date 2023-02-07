@@ -376,20 +376,17 @@ object:
 - `error`: Returns True if the most recent `SCREWS_TILT_CALCULATE`
   command included the `MAX_DEVIATION` parameter and any of the probed
   screw points exceeded the specified `MAX_DEVIATION`.
-- `results`: A list of the probed screw locations. Each entry in
-  the list will be a dictionary containing the following keys:
-  - `name`: The name of the screw as specified in the config file.
-  - `x`: The X coordinate of the screw as specified in the config file.
-  - `y`: The Y coordinate of the screw as specified in the config file.
+- `results["<screw>"]`: A dictionary containing the following keys:
   - `z`: The measured Z height of the screw location.
   - `sign`: A string specifying the direction to turn to screw for the
     necessary adjustment. Either "CW" for clockwise or "CCW" for
-    counterclockwise. The base screw will not have a `sign` key.
+    counterclockwise.
   - `adjust`: The number of screw turns to adjust the screw, given in
     the format "HH:MM," where "HH" is the number of full screw turns
     and "MM" is the number of "minutes of a clock face" representing
     a partial screw turn. (E.g. "01:15" would mean to turn the screw
     one and a quarter revolutions.)
+  - `is_base`: Returns True if this is the base screw.
 
 ## servo
 
