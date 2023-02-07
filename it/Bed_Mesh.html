@@ -730,8 +730,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#loading-the-default-profile" class="md-nav__link">
-    Loading the default profile
+  <a href="#caricamento-del-profilo-predefinito" class="md-nav__link">
+    Caricamento del profilo predefinito
   </a>
   
 </li>
@@ -1497,8 +1497,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#loading-the-default-profile" class="md-nav__link">
-    Loading the default profile
+  <a href="#caricamento-del-profilo-predefinito" class="md-nav__link">
+    Caricamento del profilo predefinito
   </a>
   
 </li>
@@ -1720,9 +1720,9 @@ faulty_region_4_max: 45.0, 210.0
 <p>Va notato che ogni volta che si verifica un BED_MESH_CALIBRATE, lo stato corrente viene automaticamente salvato nel profilo <em>predefinito</em>. Se questo profilo esiste, viene caricato automaticamente all'avvio di Klipper. Se questo comportamento non è desiderabile, il profilo <em>predefinito</em> può essere rimosso come segue:</p>
 <p><code>BED_MESH_PROFILE REMOVE=default</code></p>
 <p>Qualsiasi altro profilo salvato può essere rimosso allo stesso modo, sostituendo <em>default</em> con il nome del profilo che desideri rimuovere.</p>
-<h4 id="loading-the-default-profile">Loading the default profile<a class="headerlink" href="#loading-the-default-profile" title="Permanent link">&para;</a></h4>
-<p>Previous versions of <code>bed_mesh</code> always loaded the profile named <em>default</em> on startup if it was present. This behavior has been removed in favor of allowing the user to determine when a profile is loaded. If a user wishes to load the <code>default</code> profile it is recommended to add <code>BED_MESH_PROFILE LOAD=default</code> to either their <code>START_PRINT</code> macro or their slicer's "Start G-Code" configuration, whichever is applicable.</p>
-<p>Alternatively the old behavior of loading a profile at startup can be restored with a <code>[delayed_gcode]</code>:</p>
+<h4 id="caricamento-del-profilo-predefinito">Caricamento del profilo predefinito<a class="headerlink" href="#caricamento-del-profilo-predefinito" title="Permanent link">&para;</a></h4>
+<p>Le versioni precedenti di <code>bed_mesh</code> caricavano sempre il profilo denominato <em>default</em> all'avvio se era presente. Questo comportamento è stato rimosso per consentire all'utente di determinare quando viene caricato un profilo. Se un utente desidera caricare il profilo <code>predefinito</code>, si consiglia di aggiungere <code>BED_MESH_PROFILE LOAD=default</code> alla macro <code>START_PRINT</code> o alla configurazione "Start G-Code" del proprio slicer, a seconda di quale sia applicabile.</p>
+<p>In alternativa, il vecchio comportamento di caricamento di un profilo all'avvio può essere ripristinato con un <code>[delayed_gcode]</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[delayed_gcode bed_mesh_init]</span>
 <span class="na">initial_duration</span><span class="o">:</span><span class="w"> </span><span class="s">.01</span>
 <span class="na">gcode</span><span class="o">:</span>

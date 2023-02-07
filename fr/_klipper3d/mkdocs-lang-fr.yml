@@ -116,7 +116,7 @@ nav:
       - Manual_Level.md
       - Bed_Mesh.md
       - Endstop_Phase.md
-    - Compensation de résonance:
+    - Compensation de la résonance:
       - Resonance_Compensation.md
       - Measuring_Resonances.md
     - Pressure_Advance.md

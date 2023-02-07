@@ -1293,9 +1293,9 @@
 <p>Questo documento copre le modifiche software recenti al file di configurazione che non sono compatibili con le versioni precedenti. È una buona idea rivedere questo documento durante l'aggiornamento del software Klipper.</p>
 <p>Tutte le date in questo documento sono approssimative.</p>
 <h2 id="cambiamenti">Cambiamenti<a class="headerlink" href="#cambiamenti" title="Permanent link">&para;</a></h2>
-<p>20230201: The <code>[bed_mesh]</code> module no longer loads the <code>default</code> profile on startup. It is recommended that users who use the <code>default</code> profile add <code>BED_MESH_PROFILE LOAD=default</code> to their <code>START_PRINT</code> macro (or to their slicer's "Start G-Code" configuration when applicable).</p>
-<p>20230103: It is now possible with the flash-sdcard.sh script to flash both variants of the Bigtreetech SKR-2, STM32F407 and STM32F429. This means that the original tag of btt-skr2 now has changed to either btt-skr-2-f407 or btt-skr-2-f429.</p>
-<p>20221128: Klipper v0.11.0 released.</p>
+<p>20230201: Il modulo <code>[bed_mesh]</code> non carica più il profilo <code>default</code> all'avvio. Si consiglia agli utenti che usano il profilo <code>default</code> di aggiungere <code>BED_MESH_PROFILE LOAD=default</code> alla loro macro <code>START_PRINT</code> (o alla configurazione "Start G-Code" del loro slicer quando applicabile).</p>
+<p>20230103: Ora è possibile con lo script flash-sdcard.sh eseguire il flashing di entrambe le varianti di Bigtreetech SKR-2, STM32F407 e STM32F429. Ciò significa che il tag originale di btt-skr2 ora è cambiato in btt-skr-2-f407 o btt-skr-2-f429.</p>
+<p>20221128: rilascio di Klipper v0.11.0.</p>
 <p>20221122: In precedenza, con safe_z_home, era possibile che z_hop dopo l'homing g28 andasse nella direzione z negativa. Ora, uno z_hop viene eseguito dopo g28 solo se risulta in un hop positivo, rispecchiando il comportamento dello z_hop che si verifica prima dell'homing g28.</p>
 <p>20220616: in precedenza era possibile eseguire il flashing di un rp2040 in modalità bootloader eseguendo <code>make flash FLASH_DEVICE=first</code>. Il comando equivalente è ora <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
 <p>20220612: Il microcontrollore rp2040 ora ha una soluzione alternativa per l'errata USB "rp2040-e5". Ciò dovrebbe rendere più affidabili le connessioni USB iniziali. Tuttavia, potrebbe comportare un cambiamento nel comportamento del pin gpio15. È improbabile che il cambiamento di comportamento di gpio15 sia evidente.</p>
