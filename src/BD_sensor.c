@@ -1,20 +1,19 @@
 
 // Code for Bed Distance Sensor
-//
-// Mark <niujl123@sina.com> https://github.com/markniu/Bed_Distance_sensor
+//https://github.com/markniu/Bed_Distance_sensor
+// Mark yue<niujl123@sina.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include<string.h>
 #include <stdlib.h>
 
-#include "autoconf.h" // CONFIG_MACH_AVR
-#include "basecmd.h" // oid_alloc
-#include "board/gpio.h" // gpio_out_write
-#include "board/irq.h" // irq_poll
-#include "board/misc.h" // timer_from_us
-#include "command.h" // DECL_COMMAND
-#include "sched.h" // DECL_SHUTDOWN
+#include "autoconf.h"
+#include "board/gpio.h"
+#include "board/irq.h"
+#include "board/misc.h"
+#include "command.h"
+#include "sched.h"
 
 
 #define BYTE_CHECK_OK     0x01

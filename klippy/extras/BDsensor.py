@@ -1,31 +1,11 @@
-#import libraries
-#/home/pi/klippy-env/bin/pip2 install RPi.GPIO
-import time
-import logging
-from . import probe
-from . import bus
+# Bed leveling sensor BDsensor(Bed Distance sensor)
+# https://github.com/markniu/Bed_Distance_sensor
+# Copyright (C) 2023 Mark yue <niujl123@sina.com>
+# This file may be distributed under the terms of the GNU GPLv3 license.
+
 import chelper
 import mcu
-
-#GPIO Basic initialization
-#GPIO.setmode(GPIO.BCM)
-#GPIO.setwarnings(False)
-
-SIGNAL_PERIOD = 0.020
-MIN_CMD_TIME = 5 * SIGNAL_PERIOD
-
-TEST_TIME = 5 * 60.
-RETRY_RESET_TIME = 1.
-ENDSTOP_REST_TIME = .001
-ENDSTOP_SAMPLE_TIME = .000015
-ENDSTOP_SAMPLE_COUNT = 4
-
-Commands = {
-    'pin_down': 0.000650, 'touch_mode': 0.001165,
-    'pin_up': 0.001475, 'self_test': 0.001780, 'reset': 0.002190,
-    'set_5V_output_mode' : 0.001988, 'set_OD_output_mode' : 0.002091,
-    'output_mode_store' : 0.001884,
-}
+from . import probe
 
 # Calculate a move's accel_t, cruise_t, and cruise_v
 def calc_move_time(dist, speed, accel):
@@ -43,12 +23,9 @@ def calc_move_time(dist, speed, accel):
     cruise_t = (dist - accel_decel_d) / speed
     return axis_r, accel_t, cruise_t, speed
 
-######################################################################
-# I2C BD_SENSOR
-######################################################################
 
-# Helper code for working with
-# devices connected to an MCU via an i2c software bus
+# I2C BD_SENSOR
+# devices connected to an MCU via an virtual i2c bus(2 any gpio)
 
 class MCU_I2C_BD:
     def __init__(self,mcu,   sda_pin,scl_pin, delay_t):
@@ -83,7 +60,6 @@ class MCU_I2C_BD:
 def MCU_BD_I2C_from_config(mcu,config):
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
-    # Create MCU_SPI object
     pin_sda=config.get('sda_pin')
     pin_scl=config.get('scl_pin')
     return MCU_I2C_BD(mcu,pin_sda,pin_scl,config.get('delay'))
@@ -121,7 +97,7 @@ class BDsensorEndstopWrapper:
 
         self.bd_sensor=MCU_BD_I2C_from_config(self.mcu,config)
         self.distance=5;
-        # Register PROBE/QUERY_PROBE commands
+        # Register M102 commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('M102', self.cmd_M102)
 
@@ -171,7 +147,6 @@ class BDsensorEndstopWrapper:
          toolhead.note_kinematic_activity(print_time)
          toolhead.dwell(accel_t + cruise_t + accel_t)
     def cmd_M102(self, gcmd, wait=False):
-        # Set Extruder Temperature
         CMD_BD = gcmd.get_int('S', None)
         toolhead = self.printer.lookup_object('toolhead')
         if CMD_BD == -6:
