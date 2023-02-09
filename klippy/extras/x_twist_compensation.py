@@ -4,6 +4,10 @@ import collections
 import logging
 from math import asin, sin, sqrt
 from . import manual_probe
+from . import bed_mesh
+
+BED_MESH_PROFILE_VERSION = bed_mesh.PROFILE_VERSION
+BED_MESH_CONFIG_NAME = "bed_mesh"
 
 def simple_linear_regression(train_values):
     # train values is a list of tuples of (x, y) values
@@ -24,32 +28,39 @@ def simple_linear_regression(train_values):
     intercept = (y_sum - slope*x_sum) / n
     return (slope, intercept)
 
-def create_x_twist_angle_regression(measured_probe_offsets, probe_nozzle_eucluid_distance):
+def create_x_twist_angle_regression(measured_probe_offsets, probe_nozzle_euclid_distance):
     # create the twist angle regression from measured probe offsets
     # measured_probe_offsets is a list of tuples of (x, measured_z_probe_offset) values
-    # probe_nozzle_eucluid_distance is the probe nozzle eucluid distance from PROBE_CALIBRATION
-    # for each tuple, calculate the twist angle (arcsin of (measured_z_probe_offset/probe_nozzle_eucluid_distance))
+    # probe_nozzle_euclid_distance is the probe nozzle euclid distance from PROBE_CALIBRATION
+    # for each tuple, calculate the twist angle (arcsin of (measured_z_probe_offset/probe_nozzle_euclid_distance))
     train_values = []
     for measured_probe_offset in measured_probe_offsets:
         x = measured_probe_offset[0]
         measured_z_probe_offset = measured_probe_offset[1]
-        twist_angle = asin(measured_z_probe_offset/probe_nozzle_eucluid_distance)
+        twist_angle = asin(measured_z_probe_offset/probe_nozzle_euclid_distance)
         train_values.append((x, twist_angle))
     # create a linear regression using the twist angles
-    return simple_linear_regression(train_values)
+    simple_linear_regression_values = simple_linear_regression(train_values)
+    return XTwistRegression(simple_linear_regression_values[0], simple_linear_regression_values[1], probe_nozzle_euclid_distance)
 
 def calculate_probe_nozzle_euclid_distance(probe_y_offset, probe_z_offset):
     # calculate the euclidian distance from the probe to the nozzle (in the y plane)
     return sqrt(probe_y_offset**2 + probe_z_offset**2)
 
-def calculate_compensated_z_probe_offset_at_x(x, twist_angle_regression, probe_nozzle_eucluid_distance):
+def calculate_compensated_z_probe_offset_at_x(x, twist_angle_regression):
     # calculate the z probe offset at x
     # x is the x probe offset at center of bed
     # twist_angle_regression is a tuple of (slope, intercept) values
-    # probe_nozzle_eucluid_distance is the probe nozzle eucluid distance from PROBE_CALIBRATION
+    # probe_nozzle_euclid_distance is the probe nozzle euclid distance from PROBE_CALIBRATION
     # returns the corrected z probe offset at given x
-    twist_angle = twist_angle_regression[0] * x + twist_angle_regression[1]
-    return sin(twist_angle) * probe_nozzle_eucluid_distance
+    twist_angle = twist_angle_regression.slope * x + twist_angle_regression.intercept
+    return sin(twist_angle) * twist_angle_regression.probe_nozzle_euclid_distance
+# regression class
+class XTwistRegression:
+    def __init__(self, slope, intercept, probe_nozzle_euclid_distance):
+        self.slope = slope
+        self.intercept = intercept
+        self.probe_nozzle_euclid_distance = probe_nozzle_euclid_distance
 
 # X twist compensation class
 class XTwistCompensation:
@@ -81,12 +92,14 @@ class XTwistCompensation:
             "profile_name": "",
             "slope": 0.0,
             "intercept": 0.0,
+            "probe_nozzle_euclid_distance": 0.0,
             "profiles": self.pmgr.get_profiles(),
         }
         if self.regression is not None:
             self.status["profile_name"] = self.pmgr.get_current_profile()
-            self.status["slope"] = self.regression[0]
-            self.status["intercept"] = self.regression[1]
+            self.status["slope"] = self.regression.slope
+            self.status["intercept"] = self.regression.intercept
+            self.status["probe_nozzle_euclid_distance"] = self.regression.probe_nozzle_euclid_distance
 
     def set_regression(self, regression):
         self.regression = regression
@@ -95,10 +108,101 @@ class XTwistCompensation:
         return self.regression
 
     cmd_COMPENSATE_MESH_help = "Compensate a mesh by applying the x twist compensation to the given raw mesh"
-    def cmd_COMPENSATE_MESH(self, raw_mesh):
+    def cmd_COMPENSATE_MESH(self, gcmd):
         # creates a compensated mesh by applying the x twist compensation to the raw mesh
-        return
+        # get the mesh name from the gcode command
+        self.raw_mesh_name = gcmd.get('MESH', None)
+        if not self.raw_mesh_name or not self.raw_mesh_name.strip():
+            raise gcmd.error("Value for parameter 'MESH' must be specified (name of mesh profile for compensation to be applied to)")
+        # load a saved mesh of name raw_mesh_name
+        self.bed_mesh = self.printer.lookup_object('bed_mesh', None)
+        if not self.bed_mesh:
+            raise gcmd.error("[bed_mesh] is not specified in your printer configuration")
+        self.bed_mesh_profile_manager = self.bed_mesh.pmgr
+        self.all_mesh_profiles = self.bed_mesh_profile_manager.get_profiles()
 
+        # get the regression name from the gcode command
+        self.regression_name = gcmd.get('REGRESSION', None)
+        if not self.regression_name or not self.regression_name.strip():
+            raise gcmd.error("Value for parameter 'REGRESSION' must be specified (name of regression profile for compensation to be applied with)")
+        # load a saved regression of name regression_name
+        all_regression_profiles = self.pmgr.get_profiles()
+
+        
+        if self.raw_mesh_name in self.all_mesh_profiles and self.regression_name in all_regression_profiles:
+            raw_mesh = self.all_mesh_profiles[self.raw_mesh_name]
+            regression = all_regression_profiles[self.regression_name]
+            slope = regression['slope']
+            intercept = regression['intercept']
+            probe_nozzle_euclid_distance = regression['probe_nozzle_euclid_distance']
+            twist_angle_regression = XTwistRegression(slope, intercept, probe_nozzle_euclid_distance)
+            # create copy of the raw mesh
+            probed_matrix = raw_mesh['points']
+            mesh_params = raw_mesh['mesh_params']
+            version = BED_MESH_PROFILE_VERSION
+            z_mesh = bed_mesh.ZMesh(mesh_params)
+            try:
+                z_mesh.build_mesh(probed_matrix)
+            except bed_mesh.BedMeshError as e:
+                raise self.gcode.error(str(e))
+            # do compensating, by modifying z values in probed matrix
+            # probed matrix is a list of rows of probed z values
+            # eg. probed_matrix[0][0] = bottom left corner of mesh, z value
+            compensated_matrix = []
+            for row_index in range(len(probed_matrix)):
+                compensated_row = []
+                row = probed_matrix[row_index]
+                for col_index in range(len(row)):
+                    z = row[col_index]
+                    x = self._get_probed_point_x_coordinate(col_index, z_mesh)
+                    compensated_z = z + calculate_compensated_z_probe_offset_at_x(x, twist_angle_regression)
+                    compensated_row.append(compensated_z)
+                compensated_matrix.append(compensated_row)
+            # compensated_matrix is a list of list, convert to tuple of tuples
+            compensated_matrix = tuple(tuple(row) for row in compensated_matrix)
+            logging.info("probed_matrix: {}".format(probed_matrix))
+            logging.info("compensated_matrix: {}".format(compensated_matrix))
+            
+            # save compensated mesh
+            configfile = self.printer.lookup_object('configfile')
+            prof_name = self.raw_mesh_name + " " + self.regression_name
+            cfg_name = BED_MESH_CONFIG_NAME + " " + prof_name
+
+            # set params
+            z_values = ""
+            for line in compensated_matrix:
+                z_values += "\n  "
+                for p in line:
+                    z_values += "%.6f, " % p
+                z_values = z_values[:-2]
+            configfile.set(cfg_name, 'version', version)
+            configfile.set(cfg_name, 'points', z_values)
+            for key, value in mesh_params.items():
+                configfile.set(cfg_name, key, value)
+            # save copy in local storage
+            # ensure any self.profiles returned as status remains immutable
+            profiles = dict(self.all_mesh_profiles)
+            profiles[prof_name] = profile = {}
+            profile['points'] = compensated_matrix
+            profile['mesh_params'] = collections.OrderedDict(mesh_params)
+            self.bed_mesh_profile_manager.profiles = profiles
+            self.bed_mesh_profile_manager.current_profile = prof_name
+            self.bed_mesh_profile_manager.bedmesh.update_status()
+            self.gcode.respond_info(
+                "Bed Mesh state has been saved to profile [%s]\n"
+                "for the current session.  The SAVE_CONFIG command will\n"
+                "update the printer config file and restart the printer."
+                % (prof_name))
+        else:
+            if self.raw_mesh_name not in self.all_mesh_profiles:
+                self.gcode.respond_info("No mesh profile named [%s] to modify" % (self.raw_mesh_name))
+            if self.regression_name not in all_regression_profiles:
+                self.gcode.respond_info("No regression profile named [%s] to apply" % (self.regression_name))
+    def _get_probed_point_x_coordinate(self, x_index, mesh):
+        x_min = mesh.mesh_x_min
+        x_range = mesh.mesh_x_max - mesh.mesh_x_min
+        x_step = x_range / (len(mesh.probed_matrix[0]) - 1)
+        return x_min + x_index * x_step
 # X twist calibrater class
 class XTwistCalibrate:
     def __init__(self, config, compensation):
@@ -125,15 +229,15 @@ class XTwistCalibrate:
         # if yes, save regression to config (slope, intercept)
 
     def finalize(self, measured_probe_offsets):
-        # calculate the probe nozzle eucluid distance from PROBE_CALIBRATION
+        # calculate the probe nozzle euclid distance from PROBE_CALIBRATION
          # get current probe config
         probe = self.printer.lookup_object('probe', None)
         # if no probe, throw error
         logging.info('X_TWIST_INFO: Recorded z offsets {}'.format(measured_probe_offsets))
         probe_x_offset ,probe_y_offset, probe_z_offset = probe.get_offsets()[:3]
-        probe_nozzle_eucluid_distance = calculate_probe_nozzle_euclid_distance(probe_y_offset, probe_z_offset)
+        probe_nozzle_euclid_distance = calculate_probe_nozzle_euclid_distance(probe_y_offset, probe_z_offset)
         # create the twist angle regression from measured probe offsets
-        twist_angle_regression = create_x_twist_angle_regression(measured_probe_offsets, probe_nozzle_eucluid_distance)
+        twist_angle_regression = create_x_twist_angle_regression(measured_probe_offsets, probe_nozzle_euclid_distance)
         # set the current regression
         self.compensation.set_regression(twist_angle_regression)
         self.gcode.respond_info("X twist calibration complete")
@@ -254,6 +358,7 @@ class ProfileManager:
             self.profiles[name] = {} # add this stored profile to current working profiles
             self.profiles[name]['slope'] = profile.getfloat('slope', 0.0) # get the slope from the stored profile
             self.profiles[name]['intercept'] = profile.getfloat('intercept', 0.0) # get the intercept from the stored profile
+            self.profiles[name]['probe_nozzle_euclid_distance'] = profile.getfloat('probe_nozzle_euclid_distance', 0.0) # get the probe_nozzle_euclid_distance from the stored profile
 
         # Register GCode to manage profiles
         self.gcode.register_command(
@@ -295,14 +400,16 @@ class ProfileManager:
             return
         configfile = self.printer.lookup_object('configfile')
         cfg_name = "%s %s" % (self.name, prof_name)
-        configfile.set(cfg_name, 'slope', current_regression[0])
-        configfile.set(cfg_name, 'intercept', current_regression[1])
+        configfile.set(cfg_name, 'slope', current_regression.slope)
+        configfile.set(cfg_name, 'intercept', current_regression.intercept)
+        configfile.set(cfg_name, 'probe_nozzle_euclid_distance', current_regression.probe_nozzle_euclid_distance)
         # save to local storage
         profiles = dict(self.profiles)
         new_profile = {}
         profiles[prof_name] = new_profile
-        new_profile['slope'] = current_regression[0]
-        new_profile['intercept'] = current_regression[1]
+        new_profile['slope'] = current_regression.slope
+        new_profile['intercept'] = current_regression.intercept
+        new_profile['probe_nozzle_euclid_distance'] = current_regression.probe_nozzle_euclid_distance
         self.profiles = profiles
         self.current_profile = prof_name
         self.compensation.update_status()
@@ -321,9 +428,10 @@ class ProfileManager:
                 "bed_mesh: Unknown profile [%s]" % prof_name)
         slope = profile['slope']
         intercept = profile['intercept']
+        probe_nozzle_euclid_distance = profile['probe_nozzle_euclid_distance']
         # might want to do some checking to see if its a valid regression?
         self.current_profile = prof_name
-        self.compensation.set_regression((slope, intercept))
+        self.compensation.set_regression(XTwistRegression(slope, intercept, probe_nozzle_euclid_distance))
 
     def remove_profile(self, prof_name):
         # check if the profile exists
