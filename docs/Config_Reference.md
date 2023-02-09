@@ -840,6 +840,20 @@ max_temp:
 #   heater and sensor hardware failures. Set this range just wide
 #   enough so that reasonable temperatures do not result in an error.
 #   These parameters must be provided.
+#pid_settle_delta: 1.0
+#   The maximum delta between the set and measured (smoothed) temperature.
+#   This setting is used in conjunction with 'pid_settle_slope' to
+#   signal the heater has reached target temperature.
+#   Changing this should only be needed as a workaround for
+#   unstable temperatures in case of e.g noisy ADCs.
+#   Only used when the PID control algorithm is enabled.
+#   The default is 1.0 degrees Kelvin
+#pid_settle_slope: 0.1
+#   The maximum allowable (absolute) slope in temperature for the
+#   heater to signal that it reached target temperature.
+#   The smaller the value, the more the temperature needs to stabilize
+#   Used in conjuntion with 'pid_settle_delta'.
+#   The default is 0.1
 ```
 
 ### [heater_bed]
