@@ -305,7 +305,7 @@ is a [fork with builds specific to the SKR Mini E3 1.2](
   https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
 
 For generic STM32F103 boards such as the blue pill it is possible to flash
-the bootloader via 3.3v serial using stm32flash as noted in the stm32duino
+the bootloader via 3.3V serial using stm32flash as noted in the stm32duino
 section above, substituting the file name for the desired hid bootloader binary
 (ie: hid_generic_pc13.bin for the blue pill).
 
@@ -449,7 +449,7 @@ When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.
 ## STM32F4 micro-controllers (SKR Pro 1.1)
 
 STM32F4 micro-controllers come equipped with a built-in system bootloader
-capable of flashing over USB (via DFU), 3.3v Serial, and various other
+capable of flashing over USB (via DFU), 3.3V Serial, and various other
 methods (see STM Document AN2606 for more information).  Some
 STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
 bootloader.  The HID bootloader is available for STM32F405/407
