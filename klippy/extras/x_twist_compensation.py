@@ -56,7 +56,7 @@ class XTwistCompensation:
         self.printer = config.get_printer()
         self.regression = None
         # setup x twist calibrater
-        self.calibrater = XTwistCalibrate(config, self)
+        self.calibrater = XTwistCalibrate(self)
         # setup persistent storage
         self.pmgr = ProfileManager(config, self)
         self.save_profile = self.pmgr.save_profile
