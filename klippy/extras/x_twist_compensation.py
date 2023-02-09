@@ -1,8 +1,9 @@
 # X Twist Compensation
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
+import logging
 from math import asin, sin, sqrt
-from . import probe, manual_probe
+from . import manual_probe
 
 def simple_linear_regression(train_values):
     # train values is a list of tuples of (x, y) values
@@ -69,6 +70,8 @@ class XTwistCompensation:
         self.gcode.register_command(
             'X_TWIST_COMPENSATE_MESH', self.cmd_COMPENSATE_MESH,
             desc=self.cmd_COMPENSATE_MESH_help)
+        self.speed = config.getfloat('speed', 50., above=0.)
+        self.horizontal_move_z = config.getfloat('horizontal_move_z', 10)
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -103,6 +106,7 @@ class XTwistCalibrate:
         self._profile_name = None
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
+        self.config = config
         self.gcode.register_command(
             'X_TWIST_CALIBRATE', self.cmd_CALIBRATE,
             desc=self.cmd_CALIBRATE_help)
@@ -113,7 +117,7 @@ class XTwistCalibrate:
         if not self._profile_name.strip():
             raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.compensation.set_regression(None) # clear the current regression
-        MultipleZProbeOffsetHelper(self.printer, gcmd, self.finalize)
+        MultipleZProbeOffsetHelper(self.config, gcmd, self.finalize)
         # prompt user to measure n points along the x axis
         # for each point, probe the point, then prompt user to fine tune the probe offset manually
         # get a list of tuples of (x, measured_z_probe_offset) values
@@ -125,28 +129,28 @@ class XTwistCalibrate:
          # get current probe config
         probe = self.printer.lookup_object('probe', None)
         # if no probe, throw error
-        probe_x_offset ,probe_y_offset, probe_z_offset = x_offset, y_offset = probe.get_offsets()[:3]
+        logging.info('X_TWIST_INFO: Recorded z offsets {}'.format(measured_probe_offsets))
+        probe_x_offset ,probe_y_offset, probe_z_offset = probe.get_offsets()[:3]
         probe_nozzle_eucluid_distance = calculate_probe_nozzle_euclid_distance(probe_y_offset, probe_z_offset)
         # create the twist angle regression from measured probe offsets
         twist_angle_regression = create_x_twist_angle_regression(measured_probe_offsets, probe_nozzle_eucluid_distance)
-        # save the regression to config (slope, intercept)
+        # set the current regression
         self.compensation.set_regression(twist_angle_regression)
         self.gcode.respond_info("X twist calibration complete")
+        # save the regression to profile name
         self.compensation.save_profile(self._profile_name)
-        # set the current regression
-        return
 
 # Helper to get z probe offset at n points on the x axis
 class MultipleZProbeOffsetHelper:
-    def __init__(self, printer, gcmd, finalize_callback):
+    def __init__(self, config, gcmd, finalize_callback):
         # start_point and end_point are tuples of (x, y) values
         # they represent the NOZZLE's location at the start and end points along the line to probe
         # user can specify the number of points to probe with POINTS=, defaults to 3, in gcmd
         # list of tuples of ((x, y), measured_z_probe_offset) values will be passed to finalize_callback
-        self.printer = printer
+        self.printer = config.get_printer()
+        self.speed = config.getfloat('speed', 50., above=0.)
+        self.horizontal_move_z = config.getfloat('horizontal_move_z', 10)
         self.finalize_callback = finalize_callback
-        self.gcode = self.printer.lookup_object('gcode', None)
-        logging.info(self.gcode)
         self.n_points = gcmd.get_int('POINTS', 3)
         if self.n_points < 3:
             raise self.printer.command_error("Must specify at least 3 points to probe")
@@ -161,47 +165,53 @@ class MultipleZProbeOffsetHelper:
         # verify no other manual probe is in progress
         manual_probe.verify_no_manual_probe(self.printer)
         # get current probe config
-        probe = self.printer.lookup_object('probe', None)
+        self.probe = self.printer.lookup_object('probe', None)
         # if no probe, throw error
-        if probe is None:
+        if self.probe is None:
             raise self.printer.command_error("No probe found, make sure to specify one under [probe] section in config")
-        raise self.gcode.error("WTF")
-        self.probe_x_offset, self.probe_y_offset = probe.get_offsets()[:2]
-        self.lift_speed = probe.get_lift_speed()
+        self.probe_x_offset, self.probe_y_offset, self.probe_z_offset = self.probe.get_offsets()
+        self.lift_speed = self.probe.get_lift_speed()
         self.points_to_probe = self._get_points_to_probe()
         self.index_to_probe = 0
+        logging.info('X_TWIST_INFO: User configured probe offsets: [X: {}, Y: {}, Z: {}]'.format(self.probe_x_offset, self.probe_y_offset, self.probe_z_offset))
+        self.gcmd = gcmd
+        self.probe_point()
 
-        
-
-    def probe_point(self, gcmd):
+    def probe_point(self):
         point = self.points_to_probe[self.index_to_probe]
-        # move PROBE to point to probe (point_to_probe describes nozzle location, hence must offset)
+        logging.info('X_TWIST_INFO: Probing point {} of {}'.format(self.index_to_probe + 1, self.n_points))
+        # move toolhead up, else probe triggers (user can specify horizontal_move z)
+        self.printer.lookup_object('toolhead').manual_move((None, None, self.horizontal_move_z), self.lift_speed)
+        # move PROBE to point to be probed (point_to_probe describes nozzle location, hence must offset)
         probe_coordiantes = (point[0] - self.probe_x_offset, point[1] - self.probe_y_offset)
-        self.printer.lookup_object('toolhead').manual_move(probe_coordiantes)
+        self.printer.lookup_object('toolhead').manual_move(probe_coordiantes, self.speed)
         
         # probe point
-        curpos = probe.run_probe(self)
+        curpos = self.probe.run_probe(self.gcmd)
         self.current_probe_z = curpos[2]
 
         # move away from bed
-        curpos[2] += 5
+        curpos[2] += self.horizontal_move_z
         self.printer.lookup_object('toolhead').manual_move(curpos, self.lift_speed)
 
         # move the nozzle over the probe point
         curpos[0] += self.probe_x_offset
         curpos[1] += self.probe_y_offset
-        self.printer.lookup_object('toolhead').manual_move(curpos)
+        self.printer.lookup_object('toolhead').manual_move(curpos, self.speed)
 
         # start manual probe
         # callback should store the z probe offset for the point, and move to the next point
-        manual_probe.ManualProbeHelper(self.printer, gcmd,
+        manual_probe.ManualProbeHelper(self.printer, self.gcmd,
                                    self.manual_probe_callback_factory())
 
     def manual_probe_callback_factory(self):
         point = self.points_to_probe[self.index_to_probe]
         end = self.index_to_probe == len(self.points_to_probe) - 1
-        def callback(self, kin_pos):
+        logging.info('X_TWIST_INFO: Point {}/{} was probed, therefore end == {}'.format(self.index_to_probe + 1, self.n_points, end))
+        def callback(kin_pos):
+            logging.info('X_TWIST_INFO: Callback received kin_pos is {}'.format(kin_pos))
             if kin_pos is None:
+                logging.info('X_TWIST_INFO: ManualProbeHelper did not return kinematic position after probe')
                 # user cancelled
                 return
             z_offset = self.current_probe_z - kin_pos[2]
@@ -209,9 +219,11 @@ class MultipleZProbeOffsetHelper:
             if not end:
                 # move to next point
                 self.index_to_probe += 1
+                logging.info('X_TWIST_INFO: Moving to next probe point: {}/{}'.format(self.index_to_probe + 1, self.n_points))
                 self.probe_point()
             if end:
                 # finalize
+                logging.info('X_TWIST_INFO: Done probing all {} points! Storing regression.'.format(self.n_points))
                 self.finalize_callback(self.results)
         return callback
             
@@ -293,7 +305,7 @@ class ProfileManager:
         new_profile['intercept'] = current_regression[1]
         self.profiles = profiles
         self.current_profile = prof_name
-        self.regression.update_status()
+        self.compensation.update_status()
         self.gcode.respond_info(
             "X twist compensation state has been saved to profile [%s]\n"
             "for the current session.  The SAVE_CONFIG command will\n"
@@ -311,7 +323,7 @@ class ProfileManager:
         intercept = profile['intercept']
         # might want to do some checking to see if its a valid regression?
         self.current_profile = prof_name
-        self.regression.set_regression(slope, intercept)
+        self.compensation.set_regression((slope, intercept))
 
     def remove_profile(self, prof_name):
         # check if the profile exists
@@ -324,7 +336,7 @@ class ProfileManager:
             profiles = dict(self.profiles)
             del profiles[prof_name]
             self.profiles = profiles
-            self.regression.update_status()
+            self.compensation.update_status()
             self.gcode.respond_info(
                 "Profile [%s] removed from storage for this session.\n"
                 "The SAVE_CONFIG command will update the printer\n"
