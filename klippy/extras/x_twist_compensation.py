@@ -54,18 +54,24 @@ def calculate_compensated_z_probe_offset_at_x(x, twist_angle_regression, probe_n
 class XTwistCompensation:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
         self.regression = None
         # setup x twist calibrater
-        self.calibrater = XTwistCalibrate(self)
+        self.calibrater = XTwistCalibrate(config, self)
         # setup persistent storage
         self.pmgr = ProfileManager(config, self)
         self.save_profile = self.pmgr.save_profile
         # get regression from saved config (if it exists)
         # register command to perform calibration (measuring n points along the x axis)
         # register gcodes
+        self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'X_TWIST_COMPENSATE_MESH', self.cmd_COMPENSATE_MESH,
             desc=self.cmd_COMPENSATE_MESH_help)
+
+    def handle_connect(self):
+        self.toolhead = self.printer.lookup_object('toolhead')
 
     def update_status(self):
         self.status = {
@@ -92,9 +98,11 @@ class XTwistCompensation:
 
 # X twist calibrater class
 class XTwistCalibrate:
-    def __init__(self, compensation):
+    def __init__(self, config, compensation):
         self.compensation = compensation
         self._profile_name = None
+        self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'X_TWIST_CALIBRATE', self.cmd_CALIBRATE,
             desc=self.cmd_CALIBRATE_help)
@@ -117,7 +125,7 @@ class XTwistCalibrate:
          # get current probe config
         probe = self.printer.lookup_object('probe', None)
         # if no probe, throw error
-        probe_x_offset ,probe_y_offset, probe_z_offset = probe.get_offsets()
+        probe_x_offset ,probe_y_offset, probe_z_offset = x_offset, y_offset = probe.get_offsets()[:3]
         probe_nozzle_eucluid_distance = calculate_probe_nozzle_euclid_distance(probe_y_offset, probe_z_offset)
         # create the twist angle regression from measured probe offsets
         twist_angle_regression = create_x_twist_angle_regression(measured_probe_offsets, probe_nozzle_eucluid_distance)
@@ -137,6 +145,8 @@ class MultipleZProbeOffsetHelper:
         # list of tuples of ((x, y), measured_z_probe_offset) values will be passed to finalize_callback
         self.printer = printer
         self.finalize_callback = finalize_callback
+        self.gcode = self.printer.lookup_object('gcode', None)
+        logging.info(self.gcode)
         self.n_points = gcmd.get_int('POINTS', 3)
         if self.n_points < 3:
             raise self.printer.command_error("Must specify at least 3 points to probe")
@@ -155,7 +165,8 @@ class MultipleZProbeOffsetHelper:
         # if no probe, throw error
         if probe is None:
             raise self.printer.command_error("No probe found, make sure to specify one under [probe] section in config")
-        self.probe_x_offset, self.probe_y_offset = probe.get_offsets()
+        raise self.gcode.error("WTF")
+        self.probe_x_offset, self.probe_y_offset = probe.get_offsets()[:2]
         self.lift_speed = probe.get_lift_speed()
         self.points_to_probe = self._get_points_to_probe()
         self.index_to_probe = 0
@@ -218,13 +229,14 @@ class ProfileManager:
     def __init__(self, config, compensation):
         self.name = config.get_name() # gets config section name (in this case, x_twist_compensation)
         self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
         self.compensation = compensation
         self.current_profile = None
 
         # load all profiles that have been stored/saved in the config
         self.profiles = {}
         stored_profiles = config.get_prefix_sections(self.name) # gets all config that start with x_twist_compensation
-        stored_profiles = [profile for profile in stored_profiles if profile != self.name] # remove the x_twist_compensation section, we only want profiles
+        stored_profiles = [profile for profile in stored_profiles if profile.get_name() != self.name] # remove the x_twist_compensation section, we only want profiles
         for profile in stored_profiles:
             name = profile.get_name().split(' ', 1)[1] # get the profile name, discard the x_twist_compensation prefix
             self.profiles[name] = {} # add this stored profile to current working profiles
