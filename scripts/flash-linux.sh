@@ -24,3 +24,9 @@ if [ -f /etc/init.d/klipper_mcu ]; then
     echo "Attempting host MCU restart..."
     service klipper_mcu restart
 fi
+
+if [ -f /etc/systemd/system/klipper-mcu.service ]; then
+    echo "Attempting host MCU restart..."
+    service klipper-mcu restart
+fi
+
