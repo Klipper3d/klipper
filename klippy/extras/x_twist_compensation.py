@@ -41,7 +41,9 @@ def create_x_twist_angle_regression(measured_probe_offsets, probe_nozzle_euclid_
         train_values.append((x, twist_angle))
     # create a linear regression using the twist angles
     simple_linear_regression_values = simple_linear_regression(train_values)
-    return XTwistRegression(simple_linear_regression_values[0], simple_linear_regression_values[1], probe_nozzle_euclid_distance)
+    # get the center (zeroed) probe offset
+    zeroed_z_offset = measured_probe_offsets[len(measured_probe_offsets)//2][1]
+    return XTwistRegression(simple_linear_regression_values[0], simple_linear_regression_values[1], probe_nozzle_euclid_distance, zeroed_z_offset)
 
 def calculate_probe_nozzle_euclid_distance(probe_y_offset, probe_z_offset):
     # calculate the euclidian distance from the probe to the nozzle (in the y plane)
@@ -54,13 +56,14 @@ def calculate_compensated_z_probe_offset_at_x(x, twist_angle_regression):
     # probe_nozzle_euclid_distance is the probe nozzle euclid distance from PROBE_CALIBRATION
     # returns the corrected z probe offset at given x
     twist_angle = twist_angle_regression.slope * x + twist_angle_regression.intercept
-    return sin(twist_angle) * twist_angle_regression.probe_nozzle_euclid_distance
+    return twist_angle_regression.zeroed_z_offset - sin(twist_angle) * twist_angle_regression.probe_nozzle_euclid_distance
 # regression class
 class XTwistRegression:
-    def __init__(self, slope, intercept, probe_nozzle_euclid_distance):
+    def __init__(self, slope, intercept, probe_nozzle_euclid_distance, zeroed_z_offset):
         self.slope = slope
         self.intercept = intercept
         self.probe_nozzle_euclid_distance = probe_nozzle_euclid_distance
+        self.zeroed_z_offset = zeroed_z_offset
 
 # X twist compensation class
 class XTwistCompensation:
@@ -93,6 +96,7 @@ class XTwistCompensation:
             "slope": 0.0,
             "intercept": 0.0,
             "probe_nozzle_euclid_distance": 0.0,
+            "zeroed_z_offset": 0.0,
             "profiles": self.pmgr.get_profiles(),
         }
         if self.regression is not None:
@@ -100,6 +104,7 @@ class XTwistCompensation:
             self.status["slope"] = self.regression.slope
             self.status["intercept"] = self.regression.intercept
             self.status["probe_nozzle_euclid_distance"] = self.regression.probe_nozzle_euclid_distance
+            self.status["zeroed_z_offset"] = self.regression.zeroed_z_offset
 
     def set_regression(self, regression):
         self.regression = regression
@@ -135,7 +140,8 @@ class XTwistCompensation:
             slope = regression['slope']
             intercept = regression['intercept']
             probe_nozzle_euclid_distance = regression['probe_nozzle_euclid_distance']
-            twist_angle_regression = XTwistRegression(slope, intercept, probe_nozzle_euclid_distance)
+            zeroed_z_offset = regression['zeroed_z_offset']
+            twist_angle_regression = XTwistRegression(slope, intercept, probe_nozzle_euclid_distance, zeroed_z_offset)
             # create copy of the raw mesh
             probed_matrix = raw_mesh['points']
             mesh_params = raw_mesh['mesh_params']
@@ -359,7 +365,7 @@ class ProfileManager:
             self.profiles[name]['slope'] = profile.getfloat('slope', 0.0) # get the slope from the stored profile
             self.profiles[name]['intercept'] = profile.getfloat('intercept', 0.0) # get the intercept from the stored profile
             self.profiles[name]['probe_nozzle_euclid_distance'] = profile.getfloat('probe_nozzle_euclid_distance', 0.0) # get the probe_nozzle_euclid_distance from the stored profile
-
+            self.profiles[name]['zeroed_z_offset'] = profile.getfloat('zeroed_z_offset', 0.0) # probe offset at the point where probe is calibrated
         # Register GCode to manage profiles
         self.gcode.register_command(
             'X_TWIST_PROFILE', self.cmd_PROFILE,
@@ -403,6 +409,7 @@ class ProfileManager:
         configfile.set(cfg_name, 'slope', current_regression.slope)
         configfile.set(cfg_name, 'intercept', current_regression.intercept)
         configfile.set(cfg_name, 'probe_nozzle_euclid_distance', current_regression.probe_nozzle_euclid_distance)
+        configfile.set(cfg_name, 'zeroed_z_offset', current_regression.zeroed_z_offset)
         # save to local storage
         profiles = dict(self.profiles)
         new_profile = {}
@@ -410,6 +417,7 @@ class ProfileManager:
         new_profile['slope'] = current_regression.slope
         new_profile['intercept'] = current_regression.intercept
         new_profile['probe_nozzle_euclid_distance'] = current_regression.probe_nozzle_euclid_distance
+        new_profile['zeroed_z_offset'] = current_regression.zeroed_z_offset
         self.profiles = profiles
         self.current_profile = prof_name
         self.compensation.update_status()
@@ -429,9 +437,10 @@ class ProfileManager:
         slope = profile['slope']
         intercept = profile['intercept']
         probe_nozzle_euclid_distance = profile['probe_nozzle_euclid_distance']
+        zeroed_z_offset = profile['zeroed_z_offset']
         # might want to do some checking to see if its a valid regression?
         self.current_profile = prof_name
-        self.compensation.set_regression(XTwistRegression(slope, intercept, probe_nozzle_euclid_distance))
+        self.compensation.set_regression(XTwistRegression(slope, intercept, probe_nozzle_euclid_distance, zeroed_z_offset))
 
     def remove_profile(self, prof_name):
         # check if the profile exists
