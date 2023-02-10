@@ -131,7 +131,8 @@ class PrinterProbe:
         # x_twist module checks if it is enabled, returns 0 compensation if not
         x_twist_compensation = self.printer.lookup_object(
             'x_twist_compensation', None)
-        z_compensation =  x_twist_compensation.get_z_compensation_value(pos[0])
+        z_compensation = 0 if not x_twist_compensation \
+            else x_twist_compensation.get_z_compensation_value(pos[0])
         # add z compensation to probe position
         epos[2] += z_compensation
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
