@@ -3573,7 +3573,7 @@ Support for a display attached to the micro-controller.
 [display]
 lcd_type:
 #   The type of LCD chip in use. This may be "hd44780", "hd44780_spi",
-#   "st7920", "emulated_st7920", "uc1701", "ssd1306", or "sh1106".
+#   "st7920", "emulated_st7920", "uc1701", "ssd1306", "sh1106", or "sh1106a".
 #   See the display sections below for information on each type and
 #   additional parameters they provide. This parameter must be
 #   provided.
@@ -3777,7 +3777,7 @@ Information on configuring ssd1306 and sh1106 displays.
 ```
 [display]
 lcd_type:
-#   Set to either "ssd1306" or "sh1106" for the given display type.
+#   Set to either "ssd1306", "sh1106" or "sh1106a" for the given display type.
 #i2c_mcu:
 #i2c_bus:
 #i2c_speed:

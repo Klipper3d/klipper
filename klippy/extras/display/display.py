@@ -17,7 +17,7 @@ LCD_chips = {
     'st7920': st7920.ST7920, 'emulated_st7920': st7920.EmulatedST7920,
     'hd44780': hd44780.HD44780, 'uc1701': uc1701.UC1701,
     'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
-    'hd44780_spi': hd44780_spi.hd44780_spi
+    'hd44780_spi': hd44780_spi.hd44780_spi, 'sh1106a': uc1701.SH1106a
 }
 
 # Storage of [display_template my_template] config sections

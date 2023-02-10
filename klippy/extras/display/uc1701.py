@@ -238,3 +238,9 @@ class SH1106(SSD1306):
     def __init__(self, config):
         x_offset = config.getint('x_offset', 0, minval=0, maxval=3)
         SSD1306.__init__(self, config, 132, x_offset=x_offset)
+
+# the SH1106 is SSD1306 compatible with up to 132 columns
+class SH1106a(SSD1306):
+    def __init__(self, config):
+        x_offset = config.getint('x_offset', 0, minval=0, maxval=3) + 2
+        SSD1306.__init__(self, config, 132, x_offset=x_offset)
