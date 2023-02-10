@@ -1302,6 +1302,43 @@ print.
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
 
+### [x_twist_compensation]
+
+The following commands are available when the
+[x_twist_compensation config section](Config_Reference.md#x_twist_compensation)
+is enabled.
+
+#### X_TWIST_CALIBRATE
+`X_TWIST_CALIBRATE [N_POINTS=<value>]`: Initiates the X twist calibration
+wizard. `N_POINTS` specifies the number of points along the X axis to calibrate
+at and defaults to 3.
+
+#### X_TWIST_COMPENSATE_STATUS
+`X_TWIST_COMPENSATE_STATUS`: Returns the status of the `[x_twist_compensation]`
+module. If compensation is enabled, this prints the `z_compensations` values and
+`recommended_z_offset`.
+
+#### X_TWIST_COMPENSATE_MESH
+`X_TWIST_COMPENSATE_MESH MESH_NAME=<value> COMPENSATION_NAME=<value>`: Applies
+a stored compensation profile of name `COMPENSATION_NAME` to a stored mesh
+profile of name `MESH_NAME`. This is useful for correcting a mesh that was taken
+while compensation was turned off/not enabled.
+
+#### X_TWIST_PROFILE_LOAD
+`X_TWIST_PROFILE_LOAD NAME=<value>`: Loads the stored compensation profile of
+name `NAME` as the active profile.
+
+#### X_TWIST_PROFILE_CLEAR
+`X_TWIST_PROFILE_CLEAR`: Clears the active profile.
+
+#### X_TWIST_PROFILE_DELETE
+`X_TWIST_PROFILE_DELETE NAME=<value>`: Deletes the stored compensation profile
+of name `NAME`.
+
+#### X_TWIST_PROFILE_SAVE
+`X_TWIST_PROFILE_SAVE NAME=<value>`: Saves the active compensation profile under
+the name `NAME`
+
 ### [z_thermal_adjust]
 
 The following commands are available when the
