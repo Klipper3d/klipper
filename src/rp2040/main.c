@@ -7,11 +7,13 @@
 #include <stdint.h> // uint32_t
 #include "board/misc.h" // bootloader_request
 #include "generic/armcm_reset.h" // try_request_canboot
+#include "generic/armcm_boot.h" // VectorTable
 #include "hardware/structs/clocks.h" // clock_hw_t
 #include "hardware/structs/pll.h" // pll_hw_t
 #include "hardware/structs/resets.h" // sio_hw
 #include "hardware/structs/watchdog.h" // watchdog_hw
 #include "hardware/structs/xosc.h" // xosc_hw
+#include "hardware/structs/scb.h" // scb_hw
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
@@ -139,6 +141,9 @@ clock_setup(void)
 
     // Enable GPIO control
     enable_pclock(RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS);
+#if CONFIG_RP2040_FLASH_NOFLASH
+    enable_pclock(RESETS_RESET_SPI0_BITS | RESETS_RESET_PADS_QSPI_BITS);
+#endif
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()
@@ -148,3 +153,14 @@ armcm_main(void)
     clock_setup();
     sched_main();
 }
+
+#if CONFIG_RP2040_FLASH_NOFLASH
+void __section(".rp2040_main_noflash") __visible rp2040_main(void)
+{
+    scb_hw->vtor = (uint32_t)VectorTable;
+
+    // jump into armcm_boot.c:ResetHandler()
+    extern void ResetHandler(void);
+    ResetHandler();
+}
+#endif

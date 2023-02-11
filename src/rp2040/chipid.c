@@ -75,6 +75,12 @@ flash_enter_xip_perform(void)
 static void _ramfunc
 read_unique_id(uint8_t *out)
 {
+#if CONFIG_RP2040_FLASH_NOFLASH
+    // from PicoSDK: On PICO_NO_FLASH builds the unique id is set to all 0xEE.
+    memset(out, 0xEE, 8);
+    return;
+#endif
+
     uint8_t txbuf[FLASH_RUID_TOTAL_BYTES] = {0};
     uint8_t rxbuf[FLASH_RUID_TOTAL_BYTES] = {0};
 

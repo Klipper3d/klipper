@@ -53,40 +53,51 @@ config STACK_SIZE
 # Bootloader options
 ######################################################################
 
-config RP2040_HAVE_STAGE2
-    bool
-config RP2040_HAVE_BOOTLOADER
-    bool
-    default y if !RP2040_HAVE_STAGE2
-
 choice
-    prompt "Bootloader offset"
-    config RP2040_FLASH_START_0100
-        bool "No bootloader"
-        select RP2040_HAVE_STAGE2
-    config RP2040_FLASH_START_4000
-        bool "16KiB bootloader"
-endchoice
-config FLASH_APPLICATION_ADDRESS
-    hex
-    default 0x10004000 if RP2040_FLASH_START_4000
-    default 0x10000100
+    prompt "NOR Flash Model" if LOW_LEVEL_OPTIONS
+    default RP2040_FLASH_W25Q080
 
-choice
-    prompt "Flash chip" if LOW_LEVEL_OPTIONS && RP2040_HAVE_STAGE2
+    config RP2040_FLASH_NOFLASH
+        bool "No NOR Flash"
     config RP2040_FLASH_W25Q080
         bool "W25Q080 with CLKDIV 2"
     config RP2040_FLASH_GENERIC_03
         bool "GENERIC_03H with CLKDIV 4"
 endchoice
 
+choice
+    prompt "Bootloader" if LOW_LEVEL_OPTIONS
+    default RP2040_BOOTLOADER_NO_BOOTLOADER
+
+    config RP2040_BOOTLOADER_NO_BOOTLOADER
+        bool "No bootloader"
+    config RP2040_BOOTLOADER_16KiB_BOOTLOADER
+        depends on !RP2040_FLASH_NOFLASH
+        bool "Generic ARM 16KiB bootloader"
+endchoice
+
+config RP2040_HAVE_STAGE2
+    bool # link with boot stage2
+    default y if RP2040_FLASH_W25Q080
+    default y if RP2040_FLASH_GENERIC_03
+    default n if RP2040_FLASH_NOFLASH
+    default y
+
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x10004000 if RP2040_BOOTLOADER_16KiB_BOOTLOADER
+    default 0x20000000 if RP2040_FLASH_NOFLASH
+    default 0x10000100
+
 config RP2040_STAGE2_FILE
     string
+    default "" if !RP2040_HAVE_STAGE2
     default "boot2_generic_03h.S" if RP2040_FLASH_GENERIC_03
     default "boot2_w25q080.S"
 
 config RP2040_STAGE2_CLKDIV
     int
+    default 0 if RP2040_FLASH_NOFLASH
     default 4 if RP2040_FLASH_GENERIC_03
     default 2
 
