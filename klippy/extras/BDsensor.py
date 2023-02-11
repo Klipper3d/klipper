@@ -4,7 +4,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import chelper
-import mcu
+import mcu,math
 from . import probe
 
 # Calculate a move's accel_t, cruise_t, and cruise_v
@@ -65,6 +65,8 @@ def MCU_BD_I2C_from_config(mcu,config):
     return MCU_I2C_BD(mcu,pin_sda,pin_scl,config.get('delay'))
 
 # BDsensor wrapper that enables probe specific features
+# set this type of sda_pin 2 as virtual endstop
+# add new gcode command M102 for BDsensor
 class BDsensorEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -81,6 +83,7 @@ class BDsensorEndstopWrapper:
         pin = config.get('sda_pin')
         pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
         self.mcu = mcu.get_printer_mcu(self.printer, 'mcu')
+        # set this type of sda_pin 2 as virtual endstop
         pin_params['pullup']=2
         self.mcu_endstop = self.mcu.setup_pin('endstop', pin_params)
         self.printer.register_event_handler('klippy:mcu_identify',
