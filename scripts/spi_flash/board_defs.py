@@ -99,7 +99,16 @@ BOARD_DEFS = {
         'spi_bus': "swspi",
         'spi_pins': "PC8,PD2,PC12",
         'cs_pin': "PC11",
-        'skip_verify': True
+        'skip_verify': True,
+        'firmware_path': "%%HASH%%.BIN"
+    },
+    'creality-cr-fdm-v2': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True,
+        'firmware_path': "STM32F~1/%%HASH%%.BIN"
     },
     'monster8': {
         'mcu': "stm32f407xx",
