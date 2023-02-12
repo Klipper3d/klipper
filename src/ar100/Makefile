@@ -11,15 +11,19 @@ CFLAGS_klipper.elf := $(CFLAGS) -Wl,-T,src/ar100/ar100.ld -Wl,-Map,out/klipper.m
 CFLAGS_klipper.elf += -Wl,--no-undefined  -Wl,--gc-sections -static
 CFLAGS_klipper.elf += -Wl,--no-dynamic-linker -Wl,--allow-multiple-definition
 
-SFLAGS		 = -nostdinc -Wa,--fatal-warnings -MMD -Wmissing-prototypes -Wall -Wextra
+SFLAGS		 = -nostdinc -Wa,--fatal-warnings -MMD
 SFLAGS		+= -Ilib/ar100
 
 # Add source files
 src-y += ar100/main.c ar100/gpio.c ar100/serial.c
 src-y += ar100/util.c ar100/timer.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
-src-y += buttons.c tmcuart.c spi_software.c
-src-y += spicmds.c sensor_adxl345.c
+
+# Remove files that are not needed to save space
+src-y := $(filter-out lcd_hd44780.c,$(src-y))
+src-y := $(filter-out lcd_st7920.c,$(src-y))
+src-y := $(filter-out sensor_angle.c,$(src-y))
+src-y := $(filter-out thermocouple.c,$(src-y))
 
 OBJS_klipper.elf += $(OUT)lib/ar100/start.o
 OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o

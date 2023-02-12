@@ -40,53 +40,14 @@ uint32_t r_uart_fifo_rcv(void){
   return read_reg(R_UART_RFL);
 }
 
-void uart_putc(char c){
-  while(!(read_reg(UART0_LSR) & 1<<5))
-    ;
-  write_reg(UART0_THR, c);
-}
-
 void r_uart_putc(char c){
   while(!(read_reg(R_UART_LSR) & 1<<5))
     ;
   write_reg(R_UART_THR, c);
 }
 
-void uart_puts(char *s){
-  while(*s){
-    if(*s == '\n')
-      uart_putc('\r');
-    uart_putc(*s++);
-  }
-}
 void r_uart_puts(char *s){
   while(*s){
     r_uart_putc(*s++);
   }
-}
-
-void uart_puth(uint32_t u){
-  char s[11] = {0};
-  s[0] = '0';
-  s[1] = 'x';
-  for(int i=9; i>=2; i--){
-    s[i] = (u%16>9?'A'-10:'0')+u%16;
-    u/=16;
-  }
-  uart_puts(s);
-}
-
-void uart_puti(uint32_t u){
-  char s[9] = {0};
-  for(int i=7; i>=0; i--){
-    s[i] = '0'+u%10;
-    u/=10;
-  }
-  uart_puts(s);
-}
-
-void uart_put_int(int32_t j){
-  uint32_t u = j > 0 ? j:-j;
-  uart_putc(j < 0 ? '-': '+');
-  uart_puti(u);
 }
