@@ -7,11 +7,11 @@ CFLAGS		+= -fno-pie
 CFLAGS		+= -ffreestanding
 CFLAGS		+= -msfimm -mshftimm -msoft-div -msoft-mul
 CFLAGS		+= -Ilib/ar100
-CFLAGS_klipper.elf := $(CFLAGS) -Wl,-T,src/ar100/ar100.ld -Wl,-Map,out/klipper.map
-CFLAGS_klipper.elf += -Wl,--no-undefined  -Wl,--gc-sections -static
-CFLAGS_klipper.elf += -Wl,--no-dynamic-linker -Wl,--allow-multiple-definition
+CFLAGS_klipper.elf := $(CFLAGS) -T src/ar100/ar100.ld
+CFLAGS_klipper.elf += -Wl,--gc-sections -static
+CFLAGS_klipper.elf += -Wl,--no-dynamic-linker
 
-SFLAGS		 = -nostdinc -Wa,--fatal-warnings -MMD
+SFLAGS		 = -nostdinc -MMD
 SFLAGS		+= -Ilib/ar100
 
 # Add source files
