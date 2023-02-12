@@ -213,6 +213,7 @@ class TMC2208:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "pwm_reg", 8)
         set_config_field(config, "pwm_lim", 12)
+        set_config_field(config, "internal_rsense", 0)
     def read_translate(self, reg_name, val):
         if reg_name == "IOIN":
             drv_type = self.fields.get_field("sel_a", val)

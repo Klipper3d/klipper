@@ -798,6 +798,13 @@ sensor_pin:
 #   The resistance (in ohms) of the pullup attached to the thermistor.
 #   This parameter is only valid when the sensor is a thermistor. The
 #   default is 4700 ohms.
+#adc_ref: 3.3
+#   Recore specific. The reference voltage for the ADC in the STM32
+#pullup_ref: 3.2
+#   Recore specific. The reference voltage used for the pull-up resistors.
+#vo_ref: 0
+#   Recore specific. The offset voltage used to in the summing op-amp.
+#   If this is > 0, the Recore specific settings will be applied.
 #smooth_time: 1.0
 #   A time value (in seconds) over which temperature measurements will
 #   be smoothed to reduce the impact of measurement noise. The default
@@ -2495,6 +2502,30 @@ serial_no:
 #   The micro-controller to read from. Must be the host_mcu
 ```
 
+=======
+### Thermocouple
+
+Thermocouple connected to an ADC. Requires gain and offset by an op-amp
+and cold junction compensation.
+```
+sensor_type: Type K
+sensor_pin:
+#   Analog input pin connected to the sensor. This parameter must be
+#   provided.
+# gain: 100
+#   Op-amp gain of the input stage.
+# offset: 0.7
+#   Voltage offset to allow for temperatures below the board temperature.
+# adc_voltage: 3.3
+#   ADC reference voltage.
+# cj_sensor: temperature_sensor cold_junction
+#   The cold junction compensation thermistor. This is a separate temperature
+#   measuring device located close to the input of the thermocouple.
+#
+# adc_voltage: Voltage on the ADC
+
+```
+
 ## Fans
 
 ### [fan]
@@ -3161,6 +3192,9 @@ run_current:
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
+#ref_resistor: 6800
+#   The resistance (in ohms) of the reference resistor used to calculate
+#   scaling of current in the case of using internal sense resistors
 #stealthchop_threshold: 0
 #   The velocity (in mm/s) to set the "stealthChop" threshold to. When
 #   set, "stealthChop" mode will be enabled if the stepper motor
@@ -3179,6 +3213,7 @@ run_current:
 #driver_PWM_FREQ: 1
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
+#driver_INTERNAL_RSENSE: 0
 #   Set the given register during the configuration of the TMC2208
 #   chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the
@@ -3207,6 +3242,9 @@ run_current:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
 #   chips are connected to the same UART pin. The default is zero.
+#ref_resistor: 6800
+#   The resistance (in ohms) of the reference resistor used to calculate
+#   scaling of current in the case of using internal sense resistors
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2
@@ -3221,6 +3259,7 @@ run_current:
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
 #driver_SGTHRS: 0
+#driver_INTERNAL_RSENSE: 0
 #   Set the given register during the configuration of the TMC2209
 #   chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the

@@ -130,23 +130,38 @@ class TMCCurrentHelper:
                                        above=0., maxval=MAX_CURRENT)
         self.req_hold_current = hold_current
         self.sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
+        self.ref_resistor = config.getfloat('ref_resistor', 6800., above=0.)
+        self.internal_r_sense = config.getint('driver_internal_rsense', 0)
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("ihold", ihold)
         self.fields.set_field("irun", irun)
     def _calc_current_bits(self, current, vsense):
-        sense_resistor = self.sense_resistor + 0.020
-        vref = 0.32
-        if vsense:
-            vref = 0.18
-        cs = int(32. * sense_resistor * current * math.sqrt(2.) / vref + .5) - 1
+        if self.internal_r_sense:
+            r_ref = self.ref_resistor + 450
+            v_ref = 5
+            rms_current_max = (3000 * v_ref / (r_ref * math.sqrt(2.)))
+            cs = int(32. * current / rms_current_max)
+        else:
+            sense_resistor = self.sense_resistor + 0.020
+            vref = 0.32
+            if vsense:
+                vref = 0.18
+            cs = int(32. * sense_resistor * current * math.sqrt(2.)
+                / vref + .5) - 1
         return max(0, min(31, cs))
     def _calc_current_from_bits(self, cs, vsense):
-        sense_resistor = self.sense_resistor + 0.020
-        vref = 0.32
-        if vsense:
-            vref = 0.18
-        return (cs + 1) * vref / (32. * sense_resistor * math.sqrt(2.))
+        if self.internal_r_sense:
+            r_ref = self.ref_resistor + 450
+            v_ref = 5
+            rms_current_max = (3000 * v_ref / (r_ref * math.sqrt(2.)))
+            return cs * rms_current_max / 32.
+        else:
+            sense_resistor = self.sense_resistor + 0.020
+            vref = 0.32
+            if vsense:
+                vref = 0.18
+            return (cs + 1) * vref / (32. * sense_resistor * math.sqrt(2.))
     def _calc_current(self, run_current, hold_current):
         vsense = True
         irun = self._calc_current_bits(run_current, True)
