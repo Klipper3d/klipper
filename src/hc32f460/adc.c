@@ -64,7 +64,7 @@ gpio_adc_setup(uint32_t gpio)
     int chan;
     for (chan=0; ; chan++)
     {
-        if (chan >= ADC1_CH_COUNT-1)   // don't allow internal
+        if (chan >= ARRAY_SIZE(adc_gpio))
         {
             shutdown("Not a valid ADC pin");
         }
@@ -77,7 +77,7 @@ gpio_adc_setup(uint32_t gpio)
     // set as analog
     gpio_peripheral(gpio, Pin_Mode_Ana, 0);
 
-    uint8_t sampleTime[ADC1_CH_COUNT] = { TIMEOUT_VAL };   // all channels
+    uint8_t sampleTime[ARRAY_SIZE(adc_gpio)] = { TIMEOUT_VAL };   // all channels
     stc_adc_ch_cfg_t stcAdcChan;
     stcAdcChan.u32Channel   = 1 << chan;
     stcAdcChan.u8Sequence   = ADC_SEQ_A;    // all conversions are in SEQ A

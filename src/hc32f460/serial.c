@@ -53,8 +53,8 @@
 
 // use USART 1 for serial connection
 #define USARTx          M4_USART1
-#define USART_ENABLE    PWC_FCG1_PERIPH_USART1 | PWC_FCG1_PERIPH_USART2 | \
-                        PWC_FCG1_PERIPH_USART3 | PWC_FCG1_PERIPH_USART4
+#define USART_ENABLE    (PWC_FCG1_PERIPH_USART1 | PWC_FCG1_PERIPH_USART2 | \
+                        PWC_FCG1_PERIPH_USART3 | PWC_FCG1_PERIPH_USART4)
 
 #define USART_RX_FUNC   Func_Usart1_Rx
 #define USART_TX_FUNC   Func_Usart1_Tx
