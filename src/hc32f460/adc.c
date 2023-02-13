@@ -77,7 +77,7 @@ gpio_adc_setup(uint32_t gpio)
     // set as analog
     gpio_peripheral(gpio, Pin_Mode_Ana, 0);
 
-    uint8_t sampleTime[ARRAY_SIZE(adc_gpio)] = { TIMEOUT_VAL };   // all channels
+    uint8_t sampleTime[ARRAY_SIZE(adc_gpio)] = { TIMEOUT_VAL };   // all chans
     stc_adc_ch_cfg_t stcAdcChan;
     stcAdcChan.u32Channel   = 1 << chan;
     stcAdcChan.u8Sequence   = ADC_SEQ_A;    // all conversions are in SEQ A
