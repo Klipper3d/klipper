@@ -1013,6 +1013,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1774,6 +1781,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -2267,6 +2281,12 @@ object:</p>
 <ul>
 <li><code>printer["servo &lt;config_name&gt;"].value</code>: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.</li>
+</ul>
+<h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>stepper_enable</code> object (this
+object is available if any stepper is defined):</p>
+<ul>
+<li><code>steppers["&lt;stepper&gt;"]</code>: Returns True if the given stepper is enabled.</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the <code>system_stats</code> object
