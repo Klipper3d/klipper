@@ -20,6 +20,7 @@ class ExtruderStepper:
         self.sk_extruder = ffi_main.gc(ffi_lib.extruder_stepper_alloc(),
                                        ffi_lib.free)
         self.stepper.set_stepper_kinematics(self.sk_extruder)
+        self.motion_queue = None
         # Register commands
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
@@ -49,7 +50,8 @@ class ExtruderStepper:
         self._set_pressure_advance(self.config_pa, self.config_smooth_time)
     def get_status(self, eventtime):
         return {'pressure_advance': self.pressure_advance,
-                'smooth_time': self.pressure_advance_smooth_time}
+                'smooth_time': self.pressure_advance_smooth_time,
+                'motion_queue': self.motion_queue}
     def find_past_position(self, print_time):
         mcu_pos = self.stepper.get_past_mcu_position(print_time)
         return self.stepper.mcu_to_commanded_position(mcu_pos)
@@ -58,6 +60,7 @@ class ExtruderStepper:
         toolhead.flush_step_generation()
         if not extruder_name:
             self.stepper.set_trapq(None)
+            self.motion_queue = None
             return
         extruder = self.printer.lookup_object(extruder_name, None)
         if extruder is None or not isinstance(extruder, PrinterExtruder):
@@ -65,6 +68,7 @@ class ExtruderStepper:
                                              % (extruder_name,))
         self.stepper.set_position([extruder.last_position, 0., 0.])
         self.stepper.set_trapq(extruder.get_trapq())
+        self.motion_queue = extruder_name
     def _set_pressure_advance(self, pressure_advance, smooth_time):
         old_smooth_time = self.pressure_advance_smooth_time
         if not self.pressure_advance:

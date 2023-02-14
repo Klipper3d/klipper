@@ -126,6 +126,9 @@ The following information is available for extruder_stepper objects (as well as
 [extruder](Config_Reference.md#extruder) objects):
 - `pressure_advance`: The current [pressure advance](Pressure_Advance.md) value.
 - `smooth_time`: The current pressure advance smooth time.
+- `motion_queue`: The name of the extruder that this extruder stepper is
+  currently synchronized to.  This is reported as `None` if the extruder stepper
+  is not currently associated with an extruder.
 
 ## fan
 
@@ -394,6 +397,12 @@ The following information is available in
 [servo some_name](Config_Reference.md#servo) objects:
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
+
+## stepper_enable
+
+The following information is available in the `stepper_enable` object (this
+object is available if any stepper is defined):
+- `steppers["<stepper>"]`: Returns True if the given stepper is enabled.
 
 ## system_stats
 
