@@ -549,8 +549,9 @@ clears any error state from the micro-controller.
 The following standard G-Code commands are available if a
 [gcode_arcs config section](Config_Reference.md#gcode_arcs) is
 enabled:
-- Controlled Arc Move (G2 or G3): `G2 [X<pos>] [Y<pos>] [Z<pos>]
-  [E<pos>] [F<speed>] I<value> J<value>`
+- Arc Move Clockwise (G2), Arc Move Counter-clockwise (G3): `G2|G3 [X<pos>] [Y<pos>] [Z<pos>]
+  [E<pos>] [F<speed>] I<value> J<value>|I<value> K<value>|J<value> K<value>`
+- Arc Plane Select: G17 (XY plane), G18 (XZ plane), G19 (YZ plane)
 
 ### [gcode_macro]
 
@@ -810,9 +811,17 @@ The following command is available when an
 enabled.
 
 #### SET_PIN
-`SET_PIN PIN=config_name VALUE=<value> CYCLE_TIME=<cycle_time>`:
-Note - hardware PWM does not currently support the CYCLE_TIME
-parameter and will use the cycle time defined in the config.
+`SET_PIN PIN=config_name VALUE=<value> [CYCLE_TIME=<cycle_time>]`: Set
+the pin to the given output `VALUE`. VALUE should be 0 or 1 for
+"digital" output pins. For PWM pins, set to a value between 0.0 and
+1.0, or between 0.0 and `scale` if a scale is configured in the
+output_pin config section.
+
+Some pins (currently only "soft PWM" pins) support setting an explicit
+cycle time using the CYCLE_TIME parameter (specified in seconds). Note
+that the CYCLE_TIME parameter is not stored between SET_PIN commands
+(any SET_PIN command without an explicit CYCLE_TIME parameter will use
+the `cycle_time` specified in the output_pin config section).
 
 ### [palette2]
 

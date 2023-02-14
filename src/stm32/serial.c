@@ -57,8 +57,11 @@ void
 USARTx_IRQHandler(void)
 {
     uint32_t sr = USARTx->SR;
-    if (sr & (USART_SR_RXNE | USART_SR_ORE))
+    if (sr & (USART_SR_RXNE | USART_SR_ORE)) {
+        // The ORE flag is automatically cleared by reading SR, followed
+        // by reading DR.
         serial_rx_byte(USARTx->DR);
+    }
     if (sr & USART_SR_TXE && USARTx->CR1 & USART_CR1_TXEIE) {
         uint8_t data;
         int ret = serial_get_tx_byte(&data);

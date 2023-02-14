@@ -193,6 +193,7 @@ def call_picoboot(bus, addr, binfile, sudo):
 
 # Flash via Klipper modified "picoboot"
 def flash_picoboot(device, binfile, sudo):
+    ttyname, serbypath = translate_serial_to_tty(device)
     buspath, devpath = translate_serial_to_usb_path(device)
     # We need one level up to get access to busnum/devnum files
     usbdir = os.path.dirname(devpath)
@@ -202,7 +203,10 @@ def flash_picoboot(device, binfile, sudo):
         bus = f.read().strip()
     with open(usbdir + "/devnum") as f:
         addr = f.read().strip()
-    call_picoboot(bus, addr, binfile, sudo)
+    if detect_canboot(devpath):
+        call_flashcan(serbypath, binfile)
+    else:
+        call_picoboot(bus, addr, binfile, sudo)
 
 
 ######################################################################
@@ -342,7 +346,7 @@ MCUTYPES = {
     'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
     'stm32f072': flash_stm32f4, 'stm32g0b1': flash_stm32f4,
     'stm32h7': flash_stm32f4, 'stm32l4': flash_stm32f4,
-    'rp2040': flash_rp2040,
+    'stm32g4': flash_stm32f4, 'rp2040': flash_rp2040,
 }
 
 

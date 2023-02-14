@@ -14,6 +14,8 @@
 #include "stm32f4xx.h"
 #elif CONFIG_MACH_STM32G0
 #include "stm32g0xx.h"
+#elif CONFIG_MACH_STM32G4
+#include "stm32g4xx.h"
 #elif CONFIG_MACH_STM32H7
 #include "stm32h7xx.h"
 #elif CONFIG_MACH_STM32L4
@@ -38,6 +40,10 @@ void gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup);
 // clockline.c
 void enable_pclock(uint32_t periph_base);
 int is_enabled_pclock(uint32_t periph_base);
+
+// dfu_reboot.c
+void dfu_reboot(void);
+void dfu_reboot_check(void);
 
 // stm32??.c
 struct cline { volatile uint32_t *en, *rst; uint32_t bit; };

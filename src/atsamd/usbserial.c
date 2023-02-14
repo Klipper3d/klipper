@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "autoconf.h" // CONFIG_FLASH_START
+#include "autoconf.h" // CONFIG_MACH_SAMD21
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/io.h" // writeb
 #include "board/usb_cdc.h" // usb_notify_ep0
