@@ -25,29 +25,23 @@
 //                             from=t-smooth_time/2, to=t+smooth_time/2)
 //         / ((smooth_time/2)**2))
 
-// Calculate the definitive integral of the motion formula:
-//   position(t) = base + t * (start_v + t * half_accel)
-static double
-extruder_integrate(double base, double start_v, double half_accel
-                   , double start, double end)
-{
-    double half_v = .5 * start_v, sixth_a = (1. / 3.) * half_accel;
-    double si = start * (base + start * (half_v + start * sixth_a));
-    double ei = end * (base + end * (half_v + end * sixth_a));
-    return ei - si;
-}
-
 // Calculate the definitive integral of time weighted position:
 //   weighted_position(t) = t * (base + t * (start_v + t * half_accel))
-static double
-extruder_integrate_time(double base, double start_v, double half_accel
-                        , double start, double end)
+//              - time_offset * (base + t * (start_v + t * half_accel))
+inline static double
+extruder_integrate_weighted(double base, double start_v, double half_accel
+                            , double start, double end, double time_offset)
 {
-    double half_b = .5 * base, third_v = (1. / 3.) * start_v;
-    double eighth_a = .25 * half_accel;
-    double si = start * start * (half_b + start * (third_v + start * eighth_a));
-    double ei = end * end * (half_b + end * (third_v + end * eighth_a));
-    return ei - si;
+    double delta_t = end - start;
+    double end2 = end * end;
+    double start2 = start * start;
+    double c1 = .5 * (end + start);
+    double c2 = 1./3. * (end2 + end * start + start2);
+    double c3 = .5 * c1 * (end2 + start2);
+    double avg_val = base * (c1 - time_offset)
+        + start_v * (c2 - c1 * time_offset)
+        + half_accel * (c3 - c2 * time_offset);
+    return delta_t * avg_val;
 }
 
 // Calculate the definitive integral of extruder for a given move
@@ -66,15 +60,13 @@ pa_move_integrate(struct move *m, int axis
     double start_v = m->start_v * axis_r;
     double ha = m->half_accel * axis_r;
     // Calculate definitive integral
-    double iext = extruder_integrate(base, start_v, ha, start, end);
-    double wgt_ext = extruder_integrate_time(base, start_v, ha, start, end);
-    *pos_integral = wgt_ext - time_offset * iext;
+    *pos_integral = extruder_integrate_weighted(
+            base, start_v, ha, start, end, time_offset);
     if (!can_pressure_advance) {
         *pa_velocity_integral = 0.;
     } else {
-        double ivel = extruder_integrate(start_v, 2. * ha, 0., start, end);
-        double wgt_vel = extruder_integrate(0., start_v, 2. * ha, start, end);
-        *pa_velocity_integral = wgt_vel - time_offset * ivel;
+        *pa_velocity_integral = extruder_integrate_weighted(
+                start_v, 2. * ha, 0., start, end, time_offset);
     }
 }
 
