@@ -261,9 +261,17 @@ class PrinterHoming:
                 axes.append(pos)
         if not axes:
             axes = [0, 1, 2]
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        if gcmd.get('O', None) is not None:
+            curtime = self.printer.get_reactor().monotonic()
+            lazy_axes = kin.get_status(curtime)['homed_axes']
+            for pos, axis in enumerate('xyz'):
+                if axis in lazy_axes and pos in axes:
+                    axes.remove(pos)
+            if not axes:
+                return # Skip homing entirely if lazy and already homed.
         homing_state = Homing(self.printer)
         homing_state.set_axes(axes)
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
         try:
             kin.home(homing_state)
         except self.printer.command_error:

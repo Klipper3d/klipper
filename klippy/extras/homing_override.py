@@ -30,13 +30,19 @@ class HomingOverride:
                 no_axis = False
                 break
 
+        lazy_axes = ''
+        if gcmd.get('O', None) is not None:
+            kin = self.printer.lookup_object('toolhead').get_kinematics()
+            curtime = self.printer.get_reactor().monotonic()
+            lazy_axes = kin.get_status(curtime)['homed_axes'].upper()
+
         if no_axis:
-            override = True
+            override = lazy_axes != 'XYZ'
         else:
             # check if we home an axis which needs the override
             override = False
             for axis in self.axes:
-                if gcmd.get(axis, None) is not None:
+                if gcmd.get(axis, None) is not None and axis not in lazy_axes:
                     override = True
 
         if not override:

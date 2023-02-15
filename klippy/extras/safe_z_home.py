@@ -53,18 +53,22 @@ class SafeZHoming:
         if not need_x and not need_y and not need_z:
             need_x = need_y = need_z = True
 
+        # Use lazy homing if requested
+        lazy_axes = ([] if gcmd.get('O', None) is None
+                     else kin_status['homed_axes'])
+
         # Home XY axes if necessary
         new_params = {}
-        if need_x:
+        if need_x and 'x' not in lazy_axes:
             new_params['X'] = '0'
-        if need_y:
+        if need_y and 'y' not in lazy_axes:
             new_params['Y'] = '0'
         if new_params:
             g28_gcmd = self.gcode.create_gcode_command("G28", "G28", new_params)
             self.prev_G28(g28_gcmd)
 
         # Home Z axis if necessary
-        if need_z:
+        if need_z and 'z' not in lazy_axes:
             # Throw an error if X or Y are not homed
             curtime = self.printer.get_reactor().monotonic()
             kin_status = toolhead.get_kinematics().get_status(curtime)
