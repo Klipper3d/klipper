@@ -27,5 +27,5 @@ fi
 
 if [ -f /etc/systemd/system/klipper-mcu.service ]; then
     echo "Attempting host MCU restart..."
-    service klipper-mcu restart
+    systemctl restart klipper-mcu
 fi
