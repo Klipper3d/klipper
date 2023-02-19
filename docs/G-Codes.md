@@ -656,8 +656,10 @@ the config file.
 
 #### TEMPERATURE_WAIT
 `TEMPERATURE_WAIT SENSOR=<config_name> [MINIMUM=<target>]
-[MAXIMUM=<target>]`: Wait until the given temperature sensor is at or
+[MAXIMUM=<target>] [SETTLE=0]`: Wait until the given temperature sensor is at or
 above the supplied MINIMUM and/or at or below the supplied MAXIMUM.
+If the SETTLE parameter is enabled, the temperature also needs to settle according to the
+'settle_slope' [extruder config section](Config_Reference.md#extruder) parameter.
 
 #### SET_HEATER_TEMPERATURE
 `SET_HEATER_TEMPERATURE HEATER=<heater_name>

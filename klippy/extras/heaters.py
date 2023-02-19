@@ -106,10 +106,10 @@ class Heater:
             if self.last_temp_time < print_time:
                 return 0., self.target_temp
             return self.smoothed_temp, self.target_temp
-    def check_busy(self, eventtime):
+    def check_busy(self, eventtime, compat=1):
         with self.lock:
             return self.control.check_busy(
-                eventtime, self.smoothed_temp, self.target_temp)
+                eventtime, self.smoothed_temp*compat, self.target_temp*compat)
     def set_control(self, control):
         with self.lock:
             old_control = self.control
@@ -170,7 +170,6 @@ class ControlBangBang:
 ######################################################################
 
 PID_SETTLE_DELTA = 1.
-PID_SETTLE_SLOPE = .1
 
 class ControlPID:
     def __init__(self, heater, config):
@@ -179,6 +178,7 @@ class ControlPID:
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.settle_slope = config.getfloat('settle_slope', .1, above=0.)
         self.min_deriv_time = heater.get_smooth_time()
         self.temp_integ_max = 0.
         if self.Ki:
@@ -215,7 +215,7 @@ class ControlPID:
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
-                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+                or abs(self.prev_temp_deriv) > self.settle_slope)
 
 
 ######################################################################
@@ -347,6 +347,7 @@ class PrinterHeaters:
             raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
         min_temp = gcmd.get_float('MINIMUM', float('-inf'))
         max_temp = gcmd.get_float('MAXIMUM', float('inf'), above=min_temp)
+        temp_settle = bool(gcmd.get_int('SETTLE', 0))
         if min_temp == float('-inf') and max_temp == float('inf'):
             raise gcmd.error(
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
@@ -361,7 +362,8 @@ class PrinterHeaters:
         eventtime = reactor.monotonic()
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
-            if temp >= min_temp and temp <= max_temp:
+            if (temp >= min_temp and temp <= max_temp and (True, False)
+                [temp_settle and sensor.check_busy(eventtime, compat=0)]):
                 return
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))

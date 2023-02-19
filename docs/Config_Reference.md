@@ -840,6 +840,12 @@ max_temp:
 #   heater and sensor hardware failures. Set this range just wide
 #   enough so that reasonable temperatures do not result in an error.
 #   These parameters must be provided.
+#settle_slope: 0.1
+#   The maximum allowable (absolute) slope in temperature for the
+#   heater to signal that it reached target temperature.
+#   The smaller the value, the more the temperature needs to stabilize.
+#   Only used for M109/190 and TEMPERATURE_WAIT
+#   The default is 0.1
 ```
 
 ### [heater_bed]
