@@ -252,16 +252,11 @@ class PATest:
                             origin_y - perimeter_y_offset,
                             (perimeter_x_offset - x_switching_pos) * extr_r,
                             fast_velocity * 60.)
-                    yield 'G1 X%.3f Y%.3f E%.6f F%.f' % (
-                            origin_x - x_switching_pos + VERY_SLOW_SEG,
-                            origin_y - perimeter_y_offset,
-                            VERY_SLOW_SEG * extr_r,
-                            .5 * scv_velocity * 60.)
+                    yield 'G4 P0.001'
                     yield 'G1 X%.3f Y%.3f E%.6f F%.f' % (
                             origin_x - .5 * SLOW_NOTCH_SIZE,
                             origin_y - perimeter_y_offset,
-                            (x_switching_pos - .5 * SLOW_NOTCH_SIZE
-                                - VERY_SLOW_SEG) * extr_r,
+                            (x_switching_pos - .5 * SLOW_NOTCH_SIZE) * extr_r,
                             fast_velocity * 60.)
                     yield 'G1 X%.3f Y%.3f E%.6f F%.f' % (
                             origin_x + .5 * SLOW_NOTCH_SIZE,
