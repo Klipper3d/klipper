@@ -15,7 +15,7 @@ Klipper has several compelling features:
   movement provides quieter and more stable printer operation.
 
 * Best in class performance. Klipper is able to achieve high stepping
-  rates on both new and old micro-controllers. Even old 8bit
+  rates on both new and old micro-controllers. Even old 8-bit
   micro-controllers can obtain rates over 175K steps per second. On
   more recent micro-controllers, several million steps per second are
   possible. Higher stepper rates enable higher print velocities. The

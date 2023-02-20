@@ -216,7 +216,7 @@ after the above compilation:
 ```
 ls ./build/pysimulavr/_pysimulavr.*.so
 ```
-This commmand should report a specific file (e.g.
+This command should report a specific file (e.g.
 **./build/pysimulavr/_pysimulavr.cpython-39-x86_64-linux-gnu.so**) and
 not an error.
 
