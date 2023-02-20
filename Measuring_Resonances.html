@@ -1672,7 +1672,7 @@ that it has a voltage regulator and a level shifter.</p>
 <h2 id="installation-instructions">Installation instructions<a class="headerlink" href="#installation-instructions" title="Permanent link">&para;</a></h2>
 <h3 id="wiring">Wiring<a class="headerlink" href="#wiring" title="Permanent link">&para;</a></h3>
 <p>An ethernet cable with shielded twisted pairs (cat5e or better) is recommended
-for signal integrety over a long distance. If you still experience signal integrity
+for signal integrity over a long distance. If you still experience signal integrity
 issues (SPI/I2C errors), shorten the cable.</p>
 <p>Connect ethernet cable shielding to the controller board/RPI ground.</p>
 <p><strong><em>Double-check your wiring before powering up to prevent
@@ -1686,7 +1686,7 @@ SCLK+CS
 
 <h5 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h5>
 <p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and
-configuration will vary according to your specific board and avaliable pins.</strong></p>
+configuration will vary according to your specific board and available pins.</strong></p>
 <p>You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
 and <strong>will not work</strong>. The recommended connection scheme:</p>
@@ -1702,7 +1702,7 @@ and <strong>will not work</strong>. The recommended connection scheme:</p>
 <tr>
 <td align="center">3V3 (or VCC)</td>
 <td align="center">01</td>
-<td align="center">3.3v DC power</td>
+<td align="center">3.3V DC power</td>
 </tr>
 <tr>
 <td align="center">GND</td>
@@ -1989,7 +1989,7 @@ max_accel: 3000  # should not exceed the estimated max_accel for X and Y axes
 <p>or you can choose some other configuration yourself based on the generated
 charts: peaks in the power spectral density on the charts correspond to
 the resonance frequencies of the printer.</p>
-<p>Note that alternatively you can run the input shaper autocalibration
+<p>Note that alternatively you can run the input shaper auto-calibration
 from Klipper <a href="#input-shaper-auto-calibration">directly</a>, which can be
 convenient, for example, for the input shaper
 <a href="#input-shaper-re-calibration">re-calibration</a>.</p>
@@ -2196,9 +2196,9 @@ supplying <code>AXIS=</code> parameter, like</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
 </code></pre></div>
 
-<p><strong>Warning!</strong> It is not advisable to run the shaper autocalibration very
+<p><strong>Warning!</strong> It is not advisable to run the shaper auto-calibration very
 frequently (e.g. before every print, or every day). In order to determine
-resonance frequencies, autocalibration creates intensive vibrations on each of
+resonance frequencies, auto-calibration creates intensive vibrations on each of
 the axes. Generally, 3D printers are not designed to withstand a prolonged
 exposure to vibrations near the resonance frequencies. Doing so may increase
 wear of the printer components and reduce their lifespan. There is also an

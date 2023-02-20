@@ -885,8 +885,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#comment-ca-marche" class="md-nav__link">
-    Comment ça marche ?
+  <a href="#comment-cela-fonctionne-t-il" class="md-nav__link">
+    Comment cela fonctionne-t-il ?
   </a>
   
 </li>
@@ -1289,8 +1289,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#comment-ca-marche" class="md-nav__link">
-    Comment ça marche ?
+  <a href="#comment-cela-fonctionne-t-il" class="md-nav__link">
+    Comment cela fonctionne-t-il ?
   </a>
   
 </li>
@@ -1335,7 +1335,7 @@
 
 <h1 id="utilisation-des-outils-pwm">Utilisation des outils PWM<a class="headerlink" href="#utilisation-des-outils-pwm" title="Permanent link">&para;</a></h1>
 <p>Ce document décrit comment configurer un laser ou une broche contrôlée par PWM en utilisant <code>output_pin</code> et quelques macros.</p>
-<h2 id="comment-ca-marche">Comment ça marche ?<a class="headerlink" href="#comment-ca-marche" title="Permanent link">&para;</a></h2>
+<h2 id="comment-cela-fonctionne-t-il">Comment cela fonctionne-t-il ?<a class="headerlink" href="#comment-cela-fonctionne-t-il" title="Permanent link">&para;</a></h2>
 <p>En ré-utilisant la sortie pwm du ventilateur de la tête d'impression, vous pouvez contrôler des lasers ou des broches. Ceci est utile si vous utilisez des têtes d'impression commutables, par exemple le changeur d'outils E3D ou une solution DIY. Habituellement, les outils à came tels que LaserWeb peuvent être configurés pour utiliser les commandes <code>M3-M5</code>, qui correspondent à <em>vitesse de broche CW</em> (<code>M3 S[0-255]</code>), <em>vitesse de broche CCW</em> (<code>M4 S[0-255]</code>) et <em>arrêt de broche</em> (<code>M5</code>).</p>
 <p><strong>Avertissement :</strong> Lorsque vous pilotez un laser, prenez toutes les précautions de sécurité auxquelles vous pouvez penser ! Les lasers à diodes sont généralement inversés. Cela signifie que lorsque l'unité centrale redémarre, le laser sera <em>complètement allumé</em> pendant le temps nécessaire à l'unité centrale pour redémarrer. Pour faire bonne mesure, il est recommandé de <em>toujours</em> porter des lunettes laser appropriées de la bonne longueur d'onde si le laser est alimenté ; et de déconnecter le laser lorsqu'il n'est pas nécessaire. Vous devriez également configurer un délai de sécurité, de sorte que lorsque votre hôte ou votre MCU rencontre une erreur, l'outil s'arrête.</p>
 <p>Pour un exemple de configuration, voir <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>.</p>

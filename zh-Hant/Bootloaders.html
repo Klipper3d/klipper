@@ -1627,7 +1627,7 @@
 <p>如果能用某種方式將 bootloader 刷寫到微控制器，使用該方式通常也能完成程式刷寫操作，但是，這種直接刷寫可能會將 bootloader 覆蓋掉。相對地，bootloader 只允許使用者刷寫應用程式區域。因此，儘可能使用 bootloader 完成程式的刷寫。</p>
 <p>該文件將盡可能介紹常見的bootloaders，刷入bootloader所需的步驟和觸發bootloader進行程式刷寫的流程。該文件亦非官方指引，這只是在Klipper開發人員使用過程中收集到的有用資訊。</p>
 <h2 id="avr">AVR 微控制器<a class="headerlink" href="#avr" title="Permanent link">&para;</a></h2>
-<p>總體上來說，Arduino專案是8位Atmel Atmega微控制器的載入程式和刷寫程式的好的參考。特別是" boards.txt "檔案。 <a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt">https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt</a>是一個有用的參考。</p>
+<p>總體上來說，Arduino專案是8位Atmel Atmega微控制器的載入程式和刷寫程式的好的參考。特別是" boards.txt "檔案。<a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt">https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt</a>是一個有用的參考。</p>
 <p>要刷寫載入程式本身，AVR 晶片需要一個外部硬體刷寫工具（它使用 SPI 與晶片進行通訊）。這個工具可以購買（例如，在網上搜索 "avr isp"、"arduino isp "或 "usb tiny isp"）。也可以使用另一個Arduino或Raspberry Pi來快閃記憶體AVR載入程式（例如，在網上搜索 "用raspberry pi程式設計AVR"）。下面的例子是在假設使用 "AVR ISP Mk2 "型別的裝置的情況下編寫的。</p>
 <p>"avrdude "程式是最常用的工具，用於刷寫atmega晶片（包括載入程式刷寫和應用程式刷寫）。</p>
 <h3 id="atmega2560">Atmega2560<a class="headerlink" href="#atmega2560" title="Permanent link">&para;</a></h3>
@@ -1678,7 +1678,7 @@ avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 
 <h3 id="at90usb1286">At90usb1286<a class="headerlink" href="#at90usb1286" title="Permanent link">&para;</a></h3>
 <p>本檔案不包括向At90usb1286刷寫載入程式的方法，也不包括向該裝置刷寫一般應用。</p>
-<p>來自pjrc.com的Teensy++裝置帶有一個專用的載入程式。它需要一個來自 <a href="https://github.com/PaulStoffregen/teensy_loader_cli">https://github.com/PaulStoffregen/teensy_loader_cli</a>的定製刷寫工具。可以用這個工具來刷寫一個應用程式，例如：</p>
+<p>來自pjrc.com的Teensy++裝置帶有一個專用的載入程式。它需要一個來自<a href="https://github.com/PaulStoffregen/teensy_loader_cli">https://github.com/PaulStoffregen/teensy_loader_cli</a>的定製刷寫工具。可以用這個工具來刷寫一個應用程式，例如：</p>
 <div class="highlight"><pre><span></span><code>teensy_loader_cli --mcu=at90usb1286 out/klipper.elf.hex -v
 </code></pre></div>
 
@@ -1740,7 +1740,7 @@ program samd21_sam_ba.bin verify
 <div class="highlight"><pre><span></span><code>來源 [查詢目標/atsame5x.cfg]
 </code></pre></div>
 
-<p>獲得一個載入程式--很多載入程式可以從 <a href="https://github.com/adafruit/uf2-samdx1/releases/latest">https://github.com/adafruit/uf2-samdx1/releases/latest</a>獲得。例如：</p>
+<p>獲得一個載入程式--很多載入程式可以從<a href="https://github.com/adafruit/uf2-samdx1/releases/latest">https://github.com/adafruit/uf2-samdx1/releases/latest</a>獲得。例如：</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/adafruit/uf2-samdx1/releases/download/v3.7.0/bootloader-itsybitsy_m4-v3.7.0.bin&#39;
 </code></pre></div>
 
@@ -1759,10 +1759,10 @@ at91samd bootloader 16384
 <div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
-<p>注意，如果使用樹莓派的3.3V串列埠，stm32flash協議使用的序列奇偶校驗模式，樹莓派的 "mini UART "並不支援。關於在樹莓派的GPIO引腳上啟用完整的UART的細節，見 <a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a>。</p>
+<p>注意，如果使用樹莓派的3.3V串列埠，stm32flash協議使用的序列奇偶校驗模式，樹莓派的 "mini UART "並不支援。關於在樹莓派的GPIO引腳上啟用完整的UART的細節，見<a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a>。</p>
 <p>刷寫后，將 "boot 0 "和 "boot 1 "都恢復設為低電平，以便在復位后從快閃記憶體啟動。</p>
 <h3 id="stm32duino-stm32f103">帶有 stm32duino 引導載入程式的 STM32F103<a class="headerlink" href="#stm32duino-stm32f103" title="Permanent link">&para;</a></h3>
-<p>"stm32duino "專案有一個USB功能的載入程式-參見： <a href="https://github.com/rogerclarkmelbourne/STM32duino-bootloader">https://github.com/rogerclarkmelbourne/STM32duino-bootloader</a></p>
+<p>"stm32duino "專案有一個USB功能的載入程式-參見：<a href="https://github.com/rogerclarkmelbourne/STM32duino-bootloader">https://github.com/rogerclarkmelbourne/STM32duino-bootloader</a></p>
 <p>這個載入程式可以通過3.3V的串列埠用類似以下的命令來刷寫：</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/rogerclarkmelbourne/STM32duino-bootloader/raw/master/binaries/generic_boot20_pc13.bin&#39;
 
@@ -1866,11 +1866,11 @@ stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
 <p>與STM32F1一樣，STM32F4使用hid-flash工具來上傳二進制檔案到MCU。關於如何構建和使用hid-flash的細節，請參見上面的說明。</p>
 <p>可能需要手動進入載入程式，這可以通過設定 "boot 0 "為低電平，"boot 1 "為高電平並上電來完成。程式設計完成後，裝置斷電，將 "boot 1 "重設為低電平，這樣應用程式就會被載入。</p>
 <h2 id="lpc176xsmoothieboards">LPC176x微控制器（Smoothieboards）<a class="headerlink" href="#lpc176xsmoothieboards" title="Permanent link">&para;</a></h2>
-<p>本檔案沒有描述刷寫載入程式本身的方法--見： <a href="http://smoothieware.org/flashing-the-bootloader">http://smoothieware.org/flashing-the-bootloader</a>以獲得關於該主題的進一步資訊。</p>
-<p>Smoothieboards通常帶有一個來自 <a href="https://github.com/triffid/LPC17xx-DFU-Bootloader">https://github.com/triffid/LPC17xx-DFU-Bootloader</a>的bootloader。當使用這個載入程式時，應用程式必須以16KiB的起始地址進行編譯。用這個載入程式刷寫應用程式的最簡單方法是將應用程式檔案（例如<code>out/klipper.bin</code>）複製到SD卡上一個名為<code>firmware.bin</code>的檔案，然後用該SD卡重新啟動微控制器。</p>
+<p>本檔案沒有描述刷寫載入程式本身的方法--見：<a href="http://smoothieware.org/flashing-the-bootloader">http://smoothieware.org/flashing-the-bootloader</a>以獲得關於該主題的進一步資訊。</p>
+<p>Smoothieboards通常帶有一個來自<a href="https://github.com/triffid/LPC17xx-DFU-Bootloader">https://github.com/triffid/LPC17xx-DFU-Bootloader</a>的bootloader。當使用這個載入程式時，應用程式必須以16KiB的起始地址進行編譯。用這個載入程式刷寫應用程式的最簡單方法是將應用程式檔案（例如<code>out/klipper.bin</code>）複製到SD卡上一個名為<code>firmware.bin</code>的檔案，然後用該SD卡重新啟動微控制器。</p>
 <h2 id="openocd">在樹莓派上執行OpenOCD<a class="headerlink" href="#openocd" title="Permanent link">&para;</a></h2>
 <p>OpenOCD是一個軟體包，可以進行底層的晶片程式設計和除錯。它可以使用樹莓派上的GPIO引腳與各種ARM晶片通訊。</p>
-<p>本節描述瞭如何安裝和啟動OpenOCD。它來自於以下的說明： <a href="https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi">https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi</a></p>
+<p>本節描述瞭如何安裝和啟動OpenOCD。它來自於以下的說明：<a href="https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi">https://learn.adafruit.com/programming-microcontrollers-using-openocd-on-raspberry-pi</a></p>
 <p>開始下載和編譯軟體（每個步驟可能需要數分鐘，"make "步驟可能需要30分鐘以上）：</p>
 <div class="highlight"><pre><span></span><code>sudo apt-get update
 sudo apt-get install autoconf libtool telnet

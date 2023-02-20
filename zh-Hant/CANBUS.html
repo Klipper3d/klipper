@@ -1370,7 +1370,7 @@
 <p>爲了使用 CAN 匯流排，主機需要一個適配器。目前有兩種常見的選擇：</p>
 <ol>
 <li>使用<a href="https://www.waveshare.com/rs485-can-hat.htm">Waveshare Raspberry Pi CAN hat</a>或其眾多克隆中的一個。</li>
-<li>使用一個USB CAN適配器（例如 <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>）。有許多不同的USB到CAN適配器—當選擇時，我們建議驗證它是否能執行<a href="https://github.com/candle-usb/candleLight_fw">candlelight 韌體</a>。(不幸的是，我們發現一些USB適配器執行有缺陷的韌體，並被鎖死，所以在購買前要進行覈實。）</li>
+<li>使用一個USB CAN適配器（例如<a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>）。有許多不同的USB到CAN適配器—當選擇時，我們建議驗證它是否能執行<a href="https://github.com/candle-usb/candleLight_fw">candlelight 韌體</a>。(不幸的是，我們發現一些USB適配器執行有缺陷的韌體，並被鎖死，所以在購買前要進行覈實。）</li>
 </ol>
 <p>還需要將主機操作系統配置為使用適配器。通常可以通過建立一個名為 <code>/etc/network/interfaces.d/can0</code> 的新檔案來實現，該檔案包含以下內容：</p>
 <div class="highlight"><pre><span></span><code>auto can0

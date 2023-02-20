@@ -1517,13 +1517,13 @@ in dictionary, for example:</p>
 
 <p>The following fields may be specified:</p>
 <ul>
-<li><code>mcu</code>: The mcu type.  This can be retrevied after configuring the build
+<li><code>mcu</code>: The mcu type.  This can be retrieved after configuring the build
   via <code>make menuconfig</code> by running <code>cat .config | grep CONFIG_MCU</code>.  This
   field is required.</li>
-<li><code>spi_bus</code>:  The SPI bus connected to the SD Card.  This should be retreived
+<li><code>spi_bus</code>:  The SPI bus connected to the SD Card.  This should be retrieved
   from the board's schematic.  This field is required.</li>
 <li><code>cs_pin</code>: The Chip Select Pin connected to the SD Card.  This should be
-  retreived from the board schematic.  This field is required.</li>
+  retrieved from the board schematic.  This field is required.</li>
 <li><code>firmware_path</code>: The path on the SD Card where firmware should be
   transferred.  The default is <code>firmware.bin</code>.</li>
 <li><code>current_firmware_path</code>: The path on the SD Card where the renamed firmware

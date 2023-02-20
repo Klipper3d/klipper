@@ -5021,7 +5021,7 @@ pins:
 
 <h2 id="hardware-per-probing-del-piatto">Hardware per probing del piatto<a class="headerlink" href="#hardware-per-probing-del-piatto" title="Permanent link">&para;</a></h2>
 <h3 id="probe">[probe]<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h3>
-<p>Sonda di altezza Z. Si può definire questa sezione per abilitare l'hardware di rilevamento dell'altezza Z. Quando questa sezione è abilitata, i comandi estesi PROBE e QUERY_PROBE <a href="G-Codes.html#probe">comandi g-code</a> diventano disponibili. Inoltre, vedere la <a href="Probe_Calibrate.html">Guida alla calibrazione della sonda</a>. La sezione probe crea anche un pin virtuale "probe:z_virtual_endstop". Si può impostare stepper_z endstop_pin su questo pin virtuale su stampanti in stile cartesiano che utilizzano la sonda al posto di un endstop z. Se si utilizza "probe:z_virtual_endstop", non definire un position_endstop nella sezione di configurazione stepper_z.</p>
+<p>Sonda di altezza Z. Si può definire questa sezione per abilitare l'hardware di rilevamento dell'altezza Z. Quando questa sezione è abilitata, i comandi estesi PROBE e QUERY_PROBE  <a href="G-Codes.html#probe">comandi g-code</a> diventano disponibili. Inoltre, vedere la <a href="Probe_Calibrate.html">Guida alla calibrazione della sonda</a>. La sezione probe crea anche un pin virtuale "probe:z_virtual_endstop". Si può impostare stepper_z endstop_pin su questo pin virtuale su stampanti in stile cartesiano che utilizzano la sonda al posto di un endstop z. Se si utilizza "probe:z_virtual_endstop", non definire un position_endstop nella sezione di configurazione stepper_z.</p>
 <div class="highlight"><pre><span></span><code>[probe]
 pin:
 #   Pin di rilevamento della sonda. Se il pin si trova su un
@@ -5481,7 +5481,7 @@ sensor_pin:
 </code></pre></div>
 
 <h3 id="sensore-di-temperatura-bmp280bme280bme680">Sensore di temperatura BMP280/BME280/BME680<a class="headerlink" href="#sensore-di-temperatura-bmp280bme280bme680" title="Permanent link">&para;</a></h3>
-<p>Sensori ambientali BMP280/BME280/BME680 con interfaccia I2C. Si noti che questi sensori non sono destinati all'uso con estrusori e letti riscaldanti, ma piuttosto per il monitoraggio della temperatura ambiente (C), della pressione (hPa), dell'umidità relativa (%)e di livello del gas per il BME680. Vedere <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> per una gcode_macro che può essere utilizzata per riportare la pressione e l'umidità oltre alla temperatura.</p>
+<p>Sensori ambientali BMP280/BME280/BME680 con interfaccia I2C. Si noti che questi sensori non sono destinati all'uso con estrusori e letti riscaldanti, ma piuttosto per il monitoraggio della temperatura ambiente (C), della pressione (hPa), dell'umidità relativa (%)e  di livello del gas per il BME680. Vedere <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> per una gcode_macro che può essere utilizzata per riportare la pressione e l'umidità oltre alla temperatura.</p>
 <div class="highlight"><pre><span></span><code>sensor_type: BME280
 #i2c_address:
 #   Il valore predefinito è 118 (0x76). Alcuni sensori BME280 hanno un

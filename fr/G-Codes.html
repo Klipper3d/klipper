@@ -4438,7 +4438,7 @@
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
 <p>Les commandes suivantes sont disponibles lorsque la section <a href="Config_Reference.html#bed_screws">config bed_screws</a> est activée (voir également le <a href="Manual_Level.html#adjusting-bed-leveling-screws">guide du nivelage manuel</a>).</p>
 <h4 id="bed_screws_adjust">BED_SCREWS_ADJUST<a class="headerlink" href="#bed_screws_adjust" title="Permanent link">&para;</a></h4>
-<p><code>BED_SCREWS_ADJUST</code>: Cette commande fait appel à l'outil de réglage des vis du bed. Elle commandera la buse à différents endroits (tels que définis dans le fichier de configuration) et permettra d'ajuster les vis du bed afin que celui-ci et la buse soient à distance constante.</p>
+<p><code>BED_SCREWS_ADJUST</code>: Cette commande fait appel à l'outil de réglage des vis du bed. Elle commandera la buse à différents endroits (tels que définis dans le fichier de configuration) et permettra d'ajuster les vis du bed afin  que celui-ci et la buse soient à distance constante.</p>
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
 <p>Les commandes suivantes sont disponibles lorsque la section <a href="Config_Reference.html#bed_tilt">config bed_tilt</a> est activée.</p>
 <h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
@@ -4641,8 +4641,8 @@
 <h3 id="output_pin">[output_pin]<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h3>
 <p>La commande suivante est disponible lorsqu'une section <a href="Config_Reference.html#output_pin">output_pin config</a> est activée.</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
-<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>: Set the pin to the given output <code>VALUE</code>. VALUE should be 0 or 1 for "digital" output pins. For PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and <code>scale</code> if a scale is configured in the output_pin config section.</p>
-<p>Some pins (currently only "soft PWM" pins) support setting an explicit cycle time using the CYCLE_TIME parameter (specified in seconds). Note that the CYCLE_TIME parameter is not stored between SET_PIN commands (any SET_PIN command without an explicit CYCLE_TIME parameter will use the <code>cycle_time</code> specified in the output_pin config section).</p>
+<p><code>SET_PIN PIN=nom_config VALUE=&lt;valeur&gt; [CYCLE_TIME=&lt;durée_du_cycle&gt;]</code> : Fixe la broche à la sortie donnée <code>VALUE</code>. VALUE doit être 0 ou 1 pour les broches de sortie "numériques". Pour les broches PWM, définissez une valeur entre 0.0 et 1.0, ou entre 0.0 et <code>scale</code> si une échelle est configurée dans la section output_pin config.</p>
+<p>Certaines broches (actuellement seulement les broches "soft PWM") supportent la définition d'un temps de cycle explicite en utilisant le paramètre CYCLE_TIME (spécifié en secondes). Notez que le paramètre CYCLE_TIME n'est pas stocké entre les commandes SET_PIN (toute commande SET_PIN sans paramètre CYCLE_TIME explicite utilisera le <code>cycle_time</code> spécifié dans la section output_pin config).</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
 <p>Les commandes suivantes sont disponibles lorsque la section <a href="Config_Reference.html#palette2">palette2 config</a> est activée.</p>
 <p>Les impressions avec Palette fonctionnent en intégrant des OCodes (Omega Codes) spéciaux dans le fichier GCode :</p>

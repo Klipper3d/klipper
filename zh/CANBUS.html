@@ -1370,7 +1370,7 @@
 <p>为了使用 CAN 总线，主机需要一个适配器。目前有两种常见的选择：</p>
 <ol>
 <li>使用<a href="https://www.waveshare.com/rs485-can-hat.htm">Waveshare Raspberry Pi CAN hat</a>或其众多克隆中的一个。</li>
-<li>使用一个USB CAN适配器（例如 <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>）。有许多不同的USB到CAN适配器—当选择时，我们建议验证它是否能运行<a href="https://github.com/candle-usb/candleLight_fw">candlelight 固件</a>。(不幸的是，我们发现一些USB适配器运行有缺陷的固件，并被锁死，所以在购买前要进行核实。）</li>
+<li>使用一个USB CAN适配器（例如<a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>）。有许多不同的USB到CAN适配器—当选择时，我们建议验证它是否能运行<a href="https://github.com/candle-usb/candleLight_fw">candlelight 固件</a>。(不幸的是，我们发现一些USB适配器运行有缺陷的固件，并被锁死，所以在购买前要进行核实。）</li>
 </ol>
 <p>还需要将主机操作系统配置为使用适配器。通常可以通过创建一个名为 <code>/etc/network/interfaces.d/can0</code> 的新文件来实现，该文件包含以下内容：</p>
 <div class="highlight"><pre><span></span><code>auto can0
