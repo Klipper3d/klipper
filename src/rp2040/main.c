@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h> // uint32_t
+#include "autoconf.h" // CONFIG_*
 #include "board/misc.h" // bootloader_request
 #include "generic/armcm_reset.h" // try_request_canboot
 #include "generic/armcm_boot.h" // VectorTable
@@ -16,7 +17,6 @@
 #include "hardware/structs/scb.h" // scb_hw
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
-
 
 /****************************************************************
  * Bootloader
@@ -155,9 +155,18 @@ armcm_main(void)
 }
 
 #if CONFIG_RP2040_FLASH_NOFLASH
+#include "hardware/structs/usb.h" // usb_hw
+#include "generic/irq.h" // irq_poll
+
 void __section(".rp2040_main_noflash") __visible rp2040_main(void)
 {
     scb_hw->vtor = (uint32_t)VectorTable;
+
+    // USB wire pulluped in bootrom
+    // Issue a USB pulldown here, and wait a short time for a host USB reset
+    usb_hw->sie_ctrl = USB_SIE_CTRL_PULLDOWN_EN_BITS;
+    for(int32_t i = 0; i < 50*(FREQ_SYS/10000); i++)
+        irq_poll();
 
     // jump into armcm_boot.c:ResetHandler()
     extern void ResetHandler(void);

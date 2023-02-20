@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "autoconf.h" // CONFIG_USB_SERIAL_NUMBER_CHIPID
+#include "autoconf.h" // CONFIG_*
 #include "board/irq.h" // irq_disable, irq_enable
 #include "board/canserial.h" // canserial_set_uuid
 #include "generic/usb_cdc.h" // usb_fill_serial
