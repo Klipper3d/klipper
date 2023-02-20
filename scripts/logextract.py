@@ -591,11 +591,13 @@ def main():
             elif line.startswith('Start printer at'):
                 last_start = format_comment(line_num, line)
             elif line == '===== Config file =====':
-                handler = GatherConfig(configs, line_num, recent_lines, logname)
+                handler = GatherConfig(configs, line_num, recent_lines,
+                                       logname)
                 handler.add_comment(last_git)
                 handler.add_comment(last_start)
             elif 'shutdown: ' in line or line.startswith('Dumping '):
-                handler = GatherShutdown(configs, line_num, recent_lines, logname)
+                handler = GatherShutdown(configs, line_num, recent_lines,
+                                         logname)
                 handler.add_comment(last_git)
                 handler.add_comment(last_start)
     if handler is not None:
