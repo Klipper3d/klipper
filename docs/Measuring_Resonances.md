@@ -61,12 +61,13 @@ Fritzing wiring diagrams for some of the ADXL345 boards:
 
 ![ADXL345-Rpi](img/adxl345-fritzing.png)
 
-###### Via Raspberry Pi Pico
+###### Using Raspberry Pi Pico
 
 You may connect the ADXL345 to your Raspberry Pi Pico and then connect the
 Pico to your Raspberry Pi via USB. This makes it easy to reuse the
 accelerometer on other Klipper devices, as you can connect via USB instead
-of GPIO.
+of GPIO. The Pico does not have much processing power, so make sure it is
+only running the accelerometer and not performing any other duties.
 
 In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V
 only. Depending on the board's layout, a level shifter may be present, which
