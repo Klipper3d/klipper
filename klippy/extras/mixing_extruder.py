@@ -75,21 +75,14 @@ class MixingExtruder(object):
         if self._activated:
             return
         self._activated = True
-        try:
-            for name in self.stepper_names:
-                try:
-                    stepper = (self.printer
-                               .lookup_object(name).extruder_stepper)
-                except:
-                    stepper = (self.printer
-                               .lookup_object("extruder_stepper " + name)
-                               .extruder_stepper)
-                self._extruder_steppers.append(stepper)
-        except Exception as e:
-            while len(self.steppers) > 0:
-                self.steppers.pop()
-            logging.error("no steppers found: %s: %s",
-                          ", ".join(self.stepper_names), e)
+        for name in self.stepper_names:
+            printer_extruder_name = name
+            if name != "extruder":
+                printer_extruder_name = "extruder_stepper " + name
+            extruder_stepper = self.printer.lookup_object(
+                printer_extruder_name).extruder_stepper
+            self._extruder_steppers.append(
+                (extruder_stepper, extruder_stepper.stepper))
         self._rotation_distances = tuple(
             stepper.stepper.get_rotation_distance()[0]
             for stepper in self._extruder_steppers)
@@ -279,7 +272,7 @@ class GradientMixingExtruder(MixingExtruder):
             if len(scales) != len(self._mixing):
                 raise gcmd.error("Could not configure gradient: invalid scales")
             return tuple(float(scales[i]) for i in range(len(scales)))
-        except Exception:
+        except ValueError:
             raise gcmd.error(
                 "Could not configure gradient: could not parse scales")
     cmd_SET_MIXING_EXTRUDER_GRADIENT_help = "Configure gradient mixing"
