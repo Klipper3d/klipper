@@ -3018,6 +3018,7 @@ aliases may not be used with stepper motor pins.
 pins:
 #   A comma separated list of pins associated with this alias. This
 #   parameter must be provided.
+#   Multi_pin configurations must be placed above of any other configurations you wish use the aliases in.
 ```
 
 ## TMC stepper driver configuration
