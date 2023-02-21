@@ -70,10 +70,7 @@ class MixingExtruder(object):
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_MIXING_EXTRUDER",
                                self.cmd_SET_MIXING_EXTRUDER,
-                               desc=self.cmd_MIXING_STATUS_help)
-        gcode.register_command("MIXING_STATUS",
-                               self.cmd_MIXING_STATUS,
-                               desc=self.cmd_MIXING_STATUS_help)
+                               desc=self.cmd_SET_MIXING_EXTRUDER_help)
     def _handle_connect(self):
         if self._activated:
             return
@@ -149,41 +146,51 @@ class MixingExtruder(object):
               extruder_stepper.sync_to_extruder(None)
     cmd_SET_MIXING_EXTRUDER_help = "Set scale on stepper"
     def cmd_SET_MIXING_EXTRUDER(self, gcmd):
-        factors = gcmd.get('FACTORS', None)
-        preset = gcmd.get_int('PRESET', 0, minval=0)
-        enable = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
-        ratios = [1 if p == 0 else 0
-                  for p in range(len(self.stepper_names))]
-        if factors:
-            try:
-                factors = [float(s)
-                           for s in factors.replace(',', ':').split(":")]
-                if len(factors) > len(self.stepper_names):
-                    raise Exception("Invalid index")
-            except Exception as e:
-                raise gcmd.error(
-                    "Invalid stepper/motor factor: %s" % (e.message))
-            for index, factor in enumerate(factors):
-                ratios[index] = factor
-        elif preset >= 0:
-            ratios = mixing_preset(preset, len(self.stepper_names))
-        if enable:
-            s = sum(ratios)
-            if s <= 0:
-                raise gcmd.error("Could not save ratio: its empty")
-            for i, v in enumerate(ratios):
-                self._mixing[i] = v / s
-            self._enabled = bool(enable)
-            self._apply_mixing(self._mixing)
+        if (gcmd.get('FACTORS', None) or
+            gcmd.get('PRESET', None) or
+            gcmd.get('ENABLE', None)):
+            factors = gcmd.get('FACTORS', None)
+            preset = gcmd.get_int('PRESET', 0, minval=0)
+            enable = gcmd.get_int('ENABLE', 1, minval=0, maxval=1)
+            ratios = [1 if p == 0 else 0
+                    for p in range(len(self.stepper_names))]
+            if factors:
+                try:
+                    factors = [float(s)
+                            for s in factors.replace(',', ':').split(":")]
+                    if len(factors) > len(self.stepper_names):
+                        raise Exception("Invalid index")
+                except Exception as e:
+                    raise gcmd.error(
+                        "Invalid stepper/motor factor: %s" % (e.message))
+                for index, factor in enumerate(factors):
+                    ratios[index] = factor
+            elif preset >= 0:
+                ratios = mixing_preset(preset, len(self.stepper_names))
+            if enable:
+                s = sum(ratios)
+                if s <= 0:
+                    raise gcmd.error("Could not save ratio: its empty")
+                for i, v in enumerate(ratios):
+                    self._mixing[i] = v / s
+                self._enabled = bool(enable)
+                self._apply_mixing(self._mixing)
+            else:
+                self._apply_mixing(None)
+                self._enabled = bool(enable)
         else:
-            self._apply_mixing(None)
-            self._enabled = bool(enable)
-    cmd_MIXING_STATUS_help = "Display the status of the given MixingExtruder"
-    def cmd_MIXING_STATUS(self, gcmd):
-        eventtime = self.printer.get_reactor().monotonic()
-        status = self.get_status(eventtime)
-        gcmd.respond_info(", ".join("%s=%s" % (k, v)
-                                    for k, v in status.items()))
+            mix = "mixing "
+            gcmd.respond_info(
+                mix + ("enabled" if self._enabled else "disabled"))
+            gcmd.respond_info(
+                mix + ",".join("%0.1f%%" % (m * 100.)
+                               for m in self._active_mixing))
+            gcmd.respond_info(
+                mix + ",".join("%d" % (stepper.get_mcu_position())
+                               for _, stepper in self._extruder_steppers))
+            gcmd.respond_info(
+                mix + ",".join(extruder_stepper.name
+                    for extruder_stepper, _ in self._extruder_steppers))
 
 
 class GradientMixingExtruder(MixingExtruder):
@@ -200,15 +207,9 @@ class GradientMixingExtruder(MixingExtruder):
         self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.normal_transform = None
 
-        gcode.register_command("ADD_MIXING_GRADIENT",
-                               self.cmd_ADD_MIXING_GRADIENT,
-                               desc=self.cmd_ADD_MIXING_GRADIENT_help)
-        gcode.register_command("SET_MIXING_GRADIENT",
-                               self.cmd_SET_MIXING_GRADIENT,
-                               desc=self.cmd_SET_MIXING_GRADIENT_help)
-        gcode.register_command("RESET_MIXING_GRADIENT",
-                               self.cmd_RESET_MIXING_GRADIENT,
-                               desc=self.cmd_RESET_MIXING_GRADIENT_help)
+        gcode.register_command("SET_MIXING_EXTRUDER_GRADIENT",
+                               self.cmd_SET_MIXING_EXTRUDER_GRADIENT,
+                               desc=self.cmd_SET_MIXING_EXTRUDER_GRADIENT_help)
     def _enable_gradient(self):
         if self.normal_transform:
             return
@@ -281,51 +282,65 @@ class GradientMixingExtruder(MixingExtruder):
         except Exception:
             raise gcmd.error(
                 "Could not configure gradient: could not parse scales")
-    cmd_ADD_MIXING_GRADIENT_help = "Add mixing gradient"
-    def cmd_ADD_MIXING_GRADIENT(self, gcmd):
-        start_scales = self._check_scales(gcmd,gcmd.get('START_FACTORS'))
-        end_scales = self._check_scales(gcmd, gcmd.get('END_FACTORS'))
-        start_height = gcmd.get_float('START_HEIGHT', minval=0.)
-        end_height = gcmd.get_float('END_HEIGHT', minval=0.)
-        if start_height > end_height:
-            start_height, end_height = end_height, start_height
-            start_scales, end_scales = end_scales, start_scales
-        for gradient in self._gradients:
-            s, _, e = gradient[0]
-            if e > start_height and end_height > s:
-                raise gcmd.error(
-                    "Could not configure gradient: overlapping starts/ends")
-        self._gradients.append((
-            (start_height,
-             (start_height + end_height) / 2,
-             end_height),
-            (start_scales, end_scales)))
-        self._gradients.sort(key=lambda x: x[0][0])
-    cmd_SET_MIXING_GRADIENT_help = "Turn no/off gradient mixing"
-    def cmd_SET_MIXING_GRADIENT(self, gcmd):
-        method = gcmd.get('METHOD', '')
-        if method in ["linear", "spherical"]:
-            self._gradient_method = method
-        try:
-            vector = gcmd.get('VECTOR', '0,0,1').split(',')
-            self._gradient_vector = tuple(float(vector[i]) for i in range(3))
-        except Exception:
-            raise gcmd.error(
-                "Could not configure gradient: invalid vector")
-        try:
-            enable = gcmd.get_int('ENABLE', 1, minval=0, maxval=1) == 1
-        except Exception:
-            enable = gcmd.get('ENABLE', '').lower() == 'true'
-        if enable:
-            self._enable_gradient()
-        else:
+    cmd_SET_MIXING_EXTRUDER_GRADIENT_help = "Configure gradient mixing"
+    def cmd_SET_MIXING_EXTRUDER_GRADIENT(self, gcmd):
+        if gcmd.get('START_FACTORS', ''):
+            start_scales = self._check_scales(gcmd,gcmd.get('START_FACTORS'))
+            end_scales = self._check_scales(gcmd, gcmd.get('END_FACTORS'))
+            start_height = gcmd.get_float('START_HEIGHT', minval=0.)
+            end_height = gcmd.get_float('END_HEIGHT', minval=0.)
+            if start_height > end_height:
+                start_height, end_height = end_height, start_height
+                start_scales, end_scales = end_scales, start_scales
+            for gradient in self._gradients:
+                s, _, e = gradient[0]
+                if e > start_height and end_height > s:
+                    raise gcmd.error(
+                        "Could not configure gradient: overlapping starts/ends")
+            self._gradients.append((
+                (start_height, (start_height + end_height) / 2, end_height),
+                (start_scales, end_scales)))
+            self._gradients.sort(key=lambda x: x[0][0])
+        elif gcmd.get('ENABLE', '') == 'RESET':
+            self._gradient_enabled, self._gradients, self._gradient_method = \
+                False, [], 'linear'
             self._disable_gradient()
-        self._gradient_enabled = enable
-    cmd_RESET_MIXING_GRADIENT_help = "Clear mixing gradient info"
-    def cmd_RESET_MIXING_GRADIENT(self, gcmd):
-        self._gradient_enabled, self._gradients, self._gradient_method = \
-            False, [], 'linear'
-        self._disable_gradient()
+        elif gcmd.get('ENABLE', '') or gcmd.get('METHOD', ''):
+            method = gcmd.get('METHOD', '')
+            if method in ["linear", "spherical"]:
+                self._gradient_method = method
+            try:
+                vector = gcmd.get('VECTOR', '0,0,1').split(',')
+                self._gradient_vector = tuple(float(vector[i])
+                                              for i in range(3))
+            except Exception:
+                raise gcmd.error(
+                    "Could not configure gradient: invalid vector")
+            try:
+                enable = gcmd.get_int('ENABLE', 1, minval=0, maxval=1) == 1
+            except Exception:
+                enable = gcmd.get('ENABLE', '').lower() == 'true'
+            if enable:
+                self._enable_gradient()
+            else:
+                self._disable_gradient()
+            self._gradient_enabled = enable
+        else:
+            for i, gradient in enumerate(self._gradients):
+                grad = "gradient[%d] " % (i)
+                gcmd.respond_info(
+                    grad + "heights=%.1f-(%.1f)-%.1f" % gradient[0])
+                gcmd.respond_info(
+                    grad + "mixing=%s-%s" % tuple(
+                        "/".join("%.1f" % (x) for x in m)
+                        for m in gradient[1]))
+                gcmd.respond_info(
+                    grad + "method=%s" % (self._gradient_method))
+                gcmd.respond_info(
+                    grad + "vector=%s" % ("/".join("%.1f" % (x)
+                        for x in self._gradient_vector)))
+                gcmd.respond_info(
+                    grad + "enabled=%s" % (str(self._gradient_enabled)))
 
 
 def load_config(config):
