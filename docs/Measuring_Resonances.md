@@ -236,6 +236,9 @@ accel_chip: adxl345
 probe_points:
     # Somewhere slightly above the middle of your print bed
     147,154, 20
+
+[output_pin power_mode] # Improve power stability
+pin: adxl:gpio23
 ```
 
 If setting up the ADXL345 configuration in a separate file, as shown above,
