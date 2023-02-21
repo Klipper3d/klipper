@@ -91,15 +91,10 @@ class MixingExtruder(object):
             for stepper in self._extruder_steppers)
     def get_status(self, eventtime):
         return dict(
-            mixing_enabled="enabled" if self._enabled else "disabled",
-            mixing=",".join(
-                "%0.1f%%" % (m * 100.) for m in self._active_mixing),
-            mixing_ticks=",".join(
-                "%d" % (extruder_stepper.stepper.get_mcu_position())
-                for extruder_stepper in self._extruder_steppers),
-            mixing_steppers=",".join(
-                extruder_stepper.name
-                for extruder_stepper in self._extruder_steppers))
+            mixing=",".join("%0.1f" % (m * 100.)
+                            for m in self._active_mixing),
+            ticks=",".join("%d" % (stepper.get_mcu_position())
+                           for _, stepper in self._extruder_steppers))
     def get_name(self):
         return self.name
     def _init_mixing(self):
@@ -251,21 +246,6 @@ class GradientMixingExtruder(MixingExtruder):
         gcode_pos = self.gcode_move.get_status()['gcode_position']
         self._apply_mixing(self._get_gradient(gcode_pos))
         self.normal_transform.move(newpos, speed)
-    def get_status(self, eventtime):
-        status = super(GradientMixingExtruder, self).get_status(eventtime)
-        for i, gradient in enumerate(self._gradients):
-            status.update({"mixing_gradient%d" % (i): ",".join(
-                "%s:%s" % (k, v)
-                for k, v in dict(
-                    heights="%.1f-(%.1f)-%.1f" % gradient[0],
-                    mixings="%s-%s" % tuple(
-                        "/".join("%.1f" % (x) for x in m)
-                        for m in gradient[1]),
-                    method=self._gradient_method,
-                    vector="/".join("%.1f" % (x)
-                                    for x in self._gradient_vector),
-                    enabled=str(self._gradient_enabled)).items())})
-        return status
     def _check_scales(self, gcmd, s):
         try:
             scales = s.replace(',', ':').split(':')
@@ -339,5 +319,4 @@ class GradientMixingExtruder(MixingExtruder):
 def load_config(config):
     mixingextruder = GradientMixingExtruder(
         config.getsection('mixing_extruder'))
-    logging.info("Added mixing extruders")
     return mixingextruder
