@@ -195,7 +195,7 @@ serial: /dev/serial/by-id/<your PICO's serial ID>
 
 [mpu9250]
 i2c_mcu: pico
-i2c_bus: i2c1a
+i2c_bus: i2c0a
 
 [resonance_tester]
 accel_chip: mpu9250
