@@ -84,11 +84,11 @@ class MixingExtruder(object):
             self._extruder_steppers.append(
                 (extruder_stepper, extruder_stepper.stepper))
         self._rotation_distances = tuple(
-            stepper.stepper.get_rotation_distance()[0]
-            for stepper in self._extruder_steppers)
+            stepper.get_rotation_distance()[0]
+            for _, stepper in self._extruder_steppers)
         self._trapqs = tuple(
-            stepper.stepper.get_trapq()
-            for stepper in self._extruder_steppers)
+            stepper.get_trapq()
+            for _, stepper in self._extruder_steppers)
     def get_status(self, eventtime):
         return dict(
             mixing=",".join("%0.1f" % (m * 100.)
@@ -98,12 +98,12 @@ class MixingExtruder(object):
     def get_name(self):
         return self.name
     def _init_mixing(self):
-        for i, extruder_stepper in enumerate(self._extruder_steppers):
+        for i, (extruder_stepper, _) in enumerate(self._extruder_steppers):
             extruder_stepper.sync_to_extruder(self.extruder_name)
     def _restore_extruder(self):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
-        for i, extruder_stepper in enumerate(self._extruder_steppers):
+        for i, (extruder_stepper, _) in enumerate(self._extruder_steppers):
             extruder_stepper.stepper.set_rotation_distance(
                 self._rotation_distances[i]
             )
@@ -119,18 +119,16 @@ class MixingExtruder(object):
         if not self._enabled:
             return
         self._active_mixing = normalize_mixing(mixing)
-        for i, extruder_stepper in enumerate(self._extruder_steppers):
-            if self._active_mixing[i] > 0 and \
-                extruder_stepper.stepper.get_trapq():
+        for i, (extruder_stepper,
+                stepper) in enumerate(self._extruder_steppers):
+            if self._active_mixing[i] > 0 and stepper.get_trapq():
               extruder_stepper.set_rotation_distance(
                   self._rotation_distances[i] / self._active_mixing[i])
-            elif self._active_mixing[i] > 0 and \
-                not extruder_stepper.stepper.get_trapq():
+            elif self._active_mixing[i] > 0 and not stepper.get_trapq():
               extruder_stepper.sync_to_extruder(self.extruder_name)
               extruder_stepper.set_rotation_distance(
                   self._rotation_distances[i] / self._active_mixing[i])
-            elif self._active_mixing[i] == 0 and \
-                extruder_stepper.stepper.get_trapq():
+            elif self._active_mixing[i] == 0 and stepper.get_trapq():
               extruder_stepper.sync_to_extruder(None)
     cmd_SET_MIXING_EXTRUDER_help = "Set scale on stepper"
     def cmd_SET_MIXING_EXTRUDER(self, gcmd):
