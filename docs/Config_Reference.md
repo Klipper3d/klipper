@@ -3109,11 +3109,27 @@ run_current:
 #driver_TOFF: 4
 #driver_HEND: 7
 #driver_HSTRT: 0
+#driver_FD3: 0
+#driver_DISFDCC: 0
+#driver_RNDTF: 0
+#driver_CHM: 0
+#driver_VHIGHFS: 0
+#driver_VHIGHCHM: 0
+#driver_SYNC: 0
+#driver_DISS2G: 0
 #driver_PWM_AUTOSCALE: True
+#driver_PWM_SYMMETRIC: False
 #driver_PWM_FREQ: 1
+#driver_FREEWHEEL: 0
 #driver_PWM_GRAD: 4
 #driver_PWM_AMPL: 128
 #driver_SGT: 0
+#driver_SEMIN: 0
+#driver_SEUP: 0
+#driver_SEMAX: 0
+#driver_SEDN: 0
+#driver_SEIMIN: 0
+#driver_SFILT: 0
 #   Set the given register during the configuration of the TMC2130
 #   chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the
@@ -3178,11 +3194,14 @@ run_current:
 #driver_TOFF: 3
 #driver_HEND: 0
 #driver_HSTRT: 5
+#driver_DISS2G: 0
+#driver_DISS2VS: 0
 #driver_PWM_AUTOGRAD: True
 #driver_PWM_AUTOSCALE: True
 #driver_PWM_LIM: 12
 #driver_PWM_REG: 8
 #driver_PWM_FREQ: 1
+#driver_FREEWHEEL: 0
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
 #   Set the given register during the configuration of the TMC2208
@@ -3219,14 +3238,22 @@ run_current:
 #driver_TOFF: 3
 #driver_HEND: 0
 #driver_HSTRT: 5
+#driver_DISS2G: 0
+#driver_DISS2VS: 0
 #driver_PWM_AUTOGRAD: True
 #driver_PWM_AUTOSCALE: True
 #driver_PWM_LIM: 12
 #driver_PWM_REG: 8
 #driver_PWM_FREQ: 1
+#driver_FREEWHEEL: 0
 #driver_PWM_GRAD: 14
 #driver_PWM_OFS: 36
 #driver_SGTHRS: 0
+#driver_SEMIN: 0
+#driver_SEUP: 0
+#driver_SEMAX: 0
+#driver_SEDN: 0
+#driver_SEIMIN: 0
 #   Set the given register during the configuration of the TMC2209
 #   chip. This may be used to set custom motor parameters. The
 #   defaults for each parameter are next to the parameter name in the

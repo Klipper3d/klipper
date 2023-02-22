@@ -303,9 +303,23 @@ class TMC2130:
         set_config_field(config, "toff", 4)
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
+        set_config_field(config, "fd3", 0)
+        set_config_field(config, "disfdcc", 0)
+        set_config_field(config, "rndtf", 0)
+        set_config_field(config, "chm", 0)
         set_config_field(config, "tbl", 1)
+        set_config_field(config, "vhighfs", 0)
+        set_config_field(config, "vhighchm", 0)
+        set_config_field(config, "sync", 0)
+        set_config_field(config, "diss2g", 0)
         # COOLCONF
+        set_config_field(config, "semin", 0)
+        set_config_field(config, "seup", 0)
+        set_config_field(config, "semax", 0)
+        set_config_field(config, "sedn", 0)
+        set_config_field(config, "seimin", 0)
         set_config_field(config, "sgt", 0)
+        set_config_field(config, "sfilt", 0)
         # IHOLDIRUN
         set_config_field(config, "iholddelay", 8)
         # PWMCONF
@@ -313,6 +327,8 @@ class TMC2130:
         set_config_field(config, "pwm_grad", 4)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
+        set_config_field(config, "pwm_symmetric", False)
+        set_config_field(config, "freewheel", 0)
         # TPOWERDOWN
         set_config_field(config, "tpowerdown", 0)
 

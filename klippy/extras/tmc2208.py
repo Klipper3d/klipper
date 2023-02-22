@@ -207,6 +207,8 @@ class TMC2208:
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
         set_config_field(config, "tbl", 2)
+        set_config_field(config, "diss2g", 0)
+        set_config_field(config, "diss2vs", 0)
         # IHOLDIRUN
         set_config_field(config, "iholddelay", 8)
         # PWMCONF
@@ -215,6 +217,7 @@ class TMC2208:
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
         set_config_field(config, "pwm_autograd", True)
+        set_config_field(config, "freewheel", 0)
         set_config_field(config, "pwm_reg", 8)
         set_config_field(config, "pwm_lim", 12)
         # TPOWERDOWN
