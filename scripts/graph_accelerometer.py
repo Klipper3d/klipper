@@ -17,9 +17,11 @@ MAX_TITLE_LENGTH=65
 def parse_log(logname, opts):
     with open(logname) as f:
         for header in f:
-            if not header.startswith('#'):
+            if header.startswith('#'):
+                continue
+            if header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
+                # Processed power spectral density file
                 break
-        if not header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
             # Raw accelerometer data
             return np.loadtxt(logname, comments='#', delimiter=',')
     # Parse power spectral density data
