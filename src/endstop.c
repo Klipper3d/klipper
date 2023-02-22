@@ -4,13 +4,13 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h"
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // struct gpio
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
 #include "trsync.h" // trsync_do_trigger
-#include "autoconf.h"
 
 struct endstop {
     struct timer time;
@@ -26,20 +26,20 @@ enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1 };
 static uint_fast8_t endstop_oversample_event(struct timer *t);
 uint16_t BD_Data=0;
 
-#if CONFIG_MACH_STM32F031
-#define read_endstop_pin(e) gpio_in_read(e->pin)
-#else
 static uint8_t
 read_endstop_pin(struct endstop *e)
 {
-    if(e->type==2)// for Bed Distance sensor
+#if CONFIG_MACH_STM32F031
+    return gpio_in_read(e->pin);
+#else
+	if(e->type==2)// for Bed Distance sensor
     {
         return BD_Data?0:1;
     }
     else
         return gpio_in_read(e->pin);
-}
 #endif
+}
 // Timer callback for an end stop
 static uint_fast8_t
 endstop_event(struct timer *t)
