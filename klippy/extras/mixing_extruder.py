@@ -1,6 +1,6 @@
 # Code for supporting mixing extruders.
 #
-# Copyright (C) 2022 Peter Gruber <nokos@gmx.net>
+# Copyright (C) 2022-2023 Peter Gruber <nokos@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
