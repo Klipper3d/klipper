@@ -326,10 +326,10 @@ class TMC5160:
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
-        #   CHOPCONF
         set_config_field = self.fields.set_config_field
         #   GCONF
         set_config_field(config, "small_hysteresis", False)
+        #   CHOPCONF
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 2)

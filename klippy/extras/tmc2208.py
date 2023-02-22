@@ -202,12 +202,14 @@ class TMC2208:
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        # CHOPCONF
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
         set_config_field(config, "tbl", 2)
+        # IHOLDIRUN
         set_config_field(config, "iholddelay", 8)
-        set_config_field(config, "tpowerdown", 20)
+        # PWMCONF
         set_config_field(config, "pwm_ofs", 36)
         set_config_field(config, "pwm_grad", 14)
         set_config_field(config, "pwm_freq", 1)
@@ -215,6 +217,8 @@ class TMC2208:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "pwm_reg", 8)
         set_config_field(config, "pwm_lim", 12)
+        # TPOWERDOWN
+        set_config_field(config, "tpowerdown", 20)
     def read_translate(self, reg_name, val):
         if reg_name == "IOIN":
             drv_type = self.fields.get_field("sel_a", val)
