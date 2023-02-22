@@ -7,6 +7,7 @@
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
@@ -42,6 +43,10 @@ lookup_clock_line(uint32_t periph_base)
                               .bit = 1 << pos};
 
     } else {
+        if (periph_base == ADC12_COMMON_BASE)
+            return (struct cline){.en = &RCC->AHB2ENR,
+                                  .rst = &RCC->AHB2RSTR,
+                                  .bit = RCC_AHB2ENR_ADC12EN};
         uint32_t pos = (periph_base - AHB2PERIPH_BASE) / 0x400;
         return (struct cline){.en = &RCC->AHB2ENR,
                               .rst = &RCC->AHB2RSTR,
