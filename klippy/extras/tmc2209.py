@@ -79,6 +79,7 @@ class TMC2209:
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)
+        tmc.TMCcoolStepHelper(config, self.mcu_tmc, self.tmc_frequency)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         # CHOPCONF

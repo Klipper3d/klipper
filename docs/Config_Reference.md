@@ -3091,6 +3091,14 @@ run_current:
 #   disabled above this velocity. The default value is equivalent to
 #   infinity (thigh = 0).
 #   This field is also known as THIGH.
+#vcoolthrs:
+#   The velocity (in mm/s) to set the StallGuard (and CoolStep) minimum
+#   threshold. When set, StallGuard and CoolStep will be disabled if the
+#   stepper motor velocity is below this value. This value only applies while
+#   not homing. The default value is equivalent to infinity (tcoolthrs = 0),
+#   so by default StallGuard and CoolStep are completely disabled while not
+#   homing. Set this value in order to be able to use CoolStep.
+#   This field is also known as TCOOLTHRS.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -3267,6 +3275,14 @@ run_current:
 #sense_resistor: 0.110
 #stealthchop_threshold: 0
 #   See the "tmc2208" section for the definition of these parameters.
+#vcoolthrs:
+#   The velocity (in mm/s) to set the StallGuard (and CoolStep) minimum
+#   threshold. When set, StallGuard and CoolStep will be disabled if the
+#   stepper motor velocity is below this value. This value only applies while
+#   not homing. The default value is equivalent to infinity (tcoolthrs = 0),
+#   so by default StallGuard and CoolStep are completely disabled while not
+#   homing. Set this value in order to be able to use CoolStep.
+#   This field is also known as TCOOLTHRS.
 #uart_address:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
@@ -3449,6 +3465,14 @@ run_current:
 #   disabled above this velocity. The default value is equivalent to
 #   infinity (thigh = 0).
 #   This field is also known as THIGH.
+#vcoolthrs:
+#   The velocity (in mm/s) to set the StallGuard (and CoolStep) minimum
+#   threshold. When set, StallGuard and CoolStep will be disabled if the
+#   stepper motor velocity is below this value. This value only applies while
+#   not homing. The default value is equivalent to infinity (tcoolthrs = 0),
+#   so by default StallGuard and CoolStep are completely disabled while not
+#   homing. Set this value in order to be able to use CoolStep.
+#   This field is also known as TCOOLTHRS.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441

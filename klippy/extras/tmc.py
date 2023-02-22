@@ -579,6 +579,15 @@ def TMCTHIGHHelper(config, mcu_tmc, tmc_freq):
     fields.set_field("thigh",
         TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, 0))
 
+# Helper to configure coolStep and stallGuard lower velocity limit
+def TMCcoolStepHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    velocity = config.getfloat(
+        'vcoolthrs', None, minval=0.)
+    fields.set_field("tcoolthrs",
+        TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, 0))
+
+
 class TMCHomingCurrentHelper:
     def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()

@@ -332,6 +332,7 @@ class TMC5160:
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)
         tmc.TMCTHIGHHelper(config, self.mcu_tmc, self.tmc_frequency)
+        tmc.TMCcoolStepHelper(config, self.mcu_tmc, self.tmc_frequency)
         set_config_field = self.fields.set_config_field
         #   GCONF
         set_config_field(config, "small_hysteresis", False)
