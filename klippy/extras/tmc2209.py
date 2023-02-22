@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import tmc2208, tmc2130, tmc, tmc_uart
 
-TMC_FREQUENCY=12000000.
 
 Registers = dict(tmc2208.Registers)
 Registers.update({
@@ -55,6 +54,8 @@ FieldFormatters = dict(tmc2208.FieldFormatters)
 
 class TMC2209:
     def __init__(self, config):
+        self.tmc_frequency = config.getfloat('tmc_frequency',
+            12000000., minval=4000000., maxval=16000000.)
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, tmc2208.SignedFields,
                                       FieldFormatters)
@@ -76,7 +77,7 @@ class TMC2209:
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         # CHOPCONF
