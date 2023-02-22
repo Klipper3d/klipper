@@ -570,6 +570,15 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
         # TMC2208 uses en_spreadCycle
         fields.set_field("en_spreadcycle", not en_pwm_mode)
 
+# Helper to configure spreadCycle-highVelocity transition velocity
+# It is also the top speed for coolStep and stallGuard operation
+def TMCTHIGHHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    velocity = config.getfloat(
+        'vhigh', None, minval=0.)
+    fields.set_field("thigh",
+        TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, 0))
+
 class TMCHomingCurrentHelper:
     def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()

@@ -297,6 +297,7 @@ class TMC2130:
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)
+        tmc.TMCTHIGHHelper(config, self.mcu_tmc, self.tmc_frequency)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         # GCONF

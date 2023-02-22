@@ -3083,6 +3083,14 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#   This field is also known as vpwmthrs or TPWMTHRS.
+#vhigh:
+#   The velocity (in mm/s) to set the "high velocity" threshold to. When
+#   set, "stealthChop" mode will be disabled if the stepper motor
+#   velocity is above this value. StallGuard and CoolStep will also get
+#   disabled above this velocity. The default value is equivalent to
+#   infinity (thigh = 0).
+#   This field is also known as THIGH.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -3208,6 +3216,7 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#   This field is also known as vpwmthrs or TPWMTHRS.
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2
@@ -3432,6 +3441,14 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#   This field is also known as vpwmthrs or TPWMTHRS.
+#vhigh:
+#   The velocity (in mm/s) to set the "high velocity" threshold to. When
+#   set, "stealthChop" mode will be disabled if the stepper motor
+#   velocity is above this value. StallGuard and CoolStep will also get
+#   disabled above this velocity. The default value is equivalent to
+#   infinity (thigh = 0).
+#   This field is also known as THIGH.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
