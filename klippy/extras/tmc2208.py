@@ -188,6 +188,8 @@ class TMC2208:
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
         self.fields.set_field("pdn_disable", True)
+        # Set microstep config options
+        tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         # Register commands
         current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)

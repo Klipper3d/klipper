@@ -230,8 +230,6 @@ class TMCCommandHelper:
                                             self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
-        # Set microstep config options
-        TMCMicrostepHelper(config, mcu_tmc)
         # Register commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_TMC_FIELD", "STEPPER", self.name,

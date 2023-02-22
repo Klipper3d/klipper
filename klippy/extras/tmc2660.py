@@ -233,6 +233,8 @@ class TMC2660:
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.fields.set_field("sdoff", 0) # Access DRVCTRL in step/dir mode
         self.mcu_tmc = MCU_TMC2660_SPI(config, Registers, self.fields)
+        # Set microstep config options
+        tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         # Register commands
         current_helper = TMC2660CurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)

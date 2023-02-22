@@ -62,6 +62,8 @@ class TMC2209:
         # Setup fields for UART
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("senddelay", 2) # Avoid tx errors on shared uart
+        # Set microstep config options
+        tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
