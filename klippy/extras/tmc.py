@@ -538,19 +538,30 @@ def TMCMicrostepHelper(config, mcu_tmc):
     fields.set_field("mres", mres)
     fields.set_field("intpol", config.getboolean("interpolate", True))
 
-# Helper to configure "stealthchop" mode
-def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+# Helper for calculating TSTEP based values from velocity
+def TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, default_val):
     fields = mcu_tmc.get_fields()
-    en_pwm_mode = False
-    velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
-    if velocity:
+    if velocity is None:
+        return default_val
+    elif velocity > 0:
         stepper_name = " ".join(config.get_name().split()[1:])
         sconfig = config.getsection(stepper_name)
         rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
         step_dist = rotation_dist / steps_per_rotation
         step_dist_256 = step_dist / (1 << fields.get_field("mres"))
         threshold = int(tmc_freq * step_dist_256 / velocity + .5)
-        fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))
+        return max(0, min(0xfffff, threshold))
+    else:
+        return 0xfffff
+
+# Helper to configure stealthChop-spreadCycle transition velocity
+def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    en_pwm_mode = False
+    velocity = config.getfloat('stealthchop_threshold', None, minval=0.)
+    tpwmthrs = TMCtstepHelper(config, mcu_tmc, tmc_freq, velocity, 0xfffff)
+    fields.set_field("tpwmthrs", tpwmthrs)
+    if velocity is not None:
         en_pwm_mode = True
     reg = fields.lookup_register("en_pwm_mode", None)
     if reg is not None:
