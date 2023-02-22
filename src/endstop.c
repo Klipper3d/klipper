@@ -10,6 +10,7 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
 #include "trsync.h" // trsync_do_trigger
+#include "autoconf.h"
 
 struct endstop {
     struct timer time;
