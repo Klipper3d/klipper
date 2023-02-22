@@ -25,7 +25,7 @@ enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1 };
 static uint_fast8_t endstop_oversample_event(struct timer *t);
 uint16_t BD_Data=0;
 
-#if CONFIG_MACH_STM32F0
+#if CONFIG_MACH_STM32F031
 #define read_endstop_pin(e) gpio_in_read(e->pin)
 #else
 static uint8_t
