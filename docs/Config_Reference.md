@@ -3097,6 +3097,12 @@ run_current:
 #   values used by the driver. The value must be specified as a decimal integer
 #   (hex form is not supported). In order to compute the wave table fields,
 #   see the tmc2130 "Calculation Sheet" from the Trinamic website.
+#driver_SMALL_HYSTERESYS: False
+#   This option should only be used if the microcontroller is capable of
+#   generating stable STEP signals (jitter will negatively impact the stability
+#   in combination with this option). Enabling this option results in a tighter
+#   hysteresis around all velocity based thresholds (internally based on TSTEP).
+#   This option could prove useful if the desired velocity is high.
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 0
 #driver_TBL: 1
@@ -3376,6 +3382,12 @@ run_current:
 #   values used by the driver. The value must be specified as a decimal integer
 #   (hex form is not supported). In order to compute the wave table fields,
 #   see the tmc2130 "Calculation Sheet" from the Trinamic website.
+#driver_SMALL_HYSTERESYS: False
+#   This option should only be used if the microcontroller is capable of
+#   generating stable STEP signals (jitter will negatively impact the stability
+#   in combination with this option). Enabling this option results in a tighter
+#   hysteresis around all velocity based thresholds (internally based on TSTEP).
+#   This option could prove useful if the desired velocity is high.
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2

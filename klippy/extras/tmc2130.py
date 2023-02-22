@@ -297,6 +297,8 @@ class TMC2130:
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        # GCONF
+        set_config_field(config, "small_hysteresis", False)
         set_config_field(config, "toff", 4)
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
