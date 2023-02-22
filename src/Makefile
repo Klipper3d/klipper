@@ -12,4 +12,3 @@ bb-src-$(CONFIG_HAVE_GPIO_I2C) += sensor_mpu9250.c
 bb-src-$(CONFIG_HAVE_SOFTWARE_I2C) += BD_sensor.c
 src-$(CONFIG_HAVE_GPIO_BITBANGING) += $(bb-src-y) lcd_st7920.c lcd_hd44780.c \
     buttons.c tmcuart.c neopixel.c pulse_counter.c
-
