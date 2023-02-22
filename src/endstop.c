@@ -32,7 +32,7 @@ read_endstop_pin(struct endstop *e)
 #if CONFIG_MACH_STM32F031
     return gpio_in_read(e->pin);
 #else
-	if(e->type==2)// for Bed Distance sensor
+    if(e->type==2)// for Bed Distance sensor
     {
         return BD_Data?0:1;
     }
