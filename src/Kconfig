@@ -114,6 +114,8 @@ config HAVE_GPIO_SPI
     bool
 config HAVE_GPIO_I2C
     bool
+config HAVE_SOFTWARE_I2C
+    bool
 config HAVE_GPIO_HARD_PWM
     bool
 config HAVE_GPIO_BITBANGING

@@ -15,6 +15,7 @@ config STM32_SELECT
     select HAVE_CHIPID
     select HAVE_STEPPER_BOTH_EDGE
     select HAVE_BOOTLOADER_REQUEST
+    select HAVE_SOFTWARE_I2C if !(MACH_STM32F031)
 
 config BOARD_DIRECTORY
     string

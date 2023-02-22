@@ -12,6 +12,7 @@ config LINUX_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_BITBANGING
     select HAVE_GPIO
+    select HAVE_SOFTWARE_I2C
 
 config BOARD_DIRECTORY
     string
