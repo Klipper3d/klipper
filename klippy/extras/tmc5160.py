@@ -324,6 +324,7 @@ class TMC5160:
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_status = cmdhelper.get_status
+        tmc.TMCHomingCurrentHelper(config, self.mcu_tmc, current_helper)
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)

@@ -241,6 +241,7 @@ class TMC2660:
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_status = cmdhelper.get_status
+        tmc.TMCHomingCurrentHelper(config, self.mcu_tmc, current_helper)
 
         # CHOPCONF
         set_config_field = self.fields.set_config_field

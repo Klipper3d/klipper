@@ -3068,6 +3068,13 @@ run_current:
 #   when the stepper is not moving. Setting a hold_current is not
 #   recommended (see TMC_Drivers.md for details). The default is to
 #   not reduce the current.
+#homing_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is performing a homing move. It can be useful for TMC
+#   drivers if the run current is too high or too low and it causes StallGuard
+#   to perform poorly. It can also be used as a safety measure so the printer
+#   can't damage itself if homing fails.
+#   The default is to not adjust the driver currents during homing.
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -3186,6 +3193,13 @@ run_current:
 #   when the stepper is not moving. Setting a hold_current is not
 #   recommended (see TMC_Drivers.md for details). The default is to
 #   not reduce the current.
+#homing_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is performing a homing move. It can be useful for TMC
+#   drivers if the run current is too high or too low and it causes StallGuard
+#   to perform poorly. It can also be used as a safety measure so the printer
+#   can't damage itself if homing fails.
+#   The default is to not adjust the driver currents during homing.
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -3234,6 +3248,13 @@ uart_pin:
 #interpolate: True
 run_current:
 #hold_current:
+#homing_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is performing a homing move. It can be useful for TMC
+#   drivers if the run current is too high or too low and it causes StallGuard
+#   to perform poorly. It can also be used as a safety measure so the printer
+#   can't damage itself if homing fails.
+#   The default is to not adjust the driver currents during homing.
 #sense_resistor: 0.110
 #stealthchop_threshold: 0
 #   See the "tmc2208" section for the definition of these parameters.
@@ -3309,6 +3330,13 @@ cs_pin:
 run_current:
 #   The amount of current (in amps RMS) used by the driver during
 #   stepper movement. This parameter must be provided.
+#homing_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is performing a homing move. It can be useful for TMC
+#   drivers if the run current is too high or too low and it causes StallGuard
+#   to perform poorly. It can also be used as a safety measure so the printer
+#   can't damage itself if homing fails.
+#   The default is to not adjust the driver currents during homing.
 #sense_resistor:
 #   The resistance (in ohms) of the motor sense resistor. This
 #   parameter must be provided.
@@ -3389,6 +3417,13 @@ run_current:
 #   when the stepper is not moving. Setting a hold_current is not
 #   recommended (see TMC_Drivers.md for details). The default is to
 #   not reduce the current.
+#homing_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is performing a homing move. It can be useful for TMC
+#   drivers if the run current is too high or too low and it causes StallGuard
+#   to perform poorly. It can also be used as a safety measure so the printer
+#   can't damage itself if homing fails.
+#   The default is to not adjust the driver currents during homing.
 #sense_resistor: 0.075
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.075 ohms.

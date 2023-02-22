@@ -558,3 +558,41 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
     else:
         # TMC2208 uses en_spreadCycle
         fields.set_field("en_spreadcycle", not en_pwm_mode)
+
+class TMCHomingCurrentHelper:
+    def __init__(self, config, mcu_tmc, current_helper):
+        self.printer = config.get_printer()
+        self.name = config.get_name().split()[-1]
+        self.mcu_tmc = mcu_tmc
+        self.current_helper = current_helper
+        self.run_current = 0
+        self.hold_current = 0
+        self.homing_current = config.getfloat(
+            'homing_current', None, minval=0.)
+        self.printer.register_event_handler("homing:home_rails_begin",
+                                            self.handle_home_rails_begin)
+        self.printer.register_event_handler("homing:home_rails_end",
+                                            self.handle_home_rails_end)
+
+    def handle_home_rails_begin(self, homing, rails):
+        if self.homing_current is None:
+            return
+        names = [stepper.get_name() for rail in rails
+            for stepper in rail.get_steppers()]
+        if self.name not in names:
+            return
+        logging.info("homing_begin for %s", self.name)
+        self.run_current, _, self.hold_current, _ = (
+            self.current_helper.get_current())
+        self.current_helper.set_current(
+            self.homing_current, self.homing_current, None)
+    def handle_home_rails_end(self, homing, rails):
+        if self.homing_current is None:
+            return
+        names = [stepper.get_name() for rail in rails
+            for stepper in rail.get_steppers()]
+        if self.name not in names:
+            return
+        logging.info("homing_end for %s", self.name)
+        self.current_helper.set_current(
+            self.run_current, self.hold_current, None)

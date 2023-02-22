@@ -197,6 +197,7 @@ class TMC2208:
         cmdhelper.setup_register_dump(ReadRegisters, self.read_translate)
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_status = cmdhelper.get_status
+        tmc.TMCHomingCurrentHelper(config, self.mcu_tmc, current_helper)
         # Setup basic register values
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
