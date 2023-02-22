@@ -135,7 +135,7 @@ CONFIG ../../config/generic-bigtreetech-skr-v1.4.cfg
 CONFIG ../../config/generic-mks-sgenl.cfg
 CONFIG ../../config/generic-re-arm.cfg
 CONFIG ../../config/generic-smoothieboard.cfg
-CONFIG ../../config/generic-th3d-ezboard-lite-v1.2.cfg
+CONFIG ../../config/generic-th3d-ezboard-v1.2.cfg
 
 # Printers using the stm32f070
 DICTIONARY stm32f070.dict
