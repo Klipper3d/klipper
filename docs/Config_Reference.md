@@ -3228,6 +3228,7 @@ run_current:
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
 #   This field is also known as vpwmthrs or TPWMTHRS.
+#driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2
@@ -3293,6 +3294,7 @@ run_current:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
 #   chips are connected to the same UART pin. The default is zero.
+#driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2
@@ -3512,6 +3514,7 @@ run_current:
 #   in combination with this option). Enabling this option results in a tighter
 #   hysteresis around all velocity based thresholds (internally based on TSTEP).
 #   This option could prove useful if the desired velocity is high.
+#driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2

@@ -75,13 +75,14 @@ class TMC2209:
         self.get_status = cmdhelper.get_status
         tmc.TMCHomingCurrentHelper(config, self.mcu_tmc, current_helper)
         # Setup basic register values
-        self.fields.set_field("pdn_disable", True)
-        self.fields.set_field("mstep_reg_select", True)
-        self.fields.set_field("multistep_filt", True)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)
         tmc.TMCcoolStepHelper(config, self.mcu_tmc, self.tmc_frequency)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        # GCONF
+        self.fields.set_field("pdn_disable", True)
+        self.fields.set_field("mstep_reg_select", True)
+        set_config_field(config, "multistep_filt", True)
         # CHOPCONF
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
