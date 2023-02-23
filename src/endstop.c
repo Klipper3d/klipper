@@ -127,7 +127,7 @@ command_endstop_query_state(uint32_t *args)
     uint32_t nextwake = e->nextwake;
     irq_enable();
 
-    sendf("endstop_state oid=%c homing=%c next_clock=%u pin_value=%c"
+    sendf("endstop_state oid=%c homing=%c next_clock=%u pin_value=%u"
           , oid, !!(eflags & ESF_HOMING), nextwake, read_endstop_pin(e));
 }
 DECL_COMMAND(command_endstop_query_state, "endstop_query_state oid=%c");
