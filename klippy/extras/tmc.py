@@ -419,7 +419,7 @@ class TMCCommandHelper:
 
 # Helper class for "sensorless homing"
 class TMCVirtualPinHelper:
-    def __init__(self, config, mcu_tmc):
+    def __init__(self, config, mcu_tmc, tmc_freq):
         self.printer = config.get_printer()
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
@@ -436,6 +436,13 @@ class TMCVirtualPinHelper:
         self.mcu_endstop = None
         self.en_pwm = False
         self.pwmthrs = 0
+        self.tcoolthrs = 0
+
+        velocity = config.getfloat(
+            'homing_vcoolthrs', None, minval=0.)
+        self.homing_tcoolthrs = TMCtstepHelper(
+            config, mcu_tmc, tmc_freq, velocity, 0xfffff)
+
         # Register virtual_endstop pin
         name_parts = config.get_name().split()
         ppins = self.printer.lookup_object("pins")
@@ -453,10 +460,10 @@ class TMCVirtualPinHelper:
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             self.en_pwm = not self.fields.get_field("en_spreadcycle")
-            self.pwmthrs = self.fields.get_field("tpwmthrs")
         else:
             self.en_pwm = self.fields.get_field("en_pwm_mode")
-            self.pwmthrs = 0
+        self.pwmthrs = self.fields.get_field("tpwmthrs")
+        self.coolthrs = self.fields.get_field("tcoolthrs")
         self.printer.register_event_handler("homing:homing_move_begin",
                                             self.handle_homing_move_begin)
         self.printer.register_event_handler("homing:homing_move_end",
@@ -471,13 +478,15 @@ class TMCVirtualPinHelper:
             # On "stallguard4" drivers, "stealthchop" must be enabled
             tp_val = self.fields.set_field("tpwmthrs", 0)
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadcycle", 0)
+            gconf_val = self.fields.set_field("en_spreadcycle", 0)
         else:
             # On earlier drivers, "stealthchop" must be disabled
+            tp_val = self.fields.set_field("tpwmthrs", 0xfffff)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             self.fields.set_field("en_pwm_mode", 0)
-            val = self.fields.set_field(self.diag_pin_field, 1)
-        self.mcu_tmc.set_register("GCONF", val)
-        tc_val = self.fields.set_field("tcoolthrs", 0xfffff)
+            gconf_val = self.fields.set_field(self.diag_pin_field, 1)
+        self.mcu_tmc.set_register("GCONF", gconf_val)
+        tc_val = self.fields.set_field("tcoolthrs", self.homing_tcoolthrs)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
     def handle_homing_move_end(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
@@ -488,10 +497,12 @@ class TMCVirtualPinHelper:
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             val = self.fields.set_field("en_spreadcycle", not self.en_pwm)
         else:
+            tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
-        tc_val = self.fields.set_field("tcoolthrs", 0)
+        tc_val = self.fields.set_field("tcoolthrs", self.coolthrs)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
 
 

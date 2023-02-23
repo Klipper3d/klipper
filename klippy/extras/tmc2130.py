@@ -286,7 +286,7 @@ class TMC2130:
         # Set microstep config options
         tmc.TMCMicrostepHelper(config, self.mcu_tmc)
         # Allow virtual pins to be created
-        tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
+        tmc.TMCVirtualPinHelper(config, self.mcu_tmc, self.tmc_frequency)
         # Register commands
         current_helper = TMCCurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
