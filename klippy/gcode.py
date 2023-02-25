@@ -138,6 +138,13 @@ class GCodeDispatch:
             self.base_gcode_handlers[cmd] = func
         if desc is not None:
             self.gcode_help[cmd] = desc
+    def register_alias(self, cmd, target):
+        target_func = self.ready_gcode_handlers.get(target)
+        when_not_ready = target in self.base_gcode_handlers
+
+        self.register_command(cmd, target_func,
+                              when_not_ready=when_not_ready,
+                              desc="Alias for %s" % (target, ))
     def register_mux_command(self, cmd, key, value, func, desc=None):
         prev = self.mux_commands.get(cmd)
         if prev is None:

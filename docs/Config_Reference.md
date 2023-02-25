@@ -1346,6 +1346,19 @@ information.
 
 ## G-Code macros and events
 
+### [gcode_aliases]
+G-Code aliases (one may define any number of sections with a
+"gcode_aliases" prefix). Use this to define aliases for g-code
+commands.
+
+```
+[gcode_aliases my_aliases]
+aliases:
+aliases_<name>:
+#   A comma separated list of "name=value" G-Code aliases to create.
+#   Any number of options starting with "aliases_" may be specified.
+```
+
 ### [gcode_macro]
 
 G-Code macros (one may define any number of sections with a
