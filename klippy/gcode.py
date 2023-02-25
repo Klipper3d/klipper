@@ -172,13 +172,15 @@ class GCodeDispatch:
         self._respond_state("Ready")
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*/])')
+    comment_r = re.compile('\([^)]*\)')
+    def _strip_comments(self, command):
+        command = command.split(";", 1)[0]
+        return self.comment_r.sub("", command)
     def _process_commands(self, commands, need_ack=True):
         for line in commands:
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
-            cpos = line.find(';')
-            if cpos >= 0:
-                line = line[:cpos]
+            line = self._strip_comments(line)
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
             numparts = len(parts)
