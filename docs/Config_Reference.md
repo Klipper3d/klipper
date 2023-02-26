@@ -3410,6 +3410,187 @@ run_current:
 #   HDEC) is interpreted as the MSB of HSTRT in this case).
 ```
 
+### [tmc2240]
+
+Configure a TMC2240 stepper motor driver via SPI bus. To use this
+feature, define a config section with a "tmc2240" prefix followed by
+the name of the corresponding stepper config section (for example,
+"[tmc2240 stepper_x]").
+
+```
+[tmc2240 stepper_x]
+cs_pin:
+#   The pin corresponding to the TMC2240 chip select line. This pin
+#   will be set to low at the start of SPI messages and raised to high
+#   after the message completes. This parameter must be provided.
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#chain_position:
+#chain_length:
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
+#tmc_frequency: 12500000
+#   Configure if an external clock oscillator is connected to the TMC driver
+#   clock input.
+#interpolate: True
+#   If true, enable step interpolation (the driver will internally
+#   step at a rate of 256 micro-steps). The default is True.
+run_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   during stepper movement. This parameter must be provided.
+#hold_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
+#homing_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is performing a homing move. It can be useful for TMC
+#   drivers if the run current is too high or too low and it causes StallGuard
+#   to perform poorly. It can also be used as a safety measure so the printer
+#   can't damage itself if homing fails.
+#   The default is to not adjust the driver currents during homing.
+#rref: 12000
+#   The resistance (in ohms) of the resistor between IREF and GND.
+#current_range: 0
+#   The selected current range. Valid values are integers between 0 and 3.
+#   A higher value allows a higher maximum current.
+#stealthchop_threshold: 0
+#   The velocity (in mm/s) to set the "stealthChop" threshold to. When
+#   set, "stealthChop" mode will be enabled if the stepper motor
+#   velocity is below this value. The default is 0, which disables
+#   "stealthChop" mode.
+#   This field is also known as vpwmthrs or TPWMTHRS.
+#vhigh:
+#   The velocity (in mm/s) to set the "high velocity" threshold to. When
+#   set, "stealthChop" mode will be disabled if the stepper motor
+#   velocity is above this value. StallGuard and CoolStep will also get
+#   disabled above this velocity. The default value is equivalent to
+#   infinity (thigh = 0).
+#   This field is also known as THIGH.
+#vcoolthrs:
+#   The velocity (in mm/s) to set the StallGuard (and CoolStep) minimum
+#   threshold. When set, StallGuard and CoolStep will be disabled if the
+#   stepper motor velocity is below this value. This value only applies while
+#   not homing. The default value is equivalent to infinity (tcoolthrs = 0),
+#   so by default StallGuard and CoolStep are completely disabled while not
+#   homing. Set this value in order to be able to use CoolStep.
+#   This field is also known as TCOOLTHRS.
+#homing_vcoolthrs:
+#   Same as `vcoolthrs`, except it is applied only during the homing move.
+#   If not specified, it defaults to `vcoolthrs`.
+#homing_vpwmthrs:
+#   Same as `stealthchop_threshold`, except it is applied only during the
+#   homing move. This value is only used if both SGT and SG4_THRS are defined.
+#   If this config option is not defined, but both SGT and SG4_THRS are used,
+#   then it will default to `stealthchop_threshold`.
+#driver_MSLUT0: 2863314260
+#driver_MSLUT1: 1251300522
+#driver_MSLUT2: 608774441
+#driver_MSLUT3: 269500962
+#driver_MSLUT4: 4227858431
+#driver_MSLUT5: 3048961917
+#driver_MSLUT6: 1227445590
+#driver_MSLUT7: 4211234
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
+#driver_OFFSET_SIN90: 0
+#   These fields control the Microstep Table registers directly. The optimal
+#   wave table is specific to each motor and might vary with current. An
+#   optimal configuration will have minimal print artifacts caused by
+#   non-linear stepper movement. The values specified above are the default
+#   values used by the driver. The value must be specified as a decimal integer
+#   (hex form is not supported). In order to compute the wave table fields,
+#   see the tmc2130 "Calculation Sheet" from the Trinamic website.
+#   Additionally, this driver also has the OFFSET_SIN90 field which can be used
+#   to tune a motor with unbalanced coils. See the `Sine Wave Lookup Table`
+#   section in the datasheet for information about this field and how to tune
+#   it.
+#driver_SMALL_HYSTERESYS: False
+#   This option should only be used if the microcontroller is capable of
+#   generating stable STEP signals (jitter will negatively impact the stability
+#   in combination with this option). Enabling this option results in a tighter
+#   hysteresis around all velocity based thresholds (internally based on TSTEP).
+#   This option could prove useful if the desired velocity is high.
+#driver_MULTISTEP_FILT: True
+#driver_IHOLDDELAY: 6
+#driver_IRUNDELAY: 4
+#driver_TPOWERDOWN: 10
+#driver_TBL: 2
+#driver_TOFF: 3
+#driver_HEND: 2
+#driver_HSTRT: 5
+#driver_FD3: 0
+#driver_TPFD: 4
+#driver_CHM: 0
+#driver_VHIGHFS: 0
+#driver_VHIGHCHM: 0
+#driver_DISS2G: 0
+#driver_DISS2VS: 0
+#driver_PWM_AUTOSCALE: True
+#driver_PWM_AUTOGRAD: True
+#driver_PWM_FREQ: 0
+#driver_FREEWHEEL: 0
+#driver_PWM_GRAD: 0
+#driver_PWM_OFS: 30
+#driver_PWM_REG: 4
+#driver_PWM_LIM: 12
+#driver_SGT: 0
+#driver_SEMIN: 0
+#driver_SEUP: 0
+#driver_SEMAX: 0
+#driver_SEDN: 0
+#driver_SEIMIN: 0
+#driver_SFILT: 0
+#driver_SG4_THRS: 0
+#driver_SG4_FILT_EN: 0
+#driver_SG4_ANGLE_OFFSET: 1
+#   Set the given register during the configuration of the TMC2240
+#   chip. This may be used to set custom motor parameters. The
+#   defaults for each parameter are next to the parameter name in the
+#   above list.
+#diag0_pin:
+#diag1_pin:
+#   The micro-controller pin attached to one of the DIAG lines of the
+#   TMC2240 chip. Only a single diag pin should be specified. The pin
+#   is "active low" and is thus normally prefaced with "^!". Setting
+#   this creates a "tmc2240_stepper_x:virtual_endstop" virtual pin
+#   which may be used as the stepper's endstop_pin. Doing this enables
+#   "sensorless homing". (Be sure to also set driver_SGT and/or
+#   driver_sg4_thrs to an appropriate sensitivity value.) The default is
+#   to not enable sensorless homing.
+#
+#   A word of caution regarding StallGuard4 sensorless homing:
+#   While it is true that the driver has both StallGuard2 and StallGuard4
+#   for SpreadCycle and StealthChop2 respectively, and that it should be
+#   possible to home in either mode, in practice there seems to be an issue
+#   with SG4, the SG4_THRS value making no sense when used as described in the
+#   datasheet. Trinamic (ADI) was contacted about this and their official
+#   response is that the SG4_THRS field is indeed broken in such a way that
+#   only half of the range of SG4_RESULT can be covered by the SG4_THRS field.
+#   This means that SG4 will be very insensitive to stalls with most motors.
+#   When asked whether they will fix this silicon bug, they said that they had
+#   no plans for the time being and that they'll keep monitoring the situation.
+#   So in most cases, ridiculously high values will have to be used with
+#   SG4_THRS, but even that might not be sensitive enough to detect stalls.
+#   The only broken part appears to be related to SG4_THRS and the DIAG output,
+#   so `sg4_ind_[0..3]` and CoolStep using SG4 should still be functional.
+```
+
 ### [tmc5160]
 
 Configure a TMC5160 stepper motor driver via SPI bus. To use this

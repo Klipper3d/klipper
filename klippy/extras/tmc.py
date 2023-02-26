@@ -438,6 +438,15 @@ class TMCVirtualPinHelper:
         self.pwmthrs = 0
         self.tcoolthrs = 0
 
+        if self.fields.lookup_register('sg4_thrs') is not None:
+            # both "stallguard2" and "stallguard4" are available
+            self.SG2 = config.getint('driver_sgt', None, note_valid=False)
+            self.SG4 = config.getint('driver_sg4_thrs', None, note_valid=False)
+            velocity = config.getfloat(
+                'homing_vpwmthrs', None, minval=0.)
+            self.homing_tpwmthrs = TMCtstepHelper(
+                config, mcu_tmc, tmc_freq, velocity, None)
+
         velocity = config.getfloat(
             'homing_vcoolthrs', None, minval=0.)
         self.homing_tcoolthrs = TMCtstepHelper(
@@ -479,6 +488,18 @@ class TMCVirtualPinHelper:
             tp_val = self.fields.set_field("tpwmthrs", 0)
             self.mcu_tmc.set_register("TPWMTHRS", tp_val)
             gconf_val = self.fields.set_field("en_spreadcycle", 0)
+        elif self.fields.lookup_register('sg4_thrs', None) is not None:
+            # both "stallguard2" and "stallguard4" are available
+            if self.SG2 is not None and self.SG4 is None:
+                tp_val = self.fields.set_field("tpwmthrs", 0xfffff)
+            elif self.SG2 is None and self.SG4 is not None:
+                tp_val = self.fields.set_field("tpwmthrs", 0)
+            elif self.homing_tpwmthrs is None:
+                tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
+            else:
+                tp_val = self.fields.set_field("tpwmthrs", self.homing_tpwmthrs)
+            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
+            gconf_val = self.fields.set_field(self.diag_pin_field, 1)
         else:
             # On earlier drivers, "stealthchop" must be disabled
             tp_val = self.fields.set_field("tpwmthrs", 0xfffff)
