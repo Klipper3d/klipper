@@ -172,8 +172,8 @@ SignedFields = ["cur_a", "cur_b", "pwm_scale_auto"]
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
     "sel_a":            (lambda v: "%d(%s)" % (v, ["TMC222x", "TMC220x"][v])),
-    "s2vsa":            (lambda v: "1(LowSideShort_A!)" if v else ""),
-    "s2vsb":            (lambda v: "1(LowSideShort_B!)" if v else ""),
+    "s2vsa":            (lambda v: "1(ShortToSupply_A!)" if v else ""),
+    "s2vsb":            (lambda v: "1(ShortToSupply_B!)" if v else ""),
 })
 
 
