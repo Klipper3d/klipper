@@ -71,8 +71,7 @@ only running the accelerometer and not performing any other duties.
 
 In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V
 only. Depending on the board's layout, a level shifter may be present, which
-makes 5V dangerous for your RPi. For more details,
-see [this discourse post](https://klipper.discourse.group/t/raspberry-pi-pico-adxl345-portable-resonance-measurement/1757).
+makes 5V dangerous for your RPi.
 
 | ADXL345 pin | Pico pin | Pico pin name |
 |:--:|:--:|:--:|
