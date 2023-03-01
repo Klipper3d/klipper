@@ -19,7 +19,7 @@ that it has a voltage regulator and a level shifter.
 ### Wiring
 
 An ethernet cable with shielded twisted pairs (cat5e or better) is recommended
-for signal integrety over a long distance. If you still experience signal integrity
+for signal integrity over a long distance. If you still experience signal integrity
 issues (SPI/I2C errors), shorten the cable.
 
 Connect ethernet cable shielding to the controller board/RPI ground.
@@ -41,7 +41,7 @@ SCLK+CS
 
 
 **Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and
-configuration will vary according to your specific board and avaliable pins.**
+configuration will vary according to your specific board and available pins.**
 
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
@@ -49,7 +49,7 @@ and **will not work**. The recommended connection scheme:
 
 | ADXL345 pin | RPi pin | RPi pin name |
 |:--:|:--:|:--:|
-| 3V3 (or VCC) | 01 | 3.3v DC power |
+| 3V3 (or VCC) | 01 | 3.3V DC power |
 | GND | 06 | Ground |
 | CS | 24 | GPIO08 (SPI0_CE0_N) |
 | SDO | 21 | GPIO09 (SPI0_MISO) |
@@ -195,7 +195,7 @@ serial: /dev/serial/by-id/<your PICO's serial ID>
 
 [mpu9250]
 i2c_mcu: pico
-i2c_bus: i2c1a
+i2c_bus: i2c0a
 
 [resonance_tester]
 accel_chip: mpu9250
@@ -310,7 +310,7 @@ or you can choose some other configuration yourself based on the generated
 charts: peaks in the power spectral density on the charts correspond to
 the resonance frequencies of the printer.
 
-Note that alternatively you can run the input shaper autocalibration
+Note that alternatively you can run the input shaper auto-calibration
 from Klipper [directly](#input-shaper-auto-calibration), which can be
 convenient, for example, for the input shaper
 [re-calibration](#input-shaper-re-calibration).
@@ -550,9 +550,9 @@ supplying `AXIS=` parameter, like
 SHAPER_CALIBRATE AXIS=X
 ```
 
-**Warning!** It is not advisable to run the shaper autocalibration very
+**Warning!** It is not advisable to run the shaper auto-calibration very
 frequently (e.g. before every print, or every day). In order to determine
-resonance frequencies, autocalibration creates intensive vibrations on each of
+resonance frequencies, auto-calibration creates intensive vibrations on each of
 the axes. Generally, 3D printers are not designed to withstand a prolonged
 exposure to vibrations near the resonance frequencies. Doing so may increase
 wear of the printer components and reduce their lifespan. There is also an
