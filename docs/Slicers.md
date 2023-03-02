@@ -111,8 +111,10 @@ material_bed_temperature_layer_0 and material_print_temperature_layer_0
 variables is enough to mitigate this. In slic3r derivatives,
 you would use:
 
+```
 M140 S0
 M104 S0
+```
 
 before the macro call. Also note that SuperSlicer has a
 "custom gcode only" button option, which achieves the same outcome.
