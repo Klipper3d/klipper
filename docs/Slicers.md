@@ -96,7 +96,9 @@ pass through parameters from the slicer variables to the macro.
 In Cura, to pass through temperatures, the following start gcode
 would be used:
 
+```
 START_PRINT BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0}
+```
 
 In slic3r derivatives such as PrusaSlicer and SuperSlicer, the
 following would be used:
