@@ -239,6 +239,10 @@ Fields["TSTEP"] = {
 SignedFields = ["cur_a", "cur_b", "sgt", "xactual", "vactual", "pwm_scale_auto"]
 
 FieldFormatters = dict(tmc2130.FieldFormatters)
+FieldFormatters.update({
+    "s2vsa":            (lambda v: "1(ShortToSupply_A!)" if v else ""),
+    "s2vsb":            (lambda v: "1(ShortToSupply_B!)" if v else ""),
+})
 
 
 ######################################################################
