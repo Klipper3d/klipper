@@ -1226,7 +1226,10 @@ turned off then back on.
 #### SET_TMC_CURRENT
 `SET_TMC_CURRENT STEPPER=<name> CURRENT=<amps> HOLDCURRENT=<amps>`:
 This will adjust the run and hold currents of the TMC driver.
-(HOLDCURRENT is not applicable to tmc2660 drivers.)
+`HOLDCURRENT` is not applicable to tmc2660 drivers.
+When used on a driver which has the `globalscaler` field (tmc5160 and tmc2240),
+if StealthChop2 is used, the stepper must be held at standstill for >130ms so
+that the driver executes the AT#1 calibration.
 
 #### SET_TMC_FIELD
 `SET_TMC_FIELD STEPPER=<name> FIELD=<field> VALUE=<value>`: This will
