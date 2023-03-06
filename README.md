@@ -44,13 +44,50 @@ the second extruder and the heated bed plate settings.
 
 # Installation
 
-(Add specific steps for cloning this repo manually and/or using KIUAH)
+NOTE - I am using Mainsail OS for these install instructions but you can
+use any frontend and install method you want.  The only changes needed from
+this repo are in Klipper.
 
-Clone this repo and do the normal installation steps.
+Create an SD card with Mainsail OS (using Raspberry Pi Imager).  Follow the
+instructions from Mainsail OS https://docs.mainsail.xyz/setup/mainsail-os
+Note that there is a bug in Mainsail OS v1.0.1 that will cause the wifi
+connection to bounce up and down until Sonar is updated.  To work around
+this bug, once the Pi has booted IMMEDIATELY SSH into the Pi and execute
+"systemctl stop sonar".  After that navigate to the Machine page and update
+all componentshttps.
 
-Copy /config/printer-makerbot-replicator2x-2012.cfg to printer.cfg.  Edit this
-file to add/remove features specific to your printer (e.g. remove HBP,
-change the HBP sensor to match what you have, change x,y, and z limits).
+SSH into the Pi (user pi, password is what you set up when you created
+the SD card).  Execute the following commands:
+mv klipper klipper-orig
+git clone https://github.com/dockterj/klipper
+systemctl restart klipper
+
+At this point if you refresh update manager on the machine page it will
+say that klipper is invalid.  Ignore this and don't click on "hard recovery"
+or "soft recovery."  Klipper should also report ERROR.  This is normal as
+there is no printer configured yet.
+
+Copy /config/printer-makerbot-replicator2x-2012.cfg to printer.cfg.  An
+easy way to do this is to change the root directory in Config File
+(on the Machine tab) to config_examples.  Find the
+printer-makerbot-replicator2x-2012.cfg file, right click and "download"
+it.  Change the root directory back to config, upload that file, then
+rename it to printer.cfg.
+
+Plug the printer in to the Pi's usb port and verify that the device
+appears in /dev/serial/by-id by executing the following:
+ls /dev/serial/by-id
+Make a note of the name of the printer so you can update
+printer.cfg in the next steps.
+
+Edit this file to add/remove features specific to your printer
+(e.g. remove HBP, change the HBP sensor to match what you have,
+change x,y, and z limits).  Update the "serial:" line under [mcu]
+to match the filename found in the previous step.  Add the following
+two lines at the top of you printer.cfg file to enable Mainsail
+support.
+[include mainsail.cfg]
+Click save and restart.
 
 Following the normal installation steps, run make menuconfig.  Choose 
 an atmega1280, 16mhz, and uart0.  (see below for note about atmega2560).
