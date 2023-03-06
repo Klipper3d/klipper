@@ -116,20 +116,20 @@ FieldFormatters = {
 # TMC stepper current config helper
 ######################################################################
 
-MAX_CURRENT = 2.000
-
 class TMCCurrentHelper:
-    def __init__(self, config, mcu_tmc):
+    def __init__(self, config, mcu_tmc, sense_resistor_offset):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        run_current = config.getfloat('run_current',
-                                      above=0., maxval=MAX_CURRENT)
-        hold_current = config.getfloat('hold_current', MAX_CURRENT,
-                                       above=0., maxval=MAX_CURRENT)
-        self.req_hold_current = hold_current
         self.sense_resistor = config.getfloat('sense_resistor', 0.110, above=0.)
+        self.max_cur = 0.325 / ((self.sense_resistor + sense_resistor_offset)
+                           * math.sqrt(2.))
+        run_current = config.getfloat('run_current',
+                                      above=0., maxval=self.max_cur)
+        hold_current = config.getfloat('hold_current', self.max_cur,
+                                       above=0., maxval=self.max_cur)
+        self.req_hold_current = hold_current
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("vsense", vsense)
         self.fields.set_field("ihold", ihold)
@@ -166,7 +166,7 @@ class TMCCurrentHelper:
         vsense = self.fields.get_field("vsense")
         run_current = self._calc_current_from_bits(irun, vsense)
         hold_current = self._calc_current_from_bits(ihold, vsense)
-        return run_current, hold_current, self.req_hold_current, MAX_CURRENT
+        return run_current, hold_current, self.req_hold_current, self.max_cur
     def set_current(self, run_current, hold_current, print_time):
         self.req_hold_current = hold_current
         vsense, irun, ihold = self._calc_current(run_current, hold_current)
@@ -285,7 +285,7 @@ class TMC2130:
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
-        current_helper = TMCCurrentHelper(config, self.mcu_tmc)
+        current_helper = TMCCurrentHelper(config, self.mcu_tmc, 0.02)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset

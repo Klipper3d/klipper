@@ -110,17 +110,16 @@ FieldFormatters.update({
 # TMC stepper current config helper
 ######################################################################
 
-MAX_CURRENT = 2.400
-
 class TMC2660CurrentHelper:
     def __init__(self, config, mcu_tmc):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        self.current = config.getfloat('run_current', minval=0.1,
-                                       maxval=MAX_CURRENT)
         self.sense_resistor = config.getfloat('sense_resistor')
+        self.max_cur = 0.325 / ((self.sense_resistor) * math.sqrt(2.))
+        self.current = config.getfloat('run_current', minval=0.1,
+                                       maxval=self.max_cur)
         vsense, cs = self._calc_current(self.current)
         self.fields.set_field("cs", cs)
         self.fields.set_field("vsense", vsense)
@@ -177,7 +176,7 @@ class TMC2660CurrentHelper:
             self.mcu_tmc.set_register("DRVCONF", val, print_time)
 
     def get_current(self):
-        return self.current, None, None, MAX_CURRENT
+        return self.current, None, None, self.max_cur
 
     def set_current(self, run_current, hold_current, print_time):
         self.current = run_current

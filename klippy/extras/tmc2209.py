@@ -65,7 +65,7 @@ class TMC2209:
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
-        current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
+        current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc, 0.02)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
