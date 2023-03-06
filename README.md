@@ -54,7 +54,7 @@ Note that there is a bug in Mainsail OS v1.0.1 that will cause the wifi
 connection to bounce up and down until Sonar is updated.  To work around
 this bug, once the Pi has booted IMMEDIATELY SSH into the Pi and execute
 "systemctl stop sonar".  After that navigate to the Machine page and update
-all componentshttps.
+all components.
 
 SSH into the Pi (user pi, password is what you set up when you created
 the SD card).  Execute the following commands:
