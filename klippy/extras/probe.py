@@ -179,8 +179,10 @@ class PrinterProbe:
                 z_positions = [p[2] for p in positions]
                 if max(z_positions) - min(z_positions) > samples_tolerance:
                     if retries >= samples_retries:
-                        raise gcmd.error("Probe samples exceed samples_tolerance")
-                    gcmd.respond_info("Probe samples exceed tolerance. Retrying...")
+                        raise gcmd.error(
+                                   "Probe samples exceed samples_tolerance")
+                    gcmd.respond_info(
+                        "Probe samples exceed tolerance. Retrying...")
                     retries += 1
                     positions = []
             # Retract - do not reset discards as they are done once per probe
