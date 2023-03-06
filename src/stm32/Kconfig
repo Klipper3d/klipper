@@ -10,7 +10,7 @@ config STM32_SELECT
     select HAVE_GPIO_I2C if !(MACH_STM32F031)
     select HAVE_GPIO_SPI if !MACH_STM32F031
     select HAVE_GPIO_SDIO if MACH_STM32F4
-    select HAVE_GPIO_HARD_PWM if MACH_STM32F1 || MACH_STM32F4 || MACH_STM32G0 || MACH_STM32H7
+    select HAVE_GPIO_HARD_PWM if MACH_STM32F1 || MACH_STM32F4 || MACH_STM32F7 || MACH_STM32G0 || MACH_STM32H7
     select HAVE_GPIO_BITBANGING if !MACH_STM32F031
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
@@ -52,6 +52,9 @@ choice
     config MACH_STM32F446
         bool "STM32F446"
         select MACH_STM32F4
+    config MACH_STM32F765
+        bool "STM32F765"
+        select MACH_STM32F7
     config MACH_STM32F031
         bool "STM32F031"
         select MACH_STM32F0
@@ -119,6 +122,8 @@ config MACH_STM32F2
     bool
 config MACH_STM32F4
     bool
+config MACH_STM32F7
+    bool
 config MACH_STM32G0
     bool
 config MACH_STM32G07x
@@ -143,7 +148,7 @@ config HAVE_STM32_USBFS
     default y if (MACH_STM32F1 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
 config HAVE_STM32_USBOTG
     bool
-    default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32H7
+    default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F7 || MACH_STM32H7
 config HAVE_STM32_CANBUS
     bool
     default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32F0x2
@@ -170,6 +175,7 @@ config MCU
     default "stm32f407xx" if MACH_STM32F407
     default "stm32f429xx" if MACH_STM32F429
     default "stm32f446xx" if MACH_STM32F446
+    default "stm32f765xx" if MACH_STM32F765
     default "stm32g070xx" if MACH_STM32G070
     default "stm32g071xx" if MACH_STM32G071
     default "stm32g0b0xx" if MACH_STM32G0B0
@@ -190,6 +196,7 @@ config CLOCK_FREQ
     default 84000000 if MACH_STM32F401
     default 168000000 if MACH_STM32F4x5
     default 180000000 if MACH_STM32F446
+    default 216000000 if MACH_STM32F765
     default 64000000 if MACH_STM32G0
     default 150000000 if MACH_STM32G431
     default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
@@ -207,7 +214,7 @@ config FLASH_SIZE
     default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446
     default 0x20000 if MACH_STM32G0 || MACH_STM32G431
     default 0x20000 if MACH_STM32H750
-    default 0x200000 if MACH_STM32H743
+    default 0x200000 if MACH_STM32H743 || MACH_STM32F765
     default 0x20000 if MACH_N32G45x
 
 config FLASH_BOOT_ADDRESS
@@ -230,6 +237,7 @@ config RAM_SIZE
     default 0x20000 if MACH_STM32F207
     default 0x10000 if MACH_STM32F401
     default 0x20000 if MACH_STM32F4x5 || MACH_STM32F446
+    default 0x80000 if MACH_STM32F765
     default 0x9000 if MACH_STM32G07x
     default 0x24000 if MACH_STM32G0Bx
     default 0x20000 if MACH_STM32H7
@@ -254,7 +262,7 @@ config STM32_DFU_ROM_ADDRESS
     default 0 if !USB
     default 0x1fffc400 if MACH_STM32F042
     default 0x1fffc800 if MACH_STM32F072
-    default 0x1fff0000 if MACH_STM32F4 || MACH_STM32G0 || MACH_STM32G4 || MACH_STM32L4
+    default 0x1fff0000 if MACH_STM32F4 || MACH_STM32F7 || MACH_STM32G0 || MACH_STM32G4 || MACH_STM32L4
     default 0x1ff09800 if MACH_STM32H7
     default 0
 
@@ -272,7 +280,7 @@ choice
     config STM32_FLASH_START_7000
         bool "28KiB bootloader" if MACH_STM32F1
     config STM32_FLASH_START_8000
-        bool "32KiB bootloader" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4
+        bool "32KiB bootloader" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F7
     config STM32_FLASH_START_8800
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_20200
@@ -289,7 +297,7 @@ choice
     config STM32_FLASH_START_4000
         bool "16KiB bootloader (HID Bootloader)" if MACH_STM32F207 || MACH_STM32F401 || MACH_STM32F4x5 || MACH_STM32F103 || MACH_STM32F072
     config STM32_FLASH_START_20000
-        bool "128KiB bootloader (SKR SE BX v2.0)" if MACH_STM32H743 || MACH_STM32H723
+        bool "128KiB bootloader (SKR SE BX v2.0)" if MACH_STM32H743 || MACH_STM32H723 || MACH_STM32F7
 
     config STM32_FLASH_START_0000
         bool "No bootloader"
@@ -330,6 +338,8 @@ choice
         bool "16 MHz crystal"
     config STM32_CLOCK_REF_20M
         bool "20 MHz crystal"
+    config STM32_CLOCK_REF_24M
+        bool "24 MHz crystal"
     config STM32_CLOCK_REF_25M
         bool "25 MHz crystal"
     config STM32_CLOCK_REF_INTERNAL
@@ -338,6 +348,7 @@ endchoice
 config CLOCK_REF_FREQ
     int
     default 25000000 if STM32_CLOCK_REF_25M
+    default 24000000 if STM32_CLOCK_REF_24M
     default 20000000 if STM32_CLOCK_REF_20M
     default 16000000 if STM32_CLOCK_REF_16M
     default 12000000 if STM32_CLOCK_REF_12M
