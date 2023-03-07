@@ -25,7 +25,7 @@ static struct pollfd main_pfd[1];
 
 // Report 'errno' in a message written to stderr
 void
-report_errno(char *where, int rc)
+report_errno(const char *where, int rc)
 {
     int e = errno;
     fprintf(stderr, "Got error %d in %s: (%d)%s\n", rc, where, e, strerror(e));
@@ -64,7 +64,7 @@ set_close_on_exec(int fd)
 }
 
 int
-console_setup(char *name)
+console_setup(const char *name)
 {
     // Open pseudo-tty
     struct termios ti;
@@ -180,7 +180,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
 
 // Sleep until a signal received (waking early for console input if needed)
 void
-console_sleep(sigset_t *sigset)
+console_sleep(const sigset_t *sigset)
 {
     int ret = ppoll(main_pfd, ARRAY_SIZE(main_pfd), NULL, sigset);
     if (ret <= 0) {

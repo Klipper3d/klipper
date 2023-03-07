@@ -15,11 +15,11 @@
 #define NSECS_PER_TICK (NSECS / CONFIG_CLOCK_FREQ)
 
 // console.c
-void report_errno(char *where, int rc);
+void report_errno(const char *where, int rc);
 int set_non_blocking(int fd);
 int set_close_on_exec(int fd);
-int console_setup(char *name);
-void console_sleep(sigset_t *sigset);
+int console_setup(const char *name);
+void console_sleep(const sigset_t *sigset);
 
 // timer.c
 int timer_check_periodic(uint32_t *ts);
