@@ -145,6 +145,12 @@ class ZThermalAdjuster:
             self.measured_min = min(self.measured_min, self.smoothed_temp)
             self.measured_max = max(self.measured_max, self.smoothed_temp)
 
+    def get_temp(self, eventtime):
+        return self.smoothed_temp, 0.
+
+    def stats(self, eventtime):
+        return False, '%s: temp=%.1f' % ("z_thermal_adjust", self.smoothed_temp)
+
     def cmd_SET_Z_THERMAL_ADJUST(self, gcmd):
         enable = gcmd.get_int('ENABLE', None, minval=0, maxval=1)
         coeff = gcmd.get_float('TEMP_COEFF', None, minval=-1, maxval=1)

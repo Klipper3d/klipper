@@ -27,6 +27,7 @@ DECL_ENUMERATION_RANGE("pin", "gpiochip4/gpio0", GPIO(4, 0), MAX_GPIO_LINES);
 DECL_ENUMERATION_RANGE("pin", "gpiochip5/gpio0", GPIO(5, 0), MAX_GPIO_LINES);
 DECL_ENUMERATION_RANGE("pin", "gpiochip6/gpio0", GPIO(6, 0), MAX_GPIO_LINES);
 DECL_ENUMERATION_RANGE("pin", "gpiochip7/gpio0", GPIO(7, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip8/gpio0", GPIO(8, 0), MAX_GPIO_LINES);
 
 struct gpio_line {
     int chipid;
@@ -34,8 +35,8 @@ struct gpio_line {
     int fd;
     int state;
 };
-static struct gpio_line gpio_lines[8 * MAX_GPIO_LINES];
-static int gpio_chip_fd[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
+static struct gpio_line gpio_lines[9 * MAX_GPIO_LINES];
+static int gpio_chip_fd[9] = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 static int
 get_chip_fd(uint8_t chipId)
@@ -147,11 +148,11 @@ gpio_in_reset(struct gpio_in g, int8_t pull_up)
     memset(&req, 0, sizeof(req));
     req.lines = 1;
     req.flags = GPIOHANDLE_REQUEST_INPUT;
-#if defined(GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP)
+#if defined(GPIOHANDLE_REQUEST_BIAS_PULL_UP)
     if (pull_up > 0) {
-        req.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP;
+        req.flags |= GPIOHANDLE_REQUEST_BIAS_PULL_UP;
     } else if (pull_up < 0) {
-        req.flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN;
+        req.flags |= GPIOHANDLE_REQUEST_BIAS_PULL_DOWN;
     }
 #endif
     req.lineoffsets[0] = g.line->offset;

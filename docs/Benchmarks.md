@@ -248,6 +248,26 @@ results were obtained by running an STM32F407 binary on an STM32F446
 | 1 stepper            | 46    |
 | 3 stepper            | 205   |
 
+### STM32H7 step rate benchmark
+
+The following configuration sequence is used on a STM32H743VIT6:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PD4 dir_pin=PD3 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PA15 dir_pin=PA8 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PE2 dir_pin=PE3 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+```
+
+The test was last run on commit `00191b5c` with gcc version
+`arm-none-eabi-gcc (15:8-2019-q3-1+b1) 8.3.1 20190703 (release)
+[gcc-8-branch revision 273027]`.
+
+| stm32h7              | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 44    |
+| 3 stepper            | 198   |
+
 ### STM32G0B1 step rate benchmark
 
 The following configuration sequence is used on the STM32G0B1:
@@ -334,6 +354,27 @@ micro-controller.
 | 1 stepper (200Mhz)   | 39    |
 | 3 stepper (200Mhz)   | 181   |
 
+### AR100 step rate benchmark ###
+
+The following configuration sequence is used on AR100 CPU (Allwinner A64):
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PL10 dir_pin=PE14 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PL11 dir_pin=PE15 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PL12 dir_pin=PE16 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+
+```
+
+The test was last run on commit `08d037c6` with gcc version
+`or1k-linux-musl-gcc (GCC) 9.2.0` on an Allwinner A64-H
+micro-controller.
+
+| AR100 R_PIO          | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 85    |
+| 3 stepper            | 359   |
+
 ### RP2040 step rate benchmark
 
 The following configuration sequence is used on the RP2040:
@@ -405,6 +446,7 @@ hub.
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
 | at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
+| ar100 (serial)      | 138K | 08d037c6 | or1k-linux-musl-gcc 9.3.0 |
 | samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |
 | pru (shared memory) | 260K | c5968a08 | pru-gcc (GCC) 8.0.0 20170530 (experimental) |
 | stm32f103 (USB)     | 355K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |

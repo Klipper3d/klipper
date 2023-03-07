@@ -62,7 +62,8 @@ main(int argc, char **argv)
     // Parse program args
     orig_argv = argv;
     int opt, watchdog = 0, realtime = 0;
-    while ((opt = getopt(argc, argv, "wr")) != -1) {
+    char *serial = "/tmp/klipper_host_mcu";
+    while ((opt = getopt(argc, argv, "wrI:")) != -1) {
         switch (opt) {
         case 'w':
             watchdog = 1;
@@ -70,8 +71,11 @@ main(int argc, char **argv)
         case 'r':
             realtime = 1;
             break;
+        case 'I':
+            serial = optarg;
+            break;
         default:
-            fprintf(stderr, "Usage: %s [-w] [-r]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-w] [-r] [-I path]\n", argv[0]);
             return -1;
         }
     }
@@ -82,7 +86,7 @@ main(int argc, char **argv)
         if (ret)
             return ret;
     }
-    int ret = console_setup("/tmp/klipper_host_mcu");
+    int ret = console_setup(serial);
     if (ret)
         return -1;
     if (watchdog) {

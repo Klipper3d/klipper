@@ -26,7 +26,7 @@ static struct can2040 cbus;
 
 // Transmit a packet
 int
-canbus_send(struct canbus_msg *msg)
+canhw_send(struct canbus_msg *msg)
 {
     int ret = can2040_transmit(&cbus, (void*)msg);
     if (ret < 0)
@@ -36,7 +36,7 @@ canbus_send(struct canbus_msg *msg)
 
 // Setup the receive packet filter
 void
-canbus_set_filter(uint32_t id)
+canhw_set_filter(uint32_t id)
 {
     // Filter not implemented (and not necessary)
 }
