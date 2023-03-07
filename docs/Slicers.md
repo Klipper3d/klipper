@@ -7,8 +7,10 @@ Slic3r, Cura, Simplify3D, etc.
 ## Set the G-Code flavor to Marlin
 
 Many slicers have an option to configure the "G-Code flavor". The
-default is frequently "Marlin" and that works well with Klipper. The
-"Smoothieware" setting also works well with Klipper.
+default is frequently "Marlin" and that works well with Klipper. Note that
+some slicers that make optimisations for Marlin 2 may work better with the
+"Marlin (legacy)" option. The "Smoothieware" setting also works well with
+Klipper.
 
 ## Klipper gcode_macro
 
