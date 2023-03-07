@@ -126,6 +126,9 @@ The following information is available for extruder_stepper objects (as well as
 [extruder](Config_Reference.md#extruder) objects):
 - `pressure_advance`: The current [pressure advance](Pressure_Advance.md) value.
 - `smooth_time`: The current pressure advance smooth time.
+- `motion_queue`: The name of the extruder that this extruder stepper is
+  currently synchronized to.  This is reported as `None` if the extruder stepper
+  is not currently associated with an extruder.
 
 ## fan
 
@@ -376,20 +379,17 @@ object:
 - `error`: Returns True if the most recent `SCREWS_TILT_CALCULATE`
   command included the `MAX_DEVIATION` parameter and any of the probed
   screw points exceeded the specified `MAX_DEVIATION`.
-- `results`: A list of the probed screw locations. Each entry in
-  the list will be a dictionary containing the following keys:
-  - `name`: The name of the screw as specified in the config file.
-  - `x`: The X coordinate of the screw as specified in the config file.
-  - `y`: The Y coordinate of the screw as specified in the config file.
+- `results["<screw>"]`: A dictionary containing the following keys:
   - `z`: The measured Z height of the screw location.
   - `sign`: A string specifying the direction to turn to screw for the
     necessary adjustment. Either "CW" for clockwise or "CCW" for
-    counterclockwise. The base screw will not have a `sign` key.
+    counterclockwise.
   - `adjust`: The number of screw turns to adjust the screw, given in
     the format "HH:MM," where "HH" is the number of full screw turns
     and "MM" is the number of "minutes of a clock face" representing
     a partial screw turn. (E.g. "01:15" would mean to turn the screw
     one and a quarter revolutions.)
+  - `is_base`: Returns True if this is the base screw.
 
 ## servo
 
@@ -397,6 +397,12 @@ The following information is available in
 [servo some_name](Config_Reference.md#servo) objects:
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
+
+## stepper_enable
+
+The following information is available in the `stepper_enable` object (this
+object is available if any stepper is defined):
+- `steppers["<stepper>"]`: Returns True if the given stepper is enabled.
 
 ## system_stats
 

@@ -138,8 +138,8 @@ enable_clock_stm32f446(void)
     while (!(PWR->CSR & PWR_CSR_ODSWRDY))
         ;
 
-    // Enable 48Mhz USB clock
-    if (CONFIG_USB) {
+    // Enable 48Mhz USB clock for USB or for SDIO
+    if (CONFIG_USB || CONFIG_HAVE_GPIO_SDIO) {
         uint32_t ref = (CONFIG_STM32_CLOCK_REF_INTERNAL
                         ? 16000000 : CONFIG_CLOCK_REF_FREQ);
         uint32_t plls_base = 2000000, plls_freq = FREQ_USB * 4;
@@ -153,6 +153,14 @@ enable_clock_stm32f446(void)
             ;
 
         RCC->DCKCFGR2 = RCC_DCKCFGR2_CK48MSEL;
+    } else {
+        // Reset value just in case the booloader modified the default value
+        RCC->DCKCFGR2 = 0;
+    }
+
+    // Set SDIO clk to PLL48CLK
+    if (CONFIG_HAVE_GPIO_SDIO) {
+        MODIFY_REG(RCC->DCKCFGR2, RCC_DCKCFGR2_SDIOSEL, 0);
     }
 #endif
 }
