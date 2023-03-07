@@ -116,6 +116,24 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
+    },
+    'mks-rn-1.3': {
+        'mcu': "stm32f407xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        "firmware_path": "robin_nano35.bin",
+        "current_firmware_path": "robin_nano35.cur",
+        "skip_verify": True
+    },
+    'mks-rn-1.1': {
+        'mcu': "stm32f103xe",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        "firmware_path": "robin_nano35.bin",
+        "current_firmware_path": "robin_nano35.cur",
+        "skip_verify": True
     }
 }
 
@@ -162,7 +180,10 @@ BOARD_ALIASES = {
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
-    'robin_v3': BOARD_DEFS['monster8']
+    'robin_v3': BOARD_DEFS['monster8'],
+    'mks-rn-1.2': BOARD_DEFS['mks-rn-1.1'],
+    'mks-rn-1.3s': BOARD_DEFS['mks-rn-1.3']
+
 }
 
 def list_boards():
