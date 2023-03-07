@@ -106,7 +106,7 @@ following would be used:
 START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]
 
 Also note that these slicers will insert their own heating codes when
-certain conditions are not met. in Cura, the existence of the
+certain conditions are not met. In Cura, the existence of the
 `{material_bed_temperature_layer_0}` and `{material_print_temperature_layer_0}`
 variables is enough to mitigate this. In slic3r derivatives,
 you would use:
