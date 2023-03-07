@@ -98,7 +98,7 @@ def detect_canboot(devpath):
 
 def call_flashcan(device, binfile):
     try:
-        import serial
+        import serial  # noqa: F401
     except ModuleNotFoundError:
         sys.stderr.write(
             "Python's pyserial module is required to update. Install\n"

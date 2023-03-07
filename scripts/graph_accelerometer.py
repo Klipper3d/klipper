@@ -58,7 +58,7 @@ def plot_accel(datas, lognames):
     axis_names = ["x", "y", "z"]
     for data, logname in zip(datas, lognames):
         if isinstance(data, shaper_calibrate.CalibrationData):
-            raise error(
+            raise RuntimeError(
                 "Cannot plot raw accelerometer data using the processed"
                 " resonances, raw_data input is required"
             )
@@ -96,7 +96,7 @@ def calc_freq_response(data, max_freq):
 
 def calc_specgram(data, axis):
     if isinstance(data, shaper_calibrate.CalibrationData):
-        raise error(
+        raise RuntimeError(
             "Cannot calculate the spectrogram using the processed"
             " resonances, raw_data input is required"
         )

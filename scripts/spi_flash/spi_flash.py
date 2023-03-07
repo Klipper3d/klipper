@@ -17,7 +17,6 @@ import traceback
 import json
 import board_defs
 import fatfs_lib
-import util
 import reactor
 import serialhdl
 import clocksync
@@ -1130,7 +1129,7 @@ class SDCardSDIO:
     def _send_command(self, cmd, args, wait=0):
         cmd_code = SD_COMMANDS[cmd]
         argument = 0
-        if isinstance(args, int) or isinstance(args, long):
+        if isinstance(args, (int, float)):
             argument = args & 0xFFFFFFFF
         elif isinstance(args, list) and len(args) == 4:
             argument = (
@@ -1829,8 +1828,6 @@ def main():
         default=None,
         help="Klipper firmware dictionary",
     )
-    parser.add_argument("device", metavar="<device>", help="Device Serial Port")
-    parser.add_argument("board", metavar="<board>", help="Board Type")
     parser.add_argument(
         "-c",
         "--check",

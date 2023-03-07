@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
-from . import bus, tmc, tmc2130
+from . import tmc, tmc2130
 
 TMC_FREQUENCY = 12500000.0
 
