@@ -17,7 +17,7 @@ MCU := $(shell echo $(CONFIG_MCU))
 MCU_UPPER := $(shell echo $(CONFIG_MCU) | tr a-z A-Z | tr X x)
 
 CFLAGS-$(CONFIG_MACH_STM32F0) += -mcpu=cortex-m0 -Ilib/stm32f0/include
-ifeq ($(CONFIG_N32G452), y) 
+ifeq ($(CONFIG_N32G452), y)
 	dirs-$(CONFIG_MACH_STM32F1) += lib/n32g45x
 	CFLAGS-$(CONFIG_MACH_STM32F1) += -mcpu=cortex-m4 -Ilib/stm32f1/include -Ilib/n32g45x/include
 else
@@ -45,7 +45,7 @@ src-$(CONFIG_MACH_STM32F0) += stm32/stm32f0.c stm32/gpioperiph.c
 src-$(CONFIG_MACH_STM32F0) += stm32/stm32f0_adc.c stm32/stm32f0_i2c.c
 src-$(CONFIG_MACH_STM32F1) += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_MACH_STM32F1) += stm32/stm32f1.c generic/armcm_timer.c
-ifeq ($(CONFIG_N32G452), y) 
+ifeq ($(CONFIG_N32G452), y)
 	src-$(CONFIG_MACH_STM32F1) += ../lib/n32g45x/n32g45x_adc.c stm32/n32g45x_adc.c
 else
 	src-$(CONFIG_MACH_STM32F1) += stm32/adc.c
