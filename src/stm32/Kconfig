@@ -100,7 +100,7 @@ choice
 endchoice
 
 config MACH_STM32F103x6
-    depends on LOW_LEVEL_OPTIONS && MACH_STM32F103
+    depends on LOW_LEVEL_OPTIONS && MACH_STM32F103 && !N32G452
     bool "Only 10KiB of RAM (for rare stm32f103x6 variant)"
 
 config MACH_STM32F0
@@ -173,8 +173,8 @@ config MCU
 config CLOCK_FREQ
     int
     default 48000000 if MACH_STM32F0
-    default 64000000 if MACH_STM32F103 && STM32_CLOCK_REF_INTERNAL
-    default 72000000 if MACH_STM32F103
+    default 64000000 if (MACH_STM32F103 || N32G452) && STM32_CLOCK_REF_INTERNAL
+    default 72000000 if MACH_STM32F103 && !N32G452
     default 120000000 if MACH_STM32F207
     default 84000000 if MACH_STM32F401
     default 168000000 if MACH_STM32F4x5
@@ -183,6 +183,7 @@ config CLOCK_FREQ
     default 150000000 if MACH_STM32G431
     default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
     default 80000000 if MACH_STM32L412
+    default 128000000 if N32G452
 
 config FLASH_SIZE
     hex
@@ -226,7 +227,7 @@ config STACK_SIZE
 
 config STM32F103GD_DISABLE_SWD
     bool "Disable SWD at startup (for GigaDevice stm32f103 clones)"
-    depends on MACH_STM32F103 && LOW_LEVEL_OPTIONS
+    depends on MACH_STM32F103 && LOW_LEVEL_OPTIONS && !N32G452
     default n
     help
         The GigaDevice clone of the STM32F103 may not be able to
