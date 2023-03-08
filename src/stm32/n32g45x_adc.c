@@ -1,6 +1,9 @@
-// ADC functions on STM32
+// ADC functions on N32G45x
 //
 // Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2022-2023  Alexey Golyshin <stas2z@gmail.com>
+//
+// Based on Kevin's stm32f1x code, but modified for N32G45x specific ADC
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
