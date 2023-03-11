@@ -45,8 +45,8 @@ int BD_i2c_init(uint32_t _sda,uint32_t _scl,uint32_t delays)
     scl_pin =_scl;
     if(delays>0)
         delay_m=delays;
-    sda_gpio=gpio_out_setup(sda_pin, 0);
-    scl_gpio=gpio_out_setup(scl_pin, 0);
+    sda_gpio=gpio_out_setup(sda_pin, 1);
+    scl_gpio=gpio_out_setup(scl_pin, 1);
 
     gpio_out_write(sda_gpio, 1);
     gpio_out_write(scl_gpio, 1);
