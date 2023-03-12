@@ -136,14 +136,14 @@ static void
 i2c_do_write(i2c_hw_t *i2c, uint8_t addr, uint8_t write_len, uint8_t *write
              , uint8_t send_stop, uint32_t timeout)
 {
-    for (int i = 0; i < write_len; i++) {
-        int first = i == 0;
-        int last = send_stop && (i == write_len - 1);
+    for (uint32_t i = 0; i < write_len; i++) {
+        uint32_t first = i == 0;
+        uint32_t last = send_stop && (i == write_len - 1);
 
         // Wait until there's a spot in the TX FIFO
         while (i2c->txflr == 16) {
             if (!timer_is_before(timer_read_time(), timeout))
-                shutdown("i2c timeout");
+                shutdown("i2c write timeout");
         }
 
         i2c->data_cmd = first << I2C_IC_DATA_CMD_RESTART_LSB
@@ -157,7 +157,7 @@ i2c_do_write(i2c_hw_t *i2c, uint8_t addr, uint8_t write_len, uint8_t *write
     // Drain the transmit buffer
     while (i2c->txflr != 0) {
         if (!timer_is_before(timer_read_time(), timeout))
-            shutdown("i2c timeout");
+            shutdown("i2c write drain timeout");
     }
 }
 
@@ -165,27 +165,26 @@ static void
 i2c_do_read(i2c_hw_t *i2c, uint8_t addr, uint8_t read_len, uint8_t *read
             , uint32_t timeout)
 {
-    int have_read = 0;
-    int to_send = read_len;
-    while (have_read < read_len) {
-        if (!timer_is_before(timer_read_time(), timeout))
-            shutdown("i2c timeout");
+    for (uint8_t i = 0; i < read_len; ++i) {
+        uint32_t first = i == 0;
+        uint32_t last = i == read_len - 1;
 
-        if (to_send > 0 && i2c->txflr < 16) {
-            int first = to_send == read_len;
-            int last = to_send == 1;
-
-            // Put a read command in the TX FIFO
-            i2c->data_cmd = first << I2C_IC_DATA_CMD_RESTART_LSB
-                          | last << I2C_IC_DATA_CMD_STOP_LSB
-                          | I2C_IC_DATA_CMD_CMD_BITS;
-            to_send--;
+        while(i2c->txflr == 16) {
+            if (!timer_is_before(timer_read_time(), timeout))
+                shutdown("i2c read cmd timeout");
         }
 
-        if (have_read < read_len && i2c->rxflr > 0) {
-            *read++ = i2c->data_cmd & 0xFF;
-            have_read++;
+        // Put a read command in the TX FIFO
+        i2c->data_cmd = first << I2C_IC_DATA_CMD_RESTART_LSB
+                        | last << I2C_IC_DATA_CMD_STOP_LSB
+                        | I2C_IC_DATA_CMD_CMD_BITS;
+
+        while(!i2c->rxflr) {
+            if (!timer_is_before(timer_read_time(), timeout))
+                shutdown("i2c read timeout");            
         }
+
+        *read++ = (uint8_t)i2c->data_cmd;
     }
 }
 
