@@ -19,8 +19,8 @@ static struct {
     uint32_t last_read_time;
     // Fields for converting from a systime to ticks
     time_t start_sec;
-    // Flags for tracking irq_enable()/irq_disable()
-    uint32_t must_wake_timers;
+    // Flags for tracking irq_enable()/irq_disable() ref SIG31-C
+    volatile sig_atomic_t must_wake_timers; 
     // Time of next software timer (also used to convert from ticks to systime)
     uint32_t next_wake_counter;
     struct timespec next_wake;
@@ -268,7 +268,7 @@ void
 irq_wait(void)
 {
     // Must atomically sleep until signaled
-    if (!readl(&TimerInfo.must_wake_timers)) {
+    if (!TimerInfo.must_wake_timers) {
         timer_disable_signals();
         if (!TimerInfo.must_wake_timers)
             console_sleep(&TimerInfo.ss_sleep);
@@ -280,6 +280,6 @@ irq_wait(void)
 void
 irq_poll(void)
 {
-    if (readl(&TimerInfo.must_wake_timers))
+    if (TimerInfo.must_wake_timers)
         timer_dispatch();
 }
