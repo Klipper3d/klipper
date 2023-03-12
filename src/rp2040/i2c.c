@@ -181,7 +181,7 @@ i2c_do_read(i2c_hw_t *i2c, uint8_t addr, uint8_t read_len, uint8_t *read
 
         while(!i2c->rxflr) {
             if (!timer_is_before(timer_read_time(), timeout))
-                shutdown("i2c read timeout");            
+                shutdown("i2c read timeout");
         }
 
         *read++ = (uint8_t)i2c->data_cmd;
