@@ -20,7 +20,7 @@ static struct {
     // Fields for converting from a systime to ticks
     time_t start_sec;
     // Flags for tracking irq_enable()/irq_disable() ref SIG31-C
-    volatile sig_atomic_t must_wake_timers; 
+    volatile sig_atomic_t must_wake_timers;
     // Time of next software timer (also used to convert from ticks to systime)
     uint32_t next_wake_counter;
     struct timespec next_wake;
