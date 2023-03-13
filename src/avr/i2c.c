@@ -28,7 +28,7 @@ DECL_CONSTANT_STR("BUS_PINS_twi", "PD0,PD1");
 #endif
 
 static void
-i2c_init(void)
+i2c_init(uint32_t rate)
 {
     if (TWCR & (1<<TWEN))
         // Already setup
@@ -38,9 +38,9 @@ i2c_init(void)
     gpio_out_setup(SDA, 1);
     gpio_out_setup(SCL, 1);
 
-    // Set 100Khz frequency
+    // Set frequency
     TWSR = 0;
-    TWBR = ((CONFIG_CLOCK_FREQ / 100000) - 16) / 2;
+    TWBR = ((CONFIG_CLOCK_FREQ / rate) - 16) / 2;
 
     // Enable interface
     TWCR = (1<<TWEN);
@@ -51,7 +51,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 {
     if (bus)
         shutdown("Unsupported i2c bus");
-    i2c_init();
+    i2c_init(rate);
     return (struct i2c_config){ .addr=addr<<1 };
 }
 
