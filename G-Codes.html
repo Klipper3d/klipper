@@ -4494,14 +4494,15 @@ available for tle5012b chips.</p>
 <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> is enabled
 (also see the <a href="Bed_Mesh.html">bed mesh guide</a>).</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]
-[&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: This command probes the bed using
-generated points specified by the parameters in the config. After
-probing, a mesh is generated and z-movement is adjusted according to
-the mesh. See the PROBE command for details on the optional probe
-parameters. If METHOD=manual is specified then the manual probing tool
-is activated - see the MANUAL_PROBE command above for details on the
-additional commands available while this tool is active.</p>
+<p><code>BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;]
+[&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: This command probes
+the bed using generated points specified by the parameters in the config. After
+probing, a mesh is generated and z-movement is adjusted according to the mesh.
+See the PROBE command for details on the optional probe parameters. If
+METHOD=manual is specified then the manual probing tool is activated - see the
+MANUAL_PROBE command above for details on the additional commands available
+while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the
+<code>horizontal_move_z</code> option specified in the config file.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>: This command outputs the current probed
 z values and current mesh values to the terminal.  If PGP=1 is
@@ -4544,13 +4545,14 @@ bed screws so that the bed is a constant distance from the nozzle.</p>
 <p>The following commands are available when the
 <a href="Config_Reference.html#bed_tilt">bed_tilt config section</a> is enabled.</p>
 <h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_TILT_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This
-command will probe the points specified in the config and then
-recommend updated x and y tilt adjustments. See the PROBE command for
-details on the optional probe parameters. If METHOD=manual is
-specified then the manual probing tool is activated - see the
-MANUAL_PROBE command above for details on the additional commands
-available while this tool is active.</p>
+<p><code>BED_TILT_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;]
+[&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in
+the config and then recommend updated x and y tilt adjustments. See the PROBE
+command for details on the optional probe parameters. If METHOD=manual is
+specified then the manual probing tool is activated - see the MANUAL_PROBE
+command above for details on the additional commands available while this tool
+is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the
+<code>horizontal_move_z</code> option specified in the config file.</p>
 <h3 id="bltouch">[bltouch]<a class="headerlink" href="#bltouch" title="Permanent link">&para;</a></h3>
 <p>The following command is available when a
 <a href="Config_Reference.html#bltouch">bltouch config section</a> is enabled (also
@@ -4586,13 +4588,14 @@ from executing.</p>
 <a href="Config_Reference.html#linear-delta-kinematics">delta_calibrate config section</a>
 is enabled (also see the <a href="Delta_Calibrate.html">delta calibrate guide</a>).</p>
 <h4 id="delta_calibrate_1">DELTA_CALIBRATE<a class="headerlink" href="#delta_calibrate_1" title="Permanent link">&para;</a></h4>
-<p><code>DELTA_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This
-command will probe seven points on the bed and recommend updated
-endstop positions, tower angles, and radius. See the PROBE command for
-details on the optional probe parameters. If METHOD=manual is
-specified then the manual probing tool is activated - see the
-MANUAL_PROBE command above for details on the additional commands
-available while this tool is active.</p>
+<p><code>DELTA_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;]
+[&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe seven points on the bed
+and recommend updated endstop positions, tower angles, and radius. See the
+PROBE command for details on the optional probe parameters. If METHOD=manual is
+specified then the manual probing tool is activated - see the MANUAL_PROBE
+command above for details on the additional commands available while this tool
+is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the
+<code>horizontal_move_z</code> option specified in the config file.</p>
 <h4 id="delta_analyze">DELTA_ANALYZE<a class="headerlink" href="#delta_analyze" title="Permanent link">&para;</a></h4>
 <p><code>DELTA_ANALYZE</code>: This command is used during enhanced delta
 calibration. See <a href="Delta_Calibrate.html">Delta Calibrate</a> for details.</p>
@@ -5265,16 +5268,17 @@ is enabled (also see the
 <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">manual level guide</a>).</p>
 <h4 id="screws_tilt_calculate">SCREWS_TILT_CALCULATE<a class="headerlink" href="#screws_tilt_calculate" title="Permanent link">&para;</a></h4>
 <p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;]
-[&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will invoke the bed screws
-adjustment tool. It will command the nozzle to different locations (as
-defined in the config file) probing the z height and calculate the
-number of knob turns to adjust the bed level. If DIRECTION is
-specified, the knob turns will all be in the same direction, clockwise
-(CW) or counterclockwise (CCW). See the PROBE command for details on
-the optional probe parameters. IMPORTANT: You MUST always do a G28
-before using this command. If MAX_DEVIATION is specified, the command
-will raise a gcode error if any difference in the screw height
-relative to the base screw height is greater than the value provided.</p>
+[HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will
+invoke the bed screws adjustment tool. It will command the nozzle to different
+locations (as defined in the config file) probing the z height and calculate
+the number of knob turns to adjust the bed level. If DIRECTION is specified,
+the knob turns will all be in the same direction, clockwise (CW) or
+counterclockwise (CCW). See the PROBE command for details on the optional probe
+parameters. IMPORTANT: You MUST always do a G28 before using this command. If
+MAX_DEVIATION is specified, the command will raise a gcode error if any
+difference in the screw height relative to the base screw height is greater
+than the value provided. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the
+<code>horizontal_move_z</code> option specified in the config file.</p>
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
 <p>When the <a href="Config_Reference.html#sdcard_loop">sdcard_loop config section</a>
 is enabled, the following extended commands are available.</p>
@@ -5473,10 +5477,11 @@ automatically upon homing.</p>
 <p>The following commands are available when the
 <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
-<p><code>Z_TILT_ADJUST [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe
-the points specified in the config and then make independent
-adjustments to each Z stepper to compensate for tilt. See the PROBE
-command for details on the optional probe parameters.</p>
+<p><code>Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This
+command will probe the points specified in the config and then make independent
+adjustments to each Z stepper to compensate for tilt. See the PROBE command for
+details on the optional probe parameters. The optional <code>HORIZONTAL_MOVE_Z</code>
+value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 
               
             </article>
