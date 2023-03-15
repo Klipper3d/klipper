@@ -5,7 +5,7 @@ on:
     - cron: '30 5,17 * * *'
   workflow_dispatch:
 jobs:
-  build:
+  sync-with-upstream:
     runs-on: ubuntu-latest
     steps:
       - name: GitHub Sync to Upstream Repository
