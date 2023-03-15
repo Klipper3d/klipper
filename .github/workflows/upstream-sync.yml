@@ -22,7 +22,7 @@ jobs:
       id: sync
       uses: bdougie/Fork-Sync-With-Upstream-action@fork
       with:
-        upstream_repository: open-sauced/goals-template
-        upstream_branch: main
-        target_branch: main                       # optional
+        upstream_repository: Klipper3d/klipper
+        upstream_branch: master
+        target_branch: master                       # optional
         github_token: ${{ secrets.GITHUB_TOKEN }}   # optional, for accessing repos that require authenticati
