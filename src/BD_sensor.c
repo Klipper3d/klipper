@@ -194,6 +194,7 @@ void BD_i2c_write(unsigned int addr)
         }
         else
             BD_setLow(sda_gpio);
+        ndelay_bd(delay_m);
         BD_setHigh(scl_gpio);
         ndelay_bd(delay_m);
         BD_setLow(scl_gpio);
