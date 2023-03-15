@@ -326,6 +326,7 @@ class TMC5160:
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_status = cmdhelper.get_status
         # Setup basic register values
+        self.fields.set_field("multistep_filt", True)
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         set_config_field = self.fields.set_config_field
