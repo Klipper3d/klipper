@@ -1,15 +1,15 @@
 # Measuring Resonances
 
-Klipper has built-in support for ADXL345 accelerometer, which can be used to
+Klipper has built-in support for the ADXL345 accelerometer, which can be used to
 measure resonance frequencies of the printer for different axes, and auto-tune
 [input shapers](Resonance_Compensation.md) to compensate for resonances.
-Note that using ADXL345 requires some soldering and crimping. ADXL345 can be
+Note that using an ADXL345 requires some soldering and crimping. ADXL345s can be
 connected to a Raspberry Pi directly, or to an SPI interface of an MCU
 board (it needs to be reasonably fast).
 
-When sourcing ADXL345, be aware that there is a variety of different PCB
+When sourcing ADXL345s, be aware that there are a variety of different PCB
 board designs and different clones of them. Make sure that the board supports
-SPI mode (small number of boards appear to be hard-configured for I2C by
+SPI mode (a small number of boards appear to be hard-configured for I2C by
 pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU,
 that it has a voltage regulator and a level shifter.
 
@@ -40,8 +40,9 @@ SCLK+CS
 ##### ADXL345
 
 
-**Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and
-configuration will vary according to your specific board and available pins.**
+**Note: Many MCUs will work with an ADXL345 in SPI mode (e.g. Pi Pico), wiring
+and configuration will vary according to your specific board and available
+pins.**
 
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
@@ -65,17 +66,29 @@ Fritzing wiring diagrams for some of the ADXL345 boards:
 Suggested twisted pair order:
 
 ```
+3.3V+GND
+SDA+GND
+SCL+GND
+```
+or
+
+```
 3.3V+SDA
 GND+SCL
 ```
 
+The I2C bus requires its SDA and SCL signals to be pulled-up to 3.3V by one or
+more resistors with a combined value in the range of 1.8kOhm - 3.3kOhm to work
+at 400kbit/s. The smaller the resistors, the longer the I2C bus wires can be,
+and the more devices can be attached to it.
+
 ##### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
 
 Alternatives to the ADXL345 are MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500.
-These accelerometers have been tested to work over I2C on the RPi or RP2040(pico)
-at 400kbaud.
+These accelerometers have been tested to work over I2C on the RPi, RP2040 (Pico)
+and AVR at 400kbit/s.
 
-Recommended connection scheme for I2C on the Raspberry Pi:
+###### Recommended connection scheme for I2C on the Raspberry Pi:
 
 | MPU-9250 pin | RPi pin | RPi pin name |
 |:--:|:--:|:--:|
@@ -84,18 +97,40 @@ Recommended connection scheme for I2C on the Raspberry Pi:
 | SDA | 03 | GPIO02 (SDA1) |
 | SCL | 05 | GPIO03 (SCL1) |
 
+Raspberry Pi's include 1.8kOhm pull-up resistors on both SDA and SCL. Up to
+two MPU accelerometers can be connected with >=10kOhm or no pull-ups if the AD0
+pin on one is 0V and the other is 3.3V to set different I2C bus addresses.
+
 ![MPU-9250 connected to RPI](img/mpu9250-PI-fritzing.png)
 
-Recommended connection scheme for I2C(i2c0a) on the RP2040:
+###### Recommended connection scheme for I2C(i2c0a) on the RP2040:
 
-| MPU-9250 pin | RP2040 pin | RPi pin name |
+| MPU-9250 pin | RP2040 pin | RP2040 pin name |
 |:--:|:--:|:--:|
 | VCC | 39 | 3v3 |
 | GND | 38 | Ground |
 | SDA | 01 | GP0 (I2C0 SDA) |
 | SCL | 02 | GP1 (I2C0 SCL) |
 
-![MPU-9250 connected to PICO](img/mpu9250-PICO-fritzing.png)
+The Pico does not include any pull-up resistors. Some MPU accelerometer modules
+include pull-ups, but often they are too large at 10kOhm and must be changed or
+supplemented by smaller resistors.
+
+![MPU-9250 connected to Pico](img/mpu9250-PICO-fritzing.png)
+
+###### Recommended connection scheme for I2C(TWI) on the AVR ATmega328P Arduino Nano:
+
+| MPU-9250 pin | Atmega328P TQFP32 pin | Atmega328P pin name | Arduino Nano pin |
+|:--:|:--:|:--:|:--:|
+| VCC | 39 | - | - |
+| GND | 38 | Ground | GND |
+| SDA | 27 | SDA | A4 |
+| SCL | 28 | SCL | A5 |
+
+The Arduino Nano does not include any pull-up resistors nor a 3.3V power pin.
+Some MPU accelerometer modules include pull-ups and a 5V to 3.3V regulator, but
+often the pull-ups are too large at 10kOhm and must be changed or supplemented
+by smaller resistors.
 
 ### Mounting the accelerometer
 
@@ -142,7 +177,7 @@ Afterwards, check and follow the instructions in the
 [RPi Microcontroller document](RPi_microcontroller.md) to setup the
 "linux mcu" on the Raspberry Pi.
 
-#### Configure ADXL345 With RPi
+#### Configure ADXL345 with RPi
 
 Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
@@ -164,7 +199,7 @@ probe_points:
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
-#### Configure MPU-6000/9000 series With RPi
+#### Configure MPU-6000/9000 series with RPi
 
 Make sure the Linux I2C driver is enabled and the baud rate is
 set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
@@ -184,14 +219,14 @@ probe_points:
     100, 100, 20  # an example
 ```
 
-#### Configure MPU-6000/9000 series With PICO
+#### Configure MPU-6000/9000 series with Pico
 
-PICO I2C is set to 400000 on default. Simply add the following to the
-printer.cfg:
+Pico I2C will be set to 400000 by the mpu9250 option. Simply add the following
+to the printer.cfg:
 
 ```
 [mcu pico]
-serial: /dev/serial/by-id/<your PICO's serial ID>
+serial: /dev/serial/by-id/<your Pico's serial ID>
 
 [mpu9250]
 i2c_mcu: pico
@@ -204,6 +239,24 @@ probe_points:
 
 [static_digital_output pico_3V3pwm] # Improve power stability
 pin: pico:gpio23
+```
+
+#### Configure MPU-6000/9000 series with AVR
+
+AVR I2C will be set to 400000 by the mpu9250 option. Simply add the following
+to the printer.cfg:
+
+```
+[mcu nano]
+serial: /dev/serial/by-id/<your nano's serial ID>
+
+[mpu9250]
+i2c_mcu: nano
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
 ```
 
 Restart Klipper via the `RESTART` command.
@@ -324,8 +377,10 @@ resonances of Y axis - to the bed (the usual bed slinger setup).
 
 However, you can also connect two accelerometers simultaneously, though they
 must be connected to different boards (say, to an RPi and printer MCU board), or
-to two different physical SPI interfaces on the same board (rarely available).
+to two different physical SPI/I2C interfaces on the same board (rarely
+available), or to one I2C bus if they are set to different addresses.
 Then they can be configured in the following manner:
+
 ```
 [adxl345 hotend]
 # Assuming `hotend` chip is connected to an RPi
@@ -339,6 +394,26 @@ cs_pin: ...  # Printer board SPI chip select (CS) pin
 # Assuming the typical setup of the bed slinger printer
 accel_chip_x: adxl345 hotend
 accel_chip_y: adxl345 bed
+probe_points: ...
+```
+
+or for two sharing one I2C bus:
+
+```
+[mpu9250 hotend]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+i2c_address: 104
+
+[mpu9250 bed]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+i2c_address: 105
+
+[resonance_tester]
+# Assuming the typical setup of the bed slinger printer
+accel_chip_x: mpu9250 hotend
+accel_chip_y: mpu9250 bed
 probe_points: ...
 ```
 
