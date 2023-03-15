@@ -3,4 +3,6 @@ out
 *.pyc
 .config
 .config.old
+/ci_*
 klippy/.version
+.DS_Store

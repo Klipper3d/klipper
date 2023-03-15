@@ -1,3 +1,61 @@
+# Find the run target below for an example showing how it's possible to install Klipper in Docker.
+
+# But first, here is the docker builder environment target. Use this to build klipper from any
+# platform without installing locally the required packages and compilers. This is especially usefull
+# on old linux distribution and on non-linux OS'es.
+# IMPORTANT: The docker build must be run from the root of the repo. To use docker builder env
+# either prefix your command with ./scripts/with-docker-builder-env.sh like this:
+#       ./scripts/with-docker-builder-env.sh make menuconfig
+# or invoke it manually like so:
+#       docker build . -f scripts/Dockerfile --target builder -t klipper-builder
+#       docker run -it --rm -u `id -u`:`id -g` -v `pwd`:`pwd`:rw -w `pwd` klipper-builder make menuconfig
+FROM ubuntu:20.04 as builder
+ENV DEBIAN_FRONTEND=noninteractive
+# TZ hack to bypass timezone selection prompt
+ENV TZ=GMT
+RUN ln -snf "/usr/share/zoneinfo/$TZ" /etc/localtime
+RUN echo "$TZ" > /etc/timezone
+# Install klipper build deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        avr-libc \
+        binutils-arm-none-eabi \
+        bison \
+        build-essential \
+        flex \
+        gcc-arm-none-eabi \
+        gcc-avr \
+        libffi-dev \
+        libgmp-dev \
+        libmpc-dev \
+        libmpfr-dev \
+        libnewlib-arm-none-eabi \
+        pv \
+        python2-dev \
+        texinfo \
+        virtualenv \
+    && rm -rf /var/lib/apt/lists/*
+# Install gnupru toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+        git \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN cd /usr/local/src/ && \
+    git config --global user.email "you@example.com" && \
+    git config --global user.name "Your Name" && \
+    git clone https://github.com/dinuxbg/gnupru -b 2023.01 --depth 1 && \
+    cd gnupru && \
+    ./download-and-prepare.sh 2>&1 && \
+    PREFIX=/usr/local ./build.sh 2>&1 && \
+    rm -rf /usr/local/src/gnupru
+# Install or1k-linux-musl toolchain
+RUN cd /usr/local/src/ && \
+    curl https://more.musl.cc/10/x86_64-linux-musl/or1k-linux-musl-cross.tgz -o or1k-linux-musl-cross-10.tgz && \
+    tar -xf or1k-linux-musl-cross-10.tgz -C /usr/local/ && \
+    rm or1k-linux-musl-cross-10.tgz
+ENV PATH="${PATH}:/usr/local/or1k-linux-musl-cross/bin"
+
+
 # This is an example Dockerfile showing how it's possible to install Klipper in Docker.
 # IMPORTANT: The docker build must be run from the root of the repo, either copy the
 # Dockerfile to the root, or run docker build with "-f", for example:
@@ -14,7 +72,7 @@
 #       /home/klippy/.config/
 # For more Dockerfile examples with Klipper (and Octoprint) see:
 # https://github.com/sillyfrog/OctoPrint-Klipper-mjpg-Dockerfile
-FROM ubuntu:18.04
+FROM ubuntu:18.04 as run
 
 RUN apt-get update && \
     apt-get install -y sudo
