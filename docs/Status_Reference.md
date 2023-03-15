@@ -346,6 +346,7 @@ The following information is available in the
 [probe](Config_Reference.md#probe) object (this object is also
 available if a [bltouch](Config_Reference.md#bltouch) config section
 is defined):
+- `name`: Returns the name of the probe in use.
 - `last_query`: Returns True if the probe was reported as "triggered"
   during the last QUERY_PROBE command. Note, if this is used in a
   macro, due to the order of template expansion, the QUERY_PROBE
