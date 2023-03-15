@@ -6,46 +6,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync:
+  sync_with_upstream:
     runs-on: ubuntu-latest
+    name: Sync HEAD with upstream latest
+
     steps:
-      - name: Checkout snapshot
-        uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ref: snapshot
-          fetch-depth: 0
-      - name: Fetch upstream
-        run: |
-          git remote add upstream https://github.com/KevinOConnor/klipper.git
-          git fetch upstream master
-      - name: Merge changes
-        id: merge
-        run: |
-          echo "::set-output name=status::success"
-          echo "::set-output name=tagname::snapshot-$(date +'%y%m%d')"
-          git config user.name gbkwiatt
-          git config user.email gbkwiatt@users.noreply.github.com
-          git merge --no-commit --no-ff upstream/master
-          git commit -m "Merge upstream changes" || echo "::set-output name=status::failure"
-      - name: Push changes
-        if: steps.merge.outputs.status == 'success'
-        run: |
-          git push origin snapshot
-      - name: Create tag
-        if: steps.merge.outputs.status == 'success'
-        run: |
-          git tag -m '/!\ This is an automated, untested release. Use at your own risk /!\' ${{ steps.merge.outputs.tagname }}
-          git push origin refs/tags/${{ steps.merge.outputs.tagname }}
-      - name: Create prerelease
-        uses: actions/github-script@v3
-        if: steps.merge.outputs.status == 'success'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: "${{ steps.merge.outputs.tagname }}",
-              prerelease: true
-            })
+    # Step 1: run a standard checkout action, provided by github
+    - name: Checkout HEAD
+      uses: actions/checkout@v2
+      with:
+        ref: main
+
+    # Step 2: run this sync action - specify the upstream repo, upstream branch to sync with, and target sync branch
+    - name: Pull upstream changes
+      id: sync
+      uses: bdougie/Fork-Sync-With-Upstream-action@fork
+      with:
+        upstream_repository: open-sauced/goals-template
+        upstream_branch: main
+        target_branch: main                       # optional
+        github_token: ${{ secrets.GITHUB_TOKEN }}   # optional, for accessing repos that require authenticati
