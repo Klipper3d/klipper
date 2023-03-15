@@ -295,17 +295,22 @@ class TMC2130:
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        # CHOPCONF
         set_config_field(config, "toff", 4)
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
         set_config_field(config, "tbl", 1)
+        # COOLCONF
+        set_config_field(config, "sgt", 0)
+        # IHOLDIRUN
         set_config_field(config, "iholddelay", 8)
-        set_config_field(config, "tpowerdown", 0)
+        # PWMCONF
         set_config_field(config, "pwm_ampl", 128)
         set_config_field(config, "pwm_grad", 4)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
-        set_config_field(config, "sgt", 0)
+        # TPOWERDOWN
+        set_config_field(config, "tpowerdown", 0)
 
 def load_config_prefix(config):
     return TMC2130(config)

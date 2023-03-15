@@ -15,7 +15,7 @@ Klipper has several compelling features:
   movement provides quieter and more stable printer operation.
 
 * Best in class performance. Klipper is able to achieve high stepping
-  rates on both new and old micro-controllers. Even old 8bit
+  rates on both new and old micro-controllers. Even old 8-bit
   micro-controllers can obtain rates over 175K steps per second. On
   more recent micro-controllers, several million steps per second are
   possible. Higher stepper rates enable higher print velocities. The
@@ -185,6 +185,7 @@ represent total number of steps per second on the micro-controller.
 | RP2040                          | 2400K             | 1636K             |
 | SAM4E8E                         | 2500K             | 1674K             |
 | SAMD51                          | 3077K             | 1885K             |
+| AR100                           | 3529K             | 2507K             |
 | STM32F407                       | 3652K             | 2459K             |
 | STM32F446                       | 3913K             | 2634K             |
 | STM32H743                       | 9091K             | 6061K             |

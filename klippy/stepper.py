@@ -89,12 +89,12 @@ class MCU_stepper:
                                       invert_step, step_pulse_ticks))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)
-        step_cmd_tag = self._mcu.lookup_command_tag(
-            "queue_step oid=%c interval=%u count=%hu add=%hi")
-        dir_cmd_tag = self._mcu.lookup_command_tag(
-            "set_next_step_dir oid=%c dir=%c")
-        self._reset_cmd_tag = self._mcu.lookup_command_tag(
-            "reset_step_clock oid=%c clock=%u")
+        step_cmd_tag = self._mcu.lookup_command(
+            "queue_step oid=%c interval=%u count=%hu add=%hi").get_command_tag()
+        dir_cmd_tag = self._mcu.lookup_command(
+            "set_next_step_dir oid=%c dir=%c").get_command_tag()
+        self._reset_cmd_tag = self._mcu.lookup_command(
+            "reset_step_clock oid=%c clock=%u").get_command_tag()
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
