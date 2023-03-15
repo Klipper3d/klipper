@@ -1921,9 +1921,7 @@ a mesh without re-probing the bed.  After a profile has been saved using
 to write the profile to printer.cfg.</p>
 <p>Profiles can be loaded by executing <code>BED_MESH_PROFILE LOAD=&lt;name&gt;</code>.</p>
 <p>It should be noted that each time a BED_MESH_CALIBRATE occurs, the current
-state is automatically saved to the <em>default</em> profile.  If this profile
-exists it is automatically loaded when Klipper starts.  If this behavior
-is not desirable the <em>default</em> profile can be removed as follows:</p>
+state is automatically saved to the <em>default</em> profile. The <em>default</em> profile can be removed as follows:</p>
 <p><code>BED_MESH_PROFILE REMOVE=default</code></p>
 <p>Any other saved profile can be removed in the same fashion, replacing
 <em>default</em> with the named profile you wish to remove.</p>
