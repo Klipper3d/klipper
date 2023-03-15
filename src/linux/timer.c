@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <time.h> // struct timespec
+#include <signal.h> // sig_atomic_t
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/io.h" // readl
 #include "board/irq.h" // irq_disable
