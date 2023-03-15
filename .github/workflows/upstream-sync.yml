@@ -2,7 +2,7 @@ name: Upstream sync
 
 on:
   schedule:
-    - cron: '0 0 1 * *'
+    - cron: '30 5,17 * * *'
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       - name: Checkout snapshot
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           ref: snapshot
           fetch-depth: 0
       - name: Fetch upstream
@@ -24,8 +24,8 @@ jobs:
         run: |
           echo "::set-output name=status::success"
           echo "::set-output name=tagname::snapshot-$(date +'%y%m%d')"
-          git config user.name Desuuuu
-          git config user.email Desuuuu@users.noreply.github.com
+          git config user.name gbkwiatt
+          git config user.email gbkwiatt@users.noreply.github.com
           git merge --no-commit --no-ff upstream/master
           git commit -m "Merge upstream changes" || echo "::set-output name=status::failure"
       - name: Push changes
@@ -41,7 +41,7 @@ jobs:
         uses: actions/github-script@v3
         if: steps.merge.outputs.status == 'success'
         with:
-          github-token: ${{ secrets.TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             await github.repos.createRelease({
               owner: context.repo.owner,
