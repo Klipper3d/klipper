@@ -13,7 +13,7 @@ jobs:
     steps:
     # Step 1: run a standard checkout action, provided by github
     - name: Checkout HEAD
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: main
 
