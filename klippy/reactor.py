@@ -248,12 +248,12 @@ class SelectReactor:
         if file_handler in self._write_fds:
             self._write_fds.pop(self._write_fds.index(file_handler))
     def set_fd_wake(self, file_handler, is_readable=True, is_writeable=False):
-        if file_hander in self._read_fds:
+        if file_handler in self._read_fds:
             if not is_readable:
                 self._read_fds.pop(self._read_fds.index(file_handler))
         elif is_readable:
             self._read_fds.append(file_handler)
-        if file_hander in self._write_fds:
+        if file_handler in self._write_fds:
             if not is_writeable:
                 self._write_fds.pop(self._write_fds.index(file_handler))
         elif is_writeable:
