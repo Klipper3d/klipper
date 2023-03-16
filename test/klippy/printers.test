@@ -228,6 +228,7 @@ CONFIG ../../config/generic-fysetc-s6.cfg
 CONFIG ../../config/generic-fysetc-s6-v2.cfg
 CONFIG ../../config/generic-fysetc-spider.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
+CONFIG ../../config/printer-ratrig-v-minion-2021.cfg
 
 # Printers using the stm32h723
 DICTIONARY stm32h723.dict
