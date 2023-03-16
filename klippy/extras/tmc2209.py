@@ -58,7 +58,8 @@ class TMC2209:
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, tmc2208.SignedFields,
                                       FieldFormatters)
-        self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 3)
+        self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 3,
+                                             TMC_FREQUENCY)
         # Setup fields for UART
         self.fields.set_field("pdn_disable", True)
         self.fields.set_field("senddelay", 2) # Avoid tx errors on shared uart
