@@ -316,7 +316,8 @@ class TMC5160:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields)
+        self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields,
+                                           TMC_FREQUENCY)
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands

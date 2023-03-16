@@ -258,7 +258,18 @@ class TMCCommandHelper:
         reg_name = self.fields.lookup_register(field_name, None)
         if reg_name is None:
             raise gcmd.error("Unknown field name '%s'" % (field_name,))
-        value = gcmd.get_int('VALUE')
+        value = gcmd.get_int('VALUE', None)
+        velocity = gcmd.get_float('VELOCITY', None, minval=0.)
+        tmc_frequency = self.mcu_tmc.get_tmc_frequency()
+        if tmc_frequency is None and velocity is not None:
+            raise gcmd.error("VELOCITY parameter not supported by this driver")
+        if (value is None) == (velocity is None):
+            raise gcmd.error("Specify either VALUE or VELOCITY")
+        if velocity is not None:
+            step_dist = self.stepper.get_step_dist()
+            mres = self.fields.get_field("mres")
+            value = TMCtstepHelper(step_dist, mres, tmc_frequency,
+                                   velocity)
         reg_val = self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
