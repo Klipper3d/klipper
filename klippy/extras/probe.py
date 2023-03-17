@@ -56,6 +56,7 @@ class PrinterProbe:
         self.I2C_BD_send_cmd3 = None
         self.I2C_BD_receive_cmd3 = None
         self.mcu.register_config_callback(self.build_config)
+        self.horizontal_move_z = config.getfloat('horizontal_move_z', 0.7)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register homing event handlers
@@ -143,7 +144,7 @@ class PrinterProbe:
             pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
             intd=int(pr['response'])
             strd=str(intd/100.0)
-            pos[2]=intd/100.0
+            pos[2]=self.horizontal_move_z-(intd/100.0)
             self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                     % (pos[0], pos[1], pos[2]))
             return pos[:3]
