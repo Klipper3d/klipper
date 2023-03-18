@@ -4,7 +4,8 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 #include <fcntl.h> // open
-#include <linux/i2c-dev.h> // I2C_SLAVE
+#include <linux/i2c-dev.h> // I2C_SLAVE i2c_msg
+#include <linux/i2c.h> // i2c_rdwr_ioctl_data I2C_M_RD I2C_FUNC_I2C
 #include <stdio.h> // snprintf
 #include <sys/ioctl.h> // ioctl
 #include <unistd.h> // write
@@ -42,6 +43,13 @@ i2c_open(uint32_t bus, uint8_t addr)
         report_errno("open i2c", fd);
         goto fail;
     }
+    // Test for I2C_RDWR support
+    unsigned long i2c_funcs; // datatype from ioctl spec.
+    ioctl(fd, I2C_FUNCS, &i2c_funcs);
+    if ((i2c_funcs & I2C_FUNC_I2C) == 0) {
+        report_errno("i2c does not support I2C_RDWR", fd);
+        goto fail;
+    }
     int ret = ioctl(fd, I2C_SLAVE, addr);
     if (ret < 0) {
         report_errno("ioctl i2c", fd);
@@ -73,7 +81,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     // dtparam=i2c_baudrate=<rate>
 
     int fd = i2c_open(bus, addr);
-    return (struct i2c_config){.fd=fd};
+    return (struct i2c_config){.fd=fd, .addr=addr};
 }
 
 void
@@ -91,12 +99,29 @@ void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *data)
 {
-    if(reg_len != 0)
-        i2c_write(config, reg_len, reg);
-    int ret = read(config.fd, data, read_len);
-    if (ret != read_len) {
-        if (ret < 0)
-            report_errno("read value i2c", ret);
+    struct i2c_rdwr_ioctl_data i2c_data;
+    struct i2c_msg msgs[2];
+
+    if(reg_len != 0) {
+        msgs[0].addr = config.addr;
+        msgs[0].flags = 0x0;
+        msgs[0].len = reg_len;
+        msgs[0].buf = reg;
+        i2c_data.nmsgs = 2;
+        i2c_data.msgs = &msgs[0];
+    } else {
+        i2c_data.nmsgs = 1;
+        i2c_data.msgs = &msgs[1];
+    }
+
+    msgs[1].addr = config.addr;
+    msgs[1].flags = I2C_M_RD;
+    msgs[1].len = read_len;
+    msgs[1].buf = data;
+
+    int ret = ioctl(config.fd, I2C_RDWR, &i2c_data);
+
+    if(ret < 0) {
         try_shutdown("Unable to read i2c device");
     }
 }
