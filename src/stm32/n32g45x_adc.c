@@ -109,10 +109,14 @@ gpio_adc_setup(uint32_t pin)
 
     reg_temp = ADC_RCC_CFG2;
     reg_temp &= CFG2_ADCPLLPRES_RESET_MASK;
-    reg_temp |= RCC_ADCPLLCLK_DIV16;
+    reg_temp |= RCC_ADCPLLCLK_DIV1;
+    reg_temp &= RCC_ADCPLLCLK_DISABLE;
     ADC_RCC_CFG2 = reg_temp;
 
-    adc_calibrate(adc);
+    reg_temp = ADC_RCC_CFG2;
+    reg_temp &= CFG2_ADCHPRES_RESET_MASK;
+    reg_temp |= RCC_ADCHCLK_DIV16;
+    ADC_RCC_CFG2 = reg_temp;
 
     ADC_InitType ADC_InitStructure;
     ADC_InitStructure.WorkMode       = ADC_WORKMODE_INDEPENDENT;
@@ -122,6 +126,8 @@ gpio_adc_setup(uint32_t pin)
     ADC_InitStructure.DatAlign       = ADC_DAT_ALIGN_R;
     ADC_InitStructure.ChsNumber      = 1;
     ADC_Init(adc, &ADC_InitStructure);
+
+    adc_calibrate(adc);
 
     if (pin == ADC_TEMPERATURE_PIN) {
         NS_ADC1->CTRL2 |= CTRL2_TSVREFE_SET;
@@ -142,7 +148,7 @@ gpio_adc_sample(struct gpio_adc g)
     ADC_Module *adc = g.adc;
     uint32_t sr = adc->STS;
     if (sr & ADC_STS_STR) {
-        if (!(sr & ADC_STS_ENDC))
+        if (!(sr & ADC_STS_ENDC) || adc->RSEQ3 != g.chan)
             // Conversion still in progress or busy on another channel
             goto need_delay;
         // Conversion ready
@@ -161,9 +167,10 @@ uint16_t
 gpio_adc_read(struct gpio_adc g)
 {
     ADC_Module *adc = g.adc;
-    uint16_t result = adc->DAT;
+    adc->STS &= ~ADC_STS_ENDC;
     adc->STS &= ~ADC_STS_STR;
     adc->CTRL2 &= CTRL2_EXT_TRIG_SWSTART_RESET;
+    uint16_t result = adc->DAT;
     return result;
 }
 

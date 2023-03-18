@@ -133,6 +133,42 @@ typedef struct
 #define RCC_ADCHCLK_DIV32 ((uint32_t)0x00000008)
 #define RCC_ADCHCLK_DIV_OTHERS ((uint32_t)0x00000008)
 
+#define RCC_ADC1MCLK_SRC_HSI ((uint32_t)0x00000000)
+#define RCC_ADC1MCLK_SRC_HSE ((uint32_t)0x00000400)
+
+#define RCC_ADC1MCLK_DIV1  ((uint32_t)0x00000000)
+#define RCC_ADC1MCLK_DIV2  ((uint32_t)0x00000800)
+#define RCC_ADC1MCLK_DIV3  ((uint32_t)0x00001000)
+#define RCC_ADC1MCLK_DIV4  ((uint32_t)0x00001800)
+#define RCC_ADC1MCLK_DIV5  ((uint32_t)0x00002000)
+#define RCC_ADC1MCLK_DIV6  ((uint32_t)0x00002800)
+#define RCC_ADC1MCLK_DIV7  ((uint32_t)0x00003000)
+#define RCC_ADC1MCLK_DIV8  ((uint32_t)0x00003800)
+#define RCC_ADC1MCLK_DIV9  ((uint32_t)0x00004000)
+#define RCC_ADC1MCLK_DIV10 ((uint32_t)0x00004800)
+#define RCC_ADC1MCLK_DIV11 ((uint32_t)0x00005000)
+#define RCC_ADC1MCLK_DIV12 ((uint32_t)0x00005800)
+#define RCC_ADC1MCLK_DIV13 ((uint32_t)0x00006000)
+#define RCC_ADC1MCLK_DIV14 ((uint32_t)0x00006800)
+#define RCC_ADC1MCLK_DIV15 ((uint32_t)0x00007000)
+#define RCC_ADC1MCLK_DIV16 ((uint32_t)0x00007800)
+#define RCC_ADC1MCLK_DIV17 ((uint32_t)0x00008000)
+#define RCC_ADC1MCLK_DIV18 ((uint32_t)0x00008800)
+#define RCC_ADC1MCLK_DIV19 ((uint32_t)0x00009000)
+#define RCC_ADC1MCLK_DIV20 ((uint32_t)0x00009800)
+#define RCC_ADC1MCLK_DIV21 ((uint32_t)0x0000A000)
+#define RCC_ADC1MCLK_DIV22 ((uint32_t)0x0000A800)
+#define RCC_ADC1MCLK_DIV23 ((uint32_t)0x0000B000)
+#define RCC_ADC1MCLK_DIV24 ((uint32_t)0x0000B800)
+#define RCC_ADC1MCLK_DIV25 ((uint32_t)0x0000C000)
+#define RCC_ADC1MCLK_DIV26 ((uint32_t)0x0000C800)
+#define RCC_ADC1MCLK_DIV27 ((uint32_t)0x0000D000)
+#define RCC_ADC1MCLK_DIV28 ((uint32_t)0x0000D800)
+#define RCC_ADC1MCLK_DIV29 ((uint32_t)0x0000E000)
+#define RCC_ADC1MCLK_DIV30 ((uint32_t)0x0000E800)
+#define RCC_ADC1MCLK_DIV31 ((uint32_t)0x0000F000)
+#define RCC_ADC1MCLK_DIV32 ((uint32_t)0x0000F800)
+
 #define RCC_AHB_PERIPH_ADC1 ((uint32_t)0x00001000)
 #define RCC_AHB_PERIPH_ADC2 ((uint32_t)0x00002000)
 #define RCC_AHB_PERIPH_ADC3 ((uint32_t)0x00004000)
@@ -290,10 +326,6 @@ typedef struct
 #define ADC_CTRL3_CALDIF_MSK ((uint32_t)0x01L << 2)
 #define ADC_CTRL3_RES_MSK ((uint32_t)0x03L << 0)
 
-void
-ADC_Init (ADC_Module *NS_ADCx, ADC_InitType *ADC_InitStruct);
-void
-ADC_ConfigRegularChannel (ADC_Module *NS_ADCx, uint8_t ADC_Channel,
-                          uint8_t Rank, uint8_t ADC_SampleTime);
-
+void ADC_Init(ADC_Module* ADCx, ADC_InitType* ADC_InitStruct);
+void ADC_ConfigRegularChannel(ADC_Module* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime);
 #endif
