@@ -5393,13 +5393,16 @@ When used on a driver which has the <code>globalscaler</code> field (tmc5160 and
 if StealthChop2 is used, the stepper must be held at standstill for &gt;130ms so
 that the driver executes the AT#1 calibration.</p>
 <h4 id="set_tmc_field">SET_TMC_FIELD<a class="headerlink" href="#set_tmc_field" title="Permanent link">&para;</a></h4>
-<p><code>SET_TMC_FIELD STEPPER=&lt;name&gt; FIELD=&lt;field&gt; VALUE=&lt;value&gt;</code>: This will
-alter the value of the specified register field of the TMC driver.
+<p><code>SET_TMC_FIELD STEPPER=&lt;name&gt; FIELD=&lt;field&gt; VALUE=&lt;value&gt; VELOCITY=&lt;value&gt;</code>:
+This will alter the value of the specified register field of the TMC driver.
 This command is intended for low-level diagnostics and debugging only
 because changing the fields during run-time can lead to undesired and
 potentially dangerous behavior of your printer. Permanent changes
 should be made using the printer configuration file instead. No sanity
-checks are performed for the given values.</p>
+checks are performed for the given values.
+A VELOCITY can also be specified instead of a VALUE. This velocity is
+converted to the 20bit TSTEP based value representation. Only use the VELOCITY
+argument for fields that represent velocities.</p>
 <h3 id="toolhead">[toolhead]<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h3>
 <p>The toolhead module is automatically loaded.</p>
 <h4 id="set_velocity_limit">SET_VELOCITY_LIMIT<a class="headerlink" href="#set_velocity_limit" title="Permanent link">&para;</a></h4>
