@@ -198,6 +198,7 @@ CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
 
 # Printers using the stm32f401
 DICTIONARY stm32f401.dict
+CONFIG ../../config/generic-fysetc-cheetah-v2.0.cfg
 CONFIG ../../config/printer-artillery-sidewinder-x2-2022.cfg
 CONFIG ../../config/printer-elegoo-neptune3-pro-2023.cfg
 
