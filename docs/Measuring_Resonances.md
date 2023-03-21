@@ -1,11 +1,6 @@
 # Measuring Resonances
 
-Klipper has built-in support for the ADXL345 accelerometer, which can be used to
-measure resonance frequencies of the printer for different axes, and auto-tune
-[input shapers](Resonance_Compensation.md) to compensate for resonances.
-Note that using an ADXL345 requires some soldering and crimping. ADXL345s can be
-connected to a Raspberry Pi directly, or to an SPI interface of an MCU
-board (it needs to be reasonably fast).
+Klipper has built-in support for the ADXL345 and MPU-9250 compatible accelerometers which can be used to measure resonance frequencies of the printer for different axes, and auto-tune [input shapers](Resonance_Compensation.md) to compensate for resonances. Note that using accelerometers requires some soldering and crimping. The ADXL345 can be connected to the SPI interface of a Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can be connected to the I2C interface of a Raspberry Pi directly, or to an I2C interface of an MCU board (it needs to support 400kbit/s *fast mode*).
 
 When sourcing ADXL345s, be aware that there are a variety of different PCB
 board designs and different clones of them. Make sure that the board supports
@@ -13,23 +8,29 @@ SPI mode (a small number of boards appear to be hard-configured for I2C by
 pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU,
 that it has a voltage regulator and a level shifter.
 
+When sourcing the MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500 there are also a variety of board designs and clones. The SCL and SDA bus lines each require pulling-up to 3.3V by one or more resistors in the range of  1.6K to 3.3K resistors.
 
 ## Installation instructions
 
 ### Wiring
 
 An ethernet cable with shielded twisted pairs (cat5e or better) is recommended
-for signal integrity over a long distance. If you still experience signal integrity
-issues (SPI/I2C errors), shorten the cable.
+for signal integrity over a long distance. If you still experience signal integrity issues (SPI/I2C errors):
 
-Connect ethernet cable shielding to the controller board/RPI ground.
+  * Double check the wiring, preferably with a digital multimeter
+  * I2C only:
+    * Check the SCL and SDA lines are pulled-up to 3.3V by resistors
+    * Check the SCL and SDA lines pull-up resistors are in the range 1.6K to 3.3K
+  * Shorten the cable
+
+Connect ethernet cable shielding only to the MCU board/Pi ground.
 
 ***Double-check your wiring before powering up to prevent
 damaging your MCU/Raspberry Pi or the accelerometer.***
 
-#### SPI Accelerometers
+### SPI Accelerometers
 
-Suggested twisted pair order:
+Suggested twisted pair order for three twisted pairs:
 
 ```
 GND+MISO
@@ -37,12 +38,11 @@ GND+MISO
 SCLK+CS
 ```
 
-##### ADXL345
+#### ADXL345
 
 
-**Note: Many MCUs will work with an ADXL345 in SPI mode (e.g. Pi Pico), wiring
-and configuration will vary according to your specific board and available
-pins.**
+**Note: Many MCUs will work with an ADXL345 in SPI mode(e.g. Pi Pico), wiring and
+configuration will vary according to your specific board and available pins.**
 
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
@@ -61,34 +61,28 @@ Fritzing wiring diagrams for some of the ADXL345 boards:
 
 ![ADXL345-Rpi](img/adxl345-fritzing.png)
 
-#### I2C Accelerometers
+### I2C Accelerometers
 
-Suggested twisted pair order:
+Suggested twisted pair order for three pairs (preferred):
 
 ```
 3.3V+GND
 SDA+GND
 SCL+GND
 ```
-or
+
+or for two pairs:
 
 ```
 3.3V+SDA
 GND+SCL
 ```
 
-The I2C bus requires its SDA and SCL signals to be pulled-up to 3.3V by one or
-more resistors with a combined value in the range of 1.8kOhm - 3.3kOhm to work
-at 400kbit/s. The smaller the resistors, the longer the I2C bus wires can be,
-and the more devices can be attached to it.
+#### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
 
-##### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+These accelerometers have been tested to work over I2C on the RPi, RP2040 (Pico) and AVR at 400kbit/s (*fast mode*).
 
-Alternatives to the ADXL345 are MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500.
-These accelerometers have been tested to work over I2C on the RPi, RP2040 (Pico)
-and AVR at 400kbit/s.
-
-###### Recommended connection scheme for I2C on the Raspberry Pi:
+Recommended connection scheme for I2C on the Raspberry Pi:
 
 | MPU-9250 pin | RPi pin | RPi pin name |
 |:--:|:--:|:--:|
@@ -97,13 +91,9 @@ and AVR at 400kbit/s.
 | SDA | 03 | GPIO02 (SDA1) |
 | SCL | 05 | GPIO03 (SCL1) |
 
-Raspberry Pi's include 1.8kOhm pull-up resistors on both SDA and SCL. Up to
-two MPU accelerometers can be connected with >=10kOhm or no pull-ups if the AD0
-pin on one is 0V and the other is 3.3V to set different I2C bus addresses.
+![MPU-9250 connected to Pi](img/mpu9250-PI-fritzing.png)
 
-![MPU-9250 connected to RPI](img/mpu9250-PI-fritzing.png)
-
-###### Recommended connection scheme for I2C(i2c0a) on the RP2040:
+Recommended connection scheme for I2C (i2c0a) on the RP2040:
 
 | MPU-9250 pin | RP2040 pin | RP2040 pin name |
 |:--:|:--:|:--:|
@@ -113,12 +103,12 @@ pin on one is 0V and the other is 3.3V to set different I2C bus addresses.
 | SCL | 02 | GP1 (I2C0 SCL) |
 
 The Pico does not include any pull-up resistors. Some MPU accelerometer modules
-include pull-ups, but often they are too large at 10kOhm and must be changed or
-supplemented by smaller resistors.
+include pull-ups, but often they are too large at 10K and must be changed or
+supplemented by smaller resistors to put the pull-up in the range 1.6K to 3.3K.
 
 ![MPU-9250 connected to Pico](img/mpu9250-PICO-fritzing.png)
 
-###### Recommended connection scheme for I2C(TWI) on the AVR ATmega328P Arduino Nano:
+##### Recommended connection scheme for I2C(TWI) on the AVR ATmega328P Arduino Nano:
 
 | MPU-9250 pin | Atmega328P TQFP32 pin | Atmega328P pin name | Arduino Nano pin |
 |:--:|:--:|:--:|:--:|
@@ -129,8 +119,8 @@ supplemented by smaller resistors.
 
 The Arduino Nano does not include any pull-up resistors nor a 3.3V power pin.
 Some MPU accelerometer modules include pull-ups and a 5V to 3.3V regulator, but
-often the pull-ups are too large at 10kOhm and must be changed or supplemented
-by smaller resistors.
+often the pull-ups are too large at 10K and must be changed or supplemented
+by smaller resistors to put them in the range 1.6K to 3.3K.
 
 ### Mounting the accelerometer
 
@@ -177,7 +167,7 @@ Afterwards, check and follow the instructions in the
 [RPi Microcontroller document](RPi_microcontroller.md) to setup the
 "linux mcu" on the Raspberry Pi.
 
-#### Configure ADXL345 with RPi
+#### Configure ADXL345 With RPi
 
 Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
@@ -199,7 +189,7 @@ probe_points:
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
-#### Configure MPU-6000/9000 series with RPi
+#### Configure MPU-6000/9000 series With RPi
 
 Make sure the Linux I2C driver is enabled and the baud rate is
 set to 400000 (see [Enabling I2C](RPi_microcontroller.md#optional-enabling-i2c)
@@ -219,10 +209,10 @@ probe_points:
     100, 100, 20  # an example
 ```
 
-#### Configure MPU-6000/9000 series with Pico
+#### Configure MPU-9520 Compatibles With Pico
 
-Pico I2C will be set to 400000 by the mpu9250 option. Simply add the following
-to the printer.cfg:
+Pico I2C is set to 400000 on default. Simply add the following to the
+printer.cfg:
 
 ```
 [mcu pico]
@@ -241,7 +231,7 @@ probe_points:
 pin: pico:gpio23
 ```
 
-#### Configure MPU-6000/9000 series with AVR
+#### Configure MPU-9520 Compatibles with AVR
 
 AVR I2C will be set to 400000 by the mpu9250 option. Simply add the following
 to the printer.cfg:
@@ -285,8 +275,7 @@ is some other ID, it is indicative of the connection problem with ADXL345,
 or the faulty sensor. Double-check the power, the wiring (that it matches
 the schematics, no wire is broken or loose, etc.), and soldering quality.
 
-**If you are using MPU-6000/9000 series accelerometer and it show up as `mpu-unknown`, use with
-caution! They are probably refurbished chips!**
+**If you are using a MPU-9250 compatible accelerometer and it shows up as  `mpu-unknown`, use with caution! They are probably refurbished chips!**
 
 Next, try running `MEASURE_AXES_NOISE` in Octoprint, you should get some
 baseline numbers for the noise of accelerometer on the axes (should be
@@ -375,11 +364,7 @@ of the accelerometer between the measurements for X and Y axes: measure the
 resonances of X axis with the accelerometer attached to the toolhead and the
 resonances of Y axis - to the bed (the usual bed slinger setup).
 
-However, you can also connect two accelerometers simultaneously, though they
-must be connected to different boards (say, to an RPi and printer MCU board), or
-to two different physical SPI/I2C interfaces on the same board (rarely
-available), or to one I2C bus if they are set to different addresses.
-Then they can be configured in the following manner:
+However, you can also connect two accelerometers simultaneously, though the ADXL345 must be connected to different boards (say, to an RPi and printer MCU board), or to two different physical SPI interfaces on the same board (rarely available). Then they can be configured in the following manner:
 
 ```
 [adxl345 hotend]
@@ -397,18 +382,20 @@ accel_chip_y: adxl345 bed
 probe_points: ...
 ```
 
-or for two sharing one I2C bus:
+However, you can also connect two accelerometers simultaneously, though the ADXL345 must be connected to different boards (say, to an RPi and printer MCU board), or to two different physical SPI interfaces on the same board (rarely available). Then they can be configured in the following manner:
+
+Two MPUs can share one I2C bus, but they **cannot** measure simultaneously. One must have its AD0 pin pulled-down to 0V (address 104) and the other its AD0 pin pulled-up to 3.3V (address 105).
 
 ```
 [mpu9250 hotend]
 i2c_mcu: rpi
 i2c_bus: i2c.1
-i2c_address: 104
+i2c_address: 104 # This MPU must have pin AD0 pulled low
 
 [mpu9250 bed]
 i2c_mcu: rpi
 i2c_bus: i2c.1
-i2c_address: 105
+i2c_address: 105 # This MPU must have pin AD0 pulled high
 
 [resonance_tester]
 # Assuming the typical setup of the bed slinger printer
