@@ -577,7 +577,8 @@ class MCU:
                     or self._serialport.startswith("/tmp/klipper_host_")):
                 self._baud = config.getint('baud', 250000, minval=2400)
         # Restarts
-        restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb', 'tina2s']
+        restart_methods = [None, 'arduino', 'cheetah', 'command',
+                           'rpi_usb', 'tina2s']
         self._restart_method = 'command'
         if self._baud:
             rmethods = {m: m for m in restart_methods}
@@ -796,7 +797,8 @@ class MCU:
                     # else a reset will trigger the built-in bootloader.
                     rts = (resmeth != "cheetah")
                     dtr = (resmeth != "tina2s")
-                    self._serial.connect_uart(self._serialport, self._baud, rts, dtr)
+                    self._serial.connect_uart(self._serialport, self._baud,
+                                              rts, dtr)
                 else:
                     self._serial.connect_pipe(self._serialport)
                 self._clocksync.connect(self._serial)
