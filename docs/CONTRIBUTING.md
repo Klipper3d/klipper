@@ -253,8 +253,8 @@ The Klipper "reviewers" are:
 | ---------------------- | ----------------- | ----------------- |
 | Dmitry Butyugin        | @dmbutyugin       | Input shaping, resonance testing, kinematics |
 | Eric Callahan          | @Arksine          | Bed leveling, MCU flashing |
+| James Hartley          | @JamesH1978       | Configuration files |
 | Kevin O'Connor         | @KevinOConnor     | Core motion system, Micro-controller code |
-| Paul McGowan           | @mental405        | Configuration files, documentation |
 
 Please do not "ping" any of the reviewers and please do not direct
 submissions at them. All of the reviewers monitor the forums and PRs,
