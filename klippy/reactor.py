@@ -240,7 +240,7 @@ class SelectReactor:
     # File descriptors
     def register_fd(self, fd, read_callback, write_callback=None):
         file_handler = ReactorFileHandler(fd, read_callback, write_callback)
-        self.set_fd_wake(file_handle, True, False)
+        self.set_fd_wake(file_handler, True, False)
         return file_handler
     def unregister_fd(self, file_handler):
         if file_handler in self._read_fds:
@@ -248,12 +248,12 @@ class SelectReactor:
         if file_handler in self._write_fds:
             self._write_fds.pop(self._write_fds.index(file_handler))
     def set_fd_wake(self, file_handler, is_readable=True, is_writeable=False):
-        if file_hander in self._read_fds:
+        if file_handler in self._read_fds:
             if not is_readable:
                 self._read_fds.pop(self._read_fds.index(file_handler))
         elif is_readable:
             self._read_fds.append(file_handler)
-        if file_hander in self._write_fds:
+        if file_handler in self._write_fds:
             if not is_writeable:
                 self._write_fds.pop(self._write_fds.index(file_handler))
         elif is_writeable:
@@ -366,7 +366,7 @@ class EPollReactor(SelectReactor):
     def register_fd(self, fd, read_callback, write_callback=None):
         file_handler = ReactorFileHandler(fd, read_callback, write_callback)
         fds = self._fds.copy()
-        fds[fd] = callback
+        fds[fd] = read_callback
         self._fds = fds
         self._epoll.register(fd, select.EPOLLIN | select.EPOLLHUP)
         return file_handler
