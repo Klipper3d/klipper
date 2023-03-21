@@ -105,6 +105,8 @@ class TMCErrorCheck:
         self.irun_field = "irun"
         reg_name = "DRV_STATUS"
         mask = err_mask = cs_actual_mask = 0
+        err_fields = ["ot", "s2ga", "s2gb", "s2vsa", "s2vsb"]
+        warn_fields = ["otpw", "t120", "t143", "t150", "t157"]
         if name_parts[0] == 'tmc2130':
             # TMC2130 driver quirks
             self.clear_gstat = False
@@ -114,8 +116,10 @@ class TMCErrorCheck:
             self.irun_field = "cs"
             reg_name = "READRSP@RDSEL2"
             cs_actual_mask = self.fields.all_fields[reg_name]["se"]
-        err_fields = ["ot", "s2ga", "s2gb", "s2vsa", "s2vsb"]
-        warn_fields = ["otpw", "t120", "t143", "t150", "t157"]
+        if name_parts[0] == 'tmc2240':
+            # Treat otpw as an error on tmc2240 since the threshold can be
+            # configured.
+            err_fields.append("otpw")
         for f in err_fields + warn_fields:
             if f in self.fields.all_fields[reg_name]:
                 mask |= self.fields.all_fields[reg_name][f]

@@ -258,7 +258,8 @@ FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
     "s2vsa":            (lambda v: "1(ShortToSupply_A!)" if v else ""),
     "s2vsb":            (lambda v: "1(ShortToSupply_B!)" if v else ""),
-    "adc_temp":         (lambda v: "0x%04x(%.1fC)" % (v, ((v - 2038) / 7.7))),
+    "adc_temp":         (lambda v: "0x%04x(%.1fC)" % (
+                            v, TMC2240TemperatureHelper.rawToTemp(v))),
 })
 
 
@@ -336,6 +337,25 @@ class TMC2240CurrentHelper:
 
 
 ######################################################################
+# TMC2240 temperature measurement helper
+######################################################################
+
+class TMC2240TemperatureHelper:
+    @staticmethod
+    def configHelper(config, mcu_tmc):
+        fields = mcu_tmc.get_fields()
+        temp = config.getfloat('overheat_threshold', 120.,
+                                      minval=30., maxval=165.)
+        overtempprewarning_vth = TMC2240TemperatureHelper.tempToRaw(temp)
+        fields.set_field("overtempprewarning_vth", overtempprewarning_vth)
+    @staticmethod
+    def rawToTemp(rawVal):
+        return (rawVal - 2038) / 7.7
+    @staticmethod
+    def tempToRaw(temp):
+        return int(temp * 7.7 + 2038)
+
+######################################################################
 # TMC2240 printer object
 ######################################################################
 
@@ -394,6 +414,9 @@ class TMC2240:
         set_config_field(config, "pwm_lim", 12)
         #   TPOWERDOWN
         set_config_field(config, "tpowerdown", 10)
+        #   OTW_OV_VTH
+        TMC2240TemperatureHelper.configHelper(config, self.mcu_tmc)
+        self.fields.set_field("overvoltage_vth", 0xf25)
 
 def load_config_prefix(config):
     return TMC2240(config)

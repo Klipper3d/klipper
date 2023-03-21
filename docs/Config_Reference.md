@@ -3352,6 +3352,9 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#overheat_threshold: 120.
+#   The temperature threshold in degrees Celsius above which the driver is
+#   considered to be overheating.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
