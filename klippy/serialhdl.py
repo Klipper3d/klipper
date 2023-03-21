@@ -173,7 +173,7 @@ class SerialReader:
             ret = self._start_session(serial_dev)
             if ret:
                 break
-    def connect_uart(self, serialport, baud, rts=True):
+    def connect_uart(self, serialport, baud, rts=True, dtr=True):
         # Initial connection
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
@@ -185,6 +185,7 @@ class SerialReader:
                                            exclusive=True)
                 serial_dev.port = serialport
                 serial_dev.rts = rts
+                serial_dev.dtr = dtr
                 serial_dev.open()
             except (OSError, IOError, serial.SerialException) as e:
                 logging.warn("%sUnable to open serial port: %s",
