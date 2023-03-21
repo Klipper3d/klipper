@@ -7658,19 +7658,19 @@ SPI bus.</p>
 <h3 id="common-i2c-settings">Common I2C settings<a class="headerlink" href="#common-i2c-settings" title="Permanent link">&para;</a></h3>
 <p>The following parameters are generally available for devices using an
 I2C bus.</p>
-<p>Note that Klipper's current micro-controller support for i2c is
-generally not tolerant to line noise. Unexpected errors on the i2c
+<p>Note that Klipper's current micro-controller support for I2C is
+generally not tolerant to line noise. Unexpected errors on the I2C
 wires may result in Klipper raising a run-time error. Klipper's
 support for error recovery varies between each micro-controller type.
-It is generally recommended to only use i2c devices that are on the
+It is generally recommended to only use I2C devices that are on the
 same printed circuit board as the micro-controller.</p>
 <p>Most Klipper micro-controller implementations only support an
-<code>i2c_speed</code> of 100000. The Klipper "linux" micro-controller supports a
-400000 speed, but it must be
+<code>i2c_speed</code> of 100000 (<em>standard mode</em>, 100kbit/s). The Klipper "Linux"
+micro-controller supports a 400000 speed (<em>fast mode</em>, 400kbit/s), but it must be
 <a href="RPi_microcontroller.html#optional-enabling-i2c">set in the operating system</a>
 and the <code>i2c_speed</code> parameter is otherwise ignored. The Klipper
-"rp2040" micro-controller supports a rate of 400000 via the
-<code>i2c_speed</code> parameter. All other Klipper micro-controllers use a
+"RP2040" micro-controller and ATmega AVR family support a rate of 400000
+via the <code>i2c_speed</code> parameter. All other Klipper micro-controllers use a
 100000 rate and ignore the <code>i2c_speed</code> parameter.</p>
 <div class="highlight"><pre><span></span><code>#i2c_address:
 #   The i2c address of the device. This must specified as a decimal
@@ -7686,7 +7686,7 @@ and the <code>i2c_speed</code> parameter is otherwise ignored. The Klipper
 #   The I2C speed (in Hz) to use when communicating with the device.
 #   The Klipper implementation on most micro-controllers is hard-coded
 #   to 100000 and changing this value has no effect. The default is
-#   100000.
+#   100000. Linux, RP2040 and ATmega support 400000.
 </code></pre></div>
 
               
