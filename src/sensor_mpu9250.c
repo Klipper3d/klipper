@@ -64,7 +64,7 @@ get_fifo_status (struct mpu9250 *mp)
 {
     uint8_t reg[] = {AR_FIFO_COUNT_H};
     uint8_t msg[2];
-    i2c_read(mp->i2c->i2c_config, sizeof(reg), reg, sizeof(2), msg);
+    i2c_read(mp->i2c->i2c_config, sizeof(reg), reg, sizeof(msg), msg);
     msg[0] = 0x1F & msg[0]; // discard 3 MSB per datasheet
     uint16_t bytes_to_read = ((uint16_t)msg[0]) << 8 | msg[1];
     if (bytes_to_read > mp->fifo_max) mp->fifo_max = bytes_to_read;
@@ -176,8 +176,9 @@ mp9250_start(struct mpu9250 *mp, uint8_t oid)
     msg[1] = SET_USER_FIFO_EN; // enable FIFO buffer access
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
 
-    uint8_t int_reg[] = {AR_INT_STATUS}; // clear FIFO overflow flag
-    i2c_read(mp->i2c->i2c_config, sizeof(int_reg), int_reg, 1, msg);
+    msg[0] = AR_INT_STATUS; // clear FIFO overflow flag. Use msg[] to save stack
+    i2c_read(mp->i2c->i2c_config, sizeof(msg[0]), &msg[0],
+                sizeof(msg[1]), &msg[1]);
 
     msg[0] = AR_FIFO_EN;
     msg[1] = SET_ENABLE_FIFO; // enable accel output to FIFO
@@ -200,12 +201,11 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
     uint32_t end2_time = timer_read_time();
 
-    // Detect if a FIFO overrun occured
-    uint8_t int_reg[] = {AR_INT_STATUS};
-    uint8_t int_msg;
-    i2c_read(mp->i2c->i2c_config, sizeof(int_reg), int_reg, sizeof(int_msg),
-                &int_msg);
-    if (int_msg & FIFO_OVERFLOW_INT)
+    // Detect if a FIFO overrun occured. Use msg[] to save stack
+    msg[0] = AR_INT_STATUS;
+    i2c_read(mp->i2c->i2c_config, sizeof(msg[0]), &msg[0],
+                sizeof(msg[1]), &msg[1]);
+    if (msg[1] & FIFO_OVERFLOW_INT)
         mp->limit_count++;
 
     // Report final data
