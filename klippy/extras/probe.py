@@ -392,6 +392,7 @@ class ProbePointsHelper:
                                                 parser=float, count=2)
         def_move_z = config.getfloat('horizontal_move_z', 5.)
         self.default_horizontal_move_z = def_move_z
+        self.horizontal_move_z=def_move_z
         self.speed = config.getfloat('speed', 50., above=0.)
         self.use_offsets = False
         # Internal probing state
