@@ -304,6 +304,8 @@ class TMC2130:
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
         set_config_field(config, "tbl", 1)
+        set_config_field(config, "vhighfs", 0)
+        set_config_field(config, "vhighchm", 0)
         # COOLCONF
         set_config_field(config, "sgt", 0)
         # IHOLDIRUN
