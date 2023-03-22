@@ -143,7 +143,7 @@ class PrinterProbe:
             pr = self.I2C_BD_receive_cmd3.send([self.oid, "32".encode('utf-8')])
             intd=int(pr['response'])
             strd=str(intd/100.0)
-            pos[2]=self.horizontal_move_z-(intd/100.0)
+            pos[2]=self.default_horizontal_move_z-(intd/100.0)
             self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                     % (pos[0], pos[1], pos[2]))
             return pos[:3]
@@ -389,7 +389,6 @@ class ProbePointsHelper:
         if default_points is None or config.get('points', None) is not None:
             self.probe_points = config.getlists('points', seps=(',', '\n'),
                                                 parser=float, count=2)
-        self.horizontal_move_z = config.getfloat('horizontal_move_z',0.7)
         def_move_z = config.getfloat('horizontal_move_z', 5.)
         self.default_horizontal_move_z = def_move_z
         self.speed = config.getfloat('speed', 50., above=0.)
