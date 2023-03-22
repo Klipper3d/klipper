@@ -56,7 +56,6 @@ class PrinterProbe:
         self.I2C_BD_send_cmd3 = None
         self.I2C_BD_receive_cmd3 = None
         self.mcu.register_config_callback(self.build_config)
-        self.horizontal_move_z = config.getfloat('horizontal_move_z', 0.7)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register homing event handlers
@@ -390,7 +389,7 @@ class ProbePointsHelper:
         if default_points is None or config.get('points', None) is not None:
             self.probe_points = config.getlists('points', seps=(',', '\n'),
                                                 parser=float, count=2)
-        self.horizontal_move_z = config.getfloat('horizontal_move_z', 5.)
+        self.horizontal_move_z = config.getfloat('horizontal_move_z',0.7)
         self.speed = config.getfloat('speed', 50., above=0.)
         self.use_offsets = False
         # Internal probing state

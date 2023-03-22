@@ -183,8 +183,7 @@ class BDsensorEndstopWrapper:
             self.bd_sensor.I2C_BD_send("1017")#tart read raw calibrate data
             ncount1=0
             while 1:
-                pr = self.I2C_BD_receive_cmd.send([self.oid, "32".encode('utf-8')])
-              #  print"params:%s" % pr['response']
+                pr=self.I2C_BD_receive_cmd.send([self.oid,"3".encode('utf-8')])
                 intd=int(pr['response'])
                 strd=str(intd)
                 gcmd.respond_raw(strd)
@@ -197,7 +196,7 @@ class BDsensorEndstopWrapper:
             ncount1=0
             x=[]
             while 1:
-                pr = self.I2C_BD_receive_cmd.send([self.oid, "32".encode('utf-8')])
+                pr=self.I2C_BD_receive_cmd.send([self.oid,"3".encode('utf-8')])
               #  print"params:%s" % pr['response']
                 intd=int(pr['response'])
                 if intd>127:
