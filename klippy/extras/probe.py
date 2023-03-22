@@ -140,7 +140,7 @@ class PrinterProbe:
         #for BD sensor
         if self.I2C_BD_receive_cmd3 is not None:
             toolhead.wait_moves()
-            pr = self.I2C_BD_receive_cmd3.send([self.oid, "32"])
+            pr = self.I2C_BD_receive_cmd3.send([self.oid, "32".encode('utf-8')])
             intd=int(pr['response'])
             strd=str(intd/100.0)
             pos[2]=intd/100.0

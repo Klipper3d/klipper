@@ -99,7 +99,7 @@ class DisplayGroup:
             text = template.render(context)
             display.draw_text(row, col, text.replace('\n', ''), eventtime)
         if self.I2C_BD_receive_cmd is not None:
-            pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
+            pr = self.I2C_BD_receive_cmd.send([self.oid, "32".encode('utf-8')])
             intd=int(pr['response'])
             strd=str(intd/100.0)
             display.draw_text(3, 10,strd+"mm", eventtime)#mark

@@ -53,7 +53,7 @@ class MCU_I2C_BD:
     def get_command_queue(self):
         return self.cmd_queue
     def I2C_BD_send(self, data):
-        self.I2C_BD_send_cmd.send([self.oid, data])
+        self.I2C_BD_send_cmd.send([self.oid, data.encode('utf-8')])
     def I2C_BD_receive(self,  data):
         return self.I2C_BD_receive_cmd.send([self.oid, data])
 
@@ -183,7 +183,7 @@ class BDsensorEndstopWrapper:
             self.bd_sensor.I2C_BD_send("1017")#tart read raw calibrate data
             ncount1=0
             while 1:
-                pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
+                pr = self.I2C_BD_receive_cmd.send([self.oid, "32".encode('utf-8')])
               #  print"params:%s" % pr['response']
                 intd=int(pr['response'])
                 strd=str(intd)
@@ -197,7 +197,7 @@ class BDsensorEndstopWrapper:
             ncount1=0
             x=[]
             while 1:
-                pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
+                pr = self.I2C_BD_receive_cmd.send([self.oid, "32".encode('utf-8')])
               #  print"params:%s" % pr['response']
                 intd=int(pr['response'])
                 if intd>127:
@@ -214,7 +214,7 @@ class BDsensorEndstopWrapper:
                     break
         if  CMD_BD == -2:# gcode M102 S-2 read distance data
             self.bd_sensor.I2C_BD_send("1015")#1015   read distance data
-            pr = self.I2C_BD_receive_cmd.send([self.oid, "32"])
+            pr = self.I2C_BD_receive_cmd.send([self.oid, "32".encode('utf-8')])
             intd=int(pr['response'])
             strd=str(intd/100.0)+"mm"
             gcmd.respond_raw(strd)
