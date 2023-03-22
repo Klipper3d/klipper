@@ -3082,6 +3082,18 @@ run_current:
 #   homing, but CoolStep is also disabled at all other times. Configure this
 #   setting in order to enable the CoolStep feature and to improve the
 #   sensorless homing reliability.
+#vhigh: 0
+#   The velocity (in mm/s) to set the "High velocity" threshold to. When set,
+#   the CoolStep feature will be disabled if the stepper motor velocity
+#   is approximately above this value. Besides CoolStep, this also sets the
+#   velocity above which the Stall output of the driver gets disabled, so it
+#   might influence the homing if it is set too low.
+#   In combination with `vhighchm` or `vhighfs`, the velocity threshold above
+#   which the driver switches to "Constant off time with slow decay" mode and
+#   FullStepping can be configured, which could help maintain motor torque when
+#   the back EMF of the motor approaches the stepper supply voltage.
+#   If it is not specified, it defaults to the maximum possible velocity,
+#   effectively disabling the "High velocity" mode.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -3379,6 +3391,18 @@ run_current:
 #   homing, but CoolStep is also disabled at all other times. Configure this
 #   setting in order to enable the CoolStep feature and to improve the
 #   sensorless homing reliability.
+#vhigh: 0
+#   The velocity (in mm/s) to set the "High velocity" threshold to. When set,
+#   the CoolStep feature will be disabled if the stepper motor velocity
+#   is approximately above this value. Besides CoolStep, this also sets the
+#   velocity above which the Stall output of the driver gets disabled, so it
+#   might influence the homing if it is set too low.
+#   In combination with `vhighchm` or `vhighfs`, the velocity threshold above
+#   which the driver switches to "Constant off time with slow decay" mode and
+#   FullStepping can be configured, which could help maintain motor torque when
+#   the back EMF of the motor approaches the stepper supply voltage.
+#   If it is not specified, it defaults to the maximum possible velocity,
+#   effectively disabling the "High velocity" mode.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -3507,6 +3531,18 @@ run_current:
 #   homing, but CoolStep is also disabled at all other times. Configure this
 #   setting in order to enable the CoolStep feature and to improve the
 #   sensorless homing reliability.
+#vhigh: 0
+#   The velocity (in mm/s) to set the "High velocity" threshold to. When set,
+#   the CoolStep feature will be disabled if the stepper motor velocity
+#   is approximately above this value. Besides CoolStep, this also sets the
+#   velocity above which the Stall output of the driver gets disabled, so it
+#   might influence the homing if it is set too low.
+#   In combination with `vhighchm` or `vhighfs`, the velocity threshold above
+#   which the driver switches to "Constant off time with slow decay" mode and
+#   FullStepping can be configured, which could help maintain motor torque when
+#   the back EMF of the motor approaches the stepper supply voltage.
+#   If it is not specified, it defaults to the maximum possible velocity,
+#   effectively disabling the "High velocity" mode.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
