@@ -56,6 +56,7 @@ class PrinterProbe:
         self.I2C_BD_send_cmd3 = None
         self.I2C_BD_receive_cmd3 = None
         self.mcu.register_config_callback(self.build_config)
+        self.horizontal_move_z = config.getfloat('horizontal_move_z', 0.7)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register homing event handlers
@@ -143,7 +144,7 @@ class PrinterProbe:
             pr = self.I2C_BD_receive_cmd3.send([self.oid, "32".encode('utf-8')])
             intd=int(pr['response'])
             strd=str(intd/100.0)
-            pos[2]=self.default_horizontal_move_z-(intd/100.0)
+            pos[2]=self.horizontal_move_z-(intd/100.0)
             self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                     % (pos[0], pos[1], pos[2]))
             return pos[:3]
@@ -391,6 +392,7 @@ class ProbePointsHelper:
                                                 parser=float, count=2)
         def_move_z = config.getfloat('horizontal_move_z', 5.)
         self.default_horizontal_move_z = def_move_z
+        self.horizontal_move_z=def_move_z
         self.speed = config.getfloat('speed', 50., above=0.)
         self.use_offsets = False
         # Internal probing state
@@ -450,7 +452,7 @@ class ProbePointsHelper:
                              " probe's z_offset")
         probe.multi_probe_begin()
         if probe.I2C_BD_send_cmd3 is not None:
-            probe.I2C_BD_send_cmd3.send([probe.oid, "1022"])
+            probe.I2C_BD_send_cmd3.send([probe.oid, "1022".encode('utf-8')])
         while 1:
             done = self._move_next()
             if done:
@@ -458,7 +460,7 @@ class ProbePointsHelper:
             pos = probe.run_probe(gcmd)
             self.results.append(pos)
         if probe.I2C_BD_send_cmd3 is not None:
-            probe.I2C_BD_send_cmd3.send([probe.oid, "1018"])
+            probe.I2C_BD_send_cmd3.send([probe.oid, "1018".encode('utf-8')])
         probe.multi_probe_end()
     def _manual_probe_start(self):
         done = self._move_next()
