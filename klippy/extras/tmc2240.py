@@ -357,7 +357,7 @@ class TMC2240:
         self.fields.set_field("multistep_filt", True)
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         self.fields.set_config_field(config, "offset_sin90", 0)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
         #   CHOPCONF
         set_config_field = self.fields.set_config_field
         set_config_field(config, "toff", 3)

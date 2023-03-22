@@ -329,7 +329,7 @@ class TMC5160:
         # Setup basic register values
         self.fields.set_field("multistep_filt", True)
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
         set_config_field = self.fields.set_config_field
         #   CHOPCONF
         set_config_field(config, "toff", 3)
