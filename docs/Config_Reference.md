@@ -3073,6 +3073,15 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#vcoolthrs: 0
+#   The velocity (in mm/s) to set the "CoolStep" threshold to. When set,
+#   the CoolStep feature will be disabled if the stepper motor velocity
+#   is below this value. Besides CoolStep, this also sets the velocity
+#   below which the Stall output of the driver gets disabled, so it will
+#   influence the homing. If it is not specified, it defaults to 0mm/s during
+#   homing, but CoolStep is also disabled at all other times. Configure this
+#   setting in order to enable the CoolStep feature and to improve the
+#   sensorless homing reliability.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -3203,6 +3212,15 @@ run_current:
 #sense_resistor: 0.110
 #stealthchop_threshold: 0
 #   See the "tmc2208" section for the definition of these parameters.
+#vcoolthrs: 0
+#   The velocity (in mm/s) to set the "CoolStep" threshold to. When set,
+#   the CoolStep feature will be disabled if the stepper motor velocity
+#   is below this value. Besides CoolStep, this also sets the velocity
+#   below which the Stall output of the driver gets disabled, so it will
+#   influence the homing. If it is not specified, it defaults to 0mm/s during
+#   homing, but CoolStep is also disabled at all other times. Configure this
+#   setting in order to enable the CoolStep feature and to improve the
+#   sensorless homing reliability.
 #uart_address:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
@@ -3352,6 +3370,15 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#vcoolthrs: 0
+#   The velocity (in mm/s) to set the "CoolStep" threshold to. When set,
+#   the CoolStep feature will be disabled if the stepper motor velocity
+#   is below this value. Besides CoolStep, this also sets the velocity
+#   below which the Stall output of the driver gets disabled, so it will
+#   influence the homing. If it is not specified, it defaults to 0mm/s during
+#   homing, but CoolStep is also disabled at all other times. Configure this
+#   setting in order to enable the CoolStep feature and to improve the
+#   sensorless homing reliability.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
@@ -3471,6 +3498,15 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#vcoolthrs: 0
+#   The velocity (in mm/s) to set the "CoolStep" threshold to. When set,
+#   the CoolStep feature will be disabled if the stepper motor velocity
+#   is below this value. Besides CoolStep, this also sets the velocity
+#   below which the Stall output of the driver gets disabled, so it will
+#   influence the homing. If it is not specified, it defaults to 0mm/s during
+#   homing, but CoolStep is also disabled at all other times. Configure this
+#   setting in order to enable the CoolStep feature and to improve the
+#   sensorless homing reliability.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441

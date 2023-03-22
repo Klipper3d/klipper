@@ -358,8 +358,10 @@ class TMC2240:
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         self.fields.set_config_field(config, "offset_sin90", 0)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc)
-        #   CHOPCONF
+        tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
+        # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        #   CHOPCONF
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 2)
