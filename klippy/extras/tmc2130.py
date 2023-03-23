@@ -307,7 +307,13 @@ class TMC2130:
         set_config_field(config, "vhighfs", 0)
         set_config_field(config, "vhighchm", 0)
         # COOLCONF
+        set_config_field(config, "semin", 0)
+        set_config_field(config, "seup", 0)
+        set_config_field(config, "semax", 0)
+        set_config_field(config, "sedn", 0)
+        set_config_field(config, "seimin", 0)
         set_config_field(config, "sgt", 0)
+        set_config_field(config, "sfilt", 0)
         # IHOLDIRUN
         set_config_field(config, "iholddelay", 8)
         # PWMCONF
