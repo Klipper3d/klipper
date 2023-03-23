@@ -7,6 +7,13 @@ if [ "$EUID" -ne 0 ]; then
 fi
 set -e
 
+# Setting build output directory
+if [ -z "${1}" ]; then
+    out='out'
+else
+    out=${1}
+fi
+
 # Install new micro-controller code
 echo "Installing micro-controller code to /usr/local/bin/"
 rm -f /usr/local/bin/klipper_mcu
