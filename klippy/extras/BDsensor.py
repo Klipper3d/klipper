@@ -119,6 +119,8 @@ class BDsensorEndstopWrapper:
         self.home_start = self.mcu_endstop.home_start
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
+        self.process_m102=0
+        self.gcode_que=None
         # multi probes state
         self.multi = 'OFF'
         self.mcu.register_config_callback(self.build_config)
@@ -137,6 +139,10 @@ class BDsensorEndstopWrapper:
         if self.adjust_range<=0 or self.adjust_range > 40:
             return
         cur_pos=self.toolhead.get_position()
+        #print ("z_live_adjust", cur_pos)
+        #print ("bd_value", bd_value)
+        if cur_pos[:3] is None:
+            return
         if cur_pos[:3]*10>self.adjust_range:
             return
         if bd_value < 0:
@@ -159,6 +165,9 @@ class BDsensorEndstopWrapper:
         # schedule the next call first
         #scheduler.enter(1, 1, self.BD_loop, (scheduler,))
         #Timer(1, self.BD_loop, ()).start()
+        if self.gcode_que is not None:
+            self.process_M102(self.gcode_que)
+            self.gcode_que=None
         bd_value = -1.0;
         if self.I2C_BD_receive_cmd2 is not None:
             #print("BD_loop.",self.I2C_BD_receive_cmd2)
@@ -213,7 +222,12 @@ class BDsensorEndstopWrapper:
          stepper.set_stepper_kinematics(prev_sk)
          self.toolhead.note_kinematic_activity(print_time)
          self.toolhead.dwell(accel_t + cruise_t + accel_t)
+
     def cmd_M102(self, gcmd, wait=False):
+         self.gcode_que=gcmd
+    def process_M102(self, gcmd):
+        self.process_m102=1
+        #self.reactor.update_timer(self.bd_update_timer, self.reactor.NOW)
         CMD_BD = gcmd.get_int('S', None)
         self.toolhead = self.printer.lookup_object('toolhead')
         if CMD_BD == -6:
@@ -288,6 +302,7 @@ class BDsensorEndstopWrapper:
         self.bd_sensor.I2C_BD_send("1018")
         if  CMD_BD >= 0:# gcode M102 Sx live adjust
             self.adjust_range = CMD_BD
+        self.process_m102=0
     def _handle_mcu_identify(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
