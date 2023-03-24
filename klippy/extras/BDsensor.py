@@ -2,10 +2,14 @@
 # https://github.com/markniu/Bed_Distance_sensor
 # Copyright (C) 2023 Mark yue <niujl123@sina.com>
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import sched, time
+from threading import Timer
 
 import chelper
 import mcu,math
 from . import probe
+BD_TIMER = 0.500
+
 
 # Calculate a move's accel_t, cruise_t, and cruise_v
 def calc_move_time(dist, speed, accel):
@@ -46,6 +50,7 @@ class MCU_I2C_BD:
             "I2C_BD_receive oid=%c data=%*s",
             "I2C_BD_receive_response oid=%c response=%*s",
              oid=self.oid, cq=self.cmd_queue)
+
     def get_oid(self):
         return self.oid
     def get_mcu(self):
@@ -103,7 +108,11 @@ class BDsensorEndstopWrapper:
         # Register M102 commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('M102', self.cmd_M102)
-
+        self.BD_display = config.get('BD_display', None)
+        self.I2C_BD_receive_cmd2 = None
+        self.gcode_move = self.printer.load_object(config, "gcode_move")
+        self.gcode = self.printer.lookup_object('gcode')
+        
         # Wrappers
         self.get_mcu = self.mcu_endstop.get_mcu
         self.add_stepper = self.mcu_endstop.add_stepper
@@ -114,32 +123,93 @@ class BDsensorEndstopWrapper:
         # multi probes state
         self.multi = 'OFF'
         self.mcu.register_config_callback(self.build_config)
+        self.adjust_range=0;
+        #bd_scheduler = sched.scheduler(time.time, time.sleep)
+        #bd_scheduler.enter(1, 1, self.BD_loop, (bd_scheduler,))
+        #bd_scheduler.run()
+        #Timer(2, self.BD_loop, ()).start()
+        self.reactor = self.printer.get_reactor()
+        self.bd_update_timer = self.reactor.register_timer(
+            self.bd_update_event)
+        self.reactor.update_timer(self.bd_update_timer, self.reactor.NOW)
+
+    def z_live_adjust(self,bd_value):
+        #self.toolhead = self.printer.lookup_object('toolhead')        
+        self.toolhead = self.printer.lookup_object('toolhead')
+        if self.adjust_range<=0 or self.adjust_range > 40:
+            return
+        cur_pos=self.toolhead.get_position()
+        if cur_pos[:3]*10>self.adjust_range: 
+            return
+        if bd_value < 0:
+            pr = self.I2C_BD_receive_cmd2.send([self.oid, "32".encode('utf-8')])
+            bd_value=int(pr['response'])/100.0
+        if bd_value>1010:
+            return;
+        if abs(cur_pos[:3]-bd_value)<=0.01:
+            return;
+        #self.toolhead.wait_moves() 
+        if cur_pos[:3] > bd_value:
+            #g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
+            g1_gcmd = self.gcode.self.gcode.create_gcode_command("G1", "G1", {'Z': cur_pos[:3]+(cur_pos[:3]-bd_value)})   
+            self.gcode_move.cmd_G1(g1_gcmd)
+        else:
+            g1_gcmd = self.gcode.self.gcode.create_gcode_command("G1", "G1", {'Z': cur_pos[:3]-(cur_pos[:3]-bd_value)})
+            self.gcode_move.cmd_G1(g1_gcmd)
+        
+        
+    def bd_update_event(self, eventtime): 
+        # schedule the next call first
+        #scheduler.enter(1, 1, self.BD_loop, (scheduler,))
+        #Timer(1, self.BD_loop, ()).start()
+        bd_value = -1.0;
+        if self.I2C_BD_receive_cmd2 is not None:
+            #print("BD_loop.",self.I2C_BD_receive_cmd2)
+            pr = self.I2C_BD_receive_cmd2.send([self.oid, "32".encode('utf-8')])
+            bd_value=int(pr['response'])/100.0
+            strd=str(bd_value)
+            status_dis=self.printer.lookup_object('display_status')
+            status_dis.set_message(strd+"mm")
+            if bd_value == 10.24:
+                status_dis.set_message("BDs:ConnectErr")
+            if bd_value == 3.9:
+                status_dis.set_message("BDs:Out Range")
+
+        self.z_live_adjust(bd_value)
+        
+        return eventtime + BD_TIMER
+
     def build_config(self):
        self.I2C_BD_receive_cmd = self.mcu.lookup_query_command(
             "I2C_BD_receive oid=%c data=%*s",
             "I2C_BD_receive_response oid=%c response=%*s",
             oid=self.oid, cq=self.cmd_queue)
+       
+       self.I2C_BD_receive_cmd2 = self.mcu.lookup_query_command(
+            "I2C_BD_receive2 oid=%c data=%*s",
+            "I2C_BD_receive2_response oid=%c response=%*s",
+            oid=self.oid, cq=self.cmd_queue)
 
     def _force_enable(self,stepper):
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
+        self.toolhead = self.printer.lookup_object('toolhead')
+        print_time = self.toolhead.get_last_move_time()
         stepper_enable = self.printer.lookup_object('stepper_enable')
         enable = stepper_enable.lookup_enable(stepper.get_name())
         was_enable = enable.is_motor_enabled()
         STALL_TIME = 0.100
         if not was_enable:
             enable.motor_enable(print_time)
-            toolhead.dwell(STALL_TIME)
+            self.toolhead.dwell(STALL_TIME)
         return was_enable
 
     def manual_move(self, stepper, dist, speed, accel=0.):
-         toolhead = self.printer.lookup_object('toolhead')
-         toolhead.flush_step_generation()
+         self.toolhead = self.printer.lookup_object('toolhead')
+         self.toolhead.flush_step_generation()
          prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
          prev_trapq = stepper.set_trapq(self.trapq)
          stepper.set_position((0., 0., 0.))
          axis_r, accel_t,cruise_t,cruise_v=calc_move_time(dist, speed, accel)
-         print_time = toolhead.get_last_move_time()
+         print_time = self.toolhead.get_last_move_time()
          self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
                            0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
          print_time = print_time + accel_t + cruise_t + accel_t
@@ -147,13 +217,18 @@ class BDsensorEndstopWrapper:
          self.trapq_finalize_moves(self.trapq, print_time + 99999.9)
          stepper.set_trapq(prev_trapq)
          stepper.set_stepper_kinematics(prev_sk)
-         toolhead.note_kinematic_activity(print_time)
-         toolhead.dwell(accel_t + cruise_t + accel_t)
+         self.toolhead.note_kinematic_activity(print_time)
+         self.toolhead.dwell(accel_t + cruise_t + accel_t)
+
+
+
+        
+    
     def cmd_M102(self, gcmd, wait=False):
         CMD_BD = gcmd.get_int('S', None)
-        toolhead = self.printer.lookup_object('toolhead')
+        self.toolhead = self.printer.lookup_object('toolhead')
         if CMD_BD == -6:
-            kin = toolhead.get_kinematics()
+            kin = self.toolhead.get_kinematics()
             self.bd_sensor.I2C_BD_send("1019")
             distance = 0.5#gcmd.get_float('DISTANCE')
             speed = 10#gcmd.get_float('VELOCITY', above=0.)
@@ -162,19 +237,19 @@ class BDsensorEndstopWrapper:
             for stepper in kin.get_steppers():
                 if stepper.is_active_axis('z'):
                     self._force_enable(stepper)
-                    toolhead.wait_moves()
+                    self.toolhead.wait_moves()
             ncount=0
             while 1:
-                toolhead.dwell(0.1)
+                self.toolhead.dwell(0.1)
                 self.bd_sensor.I2C_BD_send(str(ncount))
-                toolhead.dwell(0.1)
+                self.toolhead.dwell(0.1)
                 #self.bd_sensor.I2C_BD_send(str(ncount))
                 #toolhead.dwell(0.5)
                 for stepper in kin.get_steppers():
                     if stepper.is_active_axis('z'):
                         self._force_enable(stepper)
                         self.manual_move(stepper, self.distance, speed)
-                toolhead.wait_moves()
+                self.toolhead.wait_moves()
                 ncount=ncount+1
                 if ncount>=40:
                     self.bd_sensor.I2C_BD_send("1021")
@@ -187,7 +262,7 @@ class BDsensorEndstopWrapper:
                 intd=int(pr['response'])
                 strd=str(intd)
                 gcmd.respond_raw(strd)
-                toolhead.dwell(0.1)
+                self.toolhead.dwell(0.1)
                 ncount1=ncount1+1
                 if ncount1>=40:
                     break
@@ -204,7 +279,7 @@ class BDsensorEndstopWrapper:
                 if intd<0x20:
                     intd=0x20
                 x.append(intd)
-                toolhead.dwell(0.3)
+                self.toolhead.dwell(0.3)
                 ncount1=ncount1+1
                 if ncount1>=20:
                     self.bd_sensor.I2C_BD_send("1018")#1018// finish reading
@@ -224,17 +299,17 @@ class BDsensorEndstopWrapper:
             if stepper.is_active_axis('z'):
                 self.add_stepper(stepper)
     def raise_probe(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        start_pos = toolhead.get_position()
+        self.toolhead = self.printer.lookup_object('toolhead')
+        start_pos = self.toolhead.get_position()
         self.deactivate_gcode.run_gcode_from_command()
-        if toolhead.get_position()[:3] != start_pos[:3]:
+        if self.toolhead.get_position()[:3] != start_pos[:3]:
             raise self.printer.command_error(
                 "Toolhead moved during probe activate_gcode script")
     def lower_probe(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        start_pos = toolhead.get_position()
+        self.toolhead = self.printer.lookup_object('toolhead')
+        start_pos = self.toolhead.get_position()
         self.activate_gcode.run_gcode_from_command()
-        if toolhead.get_position()[:3] != start_pos[:3]:
+        if self.toolhead.get_position()[:3] != start_pos[:3]:
             raise self.printer.command_error(
                 "Toolhead moved during probe deactivate_gcode script")
     def multi_probe_begin(self):
