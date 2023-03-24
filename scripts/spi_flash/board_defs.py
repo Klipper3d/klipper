@@ -101,6 +101,13 @@ BOARD_DEFS = {
         'cs_pin': "PC11",
         'skip_verify': True
     },
+    'creality-3-s1': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True
+    },
     'monster8': {
         'mcu': "stm32f407xx",
         'spi_bus': "spi3a",
