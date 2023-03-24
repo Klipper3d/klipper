@@ -164,13 +164,13 @@ class BDsensorEndstopWrapper:
             #print("BD_loop.",self.I2C_BD_receive_cmd2)
             pr = self.I2C_BD_receive_cmd2.send([self.oid, "32".encode('utf-8')])
             bd_value=int(pr['response'])/100.0
-            strd=str(bd_value)
+            strd=str(bd_value)+"mm"
             status_dis=self.printer.lookup_object('display_status')
-            status_dis.set_message(strd+"mm")
             if bd_value == 10.24:
-                status_dis.set_message("BDs:ConnectErr")
+                strd="BDs:ConnectErr"
             if bd_value == 3.9:
-                status_dis.set_message("BDs:Out Range")
+                strd="BDs:Out Range"
+            status_dis.message=strd
         self.z_live_adjust(bd_value)
         return eventtime + BD_TIMER
 
@@ -286,6 +286,8 @@ class BDsensorEndstopWrapper:
                 strd="BDsensor:Out of measure Range"
             gcmd.respond_raw(strd)
         self.bd_sensor.I2C_BD_send("1018")
+        if  CMD_BD >= 0:# gcode M102 Sx live adjust
+            self.adjust_range = CMD_BD
     def _handle_mcu_identify(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         for stepper in kin.get_steppers():
