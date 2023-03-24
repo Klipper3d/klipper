@@ -20,10 +20,14 @@ choice
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32
         bool "STMicroelectronics STM32"
+    config MACH_HC32F460
+        bool "Huada Semiconductor HC32F460"
     config MACH_RP2040
         bool "Raspberry Pi RP2040"
     config MACH_PRU
         bool "Beaglebone PRU"
+    config MACH_AR100
+        bool "Allwinner A64 AR100"
     config MACH_LINUX
         bool "Linux process"
     config MACH_SIMU
@@ -35,8 +39,10 @@ source "src/atsam/Kconfig"
 source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
 source "src/stm32/Kconfig"
+source "src/hc32f460/Kconfig"
 source "src/rp2040/Kconfig"
 source "src/pru/Kconfig"
+source "src/ar100/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
 
@@ -111,6 +117,8 @@ config HAVE_GPIO
 config HAVE_GPIO_ADC
     bool
 config HAVE_GPIO_SPI
+    bool
+config HAVE_GPIO_SDIO
     bool
 config HAVE_GPIO_I2C
     bool
