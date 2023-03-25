@@ -7,6 +7,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
+import numpy as np
 
 # Coordinates created by this are converted into G1 commands.
 #
@@ -159,23 +160,27 @@ class ArcSupport:
         # Generate coordinates
         theta_per_segment = angular_travel / segments
         linear_per_segment = linear_travel / segments
-        coords = []
-        for i in range(1, int(segments)):
-            dist_Helical = i * linear_per_segment
-            cos_Ti = math.cos(i * theta_per_segment)
-            sin_Ti = math.sin(i * theta_per_segment)
-            r_P = -offset[0] * cos_Ti + offset[1] * sin_Ti
-            r_Q = -offset[0] * sin_Ti - offset[1] * cos_Ti
 
-            # Coord doesn't support index assignment, create list
-            c = [None, None, None, None]
-            c[alpha_axis] = center_P + r_P
-            c[beta_axis] = center_Q + r_Q
-            c[helical_axis] = currentPos[helical_axis] + dist_Helical
-            coords.append(self.Coord(*c))
+        range_ = np.arange(start=1, stop=int(segments), step=1)
 
-        coords.append(targetPos)
-        return coords
+        dist_Helical = range_ * linear_per_segment
+
+        angles = range_ * theta_per_segment
+        cos_Ti = np.cos(angles)
+        sin_Ti = np.sin(angles)
+
+        r_P = -offset[0] * cos_Ti + offset[1] * sin_Ti
+        r_Q = -offset[0] * sin_Ti - offset[1] * cos_Ti
+
+        c = np.zeros((int(segments) - 1, 4))
+        c[:, alpha_axis] = center_P + r_P
+        c[:, beta_axis] = center_Q + r_Q
+        c[:, helical_axis] = currentPos[helical_axis] + dist_Helical
+        c[:, 3] = None
+
+        unpack = lambda c_ : self.Coord(*c_)
+
+        return list(np.array([unpack(ci) for ci in c])) + [targetPos]
 
 def load_config(config):
     return ArcSupport(config)
