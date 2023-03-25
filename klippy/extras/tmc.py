@@ -410,6 +410,9 @@ class TMCCommandHelper:
         gcode.register_mux_command("DUMP_TMC", "STEPPER", self.name,
                                    self.cmd_DUMP_TMC,
                                    desc=self.cmd_DUMP_TMC_help)
+        gcode.register_mux_command("QUERY_TMC_REGISTER", "STEPPER", self.name,
+                                   self.cmd_QUERY_TMC_REGISTER,
+                                   desc=self.cmd_QUERY_TMC_REGISTER_help)
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, gcmd):
         logging.info("DUMP_TMC %s", self.name)
@@ -424,6 +427,19 @@ class TMCCommandHelper:
             if self.read_translate is not None:
                 reg_name, val = self.read_translate(reg_name, val)
             gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+    cmd_QUERY_TMC_REGISTER_help = "Get the value of a TMC driver register"
+    def cmd_QUERY_TMC_REGISTER(self, gcmd):
+        reg_name = gcmd.get('REGISTER').upper()
+        val = self.fields.registers.get(reg_name)
+        if (val is not None) and (reg_name not in self.read_registers):
+            # write-only register
+            gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+        elif reg_name in self.read_registers:
+            # readable register
+            val = self.mcu_tmc.get_register(reg_name)
+            gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+        else:
+            raise gcmd.error("Unknown register name '%s'" % (reg_name))
 
 
 ######################################################################

@@ -1222,6 +1222,13 @@ are enabled.
 `DUMP_TMC STEPPER=<name>`: This command will read the TMC driver
 registers and report their values.
 
+#### QUERY_TMC_REGISTER
+`QUERY_TMC_REGISTER STEPPER=<name> REGISTER=<reg_name>`:
+This command will read a single TMC driver register and report the values
+of the fields in that register. It is a more lightweight version of the
+`DUMP_TMC` command. If the field is write-only, the last known value of the
+register will be reported. Otherwise, the TMC driver will be queried.
+
 #### INIT_TMC
 `INIT_TMC STEPPER=<name>`: This command will initialize the TMC
 registers. Needed to re-enable the driver if power to the chip is
