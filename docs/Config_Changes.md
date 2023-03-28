@@ -8,6 +8,31 @@ All dates in this document are approximate.
 
 ## Changes
 
+20230304: The `SET_TMC_CURRENT` command now properly adjusts the globalscaler
+register for drivers that have it. This removes a limitation where on tmc5160,
+the currents could not be raised higher with `SET_TMC_CURRENT` than the
+`run_current` value set in the config file.
+However, this has a side effect: After running `SET_TMC_CURRENT`, the stepper
+must be held at standstill for >130ms in case StealthChop2 is used so that the
+AT#1 calibration gets executed by the driver.
+
+20230202: The format of the `printer.screws_tilt_adjust` status
+information has changed. The information is now stored as a dictionary of
+screws with the resulting measurements. See the
+[status reference](Status_Reference.md#screws_tilt_adjust) for details.
+
+20230201:  The `[bed_mesh]` module no longer loads the `default` profile
+on startup.  It is recommended that users who use the `default` profile
+add `BED_MESH_PROFILE LOAD=default` to their `START_PRINT` macro (or
+to their slicer's "Start G-Code" configuration when applicable).
+
+20230103: It is now possible with the flash-sdcard.sh script to flash
+both variants of the Bigtreetech SKR-2, STM32F407 and STM32F429.
+This means that the original tag of btt-skr2 now has changed to either
+btt-skr-2-f407 or btt-skr-2-f429.
+
+20221128: Klipper v0.11.0 released.
+
 20221122: Previously, with safe_z_home, it was possible that the
 z_hop after the g28 homing would go in the negative z direction.
 Now, a z_hop is performed after g28 only if it results in a positive

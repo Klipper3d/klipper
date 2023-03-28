@@ -14,7 +14,7 @@ config LPC_SELECT
     select HAVE_CHIPID
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_BOTH_EDGE
-    select SERIAL_BOOTLOADER_SIDECHANNEL
+    select HAVE_BOOTLOADER_REQUEST
 
 config BOARD_DIRECTORY
     string

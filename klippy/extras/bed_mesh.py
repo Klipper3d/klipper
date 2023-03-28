@@ -129,7 +129,6 @@ class BedMesh:
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         self.bmc.print_generated_points(logging.info)
-        self.pmgr.initialize()
     def set_mesh(self, mesh):
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
@@ -1137,10 +1136,6 @@ class ProfileManager:
         self.gcode.register_command(
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
             desc=self.cmd_BED_MESH_PROFILE_help)
-    def initialize(self):
-        self._check_incompatible_profiles()
-        if "default" in self.profiles:
-            self.load_profile("default")
     def get_profiles(self):
         return self.profiles
     def get_current_profile(self):

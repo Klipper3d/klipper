@@ -65,6 +65,8 @@ class DeltaKinematics:
         self.min_z = config.getfloat('minimum_z_position', 0, maxval=self.max_z)
         self.limit_z = min([ep - arm
                             for ep, arm in zip(self.abs_endstops, arm_lengths)])
+        self.min_arm_length = min_arm_length = min(arm_lengths)
+        self.min_arm2 = min_arm_length**2
         logging.info(
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
             % (self.max_z, self.limit_z))
@@ -123,7 +125,11 @@ class DeltaKinematics:
         end_z = end_pos[2]
         limit_xy2 = self.max_xy2
         if end_z > self.limit_z:
-            limit_xy2 = min(limit_xy2, (self.max_z - end_z)**2)
+            above_z_limit = end_z - self.limit_z
+            allowed_radius = self.radius - math.sqrt(
+                self.min_arm2 - (self.min_arm_length - above_z_limit)**2
+            )
+            limit_xy2 = min(limit_xy2, allowed_radius**2)
         if end_xy2 > limit_xy2 or end_z > self.max_z or end_z < self.min_z:
             # Move out of range - verify not a homing move
             if (end_pos[:2] != self.home_position[:2]

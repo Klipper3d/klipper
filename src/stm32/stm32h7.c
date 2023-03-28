@@ -40,6 +40,9 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - D2_AHB2PERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHB2ENR, .rst=&RCC->AHB2RSTR, .bit=bit};
     } else if (periph_base >= D2_AHB1PERIPH_BASE) {
+        if (periph_base == ADC12_COMMON_BASE)
+            return (struct cline){.en = &RCC->AHB1ENR, .rst = &RCC->AHB1RSTR,
+                                  .bit = RCC_AHB1ENR_ADC12EN};
         uint32_t bit = 1 << ((periph_base - D2_AHB1PERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHB1ENR, .rst=&RCC->AHB1RSTR, .bit=bit};
     } else if (periph_base >= D2_APB2PERIPH_BASE) {
@@ -231,6 +234,12 @@ armcm_main(void)
     RCC->D2CCIP1R = 0x00000000;
     RCC->D2CCIP2R = 0x00000000;
     RCC->D3CCIPR = 0x00000000;
+    RCC->APB1LENR = 0x00000000;
+    RCC->APB1HENR = 0x00000000;
+    RCC->APB2ENR = 0x00000000;
+    RCC->APB3ENR = 0x00000000;
+    RCC->APB4ENR = 0x00000000;
+
     SCB->VTOR = (uint32_t)VectorTable;
 
     dfu_reboot_check();

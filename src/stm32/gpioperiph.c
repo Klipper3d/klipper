@@ -6,7 +6,7 @@
 
 #include "internal.h" // gpio_peripheral
 
-// Set the mode and extended function of a pin
+// Set the mode, extended function and speed of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 {
@@ -16,7 +16,8 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     gpio_clock_enable(regs);
 
     // Configure GPIO
-    uint32_t mode_bits = mode & 0xf, func = (mode >> 4) & 0xf, od = mode >> 8;
+    uint32_t mode_bits = mode & 0xf, func = (mode >> 4) & 0xf;
+    uint32_t od = (mode >> 8) & 0x1, hs = (mode >> 9) & 0x1;
     uint32_t pup = pullup ? (pullup > 0 ? 1 : 2) : 0;
     uint32_t pos = gpio % 16, af_reg = pos / 8;
     uint32_t af_shift = (pos % 8) * 4, af_msk = 0x0f << af_shift;
@@ -33,6 +34,6 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     // stm32f4 is ~50Mhz at 40pF
     // stm32g0 is ~30Mhz at 50pF
     // stm32h7 is ~85Mhz at 50pF
-    uint32_t ospeed = CONFIG_MACH_STM32F0 ? 0x01 : 0x02;
+    uint32_t ospeed = hs ? 0x03 : (CONFIG_MACH_STM32F0 ? 0x01 : 0x02);
     regs->OSPEEDR = (regs->OSPEEDR & ~m_msk) | (ospeed << m_shift);
 }

@@ -19,7 +19,7 @@ that it has a voltage regulator and a level shifter.
 ### Wiring
 
 An ethernet cable with shielded twisted pairs (cat5e or better) is recommended
-for signal integrety over a long distance. If you still experience signal integrity
+for signal integrity over a long distance. If you still experience signal integrity
 issues (SPI/I2C errors), shorten the cable.
 
 Connect ethernet cable shielding to the controller board/RPI ground.
@@ -39,9 +39,10 @@ SCLK+CS
 
 ##### ADXL345
 
+###### Direct to Raspberry Pi
 
 **Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and
-configuration will vary according to your specific board and avaliable pins.**
+configuration will vary according to your specific board and available pins.**
 
 You need to connect ADXL345 to your Raspberry Pi via SPI. Note that the I2C
 connection, which is suggested by ADXL345 documentation, has too low throughput
@@ -49,7 +50,7 @@ and **will not work**. The recommended connection scheme:
 
 | ADXL345 pin | RPi pin | RPi pin name |
 |:--:|:--:|:--:|
-| 3V3 (or VCC) | 01 | 3.3v DC power |
+| 3V3 (or VCC) | 01 | 3.3V DC power |
 | GND | 06 | Ground |
 | CS | 24 | GPIO08 (SPI0_CE0_N) |
 | SDO | 21 | GPIO09 (SPI0_MISO) |
@@ -59,6 +60,31 @@ and **will not work**. The recommended connection scheme:
 Fritzing wiring diagrams for some of the ADXL345 boards:
 
 ![ADXL345-Rpi](img/adxl345-fritzing.png)
+
+###### Using Raspberry Pi Pico
+
+You may connect the ADXL345 to your Raspberry Pi Pico and then connect the
+Pico to your Raspberry Pi via USB. This makes it easy to reuse the
+accelerometer on other Klipper devices, as you can connect via USB instead
+of GPIO. The Pico does not have much processing power, so make sure it is
+only running the accelerometer and not performing any other duties.
+
+In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V
+only. Depending on the board's layout, a level shifter may be present, which
+makes 5V dangerous for your RPi.
+
+| ADXL345 pin | Pico pin | Pico pin name |
+|:--:|:--:|:--:|
+| 3V3 (or VCC) | 36 | 3.3V DC power |
+| GND | 38 | Ground |
+| CS | 2 | GP1 (SPI0_CSn) |
+| SDO | 1 | GP0 (SPI0_RX) |
+| SDA | 5 | GP3 (SPI0_TX) |
+| SCL | 4 | GP2 (SPI0_SCK) |
+
+Wiring diagrams for some of the ADXL345 boards:
+
+![ADXL345-Pico](img/adxl345-pico.png)
 
 #### I2C Accelerometers
 
@@ -164,6 +190,65 @@ probe_points:
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
 
+#### Configure ADXL345 With Pi Pico
+
+##### Flash the Pico Firmware
+
+On your Raspberry Pi, compile the firmware for the Pico.
+
+```
+cd ~/klipper
+make clean
+make menuconfig
+```
+![Pico menuconfig](img/klipper_pico_menuconfig.png)
+
+Now, while holding down the `BOOTSEL` button on the Pico, connect the Pico to
+the Raspberry Pi via USB. Compile and flash the firmware.
+```
+make flash FLASH_DEVICE=first
+```
+
+If that fails, you will be told which `FLASH_DEVICE` to use. In this example,
+that's ```make flash FLASH_DEVICE=2e8a:0003```.
+![Determine flash device](img/flash_rp2040_FLASH_DEVICE.png)
+
+##### Configure the Connection
+
+The Pico will now reboot with the new firmware and should show up as a serial
+device. Find the pico serial device with `ls /dev/serial/by-id/*`. You can
+now add an `adxl.cfg` file with the following settings:
+
+```
+[mcu adxl]
+# Change <mySerial> to whatever you found above. For example,
+# usb-Klipper_rp2040_E661640843545B2E-if00
+serial: /dev/serial/by-id/usb-Klipper_rp2040_<mySerial>
+
+[adxl345]
+cs_pin: adxl:gpio1
+spi_bus: spi0a
+axes_map: x,z,y
+
+[resonance_tester]
+accel_chip: adxl345
+probe_points:
+    # Somewhere slightly above the middle of your print bed
+    147,154, 20
+
+[output_pin power_mode] # Improve power stability
+pin: adxl:gpio23
+```
+
+If setting up the ADXL345 configuration in a separate file, as shown above,
+you'll also want to modify your `printer.cfg` file to include this:
+
+```
+[include adxl.cfg] # Comment this out when you disconnect the accelerometer
+```
+
+Restart Klipper via the `RESTART` command.
+
 #### Configure MPU-6000/9000 series With RPi
 
 Make sure the Linux I2C driver is enabled and the baud rate is
@@ -195,7 +280,7 @@ serial: /dev/serial/by-id/<your PICO's serial ID>
 
 [mpu9250]
 i2c_mcu: pico
-i2c_bus: i2c1a
+i2c_bus: i2c0a
 
 [resonance_tester]
 accel_chip: mpu9250
@@ -228,7 +313,9 @@ Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
 ```
 
 If you get an error like `Invalid adxl345 id (got xx vs e5)`, where `xx`
-is some other ID, it is indicative of the connection problem with ADXL345,
+is some other ID, immediately try again. There's an issue with SPI
+initialization. If you still get an error, it is indicative of the connection
+problem with ADXL345,
 or the faulty sensor. Double-check the power, the wiring (that it matches
 the schematics, no wire is broken or loose, etc.), and soldering quality.
 
@@ -310,7 +397,7 @@ or you can choose some other configuration yourself based on the generated
 charts: peaks in the power spectral density on the charts correspond to
 the resonance frequencies of the printer.
 
-Note that alternatively you can run the input shaper autocalibration
+Note that alternatively you can run the input shaper auto-calibration
 from Klipper [directly](#input-shaper-auto-calibration), which can be
 convenient, for example, for the input shaper
 [re-calibration](#input-shaper-re-calibration).
@@ -550,9 +637,9 @@ supplying `AXIS=` parameter, like
 SHAPER_CALIBRATE AXIS=X
 ```
 
-**Warning!** It is not advisable to run the shaper autocalibration very
+**Warning!** It is not advisable to run the shaper auto-calibration very
 frequently (e.g. before every print, or every day). In order to determine
-resonance frequencies, autocalibration creates intensive vibrations on each of
+resonance frequencies, auto-calibration creates intensive vibrations on each of
 the axes. Generally, 3D printers are not designed to withstand a prolonged
 exposure to vibrations near the resonance frequencies. Doing so may increase
 wear of the printer components and reduce their lifespan. There is also an
