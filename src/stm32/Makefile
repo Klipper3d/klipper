@@ -57,6 +57,7 @@ src-$(CONFIG_MACH_STM32G4) += stm32/stm32f0_i2c.c
 src-$(CONFIG_MACH_STM32H7) += ../lib/stm32h7/system_stm32h7xx.c
 src-$(CONFIG_MACH_STM32H7) += stm32/stm32h7.c generic/armcm_timer.c
 src-$(CONFIG_MACH_STM32H7) += stm32/gpioperiph.c stm32/stm32h7_adc.c
+src-$(CONFIG_MACH_STM32H7) += stm32/stm32f0_i2c.c
 src-$(CONFIG_MACH_STM32L4) += ../lib/stm32l4/system_stm32l4xx.c
 src-$(CONFIG_MACH_STM32L4) += stm32/stm32l4.c generic/armcm_timer.c
 src-$(CONFIG_MACH_STM32L4) += stm32/gpioperiph.c
