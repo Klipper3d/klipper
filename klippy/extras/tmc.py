@@ -413,17 +413,32 @@ class TMCCommandHelper:
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, gcmd):
         logging.info("DUMP_TMC %s", self.name)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        gcmd.respond_info("========== Write-only registers ==========")
-        for reg_name, val in self.fields.registers.items():
-            if reg_name not in self.read_registers:
+        reg_name = gcmd.get('REGISTER', None)
+        if reg_name is not None:
+            reg_name = reg_name.upper()
+            val = self.fields.registers.get(reg_name)
+            if (val is not None) and (reg_name not in self.read_registers):
+                # write-only register
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
-        gcmd.respond_info("========== Queried registers ==========")
-        for reg_name in self.read_registers:
-            val = self.mcu_tmc.get_register(reg_name)
-            if self.read_translate is not None:
-                reg_name, val = self.read_translate(reg_name, val)
-            gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+            elif reg_name in self.read_registers:
+                # readable register
+                val = self.mcu_tmc.get_register(reg_name)
+                if self.read_translate is not None:
+                    reg_name, val = self.read_translate(reg_name, val)
+                gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+            else:
+                raise gcmd.error("Unknown register name '%s'" % (reg_name))
+        else:
+            gcmd.respond_info("========== Write-only registers ==========")
+            for reg_name, val in self.fields.registers.items():
+                if reg_name not in self.read_registers:
+                    gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+            gcmd.respond_info("========== Queried registers ==========")
+            for reg_name in self.read_registers:
+                val = self.mcu_tmc.get_register(reg_name)
+                if self.read_translate is not None:
+                    reg_name, val = self.read_translate(reg_name, val)
+                gcmd.respond_info(self.fields.pretty_format(reg_name, val))
 
 
 ######################################################################
