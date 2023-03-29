@@ -7,7 +7,7 @@ compensate for resonances. Note that using accelerometers requires some
 soldering and crimping. The ADXL345 can be connected to the SPI interface of a
 Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can
 be connected to the I2C interface of a Raspberry Pi directly, or to an I2C
-interface of an MCU board (it needs to support 400kbit/s *fast mode*).
+interface of an MCU board that supports 400kbit/s *fast mode* in Klipper.
 
 When sourcing accelerometers, be aware that there are a variety of different PCB
 board designs and different clones of them. If it is going to be connected to a
@@ -19,6 +19,14 @@ boards appear to be hard-configured for I2C by pulling SDO to GND).
 For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s there are also a variety of
 board designs and clones with different I2C pull-up resistors which will need
 supplementing.
+
+## MCUs with Klipper I2C *fast-mode* Support
+
+| MCU Family | MCU(s) Tested | MCU(s) with Support |
+|:--:|:--|:--|
+| Raspberry Pi | 3B+, Pico | 3A, 3A+, 3B, 4 |
+| AVR ATmega | ATmega328p | ATmega32u4, ATmega128, ATmega168, ATmega328, ATmega644p, ATmega1280, ATmega1284, ATmega2560 |
+| AVR AT90 | - | AT90usb646, AT90usb1286 |
 
 ## Installation instructions
 
