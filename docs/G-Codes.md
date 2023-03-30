@@ -1219,7 +1219,7 @@ The following commands are available when any of the
 are enabled.
 
 #### DUMP_TMC
-`DUMP_TMC STEPPER=<name>` [REGISTER=<name>]: This command will read all TMC
+`DUMP_TMC STEPPER=<name> [REGISTER=<name>]`: This command will read all TMC
 driver registers and report their values. If a REGISTER is provided, only
 the specified register will be dumped.
 
