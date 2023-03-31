@@ -10,7 +10,7 @@ config STM32_SELECT
     select HAVE_GPIO_I2C if !(MACH_STM32F031 || MACH_STM32H7)
     select HAVE_GPIO_SPI if !MACH_STM32F031
     select HAVE_GPIO_SDIO if MACH_STM32F4
-    select HAVE_GPIO_HARD_PWM if MACH_STM32F1 || MACH_STM32F4 || MACH_STM32G0 || MACH_STM32H7 || MACH_N32G45x
+    select HAVE_GPIO_HARD_PWM if MACH_STM32F1 || MACH_STM32F4 || MACH_STM32G0 || MACH_STM32H7
     select HAVE_GPIO_BITBANGING if !MACH_STM32F031
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
@@ -100,9 +100,11 @@ choice
     config MACH_N32G452
         bool "Nation N32G452"
         select MACH_N32G45x
+        select MACH_STM32F1
     config MACH_N32G455
         bool "Nation N32G455"
         select MACH_N32G45x
+        select MACH_STM32F1
 endchoice
 
 config MACH_STM32F103x6
@@ -138,8 +140,7 @@ config MACH_N32G45x
 config HAVE_STM32_USBFS
     bool
     default y if MACH_STM32F0x2 || MACH_STM32G0Bx || MACH_STM32L4 || MACH_STM32G4
-    default y if (MACH_STM32F103 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
-    default y if MACH_N32G45x && !STM32_CLOCK_REF_INTERNAL
+    default y if (MACH_STM32F1 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
 config HAVE_STM32_USBOTG
     bool
     default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32H7
@@ -153,7 +154,7 @@ config HAVE_STM32_USBCANBUS
     bool
     depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
     depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
-    depends on !MACH_STM32F103 || !MACH_N32G45x
+    depends on !MACH_STM32F1
     default y
 
 config MCU
@@ -265,13 +266,13 @@ config STM32_DFU_ROM_ADDRESS
 choice
     prompt "Bootloader offset"
     config STM32_FLASH_START_2000
-        bool "8KiB bootloader" if MACH_STM32F103 || MACH_STM32F070 || MACH_STM32G0 || MACH_STM32F0x2 || MACH_N32G45x
+        bool "8KiB bootloader" if MACH_STM32F1 || MACH_STM32F070 || MACH_STM32G0 || MACH_STM32F0x2
     config STM32_FLASH_START_5000
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000
-        bool "28KiB bootloader" if MACH_STM32F103 || MACH_N32G45x
+        bool "28KiB bootloader" if MACH_STM32F1
     config STM32_FLASH_START_8000
-        bool "32KiB bootloader" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4 || MACH_N32G45x
+        bool "32KiB bootloader" if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4
     config STM32_FLASH_START_8800
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_20200
