@@ -343,7 +343,8 @@ class TMC2240:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields)
+        self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields,
+                                           TMC_FREQUENCY)
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
@@ -353,6 +354,7 @@ class TMC2240:
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_status = cmdhelper.get_status
         # Setup basic register values
+        self.fields.set_field("multistep_filt", True)
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         self.fields.set_config_field(config, "offset_sin90", 0)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
@@ -392,6 +394,8 @@ class TMC2240:
         set_config_field(config, "pwm_lim", 12)
         #   TPOWERDOWN
         set_config_field(config, "tpowerdown", 10)
+        #   SG4_THRS
+        set_config_field(config, "sg4_angle_offset", 1)
 
 def load_config_prefix(config):
     return TMC2240(config)

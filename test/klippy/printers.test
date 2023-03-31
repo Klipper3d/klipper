@@ -154,6 +154,7 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
 CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
 CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
+CONFIG ../../config/printer-sovol-sv05-2022.cfg
 CONFIG ../../config/printer-sovol-sv06-2022.cfg
 CONFIG ../../config/printer-sunlu-t3-2022.cfg
 
@@ -175,6 +176,7 @@ CONFIG ../../config/printer-creality-ender2pro-2021.cfg
 CONFIG ../../config/printer-creality-ender3-s1-2021.cfg
 CONFIG ../../config/printer-creality-ender3-s1plus-2022.cfg
 CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
+CONFIG ../../config/printer-creality-ender3-v2-neo-2022.cfg
 CONFIG ../../config/printer-creality-ender3max-2021.cfg
 CONFIG ../../config/printer-creality-ender3pro-2020.cfg
 CONFIG ../../config/printer-creality-ender5pro-2020.cfg
@@ -197,7 +199,9 @@ CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
 
 # Printers using the stm32f401
 DICTIONARY stm32f401.dict
+CONFIG ../../config/generic-fysetc-cheetah-v2.0.cfg
 CONFIG ../../config/printer-artillery-sidewinder-x2-2022.cfg
+CONFIG ../../config/printer-elegoo-neptune3-pro-2023.cfg
 
 # Printers using the stm32f405
 DICTIONARY stm32f405.dict
@@ -226,6 +230,7 @@ CONFIG ../../config/generic-fysetc-s6.cfg
 CONFIG ../../config/generic-fysetc-s6-v2.cfg
 CONFIG ../../config/generic-fysetc-spider.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
+CONFIG ../../config/printer-ratrig-v-minion-2021.cfg
 
 # Printers using the stm32h723
 DICTIONARY stm32h723.dict
@@ -248,6 +253,10 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 # Printers using the rp2040
 DICTIONARY rp2040.dict
 CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
+
+# Anycubic Printers using trigorilla board with the hc32f460
+DICTIONARY hc32f460-serial-PA3PA2.dict
+CONFIG ../../config/printer-anycubic-kobra-plus-2022.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
