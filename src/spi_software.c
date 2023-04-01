@@ -83,7 +83,7 @@ spi_software_transfer(struct spi_software *ss, uint8_t receive_data
                 gpio_out_toggle(ss->sclk);
                 ndelay(ss->delay);
                 inbuf <<= 1;
-                inbuf |= gpio_in_read(ss->miso);                
+                inbuf |= gpio_in_read(ss->miso);
             } else {
                 // MODE 0 & 2
                 gpio_out_write(ss->mosi, outbuf & 0x80);
