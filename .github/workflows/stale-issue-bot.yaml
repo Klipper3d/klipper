@@ -332,7 +332,7 @@ jobs:
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
-    - uses: dessant/lock-threads@v3
+    - uses: dessant/lock-threads@v4
       with:
         issue-inactive-days: '180'
         issue-lock-reason: ''
