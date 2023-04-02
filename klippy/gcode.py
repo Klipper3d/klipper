@@ -119,6 +119,14 @@ class GCodeDispatch:
             return cmd[0].isupper() and cmd[1].isdigit()
         except:
             return False
+    def get_canonical_command(self, cmd):
+        if not self.is_traditional_gcode(cmd):
+            return cmd.upper()
+        # Some tools zero-pad g-code commands, we need to strip
+        # leading zeros to handle such commands.
+        if cmd[1:].lstrip("0") == "":
+            return cmd[0].upper() + "0"
+        return cmd[0].upper() + cmd[1:].lstrip("0")
     def register_command(self, cmd, func, when_not_ready=False, desc=None):
         if func is None:
             old_cmd = self.ready_gcode_handlers.get(cmd)
@@ -182,12 +190,13 @@ class GCodeDispatch:
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
             numparts = len(parts)
-            cmd = ""
+            raw_cmd = ""
             if numparts >= 3 and parts[1] != 'N':
-                cmd = parts[1] + parts[2].strip()
+                raw_cmd = parts[1] + parts[2].strip()
             elif numparts >= 5 and parts[1] == 'N':
                 # Skip line number at start of command
-                cmd = parts[3] + parts[4].strip()
+                raw_cmd = parts[3] + parts[4].strip()
+            cmd = self.get_canonical_command(raw_cmd)
             # Build gcode "params" dictionary
             params = { parts[i]: parts[i+1].strip()
                        for i in range(1, numparts, 2) }
