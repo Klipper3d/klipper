@@ -44,6 +44,7 @@ class ExtruderStepper:
         gcode.register_mux_command("SYNC_STEPPER_TO_EXTRUDER", "STEPPER",
                                    self.name, self.cmd_SYNC_STEPPER_TO_EXTRUDER,
                                    desc=self.cmd_SYNC_STEPPER_TO_EXTRUDER_help)
+        
     def _handle_connect(self):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_step_generator(self.stepper.generate_steps)
@@ -208,6 +209,9 @@ class PrinterExtruder:
             toolhead.set_extruder(self, 0.)
             gcode.register_command("M104", self.cmd_M104)
             gcode.register_command("M109", self.cmd_M109)
+            gcode.register_mux_command("SET_MAX_EXTRUDE_ONLY_ACCEL", "EXTRUDER", None, self.cmd_SET_MAX_EXTRUDE_ONLY_ACCEL,
+                                   desc=self.cmd_SET_MAX_EXTRUDE_ONLY_ACCEL_help)
+            
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
@@ -308,6 +312,13 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.last_position)
         self.printer.send_event("extruder:activate_extruder")
+        
+    cmd_SET_MAX_EXTRUDE_ONLY_ACCEL_help = "Set extruder max_extrude_only_accel"
+    def cmd_SET_MAX_EXTRUDE_ONLY_ACCEL(self, gcmd):
+        accel = gcmd.get_float("ACCEL", self.max_e_accel, above=0.)
+        if accel is not None:
+            self.max_e_accel = accel
+            gcmd.respond_info("'extrude_only_accel': %s" % (accel,))
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
