@@ -239,17 +239,19 @@ class PrinterHoming:
                 raise self.printer.command_error(
                     "Homing failed due to printer shutdown")
             raise
-    def probing_move(self, mcu_probe, pos, speed):
+    def probing_move(self, mcu_probe, pos, speed, triggered=True):
         endstops = [(mcu_probe, "probe")]
         hmove = HomingMove(self.printer, endstops)
         try:
-            epos = hmove.homing_move(pos, speed, probe_pos=True)
+            epos = hmove.homing_move(pos, speed, probe_pos=True,
+                triggered=triggered)
         except self.printer.command_error:
             if self.printer.is_shutdown():
                 raise self.printer.command_error(
                     "Probing failed due to printer shutdown")
             raise
-        if hmove.check_no_movement() is not None:
+
+        if all([sp.start_pos == sp.trig_pos for sp in hmove.stepper_positions]):
             raise self.printer.command_error(
                 "Probe triggered prior to movement")
         return epos
