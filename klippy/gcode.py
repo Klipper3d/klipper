@@ -135,6 +135,9 @@ class GCodeDispatch:
             if cmd in self.base_gcode_handlers:
                 del self.base_gcode_handlers[cmd]
             return old_cmd
+        if cmd != self.get_canonical_command(cmd):
+            raise self.printer.config_error(
+                "%s is not a canonical gcode command" % (cmd,))
         if cmd in self.ready_gcode_handlers:
             raise self.printer.config_error(
                 "gcode command %s already registered" % (cmd,))
