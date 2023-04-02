@@ -922,8 +922,11 @@ see the [probe calibrate guide](Probe_Calibrate.md)).
 #### PROBE
 `PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
 [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
-[SAMPLES_TOLERANCE_RETRIES=<count>] [SAMPLES_RESULT=median|average]`:
-Move the nozzle downwards until the probe triggers. If any of the
+[SAMPLES_TOLERANCE_RETRIES=<count>] [SAMPLES_RESULT=median|average]
+[TARGET_X=<pos>] [TARGET_Y=<pos>] [TARGET_Z=<pos>] [TRIGGERED=0]`:
+Move the nozzle until the probe triggers. By default the target is
+directly below the current position. If TRIGGERED=0 is specified then
+the nozzle will move until the probe becomes untriggered. If any of the
 optional parameters are provided they override their equivalent
 setting in the [probe config section](Config_Reference.md#probe).
 

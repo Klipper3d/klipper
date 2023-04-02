@@ -351,10 +351,15 @@ is defined):
   during the last QUERY_PROBE command. Note, if this is used in a
   macro, due to the order of template expansion, the QUERY_PROBE
   command must be run prior to the macro containing this reference.
-- `last_z_result`: Returns the Z result value of the last PROBE
-  command. Note, if this is used in a macro, due to the order of
-  template expansion, the PROBE (or similar) command must be run prior
-  to the macro containing this reference.
+- `last_result`: Returns the result value of the last PROBE
+  command. It is possible to access the x, y, and z components of this
+  position (eg, `last_result.z`). Note, if this is used in a macro,
+  due to the order of template expansion, the PROBE (or similar) command
+  must be run prior to the macro containing this reference.
+- `last_z_result`: Returns only the z component of the `last_result`.
+  Note, if this is used in a macro, due to the order of template expansion,
+  the PROBE (or similar) command must be run prior to the macro containing
+  this reference.
 
 ## quad_gantry_level
 
