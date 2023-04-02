@@ -209,7 +209,7 @@ class PrinterExtruder:
             toolhead.set_extruder(self, 0.)
             gcode.register_command("M104", self.cmd_M104)
             gcode.register_command("M109", self.cmd_M109)
-            gcode.register_mux_command("SET_MAX_EXTRUDE_ONLY_ACCEL", "EXTRUDER", 
+            gcode.register_mux_command("SET_MAX_EXTRUDE_ONLY_ACCEL","EXTRUDER",
                                None, self.cmd_SET_MAX_EXTRUDE_ONLY_ACCEL,
                                desc=self.cmd_SET_MAX_EXTRUDE_ONLY_ACCEL_help)
 
