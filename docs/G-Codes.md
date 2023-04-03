@@ -423,6 +423,12 @@ MOTION_QUEUE (as defined in an [extruder](Config_Reference.md#extruder)
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.
 
+#### SET_MAX_EXTRUDE_ONLY_ACCEL
+`SET_MAX_EXTRUDE_ONLY_ACCEL ACCEL=<float>`. This command sets the
+max_extrude_only_accel parameter of [extruder]. Value must be bigger
+than 0. If `ACCEL` value is not provided the command will return 
+the currently set max_extrude_only_accel.
+
 #### SET_EXTRUDER_STEP_DISTANCE
 This command is deprecated and will be removed in the near future.
 
