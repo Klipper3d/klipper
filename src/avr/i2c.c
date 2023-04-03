@@ -27,31 +27,27 @@ static const uint8_t SCL = GPIO('D', 0), SDA = GPIO('D', 1);
 DECL_CONSTANT_STR("BUS_PINS_twi", "PD0,PD1");
 #endif
 
-static void
-i2c_init(void)
-{
-    if (TWCR & (1<<TWEN))
-        // Already setup
-        return;
-
-    // Setup output pins and enable pullups
-    gpio_out_setup(SDA, 1);
-    gpio_out_setup(SCL, 1);
-
-    // Set 100Khz frequency
-    TWSR = 0;
-    TWBR = ((CONFIG_CLOCK_FREQ / 100000) - 16) / 2;
-
-    // Enable interface
-    TWCR = (1<<TWEN);
-}
-
 struct i2c_config
 i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 {
     if (bus)
         shutdown("Unsupported i2c bus");
-    i2c_init();
+
+    if (!(TWCR & (1<<TWEN))) {
+        // Setup output pins and enable pullups
+        gpio_out_setup(SDA, 1);
+        gpio_out_setup(SCL, 1);
+
+        // Set frequency avoiding pulling in integer divide
+        TWSR = 0;
+        if (rate >= 400000)
+            TWBR = ((CONFIG_CLOCK_FREQ / 400000) - 16) / 2;
+        else
+            TWBR = ((CONFIG_CLOCK_FREQ / 100000) - 16) / 2;
+
+        // Enable interface
+        TWCR = (1<<TWEN);
+    }
     return (struct i2c_config){ .addr=addr<<1 };
 }
 

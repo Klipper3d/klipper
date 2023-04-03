@@ -346,7 +346,7 @@ max_z_velocity:
 #min_angle: 5
 #   This represents the minimum angle (in degrees) relative to horizontal
 #   that the deltesian arms are allowed to achieve. This parameter is
-#   intended to restrict the arms from becomming completely horizontal,
+#   intended to restrict the arms from becoming completely horizontal,
 #   which would risk accidental inversion of the XZ axis. The default is 5.
 #print_width:
 #   The distance (in mm) of valid toolhead X coordinates. One may use
@@ -383,7 +383,7 @@ arm_x_length:
 #   for stepper_right, this parameter defaults to the value specified for
 #   stepper_left.
 
-# The stepper_right section is used to desribe the stepper controlling the
+# The stepper_right section is used to describe the stepper controlling the
 # right tower.
 [stepper_right]
 
@@ -1093,12 +1093,12 @@ information.
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
 #screw_thread: CW-M3
-#   The type of screw used for bed level, M3, M4 or M5 and the
-#   direction of the knob used to level the bed, clockwise decrease
-#   counter-clockwise decrease.
+#   The type of screw used for bed leveling, M3, M4, or M5, and the
+#   rotation direction of the knob that is used to level the bed.
 #   Accepted values: CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5, CCW-M5.
-#   Default value is CW-M3, most printers use an M3 screw and
-#   turning the knob clockwise decrease distance.
+#   Default value is CW-M3 which most printers use. A clockwise
+#   rotation of the knob decreases the gap between the nozzle and the
+#   bed. Conversely, a counter-clockwise rotation increases the gap.
 ```
 
 ### [z_tilt]
@@ -3307,6 +3307,126 @@ run_current:
 #   HDEC) is interpreted as the MSB of HSTRT in this case).
 ```
 
+### [tmc2240]
+
+Configure a TMC2240 stepper motor driver via SPI bus. To use this
+feature, define a config section with a "tmc2240" prefix followed by
+the name of the corresponding stepper config section (for example,
+"[tmc2240 stepper_x]").
+
+```
+[tmc2240 stepper_x]
+cs_pin:
+#   The pin corresponding to the TMC2240 chip select line. This pin
+#   will be set to low at the start of SPI messages and raised to high
+#   after the message completes. This parameter must be provided.
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#chain_position:
+#chain_length:
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
+#interpolate: True
+#   If true, enable step interpolation (the driver will internally
+#   step at a rate of 256 micro-steps). The default is True.
+run_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   during stepper movement. This parameter must be provided.
+#hold_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
+#rref: 12000
+#   The resistance (in ohms) of the resistor between IREF and GND. The
+#   default is 12000.
+#stealthchop_threshold: 0
+#   The velocity (in mm/s) to set the "stealthChop" threshold to. When
+#   set, "stealthChop" mode will be enabled if the stepper motor
+#   velocity is below this value. The default is 0, which disables
+#   "stealthChop" mode.
+#driver_MSLUT0: 2863314260
+#driver_MSLUT1: 1251300522
+#driver_MSLUT2: 608774441
+#driver_MSLUT3: 269500962
+#driver_MSLUT4: 4227858431
+#driver_MSLUT5: 3048961917
+#driver_MSLUT6: 1227445590
+#driver_MSLUT7: 4211234
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
+#driver_OFFSET_SIN90: 0
+#   These fields control the Microstep Table registers directly. The optimal
+#   wave table is specific to each motor and might vary with current. An
+#   optimal configuration will have minimal print artifacts caused by
+#   non-linear stepper movement. The values specified above are the default
+#   values used by the driver. The value must be specified as a decimal integer
+#   (hex form is not supported). In order to compute the wave table fields,
+#   see the tmc2130 "Calculation Sheet" from the Trinamic website.
+#   Additionally, this driver also has the OFFSET_SIN90 field which can be used
+#   to tune a motor with unbalanced coils. See the `Sine Wave Lookup Table`
+#   section in the datasheet for information about this field and how to tune
+#   it.
+#driver_IHOLDDELAY: 6
+#driver_IRUNDELAY: 4
+#driver_TPOWERDOWN: 10
+#driver_TBL: 2
+#driver_TOFF: 3
+#driver_HEND: 2
+#driver_HSTRT: 5
+#driver_FD3: 0
+#driver_TPFD: 4
+#driver_CHM: 0
+#driver_VHIGHFS: 0
+#driver_VHIGHCHM: 0
+#driver_DISS2G: 0
+#driver_DISS2VS: 0
+#driver_PWM_AUTOSCALE: True
+#driver_PWM_AUTOGRAD: True
+#driver_PWM_FREQ: 0
+#driver_FREEWHEEL: 0
+#driver_PWM_GRAD: 0
+#driver_PWM_OFS: 29
+#driver_PWM_REG: 4
+#driver_PWM_LIM: 12
+#driver_SGT: 0
+#driver_SEMIN: 0
+#driver_SEUP: 0
+#driver_SEMAX: 0
+#driver_SEDN: 0
+#driver_SEIMIN: 0
+#driver_SFILT: 0
+#driver_SG4_ANGLE_OFFSET: 1
+#   Set the given register during the configuration of the TMC2240
+#   chip. This may be used to set custom motor parameters. The
+#   defaults for each parameter are next to the parameter name in the
+#   above list.
+#diag0_pin:
+#diag1_pin:
+#   The micro-controller pin attached to one of the DIAG lines of the
+#   TMC2240 chip. Only a single diag pin should be specified. The pin
+#   is "active low" and is thus normally prefaced with "^!". Setting
+#   this creates a "tmc2240_stepper_x:virtual_endstop" virtual pin
+#   which may be used as the stepper's endstop_pin. Doing this enables
+#   "sensorless homing". (Be sure to also set driver_SGT to an
+#   appropriate sensitivity value.) The default is to not enable
+#   sensorless homing.
+```
+
 ### [tmc5160]
 
 Configure a TMC5160 stepper motor driver via SPI bus. To use this
@@ -4323,7 +4443,7 @@ serial:
 #auto_load_speed: 2
 #   Extrude feedrate when autoloading, default is 2 (mm/s)
 #auto_cancel_variation: 0.1
-#   Auto cancel print when ping varation is above this threshold
+#   Auto cancel print when ping variation is above this threshold
 ```
 
 ### [angle]
@@ -4389,20 +4509,20 @@ SPI bus.
 The following parameters are generally available for devices using an
 I2C bus.
 
-Note that Klipper's current micro-controller support for i2c is
-generally not tolerant to line noise. Unexpected errors on the i2c
+Note that Klipper's current micro-controller support for I2C is
+generally not tolerant to line noise. Unexpected errors on the I2C
 wires may result in Klipper raising a run-time error. Klipper's
 support for error recovery varies between each micro-controller type.
-It is generally recommended to only use i2c devices that are on the
+It is generally recommended to only use I2C devices that are on the
 same printed circuit board as the micro-controller.
 
 Most Klipper micro-controller implementations only support an
-`i2c_speed` of 100000. The Klipper "linux" micro-controller supports a
-400000 speed, but it must be
+`i2c_speed` of 100000 (*standard mode*, 100kbit/s). The Klipper "Linux"
+micro-controller supports a 400000 speed (*fast mode*, 400kbit/s), but it must be
 [set in the operating system](RPi_microcontroller.md#optional-enabling-i2c)
 and the `i2c_speed` parameter is otherwise ignored. The Klipper
-"rp2040" micro-controller supports a rate of 400000 via the
-`i2c_speed` parameter. All other Klipper micro-controllers use a
+"RP2040" micro-controller and ATmega AVR family support a rate of 400000
+via the `i2c_speed` parameter. All other Klipper micro-controllers use a
 100000 rate and ignore the `i2c_speed` parameter.
 
 ```
@@ -4420,5 +4540,5 @@ and the `i2c_speed` parameter is otherwise ignored. The Klipper
 #   The I2C speed (in Hz) to use when communicating with the device.
 #   The Klipper implementation on most micro-controllers is hard-coded
 #   to 100000 and changing this value has no effect. The default is
-#   100000.
+#   100000. Linux, RP2040 and ATmega support 400000.
 ```
