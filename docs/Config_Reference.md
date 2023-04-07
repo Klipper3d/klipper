@@ -2708,6 +2708,11 @@ information.
 #gcode_id:
 #   If set, the temperature will be reported in M105 queries using the
 #   given id. The default is to not report the temperature via M105.
+reverse: False
+#   If True, the working mode of the fan is reversed. If the temperature
+#   is lower than the target temperature, the fan speed increases;
+#   otherwise, the fan speed decreases.
+#   The default is False
 ```
 
 ### [fan_generic]
