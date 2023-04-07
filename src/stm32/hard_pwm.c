@@ -20,7 +20,7 @@ struct gpio_pwm_info {
 };
 
 static const struct gpio_pwm_info pwm_regs[] = {
-#if CONFIG_MACH_STM32F103
+#if CONFIG_MACH_STM32F103 || CONFIG_MACH_N32G45x
     {TIM2, GPIO('A', 0),  1, GPIO_FUNCTION(2)},
     {TIM2, GPIO('A', 1),  2, GPIO_FUNCTION(2)},
     {TIM2, GPIO('A', 2),  3, GPIO_FUNCTION(2)},
