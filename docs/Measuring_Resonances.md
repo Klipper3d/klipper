@@ -36,16 +36,16 @@ An ethernet cable with shielded twisted pairs (cat5e or better) is recommended
 for signal integrity over a long distance. If you still experience signal
 integrity issues (SPI/I2C errors):
 
-  * Double check the wiring with a digital multimeter for:
-    * Correct connections when turned off (continuity)
-    * Correct power and ground voltages
-  * I2C only:
-    * Check the SCL and SDA lines' resistances to 3.3V are in the range of 900
-      ohms to 1.8K
-    * For full technical details consult [chapter 7 of the I2C-bus specification
-      and user manual UM10204](https://www.pololu.com/file/0J435/UM10204.pdf)
-      for *fast-mode*
-  * Shorten the cable
+- Double check the wiring with a digital multimeter for:
+  - Correct connections when turned off (continuity)
+  - Correct power and ground voltages
+- I2C only:
+  - Check the SCL and SDA lines' resistances to 3.3V are in the range of 900
+    ohms to 1.8K
+  - For full technical details consult [chapter 7 of the I2C-bus specification
+    and user manual UM10204](https://www.pololu.com/file/0J435/UM10204.pdf)
+    for *fast-mode*
+- Shorten the cable
 
 Connect ethernet cable shielding only to the MCU board/Pi ground.
 
