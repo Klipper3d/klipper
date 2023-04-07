@@ -196,6 +196,7 @@ CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1.1-2021.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
+CONFIG ../../config/printer-voxelab-aquila-2021.cfg
 
 # Printers using the stm32f401
 DICTIONARY stm32f401.dict
