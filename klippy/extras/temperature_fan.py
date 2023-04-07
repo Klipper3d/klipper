@@ -17,6 +17,7 @@ class TemperatureFan:
         self.fan = fan.Fan(config, default_shutdown_speed=1.)
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        self.reverse = config.getboolean('reverse', False)
         pheaters = self.printer.load_object(config, 'heaters')
         self.sensor = pheaters.setup_sensor(config)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
@@ -121,12 +122,16 @@ class ControlBangBang:
         self.heating = False
     def temperature_callback(self, read_time, temp):
         current_temp, target_temp = self.temperature_fan.get_temp(read_time)
+        temp_diff = target_temp - temp
+        if self.temperature_fan.reverse:
+            temp_diff = -temp_diff
         if (self.heating
-            and temp >= target_temp+self.max_delta):
+            and temp_diff >= self.max_delta):
             self.heating = False
         elif (not self.heating
-              and temp <= target_temp-self.max_delta):
+              and temp_diff <= -self.max_delta):
             self.heating = True
+
         if self.heating:
             self.temperature_fan.set_speed(read_time, 0.)
         else:
@@ -157,8 +162,12 @@ class ControlPID:
     def temperature_callback(self, read_time, temp):
         current_temp, target_temp = self.temperature_fan.get_temp(read_time)
         time_diff = read_time - self.prev_temp_time
-        # Calculate change of temperature
-        temp_diff = temp - self.prev_temp
+        # Calculate change of temperature, flip sign if set to reverse
+        if self.temperature_fan.reverse:
+            temp_diff = target_temp - temp
+        else:
+            temp_diff = temp - target_temp
+
         if time_diff >= self.min_deriv_time:
             temp_deriv = temp_diff / time_diff
         else:
