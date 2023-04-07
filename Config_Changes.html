@@ -1295,6 +1295,8 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20230407: The <code>stalled_bytes</code> counter in the log and in the
+<code>printer.mcu.last_stats</code> field has been renamed to <code>upcoming_bytes</code>.</p>
 <p>20230304: The <code>SET_TMC_CURRENT</code> command now properly adjusts the globalscaler
 register for drivers that have it. This removes a limitation where on tmc5160,
 the currents could not be raised higher with <code>SET_TMC_CURRENT</code> than the
