@@ -10,6 +10,7 @@
 #include <string.h> // memset
 #include "compiler.h" // __visible
 #include "itersolve.h" // struct stepper_kinematics
+#include "kin_shaper.h" // struct shaper_pulses
 #include "pyhelper.h" // errorf
 #include "trapq.h" // move_get_distance
 
@@ -76,6 +77,14 @@ static void
 pa_range_integrate(struct move *m, int axis, double move_time, double hst
                    , double *pos_integral, double *pa_velocity_integral)
 {
+    while (unlikely(move_time < 0.)) {
+        m = list_prev_entry(m, node);
+        move_time += m->move_t;
+    }
+    while (unlikely(move_time > m->move_t)) {
+        move_time -= m->move_t;
+        m = list_next_entry(m, node);
+    }
     // Calculate integral for the current move
     *pos_integral = *pa_velocity_integral = 0.;
     double m_pos_int, m_pa_vel_int;
@@ -110,6 +119,24 @@ pa_range_integrate(struct move *m, int axis, double move_time, double hst
         *pos_integral -= m_pos_int;
         *pa_velocity_integral -= m_pa_vel_int;
     }
+    *pos_integral += start_base * hst * hst;
+}
+
+static void
+shaper_pa_range_integrate(struct move *m, int axis, double move_time
+                          , double hst, struct shaper_pulses *sp
+                          , double *pos_integral, double *pa_velocity_integral)
+{
+    *pos_integral = *pa_velocity_integral = 0.;
+    int num_pulses = sp->num_pulses, i;
+    for (i = 0; i < num_pulses; ++i) {
+        double t = sp->pulses[i].t, a = sp->pulses[i].a;
+        double p_pos_int, p_pa_vel_int;
+        pa_range_integrate(m, axis, move_time + t, hst,
+                           &p_pos_int, &p_pa_vel_int);
+        *pos_integral += a * p_pos_int;
+        *pa_velocity_integral += a * p_pa_vel_int;
+    }
 }
 
 struct pressure_advance_params {
@@ -129,6 +156,7 @@ typedef double (*pressure_advance_func)(
 
 struct extruder_stepper {
     struct stepper_kinematics sk;
+    struct shaper_pulses sp[3];
     struct pressure_advance_params pa_params;
     pressure_advance_func pa_func;
     double time_offset, half_smooth_time, inv_half_smooth_time2;
@@ -184,16 +212,25 @@ extruder_calc_position(struct stepper_kinematics *sk, struct move *m
     struct coord e_pos, pa_vel;
     double move_dist = move_get_distance(m, move_time);
     for (i = 0; i < 3; ++i) {
+        int axis = 'x' + i;
+        struct shaper_pulses* sp = &es->sp[i];
+        int num_pulses = sp->num_pulses;
         if (!hst) {
-            e_pos.axis[i] = m->axes_r.axis[i] * move_dist;
+            e_pos.axis[i] = num_pulses
+                ? shaper_calc_position(m, axis, move_time, sp)
+                : m->start_pos.axis[i] + m->axes_r.axis[i] * move_dist;
             pa_vel.axis[i] = 0.;
         } else {
-            pa_range_integrate(m, 'x' + i, move_time, hst,
-                               &e_pos.axis[i], &pa_vel.axis[i]);
+            if (num_pulses) {
+                shaper_pa_range_integrate(m, axis, move_time, hst, sp,
+                                          &e_pos.axis[i], &pa_vel.axis[i]);
+            } else {
+                pa_range_integrate(m, axis, move_time, hst,
+                                   &e_pos.axis[i], &pa_vel.axis[i]);
+            }
             e_pos.axis[i] *= es->inv_half_smooth_time2;
             pa_vel.axis[i] *= es->inv_half_smooth_time2;
         }
-        e_pos.axis[i] += m->start_pos.axis[i];
     }
     double position = e_pos.x + e_pos.y + e_pos.z;
     if (!hst)
@@ -207,6 +244,15 @@ static void
 extruder_note_generation_time(struct extruder_stepper *es)
 {
     double pre_active = 0., post_active = 0.;
+    int i;
+    for (i = 0; i < 2; ++i) {
+        struct shaper_pulses* sp = &es->sp[i];
+        if (!es->sp[i].num_pulses) continue;
+        pre_active = sp->pulses[sp->num_pulses-1].t > pre_active
+            ? sp->pulses[sp->num_pulses-1].t : pre_active;
+        post_active = -sp->pulses[0].t > post_active
+            ? -sp->pulses[0].t : post_active;
+    }
     pre_active += es->half_smooth_time + es->time_offset;
     if (pre_active < 0.) pre_active = 0.;
     post_active += es->half_smooth_time - es->time_offset;
@@ -241,6 +287,27 @@ extruder_set_pressure_advance_model_func(struct stepper_kinematics *sk
     struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
     memset(&es->pa_params, 0, sizeof(es->pa_params));
     es->pa_func = func;
+}
+
+int __visible
+extruder_set_shaper_params(struct stepper_kinematics *sk, char axis
+                           , int n, double a[], double t[])
+{
+    if (axis != 'x' && axis != 'y')
+        return -1;
+    struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
+    struct shaper_pulses *sp = &es->sp[axis-'x'];
+    int status = init_shaper(n, a, t, sp);
+    extruder_note_generation_time(es);
+    return status;
+}
+
+double __visible
+extruder_get_step_gen_window(struct stepper_kinematics *sk)
+{
+    struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
+    return es->sk.gen_steps_pre_active > es->sk.gen_steps_post_active
+         ? es->sk.gen_steps_pre_active : es->sk.gen_steps_post_active;
 }
 
 struct stepper_kinematics * __visible
