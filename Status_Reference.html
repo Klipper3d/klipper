@@ -2341,6 +2341,9 @@ objects (eg, <code>[tmc2208 stepper_x]</code>):</p>
 <li><code>drv_status</code>: The results of the last driver status query. (Only
   non-zero fields are reported.) This field will be null if the driver
   is not enabled (and thus is not periodically queried).</li>
+<li><code>temperature</code>: The internal temperature reported by the driver. This
+  field will be null if the driver is not enabled or if the driver
+  does not support temperature reporting.</li>
 <li><code>run_current</code>: The currently set run current.</li>
 <li><code>hold_current</code>: The currently set hold current.</li>
 </ul>
