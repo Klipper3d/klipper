@@ -3052,6 +3052,9 @@ cs_pin:
 #   define the stepper position in the chain and the total chain length.
 #   Position 1 corresponds to the stepper that connects to the MOSI signal.
 #   The default is to not use an SPI daisy chain.
+#external_clock_frequency: 13200000
+#   Configure only if an external clock oscillator is connected to the TMC
+#   driver clock input.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). This interpolation does
@@ -3145,6 +3148,9 @@ uart_pin:
 #   A comma separated list of pins to set prior to accessing the
 #   tmc2208 UART. This may be useful for configuring an analog mux for
 #   UART communication. The default is to not configure any pins.
+#external_clock_frequency: 12000000
+#   Configure only if an external clock oscillator is connected to the TMC
+#   driver clock input.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). This interpolation does
@@ -3197,6 +3203,9 @@ by the name of the corresponding stepper config section (for example,
 uart_pin:
 #tx_pin:
 #select_pins:
+#external_clock_frequency: 12000000
+#   Configure only if an external clock oscillator is connected to the TMC
+#   driver clock input.
 #interpolate: True
 run_current:
 #hold_current:
@@ -3333,6 +3342,9 @@ cs_pin:
 #   define the stepper position in the chain and the total chain length.
 #   Position 1 corresponds to the stepper that connects to the MOSI signal.
 #   The default is to not use an SPI daisy chain.
+#external_clock_frequency: 12500000
+#   Configure only if an external clock oscillator is connected to the TMC
+#   driver clock input.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). The default is True.
@@ -3453,6 +3465,9 @@ cs_pin:
 #   define the stepper position in the chain and the total chain length.
 #   Position 1 corresponds to the stepper that connects to the MOSI signal.
 #   The default is to not use an SPI daisy chain.
+#external_clock_frequency: 12000000
+#   Configure only if an external clock oscillator is connected to the TMC
+#   driver clock input.
 #interpolate: True
 #   If true, enable step interpolation (the driver will internally
 #   step at a rate of 256 micro-steps). The default is True.

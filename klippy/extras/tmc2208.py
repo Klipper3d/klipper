@@ -6,7 +6,6 @@
 import logging
 from . import tmc, tmc_uart, tmc2130
 
-TMC_FREQUENCY=12000000.
 
 Registers = {
     "GCONF": 0x00, "GSTAT": 0x01, "IFCNT": 0x02, "SLAVECONF": 0x03,
@@ -184,10 +183,12 @@ FieldFormatters.update({
 
 class TMC2208:
     def __init__(self, config):
+        self.tmc_frequency = config.getfloat('external_clock_frequency',
+            12000000., minval=4000000., maxval=18000000.)
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 0,
-                                             TMC_FREQUENCY)
+                                             self.tmc_frequency)
         self.fields.set_field("pdn_disable", True)
         # Register commands
         current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
@@ -198,7 +199,7 @@ class TMC2208:
         # Setup basic register values
         self.fields.set_field("mstep_reg_select", True)
         self.fields.set_field("multistep_filt", True)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         # CHOPCONF

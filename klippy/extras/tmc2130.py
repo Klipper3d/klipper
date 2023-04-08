@@ -6,7 +6,6 @@
 import math, logging
 from . import bus, tmc
 
-TMC_FREQUENCY=13200000.
 
 Registers = {
     "GCONF": 0x00, "GSTAT": 0x01, "IOIN": 0x04, "IHOLD_IRUN": 0x10,
@@ -282,10 +281,12 @@ class MCU_TMC_SPI:
 
 class TMC2130:
     def __init__(self, config):
+        self.tmc_frequency = config.getfloat('external_clock_frequency',
+            13200000., minval=4000000., maxval=18000000.)
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields,
-                                   TMC_FREQUENCY)
+                                   self.tmc_frequency)
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
@@ -296,7 +297,7 @@ class TMC2130:
         self.get_status = cmdhelper.get_status
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc, self.tmc_frequency)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         # CHOPCONF
