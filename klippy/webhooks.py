@@ -268,8 +268,14 @@ class ClientConnection:
         self.send(result)
 
     def send(self, data):
-        jmsg = json.dumps(data, separators=(',', ':'))
-        self.send_buffer += jmsg.encode() + b"\x03"
+        try:
+            jmsg = json.dumps(data, separators=(',', ':'))
+            self.send_buffer += jmsg.encode() + b"\x03"
+        except (TypeError, ValueError) as e:
+            msg = ("json encoding error: %s" % (str(e),))
+            logging.exception(msg)
+            self.printer.invoke_shutdown(msg)
+            return
         if not self.is_blocking:
             self._do_send()
 
