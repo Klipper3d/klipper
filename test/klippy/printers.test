@@ -264,6 +264,11 @@ DICTIONARY pru.dict host=linuxprocess.dict
 CONFIG ../../config/generic-cramps.cfg
 CONFIG ../../config/generic-replicape.cfg
 
+# Printers using the AR100
+DICTIONARY stm32f031-serial.dict ar100=ar100.dict
+CONFIG ../../config/generic-recore-a6.cfg
+CONFIG ../../config/generic-recore-a7.cfg
+
 # Tests with multiple mcus
 DICTIONARY atmega2560.dict zboard=atmega2560.dict auxboard=atmega2560.dict
 CONFIG ../../config/sample-multi-mcu.cfg
