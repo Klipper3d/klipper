@@ -4652,6 +4652,15 @@ host_mcu:
 #   (True sets CFG5 high, False sets it low). The default is True.
 ```
 
+### [ina381]
+The INA381 is an current monitor chip with a programmable over current
+alarm.
+
+This chip needs a reset pulse in order to operate in latching mode,
+so that is all this plugin does. The rest of the functionality can be
+implemented using already existing functionality in Klipper.
+
+
 ## Other Custom Modules
 
 ### [palette2]
