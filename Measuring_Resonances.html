@@ -758,13 +758,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#using-raspberry-pi-pico_1" class="md-nav__link">
-    Using Raspberry Pi Pico
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1578,13 +1571,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#using-raspberry-pi-pico_1" class="md-nav__link">
-    Using Raspberry Pi Pico
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1880,7 +1866,7 @@ SCLK+CS
 
 <p>Note that unlike a cable shield, GND must be connected at both ends.</p>
 <h4 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h4>
-<h6 id="direct-to-raspberry-pi">Direct to Raspberry Pi<a class="headerlink" href="#direct-to-raspberry-pi" title="Permanent link">&para;</a></h6>
+<h5 id="direct-to-raspberry-pi">Direct to Raspberry Pi<a class="headerlink" href="#direct-to-raspberry-pi" title="Permanent link">&para;</a></h5>
 <p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode (e.g. Pi Pico), wiring
 and configuration will vary according to your specific board and available
 pins.</strong></p>
@@ -1930,59 +1916,7 @@ and <strong>will not work</strong>. The recommended connection scheme:</p>
 </table>
 <p>Fritzing wiring diagrams for some of the ADXL345 boards:</p>
 <p><img alt="ADXL345-Rpi" src="img/adxl345-fritzing.png" /></p>
-<h6 id="using-raspberry-pi-pico">Using Raspberry Pi Pico<a class="headerlink" href="#using-raspberry-pi-pico" title="Permanent link">&para;</a></h6>
-<p>You may connect the ADXL345 to your Raspberry Pi Pico and then connect the
-Pico to your Raspberry Pi via USB. This makes it easy to reuse the
-accelerometer on other Klipper devices, as you can connect via USB instead
-of GPIO. The Pico does not have much processing power, so make sure it is
-only running the accelerometer and not performing any other duties.</p>
-<p>In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V
-only. Depending on the board's layout, a level shifter may be present, which
-makes 5V dangerous for your RPi.</p>
-<table>
-<thead>
-<tr>
-<th align="center">ADXL345 pin</th>
-<th align="center">Pico pin</th>
-<th align="center">Pico pin name</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">3V3 (or VCC)</td>
-<td align="center">36</td>
-<td align="center">3.3V DC power</td>
-</tr>
-<tr>
-<td align="center">GND</td>
-<td align="center">38</td>
-<td align="center">Ground</td>
-</tr>
-<tr>
-<td align="center">CS</td>
-<td align="center">2</td>
-<td align="center">GP1 (SPI0_CSn)</td>
-</tr>
-<tr>
-<td align="center">SDO</td>
-<td align="center">1</td>
-<td align="center">GP0 (SPI0_RX)</td>
-</tr>
-<tr>
-<td align="center">SDA</td>
-<td align="center">5</td>
-<td align="center">GP3 (SPI0_TX)</td>
-</tr>
-<tr>
-<td align="center">SCL</td>
-<td align="center">4</td>
-<td align="center">GP2 (SPI0_SCK)</td>
-</tr>
-</tbody>
-</table>
-<p>Wiring diagrams for some of the ADXL345 boards:</p>
-<p><img alt="ADXL345-Pico" src="img/adxl345-pico.png" /></p>
-<h6 id="using-raspberry-pi-pico_1">Using Raspberry Pi Pico<a class="headerlink" href="#using-raspberry-pi-pico_1" title="Permanent link">&para;</a></h6>
+<h5 id="using-raspberry-pi-pico">Using Raspberry Pi Pico<a class="headerlink" href="#using-raspberry-pi-pico" title="Permanent link">&para;</a></h5>
 <p>You may connect the ADXL345 to your Raspberry Pi Pico and then connect the
 Pico to your Raspberry Pi via USB. This makes it easy to reuse the
 accelerometer on other Klipper devices, as you can connect via USB instead
