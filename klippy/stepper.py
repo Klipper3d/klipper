@@ -334,6 +334,10 @@ class PrinterRail:
             'homing_retract_speed', self.homing_speed, above=0.)
         self.homing_retract_dist = config.getfloat(
             'homing_retract_dist', 5., minval=0.)
+        self.homing_retract_after= config.getfloat(
+            'homing_retract_after', 0., minval=0.)
+        self.homing_retract_dwell= config.getfloat(
+            'homing_retract_dwell', 0., minval=0.)
         self.homing_positive_dir = config.getboolean(
             'homing_positive_dir', None)
         if self.homing_positive_dir is None:
@@ -359,10 +363,12 @@ class PrinterRail:
     def get_homing_info(self):
         homing_info = collections.namedtuple('homing_info', [
             'speed', 'position_endstop', 'retract_speed', 'retract_dist',
-            'positive_dir', 'second_homing_speed'])(
+            'positive_dir', 'second_homing_speed','homing_retract_after',
+            'homing_retract_dwell'])(
                 self.homing_speed, self.position_endstop,
                 self.homing_retract_speed, self.homing_retract_dist,
-                self.homing_positive_dir, self.second_homing_speed)
+                self.homing_positive_dir, self.second_homing_speed,
+                self.homing_retract_after,self.homing_retract_dwell)
         return homing_info
     def get_steppers(self):
         return list(self.steppers)
