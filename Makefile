@@ -9,7 +9,10 @@ OUT=out/
 
 # Kconfig includes
 export KCONFIG_CONFIG     := $(CURDIR)/.config
--include $(KCONFIG_CONFIG)
+
+# Handle path with spaces
+ESC_KCONFIG_CONFIG = $(subst $() $(),$()\ $(),$(KCONFIG_CONFIG))
+-include $(ESC_KCONFIG_CONFIG)
 
 # Common command definitions
 CC=$(CROSS_PREFIX)gcc
@@ -90,13 +93,13 @@ create-board-link:
 	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
 	$(Q)rm -f $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y))
 	$(Q)rm -f $(OUT)board
-	$(Q)ln -sf $(CURDIR)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
+	$(Q)ln -sf "$(CURDIR)/src/$(CONFIG_BOARD_DIRECTORY)" $(OUT)board
 	$(Q)mkdir -p $(OUT)board-generic
 	$(Q)rm -f $(OUT)board-generic/board
-	$(Q)ln -sf $(CURDIR)/src/generic $(OUT)board-generic/board
+	$(Q)ln -sf "$(CURDIR)/src/generic" $(OUT)board-generic/board
 
 # Hack to rebuild OUT directory and reload make dependencies on Kconfig change
-$(OUT)board-link: $(KCONFIG_CONFIG)
+$(OUT)board-link: $(ESC_KCONFIG_CONFIG)
 	$(Q)mkdir -p $(OUT)
 	$(Q)echo "# Makefile board-link rule" > $@
 	$(Q)$(MAKE) create-board-link
@@ -104,12 +107,12 @@ include $(OUT)board-link
 
 ################ Kconfig rules
 
-$(OUT)autoconf.h: $(KCONFIG_CONFIG)
+$(OUT)autoconf.h: $(ESC_KCONFIG_CONFIG)
 	@echo "  Building $@"
 	$(Q)mkdir -p $(OUT)
 	$(Q) KCONFIG_AUTOHEADER=$@ $(PYTHON) lib/kconfiglib/genconfig.py src/Kconfig
 
-$(KCONFIG_CONFIG) olddefconfig: src/Kconfig
+$(ESC_KCONFIG_CONFIG) olddefconfig: src/Kconfig
 	$(Q)$(PYTHON) lib/kconfiglib/olddefconfig.py src/Kconfig
 
 menuconfig:
