@@ -78,6 +78,32 @@ Understanding the content of these messages will likely require
 low-level knowledge of Klipper's [CANBUS protocol](CANBUS_protocol.md)
 and Klipper's [MCU commands](MCU_Commands.md).
 
+### Parsing Klipper messages in a candump log
+
+One may use the `parsecandump.py` tool to parse the low-level Klipper
+micro-controller messages contained in a candump log. Using this tool
+is an advanced topic that requires knowledge of Klipper
+[MCU commands](MCU_Commands.md). For example:
+```
+./scripts/parsecandump.py mycanlog 108 ./out/klipper.dict
+```
+
+This tool produces output similar to the [parsedump
+tool](Debugging.md#translating-gcode-files-to-micro-controller-commands). See
+the documentation for that tool for information on generating the
+Klipper micro-controller data dictionary.
+
+In the above example, `108` is the [CAN bus
+id](CANBUS_protocol.md#micro-controller-id-assignment). It is a
+hexadecimal number. The id `108` is assigned by Klipper to the first
+micro-controller. If the CAN bus has multiple micro-controllers on it,
+then the second micro-controller would be `10a`, the third would be
+`10c`, and so on.
+
+The candump log must be produced using the `-tz -Ddex` command-line
+arguments (for example: `candump -tz -Ddex can0,#FFFFFFFF`) in order
+to use the `parsecandump.py` tool.
+
 ## Using a logic analyzer on the canbus wiring
 
 The [Sigrok Pulseview](https://sigrok.org/wiki/PulseView) software
