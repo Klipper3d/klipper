@@ -117,7 +117,7 @@ static struct usbcan_data {
 
     // Data from physical canbus interface
     uint32_t pull_pos, push_pos;
-    struct canbus_msg queue[8];
+    struct canbus_msg queue[32];
 } UsbCan;
 
 enum {
