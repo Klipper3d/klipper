@@ -169,18 +169,18 @@ send_frame(struct canbus_msg *msg)
 static int
 drain_hw_queue(void)
 {
+    uint32_t pull_pos = UsbCan.pull_pos;
     for (;;) {
         uint32_t push_pos = readl(&UsbCan.push_pos);
-        uint32_t pull_pos = UsbCan.pull_pos;
-        if (push_pos != pull_pos) {
-            uint32_t pos = pull_pos % ARRAY_SIZE(UsbCan.queue);
-            int ret = send_frame(&UsbCan.queue[pos]);
-            if (ret < 0)
-                return -1;
-            UsbCan.pull_pos = pull_pos + 1;
-            continue;
-        }
-        return 0;
+        if (push_pos == pull_pos)
+            // No more data to send
+            return 0;
+        uint32_t pos = pull_pos % ARRAY_SIZE(UsbCan.queue);
+        int ret = send_frame(&UsbCan.queue[pos]);
+        if (ret < 0)
+            // USB is busy - retry later
+            return -1;
+        UsbCan.pull_pos = pull_pos = pull_pos + 1;
     }
 }
 
