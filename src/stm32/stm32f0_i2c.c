@@ -72,6 +72,13 @@ struct i2c_info {
   DECL_CONSTANT_STR("BUS_PINS_i2c3_PC8_PC9", "PC8,PC9");
   DECL_ENUMERATION("i2c_bus", "i2c3_PC8_PC11", 7);
   DECL_CONSTANT_STR("BUS_PINS_i2c3_PC8_PC11", "PC8,PC11");
+#elif CONFIG_MACH_STM32H7
+  DECL_ENUMERATION("i2c_bus", "i2c1_PB6_PB7", 0);
+  DECL_CONSTANT_STR("BUS_PINS_i2c1_PB6_PB7", "PB6,PB7");
+  DECL_ENUMERATION("i2c_bus", "i2c1_PB8_PB9", 1);
+  DECL_CONSTANT_STR("BUS_PINS_i2c1_PB8_PB9", "PB8,PB9");
+  DECL_ENUMERATION("i2c_bus", "i2c2_PB10_PB11", 2);
+  DECL_CONSTANT_STR("BUS_PINS_i2c2_PB10_PB11", "PB10,PB11");
 #endif
 
 static const struct i2c_info i2c_bus[] = {
@@ -104,6 +111,10 @@ static const struct i2c_info i2c_bus[] = {
     { I2C2, GPIO('C', 4), GPIO('F', 0), GPIO_FUNCTION(4) },
     { I2C3, GPIO('C', 8), GPIO('C', 9), GPIO_FUNCTION(8) },
     { I2C3, GPIO('C', 8), GPIO('C', 11), GPIO_FUNCTION(8) },
+#elif CONFIG_MACH_STM32H7
+    { I2C1, GPIO('B', 6), GPIO('B', 7), GPIO_FUNCTION(4) },
+    { I2C1, GPIO('B', 8), GPIO('B', 9), GPIO_FUNCTION(4) },
+    { I2C2, GPIO('B', 10), GPIO('B', 11), GPIO_FUNCTION(4) },
 #endif
 };
 

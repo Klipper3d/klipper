@@ -93,7 +93,7 @@ class TMCErrorCheck:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.check_timer = None
-        self.last_drv_status = self.last_status = None
+        self.last_drv_status = self.last_drv_fields = None
         # Setup for GSTAT query
         reg_name = self.fields.lookup_register("drv_err")
         if reg_name is not None:
@@ -122,6 +122,9 @@ class TMCErrorCheck:
                 if f in err_fields:
                     err_mask |= self.fields.all_fields[reg_name][f]
         self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
+        # Setup for temperature query
+        self.adc_temp = None
+        self.adc_temp_reg = self.fields.lookup_register("adc_temp")
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         cleared_flags = 0
@@ -161,11 +164,20 @@ class TMCErrorCheck:
                 cleared_flags |= val & err_mask
                 self.mcu_tmc.set_register(reg_name, val & err_mask)
         return cleared_flags
+    def _query_temperature(self):
+        try:
+            self.adc_temp = self.mcu_tmc.get_register(self.adc_temp_reg)
+        except self.printer.command_error as e:
+            # Ignore comms error for temperature
+            self.adc_temp = None
+            return
     def _do_periodic_check(self, eventtime):
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
                 self._query_register(self.gstat_reg_info)
+            if self.adc_temp_reg is not None:
+                self._query_temperature()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
             return self.printer.get_reactor().NEVER
@@ -194,14 +206,16 @@ class TMCErrorCheck:
         return False
     def get_status(self, eventtime=None):
         if self.check_timer is None:
-            return {'drv_status': None}
+            return {'drv_status': None, 'temperature': None}
+        temp = None
+        if self.adc_temp is not None:
+            temp = round((self.adc_temp - 2038) / 7.7, 2)
         last_value, reg_name = self.drv_status_reg_info[:2]
         if last_value != self.last_drv_status:
             self.last_drv_status = last_value
             fields = self.fields.get_reg_fields(reg_name, last_value)
-            fields = {n: v for n, v in fields.items() if v}
-            self.last_status = {'drv_status': fields}
-        return self.last_status
+            self.last_drv_fields = {n: v for n, v in fields.items() if v}
+        return {'drv_status': self.last_drv_fields, 'temperature': temp}
 
 
 ######################################################################
@@ -413,17 +427,32 @@ class TMCCommandHelper:
     cmd_DUMP_TMC_help = "Read and display TMC stepper driver registers"
     def cmd_DUMP_TMC(self, gcmd):
         logging.info("DUMP_TMC %s", self.name)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        gcmd.respond_info("========== Write-only registers ==========")
-        for reg_name, val in self.fields.registers.items():
-            if reg_name not in self.read_registers:
+        reg_name = gcmd.get('REGISTER', None)
+        if reg_name is not None:
+            reg_name = reg_name.upper()
+            val = self.fields.registers.get(reg_name)
+            if (val is not None) and (reg_name not in self.read_registers):
+                # write-only register
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
-        gcmd.respond_info("========== Queried registers ==========")
-        for reg_name in self.read_registers:
-            val = self.mcu_tmc.get_register(reg_name)
-            if self.read_translate is not None:
-                reg_name, val = self.read_translate(reg_name, val)
-            gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+            elif reg_name in self.read_registers:
+                # readable register
+                val = self.mcu_tmc.get_register(reg_name)
+                if self.read_translate is not None:
+                    reg_name, val = self.read_translate(reg_name, val)
+                gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+            else:
+                raise gcmd.error("Unknown register name '%s'" % (reg_name))
+        else:
+            gcmd.respond_info("========== Write-only registers ==========")
+            for reg_name, val in self.fields.registers.items():
+                if reg_name not in self.read_registers:
+                    gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+            gcmd.respond_info("========== Queried registers ==========")
+            for reg_name in self.read_registers:
+                val = self.mcu_tmc.get_register(reg_name)
+                if self.read_translate is not None:
+                    reg_name, val = self.read_translate(reg_name, val)
+                gcmd.respond_info(self.fields.pretty_format(reg_name, val))
 
 
 ######################################################################
