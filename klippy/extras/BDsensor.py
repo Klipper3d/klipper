@@ -238,16 +238,15 @@ class BDsensorEndstopWrapper:
             accel = 2000#gcmd.get_float('ACCEL', 0., minval=0.)
             self.distance=0.1
             for stepper in kin.get_steppers():
-                if stepper.is_active_axis('z'):
-                    self._force_enable(stepper)
-                    self.toolhead.wait_moves()
+                #if stepper.is_active_axis('z'):
+                self._force_enable(stepper)
+                self.toolhead.wait_moves()
             ncount=0
             while 1:
-                self.toolhead.dwell(0.1)
                 self.bd_sensor.I2C_BD_send(str(ncount))
-                self.toolhead.dwell(0.1)
-                #self.bd_sensor.I2C_BD_send(str(ncount))
-                #toolhead.dwell(0.5)
+				self.bd_sensor.I2C_BD_send(str(ncount))
+				self.bd_sensor.I2C_BD_send(str(ncount))	
+                self.toolhead.dwell(0.2)
                 for stepper in kin.get_steppers():
                     if stepper.is_active_axis('z'):
                         self._force_enable(stepper)
@@ -301,7 +300,7 @@ class BDsensorEndstopWrapper:
             gcmd.respond_raw(strd)
         self.bd_sensor.I2C_BD_send("1018")
         if  CMD_BD >= 0:# gcode M102 Sx live adjust
-            self.adjust_range = CMD_BD
+            self.adjust_range = 0#CMD_BD
         self.process_m102=0
     def _handle_mcu_identify(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()

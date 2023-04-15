@@ -207,7 +207,7 @@ uint32_t INT_to_String(uint32_t BD_z1,uint8_t*data)
 {
     uint32_t BD_z=BD_z1;
     uint32_t len=0,j=0;
-    if(BD_z>1000)
+    if(BD_z>=1000)
     {
         j=BD_z/1000;
         data[len++] = '0'+j;
@@ -216,7 +216,7 @@ uint32_t INT_to_String(uint32_t BD_z1,uint8_t*data)
         data[len+1]='0';
         data[len+2]='0';
     }
-    if(BD_z>100)
+    if(BD_z>=100)
     {
         j=BD_z/100;
         data[len++] = '0'+j;
@@ -226,7 +226,7 @@ uint32_t INT_to_String(uint32_t BD_z1,uint8_t*data)
     }
     else if(data[len])
         len++;
-    if(BD_z>10)
+    if(BD_z>=10)
     {
         j=BD_z/10;
         data[len++] = '0'+j;
