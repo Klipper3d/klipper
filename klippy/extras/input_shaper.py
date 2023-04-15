@@ -70,10 +70,6 @@ class AxisInputShaper:
             ffi_lib.input_shaper_set_shaper_params(
                     sk, self.axis.encode(), self.n, self.A, self.T)
         return success
-    def get_step_generation_window(self):
-        ffi_main, ffi_lib = chelper.get_ffi()
-        return ffi_lib.input_shaper_get_step_generation_window(self.n,
-                                                               self.A, self.T)
     def disable_shaping(self):
         if self.saved is None and self.n:
             self.saved = (self.n, self.A, self.T)
@@ -109,7 +105,6 @@ class InputShaper:
     def connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         # Configure initial values
-        self.old_delay = 0.
         self._update_input_shaping(error=self.printer.config_error)
     def _get_input_shaper_stepper_kinematics(self, stepper):
         # Lookup stepper kinematics
@@ -131,10 +126,7 @@ class InputShaper:
         return is_sk
     def _update_input_shaping(self, error=None):
         self.toolhead.flush_step_generation()
-        new_delay = max([s.get_step_generation_window() for s in self.shapers])
-        self.toolhead.note_step_generation_scan_time(new_delay,
-                                                     old_delay=self.old_delay)
-        self.old_delay = new_delay
+        ffi_main, ffi_lib = chelper.get_ffi()
         kin = self.toolhead.get_kinematics()
         failed_shapers = []
         for s in kin.get_steppers():
@@ -143,11 +135,16 @@ class InputShaper:
             is_sk = self._get_input_shaper_stepper_kinematics(s)
             if is_sk is None:
                 continue
+            old_delay = ffi_lib.input_shaper_get_step_generation_window(is_sk)
             for shaper in self.shapers:
                 if shaper in failed_shapers:
                     continue
                 if not shaper.set_shaper_kinematics(is_sk):
                     failed_shapers.append(shaper)
+            new_delay = ffi_lib.input_shaper_get_step_generation_window(is_sk)
+            if old_delay != new_delay:
+                self.toolhead.note_step_generation_scan_time(new_delay,
+                                                             old_delay)
         if failed_shapers:
             error = error or self.printer.command_error
             raise error("Failed to configure shaper(s) %s with given parameters"

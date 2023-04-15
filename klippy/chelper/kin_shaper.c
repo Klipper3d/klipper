@@ -210,16 +210,11 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
 }
 
 double __visible
-input_shaper_get_step_generation_window(int n, double a[], double t[])
+input_shaper_get_step_generation_window(struct stepper_kinematics *sk)
 {
-    struct shaper_pulses sp;
-    init_shaper(n, a, t, &sp);
-    if (!sp.num_pulses)
-        return 0.;
-    double window = -sp.pulses[0].t;
-    if (sp.pulses[sp.num_pulses-1].t > window)
-        window = sp.pulses[sp.num_pulses-1].t;
-    return window;
+    struct input_shaper *is = container_of(sk, struct input_shaper, sk);
+    return is->sk.gen_steps_pre_active > is->sk.gen_steps_post_active
+         ? is->sk.gen_steps_pre_active : is->sk.gen_steps_post_active;
 }
 
 struct stepper_kinematics * __visible
