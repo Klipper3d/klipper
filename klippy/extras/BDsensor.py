@@ -244,8 +244,8 @@ class BDsensorEndstopWrapper:
             ncount=0
             while 1:
                 self.bd_sensor.I2C_BD_send(str(ncount))
-				self.bd_sensor.I2C_BD_send(str(ncount))
-				self.bd_sensor.I2C_BD_send(str(ncount))	
+                self.bd_sensor.I2C_BD_send(str(ncount))
+                self.bd_sensor.I2C_BD_send(str(ncount))
                 self.toolhead.dwell(0.2)
                 for stepper in kin.get_steppers():
                     if stepper.is_active_axis('z'):
