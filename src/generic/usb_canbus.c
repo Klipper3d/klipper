@@ -204,19 +204,15 @@ usbcan_task(void)
             msg.dlc = gs->can_dlc;
             msg.data32[0] = gs->data32[0];
             msg.data32[1] = gs->data32[1];
+            if (host_status & HS_TX_LOCAL) {
+                canserial_process_data(&msg);
+                UsbCan.host_status = host_status = host_status & ~HS_TX_LOCAL;
+            }
             if (host_status & HS_TX_HW) {
                 ret = canhw_send(&msg);
                 if (ret < 0)
                     return;
                 UsbCan.host_status = host_status = host_status & ~HS_TX_HW;
-            }
-            if (host_status & HS_TX_LOCAL) {
-                ret = canserial_process_data(&msg);
-                if (ret < 0) {
-                    usb_notify_bulk_out();
-                    return;
-                }
-                UsbCan.host_status = host_status & ~HS_TX_LOCAL;
             }
             continue;
         }
