@@ -157,6 +157,12 @@ config INITIAL_PINS
         pins will be set to output high - preface a pin with a '!'
         character to set that pin to output low.
 
+config HIGH_PREC_STEP
+    depends on LOW_LEVEL_OPTIONS && \
+        FLASH_SIZE >= 0x8000 && (!MACH_AVR || FLASH_SIZE >= 0x10000)
+    bool "High-precision stepping support (slow)"
+    default n
+
 # The HAVE_x options allow boards to disable support for some commands
 # if the hardware does not support the feature.
 config HAVE_GPIO
