@@ -26,9 +26,7 @@ command_i2c_set_software_bus(uint32_t *args)
 {
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
     struct i2c_software *is = alloc_chunk(sizeof(*is));
-    // Max speed = 1MHz
-    unsigned int speed = args[3] > 1000000 ? 1000000 : args[3];
-    is->ticks = 1000000000 / speed / 2;
+    is->ticks = 1000000 / 100 / 2; // 100KHz
     is->addr = (args[4] & 0x7f) << 1; // address format shifted
     is->sda_pin = args[2];
     is->scl = gpio_out_setup(args[1], 1);
@@ -39,16 +37,26 @@ DECL_COMMAND(command_i2c_set_software_bus,
              "i2c_set_software_bus oid=%c scl_pin=%u sda_pin=%u"
              " rate=%u address=%u");
 
+// The AVR micro-controllers require specialized timing
+#if CONFIG_MACH_AVR
+
+#define i2c_delay(ticks) (void)(ticks)
+
+#else
+
 static unsigned int
 nsecs_to_ticks(uint32_t ns)
 {
     return timer_from_us(ns * 1000) / 1000000;
 }
 
-void i2c_delay(unsigned int n) {
-    unsigned int t = timer_read_time() + nsecs_to_ticks(n);
+static void
+i2c_delay(unsigned int ticks) {
+    unsigned int t = timer_read_time() + nsecs_to_ticks(ticks);
     while (t > timer_read_time());
 }
+
+#endif
 
 static void
 i2c_software_send_ack(struct i2c_software *is, const uint8_t ack)
