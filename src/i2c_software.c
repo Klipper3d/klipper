@@ -15,8 +15,8 @@
 #include "i2ccmds.h" // i2cdev_set_software_bus
 
 struct i2c_software {
-    struct gpio_out scl, sda;
-    uint32_t sda_pin;
+    struct gpio_out scl, sda_out;
+    struct gpio_in sda_in;
     uint8_t addr;
     unsigned int ticks;
 };
@@ -28,9 +28,9 @@ command_i2c_set_software_bus(uint32_t *args)
     struct i2c_software *is = alloc_chunk(sizeof(*is));
     is->ticks = 1000000 / 100 / 2; // 100KHz
     is->addr = (args[4] & 0x7f) << 1; // address format shifted
-    is->sda_pin = args[2];
     is->scl = gpio_out_setup(args[1], 1);
-    is->sda = gpio_out_setup(is->sda_pin, 1);
+    is->sda_in = gpio_in_setup(args[2], 1);
+    is->sda_out = gpio_out_setup(args[2], 1);
     i2cdev_set_software_bus(i2c, is);
 }
 DECL_COMMAND(command_i2c_set_software_bus,
@@ -61,7 +61,7 @@ i2c_delay(unsigned int ticks) {
 static void
 i2c_software_send_ack(struct i2c_software *is, const uint8_t ack)
 {
-    gpio_out_write(is->sda, ack);
+    gpio_out_write(is->sda_out, ack);
     i2c_delay(is->ticks);
     gpio_out_write(is->scl, 1);
     i2c_delay(is->ticks);
@@ -72,13 +72,13 @@ static uint8_t
 i2c_software_read_ack(struct i2c_software *is)
 {
     uint8_t nack = 0;
-    struct gpio_in sda_in = gpio_in_setup(is->sda_pin, 1);
+    gpio_in_reset(is->sda_in, 1);
     i2c_delay(is->ticks);
     gpio_out_write(is->scl, 1);
-    nack = gpio_in_read(sda_in);
+    nack = gpio_in_read(is->sda_in);
     i2c_delay(is->ticks);
     gpio_out_write(is->scl, 0);
-    gpio_out_setup(is->sda_pin, 1);
+    gpio_out_reset(is->sda_out, 1);
     return nack;
 }
 
@@ -86,7 +86,7 @@ static void
 i2c_software_send_byte(struct i2c_software *is, uint8_t b)
 {
     for (uint_fast8_t i = 0; i < 8; i++) {
-        gpio_out_write(is->sda, b & 0x80);
+        gpio_out_write(is->sda_out, b & 0x80);
         b <<= 1;
         i2c_delay(is->ticks);
         gpio_out_write(is->scl, 1);
@@ -103,16 +103,16 @@ static uint8_t
 i2c_software_read_byte(struct i2c_software *is, uint8_t remaining)
 {
     uint8_t b = 0;
-    struct gpio_in sda_in = gpio_in_setup(is->sda_pin, 1);
+    gpio_in_reset(is->sda_in, 1);
     for (uint_fast8_t i = 0; i < 8; i++) {
         i2c_delay(is->ticks);
         gpio_out_write(is->scl, 1);
         i2c_delay(is->ticks);
         b <<= 1;
-        b |= gpio_in_read(sda_in);
+        b |= gpio_in_read(is->sda_in);
         gpio_out_write(is->scl, 0);
     }
-    gpio_out_setup(is->sda_pin, 1);
+    gpio_out_reset(is->sda_out, 1);
     i2c_software_send_ack(is, remaining == 0);
     return b;
 }
@@ -121,10 +121,10 @@ static void
 i2c_software_start(struct i2c_software *is, uint8_t addr)
 {
     i2c_delay(is->ticks);
-    gpio_out_write(is->sda, 1);
+    gpio_out_write(is->sda_out, 1);
     gpio_out_write(is->scl, 1);
     i2c_delay(is->ticks);
-    gpio_out_write(is->sda, 0);
+    gpio_out_write(is->sda_out, 0);
     i2c_delay(is->ticks);
     gpio_out_write(is->scl, 0);
 
@@ -134,11 +134,11 @@ i2c_software_start(struct i2c_software *is, uint8_t addr)
 static void
 i2c_software_stop(struct i2c_software *is)
 {
-    gpio_out_write(is->sda, 0);
+    gpio_out_write(is->sda_out, 0);
     i2c_delay(is->ticks);
     gpio_out_write(is->scl, 1);
     i2c_delay(is->ticks);
-    gpio_out_write(is->sda, 1);
+    gpio_out_write(is->sda_out, 1);
 }
 
 void
