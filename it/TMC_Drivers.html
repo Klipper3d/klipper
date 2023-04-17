@@ -990,8 +990,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-segnala-un-errore-shorttognd-o-lowsideshort" class="md-nav__link">
-    TMC segnala un errore: ... ShortToGND O LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1649,8 +1649,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-segnala-un-errore-shorttognd-o-lowsideshort" class="md-nav__link">
-    TMC segnala un errore: ... ShortToGND O LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1897,7 +1897,7 @@ gcode:
 <p>Alcuni errori comuni e suggerimenti per diagnosticarli:</p>
 <h4 id="tmc-segnala-lerrore-ot1overtemperror">TMC segnala l'errore: <code>... ot=1(OvertempError!)</code><a class="headerlink" href="#tmc-segnala-lerrore-ot1overtemperror" title="Permanent link">&para;</a></h4>
 <p>Ciò indica che il driver del motore si è disabilitato perché è diventato troppo caldo. Le soluzioni tipiche consistono nel ridurre la corrente del motore passo-passo, aumentare il raffreddamento sul driver del motore passo-passo e/o aumentare il raffreddamento sul motore passo-passo.</p>
-<h4 id="tmc-segnala-un-errore-shorttognd-o-lowsideshort">TMC segnala un errore: <code>... ShortToGND</code> O <code>LowSideShort</code><a class="headerlink" href="#tmc-segnala-un-errore-shorttognd-o-lowsideshort" title="Permanent link">&para;</a></h4>
+<h4 id="tmc-reports-error-shorttognd-or-shorttosupply">TMC reports error: <code>... ShortToGND</code> OR <code>ShortToSupply</code><a class="headerlink" href="#tmc-reports-error-shorttognd-or-shorttosupply" title="Permanent link">&para;</a></h4>
 <p>Ciò indica che il driver si è disabilitato perché ha rilevato una corrente molto elevata che passa attraverso il driver. Ciò potrebbe indicare un filo allentato o in cortocircuito al motore passo-passo o all'interno del motore passo-passo stesso.</p>
 <p>Questo errore può verificarsi anche se si utilizza la modalità StealthChop e il driver TMC non è in grado di prevedere con precisione il carico meccanico del motore. (Se il driver fa una previsione scadente, potrebbe inviare troppa corrente attraverso il motore e attivare il proprio rilevamento di sovracorrente.) Per verificarlo, disabilitare la modalità StealthChop e verificare se gli errori continuano a verificarsi.</p>
 <h4 id="tmc-segnala-un-errore-reset1reset-or-cs_actual0reset-or-se0reset">TMC segnala un errore: <code>... reset=1(Reset)</code> OR <code>CS_ACTUAL=0(Reset?)</code> OR <code>SE=0(Reset?)</code><a class="headerlink" href="#tmc-segnala-un-errore-reset1reset-or-cs_actual0reset-or-se0reset" title="Permanent link">&para;</a></h4>

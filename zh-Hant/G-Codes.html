@@ -4424,7 +4424,7 @@
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> 時，以下命令可用（另請參閱 <a href="Bed_Mesh.html">bed mesh guide</a>）。</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_CALIBRATE [METHOD=manual] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: 此命令使用通過配置參數指定並產生的探測點探測列印床。在探測后，一個網格將被產生，z 軸移動將根據網格調整。有關可選探測參數，請見 PROBE命令。如果指定 METHOD=manual ，則會啟動手動探測工具 - 有關此工具活躍時可用的額外命令，詳見 MANUAL_PROBE 命令。</p>
+<p><code>BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: This command probes the bed using generated points specified by the parameters in the config. After probing, a mesh is generated and z-movement is adjusted according to the mesh. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>：該命令將目前探測到的 Z 值和目前網格的值輸出到終端。如果指定 PGP=1，則將bed_mesh產生的X、Y座標，以及它們關聯的指數，輸出到終端。</p>
 <h4 id="bed_mesh_map">BED_MESH_MAP<a class="headerlink" href="#bed_mesh_map" title="Permanent link">&para;</a></h4>
@@ -4442,7 +4442,7 @@
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#bed_tilt">bed_tilt config section</a> 時，以下命令可用。</p>
 <h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_TILT_CALIBRATE [Method=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>:該命令將探測配置中指定的點，然後建議更新X和Y的傾斜調整。有關可選探測參數的詳細資訊，請參見PROBE命令。如果指定METHOD=manual，那麼手動探測工具就會被啟用 - 關於該工具啟用時可用的附加命令，請參見上面的MANUAL_PROBE命令。</p>
+<p><code>BED_TILT_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then recommend updated x and y tilt adjustments. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 <h3 id="bltouch">[bltouch]<a class="headerlink" href="#bltouch" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#bltouch">bltouch config section</a> 時，以下命令可用（另請參閱 <a href="BLTouch.html">BL-Touch guide</a>）。</p>
 <h4 id="bltouch_debug">BLTOUCH_DEBUG<a class="headerlink" href="#bltouch_debug" title="Permanent link">&para;</a></h4>
@@ -4460,7 +4460,7 @@
 <h3 id="delta_calibrate">[delta_calibrate]<a class="headerlink" href="#delta_calibrate" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#linear-delta-kinematics">delta_calibrate config section</a> 時，以下命令可用（另請參見 <a href="Delta_Calibrate.html">delta calibrate guide</a>）。</p>
 <h4 id="delta_calibrate_1">DELTA_CALIBRATE<a class="headerlink" href="#delta_calibrate_1" title="Permanent link">&para;</a></h4>
-<p><code>DELTA_CALIBRATE [Method=manual] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>:這條命令將探測床身的七個點，並建議更新限位位置、塔架角度和半徑。有關可選探測參數的詳細資訊，請參見PROBE命令。如果指定METHOD=manual，那麼手動探測工具將被啟用 - 關於該工具啟用時可用的附加命令的詳細資訊，請參見上面的MANUAL_PROBE命令。</p>
+<p><code>DELTA_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe seven points on the bed and recommend updated endstop positions, tower angles, and radius. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 <h4 id="delta_analyze">DELTA_ANALYZE<a class="headerlink" href="#delta_analyze" title="Permanent link">&para;</a></h4>
 <p><code>DELTA_ANALYZE</code>:這個命令在增強的delta校準過程中使用。詳情見<a href="Delta_Calibrate.html">Delta Calibrate</a>。</p>
 <h3 id="display">[display]<a class="headerlink" href="#display" title="Permanent link">&para;</a></h3>
@@ -4731,7 +4731,7 @@
 <h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#screws_tilt_adjust">screws_tilt_adjust config section</a> 時，以下命令可用（另請參閱 [manual level guide](Manual_Level.md#adjusting-bed-leveling-screws-using-the-bed-probe ））。</p>
 <h4 id="screws_tilt_calculate">SCREWS_TILT_CALCULATE<a class="headerlink" href="#screws_tilt_calculate" title="Permanent link">&para;</a></h4>
-<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will invoke the bed screws adjustment tool. It will command the nozzle to different locations (as defined in the config file) probing the z height and calculate the number of knob turns to adjust the bed level. If DIRECTION is specified, the knob turns will all be in the same direction, clockwise (CW) or counterclockwise (CCW). See the PROBE command for details on the optional probe parameters. IMPORTANT: You MUST always do a G28 before using this command. If MAX_DEVIATION is specified, the command will raise a gcode error if any difference in the screw height relative to the base screw height is greater than the value provided.</p>
+<p><code>SCREWS_TILT_CALCULATE [DIRECTION=CW|CCW] [MAX_DEVIATION=&lt;value&gt;] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will invoke the bed screws adjustment tool. It will command the nozzle to different locations (as defined in the config file) probing the z height and calculate the number of knob turns to adjust the bed level. If DIRECTION is specified, the knob turns will all be in the same direction, clockwise (CW) or counterclockwise (CCW). See the PROBE command for details on the optional probe parameters. IMPORTANT: You MUST always do a G28 before using this command. If MAX_DEVIATION is specified, the command will raise a gcode error if any difference in the screw height relative to the base screw height is greater than the value provided. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 <h3 id="sdcard_loop">[sdcard_loop]<a class="headerlink" href="#sdcard_loop" title="Permanent link">&para;</a></h3>
 <p>當 <a href="Config_Reference.html#sdcard_loop">sdcard_loop config section</a> 啟用時，以下擴展命令可用。</p>
 <h4 id="sdcard_loop_begin">SDCARD_LOOP_BEGIN<a class="headerlink" href="#sdcard_loop_begin" title="Permanent link">&para;</a></h4>
@@ -4771,13 +4771,13 @@
 <h3 id="tmcxxxx">[tmcXXXX]<a class="headerlink" href="#tmcxxxx" title="Permanent link">&para;</a></h3>
 <p>當啟用任何 <a href="Config_Reference.html#tmc-stepper-driver-configuration">tmcXXXX config sections</a> 時，以下命令可用。</p>
 <h4 id="dump_tmc">DUMP_TMC<a class="headerlink" href="#dump_tmc" title="Permanent link">&para;</a></h4>
-<p><code>DUMP_TMC STEPPER=&lt;name&gt;</code>。該命令將讀取TMC驅動暫存器並報告其值。</p>
+<p><code>DUMP_TMC STEPPER=&lt;name&gt; [REGISTER=&lt;name&gt;]</code>: This command will read all TMC driver registers and report their values. If a REGISTER is provided, only the specified register will be dumped.</p>
 <h4 id="init_tmc">INIT_TMC<a class="headerlink" href="#init_tmc" title="Permanent link">&para;</a></h4>
 <p><code>INIT_TMC STEPPER=&lt;名稱&gt;</code>：此命令將初始化 TMC 暫存器。如果晶片的電源關閉然後重新打開，則需要重新啟用該驅動。</p>
 <h4 id="set_tmc_current">SET_TMC_CURRENT<a class="headerlink" href="#set_tmc_current" title="Permanent link">&para;</a></h4>
-<p><code>SET_TMC_CURRENT STEPPER=&lt;名稱&gt; CURRENT=&lt;安培&gt; HOLDCURRENT=&lt;安培&gt;</code>：該命令修改TMC驅動的執行和保持電流（HOLDCURRENT 在 tmc2660 驅動上不起效）。</p>
+<p><code>SET_TMC_CURRENT STEPPER=&lt;name&gt; CURRENT=&lt;amps&gt; HOLDCURRENT=&lt;amps&gt;</code>: This will adjust the run and hold currents of the TMC driver. <code>HOLDCURRENT</code> is not applicable to tmc2660 drivers. When used on a driver which has the <code>globalscaler</code> field (tmc5160 and tmc2240), if StealthChop2 is used, the stepper must be held at standstill for &gt;130ms so that the driver executes the AT#1 calibration.</p>
 <h4 id="set_tmc_field">SET_TMC_FIELD<a class="headerlink" href="#set_tmc_field" title="Permanent link">&para;</a></h4>
-<p><code>SET_TMC_FIELD STEPPER=&lt;名稱&gt; FIELD=&lt;欄位&gt; VALUE=&lt;值&gt;</code>：這將修改指定 TMC 步進驅動暫存器欄位的值。該命令僅適用於低階別的診斷和除錯，因為在執行期間改變欄位可能會導致印表機出現不符合預期的、有潛在危險的行為。常規修改應當通過印表機配置檔案進行。該命令不會對給定的值進行越界檢查。</p>
+<p><code>SET_TMC_FIELD STEPPER=&lt;name&gt; FIELD=&lt;field&gt; VALUE=&lt;value&gt; VELOCITY=&lt;value&gt;</code>: This will alter the value of the specified register field of the TMC driver. This command is intended for low-level diagnostics and debugging only because changing the fields during run-time can lead to undesired and potentially dangerous behavior of your printer. Permanent changes should be made using the printer configuration file instead. No sanity checks are performed for the given values. A VELOCITY can also be specified instead of a VALUE. This velocity is converted to the 20bit TSTEP based value representation. Only use the VELOCITY argument for fields that represent velocities.</p>
 <h3 id="toolhead">[toolhead]<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h3>
 <p>模組toolhead已自動載入.</p>
 <h4 id="set_velocity_limit">SET_VELOCITY_LIMIT<a class="headerlink" href="#set_velocity_limit" title="Permanent link">&para;</a></h4>
@@ -4814,7 +4814,7 @@
 <h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#z_tilt">z_tilt config section</a> 時，以下命令可用。</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
-<p><code>Z_TILT_ADJUST [&lt;probe_參數&gt;=&lt;值&gt;]</code>：該命令將探測配置中指定的座標並對每個Z步進電機進行獨立的調整以抵消傾斜。有關可選的探針參數，詳見 PROBE 命令。</p>
+<p><code>Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then make independent adjustments to each Z stepper to compensate for tilt. See the PROBE command for details on the optional probe parameters. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 
               
             </article>

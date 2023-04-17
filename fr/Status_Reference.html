@@ -1013,6 +1013,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1774,6 +1781,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1949,6 +1963,7 @@
 <ul>
 <li><code>pressure_advance</code> : la valeur actuelle de <a href="Pressure_Advance.html">pressure advance</a>.</li>
 <li><code>smooth_time</code> : Le temps de lissage associé à la valeur de "pressure advance" courante.</li>
+<li><code>motion_queue</code>: The name of the extruder that this extruder stepper is currently synchronized to. This is reported as <code>None</code> if the extruder stepper is not currently associated with an extruder.</li>
 </ul>
 <h2 id="ventilateur">ventilateur<a class="headerlink" href="#ventilateur" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans les objets <a href="Config_Reference.html#fan">fan</a>, <a href="Config_Reference.html#heater_fan">heater_fan nom_du_ventilateur</a> et <a href="Config_Reference.html#controller_fan">controller_fan nom_du_ventilateur</a> :</p>
@@ -2072,6 +2087,7 @@
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans l'objet <a href="Config_Reference.html#probe">probe</a> (cet objet est également disponible si une section de configuration <a href="Config_Reference.html#bltouch">bltouch</a> est définie) :</p>
 <ul>
+<li><code>name</code>: Returns the name of the probe in use.</li>
 <li><code>last_query</code> : renvoie True si la sonde a été signalée comme "déclenchée" lors de la dernière commande QUERY_PROBE. Notez que si cela est utilisé dans une macro, en raison de l'ordre de développement du modèle, la commande QUERY_PROBE doit être exécutée avant la macro contenant cette demande.</li>
 <li><code>last_z_result</code> : Renvoie la valeur du Z de la dernière commande PROBE. Notez que si cela est utilisé dans une macro, en raison de l'ordre d'expansion du modèle, la commande PROBE (ou similaire) doit être exécutée avant la macro contenant cette demande.</li>
 </ul>
@@ -2089,13 +2105,11 @@
 <p>Les informations suivantes sont disponibles dans l'objet <code>screws_tilt_adjust</code> :</p>
 <ul>
 <li><code>error</code> : renvoie True si la commande <code>SCREWS_TILT_CALCULATE</code> la plus récente incluait le paramètre <code>MAX_DEVIATION</code> et que l'un des sondages au niveau des vis de lit dépassait la valeur <code>MAX_DEVIATION</code>.</li>
-<li><code>résultats</code> : une liste des emplacements des vis de lit sondées. Chaque entrée de la liste est un dictionnaire contenant les clés suivantes :<ul>
-<li><code>name</code> : le nom de la vis tel qu'il est spécifié dans le fichier de configuration.</li>
-<li><code>x</code> : la coordonnée X de la vis telle que spécifiée dans le fichier de configuration.</li>
-<li><code>y</code> : la coordonnée Y de la vis telle que spécifiée dans le fichier de configuration.</li>
+<li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
 <li><code>z</code> : La hauteur Z mesurée à l'emplacement de la vis.</li>
-<li><code>sign</code> : Une chaîne spécifiant le sens de rotation à visser pour le réglage nécessaire. Soit "CW" pour le sens horaire ou "CCW" pour le sens antihoraire. La vis de base n'aura pas de clé <code>sign</code>.</li>
+<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise.</li>
 <li><code>adjust</code> : le nombre de tours de vis pour ajuster la vis, donné au format "HH:MM", où "HH" est le nombre de tours de vis complets et "MM" est le nombre de "minutes d'un cadran d'horloge" représentant un tour de vis partiel. (Par exemple, "01:15" signifierait de tourner la vis d'un tour et quart.)</li>
+<li><code>is_base</code>: Returns True if this is the base screw.</li>
 </ul>
 </li>
 </ul>
@@ -2103,6 +2117,11 @@
 <p>Les informations suivantes sont disponibles dans les objets <a href="Config_Reference.html#servo">servo some_name</a> :</p>
 <ul>
 <li><code>printer["servo &lt;config_name&gt;"].value</code> : le dernier réglage de la broche PWM (une valeur comprise entre 0,0 et 1,0) associée au servo.</li>
+</ul>
+<h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>stepper_enable</code> object (this object is available if any stepper is defined):</p>
+<ul>
+<li><code>steppers["&lt;stepper&gt;"]</code>: Returns True if the given stepper is enabled.</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans l'objet <code>system_stats</code> (cet objet est toujours disponible) :</p>

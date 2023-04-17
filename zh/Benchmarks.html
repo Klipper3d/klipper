@@ -1137,6 +1137,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ar100" class="md-nav__link">
+    AR100 步进率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#rp2040" class="md-nav__link">
     RP2040 步速率基准测试
   </a>
@@ -1501,6 +1508,13 @@
           <li class="md-nav__item">
   <a href="#samd51" class="md-nav__link">
     SAMD51 步速率基准测试
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ar100" class="md-nav__link">
+    AR100 步进率基准测试
   </a>
   
 </li>
@@ -2005,6 +2019,34 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
+<h3 id="ar100">AR100 步进率基准测试<a class="headerlink" href="#ar100" title="Permanent link">&para;</a></h3>
+<p>以下配置顺序被用于AR100 CPU（全志A64）：</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PL10 dir_pin=PE14 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PL11 dir_pin=PE15 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PL12 dir_pin=PE16 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>该测试最后一次运行在提交<code>08d037c6</code> ，gcc版本<code>or1k-linux-musl-gcc（GCC）9.2.0</code> ，全志A64-H微控制器上进行。</p>
+<table>
+<thead>
+<tr>
+<th>AR100 R_PIO</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>85</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>359</td>
+</tr>
+</tbody>
+</table>
 <h3 id="rp2040">RP2040 步速率基准测试<a class="headerlink" href="#rp2040" title="Permanent link">&para;</a></h3>
 <p>RP2040 上使用以下配置序列：</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
@@ -2103,6 +2145,12 @@ get_uptime
 <td>75K</td>
 <td>01d2183f</td>
 <td>avr-gcc (GCC) 5.4.0</td>
+</tr>
+<tr>
+<td>ar100 (串行)</td>
+<td>138K</td>
+<td>08d037c6</td>
+<td>or1k-linux-musl-gcc 9.3.0</td>
 </tr>
 <tr>
 <td>samd21 (USB)</td>

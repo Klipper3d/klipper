@@ -891,6 +891,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#start_print-macros" class="md-nav__link">
+    START_PRINT macros
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1358,6 +1365,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#start_print-macros" class="md-nav__link">
+    START_PRINT macros
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1398,6 +1412,21 @@
 <p>一些切片軟體宣傳有 "高級擠出機壓力調整 "的功能。建議在使用 Klipper 時禁用這些功能，因為它們很可能會降低列印質量。考慮使用 Klipper 的<a href="Pressure_Advance.html">壓力提前</a>代替。</p>
 <p>具體來說，這些切片軟體的設定產生的命令會韌體對擠出率進行劇烈的改變，希望韌體能接近這些請求值，使印表機獲得一個大致理想的擠出機壓力。然而，Klipper利用精確的運動學計算和計時。當Klipper被命令對擠出率進行重大改變時，它將計劃出速度、加速度和擠出機運動的相應變化--這不是切片軟體的意圖。切片軟體甚至可能產生過大的擠出速度，以至於觸發Klipper的最大擠出截面檢查。</p>
 <p>相反，使用切片軟體的"回抽"、"擦拭 "和/或 "縮回時擦拭 "設定通常是有益的。</p>
+<h2 id="start_print-macros">START_PRINT macros<a class="headerlink" href="#start_print-macros" title="Permanent link">&para;</a></h2>
+<p>When using a START_PRINT macro or similar, it is useful to sometimes pass through parameters from the slicer variables to the macro.</p>
+<p>In Cura, to pass through temperatures, the following start gcode would be used:</p>
+<div class="highlight"><pre><span></span><code>START_PRINT BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0}
+</code></pre></div>
+
+<p>In slic3r derivatives such as PrusaSlicer and SuperSlicer, the following would be used:</p>
+<p>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]</p>
+<p>Also note that these slicers will insert their own heating codes when certain conditions are not met. In Cura, the existence of the <code>{material_bed_temperature_layer_0}</code> and <code>{material_print_temperature_layer_0}</code> variables is enough to mitigate this. In slic3r derivatives, you would use:</p>
+<div class="highlight"><pre><span></span><code>M140 S0
+M104 S0
+</code></pre></div>
+
+<p>before the macro call. Also note that SuperSlicer has a "custom gcode only" button option, which achieves the same outcome.</p>
+<p>An example of a START_PRINT macro using these paramaters can be found in config/sample-macros.cfg</p>
 
               
             </article>

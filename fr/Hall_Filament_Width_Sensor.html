@@ -1348,11 +1348,11 @@
 
 
 <h1 id="detecteur-de-largeur-de-filament-a-effet-hall">Détecteur de largeur de filament à effet hall<a class="headerlink" href="#detecteur-de-largeur-de-filament-a-effet-hall" title="Permanent link">&para;</a></h1>
-<p>Ce document décrit le module hôte du capteur de largeur de filament. Le matériel utilisé pour développer ce module hôte est basé sur deux capteurs linéaires de type Hall (ss49e par exemple). Les capteurs dans le corps sont situés sur des côtés opposés. Principe de fonctionnement : deux capteurs Hall fonctionnent en mode différentiel, la dérive de température est la même pour tous les capteurs. Une compensation spéciale de la température n'est donc pas nécessaire.</p>
+<p>This document describes Filament Width Sensor host module. Hardware used for developing this host module is based on two Hall linear sensors (ss49e for example). Sensors in the body are located on opposite sides. Principle of operation: two hall sensors work in differential mode, temperature drift same for sensor. Special temperature compensation not needed.</p>
 <p>Vous trouverez les modèles sur <a href="https://www.thingiverse.com/thing:4138933">Thingiverse</a>, une vidéo de montage est également disponible sur <a href="https://www.youtube.com/watch?v=TDO9tME8vp4">Youtube</a></p>
 <p>Pour utiliser le capteur de largeur de filament de Hall, consultez <a href="Config_Reference.html#hall_filament_width_sensor">Référence des configurations</a> et <a href="G-Codes.html#hall_filament_width_sensor">documentation G-Code</a>.</p>
 <h2 id="comment-cela-fonctionne-t-il">Comment cela fonctionne-t-il ?<a class="headerlink" href="#comment-cela-fonctionne-t-il" title="Permanent link">&para;</a></h2>
-<p>Le capteur génère deux sorties analogiques basées sur la largeur calculée du filament. La somme des tensions de sortie est toujours égale à la largeur de filament détectée. Le module hôte surveille les changements de tension et ajuste le multiplicateur d'extrusion. J'utilise le connecteur aux2 sur les broches analogiques 11 et 12 d'une carte genre Ramps. Vous pouvez utiliser des broches différentes et des cartes différentes.</p>
+<p>Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width. Host module monitors voltage changes and adjusts extrusion multiplier. I use the aux2 connector on a ramps-like board with the analog11 and analog12 pins. You can use different pins and different boards.</p>
 <h2 id="modele-pour-les-variables-du-menu">Modèle pour les variables du menu<a class="headerlink" href="#modele-pour-les-variables-du-menu" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>[menu __main __filament __width_current]
 type: command

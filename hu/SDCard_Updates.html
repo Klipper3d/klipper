@@ -1471,9 +1471,9 @@ opcionális argumentumok:
 
 <p>A következő mezők adhatók meg:</p>
 <ul>
-<li><code>mcu</code>: Az mcu típusa. Ezt a készlet <code>make menuconfig</code> segítségével történő konfigurálása után a <code>cat .config | grep CONFIG_MCU</code> futtatásával lehet visszakeresni. Ez a mező kötelezően kitöltendő.</li>
-<li><code>spi_bus</code>: Az SD-kártyához csatlakoztatott SPI-busz. Ezt a tábla kapcsolási rajzából kell visszakeresni. Ez a mező kötelező.</li>
-<li><code>cs_pin</code>: Az SD-kártyához csatlakoztatott chipkiválasztó tű. Ezt a kártya kapcsolási rajzából kell visszakeresni. Ez a mező kötelező.</li>
+<li><code>mcu</code>: The mcu type. This can be retrieved after configuring the build via <code>make menuconfig</code> by running <code>cat .config | grep CONFIG_MCU</code>. This field is required.</li>
+<li><code>spi_bus</code>: The SPI bus connected to the SD Card. This should be retrieved from the board's schematic. This field is required.</li>
+<li><code>cs_pin</code>: The Chip Select Pin connected to the SD Card. This should be retrieved from the board schematic. This field is required.</li>
 <li><code>firmware_path</code>: Az SD-kártyán lévő elérési útvonal, ahová a firmware-t át kell vinni. Az alapértelmezett <code>firmware.bin</code>.</li>
 <li><code>current_firmware_path</code>: Az SD-kártyán lévő elérési útvonal, ahol az átnevezett firmware fájl található a sikeres égetés után. Az alapértelmezett név: <code>firmware.cur</code>.</li>
 <li><code>skip_verify</code>: Ez egy logikai értéket határoz meg, amely a szkripteknek azt mondja meg, hogy hagyja ki a firmware ellenőrzésének lépését az égetési folyamat során. Az alapértelmezett érték <code>False</code>. Ez az érték <code>True</code> értékre állítható olyan kártyák esetében, amelyeknél az égetés befejezéséhez kézi bekapcsolás szükséges. A firmware utólagos ellenőrzéséhez futtasd újra a szkriptet a <code>-c</code> opcióval, hogy elvégezd az ellenőrzési lépést. <a href="#caveats">Lásd az SDIO kártyákkal kapcsolatos figyelmeztetéseket</a></li>

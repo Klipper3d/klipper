@@ -1471,9 +1471,9 @@ optional arguments:
 
 <p>Possono essere specificati i seguenti campi:</p>
 <ul>
-<li><code>mcu</code>: il tipo di mcu. Questo può essere recuperato dopo aver configurato la build tramite <code>make menuconfig</code> eseguendo <code>cat .config | grep CONFIG_MCU</code>. Questo campo è obbligatorio.</li>
-<li><code>spi_bus</code>: il bus SPI collegato alla scheda SD. Questo dovrebbe essere recuperato dallo schema della scheda. Questo campo è obbligatorio.</li>
-<li><code>cs_pin</code>: il pin di selezione del chip collegato alla scheda SD. Questo dovrebbe essere recuperato dallo schema della scheda. Questo campo è obbligatorio.</li>
+<li><code>mcu</code>: The mcu type. This can be retrieved after configuring the build via <code>make menuconfig</code> by running <code>cat .config | grep CONFIG_MCU</code>. This field is required.</li>
+<li><code>spi_bus</code>: The SPI bus connected to the SD Card. This should be retrieved from the board's schematic. This field is required.</li>
+<li><code>cs_pin</code>: The Chip Select Pin connected to the SD Card. This should be retrieved from the board schematic. This field is required.</li>
 <li><code>firmware_path</code>: il percorso sulla scheda SD in cui trasferire il firmware. L'impostazione predefinita è <code>firmware.bin</code>.</li>
 <li><code>current_firmware_path</code>: il percorso sulla scheda SD in cui si trova il file del firmware rinominato dopo un flash riuscito. L'impostazione predefinita è 'firmware.cur'.</li>
 <li><code>skip_verify</code>: Definisce un valore booleano che dice agli script di saltare il passaggio di verifica del firmware durante il processo di flashing. L'impostazione predefinita è <code>False</code>. Può essere impostato su <code>True</code> per le schede che richiedono un ciclo di alimentazione manuale per completare il flashing. Per verificare il firmware in seguito, eseguire nuovamente lo script con l'opzione <code>-c</code> per eseguire lo step di verifica. <a href="#caveats">Vedi le avvertenze con le schede SDIO</a></li>

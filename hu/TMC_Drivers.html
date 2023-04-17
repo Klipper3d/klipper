@@ -990,8 +990,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#a-tmc-hibat-jelent-shorttognd-vagy-lowsideshort" class="md-nav__link">
-    A TMC hibát jelent: ... ShortToGND VAGY LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1649,8 +1649,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#a-tmc-hibat-jelent-shorttognd-vagy-lowsideshort" class="md-nav__link">
-    A TMC hibát jelent: ... ShortToGND VAGY LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1897,7 +1897,7 @@ gcode:
 <p>Néhány gyakori hiba és tipp a diagnosztizáláshoz:</p>
 <h4 id="tmc-hibat-jelent-ot1overtemperror">TMC hibát jelent: <code>... ot=1(OvertempError!)</code><a class="headerlink" href="#tmc-hibat-jelent-ot1overtemperror" title="Permanent link">&para;</a></h4>
 <p>Ez azt jelzi, hogy a motorvezérlő kikapcsolta magát, mert túlmelegedett. A tipikus megoldások a léptetőmotor áramának csökkentése, a motorvezérlő és/vagy a léptetőmotor hűtése.</p>
-<h4 id="a-tmc-hibat-jelent-shorttognd-vagy-lowsideshort">A TMC hibát jelent: <code>... ShortToGND</code> VAGY <code>LowSideShort</code><a class="headerlink" href="#a-tmc-hibat-jelent-shorttognd-vagy-lowsideshort" title="Permanent link">&para;</a></h4>
+<h4 id="tmc-reports-error-shorttognd-or-shorttosupply">TMC reports error: <code>... ShortToGND</code> OR <code>ShortToSupply</code><a class="headerlink" href="#tmc-reports-error-shorttognd-or-shorttosupply" title="Permanent link">&para;</a></h4>
 <p>Ez azt jelzi, hogy a motorvezérlő letiltotta magát, mert nagyon magas áramot érzékelt a meghajtón keresztül. Ez azt jelezheti, hogy meglazult vagy rövidre zárt vezeték van a léptetőmotorban vagy magához a léptetőmotorhoz futó vezeték hibás.</p>
 <p>Ez a hiba akkor is előfordulhat, ha StealthChop üzemmódot használsz, és a TMC motorvezérlő nem képes pontosan megjósolni a motor mechanikai terhelését. (Ha a motorvezérlő rosszul jósol, akkor előfordulhat, hogy túl nagy áramot küld a motoron keresztül, és ezzel kiváltja saját túláram-érzékelését). Ennek teszteléséhez kapcsold ki a StealthChop üzemmódot, és ellenőrizd, hogy a hibák továbbra is előfordulnak-e.</p>
 <h4 id="a-tmc-hibat-jelent-reset1reset-vagy-cs_actual0reset-vagy-se0reset">A TMC hibát jelent: <code>... reset=1(Reset)</code> VAGY <code>CS_ACTUAL=0(Reset?)</code> VAGY <code>SE=0(Reset?)</code><a class="headerlink" href="#a-tmc-hibat-jelent-reset1reset-vagy-cs_actual0reset-vagy-se0reset" title="Permanent link">&para;</a></h4>

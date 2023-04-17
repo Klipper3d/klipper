@@ -1471,9 +1471,9 @@ optional arguments:
 
 <p>可以指定以下欄位：</p>
 <ul>
-<li><code>mcu</code>：微控制器型別。這可以在使用<code>make menuconfig</code>配置構建配置后通過執行<code>cat .config | grep CONFIG_MCU</code>獲取。 此欄位是必需的。</li>
-<li><code>spi_bus</code>：連線到 SD 卡的 SPI 匯流排。 這應該從電路板的原理圖中檢索。 此欄位是必需的。</li>
-<li><code>cs_pin</code>：連線到 SD 卡的晶片選擇引腳。 這應該從電路板原理圖中檢索。 此欄位是必需的。</li>
+<li><code>mcu</code>: The mcu type. This can be retrieved after configuring the build via <code>make menuconfig</code> by running <code>cat .config | grep CONFIG_MCU</code>. This field is required.</li>
+<li><code>spi_bus</code>: The SPI bus connected to the SD Card. This should be retrieved from the board's schematic. This field is required.</li>
+<li><code>cs_pin</code>: The Chip Select Pin connected to the SD Card. This should be retrieved from the board schematic. This field is required.</li>
 <li><code>firmware_path</code>：SD 卡上韌體應傳輸的路徑。 預設是<code>firmware.bin</code>。</li>
 <li><code>current_firmware_path</code>: The path on the SD Card where the renamed firmware file is located after a successful flash. The default is <code>firmware.cur</code>.</li>
 <li><code>skip_verify</code>: This defines a boolean value which tells the scripts to skip the firmware verification step during the flashing process. The default is <code>False</code>. It can be set to <code>True</code> for boards that require a manual power-cycle to complete flashing. To verify the firmware afterward, run the script again with the <code>-c</code> option to perform the verification step. <a href="#caveats">See caveats with SDIO cards</a></li>

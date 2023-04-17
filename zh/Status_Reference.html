@@ -1013,6 +1013,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1774,6 +1781,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1949,6 +1963,7 @@
 <ul>
 <li><code>pressure_advance</code>：当前的<a href="Pressure_Advance.html">压力提前</a>值。</li>
 <li><code>smooth_time</code>：当前压力提前平滑时间。</li>
+<li><code>motion_queue</code>: The name of the extruder that this extruder stepper is currently synchronized to. This is reported as <code>None</code> if the extruder stepper is not currently associated with an extruder.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#fan">fan</a>、<a href="Config_Reference.html#heater_fan">heater_fan some_name</a>和<a href="Config_Reference.html#controller_fan">controller_fan some_name</a>对象提供了以下信息：</p>
@@ -2067,11 +2082,12 @@
 <ul>
 <li><code>filename</code>、<code>total_duration</code>、<code>print_duration</code>、<code>filament_used</code>、<code>state</code>、<code>message</code>：virtual_sdcard 打印处于活动状态时有关当前打印的估测。</li>
 <li><code>info.total_layer</code>：最后一条<code>SET_PRINT_STATS_INFO TOTAL_LAYER=&lt;值&gt;</code> G-Code命令的总层值。</li>
-<li><code>info.current_layer</code>: The current layer value of the last <code>SET_PRINT_STATS_INFO CURRENT_LAYER=&lt;value&gt;</code> G-Code command.</li>
+<li><code>info.current_layer</code>: 上一条 <code>SET_PRINT_STATS_INFO CURRENT_LAYER=&lt;值&gt;</code> G代码命令的当前层值。</li>
 </ul>
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#probe">probe</a> 对象中提供了以下信息（如果定义了 <a href="Config_Reference.html#bltouch">bltouch</a> 配置分段，则此对象也可用）：</p>
 <ul>
+<li><code>name</code>: Returns the name of the probe in use.</li>
 <li><code>last_query</code>：如果探针在上一个 QUERY_PROBE 命令期间报告为"已触发"，则返回 True。请注意，如果在宏中使用它，根据模板展开的顺序，必须在包含此引用的宏之前运行 QUERY_PROBE 命令。</li>
 <li><code>last_z_result</code>：返回上一次 PROBE 命令的结果 Z 值。请注意，由于模板展开的顺序，在宏中使用时必须在包含此引用的宏之前运行 PROBE（或类似）命令。</li>
 </ul>
@@ -2086,16 +2102,14 @@
 <li><code>last_query["&lt;限位&gt;"]</code>：如果在最后一次 QUERY_ENDSTOP 命令中，给定的 endstop 处于“触发”状态，则返回 True。注意，如果在宏中使用，由于模板扩展的顺序，QUERY_ENDSTOP 命令必须在包含这个引用的宏之前运行。</li>
 </ul>
 <h2 id="screws_tilt_adjust">screws_tilt_adjust<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>screws_tilt_adjust</code> object:</p>
+<p>以下信息可在<code>screws_tilt_adjust</code>对象中获取：</p>
 <ul>
-<li><code>error</code>: Returns True if the most recent <code>SCREWS_TILT_CALCULATE</code> command included the <code>MAX_DEVIATION</code> parameter and any of the probed screw points exceeded the specified <code>MAX_DEVIATION</code>.</li>
-<li><code>results</code>: A list of the probed screw locations. Each entry in the list will be a dictionary containing the following keys:<ul>
-<li><code>name</code>: The name of the screw as specified in the config file.</li>
-<li><code>x</code>: The X coordinate of the screw as specified in the config file.</li>
-<li><code>y</code>: The Y coordinate of the screw as specified in the config file.</li>
-<li><code>z</code>: The measured Z height of the screw location.</li>
-<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise. The base screw will not have a <code>sign</code> key.</li>
-<li><code>adjust</code>: The number of screw turns to adjust the screw, given in the format "HH:MM," where "HH" is the number of full screw turns and "MM" is the number of "minutes of a clock face" representing a partial screw turn. (E.g. "01:15" would mean to turn the screw one and a quarter revolutions.)</li>
+<li><code>error</code>: 如果最近的 <code>SCREWS_TILT_CALCULATE</code> 命令包含了 <code>MAX_DEVIATION</code> 参数，并且任何一个已探测的螺丝坐标超过了指定的 <code>MAX_DEVIATION</code>，则返回 True。</li>
+<li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
+<li><code>z</code>: 螺丝坐标测量的 Z 高度。</li>
+<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise.</li>
+<li><code>adjust</code>: 调整螺丝的圈数，格式为 "HH:MM"，其中 "HH" 表示完整螺丝圈数，"MM" 表示代表部分螺丝圈数的 "时钟面的分钟数"。例如，“01:15”表示旋转螺丝一圈和四分之一圈。</li>
+<li><code>is_base</code>: Returns True if this is the base screw.</li>
 </ul>
 </li>
 </ul>
@@ -2103,6 +2117,11 @@
 <p><a href="Config_Reference.html#servo">servo some_name</a> 对象提供了以下信息：</p>
 <ul>
 <li><code>printer["servo &lt;配置名&gt;"].value</code>：与指定伺服相关 PWM 引脚的上一次设置的值（0.0 和 1.0 之间的值）。</li>
+</ul>
+<h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>stepper_enable</code> object (this object is available if any stepper is defined):</p>
+<ul>
+<li><code>steppers["&lt;stepper&gt;"]</code>: Returns True if the given stepper is enabled.</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
 <p><code>system_stats</code> 对象提供了以下信息（该对象始终可用）：</p>

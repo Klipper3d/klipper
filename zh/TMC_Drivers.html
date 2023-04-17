@@ -990,8 +990,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-shorttognd-lowsideshort" class="md-nav__link">
-    TMC 报告错误: ... ShortToGND 或着 LowSideShort
+  <a href="#tmc-shorttognd-shorttosupply" class="md-nav__link">
+    TMC 报告错误：... ShortToGND（接地短路）或 ShortToSupply（与电源短路）
   </a>
   
 </li>
@@ -1649,8 +1649,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-shorttognd-lowsideshort" class="md-nav__link">
-    TMC 报告错误: ... ShortToGND 或着 LowSideShort
+  <a href="#tmc-shorttognd-shorttosupply" class="md-nav__link">
+    TMC 报告错误：... ShortToGND（接地短路）或 ShortToSupply（与电源短路）
   </a>
   
 </li>
@@ -1897,7 +1897,7 @@ gcode:
 <p>一些常见的错误和诊断的技巧：</p>
 <h4 id="tmc-ot1overtemperror">TMC 报告错误： <code>... ot=1(OvertempError!)</code><a class="headerlink" href="#tmc-ot1overtemperror" title="Permanent link">&para;</a></h4>
 <p>这表明电机驱动器因温度过高而自我禁用。典型的解决方案是降低步进电机的电流，增加步进电机驱动器的冷却，和/或增加步进电机的冷却。</p>
-<h4 id="tmc-shorttognd-lowsideshort">TMC 报告错误: <code>... ShortToGND</code> 或着 <code>LowSideShort</code><a class="headerlink" href="#tmc-shorttognd-lowsideshort" title="Permanent link">&para;</a></h4>
+<h4 id="tmc-shorttognd-shorttosupply">TMC 报告错误：<code>... ShortToGND</code>（接地短路）或 <code>ShortToSupply</code>（与电源短路）<a class="headerlink" href="#tmc-shorttognd-shorttosupply" title="Permanent link">&para;</a></h4>
 <p>这表明驱动器已自行禁用，因为它检测到通过驱动器的电流非常高。这可能表明连接到步进电机或者部件电机内部的电线松动或短路了。</p>
 <p>如果使用stealthChop模式，并且TMC驱动器不能准确地预测电机的机械负载，也可能发生这种错误。(如果驱动器预测不准确，那么它可能输出过高电流到电机，并触发自己的过电流检测)。要测试这个，请禁用stealthChop模式，再检查错误是否继续发生。</p>
 <h4 id="tmc-reset1reset-cs_actual0reset-se0reset">TMC报告错误：<code>... reset=1(Reset)</code> 或<code>CS_ACTUAL=0(Reset?)</code> 或<code>SE=0(Reset?)</code><a class="headerlink" href="#tmc-reset1reset-cs_actual0reset-se0reset" title="Permanent link">&para;</a></h4>

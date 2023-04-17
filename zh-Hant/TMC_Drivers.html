@@ -990,8 +990,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-shorttognd-lowsideshort" class="md-nav__link">
-    TMC 報告錯誤: ... ShortToGND 或著 LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1649,8 +1649,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-shorttognd-lowsideshort" class="md-nav__link">
-    TMC 報告錯誤: ... ShortToGND 或著 LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1897,7 +1897,7 @@ gcode:
 <p>一些常見的錯誤和診斷的技巧：</p>
 <h4 id="tmc-ot1overtemperror">TMC 報告錯誤： <code>... ot=1(OvertempError!)</code><a class="headerlink" href="#tmc-ot1overtemperror" title="Permanent link">&para;</a></h4>
 <p>這表明電機驅動器因溫度過高而自我禁用。典型的解決方案是降低步進電機的電流，增加步進電機驅動器的冷卻，和/或增加步進電機的冷卻。</p>
-<h4 id="tmc-shorttognd-lowsideshort">TMC 報告錯誤: <code>... ShortToGND</code> 或著 <code>LowSideShort</code><a class="headerlink" href="#tmc-shorttognd-lowsideshort" title="Permanent link">&para;</a></h4>
+<h4 id="tmc-reports-error-shorttognd-or-shorttosupply">TMC reports error: <code>... ShortToGND</code> OR <code>ShortToSupply</code><a class="headerlink" href="#tmc-reports-error-shorttognd-or-shorttosupply" title="Permanent link">&para;</a></h4>
 <p>這表明驅動器已自行禁用，因為它檢測到通過驅動器的電流非常高。這可能表明連線到步進電機或者部件電機內部的電線鬆動或短路了。</p>
 <p>如果使用stealthChop模式，並且TMC驅動器不能準確地預測電機的機械負載，也可能發生這種錯誤。(如果驅動器預測不準確，那麼它可能輸出過高電流到電機，並觸發自己的過電流檢測)。要測試這個，請禁用stealthChop模式，再檢查錯誤是否繼續發生。</p>
 <h4 id="tmc-reset1reset-cs_actual0reset-se0reset">TMC報告錯誤：<code>... reset=1(Reset)</code> 或<code>CS_ACTUAL=0(Reset?)</code> 或<code>SE=0(Reset?)</code><a class="headerlink" href="#tmc-reset1reset-cs_actual0reset-se0reset" title="Permanent link">&para;</a></h4>

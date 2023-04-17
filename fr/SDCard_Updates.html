@@ -1471,9 +1471,9 @@ optional arguments:
 
 <p>Les champs suivants peuvent être précisés :</p>
 <ul>
-<li><code>mcu</code> : Le type de mcu. On peut le retrouver après avoir configuré le build via <code>make menuconfig</code> en exécutant <code>cat .config | grep CONFIG_MCU</code>. Ce champ est obligatoire.</li>
-<li><code>spi_bus</code> : Le bus SPI connecté à la carte SD. Ceci doit être obtenu à partir du schéma de la carte. Ce champ est obligatoire.</li>
-<li><code>cs_pin</code> : La broche de sélection de puce connectée à la carte SD. Ceci doit être obtenu à partir du schéma de la carte. Ce champ est obligatoire.</li>
+<li><code>mcu</code>: The mcu type. This can be retrieved after configuring the build via <code>make menuconfig</code> by running <code>cat .config | grep CONFIG_MCU</code>. This field is required.</li>
+<li><code>spi_bus</code>: The SPI bus connected to the SD Card. This should be retrieved from the board's schematic. This field is required.</li>
+<li><code>cs_pin</code>: The Chip Select Pin connected to the SD Card. This should be retrieved from the board schematic. This field is required.</li>
 <li><code>firmware_path</code> : Le chemin sur la carte SD où le firmware doit être transféré. La valeur par défaut est <code>firmware.bin</code>.</li>
 <li><code>current_firmware_path</code> : Le chemin sur la carte SD où le fichier du firmware renommé est situé après un flash réussi. La valeur par défaut est <code>firmware.cur</code>.</li>
 <li><code>skip_verify</code> : définit une valeur booléenne indiquant aux scripts d'ignorer l'étape de vérification du firmware pendant le processus de flashage. La valeur par défaut est <code>False</code>. Peut être défini à <code>True</code> pour les cartes nécessitant un cycle d'alimentation manuel pour terminer le flashage. Pour vérifier le firmware par la suite, exécutez à nouveau le script avec l'option <code>-c</code> pour effectuer l'étape de vérification. <a href="#caveats">Voir les avertissements avec les cartes SDIO</a></li>

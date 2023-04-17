@@ -1348,11 +1348,11 @@
 
 
 <h1 id="sensore-di-hall-per-larghezza-del-filamento">Sensore di Hall per larghezza del filamento<a class="headerlink" href="#sensore-di-hall-per-larghezza-del-filamento" title="Permanent link">&para;</a></h1>
-<p>Questo documento descrive il modulo host del sensore di larghezza del filamento Filament Width Sensor. L'hardware utilizzato per lo sviluppo di questo modulo host si basa su due sensori lineari Hall (ad esempio ss49e). I sensori nel corpo si trovano ai lati opposti. Principio di funzionamento: due sensori Hall funzionano in modalità differenziale, la stessa deriva di temperatura per il sensore. Non è necessaria una speciale compensazione della temperatura.</p>
+<p>This document describes Filament Width Sensor host module. Hardware used for developing this host module is based on two Hall linear sensors (ss49e for example). Sensors in the body are located on opposite sides. Principle of operation: two hall sensors work in differential mode, temperature drift same for sensor. Special temperature compensation not needed.</p>
 <p>Puoi trovare i design su <a href="https://www.thingiverse.com/thing:4138933">Thingiverse</a>, un video di assemblaggio è disponibile anche su <a href="https://www.youtube.com/watch?v=TDO9tME8vp4">Youtube</a></p>
 <p>Per utilizzare il sensore di larghezza del filamento Hall, leggere <a href="Config_Reference.html#hall_filament_width_sensor">Config Reference</a> e <a href="G-Codes.html#hall_filament_width_sensor">G-Code documentation</a>.</p>
 <h2 id="come-funziona">Come funziona?<a class="headerlink" href="#come-funziona" title="Permanent link">&para;</a></h2>
-<p>Il sensore genera due uscite analogiche in base alla larghezza del filamento calcolata. La somma della tensione di uscita è sempre uguale alla larghezza del filamento rilevata. Il modulo host monitora le variazioni di tensione e regola il moltiplicatore di estrusione. Uso il connettore aux2 su una scheda simile a rampe analog11 e analog12 pin. Puoi usare diversi pin e diverse schede.</p>
+<p>Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width. Host module monitors voltage changes and adjusts extrusion multiplier. I use the aux2 connector on a ramps-like board with the analog11 and analog12 pins. You can use different pins and different boards.</p>
 <h2 id="modello-per-variabili-di-menu">Modello per variabili di menu<a class="headerlink" href="#modello-per-variabili-di-menu" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>[menu __main __filament __width_current]
 type: command

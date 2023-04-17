@@ -735,6 +735,26 @@
     ADXL345
   </a>
   
+    <nav class="md-nav" aria-label="ADXL345">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direct-to-raspberry-pi" class="md-nav__link">
+    Direct to Raspberry Pi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-raspberry-pi-pico" class="md-nav__link">
+    Using Raspberry Pi Pico
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -786,6 +806,33 @@
   <a href="#configurer-ladxl345-avec-le-rpi" class="md-nav__link">
     Configurer l'ADXL345 avec le RPi
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-pi-pico" class="md-nav__link">
+    Configure ADXL345 With Pi Pico
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure ADXL345 With Pi Pico">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flash-the-pico-firmware" class="md-nav__link">
+    Flash the Pico Firmware
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-connection" class="md-nav__link">
+    Configure the Connection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1480,6 +1527,26 @@
     ADXL345
   </a>
   
+    <nav class="md-nav" aria-label="ADXL345">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direct-to-raspberry-pi" class="md-nav__link">
+    Direct to Raspberry Pi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-raspberry-pi-pico" class="md-nav__link">
+    Using Raspberry Pi Pico
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1531,6 +1598,33 @@
   <a href="#configurer-ladxl345-avec-le-rpi" class="md-nav__link">
     Configurer l'ADXL345 avec le RPi
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-pi-pico" class="md-nav__link">
+    Configure ADXL345 With Pi Pico
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure ADXL345 With Pi Pico">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flash-the-pico-firmware" class="md-nav__link">
+    Flash the Pico Firmware
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-connection" class="md-nav__link">
+    Configure the Connection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1662,7 +1756,7 @@
 <p>Lors de l’approvisionnement en ADXL345, sachez qu’il existe une variété de conceptions de cartes PCB différentes et différents clones. Assurez-vous que la carte prend en charge le mode SPI (un petit nombre de cartes semble être configurée en dur pour I2C avec SDO raccordé au GND) et, si elle doit être connectée à un microcontrôleur d’imprimante 5V, qu’elle dispose d’un régulateur de tension et d’un décalage de niveau.</p>
 <h2 id="instructions-dinstallation">Instructions d’installation<a class="headerlink" href="#instructions-dinstallation" title="Permanent link">&para;</a></h2>
 <h3 id="cablage">Câblage<a class="headerlink" href="#cablage" title="Permanent link">&para;</a></h3>
-<p>Un câble Ethernet à paires torsadées blindées (cat5e ou supérieur) est recommandé pour la qualité du signal sur une longue distance. Si vous rencontrez toujours des problèmes de qualité du signal (erreurs SPI/I2C), raccourcissez le câble.</p>
+<p>An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrity over a long distance. If you still experience signal integrity issues (SPI/I2C errors), shorten the cable.</p>
 <p>Connectez le blindage du câble Ethernet à la terre de la carte contrôleur/RPI.</p>
 <p><strong><em>Vérifiez votre câblage avant de mettre sous tension pour éviter d'endommager votre MCU/Raspberry Pi ou l'accéléromètre ou les deux.</em></strong></p>
 <h4 id="accelerometres-spi">Accéléromètres SPI<a class="headerlink" href="#accelerometres-spi" title="Permanent link">&para;</a></h4>
@@ -1673,7 +1767,8 @@ SCLK+CS
 </code></pre></div>
 
 <h5 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h5>
-<p><strong>Remarque : de nombreux microcontrôleurs fonctionnent avec un ADXL345 en mode SPI (par exemple, Pi Pico), le câblage et la configuration varient en fonction de votre carte ADXL et des broches disponibles. sur votre MCU</strong></p>
+<h6 id="direct-to-raspberry-pi">Direct to Raspberry Pi<a class="headerlink" href="#direct-to-raspberry-pi" title="Permanent link">&para;</a></h6>
+<p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and configuration will vary according to your specific board and available pins.</strong></p>
 <p>Vous devez connecter votre ADXL345 à votre Raspberry Pi via SPI. Notez que la connexion I2C, suggérée par la documentation ADXL345, possède un débit trop faible et <strong> ne fonctionnera pas</strong>. Le schéma de connexion recommandé :</p>
 <table>
 <thead>
@@ -1687,7 +1782,7 @@ SCLK+CS
 <tr>
 <td align="center">3,3 V (ou VCC)</td>
 <td align="center">01</td>
-<td align="center">Alimentation 3.3v continu</td>
+<td align="center">3.3V DC power</td>
 </tr>
 <tr>
 <td align="center">GND</td>
@@ -1718,6 +1813,52 @@ SCLK+CS
 </table>
 <p>Schémas de câblage de Fritzing pour certaines des cartes ADXL345 :</p>
 <p><img alt="ADXL345-Rpi" src="img/adxl345-fritzing.png" /></p>
+<h6 id="using-raspberry-pi-pico">Using Raspberry Pi Pico<a class="headerlink" href="#using-raspberry-pi-pico" title="Permanent link">&para;</a></h6>
+<p>You may connect the ADXL345 to your Raspberry Pi Pico and then connect the Pico to your Raspberry Pi via USB. This makes it easy to reuse the accelerometer on other Klipper devices, as you can connect via USB instead of GPIO. The Pico does not have much processing power, so make sure it is only running the accelerometer and not performing any other duties.</p>
+<p>In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V only. Depending on the board's layout, a level shifter may be present, which makes 5V dangerous for your RPi.</p>
+<table>
+<thead>
+<tr>
+<th align="center">Brochage de l'ADXL345</th>
+<th align="center">Pico pin</th>
+<th align="center">Pico pin name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">3,3 V (ou VCC)</td>
+<td align="center">36</td>
+<td align="center">3.3V DC power</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">Terre</td>
+</tr>
+<tr>
+<td align="center">CS</td>
+<td align="center">2</td>
+<td align="center">GP1 (SPI0_CSn)</td>
+</tr>
+<tr>
+<td align="center">SDO</td>
+<td align="center">1</td>
+<td align="center">GP0 (SPI0_RX)</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">5</td>
+<td align="center">GP3 (SPI0_TX)</td>
+</tr>
+<tr>
+<td align="center">SCL</td>
+<td align="center">4</td>
+<td align="center">GP2 (SPI0_SCK)</td>
+</tr>
+</tbody>
+</table>
+<p>Wiring diagrams for some of the ADXL345 boards:</p>
+<p><img alt="ADXL345-Pico" src="img/adxl345-pico.png" /></p>
 <h4 id="accelerometres-i2c">Accéléromètres I2C<a class="headerlink" href="#accelerometres-i2c" title="Permanent link">&para;</a></h4>
 <p>Suggestions d'utilisation des paires torsadées :</p>
 <div class="highlight"><pre><span></span><code>3.3V+SDA
@@ -1826,6 +1967,47 @@ probe_points:
 </code></pre></div>
 
 <p>Il est conseillé de commencer par 1 point de test, au milieu du lit d’impression, légèrement au-dessus.</p>
+<h4 id="configure-adxl345-with-pi-pico">Configure ADXL345 With Pi Pico<a class="headerlink" href="#configure-adxl345-with-pi-pico" title="Permanent link">&para;</a></h4>
+<h5 id="flash-the-pico-firmware">Flash the Pico Firmware<a class="headerlink" href="#flash-the-pico-firmware" title="Permanent link">&para;</a></h5>
+<p>On your Raspberry Pi, compile the firmware for the Pico.</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+make clean
+make menuconfig
+</code></pre></div>
+
+<p><img alt="Pico menuconfig" src="img/klipper_pico_menuconfig.png" /></p>
+<p>Now, while holding down the <code>BOOTSEL</code> button on the Pico, connect the Pico to the Raspberry Pi via USB. Compile and flash the firmware.</p>
+<div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=first
+</code></pre></div>
+
+<p>If that fails, you will be told which <code>FLASH_DEVICE</code> to use. In this example, that's <code>make flash FLASH_DEVICE=2e8a:0003</code>. <img alt="Determine flash device" src="img/flash_rp2040_FLASH_DEVICE.png" /></p>
+<h5 id="configure-the-connection">Configure the Connection<a class="headerlink" href="#configure-the-connection" title="Permanent link">&para;</a></h5>
+<p>The Pico will now reboot with the new firmware and should show up as a serial device. Find the pico serial device with <code>ls /dev/serial/by-id/*</code>. You can now add an <code>adxl.cfg</code> file with the following settings:</p>
+<div class="highlight"><pre><span></span><code>[mcu adxl]
+# Change &lt;mySerial&gt; to whatever you found above. For example,
+# usb-Klipper_rp2040_E661640843545B2E-if00
+serial: /dev/serial/by-id/usb-Klipper_rp2040_&lt;mySerial&gt;
+
+[adxl345]
+cs_pin: adxl:gpio1
+spi_bus: spi0a
+axes_map: x,z,y
+
+[resonance_tester]
+accel_chip: adxl345
+probe_points:
+    # Somewhere slightly above the middle of your print bed
+    147,154, 20
+
+[output_pin power_mode] # Improve power stability
+pin: adxl:gpio23
+</code></pre></div>
+
+<p>If setting up the ADXL345 configuration in a separate file, as shown above, you'll also want to modify your <code>printer.cfg</code> file to include this:</p>
+<div class="highlight"><pre><span></span><code>[include adxl.cfg] # Comment this out when you disconnect the accelerometer
+</code></pre></div>
+
+<p>Redémarrez Klipper avec la commande <code>RESTART</code>.</p>
 <h4 id="configurer-les-series-mpu-60009000-avec-le-rpi">Configurer les séries MPU-6000/9000 avec le RPi<a class="headerlink" href="#configurer-les-series-mpu-60009000-avec-le-rpi" title="Permanent link">&para;</a></h4>
 <p>Assurez-vous que le pilote Linux I2C est activé et que le débit en bauds est défini sur 400 000 (voir la section <a href="RPi_microcontroller.html#optional-enabling-i2c">Activation d'I2C</a> pour plus de détails). Ensuite, ajoutez ce qui suit au fichier printer.cfg :</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
@@ -1844,19 +2026,19 @@ probe_points:
 <h4 id="configurer-les-series-mpu-60009000-avec-le-pico">Configurer les séries MPU-6000/9000 avec le PICO<a class="headerlink" href="#configurer-les-series-mpu-60009000-avec-le-pico" title="Permanent link">&para;</a></h4>
 <p>Sur le PICO I2C est réglé sur 400000 par défaut. Ajoutez simplement ce qui suit au fichier printer.cfg :</p>
 <div class="highlight"><pre><span></span><code>[mcu pico]
-serial : /dev/serial/by-id/&lt;le serial id du PICO&gt;
+serial: /dev/serial/by-id/&lt;your PICO&#39;s serial ID&gt;
 
 [mpu9250]
-i2c_mcu : pico
-i2c_bus : i2c1a
+i2c_mcu: pico
+i2c_bus: i2c0a
 
 [resonance_tester]
-accel_chip : mpu9250
-probe_points :
-    100, 100, 20  # un exemple
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
 
-[static_digital_output pico_3V3pwm] # Amélioration de la stabilité de l&#39;alimentation
-pin : pico :gpio23
+[static_digital_output pico_3V3pwm] # Improve power stability
+pin: pico:gpio23
 </code></pre></div>
 
 <p>Redémarrez Klipper avec la commande <code>RESTART</code>.</p>
@@ -1871,7 +2053,7 @@ pin : pico :gpio23
 <div class="highlight"><pre><span></span><code>Recv: // adxl345 values (x, y, z) : 470.719200, 941.438400, 9728.196800
 </code></pre></div>
 
-<p>Si vous obtenez une erreur comme <code>Invalid adxl345 id (got xx vs e5)</code>, où <code>xx</code> est un autre ID, cela indique un problème de connexion avec l'ADXL345, ou un capteur défectueux. Vérifiez l’alimentation, le câblage (correspondance avec les schémas, aucun fil coupé ou desserré, etc.) et la qualité des soudures.</p>
+<p>If you get an error like <code>Invalid adxl345 id (got xx vs e5)</code>, where <code>xx</code> is some other ID, immediately try again. There's an issue with SPI initialization. If you still get an error, it is indicative of the connection problem with ADXL345, or the faulty sensor. Double-check the power, the wiring (that it matches the schematics, no wire is broken or loose, etc.), and soldering quality.</p>
 <p><strong>Si vous utilisez un accéléromètre de la série MPU-6000/9000 et qu'il s'affiche comme "mpu-unknown", utilisez-le avec prudence ! Ce sont probablement des puces reconditionnées !</strong></p>
 <p>Ensuite, essayez d’exécuter <code>MEASURE_AXES_NOISE</code> dans Octoprint, vous devriez obtenir des chiffres de base pour le bruit de fond de l’accéléromètre sur les axes (devraient se situer entre 1 et 100). Un bruit de fond d’axe trop élevé (par exemple 1000 et plus) peut indiquer des problèmes de capteur, des problèmes de puissance ou des ventilateurs déséquilibrés entrainant trop de vibrations sur l'imprimante 3D.</p>
 <h3 id="mesurer-les-resonances_1">Mesurer les résonances<a class="headerlink" href="#mesurer-les-resonances_1" title="Permanent link">&para;</a></h3>
@@ -1923,7 +2105,7 @@ max_accel: 3000  # Ne devrait pas dépasser les valeurs estimées d&#39;accélé
 </code></pre></div>
 
 <p>Ou vous pouvez choisir vous-même une autre configuration en fonction des graphiques générés : les pics de densité spectrale de puissance sur les graphiques correspondent aux fréquences de résonance de l’imprimante.</p>
-<p>Notez que vous pouvez également exécuter l’auto-étalonnage du formateur d'entrée (input shapper) à partir de Klipper <a href="#input-shaper-auto-calibration">directement</a>, pratique, par exemple, pour la <a href="#input-shaper-re-calibration">recalibration</a> du formateur d'entrée.</p>
+<p>Note that alternatively you can run the input shaper auto-calibration from Klipper <a href="#input-shaper-auto-calibration">directly</a>, which can be convenient, for example, for the input shaper <a href="#input-shaper-re-calibration">re-calibration</a>.</p>
 <h3 id="imprimantes-cartesiennes-a-lit-mobile">Imprimantes cartésiennes à lit mobile<a class="headerlink" href="#imprimantes-cartesiennes-a-lit-mobile" title="Permanent link">&para;</a></h3>
 <p>Si votre imprimante est une imprimante cartésienne dont le plateau est mobile sur l'axe Y, vous devrez changer l’emplacement de l’accéléromètre entre les mesures des axes X et Y : mesurez les résonances de l’axe X avec l’accéléromètre fixé à la tête et les résonances de l’axe Y - au lit (la configuration habituelle des imprimantes cartésiennes).</p>
 <p>Cependant, vous pouvez également connecter les deux accéléromètres simultanément, bien qu'ils doivent être connectés à des cartes différentes (par exemple, à une carte RPi et au MCU de l'imprimante), ou à deux interfaces SPI physiques différentes sur la même carte (rarement disponibles). Ensuite, ils peuvent être configurés de la manière suivante :</p>
@@ -2050,7 +2232,7 @@ Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
 </code></pre></div>
 
-<p><strong>Attention !</strong> Il est déconseillé d'exécuter l'autocalibrage de l'input shaper très fréquemment (par exemple, avant chaque impression ou tous les jours). Afin de déterminer les fréquences de résonance, l'autocalibrage crée des vibrations intenses sur chacun des axes. Les imprimantes 3D ne sont pas conçues pour résister à une exposition prolongée à des vibrations proches des fréquences de résonance. Cela pourrait augmenter l'usure des composants de l'imprimante et réduire leur durée de vie. Il existe également un risque accru que certaines pièces se dévissent ou se desserrent. Vérifiez toujours que toutes les pièces de l'imprimante (y compris celles qui ne peuvent normalement pas bouger) sont solidement fixées en place après chaque réglage automatique.</p>
+<p><strong>Warning!</strong> It is not advisable to run the shaper auto-calibration very frequently (e.g. before every print, or every day). In order to determine resonance frequencies, auto-calibration creates intensive vibrations on each of the axes. Generally, 3D printers are not designed to withstand a prolonged exposure to vibrations near the resonance frequencies. Doing so may increase wear of the printer components and reduce their lifespan. There is also an increased risk of some parts unscrewing or becoming loose. Always check that all parts of the printer (including the ones that may normally not move) are securely fixed in place after each auto-tuning.</p>
 <p>De plus, en raison d'un certain bruit dans les mesures, il est possible que les résultats de réglage soient légèrement différents d'un calibrage à l'autre. Ce bruit ne devrait pas trop affecter la qualité d'impression. Cependant, il est conseillé de revérifier les paramètres suggérés et d'imprimer des tests d'impression avant de les utiliser pour confirmer qu'ils sont corrects.</p>
 <h2 id="traitement-hors-ligne-des-donnees-de-laccelerometre">Traitement hors ligne des données de l’accéléromètre<a class="headerlink" href="#traitement-hors-ligne-des-donnees-de-laccelerometre" title="Permanent link">&para;</a></h2>
 <p>Il est possible de générer les données brutes de l’accéléromètre et de les traiter hors ligne (par exemple sur une machine hôte), par exemple pour trouver des résonances. Pour ce faire, exécutez les commandes suivantes via le terminal Octoprint :</p>

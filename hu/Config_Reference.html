@@ -1340,6 +1340,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#tmc2240" class="md-nav__link">
+    [tmc2240]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tmc5160" class="md-nav__link">
     [tmc5160]
   </a>
@@ -3261,6 +3268,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#tmc2240" class="md-nav__link">
+    [tmc2240]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tmc5160" class="md-nav__link">
     [tmc5160]
   </a>
@@ -3837,64 +3851,65 @@ radius:
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: deltesian
 max_z_velocity:
-#   Deltesian nyomtatóknál ez korlátozza a Z tengely mozgásának maximális
-#   sebességét (mm/s-ban). Ezzel a beállítással csökkenthető a fel/le
-#   mozgások maximális sebessége (amelyek nagyobb lépésszámot
-#   igényelnek, mint egy deltesian nyomtató egyéb lépései).
-#   Az alapértelmezett a max_velocity a max_z_velocity értékhez.
+#   For deltesian printers, this limits the maximum velocity (in mm/s) of
+#   moves with z axis movement. This setting can be used to reduce the
+#   maximum speed of up/down moves (which require a higher step rate
+#   than other moves on a deltesian printer). The default is to use
+#   max_velocity for max_z_velocity.
 #max_z_accel:
-#   Ez beállítja a Z tengely mentén történő mozgás maximális gyorsulását
-#   (mm/s^2-ben). Ennek beállítása akkor lehet hasznos, ha a nyomtató
-#   nagyobb gyorsulást tud elérni XY mozgásnál, mint Z mozgásnál
-#   (pl. bemeneti alakformáló használatakor).
-#   Az alapértelmezett a max_accel a max_z_accel értékhez.
-#minimális_z_pozíció: 0
-#   Az a minimális Z pozíció, amelybe a felhasználó utasíthatja a fejet, hogy
-#   mozogjon. Az alapértelmezett érték 0.
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. Setting this may be useful if the printer can reach higher
+#   acceleration on XY moves than Z moves (eg, when using input shaper).
+#   The default is to use max_accel for max_z_accel.
+#minimum_z_position: 0
+#   The minimum Z position that the user may command the head to move
+#   to. The default is 0.
 #min_angle: 5
-#   Ez azt a minimális szöget (fokban) jelenti a vízszinteshez képest, amelyet
-#   a deltesian karok elérhetnek. Ennek a paraméternek az a célja, hogy
-#   megakadályozza, a karok teljesen vízszintesbe mozgatását, ami az XZ
-#   tengely véletlen megfordulását kockáztatná. Az alapértelmezett érték 5.
+#   This represents the minimum angle (in degrees) relative to horizontal
+#   that the deltesian arms are allowed to achieve. This parameter is
+#   intended to restrict the arms from becoming completely horizontal,
+#   which would risk accidental inversion of the XZ axis. The default is 5.
 #print_width:
-#   Az érvényes nyomtatófej X koordináták távolsága (mm-ben). Ezzel a
-#   beállítással testreszabható a nyomtatófej mozgások tartományellenőrzése.
-#   Ha itt nagy értéket adunk meg, akkor előfordulhat, hogy a nyomtatófejet a
-#   toronnyal való ütközésre utasíthatjuk.
-#   Ez a beállítás általában a tárgyasztal szélességnek felel meg (mm-ben).
+#   The distance (in mm) of valid toolhead X coordinates. One may use
+#   this setting to customize the range checking of toolhead moves. If
+#   a large value is specified here then it may be possible to command
+#   the toolhead into a collision with a tower. This setting usually
+#   corresponds to bed width (in mm).
 #slow_ratio: 3
-#   Az az arány, amely korlátozza a sebességet és a gyorsulást az X tengely
-#   szélső pontjaihoz közeli mozgásoknál. Ha a függőleges távolság osztva a
-#   vízszintes távolsággal meghaladja a slow_ratio értékét, akkor a sebesség és
-#   a gyorsulás a névleges értékük felére korlátozódik. Ha a függőleges távolság
-#   osztva a vízszintes távolsággal meghaladja a slow_ratio értékének
-#   kétszeresét, akkor a sebesség és a gyorsulás a névleges értékük
-#   egynegyedére korlátozódik. Az alapértelmezett érték a 3.
+#   The ratio used to limit velocity and acceleration on moves near the
+#   extremes of the X axis. If vertical distance divided by horizontal
+#   distance exceeds the value of slow_ratio, then velocity and
+#   acceleration are limited to half their nominal values. If vertical
+#   distance divided by horizontal distance exceeds twice the value of
+#   the slow_ratio, then velocity and acceleration are limited to one
+#   quarter of their nominal values. The default is 3.
 
-#   A stepper_left szakasz a bal tornyot vezérlő léptető leírására szolgál.
-#   Ez a szakasz az összes toronyhoz tartozó homing paramétereket
-#   (homing_speed, homing_retract_dist) is szabályozza.
+# The stepper_left section is used to describe the stepper controlling
+# the left tower. This section also controls the homing parameters
+# (homing_speed, homing_retract_dist) for all towers.
 [stepper_left]
 position_endstop:
-#   Távolság (mm-ben) a fúvóka és a tárgyasztal között, ha a fúvóka az építési terület
-#   közepén van, és a végütközők kioldódnak. Ezt a paramétert meg kell adni a
-#   stepper_left; a stepper_right esetén ez a paraméter alapértelmezett értéke
-#   a stepper_left paraméterben megadott érték.
+#   Distance (in mm) between the nozzle and the bed when the nozzle is
+#   in the center of the build area and the endstops are triggered. This
+#   parameter must be provided for stepper_left; for stepper_right this
+#   parameter defaults to the value specified for stepper_left.
 arm_length:
-#   A toronykocsit a nyomtatófejjel összekötő átlós rúd hossza (mm-ben).
-#   Ezt a paramétert meg kell adni a stepper_left; a stepper_right esetén ez a
-#   paraméter alapértelmezett értéke a stepper_left paraméter megadott értéke.
+#   Length (in mm) of the diagonal rod that connects the tower carriage to
+#   the print head. This parameter must be provided for stepper_left; for
+#   stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
 arm_x_length:
-#   Vízszintes távolság a nyomtatófej és a torony között, ha minden
-#   kezdőponton van. Ezt a paramétert meg kell adni a stepper_left; a
-#   stepper_right esetén ez a paraméter alapértelmezett értéke a
-#   stepper_left paraméterben megadott érték.
+#   Horizontal distance between the print head and the tower when the
+#   printers is homed. This parameter must be provided for stepper_left;
+#   for stepper_right, this parameter defaults to the value specified for
+#   stepper_left.
 
-#   A stepper_right szekció a jobb oldali tornyot vezérlő léptető leírására szolgál.
+# The stepper_right section is used to describe the stepper controlling the
+# right tower.
 [stepper_right]
 
-#   A stepper_y szakasz az Y tengelyt vezérlő léptető leírására szolgál
-#   egy deltesian gépen.
+# The stepper_y section is used to describe the stepper controlling
+# the Y axis in a deltesian robot.
 [stepper_y]
 </code></pre></div>
 
@@ -4459,35 +4474,33 @@ max_temp:
 <p>További információkért lásd a <a href="Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe">szintezési útmutató</a> és a <a href="G-Codes.html#screws_tilt_adjust">parancs hivatkozás</a> dokumentumot.</p>
 <div class="highlight"><pre><span></span><code>[screws_tilt_adjust]
 #screw1:
-#   Az első tárgyasztal kiegyenlítő csavar (X, Y) koordinátája. Ez a helyzet a fúvóka
-#   utasításához úgy, hogy a szonda közvetlenül a tárgyasztal csavar felett
-#   legyen (vagy a lehető legközelebb, miközben továbbra is a tárgyasztal felett
-#   van). Ez a számításoknál használt alapcsavar.
-#   Ezt a paramétert meg kell adni.
+#   The (X, Y) coordinate of the first bed leveling screw. This is a
+#   position to command the nozzle to so that the probe is directly
+#   above the bed screw (or as close as possible while still being
+#   above the bed). This is the base screw used in calculations. This
+#   parameter must be provided.
 #screw1_name:
-#   Az adott csavar tetszőleges neve. Ez a név jelenik meg a segédszkript
-#   futtatásakor. Az alapértelmezés szerint a név a a csavar X-Y
-#   helyére épül.
+#   An arbitrary name for the given screw. This name is displayed when
+#   the helper script runs. The default is to use a name based upon
+#   the screw XY location.
 #screw2:
 #screw2_name:
 #...
-#   További tárgyasztal kiegyenlítő csavarok.
-#   Legalább két csavart kell meghatározott.
+#   Additional bed leveling screws. At least two screws must be
+#   defined.
 #speed: 50
-#   A kalibrálás során a nem mérő mozgások sebessége (mm/sec-ben).
-#   Az alapértelmezett érték 50.
+#   The speed (in mm/s) of non-probing moves during the calibration.
+#   The default is 50.
 #horizontal_move_z: 5
-#   A magasság (mm-ben), ahová a fejnek el kell mozdulnia.
-#   Közvetlenül a szondaművelet megkezdése előtt.
-#   Az alapértelmezett érték 5.
+#   The height (in mm) that the head should be commanded to move to
+#   just prior to starting a probe operation. The default is 5.
 #screw_thread: CW-M3
-#   A tárgyasztal szintjéhez használt csavar típusa, M3, M4 vagy M5, valamint a
-#   tárgyasztal szintbeállításához használt gomb iránya, az óramutató járásával
-#   megegyező irányú csökkenés az óramutató járásával ellentétes irányú
-#   csökkenés. Elfogadott értékek: CW-M3, CCW-M3, CW-M4, CCW-M4,
-#   CW-M5, CCW-M5. Az alapértelmezett érték CW-M3, a legtöbb nyomtató
-#   M3-as csavart és a gombot az óramutató járásával megegyező irányba
-#   forgatva csökken a távolság.
+#   The type of screw used for bed leveling, M3, M4, or M5, and the
+#   rotation direction of the knob that is used to level the bed.
+#   Accepted values: CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5, CCW-M5.
+#   Default value is CW-M3 which most printers use. A clockwise
+#   rotation of the knob decreases the gap between the nozzle and the
+#   bed. Conversely, a counter-clockwise rotation increases the gap.
 </code></pre></div>
 
 <h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
@@ -6289,6 +6302,120 @@ run_current:
 #   a HSTRT MSB-jeként értelmeződik).
 </code></pre></div>
 
+<h3 id="tmc2240">[tmc2240]<a class="headerlink" href="#tmc2240" title="Permanent link">&para;</a></h3>
+<p>Configure a TMC2240 stepper motor driver via SPI bus. To use this feature, define a config section with a "tmc2240" prefix followed by the name of the corresponding stepper config section (for example, "[tmc2240 stepper_x]").</p>
+<div class="highlight"><pre><span></span><code>[tmc2240 stepper_x]
+cs_pin:
+#   The pin corresponding to the TMC2240 chip select line. This pin
+#   will be set to low at the start of SPI messages and raised to high
+#   after the message completes. This parameter must be provided.
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters.
+#chain_position:
+#chain_length:
+#   These parameters configure an SPI daisy chain. The two parameters
+#   define the stepper position in the chain and the total chain length.
+#   Position 1 corresponds to the stepper that connects to the MOSI signal.
+#   The default is to not use an SPI daisy chain.
+#interpolate: True
+#   If true, enable step interpolation (the driver will internally
+#   step at a rate of 256 micro-steps). The default is True.
+run_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   during stepper movement. This parameter must be provided.
+#hold_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the stepper is not moving. Setting a hold_current is not
+#   recommended (see TMC_Drivers.md for details). The default is to
+#   not reduce the current.
+#rref: 12000
+#   The resistance (in ohms) of the resistor between IREF and GND. The
+#   default is 12000.
+#stealthchop_threshold: 0
+#   The velocity (in mm/s) to set the &quot;stealthChop&quot; threshold to. When
+#   set, &quot;stealthChop&quot; mode will be enabled if the stepper motor
+#   velocity is below this value. The default is 0, which disables
+#   &quot;stealthChop&quot; mode.
+#driver_MSLUT0: 2863314260
+#driver_MSLUT1: 1251300522
+#driver_MSLUT2: 608774441
+#driver_MSLUT3: 269500962
+#driver_MSLUT4: 4227858431
+#driver_MSLUT5: 3048961917
+#driver_MSLUT6: 1227445590
+#driver_MSLUT7: 4211234
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
+#driver_OFFSET_SIN90: 0
+#   These fields control the Microstep Table registers directly. The optimal
+#   wave table is specific to each motor and might vary with current. An
+#   optimal configuration will have minimal print artifacts caused by
+#   non-linear stepper movement. The values specified above are the default
+#   values used by the driver. The value must be specified as a decimal integer
+#   (hex form is not supported). In order to compute the wave table fields,
+#   see the tmc2130 &quot;Calculation Sheet&quot; from the Trinamic website.
+#   Additionally, this driver also has the OFFSET_SIN90 field which can be used
+#   to tune a motor with unbalanced coils. See the `Sine Wave Lookup Table`
+#   section in the datasheet for information about this field and how to tune
+#   it.
+#driver_IHOLDDELAY: 6
+#driver_IRUNDELAY: 4
+#driver_TPOWERDOWN: 10
+#driver_TBL: 2
+#driver_TOFF: 3
+#driver_HEND: 2
+#driver_HSTRT: 5
+#driver_FD3: 0
+#driver_TPFD: 4
+#driver_CHM: 0
+#driver_VHIGHFS: 0
+#driver_VHIGHCHM: 0
+#driver_DISS2G: 0
+#driver_DISS2VS: 0
+#driver_PWM_AUTOSCALE: True
+#driver_PWM_AUTOGRAD: True
+#driver_PWM_FREQ: 0
+#driver_FREEWHEEL: 0
+#driver_PWM_GRAD: 0
+#driver_PWM_OFS: 29
+#driver_PWM_REG: 4
+#driver_PWM_LIM: 12
+#driver_SGT: 0
+#driver_SEMIN: 0
+#driver_SEUP: 0
+#driver_SEMAX: 0
+#driver_SEDN: 0
+#driver_SEIMIN: 0
+#driver_SFILT: 0
+#driver_SG4_ANGLE_OFFSET: 1
+#   Set the given register during the configuration of the TMC2240
+#   chip. This may be used to set custom motor parameters. The
+#   defaults for each parameter are next to the parameter name in the
+#   above list.
+#diag0_pin:
+#diag1_pin:
+#   The micro-controller pin attached to one of the DIAG lines of the
+#   TMC2240 chip. Only a single diag pin should be specified. The pin
+#   is &quot;active low&quot; and is thus normally prefaced with &quot;^!&quot;. Setting
+#   this creates a &quot;tmc2240_stepper_x:virtual_endstop&quot; virtual pin
+#   which may be used as the stepper&#39;s endstop_pin. Doing this enables
+#   &quot;sensorless homing&quot;. (Be sure to also set driver_SGT to an
+#   appropriate sensitivity value.) The default is to not enable
+#   sensorless homing.
+</code></pre></div>
+
 <h3 id="tmc5160">[tmc5160]<a class="headerlink" href="#tmc5160" title="Permanent link">&para;</a></h3>
 <p>TMC5160 motorvezérlő konfigurálása SPI-buszon keresztül. A funkció használatához definiáljon egy konfigurációs szekciót "tmc5160" előtaggal, amelyet a megfelelő léptető konfigurációs szekció neve követ (például "[tmc5160 stepper_x]").</p>
 <div class="highlight"><pre><span></span><code>[tmc5160 stepper_x]
@@ -7135,19 +7262,19 @@ host_mcu:
 <p>Ez a modul a teljes funkcionalitáshoz a <code>[virtual_sdcard]</code> és <code>[pause_resume]</code> modulokat is igényli.</p>
 <p>Ha ezt a modult használod, ne használd a Palette 2 plugint az Octoprinthez, mivel ezek ütközni fognak, és az egyik nem fog megfelelően inicializálódni, ami valószínűleg megszakítja a nyomtatást.</p>
 <p>Ha az Octoprintet használod és a G-kódot a soros porton keresztül streameli a virtual_sd-ről való nyomtatás helyett, akkor a <strong>M1</strong> és <strong>M0</strong> parancsok <em>Pausing parancsok</em> a <em>Settings &gt;. alatt remo; Serial Connection &gt; Firmware &amp; protocol</em> megakadályozzák, hogy a nyomtatás megkezdéséhez a Paletta 2-n el kelljen indítani a nyomtatást, és az Octoprintben fel kelljen oldani a szünetet.</p>
-<div class="highlight"><pre><span></span><code>[paletta2]
+<div class="highlight"><pre><span></span><code>[palette2]
 serial:
-#   A soros port, amelyhez a Palette 2 csatlakozik.
+#   The serial port to connect to the Palette 2.
 #baud: 115200
-#   A használandó baud-ráta. Az alapértelmezett érték 115200.
+#   The baud rate to use. The default is 115200.
 #feedrate_splice: 0.8
-#   A toldáskor használandó feedrate, alapértelmezett 0.8.
+#   The feedrate to use when splicing, default is 0.8
 #feedrate_normal: 1.0
-#   A toldás után használandó feedrate, alapértelmezett értéke 1.0.
+#   The feedrate to use after splicing, default is 1.0
 #auto_load_speed: 2
-#   Extrudálási előtolási sebesség automatikus betöltéskor, alapértelmezett 2 (mm/sec)
+#   Extrude feedrate when autoloading, default is 2 (mm/s)
 #auto_cancel_variation: 0.1
-#   Automatikusan törli a nyomtatást, ha a ping meghaladja ezt a küszöbértéket.
+#   Auto cancel print when ping variation is above this threshold
 </code></pre></div>
 
 <h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
@@ -7199,24 +7326,23 @@ cs_pin:
 
 <h3 id="gyakori-i2c-beallitasok">Gyakori I2C beállítások<a class="headerlink" href="#gyakori-i2c-beallitasok" title="Permanent link">&para;</a></h3>
 <p>A következő paraméterek általában az I2C-buszt használó eszközökhöz állnak rendelkezésre.</p>
-<p>Vedd figyelembe, hogy a Klipper jelenlegi mikrokontrollerek i2c támogatása nem tolerálja a hálózati zajt. Az i2c vezetékek nem várt hibái a Klipper futásidejű hibaüzenetét eredményezhetik. A Klipper hibaelhárítás támogatása az egyes mikrokontroller-típusok között változik. Általában csak olyan i2c eszközök használata ajánlott, amelyek ugyanazon a nyomtatott áramköri lapon vannak, mint a mikrokontroller.</p>
-<p>A legtöbb Klipper mikrokontroller implementáció csak 100000 <code>i2c_speed</code> értéket támogat. A Klipper "linux" mikrokontroller támogatja a 400000-es sebességet, de ezt <a href="RPi_microcontroller.html#optional-enabling-i2c">az operációs rendszerben kell beállítani</a>, és az <code>i2c_speed</code> paramétert egyébként figyelmen kívül hagyja. A Klipper "rp2040" mikrokontroller az <code>i2c_speed</code> paraméteren keresztül 400000-es sebességet támogat. Az összes többi Klipper mikrovezérlő 100000-es sebességet használ, és figyelmen kívül hagyja az <code>i2c_speed</code> paramétert.</p>
+<p>Note that Klipper's current micro-controller support for I2C is generally not tolerant to line noise. Unexpected errors on the I2C wires may result in Klipper raising a run-time error. Klipper's support for error recovery varies between each micro-controller type. It is generally recommended to only use I2C devices that are on the same printed circuit board as the micro-controller.</p>
+<p>Most Klipper micro-controller implementations only support an <code>i2c_speed</code> of 100000 (<em>standard mode</em>, 100kbit/s). The Klipper "Linux" micro-controller supports a 400000 speed (<em>fast mode</em>, 400kbit/s), but it must be <a href="RPi_microcontroller.html#optional-enabling-i2c">set in the operating system</a> and the <code>i2c_speed</code> parameter is otherwise ignored. The Klipper "RP2040" micro-controller and ATmega AVR family support a rate of 400000 via the <code>i2c_speed</code> parameter. All other Klipper micro-controllers use a 100000 rate and ignore the <code>i2c_speed</code> parameter.</p>
 <div class="highlight"><pre><span></span><code>#i2c_address:
-#   Az eszköz i2c címe. Ezt decimális számként kell megadni
-#   (nem hexadecimális formában).
-#   Az alapértelmezett érték az eszköz típusától függ.
+#   The i2c address of the device. This must specified as a decimal
+#   number (not in hex). The default depends on the type of device.
 #i2c_mcu:
-#   Annak a mikrovezérlőnek a neve, amelyhez a chip csatlakozik.
-#   Az alapértelmezett az &quot;mcu&quot;.
+#   The name of the micro-controller that the chip is connected to.
+#   The default is &quot;mcu&quot;.
 #i2c_bus:
-#   Ha a mikrovezérlő több I2C buszt támogat, akkor itt megadhatod a
-#   mikrovezérlő busz nevét.
-#   Az alapértelmezett érték a mikrovezérlő típusától függ.
+#   If the micro-controller supports multiple I2C busses then one may
+#   specify the micro-controller bus name here. The default depends on
+#   the type of micro-controller.
 #i2c_speed:
-#   Az eszközzel való kommunikáció során használandó I2C sebesség
-#   (Hz-ben). A Klipper implementációja a legtöbb mikrovezérlőn kódolt
-#   értéke 100000, és ennek az értéknek nincs hatása.
-#   Az alapértelmezett érték 100 000.
+#   The I2C speed (in Hz) to use when communicating with the device.
+#   The Klipper implementation on most micro-controllers is hard-coded
+#   to 100000 and changing this value has no effect. The default is
+#   100000. Linux, RP2040 and ATmega support 400000.
 </code></pre></div>
 
               

@@ -1348,11 +1348,11 @@
 
 
 <h1 id="_1">霍尔耗材线径传感器<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>本文件介绍了耗材宽度传感器的主机模块。用于开发该主机模块的硬件基于两个霍尔线性传感器（例如，ss49e）。设备内的两个传感器位于两侧。工作原理：两个霍尔传感器以差分模式工作，由于传感器的温度漂移相同。不需要特殊的温度补偿。</p>
+<p>本文件介绍了耗材直径传感器的主机模块。用于开发该主机模块的硬件基于两个霍尔线性传感器（例如，ss49e）。霍尔传感器位于相对耗材直径模块的两侧。工作原理：两个霍尔传感器以差分模式工作，由于传感器的温度漂移相同，不需要特殊的温度补偿。</p>
 <p>你可以在<a href="https://www.thingiverse.com/thing:4138933">Thingiverse</a>上找到设计，在<a href="https://www.youtube.com/watch?v=TDO9tME8vp4">Youtube</a>上也有一个装配视频</p>
 <p>要使用霍尔耗材线径传感器，请阅读<a href="Config_Reference.html#hall_filament_width_sensor">配置参考</a>和<a href="G-Codes.html#hall_filament_width_sensor">G-Code 文档</a>。</p>
 <h2 id="_2">它如何运作？<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>传感器根据两个模拟输出计算出耗材直径。检测到的电压之和始终对应耗材宽度。主机模块监测电压变化并调整挤出倍率。我在类似ramps的控制板上使用aux2连接器的 analog11和analog12引脚，你也可以使用不同的引脚和不同的控制板。</p>
+<p>传感器基于两个模拟输出计算出耗材直径。检测到的电压之和始终对应耗材直径。主机模块监测电压变化并调整挤出倍率。例如可以在类似ramps的控制板上使用 aux2 连接器的 analog11和analog12引脚，你也可以使用不同的引脚和不同的控制板。</p>
 <h2 id="_3">菜单变量模板<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>[menu __main __filament __width_current]
 type: command

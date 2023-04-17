@@ -1013,6 +1013,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1774,6 +1781,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1949,6 +1963,7 @@
 <ul>
 <li><code>pressure_advance</code>: The current <a href="Pressure_Advance.html">pressure advance</a> value.</li>
 <li><code>smooth_time</code>: The current pressure advance smooth time.</li>
+<li><code>motion_queue</code>: The name of the extruder that this extruder stepper is currently synchronized to. This is reported as <code>None</code> if the extruder stepper is not currently associated with an extruder.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#fan">fan</a>、<a href="Config_Reference.html#heater_fan">heater_fan some_name</a>和<a href="Config_Reference.html#controller_fan">controller_fan some_name</a>對像提供了以下資訊：</p>
@@ -2072,6 +2087,7 @@
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#probe">probe</a> 對像中提供了以下資訊（如果定義了 <a href="Config_Reference.html#bltouch">bltouch</a> 配置分段，則此對象也可用）：</p>
 <ul>
+<li><code>name</code>: Returns the name of the probe in use.</li>
 <li><code>last_query</code>：如果探針在上一個 QUERY_PROBE 命令期間報告為"已觸發"，則返回 True。請注意，如果在宏中使用它，根據模板展開的順序，必須在包含此引用的宏之前執行 QUERY_PROBE 命令。</li>
 <li><code>last_z_result</code>：返回上一次 PROBE 命令的結果 Z 值。請注意，由於模板展開的順序，在宏中使用時必須在包含此引用的宏之前執行 PROBE（或類似）命令。</li>
 </ul>
@@ -2089,13 +2105,11 @@
 <p>The following information is available in the <code>screws_tilt_adjust</code> object:</p>
 <ul>
 <li><code>error</code>: Returns True if the most recent <code>SCREWS_TILT_CALCULATE</code> command included the <code>MAX_DEVIATION</code> parameter and any of the probed screw points exceeded the specified <code>MAX_DEVIATION</code>.</li>
-<li><code>results</code>: A list of the probed screw locations. Each entry in the list will be a dictionary containing the following keys:<ul>
-<li><code>name</code>: The name of the screw as specified in the config file.</li>
-<li><code>x</code>: The X coordinate of the screw as specified in the config file.</li>
-<li><code>y</code>: The Y coordinate of the screw as specified in the config file.</li>
+<li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
 <li><code>z</code>: The measured Z height of the screw location.</li>
-<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise. The base screw will not have a <code>sign</code> key.</li>
+<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise.</li>
 <li><code>adjust</code>: The number of screw turns to adjust the screw, given in the format "HH:MM," where "HH" is the number of full screw turns and "MM" is the number of "minutes of a clock face" representing a partial screw turn. (E.g. "01:15" would mean to turn the screw one and a quarter revolutions.)</li>
+<li><code>is_base</code>: Returns True if this is the base screw.</li>
 </ul>
 </li>
 </ul>
@@ -2103,6 +2117,11 @@
 <p><a href="Config_Reference.html#servo">servo some_name</a> 對像提供了以下資訊：</p>
 <ul>
 <li><code>printer["servo &lt;配置名&gt;"].value</code>：與指定伺服相關 PWM 引腳的上一次設定的值（0.0 和 1.0 之間的值）。</li>
+</ul>
+<h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>stepper_enable</code> object (this object is available if any stepper is defined):</p>
+<ul>
+<li><code>steppers["&lt;stepper&gt;"]</code>: Returns True if the given stepper is enabled.</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
 <p><code>system_stats</code> 對像提供了以下資訊（該對像始終可用）：</p>

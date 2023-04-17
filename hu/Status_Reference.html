@@ -1013,6 +1013,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1774,6 +1781,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#stepper_enable" class="md-nav__link">
+    stepper_enable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#system_stats" class="md-nav__link">
     system_stats
   </a>
@@ -1949,6 +1963,7 @@
 <ul>
 <li><code>pressure_advance</code>: Az aktuális <a href="Pressure_Advance.html">nyomás előtolás</a> érték.</li>
 <li><code>smooth_time</code>: Az aktuális nyomás előtolásának simítási ideje.</li>
+<li><code>motion_queue</code>: The name of the extruder that this extruder stepper is currently synchronized to. This is reported as <code>None</code> if the extruder stepper is not currently associated with an extruder.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#fan">ventilátor</a>, <a href="Config_Reference.html#heater_fan">heater_fan some_name</a> és <a href="Config_Reference.html#controller_fan">controller_fan some_name</a> objektumokban érhetők el:</p>
@@ -2072,6 +2087,7 @@
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#probe">szonda</a> objektumban érhetők el (ez az objektum akkor is elérhető, ha egy <a href="Config_Reference.html#bltouch">bltouch</a> konfigurációs szakasz van definiálva):</p>
 <ul>
+<li><code>name</code>: Returns the name of the probe in use.</li>
 <li><code>last_query</code>: True értéket ad vissza, ha a szondát az utolsó QUERY_PROBE parancs során "triggered" -ként jelentették. Megjegyzés: ha ezt egy makróban használjuk, a sablon bővítési sorrendje miatt a QUERY_PROBE parancsot akkor ezt a hivatkozást tartalmazó makró előtt kell lefuttatni.</li>
 <li><code>last_z_result</code>: Az utolsó PROBE parancs Z eredményének értékét adja vissza. Figyelem, ha ezt egy makróban használjuk, a sablon bővítési sorrendje miatt a PROBE (vagy hasonló) parancsot akkor ezt a hivatkozást tartalmazó makró előtt kell lefuttatni.</li>
 </ul>
@@ -2089,13 +2105,11 @@
 <p>A következő információk a <code>screws_tilt_adjust</code> objektumban találhatók:</p>
 <ul>
 <li><code>error</code>: True értéket ad vissza, ha a legutóbbi <code>SCREWS_TILT_CALCULATE</code> parancs tartalmazta a <code>MAX_DEVIATION</code> paramétert, és bármelyik vizsgált csavarpont meghaladta a megadott <code>MAX_DEVIATION</code> értéket.</li>
-<li><code>results</code>: A vizsgált csavarok helyének listája. A lista minden egyes bejegyzése egy szótár lesz, amely a következő kulcsokat tartalmazza:<ul>
-<li><code>name</code>: A csavar neve a konfigurációs fájlban megadottak szerint.</li>
-<li><code>x</code>: A csavar X koordinátája a konfigurációs fájlban megadottak szerint.</li>
-<li><code>x</code>: A csavar X koordinátája a konfigurációs fájlban megadottak szerint.</li>
+<li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
 <li><code>z</code>: A csavar helyének mért Z magassága.</li>
-<li><code>sign</code>: Egy karakterlánc, amely megadja, hogy a szükséges beállításhoz milyen irányba kell elfordítani a csavart. Vagy "CW" az óramutató járásával megegyező irányban, vagy "CCW" az óramutató járásával ellentétes irányban. Az alapcsavar nem rendelkezik <code>sign</code> kulcsal.</li>
+<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise.</li>
 <li><code>adjust</code>: A csavar beállításához szükséges csavarfordítások száma, "HH:MM" formátumban megadva, ahol "HH" a teljes csavarfordítások száma, "MM" pedig a részleges csavarfordítást jelentő "óramutató percek" száma. (Pl. "01:15" azt jelentené, hogy a csavart egy és negyed fordulatot kell elfordítani.)</li>
+<li><code>is_base</code>: Returns True if this is the base screw.</li>
 </ul>
 </li>
 </ul>
@@ -2103,6 +2117,11 @@
 <p>A következő információk a <a href="Config_Reference.html#servo">szervó some_name</a> objektumokban érhetők el:</p>
 <ul>
 <li><code>printer["servo &lt;config_name&gt;"].value</code>: A szervóhoz tartozó PWM tű utolsó beállítása (0,0 és 1,0 közötti érték).</li>
+</ul>
+<h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>stepper_enable</code> object (this object is available if any stepper is defined):</p>
+<ul>
+<li><code>steppers["&lt;stepper&gt;"]</code>: Returns True if the given stepper is enabled.</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>system_stats</code> objektumban érhetők el (ez az objektum mindig elérhető):</p>

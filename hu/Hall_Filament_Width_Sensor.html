@@ -1348,11 +1348,11 @@
 
 
 <h1 id="hall-nyomtatoszal-szelesseg-erzekelo">Hall nyomtatószál szélesség érzékelő<a class="headerlink" href="#hall-nyomtatoszal-szelesseg-erzekelo" title="Permanent link">&para;</a></h1>
-<p>Ez a dokumentum az izzószálszélesség-érzékelő gazdagép modulját írja le. A gazdamodul fejlesztéséhez használt hardver két Hall lineáris érzékelőn alapul (például ss49e). Az érzékelők a testben ellentétes oldalon helyezkednek el. Működési elv: két Hall érzékelő differenciál üzemmódban működik, a hőmérséklet csúszás ugyanaz a szenzornál. Speciális hőmérséklet kompenzáció nem szükséges.</p>
+<p>This document describes Filament Width Sensor host module. Hardware used for developing this host module is based on two Hall linear sensors (ss49e for example). Sensors in the body are located on opposite sides. Principle of operation: two hall sensors work in differential mode, temperature drift same for sensor. Special temperature compensation not needed.</p>
 <p>Terveket a [Thingiverse] oldalon találod (<a href="https://www.thingiverse.com/thing:4138933">https://www.thingiverse.com/thing:4138933</a>), az összeszerelési videó a [Youtube]-on is elérhető (<a href="https://www.youtube.com/watch?v=TDO9tME8vp4">https://www.youtube.com/watch?v=TDO9tME8vp4</a> )</p>
 <p>A Hall nyomtatószál szélesség érzékelő használatához olvasd el a <a href="Config_Reference.html#hall_filament_width_sensor">Konfigurációs hivatkozás</a> és a <a href="G-Codes.html#hall_filament_width_sensor">G-kód dokumentáció</a> részt.</p>
 <h2 id="hogyan-mukodik">Hogyan működik?<a class="headerlink" href="#hogyan-mukodik" title="Permanent link">&para;</a></h2>
-<p>Az érzékelő két analóg kimenetet generál az izzószál számított szélessége alapján. A kimeneti feszültség összege mindig megegyezik az izzószál érzékelt szélességével. A gazdamodul figyeli a feszültségváltozásokat és beállítja az extrudálási szorzót. Aux2 csatlakozót használok a RAMPS kártya analóg11 és analóg12 érintkezőin. Különböző tűket és különböző táblákat használhat.</p>
+<p>Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width. Host module monitors voltage changes and adjusts extrusion multiplier. I use the aux2 connector on a ramps-like board with the analog11 and analog12 pins. You can use different pins and different boards.</p>
 <h2 id="menuvaltozok-sablonja">Menüváltozók sablonja<a class="headerlink" href="#menuvaltozok-sablonja" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>[menu __main __filament __width_current]
 type: command

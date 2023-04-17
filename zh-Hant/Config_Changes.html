@@ -1293,6 +1293,8 @@
 <p>本文件涵蓋了軟體更新中對配置檔案不向后相容的部分。在升級 Klipper 時，最好也檢視一下這份文件。</p>
 <p>本文件中的所有日期都是不精確的。</p>
 <h2 id="_2">變更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>20230304: The <code>SET_TMC_CURRENT</code> command now properly adjusts the globalscaler register for drivers that have it. This removes a limitation where on tmc5160, the currents could not be raised higher with <code>SET_TMC_CURRENT</code> than the <code>run_current</code> value set in the config file. However, this has a side effect: After running <code>SET_TMC_CURRENT</code>, the stepper must be held at standstill for &gt;130ms in case StealthChop2 is used so that the AT#1 calibration gets executed by the driver.</p>
+<p>20230202: The format of the <code>printer.screws_tilt_adjust</code> status information has changed. The information is now stored as a dictionary of screws with the resulting measurements. See the <a href="Status_Reference.html#screws_tilt_adjust">status reference</a> for details.</p>
 <p>20230201: The <code>[bed_mesh]</code> module no longer loads the <code>default</code> profile on startup. It is recommended that users who use the <code>default</code> profile add <code>BED_MESH_PROFILE LOAD=default</code> to their <code>START_PRINT</code> macro (or to their slicer's "Start G-Code" configuration when applicable).</p>
 <p>20230103: It is now possible with the flash-sdcard.sh script to flash both variants of the Bigtreetech SKR-2, STM32F407 and STM32F429. This means that the original tag of btt-skr2 now has changed to either btt-skr-2-f407 or btt-skr-2-f429.</p>
 <p>20221128: Klipper v0.11.0 released.</p>

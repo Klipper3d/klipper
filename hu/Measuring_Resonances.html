@@ -735,6 +735,26 @@
     ADXL345
   </a>
   
+    <nav class="md-nav" aria-label="ADXL345">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direct-to-raspberry-pi" class="md-nav__link">
+    Direct to Raspberry Pi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-raspberry-pi-pico" class="md-nav__link">
+    Using Raspberry Pi Pico
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -786,6 +806,33 @@
   <a href="#adxl345-konfiguralasa-rpi-vel" class="md-nav__link">
     ADXL345 konfigurálása RPi-vel
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-pi-pico" class="md-nav__link">
+    Configure ADXL345 With Pi Pico
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure ADXL345 With Pi Pico">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flash-the-pico-firmware" class="md-nav__link">
+    Flash the Pico Firmware
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-connection" class="md-nav__link">
+    Configure the Connection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1480,6 +1527,26 @@
     ADXL345
   </a>
   
+    <nav class="md-nav" aria-label="ADXL345">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direct-to-raspberry-pi" class="md-nav__link">
+    Direct to Raspberry Pi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-raspberry-pi-pico" class="md-nav__link">
+    Using Raspberry Pi Pico
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1531,6 +1598,33 @@
   <a href="#adxl345-konfiguralasa-rpi-vel" class="md-nav__link">
     ADXL345 konfigurálása RPi-vel
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-adxl345-with-pi-pico" class="md-nav__link">
+    Configure ADXL345 With Pi Pico
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure ADXL345 With Pi Pico">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flash-the-pico-firmware" class="md-nav__link">
+    Flash the Pico Firmware
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-connection" class="md-nav__link">
+    Configure the Connection
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1662,7 +1756,7 @@
 <p>Az ADXL345 beszerzésekor vedd figyelembe, hogy számos különböző NYÁK lapkakialakítás és különböző klónok léteznek. Győződj meg róla, hogy a kártya támogatja az SPI módot (kis számú kártya úgy tűnik, hogy szorosan konfigurálva van az I2C-re az SDO GND-re húzásával), és ha 5V-os nyomtató MCU-hoz csatlakozik ellenőrizd,hogy rendelkezik feszültségszabályozóval és szintválasztóval.</p>
 <h2 id="telepitesi-utasitasok">Telepítési utasítások<a class="headerlink" href="#telepitesi-utasitasok" title="Permanent link">&para;</a></h2>
 <h3 id="vezetekek">Vezetékek<a class="headerlink" href="#vezetekek" title="Permanent link">&para;</a></h3>
-<p>A nagy távolságra történő jelintegráció érdekében árnyékolt, sodrott páros (cat5e vagy jobb) ethernet-kábel használata ajánlott. Ha továbbra is jelintegritási problémákat tapasztalsz (SPI/I2C hibák), rövidítsd le a kábelt.</p>
+<p>An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrity over a long distance. If you still experience signal integrity issues (SPI/I2C errors), shorten the cable.</p>
 <p>Csatlakoztasd az ethernet kábel árnyékolását a vezérlőpanel/RPI földeléséhez.</p>
 <p><strong><em>Kétszer is ellenőrizd a vezetékeket a bekapcsolás előtt, hogy elkerüld az MCU/Raspberry Pi vagy a gyorsulásmérő károsodását.</em></strong></p>
 <h4 id="spi-gyorsulasmerok">SPI Gyorsulásmérők<a class="headerlink" href="#spi-gyorsulasmerok" title="Permanent link">&para;</a></h4>
@@ -1673,7 +1767,8 @@ SCLK+CS
 </code></pre></div>
 
 <h5 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h5>
-<p><strong>Megjegyzés: Sok MCU működik az ADXL345-össel SPI módban (pl. Pi Pico), a vezetékezés és a konfiguráció az adott laptól és a rendelkezésre álló tűktől függően változik.</strong></p>
+<h6 id="direct-to-raspberry-pi">Direct to Raspberry Pi<a class="headerlink" href="#direct-to-raspberry-pi" title="Permanent link">&para;</a></h6>
+<p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and configuration will vary according to your specific board and available pins.</strong></p>
 <p>Az ADXL345-öt SPI-n keresztül kell csatlakoztatnod a Raspberry Pi-hez. Vedd figyelembe, hogy az ADXL345 dokumentációja által javasolt I2C kapcsolatnak túl alacsony az adatforgalmi képessége, és <strong>nem fog működni</strong>. Az ajánlott kapcsolási séma:</p>
 <table>
 <thead>
@@ -1687,7 +1782,7 @@ SCLK+CS
 <tr>
 <td align="center">3V3 (or VCC)</td>
 <td align="center">01</td>
-<td align="center">3.3v DC feszültség</td>
+<td align="center">3.3V DC power</td>
 </tr>
 <tr>
 <td align="center">GND</td>
@@ -1718,6 +1813,52 @@ SCLK+CS
 </table>
 <p>Fritzing kapcsolási rajzok néhány ADXL345 laphoz:</p>
 <p><img alt="ADXL345-Rpi" src="img/adxl345-fritzing.png" /></p>
+<h6 id="using-raspberry-pi-pico">Using Raspberry Pi Pico<a class="headerlink" href="#using-raspberry-pi-pico" title="Permanent link">&para;</a></h6>
+<p>You may connect the ADXL345 to your Raspberry Pi Pico and then connect the Pico to your Raspberry Pi via USB. This makes it easy to reuse the accelerometer on other Klipper devices, as you can connect via USB instead of GPIO. The Pico does not have much processing power, so make sure it is only running the accelerometer and not performing any other duties.</p>
+<p>In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V only. Depending on the board's layout, a level shifter may be present, which makes 5V dangerous for your RPi.</p>
+<table>
+<thead>
+<tr>
+<th align="center">ADXL345 tű</th>
+<th align="center">Pico pin</th>
+<th align="center">Pico pin name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">3V3 (or VCC)</td>
+<td align="center">36</td>
+<td align="center">3.3V DC power</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">Föld</td>
+</tr>
+<tr>
+<td align="center">CS</td>
+<td align="center">2</td>
+<td align="center">GP1 (SPI0_CSn)</td>
+</tr>
+<tr>
+<td align="center">SDO</td>
+<td align="center">1</td>
+<td align="center">GP0 (SPI0_RX)</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">5</td>
+<td align="center">GP3 (SPI0_TX)</td>
+</tr>
+<tr>
+<td align="center">SCL</td>
+<td align="center">4</td>
+<td align="center">GP2 (SPI0_SCK)</td>
+</tr>
+</tbody>
+</table>
+<p>Wiring diagrams for some of the ADXL345 boards:</p>
+<p><img alt="ADXL345-Pico" src="img/adxl345-pico.png" /></p>
 <h4 id="i2c-gyorsulasmerok">I2C Gyorsulásmérők<a class="headerlink" href="#i2c-gyorsulasmerok" title="Permanent link">&para;</a></h4>
 <p>Javasolt csavart érpáros sorrend:</p>
 <div class="highlight"><pre><span></span><code>3.3V+SDA
@@ -1826,6 +1967,47 @@ probe_points:
 </code></pre></div>
 
 <p>Javasoljuk, hogy 1 mérőponttal kezd, a nyomtatási tárgyasztal közepén, kissé felette.</p>
+<h4 id="configure-adxl345-with-pi-pico">Configure ADXL345 With Pi Pico<a class="headerlink" href="#configure-adxl345-with-pi-pico" title="Permanent link">&para;</a></h4>
+<h5 id="flash-the-pico-firmware">Flash the Pico Firmware<a class="headerlink" href="#flash-the-pico-firmware" title="Permanent link">&para;</a></h5>
+<p>On your Raspberry Pi, compile the firmware for the Pico.</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+make clean
+make menuconfig
+</code></pre></div>
+
+<p><img alt="Pico menuconfig" src="img/klipper_pico_menuconfig.png" /></p>
+<p>Now, while holding down the <code>BOOTSEL</code> button on the Pico, connect the Pico to the Raspberry Pi via USB. Compile and flash the firmware.</p>
+<div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=first
+</code></pre></div>
+
+<p>If that fails, you will be told which <code>FLASH_DEVICE</code> to use. In this example, that's <code>make flash FLASH_DEVICE=2e8a:0003</code>. <img alt="Determine flash device" src="img/flash_rp2040_FLASH_DEVICE.png" /></p>
+<h5 id="configure-the-connection">Configure the Connection<a class="headerlink" href="#configure-the-connection" title="Permanent link">&para;</a></h5>
+<p>The Pico will now reboot with the new firmware and should show up as a serial device. Find the pico serial device with <code>ls /dev/serial/by-id/*</code>. You can now add an <code>adxl.cfg</code> file with the following settings:</p>
+<div class="highlight"><pre><span></span><code>[mcu adxl]
+# Change &lt;mySerial&gt; to whatever you found above. For example,
+# usb-Klipper_rp2040_E661640843545B2E-if00
+serial: /dev/serial/by-id/usb-Klipper_rp2040_&lt;mySerial&gt;
+
+[adxl345]
+cs_pin: adxl:gpio1
+spi_bus: spi0a
+axes_map: x,z,y
+
+[resonance_tester]
+accel_chip: adxl345
+probe_points:
+    # Somewhere slightly above the middle of your print bed
+    147,154, 20
+
+[output_pin power_mode] # Improve power stability
+pin: adxl:gpio23
+</code></pre></div>
+
+<p>If setting up the ADXL345 configuration in a separate file, as shown above, you'll also want to modify your <code>printer.cfg</code> file to include this:</p>
+<div class="highlight"><pre><span></span><code>[include adxl.cfg] # Comment this out when you disconnect the accelerometer
+</code></pre></div>
+
+<p>Indítsd újra a Klippert a <code>RESTART</code> paranccsal.</p>
 <h4 id="az-mpu-60009000-sorozat-konfiguralasa-rpi-vel">Az MPU-6000/9000 sorozat konfigurálása RPi-vel<a class="headerlink" href="#az-mpu-60009000-sorozat-konfiguralasa-rpi-vel" title="Permanent link">&para;</a></h4>
 <p>Az MPU-9250 esetében győződj meg róla, hogy a Linux I2C illesztőprogram engedélyezve van, és az átviteli sebesség 400000-re van állítva (további részletekért lásd az <a href="RPi_microcontroller.html#optional-enabling-i2c">I2C engedélyezése</a> részt). Ezután adjuk hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
@@ -1844,18 +2026,18 @@ probe_points:
 <h4 id="mpu-60009000-sorozat-konfiguralasa-pico-val">MPU-6000/9000 sorozat konfigurálása PICO-val<a class="headerlink" href="#mpu-60009000-sorozat-konfiguralasa-pico-val" title="Permanent link">&para;</a></h4>
 <p>A PICO I2C alapértelmezés szerint 400000-re van beállítva. Egyszerűen add hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu pico]
-serial: /dev/serial/by-id/&lt;a PICO soros azonosítója&gt;
+serial: /dev/serial/by-id/&lt;your PICO&#39;s serial ID&gt;
 
 [mpu9250]
 i2c_mcu: pico
-i2c_bus: i2c1a
+i2c_bus: i2c0a
 
 [resonance_tester]
 accel_chip: mpu9250
 probe_points:
-         100, 100, 20 # egy példa
+    100, 100, 20  # an example
 
-[static_digital_output pico_3V3pwm] # A teljesítmény stabilitásának javítása
+[static_digital_output pico_3V3pwm] # Improve power stability
 pin: pico:gpio23
 </code></pre></div>
 
@@ -1871,7 +2053,7 @@ pin: pico:gpio23
 <div class="highlight"><pre><span></span><code>Visszahívás: // adxl345 értékek (x, y, z): 470.719200, 941.438400, 9728.196800
 </code></pre></div>
 
-<p>Ha olyan hibát kapsz, mint <code>Invalid adxl345 id (got xx vs e5)</code>, ahol <code>xx</code> valami más azonosító, azaz ADXL345-öt érintő kapcsolati problémára vagy a hibás érzékelőre utal. Ellenőrizd kétszer is a tápellátást, a kábelezést (hogy megfelel-e a kapcsolási rajzoknak, nincs-e törött vagy laza vezeték stb.) és a forrasztás minőségét.</p>
+<p>If you get an error like <code>Invalid adxl345 id (got xx vs e5)</code>, where <code>xx</code> is some other ID, immediately try again. There's an issue with SPI initialization. If you still get an error, it is indicative of the connection problem with ADXL345, or the faulty sensor. Double-check the power, the wiring (that it matches the schematics, no wire is broken or loose, etc.), and soldering quality.</p>
 <p><strong>Ha MPU-6000/9000 sorozatú gyorsulásmérőt használsz, és az <code>mpu-unknown</code>-ként jelenik meg, óvatosan használd! Ezek valószínűleg felújított chipek!</strong></p>
 <p>Ezután próbáld meg futtatni a <code>MEASURE_AXES_NOISE</code> parancsot az Octoprint-ben, így kaphatsz néhány alapszámot a gyorsulásmérő zajára a tengelyeken (valahol a ~1-100-as tartományban kell lennie). A túl magas tengelyzaj (pl. 1000 és több) az érzékelő problémáira, a tápellátásával kapcsolatos problémákra vagy a 3D nyomtató túl zajos, kiegyensúlyozatlan ventilátoraira utalhat.</p>
 <h3 id="a-rezonanciak-merese_1">A rezonanciák mérése<a class="headerlink" href="#a-rezonanciak-merese_1" title="Permanent link">&para;</a></h3>
@@ -1923,7 +2105,7 @@ max_accel: 3000 # nem haladhatja meg a becsült max_accel értéket az X és Y t
 </code></pre></div>
 
 <p>vagy választhatsz más konfigurációt is a generált diagramok alapján: a diagramokon a teljesítményspektrális sűrűség csúcsai megfelelnek a nyomtató rezonanciafrekvenciáinak.</p>
-<p>Megjegyzendő, hogy alternatívaként a bemeneti alakító automatikus kalibrációját a Klipper-ből <a href="#bemeneti-formazo-automatikus-kalibralasa">közvetlenül</a> is futtathatod, ami például a bemeneti formázó <a href="#bemeneti-formazo-ujrakalibralasa">újrakalibrálásához</a> lehet hasznos.</p>
+<p>Note that alternatively you can run the input shaper auto-calibration from Klipper <a href="#input-shaper-auto-calibration">directly</a>, which can be convenient, for example, for the input shaper <a href="#input-shaper-re-calibration">re-calibration</a>.</p>
 <h3 id="bed-slinger-nyomtatok">Bed-slinger nyomtatók<a class="headerlink" href="#bed-slinger-nyomtatok" title="Permanent link">&para;</a></h3>
 <p>Ha a nyomtatód tárgyasztala Y tengelyen van, akkor meg kell változtatnod a gyorsulásmérő helyét az X és Y tengelyek mérései között: az X tengely rezonanciáit a nyomtatófejre szerelt gyorsulásmérővel, az Y tengely rezonanciáit pedig a tárgyasztalra szerelt gyorsulásmérővel kell mérned (a szokásos nyomtató beállítással).</p>
 <p>Azonban két gyorsulásmérőt is csatlakoztathatsz egyszerre, bár ezeket különböző lapokhoz kell csatlakoztatni (mondjuk egy RPi és egy nyomtató MCU laphoz), vagy két különböző fizikai SPI interfészhez ugyanazon a lapon (ritkán elérhető). Ezután a következő módon lehet őket konfigurálni:</p>
@@ -2050,7 +2232,7 @@ Ajánlott shaper_type_y = mzv, shaper_freq_y = 36,8 Hz
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
 </code></pre></div>
 
-<p><strong>Figyelmeztetés!</strong> Nem tanácsos a gépen az automatikus kalibrációt nagyon gyakran futtatni (pl. minden nyomtatás előtt vagy minden nap). A rezonanciafrekvenciák meghatározása érdekében az automatikus kalibrálás intenzív rezgéseket hoz létre az egyes tengelyeken. A 3D nyomtatókat általában nem úgy tervezték, hogy a rezonanciafrekvenciákhoz közeli rezgéseknek tartósan ellenálljanak. Ez növelheti a nyomtató alkatrészeinek kopását és csökkentheti élettartamukat. Megnő a kockázata annak is, hogy egyes alkatrészek kicsavarodnak vagy meglazulnak. Minden egyes automatikus hangolás után mindig ellenőrizd, hogy a nyomtató minden alkatrésze (beleértve azokat is, amelyek normál esetben nem mozoghatnak) biztonságosan a helyén van-e rögzítve.</p>
+<p><strong>Warning!</strong> It is not advisable to run the shaper auto-calibration very frequently (e.g. before every print, or every day). In order to determine resonance frequencies, auto-calibration creates intensive vibrations on each of the axes. Generally, 3D printers are not designed to withstand a prolonged exposure to vibrations near the resonance frequencies. Doing so may increase wear of the printer components and reduce their lifespan. There is also an increased risk of some parts unscrewing or becoming loose. Always check that all parts of the printer (including the ones that may normally not move) are securely fixed in place after each auto-tuning.</p>
 <p>Továbbá a mérések zajossága miatt lehetséges, hogy a hangolási eredmények kissé eltérnek az egyes kalibrálási folyamatok között. Ennek ellenére nem várható, hogy a zaj túlságosan befolyásolja a nyomtatási minőséget. Mindazonáltal továbbra is tanácsos kétszer is ellenőrizni a javasolt paramétereket, és használat előtt nyomtatni néhány próbanyomatot, hogy megbizonyosodj arról, hogy azok megfelelőek.</p>
 <h2 id="a-gyorsulasmero-adatainak-offline-feldolgozasa">A gyorsulásmérő adatainak offline feldolgozása<a class="headerlink" href="#a-gyorsulasmero-adatainak-offline-feldolgozasa" title="Permanent link">&para;</a></h2>
 <p>Lehetőség van a nyers gyorsulásmérő adatok előállítására és offline feldolgozására (pl. egy központi gépen), például rezonanciák keresésére. Ehhez futtasd a következő parancsokat az Octoprint terminálon keresztül:</p>

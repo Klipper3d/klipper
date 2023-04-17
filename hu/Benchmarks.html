@@ -1137,6 +1137,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ar100-step-rate-benchmark" class="md-nav__link">
+    AR100 step rate benchmark
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#rp2040-leptetesi-referencia" class="md-nav__link">
     RP2040 léptetési referencia
   </a>
@@ -1501,6 +1508,13 @@
           <li class="md-nav__item">
   <a href="#samd51-lepesi-sebesseg-referencia" class="md-nav__link">
     SAMD51 lépési sebesség referencia
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ar100-step-rate-benchmark" class="md-nav__link">
+    AR100 step rate benchmark
   </a>
   
 </li>
@@ -2005,6 +2019,34 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
+<h3 id="ar100-step-rate-benchmark">AR100 step rate benchmark<a class="headerlink" href="#ar100-step-rate-benchmark" title="Permanent link">&para;</a></h3>
+<p>The following configuration sequence is used on AR100 CPU (Allwinner A64):</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PL10 dir_pin=PE14 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PL11 dir_pin=PE15 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PL12 dir_pin=PE16 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>The test was last run on commit <code>08d037c6</code> with gcc version <code>or1k-linux-musl-gcc (GCC) 9.2.0</code> on an Allwinner A64-H micro-controller.</p>
+<table>
+<thead>
+<tr>
+<th>AR100 R_PIO</th>
+<th>trükkök</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 léptető</td>
+<td>85</td>
+</tr>
+<tr>
+<td>3 léptető</td>
+<td>359</td>
+</tr>
+</tbody>
+</table>
 <h3 id="rp2040-leptetesi-referencia">RP2040 léptetési referencia<a class="headerlink" href="#rp2040-leptetesi-referencia" title="Permanent link">&para;</a></h3>
 <p>Az RP2040 esetében a következő konfigurációs sorrendet kell alkalmazni:</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
@@ -2103,6 +2145,12 @@ get_uptime
 <td>75K</td>
 <td>01d2183f</td>
 <td>avr-gcc (GCC) 5.4.0</td>
+</tr>
+<tr>
+<td>ar100 (serial)</td>
+<td>138K</td>
+<td>08d037c6</td>
+<td>or1k-linux-musl-gcc 9.3.0</td>
 </tr>
 <tr>
 <td>samd21 (USB)</td>

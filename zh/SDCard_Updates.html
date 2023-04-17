@@ -1149,30 +1149,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#flashing-boards-that-use-sdio" class="md-nav__link">
-    Flashing Boards that use SDIO
+  <a href="#sdio" class="md-nav__link">
+    刷写使用SDIO的控制板
   </a>
   
-    <nav class="md-nav" aria-label="Flashing Boards that use SDIO">
+    <nav class="md-nav" aria-label="刷写使用SDIO的控制板">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-separate-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on Separate Power Supply
+  <a href="#rpisdio" class="md-nav__link">
+    RPi有独立的电源时进行SDIO刷写
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-the-same-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on the Same Power Supply
+  <a href="#rpisdio_1" class="md-nav__link">
+    对与RPi在同一电源上的主板进行SDIO刷写
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-to-spi-pin-mapping" class="md-nav__link">
-    SDIO to SPI Pin Mapping
+  <a href="#sdiospi" class="md-nav__link">
+    SDIO到SPI引脚映射
   </a>
   
 </li>
@@ -1351,30 +1351,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#flashing-boards-that-use-sdio" class="md-nav__link">
-    Flashing Boards that use SDIO
+  <a href="#sdio" class="md-nav__link">
+    刷写使用SDIO的控制板
   </a>
   
-    <nav class="md-nav" aria-label="Flashing Boards that use SDIO">
+    <nav class="md-nav" aria-label="刷写使用SDIO的控制板">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-separate-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on Separate Power Supply
+  <a href="#rpisdio" class="md-nav__link">
+    RPi有独立的电源时进行SDIO刷写
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-programming-with-rpi-on-the-same-power-supply" class="md-nav__link">
-    SDIO Programming with RPi on the Same Power Supply
+  <a href="#rpisdio_1" class="md-nav__link">
+    对与RPi在同一电源上的主板进行SDIO刷写
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdio-to-spi-pin-mapping" class="md-nav__link">
-    SDIO to SPI Pin Mapping
+  <a href="#sdiospi" class="md-nav__link">
+    SDIO到SPI引脚映射
   </a>
   
 </li>
@@ -1424,21 +1424,21 @@ sudo service klipper start
 <h2 id="_2">高级用法<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>上述命令假设您的 MCU 以默认波特率 250000 连接并且固件位于<code>~/klipper/out/klipper.bin</code>。 <code>flash-sdcard.sh</code> 脚本提供了更改这些默认值的选项。 所有选项都可以通过帮助画面查看：</p>
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
-SD Card upload utility for Klipper
+Klipper SD卡上传工具
 
-usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
-                       &lt;device&gt; &lt;board&gt;
+usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;波特率&gt;] [-f &lt;固件&gt;]
+                       &lt;设备&gt; &lt;控制板&gt;
 
-positional arguments:
-  &lt;device&gt;        device serial port
-  &lt;board&gt;         board type
+位置参数：
+  &lt;设备&gt;        设备串口
+  &lt;控制板&gt;         控制板类型
 
-optional arguments:
-  -h              show this message
-  -l              list available boards
-  -c              run flash check/verify only (skip upload)
-  -b &lt;baud&gt;       serial baud rate (default is 250000)
-  -f &lt;firmware&gt;   path to klipper.bin
+可选参数：
+  -h              显示此信息
+  -l              列出可用控制板
+  -c              进行闪存检查/仅验证（跳过上传）
+  -b &lt;波特率&gt;      串口波特率 (默认为250000)
+  -f &lt;firmware&gt;   klipper.bin文件路径
 </code></pre></div>
 
 <p>如果您的电路板使用以自定义波特率连接的固件刷新，则可以通过指定 <code>-b</code> 选项进行升级：</p>
@@ -1450,12 +1450,12 @@ optional arguments:
 </code></pre></div>
 
 <p>请注意，升级 MKS Robin E3 时，无需手动运行 <code>update_mks_robin.py</code> 并将生成的二进制文件提供给 <code>flash-sdcard.sh</code>。 此过程在上传过程中自动执行。</p>
-<p>The <code>-c</code> option is used to perform a check or verify-only operation to test if the board is running the specified firmware correctly. This option is primarily intended for cases where a manual power-cycle is necessary to complete the flashing procedure, such as with bootloaders that use SDIO mode instead of SPI to access their SD Cards. (See Caveats below) But, it can also be used anytime to verify if the code flashed into the board matches the version in your build folder on any supported board.</p>
+<p><code>-c</code> 选项用于执行检查或只验证的操作，以测试控制板是否正确运行指定的固件。这个选项主要是针对需要手动断电来完成刷写程序的情况，比如使用SDIO模式而不是SPI来访问SD卡的引导程序。(见下面的注意事项）但是，它也可以在任何时候用来验证在任何支持的板子上刷入板子的固件是否与你的构建文件夹中的版本一致。</p>
 <h2 id="_3">注意事项<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <ul>
 <li>如介绍中所述，此方法仅适用于升级固件。 初始刷鞋程序必须按照适用于您的控制器板的说明手动完成。</li>
 <li>虽然可以刷新更改串行波特率或连接接口（即：从 USB 到 UART）的构建，但验证终将失败，因为脚本将无法重新连接到 MCU 以验证当前版本。</li>
-<li>Only boards that use SPI for SD Card communication are supported. Boards that use SDIO, such as the Flymaker Flyboard and MKS Robin Nano V1/V2, will not work in SDIO mode. However, it's usually possible to flash such boards using Software SPI mode instead. But if the board's bootloader only uses SDIO mode to access the SD Card, a power-cycle of the board and SD Card will be necessary so that the mode can switch from SPI back to SDIO to complete reflashing. Such boards should be defined with <code>skip_verify</code> enabled to skip the verify step immediately after flashing. Then after the manual power-cycle, you can rerun the exact same <code>./scripts/flash-sdcard.sh</code> command, but add the <code>-c</code> option to complete the check/verify operation. See <a href="#flashing-boards-that-use-sdio">Flashing Boards that use SDIO</a> for examples.</li>
+<li>只支持使用SPI进行SD卡通信的控制板。使用SDIO的控制，如Flymaker Flyboard和MKS Robin Nano V1/V2，将不能在SDIO模式下工作。然而，通常可以使用软件 SPI 模式来刷写这种板子。但是如果板子的 bootloader 只支持使用SDIO模式来访问SD卡，就需要对板子和SD卡进行电源循环，以便模式可以从SPI切换回SDIO来完成重新刷写。这样的板子应该在定义时启用<code>skip_verify</code> ，以便在刷写后立即跳过验证步骤。然后在手动断电后，你可以重新运行完全相同的<code>./scripts/flash-sdcard.sh</code> 命令，但加入<code>-c</code> 选项来完成检查/验证操作。请参阅<a href="#flashing-boards-that-use-sdio">刷写使用SDIO的控制板</a>以了解实例。</li>
 </ul>
 <h2 id="_4">电路板定义<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>大多数常见的电路板都应该可用，但如有必要，可以添加新的电路板定义。 板定义位于<code>~/klipper/scripts/spi_flash/board_defs.py</code>。 定义存储在字典中，例如：</p>
@@ -1472,17 +1472,17 @@ optional arguments:
 <p>可以指定以下字段：</p>
 <ul>
 <li><code>mcu</code>：微控制器类型。这可以在使用<code>make menuconfig</code>配置构建配置后通过运行<code>cat .config | grep CONFIG_MCU</code>获取。 此字段是必需的。</li>
-<li><code>spi_bus</code>：连接到 SD 卡的 SPI 总线。 这应该从电路板的原理图中检索。 此字段是必需的。</li>
-<li><code>cs_pin</code>：连接到 SD 卡的芯片选择引脚。 这应该从电路板原理图中检索。 此字段是必需的。</li>
+<li><code>spi_bus</code>：连接到 SD 卡的 SPI 总线。 这应该可以在控制板的原理图中找到。 此字段是必需的。</li>
+<li><code>cs_pin</code>：连接到 SD 卡的芯片选择引脚。 可以在控制板的原理图中找到。 此字段是必需的。</li>
 <li><code>firmware_path</code>：SD 卡上固件应传输的路径。 默认是<code>firmware.bin</code>。</li>
-<li><code>current_firmware_path</code>: The path on the SD Card where the renamed firmware file is located after a successful flash. The default is <code>firmware.cur</code>.</li>
-<li><code>skip_verify</code>: This defines a boolean value which tells the scripts to skip the firmware verification step during the flashing process. The default is <code>False</code>. It can be set to <code>True</code> for boards that require a manual power-cycle to complete flashing. To verify the firmware afterward, run the script again with the <code>-c</code> option to perform the verification step. <a href="#caveats">See caveats with SDIO cards</a></li>
+<li><code>current_firmware_path</code> ：刷写成功后，SD卡上重命名的固件文件所在的路径。默认是<code>firmware.cur</code> 。</li>
+<li><code>skip_verify</code>: 定义了一个布尔值，它告诉脚本在刷写过程中跳过固件验证步骤。默认值是<code>False</code> 。对于需要手动断电才能完成刷写的控制板，它可以被设置为<code>True</code> 。要想在之后验证固件，可以用<code>-c</code> 选项再次运行脚本来执行验证步骤。<a href="#caveats">参见SDIO卡的注意事项</a></li>
 </ul>
-<p>If software SPI is required, the <code>spi_bus</code> field should be set to <code>swspi</code> and the following additional field should be specified:</p>
+<p>如果需要软件 SPI，<code>spi_bus</code> 字段应设置为 <code>swspi</code>，并应指定以下附加字段：</p>
 <ul>
 <li><code>spi_pins</code>：这应该是 3 个逗号分隔的引脚，以 <code>miso,mosi,sclk</code> 的格式连接到 SD 卡。</li>
 </ul>
-<p>It should be exceedingly rare that Software SPI is necessary, typically only boards with design errors or boards that normally only support SDIO mode for their SD Card will require it. The <code>btt-skr-pro</code> board definition provides an example of the former, and the <code>btt-octopus-f446-v1</code> board definition provides an example of the latter.</p>
+<p>通常只有设计错误或只支持SD卡的SDIO模式的控制板才会需要软件SPI，这种情况极为罕见。<code>btt-skr-pro</code> 控制板定义提供了前者的例子，<code>btt-octopus-f446-v1</code> 控制板定义提供了后者的例子。</p>
 <p>在创建新板定义之前，应检查现有板定义是否满足新板所需的标准。 如果是这种情况，可以指定<code>BOARD_ALIAS</code>。 例如，可以添加以下别名来指定“my-new-board”作为“generic-lpc1768”的别名：</p>
 <div class="highlight"><pre><span></span><code><span class="n">BOARD_ALIASES</span> <span class="o">=</span> <span class="p">{</span>
     <span class="o">...&lt;</span><span class="n">原先的别名</span><span class="o">&gt;</span><span class="p">,</span>
@@ -1491,11 +1491,11 @@ optional arguments:
 </code></pre></div>
 
 <p>如果您需要一个新的电路板定义并且您对上述过程感到不舒服，建议您在 <a href="Contact.html#discord">Klipper Community Discord</a> 中请求一个。</p>
-<h2 id="flashing-boards-that-use-sdio">Flashing Boards that use SDIO<a class="headerlink" href="#flashing-boards-that-use-sdio" title="Permanent link">&para;</a></h2>
-<p><a href="#caveats">As mentioned in the Caveats</a>, boards whose bootloader uses SDIO mode to access their SD Card require a power-cycle of the board, and specifically the SD Card itself, in order to switch from the SPI Mode used while writing the file to the SD Card back to SDIO mode for the bootloader to flash it into the board. These board definitions will use the <code>skip_verify</code> flag, which tells the flashing tool to stop after writing the firmware to the SD Card so that the board can be manually power-cycled and the verification step deferred until that's complete.</p>
-<p>There are two scenarios -- one with the RPi Host running on a separate power supply and the other when the RPi Host is running on the same power supply as the main board being flashed. The difference is whether or not it's necessary to also shutdown the RPi and then <code>ssh</code> again after the flashing is complete in order to do the verification step, or if the verification can be done immediately. Here's examples of the two scenarios:</p>
-<h3 id="sdio-programming-with-rpi-on-separate-power-supply">SDIO Programming with RPi on Separate Power Supply<a class="headerlink" href="#sdio-programming-with-rpi-on-separate-power-supply" title="Permanent link">&para;</a></h3>
-<p>A typical session with the RPi on a Separate Power Supply looks like the following. You will, of course, need to use your proper device path and board name:</p>
+<h2 id="sdio">刷写使用SDIO的控制板<a class="headerlink" href="#sdio" title="Permanent link">&para;</a></h2>
+<p><a href="#caveats">正如在注意事项中提到的那样</a>，引导程序使用SDIO模式访问它们的SD卡的控制板需要对控制板进行电源循环，特别是SD卡本身，以便从将文件写入SD卡时使用的SPI模式切换回SDIO模式，以便引导程序将其刷写到板子上。这些板子的定义将使用<code>skip_verify</code> 标志，它告诉刷写工具在将固件写入SD卡后停止，以便控制板可以手动断电并推迟验证步骤直到完成。</p>
+<p>有两种情况 - 一种是RPi主机在独立电源上运行，另一种是RPi主机与被刷写的主板在同一电源上运行。区别在于是否有必要同时关闭RPi，然后在刷写完成后再次<code>ssh</code> ，以进行验证步骤，或者是否可以立即进行验证。下面是这两种情况的例子：</p>
+<h3 id="rpisdio">RPi有独立的电源时进行SDIO刷写<a class="headerlink" href="#rpisdio" title="Permanent link">&para;</a></h3>
+<p>使用独立电源的RPi的典型流程看起来像下面这样。当然，你需要使用适当的设备路径和控制板名称：</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 cd ~/klipper
 git pull
@@ -1503,13 +1503,13 @@ make clean
 make menuconfig
 make
 ./scripts/flash-sdcard.sh /dev/ttyACM0 btt-octopus-f446-v1
-[[[manually power-cycle the printer board here when instructed]]]
+[[[在提示时手动重启打印机控制板]]]
 ./scripts/flash-sdcard.sh -c /dev/ttyACM0 btt-octopus-f446-v1
 sudo service klipper start
 </code></pre></div>
 
-<h3 id="sdio-programming-with-rpi-on-the-same-power-supply">SDIO Programming with RPi on the Same Power Supply<a class="headerlink" href="#sdio-programming-with-rpi-on-the-same-power-supply" title="Permanent link">&para;</a></h3>
-<p>A typical session with the RPi on the Same Power Supply looks like the following. You will, of course, need to use your proper device path and board name:</p>
+<h3 id="rpisdio_1">对与RPi在同一电源上的主板进行SDIO刷写<a class="headerlink" href="#rpisdio_1" title="Permanent link">&para;</a></h3>
+<p>RPI和控制板在同一电源上的典型会话看起来像下面这样。当然，你需要使用正确的设备路径和控制板名称：</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 cd ~/klipper
 git pull
@@ -1518,23 +1518,23 @@ make menuconfig
 make
 ./scripts/flash-sdcard.sh /dev/ttyACM0 btt-octopus-f446-v1
 sudo shutdown -h now
-[[[wait for the RPi to shutdown, then power-cycle and ssh again to the RPi when it restarts]]]
+[[[等RPI关机后，断电重启后再次 ssh 连接到 RPi]]]
 sudo service klipper stop
 cd ~/klipper
 ./scripts/flash-sdcard.sh -c /dev/ttyACM0 btt-octopus-f446-v1
 sudo service klipper start
 </code></pre></div>
 
-<p>In this case, since the RPi Host is being restarted, which will restart the <code>klipper</code> service, it's necessary to stop <code>klipper</code> again before doing the verification step and restart it after verification is complete.</p>
-<h3 id="sdio-to-spi-pin-mapping">SDIO to SPI Pin Mapping<a class="headerlink" href="#sdio-to-spi-pin-mapping" title="Permanent link">&para;</a></h3>
-<p>If your board's schematic uses SDIO for its SD Card, you can map the pins as described in the chart below to determine the compatible Software SPI pins to assign in the <code>board_defs.py</code> file:</p>
+<p>在这种情况下，由于RPi主机被重新启动，这将重新启动<code>klipper</code> 服务，所以有必要在做验证步骤之前再次停止<code>klipper</code> ，并在验证完成后重新启动服务。</p>
+<h3 id="sdiospi">SDIO到SPI引脚映射<a class="headerlink" href="#sdiospi" title="Permanent link">&para;</a></h3>
+<p>如果你的控制板原理图显示它使用SDIO的SD卡，你可以按照下图描述的方式映射引脚，以确定在<code>board_defs.py</code> 文件中分配的兼容的软件SPI引脚：</p>
 <table>
 <thead>
 <tr>
-<th align="center">SD Card Pin</th>
-<th align="center">Micro SD Card Pin</th>
-<th align="center">SDIO Pin Name</th>
-<th align="center">SPI Pin Name</th>
+<th align="center">SD 卡引脚</th>
+<th align="center">MicroSD卡引脚</th>
+<th align="center">SDIO 引脚名称</th>
+<th align="center">SPI引脚名称</th>
 </tr>
 </thead>
 <tbody>
@@ -1589,8 +1589,8 @@ sudo service klipper start
 <tr>
 <td align="center">N/A</td>
 <td align="center">9</td>
-<td align="center">Card Detect (CD)</td>
-<td align="center">Card Detect (CD)</td>
+<td align="center">卡片检测 (CD)</td>
+<td align="center">卡片检测 (CD)</td>
 </tr>
 <tr>
 <td align="center">6</td>
@@ -1600,7 +1600,7 @@ sudo service klipper start
 </tr>
 </tbody>
 </table>
-<p>* None (PU) indicates an unused pin with a pull-up resistor</p>
+<p>* None (PU)表示有上拉电阻的未使用引脚</p>
 
               
             </article>

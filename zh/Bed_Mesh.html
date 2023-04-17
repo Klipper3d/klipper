@@ -730,8 +730,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#loading-the-default-profile" class="md-nav__link">
-    Loading the default profile
+  <a href="#_13" class="md-nav__link">
+    加载默认配置文件
   </a>
   
 </li>
@@ -742,14 +742,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
+  <a href="#_14" class="md-nav__link">
     输出
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
+  <a href="#_15" class="md-nav__link">
     清除网格状态
   </a>
   
@@ -1497,8 +1497,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#loading-the-default-profile" class="md-nav__link">
-    Loading the default profile
+  <a href="#_13" class="md-nav__link">
+    加载默认配置文件
   </a>
   
 </li>
@@ -1509,14 +1509,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
+  <a href="#_14" class="md-nav__link">
     输出
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
+  <a href="#_15" class="md-nav__link">
     清除网格状态
   </a>
   
@@ -1552,7 +1552,7 @@
 
 
 <h1 id="_1">床网<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>网床 插件可用于补偿热床表面的不规则性，以保证在打印过程中获得更好的第一层。 需要注意的是，基于软件的校正还不能达到完美的程度，它只能尽可能达到床的形状。网床 也无法补偿机械和电气导致的问题。 如果机器没装好结构歪了或探针不准确，则 网床 模块将无法从探测过程中获得令人满意的结果。</p>
+<p>床网模块可以用于补偿床面的不规则性，以实现更好的首层均一性。需要注意的是，基于软件的校正无法达到完美的结果，它只能近似地模拟床面的形状。床网模块也无法对机械和电气问题进行补偿。如果一个轴倾斜或探针不准确，那么床网模块将无法从探测过程中获得准确的结果。</p>
 <p>在进行网格校准之前，需要先校准探针的 Z 偏移。如果使用限位开关进行Z轴定位，也需要对其进行校准。请参阅<a href="Probe_Calibrate.html">探针校准</a>和<a href="Manual_Level.html">手动调平</a>中的 Z_ENDSTOP_CALIBRATE 获取更多信息。</p>
 <h2 id="_2">基本配置<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <h3 id="_3">矩形床<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
@@ -1569,7 +1569,7 @@ probe_count: 5, 3
 <li><code>speed: 120</code> <em>默认值：50</em> 探针在两个点之间移动的速度。</li>
 <li><code>horizontal_move_z: 5</code> <em>默认值：5</em> 探针前往下一个点之前Z需要抬升的高度。</li>
 <li><code>mesh_min: 35,6</code> <em>（必须存在）</em>第一个探测的坐标，距离原点最近。该坐标就是探针所在的位置。</li>
-<li><code>mesh_max: 240,198</code> <em>必须配置</em> 距离原点最远的探测坐标。 这不一定是最后一个探测点，因为探测会以锯齿形的方式运动。 与 <code>mesh_min</code> 一样，这个坐标相对于探针。</li>
+<li><code>mesh_max: 240, 198</code> <em>必填</em> 探测坐标最远离原点的点。这不一定是最后一个被探测到的点，因为探测过程是以锯齿形进行的。与 <code>mesh_min</code> 一样，此坐标相对于探针位置。</li>
 <li><code>probe_count: 5, 3</code> <em>默认值：3, 3</em> 每个轴上要探测的点数，指定为 X, Y 整数值。 在本示例中，将沿 X 轴探测 5 个点，沿 Y 轴探测 3 个点，总共探测 15 个点。 请注意，如果您想要一个方形网格，例如 3x3，可以将指定其为一个整数值，比如 <code>probe_count: 3</code>。 请注意，网格需要沿每个轴的最小 probe_count 为3。</li>
 </ul>
 <p>下图演示了如何使用 <code>mesh_min</code>、<code>mesh_max</code> 和 <code>probe_count</code> 选项来生成探测点。 箭头表示探测过程的运动方向，从“mesh_min”开始。 图中所示，当探针位于“mesh_min”时，喷嘴将位于 (11, 1)，当探针位于“mesh_max”时，喷嘴将位于 (206, 193)。</p>
@@ -1589,12 +1589,12 @@ round_probe_count: 5
 <li><code>mesh_origin: 0, 0</code> <em>默认值：0, 0</em> 探测网格的中心点。 该坐标相对于探针的位置。 虽然默认值为 0,0，但如果希望探测床的边角可以修改该值。 请参阅下图。</li>
 <li><code>round_probe_count: 5</code> <em>默认值： 5</em> 这是一个整数值，用于限制沿 X 轴和 Y 轴的最大探测点数。 “最大”是指沿网格原点探测的点数。 该值必须是奇数，因为需要探测网格的中心。</li>
 </ul>
-<p>下图展示了如何生成探测点。 如您所见，将 <code>mesh_origin</code> 设置为 (-10, 0) 允许我们指定更大的网格半径 85mm。</p>
+<p>下面的插图展示了如何生成探测点。如您所见，将 <code>mesh_origin</code> 设置为 (-10, 0) 允许我们指定更大的网格半径为 85。</p>
 <p><img alt="圆形网床基本配置" src="img/bedmesh_round_basic.svg" /></p>
 <h2 id="_5">高级配置<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>下面详细解释了更高级的配置选项。 每个示例都将建立在上面显示的基本矩形床配置之上。 每个高级选项都以相同的方式应用于圆床。</p>
 <h3 id="_6">网格插值<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
-<p>虽然可以使用简单的双线性插值直接对探测网格的数据进行采样以确定探测点之间的 Z 值，但使用更高级的插值算法来插入额外的点以增加网格密度通常很有用。 这些算法向网格添加曲率，试图模拟床的材料属性。 网床提供了拉格朗日和双三次插值来实现这一点。</p>
+<p>虽然可以直接使用简单的双线性插值来对探测矩阵进行采样，以确定探测点之间的 Z 值，但通常使用更高级的插值算法来插值额外的点，以增加网格密度，效果通常很好。这些算法会向网格添加曲率，试图模拟床的材料属性。床网提供拉格朗日和双三次插值来实现这一点。</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -1629,7 +1629,7 @@ split_delta_z: .025
 <li><code>move_check_distance: 5</code> <em>默认值：5</em> 在执行拆分之前检查 Z 中需要变化的最小距离。 在此示例中，算法将遍历超过 5 毫米的移动。 每 5mm 将查找一次网格的Z ，并将其与前一次移动的 Z 值进行比较。 如果三角洲满足 <code>split_delta_z</code> 设置的阈值，则移动将被拆分并继续遍历。 重复此过程，直到到达移动结束处，在此将应用最终调整。 比 <code>move_check_distance</code> 短的移动将正确的 Z 调整直接应用于移动，无需遍历或拆分。</li>
 <li><code>split_delta_z: .025</code> <em>默认值：.025</em> 如上所述，这是触发移动拆分所需的最小偏差。 在上面的示例中，任何偏差为 +/- .025 mm的 Z 值都将触发拆分。</li>
 </ul>
-<p>一般来说，这些选项的默认值就足够了，但事实上，<code>move_check_distance</code> 的默认值 5mm 可能会有点过度矫正。 所以，高端可能希望尝试使用这个选项来获得挤出最佳的第一层。</p>
+<p>通常这些选项的默认值已经足够了，事实上 <code>move_check_distance</code> 的默认值 5mm 可能过于保守。但是，高级用户可能希望尝试这些选项，以获取最佳的第一层效果。</p>
 <h3 id="_8">网格淡出<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>启用“网格淡出”后，Z 轴的调整将在配置中定义的距离范围内逐步消失。 这是通过对层高进行小幅调整来实现的，根据床的形状增加或减少。 网格淡出完成后，不再使用 Z 调整，使打印的表面是平坦的而不是床弯曲的形状。 网格淡出也可能会产生一些不良表现，如果网格淡出过快，可能会导致打印件上出现可见的瑕疵（伪影）。 此外，如果您的床明显变形，网格淡出会缩小或拉伸打印件的 Z 高度。 因此，默认情况下禁用网格淡出。</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
@@ -1646,10 +1646,10 @@ fade_target: 0
 <ul>
 <li><code>fade_start: 1</code> <em>默认值：1</em> 开始网格淡出的值，在设定的fade_start值之后逐步停止调整Z的高度。 建议在打印几层之后再开始淡出层高。</li>
 <li><code>fade_end: 10</code> <em>默认值：0</em> 网格淡出完成的 Z 高度。 如果此值低于<code>fade_start</code>，则禁用网格淡出。 该值可以根据打印表面的弯曲程度进行调整。 明显弯曲的表面应该在将网格淡出的距离长。 接近平坦的表面可能能够降低该值以更快地逐步淘汰。 如果对 <code>fade_start</code> 使用默认值 1，则 10mm 是一个合理的值。</li>
-<li><code>fade_target: 0</code> <em>默认值：热床网格的平均Z值</em> <code>fade_target</code> 是在网格淡出完成后应用于整个床的额外 Z 偏移。一 般来说，这个值是 0，但有些情况下它需要改动。 例如，您在热床的归位位置与床的平均探测高度有偏差，它比床的平均探测高度低 0.2 mm。 如果 <code>fade_target</code> 为 0，淡出会将整个床的打印平均缩小 0.2 mm。 通过将 <code>fade_target</code> 设置为 0.2，归位的位置将扩大 0.2 毫米，但床的其余部分将具有准确的尺寸。 一般来说，最好不要修改 <code>fade_target</code> 而修正机器本身导致的误差，以便使用网格的平均高度，但是如果想要在床的特定部分打印，可能需要手动调整网格淡出。</li>
+<li><code>fade_target: 0</code> <em>默认值：网格的平均 Z 值</em> <code>fade_target</code> 可以被视为在淡化完成后应用于整个床面的额外 Z 偏移量。一般来说，我们希望这个值为 0，但有些情况下不应该是这样的。例如，假设您在床上的归位位置是一个异常值，比床面的平均探测高度低 0.2 毫米。如果 <code>fade_target</code> 为 0，淡化将会使整个床面平均降低 0.2 毫米。通过将 <code>fade_target</code> 设置为 0.2，淡化区域将会提高到 0.2 毫米，但是，床面的其余部分将保持原大小。通常最好将 <code>fade_target</code> 留在配置中，以便使用网格的平均高度，但是如果您想在床面的特定部分上打印，则可能需要手动调整淡化目标。</li>
 </ul>
 <h3 id="_9">相对参考索引<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
-<p>大部分探针检测到的值容易产生误差，即：由温度或探测介质干扰产生的探测误差。 这加大探针Z偏移的看计算难度，尤其是在不同的热床温度下。 因此，一些打印机使用限位开关来归位 Z 轴，并使用探针来校准网格。 这些打印机可以从配置中的相对参考索引（relative_reference_index）中寻找帮助。</p>
+<p>大多数探针容易出现漂移，即由于热量或干扰而引入的探测不准确。这可能会使计算探针的 z 偏移量变得困难，特别是在不同的床温度下。因此，一些打印机使用一个终点开关归位 Z 轴，使用探针探测网格。这些打印机可以通过配置相对参考指数来获益。</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -1717,19 +1717,19 @@ faulty_region_4_max: 45.0, 210.0
 <p><code>BED_MESH_PROFILE SAVE=&lt;名称&gt; LOAD=&lt;名称&gt; REMOVE=&lt;名称&gt;</code></p>
 <p>在执行 BED_MESH_CALIBRATE 后，可以将当前网格状态保存到一个命名的配置中。这样不需要重新探测打印床就可以载入一个网格。在使用<code>BED_MESH_PROFILE SAVE=&lt;名称&gt;</code>保存了一个配置文件后，可以执行<code>SAVE_CONFIG</code> G代码将配置写入 printer.cfg。</p>
 <p>可以通过运行 <code>BED_MESH_PROFILE LOAD=&lt;名称&gt;</code> 来载入配置。</p>
-<p>请注意，每次运行 BED_MESH_CALIBRATE 后，当前状态会被保存到 <em>default</em> 配置。如果这个配置在配置文件中存在，它会在 Klipper 启动时自动载入。如果不希望这种行为，可以通过以下命令删除 <em>default</em> 配置：</p>
+<p>需要注意的是，每次进行 BED_MESH_CALIBRATE 时，当前状态会自动保存到 <em>default</em> 配置文件中。可以按以下方式删除 <em>default</em> 配置文件：</p>
 <p><code>BED_MESH_PROFILE REMOVE=default</code></p>
 <p>任何其他保存的配置也可以用相同的方式删除，用你想删除的配置名称替换<em>default</em>。</p>
-<h4 id="loading-the-default-profile">Loading the default profile<a class="headerlink" href="#loading-the-default-profile" title="Permanent link">&para;</a></h4>
-<p>Previous versions of <code>bed_mesh</code> always loaded the profile named <em>default</em> on startup if it was present. This behavior has been removed in favor of allowing the user to determine when a profile is loaded. If a user wishes to load the <code>default</code> profile it is recommended to add <code>BED_MESH_PROFILE LOAD=default</code> to either their <code>START_PRINT</code> macro or their slicer's "Start G-Code" configuration, whichever is applicable.</p>
-<p>Alternatively the old behavior of loading a profile at startup can be restored with a <code>[delayed_gcode]</code>:</p>
+<h4 id="_13">加载默认配置文件<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h4>
+<p>以前版本的<code>bed_mesh</code>如果(default)默认配置存在，则始终在启动时加载名为<em>default</em>的配置文件。现已删除此行为，以允许用户确定何时加载配置文件。如果用户希望加载<code>default</code>配置文件，则建议将 <code>BED_MESH_PROFILE LOAD=default</code> 添加到其 <code>START_PRINT</code> 宏或其切片软件的“启动 G代码”配置中，视情况而定。</p>
+<p>或者可以通过添加<code>[delayed_gcode]</code>恢复在启动时加载配置文件的旧行为：</p>
 <div class="highlight"><pre><span></span><code><span class="k">[delayed_gcode bed_mesh_init]</span>
 <span class="na">initial_duration</span><span class="o">:</span><span class="w"> </span><span class="s">.01</span>
 <span class="na">gcode</span><span class="o">:</span>
 <span class="w">  </span><span class="na">BED_MESH_PROFILE LOAD</span><span class="o">=</span><span class="s">default</span>
 </code></pre></div>
 
-<h3 id="_13">输出<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<h3 id="_14">输出<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_OUTPUT PGP=[0 | 1]</code></p>
 <p>将当前网格状态输出到终端。请注意，输出的是网格本身</p>
 <p>PGP 参数是“打印生成的点”的简写。如果设置了<code>PGP=1</code>，生成的探测点将输出到终端：</p>
@@ -1753,7 +1753,7 @@ faulty_region_4_max: 45.0, 210.0
 </code></pre></div>
 
 <p>"Tool Adjusted"（工具调整）点指每个点的喷嘴位置，"Probe"（探针）点指探头位置。请注意，手动探测时"Probe"（探针）点时将同时指工具和喷嘴位置。</p>
-<h3 id="_14">清除网格状态<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<h3 id="_15">清除网格状态<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CLEAR</code></p>
 <p>此 gcode 可用于清除内部网格状态。</p>
 <h3 id="xy">应用X/Y偏移量<a class="headerlink" href="#xy" title="Permanent link">&para;</a></h3>

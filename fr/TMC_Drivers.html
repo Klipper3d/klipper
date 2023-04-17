@@ -990,8 +990,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-signale-une-erreur-shorttognd-ou-lowsideshort" class="md-nav__link">
-    TMC signale une erreur : ... ShortToGND OU LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1649,8 +1649,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-signale-une-erreur-shorttognd-ou-lowsideshort" class="md-nav__link">
-    TMC signale une erreur : ... ShortToGND OU LowSideShort
+  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
+    TMC reports error: ... ShortToGND OR ShortToSupply
   </a>
   
 </li>
@@ -1897,7 +1897,7 @@ gcode:
 <p>Quelques erreurs courantes et conseils pour les diagnostiquer :</p>
 <h4 id="tmc-signale-une-erreur-ot1overtemperror">TMC signale une erreur : <code>... ot=1(OvertempError !)</code><a class="headerlink" href="#tmc-signale-une-erreur-ot1overtemperror" title="Permanent link">&para;</a></h4>
 <p>Cela indique que le pilote du moteur s'est désactivé car il est en surchauffe. Les solutions typiques consistent à diminuer le courant du pilote de moteur pas à pas, à augmenter le refroidissement du pilote du moteur pas à pas et/ou à augmenter le refroidissement du pilote du moteur pas à pas.</p>
-<h4 id="tmc-signale-une-erreur-shorttognd-ou-lowsideshort">TMC signale une erreur : <code>... ShortToGND</code> OU <code>LowSideShort</code><a class="headerlink" href="#tmc-signale-une-erreur-shorttognd-ou-lowsideshort" title="Permanent link">&para;</a></h4>
+<h4 id="tmc-reports-error-shorttognd-or-shorttosupply">TMC reports error: <code>... ShortToGND</code> OR <code>ShortToSupply</code><a class="headerlink" href="#tmc-reports-error-shorttognd-or-shorttosupply" title="Permanent link">&para;</a></h4>
 <p>Cela indique que le pilote s'est désactivé car il a détecté un courant très élevé le traversant. Cela peut indiquer un fil desserré ou court-circuité vers le moteur pas à pas ou dans le moteur pas à pas lui-même.</p>
 <p>Cette erreur peut également se produire si vous utilisez le mode StealthChop et que le pilote TMC n'est pas en mesure de prédire avec précision la charge mécanique du moteur. (Si le pilote fait une mauvaise prédiction, il peut envoyer trop de courant à travers le moteur et déclencher sa propre détection de surintensité.) Pour tester cela, désactivez le mode StealthChop et vérifiez si les erreurs continuent de se produire.</p>
 <h4 id="tmc-signale-une-erreur-reset1reset-or-cs_actual0reset-or-se0reset">TMC signale une erreur : <code>... reset=1(Reset)</code> OR <code>CS_ACTUAL=0(Reset ?)</code> OR <code>SE=0(Reset?)</code><a class="headerlink" href="#tmc-signale-une-erreur-reset1reset-or-cs_actual0reset-or-se0reset" title="Permanent link">&para;</a></h4>
