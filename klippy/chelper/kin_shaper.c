@@ -171,6 +171,9 @@ input_shaper_set_sk(struct stepper_kinematics *sk
         return -1;
     is->sk.active_flags = orig_sk->active_flags;
     is->orig_sk = orig_sk;
+    is->sk.commanded_pos = orig_sk->commanded_pos;
+    is->sk.last_flush_time = orig_sk->last_flush_time;
+    is->sk.last_move_time = orig_sk->last_move_time;
     return 0;
 }
 
