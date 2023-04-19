@@ -284,6 +284,8 @@ class ResonanceTester:
         if not self.is_valid_name_suffix(name_suffix):
             raise gcmd.error("Invalid NAME parameter")
 
+        input_shaper = self.printer.lookup_object('input_shaper', None)
+
         # Setup shaper calibration
         helper = shaper_calibrate.ShaperCalibrate(self.printer)
 
@@ -302,6 +304,9 @@ class ResonanceTester:
                     "Recommended shaper_type_%s = %s, shaper_freq_%s = %.1f Hz"
                     % (axis_name, best_shaper.name,
                        axis_name, best_shaper.freq))
+            if input_shaper is not None:
+                helper.apply_params(input_shaper, axis_name,
+                                    best_shaper.name, best_shaper.freq)
             helper.save_params(configfile, axis_name,
                                best_shaper.name, best_shaper.freq)
             csv_name = self.save_calibration_data(

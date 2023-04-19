@@ -1032,7 +1032,9 @@ frequency responses and the different input shapers values are written
 to a CSV file(s) `/tmp/calibration_data_<axis>_<name>.csv`. Unless
 specified, NAME defaults to the current time in "YYYYMMDD_HHMMSS"
 format. Note that the suggested input shaper parameters can be
-persisted in the config by issuing `SAVE_CONFIG` command.
+persisted in the config by issuing `SAVE_CONFIG` command, and if
+`[input_shaper]` was already enabled previously, these parameters
+take effect immediately.
 
 ### [respond]
 
