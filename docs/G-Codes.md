@@ -1018,7 +1018,7 @@ frequency response is calculated (across all probe points) and written into
 
 #### SHAPER_CALIBRATE
 `SHAPER_CALIBRATE [AXIS=<axis>] [NAME=<name>] [FREQ_START=<min_freq>]
-[FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]
+[FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>] [CHIPS=<adxl345_chip_name>]
 [MAX_SMOOTHING=<max_smoothing>]`: Similarly to `TEST_RESONANCES`, runs
 the resonance test as configured, and tries to find the optimal
 parameters for the input shaper for the requested axis (or both X and
