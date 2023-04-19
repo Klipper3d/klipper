@@ -78,6 +78,13 @@
   #define USARTx_FUNCTION GPIO_FUNCTION(8)
   #define USARTx UART4
   #define USARTx_IRQn UART4_IRQn
+#elif CONFIG_STM32_SERIAL_USART5
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD2,PD3");
+  #define GPIO_Rx GPIO('D', 2)
+  #define GPIO_Tx GPIO('D', 3)
+  #define USARTx_FUNCTION GPIO_FUNCTION(3)
+  #define USARTx USART5
+  #define USARTx_IRQn USART5_IRQn
 #endif
 
 #if CONFIG_MACH_STM32F031
@@ -90,6 +97,10 @@
   // Some of the stm32g0 MCUs have slightly different register names
   #if CONFIG_MACH_STM32G0B1
     #define USART2_IRQn USART2_LPUART2_IRQn
+    #define USART3_IRQn USART3_4_5_6_LPUART1_IRQn
+    #define USART4_IRQn USART3_4_5_6_LPUART1_IRQn
+    #define USART5_IRQn USART3_4_5_6_LPUART1_IRQn
+    #define USART6_IRQn USART3_4_5_6_LPUART1_IRQn
   #endif
   #define USART_CR1_RXNEIE USART_CR1_RXNEIE_RXFNEIE
   #define USART_CR1_TXEIE USART_CR1_TXEIE_TXFNFIE
