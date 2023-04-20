@@ -1843,15 +1843,19 @@ supplementing.</p>
 for signal integrity over a long distance. If you still experience signal
 integrity issues (SPI/I2C errors):</p>
 <ul>
-<li>Double check the wiring with a digital multimeter for:</li>
+<li>Double check the wiring with a digital multimeter for:<ul>
 <li>Correct connections when turned off (continuity)</li>
 <li>Correct power and ground voltages</li>
-<li>I2C only:</li>
+</ul>
+</li>
+<li>I2C only:<ul>
 <li>Check the SCL and SDA lines' resistances to 3.3V are in the range of 900
-      ohms to 1.8K</li>
+  ohms to 1.8K</li>
 <li>For full technical details consult <a href="https://www.pololu.com/file/0J435/UM10204.pdf">chapter 7 of the I2C-bus specification
-      and user manual UM10204</a>
-      for <em>fast-mode</em></li>
+  and user manual UM10204</a>
+  for <em>fast-mode</em></li>
+</ul>
+</li>
 <li>Shorten the cable</li>
 </ul>
 <p>Connect ethernet cable shielding only to the MCU board/Pi ground.</p>
