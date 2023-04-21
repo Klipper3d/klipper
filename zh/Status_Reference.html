@@ -1963,7 +1963,7 @@
 <ul>
 <li><code>pressure_advance</code>：当前的<a href="Pressure_Advance.html">压力提前</a>值。</li>
 <li><code>smooth_time</code>：当前压力提前平滑时间。</li>
-<li><code>motion_queue</code>: The name of the extruder that this extruder stepper is currently synchronized to. This is reported as <code>None</code> if the extruder stepper is not currently associated with an extruder.</li>
+<li><code>motion_queue</code>：当前与该挤出机步进电机同步的挤出机名称。如果该挤出机步进电机目前未与任何挤出机相关联，则报告为<code>None</code>。</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#fan">fan</a>、<a href="Config_Reference.html#heater_fan">heater_fan some_name</a>和<a href="Config_Reference.html#controller_fan">controller_fan some_name</a>对象提供了以下信息：</p>
@@ -2087,7 +2087,7 @@
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#probe">probe</a> 对象中提供了以下信息（如果定义了 <a href="Config_Reference.html#bltouch">bltouch</a> 配置分段，则此对象也可用）：</p>
 <ul>
-<li><code>name</code>: Returns the name of the probe in use.</li>
+<li><code>name</code>：返回正在使用的探针的名称。</li>
 <li><code>last_query</code>：如果探针在上一个 QUERY_PROBE 命令期间报告为"已触发"，则返回 True。请注意，如果在宏中使用它，根据模板展开的顺序，必须在包含此引用的宏之前运行 QUERY_PROBE 命令。</li>
 <li><code>last_z_result</code>：返回上一次 PROBE 命令的结果 Z 值。请注意，由于模板展开的顺序，在宏中使用时必须在包含此引用的宏之前运行 PROBE（或类似）命令。</li>
 </ul>
@@ -2105,11 +2105,11 @@
 <p>以下信息可在<code>screws_tilt_adjust</code>对象中获取：</p>
 <ul>
 <li><code>error</code>: 如果最近的 <code>SCREWS_TILT_CALCULATE</code> 命令包含了 <code>MAX_DEVIATION</code> 参数，并且任何一个已探测的螺丝坐标超过了指定的 <code>MAX_DEVIATION</code>，则返回 True。</li>
-<li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
+<li><code>results["&lt;螺丝&gt;"]</code>：包含以下键的字典：<ul>
 <li><code>z</code>: 螺丝坐标测量的 Z 高度。</li>
-<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise.</li>
-<li><code>adjust</code>: 调整螺丝的圈数，格式为 "HH:MM"，其中 "HH" 表示完整螺丝圈数，"MM" 表示代表部分螺丝圈数的 "时钟面的分钟数"。例如，“01:15”表示旋转螺丝一圈和四分之一圈。</li>
-<li><code>is_base</code>: Returns True if this is the base screw.</li>
+<li><code>sign</code>：一个字符串，指定进行必要的调整时旋转螺丝的方向。“CW”表示顺时针，“CCW”表示逆时针。</li>
+<li><code>adjust</code>: 调整螺丝的圈数，格式为 "HH:MM"，其中 "HH" 表示完整螺丝圈数，"MM" 表示代表部分螺丝圈数的 "时钟面的分钟数"。（例如，“01:15”表示旋转螺丝一圈和四分之一圈。）</li>
+<li><code>is_base</code> ：如果这是基准螺丝，则返回True。</li>
 </ul>
 </li>
 </ul>
@@ -2119,9 +2119,9 @@
 <li><code>printer["servo &lt;配置名&gt;"].value</code>：与指定伺服相关 PWM 引脚的上一次设置的值（0.0 和 1.0 之间的值）。</li>
 </ul>
 <h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>stepper_enable</code> object (this object is available if any stepper is defined):</p>
+<p>以下信息可在<code>stepper_enable</code> 对象中获得（这个对象在定义了任何步进电机后可用）：</p>
 <ul>
-<li><code>steppers["&lt;stepper&gt;"]</code>: Returns True if the given stepper is enabled.</li>
+<li><code>steppers["&lt;步进器&gt;"]</code> ：如果给定的步进器被启用，返回True。</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
 <p><code>system_stats</code> 对象提供了以下信息（该对象始终可用）：</p>
