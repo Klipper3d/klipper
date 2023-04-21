@@ -306,13 +306,17 @@ class PrinterRail:
         self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
         # Primary endstop position
         mcu_endstop = self.endstops[0][0]
+        position_endstop = 0.0
         if hasattr(mcu_endstop, "get_position_endstop"):
-            self.position_endstop = mcu_endstop.get_position_endstop()
+            self.get_position_endstop = mcu_endstop.get_position_endstop
+            position_endstop = self.get_position_endstop()
         elif default_position_endstop is None:
-            self.position_endstop = config.getfloat('position_endstop')
+            position_endstop = config.getfloat('position_endstop')
+            self.get_position_endstop = lambda: position_endstop
         else:
-            self.position_endstop = config.getfloat(
+            position_endstop = config.getfloat(
                 'position_endstop', default_position_endstop)
+            self.get_position_endstop = lambda: position_endstop
         # Axis range
         if need_position_minmax:
             self.position_min = config.getfloat('position_min', 0.)
@@ -320,9 +324,9 @@ class PrinterRail:
                 'position_max', above=self.position_min)
         else:
             self.position_min = 0.
-            self.position_max = self.position_endstop
-        if (self.position_endstop < self.position_min
-            or self.position_endstop > self.position_max):
+            self.position_max = position_endstop
+        if (position_endstop < self.position_min
+            or position_endstop > self.position_max):
             raise config.error(
                 "position_endstop in section '%s' must be between"
                 " position_min and position_max" % config.get_name())
@@ -338,9 +342,9 @@ class PrinterRail:
             'homing_positive_dir', None)
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
-            if self.position_endstop <= self.position_min + axis_len / 4.:
+            if position_endstop <= self.position_min + axis_len / 4.:
                 self.homing_positive_dir = False
-            elif self.position_endstop >= self.position_max - axis_len / 4.:
+            elif position_endstop >= self.position_max - axis_len / 4.:
                 self.homing_positive_dir = True
             else:
                 raise config.error(
@@ -348,9 +352,9 @@ class PrinterRail:
                     % (config.get_name(),))
             config.getboolean('homing_positive_dir', self.homing_positive_dir)
         elif ((self.homing_positive_dir
-               and self.position_endstop == self.position_min)
+               and position_endstop == self.position_min)
               or (not self.homing_positive_dir
-                  and self.position_endstop == self.position_max)):
+                  and position_endstop == self.position_max)):
             raise config.error(
                 "Invalid homing_positive_dir / position_endstop in '%s'"
                 % (config.get_name(),))
@@ -360,7 +364,7 @@ class PrinterRail:
         homing_info = collections.namedtuple('homing_info', [
             'speed', 'position_endstop', 'retract_speed', 'retract_dist',
             'positive_dir', 'second_homing_speed'])(
-                self.homing_speed, self.position_endstop,
+                self.homing_speed, self.get_position_endstop(),
                 self.homing_retract_speed, self.homing_retract_dist,
                 self.homing_positive_dir, self.second_homing_speed)
         return homing_info
