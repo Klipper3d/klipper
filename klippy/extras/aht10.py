@@ -1,4 +1,4 @@
-# AHT10 I2c-based humiditure sensor support
+# AHT10/AHT20/AHT21 I2c-based humiditure sensor support
 #
 # Copyright (C) 2023 Scott Mudge <mail@scottmudge.com>
 #
@@ -9,6 +9,8 @@ from . import bus
 ######################################################################
 # Compatible Sensors:
 #       AHT10      -    Tested w/ BTT GTR 1.0 MCU on i2c3
+#       AHT20      -    Untested but should work
+#       AHT21      -    Tested w/ BTT GTR 1.0 MCU on i2c3
 ######################################################################
 
 AHT10_I2C_ADDR= 0x38
