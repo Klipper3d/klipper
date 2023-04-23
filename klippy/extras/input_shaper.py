@@ -8,32 +8,48 @@ import collections
 import chelper
 from . import shaper_defs
 
-class InputShaperParams:
-    def __init__(self, axis, config):
+def parse_float_list(list_str):
+    def parse_str(s):
+        res = []
+        for line in s.split('\n'):
+            for coeff in line.split(','):
+                res.append(float(coeff.strip()))
+        return res
+    try:
+        return parse_str(list_str)
+    except:
+        return None
+
+class TypedInputShaperParams:
+    shapers = {s.name : s.init_func for s in shaper_defs.INPUT_SHAPERS}
+    def __init__(self, axis, shaper_type, config):
         self.axis = axis
-        self.shapers = {s.name : s.init_func for s in shaper_defs.INPUT_SHAPERS}
-        shaper_type = config.get('shaper_type', 'mzv')
-        self.shaper_type = config.get('shaper_type_' + axis, shaper_type)
-        if self.shaper_type not in self.shapers:
-            raise config.error(
-                    'Unsupported shaper type: %s' % (self.shaper_type,))
-        self.damping_ratio = config.getfloat('damping_ratio_' + axis,
-                                             shaper_defs.DEFAULT_DAMPING_RATIO,
-                                             minval=0., maxval=1.)
-        self.shaper_freq = config.getfloat('shaper_freq_' + axis, 0., minval=0.)
-    def update(self, gcmd):
+        self.shaper_type = shaper_type
+        self.damping_ratio = shaper_defs.DEFAULT_DAMPING_RATIO
+        self.shaper_freq = 0.
+        if config is not None:
+            if shaper_type not in self.shapers:
+                raise config.error(
+                        'Unsupported shaper type: %s' % (shaper_type,))
+            self.damping_ratio = config.getfloat('damping_ratio_' + axis,
+                                                 self.damping_ratio,
+                                                 minval=0., maxval=1.)
+            self.shaper_freq = config.getfloat('shaper_freq_' + axis,
+                                               self.shaper_freq, minval=0.)
+    def get_type(self):
+        return self.shaper_type
+    def get_axis(self):
+        return self.axis
+    def update(self, shaper_type, gcmd):
+        if shaper_type not in self.shapers:
+            raise gcmd.error('Unsupported shaper type: %s' % (shaper_type,))
         axis = self.axis.upper()
         self.damping_ratio = gcmd.get_float('DAMPING_RATIO_' + axis,
                                             self.damping_ratio,
                                             minval=0., maxval=1.)
         self.shaper_freq = gcmd.get_float('SHAPER_FREQ_' + axis,
                                           self.shaper_freq, minval=0.)
-        shaper_type = gcmd.get('SHAPER_TYPE', None)
-        if shaper_type is None:
-            shaper_type = gcmd.get('SHAPER_TYPE_' + axis, self.shaper_type)
-        if shaper_type.lower() not in self.shapers:
-            raise gcmd.error('Unsupported shaper type: %s' % (shaper_type,))
-        self.shaper_type = shaper_type.lower()
+        self.shaper_type = shaper_type
     def get_shaper(self):
         if not self.shaper_freq:
             A, T = shaper_defs.get_none_shaper()
@@ -47,39 +63,99 @@ class InputShaperParams:
             ('shaper_freq', '%.3f' % (self.shaper_freq,)),
             ('damping_ratio', '%.6f' % (self.damping_ratio,))])
 
-class AxisInputShaper:
+class CustomInputShaperParams:
+    SHAPER_TYPE = 'custom'
     def __init__(self, axis, config):
         self.axis = axis
-        self.params = InputShaperParams(axis, config)
-        self.n, self.A, self.T = self.params.get_shaper()
-        self.saved = None
-    def get_name(self):
-        return 'shaper_' + self.axis
+        self.n, self.A, self.T = 0, [], []
+        if config is not None:
+            shaper_a_str = config.get('shaper_a_' + axis)
+            shaper_t_str = config.get('shaper_t_' + axis)
+            self.n, self.A, self.T = self._parse_custom_shaper(
+                    shaper_a_str, shaper_t_str, config.error)
+    def get_type(self):
+        return self.SHAPER_TYPE
     def get_axis(self):
         return self.axis
+    def update(self, shaper_type, gcmd):
+        if shaper_type != self.SHAPER_TYPE:
+            raise gcmd.error('Unsupported shaper type: %s' % (shaper_type,))
+        axis = self.axis.upper()
+        shaper_a_str = gcmd.get('SHAPER_A_' + axis, None)
+        shaper_t_str = gcmd.get('SHAPER_T_' + axis, None)
+        if (shaper_a_str is None) != (shaper_t_str is None):
+            raise gcmd.error("Both SHAPER_A_%s and SHAPER_T_%s parameters"
+                             " must be provided" % (axis, axis))
+        if shaper_a_str is not None:
+            self.n, self.A, self.T = self._parse_custom_shaper(
+                    shaper_a_str, shaper_t_str, gcmd.error)
+    def _parse_custom_shaper(self, custom_a_str, custom_t_str, parse_error):
+        A = parse_float_list(custom_a_str)
+        if A is None:
+            raise parse_error("Invalid shaper A string: '%s'" % (custom_a_str,))
+        if min([abs(a) for a in A]) < 0.001:
+            raise parse_error("All shaper A coefficients must be non-zero")
+        if sum(A) < 0.001:
+            raise parse_error(
+                    "Shaper A parameter must sum up to a positive number")
+        T = parse_float_list(custom_t_str)
+        if T is None:
+            raise parse_error("Invalid shaper T string: '%s'" % (custom_t_str,))
+        if T != sorted(T):
+            raise parse_error("Shaper T parameter is not ordered: %s" % (T,))
+        if len(A) != len(T):
+            raise parse_error(
+                    "Shaper A and T parameters must have the same length:"
+                    " %d vs %d" % (len(A), len(T),))
+        dur = T[-1] - T[0]
+        if len(T) > 1 and dur < 0.001:
+            raise parse_error("Shaper duration is too small (%.6f sec)"
+                              % (dur,))
+        if dur > 0.2:
+            raise parse_error("Shaper duration is too large (%.6f sec)"
+                              % (dur,))
+        return len(A), A, T
     def get_shaper(self):
         return self.n, self.A, self.T
-    def update(self, gcmd):
-        self.params.update(gcmd)
-        old_n, old_A, old_T = self.n, self.A, self.T
+    def get_status(self):
+        return collections.OrderedDict([
+            ('shaper_type', self.SHAPER_TYPE),
+            ('shaper_a', ','.join(['%.6f' % (a,) for a in self.A])),
+            ('shaper_t', ','.join(['%.6f' % (t,) for t in self.T]))])
+
+class AxisInputShaper:
+    def __init__(self, params):
+        self.params = params
+        self.n, self.A, self.T = params.get_shaper()
+        self.saved = None
+    def get_name(self):
+        return 'shaper_' + self.get_axis()
+    def get_type(self):
+        return self.params.get_type()
+    def get_axis(self):
+        return self.params.get_axis()
+    def update(self, shaper_type, gcmd):
+        self.params.update(shaper_type, gcmd)
         self.n, self.A, self.T = self.params.get_shaper()
     def update_stepper_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
+        axis = self.get_axis().encode()
         success = ffi_lib.input_shaper_set_shaper_params(
-                sk, self.axis.encode(), self.n, self.A, self.T) == 0
+                sk, axis, self.n, self.A, self.T) == 0
         if not success:
             self.disable_shaping()
             ffi_lib.input_shaper_set_shaper_params(
-                    sk, self.axis.encode(), self.n, self.A, self.T)
+                    sk, axis, self.n, self.A, self.T)
         return success
     def update_extruder_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
+        axis = self.get_axis().encode()
         success = ffi_lib.extruder_set_shaper_params(
-                sk, self.axis.encode(), self.n, self.A, self.T) == 0
+                sk, axis, self.n, self.A, self.T) == 0
         if not success:
             self.disable_shaping()
             ffi_lib.extruder_set_shaper_params(
-                    sk, self.axis.encode(), self.n, self.A, self.T)
+                    sk, axis, self.n, self.A, self.T)
         return success
     def disable_shaping(self):
         was_enabled = False
@@ -97,9 +173,43 @@ class AxisInputShaper:
         self.saved = None
         return True
     def report(self, gcmd):
-        info = ' '.join(["%s_%s:%s" % (key, self.axis, value)
+        info = ' '.join(["%s_%s:%s" % (key, self.get_axis(), value)
                          for (key, value) in self.params.get_status().items()])
         gcmd.respond_info(info)
+
+class ShaperFactory:
+    def __init__(self):
+        pass
+    def _create_shaper(self, axis, type_name, config=None):
+        if type_name == CustomInputShaperParams.SHAPER_TYPE:
+            return AxisInputShaper(CustomInputShaperParams(axis, config))
+        if type_name in TypedInputShaperParams.shapers:
+            return AxisInputShaper(
+                    TypedInputShaperParams(axis, type_name, config))
+        return None
+    def create_shaper(self, axis, config):
+        shaper_type = config.get('shaper_type', 'mzv')
+        shaper_type = config.get('shaper_type_' + axis, shaper_type).lower()
+        shaper = self._create_shaper(axis, shaper_type, config)
+        if shaper is None:
+            raise config.error("Unsupported shaper type '%s'" % (shaper_type,))
+        return shaper
+    def update_shaper(self, shaper, gcmd):
+        shaper_type = gcmd.get('SHAPER_TYPE', None)
+        if shaper_type is None:
+            shaper_type = gcmd.get('SHAPER_TYPE_' + shaper.get_axis().upper(),
+                                   shaper.get_type())
+        shaper_type = shaper_type.lower()
+        try:
+            shaper.update(shaper_type, gcmd)
+            return shaper
+        except gcmd.error:
+            pass
+        shaper = self._create_shaper(shaper.get_axis(), shaper_type)
+        if shaper is None:
+            raise gcmd.error("Unsupported shaper type '%s'" % (shaper_type,))
+        shaper.update(shaper_type, gcmd)
+        return shaper
 
 class InputShaper:
     def __init__(self, config):
@@ -108,8 +218,9 @@ class InputShaper:
         self.toolhead = None
         self.extruders = []
         self.config_extruder_names = config.getlist('enabled_extruders', [])
-        self.shapers = [AxisInputShaper('x', config),
-                        AxisInputShaper('y', config)]
+        self.shaper_factory = ShaperFactory()
+        self.shapers = [self.shaper_factory.create_shaper('x', config),
+                        self.shaper_factory.create_shaper('y', config)]
         self.input_shaper_stepper_kinematics = []
         self.orig_stepper_kinematics = []
         # Register gcode commands
@@ -192,8 +303,8 @@ class InputShaper:
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
     def cmd_SET_INPUT_SHAPER(self, gcmd):
         if gcmd.get_command_parameters():
-            for shaper in self.shapers:
-                shaper.update(gcmd)
+            self.shapers = [self.shaper_factory.update_shaper(shaper, gcmd)
+                            for shaper in self.shapers]
             self._update_input_shaping()
         for shaper in self.shapers:
             shaper.report(gcmd)
