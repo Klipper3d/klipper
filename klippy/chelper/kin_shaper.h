@@ -11,7 +11,7 @@ struct shaper_pulses {
 struct move;
 
 int init_shaper(int n, double a[], double t[], struct shaper_pulses *sp);
-double shaper_calc_position(struct move *m, int axis, double move_time
-                            , struct shaper_pulses *sp);
+double shaper_calc_position(const struct move *m, int axis, double move_time
+                            , const struct shaper_pulses *sp);
 
 #endif  // kin_shaper.h

@@ -22,14 +22,14 @@ move_alloc(void)
 
 // Return the distance moved given a time in a move
 inline double
-move_get_distance(struct move *m, double move_time)
+move_get_distance(const struct move *m, double move_time)
 {
     return (m->start_v + m->half_accel * move_time) * move_time;
 }
 
 // Return the XYZ coordinates given a time in a move
 inline struct coord
-move_get_coord(struct move *m, double move_time)
+move_get_coord(const struct move *m, double move_time)
 {
     double move_dist = move_get_distance(m, move_time);
     return (struct coord) {
