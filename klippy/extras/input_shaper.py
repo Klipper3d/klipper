@@ -134,6 +134,10 @@ class AxisInputShaper:
         return self.params.get_type()
     def get_axis(self):
         return self.params.get_axis()
+    def is_smoothing(self):
+        return False
+    def is_enabled(self):
+        return self.n > 0
     def update(self, shaper_type, gcmd):
         self.params.update(shaper_type, gcmd)
         self.n, self.A, self.T = self.params.get_shaper()
@@ -150,6 +154,10 @@ class AxisInputShaper:
     def update_extruder_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
+        # Make sure to disable any active input smoothing
+        coeffs, smooth_time = [], 0.
+        success = ffi_lib.extruder_set_smoothing_params(
+                sk, axis, len(coeffs), coeffs, smooth_time) == 0
         success = ffi_lib.extruder_set_shaper_params(
                 sk, axis, self.n, self.A, self.T) == 0
         if not success:
@@ -177,10 +185,109 @@ class AxisInputShaper:
                          for (key, value) in self.params.get_status().items()])
         gcmd.respond_info(info)
 
+class CustomInputSmootherParams:
+    SHAPER_TYPE = 'smoother'
+    def __init__(self, axis, config):
+        self.axis = axis
+        self.smooth_time, self.coeffs = 0., [1.]
+        if config is not None:
+            self.smooth_time = config.getfloat('smooth_time_' + axis,
+                                               self.smooth_time, minval=0.)
+            self.coeffs = list(reversed(config.getfloatlist('coeffs_' + axis,
+                                                            self.coeffs)))
+    def get_type(self):
+        return self.SHAPER_TYPE
+    def get_axis(self):
+        return self.axis
+    def update(self, shaper_type, gcmd):
+        if shaper_type != self.SHAPER_TYPE:
+            raise gcmd.error('Unsupported shaper type: %s' % (shaper_type,))
+        axis = self.axis.upper()
+        self.smooth_time = gcmd.get_float('SMOOTH_TIME_' + axis,
+                                          self.smooth_time)
+        coeffs_str = gcmd.get('COEFFS_' + axis, None)
+        if coeffs_str is not None:
+            try:
+                coeffs = parse_float_list(coeffs_str)
+                coeffs.reverse()
+            except:
+                raise gcmd.error("Invalid format for COEFFS parameter")
+            self.coeffs = coeffs
+    def get_smoother(self):
+        return len(self.coeffs), self.coeffs, self.smooth_time
+    def get_status(self):
+        return collections.OrderedDict([
+            ('shaper_type', self.SHAPER_TYPE),
+            ('shaper_coeffs', ','.join(['%.9e' % (a,)
+                                        for a in reversed(self.coeffs)])),
+            ('shaper_smooth_time', self.smooth_time)])
+
+class AxisInputSmoother:
+    def __init__(self, params):
+        self.params = params
+        self.n, self.coeffs, self.smooth_time = params.get_smoother()
+        self.saved_smooth_time = 0.
+    def get_name(self):
+        return 'smoother_' + self.axis
+    def get_type(self):
+        return self.params.get_type()
+    def get_axis(self):
+        return self.params.get_axis()
+    def is_smoothing(self):
+        return True
+    def is_enabled(self):
+        return self.smooth_time > 0.
+    def update(self, shaper_type, gcmd):
+        self.params.update(shaper_type, gcmd)
+        self.n, self.coeffs, self.smooth_time = self.params.get_smoother()
+    def update_stepper_kinematics(self, sk):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        axis = self.get_axis().encode()
+        success = ffi_lib.input_shaper_set_smoother_params(
+                sk, axis, self.n, self.coeffs, self.smooth_time) == 0
+        if not success:
+            self.disable_shaping()
+            ffi_lib.input_shaper_set_smoother_params(
+                    sk, axis, self.n, self.coeffs, self.smooth_time)
+        return success
+    def update_extruder_kinematics(self, sk):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        axis = self.get_axis().encode()
+        # Make sure to disable any active input shaping
+        A, T = shaper_defs.get_none_shaper()
+        ffi_lib.extruder_set_shaper_params(sk, axis, len(A), A, T)
+        success = ffi_lib.extruder_set_smoothing_params(
+                sk, axis, self.n, self.coeffs, self.smooth_time) == 0
+        if not success:
+            self.disable_shaping()
+            ffi_lib.extruder_set_smoothing_params(
+                    sk, axis, self.n, self.coeffs, self.smooth_time)
+        return success
+    def disable_shaping(self):
+        was_enabled = False
+        if self.smooth_time:
+            self.saved_smooth_time = self.smooth_time
+            was_enabled = True
+        self.smooth_time = 0.
+        return was_enabled
+    def enable_shaping(self):
+        if not self.saved_smooth_time:
+            # Input smoother was not disabled
+            return False
+        self.smooth_time = self.saved_smooth_time
+        self.saved_smooth_time = 0.
+        return True
+    def report(self, gcmd):
+        info = ' '.join(["%s_%s:%s" % (key, self.get_axis(), value)
+                         for (key, value) in self.params.get_status().items()])
+        gcmd.respond_info(info)
+
 class ShaperFactory:
     def __init__(self):
         pass
     def _create_shaper(self, axis, type_name, config=None):
+        if type_name == CustomInputSmootherParams.SHAPER_TYPE:
+            return AxisInputSmoother(CustomInputSmootherParams(axis, config))
         if type_name == CustomInputShaperParams.SHAPER_TYPE:
             return AxisInputShaper(CustomInputShaperParams(axis, config))
         if type_name in TypedInputShaperParams.shapers:
