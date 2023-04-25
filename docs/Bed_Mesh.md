@@ -371,7 +371,7 @@ following parameters are available:
   - `MESH_ORIGIN`
   - `ROUND_PROBE_COUNT`
 - All beds:
-  - `RELATIVE_REFERNCE_INDEX`
+  - `RELATIVE_REFERENCE_INDEX`
   - `ALGORITHM`
 
 See the configuration documentation above for details on how each parameter

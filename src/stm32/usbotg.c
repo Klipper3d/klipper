@@ -397,11 +397,11 @@ OTG_FS_IRQHandler(void)
     }
     if (sts & USB_OTG_GINTSTS_IEPINT) {
         // Can transmit data - disable irq and notify endpoint
-        uint32_t daint = OTGD->DAINT;
-        OTGD->DAINTMSK &= ~daint;
-        if (daint & (1 << 0))
+        uint32_t daint = OTGD->DAINT, msk = OTGD->DAINTMSK, pend = daint & msk;
+        OTGD->DAINTMSK = msk & ~daint;
+        if (pend & (1 << 0))
             usb_notify_ep0();
-        if (daint & (1 << USB_CDC_EP_BULK_IN))
+        if (pend & (1 << USB_CDC_EP_BULK_IN))
             usb_notify_bulk_in();
     }
 }

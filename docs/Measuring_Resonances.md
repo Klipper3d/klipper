@@ -157,7 +157,7 @@ Recommended connection scheme for I2C (i2c0a) on the RP2040:
 
 | MPU-9250 pin | RP2040 pin | RP2040 pin name |
 |:--:|:--:|:--:|
-| VCC | 39 | 3v3 |
+| VCC | 36 | 3v3 |
 | GND | 38 | Ground |
 | SDA | 01 | GP0 (I2C0 SDA) |
 | SCL | 02 | GP1 (I2C0 SCL) |
@@ -343,7 +343,7 @@ probe_points:
     100, 100, 20  # an example
 
 [static_digital_output pico_3V3pwm] # Improve power stability
-pin: pico:gpio23
+pins: pico:gpio23
 ```
 
 #### Configure MPU-9520 Compatibles with AVR
