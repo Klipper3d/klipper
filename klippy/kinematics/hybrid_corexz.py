@@ -66,7 +66,11 @@ class HybridCoreXZKinematics:
         else:
             return [pos[0] + pos[2], pos[1], pos[2]]
     def update_limits(self, i, range):
-        self.limits[i] = range
+        l, h = self.limits[i]
+        # Only update limits if this axis was already homed,
+        # otherwise leave in un-homed state.
+        if l <= h:
+            self.limits[i] = range
     def override_rail(self, i, rail):
         self.rails[i] = rail
     def set_position(self, newpos, homing_axes):
