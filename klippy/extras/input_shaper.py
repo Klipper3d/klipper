@@ -185,11 +185,46 @@ class AxisInputShaper:
                          for (key, value) in self.params.get_status().items()])
         gcmd.respond_info(info)
 
+class TypedInputSmootherParams:
+    smoothers = {s.name : s.init_func for s in shaper_defs.INPUT_SMOOTHERS}
+    def __init__(self, axis, smoother_type, config):
+        self.axis = axis
+        self.smoother_type = smoother_type
+        self.smoother_freq = 0.
+        if config is not None:
+            if smoother_type not in self.smoothers:
+                raise config.error(
+                        'Unsupported shaper type: %s' % (smoother_type,))
+            self.smoother_freq = config.getfloat('smoother_freq_' + axis,
+                                                 self.smoother_freq, minval=0.)
+    def get_type(self):
+        return self.smoother_type
+    def get_axis(self):
+        return self.axis
+    def update(self, smoother_type, gcmd):
+        if smoother_type not in self.smoothers:
+            raise gcmd.error('Unsupported shaper type: %s' % (smoother_type,))
+        axis = self.axis.upper()
+        self.smoother_freq = gcmd.get_float('SMOOTHER_FREQ_' + axis,
+                                            self.smoother_freq, minval=0.)
+        self.smoother_type = smoother_type
+    def get_smoother(self):
+        if not self.smoother_freq:
+            C, tsm = shaper_defs.get_none_smoother()
+        else:
+            C, tsm = self.smoothers[self.smoother_type](self.smoother_freq,
+                                                        normalize_coeffs=False)
+        return len(C), C, tsm
+    def get_status(self):
+        return collections.OrderedDict([
+            ('shaper_type', self.smoother_type),
+            ('smoother_freq', '%.3f' % (self.smoother_freq,))])
+
 class CustomInputSmootherParams:
     SHAPER_TYPE = 'smoother'
     def __init__(self, axis, config):
         self.axis = axis
-        self.smooth_time, self.coeffs = 0., [1.]
+        self.coeffs, self.smooth_time = shaper_defs.get_none_smoother()
         if config is not None:
             self.smooth_time = config.getfloat('smooth_time_' + axis,
                                                self.smooth_time, minval=0.)
@@ -293,6 +328,9 @@ class ShaperFactory:
         if type_name in TypedInputShaperParams.shapers:
             return AxisInputShaper(
                     TypedInputShaperParams(axis, type_name, config))
+        if type_name in TypedInputSmootherParams.smoothers:
+            return AxisInputSmoother(
+                    TypedInputSmootherParams(axis, type_name, config))
         return None
     def create_shaper(self, axis, config):
         shaper_type = config.get('shaper_type', 'mzv')
