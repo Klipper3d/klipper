@@ -138,20 +138,30 @@ def get_git_version(from_file=True):
 
     # Obtain version info from "git" program
     gitdir = os.path.join(klippy_src, '..')
-    prog = ('git', '-C', gitdir, 'describe', '--always',
-            '--tags', '--long', '--dirty')
+    prog_desc = ('git', '-C', gitdir, 'describe', '--always',
+                 '--tags', '--long', '--dirty')
+    prog_status = ('git', '-C', gitdir, 'status', '--porcelain', '--ignored')
     try:
-        process = subprocess.Popen(prog, stdout=subprocess.PIPE,
+        process = subprocess.Popen(prog_desc, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         ver, err = process.communicate()
         retcode = process.wait()
         if retcode == 0:
-            return str(ver.strip().decode())
+            process = subprocess.Popen(prog_status, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            stat, err = process.communicate()
+            status = [l.split(None, 1)
+                      for l in str(stat.strip().decode()).split('\n')]
+            retcode = process.wait()
+            if retcode == 0:
+                return (str(ver.strip().decode()), status)
+            else:
+                logging.debug("Error getting git status: %s", err)
         else:
             logging.debug("Error getting git version: %s", err)
     except:
         logging.debug("Exception on run: %s", traceback.format_exc())
 
     if from_file:
-        return get_version_from_file(klippy_src)
-    return "?"
+        return (get_version_from_file(klippy_src), [])
+    return ("?", [])
