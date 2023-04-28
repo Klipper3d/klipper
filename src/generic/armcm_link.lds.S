@@ -26,6 +26,12 @@ SECTIONS
         *(.rodata .rodata*)
     } > rom
 
+    .ARM.exidx : {
+        __exidx_start = .;
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        __exidx_end = .;
+    } > rom
+
     . = ALIGN(4);
     _data_flash = .;
 
@@ -62,6 +68,23 @@ SECTIONS
     {
         . = . + CONFIG_STACK_SIZE;
         _stack_end = .;
+    } > ram
+
+    // Versions of newlib with libnosys require a heap end marker even
+    // in C freestanding mode. This creates a one byte heap.
+    // !! WARNING: The version of sbrk in libnosys does NOT check
+    // for the heap overrunning its allocation. Trying to expand the heap
+    // will have undefined behavior.
+    // Note: 'end' below refers to the initial end of the heap,
+    // while __heap_end__ refers to the last available address
+    .heap (NOLOAD) :
+    {
+        __heap_start__ = .;
+        end = __heap_start__;
+        _end = end;
+        __end = end;
+        __heap_end__ = .;
+        __HeapLimit = __heap_end__;
     } > ram
 
     /DISCARD/ : {
