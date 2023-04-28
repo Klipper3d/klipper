@@ -12,7 +12,7 @@
 
 struct spi_info {
     SPI_TypeDef *spi;
-    uint8_t miso_pin, mosi_pin, sck_pin, miso_pin_function, mosi_pin_function, sck_pin_function;
+    uint8_t miso_pin, mosi_pin, sck_pin, miso_af, mosi_af, sck_af;
 };
 
 DECL_ENUMERATION("spi_bus", "spi2", 0);
@@ -49,12 +49,13 @@ DECL_CONSTANT_STR("BUS_PINS_spi1a", "PB4,PB5,PB3");
 #endif
 #endif
 
-#define GPIO_FUNCTION_ALL(fn) GPIO_FUNCTION(fn), GPIO_FUNCTION(fn), GPIO_FUNCTION(fn)
+#define GPIO_FUNCTION_ALL(fn) GPIO_FUNCTION(fn), \
+    GPIO_FUNCTION(fn), GPIO_FUNCTION(fn)
 
 #if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32G0
- #define SPI_FUNCTION_ALL GPIO_FUNCTION(0), GPIO_FUNCTION(0), GPIO_FUNCTION(0)
+ #define SPI_FUNCTION_ALL GPIO_FUNCTION_ALL(0)
 #else
- #define SPI_FUNCTION_ALL GPIO_FUNCTION(5), GPIO_FUNCTION(5), GPIO_FUNCTION(5)
+ #define SPI_FUNCTION_ALL GPIO_FUNCTION_ALL(5)
 #endif
 
 static const struct spi_info spi_bus[] = {
@@ -77,7 +78,8 @@ static const struct spi_info spi_bus[] = {
   #endif
  #endif
  #if CONFIG_MACH_STM32G0B1
-    { SPI2, GPIO('B', 2), GPIO('B', 11), GPIO('B', 10), GPIO_FUNCTION(1), GPIO_FUNCTION(0), GPIO_FUNCTION(5) },
+    { SPI2, GPIO('B', 2), GPIO('B', 11), GPIO('B', 10),
+        GPIO_FUNCTION(1), GPIO_FUNCTION(0), GPIO_FUNCTION(5) },
  #endif
 #endif
 };
@@ -92,9 +94,9 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     SPI_TypeDef *spi = spi_bus[bus].spi;
     if (!is_enabled_pclock((uint32_t)spi)) {
         enable_pclock((uint32_t)spi);
-        gpio_peripheral(spi_bus[bus].miso_pin, spi_bus[bus].miso_pin_function, 1);
-        gpio_peripheral(spi_bus[bus].mosi_pin, spi_bus[bus].mosi_pin_function, 0);
-        gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].sck_pin_function, 0);
+        gpio_peripheral(spi_bus[bus].miso_pin, spi_bus[bus].miso_af, 1);
+        gpio_peripheral(spi_bus[bus].mosi_pin, spi_bus[bus].mosi_af, 0);
+        gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].sck_af, 0);
 
         // Configure CR2 on stm32 f0/g0/l4/g4
 #if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32G0 || CONFIG_MACH_STM32L4 \
