@@ -346,6 +346,7 @@ The following information is available in the
 [probe](Config_Reference.md#probe) object (this object is also
 available if a [bltouch](Config_Reference.md#bltouch) config section
 is defined):
+- `name`: Returns the name of the probe in use.
 - `last_query`: Returns True if the probe was reported as "triggered"
   during the last QUERY_PROBE command. Note, if this is used in a
   macro, due to the order of template expansion, the QUERY_PROBE
@@ -457,6 +458,9 @@ objects (eg, `[tmc2208 stepper_x]`):
 - `drv_status`: The results of the last driver status query. (Only
   non-zero fields are reported.) This field will be null if the driver
   is not enabled (and thus is not periodically queried).
+- `temperature`: The internal temperature reported by the driver. This
+  field will be null if the driver is not enabled or if the driver
+  does not support temperature reporting.
 - `run_current`: The currently set run current.
 - `hold_current`: The currently set hold current.
 

@@ -113,7 +113,7 @@ static const uint16_t can2040_program_instructions[] = {
     0x20c4, // 28: wait   1 irq, 4
     0x00d9, // 29: jmp    pin, 25
     0x023a, // 30: jmp    !x, 26                 [2]
-    0xc027, // 31: irq    wait 7
+    0x001f, // 31: jmp    31
 };
 
 // Local names for PIO state machine IRQs
@@ -267,7 +267,7 @@ pio_tx_send(struct can2040 *cd, uint32_t *data, uint32_t count)
     pio_hw_t *pio_hw = cd->pio_hw;
     pio_tx_reset(cd);
     pio_hw->instr_mem[can2040_offset_tx_got_recessive] = 0xa242; // nop [2]
-    int i;
+    uint32_t i;
     for (i=0; i<count; i++)
         pio_hw->txf[3] = data[i];
     struct pio_sm_hw *sm = &pio_hw->sm[3];
@@ -351,7 +351,7 @@ pio_sm_setup(struct can2040 *cd)
     pio_signal_set_txpending(cd);
 
     // Load pio program
-    int i;
+    uint32_t i;
     for (i=0; i<ARRAY_SIZE(can2040_program_instructions); i++)
         pio_hw->instr_mem[i] = can2040_program_instructions[i];
 
@@ -436,9 +436,9 @@ static inline uint32_t
 crc_bytes(uint32_t crc, uint32_t data, uint32_t num)
 {
     switch (num) {
-    default: crc = crc_byte(crc, data >> 24);
-    case 3:  crc = crc_byte(crc, data >> 16);
-    case 2:  crc = crc_byte(crc, data >> 8);
+    default: crc = crc_byte(crc, data >> 24); /* FALLTHRU */
+    case 3:  crc = crc_byte(crc, data >> 16); /* FALLTHRU */
+    case 2:  crc = crc_byte(crc, data >> 8);  /* FALLTHRU */
     case 1:  crc = crc_byte(crc, data);
     }
     return crc;
@@ -647,14 +647,19 @@ tx_schedule_transmit(struct can2040 *cd)
     if (cd->tx_state == TS_QUEUED && !pio_tx_did_fail(cd))
         // Already queued or actively transmitting
         return 0;
-    if (cd->tx_push_pos == cd->tx_pull_pos) {
+    uint32_t tx_pull_pos = cd->tx_pull_pos;
+    if (readl(&cd->tx_push_pos) == tx_pull_pos) {
         // No new messages to transmit
         cd->tx_state = TS_IDLE;
         pio_signal_clear_txpending(cd);
-        return SI_TXPENDING;
+        __DMB();
+        if (likely(readl(&cd->tx_push_pos) == tx_pull_pos))
+            return SI_TXPENDING;
+        // Raced with can2040_transmit() - msg is now available for transmit
+        pio_signal_set_txpending(cd);
     }
     cd->tx_state = TS_QUEUED;
-    struct can2040_transmit *qt = &cd->tx_queue[tx_qpos(cd, cd->tx_pull_pos)];
+    struct can2040_transmit *qt = &cd->tx_queue[tx_qpos(cd, tx_pull_pos)];
     pio_tx_send(cd, qt->stuffed_data, qt->stuffed_words);
     return 0;
 }
@@ -717,7 +722,7 @@ report_callback_rx_msg(struct can2040 *cd)
 static void
 report_callback_tx_msg(struct can2040 *cd)
 {
-    cd->tx_pull_pos++;
+    writel(&cd->tx_pull_pos, cd->tx_pull_pos + 1);
     cd->rx_cb(cd, CAN2040_NOTIFY_TX, &cd->parse_msg);
 }
 
@@ -856,7 +861,9 @@ report_line_maytx(struct can2040 *cd)
 static void
 report_line_txpending(struct can2040 *cd)
 {
-    if (cd->report_state == RS_NEED_RX_ACK) {
+    uint32_t pio_irqs = pio_irq_get(cd);
+    if (pio_irqs == (SI_MAYTX | SI_TXPENDING | SI_RX_DATA)
+        && cd->report_state == RS_NEED_RX_ACK) {
         // Ack inject request from report_note_crc_start()
         uint32_t mk = pio_match_calc_key(cd->parse_crc_bits, cd->parse_crc_pos);
         tx_inject_ack(cd, mk);
@@ -866,7 +873,7 @@ report_line_txpending(struct can2040 *cd)
     // Tx request from can2040_transmit(), report_note_eof_success(),
     // or report_note_parse_error().
     uint32_t check_txpending = tx_schedule_transmit(cd);
-    pio_irq_set(cd, (pio_irq_get(cd) & ~SI_TXPENDING) | check_txpending);
+    pio_irq_set(cd, (pio_irqs & ~SI_TXPENDING) | check_txpending);
 }
 
 
@@ -1241,7 +1248,7 @@ can2040_transmit(struct can2040 *cd, struct can2040_msg *msg)
         crc = crc_bytes(crc, hdr, 3);
         bs_push(&bs, hdr, 19);
     }
-    int i;
+    uint32_t i;
     for (i=0; i<data_len; i++) {
         uint32_t v = qt->msg.data[i];
         crc = crc_byte(crc, v);
@@ -1256,6 +1263,7 @@ can2040_transmit(struct can2040 *cd, struct can2040_msg *msg)
     writel(&cd->tx_push_pos, tx_push_pos + 1);
 
     // Wakeup if in TS_IDLE state
+    __DMB();
     pio_signal_set_txpending(cd);
 
     return 0;
