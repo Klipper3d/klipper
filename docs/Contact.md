@@ -9,7 +9,7 @@ This document provides contact information for Klipper.
 5. [Help! It doesn't work!](#help-it-doesnt-work)
 6. [I found a bug in the Klipper software](#i-found-a-bug-in-the-klipper-software)
 7. [I am making changes that I'd like to include in Klipper](#i-am-making-changes-that-id-like-to-include-in-klipper)
-8. [Klipper github](#klipper-github)
+8. [Klipper GitHub](#klipper-github)
 
 ## Community Forum
 
