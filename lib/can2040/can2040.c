@@ -113,7 +113,7 @@ static const uint16_t can2040_program_instructions[] = {
     0x20c4, // 28: wait   1 irq, 4
     0x00d9, // 29: jmp    pin, 25
     0x023a, // 30: jmp    !x, 26                 [2]
-    0xc027, // 31: irq    wait 7
+    0x001f, // 31: jmp    31
 };
 
 // Local names for PIO state machine IRQs
