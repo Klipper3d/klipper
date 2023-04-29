@@ -261,13 +261,18 @@ fade_target: 0
   mesh is used, however it may be desirable to manually adjust the fade target
   if one wants to print on a specific portion of the bed.
 
-### The Relative Reference Index
+### Configuring the zero reference position
 
-Most probes are susceptible to drift, ie: inaccuracies in probing introduced by
-heat or interference.  This can make calculating the probe's z-offset
-challenging, particularly at different bed temperatures.  As such, some printers
-use an endstop for homing the Z axis, and a probe for calibrating the mesh.
-These printers can benefit from configuring the relative reference index.
+Many probes are susceptible to "drift", ie: inaccuracies in probing introduced
+by heat or interference.  This can make calculating the probe's z-offset
+challenging, particularly at different bed temperatures.  As such, some
+printers use an endstop for homing the Z axis and a probe for calibrating the
+mesh. In this configuration it is possible offset the mesh so that the (X, Y)
+`reference position` applies zero adjustment.  The `reference postion` should
+be the location on the bed where a
+[Z_ENDSTOP_CALIBRATE](./Manual_Level#calibrating-a-z-endstop)
+paper test is performed.  The bed_mesh module provides the
+`zero_reference_position` option for specifying this coordinate:
 
 ```
 [bed_mesh]
@@ -275,23 +280,45 @@ speed: 120
 horizontal_move_z: 5
 mesh_min: 35, 6
 mesh_max: 240, 198
+zero_reference_position: 125, 110
 probe_count: 5, 3
-relative_reference_index: 7
+```
+- `zero_reference_position: `\
+  _Default Value: None (disabled)_\
+  The `zero_reference_position` expects an (X, Y) coordinate matching that
+  of the `reference position` described above.  If the coordinate lies within
+  the mesh then the mesh will be offset so the reference position applies zero
+  adjustment.  If the coordinate lies outside of the mesh then the coordinate
+  will be probed after calibration, with the resulting z-value used as the
+  z-offset.  Note that this coordinate must NOT be in a location specified as
+  a `faulty_region` if a probe is necessary.
+
+#### The deprecated relative_reference_index
+
+Existing configurations using the `relative_reference_index` option must be
+updated to use the `zero_reference_position`.  The response to the
+[BED_MESH_OUTPUT PGP=1](#output) gcode command will include the (X, Y)
+coordinate associated with the index;  this position may be used as the value for
+the `zero_reference_position`. The output will look similar to the following:
+
+```
+// bed_mesh: generated points
+// Index | Tool Adjusted | Probe
+// 0 | (1.0, 1.0) | (24.0, 6.0)
+// 1 | (36.7, 1.0) | (59.7, 6.0)
+// 2 | (72.3, 1.0) | (95.3, 6.0)
+// 3 | (108.0, 1.0) | (131.0, 6.0)
+... (additional generated points)
+// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
 ```
 
-- `relative_reference_index: 7`\
-  _Default Value: None (disabled)_\
-  When the probed points are generated they are each assigned an index.  You
-  can look up this index in klippy.log or by using BED_MESH_OUTPUT (see the
-  section on Bed Mesh GCodes below for more information).  If you assign an
-  index to the `relative_reference_index` option, the value probed at this
-  coordinate will replace the probe's z_offset.  This effectively makes
-  this coordinate the "zero" reference for the mesh.
+_Note:  The above output is also printed in `klippy.log` during initialization._
 
-When using the relative reference index, you should choose the index nearest
-to the spot on the bed where Z endstop calibration was done.  Note that
-when looking up the index using the log or BED_MESH_OUTPUT, you should use
-the coordinates listed under the "Probe" header to find the correct index.
+Using the example above we see that the `relative_reference_index` is
+printed along with its coordinate.  Thus the `zero_reference_position`
+is `131.5, 108`.
+
+
 
 ### Faulty Regions
 
@@ -371,11 +398,11 @@ following parameters are available:
   - `MESH_ORIGIN`
   - `ROUND_PROBE_COUNT`
 - All beds:
-  - `RELATIVE_REFERENCE_INDEX`
   - `ALGORITHM`
 
 See the configuration documentation above for details on how each parameter
 applies to the mesh.
+
 
 ### Profiles
 
