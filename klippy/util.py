@@ -183,6 +183,13 @@ def _get_repo_info(gitdir):
     return repo_info
 
 def get_git_version(from_file=True):
+    git_info = {
+        "version": "?",
+        "file_status": [],
+        "branch": "?",
+        "remote": "?",
+        "url": "?"
+    }
     klippy_src = os.path.dirname(__file__)
 
     # Obtain version info from "git" program
@@ -196,6 +203,7 @@ def get_git_version(from_file=True):
         ver, err = process.communicate()
         retcode = process.wait()
         if retcode == 0:
+            git_info["version"] = str(ver.strip().decode())
             process = subprocess.Popen(prog_status, stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
             stat, err = process.communicate()
@@ -203,15 +211,16 @@ def get_git_version(from_file=True):
                       for l in str(stat.strip().decode()).split('\n')]
             retcode = process.wait()
             if retcode == 0:
-                repo_info = _get_repo_info(gitdir)
-                return (str(ver.strip().decode()), status, repo_info)
+                git_info["file_status"] = status
             else:
                 logging.debug("Error getting git status: %s", err)
+            git_info.update(_get_repo_info(gitdir))
+            return git_info
         else:
             logging.debug("Error getting git version: %s", err)
     except:
         logging.debug("Exception on run: %s", traceback.format_exc())
 
     if from_file:
-        return (get_version_from_file(klippy_src), [], {})
-    return ("?", [], {})
+        git_info["version"] = get_version_from_file(klippy_src)
+    return git_info
