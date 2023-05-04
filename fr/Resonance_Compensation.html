@@ -1540,7 +1540,7 @@
 
 
 <h1 id="compensation-de-la-resonance">Compensation de la résonance<a class="headerlink" href="#compensation-de-la-resonance" title="Permanent link">&para;</a></h1>
-<p>Klipper prend en charge l'input shaper, une technique utilisée pour réduire l'effet de la résonance (également connu sous le nom d'écho, d'image fantôme - "ghosting" - ou d'ondulation - "ringing") dans les impressions. La résonance est un défaut d'impression de la surface lorsque des éléments tels que des bords se répètent sous la forme d'un léger "écho" :</p>
+<p>Klipper prend en charge l'"input shaping", une technique utilisée pour réduire l'effet de résonance (également connu sous le nom d'écho, d'image fantôme - "ghosting" - ou d'ondulation - "ringing") dans les impressions. La résonance est un défaut d'impression de surface lorsque des éléments tels que des bords se répètent sous la forme d'un léger "écho" :</p>
 <p>|<img alt="Test de résonance" src="img/ringing-test.jpg" />|<img alt="3D Benchy" src="img/ringing-3dbenchy.jpg" />|</p>
 <p>La résonance est causée par des vibrations mécaniques dans l'imprimante dues à des changements rapides de direction pendant l'impression. La résonance a généralement des origines mécaniques : cadre de l'imprimante insuffisamment rigide, courroies non tendues ou trop élastiques, problèmes d'alignement des pièces mécaniques, masse mobile importante, etc. Ces problèmes doivent être vérifiés et corrigés en premier lieu, si possible.</p>
 <p>L' <a href="https://en.wikipedia.org/wiki/Input_shaping">input shaping</a> est une technique de contrôle en boucle ouverte qui crée un signal de commande annulant ses propres vibrations. L'input shaping nécessite quelques réglages et mesures avant de pouvoir être activée. Outre la résonance, l'input shaping réduit aussi les vibrations et les secousses de l'imprimante en général, et peut également améliorer la fiabilité du mode stealthChop des pilotes Trinamic.</p>
@@ -1550,7 +1550,7 @@
 <ul>
 <li>La hauteur de couche recommandée est de 0,2 ou 0,25 mm.</li>
 <li>Le remplissage et le nombre de couches supérieures peuvent être réglés sur 0.</li>
-<li>Utilisez 1 ou 2 parois, ou mieux encore le mode vase avec 1 ou 2 mm de base.</li>
+<li>Utilisez 1 ou 2 parois, ou mieux encore le mode vase avec une base de 1 ou 2 mm.</li>
 <li>Utilisez une vitesse suffisamment élevée, entre 80 et 100 mm/s, pour les parois <strong>externes</strong>.</li>
 <li>Veillez à ce que le temps minimum par couche soit <strong>au maximum</strong> de 3 secondes.</li>
 <li>Assurez-vous que toutes les options de "contrôle d'accélération" soient bien désactivées dans le trancheur.</li>

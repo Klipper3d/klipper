@@ -892,8 +892,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#start_print-macros" class="md-nav__link">
-    START_PRINT macros
+  <a href="#macros-start_print" class="md-nav__link">
+    Macros START_PRINT
   </a>
   
 </li>
@@ -1366,8 +1366,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#start_print-macros" class="md-nav__link">
-    START_PRINT macros
+  <a href="#macros-start_print" class="md-nav__link">
+    Macros START_PRINT
   </a>
   
 </li>
@@ -1412,21 +1412,21 @@
 <p>Certains trancheurs présentent une fonction de "pression d'extrudeuse avancée". Il est recommandé de garder ces options désactivées lors de l'utilisation de Klipper car elles risquent d'entraîner des impressions de mauvaise qualité. Envisagez d'utiliser à la place la <a href="Pressure_Advance.html">Pressure Advance</a> de Klipper.</p>
 <p>Ces paramètres de trancheur peuvent demander au micrologiciel d'apporter des modifications non contrôlées au taux d'extrusion dans l'espoir que le micrologiciel se rapprochera de ces demandes et que l'imprimante obtiendra approximativement une pression d'extrudeuse souhaitable. Klipper, utilise des calculs cinématiques et une synchronisation précise. Lorsque Klipper reçoit l'ordre d'apporter des modifications importantes au taux d'extrusion, il planifiera les modifications correspondantes de la vitesse, de l'accélération et du mouvement de l'extrudeuse - ce qui n'est pas prévu par le trancheur. Le trancheur peut même commander des taux d'extrusion excessifs au point de déclencher la limite d'extrusion maximale de Klipper.</p>
 <p>En revanche, il est possible (et souvent utile) d'utiliser le réglage « rétracter », le réglage « essuyer » et/ou le réglage « essuyer lors de la rétractation » d'un trancheur.</p>
-<h2 id="start_print-macros">START_PRINT macros<a class="headerlink" href="#start_print-macros" title="Permanent link">&para;</a></h2>
-<p>When using a START_PRINT macro or similar, it is useful to sometimes pass through parameters from the slicer variables to the macro.</p>
-<p>In Cura, to pass through temperatures, the following start gcode would be used:</p>
+<h2 id="macros-start_print">Macros START_PRINT<a class="headerlink" href="#macros-start_print" title="Permanent link">&para;</a></h2>
+<p>Lors de l'utilisation d'une macro START_PRINT ou similaire, il est parfois utile de passer les paramètres des variables du trancheur à la macro.</p>
+<p>Dans Cura, pour passer les températures, le gcode de démarrage suivant serait utilisé :</p>
 <div class="highlight"><pre><span></span><code>START_PRINT BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0}
 </code></pre></div>
 
-<p>In slic3r derivatives such as PrusaSlicer and SuperSlicer, the following would be used:</p>
+<p>Dans slic3r et ses dérivés tels que PrusaSlicer et SuperSlicer, les éléments suivants seraient utilisés :</p>
 <p>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]</p>
-<p>Also note that these slicers will insert their own heating codes when certain conditions are not met. In Cura, the existence of the <code>{material_bed_temperature_layer_0}</code> and <code>{material_print_temperature_layer_0}</code> variables is enough to mitigate this. In slic3r derivatives, you would use:</p>
+<p>Notez également que ces trancheurs insèrent leurs propres codes de chauffe lorsque certaines conditions ne sont pas remplies. Dans Cura, l'existence des variables <code>{material_bed_temperature_layer_0}</code> et <code>{material_print_temperature_layer_0}</code> suffit à supprimer ces code de chauffe. Dans les dérivés slic3r, vous utiliseriez :</p>
 <div class="highlight"><pre><span></span><code>M140 S0
 M104 S0
 </code></pre></div>
 
-<p>before the macro call. Also note that SuperSlicer has a "custom gcode only" button option, which achieves the same outcome.</p>
-<p>An example of a START_PRINT macro using these paramaters can be found in config/sample-macros.cfg</p>
+<p>avant l'appel de la macro. Notez également que SuperSlicer a une option de bouton "gcode personnalisé uniquement", qui permet d'obtenir le même résultat.</p>
+<p>Un exemple de macro START_PRINT utilisant ces paramètres peut être trouvé dans config/sample-macros.cfg</p>
 
               
             </article>

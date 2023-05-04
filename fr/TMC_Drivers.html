@@ -843,11 +843,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mise-a-lorigine-sans-capteur" class="md-nav__link">
-    Mise à l'origine sans capteur
+  <a href="#mise-a-lorigine-sans-capteurs" class="md-nav__link">
+    Mise à l'origine sans capteur(s)
   </a>
   
-    <nav class="md-nav" aria-label="Mise à l'origine sans capteur">
+    <nav class="md-nav" aria-label="Mise à l'origine sans capteur(s)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -990,8 +990,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
-    TMC reports error: ... ShortToGND OR ShortToSupply
+  <a href="#tmc-signale-une-erreur-shorttognd-ou-shorttosupply" class="md-nav__link">
+    TMC signale une erreur : ... ShortToGND OU ShortToSupply
   </a>
   
 </li>
@@ -1502,11 +1502,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mise-a-lorigine-sans-capteur" class="md-nav__link">
-    Mise à l'origine sans capteur
+  <a href="#mise-a-lorigine-sans-capteurs" class="md-nav__link">
+    Mise à l'origine sans capteur(s)
   </a>
   
-    <nav class="md-nav" aria-label="Mise à l'origine sans capteur">
+    <nav class="md-nav" aria-label="Mise à l'origine sans capteur(s)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1649,8 +1649,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
-    TMC reports error: ... ShortToGND OR ShortToSupply
+  <a href="#tmc-signale-une-erreur-shorttognd-ou-shorttosupply" class="md-nav__link">
+    TMC signale une erreur : ... ShortToGND OU ShortToSupply
   </a>
   
 </li>
@@ -1705,7 +1705,7 @@
 
 <h1 id="pilotes-de-moteur-pas-a-pas-tmc">Pilotes de moteur pas à pas TMC<a class="headerlink" href="#pilotes-de-moteur-pas-a-pas-tmc" title="Permanent link">&para;</a></h1>
 <p>Ce document fournit des informations sur l'utilisation des pilotes de moteur pas à pas Trinamic en mode SPI/UART sur Klipper.</p>
-<p>Klipper peut également utiliser les pilotes Trinamic dans leur "mode autonome". Cependant, lorsque les pilotes sont dans ce mode, aucune configuration spéciale de Klipper n'est possible et les fonctionnalités avancées de Klipper décrites dans ce document ne sont pas disponibles.</p>
+<p>Klipper peut également utiliser les pilotes Trinamic dans leur "mode autonome". Cependant, lorsque les pilotes sont dans ce mode, aucune configuration spéciale de Klipper n'est nécessaire et les fonctionnalités avancées de Klipper décrites dans ce document ne sont pas disponibles.</p>
 <p>En plus de ce document, veillez à consulter la <a href="Config_Reference.html#tmc-stepper-driver-configuration">référence de configuration du pilote TMC</a>.</p>
 <h2 id="reglage-du-courant-du-moteur">Réglage du courant du moteur<a class="headerlink" href="#reglage-du-courant-du-moteur" title="Permanent link">&para;</a></h2>
 <p>Un courant de commande plus élevé augmente la précision de positionnement et le couple. Cependant, un courant plus élevé augmente également la chaleur produite par le moteur pas à pas et le pilote du moteur pas à pas. Si le pilote du moteur pas à pas devient trop chaud, il se désactivera et Klipper signalera une erreur. Si le moteur pas à pas devient trop chaud, il perd du couple et de la précision de positionnement. (S'il devient très chaud, il peut également faire fondre les pièces en plastique qui y sont attachées ou à proximité.)</p>
@@ -1724,13 +1724,13 @@
 <p>Le paramètre <code>interpolation</code> du pilote TMC peut réduire le bruit audible du mouvement de l'imprimante au prix de l'introduction d'une petite erreur de position systémique. Cette erreur de position systémique résulte du retard du conducteur à exécuter les "étapes" que Klipper lui envoie. Pendant les déplacements à vitesse constante, ce retard entraîne une erreur de position de près d'un demi-micropas configuré (plus précisément, l'erreur est d'une demi-distance de micropas moins un 512e de distance d'un pas complet). Par exemple, sur un axe avec une rotation_distance de 40 mm, 200 pas_par_rotation et 16 micropas, l'erreur systémique introduite lors des mouvements à vitesse constante est d'environ 0,006 mm.</p>
 <p>Pour une meilleure précision de positionnement, envisagez d'utiliser le mode spreadCycle et désactivez l'interpolation (définissez <code>interpolate : False</code> dans la configuration du pilote TMC). Lorsqu'il est configuré de cette façon, on peut augmenter le paramètre <code>microstep</code> pour réduire le bruit audible pendant le mouvement pas à pas. En règle générale, un réglage de micropas de <code>64</code> ou <code>128</code> aura un bruit audible similaire à celui de l'interpolation, et ce, sans introduire d'erreur de position systémique.</p>
 <p>Si vous utilisez le mode StealthChop, l'imprécision de position due à l'interpolation est faible par rapport à l'imprécision de position introduite à partir du mode StealthChop. Par conséquent, le réglage de l'interpolation n'est pas considérée comme utile en mode StealthChop, et on peut laisser l'interpolation dans son état par défaut.</p>
-<h2 id="mise-a-lorigine-sans-capteur">Mise à l'origine sans capteur<a class="headerlink" href="#mise-a-lorigine-sans-capteur" title="Permanent link">&para;</a></h2>
+<h2 id="mise-a-lorigine-sans-capteurs">Mise à l'origine sans capteur(s)<a class="headerlink" href="#mise-a-lorigine-sans-capteurs" title="Permanent link">&para;</a></h2>
 <p>La mise à l'origine ans capteur permet de référencer un axe sans avoir besoin d'une fin de course physique. Au lieu de cela, le chariot sur l'axe est déplacé dans la limite mécanique, ce qui fait perdre des pas au moteur pas à pas. Le pilote pas à pas détecte les pas perdus et l'indique au MCU de contrôle (Klipper) en basculant une broche. Cette information peut être utilisée par Klipper comme fin de course pour l'axe.</p>
-<p>Ce guide couvre la configuration de la mise à l'origine sans capteur pour l'axe X de votre imprimante (cartésienne). Cependant, cela fonctionne de la même manière avec tous les autres axes (qui nécessitent une fin de course). Vous devez le configurer et le régler pour un axe à la fois.</p>
+<p>Ce guide couvre la configuration de la mise à l'origine sans capteur pour l'axe X de votre imprimante (cartésienne). Cependant, cela fonctionne de la même manière avec tous les autres axes (qui nécessitent une butée fin de course). Vous devez le configurer et le régler pour un seul axe à la fois.</p>
 <h3 id="limites">Limites<a class="headerlink" href="#limites" title="Permanent link">&para;</a></h3>
-<p>Assurez-vous que vos composants mécaniques sont capables de supporter la charge du chariot heurtant à plusieurs reprises la fin de course de l'axe. Les vis sans fin, en particulier, peuvent générer beaucoup de force. La prise d'origine d'un axe Z en écrasant la buse dans la surface d'impression n'est peut-être pas une bonne idée. Pour de meilleurs résultats, vérifiez que le chariot de l'axe établit un contact lors de la mise à l'origine.</p>
+<p>Assurez-vous que vos composants mécaniques sont capables de supporter la charge du chariot heurtant à plusieurs reprises la fin de course de l'axe. Les vis sans fin, en particulier, peuvent générer une force importante. La prise d'origine d'un axe Z en écrasant la buse dans la surface d'impression n'est peut-être pas une bonne idée. Pour de meilleurs résultats, vérifiez que le chariot de l'axe établit un contact franc lors de la mise à l'origine.</p>
 <p>De plus, la mise à l'origine sans capteur peut ne pas être suffisamment précise pour votre imprimante. Bien que la mise à l'origine des axes X et Y sur une machine cartésienne puisse bien fonctionner, la prise d'origine de l'axe Z n'est généralement pas assez précise et peut entraîner une hauteur de première couche incohérente. Le référencement d'une imprimante delta sans capteur n'est pas conseillé en raison du manque de précision.</p>
-<p>De plus, la détection de décrochage du pilote pas à pas dépend de la charge mécanique sur le moteur, du courant du moteur et de la température du moteur (résistance de la bobine).</p>
+<p>En outre, la détection de décrochage du pilote pas à pas dépend de la charge mécanique sur le moteur, du courant du moteur et de la température du moteur (résistance de la bobine).</p>
 <p>La mise à l'origine sans capteur fonctionne mieux à des vitesses de moteur moyennes. Pour des vitesses très lentes (moins de 10 tr/min), le moteur ne génère pas de force contre-électromotrice significative et le TMC ne peut pas détecter de manière fiable les calages du moteur. A des vitesses très élevées, la force contre-électromotrice du moteur se rapproche de la tension d'alimentation du moteur, de sorte que le TMC ne peut plus détecter les calages. Il est conseillé de consulter la fiche technique de vos TMC spécifiques. Vous y trouverez également plus de détails sur les limites de cette configuration.</p>
 <h3 id="conditions-prealables">Conditions préalables<a class="headerlink" href="#conditions-prealables" title="Permanent link">&para;</a></h3>
 <p>Quelques prérequis sont nécessaires pour utiliser la mise à l'origine sans capteur :</p>
@@ -1897,7 +1897,7 @@ gcode:
 <p>Quelques erreurs courantes et conseils pour les diagnostiquer :</p>
 <h4 id="tmc-signale-une-erreur-ot1overtemperror">TMC signale une erreur : <code>... ot=1(OvertempError !)</code><a class="headerlink" href="#tmc-signale-une-erreur-ot1overtemperror" title="Permanent link">&para;</a></h4>
 <p>Cela indique que le pilote du moteur s'est désactivé car il est en surchauffe. Les solutions typiques consistent à diminuer le courant du pilote de moteur pas à pas, à augmenter le refroidissement du pilote du moteur pas à pas et/ou à augmenter le refroidissement du pilote du moteur pas à pas.</p>
-<h4 id="tmc-reports-error-shorttognd-or-shorttosupply">TMC reports error: <code>... ShortToGND</code> OR <code>ShortToSupply</code><a class="headerlink" href="#tmc-reports-error-shorttognd-or-shorttosupply" title="Permanent link">&para;</a></h4>
+<h4 id="tmc-signale-une-erreur-shorttognd-ou-shorttosupply">TMC signale une erreur : <code>... ShortToGND</code> OU <code>ShortToSupply</code><a class="headerlink" href="#tmc-signale-une-erreur-shorttognd-ou-shorttosupply" title="Permanent link">&para;</a></h4>
 <p>Cela indique que le pilote s'est désactivé car il a détecté un courant très élevé le traversant. Cela peut indiquer un fil desserré ou court-circuité vers le moteur pas à pas ou dans le moteur pas à pas lui-même.</p>
 <p>Cette erreur peut également se produire si vous utilisez le mode StealthChop et que le pilote TMC n'est pas en mesure de prédire avec précision la charge mécanique du moteur. (Si le pilote fait une mauvaise prédiction, il peut envoyer trop de courant à travers le moteur et déclencher sa propre détection de surintensité.) Pour tester cela, désactivez le mode StealthChop et vérifiez si les erreurs continuent de se produire.</p>
 <h4 id="tmc-signale-une-erreur-reset1reset-or-cs_actual0reset-or-se0reset">TMC signale une erreur : <code>... reset=1(Reset)</code> OR <code>CS_ACTUAL=0(Reset ?)</code> OR <code>SE=0(Reset?)</code><a class="headerlink" href="#tmc-signale-une-erreur-reset1reset-or-cs_actual0reset-or-se0reset" title="Permanent link">&para;</a></h4>

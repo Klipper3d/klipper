@@ -1306,7 +1306,7 @@
 
 
 <h1 id="capteur-de-largeur-de-filament-tsl1401cl">Capteur de largeur de filament TSL1401CL<a class="headerlink" href="#capteur-de-largeur-de-filament-tsl1401cl" title="Permanent link">&para;</a></h1>
-<p>Ce document décrit le module hôte du capteur de largeur de filament. Le matériel utilisé pour développer ce module hôte est basé sur le réseau de capteurs linéaires TSL1401CL, mais il peut fonctionner avec tout réseau de capteurs ayant une sortie analogique. Vous pouvez trouver les conceptions sur <a href="https://www.thingiverse.com/search?q=filament%20width%20sensor">Thingiverse</a>.</p>
+<p>Ce document décrit le module hôte du capteur de largeur de filament. Le matériel utilisé pour développer ce module hôte est basé sur le réseau de capteurs linéaires TSL1401CL, mais il peut fonctionner avec n'importe quel autre réseau de capteurs ayant une sortie analogique. Vous pouvez trouver des réalisations sur <a href="https://www.thingiverse.com/search?q=filament%20width%20sensor">Thingiverse</a>.</p>
 <p>Pour utiliser un réseau de capteurs comme capteur de largeur de filament, consultez <a href="Config_Reference.html#tsl1401cl_filament_width_sensor">Config Reference</a> et <a href="G-Codes.html#hall_filament_width_sensor">documentation G-Code</a>.</p>
 <h2 id="comment-cela-fonctionne-t-il">Comment cela fonctionne-t-il ?<a class="headerlink" href="#comment-cela-fonctionne-t-il" title="Permanent link">&para;</a></h2>
 <p>Le capteur génère une sortie analogique basée sur la largeur calculée du filament. La tension de sortie est toujours égale à la largeur de filament détectée (ex. 1,65v, 1,70v, 3,0v). Le module hôte surveille les changements de tension et ajuste le multiplicateur d'extrusion.</p>

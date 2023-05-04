@@ -1137,8 +1137,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ar100-step-rate-benchmark" class="md-nav__link">
-    AR100 step rate benchmark
+  <a href="#test-du-taux-de-pas-de-lar100" class="md-nav__link">
+    Test du taux de pas de l'AR100
   </a>
   
 </li>
@@ -1513,8 +1513,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ar100-step-rate-benchmark" class="md-nav__link">
-    AR100 step rate benchmark
+  <a href="#test-du-taux-de-pas-de-lar100" class="md-nav__link">
+    Test du taux de pas de l'AR100
   </a>
   
 </li>
@@ -1574,8 +1574,8 @@
 <h2 id="bancs-dessai-des-microcontroleurs">Bancs d'essai des microcontrôleurs<a class="headerlink" href="#bancs-dessai-des-microcontroleurs" title="Permanent link">&para;</a></h2>
 <p>Cette section décrit le mécanisme utilisé pour générer les bancs d'essais (benchmarks) de fréquence de pas du microcontrôleur Klipper.</p>
 <p>L'objectif principal des bancs d'essais est de fournir un mécanisme cohérent pour mesurer l'impact des changements de codage dans le logiciel. Un objectif secondaire est de fournir des mesures de haut niveau pour comparer les performances entre puces et entre plateformes logicielles.</p>
-<p>Le test de vitesse des moteurs pas à pas est conçu pour trouver la fréquence de pas maximale que le matériel et le logiciel peuvent atteindre. Ce taux de pas de référence n'est pas réalisable dans une utilisation normale de Klipper car il doit effectuer d'autres tâches (par exemple, la communication mcu/hôte, la lecture de la température, la vérification des fin de course).</p>
-<p>En général, les broches pour les tests sont choisies pour faire clignoter des LED ou d'autres actions inoffensives. <strong>Vérifiez toujours qu'il est sûr de commander les broches configurées avant d'exécuter un test.</strong> Il n'est pas recommandé de piloter un moteur pas à pas lors d'un benchmark.</p>
+<p>Le test de vitesse des moteurs pas à pas est conçu pour trouver la fréquence de pas maximale que le matériel et le logiciel peuvent atteindre. Ce taux de pas de référence n'est pas réalisable dans une utilisation "réelle" de Klipper car il doit effectuer d'autres tâches (par exemple, la communication microcontrôleur(s)/hôte, la lecture de la température, la vérification des fin de course).</p>
+<p>En général, les broches pour les tests sont choisies pour faire clignoter des LED ou d'autres actions inoffensives. <strong>Vérifiez toujours qu'il est sûr de commander les broches configurées avant d'exécuter un test.</strong> Il n'est pas recommandé de piloter un moteur pas à pas lors d'un test.</p>
 <h3 id="test-du-taux-de-pas">Test du taux de pas<a class="headerlink" href="#test-du-taux-de-pas" title="Permanent link">&para;</a></h3>
 <p>Le test est effectué à l'aide de l'outil console.py (décrit dans <Debugging.md>). Le microcontrôleur est configuré pour la plate-forme matérielle (voir ci-dessous), puis ce qui suit est copié-collé dans la fenêtre du terminal console.py :</p>
 <div class="highlight"><pre><span></span><code>SET start_clock {clock+freq}
@@ -1600,7 +1600,7 @@ set_next_step_dir oid=2 dir=1
 queue_step oid=2 interval=3000 count=1 add=0
 </code></pre></div>
 
-<p>Ces tests simule le déplacement de trois moteurs pas à pas simultanément. Si son exécution entraîne une erreur "Rescheduled timer in the past" or "Stepper too far in past", cela indique que le paramètre <code>ticks</code> est trop faible (il en résulte une vitesse de pas trop rapide) . L'objectif est de trouver le réglage le plus bas du paramètre ticks qui aboutit de manière fiable à la réussite du test. Il devrait être possible de rechercher par dichotomie le paramètre ticks jusqu'à ce qu'une valeur stable soit trouvée.</p>
+<p>Ces tests simulent le déplacement de trois moteurs pas à pas simultanément. Si son exécution entraîne une erreur "Rescheduled timer in the past" or "Stepper too far in past", cela indique que le paramètre <code>ticks</code> est trop faible (il en résulte une vitesse de pas trop rapide) . L'objectif est de trouver le réglage le plus bas du paramètre ticks qui aboutit de manière fiable à la réussite du test. Il devrait être possible de rechercher par dichotomie le paramètre ticks jusqu'à ce qu'une valeur stable soit trouvée.</p>
 <p>En cas d'échec, on peut copier-coller ce qui suit pour effacer l'erreur en vue du prochain test :</p>
 <div class="highlight"><pre><span></span><code>clear_shutdown
 </code></pre></div>
@@ -2019,8 +2019,8 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
-<h3 id="ar100-step-rate-benchmark">AR100 step rate benchmark<a class="headerlink" href="#ar100-step-rate-benchmark" title="Permanent link">&para;</a></h3>
-<p>The following configuration sequence is used on AR100 CPU (Allwinner A64):</p>
+<h3 id="test-du-taux-de-pas-de-lar100">Test du taux de pas de l'AR100<a class="headerlink" href="#test-du-taux-de-pas-de-lar100" title="Permanent link">&para;</a></h3>
+<p>La séquence de configuration suivante est utilisée sur le processeur AR100 (Allwinner A64) :</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
 config_stepper oid=0 step_pin=PL10 dir_pin=PE14 invert_step=-1 step_pulse_ticks=0
 config_stepper oid=1 step_pin=PL11 dir_pin=PE15 invert_step=-1 step_pulse_ticks=0
@@ -2028,7 +2028,7 @@ config_stepper oid=2 step_pin=PL12 dir_pin=PE16 invert_step=-1 step_pulse_ticks=
 finalize_config crc=0
 </code></pre></div>
 
-<p>The test was last run on commit <code>08d037c6</code> with gcc version <code>or1k-linux-musl-gcc (GCC) 9.2.0</code> on an Allwinner A64-H micro-controller.</p>
+<p>Le test a été exécuté pour la dernière fois sur le commit <code>08d037c6</code> avec la version de gcc <code>or1k-linux-musl-gcc (GCC) 9.2.0</code> sur un microcontrôleur Allwinner A64-H.</p>
 <table>
 <thead>
 <tr>
@@ -2147,7 +2147,7 @@ get_uptime
 <td>avr-gcc (GCC) 5.4.0</td>
 </tr>
 <tr>
-<td>ar100 (serial)</td>
+<td>ar100 (série)</td>
 <td>138K</td>
 <td>08d037c6</td>
 <td>or1k-linux-musl-gcc 9.3.0</td>

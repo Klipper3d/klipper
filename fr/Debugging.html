@@ -1422,22 +1422,22 @@
 <p>Voir la commande "AIDE" dans l'outil pour plus d'informations sur sa fonctionnalité.</p>
 <p>Certaines options en ligne de commande sont disponibles. Pour plus d'informations, exécutez : <code>~/klippy-env/bin/python ./klippy/console.py --help</code></p>
 <h2 id="traduction-des-fichiers-g-code-en-commandes-de-microcontroleur">Traduction des fichiers G-Code en commandes de microcontrôleur<a class="headerlink" href="#traduction-des-fichiers-g-code-en-commandes-de-microcontroleur" title="Permanent link">&para;</a></h2>
-<p>Le code hôte Klippy peut s'exécuter en mode batch pour produire les commandes de microcontrôleur de bas niveau associées à un fichier gcode. L'inspection de ces commandes de bas niveau est utile lorsque vous essayez de comprendre les actions du matériel de bas niveau. Il peut également être utile de comparer la différence des commandes du microcontrôleur après un changement de code.</p>
-<p>Pour exécuter Klippy dans ce mode batch, il y a une seule étape nécessaire pour générer le "dictionnaire de données" du microcontrôleur. Cela se fait en compilant le code du micro-contrôleur pour obtenir le fichier <strong>out/klipper.dict</strong> :</p>
+<p>Le code hôte Klippy peut être executé en mode batch pour produire les commandes bas niveau du microcontrôleur associées à un fichier gcode. L'inspection de ces commandes de bas niveau est utile pour essayer de comprendre les actions du matériel de bas niveau. Il peut également être utile de comparer la différence dans les commandes du microcontrôleur après un changement de code.</p>
+<p>Pour exécuter Klippy dans ce mode batch, une seule étape est nécessaire pour générer le "dictionnaire de données" du microcontrôleur. Cela se fait en compilant le code du micro-contrôleur pour obtenir le fichier <strong>out/klipper.dict</strong> :</p>
 <div class="highlight"><pre><span></span><code>make menuconfig
 make
 </code></pre></div>
 
-<p>Une fois que ce qui précède est fait, il est possible d'exécuter Klipper en mode batch (voir <a href="Installation.html">installation</a> pour les étapes nécessaires pour construire l'environnement virtuel python et un fichier printer.cfg) :</p>
+<p>Une fois que ce qui précède a été fait, il est possible d'exécuter Klipper en mode batch (voir <a href="Installation.html">installation</a> pour les étapes nécessaires à la construction de l'environnement virtuel python et d'un fichier printer.cfg) :</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/klippy.py ~/printer.cfg -i test.gcode -o test.serial -v -d out/klipper.dict
 </code></pre></div>
 
-<p>Ce qui précède produira un fichier <strong>test.serial</strong> avec la sortie série binaire. Cette sortie peut être traduite en texte lisible avec :</p>
+<p>L'opération ci-dessus produira un fichier <strong>test.serial</strong> avec la sortie série binaire. Cette sortie peut être traduite en texte lisible avec :</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/python ./klippy/parsedump.py out/klipper.dict test.serial &gt; test.txt
 </code></pre></div>
 
-<p>Le fichier résultant <strong>test.txt</strong> contient une liste lisible des commandes du microcontrôleur.</p>
-<p>Le mode batch désactive certaines commandes de réponse/requête pour fonctionner. Par conséquent, il y aura des différences entre les commandes réelles et la sortie ci-dessus. Les données générées sont utiles pour les tests et l'inspection ; elles ne sont pas utiles en fonctionnement normale (vers un vrai microcontrôleur).</p>
+<p>Le fichier résultant <strong>test.txt</strong> contient une liste lisible (par un humain) des commandes du microcontrôleur.</p>
+<p>Le mode batch désactive certaines commandes de réponse / requête pour fonctionner. Par conséquent, il y aura des différences entre les commandes réelles et la sortie ci-dessus. Les données générées sont utiles pour les tests et l'inspection ; elles ne sont pas utiles en fonctionnement normal (vers un vrai microcontrôleur).</p>
 <h2 id="analyse-de-mouvements-et-enregistrement-de-donnees">Analyse de mouvements et enregistrement de données<a class="headerlink" href="#analyse-de-mouvements-et-enregistrement-de-donnees" title="Permanent link">&para;</a></h2>
 <p>Klipper prend en charge la journalisation de l'historique des mouvement, qui peut être analysé ultérieurement. Pour utiliser cette fonctionnalité, Klipper doit être démarré avec le <a href="API_Server.html">Serveur API</a> activé.</p>
 <p>L'enregistrement des données est activé avec l'outil <code>data_logger.py</code>. Par example :</p>
@@ -1493,7 +1493,7 @@ cp /tmp/klippy.log .
 
 <p>Le script extrait le fichier de configuration de l'imprimante et extrait les informations d'arrêt du MCU. Les vidages d'informations d'un arrêt de MCU (le cas échéant) sont réorganisés par horodatage pour faciliter le diagnostic des scénarios de cause à effet.</p>
 <h2 id="tester-avec-simulavr">Tester avec simulavr<a class="headerlink" href="#tester-avec-simulavr" title="Permanent link">&para;</a></h2>
-<p>L'outil <a href="http://www.nongnu.org/simulavr/">simulavr</a> permet de simuler un microcontrôleur Atmel ATmega. Cette section décrit comment exécuter des fichiers gcode de test via simulavr. Il est recommandé de l'exécuter sur une machine de bureau (pas un Raspberry Pi) car il nécessite un processeur important pour fonctionner efficacement.</p>
+<p>L'outil <a href="http://www.nongnu.org/simulavr/">simulavr</a> permet de simuler un microcontrôleur Atmel ATmega. Cette section décrit comment exécuter des fichiers gcode de test via simulavr. Il est recommandé de l'exécuter sur une machine de bureau (pas un Raspberry Pi) car il nécessite un processeur puissant pour fonctionner efficacement.</p>
 <p>Pour utiliser simulavr, téléchargez le package simulavr et compilez avec le support python. Notez que le système de construction peut nécessiter l'installation de certains packages (tels que swig) afin de construire le module python.</p>
 <div class="highlight"><pre><span></span><code>git clone git://git.savannah.nongnu.org/simulavr.git
 cd simulavr
@@ -1505,7 +1505,7 @@ make build
 <div class="highlight"><pre><span></span><code>ls ./build/pysimulavr/_pysimulavr.*.so
 </code></pre></div>
 
-<p>This command should report a specific file (e.g. <strong>./build/pysimulavr/_pysimulavr.cpython-39-x86_64-linux-gnu.so</strong>) and not an error.</p>
+<p>Cette commande doit signaler un fichier spécifique (par exemple <strong>./build/pysimulavr/_pysimulavr.cpython-39-x86_64-linux-gnu.so</strong>) et non une erreur.</p>
 <p>Si vous êtes sur un système basé sur Debian (Debian, Ubuntu, etc.), vous pouvez installer les packages suivants et générer des fichiers *.deb pour une installation de simulavr à l'échelle du système :</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
 sudo apt install g++ make cmake swig rst2pdf help2man texinfo

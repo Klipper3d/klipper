@@ -1212,8 +1212,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modele-pour-les-variables-du-menu" class="md-nav__link">
-    Modèle pour les variables du menu
+  <a href="#modele-pour-les-variables-des-menus" class="md-nav__link">
+    Modèle pour les variables des menus
   </a>
   
 </li>
@@ -1303,8 +1303,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modele-pour-les-variables-du-menu" class="md-nav__link">
-    Modèle pour les variables du menu
+  <a href="#modele-pour-les-variables-des-menus" class="md-nav__link">
+    Modèle pour les variables des menus
   </a>
   
 </li>
@@ -1348,12 +1348,12 @@
 
 
 <h1 id="detecteur-de-largeur-de-filament-a-effet-hall">Détecteur de largeur de filament à effet hall<a class="headerlink" href="#detecteur-de-largeur-de-filament-a-effet-hall" title="Permanent link">&para;</a></h1>
-<p>This document describes Filament Width Sensor host module. Hardware used for developing this host module is based on two Hall linear sensors (ss49e for example). Sensors in the body are located on opposite sides. Principle of operation: two hall sensors work in differential mode, temperature drift same for sensor. Special temperature compensation not needed.</p>
+<p>Ce document décrit le module hôte du capteur de largeur de filament. Le matériel utilisé pour développer ce module hôte est basé sur deux capteurs linéaires Hall (ss49e par exemple). Les capteurs dans le corps sont situés sur des côtés opposés. Principe de fonctionnement : deux capteurs hall fonctionnent en mode différentiel, dérive de température identique pour le capteur. Compensation de température spéciale non nécessaire.</p>
 <p>Vous trouverez les modèles sur <a href="https://www.thingiverse.com/thing:4138933">Thingiverse</a>, une vidéo de montage est également disponible sur <a href="https://www.youtube.com/watch?v=TDO9tME8vp4">Youtube</a></p>
 <p>Pour utiliser le capteur de largeur de filament de Hall, consultez <a href="Config_Reference.html#hall_filament_width_sensor">Référence des configurations</a> et <a href="G-Codes.html#hall_filament_width_sensor">documentation G-Code</a>.</p>
 <h2 id="comment-cela-fonctionne-t-il">Comment cela fonctionne-t-il ?<a class="headerlink" href="#comment-cela-fonctionne-t-il" title="Permanent link">&para;</a></h2>
-<p>Sensor generates two analog output based on calculated filament width. Sum of output voltage always equals to detected filament width. Host module monitors voltage changes and adjusts extrusion multiplier. I use the aux2 connector on a ramps-like board with the analog11 and analog12 pins. You can use different pins and different boards.</p>
-<h2 id="modele-pour-les-variables-du-menu">Modèle pour les variables du menu<a class="headerlink" href="#modele-pour-les-variables-du-menu" title="Permanent link">&para;</a></h2>
+<p>Le capteur génère deux sorties analogiques basées sur la largeur de filament calculée. La somme de la tension de sortie est toujours égale à la largeur de filament détectée. Le module hôte surveille les changements de tension et ajuste le multiplicateur d'extrusion. J'utilise le connecteur aux2 sur une carte de type ramps avec les broches analog11 et analog12. Vous pouvez utiliser différentes broches et différentes cartes.</p>
+<h2 id="modele-pour-les-variables-des-menus">Modèle pour les variables des menus<a class="headerlink" href="#modele-pour-les-variables-des-menus" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>[menu __main __filament __width_current]
 type: command
 enable: {&#39;hall_filament_width_sensor&#39; in printer}
@@ -1379,7 +1379,7 @@ index: 1
 <p>Pour activer le capteur, lancez la commande <strong>ENABLE_FILAMENT_WIDTH_SENSOR</strong> ou définissez le paramètre <code>enable</code> sur <code>true</code>.</p>
 <h2 id="journalisation">Journalisation<a class="headerlink" href="#journalisation" title="Permanent link">&para;</a></h2>
 <p>Par défaut, la journalisation du diamètre est désactivée à la mise sous tension.</p>
-<p>Envoyez la commande <strong>ENABLE_FILAMENT_WIDTH_LOG</strong> pour démarrer la journalisation, envoyez la commande <strong>DISABLE_FILAMENT_WIDTH_LOG</strong> pour l'arrêter. Pour activer la journalisation à la mise sous tension, définissez le paramètre <code>logging</code> à <code>true</code>.</p>
+<p>Executez la commande <strong>ENABLE_FILAMENT_WIDTH_LOG</strong> pour démarrer la journalisation et la commande <strong>DISABLE_FILAMENT_WIDTH_LOG</strong> pour l'arrêter. Pour activer la journalisation à la mise sous tension, définissez le paramètre <code>logging</code> à <code>true</code>.</p>
 <p>Le diamètre du filament est enregistré à chaque intervalle de mesure (10 mm par défaut).</p>
 
               

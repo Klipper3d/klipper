@@ -1420,7 +1420,7 @@ sudo service klipper start
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -l
 </code></pre></div>
 
-<p>Si vous ne voyez pas votre carte dans la liste, il peut être nécessaire d'ajouter une nouvelle définition de carte comme <a href="#board-definitions">décrit ci-dessous</a>.</p>
+<p>Si votre carte ne figure pas dans la liste, il peut être nécessaire d'ajouter une nouvelle définition de carte comme <a href="#board-definitions">décrit ci-dessous</a>.</p>
 <h2 id="utilisation-avancee">Utilisation avancée<a class="headerlink" href="#utilisation-avancee" title="Permanent link">&para;</a></h2>
 <p>Les commandes ci-dessus supposent que votre MCU se connecte à la vitesse de transmission par défaut de 250000 et que le firmware se trouve dans <code>~/klipper/out/klipper.bin</code>. Le script <code>flash-sdcard.sh</code> fournit des options pour changer ces valeurs par défaut. Toutes les options peuvent être visualisées par l'écran d'aide :</p>
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
@@ -1441,7 +1441,7 @@ optional arguments:
   -f &lt;firmware&gt;   path to klipper.bin
 </code></pre></div>
 
-<p>Si votre carte est flashée avec un firmware qui se connecte à un taux de baud personnalisé, il est possible de mettre à jour en spécifiant l'option <code>-b</code> :</p>
+<p>Si votre carte est flashée avec un micro logiciel qui se connecte à une vitesse (baud rate) personnalisée, il est possible de mettre à jour en spécifiant l'option <code>-b</code> :</p>
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -b 115200 /dev/ttyAMA0 btt-skr-v1.3
 </code></pre></div>
 
@@ -1449,7 +1449,7 @@ optional arguments:
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -f ~/downloads/klipper.bin /dev/ttyAMA0 btt-skr-v1.3
 </code></pre></div>
 
-<p>Notez que lors de la mise à jour d'un MKS Robin E3, il n'est pas nécessaire d'exécuter manuellement <code>update_mks_robin.py</code> et de fournir le binaire résultant à <code>flash-sdcard.sh</code>. Cette procédure est automatisée pendant le processus de téléchargement.</p>
+<p>Notez que lors de la mise à jour d'un MKS Robin E3, il n'est pas nécessaire d'exécuter manuellement <code>update_mks_robin.py</code> et de fournir le binaire résultant à <code>flash-sdcard.sh</code>. Cette procédure est automatisée pendant le processus de téléversement.</p>
 <p>L'option <code>-c</code> est utilisée pour effectuer une opération de contrôle ou de vérification uniquement pour tester si la carte exécute correctement le firmware spécifié. Cette option est principalement destinée aux cas où un cycle d'alimentation manuel est nécessaire pour compléter la procédure de flashage, comme avec des chargeurs de démarrage utilisant le mode SDIO au lieu de SPI pour accéder à leurs cartes SD. (Voir Caveats ci-dessous) Mais, elle peut également être utilisée à tout moment pour vérifier si le code flashé dans la carte correspond à la version dans votre dossier de construction sur toute carte supportée.</p>
 <h2 id="avertissements">Avertissements<a class="headerlink" href="#avertissements" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1471,9 +1471,9 @@ optional arguments:
 
 <p>Les champs suivants peuvent être précisés :</p>
 <ul>
-<li><code>mcu</code>: The mcu type. This can be retrieved after configuring the build via <code>make menuconfig</code> by running <code>cat .config | grep CONFIG_MCU</code>. This field is required.</li>
-<li><code>spi_bus</code>: The SPI bus connected to the SD Card. This should be retrieved from the board's schematic. This field is required.</li>
-<li><code>cs_pin</code>: The Chip Select Pin connected to the SD Card. This should be retrieved from the board schematic. This field is required.</li>
+<li><code>mcu</code> : le type de mcu. Il peut être récupéré après avoir configuré la construction via <code>make menuconfig</code> en exécutant <code>cat .config | grepCONFIG_MCU</code>. Ce champ est obligatoire.</li>
+<li><code>spi_bus</code> : Le bus SPI connecté à la carte SD. Cette information doit être récupérée à partir du schéma de la carte. Ce champ est obligatoire.</li>
+<li><code>cs_pin</code> : La broche de sélection de puce connectée à la carte SD. Cette information doit être récupérée à partir du schéma de la carte. Ce champ est obligatoire.</li>
 <li><code>firmware_path</code> : Le chemin sur la carte SD où le firmware doit être transféré. La valeur par défaut est <code>firmware.bin</code>.</li>
 <li><code>current_firmware_path</code> : Le chemin sur la carte SD où le fichier du firmware renommé est situé après un flash réussi. La valeur par défaut est <code>firmware.cur</code>.</li>
 <li><code>skip_verify</code> : définit une valeur booléenne indiquant aux scripts d'ignorer l'étape de vérification du firmware pendant le processus de flashage. La valeur par défaut est <code>False</code>. Peut être défini à <code>True</code> pour les cartes nécessitant un cycle d'alimentation manuel pour terminer le flashage. Pour vérifier le firmware par la suite, exécutez à nouveau le script avec l'option <code>-c</code> pour effectuer l'étape de vérification. <a href="#caveats">Voir les avertissements avec les cartes SDIO</a></li>
