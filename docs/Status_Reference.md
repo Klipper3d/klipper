@@ -399,6 +399,23 @@ The following information is available in
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
 
+## stepper_*
+
+The following information is available in the `stepper_*`, and
+`manual_stepper some_name`:
+- `mcu_position`: The total number of steps the micro-controller has issued
+  in a positive direction minus the number of steps issued in a negative
+  direction since the micro-controller was last reset. This is the "mcu"
+  position reported by `GET_POSITION`. See the developer documentation of
+  [GET_POSITION output](Code_Overview.md#coordinate-systems) for more
+  information.
+
+If the robot is in motion when the query is issued then the reported value
+includes moves buffered on the micro-controller, but does not include moves
+on the look-ahead queue. One may execute `M400` before evaluating a macro
+that reads `mcu_position` to fully flush the look-ahead and step generation
+code.
+
 ## stepper_enable
 
 The following information is available in the `stepper_enable` object (this

@@ -228,6 +228,10 @@ class MCU_stepper:
         ffi_main, ffi_lib = chelper.get_ffi()
         a = axis.encode()
         return ffi_lib.itersolve_is_active_axis(self._stepper_kinematics, a)
+    def get_status(self, eventtime):
+        return {
+            'mcu_position': self.get_mcu_position(),
+         }
 
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):
@@ -246,6 +250,8 @@ def PrinterStepper(config, units_in_radians=False):
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params,
                               rotation_dist, steps_per_rotation,
                               step_pulse_duration, units_in_radians)
+    if 'stepper' in name:
+        printer.add_object(name, mcu_stepper)
     # Register with helper modules
     for mname in ['stepper_enable', 'force_move', 'motion_report']:
         m = printer.load_object(config, mname)
