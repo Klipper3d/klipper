@@ -101,23 +101,6 @@ shaper_calc_position(const struct move *m, int axis, double move_time
  * Generic position calculation via smoother integration
  ****************************************************************/
 
-// Calculate the definitive integral on a part of a move
-static double
-move_integrate(const struct move *m, int axis, double start, double end
-               , double t0, const struct smoother *sm)
-{
-    if (start < 0.)
-        start = 0.;
-    if (end > m->move_t)
-        end = m->move_t;
-    double axis_r = m->axes_r.axis[axis - 'x'];
-    double start_pos = m->start_pos.axis[axis - 'x'];
-    double res = integrate_weighted(sm, start_pos,
-                                    axis_r * m->start_v, axis_r * m->half_accel,
-                                    start, end, t0);
-    return res;
-}
-
 // Calculate the definitive integral over a range of moves
 static double
 range_integrate(const struct move *m, int axis, double move_time
@@ -134,20 +117,23 @@ range_integrate(const struct move *m, int axis, double move_time
     }
     // Calculate integral for the current move
     double start = move_time - sm->hst, end = move_time + sm->hst;
-    double res = move_integrate(m, axis, start, end, /*t0=*/move_time, sm);
+    double res = integrate_weighted(m, axis, sm, m->start_pos.axis[axis - 'x'],
+                                    start, end, /*t0=*/move_time, NULL);
     // Integrate over previous moves
     const struct move *prev = m;
     while (unlikely(start < 0.)) {
         prev = list_prev_entry(prev, node);
         start += prev->move_t;
-        res += move_integrate(prev, axis, start, prev->move_t,
-                              /*t0=*/start + sm->hst, sm);
+        res += integrate_weighted(
+                prev, axis, sm, prev->start_pos.axis[axis - 'x'],
+                start, prev->move_t, /*t0=*/start + sm->hst, NULL);
     }
     // Integrate over future moves
     while (unlikely(end > m->move_t)) {
         end -= m->move_t;
         m = list_next_entry(m, node);
-        res += move_integrate(m, axis, 0., end, /*t0=*/end - sm->hst, sm);
+        res += integrate_weighted(m, axis, sm, m->start_pos.axis[axis - 'x'],
+                                  0., end, /*t0=*/end - sm->hst, NULL);
     }
     return res;
 }

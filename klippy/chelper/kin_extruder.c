@@ -22,11 +22,17 @@
 // deceleration). The formula is:
 //     pa_position(t) = (nominal_position(t)
 //                       + pressure_advance * nominal_velocity(t))
-// Which is then "smoothed" using a weighted average:
+// The nominal position and velocity are then smoothed using a weighted average:
 //     smooth_position(t) = (
-//         definitive_integral(pa_position(x + t_offs) * smoother(t-x) * dx,
+//         definitive_integral(nominal_position(x+t_offs) * smoother(t-x) * dx,
 //                             from=t-smooth_time/2, to=t+smooth_time/2)
-//         / ((smooth_time/2)**2))
+//     smooth_velocity(t) = (
+//         definitive_integral(nominal_velocity(x+t_offs) * smoother(t-x) * dx,
+//                             from=t-smooth_time/2, to=t+smooth_time/2)
+// and the final pressure advance value calculated as
+//     smooth_pa_position(t) = smooth_position(t) + pa_func(smooth_velocity(t))
+// where pa_func(v) = pressure_advance * v for linear velocity model or a more
+// complicated function for non-linear pressure advance models.
 
 // Calculate the definitive integral of extruder for a given move
 static void
@@ -35,21 +41,15 @@ pa_move_integrate(const struct move *m, int axis
                   , double t0, const struct smoother *sm
                   , double *pos_integral, double *pa_velocity_integral)
 {
-    if (start < 0.)
-        start = 0.;
-    if (end > m->move_t)
-        end = m->move_t;
     // Calculate base position and velocity with pressure advance
     int can_pressure_advance = m->axes_r.x > 0. || m->axes_r.y > 0.;
-    double axis_r = m->axes_r.axis[axis - 'x'];
-    double start_v = m->start_v * axis_r;
-    double ha = m->half_accel * axis_r;
     // Calculate definitive integral
+    double smooth_velocity;
     *pos_integral += integrate_weighted(
-            sm, base, start_v, ha, start, end, t0);
+            m, axis, sm, base, start, end, t0,
+            can_pressure_advance ? &smooth_velocity : NULL);
     if (can_pressure_advance) {
-        *pa_velocity_integral += integrate_weighted(
-                sm, start_v, 2. * ha, 0., start, end, t0);
+        *pa_velocity_integral += smooth_velocity;
     }
 }
 
@@ -72,7 +72,7 @@ pa_range_integrate(const struct move *m, int axis, double move_time
     double start = move_time - sm->hst, end = move_time + sm->hst;
     double start_base = m->start_pos.axis[axis - 'x'];
     *pos_integral = *pa_velocity_integral = 0.;
-    pa_move_integrate(m, axis, 0., start, end, move_time,
+    pa_move_integrate(m, axis, 0., start, end, /*t0=*/move_time,
                       sm, pos_integral, pa_velocity_integral);
     // Integrate over previous moves
     const struct move *prev = m;
@@ -81,7 +81,7 @@ pa_range_integrate(const struct move *m, int axis, double move_time
         start += prev->move_t;
         double base = prev->start_pos.axis[axis - 'x'] - start_base;
         pa_move_integrate(prev, axis, base, start, prev->move_t,
-                          start + sm->hst, sm, pos_integral,
+                          /*t0=*/start + sm->hst, sm, pos_integral,
                           pa_velocity_integral);
     }
     // Integrate over future moves
@@ -89,7 +89,7 @@ pa_range_integrate(const struct move *m, int axis, double move_time
         end -= m->move_t;
         m = list_next_entry(m, node);
         double base = m->start_pos.axis[axis - 'x'] - start_base;
-        pa_move_integrate(m, axis, base, 0., end, end - sm->hst,
+        pa_move_integrate(m, axis, base, 0., end, /*t0=*/end - sm->hst,
                           sm, pos_integral, pa_velocity_integral);
     }
     *pos_integral += start_base;
