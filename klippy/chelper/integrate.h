@@ -2,14 +2,17 @@
 #define INTEGRATE_H
 
 struct smoother {
-    double c[12];
+    double c0[14], c1[14], c2[14];
     double hst, t_offs;
-    int n;
+    int n, symm;
 };
 
+struct move;
+
 int init_smoother(int n, const double a[], double t_sm, struct smoother* sm);
-double integrate_weighted(const struct smoother *sm,
-                          double pos, double start_v, double half_accel,
-                          double start, double end, double t0);
+double integrate_weighted(const struct move* m, int axis
+                          , const struct smoother *sm, double base
+                          , double start, double end, double t0
+                          , double* smooth_velocity);
 
 #endif // integrate.h
