@@ -305,6 +305,13 @@ def main():
                     help="input tty name (default is /tmp/printer)")
     opts.add_option("-a", "--api-server", dest="apiserver",
                     help="api server unix domain socket filename")
+    opts.add_option("--api-server_perm", dest="apiserver_perm",
+                    help="permissions for the api server unix domain socket")
+    opts.add_option("--api-server_script", dest="apiserver_script",
+                    help="script to execute on the socket  after creation")
+    opts.add_option("--api-server_script_sudo", dest="apiserver_script_sudo",
+                    default="False",
+                    help="use sudo for the api script")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
@@ -321,7 +328,12 @@ def main():
         import_test()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    start_args = {'config_file': args[0], 'apiserver': options.apiserver,
+    start_args = {'config_file': args[0],
+                  'apiserver': options.apiserver,
+                  'apiserver_perm': options.apiserver_perm,
+                  'apiserver_script': options.apiserver_script,
+                  'apiserver_script_sudo': options.apiserver_script_sudo.lower()
+                                           in ['true', '1', 't', 'y', 'yes'],
                   'start_reason': 'startup'}
 
     debuglevel = logging.INFO

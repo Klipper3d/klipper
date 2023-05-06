@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license
 import logging, socket, os, sys, errno, json, collections
 import gcode
+import pwd, grp, subprocess
 
 REQUEST_LOG_SIZE = 20
 
@@ -118,6 +119,11 @@ class ServerSocket:
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.setblocking(0)
         self.sock.bind(server_address)
+        self._set_socket_file_perm(server_address,
+                                   start_args.get('apiserver_perm'))
+        self._exec_socket_file_script(server_address,
+                                      start_args.get('apiserver_script'),
+                                      start_args.get('apiserver_script_sudo'))
         self.sock.listen(1)
         self.fd_handle = self.reactor.register_fd(
             self.sock.fileno(), self._handle_accept)
@@ -148,6 +154,55 @@ class ServerSocket:
     def _handle_shutdown(self):
         for client in self.clients.values():
             client.dump_request_log()
+
+    def _set_socket_file_perm(self, file_path, perm):
+        if (perm == None):
+            return
+
+        perm = int(perm, 8)
+        logging.info("Changing socket permissions to '{}'.".format(perm))
+        try:
+            os.chmod(file_path, perm)
+        except Exception as e:
+            logging.warning(
+                "Could not change socket permissions due to '{}'".format(e))
+
+        return
+
+    def _exec_socket_file_script(self, file_path, script_path, sudo):
+        if (script_path == None):
+            return
+
+        script_path = os.path.abspath(script_path)
+
+        if not (os.path.isfile(script_path)):
+            logging.warning(
+                "Socket script '{}' could not be found.".format(script_path))
+            return
+
+        prog_desc = [script_path, file_path]
+        if sudo:
+            logging.info("Socket script will use sudo.")
+            prog_desc.insert(0, "sudo")
+
+        try:
+            process = subprocess.Popen(prog_desc,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+        except Exception as e:
+            logging.warning(
+                "Could not execute socket script due to '{}'.".format(e))
+            return
+
+        result, err = process.communicate()
+        retcode = process.wait()
+        if retcode != 0:
+            logging.warning(
+                "Socket script failed code '{}' saying: {}"
+                .format(retcode, err.decode().strip()))
+
+        logging.info(
+            "Socket script answered: {}".format(result.decode().strip()))
 
     def _remove_socket_file(self, file_path):
         try:
