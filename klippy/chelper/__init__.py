@@ -12,10 +12,12 @@ import cffi
 ######################################################################
 
 GCC_CMD = "gcc"
-COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
+COMPILE_ARGS = ("-Wall -g -O3 -shared -fPIC"
                 " -flto -fwhole-program -fno-use-linker-plugin"
+                " -march=native -mcpu=native -mtune=native"
                 " -o %s %s")
 SSE_FLAGS = "-mfpmath=sse -msse2"
+NEON_FLAGS = "-mfpu=neon"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'stepcompress_hp.c',
     'itersolve.c', 'trapq.c', 'pollreactor.c', 'msgblock.c', 'trdispatch.c',
@@ -285,6 +287,8 @@ def get_ffi():
         if check_build_code(srcfiles+ofiles+[__file__], destlib):
             if check_gcc_option(SSE_FLAGS):
                 cmd = "%s %s %s" % (GCC_CMD, SSE_FLAGS, COMPILE_ARGS)
+            elif check_gcc_option(NEON_FLAGS):
+                cmd = "%s %s %s" % (GCC_CMD, NEON_FLAGS, COMPILE_ARGS)
             else:
                 cmd = "%s %s" % (GCC_CMD, COMPILE_ARGS)
             logging.info("Building C code module %s", DEST_LIB)
