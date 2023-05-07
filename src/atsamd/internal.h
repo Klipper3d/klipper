@@ -5,9 +5,7 @@
 #include <stdint.h> // uint32_t
 #include "autoconf.h" // CONFIG_MACH_SAMD21A
 
-#if CONFIG_MACH_SAMC21
-#include "samc21.h"
-#elif CONFIG_MACH_SAMD21
+#if CONFIG_MACH_SAMD21
 #include "samd21.h"
 #elif CONFIG_MACH_SAMD51
 #include "samd51.h"
