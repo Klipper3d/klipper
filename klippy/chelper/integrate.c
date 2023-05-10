@@ -20,73 +20,38 @@ static double coeffs[] = {
     1./11., 1./12., 1./13., 1./14., 1./15., 1./16., 1./17., 1./18., 1./19.,
 };
 
-inline static void
-integrate_smoother(const struct smoother* sm, double start, double end
-                   , double* s0, double* s1, double* s2)
+inline smoother_antiderivatives
+calc_antiderivatives(const struct smoother* sm, double t)
 {
-    int n = sm->n;
-    double u = start + end;
-    double end_n = end;
-    // First 2 iterations with i == 0 and 1
-    double sum0 = sm->c0[0] + sm->c0[1] * u, sum1 = sm->c1[0] * u, sum2 = 0.;
-    int i;
+    int n = sm->n, i;
+    double it0 = (sm->c0[0] * t + sm->c0[1]) * t;
+    double it1 = (sm->c1[0] * t + sm->c1[1]) * t;
+    double it2 = (sm->c2[0] * t + sm->c2[1]) * t;
     for (i = 2; i < n; ++i) {
-        end_n *= end;
-        u = u * start + end_n;
-        sum2 += sm->c2[i-2] * u;
-        sum1 += sm->c1[i-1] * u;
-        sum0 += sm->c0[i] * u;
+        it0 = (it0 + sm->c0[i]) * t;
+        it1 = (it1 + sm->c1[i]) * t;
+        it2 = (it2 + sm->c2[i]) * t;
     }
-    // Remainging 2 iterations with i == n and n+1
-    end_n *= end;
-    u = u * start + end_n;
-    sum2 += sm->c2[n-2] * u;
-    sum1 += sm->c1[n-1] * u;
-
-    end_n *= end;
-    u = u * start + end_n;
-    sum2 += sm->c2[n-1] * u;
-
-    *s0 = sum0;
-    *s1 = sum1;
-    *s2 = sum2;
+    it1 *= t;
+    it2 *= t * t;
+    return (smoother_antiderivatives) {
+        .it0 = it0, .it1 = it1, .it2 = it2 };
 }
 
-inline static void
-integrate_smoother_symm(const struct smoother* sm, double start, double end
-                        , double* s0, double* s1, double* s2)
+inline smoother_antiderivatives
+diff_antiderivatives(const smoother_antiderivatives* ad1
+                     , const smoother_antiderivatives* ad2)
 {
-    int n = sm->n;
-    double u = start + end;
-    double end_n = end;
-    // First 2 iterations with i == 0 and 1
-    double sum0 = sm->c0[0], sum1 = sm->c1[0] * u, sum2 = 0.;
-    int i;
-    for (i = 2; i < n; i += 2) {
-        end_n *= end;
-        u = u * start + end_n;
-        sum2 += sm->c2[i-2] * u;
-        sum0 += sm->c0[i] * u;
-        end_n *= end;
-        u = u * start + end_n;
-        sum1 += sm->c1[i] * u;
-    }
-    // Last iteration with i == n+1
-    end_n *= end;
-    u = u * start + end_n;
-    sum2 += sm->c2[n-1] * u;
-
-    *s0 = sum0;
-    *s1 = sum1;
-    *s2 = sum2;
+    return (smoother_antiderivatives) {
+        .it0 = ad2->it0 - ad1->it0,
+        .it1 = ad2->it1 - ad1->it1,
+        .it2 = ad2->it2 - ad1->it2 };
 }
 
-// Integrate (pos + start_v*t + half_accel*t^2) with smoothing weight function
-// w(t0 - t) over the range [start; end]
-__always_inline double
-integrate_weighted(const struct move* m, int axis, const struct smoother *sm
-                   , double base, double start, double end, double t0
-                   , double* smooth_velocity)
+inline double
+integrate_move(const struct move* m, int axis, double base, double t0
+               , const smoother_antiderivatives* s
+               , double* smooth_velocity)
 {
     double axis_r = m->axes_r.axis[axis - 'x'];
     double start_v = m->start_v * axis_r;
@@ -95,17 +60,9 @@ integrate_weighted(const struct move* m, int axis, const struct smoother *sm
     double accel = 2. * half_accel;
     base += (half_accel * t0 + start_v) * t0;
     start_v += accel * t0;
-    if (start <= 0.) start = 0.;
-    if (end >= m->move_t) end = m->move_t;
-    double delta_t = end - start;
-    double s0, s1, s2;
-    if (unlikely(sm->symm))
-        integrate_smoother_symm(sm, t0 - end, t0 - start, &s0, &s1, &s2);
-    else
-        integrate_smoother(sm, t0 - end, t0 - start, &s0, &s1, &s2);
-    double smooth_pos = (base * s0 - start_v * s1 + half_accel * s2) * delta_t;
+    double smooth_pos = base * s->it0 - start_v * s->it1 + half_accel * s->it2;
     if (smooth_velocity)
-        *smooth_velocity = (start_v * s0 - accel * s1) * delta_t;
+        *smooth_velocity = start_v * s->it0 - accel * s->it1;
     return smooth_pos;
 }
 
@@ -116,7 +73,7 @@ integrate_weighted(const struct move* m, int axis, const struct smoother *sm
 int
 init_smoother(int n, const double a[], double t_sm, struct smoother* sm)
 {
-    if (n < 2 || n + 2 > ARRAY_SIZE(sm->c0))
+    if ((t_sm && n < 2) || n > ARRAY_SIZE(sm->c0))
         return -1;
     memset(sm, 0, sizeof(*sm));
     sm->n = n;
@@ -128,21 +85,22 @@ init_smoother(int n, const double a[], double t_sm, struct smoother* sm)
     for (i = 0; i < n; ++i) {
         if ((i & 1) && a[i]) symm = 0;
         double c = a[i] * inv_t_sm_n;
-        sm->c0[i] = c * coeffs[i];
-        sm->c1[i] = c * coeffs[i+1];
-        sm->c2[i] = c * coeffs[i+2];
+        sm->c0[n-1-i] = c * coeffs[i];
+        sm->c1[n-1-i] = c * coeffs[i+1];
+        sm->c2[n-1-i] = c * coeffs[i+2];
         inv_t_sm_n *= inv_t_sm;
     }
     sm->symm = symm;
-    double norm, t_int, t2_int;
-    integrate_smoother(sm, -sm->hst, sm->hst, &norm, &t_int, &t2_int);
-    double inv_norm = inv_t_sm / norm;
+    double inv_norm = 1. / (calc_antiderivatives(sm, sm->hst).it0
+                            - calc_antiderivatives(sm, -sm->hst).it0);
     for (i = 0; i < n; ++i) {
         sm->c0[i] *= inv_norm;
         sm->c1[i] *= inv_norm;
         sm->c2[i] *= inv_norm;
     }
-    integrate_smoother(sm, -sm->hst, sm->hst, &norm, &t_int, &t2_int);
-    sm->t_offs = t_int * t_sm;
+    sm->p_hst = calc_antiderivatives(sm, sm->hst);
+    sm->m_hst = calc_antiderivatives(sm, -sm->hst);
+    sm->pm_diff = diff_antiderivatives(&sm->m_hst, &sm->p_hst);
+    sm->t_offs = sm->pm_diff.it1;
     return 0;
 }
