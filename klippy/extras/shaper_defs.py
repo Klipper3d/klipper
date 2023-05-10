@@ -137,19 +137,19 @@ def get_zv_smoother(shaper_freq, damping_ratio_unused=None,
               -1.465471373781904,0.01966833207740377]
     return init_smoother(coeffs, 0.8025 / shaper_freq, normalize_coeffs)
 
-def get_mzv20_smoother(shaper_freq, damping_ratio_unused=None,
-                       normalize_coeffs=True):
-    coeffs = [-1928.625991372561,174.47238885576,680.8819871456237,
-              -54.08725118644957,-55.28572183696386,2.617288493127363,
-              1.401087377835678]
-    return init_smoother(coeffs, 0.85175 / shaper_freq, normalize_coeffs)
+def get_mzv_smoother(shaper_freq, damping_ratio_unused=None,
+                     normalize_coeffs=True):
+    coeffs = [-1906.717580206364,125.8892756660212,698.0200035767849,
+              -37.75923018121473,-62.18762409216703,1.57172781617736,
+              1.713117990217123]
+    return init_smoother(coeffs, 0.95625 / shaper_freq, normalize_coeffs)
 
-def get_mzv16_smoother(shaper_freq, damping_ratio_unused=None,
-                       normalize_coeffs=True):
-    coeffs = [-1938.774071514084,157.7065914461193,711.7324202087348,
-              -48.34288782208795,-63.72538103023892,2.22905999013954,
-              1.741413861921329]
-    return init_smoother(coeffs, 0.9665 / shaper_freq, normalize_coeffs)
+def get_ei_smoother(shaper_freq, damping_ratio_unused=None,
+                    normalize_coeffs=True):
+    coeffs = [-1797.048868963208,120.5310596109878,669.6653197989012,
+              -35.71975707450795,-62.49388325512682,1.396748042940248,
+              1.848276903900512]
+    return init_smoother(coeffs, 1.06625 / shaper_freq, normalize_coeffs)
 
 def get_2hump_ei_smoother(shaper_freq, damping_ratio_unused=None,
                           normalize_coeffs=True):
@@ -160,28 +160,10 @@ def get_2hump_ei_smoother(shaper_freq, damping_ratio_unused=None,
 
 def get_si_smoother(shaper_freq, damping_ratio_unused=None,
                     normalize_coeffs=True):
-    coeffs = [-121313.2032178889,26921.56924860698,63029.77630233325,
-              -13293.49355097946,-10648.58182242004,2050.103214332665,
-              666.126576474768,-102.9883580154977,-17.0691108398123,
-              0.1640954647660932,1.278318992073449]
-    return init_smoother(coeffs, 1.2 / shaper_freq, normalize_coeffs)
-
-def get_nei_smoother(shaper_freq, damping_ratio_unused=None,
-                    normalize_coeffs=True):
-    coeffs = [4883445.221306241,-720494.0751766556,-3148819.580240736,
-              424777.3712490448,721441.1426576816,-85447.8333563426,
-              -70054.38903665643,6764.372246231036,2669.737943114452,
-              -180.6374244922258,-30.4660136303673,1.82937577459115]
-    return init_smoother(coeffs, 1.42 / shaper_freq, normalize_coeffs)
-
-def get_nsi_smoother(shaper_freq, damping_ratio_unused=None,
-                    normalize_coeffs=True):
-    coeffs = [1.576037300103821e7,-3450496.635175148,-1.138914512941258e7,
-              2263562.40616947,3103579.174607452,-537674.9863778015,
-              -397766.323762382,56331.41234254206,24270.29707072854,
-              -2532.279663870225,-598.7901101230622,36.92208279328751,
-              -0.9886556775166597,1.047798776818597]
-    return init_smoother(coeffs, 1.58 / shaper_freq, normalize_coeffs)
+    coeffs = [-6186.76006449789,1206.747198930197,2579.985143622855,
+              -476.8554763069169,-295.546608490564,52.69679971161049,
+              4.234582468800491,-2.226157642004671,1.267781046297883]
+    return init_smoother(coeffs, 1.245 / shaper_freq, normalize_coeffs)
 
 # min_freq for each shaper is chosen to have projected max_accel ~= 1500
 INPUT_SHAPERS = [
@@ -195,10 +177,8 @@ INPUT_SHAPERS = [
 
 INPUT_SMOOTHERS = [
     InputSmootherCfg('smooth_zv', get_zv_smoother, min_freq=21.),
-    InputSmootherCfg('smooth_mzv20', get_mzv20_smoother, min_freq=23.),
-    InputSmootherCfg('smooth_mzv16', get_mzv16_smoother, min_freq=23.),
+    InputSmootherCfg('smooth_mzv', get_mzv_smoother, min_freq=23.),
+    InputSmootherCfg('smooth_ei', get_ei_smoother, min_freq=23.),
     InputSmootherCfg('smooth_2hump_ei', get_2hump_ei_smoother, min_freq=23.),
     InputSmootherCfg('smooth_si', get_si_smoother, min_freq=23.),
-    InputSmootherCfg('smooth_nei', get_nei_smoother, min_freq=23.),
-    InputSmootherCfg('smooth_nsi', get_nsi_smoother, min_freq=23.),
 ]
