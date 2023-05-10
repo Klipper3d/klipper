@@ -35,19 +35,18 @@
 // complicated function for non-linear pressure advance models.
 
 // Calculate the definitive integral of extruder for a given move
-static void
-pa_move_integrate(const struct move *m, int axis
-                  , double base, double start, double end
-                  , double t0, const struct smoother *sm
+static inline void
+pa_move_integrate(const struct move *m, int axis, double base
+                  , double t0, const smoother_antiderivatives *ad
                   , double *pos_integral, double *pa_velocity_integral)
 {
     // Calculate base position and velocity with pressure advance
     int can_pressure_advance = m->axes_r.x > 0. || m->axes_r.y > 0.;
-    // Calculate definitive integral
     double smooth_velocity;
-    *pos_integral += integrate_weighted(
-            m, axis, sm, base, start, end, t0,
-            can_pressure_advance ? &smooth_velocity : NULL);
+    // Calculate definitive integral
+    *pos_integral += integrate_move(m, axis, base, t0, ad,
+                                    can_pressure_advance ? &smooth_velocity
+                                                         : NULL);
     if (can_pressure_advance) {
         *pa_velocity_integral += smooth_velocity;
     }
@@ -70,27 +69,51 @@ pa_range_integrate(const struct move *m, int axis, double move_time
     }
     // Calculate integral for the current move
     double start = move_time - sm->hst, end = move_time + sm->hst;
+    double t0 = move_time;
     double start_base = m->start_pos.axis[axis - 'x'];
     *pos_integral = *pa_velocity_integral = 0.;
-    pa_move_integrate(m, axis, 0., start, end, /*t0=*/move_time,
-                      sm, pos_integral, pa_velocity_integral);
+    if (unlikely(start >= 0. && end <= m->move_t)) {
+        pa_move_integrate(m, axis, 0., t0, &sm->pm_diff,
+                          pos_integral, pa_velocity_integral);
+        *pos_integral += start_base;
+        return;
+    }
+    smoother_antiderivatives left =
+        likely(start < 0.) ? calc_antiderivatives(sm, t0) : sm->p_hst;
+    smoother_antiderivatives right =
+        likely(end > m->move_t) ? calc_antiderivatives(sm, t0 - m->move_t)
+                                : sm->m_hst;
+    smoother_antiderivatives diff = diff_antiderivatives(&right, &left);
+    pa_move_integrate(m, axis, 0., t0, &diff,
+                      pos_integral, pa_velocity_integral);
     // Integrate over previous moves
     const struct move *prev = m;
-    while (unlikely(start < 0.)) {
+    while (likely(start < 0.)) {
         prev = list_prev_entry(prev, node);
         start += prev->move_t;
+        t0 += prev->move_t;
+        smoother_antiderivatives r = left;
+        left = likely(start < 0.) ? calc_antiderivatives(sm, t0)
+                                  : sm->p_hst;
+        diff = diff_antiderivatives(&r, &left);
         double base = prev->start_pos.axis[axis - 'x'] - start_base;
-        pa_move_integrate(prev, axis, base, start, prev->move_t,
-                          /*t0=*/start + sm->hst, sm, pos_integral,
-                          pa_velocity_integral);
+        pa_move_integrate(prev, axis, base, t0, &diff,
+                          pos_integral, pa_velocity_integral);
     }
     // Integrate over future moves
-    while (unlikely(end > m->move_t)) {
+    t0 = move_time;
+    while (likely(end > m->move_t)) {
         end -= m->move_t;
+        t0 -= m->move_t;
         m = list_next_entry(m, node);
+        smoother_antiderivatives l = right;
+        right = likely(end > m->move_t) ? calc_antiderivatives(sm,
+                                                               t0 - m->move_t)
+                                        : sm->m_hst;
+        diff = diff_antiderivatives(&right, &l);
         double base = m->start_pos.axis[axis - 'x'] - start_base;
-        pa_move_integrate(m, axis, base, 0., end, /*t0=*/end - sm->hst,
-                          sm, pos_integral, pa_velocity_integral);
+        pa_move_integrate(m, axis, base, t0, &diff,
+                          pos_integral, pa_velocity_integral);
     }
     *pos_integral += start_base;
 }
