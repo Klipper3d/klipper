@@ -117,23 +117,44 @@ range_integrate(const struct move *m, int axis, double move_time
     }
     // Calculate integral for the current move
     double start = move_time - sm->hst, end = move_time + sm->hst;
-    double res = integrate_weighted(m, axis, sm, m->start_pos.axis[axis - 'x'],
-                                    start, end, /*t0=*/move_time, NULL);
+    double t0 = move_time;
+    if (unlikely(start >= 0. && end <= m->move_t))
+        return integrate_move(m, axis, m->start_pos.axis[axis - 'x'],
+                              t0, &sm->pm_diff, NULL);
+    smoother_antiderivatives left =
+        likely(start < 0.) ? calc_antiderivatives(sm, t0) : sm->p_hst;
+    smoother_antiderivatives right =
+        likely(end > m->move_t) ? calc_antiderivatives(sm, t0 - m->move_t)
+                                : sm->m_hst;
+    smoother_antiderivatives diff = diff_antiderivatives(&right, &left);
+    double res = integrate_move(m, axis, m->start_pos.axis[axis - 'x'],
+                                t0, &diff, NULL);
     // Integrate over previous moves
     const struct move *prev = m;
-    while (unlikely(start < 0.)) {
+    while (likely(start < 0.)) {
         prev = list_prev_entry(prev, node);
         start += prev->move_t;
-        res += integrate_weighted(
-                prev, axis, sm, prev->start_pos.axis[axis - 'x'],
-                start, prev->move_t, /*t0=*/start + sm->hst, NULL);
+        t0 += prev->move_t;
+        smoother_antiderivatives r = left;
+        left = likely(start < 0.) ? calc_antiderivatives(sm, t0)
+                                  : sm->p_hst;
+        diff = diff_antiderivatives(&r, &left);
+        res += integrate_move(prev, axis, prev->start_pos.axis[axis - 'x'],
+                              t0, &diff, NULL);
     }
     // Integrate over future moves
-    while (unlikely(end > m->move_t)) {
+    t0 = move_time;
+    while (likely(end > m->move_t)) {
         end -= m->move_t;
+        t0 -= m->move_t;
         m = list_next_entry(m, node);
-        res += integrate_weighted(m, axis, sm, m->start_pos.axis[axis - 'x'],
-                                  0., end, /*t0=*/end - sm->hst, NULL);
+        smoother_antiderivatives l = right;
+        right = likely(end > m->move_t) ? calc_antiderivatives(sm,
+                                                               t0 - m->move_t)
+                                        : sm->m_hst;
+        diff = diff_antiderivatives(&right, &l);
+        res += integrate_move(m, axis, m->start_pos.axis[axis - 'x'],
+                              t0, &diff, NULL);
     }
     return res;
 }
