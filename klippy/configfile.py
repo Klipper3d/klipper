@@ -300,7 +300,8 @@ class PrinterConfig:
                             % (section,))
             for option in fileconfig.options(section_name):
                 option = option.lower()
-                if (section, option) not in access_tracking:
+                if ((section, option) not in access_tracking and
+                        not option.startswith('meta_')):
                     raise error("Option '%s' is not valid in section '%s'"
                                 % (option, section))
         # Setup get_status()

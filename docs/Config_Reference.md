@@ -1764,6 +1764,16 @@ pins:
 #   provided.
 ```
 
+### "meta_" prefixed options
+
+```
+[<section>]
+#meta_<name>:
+#   One may specify any number of options with a "meta_" prefix.
+#   These options are not used anywhere in Klipper, but will be available
+#   on the `configfile.config.<section>.meta_<name>` status object
+```
+
 ## Bed probing hardware
 
 ### [probe]
