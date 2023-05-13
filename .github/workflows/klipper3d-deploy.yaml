@@ -8,6 +8,8 @@ on:
     paths:
       - docs/**
       - .github/workflows/klipper3d-deploy.yaml
+  workflow_dispatch:  # click the button on Github repo!
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
