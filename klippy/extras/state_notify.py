@@ -1,1 +1,0 @@
-/home/pi/voron-klipper-extensions/state_notify.py
