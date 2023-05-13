@@ -79,7 +79,7 @@ class LimitedCartKinematics(cartesian.CartKinematics):
         ]
         self.xy_hypot_accel = hypot(*self.max_accels[:2])
         self.scale_per_axis = bool(gcmd.get_int('SCALE',
-                                                self.scale_per_axis, minval=0, maxval=1))
+            self.scale_per_axis, minval=0, maxval=1))
         msg = ("x,y,z max_velocities: %r\n"
                "x,y,z max_accels: %r\n") % (
                    self.max_velocities,
