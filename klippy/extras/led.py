@@ -91,7 +91,7 @@ class PrinterLED:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_LED_TEMPLATE", self.cmd_SET_LED_TEMPLATE,
                                desc=self.cmd_SET_LED_TEMPLATE_help)
-        self.printer.register_event_handler('klippy:shutdown', 
+        self.printer.register_event_handler('klippy:shutdown',
                                             self._handle_shutdown)
 
     def _handle_shutdown(self):
