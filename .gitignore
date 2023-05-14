@@ -4,8 +4,3 @@ out
 .config
 .config.old
 klippy/.version
-klippy/extras/led_interpolate.py
-klippy/extras/gcode_shell_command.py
-klippy/extras/state_notify.py
-klippy/extras/led_effect.py
-klippy/extras/settling_probe.py
