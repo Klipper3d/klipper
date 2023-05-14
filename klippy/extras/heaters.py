@@ -23,6 +23,7 @@ class Heater:
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
+        self.max_set_temp = config.getfloat('max__settemp', above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         self.pwm_delay = self.sensor.get_report_time_delta()
@@ -94,10 +95,10 @@ class Heater:
     def get_smooth_time(self):
         return self.smooth_time
     def set_temp(self, degrees):
-        if degrees and (degrees < self.min_temp or degrees > self.max_temp):
+        if degrees and (degrees < self.min_temp or degrees > self.max_set_temp):
             raise self.printer.command_error(
                 "Requested temperature (%.1f) out of range (%.1f:%.1f)"
-                % (degrees, self.min_temp, self.max_temp))
+                % (degrees, self.min_temp, self.max_set_temp))
         with self.lock:
             self.target_temp = degrees
     def get_temp(self, eventtime):
