@@ -111,14 +111,26 @@ class ServerSocket:
         start_args = printer.get_start_args()
         server_address = start_args.get('apiserver')
         is_fileinput = (start_args.get('debuginput') is not None)
-        if not server_address or is_fileinput:
+        if (int(os.environ.get('LISTEN_PID', 0)) == os.getpid()
+            and int(os.environ.get('LISTEN_FDS', 0)) >= 1):
+            if (int(os.environ.get('LISTEN_FDS', 0)) > 1):
+                logging.warn("Too many sockets, handling 1st only.")
+            # Valid systemd socket activation opens a single socket
+            # LISTEN_FDS_START = 3, so first socket is 3
+            self.sock = socket.fromfd(3, socket.AF_UNIX, socket.SOCK_STREAM)
+            logging.info('Started by socket activation on %r',
+                         self.sock.getsockname())
+        elif server_address and not is_fileinput:
+            # Unix domain socket file managed by klipper
+            self._remove_socket_file(server_address)
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.sock.bind(server_address)
+            self.sock.listen(1)
+            logging.info('Created socket at %r', server_address)
+        else:
             # Do not enable server
             return
-        self._remove_socket_file(server_address)
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.setblocking(0)
-        self.sock.bind(server_address)
-        self.sock.listen(1)
         self.fd_handle = self.reactor.register_fd(
             self.sock.fileno(), self._handle_accept)
         printer.register_event_handler(
