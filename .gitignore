@@ -4,4 +4,5 @@ out
 .config
 .config.old
 /*.old
+config.*
 klippy/.version
