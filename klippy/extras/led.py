@@ -95,7 +95,7 @@ class PrinterLED:
                                             self._handle_shutdown)
 
     def _handle_shutdown(self):
-        del self.active_templates[:]
+        del self.active_templates *= 0
     def setup_helper(self, config, update_func, led_count=1):
         led_helper = LEDHelper(config, update_func, led_count)
         name = config.get_name().split()[-1]
