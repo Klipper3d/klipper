@@ -24,7 +24,7 @@ class Heater:
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.max_set_temp = config.getfloat(
-            'max_set_temp', self.max_temp, 
+            'max_set_temp', self.max_temp,
             minval=self.min_temp, maxval=self.max_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
