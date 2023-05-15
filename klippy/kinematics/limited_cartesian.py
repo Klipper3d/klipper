@@ -78,8 +78,7 @@ class LimitedCartKinematics(cartesian.CartKinematics):
             for max_a, ax in zip(self.max_accels, 'XYZ')
         ]
         self.xy_hypot_accel = hypot(*self.max_accels[:2])
-        self.scale_per_axis = bool(gcmd.get_int('SCALE',
-            self.scale_per_axis, minval=0, maxval=1))
+        self.scale_per_axis = bool(gcmd.get_int('SCALE', self.scale_per_axis, minval=0, maxval=1))
         msg = ("x,y,z max_velocities: %r\n"
                "x,y,z max_accels: %r\n") % (
                    self.max_velocities,
@@ -88,8 +87,8 @@ class LimitedCartKinematics(cartesian.CartKinematics):
             msg += ("Per axis accelerations limits "
                     "scale with current acceleration.\n")
         else:
-            msg += ("Per axis accelerations limits are "
-                    "independent of current acceleration.\n")
+            msg += ("Per axis accelerations limits "
+                    "are independent of current acceleration.\n")
         msg += ("Maximum XY velocity of %.1f mm/s "
                 "reached on %.0f degrees diagonals.\n"
                 "Maximum XY acceleration of %.0f mm/s^2 "
