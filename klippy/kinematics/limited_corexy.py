@@ -49,9 +49,9 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
         self.max_x_accel = gcmd.get_float('X_ACCEL', self.max_x_accel, above=0.)
         self.max_y_accel = gcmd.get_float('Y_ACCEL', self.max_y_accel, above=0.)
         self.max_z_accel = gcmd.get_float('Z_ACCEL', self.max_z_accel, above=0.)
-        self.scale_per_axis = bool(gcmd.get_int('SCALE', 
+        self.scale_per_axis = bool(gcmd.get_int('SCALE',
             self.scale_per_axis, minval=0, maxval=1))
-        msg = "x,y max_accels: %r\n" % [self.max_x_accel, 
+        msg = "x,y max_accels: %r\n" % [self.max_x_accel,
                self.max_y_accel, self.max_z_accel]
         if self.scale_per_axis:
             msg += ("Per axis accelerations limits "
@@ -80,7 +80,7 @@ class LimitedCoreXYKinematics(corexy.CoreXYKinematics):
             x_o_a = x / max_x_accel
             y_o_a = y / max_y_accel
             if self.scale_per_axis:
-                max_a *= move_d / (max(abs(x_o_a + y_o_a), 
+                max_a *= move_d / (max(abs(x_o_a + y_o_a),
                       abs(x_o_a - y_o_a)) * max(max_x_accel, max_y_accel))
             else:
                 max_a = move_d / max(abs(x_o_a + y_o_a), abs(x_o_a - y_o_a))
