@@ -231,6 +231,64 @@ max_z_accel:
 [stepper_z]
 ```
 
+### Cartesian Kinematics with limits for X and Y axes
+
+Behaves exactly the as cartesian kinematics, but allows to set a velocity and
+acceleration limit for X and Y axis.
+
+If you set accelerations per feature type in the slicer, and have tuned your
+acceleration to get similar resonance amplitudes and level of smoothing on X and
+Y, you may want to enable `scale_xy_accel: true`. This will scale the X and Y
+accelerations by the ratio `M204 acceleration / config.max_accel`. For example,
+if you have `max_accel: 10000` in your config and set in the slicer an
+acceleration of 5000 mm/s² (`M204 S5000`), effective `max_x_accel` and
+`max_y_accel` values will be halved compared to their original values set in the
+`[printer]` config. Otherwise, with `scale_xy_accel: false` (the default) they
+behave as machine limits, like `max_z_accel` and `max_z_velocity` always do.
+Gcode velocities under the limits are never scaled per axis and stay isotropic.
+
+```
+[printer]
+kinematics: limited_cartesian
+max_x_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the x
+#   axis. This setting can be used to restrict the maximum speed of
+#   the x stepper motor. The default is to use max_velocity for
+#   max_x_velocity.
+max_y_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the y
+#   axis. This setting can be used to restrict the maximum speed of
+#   the y stepper motor. The default is to use max_velocity for
+#   max_x_velocity.
+max_z_velocity:
+#   See cartesian above.
+max_velocity:
+#   In order to get maximum velocity gains on diagonals, this should be equal or
+#   greater than the hypotenuse (sqrt(x*x + y*y)) of max_x_velocity and
+#   max_y_velocity.
+max_x_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the x axis. It limits the acceleration of the x stepper motor. The
+#   default is to use max_accel for max_x_accel.
+max_y_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the y axis. It limits the acceleration of the y stepper motor. The
+#   default is to use max_accel for max_y_accel.
+max_z_accel:
+# See cartesian above.
+max_accel:
+#   In order to get maximum acceleration gains on diagonals, this should be
+#   equal or greater than the hypotenuse (sqrt(x*x + y*y)) of max_x_accel and
+#   max_y_accel.
+scale_xy_accel:
+#   If scale_xy_accel is False, `max_accel`, set by M204 or SET_VELOCITY_LIMIT,
+#   acts as a third limit. This means that moves with an acceleration lower
+#   than max_x_accel and max_y_accel, have no per-axis limits applied. When set
+#   to True, max_x_accel and max_y_accel are scaled by the ratio of the
+#   acceleration set at runtime and the max_accel value from the config. Then
+#   the actual acceleration will always depend on the orientation.
+```
+
 ### Linear Delta Kinematics
 
 See [example-delta.cfg](../config/example-delta.cfg) for an example
@@ -425,6 +483,54 @@ max_z_accel:
 # The stepper_z section is used to describe the stepper controlling
 # the Z axis.
 [stepper_z]
+```
+
+### CoreXY Kinematics with limits for X and Y axes
+
+Behaves exactly the as CoreXY kinematics, but allows to set a acceleration limit
+for X and Y axis.
+
+There is no velocity limits for X and Y, since on a CoreXY the pull-out velocity
+are identical on both axes.
+
+If you set accelerations per feature type in the slicer, and have tuned your
+acceleration to get similar resonance amplitudes and level of smoothing on X and
+Y, you may want to enable `scale_xy_accel: true`. This will scale the X and Y
+accelerations by the ratio `M204 acceleration / config.max_accel`. For example,
+if you have `max_accel: 10000` in your config and set in the slicer an
+acceleration of 5000 mm/s² (`M204 S5000`), effective `max_x_accel` and
+`max_y_accel` values will be halved compared to their original values set in the
+`[printer]` config. Otherwise, with `scale_xy_accel: false` (the default) they
+behave as machine limits, like `max_z_accel` always does.
+
+Derivation of the formulae is detailed [in this notebook](PerAxisLimits.ipynb)
+
+```
+[printer]
+kinematics: limited_corexy
+max_z_velocity:
+#   See cartesian above.
+max_x_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the x axis. It limits the acceleration of the x stepper motor. The
+#   default is to use max_accel for max_x_accel.
+max_y_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the y axis. It limits the acceleration of the y stepper motor. The
+#   default is to use max_accel for max_y_accel.
+max_z_accel:
+# See cartesian above.
+max_accel:
+#   In order to get maximum acceleration gains on diagonals, this should be
+#   equal or greater than the hypotenuse (sqrt(x*x + y*y)) of max_x_accel and
+#   max_y_accel.
+scale_xy_accel:
+#   If scale_xy_accel is False, `max_accel`, set by M204 or SET_VELOCITY_LIMIT,
+#   acts as a third limit. This means that moves with an acceleration lower
+#   than max_x_accel and max_y_accel, have no per-axis limits applied. When set
+#   to True, max_x_accel and max_y_accel are scaled by the ratio of the
+#   acceleration set at runtime and the max_accel value from the config. Then
+#   the actual acceleration will always depend on the orientation.
 ```
 
 ### CoreXZ Kinematics
