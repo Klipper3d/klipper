@@ -396,6 +396,9 @@ class TMC2240:
         set_config_field(config, "tpowerdown", 10)
         #   SG4_THRS
         set_config_field(config, "sg4_angle_offset", 1)
+        # Register temperature sensor
+        pheaters = config.get_printer().load_object(config, 'heaters')
+        pheaters.register_sensor(config, self)
 
 def load_config_prefix(config):
     return TMC2240(config)
