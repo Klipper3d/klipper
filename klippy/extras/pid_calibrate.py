@@ -45,14 +45,11 @@ class PIDCalibrate:
             "with these parameters and restart the printer." % (Kp, Ki, Kd))
         # Store results for SAVE_CONFIG
         configfile = self.printer.lookup_object('configfile')
-        section_name = (
-            heater_name if profile is None
-            else ("pid_profile " + heater_name + " " + profile))
         control = 'pid_v' if old_control.get_name() == 'pid_v' else 'pid'
-        configfile.set(section_name, 'control', control)
-        configfile.set(section_name, 'pid_Kp', "%.3f" % (Kp,))
-        configfile.set(section_name, 'pid_Ki', "%.3f" % (Ki,))
-        configfile.set(section_name, 'pid_Kd', "%.3f" % (Kd,))
+        configfile.set(heater_name, 'control', control)
+        configfile.set(heater_name, 'pid_Kp', "%.3f" % (Kp,))
+        configfile.set(heater_name, 'pid_Ki', "%.3f" % (Ki,))
+        configfile.set(heater_name, 'pid_Kd', "%.3f" % (Kd,))
 
 TUNE_PID_DELTA = 5.0
 TUNE_PID_TOL = 0.02
