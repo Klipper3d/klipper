@@ -473,7 +473,7 @@ choice
         depends on HAVE_STM32_CANBUS && MACH_STM32F4
     config STM32_CMENU_CANBUS_PB5_PB6
         bool "CAN bus (on PB5/PB6)"
-        depends on HAVE_STM32_CANBUS && MACH_STM32F4
+        depends on (HAVE_STM32_CANBUS && MACH_STM32F4) || (HAVE_STM32_FDCANBUS && MACH_STM32G0B1)
     config STM32_CMENU_CANBUS_PB12_PB13
         bool "CAN bus (on PB12/PB13)"
         depends on (HAVE_STM32_CANBUS && MACH_STM32F4) || HAVE_STM32_FDCANBUS
