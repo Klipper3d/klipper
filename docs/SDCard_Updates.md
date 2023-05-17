@@ -144,6 +144,10 @@ The following fields may be specified:
   power-cycle to complete flashing.  To verify the firmware afterward, run
   the script again with the `-c` option to perform the verification step.
   [See caveats with SDIO cards](#caveats)
+- `requires_unique_filename`: Set this to `True` if the board requires a
+  unique filename for each firmware update. The filename will be based on
+  the firmware hash, and will be directly appended to `firmware_path`.  The
+  default is `False`.
 
 If software SPI is required, the `spi_bus` field should be set to `swspi`
 and the following additional field should be specified:

@@ -29,6 +29,19 @@ import mcu
 #
 ###########################################################
 
+def calc_hash(fd):
+    sha = hashlib.sha1()
+    while True:
+        buf = fd.read(4096)
+        if not buf:
+            break
+        sha.update(buf)
+    return sha.hexdigest().upper()
+
+def gen_unique_filename(chksm):
+    return chksm[:8].upper().translate(
+        str.maketrans("0123456789","GHIJKLMNOP")) + ".BIN"
+
 def output_line(msg):
     sys.stdout.write("%s\n" % (msg,))
     sys.stdout.flush()
@@ -1364,10 +1377,16 @@ class MCUConnection:
 
     def sdcard_upload(self):
         output("Uploading Klipper Firmware to SD Card...")
-        input_sha = hashlib.sha1()
-        sd_sha = hashlib.sha1()
         klipper_bin_path = self.board_config['klipper_bin_path']
+        try:
+            with open(klipper_bin_path, 'rb') as local_f:
+                input_chksm = calc_hash(local_f)
+        except Exception:
+            logging.exception("Local File Read Error")
+            raise SPIFlashError("Error Reading Local File")
         fw_path = self.board_config.get('firmware_path', "firmware.bin")
+        if self.board_config.get('requires_unique_filename'):
+            fw_path = fw_path + gen_unique_filename(input_chksm)
         try:
             with open(klipper_bin_path, 'rb') as local_f:
                 with self.fatfs.open_file(fw_path, "wb") as sd_f:
@@ -1375,7 +1394,6 @@ class MCUConnection:
                         buf = local_f.read(4096)
                         if not buf:
                             break
-                        input_sha.update(buf)
                         sd_f.write(buf)
         except Exception:
             logging.exception("SD Card Upload Error")
@@ -1385,17 +1403,11 @@ class MCUConnection:
         try:
             finfo = self.fatfs.get_file_info(fw_path)
             with self.fatfs.open_file(fw_path, 'r') as sd_f:
-                while True:
-                    buf = sd_f.read(4096)
-                    if not buf:
-                        break
-                    sd_sha.update(buf)
+                sd_chksm = calc_hash(sd_f)
         except Exception:
             logging.exception("SD Card Download Error")
             raise SPIFlashError("Error reading %s from SD" % (fw_path))
         sd_size = finfo.get('size', -1)
-        input_chksm = input_sha.hexdigest().upper()
-        sd_chksm = sd_sha.hexdigest().upper()
         if input_chksm != sd_chksm:
             raise SPIFlashError("Checksum Mismatch: Got '%s', expected '%s'"
                                 % (sd_chksm, input_chksm))
@@ -1429,24 +1441,18 @@ class MCUConnection:
         else:
             output("Version unchanged...")
         # If the version didn't change, look for current firmware to checksum
-        cur_fw_sha = None
+        cur_fw_chksm = None
         if not validation_passed:
             cur_fw_path = self.board_config.get('current_firmware_path',
                                                 "FIRMWARE.CUR")
             try:
                 with self.fatfs.open_file(cur_fw_path, 'r') as sd_f:
-                    cur_fw_sha = hashlib.sha1()
-                    while True:
-                        buf = sd_f.read(4096)
-                        if not buf:
-                            break
-                        cur_fw_sha.update(buf)
+                    cur_fw_chksm = calc_hash(sd_f)
             except Exception:
                 msg = "Failed to read file %s" % (cur_fw_path,)
                 logging.debug(msg)
                 output("Checksum skipped...")
-            if cur_fw_sha is not None:
-                cur_fw_chksm = cur_fw_sha.hexdigest().upper()
+            if cur_fw_chksm is not None:
                 if req_chksm == cur_fw_chksm:
                     validation_passed = True
                     output("Checksum matched...")
@@ -1458,7 +1464,7 @@ class MCUConnection:
             raise SPIFlashError("Validation failure.")
         output_line("Done")
         # Remove firmware file if MCU bootloader failed to rename.
-        if cur_fw_sha is None:
+        if cur_fw_chksm is None:
             try:
                 fw_path = self.board_config.get('firmware_path', "firmware.bin")
                 self.fatfs.remove_item(fw_path)
