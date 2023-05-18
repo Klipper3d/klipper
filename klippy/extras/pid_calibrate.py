@@ -45,7 +45,7 @@ class PIDCalibrate:
             "with these parameters and restart the printer." % (Kp, Ki, Kd))
         # Store results for SAVE_CONFIG
         configfile = self.printer.lookup_object('configfile')
-        control = 'pid_v' if old_control.get_name() == 'pid_v' else 'pid'
+        control = 'pid_v' if old_control.get_type() == 'pid_v' else 'pid'
         configfile.set(heater_name, 'control', control)
         configfile.set(heater_name, 'pid_Kp', "%.3f" % (Kp,))
         configfile.set(heater_name, 'pid_Ki', "%.3f" % (Ki,))
