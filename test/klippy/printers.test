@@ -190,12 +190,14 @@ CONFIG ../../config/printer-flsun-qqs-2020.cfg
 CONFIG ../../config/printer-fokoos-odin5-f3-2021.cfg
 CONFIG ../../config/printer-geeetech-301-2019.cfg
 CONFIG ../../config/printer-kingroon-kp3s-2020.cfg
+CONFIG ../../config/printer-longer-lk4x-2022.cfg
 CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
 CONFIG ../../config/printer-tronxy-x5sa-pro-2020.cfg
 CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1-2020.cfg
 CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1.1-2021.cfg
 CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
+CONFIG ../../config/printer-voxelab-aquila-2021.cfg
 
 # Printers using the stm32f401
 DICTIONARY stm32f401.dict
@@ -256,6 +258,7 @@ CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
 
 # Anycubic Printers using trigorilla board with the hc32f460
 DICTIONARY hc32f460-serial-PA3PA2.dict
+CONFIG ../../config/printer-anycubic-kobra-go-2022.cfg
 CONFIG ../../config/printer-anycubic-kobra-plus-2022.cfg
 
 # Printers using the PRU
