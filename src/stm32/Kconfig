@@ -411,6 +411,10 @@ choice
         bool "Serial (on UART4 PA0/PA1)"
         depends on MACH_STM32H7
         select SERIAL
+    config STM32_SERIAL_USART5
+        bool "Serial (on USART5 PD2/PD3)" if LOW_LEVEL_OPTIONS
+        depends on MACH_STM32G0Bx
+        select SERIAL
     config STM32_SERIAL_USART6_ALT_PC6_PC7
         bool "Serial (on USART6 PC6/PC7)" if LOW_LEVEL_OPTIONS
         depends on MACH_STM32F4
