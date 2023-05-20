@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20230530: The default canbus frequency in "make menuconfig" is
+now 1000000. If using canbus and using canbus with some other
+frequency is required, then be sure to select "Enable extra low-level
+configuration options" and specify the desired "CAN bus speed" in
+"make menuconfig" when compiling and flashing the micro-controller.
+
 20230525: `SHAPER_CALIBRATE` command immediately applies input shaper
 parameters if `[input_shaper]` was enabled already.
 
