@@ -7,6 +7,7 @@ import logging
 from . import bus
 
 REPORT_TIME = .8
+REPORT_TIME_BME680 = .8 * 4
 BME280_CHIP_ADDR = 0x76
 BME280_REGS = {
     'RESET': 0xE0, 'CTRL_HUM': 0xF2,
@@ -124,7 +125,7 @@ class BME280:
         self._callback = cb
 
     def get_report_time_delta(self):
-        return REPORT_TIME
+        return REPORT_TIME_BME680 if self.chip_type == 'BME680' else REPORT_TIME
 
     def _init_bmxx80(self):
         def read_calibration_data_bmp280(calib_data_1):
@@ -269,7 +270,7 @@ class BME280:
                 % (self.temp, self.min_temp, self.max_temp))
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
-        return measured_time + REPORT_TIME
+        return measured_time + self.get_report_time_delta()
 
     def _sample_bme680(self, eventtime):
         self.write_register('CTRL_HUM', self.os_hum & 0x07)
@@ -332,7 +333,7 @@ class BME280:
                 % (self.temp, self.min_temp, self.max_temp))
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
-        return measured_time + REPORT_TIME * 4
+        return measured_time + get_report_time_delta
 
     def _compensate_temp(self, raw_temp):
         dig = self.dig
