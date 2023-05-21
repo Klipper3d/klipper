@@ -2506,6 +2506,17 @@ sensor_type: temperature_mcu
 #   micro-controller specification.
 ```
 
+### Builtin stepper driver temperature sensor
+
+The TMC2240 stepper driver contain an internal temperature sensor. One can
+use the "temperature_driver" sensor to monitor this temperatures.
+
+```
+sensor_type: temperature_driver
+sensor_driver:
+#   The stepper driver to read from.
+```
+
 ### Host temperature sensor
 
 Temperature from the machine (eg Raspberry Pi) running the host software.

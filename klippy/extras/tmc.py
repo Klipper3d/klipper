@@ -204,12 +204,14 @@ class TMCErrorCheck:
             if cleared_flags & reset_mask:
                 return True
         return False
+    def get_temperature(self):
+        if self.check_timer is None or self.adc_temp is None:
+            return None
+        return round((self.adc_temp - 2038) / 7.7, 2)
     def get_status(self, eventtime=None):
         if self.check_timer is None:
             return {'drv_status': None, 'temperature': None}
-        temp = None
-        if self.adc_temp is not None:
-            temp = round((self.adc_temp - 2038) / 7.7, 2)
+        temp = self.get_temperature()
         last_value, reg_name = self.drv_status_reg_info[:2]
         if last_value != self.last_drv_status:
             self.last_drv_status = last_value
@@ -404,6 +406,10 @@ class TMCCommandHelper:
             self._init_registers()
         except self.printer.command_error as e:
             logging.info("TMC %s failed to init: %s", self.name, str(e))
+    def get_temperature(self):
+        return self.echeck_helper.get_temperature()
+    def get_mcu(self):
+        return self.mcu_tmc.get_mcu()
     # get_status information export
     def get_status(self, eventtime=None):
         cpos = None

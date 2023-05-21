@@ -223,6 +223,8 @@ class MCU_TMC2660_SPI:
             self.spi.spi_send(msg, minclock)
     def get_tmc_frequency(self):
         return None
+    def get_mcu(self):
+        return self.spi.get_mcu()
 
 
 ######################################################################
@@ -240,6 +242,8 @@ class TMC2660:
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
+        self.get_temperature = cmdhelper.get_temperature
+        self.get_mcu = cmdhelper.get_mcu
         self.get_status = cmdhelper.get_status
 
         # CHOPCONF
