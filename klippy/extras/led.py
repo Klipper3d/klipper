@@ -27,19 +27,40 @@ class LEDHelper:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
                                    desc=self.cmd_SET_LED_help)
+    def check_index(self, index, gcmd, led_count):
+        try:
+            i = int(index)
+        except ValueError:
+            raise gcmd.error("'%s' is not a number, "
+                             "only numbers, ',' and '-' are allowed." % index)
+        if i < 1:
+            raise gcmd.error("index can not be less than 1(was '%d')" % i)
+        if i > led_count:
+            raise gcmd.error("index can not exceed amount of "
+                             "led in chain(was '%d')" % i)
+        return i
+    def get_indices(self, gcmd, led_count):
+        command = gcmd.get("INDEX", None)
+        if command is None:
+            return range(1, (led_count + 1))
+        indices = set()
+        for index in command.split(','):
+            if '-' in index:
+                group = index.split('-')
+                if len(group) > 2:
+                    raise gcmd.error("More than one '-' found in '%s', "
+                                     "only one allowed" % index)
+                for i in range(int(group[0]), (int(group[1]) + 1)):
+                    indices.add(self.check_index(i, gcmd, led_count))
+            else:
+                indices.add(self.check_index(index, gcmd, led_count))
+        return indices
     def get_led_count(self):
         return self.led_count
     def set_color(self, index, color):
-        if index is None:
-            new_led_state = [color] * self.led_count
-            if self.led_state == new_led_state:
-                return
-        else:
-            if self.led_state[index - 1] == color:
-                return
-            new_led_state = list(self.led_state)
-            new_led_state[index - 1] = color
-        self.led_state = new_led_state
+        if self.led_state[index - 1] == color:
+            return
+        self.led_state[index - 1] = color
         self.need_transmit = True
     def check_transmit(self, print_time):
         if not self.need_transmit:
@@ -56,13 +77,13 @@ class LEDHelper:
         green = gcmd.get_float('GREEN', 0., minval=0., maxval=1.)
         blue = gcmd.get_float('BLUE', 0., minval=0., maxval=1.)
         white = gcmd.get_float('WHITE', 0., minval=0., maxval=1.)
-        index = gcmd.get_int('INDEX', None, minval=1, maxval=self.led_count)
         transmit = gcmd.get_int('TRANSMIT', 1)
         sync = gcmd.get_int('SYNC', 1)
         color = (red, green, blue, white)
         # Update and transmit data
         def lookahead_bgfunc(print_time):
-            self.set_color(index, color)
+            for index in self.get_indices(gcmd, self.led_count):
+                self.set_color(index, color)
             if transmit:
                 self.check_transmit(print_time)
         if sync:
@@ -152,7 +173,6 @@ class PrinterLED:
         if led_helper is None:
             raise gcmd.error("Unknown LED '%s'" % (led_name,))
         led_count = led_helper.get_led_count()
-        index = gcmd.get_int("INDEX", None, minval=1, maxval=led_count)
         template = None
         lparams = {}
         tpl_name = gcmd.get("TEMPLATE")
@@ -172,11 +192,8 @@ class PrinterLED:
                     lparams[p] = ast.literal_eval(v)
                 except ValueError as e:
                     raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
-        if index is not None:
+        for index in led_helper.get_indices(gcmd, led_count):
             self._activate_template(led_helper, index, template, lparams)
-        else:
-            for i in range(led_count):
-                self._activate_template(led_helper, i+1, template, lparams)
         self._activate_timer()
 
 PIN_MIN_TIME = 0.100
