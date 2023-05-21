@@ -135,3 +135,7 @@ iface can0 can static
   be configured in Klipper's printer.cfg file with a `serial:`
   parameter. The bridge board appears as a "USB CAN adapter" and it is
   configured in the printer.cfg as a [CAN node](#configuring-klipper).
+
+## Tips for troubleshooting
+
+See the [CAN bus troubleshooting](CANBUS_Troubleshooting.md) document.
