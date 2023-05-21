@@ -68,7 +68,7 @@ class Heater:
             and abs(value - self.last_pwm_value) < 0.05):
             # No significant change in value - can suppress update
             return
-        pwm_time = read_time + self.pwm_delay
+        pwm_time = read_time - self.pwm_delay
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
         self.mcu_pwm.set_pwm(pwm_time, value)
