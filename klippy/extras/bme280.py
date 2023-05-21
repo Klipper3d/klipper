@@ -6,7 +6,7 @@
 import logging
 from . import bus
 
-REPORT_TIME = .8
+BME280_REPORT_TIME = .8
 BME280_CHIP_ADDR = 0x76
 BME280_REGS = {
     'RESET': 0xE0, 'CTRL_HUM': 0xF2,
@@ -16,6 +16,8 @@ BME280_REGS = {
     'HUM_MSB': 0xFD, 'HUM_LSB': 0xFE, 'CAL_1': 0x88, 'CAL_2': 0xE1
 }
 
+
+BME680_REPORT_TIME = 3.2
 BME680_REGS = {
     'RESET': 0xE0, 'CTRL_HUM': 0x72, 'CTRL_GAS_1': 0x71, 'CTRL_GAS_0': 0x70,
     'GAS_WAIT_0': 0x64, 'RES_HEAT_0': 0x5A, 'IDAC_HEAT_0': 0x50,
@@ -106,6 +108,7 @@ class BME280:
         self.dig = self.sample_timer = None
         self.chip_type = 'BMP280'
         self.chip_registers = BME280_REGS
+        self.report_time_delta = BME280_REPORT_TIME
         self.printer.add_object("bme280 " + self.name, self)
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
@@ -124,7 +127,7 @@ class BME280:
         self._callback = cb
 
     def get_report_time_delta(self):
-        return REPORT_TIME
+        return self.report_time_delta
 
     def _init_bmxx80(self):
         def read_calibration_data_bmp280(calib_data_1):
@@ -210,12 +213,14 @@ class BME280:
             self.max_sample_time = 0.5
             self.sample_timer = self.reactor.register_timer(self._sample_bme680)
             self.chip_registers = BME680_REGS
+            self.report_time_delta = BME680_REPORT_TIME
         else:
             self.max_sample_time = \
                 (1.25 + (2.3 * self.os_temp) + ((2.3 * self.os_pres) + .575)
                  + ((2.3 * self.os_hum) + .575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bme280)
             self.chip_registers = BME280_REGS
+            self.report_time_delta = BME280_REPORT_TIME
 
         if self.chip_type in ('BME680', 'BME280'):
             self.write_register('CONFIG', (self.iir_filter & 0x07) << 2)
@@ -269,7 +274,7 @@ class BME280:
                 % (self.temp, self.min_temp, self.max_temp))
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
-        return measured_time + REPORT_TIME
+        return measured_time + self.report_time_delta
 
     def _sample_bme680(self, eventtime):
         self.write_register('CTRL_HUM', self.os_hum & 0x07)
@@ -332,7 +337,7 @@ class BME280:
                 % (self.temp, self.min_temp, self.max_temp))
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
-        return measured_time + REPORT_TIME * 4
+        return measured_time + self.report_time_delta
 
     def _compensate_temp(self, raw_temp):
         dig = self.dig
