@@ -4,7 +4,7 @@ This document describes some of the Klipper debugging tools.
 
 ## Running the regression tests
 
-The main Klipper GitHub repository uses "github actions" to run a
+The main Klipper GitHub repository uses "GitHub actions" to run a
 series of regression tests. It can be useful to run some of these
 tests locally.
 
@@ -15,7 +15,7 @@ The source code "whitespace check" can be run with:
 
 The Klippy regression test suite requires "data dictionaries" from
 many platforms. The easiest way to obtain them is to
-[download them from github](https://github.com/Klipper3d/klipper/issues/1438).
+[download them from GitHub](https://github.com/Klipper3d/klipper/issues/1438).
 Once the data dictionaries are downloaded, use the following to run
 the regression suite:
 ```

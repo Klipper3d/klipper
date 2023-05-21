@@ -197,7 +197,7 @@ Available on 20180331. Major changes in this release:
   * New multiple MCU config example
   * New bltouch sensor config example
   * New FAQ, config check, and G-Code documents
-* Initial support for continuous integration testing on all github commits
+* Initial support for continuous integration testing on all GitHub commits
 * Several bug fixes and code cleanups
 
 ## Klipper 0.5.0

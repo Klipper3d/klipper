@@ -1,7 +1,7 @@
 # Example configurations
 
 This document contains guidelines for contributing an example Klipper
-configuration to the Klipper github repository (located in the
+configuration to the Klipper GitHub repository (located in the
 [config directory](../config/)).
 
 Note that the
@@ -105,6 +105,6 @@ is also a useful resource for finding and sharing config files.
     baud rate of 250000. Do not recommend a different baud rate in an
     example config file.
 
-Example config files are submitted by creating a github "pull
+Example config files are submitted by creating a GitHub "pull
 request". Please also follow the directions in the
 [contributing document](CONTRIBUTING.md).
