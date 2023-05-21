@@ -2,14 +2,18 @@
 # Script to plot input shapers
 #
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020-2023  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import optparse, math
-import matplotlib
+import optparse, importlib, math, os, sys
+import numpy as np, matplotlib
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                             '..', 'klippy'))
+shaper_defs = importlib.import_module('.shaper_defs', 'extras')
+shaper_calibrate = importlib.import_module('.shaper_calibrate', 'extras')
 
 # A set of damping ratios to calculate shaper response for
-DAMPING_RATIOS=[0.05, 0.1, 0.2]
+DAMPING_RATIOS=[0.075, 0.1, 0.15]
 
 # Parameters of the input shaper
 SHAPER_FREQ=50.0
@@ -17,121 +21,14 @@ SHAPER_DAMPING_RATIO=0.1
 
 # Simulate input shaping of step function for these true resonance frequency
 # and damping ratio
-STEP_SIMULATION_RESONANCE_FREQ=60.
-STEP_SIMULATION_DAMPING_RATIO=0.15
+STEP_SIMULATION_RESONANCE_FREQ=50.
+STEP_SIMULATION_DAMPING_RATIO=0.1
 
-# If set, defines which range of frequencies to plot shaper frequency responce
+# If set, defines which range of frequencies to plot shaper frequency response
 PLOT_FREQ_RANGE = []  # If empty, will be automatically determined
 #PLOT_FREQ_RANGE = [10., 100.]
 
-PLOT_FREQ_STEP = .01
-
-######################################################################
-# Input shapers
-######################################################################
-
-def get_zv_shaper():
-    df = math.sqrt(1. - SHAPER_DAMPING_RATIO**2)
-    K = math.exp(-SHAPER_DAMPING_RATIO * math.pi / df)
-    t_d = 1. / (SHAPER_FREQ * df)
-    A = [1., K]
-    T = [0., .5*t_d]
-    return (A, T, "ZV")
-
-def get_zvd_shaper():
-    df = math.sqrt(1. - SHAPER_DAMPING_RATIO**2)
-    K = math.exp(-SHAPER_DAMPING_RATIO * math.pi / df)
-    t_d = 1. / (SHAPER_FREQ * df)
-    A = [1., 2.*K, K**2]
-    T = [0., .5*t_d, t_d]
-    return (A, T, "ZVD")
-
-def get_mzv_shaper():
-    df = math.sqrt(1. - SHAPER_DAMPING_RATIO**2)
-    K = math.exp(-.75 * SHAPER_DAMPING_RATIO * math.pi / df)
-    t_d = 1. / (SHAPER_FREQ * df)
-
-    a1 = 1. - 1. / math.sqrt(2.)
-    a2 = (math.sqrt(2.) - 1.) * K
-    a3 = a1 * K * K
-
-    A = [a1, a2, a3]
-    T = [0., .375*t_d, .75*t_d]
-    return (A, T, "MZV")
-
-def get_ei_shaper():
-    v_tol = 0.05 # vibration tolerance
-    df = math.sqrt(1. - SHAPER_DAMPING_RATIO**2)
-    K = math.exp(-SHAPER_DAMPING_RATIO * math.pi / df)
-    t_d = 1. / (SHAPER_FREQ * df)
-
-    a1 = .25 * (1. + v_tol)
-    a2 = .5 * (1. - v_tol) * K
-    a3 = a1 * K * K
-
-    A = [a1, a2, a3]
-    T = [0., .5*t_d, t_d]
-    return (A, T, "EI")
-
-def get_2hump_ei_shaper():
-    v_tol = 0.05 # vibration tolerance
-    df = math.sqrt(1. - SHAPER_DAMPING_RATIO**2)
-    K = math.exp(-SHAPER_DAMPING_RATIO * math.pi / df)
-    t_d = 1. / (SHAPER_FREQ * df)
-
-    V2 = v_tol**2
-    X = pow(V2 * (math.sqrt(1. - V2) + 1.), 1./3.)
-    a1 = (3.*X*X + 2.*X + 3.*V2) / (16.*X)
-    a2 = (.5 - a1) * K
-    a3 = a2 * K
-    a4 = a1 * K * K * K
-
-    A = [a1, a2, a3, a4]
-    T = [0., .5*t_d, t_d, 1.5*t_d]
-    return (A, T, "2-hump EI")
-
-def get_3hump_ei_shaper():
-    v_tol = 0.05 # vibration tolerance
-    df = math.sqrt(1. - SHAPER_DAMPING_RATIO**2)
-    K = math.exp(-SHAPER_DAMPING_RATIO * math.pi / df)
-    t_d = 1. / (SHAPER_FREQ * df)
-
-    K2 = K*K
-    a1 = 0.0625 * (1. + 3. * v_tol + 2. * math.sqrt(2. * (v_tol + 1.) * v_tol))
-    a2 = 0.25 * (1. - v_tol) * K
-    a3 = (0.5 * (1. + v_tol) - 2. * a1) * K2
-    a4 = a2 * K2
-    a5 = a1 * K2 * K2
-
-    A = [a1, a2, a3, a4, a5]
-    T = [0., .5*t_d, t_d, 1.5*t_d, 2.*t_d]
-    return (A, T, "3-hump EI")
-
-
-def estimate_shaper(shaper, freq, damping_ratio):
-    A, T, _ = shaper
-    n = len(T)
-    inv_D = 1. / sum(A)
-    omega = 2. * math.pi * freq
-    damping = damping_ratio * omega
-    omega_d = omega * math.sqrt(1. - damping_ratio**2)
-    S = C = 0
-    for i in range(n):
-        W = A[i] * math.exp(-damping * (T[-1] - T[i]))
-        S += W * math.sin(omega_d * T[i])
-        C += W * math.cos(omega_d * T[i])
-    return math.sqrt(S*S + C*C) * inv_D
-
-def shift_pulses(shaper):
-    A, T, name = shaper
-    n = len(T)
-    ts = sum([A[i] * T[i] for i in range(n)]) / sum(A)
-    for i in range(n):
-        T[i] -= ts
-
-# Shaper selection
-get_shaper = get_ei_shaper
-
+PLOT_FREQ_STEP = .05
 
 ######################################################################
 # Plotting and startup
@@ -148,86 +45,139 @@ def bisect(func, left, right):
             right = mid
     return .5 * (left + right)
 
-def find_shaper_plot_range(shaper, vib_tol):
+def find_shaper_plot_range(estimate_shaper, shaper_freq, vib_tol):
     def eval_shaper(freq):
-        return estimate_shaper(shaper, freq, DAMPING_RATIOS[0]) - vib_tol
+        return estimate_shaper(freq) - vib_tol
     if not PLOT_FREQ_RANGE:
-        left = bisect(eval_shaper, 0., SHAPER_FREQ)
-        right = bisect(eval_shaper, SHAPER_FREQ, 2.4 * SHAPER_FREQ)
+        left = bisect(eval_shaper, 0.1 * shaper_freq, shaper_freq)
+        right = bisect(eval_shaper, shaper_freq, 3 * shaper_freq)
     else:
         left, right = PLOT_FREQ_RANGE
     return (left, right)
 
-def gen_shaper_response(shaper):
-    # Calculate shaper vibration responce on a range of requencies
-    response = []
-    freqs = []
-    freq, freq_end = find_shaper_plot_range(shaper, vib_tol=0.25)
-    while freq <= freq_end:
-        vals = []
-        for damping_ratio in DAMPING_RATIOS:
-            vals.append(estimate_shaper(shaper, freq, damping_ratio))
-        response.append(vals)
-        freqs.append(freq)
-        freq += PLOT_FREQ_STEP
+def gen_shaper_response(shaper, shaper_freq, estimate_shaper):
+    # Calculate shaper vibration response on a range of requencies
+    freq_start, freq_end = find_shaper_plot_range(
+            lambda freq: estimate_shaper(
+                np, shaper, DAMPING_RATIOS[0], [freq]),
+            shaper_freq, vib_tol=0.25)
+    freqs = np.arange(freq_start, freq_end, PLOT_FREQ_STEP)
+    response = np.zeros(shape=(freqs.shape[0], len(DAMPING_RATIOS)))
+    n_dr = len(DAMPING_RATIOS)
+    response = np.zeros(shape=(freqs.shape[0], n_dr))
+    for i in range(n_dr):
+        response[:, i] = estimate_shaper(
+                np, shaper, DAMPING_RATIOS[i], freqs)
     legend = ['damping ratio = %.3f' % d_r for d_r in DAMPING_RATIOS]
     return freqs, response, legend
 
-def gen_shaped_step_function(shaper):
+def step_response(t, omega, damping_ratio):
+    t = np.maximum(t, 0.)
+    damping = damping_ratio * omega
+    omega_d = omega * math.sqrt(1. - damping_ratio**2)
+    phase = math.acos(damping_ratio)
+    return (1. - np.exp(np.outer(-damping, t))
+               * np.sin(np.outer(omega_d, t) + phase) * (1. / math.sin(phase)))
+
+def gen_shaped_step_function(shaper, freq, damping_ratio):
     # Calculate shaping of a step function
     A, T, _ = shaper
     inv_D = 1. / sum(A)
     n = len(T)
+    t_s = T[-1] - T[0]
+    A = np.asarray(A)
 
-    omega = 2. * math.pi * STEP_SIMULATION_RESONANCE_FREQ
-    damping = STEP_SIMULATION_DAMPING_RATIO * omega
-    omega_d = omega * math.sqrt(1. - STEP_SIMULATION_DAMPING_RATIO**2)
-    phase = math.acos(STEP_SIMULATION_DAMPING_RATIO)
+    omega = 2. * math.pi * freq
 
-    t_start = T[0] - .5 / SHAPER_FREQ
-    t_end = T[-1] + 1.5 / STEP_SIMULATION_RESONANCE_FREQ
-    result = []
-    time = []
-    t = t_start
+    t_start = T[0] - .5 * t_s
+    t_end = T[-1] + 1.5 * max(1. / freq, t_s)
+    dt = .01 * min(t_s, 1. / freq)
+    time = np.arange(t_start, t_end, dt)
+    time_t = time[np.newaxis].T
 
-    def step_response(t):
-        if t < 0.:
-            return 0.
-        return 1. - math.exp(-damping * t) * math.sin(omega_d * t
-                                                      + phase) / math.sin(phase)
-
-    while t <= t_end:
-        val = []
-        val.append(1. if t >= 0. else 0.)
-        #val.append(step_response(t))
-
-        commanded = 0.
-        response = 0.
-        S = C = 0
-        for i in range(n):
-            if t < T[i]:
-                continue
-            commanded += A[i]
-            response += A[i] * step_response(t - T[i])
-        val.append(commanded * inv_D)
-        val.append(response * inv_D)
-
-        result.append(val)
-        time.append(t)
-        t += .01 / SHAPER_FREQ
-    legend = ['step', 'shaper commanded', 'system response']
+    step = np.zeros(time.shape)
+    step[time >= 0.] = 1.
+    commanded = np.sum(A * np.where(time_t - T >= 0, 1., 0.), axis=-1) * inv_D
+    response = np.zeros(shape=(time.shape))
+    for i in range(n):
+        response += A[i] * step_response(time - T[i], omega, damping_ratio)[0,:]
+    response *= inv_D
+    velocity = np.insert(
+            (response[1:] - response[:-1]) / (2 * math.pi * freq * dt), 0, 0.)
+    legend = ['step', 'shaper commanded', 'system response',
+              'system response velocity']
+    result = np.zeros(shape=(time.shape[0], 4))
+    result[:,0] = step
+    result[:,1] = commanded
+    result[:,2] = response
+    result[:,3] = velocity
     return time, result, legend
 
+def gen_smoothed_step_function(smoother, freq, damping_ratio):
+    # Calculate smoothing of a step function
+    C, t_sm, t_offs, _ = smoother
+    hst = 0.5 * t_sm
 
-def plot_shaper(shaper):
-    shift_pulses(shaper)
-    freqs, response, response_legend = gen_shaper_response(shaper)
-    time, step_vals, step_legend = gen_shaped_step_function(shaper)
+    n_t = max(1000, 1000 * round(t_sm * freq))
+    tau, dt = np.linspace(-hst, hst, n_t, retstep=True)
+    w = np.zeros(shape=tau.shape)
+    for c in C[::-1]:
+        w = w * tau + c
+
+    omega = 2. * math.pi * freq
+    damping = damping_ratio * omega
+    omega_d = omega * math.sqrt(1. - damping_ratio**2)
+    phase = math.acos(damping_ratio)
+
+    t_start = -t_sm - t_offs
+    t_end = hst - t_offs + 1.5 * max(1. / freq, t_sm)
+    time = np.arange(t_start, t_end, dt)
+    time_t = time[np.newaxis].T
+    w_dt = w * dt
+    step = np.zeros(time.shape)
+    step[time >= 0.] = 1.
+    commanded = np.sum(w_dt * np.where(time_t - tau + t_offs >= 0, 1., 0.),
+                       axis=-1)
+    s_r_n = time.size + tau.size - 1
+    s_r_t = np.arange(t_start - hst, t_end + hst * 1.1, dt)[:s_r_n]
+    s_r = step_response(s_r_t + t_offs, omega, damping_ratio)
+    response = np.convolve(s_r[0,:], w_dt, mode='valid')
+    velocity = np.insert((response[1:] - response[:-1])
+                         / (2 * math.pi * freq * dt), 0, 0.)
+    legend = ['step', 'shaper commanded', 'system response',
+              'system response velocity']
+    result = np.zeros(shape=(time.shape[0], 4))
+    result[:,0] = step
+    result[:,1] = commanded
+    result[:,2] = response
+    result[:,3] = velocity
+    return time, result, legend
+
+def plot_shaper(shaper_name, shaper_freq, freq, damping_ratio):
+    for s in shaper_defs.INPUT_SHAPERS:
+        if s.name == shaper_name.lower():
+            A, T = s.init_func(shaper_freq, SHAPER_DAMPING_RATIO)
+            ts = shaper_calibrate.get_shaper_offset(A, T)
+            T = [t - ts for t in T]
+            shaper = A, T, s.name.upper()
+            freqs, response, response_legend = gen_shaper_response(
+                    shaper, shaper_freq, shaper_calibrate.estimate_shaper)
+            time, step_vals, step_legend = gen_shaped_step_function(
+                    shaper, freq, damping_ratio)
+    for s in shaper_defs.INPUT_SMOOTHERS:
+        if s.name == shaper_name.lower():
+            C, t_sm = s.init_func(shaper_freq)
+            t_offs = shaper_calibrate.get_smoother_offset(np, C, t_sm)
+            shaper = C, t_sm, t_offs, s.name.upper()
+            freqs, response, response_legend = gen_shaper_response(
+                    shaper, shaper_freq, shaper_calibrate.estimate_smoother)
+            time, step_vals, step_legend = gen_smoothed_step_function(
+                    shaper, freq, damping_ratio)
 
     fig, (ax1, ax2) = matplotlib.pyplot.subplots(nrows=2, figsize=(10,9))
     ax1.set_title("Vibration response simulation for shaper '%s',\n"
                   "shaper_freq=%.1f Hz, damping_ratio=%.3f"
-                  % (shaper[-1], SHAPER_FREQ, SHAPER_DAMPING_RATIO))
+                  % (shaper[-1], shaper_freq, SHAPER_DAMPING_RATIO))
     ax1.plot(freqs, response)
     ax1.set_ylim(bottom=0.)
     fontP = matplotlib.font_manager.FontProperties()
@@ -241,8 +191,7 @@ def plot_shaper(shaper):
     ax1.grid(which='minor', color='lightgrey')
 
     ax2.set_title("Unit step input, resonance frequency=%.1f Hz, "
-                  "damping ratio=%.3f" % (STEP_SIMULATION_RESONANCE_FREQ,
-                                          STEP_SIMULATION_DAMPING_RATIO))
+                  "damping ratio=%.3f" % (freq, damping_ratio))
     ax2.plot(time, step_vals)
     ax2.legend(step_legend, loc='best', prop=fontP)
     ax2.set_xlabel('Time, sec')
@@ -264,13 +213,30 @@ def main():
     opts = optparse.OptionParser(usage)
     opts.add_option("-o", "--output", type="string", dest="output",
                     default=None, help="filename of output graph")
+    opts.add_option("-s", "--shaper", type="string", dest="shaper",
+                    default="ei", help="name of the shaper to plot")
+    opts.add_option("-f", "--freq", type="float", dest="freq",
+                    default=STEP_SIMULATION_RESONANCE_FREQ,
+                    help="the frequency of the system")
+    opts.add_option("--damping_ratio", type="float", dest="damping_ratio",
+                    default=STEP_SIMULATION_DAMPING_RATIO,
+                    help="the damping ratio of the system")
+    opts.add_option("--shaper_freq", type="float", dest="shaper_freq",
+                    default=SHAPER_FREQ,
+                    help="the frequency of the shaper")
     options, args = opts.parse_args()
     if len(args) != 0:
         opts.error("Incorrect number of arguments")
+    if (options.shaper.lower() not in
+            [s.name for s in shaper_defs.INPUT_SHAPERS] and
+        options.shaper.lower() not in
+            [s.name for s in shaper_defs.INPUT_SMOOTHERS]):
+        opts.error("Invalid shaper name '%s'" % (opts.shaper,))
 
     # Draw graph
     setup_matplotlib(options.output is not None)
-    fig = plot_shaper(get_shaper())
+    fig = plot_shaper(options.shaper, options.shaper_freq, options.freq,
+                      options.damping_ratio)
 
     # Show graph
     if options.output is None:
