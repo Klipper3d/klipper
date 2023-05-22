@@ -776,20 +776,22 @@ LED output. Each color `<value>` must be between 0.0 and 1.0. The
 WHITE option is only valid on RGBW LEDs. If the LED supports multiple
 chips in a daisy-chain then one may specify INDEX to alter the color
 of just the given chips (1 for the first chip, 2 for the second,
-etc. You can specify multiple LEDs by either separate Indices by comma:
-INDEX=1,3,4; specify a range by using a dash: INDEX=1-4, which would
+etc. You can specify multiple LEDs by either separating Indices by comma:
+INDEX=1,3,4; specifying a range by using a dash: INDEX=1-4, which would
 update LED1, LED2, LED3 and LED4 or mix and match both methods: INDEX=
-1,2-5,7 would update LED1, LED2, LED3, LED4, LED5 and LED 7). If INDEX
-is not provided then all LEDs in the daisy-chain will be set to the
-provided color. If TRANSMIT=0 is specified then the color change will
-only be made on the next SET_LED command that doesnot specify
-TRANSMIT=0; this may be useful in combination with the INDEX parameter
-to batch multiple updates in a daisy-chain. By default, the SET_LED
-command will sync it's changes with other ongoing gcode commands.
-This can lead to undesirable behavior if LEDs are being set while the
-printer is not printing as it will reset the idle timeout. If careful
-timing is not needed, the optional SYNC=0 parameter can be specified
-to apply the changes without resetting the idle timeout.
+1,2-5,7 would update LED1, LED2, LED3, LED4, LED5 and LED 7). You can
+also add |n behind a range, which would then only take every n LEDs in
+that range(e.g. INDEX=1-5|2 would update LED1, LED3 and LED5, INDEX1-7|3
+would update LED1, LED4 and LED7). If INDEX is not provided then all LEDs
+in the daisy-chain will be set to the provided color. If TRANSMIT=0 is
+specified then the color change will only be made on the next SET_LED
+command that doesnot specify TRANSMIT=0; this may be useful in combination
+with the INDEX parameter to batch multiple updates in a daisy-chain. By
+default, the SET_LED command will sync it's changes with other ongoing
+gcode commands. This can lead to undesirable behavior if LEDs are being
+set while the printer is not printing as it will reset the idle timeout.
+If careful timing is not needed, the optional SYNC=0 parameter can be
+specified to apply the changes without resetting the idle timeout.
 
 #### SET_LED_TEMPLATE
 `SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
