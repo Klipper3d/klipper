@@ -208,6 +208,26 @@ available parameters.
 ```
 [printer]
 kinematics: cartesian
+max_x_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the x
+#   axis. This setting can be used to restrict the maximum speed of
+#   the x stepper motor. The default is to use max_velocity for
+#   max_x_velocity.
+max_x_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the x axis. It limits the acceleration of the x stepper motor. The
+#   default is to use max_accel for max_x_accel.
+
+max_y_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the y
+#   axis. This setting can be used to restrict the maximum speed of
+#   the y stepper motor. The default is to use max_velocity for
+#   max_y_velocity.
+max_y_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the y axis. It limits the acceleration of the y stepper motor. The
+#   default is to use max_accel for max_y_accel.
+
 max_z_velocity:
 #   This sets the maximum velocity (in mm/s) of movement along the z
 #   axis. This setting can be used to restrict the maximum speed of
