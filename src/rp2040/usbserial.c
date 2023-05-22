@@ -96,7 +96,8 @@ int_fast8_t
 usb_read_ep0_setup(void *data, uint_fast8_t max_len)
 {
     if (!(usb_hw->intr & USB_INTR_SETUP_REQ_BITS)) {
-        usb_hw->inte = USB_INTE_BUFF_STATUS_BITS | USB_INTE_SETUP_REQ_BITS;
+        usb_hw->inte = (USB_INTE_BUFF_STATUS_BITS | USB_INTE_SETUP_REQ_BITS
+                        | USB_INTE_BUS_RESET_BITS);
         return -1;
     }
     usb_dpram->ep_buf_ctrl[0].in = 0;
@@ -168,6 +169,7 @@ usb_set_configure(void)
 // The rp2040 USB has an errata causing it to sometimes not connect
 // after a reset.  The following code has extracts from the PICO SDK.
 
+static uint8_t need_errata;
 static struct task_wake usb_errata_wake;
 
 // Workaround for rp2040-e5 errata
@@ -253,7 +255,7 @@ USB_Handler(void)
 {
     uint32_t ints = usb_hw->ints;
     if (ints & USB_INTS_SETUP_REQ_BITS) {
-        usb_hw->inte = USB_INTE_BUFF_STATUS_BITS;
+        usb_hw->inte = USB_INTE_BUFF_STATUS_BITS | USB_INTE_BUS_RESET_BITS;
         usb_notify_ep0();
     }
     if (ints & USB_INTS_BUFF_STATUS_BITS) {
@@ -272,8 +274,10 @@ USB_Handler(void)
         }
     }
     if (ints & USB_INTS_BUS_RESET_BITS) {
+        usb_hw->dev_addr_ctrl = 0;
         usb_hw->sie_status = USB_SIE_STATUS_BUS_RESET_BITS;
-        sched_wake_task(&usb_errata_wake);
+        if (need_errata)
+            sched_wake_task(&usb_errata_wake);
     }
 }
 
@@ -317,11 +321,12 @@ usbserial_init(void)
     uint32_t chip_id = *((io_ro_32*)(SYSINFO_BASE + SYSINFO_CHIP_ID_OFFSET));
     uint32_t version = ((chip_id & SYSINFO_CHIP_ID_REVISION_BITS)
                         >> SYSINFO_CHIP_ID_REVISION_LSB);
+    need_errata = (version == 1);
 
     // Enable irqs
     usb_hw->sie_ctrl = USB_SIE_CTRL_EP0_INT_1BUF_BITS;
     usb_hw->inte = (USB_INTE_BUFF_STATUS_BITS | USB_INTE_SETUP_REQ_BITS
-                    | (version == 1 ? USB_INTE_BUS_RESET_BITS: 0));
+                    | USB_INTE_BUS_RESET_BITS);
     armcm_enable_irq(USB_Handler, USBCTRL_IRQ_IRQn, 1);
 
     // Enable USB pullup

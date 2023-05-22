@@ -30,7 +30,7 @@ chipid_init(void)
         return;
 
     uint32_t id[4];
-    if (CONFIG_MACH_SAMD21) {
+    if (CONFIG_MACH_SAMX2) {
         id[0] = *(uint32_t*)0x0080A00C;
         id[1] = *(uint32_t*)0x0080A040;
         id[2] = *(uint32_t*)0x0080A044;

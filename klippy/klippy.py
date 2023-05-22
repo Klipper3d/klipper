@@ -343,12 +343,35 @@ def main():
     else:
         logging.getLogger().setLevel(debuglevel)
     logging.info("Starting Klippy...")
-    start_args['software_version'] = util.get_git_version()
+    git_info = util.get_git_version()
+    git_vers = git_info["version"]
+    extra_files = [fname for code, fname in git_info["file_status"]
+                   if (code in ('??', '!!') and fname.endswith('.py')
+                       and (fname.startswith('klippy/kinematics/')
+                            or fname.startswith('klippy/extras/')))]
+    modified_files = [fname for code, fname in git_info["file_status"]
+                      if code == 'M']
+    extra_git_desc = ""
+    if extra_files:
+        if not git_vers.endswith('-dirty'):
+            git_vers = git_vers + '-dirty'
+        if len(extra_files) > 10:
+            extra_files[10:] = ["(+%d files)" % (len(extra_files) - 10,)]
+        extra_git_desc += "\nUntracked files: %s" % (', '.join(extra_files),)
+    if modified_files:
+        if len(modified_files) > 10:
+            modified_files[10:] = ["(+%d files)" % (len(modified_files) - 10,)]
+        extra_git_desc += "\nModified files: %s" % (', '.join(modified_files),)
+    extra_git_desc += "\nBranch: %s" % (git_info["branch"])
+    extra_git_desc += "\nRemote: %s" % (git_info["remote"])
+    extra_git_desc += "\nTracked URL: %s" % (git_info["url"])
+    start_args['software_version'] = git_vers
     start_args['cpu_info'] = util.get_cpu_info()
     if bglogger is not None:
         versions = "\n".join([
             "Args: %s" % (sys.argv,),
-            "Git version: %s" % (repr(start_args['software_version']),),
+            "Git version: %s%s" % (repr(start_args['software_version']),
+                                   extra_git_desc),
             "CPU: %s" % (start_args['cpu_info'],),
             "Python: %s" % (repr(sys.version),)])
         logging.info(versions)

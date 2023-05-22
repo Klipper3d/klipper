@@ -345,6 +345,7 @@ MCUTYPES = {
     'lpc176': flash_lpc176x, 'stm32f103': flash_stm32f1,
     'stm32f4': flash_stm32f4, 'stm32f042': flash_stm32f4,
     'stm32f072': flash_stm32f4, 'stm32g0b1': flash_stm32f4,
+    'stm32f7': flash_stm32f4,
     'stm32h7': flash_stm32f4, 'stm32l4': flash_stm32f4,
     'stm32g4': flash_stm32f4, 'rp2040': flash_rp2040,
 }

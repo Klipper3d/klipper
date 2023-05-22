@@ -32,6 +32,7 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     // stm32f0 is ~10Mhz at 50pF
     // stm32f2 is ~25Mhz at 40pF
     // stm32f4 is ~50Mhz at 40pF
+    // stm32f7 is ~50Mhz at 40pF
     // stm32g0 is ~30Mhz at 50pF
     // stm32h7 is ~85Mhz at 50pF
     uint32_t ospeed = hs ? 0x03 : (CONFIG_MACH_STM32F0 ? 0x01 : 0x02);
