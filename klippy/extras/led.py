@@ -51,7 +51,9 @@ class LEDHelper:
                     raise gcmd.error("More than one '-' found in '%s', "
                                      "only one allowed" % index)
                 for i in range(self.check_index(group[0], gcmd, led_count),
-                               (self.check_index(group[1], gcmd, led_count) + 1)):
+                               (self.check_index(group[1],
+                                                 gcmd,
+                                                 led_count) + 1)):
                     indices.add(i)
             else:
                 indices.add(self.check_index(index, gcmd, led_count))
