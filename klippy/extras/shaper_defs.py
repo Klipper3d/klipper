@@ -165,6 +165,13 @@ def get_si_smoother(shaper_freq, damping_ratio_unused=None,
               4.234582468800491,-2.226157642004671,1.267781046297883]
     return init_smoother(coeffs, 1.245 / shaper_freq, normalize_coeffs)
 
+def get_zvd_ei_smoother(shaper_freq, damping_ratio_unused=None,
+                        normalize_coeffs=True):
+    coeffs = [-18835.07746719777,1914.349309746547,8786.608981369287,
+              -807.3061869131075,-1209.429748155012,96.48879052981883,
+              43.1595785340444,-3.577268915175282,1.083220648523371]
+    return init_smoother(coeffs, 1.475 / shaper_freq, normalize_coeffs)
+
 # min_freq for each shaper is chosen to have projected max_accel ~= 1500
 INPUT_SHAPERS = [
     InputShaperCfg('zv', get_zv_shaper, min_freq=21.),
@@ -180,5 +187,6 @@ INPUT_SMOOTHERS = [
     InputSmootherCfg('smooth_mzv', get_mzv_smoother, min_freq=23.),
     InputSmootherCfg('smooth_ei', get_ei_smoother, min_freq=23.),
     InputSmootherCfg('smooth_2hump_ei', get_2hump_ei_smoother, min_freq=23.),
+    InputSmootherCfg('smooth_zvd_ei', get_zvd_ei_smoother, min_freq=23.),
     InputSmootherCfg('smooth_si', get_si_smoother, min_freq=23.),
 ]
