@@ -71,14 +71,6 @@ def gen_shaper_response(shaper, shaper_freq, estimate_shaper):
     legend = ['damping ratio = %.3f' % d_r for d_r in DAMPING_RATIOS]
     return freqs, response, legend
 
-def step_response(t, omega, damping_ratio):
-    t = np.maximum(t, 0.)
-    damping = damping_ratio * omega
-    omega_d = omega * math.sqrt(1. - damping_ratio**2)
-    phase = math.acos(damping_ratio)
-    return (1. - np.exp(np.outer(-damping, t))
-               * np.sin(np.outer(omega_d, t) + phase) * (1. / math.sin(phase)))
-
 def gen_shaped_step_function(shaper, freq, damping_ratio):
     # Calculate shaping of a step function
     A, T, _ = shaper
@@ -100,7 +92,8 @@ def gen_shaped_step_function(shaper, freq, damping_ratio):
     commanded = np.sum(A * np.where(time_t - T >= 0, 1., 0.), axis=-1) * inv_D
     response = np.zeros(shape=(time.shape))
     for i in range(n):
-        response += A[i] * step_response(time - T[i], omega, damping_ratio)[0,:]
+        response += A[i] * shaper_calibrate.step_response(
+                np, time - T[i], omega, damping_ratio)[0,:]
     response *= inv_D
     velocity = np.insert(
             (response[1:] - response[:-1]) / (2 * math.pi * freq * dt), 0, 0.)
@@ -140,7 +133,8 @@ def gen_smoothed_step_function(smoother, freq, damping_ratio):
                        axis=-1)
     s_r_n = time.size + tau.size - 1
     s_r_t = np.arange(t_start - hst, t_end + hst * 1.1, dt)[:s_r_n]
-    s_r = step_response(s_r_t + t_offs, omega, damping_ratio)
+    s_r = shaper_calibrate.step_response(
+            np, s_r_t + t_offs, omega, damping_ratio)
     response = np.convolve(s_r[0,:], w_dt, mode='valid')
     velocity = np.insert((response[1:] - response[:-1])
                          / (2 * math.pi * freq * dt), 0, 0.)
