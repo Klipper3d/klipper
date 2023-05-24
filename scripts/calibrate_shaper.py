@@ -102,11 +102,17 @@ def plot_freq_response(lognames, calibration_data, shapers,
                 shaper.name.upper(), shaper.freq,
                 shaper.vibrs * 100., shaper.smoothing,
                 round(shaper.max_accel / 100.) * 100.)
-        linestyle = 'dotted'
+        linestyle = 'dotted' if shaper.name.startswith('smooth') else 'dashed'
+        linewidth = 1.0
         if shaper.name == selected_shaper:
             linestyle = 'dashdot'
+            linewidth = 2.0
             best_shaper_vals = shaper.vals
-        ax2.plot(freqs, shaper.vals, label=label, linestyle=linestyle)
+        ax2.plot(freqs, shaper.vals, label=label, linestyle=linestyle,
+                 linewidth=linewidth)
+    vibr_thresh = (psd[freqs > 0] / freqs[freqs > 0]).max() * (freqs + 5) / 33.3
+    ax.plot(freqs, vibr_thresh,
+            label='Acceptable\nvibrations', color='lightgrey')
     ax.plot(freqs, psd * best_shaper_vals,
             label='After\nshaper', color='cyan')
     # A hack to add a human-readable shaper recommendation to legend
@@ -115,6 +121,9 @@ def plot_freq_response(lognames, calibration_data, shapers,
 
     ax.legend(loc='upper left', prop=fontP)
     ax2.legend(loc='upper right', prop=fontP)
+
+    ax.set_ylim(bottom=0)
+    ax2.set_ylim(bottom=0)
 
     fig.tight_layout()
     return fig
