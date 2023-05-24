@@ -13,8 +13,8 @@ MAX_SHAPER_FREQ = 150.
 
 TEST_DAMPING_RATIOS=[0.075, 0.1, 0.15]
 
-AUTOTUNE_SHAPERS = ['mzv', 'ei', '2hump_ei', 'smooth_zv', 'smooth_mzv',
-                    'smooth_ei', 'smooth_2hump_ei', 'smooth_si']
+AUTOTUNE_SHAPERS = ['smooth_zv', 'smooth_mzv', 'smooth_ei', 'smooth_2hump_ei',
+                    'smooth_zvd_ei', 'smooth_si', 'mzv', 'ei', '2hump_ei']
 
 ######################################################################
 # Frequency response calculation and shaper auto-tuning
