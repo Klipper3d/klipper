@@ -73,7 +73,25 @@ def get_smoother_offset(np, C, t_sm):
 
     return -np.trapz(t * w, dx=dt)
 
-def estimate_shaper(np, shaper, test_damping_ratio, test_freqs):
+def step_response(np, t, omega, damping_ratio):
+    t = np.maximum(t, 0.)
+    omega = np.swapaxes(np.array(omega, ndmin=2), 0, 1)
+    damping = damping_ratio * omega
+    omega_d = omega * math.sqrt(1. - damping_ratio**2)
+    phase = math.acos(damping_ratio)
+    return (1. - np.exp((-damping * t))
+               * np.sin((omega_d * t) + phase) * (1. / math.sin(phase)))
+
+def step_response_min_velocity(damping_ratio):
+    d2 = damping_ratio * damping_ratio
+    d_r = damping_ratio / math.sqrt(1. - d2)
+    # Analytical formula for the minimum was obtained using Maxima system
+    t = .5 * math.atan2(2. * d2, (2. * d2 - 1.) * d_r) + math.pi
+    phase = math.acos(damping_ratio)
+    v = math.exp(-d_r * t) * (d_r * math.sin(t + phase) - math.cos(t + phase))
+    return v
+
+def estimate_shaper_old(np, shaper, test_damping_ratio, test_freqs):
     A, T = np.asarray(shaper[0]), np.asarray(shaper[1])
     inv_D = 1. / A.sum()
 
@@ -85,7 +103,36 @@ def estimate_shaper(np, shaper, test_damping_ratio, test_freqs):
     C = W * np.cos(np.outer(omega_d, T))
     return np.sqrt(S.sum(axis=1)**2 + C.sum(axis=1)**2) * inv_D
 
-def estimate_smoother(np, smoother, test_damping_ratio, test_freqs):
+def estimate_shaper(np, shaper, test_damping_ratio, test_freqs):
+    A, T = np.asarray(shaper[0]), np.asarray(shaper[1])
+    inv_D = 1. / A.sum()
+    n = len(T)
+    t_s = T[-1] - T[0]
+
+    test_freqs = np.asarray(test_freqs)
+    t_start = T[0]
+    t_end = T[-1] + 2.0 * np.maximum(1. / test_freqs[test_freqs > 0.], t_s)
+    n_t = 1000
+    unity_range = np.linspace(0., 1., n_t)
+    time = (t_end[:, np.newaxis] - t_start) * unity_range + t_start
+    dt = (time[:,-1] - time[:,0]) / n_t
+
+    min_v = -step_response_min_velocity(test_damping_ratio)
+
+    omega = 2. * math.pi * test_freqs[test_freqs > 0.]
+
+    response = np.zeros(shape=(omega.shape[0], time.shape[-1]))
+    for i in range(n):
+        s_r = step_response(np, time - T[i], omega, test_damping_ratio)
+        response += A[i] * s_r
+    response *= inv_D
+    velocity = (response[:,1:] - response[:,:-1]) / (omega * dt)[:, np.newaxis]
+    res = np.zeros(shape=test_freqs.shape)
+    res[test_freqs > 0.] = -velocity.min(axis=-1) / min_v
+    res[test_freqs <= 0.] = 1.
+    return res
+
+def estimate_smoother_old(np, smoother, test_damping_ratio, test_freqs):
     C, t_sm = smoother[0], smoother[1]
     hst = t_sm * 0.5
 
@@ -104,6 +151,48 @@ def estimate_smoother(np, smoother, test_damping_ratio, test_freqs):
     C = np.cos(np.outer(omega_d, (t-t_sm)))
     S = np.sin(np.outer(omega_d, (t-t_sm)))
     return np.sqrt(np.trapz(E * C, dx=dt)**2 + np.trapz(E * S, dx=dt)**2)
+
+def estimate_smoother(np, smoother, test_damping_ratio, test_freqs):
+    C, t_sm = smoother[0], smoother[1]
+    hst = t_sm * 0.5
+
+    test_freqs = np.asarray(test_freqs)
+
+    t_start = -hst
+    t_end = hst + 1.5 * np.maximum(1. / test_freqs[test_freqs > 0.], t_sm)
+    n_t = 1000
+    unity_range = np.linspace(0., 1., n_t)
+    time = (t_end[:, np.newaxis] - t_start) * unity_range + t_start
+    dt = (time[:,-1] - time[:,0]) / n_t
+    tau = np.copy(time)
+    tau[time > hst] = 0.
+
+    w = np.zeros(shape=tau.shape)
+    for c in C[::-1]:
+        w = w * tau + c
+    w[time > hst] = 0.
+    norms = (w * dt[:, np.newaxis]).sum(axis=-1)
+
+    min_v = -step_response_min_velocity(test_damping_ratio)
+
+    omega = 2. * math.pi * test_freqs[test_freqs > 0.]
+
+    wl = np.count_nonzero(time <= hst, axis=-1).max()
+
+    def get_windows(m, wl):
+        nrows = m.shape[-1] - wl + 1
+        n = m.strides[-1]
+        return np.lib.stride_tricks.as_strided(m, shape=(m.shape[0], nrows, wl),
+                                               strides=(m.strides[0], n, n))
+
+    s_r = step_response(np, time, omega, test_damping_ratio)
+    w_dt = w[:, :wl] * (np.reciprocal(norms) * dt)[:, np.newaxis]
+    response = np.einsum("ijk,ik->ij", get_windows(s_r, wl), w_dt[:,::-1])
+    velocity = (response[:,1:] - response[:,:-1]) / (omega * dt)[:, np.newaxis]
+    res = np.zeros(shape=test_freqs.shape)
+    res[test_freqs > 0.] = -velocity.min(axis=-1) / min_v
+    res[test_freqs <= 0.] = 1.
+    return res
 
 class ShaperCalibrate:
     def __init__(self, printer):
