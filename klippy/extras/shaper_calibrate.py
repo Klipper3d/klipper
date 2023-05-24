@@ -30,26 +30,21 @@ class CalibrationData:
         self._psd_list = [self.psd_sum, self.psd_x, self.psd_y, self.psd_z]
         self._psd_map = {'x': self.psd_x, 'y': self.psd_y, 'z': self.psd_z,
                          'all': self.psd_sum}
-        self.data_sets = 1
     def add_data(self, other):
         np = self.numpy
-        joined_data_sets = self.data_sets + other.data_sets
         for psd, other_psd in zip(self._psd_list, other._psd_list):
             # `other` data may be defined at different frequency bins,
             # interpolating to fix that.
-            other_normalized = other.data_sets * np.interp(
+            other_normalized = np.interp(
                     self.freq_bins, other.freq_bins, other_psd)
-            psd *= self.data_sets
-            psd[:] = (psd + other_normalized) * (1. / joined_data_sets)
-        self.data_sets = joined_data_sets
+            psd[:] = np.maximum(psd, other_normalized)
     def set_numpy(self, numpy):
         self.numpy = numpy
     def normalize_to_frequencies(self):
+        freq_bins = self.freq_bins
         for psd in self._psd_list:
-            # Avoid division by zero errors
-            psd /= self.freq_bins + .1
-            # Remove low-frequency noise
-            psd[self.freq_bins < MIN_FREQ] = 0.
+            # Avoid division by zero errors and remove low-frequency noise
+            psd *= self.numpy.tanh(.5 / MIN_FREQ * freq_bins) / (freq_bins + .1)
     def get_psd(self, axis='all'):
         return self._psd_map[axis]
 
@@ -64,7 +59,7 @@ def get_shaper_offset(A, T):
 def get_smoother_offset(np, C, t_sm):
     hst = t_sm * 0.5
 
-    n_t = 1000
+    n_t = 200
     t, dt = np.linspace(-hst, hst, n_t, retstep=True)
 
     w = np.zeros(shape=t.shape)
@@ -318,14 +313,15 @@ class ShaperCalibrate:
         calibration_data.set_numpy(self.numpy)
         return calibration_data
 
-    def _estimate_remaining_vibrations(self, vals, psd):
-        # The input shaper can only reduce the amplitude of vibrations by
-        # SHAPER_VIBRATION_REDUCTION times, so all vibrations below that
-        # threshold can be igonred
-        vibr_threshold = psd.max() / shaper_defs.SHAPER_VIBRATION_REDUCTION
-        remaining_vibrations = self.numpy.maximum(
-                vals * psd - vibr_threshold, 0).sum()
-        all_vibrations = self.numpy.maximum(psd - vibr_threshold, 0).sum()
+    def _estimate_remaining_vibrations(self, freq_bins, vals, psd):
+        # Calculate the acceptable level of remaining vibrations.
+        # Note that these are not true remaining vibrations, but rather
+        # just a score to compare different shapers between each other.
+        vibr_threshold = ((psd[freq_bins > 0] / freq_bins[freq_bins > 0]).max()
+                          * (freq_bins + MIN_FREQ) * (1. / 33.3))
+        remaining_vibrations = (self.numpy.maximum(
+                vals * psd - vibr_threshold, 0) * freq_bins**2).sum()
+        all_vibrations = (psd * freq_bins**2).sum()
         return remaining_vibrations / all_vibrations
 
     def _get_shaper_smoothing(self, shaper, accel=5000, scv=5.):
@@ -359,7 +355,9 @@ class ShaperCalibrate:
         w = np.zeros(shape=t.shape)
         for c in C[::-1]:
             w = w * (-t) + c
-        t += get_smoother_offset(np, C, t_sm)
+        inv_norm = 1. / np.trapz(w, dx=dt)
+        w *= inv_norm
+        t -= np.trapz(t * w, dx=dt)
 
         offset_180 = np.trapz(half_accel * t**2 * w, dx=dt)
         offset_90_x = np.trapz(((scv + half_accel * t) * t * w)[t >= 0], dx=dt)
@@ -371,6 +369,16 @@ class ShaperCalibrate:
                    estimate_shaper, get_shaper_smoothing):
         np = self.numpy
 
+        shaper = shaper_cfg.init_func(1.0, shaper_defs.DEFAULT_DAMPING_RATIO)
+
+        test_freq_bins = np.arange(0., 10., 0.01)
+        test_shaper_vals = np.zeros(shape=test_freq_bins.shape)
+        # Exact damping ratio of the printer is unknown, pessimizing
+        # remaining vibrations over possible damping values
+        for dr in TEST_DAMPING_RATIOS:
+            vals = estimate_shaper(self.numpy, shaper, dr, test_freq_bins)
+            test_shaper_vals = np.maximum(test_shaper_vals, vals)
+
         test_freqs = np.arange(shaper_cfg.min_freq, MAX_SHAPER_FREQ, .2)
 
         freq_bins = calibration_data.freq_bins
@@ -380,27 +388,22 @@ class ShaperCalibrate:
         best_res = None
         results = []
         for test_freq in test_freqs[::-1]:
-            shaper_vibrations = 0.
-            shaper_vals = np.zeros(shape=freq_bins.shape)
             shaper = shaper_cfg.init_func(
                     test_freq, shaper_defs.DEFAULT_DAMPING_RATIO)
             shaper_smoothing = get_shaper_smoothing(shaper)
             if max_smoothing and shaper_smoothing > max_smoothing and best_res:
                 return best_res
-            # Exact damping ratio of the printer is unknown, pessimizing
-            # remaining vibrations over possible damping values
-            for dr in TEST_DAMPING_RATIOS:
-                vals = estimate_shaper(self.numpy, shaper, dr, freq_bins)
-                vibrations = self._estimate_remaining_vibrations(vals, psd)
-                shaper_vals = np.maximum(shaper_vals, vals)
-                if vibrations > shaper_vibrations:
-                    shaper_vibrations = vibrations
+            shaper_vals = np.interp(freq_bins, test_freq_bins * test_freq,
+                                    test_shaper_vals)
+            shaper_vibrations = self._estimate_remaining_vibrations(
+                    freq_bins, shaper_vals, psd)
             max_accel = self.find_max_accel(shaper, get_shaper_smoothing)
             # The score trying to minimize vibrations, but also accounting
             # the growth of smoothing. The formula itself does not have any
             # special meaning, it simply shows good results on real user data
-            shaper_score = shaper_smoothing * (shaper_vibrations**1.5 +
-                                               shaper_vibrations * .2 + .01)
+            shaper_score = shaper_smoothing * (2. * shaper_vibrations**1.5 +
+                                               shaper_vibrations * .2 + .001 +
+                                               shaper_smoothing * .002)
             results.append(
                     CalibrationResult(
                         name=shaper_cfg.name, freq=test_freq, vals=shaper_vals,
@@ -413,11 +416,13 @@ class ShaperCalibrate:
         # much worse than the 'best' one, but gives much less smoothing
         selected = best_res
         for res in results[::-1]:
-            if res.vibrs < best_res.vibrs * 1.01 and res.score < selected.score:
+            if res.score < selected.score and (
+                    res.vibrs < best_res.vibrs * 1.2 or
+                    res.vibrs < best_res.vibrs + 0.0075):
                 selected = res
         return selected
 
-    def _bisect(self, func):
+    def _bisect(self, func, eps = 1e-8):
         left = right = 1.
         while not func(left):
             right = left
@@ -425,7 +430,7 @@ class ShaperCalibrate:
         if right == left:
             while func(right):
                 right *= 2.
-        while right - left > 1e-8:
+        while right - left > eps:
             middle = (left + right) * .5
             if func(middle):
                 left = middle
@@ -438,7 +443,7 @@ class ShaperCalibrate:
         # for max_accel without much smoothing
         TARGET_SMOOTHING = 0.12
         max_accel = self._bisect(lambda test_accel: get_smoothing(
-            s, test_accel) <= TARGET_SMOOTHING)
+            s, test_accel) <= TARGET_SMOOTHING, 1e-2)
         return max_accel
 
     def find_best_shaper(self, calibration_data, max_smoothing, logger=None):
@@ -452,9 +457,10 @@ class ShaperCalibrate:
                 estimate_smoother, self._get_smoother_smoothing))
             if logger is not None:
                 logger("Fitted smoother '%s' frequency = %.1f Hz "
-                       "(vibrations = %.1f%%, smoothing ~= %.3f)" % (
+                       "(vibration score = %.2f%%, smoothing ~= %.3f,"
+                       " combined score = %.3e)" % (
                            smoother.name, smoother.freq, smoother.vibrs * 100.,
-                           smoother.smoothing))
+                           smoother.smoothing, smoother.score))
                 logger("To avoid too much smoothing with '%s', suggested "
                        "max_accel <= %.0f mm/sec^2" % (
                            smoother.name,
@@ -474,9 +480,10 @@ class ShaperCalibrate:
                 estimate_shaper, self._get_shaper_smoothing))
             if logger is not None:
                 logger("Fitted shaper '%s' frequency = %.1f Hz "
-                       "(vibrations = %.1f%%, smoothing ~= %.3f)" % (
+                       "(vibration score = %.2f%%, smoothing ~= %.3f,"
+                       " combined score = %.3e)" % (
                            shaper.name, shaper.freq, shaper.vibrs * 100.,
-                           shaper.smoothing))
+                           shaper.smoothing, shaper.score))
                 logger("To avoid too much smoothing with '%s', suggested "
                        "max_accel <= %.0f mm/sec^2" % (
                            shaper.name, round(shaper.max_accel / 100.) * 100.))
