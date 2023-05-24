@@ -182,11 +182,12 @@ INPUT_SHAPERS = [
     InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=48.),
 ]
 
+# min_freq for each smoother is chosen to have projected max_accel ~= 1000
 INPUT_SMOOTHERS = [
-    InputSmootherCfg('smooth_zv', get_zv_smoother, min_freq=21.),
-    InputSmootherCfg('smooth_mzv', get_mzv_smoother, min_freq=23.),
-    InputSmootherCfg('smooth_ei', get_ei_smoother, min_freq=23.),
-    InputSmootherCfg('smooth_2hump_ei', get_2hump_ei_smoother, min_freq=23.),
-    InputSmootherCfg('smooth_zvd_ei', get_zvd_ei_smoother, min_freq=23.),
-    InputSmootherCfg('smooth_si', get_si_smoother, min_freq=23.),
+    InputSmootherCfg('smooth_zv', get_zv_smoother, min_freq=18.),
+    InputSmootherCfg('smooth_mzv', get_mzv_smoother, min_freq=20.),
+    InputSmootherCfg('smooth_ei', get_ei_smoother, min_freq=21.),
+    InputSmootherCfg('smooth_2hump_ei', get_2hump_ei_smoother, min_freq=21.5),
+    InputSmootherCfg('smooth_zvd_ei', get_zvd_ei_smoother, min_freq=26.),
+    InputSmootherCfg('smooth_si', get_si_smoother, min_freq=21.5),
 ]
