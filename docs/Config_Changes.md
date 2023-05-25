@@ -8,8 +8,8 @@ All dates in this document are approximate.
 
 ## Changes
 
-20230519: `SHAPER_CALIBRATE` command immediately applies input shaper parameters
-if `[input_shaper]` was enabled already.
+20230525: `SHAPER_CALIBRATE` command immediately applies input shaper
+parameters if `[input_shaper]` was enabled already.
 
 20230407: The `stalled_bytes` counter in the log and in the
 `printer.mcu.last_stats` field has been renamed to `upcoming_bytes`.
