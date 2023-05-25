@@ -892,8 +892,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#start_print-macros" class="md-nav__link">
-    START_PRINT macros
+  <a href="#start_print-makrok" class="md-nav__link">
+    START_PRINT makrók
   </a>
   
 </li>
@@ -1366,8 +1366,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#start_print-macros" class="md-nav__link">
-    START_PRINT macros
+  <a href="#start_print-makrok" class="md-nav__link">
+    START_PRINT makrók
   </a>
   
 </li>
@@ -1412,21 +1412,21 @@
 <p>Néhány szeletelőnek "fejlett nyomás előtolás" képessége van. A Klipper használata esetén ajánlott ezeket az opciókat kikapcsolva tartani, mivel valószínűleg rossz minőségű nyomatokat eredményeznek. Fontold meg ehelyett a Klipper <a href="Pressure_Advance.html">nyomás előtolás</a> használatát.</p>
 <p>Konkrétan ezek a szeletelő beállítások utasíthatják a firmware-t, hogy vad változtatásokat végezzen az extrudálási sebességben, abban a reményben, hogy a firmware közelíteni fogja ezeket a kéréseket, és a nyomtató nagyjából a kívánt extrudernyomást fogja elérni. A Klipper azonban pontos kinematikai számításokat és időzítést használ. Amikor a Klipper parancsot kap az extrudálási sebesség jelentős változtatására, megtervezi a sebesség, a gyorsulás és az extruder mozgásának megfelelő változásait - ami nem a szeletelő szándékában áll. A szeletelő akár túlzott extrudálási sebességet is parancsolhat, olyannyira, hogy az kiváltja a Klipper maximális extrudálási keresztmetszet ellenőrzését.</p>
 <p>Ezzel szemben a szeletelő "visszahúzás" beállítása, "törlés" beállítása és/vagy "törlés visszahúzáskor" beállítása rendben van (és gyakran hasznos).</p>
-<h2 id="start_print-macros">START_PRINT macros<a class="headerlink" href="#start_print-macros" title="Permanent link">&para;</a></h2>
-<p>When using a START_PRINT macro or similar, it is useful to sometimes pass through parameters from the slicer variables to the macro.</p>
-<p>In Cura, to pass through temperatures, the following start gcode would be used:</p>
+<h2 id="start_print-makrok">START_PRINT makrók<a class="headerlink" href="#start_print-makrok" title="Permanent link">&para;</a></h2>
+<p>START_PRINT makró vagy hasonló makró használata esetén néha hasznos, ha a szeletelőváltozókból paramétereket adunk át a makrónak.</p>
+<p>A Cura programban a hőmérsékleteknek való átváltásához a következő start G-kódot kell használni:</p>
 <div class="highlight"><pre><span></span><code>START_PRINT BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0}
 </code></pre></div>
 
-<p>In slic3r derivatives such as PrusaSlicer and SuperSlicer, the following would be used:</p>
+<p>A slic3r származékokban, mint például a PrusaSlicer és a SuperSlicer, a következőket kell használni:</p>
 <p>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]</p>
-<p>Also note that these slicers will insert their own heating codes when certain conditions are not met. In Cura, the existence of the <code>{material_bed_temperature_layer_0}</code> and <code>{material_print_temperature_layer_0}</code> variables is enough to mitigate this. In slic3r derivatives, you would use:</p>
+<p>Vedd figyelembe azt is, hogy ezek a szeletelők saját fűtési kódokat adnak meg, ha bizonyos feltételek nem teljesülnek. A Curában a <code>{material_bed_temperature_layer_0}</code> és a <code>{material_print_temperature_layer_0}</code> változók létezése elegendő ennek enyhítésére. A slic3r származékokban a következőket használhatod:</p>
 <div class="highlight"><pre><span></span><code>M140 S0
 M104 S0
 </code></pre></div>
 
-<p>before the macro call. Also note that SuperSlicer has a "custom gcode only" button option, which achieves the same outcome.</p>
-<p>An example of a START_PRINT macro using these paramaters can be found in config/sample-macros.cfg</p>
+<p>a makróhívás előtt. Vedd figyelembe, hogy a SuperSlicer rendelkezik egy "egyéni G-kód" gomb opcióval, amely ugyanezt az eredményt éri el.</p>
+<p>Egy példát a START_PRINT makróra, amely ezeket a paramétereket használja, az alábbi fájlban találhatsz config/sample-macros.cfg</p>
 
               
             </article>
