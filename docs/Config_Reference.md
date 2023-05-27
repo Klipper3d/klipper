@@ -3531,6 +3531,7 @@ run_current:
 #driver_CHM: 0
 #driver_VHIGHFS: 0
 #driver_VHIGHCHM: 0
+#driver_THIGH: 0
 #driver_DISS2G: 0
 #driver_DISS2VS: 0
 #driver_PWM_AUTOSCALE: True
