@@ -23,18 +23,25 @@ class CartKinematics:
                                             self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
-                                              above=0., maxval=max_velocity)
-        self.max_z_accel = config.getfloat('max_z_accel', max_accel,
-                                           above=0., maxval=max_accel)
-        self.max_x_velocity = config.getfloat('max_x_velocity', max_velocity,
-                                              above=0., maxval=max_velocity)
-        self.max_x_accel = config.getfloat('max_x_accel', max_accel,
-                                           above=0., maxval=max_accel)
-        self.max_y_velocity = config.getfloat('max_y_velocity', max_velocity,
-                                              above=0., maxval=max_velocity)
-        self.max_y_accel = config.getfloat('max_y_accel', max_accel,
-                                           above=0., maxval=max_accel)
+        self.axis_velocity_limits = [max_velocity]*3
+        self.axis_accel_limits = [max_accel]*3
+
+        # Setup per axis velocity limits
+        self.axis_velocity_limits[0] = config.getfloat('max_x_velocity',
+                max_velocity, above=0., maxval=max_velocity)
+        self.axis_velocity_limits[1] = config.getfloat('max_y_velocity',
+                max_velocity, above=0., maxval=max_velocity)
+        self.axis_velocity_limits[2] = config.getfloat('max_z_velocity',
+                max_velocity, above=0., maxval=max_velocity)
+
+        # Setup per axis acceleration limits
+        self.axis_accel_limits[0] = config.getfloat('max_x_accel', max_accel,
+                above=0., maxval=max_accel)
+        self.axis_accel_limits[1] = config.getfloat('max_y_accel', max_accel,
+                above=0., maxval=max_accel)
+        self.axis_accel_limits[2] = config.getfloat('max_z_accel', max_accel,
+                above=0., maxval=max_accel)
+
         self.limits = [(1.0, -1.0)] * 3
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
@@ -106,30 +113,24 @@ class CartKinematics:
                 if self.limits[i][0] > self.limits[i][1]:
                     raise move.move_error("Must home axis first")
                 raise move.move_error()
+
     def check_move(self, move):
         limits = self.limits
         xpos, ypos = move.end_pos[:2]
         if (xpos < limits[0][0] or xpos > limits[0][1]
             or ypos < limits[1][0] or ypos > limits[1][1]):
             self._check_endstops(move)
-        self._check_endstops(move)
-        # Move with X - update velocity and accel for slower X axis
-        if move.axes_d[0]:
-            self._check_endstops(move)
-            x_ratio = move.move_d / abs(move.axes_d[0])
-            move.limit_speed(
-                self.max_x_velocity * x_ratio, self.max_x_accel * x_ratio)
-        # Move with Y - update velocity and accel for slower Y axis
-        if move.axes_d[1]:
-            self._check_endstops(move)
-            y_ratio = move.move_d / abs(move.axes_d[1])
-            move.limit_speed(
-                self.max_y_velocity * y_ratio, self.max_y_accel * y_ratio)
-        # Move with Z - update velocity and accel for slower Z axis
-        if move.axes_d[2]:
-            z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(
-                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+
+        # enforce per-axis velocity, acceleration limits
+        for axis in (0, 1, 2):
+            d = move.axes_d[axis]
+            if(d):
+                ratio = abs(move.move_d / d)
+                move.limit_speed(
+                    axis_velocity_limits[axis] * ratio,
+                    self.axis_accel_limits[axis] * ratio
+                    )
+
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
         return {
