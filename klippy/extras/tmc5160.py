@@ -240,7 +240,7 @@ Fields["TCOOLTHRS"] = {
     "tcoolthrs":                0xfffff << 0
 }
 Fields["THIGH"] = {
-    "thigh":                	0xfffff << 0
+    "thigh":                    0xfffff << 0
 }
 Fields["TSTEP"] = {
     "tstep":                    0xfffff << 0
