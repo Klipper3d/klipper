@@ -380,6 +380,7 @@ class TMC5160:
         set_config_field(config, "pwm_lim", 12)
         #   TPOWERDOWN
         set_config_field(config, "tpowerdown", 10)
+        set_config_field(config, "thigh", 0)
 
 def load_config_prefix(config):
     return TMC5160(config)
