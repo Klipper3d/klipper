@@ -26,13 +26,13 @@ class CartKinematics:
 
         # Setup per-axis velocity limits
         self.axis_velocity_limits = tuple(
-            config.getfloat(f'max_{axis}_velocity', max_velocity, above=0.,
-                maxval=max_velocity)
+            config.getfloat('max_{}_velocity'.format(axis), max_velocity,
+                above=0., maxval=max_velocity)
             for axis in 'xyz')
 
         # Setup per-axis acceleration limits
         self.axis_accel_limits = tuple(
-            config.getfloat(f'max_{axis}_accel', max_accel, above=0.,
+            config.getfloat('max_{}_accel'.format(axis), max_accel, above=0.,
                 maxval=max_accel)
             for axis in 'xyz')
 
