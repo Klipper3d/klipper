@@ -116,14 +116,14 @@ class CartKinematics:
             self._check_endstops(move)
 
         # enforce per-axis velocity, acceleration limits
-        for axis in (0, 1, 2):
-            d = move.axes_d[axis]
-            if(d):
-                ratio = abs(move.move_d / d)
-                move.limit_speed(
-                    axis_velocity_limits[axis] * ratio,
-                    self.axis_accel_limits[axis] * ratio
-                    )
+        for axis_d, max_v, max_a in zip(
+            move.axes_d,
+            self.axis_velocity_limits,
+            self.axis_accel_limits
+        ):
+            if(axis_d):
+                ratio = abs(move.move_d / axis_d)
+                move.limit_speed(max_v * ratio, max_a * ratio)
 
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
