@@ -109,12 +109,7 @@ class CartKinematics:
                 raise move.move_error()
 
     def check_move(self, move):
-        limits = self.limits
-        xpos, ypos = move.end_pos[:2]
-        if (xpos < limits[0][0] or xpos > limits[0][1]
-            or ypos < limits[1][0] or ypos > limits[1][1]):
-            self._check_endstops(move)
-
+        self._check_endstops(move)
         # enforce per-axis velocity, acceleration limits
         for axis_d, max_v, max_a in zip(
             move.axes_d,
