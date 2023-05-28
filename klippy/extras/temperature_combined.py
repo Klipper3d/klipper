@@ -39,7 +39,7 @@ class PrinterSensorCombined:
     def update_temp(self, eventtime):
         values = []
         for sensor_name in self.sensor_names:
-            sensor = self.pheaters.heaters[sensor_name]
+            sensor = self.printer.lookup_object(sensor_name)
             temp_sensor, _ = sensor.get_temp(eventtime)
             values.append(temp_sensor)
         temp = self.mode(values)
@@ -58,7 +58,7 @@ class PrinterSensorCombined:
             'measured_max_temp': round(self.measured_max, 2)
         }
     def _handle_ready(self):
-        self.pheaters = self.printer.lookup_object('heaters')
+        # self.pheaters = self.printer.lookup_object('heaters')
         # Start temperature update timer
         self.reactor.update_timer(self.temperature_update_timer,
                                   self.reactor.NOW)
