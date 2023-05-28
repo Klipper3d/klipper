@@ -16,21 +16,21 @@ class PrinterSensorCombined:
         algos = {'min': min, 'max': max, 'mean': mean}
         self.mode = config.getchoice('type', algos)
         # get heater
-        pheaters = self.printer.lookup_object('heaters')
+        self.pheaters = self.printer.lookup_object('heaters')
         # set min / max temp
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
                                         minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', 99999999.9,
                                         above=self.min_temp)
         # register sensor
-        pheaters.register_sensor(config, self)
+        self.pheaters.register_sensor(config, self)
         # set default values
         self.last_temp = 0.
         self.measured_min = 99999999.
         self.measured_max = 0.
         # update original sensor callbacks
         for sensor_name in self.sensor_names:
-            sensor = self.printer.lookup_object(sensor_name)
+            sensor = self.pheaters[sensor_name]
             def new_temperature_callback(read_time, temp):
                 sensor.temperature_callback(read_time, temp)
                 self.temperature_callback(read_time, temp)
@@ -38,7 +38,7 @@ class PrinterSensorCombined:
     def temperature_callback(self, read_time, temp):
         values = []
         for sensor_name in self.sensor_names:
-            sensor = self.printer.lookup_object(sensor_name)
+            sensor = self.pheaters[sensor_name]
             temp_sensor, _ = sensor.get_temp(read_time)
             values.append(temp_sensor)
         temp = self.mode(values)
