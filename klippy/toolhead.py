@@ -17,6 +17,7 @@ class Move:
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
+        self.deccel = toolhead.max_accel
         self.junction_deviation = toolhead.junction_deviation
         self.timing_callbacks = []
         velocity = min(speed, toolhead.max_velocity)
@@ -47,12 +48,16 @@ class Move:
         self.delta_v2 = 2.0 * move_d * self.accel
         self.max_smoothed_v2 = 0.
         self.smooth_delta_v2 = 2.0 * move_d * toolhead.max_accel_to_decel
-    def limit_speed(self, speed, accel):
+    def limit_speed(self, speed, accel, deccel=-1):
+        if deccel == -1:
+            deccel = accel
+
         speed2 = speed**2
         if speed2 < self.max_cruise_v2:
             self.max_cruise_v2 = speed2
             self.min_move_t = self.move_d / speed
         self.accel = min(self.accel, accel)
+        self.deccel = min(self.deccel, deccel)
         self.delta_v2 = 2.0 * self.move_d * self.accel
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def move_error(self, msg="Move out of range"):
@@ -93,8 +98,9 @@ class Move:
     def set_junction(self, start_v2, cruise_v2, end_v2):
         # Determine accel, cruise, and decel portions of the move distance
         half_inv_accel = .5 / self.accel
+        halv_inv_deccel = .5 / self.deccel
         accel_d = (cruise_v2 - start_v2) * half_inv_accel
-        decel_d = (cruise_v2 - end_v2) * half_inv_accel
+        decel_d = (cruise_v2 - end_v2) * halv_inv_deccel
         cruise_d = self.move_d - accel_d - decel_d
         # Determine move velocities
         self.start_v = start_v = math.sqrt(start_v2)
@@ -321,7 +327,7 @@ class ToolHead:
                     move.accel_t, move.cruise_t, move.decel_t,
                     move.start_pos[0], move.start_pos[1], move.start_pos[2],
                     move.axes_r[0], move.axes_r[1], move.axes_r[2],
-                    move.start_v, move.cruise_v, move.accel)
+                    move.start_v, move.cruise_v, move.accel, move.deccel)
             if move.axes_d[3]:
                 self.extruder.move(next_move_time, move)
             next_move_time = (next_move_time + move.accel_t
