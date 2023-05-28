@@ -191,7 +191,6 @@ config CLOCK_FREQ
 
 choice
     prompt "Communication interface"
-<<<<<<< HEAD
     config ATSAMD_USB_PA24_PA25
         bool "USB (on PA24/PA25)"
         select USBSERIAL
@@ -218,7 +217,6 @@ choice
         select SERIAL
     config ATSAMD_SERIAL_SERCOM7
         bool "Serial (on SERCOM7)" if LOW_LEVEL_OPTIONS && (MACH_SAMD51N19 || MACH_SAMD51P20)
-=======
     config ATSAMD_USB
         bool "USB"
         depends on HAVE_SAMD_USB
@@ -226,7 +224,6 @@ choice
     config ATSAMD_SERIAL
         bool "Serial"
         depends on !MACH_SAMC21
->>>>>>> 5f0d252b408ef0cd182367ba4cc224b8d105f0ec
         select SERIAL
     config ATSAMD_MMENU_CANBUS_PA23_PA22
         bool "CAN bus (on PA23/PA22)"
@@ -268,15 +265,12 @@ config ATSAMD_SERIAL_RX_ALT
 
 config ATSAMD_SERIAL_RX_PAD0
     bool
-<<<<<<< HEAD
 config ATSAMD_SERIAL_RX_PAD1
-=======
     default y if ATSAMD_MMENU_CANBUS_PA25_PA24
 config ATSAMD_CANBUS_PB11_PB10
     bool
     default y if ATSAMD_MMENU_CANBUS_PB11_PB10
 config ATSAMD_CANBUS_PB13_PB12
->>>>>>> 5f0d252b408ef0cd182367ba4cc224b8d105f0ec
     bool
 config ATSAMD_SERIAL_RX_PAD2
     bool
