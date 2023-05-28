@@ -16,7 +16,7 @@ class PrinterSensorCombined:
         algos = {'min': min, 'max': max, 'mean': mean}
         self.mode = config.getchoice('type', algos)
         # get heater
-        pheaters = self.printer.load_object(config, 'heaters')
+        pheaters = self.printer.lookup_object('heaters')
         # set min / max temp
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
                                         minval=KELVIN_TO_CELSIUS)
