@@ -30,6 +30,9 @@ class PrinterSensorCombined:
         self.last_temp = 0.
         self.measured_min = 99999999.
         self.measured_max = 0.
+        # Register commands and event handlers
+        self.printer.register_event_handler('klippy:ready',
+                self._handle_ready)
         # update sensor
         self.temperature_update_timer = self.reactor.register_timer(
             self._temperature_update_event)
