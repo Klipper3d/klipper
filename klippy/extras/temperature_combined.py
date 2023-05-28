@@ -30,6 +30,8 @@ class PrinterSensorCombined:
         self.measured_max = 0.
         # update original sensor callbacks
         for sensor_name in self.sensor_names:
+            if sensor_name not in self.pheaters.available_sensors:
+                return
             sensor = self.pheaters.heaters[sensor_name]
             def new_temperature_callback(read_time, temp):
                 sensor.temperature_callback(read_time, temp)
