@@ -21,6 +21,11 @@ Atmel.SAM4S_DFP.1.0.56.atpack zip file found at:
   http://packs.download.atmel.com/
 version 1.0.56 (extracted on 20181220).
 
+The samc21 directory contains code from the
+Atmel.SAMC21_DFP.1.2.176.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.2.176 (extracted on 20230115).
+
 The samd21 directory contains code from the
 Atmel.SAMD21_DFP.1.3.304.atpack zip file found at:
   http://packs.download.atmel.com/
@@ -72,6 +77,11 @@ The stm32f4 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeF4
 version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
+
+The stm32f7 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF7
+version v1.15.0 (3600603267ebc7da619f50542e99bbdfd7e35f4a). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F7xx/ directory.
 
 The stm32g0 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeG0
