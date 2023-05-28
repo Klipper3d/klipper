@@ -44,7 +44,7 @@ CONTROL_TYPES = {
 def map_value_range(x, in_min, in_max, out_min, out_max):
     return int(round((x - in_min)
                      * (out_max - out_min)
-                     / (in_max - in_min)
+                     // (in_max - in_min)
                      + out_min))
 
 def get_duration(seconds):
@@ -52,9 +52,9 @@ def get_duration(seconds):
         seconds = int(seconds)
     if seconds < 0:
         seconds = 0
-    minutes = seconds / 60
-    hours = minutes / 60
-    days = hours / 24
+    minutes = seconds // 60
+    hours = minutes // 60
+    days = hours // 24
     days %= 365
     hours %= 24
     minutes %= 60
@@ -830,10 +830,10 @@ class T5UID1:
             and self._z_max < z_max
             and self._z_max > z_min):
             z_max = self._z_max
-        x_min_inset = min(self._x_min_inset, (x_max - x_min) / 2)
-        x_max_inset = min(self._x_max_inset, (x_max - x_min) / 2)
-        y_min_inset = min(self._y_min_inset, (y_max - y_min) / 2)
-        y_max_inset = min(self._y_max_inset, (y_max - y_min) / 2)
+        x_min_inset = min(self._x_min_inset, (x_max - x_min) / 2.0)
+        x_max_inset = min(self._x_max_inset, (x_max - x_min) / 2.0)
+        y_min_inset = min(self._y_min_inset, (y_max - y_min) / 2.0)
+        y_max_inset = min(self._y_max_inset, (y_max - y_min) / 2.0)
         return {
             'x_min': x_min,
             'x_max': x_max,
