@@ -22,17 +22,18 @@ class PrinterSensorCombined:
         self.last_temp = 0.
         self.measured_min = 99999999.
         self.measured_max = 0.
-    def get_temp(self, eventtime):
+    def temperature_callback(self, read_time, temp):
         values = []
         for sensor_name in self.sensor_names:
             sensor = self.printer.lookup_object(sensor_name)
-            temp_sensor, _ = sensor.get_temp(eventtime)
+            temp_sensor, _ = sensor.get_temp(read_time)
             values.append(temp_sensor)
         temp = self.mode(values)
         if temp:
             self.last_temp = temp
             self.measured_min = min(self.measured_min, temp)
             self.measured_max = max(self.measured_max, temp)
+    def get_temp(self, eventtime):
         return self.last_temp, 0.
     def stats(self, eventtime):
         return False, '%s: temp=%.1f' % (self.name, self.last_temp)
