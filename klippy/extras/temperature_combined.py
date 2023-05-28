@@ -30,7 +30,7 @@ class PrinterSensorCombined:
         self.measured_max = 0.
         # update original sensor callbacks
         for sensor_name in self.sensor_names:
-            sensor = self.pheaters[sensor_name]
+            sensor = self.pheaters.heaters[sensor_name]
             def new_temperature_callback(read_time, temp):
                 sensor.temperature_callback(read_time, temp)
                 self.temperature_callback(read_time, temp)
@@ -38,7 +38,7 @@ class PrinterSensorCombined:
     def temperature_callback(self, read_time, temp):
         values = []
         for sensor_name in self.sensor_names:
-            sensor = self.pheaters[sensor_name]
+            sensor = self.pheaters.heaters[sensor_name]
             temp_sensor, _ = sensor.get_temp(read_time)
             values.append(temp_sensor)
         temp = self.mode(values)
