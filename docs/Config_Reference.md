@@ -2526,11 +2526,11 @@ Combined temperature sensor is a virtual temperature sensor based on several oth
 ```
 sensor_type: temperature_combined
 #sensors:
-#   Must be provided. List of sensors to combine to new "virtual" 
+#   Must be provided. List of sensors to combine to new "virtual"
 #   sensor.
 #   E.g. 'temperature_sensor sensor1,extruder,heater_bed'
 #type:
-#   Must be provided. Algorithm to combine the provided sensors. 
+#   Must be provided. Algorithm to combine the provided sensors.
 #   Available options are 'max', 'min', 'mean'
 ```
 
