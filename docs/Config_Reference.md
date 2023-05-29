@@ -2252,15 +2252,6 @@ temperature sensors that are reported via the M105 command.
 #gcode_id:
 #   See the "heater_generic" section for the definition of this
 #   parameter.
-#sensors:
-#   Only available if 'sensor_type: combined' must be provided 
-#   in this case. List of sensors to combine to new "virtual" 
-#   sensor. Type of combination see 'type' option.
-#   E.g. 'temperature_sensor sensor1,extruder,heater_bed'
-#type:
-#   Only available if 'sensor_type: combined' must be provided 
-#   in this case. Algorithm to combine the provided sensors. 
-#   Available options are 'max', 'min', 'mean'
 ```
 
 ## Temperature sensors
