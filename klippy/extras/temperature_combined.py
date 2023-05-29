@@ -92,4 +92,4 @@ def mean(values):
 
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
-    pheaters.add_sensor_factory("temperature_mcu", PrinterSensorCombined)
+    pheaters.add_sensor_factory("temperature_combined", PrinterSensorCombined)
