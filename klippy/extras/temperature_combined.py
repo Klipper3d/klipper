@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Support for combination of temperature sensors
 #
 # Copyright (C) 2023  Michael Jäger <michael@mjaeger.eu>
