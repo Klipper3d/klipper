@@ -46,9 +46,11 @@ class PrinterSensorCombined:
         self.name = config.get_name().split()[-1]
         # get sensor names
         self.sensor_names = config.getlist('sensors', None)
+        # get empty list for sensors
+        self.sensors = []
         # get type of algorithm to handle the different sensor values with
         algos = {'min': min, 'max': max, 'mean': mean}
-        self.mode = config.getchoice('type', algos)
+        self.apply_mode = config.getchoice('type', algos)
         # get heater
         pheaters = self.printer.lookup_object('heaters')
         # set min / max temp
@@ -58,28 +60,24 @@ class PrinterSensorCombined:
                                         above=self.min_temp)
         # register sensor
         pheaters.register_sensor(config, self)
-        # set default values
-        self.last_temp = 0.
-        self.measured_min = 99999999.
-        self.measured_max = 0.
         # Register commands and event handlers
+        self.printer.register_event_handler('klippy:connect',
+                self._handle_connect)
         self.printer.register_event_handler('klippy:ready',
                 self._handle_ready)
         # update sensor
         self.temperature_update_timer = self.reactor.register_timer(
             self._temperature_update_event)
+        # set default values
+        self.last_temp = 0.
+        self.measured_min = 99999999.
+        self.measured_max = 0.
     def update_temp(self, eventtime):
         values = []
-        for sensor_name in self.sensor_names:
-            sensor = self.printer.lookup_object(sensor_name)
-            # if temperature sensor
-            if hasattr(sensor, 'get_temp'):
-                temp_sensor, _ = sensor.get_temp(eventtime)
-            # if heater
-            else:
-                temp_sensor, _ = sensor.heater.get_temp(eventtime)
+        for sensor in self.sensors:
+            temp_sensor, _ = sensor.get_temp(eventtime)
             values.append(temp_sensor)
-        temp = self.mode(values)
+        temp = self.apply_mode(values)
         if temp:
             self.last_temp = temp
             self.measured_min = min(self.measured_min, temp)
@@ -94,8 +92,16 @@ class PrinterSensorCombined:
             'measured_min_temp': round(self.measured_min, 2),
             'measured_max_temp': round(self.measured_max, 2)
         }
+    def _handle_connect(self):
+        for sensor_name in self.sensor_names:
+            sensor = self.printer.lookup_object(sensor_name)
+            # if temperature sensor
+            if hasattr(sensor, 'get_temp'):
+                self.sensors.append(sensor)
+            # if heater
+            elif hasattr(sensor, 'heater'):
+                self.sensors.append(sensor.heater)
     def _handle_ready(self):
-        # self.pheaters = self.printer.lookup_object('heaters')
         # Start temperature update timer
         self.reactor.update_timer(self.temperature_update_timer,
                                   self.reactor.NOW)
