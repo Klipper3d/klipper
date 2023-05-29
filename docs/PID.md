@@ -51,6 +51,42 @@ asymmetric but ends very symmetric.
 
 ![advanced relay test](img/pid_02.png)
 
+Asymmetry can be monitored in real time during a calibration run. It can also
+provide insight into how suitable the heater is for the current calibration
+parameters. When asymmetry starts off positive and converges to zero, the
+heater has more than enough power to achieve symmetry for the calibration
+parameters.
+
+```
+3:12 PM   PID_CALIBRATE HEATER=extruder TARGET=220 TOLERANCE=0.01 WRITE_FILE=1
+3:15 PM   sample:1 pwm:1.0000 asymmetry:3.7519 tolerance:n/a
+3:15 PM   sample:2 pwm:0.6229 asymmetry:0.3348 tolerance:n/a
+3:16 PM   sample:3 pwm:0.5937 asymmetry:0.0840 tolerance:n/a
+3:17 PM   sample:4 pwm:0.5866 asymmetry:0.0169 tolerance:0.4134
+3:18 PM   sample:5 pwm:0.5852 asymmetry:0.0668 tolerance:0.0377
+3:18 PM   sample:6 pwm:0.5794 asymmetry:0.0168 tolerance:0.0142
+3:19 PM   sample:7 pwm:0.5780 asymmetry:-0.1169 tolerance:0.0086
+3:19 PM   PID parameters: pid_Kp=16.538 pid_Ki=0.801 pid_Kd=85.375
+               The SAVE_CONFIG command will update the printer config file
+               with these parameters and restart the printer.
+```
+
+When asymmetry starts off negative, It will not converge to zero. If Klipper
+does not error out, the calibration run will complete and provide good PID
+parameters, However the heater is less likely to handle disturbances as well
+as a heater with power in reserve.
+
+```
+3:36 PM   PID_CALIBRATE HEATER=extruder TARGET=220 TOLERANCE=0.01 WRITE_FILE=1
+3:38 PM   sample:1 pwm:1.0000 asymmetry:-2.1149 tolerance:n/a
+3:39 PM   sample:2 pwm:1.0000 asymmetry:-2.0140 tolerance:n/a
+3:39 PM   sample:3 pwm:1.0000 asymmetry:-1.8811 tolerance:n/a
+3:40 PM   sample:4 pwm:1.0000 asymmetry:-1.8978 tolerance:0.0000
+3:40 PM   PID parameters: pid_Kp=21.231 pid_Ki=1.227 pid_Kd=91.826
+               The SAVE_CONFIG command will update the printer config file
+               with these parameters and restart the printer.
+```
+
 A topic that’s not often discussed in the 3D printing community is the
 conditions in which calibration should be performed. When a calibration test is
 performed external variables should be minimized as much as possible, as the
