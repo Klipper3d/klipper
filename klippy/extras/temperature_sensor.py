@@ -95,10 +95,7 @@ class PrinterSensorCombined:
         # check if all sensors are available
         values = []
         for sensor_name in self.sensor_names:
-            sensor = self.printer.lookup_object(sensor_name, None)
-            if not sensor:
-                raise self.printer.error("Sensor '%s' does not exist, only '%s' available"
-                                         % (sensor_name, self.printer.objects))
+            sensor = self.printer.lookup_object(sensor_name)
     def _handle_ready(self):
         # self.pheaters = self.printer.lookup_object('heaters')
         # Start temperature update timer
