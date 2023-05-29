@@ -51,7 +51,6 @@ class PrinterSensorCombined:
         self.mode = config.getchoice('type', algos)
         # get heater
         pheaters = self.printer.lookup_object('heaters')
-        raise config.error(str(self.printer.lookup_objects()))
         # set min / max temp
         self.min_temp = config.getfloat('min_temp', KELVIN_TO_CELSIUS,
                                         minval=KELVIN_TO_CELSIUS)
@@ -73,7 +72,12 @@ class PrinterSensorCombined:
         values = []
         for sensor_name in self.sensor_names:
             sensor = self.printer.lookup_object(sensor_name)
-            temp_sensor, _ = sensor.get_temp(eventtime)
+            # if temperature sensor
+            if hasattr(sensor, 'get_temp'):
+                temp_sensor, _ = sensor.get_temp(eventtime)
+            # if heater
+            else:
+                temp_sensor, _ = sensor.heater.get_temp(eventtime)
             values.append(temp_sensor)
         temp = self.mode(values)
         if temp:
