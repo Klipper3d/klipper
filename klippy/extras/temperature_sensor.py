@@ -63,6 +63,8 @@ class PrinterSensorCombined:
         self.measured_min = 99999999.
         self.measured_max = 0.
         # Register commands and event handlers
+        self.printer.register_event_handler('klippy:connect',
+                self._handle_connect)
         self.printer.register_event_handler('klippy:ready',
                 self._handle_ready)
         # update sensor
@@ -89,6 +91,14 @@ class PrinterSensorCombined:
             'measured_min_temp': round(self.measured_min, 2),
             'measured_max_temp': round(self.measured_max, 2)
         }
+    def _handle_connect(self):
+        # check if all sensors are available
+        values = []
+        for sensor_name in self.sensor_names:
+            sensor = self.printer.lookup_object(sensor_name, None)
+            if not sensor:
+                raise self.printer.error("Sensor '%s' does not exist, only '%s' available"
+                                         % (sensor_name, self.printer.objects))
     def _handle_ready(self):
         # self.pheaters = self.printer.lookup_object('heaters')
         # Start temperature update timer
