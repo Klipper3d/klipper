@@ -2521,7 +2521,7 @@ serial_no:
 
 ### Combined temperature sensor
 
-Combined temperature sensor is a virtual temperature sensor based on several other sensors. This sensor can be useed with extruders and heater beds.
+Combined temperature sensor is a virtual temperature sensor based on several other sensors. This sensor can be used with extruders and heater beds.
 
 ```
 sensor_type: temperature_combined
