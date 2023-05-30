@@ -45,7 +45,7 @@ class Move:
         # can change in this move.
         self.max_start_v2 = 0.
         self.max_cruise_v2 = velocity**2
-        self.delta_v2 = 2.0 * move_d * self.accel
+        self.delta_v2 = 2.0 * move_d * (self.accel+self.decel)/2
         self.max_smoothed_v2 = 0.
         self.smooth_delta_v2 = 2.0 * move_d * toolhead.max_accel_to_decel
     def limit_speed(self, speed, accel, decel=-1):
@@ -58,7 +58,7 @@ class Move:
             self.min_move_t = self.move_d / speed
         self.accel = min(self.accel, accel)
         self.decel = min(self.decel, decel)
-        self.delta_v2 = 2.0 * self.move_d * self.accel
+        self.delta_v2 = 2.0 * self.move_d * (self.accel+self.decel)/2
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def move_error(self, msg="Move out of range"):
         ep = self.end_pos
