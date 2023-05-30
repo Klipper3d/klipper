@@ -568,6 +568,11 @@ enabled (also see the
 This command allows one to change the value of a gcode_macro variable
 at run-time. The provided VALUE is parsed as a Python literal.
 
+#### GET_GCODE_VARIABLE
+`GET_GCODE_VARIABLE MACRO=<macro_name> VARIABLE=<name>`:
+This command allows one to display the value of a gcode_macro variable
+at run-time to the console. It is useful for debugging gcode macros.
+
 ### [gcode_move]
 
 The gcode_move module is automatically loaded.
