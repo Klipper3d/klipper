@@ -1218,10 +1218,31 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tips-for-troubleshooting" class="md-nav__link">
+    Tips for troubleshooting
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
+      </a>
     </li>
   
 
@@ -1344,6 +1365,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tips-for-troubleshooting" class="md-nav__link">
+    Tips for troubleshooting
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1364,50 +1392,38 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>This document describes Klipper's CAN bus support.</p>
 <h2 id="device-hardware">Device Hardware<a class="headerlink" href="#device-hardware" title="Permanent link">&para;</a></h2>
-<p>Klipper currently supports CAN on stm32, same5x, and rp2040 chips. In
+<p>Klipper currently supports CAN on stm32, SAME5x, and rp2040 chips. In
 addition, the micro-controller chip must be on a board that has a CAN
 transceiver.</p>
 <p>To compile for CAN, run <code>make menuconfig</code> and select "CAN bus" as the
 communication interface. Finally, compile the micro-controller code
 and flash it to the target board.</p>
 <h2 id="host-hardware">Host Hardware<a class="headerlink" href="#host-hardware" title="Permanent link">&para;</a></h2>
-<p>In order to use a CAN bus, it is necessary to have a host adapter.
-There are currently two common options:</p>
-<ol>
-<li>
-<p>Use a
-   <a href="https://www.waveshare.com/rs485-can-hat.htm">Waveshare Raspberry Pi CAN hat</a>
-   or one of its many clones.</p>
-</li>
-<li>
-<p>Use a USB CAN adapter (for example
-   <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/"><a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a></a>). There
-   are many different USB to CAN adapters available - when choosing
-   one, we recommend verifying it can run the
-   <a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a>.
-   (Unfortunately, we've found some USB adapters run defective
-   firmware and are locked down, so verify before purchasing.)</p>
-</li>
-</ol>
+<p>In order to use a CAN bus, it is necessary to have a host adapter. It
+is recommended to use a "USB to CAN adapter". There are many different
+USB to CAN adapters available from different manufacturers. When
+choosing one, we recommend verifying that the firmware can be updated
+on it. (Unfortunately, we've found some USB adapters run defective
+firmware and are locked down, so verify before purchasing.) Look for
+adapters that can run Klipper directly (in its "USB to CAN bridge
+mode") or that run the
+<a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a>.</p>
 <p>It is also necessary to configure the host operating system to use the
 adapter. This is typically done by creating a new file named
 <code>/etc/network/interfaces.d/can0</code> with the following contents:</p>
-<div class="highlight"><pre><span></span><code>auto can0
+<div class="highlight"><pre><span></span><code>allow-hotplug can0
 iface can0 can static
-    bitrate 500000
+    bitrate 1000000
     up ifconfig $IFACE txqueuelen 128
 </code></pre></div>
 
-<p>Note that the "Raspberry Pi CAN hat" also requires
-<a href="https://www.waveshare.com/wiki/RS485_CAN_HAT">changes to config.txt</a>.</p>
 <h2 id="terminating-resistors">Terminating Resistors<a class="headerlink" href="#terminating-resistors" title="Permanent link">&para;</a></h2>
 <p>A CAN bus should have two 120 ohm resistors between the CANH and CANL
 wires. Ideally, one resistor located at each the end of the bus.</p>
-<p>Note that some devices have a builtin 120 ohm resistor (for example,
-the "Waveshare Raspberry Pi CAN hat" has a soldered on resistor that
-can not be easily removed). Some devices do not include a resistor at
-all. Other devices have a mechanism to select the resistor (typically
-by connecting a "pin jumper"). Be sure to check the schematics of all
+<p>Note that some devices have a builtin 120 ohm resistor that can not be
+easily removed. Some devices do not include a resistor at all. Other
+devices have a mechanism to select the resistor (typically by
+connecting a "pin jumper"). Be sure to check the schematics of all
 devices on the CAN bus to verify that there are two and only two 120
 Ohm resistors on the bus.</p>
 <p>To test that the resistors are correct, one can remove power to the
@@ -1441,20 +1457,15 @@ canbus_uuid: 11aa22bb33cc
 
 <h2 id="usb-to-can-bus-bridge-mode">USB to CAN bus bridge mode<a class="headerlink" href="#usb-to-can-bus-bridge-mode" title="Permanent link">&para;</a></h2>
 <p>Some micro-controllers support selecting "USB to CAN bus bridge" mode
-during "make menuconfig". This mode may allow one to use a
+during Klipper's "make menuconfig". This mode may allow one to use a
 micro-controller as both a "USB to CAN bus adapter" and as a Klipper
 node.</p>
 <p>When Klipper uses this mode the micro-controller appears as a "USB CAN
 bus adapter" under Linux. The "Klipper bridge mcu" itself will appear
-as if was on this CAN bus - it can be identified via <code>canbus_query.py</code>
-and configured like other CAN bus Klipper nodes. It will appear
-alongside other devices that are actually on the CAN bus.</p>
+as if it was on this CAN bus - it can be identified via
+<code>canbus_query.py</code> and it must be configured like other CAN bus Klipper
+nodes.</p>
 <p>Some important notes when using this mode:</p>
-<ul>
-<li>The "bridge mcu" is not actually on the CAN bus. Messages to and
-  from it do not consume bandwidth on the CAN bus. The mcu can not be
-  seen by other adapters that may be on the CAN bus.</li>
-</ul>
 <ul>
 <li>It is necessary to configure the <code>can0</code> (or similar) interface in
   Linux in order to communicate with the bus. However, Linux CAN bus
@@ -1465,15 +1476,42 @@ alongside other devices that are actually on the CAN bus.</p>
 <ul>
 <li>Whenever the "bridge mcu" is reset, Linux will disable the
   corresponding <code>can0</code> interface. To ensure proper handling of
-  FIRMWARE_RESTART and RESTART commands, it is recommended to replace
-  <code>auto</code> with <code>allow-hotplug</code> in the <code>/etc/network/interfaces.d/can0</code>
-  file. For example:</li>
+  FIRMWARE_RESTART and RESTART commands, it is recommended to use
+  <code>allow-hotplug</code> in the <code>/etc/network/interfaces.d/can0</code> file. For
+  example:</li>
 </ul>
 <div class="highlight"><pre><span></span><code>allow-hotplug can0
 iface can0 can static
-    bitrate 500000
+    bitrate 1000000
     up ifconfig $IFACE txqueuelen 128
 </code></pre></div>
+
+<ul>
+<li>The "bridge mcu" is not actually on the CAN bus. Messages to and
+  from the bridge mcu will not be seen by other adapters that may be
+  on the CAN bus.</li>
+</ul>
+<ul>
+<li>
+<p>The available bandwidth to both the "bridge mcu" itself and all
+  devices on the CAN bus is effectively limited by the CAN bus
+  frequency. As a result, it is recommended to use a CAN bus frequency
+  of 1000000 when using "USB to CAN bus bridge mode".</p>
+<p>Even at a CAN bus frequency of 1000000, there may not be sufficient
+bandwidth to run a <code>SHAPER_CALIBRATE</code> test if both the XY steppers
+and the accelerometer all communicate via a single "USB to CAN bus"
+interface.</p>
+</li>
+</ul>
+<ul>
+<li>A USB to CAN bridge board will not appear as a USB serial device, it
+  will not show up when running <code>ls /dev/serial/by-id</code>, and it can not
+  be configured in Klipper's printer.cfg file with a <code>serial:</code>
+  parameter. The bridge board appears as a "USB CAN adapter" and it is
+  configured in the printer.cfg as a <a href="#configuring-klipper">CAN node</a>.</li>
+</ul>
+<h2 id="tips-for-troubleshooting">Tips for troubleshooting<a class="headerlink" href="#tips-for-troubleshooting" title="Permanent link">&para;</a></h2>
+<p>See the <a href="CANBUS_Troubleshooting.html">CAN bus troubleshooting</a> document.</p>
 
               
             </article>
@@ -1508,13 +1546,13 @@ iface can0 can static
       
       
         
-        <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-footer__link md-footer__link--next" aria-label="Next: TSL1401CL filament width sensor" rel="next">
+        <a href="CANBUS_Troubleshooting.html" class="md-footer__link md-footer__link--next" aria-label="Next: CANBUS Troubleshooting" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              TSL1401CL filament width sensor
+              CANBUS Troubleshooting
             </div>
           </div>
           <div class="md-footer__button md-icon">
