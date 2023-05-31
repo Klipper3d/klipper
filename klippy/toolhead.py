@@ -45,7 +45,7 @@ class Move:
         # can change in this move.
         self.max_start_v2 = 0.
         self.max_cruise_v2 = velocity**2
-        self.delta_v2 = 2.0 * move_d * (self.accel+self.decel)/2
+        self.delta_v2 = 2.0 * move_d * (self.accel/2+self.decel/2)
         self.max_smoothed_v2 = 0.
         self.smooth_delta_v2 = 2.0 * move_d * toolhead.max_accel_to_decel
     def limit_speed(self, speed, accel, decel=-1):
@@ -58,7 +58,7 @@ class Move:
             self.min_move_t = self.move_d / speed
         self.accel = min(self.accel, accel)
         self.decel = min(self.decel, decel)
-        self.delta_v2 = 2.0 * self.move_d * (self.accel+self.decel)/2
+        self.delta_v2 = 2.0 * self.move_d * (self.accel/2+self.decel/2)
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def move_error(self, msg="Move out of range"):
         ep = self.end_pos
@@ -82,13 +82,13 @@ class Move:
         R_jd = sin_theta_d2 / (1. - sin_theta_d2)
         # Approximated circle must contact moves no further away than mid-move
         tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5*(1.0+junction_cos_theta))
-        move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * (self.accel + self.decel)/2
+        move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * (self.accel/2 + self.decel/2)
         prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
-                                    * (prev_move.accel + prev_move.decel)/2)
+                                    * (prev_move.accel/2 + prev_move.decel/2))
         # Apply limits
         self.max_start_v2 = min(
-            R_jd * self.junction_deviation * (self.accel + self.decel)/2,
-            R_jd * prev_move.junction_deviation * (prev_move.accel+prev_move.decel)/2,
+            R_jd * self.junction_deviation * (self.accel/2 + self.decel/2),
+            R_jd * prev_move.junction_deviation * (prev_move.accel/2+prev_move.decel/2),
             move_centripetal_v2, prev_move_centripetal_v2,
             extruder_v2, self.max_cruise_v2, prev_move.max_cruise_v2,
             prev_move.max_start_v2 + prev_move.delta_v2)
