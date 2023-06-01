@@ -46,8 +46,18 @@ config FLASH_SIZE
     hex
     default 0x40000
 
+choice "Application Address"
+    prompt "Application Address"
+    config HC32F460_FLASH_APPLICATION_ADDRESS_0x8000
+        bool "0x8000"
+    config HC32F460_FLASH_APPLICATION_ADDRESS_0xC000
+        bool "0xC000"
+endchoice
+
 config FLASH_APPLICATION_ADDRESS
-    default 0x8000  # Aquila is 0xC000
+    hex
+    default 0x8000 if HC32F460_FLASH_APPLICATION_ADDRESS_0x8000
+    default 0xC000 if HC32F460_FLASH_APPLICATION_ADDRESS_0xC000
 
 config FLASH_BOOT_ADDRESS
     hex
