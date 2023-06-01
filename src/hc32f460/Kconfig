@@ -20,23 +20,27 @@ config BOARD_DIRECTORY
 ######################################################################
 # Communication interface
 ######################################################################
-
 choice
     prompt "Communication interface"
     config HC32F460_SERIAL_PA7_PA8
-        bool "Serial (PA7 & PA8) - Creality Ender 2 PRO"
+        bool "Serial (PA7 & PA8)"
+        select SERIAL
+    config HC32F460_SERIAL_PA13_PA14
+        bool "Serial (PA13 & PA14)"
         select SERIAL
     config HC32F460_SERIAL_PA3_PA2
-        bool "Serial (PA3 & PA2) - Anycube"
+        bool "Serial (PA3 & PA2)"
+        select SERIAL
+    config HC32F460_SERIAL_PH2_PB10
+        bool "Serial (PH2 & PB10)"
         select SERIAL
     config HC32F460_SERIAL_PA15_PA9
-        bool "Serial (PA15 & PA09) - Voxelab"
+        bool "Serial (PA15 & PA09)"
         select SERIAL
     config HC32F460_SERIAL_PC0_PC1
-        bool "Serial (PC0 & PC1) - on LCD connector"
+        bool "Serial (PC0 & PC1)"
         select SERIAL
 endchoice
-
 
 ######################################################################
 # Bootloader
