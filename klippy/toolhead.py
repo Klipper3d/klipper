@@ -17,7 +17,7 @@ class Move:
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
-        self.junction_deviation = toolhead.junction_deviation
+        self.equilateral_corner_v2 = toolhead.equilateral_corner_v2
         self.timing_callbacks = []
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
@@ -82,8 +82,8 @@ class Move:
                                     * prev_move.accel)
         # Apply limits
         self.max_start_v2 = min(
-            R_jd * self.junction_deviation * self.accel,
-            R_jd * prev_move.junction_deviation * prev_move.accel,
+            R_jd * self.equilateral_corner_v2,
+            R_jd * prev_move.equilateral_corner_v2,
             move_centripetal_v2, prev_move_centripetal_v2,
             extruder_v2, self.max_cruise_v2, prev_move.max_cruise_v2,
             prev_move.max_start_v2 + prev_move.delta_v2)
@@ -218,7 +218,7 @@ class ToolHead:
         self.max_accel_to_decel = self.requested_accel_to_decel
         self.square_corner_velocity = config.getfloat(
             'square_corner_velocity', 5., minval=0.)
-        self.junction_deviation = 0.
+        self.equilateral_corner_v2 = 0.
         self._calc_junction_deviation()
         # Print time tracking
         self.buffer_time_low = config.getfloat(
@@ -547,7 +547,7 @@ class ToolHead:
         return self.max_velocity, self.max_accel
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
-        self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
+        self.equilateral_corner_v2 = scv2 * (math.sqrt(2.) - 1.)
         self.max_accel_to_decel = min(self.requested_accel_to_decel,
                                       self.max_accel)
     def cmd_G4(self, gcmd):
