@@ -48,7 +48,7 @@ mask_to_pin(uint32_t mask)
 struct gpio_out
 gpio_out_setup(uint8_t pin, uint8_t val)
 {
-    if (pin > 30)
+    if (pin >= 30)
         goto fail;
     struct gpio_out g = { .bit=1<<pin };
     gpio_out_reset(g, val);
@@ -93,7 +93,7 @@ gpio_out_write(struct gpio_out g, uint8_t val)
 struct gpio_in
 gpio_in_setup(uint8_t pin, int8_t pull_up)
 {
-    if (pin > 30)
+    if (pin >= 30)
         goto fail;
     struct gpio_in g = { .bit=1<<pin };
     gpio_in_reset(g, pull_up);

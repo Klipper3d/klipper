@@ -5,7 +5,6 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "autoconf.h" // CONFIG_SMOOTHIEWARE_BOOTLOADER
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/armcm_timer.h" // udelay
 #include "board/misc.h" // timer_read_time

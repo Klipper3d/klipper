@@ -138,8 +138,8 @@ enable_clock_stm32f446(void)
     while (!(PWR->CSR & PWR_CSR_ODSWRDY))
         ;
 
-    // Enable 48Mhz USB clock
-    if (CONFIG_USB) {
+    // Enable 48Mhz USB clock for USB or for SDIO
+    if (CONFIG_USB || CONFIG_HAVE_GPIO_SDIO) {
         uint32_t ref = (CONFIG_STM32_CLOCK_REF_INTERNAL
                         ? 16000000 : CONFIG_CLOCK_REF_FREQ);
         uint32_t plls_base = 2000000, plls_freq = FREQ_USB * 4;
@@ -153,6 +153,14 @@ enable_clock_stm32f446(void)
             ;
 
         RCC->DCKCFGR2 = RCC_DCKCFGR2_CK48MSEL;
+    } else {
+        // Reset value just in case the booloader modified the default value
+        RCC->DCKCFGR2 = 0;
+    }
+
+    // Set SDIO clk to PLL48CLK
+    if (CONFIG_HAVE_GPIO_SDIO) {
+        MODIFY_REG(RCC->DCKCFGR2, RCC_DCKCFGR2_SDIOSEL, 0);
     }
 #endif
 }
@@ -204,30 +212,6 @@ usb_hid_bootloader(void)
     NVIC_SystemReset();
 }
 
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 4096)
-#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
-
-// Flag that bootloader is desired and reboot
-static void
-usb_reboot_for_dfu_bootloader(void)
-{
-    irq_disable();
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
-    NVIC_SystemReset();
-}
-
-// Check if rebooting into system DFU Bootloader
-static void
-check_usb_dfu_bootloader(void)
-{
-    if (!CONFIG_USB || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
-        return;
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
-    uint32_t *sysbase = (uint32_t*)0x1fff0000;
-    asm volatile("mov sp, %0\n bx %1"
-                 : : "r"(sysbase[0]), "r"(sysbase[1]));
-}
-
 // Handle reboot requests
 void
 bootloader_request(void)
@@ -235,7 +219,7 @@ bootloader_request(void)
     try_request_canboot();
     if (CONFIG_STM32_FLASH_START_4000)
         usb_hid_bootloader();
-    usb_reboot_for_dfu_bootloader();
+    dfu_reboot();
 }
 
 
@@ -247,7 +231,7 @@ bootloader_request(void)
 void
 armcm_main(void)
 {
-    check_usb_dfu_bootloader();
+    dfu_reboot_check();
 
     // Run SystemInit() and then restore VTOR
     SystemInit();

@@ -18,10 +18,12 @@ struct canbus_msg {
 #define CANMSG_DATA_LEN(msg) ((msg)->dlc > 8 ? 8 : (msg)->dlc)
 
 // callbacks provided by board specific code
-int canbus_send(struct canbus_msg *msg);
-void canbus_set_filter(uint32_t id);
+int canhw_send(struct canbus_msg *msg);
+void canhw_set_filter(uint32_t id);
 
 // canbus.c
+int canbus_send(struct canbus_msg *msg);
+void canbus_set_filter(uint32_t id);
 void canbus_notify_tx(void);
 void canbus_process_data(struct canbus_msg *msg);
 

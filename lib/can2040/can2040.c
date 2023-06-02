@@ -67,6 +67,7 @@ rp2040_gpio_peripheral(uint32_t gpio, int func, int pull_up)
  ****************************************************************/
 
 #define PIO_CLOCK_PER_BIT 32
+#define PIO_RX_WAKE_BITS 10
 
 #define can2040_offset_sync_found_end_of_message 2u
 #define can2040_offset_sync_signal_start 4u
@@ -75,21 +76,21 @@ rp2040_gpio_peripheral(uint32_t gpio, int func, int pull_up)
 #define can2040_offset_shared_rx_read 13u
 #define can2040_offset_shared_rx_end 15u
 #define can2040_offset_match_load_next 18u
+#define can2040_offset_tx_conflict 24u
 #define can2040_offset_match_end 25u
 #define can2040_offset_tx_got_recessive 25u
-#define can2040_offset_tx_start 26u
-#define can2040_offset_tx_conflict 31u
+#define can2040_offset_tx_write_pin 27u
 
 static const uint16_t can2040_program_instructions[] = {
     0x0085, //  0: jmp    y--, 5
     0x0048, //  1: jmp    x--, 8
-    0xe13a, //  2: set    x, 26                  [1]
+    0xe029, //  2: set    x, 9
     0x00cc, //  3: jmp    pin, 12
     0xc000, //  4: irq    nowait 0
     0x00c0, //  5: jmp    pin, 0
     0xc040, //  6: irq    clear 0
-    0xe228, //  7: set    x, 8                   [2]
-    0xf242, //  8: set    y, 2                   [18]
+    0xe429, //  7: set    x, 9                   [4]
+    0xf043, //  8: set    y, 3                   [16]
     0xc104, //  9: irq    nowait 4               [1]
     0x03c5, // 10: jmp    pin, 5                 [3]
     0x0307, // 11: jmp    7                      [3]
@@ -97,7 +98,7 @@ static const uint16_t can2040_program_instructions[] = {
     0x20c4, // 13: wait   1 irq, 4
     0x4001, // 14: in     pins, 1
     0xa046, // 15: mov    y, isr
-    0x00b2, // 16: jmp    x != y, 18
+    0x01b2, // 16: jmp    x != y, 18             [1]
     0xc002, // 17: irq    nowait 2
     0x40eb, // 18: in     osr, 11
     0x4054, // 19: in     y, 20
@@ -106,14 +107,21 @@ static const uint16_t can2040_program_instructions[] = {
     0xa027, // 22: mov    x, osr
     0x0098, // 23: jmp    y--, 24
     0xa0e2, // 24: mov    osr, y
-    0xa242, // 25: nop                           [2]
-    0x6021, // 26: out    x, 1
-    0xa001, // 27: mov    pins, x
-    0x20c4, // 28: wait   1 irq, 4
-    0x00d9, // 29: jmp    pin, 25
-    0x023a, // 30: jmp    !x, 26                 [2]
-    0xc027, // 31: irq    wait 7
+    0x6021, // 25: out    x, 1
+    0x00df, // 26: jmp    pin, 31
+    0xb801, // 27: mov    pins, x                [24]
+    0x02d9, // 28: jmp    pin, 25                [2]
+    0x0058, // 29: jmp    x--, 24
+    0x6021, // 30: out    x, 1
+    0x011b, // 31: jmp    27                     [1]
 };
+
+// Local names for PIO state machine IRQs
+#define SI_MAYTX     PIO_IRQ0_INTE_SM0_BITS
+#define SI_MATCHED   PIO_IRQ0_INTE_SM2_BITS
+#define SI_ACKDONE   PIO_IRQ0_INTE_SM3_BITS
+#define SI_RX_DATA   PIO_IRQ0_INTE_SM1_RXNEMPTY_BITS
+#define SI_TXPENDING PIO_IRQ0_INTE_SM1_BITS // Misc bit manually forced
 
 // Setup PIO "sync" state machine (state machine 0)
 static void
@@ -130,7 +138,7 @@ pio_sync_setup(struct can2040 *cd)
         | cd->gpio_rx << PIO_SM0_PINCTRL_SET_BASE_LSB);
     sm->instr = 0xe080; // set pindirs, 0
     sm->pinctrl = 0;
-    pio_hw->txf[0] = PIO_CLOCK_PER_BIT / 2 * 8 - 5 - 1;
+    pio_hw->txf[0] = 9 + 6 * PIO_CLOCK_PER_BIT / 2;
     sm->instr = 0x80a0; // pull block
     sm->instr = can2040_offset_sync_entry; // jmp sync_entry
 }
@@ -147,7 +155,7 @@ pio_rx_setup(struct can2040 *cd)
     sm->pinctrl = cd->gpio_rx << PIO_SM0_PINCTRL_IN_BASE_LSB;
     sm->shiftctrl = 0; // flush fifo on a restart
     sm->shiftctrl = (PIO_SM0_SHIFTCTRL_FJOIN_RX_BITS
-                     | 8 << PIO_SM0_SHIFTCTRL_PUSH_THRESH_LSB
+                     | PIO_RX_WAKE_BITS << PIO_SM0_SHIFTCTRL_PUSH_THRESH_LSB
                      | PIO_SM0_SHIFTCTRL_AUTOPUSH_BITS);
     sm->instr = can2040_offset_shared_rx_read; // jmp shared_rx_read
 }
@@ -175,7 +183,10 @@ pio_tx_setup(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     struct pio_sm_hw *sm = &pio_hw->sm[3];
-    sm->execctrl = cd->gpio_rx << PIO_SM0_EXECCTRL_JMP_PIN_LSB;
+    sm->execctrl = (
+        cd->gpio_rx << PIO_SM0_EXECCTRL_JMP_PIN_LSB
+        | can2040_offset_tx_conflict << PIO_SM0_EXECCTRL_WRAP_TOP_LSB
+        | can2040_offset_tx_conflict << PIO_SM0_EXECCTRL_WRAP_BOTTOM_LSB);
     sm->shiftctrl = (PIO_SM0_SHIFTCTRL_FJOIN_TX_BITS
                      | PIO_SM0_SHIFTCTRL_AUTOPULL_BITS);
     sm->pinctrl = (1 << PIO_SM0_PINCTRL_SET_COUNT_LSB
@@ -192,7 +203,7 @@ pio_sync_normal_start_signal(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     uint32_t eom_idx = can2040_offset_sync_found_end_of_message;
-    pio_hw->instr_mem[eom_idx] = 0xe13a; // set x, 26 [1]
+    pio_hw->instr_mem[eom_idx] = 0xe12a; // set x, 10 [1]
 }
 
 // Set PIO "sync" machine to signal "may transmit" (sm irq 0) on 17 idle bits
@@ -210,14 +221,6 @@ pio_rx_check_stall(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     return pio_hw->fdebug & (1 << (PIO_FDEBUG_RXSTALL_LSB + 1));
-}
-
-// Report number of bytes still pending in PIO "rx" fifo queue
-static int
-pio_rx_fifo_level(struct can2040 *cd)
-{
-    pio_hw_t *pio_hw = cd->pio_hw;
-    return (pio_hw->flevel & PIO_FLEVEL_RX1_BITS) >> PIO_FLEVEL_RX1_LSB;
 }
 
 // Set PIO "match" state machine to raise a "matched" signal on a bit sequence
@@ -247,17 +250,15 @@ static void
 pio_tx_reset(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
+    pio_hw->ctrl = 0x07 << PIO_CTRL_SM_ENABLE_LSB;
     pio_hw->ctrl = ((0x07 << PIO_CTRL_SM_ENABLE_LSB)
                     | (0x08 << PIO_CTRL_SM_RESTART_LSB));
-    pio_hw->irq = (1 << 2) | (1<< 3); // clear "matched" and "ack done" signals
+    pio_hw->irq = (SI_MATCHED | SI_ACKDONE) >> 8; // clear PIO irq flags
     // Clear tx fifo
     struct pio_sm_hw *sm = &pio_hw->sm[3];
     sm->shiftctrl = 0;
     sm->shiftctrl = (PIO_SM0_SHIFTCTRL_FJOIN_TX_BITS
                      | PIO_SM0_SHIFTCTRL_AUTOPULL_BITS);
-    // Must reset again after clearing fifo
-    pio_hw->ctrl = ((0x07 << PIO_CTRL_SM_ENABLE_LSB)
-                    | (0x08 << PIO_CTRL_SM_RESTART_LSB));
 }
 
 // Queue a message for transmission on PIO "tx" state machine
@@ -266,13 +267,14 @@ pio_tx_send(struct can2040 *cd, uint32_t *data, uint32_t count)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     pio_tx_reset(cd);
-    pio_hw->instr_mem[can2040_offset_tx_got_recessive] = 0xa242; // nop [2]
-    int i;
+    pio_hw->instr_mem[can2040_offset_tx_got_recessive] = 0x6021; // out x, 1
+    uint32_t i;
     for (i=0; i<count; i++)
         pio_hw->txf[3] = data[i];
     struct pio_sm_hw *sm = &pio_hw->sm[3];
     sm->instr = 0xe001; // set pins, 1
-    sm->instr = can2040_offset_tx_start; // jmp tx_start
+    sm->instr = 0x6021; // out x, 1
+    sm->instr = can2040_offset_tx_write_pin; // jmp tx_write_pin
     sm->instr = 0x20c0; // wait 1 irq, 0
     pio_hw->ctrl = 0x0f << PIO_CTRL_SM_ENABLE_LSB;
 }
@@ -287,61 +289,57 @@ pio_tx_inject_ack(struct can2040 *cd, uint32_t match_key)
     pio_hw->txf[3] = 0x7fffffff;
     struct pio_sm_hw *sm = &pio_hw->sm[3];
     sm->instr = 0xe001; // set pins, 1
-    sm->instr = can2040_offset_tx_start; // jmp tx_start
+    sm->instr = 0x6021; // out x, 1
+    sm->instr = can2040_offset_tx_write_pin; // jmp tx_write_pin
     sm->instr = 0x20c2; // wait 1 irq, 2
     pio_hw->ctrl = 0x0f << PIO_CTRL_SM_ENABLE_LSB;
 
     pio_match_check(cd, match_key);
 }
 
-// Check if the PIO "tx" state machine stopped due to passive/dominant conflict
+// Did PIO "tx" state machine unexpectedly finish a transmit attempt?
 static int
-pio_tx_did_conflict(struct can2040 *cd)
+pio_tx_did_fail(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
-    return pio_hw->sm[3].addr == can2040_offset_tx_conflict;
+    // Check for passive/dominant bit conflict without parser noticing
+    if (pio_hw->sm[3].addr == can2040_offset_tx_conflict)
+        return !(pio_hw->intr & SI_RX_DATA);
+    // Check for unexpected drain of transmit queue without parser noticing
+    return (!(pio_hw->flevel & PIO_FLEVEL_TX3_BITS)
+            && (pio_hw->intr & (SI_MAYTX | SI_RX_DATA)) == SI_MAYTX);
 }
 
-// Enable host irq on a "may transmit" signal (sm irq 0)
+// Enable host irqs for state machine signals
 static void
-pio_irq_set_maytx(struct can2040 *cd)
+pio_irq_set(struct can2040 *cd, uint32_t sm_irqs)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
-    pio_hw->inte0 = PIO_IRQ0_INTE_SM0_BITS | PIO_IRQ0_INTE_SM1_RXNEMPTY_BITS;
+    pio_hw->inte0 = sm_irqs | SI_RX_DATA;
 }
 
-// Enable host irq on a "may transmit" or "matched" signal (sm irq 0 or 2)
-static void
-pio_irq_set_maytx_matched(struct can2040 *cd)
+// Return current host irq mask
+static uint32_t
+pio_irq_get(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
-    pio_hw->inte0 = (PIO_IRQ0_INTE_SM0_BITS | PIO_IRQ0_INTE_SM2_BITS
-                     | PIO_IRQ0_INTE_SM1_RXNEMPTY_BITS);
+    return pio_hw->inte0;
 }
 
-// Enable host irq on a "may transmit" or "ack done" signal (sm irq 0 or 3)
+// Raise the txpending flag
 static void
-pio_irq_set_maytx_ackdone(struct can2040 *cd)
+pio_signal_set_txpending(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
-    pio_hw->inte0 = (PIO_IRQ0_INTE_SM0_BITS | PIO_IRQ0_INTE_SM3_BITS
-                     | PIO_IRQ0_INTE_SM1_RXNEMPTY_BITS);
+    pio_hw->irq_force = SI_TXPENDING >> 8;
 }
 
-// Atomically enable "may transmit" signal (sm irq 0)
+// Clear the txpending flag
 static void
-pio_irq_atomic_set_maytx(struct can2040 *cd)
+pio_signal_clear_txpending(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
-    hw_set_bits(&pio_hw->inte0, PIO_IRQ0_INTE_SM0_BITS);
-}
-
-// Disable PIO host irqs (except for normal data read irq)
-static void
-pio_irq_set_none(struct can2040 *cd)
-{
-    pio_hw_t *pio_hw = cd->pio_hw;
-    pio_hw->inte0 = PIO_IRQ0_INTE_SM1_RXNEMPTY_BITS;
+    pio_hw->irq = SI_TXPENDING >> 8;
 }
 
 // Setup PIO state machines
@@ -352,9 +350,11 @@ pio_sm_setup(struct can2040 *cd)
     pio_hw_t *pio_hw = cd->pio_hw;
     pio_hw->ctrl = PIO_CTRL_SM_RESTART_BITS | PIO_CTRL_CLKDIV_RESTART_BITS;
     pio_hw->fdebug = 0xffffffff;
+    pio_hw->irq = 0xff;
+    pio_signal_set_txpending(cd);
 
     // Load pio program
-    int i;
+    uint32_t i;
     for (i=0; i<ARRAY_SIZE(can2040_program_instructions); i++)
         pio_hw->instr_mem[i] = can2040_program_instructions[i];
 
@@ -367,8 +367,6 @@ pio_sm_setup(struct can2040 *cd)
     // Start state machines
     pio_hw->ctrl = 0x07 << PIO_CTRL_SM_ENABLE_LSB;
 }
-
-#define PIO_FUNC 6
 
 // Initial setup of gpio pins and PIO state machines
 static void
@@ -389,8 +387,9 @@ pio_setup(struct can2040 *cd, uint32_t sys_clock, uint32_t bitrate)
     pio_sm_setup(cd);
 
     // Map Rx/Tx gpios
-    rp2040_gpio_peripheral(cd->gpio_rx, PIO_FUNC, 1);
-    rp2040_gpio_peripheral(cd->gpio_tx, PIO_FUNC, 0);
+    uint32_t pio_func = cd->pio_num ? 7 : 6;
+    rp2040_gpio_peripheral(cd->gpio_rx, pio_func, 1);
+    rp2040_gpio_peripheral(cd->gpio_tx, pio_func, 0);
 }
 
 
@@ -440,9 +439,9 @@ static inline uint32_t
 crc_bytes(uint32_t crc, uint32_t data, uint32_t num)
 {
     switch (num) {
-    default: crc = crc_byte(crc, data >> 24);
-    case 3:  crc = crc_byte(crc, data >> 16);
-    case 2:  crc = crc_byte(crc, data >> 8);
+    default: crc = crc_byte(crc, data >> 24); /* FALLTHRU */
+    case 3:  crc = crc_byte(crc, data >> 16); /* FALLTHRU */
+    case 2:  crc = crc_byte(crc, data >> 8);  /* FALLTHRU */
     case 1:  crc = crc_byte(crc, data);
     }
     return crc;
@@ -462,12 +461,12 @@ unstuf_add_bits(struct can2040_bitunstuffer *bu, uint32_t data, uint32_t count)
     bu->count_stuff = count;
 }
 
-// Reset state and set the next desired 'count' unstuffed bits to extract
+// Reset state and set the next desired 'num_bits' unstuffed bits to extract
 static void
-unstuf_set_count(struct can2040_bitunstuffer *bu, uint32_t count)
+unstuf_set_count(struct can2040_bitunstuffer *bu, uint32_t num_bits)
 {
     bu->unstuffed_bits = 0;
-    bu->count_unstuff = count;
+    bu->count_unstuff = num_bits;
 }
 
 // Clear bitstuffing state (used after crc field to avoid bitstuffing ack field)
@@ -475,7 +474,15 @@ static void
 unstuf_clear_state(struct can2040_bitunstuffer *bu)
 {
     uint32_t lb = 1 << bu->count_stuff;
-    bu->stuffed_bits = (bu->stuffed_bits & (lb - 1)) | lb;
+    bu->stuffed_bits = (bu->stuffed_bits & (lb - 1)) | (lb << 1);
+}
+
+// Restore raw bitstuffing state (used to undo unstuf_clear_state() )
+static void
+unstuf_restore_state(struct can2040_bitunstuffer *bu, uint32_t data)
+{
+    uint32_t cs = bu->count_stuff;
+    bu->stuffed_bits = (bu->stuffed_bits & ((1 << cs) - 1)) | (data << cs);
 }
 
 // Pull bits from unstuffer (as specified in unstuf_set_count() )
@@ -504,10 +511,10 @@ unstuf_pull_bits(struct can2040_bitunstuffer *bu)
             }
             bu->count_stuff = cs = cs - 1;
             if (rm_bits & (1 << (cs + 1))) {
-                // High bit of try_cnt a stuff bit
+                // High bit is a stuff bit
                 if (unlikely(rm_bits & (1 << cs))) {
                     // Six consecutive bits - a bitstuff error
-                    if ((sb >> cs) & 1)
+                    if (sb & (1 << cs))
                         return -1;
                     return -2;
                 }
@@ -522,6 +529,13 @@ unstuf_pull_bits(struct can2040_bitunstuffer *bu)
             // Need more data
             return 1;
     }
+}
+
+// Return most recent raw (still stuffed) bits
+static uint32_t
+unstuf_get_raw(struct can2040_bitunstuffer *bu)
+{
+    return bu->stuffed_bits >> bu->count_stuff;
 }
 
 
@@ -630,33 +644,35 @@ tx_qpos(struct can2040 *cd, uint32_t pos)
 }
 
 // Queue the next message for transmission in the PIO
-static void
+static uint32_t
 tx_schedule_transmit(struct can2040 *cd)
 {
-    if (cd->tx_state == TS_QUEUED && !pio_tx_did_conflict(cd))
+    if (cd->tx_state == TS_QUEUED && !pio_tx_did_fail(cd))
         // Already queued or actively transmitting
-        return;
-    if (cd->tx_push_pos == cd->tx_pull_pos) {
+        return 0;
+    uint32_t tx_pull_pos = cd->tx_pull_pos;
+    if (readl(&cd->tx_push_pos) == tx_pull_pos) {
         // No new messages to transmit
         cd->tx_state = TS_IDLE;
-        return;
+        pio_signal_clear_txpending(cd);
+        __DMB();
+        if (likely(readl(&cd->tx_push_pos) == tx_pull_pos))
+            return SI_TXPENDING;
+        // Raced with can2040_transmit() - msg is now available for transmit
+        pio_signal_set_txpending(cd);
     }
     cd->tx_state = TS_QUEUED;
-    struct can2040_transmit *qt = &cd->tx_queue[tx_qpos(cd, cd->tx_pull_pos)];
+    struct can2040_transmit *qt = &cd->tx_queue[tx_qpos(cd, tx_pull_pos)];
     pio_tx_send(cd, qt->stuffed_data, qt->stuffed_words);
+    return 0;
 }
 
 // Setup PIO state for ack injection
-static int
+static void
 tx_inject_ack(struct can2040 *cd, uint32_t match_key)
 {
-    if (cd->tx_state == TS_QUEUED && !pio_tx_did_conflict(cd)
-        && pio_rx_fifo_level(cd) > 1)
-        // Rx state is behind - acking wont succeed and may halt active tx
-        return -1;
     cd->tx_state = TS_ACKING_RX;
     pio_tx_inject_ack(cd, match_key);
-    return 0;
 }
 
 // Check if the current parsed message is feedback from current transmit
@@ -667,8 +683,11 @@ tx_check_local_message(struct can2040 *cd)
         return 0;
     struct can2040_transmit *qt = &cd->tx_queue[tx_qpos(cd, cd->tx_pull_pos)];
     struct can2040_msg *pm = &cd->parse_msg, *tm = &qt->msg;
-    if (qt->crc == cd->parse_crc && tm->id == pm->id && tm->dlc == pm->dlc
-        && tm->data32[0] == pm->data32[0] && tm->data32[1] == pm->data32[1]) {
+    if (tm->id == pm->id) {
+        if (qt->crc != cd->parse_crc || tm->dlc != pm->dlc
+            || tm->data32[0] != pm->data32[0] || tm->data32[1] != pm->data32[1])
+            // Message with same id that differs in content - an error
+            return -1;
         // This is a self transmit
         cd->tx_state = TS_CONFIRM_TX;
         return 1;
@@ -683,7 +702,11 @@ tx_check_local_message(struct can2040 *cd)
 
 // Report state flags (stored in cd->report_state)
 enum {
-    RS_IDLE = 0, RS_IS_TX = 1, RS_IN_MSG = 2, RS_AWAIT_EOF = 4,
+    RS_NEED_EOF_FLAG = 1<<2,
+    // States
+    RS_IDLE = 0, RS_NEED_RX_ACK = 1, RS_NEED_TX_ACK = 2,
+    RS_NEED_RX_EOF = RS_NEED_RX_ACK | RS_NEED_EOF_FLAG,
+    RS_NEED_TX_EOF = RS_NEED_TX_ACK | RS_NEED_EOF_FLAG,
 };
 
 // Report error to calling code (via callback interface)
@@ -705,7 +728,7 @@ report_callback_rx_msg(struct can2040 *cd)
 static void
 report_callback_tx_msg(struct can2040 *cd)
 {
-    cd->tx_pull_pos++;
+    writel(&cd->tx_pull_pos, cd->tx_pull_pos + 1);
     cd->rx_cb(cd, CAN2040_NOTIFY_TX, &cd->parse_msg);
 }
 
@@ -713,13 +736,10 @@ report_callback_tx_msg(struct can2040 *cd)
 static void
 report_handle_eof(struct can2040 *cd)
 {
-    if (cd->report_state == RS_IDLE)
-        // Message already reported or an unexpected EOF
-        return;
-    if (cd->report_state & RS_AWAIT_EOF) {
+    if (cd->report_state & RS_NEED_EOF_FLAG) { // RS_NEED_xX_EOF
         // Successfully processed a new message - report to calling code
         pio_sync_normal_start_signal(cd);
-        if (cd->report_state & RS_IS_TX)
+        if (cd->report_state == RS_NEED_TX_EOF)
             report_callback_tx_msg(cd);
         else
             report_callback_rx_msg(cd);
@@ -728,70 +748,71 @@ report_handle_eof(struct can2040 *cd)
     pio_match_clear(cd);
 }
 
-// Check if in an rx ack is pending
+// Check if in an rx message is being processed
 static int
-report_is_acking_rx(struct can2040 *cd)
+report_is_rx_eof_pending(struct can2040 *cd)
 {
-    return cd->report_state == (RS_IN_MSG | RS_AWAIT_EOF);
+    return cd->report_state == RS_NEED_RX_EOF;
 }
 
 // Parser found a new message start
 static void
 report_note_message_start(struct can2040 *cd)
 {
-    pio_irq_set_maytx(cd);
+    pio_irq_set(cd, SI_MAYTX);
 }
 
 // Setup for ack injection (if receiving) or ack confirmation (if transmit)
-static void
+static int
 report_note_crc_start(struct can2040 *cd)
 {
-    uint32_t cs = cd->unstuf.count_stuff;
-    uint32_t crcstart_bitpos = cd->raw_bit_count - cs - 1;
-    uint32_t last = ((cd->unstuf.stuffed_bits >> cs) << 15) | cd->parse_crc;
-    uint32_t crc_bitcount = bitstuff(&last, 15 + 1) - 1;
-    uint32_t crcend_bitpos = crcstart_bitpos + crc_bitcount;
-
     int ret = tx_check_local_message(cd);
     if (ret) {
+        if (ret < 0)
+            return -1;
         // This is a self transmit - setup tx eof "matched" signal
-        cd->report_state = RS_IN_MSG | RS_IS_TX;
-        last = (last << 10) | 0x02ff;
-        pio_match_check(cd, pio_match_calc_key(last, crcend_bitpos + 10));
-        return;
+        cd->report_state = RS_NEED_TX_ACK;
+        uint32_t bits = (cd->parse_crc_bits << 9) | 0x0ff;
+        pio_match_check(cd, pio_match_calc_key(bits, cd->parse_crc_pos + 9));
+        return 0;
     }
 
-    // Inject ack
-    cd->report_state = RS_IN_MSG;
-    last = (last << 1) | 0x01;
-    ret = tx_inject_ack(cd, pio_match_calc_key(last, crcend_bitpos + 1));
-    if (ret)
-        // Ack couldn't be scheduled (due to lagged parsing state)
-        return;
-    pio_irq_set_maytx_ackdone(cd);
-    // Setup for future rx eof "matched" signal
-    last = (last << 8) | 0x7f;
-    cd->report_eof_key = pio_match_calc_key(last, crcend_bitpos + 9);
+    // Setup for ack inject (after rx fifos fully drained)
+    cd->report_state = RS_NEED_RX_ACK;
+    pio_signal_set_txpending(cd);
+    pio_irq_set(cd, SI_MAYTX | SI_TXPENDING);
+    return 0;
+}
+
+// Parser successfully found matching crc
+static void
+report_note_crc_success(struct can2040 *cd)
+{
+    if (cd->report_state == RS_NEED_TX_ACK)
+        // Enable "matched" irq for fast back-to-back transmit scheduling
+        pio_irq_set(cd, SI_MAYTX | SI_MATCHED);
 }
 
 // Parser found successful ack
 static void
 report_note_ack_success(struct can2040 *cd)
 {
-    if (!(cd->report_state & RS_IN_MSG))
-        // Got rx "ackdone" and "matched" signals already
+    if (cd->report_state == RS_IDLE)
+        // Got "matched" signal already
         return;
-    cd->report_state |= RS_AWAIT_EOF;
-    if (cd->report_state & RS_IS_TX)
-        // Enable "matched" irq for fast back-to-back transmit scheduling
-        pio_irq_set_maytx_matched(cd);
+    // Transition RS_NEED_xX_ACK to RS_NEED_xX_EOF
+    cd->report_state |= RS_NEED_EOF_FLAG;
 }
 
 // Parser found successful EOF
 static void
 report_note_eof_success(struct can2040 *cd)
 {
+    if (cd->report_state == RS_IDLE)
+        // Got "matched" signal already
+        return;
     report_handle_eof(cd);
+    pio_irq_set(cd, SI_TXPENDING);
 }
 
 // Parser found unexpected data on input
@@ -803,34 +824,34 @@ report_note_parse_error(struct can2040 *cd)
         pio_match_clear(cd);
     }
     pio_sync_slow_start_signal(cd);
-    pio_irq_set_maytx(cd);
+    pio_irq_set(cd, SI_MAYTX | SI_TXPENDING);
 }
 
 // Received PIO rx "ackdone" irq
 static void
 report_line_ackdone(struct can2040 *cd)
 {
-    if (!(cd->report_state & RS_IN_MSG)) {
-        // Parser already processed ack and eof bits
-        pio_irq_set_maytx(cd);
-        return;
-    }
     // Setup "matched" irq for fast rx callbacks
-    cd->report_state = RS_IN_MSG | RS_AWAIT_EOF;
-    pio_match_check(cd, cd->report_eof_key);
-    pio_irq_set_maytx_matched(cd);
+    uint32_t bits = (cd->parse_crc_bits << 8) | 0x7f;
+    pio_match_check(cd, pio_match_calc_key(bits, cd->parse_crc_pos + 8));
     // Schedule next transmit (so it is ready for next frame line arbitration)
-    tx_schedule_transmit(cd);
+    uint32_t check_txpending = tx_schedule_transmit(cd);
+    pio_irq_set(cd, SI_MAYTX | SI_MATCHED | check_txpending);
 }
 
 // Received PIO "matched" irq
 static void
 report_line_matched(struct can2040 *cd)
 {
-    // Implement fast rx callback and/or fast back-to-back tx scheduling
-    report_handle_eof(cd);
-    pio_irq_set_none(cd);
-    tx_schedule_transmit(cd);
+    // A match event indicates an ack and eof are present
+    if (cd->report_state != RS_IDLE) {
+        // Transition RS_NEED_xX_ACK to RS_NEED_xX_EOF (if not already there)
+        cd->report_state |= RS_NEED_EOF_FLAG;
+        report_handle_eof(cd);
+    }
+    // Implement fast back-to-back tx scheduling (if applicable)
+    uint32_t check_txpending = tx_schedule_transmit(cd);
+    pio_irq_set(cd, check_txpending);
 }
 
 // Received 10+ passive bits on the line (between 10 and 17 bits)
@@ -838,10 +859,30 @@ static void
 report_line_maytx(struct can2040 *cd)
 {
     // Line is idle - may be unexpected EOF, missed ack injection,
-    // missed "matched" signal, or can2040_transmit() kick.
-    report_handle_eof(cd);
-    pio_irq_set_none(cd);
-    tx_schedule_transmit(cd);
+    // or missed "matched" signal.
+    if (cd->report_state != RS_IDLE)
+        report_handle_eof(cd);
+    uint32_t check_txpending = tx_schedule_transmit(cd);
+    pio_irq_set(cd, check_txpending);
+}
+
+// Schedule a transmit
+static void
+report_line_txpending(struct can2040 *cd)
+{
+    uint32_t pio_irqs = pio_irq_get(cd);
+    if (pio_irqs == (SI_MAYTX | SI_TXPENDING | SI_RX_DATA)
+        && cd->report_state == RS_NEED_RX_ACK) {
+        // Ack inject request from report_note_crc_start()
+        uint32_t mk = pio_match_calc_key(cd->parse_crc_bits, cd->parse_crc_pos);
+        tx_inject_ack(cd, mk);
+        pio_irq_set(cd, SI_MAYTX | SI_ACKDONE);
+        return;
+    }
+    // Tx request from can2040_transmit(), report_note_eof_success(),
+    // or report_note_parse_error().
+    uint32_t check_txpending = tx_schedule_transmit(cd);
+    pio_irq_set(cd, (pio_irqs & ~SI_TXPENDING) | check_txpending);
 }
 
 
@@ -857,10 +898,10 @@ enum {
 
 // Transition to the next parsing state
 static void
-data_state_go_next(struct can2040 *cd, uint32_t state, uint32_t bits)
+data_state_go_next(struct can2040 *cd, uint32_t state, uint32_t num_bits)
 {
     cd->parse_state = state;
-    unstuf_set_count(&cd->unstuf, bits);
+    unstuf_set_count(&cd->unstuf, num_bits);
 }
 
 // Transition to the MS_DISCARD state - drop all bits until 6 passive bits
@@ -886,27 +927,29 @@ data_state_line_error(struct can2040 *cd)
     data_state_go_discard(cd);
 }
 
-// Received six passive bits on the line
+// Received six unexpected passive bits on the line
 static void
 data_state_line_passive(struct can2040 *cd)
 {
-    if (cd->parse_state != MS_DISCARD) {
+    if (cd->parse_state != MS_DISCARD && cd->parse_state != MS_START) {
         // Bitstuff error
         data_state_go_discard(cd);
         return;
     }
 
-    uint32_t stuffed_bits = cd->unstuf.stuffed_bits >> cd->unstuf.count_stuff;
-    if (stuffed_bits == 0xffffffff) {
+    uint32_t stuffed_bits = unstuf_get_raw(&cd->unstuf);
+    uint32_t dom_bits = ~stuffed_bits;
+    if (!dom_bits) {
         // Counter overflow in "sync" state machine - reset it
-        pio_sync_setup(cd);
         cd->unstuf.stuffed_bits = 0;
+        cd->raw_bit_count = cd->unstuf.count_stuff = 0;
+        pio_sm_setup(cd);
         data_state_go_discard(cd);
         return;
     }
 
-    // Look for sof after 9 passive bits (most "PIO sync" will produce)
-    if (((stuffed_bits + 1) & 0x1ff) == 0) {
+    // Look for sof after 10 passive bits (most "PIO sync" will produce)
+    if (!(dom_bits & 0x3ff)) {
         data_state_go_next(cd, MS_START, 1);
         return;
     }
@@ -919,7 +962,19 @@ static void
 data_state_go_crc(struct can2040 *cd)
 {
     cd->parse_crc &= 0x7fff;
-    report_note_crc_start(cd);
+
+    // Calculate raw stuffed bits after crc and crc delimiter
+    uint32_t crcstart_bitpos = cd->raw_bit_count - cd->unstuf.count_stuff - 1;
+    uint32_t crc_bits = (unstuf_get_raw(&cd->unstuf) << 15) | cd->parse_crc;
+    uint32_t crc_bitcount = bitstuff(&crc_bits, 15 + 1) - 1;
+    cd->parse_crc_bits = (crc_bits << 1) | 0x01; // Add crc delimiter
+    cd->parse_crc_pos = crcstart_bitpos + crc_bitcount + 1;
+
+    int ret = report_note_crc_start(cd);
+    if (ret) {
+        data_state_go_discard(cd);
+        return;
+    }
     data_state_go_next(cd, MS_CRC, 16);
 }
 
@@ -1014,6 +1069,7 @@ data_state_update_crc(struct can2040 *cd, uint32_t data)
         return;
     }
 
+    report_note_crc_success(cd);
     unstuf_clear_state(&cd->unstuf);
     data_state_go_next(cd, MS_ACK, 2);
 }
@@ -1023,6 +1079,10 @@ static void
 data_state_update_ack(struct can2040 *cd, uint32_t data)
 {
     if (data != 0x01) {
+        // Undo unstuf_clear_state() for correct SOF detection in
+        // data_state_line_passive()
+        unstuf_restore_state(&cd->unstuf, (cd->parse_crc_bits << 2) | data);
+
         data_state_go_discard(cd);
         return;
     }
@@ -1039,18 +1099,18 @@ data_state_update_eof0(struct can2040 *cd, uint32_t data)
         return;
     }
     unstuf_clear_state(&cd->unstuf);
-    data_state_go_next(cd, MS_EOF1, 4);
+    data_state_go_next(cd, MS_EOF1, 5);
 }
 
-// Handle reception of end-of-frame (EOF) bits 5-7 and first IFS bit
+// Handle reception of end-of-frame (EOF) bits 5-7 and first two IFS bits
 static void
 data_state_update_eof1(struct can2040 *cd, uint32_t data)
 {
-    if (data >= 0x0e || (data >= 0x0c && report_is_acking_rx(cd)))
+    if (data >= 0x1c || (data >= 0x18 && report_is_rx_eof_pending(cd)))
         // Message is considered fully transmitted
         report_note_eof_success(cd);
 
-    if (data == 0x0f)
+    if (data == 0x1f)
         data_state_go_next(cd, MS_START, 1);
     else
         data_state_go_discard(cd);
@@ -1086,12 +1146,12 @@ data_state_update(struct can2040 *cd, uint32_t data)
  * Input processing
  ****************************************************************/
 
-// Process an incoming byte of data from PIO "rx" state machine
+// Process incoming data from PIO "rx" state machine
 static void
-process_rx(struct can2040 *cd, uint32_t rx_byte)
+process_rx(struct can2040 *cd, uint32_t rx_data)
 {
-    unstuf_add_bits(&cd->unstuf, rx_byte, 8);
-    cd->raw_bit_count += 8;
+    unstuf_add_bits(&cd->unstuf, rx_data, PIO_RX_WAKE_BITS);
+    cd->raw_bit_count += PIO_RX_WAKE_BITS;
 
     // undo bit stuffing
     for (;;) {
@@ -1119,23 +1179,26 @@ can2040_pio_irq_handler(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     uint32_t ints = pio_hw->ints0;
-    while (likely(ints & PIO_IRQ0_INTE_SM1_RXNEMPTY_BITS)) {
-        uint8_t rx_byte = pio_hw->rxf[1];
-        process_rx(cd, rx_byte);
+    while (likely(ints & SI_RX_DATA)) {
+        uint32_t rx_data = pio_hw->rxf[1];
+        process_rx(cd, rx_data);
         ints = pio_hw->ints0;
         if (likely(!ints))
             return;
     }
 
-    if (ints & PIO_IRQ0_INTE_SM3_BITS)
+    if (ints & SI_ACKDONE)
         // Ack of received message completed successfully
         report_line_ackdone(cd);
-    else if (ints & PIO_IRQ0_INTE_SM2_BITS)
+    else if (ints & SI_MATCHED)
         // Transmit message completed successfully
         report_line_matched(cd);
-    else if (ints & PIO_IRQ0_INTE_SM0_BITS)
+    else if (ints & SI_MAYTX)
         // Bus is idle, but not all bits may have been flushed yet
         report_line_maytx(cd);
+    else if (ints & SI_TXPENDING)
+        // Schedule a transmit
+        report_line_txpending(cd);
 }
 
 
@@ -1198,7 +1261,7 @@ can2040_transmit(struct can2040 *cd, struct can2040_msg *msg)
         crc = crc_bytes(crc, hdr, 3);
         bs_push(&bs, hdr, 19);
     }
-    int i;
+    uint32_t i;
     for (i=0; i<data_len; i++) {
         uint32_t v = qt->msg.data[i];
         crc = crc_byte(crc, v);
@@ -1213,7 +1276,8 @@ can2040_transmit(struct can2040 *cd, struct can2040_msg *msg)
     writel(&cd->tx_push_pos, tx_push_pos + 1);
 
     // Wakeup if in TS_IDLE state
-    pio_irq_atomic_set_maytx(cd);
+    __DMB();
+    pio_signal_set_txpending(cd);
 
     return 0;
 }
