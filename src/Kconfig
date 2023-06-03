@@ -95,7 +95,7 @@ config CANBUS
     default y if CANSERIAL || USBCANBUS
 config CANBUS_FREQUENCY
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANBUS
-    default 500000
+    default 1000000
 config CANBUS_FILTER
     bool
     default y if CANSERIAL
