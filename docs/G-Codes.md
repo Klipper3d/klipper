@@ -868,11 +868,11 @@ in the config file.
 
 #### PID_CALIBRATE
 `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
-[WRITE_FILE=1]`: Perform a PID calibration test. The
+[WRITE_FILE=1] [TOLERANCE=0.02]`: Perform a PID calibration test. The
 specified heater will be enabled until the specified target temperature
 is reached, and then the heater will be turned off and on for several
 cycles. If the WRITE_FILE parameter is enabled, then the file
-/tmp/heattest.txt will be created with a log of all temperature samples
+/tmp/heattest.csv will be created with a log of all temperature samples
 taken during the test. TOLERANCE defaults to 0.02 if not passed in. The
 tighter the tolerance the better the calibration result will be, but how
 tight you can achieve depends on how clean your sensor readings are. low
