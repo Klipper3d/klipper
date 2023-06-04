@@ -295,7 +295,6 @@ class BedMeshCalibrate:
         self._init_mesh_config(config)
         self._generate_points(config.error)
         self._profile_name = None
-        self.orig_points = self.points
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points())
         self.probe_helper.minimum_points(3)
@@ -349,6 +348,7 @@ class BedMeshCalibrate:
         self.points = points
         if not self.faulty_regions:
             return
+        self.substituted_indices.clear()
         # Check to see if any points fall within faulty regions
         last_y = self.points[0][1]
         is_reversed = False
@@ -581,7 +581,7 @@ class BedMeshCalibrate:
                               in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
-            self.points = self.orig_points
+            self._generate_points(gcmd.error)
             pts = self._get_adjusted_points()
             self.probe_helper.update_probe_points(pts, 3)
     def _get_adjusted_points(self):
