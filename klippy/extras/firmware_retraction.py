@@ -74,7 +74,7 @@ class FirmwareRetraction:
 
     def cmd_GET_RETRACTION(self, gcmd):
         gcmd.respond_info('RETRACT_LENGTH=%.5f RETRACT_SPEED=%.5f '
-                          'UNRETRACT_EXTRA_LENGTH=%.5f UNRETRACT_SPEED=%.5f'
+                          'UNRETRACT_EXTRA_LENGTH=%.5f UNRETRACT_SPEED=%.5f '
                           ' Z_HOP_HEIGHT=%.5f Z_HOP_STYLE=%s '
                           ' RETRACTED=%s RAMP_MOVE=%s'
                           % (self.retract_length, self.retract_speed,
@@ -85,7 +85,7 @@ class FirmwareRetraction:
         if self.stored_set_retraction_gcmds:#List queued SET_RETRACTION commands
             for i, stored_gcmd in reversed(list(enumerate(\
                     self.stored_set_retraction_gcmds))):
-                params = ' '.join(f'{k} = {v}' for k, v in \
+                params = ' '.join('{} = {}'.format(k, v) for k, v in \
                     stored_gcmd.get_command_parameters().items())
                 gcmd.respond_info('Stored command #%d: SET_RETRACTION %s' % \
                     (i + 1, params))                    # Format stored commands
@@ -506,7 +506,7 @@ class FirmwareRetraction:
 
         new_g1_command = 'G1.20140114'
         for key, value in params.items():
-            new_g1_command += f' {key}{value}'
+            new_g1_command += ' {0}{1}'.format(key, value)
 
         # Run originl G1 (renamed G1.20140114) with adjusted parameters
         self.gcode.run_script_from_command(new_g1_command)
