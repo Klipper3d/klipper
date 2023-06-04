@@ -1427,20 +1427,20 @@
 <p>具体来说，这些切片软件的设置生成的命令会固件对挤出率进行剧烈的改变，希望固件能接近这些请求值，使打印机获得一个大致理想的挤出机压力。然而，Klipper利用精确的运动学计算和计时。当Klipper被命令对挤出率进行重大改变时，它将计划出速度、加速度和挤出机运动的相应变化--这不是切片软件的意图。切片软件甚至可能产生过大的挤出速度，以至于触发Klipper的最大挤出截面检查。</p>
 <p>相反，使用切片软件的"回抽"、"擦拭 "和/或 "缩回时擦拭 "设置通常是有益的。</p>
 <h2 id="start_print">START_PRINT宏<a class="headerlink" href="#start_print" title="Permanent link">&para;</a></h2>
-<p>When using a START_PRINT macro or similar, it is useful to sometimes pass through parameters from the slicer variables to the macro.</p>
-<p>In Cura, to pass through temperatures, the following start gcode would be used:</p>
+<p>当使用START_PRINT宏或类似的宏时，也可以将切片变量的参数传递给宏。</p>
+<p>在 Cura 中，要传递温度参数，使用以下开始G代码：</p>
 <div class="highlight"><pre><span></span><code>START_PRINT BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0}
 </code></pre></div>
 
-<p>In slic3r derivatives such as PrusaSlicer and SuperSlicer, the following would be used:</p>
+<p>在PrusaSlicer和SuperSlicer等sli3er衍生版本中，使用以下G代码：</p>
 <p>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]</p>
-<p>Also note that these slicers will insert their own heating codes when certain conditions are not met. In Cura, the existence of the <code>{material_bed_temperature_layer_0}</code> and <code>{material_print_temperature_layer_0}</code> variables is enough to mitigate this. In slic3r derivatives, you would use:</p>
+<p>还要注意，当某些条件不满足时，这些切片软件会插入自己的加热代码。在Cura中，存在<code>{material_bed_temperature_layer_0}</code>和<code>{material_print_temperature_layer_0}</code>这两个变量就足够了。在slic3r衍生品中，你需要使用：</p>
 <div class="highlight"><pre><span></span><code>M140 S0
 M104 S0
 </code></pre></div>
 
-<p>before the macro call. Also note that SuperSlicer has a "custom gcode only" button option, which achieves the same outcome.</p>
-<p>An example of a START_PRINT macro using these paramaters can be found in config/sample-macros.cfg</p>
+<p>在宏调用之前。还要注意的是，SuperSlicer有一个 "仅包含定制G代码"的按钮选项，可以达到同样的效果。</p>
+<p>在config/sample-macros.cfg中可以找到一个使用这些参数的START_PRINT宏的例子</p>
 
               
             </article>
