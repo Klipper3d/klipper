@@ -1504,58 +1504,58 @@ allowing per-filament settings and runtime tuning.
 ```
 [firmware_retraction]
 #retract_length: 0.0
-#   The length of filament (in mm) to retract when a G10 sommand is 
-#   executed. When a G11 command is executed, the unretract length 
-#   is the sum of the retract_length and the unretract_extra_length 
-#   (see below). The minimum value and default are 0 mm, which 
+#   The length of filament (in mm) to retract when a G10 sommand is
+#   executed. When a G11 command is executed, the unretract length
+#   is the sum of the retract_length and the unretract_extra_length
+#   (see below). The minimum value and default are 0 mm, which
 #   disables firmware retraction.
 #retract_speed: 20.0
 #   The speed of filament retraction moves (in mm/s).
-#   This value is typically set relatively high (>40 mm/s), 
-#   except for soft and/oozy filaments like TPU and PETG 
-#   (20 to 30 mm/s). The minimum value is 1 mm/s, the default value 
+#   This value is typically set relatively high (>40 mm/s),
+#   except for soft and/oozy filaments like TPU and PETG
+#   (20 to 30 mm/s). The minimum value is 1 mm/s, the default value
 #   is 20 mm/s.
 #unretract_extra_length: 0.0
 #   The *additional* length (in mm) to add or the length to subtract
-#   from the filament move when unretracting compared to the retract 
-#   move length. This allows priming the nozzle (positive extra length) 
-#   or delaying extrusion after unretracting (negative length). The 
-#   latter may help reduce blobbing. The minimum value is -1 mm 
+#   from the filament move when unretracting compared to the retract
+#   move length. This allows priming the nozzle (positive extra length)
+#   or delaying extrusion after unretracting (negative length). The
+#   latter may help reduce blobbing. The minimum value is -1 mm
 #   (2.41 mm3 volume), the default value is 0 mm.
 #unretract_speed: 10.0
 #   The speed of filament unretraction moves (in mm/s).
-#   This parameter is not particularly critical, although often lower 
-#   than RETRACT_SPEED. The minimum value is 1 mm/s, the default value 
+#   This parameter is not particularly critical, although often lower
+#   than RETRACT_SPEED. The minimum value is 1 mm/s, the default value
 #   is 10 mm/s.
 #z_hop_height: 0.0
-#   The vertical height by which the nozzle is lifted from the print to 
-#   prevent collisions with the print during travel moves. 
-#   The minimum value is 0 mm, the default value is 0 mm, which disables 
+#   The vertical height by which the nozzle is lifted from the print to
+#   prevent collisions with the print during travel moves.
+#   The minimum value is 0 mm, the default value is 0 mm, which disables
 #   zhop moves.
 #z_hop_style: standard
-#   The type of lifting movement of the nozzle if zhop moves are 
-#   enabled. Supported move types are standard, helix and ramp. 
-#   'Standard' corresponds to a simple vertical lift movement. 'Helix' 
-#   combines the vertical lift movement with a circular movement of 
-#   the nozzle. This increases the effective move length during nozzle 
-#   lifting and therefore produces thinner strings that break faster. It  
-#   may therefore be beneficial for oozy filaments and is the standard 
-#   setting in BambuStudio. 'Ramp' does not immediately cause the 
-#   nozzle to lift vertically upon retraction but instead adds the 
-#   corresponding vertical movement component to the travel move 
-#   following the retraction. This reduces overall travel distance and 
+#   The type of lifting movement of the nozzle if zhop moves are
+#   enabled. Supported move types are standard, helix and ramp.
+#   'Standard' corresponds to a simple vertical lift movement. 'Helix'
+#   combines the vertical lift movement with a circular movement of
+#   the nozzle. This increases the effective move length during nozzle
+#   lifting and therefore produces thinner strings that break faster. It
+#   may therefore be beneficial for oozy filaments and is the standard
+#   setting in BambuStudio. 'Ramp' does not immediately cause the
+#   nozzle to lift vertically upon retraction but instead adds the
+#   corresponding vertical movement component to the travel move
+#   following the retraction. This reduces overall travel distance and
 #   may reduce print time slightly. The default value is 'standard'.
 #verbose: False
-#   This enables (True) or disables (False) user messages, which may 
+#   This enables (True) or disables (False) user messages, which may
 #   be used for debugging  if using firmware retraction in macros.
 #   The default value is False, which disables user messages.
 #config_params_on_clear: True
-#   This allows the User to control the behavior of the module when 
-#   the retraction state is cleared other than by using the G11 
-#   command while filament moves are possible (hotend temperature 
-#   above minimum for extrusion). If the retract state is cleared and 
-#   'config_params_on_clear' is set to 'True', any changes made to the 
-#   parameters used by firmware retraction via the SET_RETRACTION 
+#   This allows the User to control the behavior of the module when
+#   the retraction state is cleared other than by using the G11
+#   command while filament moves are possible (hotend temperature
+#   above minimum for extrusion). If the retract state is cleared and
+#   'config_params_on_clear' is set to 'True', any changes made to the
+#   parameters used by firmware retraction via the SET_RETRACTION
 #   command, will be reset to config values.
 ```
 

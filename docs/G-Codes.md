@@ -462,16 +462,16 @@ will be disabled, if set to 1 it is enabled.
 The following standard G-Code commands are available when the
 [firmware_retraction config section](Config_Reference.md#firmware_retraction)
 is enabled. These commands allow utilizing the firmware
-retraction feature available in many slicers. Retraction is a strategy to 
-reduce stringing during travel moves (non-extrusion) from one part of the 
-print to another. Note that pressure advance should be properly configured 
+retraction feature available in many slicers. Retraction is a strategy to
+reduce stringing during travel moves (non-extrusion) from one part of the
+print to another. Note that pressure advance should be properly configured
 before retraction parameters are tuned to ensure optimal results.
 - `G10`: Retracts the filament using the currently configured
-  parameters. If z_hop_height is set to a value greater cero, 
-  besides retracting the filament, the nozzle is lifted by set value.  
+  parameters. If z_hop_height is set to a value greater cero,
+  besides retracting the filament, the nozzle is lifted by set value.
 - `G11`: Unretracts the filament using the currently configured
-  parameters. If z_hop_height is set to a value greater cero, 
-  besides unretracting the filament, the nozzle is lowered back on the print 
+  parameters. If z_hop_height is set to a value greater cero,
+  besides unretracting the filament, the nozzle is lowered back on the print
   with a vertical movement.
 
 The following additional commands are available.
@@ -481,35 +481,36 @@ The following additional commands are available.
 [UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [Z_HOP_HEIGHT=<mm>]
 [Z_HOP_STYLE=<STANDARD,HELIX,RAMP>]`:
 Adjust the parameters used by firmware retraction.
-RETRACT_LENGTH determines the length of filament to retract (the minimum 
+RETRACT_LENGTH determines the length of filament to retract (the minimum
 as well as standard value is 0 mm).
-RETRACT_SPEED determines the speed of the filament retraction move (the 
-minimum value is 1 mm/s, the standard value is 20 mm/s). This value is 
-typically set relatively high (>40 mm/s), except for soft and/oozy filaments 
+RETRACT_SPEED determines the speed of the filament retraction move (the
+minimum value is 1 mm/s, the standard value is 20 mm/s). This value is
+typically set relatively high (>40 mm/s), except for soft and/oozy filaments
 like TPU and PETG (20 to 30 mm/s).
-UNRETRACT_SPEED sets the speed of the filament unretraction move (the 
-minimum value is 1 mm/s, the standard value is 10 mm/s). This 
+UNRETRACT_SPEED sets the speed of the filament unretraction move (the
+minimum value is 1 mm/s, the standard value is 10 mm/s). This
 parameter is not particularly critical, although often lower than RETRACT_SPEED.
-UNRETRACT_EXTRA_LENGTH allows to add a small amount of length to the filament 
-unretract move to prime the nozzle or to subtract a small amount of length from 
-the filament unretract move to reduce blobbing at seams (the minimum value is 
+UNRETRACT_EXTRA_LENGTH allows to add a small amount of length to the filament
+unretract move to prime the nozzle or to subtract a small amount of length from
+the filament unretract move to reduce blobbing at seams (the minimum value is
 -1 mm (2.41 mm3 volume), the standard value is 0 mm).
-Z_HOP_HEIGHT determines the vertical height by which the nozzle is lifted from 
-the print to prevent collisions with the print during travel moves (the 
+Z_HOP_HEIGHT determines the vertical height by which the nozzle is lifted from
+the print to prevent collisions with the print during travel moves (the
 minimum value is 0 mm, the standard value is 0 mm, which disables zhop moves).
-Z_HOP_STYLE allows you to choose the type of lifting movement of the nozzle. 
-Three options are available: (1) Standard: vertical lift movement, 
-(2) Helix: full circular movement combined with vertical lift as implemented 
-in BambuStudio and, (3) Ramp: vertical lift is performed while executing 
-the travel move following the filament retraction move. Helix provides more effective 
-move length during nozzle lifting and therefore thinner strings that break faster. 
-It may therefore be beneficial for oozy filaments and is the standard setting in
-BambuStudio. Ramp style allows reducing the total retract-travel-unretract motion system 
-move length a tiny bit and may have slight print time reduction benefits.
-SET_RETRACTION is commonly set as part of slicer per-filament
-configuration, as different filaments require different parameter
-settings. The command can be issued at runtime. If the printer is retracted while the
-command is issued, the command will be queued and executed directly after unretraction.
+Z_HOP_STYLE allows you to choose the type of lifting movement of the nozzle.
+Three options are available: (1) Standard: vertical lift movement,
+(2) Helix: full circular movement combined with vertical lift as implemented
+in BambuStudio and, (3) Ramp: vertical lift is performed while executing
+the travel move following the filament retraction move. Helix provides more
+effective move length during nozzle lifting and therefore thinner strings that
+break faster. It may therefore be beneficial for oozy filaments and is the
+standard setting in BambuStudio. Ramp style allows reducing the total retract-
+travel-unretract motion system move length a tiny bit and may have slight print
+time reduction benefits. SET_RETRACTION is commonly set as part of slicer
+per-filament configuration, as different filaments require different parameter
+settings. The command can be issued at runtime. If the printer is retracted
+while the command is issued, the command will be queued and executed directly
+after unretraction.
 
 #### CLEAR_RETRACTION
 `CLEAR_RETRACTION`: Clears the current retract state without extruder or
@@ -517,27 +518,28 @@ motion system movement. All flags related to the retract state are reset to
 False, queued SET_RETRACTION commands are flushed and all changes to retraction
 parameters made via previous SET_RETRACTION commands are reset (if parameter
 `config_params_on_clear` is set to True in the config).
-NOTE: The Module contains a lot of redundancy for safety to prevent undesired behavior.
-When printing from virtual SD Card, the printer state is monitored and retraction state
-is cleared if a print is started, canceled or finished or if a virtual SD card file is 
-reset. When printing via GCode streaming (e.g. using OctoPrint), the retract state is
-cleared when the steppers are disabled (M84, typically part of end gcode and standard behavior
-of OctoPrint if a print is canceled) or the printer is homed (G28, typically part of 
-start gcode). Hence, upon ending or canceling a print as well as starting a new print
-via GCode streaming or virtual SD card, the printer should always be in unretracted state.
-Nevertheless, it is recommended to add `CLEAR_RETRACTION` to your 
-start and end gcode to make sure the retract state is reset before and after each print.
-If a print is finished or canceled while retracted and the retract state is not cleared, 
-either via `CLEAR_RETRACTION` without filament or motion system movement or G11, 
-the nozzle will stay above the requested z coordinate by the set z_hop_height. 
+NOTE: The Module contains a lot of redundancy for safety to prevent undesired
+behavior. When printing from virtual SD Card, the printer state is monitored and
+retraction state is cleared if a print is started, canceled or finished or if a
+virtual SD card file is reset. When printing via GCode streaming (e.g. using
+OctoPrint), the retract state is cleared when the steppers are disabled (M84,
+typically part of end gcode and standard behavior of OctoPrint if a print is
+canceled) or the printer is homed (G28, typically part of start gcode). Hence,
+upon ending or canceling a print as well as starting a new printvia GCode
+streaming or virtual SD card, the printer should always be in unretracted state.
+Nevertheless, it is recommended to add `CLEAR_RETRACTION` to your start and end
+gcode to make sure the retract state is reset before and after each print. If a
+print is finished or canceled while retracted and the retract state is not
+cleared, either via `CLEAR_RETRACTION` without filament or motion system
+movement or G11, the nozzle will stay above the requested z coordinate by the
+set z_hop_height.
 
 #### GET_RETRACTION
-`GET_RETRACTION`: Queries the current parameters used by firmware
-retraction as well as firmware retraction status. RETRACT_LENGTH, 
-RETRACT_SPEED, UNRETRACT_EXTRA_LENGTH, UNRETRACT_SPEED, 
-Z_HOP_HEIGHT, Z_HOP_STYLE, RETRACTED (True, if retracted)
-and RAMP_MOVE (True, if upcoming move is raming up to Z-Hop height) 
-are displayed on the terminal.
+`GET_RETRACTION`: Queries the current parameters used by firmware retraction as
+well as firmware retraction status. RETRACT_LENGTH, RETRACT_SPEED,
+UNRETRACT_EXTRA_LENGTH, UNRETRACT_SPEED, Z_HOP_HEIGHT, Z_HOP_STYLE, RETRACTED
+(True, if retracted) and RAMP_MOVE (True, if upcoming move is raming up to Z-Hop
+height) are displayed on the terminal.
 
 ### [force_move]
 
