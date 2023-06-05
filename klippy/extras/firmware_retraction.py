@@ -34,11 +34,6 @@ class FirmwareRetraction:
         self.is_retracted = False                           # Retract state flag
         self.ramp_move = False                                  # Ramp move flag
         self.vsdcard_paused = False                         # VSDCard pause flag
-        if self.config_ref.getsection('virtual_sdcard') is not None:
-            self.vsdcard_enabled = True                   # VSD Card enable flag
-        else:
-            self.vsdcard_enabled = False
-
         self.stored_set_retraction_gcmds = []  # List for delayed SET_RETRACTION
         self.acc_vel_state = []                # List for accel and vel settings
 
@@ -106,6 +101,7 @@ class FirmwareRetraction:
 
     ########################### Gcode Command G10 to perform firmware retraction
     def cmd_G10(self, gcmd):
+        retract_gcode = ""                                # Reset retract string
         homing_status = self._get_homing_status()          # Check homing status
         if 'xyz' not in homing_status: # If printer is not homed, ignore command
             if self.verbose: gcmd.respond_info('Printer is not homed. \
@@ -178,6 +174,7 @@ class FirmwareRetraction:
 
     ######################### GCode Command G11 to perform filament unretraction
     def cmd_G11(self, gcmd):
+        unretract_gcode = ""                            # Reset unretract string
         if self.retract_length == 0.0:          # Check if FW retraction enabled
             if self.verbose: gcmd.respond_info('Retraction length cero. \
                 Firmware retraction disabled. Command ignored!')
@@ -197,16 +194,17 @@ class FirmwareRetraction:
                 unretract_gcode = (
                     "SAVE_GCODE_STATE NAME=_unretract_state\n"
                     "M204 S{:.5f}\n"          # Set max accel for unretract move
+                    "G91\n"
                     ).format(self.max_acc)
 
                 # Incl move command only if z_hop enabled and ramp move was used
+                # This is a move in relative mode, which was already set
                 if self.z_hop_height > 0.0 and self.ramp_move:
                     self.ramp_move = False  # Reset ramp flag if not used before
                 elif self.z_hop_height > 0.0:
                     unretract_gcode += (
                         "SET_VELOCITY_LIMIT VELOCITY={:.5f} \
                             SQUARE_CORNER_VELOCITY={:.5f}\n"       # Set max vel
-                        "G91\n"
                         "G1 Z-{:.5f} F{}\n"
                     ).format(self.max_vel, self.max_sqv, \
                         self.safe_z_hop_height, \
@@ -256,11 +254,11 @@ class FirmwareRetraction:
             'z_hop_style', default='standard').strip().lower()
         self._check_z_hop_style()   # Safe guard that zhop style is properly set
         # verbose to enable/disable user messages
-        self.verbose = self.config_ref.get('verbose', default=False)
+        self.verbose = self.config_ref.getboolean('verbose', False)
         # Control retraction parameter behaviour when retraction is cleared.
         # Default is to reset retraction parameters to config values.
-        self.config_params_on_clear = self.config_ref.get(\
-            'config_params_on_clear', default=True)
+        self.config_params_on_clear = self.config_ref.getboolean(\
+            'config_params_on_clear', True)
 
     ################### Helper to check that z_hop_style was input and is valid.
     def _check_z_hop_style(self):
@@ -275,8 +273,6 @@ class FirmwareRetraction:
         self.gcode_move = self.printer.lookup_object('gcode_move')
         self.toolhead = self.printer.lookup_object('toolhead')
         self.extruder = self.printer.lookup_object('extruder')
-        if self.vsdcard_enabled:         # Get ref to VSD Card object if enabled
-            self.vsdcard = self.printer.lookup_object('virtual_sdcard')
 
         # Register new G-code commands for setting/retrieving retraction
         # parameters and clearing retraction
@@ -322,8 +318,11 @@ class FirmwareRetraction:
         ################# Virtual SD card mode (Default for Mainsail, Fluidd and
         # DWC2-to-Klipper. Also possible via OctoPrint) Printing via virtual SD
         # Card is recommended as start, cancel and finish print can be detected
-        # more reliably!
-        if self.vsdcard_enabled:
+        # more reliably! If Virtual SD Card is avilable, additional events can
+        # be used to track the state of the printer.
+        if self.config_ref.has_section('virtual_sdcard'):
+            # Get ref to VSD Card object
+            self.vsdcard = self.printer.lookup_object('virtual_sdcard')
             # Print is started: If started using the SDCARD_PRINT_FILE command,
             # any previously loaded file is reset first. Hence, the rest_file
             # event indicates a starting print. If instead a file is loaded
@@ -366,7 +365,7 @@ class FirmwareRetraction:
     # (must accept all arguments passed from event handlers)
     def _evaluate_retraction(self, *args):
         if self.is_retracted:                               # Check if retracted
-                if self.vsdcard_paused:       # Check if VSDCard print is paused
+                if self.vsdcard_paused:          # Check if VSDCard print paused
                     # Reset paused flag and hence do not clear retraction on
                     # resume command.
                     self.vsdcard_paused = False
@@ -403,9 +402,12 @@ class FirmwareRetraction:
 
     ################################################# Helper to clear retraction
     def _execute_clear_retraction(self):
-        # Re-establish regular G1 command.
-        # zhop will be reversed on next move with z coordinate
-        self._re_register_G1()
+        if self.z_hop_height > 0.0:
+            # Re-establish regular G1 command if zhop enabled.
+            # zhop will be reversed on next move with z coordinate
+            # Note that disabling zhop while retracted id not possible as the
+            # SET_RETRACTION command will not execute while retracted.
+            self._re_register_G1()
         self.is_retracted = False     # Reset retract flag to enable G10 command
         self.ramp_move = False                            # Reset ramp move flag
         self.stored_set_retraction_gcmds = []       # Reset list of stored comms
@@ -473,7 +475,7 @@ class FirmwareRetraction:
             self.gcode.register_command(new_cmd_name, prev_cmd, \
                 desc=new_cmd_desc)  # Register untoggled method to untog handler
 
-    ### G1 method that accounts for z-hop by altering the z-coordinates.
+    ############ G1 method that accounts for z-hop by altering the z-coordinates
     # Offsets are not touched to prevent incompatibility issues with user macros
     def _G1_zhop(self,gcmd):
         params = gcmd.get_command_parameters()
@@ -485,7 +487,7 @@ class FirmwareRetraction:
             if not 'Z' in params:
                 # If the first move after retract does not have a Z parameter,
                 # add parameter to force ramp move
-                if is_relative == True:
+                if is_relative:
                     # In relative mode
                     params['Z'] = str(self.safe_z_hop_height)
                 else:
@@ -497,7 +499,7 @@ class FirmwareRetraction:
                 # of the ramp move (works the same in rel and abs mode)
                 params['Z'] = str(float(params['Z']) + self.safe_z_hop_height)
         elif 'Z' in params:
-            if is_relative == False:
+            if not is_relative:
                 # In absolute mode, adjust the Z value to account for the Z-hop
                 # offset after retract and ramp move (if applicable)
                 params['Z'] = str(float(params['Z']) + self.safe_z_hop_height)

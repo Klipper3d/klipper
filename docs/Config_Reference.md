@@ -1504,8 +1504,8 @@ allowing per-filament settings and runtime tuning.
 ```
 [firmware_retraction]
 #retract_length: 0.0
-#   The length of filament (in mm) to retract when a G10 sommand is
-#   executed. When a G11 command is executed, the unretract length
+#   The length of filament (in mm) to retract when a G10 command is
+#   executed. When a G11 command is executed, the unretract_length
 #   is the sum of the retract_length and the unretract_extra_length
 #   (see below). The minimum value and default are 0 mm, which
 #   disables firmware retraction.
@@ -1521,15 +1521,15 @@ allowing per-filament settings and runtime tuning.
 #   move length. This allows priming the nozzle (positive extra length)
 #   or delaying extrusion after unretracting (negative length). The
 #   latter may help reduce blobbing. The minimum value is -1 mm
-#   (2.41 mm3 volume), the default value is 0 mm.
+#   (2.41 mm3 volume for 1.75 mm filament), the default value is 0 mm.
 #unretract_speed: 10.0
 #   The speed of filament unretraction moves (in mm/s).
 #   This parameter is not particularly critical, although often lower
-#   than RETRACT_SPEED. The minimum value is 1 mm/s, the default value
+#   than retract_speed. The minimum value is 1 mm/s, the default value
 #   is 10 mm/s.
 #z_hop_height: 0.0
 #   The vertical height by which the nozzle is lifted from the print to
-#   prevent collisions with the print during travel moves.
+#   prevent collisions with the print during travel moves when retracted.
 #   The minimum value is 0 mm, the default value is 0 mm, which disables
 #   zhop moves.
 #z_hop_style: standard
@@ -1547,16 +1547,16 @@ allowing per-filament settings and runtime tuning.
 #   may reduce print time slightly. The default value is 'standard'.
 #verbose: False
 #   This enables (True) or disables (False) user messages, which may
-#   be used for debugging  if using firmware retraction in macros.
-#   The default value is False, which disables user messages.
+#   be used for debugging when using firmware retraction in macros.
+#   The default value is False.
 #config_params_on_clear: True
 #   This allows the User to control the behavior of the module when
 #   the retraction state is cleared other than by using the G11
 #   command while filament moves are possible (hotend temperature
 #   above minimum for extrusion). If the retract state is cleared and
-#   'config_params_on_clear' is set to 'True', any changes made to the
-#   parameters used by firmware retraction via the SET_RETRACTION
-#   command, will be reset to config values.
+#   'config_params_on_clear' is set to 'True', any changes made to the firmware
+#   retraction parameters, using the SET_RETRACTION command, will be reset to
+#   config values.
 ```
 
 ### [gcode_arcs]

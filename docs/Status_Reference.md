@@ -167,17 +167,17 @@ The following information is available in the
 - `retract_speed`: Current setting for speed of filament retract moves.
 - `unretract_extra_length`: Current setting for additional length of filament
   unretract moves (positive values will result in filament extrusion, while
-  negative values up to 1 mm (2.41 mm3) will result in lagging extrusion of
-  filament).
+  negative values up to 1 mm (2.41 mm3 for 1.75 mm filament) will result in
+  lagging extrusion of filament).
 - `unretract_speed`: Current setting for speed of unretract moves of filament.
 - `unretract_length`: Unretract move length (sum of retract and extra unretract
    length).
 - `z_hop_height`: Current setting for the height of nozzle lifting move (Z-Hop).
 - `z_hop_style`: Current setting for the style of Z-Hop move.
 - Above settings for the firmware_retraction module may differ from the
-  config file if a `SET_RETRACTION` command alters them. Additional information
+  config file if a `SET_RETRACTION` command altered them. Additional information
   available is as follows.
-- `retract_state`: Returns True if filament is retracted.
+- `retract_state`: Returns 'True' if filament is retracted.
 
 ## gcode_button
 
