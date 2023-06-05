@@ -3674,75 +3674,69 @@ max_accel:
 <p>关于计算<code>rotation_distance</code> 参数的方法，请参见<a href="Rotation_Distance.html">旋转距离文档</a>。关于使用多个微控制器的归位的方法，请参见<a href="Multi_MCU_Homing.html">Multi-MCU homing</a>文件。</p>
 <div class="highlight"><pre><span></span><code>[stepper_x]
 step_pin:
-#   Step 的 GPIO 引脚 (triggered high)。这个参数必须指定。
+#   步进 GPIO 引脚（高电平表示触发）。
+#   必须提供此参数。
 dir_pin:
-#   dir 的 GPIO 引脚 (high indicates positive direction).
-#  这个参数必须指定.
+#   方向 GPIO 引脚（高电平表示正方向）。
+#   必须提供此参数。
 enable_pin:
-#   Enable pin (default is enable high; use ! to indicate enable
-#   low). If this parameter is not provided then the stepper motor
-#   driver must always be enabled.
+#   使能引脚（默认是高电平启用；使用！表示低电平启用）。
+#   如果未提供此参数，步进电机驱动器必须始终被启用。
 rotation_distance:
-#   Distance (in mm) that the axis travels with one full rotation of
-#   the stepper motor (or final gear if gear_ratio is specified).
-#   This parameter must be provided.
+#   轴在步进电机（或指定了齿轮比例的最后一个齿轮）进行一
+#   次完整旋转时行进的距离（以毫米为单位）。
+#   必须提供此参数。
 microsteps:
-#   The number of microsteps the stepper motor driver uses. This
-#   parameter must be provided.
+#   步进电机驱动器使用的微步数。
+#   必须提供此参数。
 #full_steps_per_rotation: 200
-#   The number of full steps for one rotation of the stepper motor.
-#   Set this to 200 for a 1.8 degree stepper motor or set to 400 for a
-#   0.9 degree motor. The default is 200.
+#   步进电机一次旋转的完整步数。对于1.8度的步进电机，将此
+#   值设定为200；对于0.9度的电机，设定为400。
+#   默认值是200。
 #gear_ratio:
-#   The gear ratio if the stepper motor is connected to the axis via a
-#   gearbox. For example, one may specify &quot;5:1&quot; if a 5 to 1 gearbox is
-#   in use. If the axis has multiple gearboxes one may specify a comma
-#   separated list of gear ratios (for example, &quot;57:11, 2:1&quot;). If a
-#   gear_ratio is specified then rotation_distance specifies the
-#   distance the axis travels for one full rotation of the final gear.
-#   The default is to not use a gear ratio.
+#   如果步进电机通过齿轮箱与轴相连，则为齿轮比例。例如，如
+#   果使用的是5到1的齿轮箱，可以指定&quot;5:1&quot;。如果轴有多个齿轮
+#   箱，可以指定逗号分隔的齿轮比例列表（例如，&quot;57:11, 2:1&quot;）。
+#   如果指定了gear_ratio，则rotation_distance指定了最后一个齿轮
+#   完整旋转时轴行进的距离。
+#   默认情况下不使用齿轮比例。
 #step_pulse_duration:
-#   The minimum time between the step pulse signal edge and the
-#   following &quot;unstep&quot; signal edge. This is also used to set the
-#   minimum time between a step pulse and a direction change signal.
-#   The default is 0.000000100 (100ns) for TMC steppers that are
-#   configured in UART or SPI mode, and the default is 0.000002 (which
-#   is 2us) for all other steppers.
+#   step脉冲信号边缘与后续的&quot;unstep&quot;信号边缘之间的最短时间。
+#   这也用于设置step脉冲和方向变化信号之间的最短时间。对于在UART
+#   或SPI模式下配置的TMC步进器，默认值为0.000000100（100ns），
+#   对于所有其他步进器，默认值为0.000002（即2us）。
 endstop_pin:
-#   Endstop switch detection pin. If this endstop pin is on a
-#   different mcu than the stepper motor then it enables &quot;multi-mcu
-#   homing&quot;. This parameter must be provided for the X, Y, and Z
-#   steppers on cartesian style printers.
+#   限位开关检测引脚。如果此限位引脚位于与步进电机不同的mcu上，
+#   则启用&quot;多mcu归位&quot;。
+#   笛卡尔式打印机上的X，Y和Z步进电机必须提供此参数。
 #position_min: 0
-#   Minimum valid distance (in mm) the user may command the stepper to
-#   move to.  The default is 0mm.
+#   用户可以命令步进器移动到的最小有效距离（以毫米为单位）。
+#   默认值是0毫米。
 position_endstop:
-#   Location of the endstop (in mm). This parameter must be provided
-#   for the X, Y, and Z steppers on cartesian style printers.
+#   限位开关的位置（以毫米为单位）。
+#   对于笛卡尔式打印机上的X，Y和Z步进电机，必须提供此参数。
 position_max:
-#   Maximum valid distance (in mm) the user may command the stepper to
-#   move to. This parameter must be provided for the X, Y, and Z
-#   steppers on cartesian style printers.
+#   用户可以命令步进器移动到的最大有效距离（以毫米为单位）。
+#   对于笛卡尔式打印机上的X，Y和Z步进电机，必须提供此参数。
 #homing_speed: 5.0
-#   Maximum velocity (in mm/s) of the stepper when homing. The default
-#   is 5mm/s.
+#   步进器在归位时的最大速度（以毫米/秒为单位）。
+#   默认值是5毫米/秒。
 #homing_retract_dist: 5.0
-#   Distance to backoff (in mm) before homing a second time during
-#   homing. Set this to zero to disable the second home. The default
-#   is 5mm.
+#   在归位过程中第二次归位之前的后退距离（以毫米为单位）。
+#   将此设置为零以禁用第二次归位。
+#   默认值是5毫米。
 #homing_retract_speed:
-#   Speed to use on the retract move after homing in case this should
-#   be different from the homing speed, which is the default for this
-#   parameter
+#   在归位后进行收缩移动的速度，如果这个速度应该与归位速度不同。
+#   归位速度是这个参数的默认值
 #second_homing_speed:
-#   Velocity (in mm/s) of the stepper when performing the second home.
-#   The default is homing_speed/2.
+#   在进行第二次归位时步进器的速度（以毫米/秒为单位）。
+#   默认值是homing_speed的一半。
 #homing_positive_dir:
-#   If true, homing will cause the stepper to move in a positive
-#   direction (away from zero); if false, home towards zero. It is
-#   better to use the default than to specify this parameter. The
-#   default is true if position_endstop is near position_max and false
-#   if near position_min.
+#   如果为True，归位会使步进器向正方向移动（远离零）；如果为False，
+#   向零方向归位。
+#   最好使用默认值，而不是指定此参数。
+#   如果position_endstop靠近position_max，则默认值为True，如果靠近
+#   position_min，则默认值为False。
 </code></pre></div>
 
 <h3 id="_5">笛卡尔运动学<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
@@ -5073,12 +5067,11 @@ z_offset:
 #enable_pin:
 #microsteps:
 #rotation_distance:
-#   See the &quot;stepper&quot; section for the definition of the above parameters.
+#   参见&quot;stepper&quot;部分以获取上述参数的定义。
 #endstop_pin:
-#   If an endstop_pin is defined for the additional stepper then the
-#   stepper will home until the endstop is triggered. Otherwise, the
-#   stepper will home until the endstop on the primary stepper for the
-#   axis is triggered.
+#   如果为附加步进电机定义了endstop_pin，则步进电机将进行
+#   归位，直到触发终点开关。否则，步进电机将进行归位，
+#   直到触发主步进电机的轴上的终点开关。
 </code></pre></div>
 
 <h3 id="extruder1">[extruder1]<a class="headerlink" href="#extruder1" title="Permanent link">&para;</a></h3>
@@ -5834,10 +5827,10 @@ pin:
 <h3 id="static_digital_output">[static_digital_output]<a class="headerlink" href="#static_digital_output" title="Permanent link">&para;</a></h3>
 <p>静态配置的数字输出引脚（可以定义任意数量的带有 "static_digital_output "前缀的分段）。在这里配置的引脚将在MCU配置期间被设置为GPIO输出。它们在运行时不能被改变。</p>
 <div class="highlight"><pre><span></span><code>[static_digital_output my_output_pins]
-pins:
-#   A comma separated list of pins to be set as GPIO output pins. The
-#   pin will be set to a high level unless the pin name is prefaced
-#   with &quot;!&quot;. This parameter must be provided.
+pins：
+#   将被设置为GPIO输出的引脚的逗号分隔列表。引脚将被设置为高
+#   电平，除非引脚名称前面有&quot;!&quot;。
+#   必须提供这个参数。
 </code></pre></div>
 
 <h3 id="multi_pin">[multi_pin]<a class="headerlink" href="#multi_pin" title="Permanent link">&para;</a></h3>
@@ -6327,7 +6320,7 @@ enable_pin:
 </code></pre></div>
 
 <h3 id="mcp4451">[mcp4451]<a class="headerlink" href="#mcp4451" title="Permanent link">&para;</a></h3>
-<p>Statically configured MCP4451 digipot connected via I2C bus (one may define any number of sections with an "mcp4451" prefix).</p>
+<p>通过I2C总线连接的静态配置的MCP4451 digipot（可以定义任意数量带有 "mcp4451 "前缀的分段）。</p>
 <div class="highlight"><pre><span></span><code>[mcp4451 my_digipot]
 i2c_address:
 #   芯片在i2c总线上使用的i2c地址。
@@ -6354,7 +6347,7 @@ i2c_address:
 </code></pre></div>
 
 <h3 id="mcp4728">[mcp4728]<a class="headerlink" href="#mcp4728" title="Permanent link">&para;</a></h3>
-<p>Statically configured MCP4728 digital-to-analog converter connected via I2C bus (one may define any number of sections with an "mcp4728" prefix).</p>
+<p>通过I2C总线连接的静态配置的MCP4728数模转换器（可以定义任何数量带有 "mcp4728 "前缀的分段）。</p>
 <div class="highlight"><pre><span></span><code>[mcp4728 my_dac]
 #i2c_address: 96
 #   芯片在I2C总线上使用的地址。
@@ -6382,7 +6375,7 @@ i2c_address:
 </code></pre></div>
 
 <h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
-<p>Statically configured MCP4018 digipot connected via two gpio "bit banging" pins (one may define any number of sections with an "mcp4018" prefix).</p>
+<p>静态配置的MCP4018 digipot 通过两个GPIO "bit banging"引脚连接（可以定义任意数量的带有 "mcp4018 "前缀的分段）。</p>
 <div class="highlight"><pre><span></span><code>[mcp4018 my_digipot]
 scl_pin:
 #   SCL &quot;时钟&quot;引脚。
