@@ -516,9 +516,8 @@ class TMCVirtualPinHelper:
             self.fields.set_field("en_pwm_mode", 0)
             val = self.fields.set_field(self.diag_pin_field, 1)
         self.mcu_tmc.set_register("GCONF", val)
-        if self.coolthrs == 0:
-            tc_val = self.fields.set_field("tcoolthrs", 0xfffff)
-            self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
+        tc_val = self.fields.set_field("tcoolthrs", 0xfffff)
+        self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
     def handle_homing_move_end(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
