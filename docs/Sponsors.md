@@ -16,7 +16,7 @@ serve the 3D printing community better. Follow them on
 
 ## Sponsors
 
-[<img src="./img/sponsors/obico-light-horizontal.png" width="200" />](https://obico.io/?source=klipper_sponsor)
+[<img src="./img/sponsors/obico-light-horizontal.png" width="200" />](https://obico.io/klipper.html?source=klipper_sponsor)
 
 ## Klipper Developers
 
