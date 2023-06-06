@@ -14,6 +14,10 @@ serve the 3D printing community better. Follow them on
 [Facebook](https://www.facebook.com/BIGTREETECH) or
 [Twitter](https://twitter.com/BigTreeTech).
 
+## Sponsors
+
+[<img src="./img/sponsors/obico-light-horizontal.png" width="200" />](https://obico.io/klipper.html?source=klipper_sponsor)
+
 ## Klipper Developers
 
 ### Kevin O'Connor
