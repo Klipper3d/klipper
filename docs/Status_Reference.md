@@ -14,7 +14,6 @@ Klipper software.
 
 The following information is available in
 [angle some_name](Config_Reference.md#angle) objects:
-
 - `temperature`: The last temperature reading (in Celsius) from a
   tle5012b magnetic hall sensor. This value is only available if the
   angle sensor is a tle5012b chip and if measurements are in progress
@@ -24,21 +23,19 @@ The following information is available in
 
 The following information is available in the
 [bed_mesh](Config_Reference.md#bed_mesh) object:
-
 - `profile_name`, `mesh_min`, `mesh_max`, `probed_matrix`,
   `mesh_matrix`: Information on the currently active bed_mesh.
 - `profiles`: The set of currently defined profiles as setup
-  using BED_MESH_PROFILE.
+   using BED_MESH_PROFILE.
 
 ## bed_screws
 
 The following information is available in the
 `Config_Reference.md#bed_screws` object:
-
 - `is_active`: Returns True if the bed screws adjustment tool is currently
-  active.
+active.
 - `state`: The bed screws adjustment tool state. It is one of
-  the following strings: "adjust", "fine".
+the following strings: "adjust", "fine".
 - `current_screw`: The index for the current screw being adjusted.
 - `accepted_screws`: The number of accepted screws.
 
@@ -46,7 +43,6 @@ The following information is available in the
 
 The following information is available in the `configfile` object
 (this object is always available):
-
 - `settings.<section>.<option>`: Returns the given config file setting
   (or default value) during the last software start or restart. (Any
   settings changed at run-time will not be reflected here.)
@@ -68,7 +64,6 @@ The following information is available in the `configfile` object
 The following information is available in the `display_status` object
 (this object is automatically available if a
 [display](Config_Reference.md#display) config section is defined):
-
 - `progress`: The progress value of the last `M73` G-Code command (or
   `virtual_sdcard.progress` if no recent `M73` received).
 - `message`: The message contained in the last `M117` G-Code command.
@@ -77,7 +72,6 @@ The following information is available in the `display_status` object
 
 The following information is available in the
 [endstop_phase](Config_Reference.md#endstop_phase) object:
-
 - `last_home.<stepper name>.phase`: The phase of the stepper motor at
   the end of the last home attempt.
 - `last_home.<stepper name>.phases`: The total number of phases
@@ -93,13 +87,12 @@ The following information is available in the
 The following information is available in the
 [exclude_object](Exclude_Object.md) object:
 
-- `objects`: An array of the known objects as provided by the
-  `EXCLUDE_OBJECT_DEFINE` command. This is the same information provided by
+- `objects`:  An array of the known objects as provided by the
+  `EXCLUDE_OBJECT_DEFINE` command.  This is the same information provided by
   the `EXCLUDE_OBJECT VERBOSE=1` command. The `center` and `polygon` fields will
   only be present if provided in the original `EXCLUDE_OBJECT_DEFINE`
 
   Here is a JSON sample:
-
 ```
 [
   {
@@ -124,7 +117,6 @@ The following information is available in the
   }
 ]
 ```
-
 - `excluded_objects`: An array of strings listing the names of excluded objects.
 - `current_object`: The name of the object currently being printed.
 
@@ -132,11 +124,10 @@ The following information is available in the
 
 The following information is available for extruder_stepper objects (as well as
 [extruder](Config_Reference.md#extruder) objects):
-
 - `pressure_advance`: The current [pressure advance](Pressure_Advance.md) value.
 - `smooth_time`: The current pressure advance smooth time.
 - `motion_queue`: The name of the extruder that this extruder stepper is
-  currently synchronized to. This is reported as `None` if the extruder stepper
+  currently synchronized to.  This is reported as `None` if the extruder stepper
   is not currently associated with an extruder.
 
 ## fan
@@ -146,7 +137,6 @@ The following information is available in
 [heater_fan some_name](Config_Reference.md#heater_fan) and
 [controller_fan some_name](Config_Reference.md#controller_fan)
 objects:
-
 - `speed`: The fan speed as a float between 0.0 and 1.0.
 - `rpm`: The measured fan speed in rotations per minute if the fan has
   a tachometer_pin defined.
@@ -156,7 +146,6 @@ objects:
 The following information is available in
 [filament_switch_sensor some_name](Config_Reference.md#filament_switch_sensor)
 objects:
-
 - `enabled`: Returns True if the switch sensor is currently enabled.
 - `filament_detected`: Returns True if the sensor is in a triggered
   state.
@@ -166,7 +155,6 @@ objects:
 The following information is available in
 [filament_motion_sensor some_name](Config_Reference.md#filament_motion_sensor)
 objects:
-
 - `enabled`: Returns True if the motion sensor is currently enabled.
 - `filament_detected`: Returns True if the sensor is in a triggered
   state.
@@ -175,7 +163,6 @@ objects:
 
 The following information is available in the
 [firmware_retraction](Config_Reference.md#firmware_retraction) object:
-
 - `retract_length`, `retract_speed`, `unretract_extra_length`,
   `unretract_speed`: The current settings for the firmware_retraction
   module. These settings may differ from the config file if a
@@ -185,14 +172,12 @@ The following information is available in the
 
 The following information is available in
 [gcode_button some_name](Config_Reference.md#gcode_button) objects:
-
 - `state`: The current button state returned as "PRESSED" or "RELEASED"
 
 ## gcode_macro
 
 The following information is available in
 [gcode_macro some_name](Config_Reference.md#gcode_macro) objects:
-
 - `<variable>`: The current value of a
   [gcode_macro variable](Command_Templates.md#variables).
 
@@ -200,7 +185,6 @@ The following information is available in
 
 The following information is available in the `gcode_move` object
 (this object is always available):
-
 - `gcode_position`: The current position of the toolhead relative to
   the current G-Code origin. That is, positions that one might
   directly send to a `G1` command. It is possible to access the x, y,
@@ -236,7 +220,6 @@ The following information is available in the `gcode_move` object
 The following information is available in the
 [hall_filament_width_sensor](Config_Reference.md#hall_filament_width_sensor)
 object:
-
 - `is_active`: Returns True if the sensor is currently active.
 - `Diameter`: The last reading from the sensor in mm.
 - `Raw`: The last raw ADC reading from the sensor.
@@ -247,7 +230,6 @@ The following information is available for heater objects such as
 [extruder](Config_Reference.md#extruder),
 [heater_bed](Config_Reference.md#heater_bed), and
 [heater_generic](Config_Reference.md#heater_generic):
-
 - `temperature`: The last reported temperature (in Celsius as a float)
   for the given heater.
 - `target`: The current target temperature (in Celsius as a float) for
@@ -261,21 +243,19 @@ The following information is available for heater objects such as
 
 The following information is available in the `heaters` object (this
 object is available if any heater is defined):
-
 - `available_heaters`: Returns a list of all currently available
   heaters by their full config section names, e.g. `["extruder",
-"heater_bed", "heater_generic my_custom_heater"]`.
+  "heater_bed", "heater_generic my_custom_heater"]`.
 - `available_sensors`: Returns a list of all currently available
   temperature sensors by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater",
-"temperature_sensor electronics_temp"]`.
+  "temperature_sensor electronics_temp"]`.
 
 ## idle_timeout
 
 The following information is available in the
 [idle_timeout](Config_Reference.md#idle_timeout) object (this object
 is always available):
-
 - `state`: The current state of the printer as tracked by the
   idle_timeout module. It is one of the following strings: "Idle",
   "Printing", "Ready".
@@ -288,7 +268,6 @@ is always available):
 The following information is available for each `[led led_name]`,
 `[neopixel led_name]`, `[dotstar led_name]`, `[pca9533 led_name]`, and
 `[pca9632 led_name]` config section defined in printer.cfg:
-
 - `color_data`: A list of color lists containing the RGBW values for a
   led in the chain. Each value is represented as a float from 0.0 to
   1.0. Each color list contains 4 items (red, green, blue, white) even
@@ -301,11 +280,10 @@ The following information is available for each `[led led_name]`,
 
 The following information is available in the
 `manual_probe` object:
-
 - `is_active`: Returns True if a manual probing helper script is currently
-  active.
+active.
 - `z_position`: The current height of the nozzle (as the printer currently
-  understands it).
+understands it).
 - `z_position_lower`: Last probe attempt just lower than the current height.
 - `z_position_upper`: Last probe attempt just greater than the current height.
 
@@ -314,7 +292,6 @@ The following information is available in the
 The following information is available in
 [mcu](Config_Reference.md#mcu) and
 [mcu some_name](Config_Reference.md#mcu-my_extra_mcu) objects:
-
 - `mcu_version`: The Klipper code version reported by the
   micro-controller.
 - `mcu_build_versions`: Information on the build tools used to
@@ -331,7 +308,6 @@ The following information is available in
 The following information is available in the `motion_report` object
 (this object is automatically available if any stepper config section
 is defined):
-
 - `live_position`: The requested toolhead position interpolated to the
   current time.
 - `live_velocity`: The requested toolhead velocity (in mm/s) at the
@@ -343,14 +319,12 @@ is defined):
 
 The following information is available in
 [output_pin some_name](Config_Reference.md#output_pin) objects:
-
 - `value`: The "value" of the pin, as set by a `SET_PIN` command.
 
 ## palette2
 
 The following information is available in the
 [palette2](Config_Reference.md#palette2) object:
-
 - `ping`: Amount of the last reported Palette 2 ping in percent.
 - `remaining_load_length`: When starting a Palette 2 print, this will
   be the amount of filament to load into the extruder.
@@ -360,7 +334,6 @@ The following information is available in the
 
 The following information is available in the
 [pause_resume](Config_Reference.md#pause_resume) object:
-
 - `is_paused`: Returns true if a PAUSE command has been executed
   without a corresponding RESUME.
 
@@ -370,12 +343,11 @@ The following information is available in the `print_stats` object
 (this object is automatically available if a
 [virtual_sdcard](Config_Reference.md#virtual_sdcard) config section is
 defined):
-
 - `filename`, `total_duration`, `print_duration`, `filament_used`,
   `state`, `message`: Estimated information about the current print when a
   virtual_sdcard print is active.
 - `info.total_layer`: The total layer value of the last `SET_PRINT_STATS_INFO
-TOTAL_LAYER=<value>` G-Code command.
+   TOTAL_LAYER=<value>` G-Code command.
 - `info.current_layer`: The current layer value of the last
   `SET_PRINT_STATS_INFO CURRENT_LAYER=<value>` G-Code command.
 
@@ -385,7 +357,6 @@ The following information is available in the
 [probe](Config_Reference.md#probe) object (this object is also
 available if a [bltouch](Config_Reference.md#bltouch) config section
 is defined):
-
 - `name`: Returns the name of the probe in use.
 - `last_query`: Returns True if the probe was reported as "triggered"
   during the last QUERY_PROBE command. Note, if this is used in a
@@ -400,7 +371,6 @@ is defined):
 
 The following information is available in the `quad_gantry_level` object
 (this object is available if quad_gantry_level is defined):
-
 - `applied`: True if the gantry leveling process has been run and completed
   successfully.
 
@@ -408,7 +378,6 @@ The following information is available in the `quad_gantry_level` object
 
 The following information is available in the `query_endstops` object
 (this object is available if any endstop is defined):
-
 - `last_query["<endstop>"]`: Returns True if the given endstop was
   reported as "triggered" during the last QUERY_ENDSTOP command. Note,
   if this is used in a macro, due to the order of template expansion,
@@ -419,7 +388,6 @@ The following information is available in the `query_endstops` object
 
 The following information is available in the `screws_tilt_adjust`
 object:
-
 - `error`: Returns True if the most recent `SCREWS_TILT_CALCULATE`
   command included the `MAX_DEVIATION` parameter and any of the probed
   screw points exceeded the specified `MAX_DEVIATION`.
@@ -439,7 +407,6 @@ object:
 
 The following information is available in
 [servo some_name](Config_Reference.md#servo) objects:
-
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
 
@@ -447,14 +414,12 @@ The following information is available in
 
 The following information is available in the `stepper_enable` object (this
 object is available if any stepper is defined):
-
 - `steppers["<stepper>"]`: Returns True if the given stepper is enabled.
 
 ## system_stats
 
 The following information is available in the `system_stats` object
 (this object is always available):
-
 - `sysload`, `cputime`, `memavail`: Information on the host operating
   system and process load.
 
@@ -468,7 +433,6 @@ The following information is available in
 and
 [temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
 objects:
-
 - `temperature`: The last read temperature from the sensor.
 - `humidity`, `pressure`, `gas`: The last read values from the sensor
   (only on bme280, htu21d, and lm75 sensors).
@@ -478,7 +442,6 @@ objects:
 The following information is available in
 [temperature_fan some_name](Config_Reference.md#temperature_fan)
 objects:
-
 - `temperature`: The last read temperature from the sensor.
 - `target`: The target temperature for the fan.
 
@@ -487,7 +450,6 @@ objects:
 The following information is available in
 [temperature_sensor some_name](Config_Reference.md#temperature_sensor)
 objects:
-
 - `temperature`: The last read temperature from the sensor.
 - `measured_min_temp`, `measured_max_temp`: The lowest and highest
   temperature seen by the sensor since the Klipper host software was
@@ -498,7 +460,6 @@ objects:
 The following information is available in
 [TMC stepper driver](Config_Reference.md#tmc-stepper-driver-configuration)
 objects (eg, `[tmc2208 stepper_x]`):
-
 - `mcu_phase_offset`: The micro-controller stepper position
   corresponding with the driver's "zero" phase. This field may be null
   if the phase offset is not known.
@@ -518,7 +479,6 @@ objects (eg, `[tmc2208 stepper_x]`):
 
 The following information is available in the `toolhead` object
 (this object is always available):
-
 - `position`: The last commanded position of the toolhead relative to
   the coordinate system specified in the config file. It is possible
   to access the x, y, z, and e components of this position (eg,
@@ -530,7 +490,7 @@ The following information is available in the `toolhead` object
   "homed" state. This is a string containing one or more of "x", "y",
   "z".
 - `axis_minimum`, `axis_maximum`: The axis travel limits (mm) after
-  homing. It is possible to access the x, y, z components of this
+  homing.  It is possible to access the x, y, z components of this
   limit value (eg, `axis_minimum.x`, `axis_maximum.z`).
 - For Delta printers the `cone_start_z` is the max z height at
   maximum radius (`printer.toolhead.cone_start_z`).
@@ -547,16 +507,14 @@ The following information is available in the `toolhead` object
 The following information is available in
 [dual_carriage](Config_Reference.md#dual_carriage)
 on a hybrid_corexy or hybrid_corexz robot
-
 - `mode`: The current mode. Possible values are: "FULL_CONTROL"
 - `active_carriage`: The current active carriage.
-  Possible values are: "CARRIAGE_0", "CARRIAGE_1"
+Possible values are: "CARRIAGE_0", "CARRIAGE_1"
 
 ## virtual_sdcard
 
 The following information is available in the
 [virtual_sdcard](Config_Reference.md#virtual_sdcard) object:
-
 - `is_active`: Returns True if a print from file is currently active.
 - `progress`: An estimate of the current print progress (based of file
   size and file position).
@@ -568,7 +526,6 @@ The following information is available in the
 
 The following information is available in the `webhooks` object (this
 object is always available):
-
 - `state`: Returns a string indicating the current Klipper
   state. Possible values are: "ready", "startup", "shutdown", "error".
 - `state_message`: A human readable string giving additional context
@@ -579,7 +536,6 @@ object is always available):
 The following information is available in the `z_thermal_adjust` object (this
 object is available if [z_thermal_adjust](Config_Reference.md#z_thermal_adjust)
 is defined).
-
 - `enabled`: Returns True if adjustment is enabled.
 - `temperature`: Current (smoothed) temperature of the defined sensor. [degC]
 - `measured_min_temp`: Minimum measured temperature. [degC]
@@ -592,6 +548,5 @@ is defined).
 
 The following information is available in the `z_tilt` object (this
 object is available if z_tilt is defined):
-
 - `applied`: True if the z-tilt leveling process has been run and completed
   successfully.
