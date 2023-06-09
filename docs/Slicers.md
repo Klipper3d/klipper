@@ -87,3 +87,39 @@ Klipper's maximum extrusion cross-section check.
 
 In contrast, it is okay (and often helpful) to use a slicer's
 "retract" setting, "wipe" setting, and/or "wipe on retract" setting.
+
+## START_PRINT macros
+
+When using a START_PRINT macro or similar, it is useful to sometimes
+pass through parameters from the slicer variables to the macro.
+
+In Cura, to pass through temperatures, the following start gcode
+would be used:
+
+```
+START_PRINT BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0}
+```
+
+In slic3r derivatives such as PrusaSlicer and SuperSlicer, the
+following would be used:
+
+```
+START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]
+```
+
+Also note that these slicers will insert their own heating codes when
+certain conditions are not met. In Cura, the existence of the
+`{material_bed_temperature_layer_0}` and `{material_print_temperature_layer_0}`
+variables is enough to mitigate this. In slic3r derivatives,
+you would use:
+
+```
+M140 S0
+M104 S0
+```
+
+before the macro call. Also note that SuperSlicer has a
+"custom gcode only" button option, which achieves the same outcome.
+
+An example of a START_PRINT macro using these paramaters can
+be found in config/sample-macros.cfg

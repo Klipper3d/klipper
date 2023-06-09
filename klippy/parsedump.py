@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Script to parse a serial port data dump
 #
 # Copyright (C) 2016  Kevin O'Connor <kevin@koconnor.net>
@@ -25,13 +25,13 @@ def main():
 
     f = open(data_filename, "rb")
     fd = f.fileno()
-    data = ""
-    while True:
+    data = bytearray()
+    while 1:
         newdata = os.read(fd, 4096)
         if not newdata:
             break
-        data += newdata
-        while True:
+        data += bytearray(newdata)
+        while 1:
             l = mp.check_packet(data)
             if l == 0:
                 break
@@ -39,7 +39,7 @@ def main():
                 logging.error("Invalid data")
                 data = data[-l:]
                 continue
-            msgs = mp.dump(bytearray(data[:l]))
+            msgs = mp.dump(data[:l])
             sys.stdout.write("\n".join(msgs[1:]) + "\n")
             data = data[l:]
 

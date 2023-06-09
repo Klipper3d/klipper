@@ -29,9 +29,6 @@ DECL_CONSTANT_STR("BUS_PINS_spi2a", "PC2,PC3,PB10");
 #endif
 
 #ifdef SPI3
-DECL_ENUMERATION("spi_bus", "spi3", __COUNTER__);
-DECL_CONSTANT_STR("BUS_PINS_spi3", "PB4,PB5,PB3");
-
 DECL_ENUMERATION("spi_bus", "spi3a", __COUNTER__);
 DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
 #endif
@@ -67,7 +64,6 @@ static const struct spi_info spi_bus[] = {
     { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), GPIO_FUNCTION(5) },
 #endif
 #ifdef SPI3
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
     { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), GPIO_FUNCTION(6) },
 #endif
 #ifdef SPI4

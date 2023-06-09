@@ -126,6 +126,13 @@ class PrinterStepperEnable:
             logging.info("%s has been manually disabled", stepper)
         toolhead.dwell(DISABLE_STALL_TIME)
 
+    def get_status(self, eventtime):
+        steppers = {
+            name: et.is_motor_enabled()
+            for (name, et) in self.enable_lines.items()
+        }
+        return {"steppers": steppers}
+
     def _handle_request_restart(self, print_time):
         self.motor_off()
 

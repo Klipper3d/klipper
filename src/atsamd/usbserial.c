@@ -5,11 +5,9 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "autoconf.h" // CONFIG_FLASH_START
+#include "autoconf.h" // CONFIG_MACH_SAMD21
 #include "board/armcm_boot.h" // armcm_enable_irq
-#include "board/io.h" // readl
-#include "board/irq.h" // irq_disable
-#include "board/misc.h" // bootloader_request
+#include "board/io.h" // writeb
 #include "board/usb_cdc.h" // usb_notify_ep0
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "command.h" // DECL_CONSTANT_STR
@@ -172,21 +170,6 @@ usb_set_configure(void)
         USB_DEVICE_EPINTENSET_TRCPT0 | USB_DEVICE_EPINTENSET_TRCPT1);
 }
 
-void
-bootloader_request(void)
-{
-    if (!CONFIG_FLASH_START)
-        return;
-    // Bootloader hack
-    irq_disable();
-#if CONFIG_MACH_SAMD21
-    writel((void*)0x20007FFC, 0x07738135);
-#elif CONFIG_MACH_SAMD51
-    writel((void*)(HSRAM_ADDR + HSRAM_SIZE - 4), 0xf01669ef);
-#endif
-    NVIC_SystemReset();
-}
-
 
 /****************************************************************
  * Setup and interrupts
@@ -253,7 +236,7 @@ usbserial_init(void)
     USB->DEVICE.INTENSET.reg = USB_DEVICE_INTENSET_EORST;
 #if CONFIG_MACH_SAMD21
     armcm_enable_irq(USB_Handler, USB_IRQn, 1);
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
     armcm_enable_irq(USB_Handler, USB_0_IRQn, 1);
     armcm_enable_irq(USB_Handler, USB_1_IRQn, 1);
     armcm_enable_irq(USB_Handler, USB_2_IRQn, 1);

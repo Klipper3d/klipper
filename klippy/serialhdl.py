@@ -264,6 +264,9 @@ class SerialReader:
     def get_msgparser(self):
         return self.msgparser
 
+    def get_serialqueue(self):
+        return self.serialqueue
+
     def get_default_command_queue(self):
         return self.default_cmd_queue
 

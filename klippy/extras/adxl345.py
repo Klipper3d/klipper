@@ -30,7 +30,8 @@ ADXL345_DEV_ID = 0xE5
 SET_FIFO_CTL = 0x90
 
 FREEFALL_ACCEL = 9.80665 * 1000.0
-SCALE = 0.0039 * FREEFALL_ACCEL  # 3.9mg/LSB * Earth gravity in mm/s**2
+SCALE_XY = 0.003774 * FREEFALL_ACCEL  # 1 / 265 (at 3.3V) mg/LSB
+SCALE_Z = 0.003906 * FREEFALL_ACCEL  # 1 / 256 (at 3.3V) mg/LSB
 
 Accel_Measurement = collections.namedtuple(
     "Accel_Measurement", ("time", "accel_x", "accel_y", "accel_z")
@@ -289,12 +290,12 @@ class ADXL345:
         AccelCommandHelper(config, self)
         self.query_rate = 0
         am = {
-            "x": (0, SCALE),
-            "y": (1, SCALE),
-            "z": (2, SCALE),
-            "-x": (0, -SCALE),
-            "-y": (1, -SCALE),
-            "-z": (2, -SCALE),
+            "x": (0, SCALE_XY),
+            "y": (1, SCALE_XY),
+            "z": (2, SCALE_Z),
+            "-x": (0, -SCALE_XY),
+            "-y": (1, -SCALE_XY),
+            "-z": (2, -SCALE_Z),
         }
         axes_map = config.getlist("axes_map", ("x", "y", "z"), count=3)
         if any([a not in am for a in axes_map]):

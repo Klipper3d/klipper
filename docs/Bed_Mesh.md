@@ -1,8 +1,8 @@
 # Bed Mesh
 
-The Bed Mesh module may be used to compensate for bed surface irregularties to
-achieve a better first layer across the entire bed.  It should be noted that
-software based correction will not achieve perfect results, it can only
+The Bed Mesh module may be used to compensate for bed surface irregularities
+to achieve a better first layer across the entire bed.  It should be noted
+that software based correction will not achieve perfect results, it can only
 approximate the shape of the bed.  Bed Mesh also cannot compensate for
 mechanical and electrical issues.  If an axis is skewed or a probe is not
 accurate then the bed_mesh module will not receive accurate results from
@@ -46,7 +46,7 @@ probe_count: 5, 3
   _Required_\
   The probed coordinate farthest farthest from the origin.  This is not
   necessarily the last point probed, as the probing process occurs in a
-  zig-zag fashion.  As with `mesh_min`, this coordiante is relative to
+  zig-zag fashion.  As with `mesh_min`, this coordinate is relative to
   the probe's location.
 
 - `probe_count: 5, 3`\
@@ -101,7 +101,7 @@ round_probe_count: 5
   that the center of the mesh is probed.
 
 The illustration below shows how the probed points are generated.  As you can see,
-setting the `mesh_origin` to (-10, 0) allows us to specifiy a larger mesh radius
+setting the `mesh_origin` to (-10, 0) allows us to specify a larger mesh radius
 of 85.
 
 ![bedmesh_round_basic](img/bedmesh_round_basic.svg)
@@ -114,7 +114,7 @@ Each of the advanced options apply to round beds in the same manner.
 
 ### Mesh Interpolation
 
-While its possible to sample the probed matrix directly using simple bilinear
+While its possible to sample the probed matrix directly using simple bi-linear
 interpolation to determine the Z-Values between probed points, it is often
 useful to interpolate extra points using more advanced interpolation algorithms
 to increase mesh density.  These algorithms add curvature to the mesh,
@@ -207,7 +207,7 @@ split_delta_z: .025
 Generally the default values for these options are sufficient, in fact the
 default value of 5mm for the `move_check_distance` may be overkill. However an
 advanced user may wish to experiment with these options in an effort to squeeze
-out the optimial first layer.
+out the optimal first layer.
 
 ### Mesh Fade
 
@@ -255,17 +255,17 @@ fade_target: 0
   example,  lets assume your homing position on the bed is an outlier, its
   .2 mm lower than the average probed height of the bed.  If the `fade_target`
   is 0, fade will shrink the print by an average of .2 mm across the bed.  By
-  setting the `fade_target` to .2, the homed area will expand by .2 mm, however
-  the rest of the bed will have an accurately sized.  Generally its a good idea
+  setting the `fade_target` to .2, the homed area will expand by .2 mm, however,
+  the rest of the bed will be accurately sized.  Generally its a good idea
   to leave `fade_target` out of the configuration so the average height of the
   mesh is used, however it may be desirable to manually adjust the fade target
   if one wants to print on a specific portion of the bed.
 
 ### The Relative Reference Index
 
-Most probes are suceptible to drift, ie: inaccuracies in probing introduced by
+Most probes are susceptible to drift, ie: inaccuracies in probing introduced by
 heat or interference.  This can make calculating the probe's z-offset
-challenging, particuarly at different bed temperatures.  As such, some printers
+challenging, particularly at different bed temperatures.  As such, some printers
 use an endstop for homing the Z axis, and a probe for calibrating the mesh.
 These printers can benefit from configuring the relative reference index.
 
@@ -371,7 +371,7 @@ following parameters are available:
   - `MESH_ORIGIN`
   - `ROUND_PROBE_COUNT`
 - All beds:
-  - `RELATIVE_REFERNCE_INDEX`
+  - `RELATIVE_REFERENCE_INDEX`
   - `ALGORITHM`
 
 See the configuration documentation above for details on how each parameter
@@ -390,14 +390,32 @@ to write the profile to printer.cfg.
 Profiles can be loaded by executing `BED_MESH_PROFILE LOAD=<name>`.
 
 It should be noted that each time a BED_MESH_CALIBRATE occurs, the current
-state is automatically saved to the _default_ profile.  If this profile
-exists it is automatically loaded when Klipper starts.  If this behavior
-is not desirable the _default_ profile can be removed as follows:
+state is automatically saved to the _default_ profile. The _default_ profile can be removed as follows:
 
 `BED_MESH_PROFILE REMOVE=default`
 
 Any other saved profile can be removed in the same fashion, replacing
 _default_ with the named profile you wish to remove.
+
+
+#### Loading the default profile
+
+Previous versions of `bed_mesh` always loaded the profile named _default_
+on startup if it was present.  This behavior has been removed in favor of
+allowing the user to determine when a profile is loaded.  If a user wishes to
+load the `default` profile it is recommended to add
+`BED_MESH_PROFILE LOAD=default` to either their `START_PRINT` macro or their
+slicer's "Start G-Code" configuration, whichever is applicable.
+
+Alternatively the old behavior of loading a profile at startup can be
+restored with a `[delayed_gcode]`:
+
+```ini
+[delayed_gcode bed_mesh_init]
+initial_duration: .01
+gcode:
+  BED_MESH_PROFILE LOAD=default
+```
 
 ### Output
 

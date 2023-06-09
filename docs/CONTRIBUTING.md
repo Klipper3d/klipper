@@ -62,6 +62,10 @@ Common things a reviewer will look for:
 
    Submissions must pass all [regression test cases](Debugging.md).
 
+   When fixing a defect in the code, submitters should have a general
+   understanding of the root cause of that defect, and the fix should
+   target that root cause.
+
    Code submissions should not contain excessive debugging code,
    debugging options, nor run-time debug logging.
 
@@ -249,8 +253,8 @@ The Klipper "reviewers" are:
 | ---------------------- | ----------------- | ----------------- |
 | Dmitry Butyugin        | @dmbutyugin       | Input shaping, resonance testing, kinematics |
 | Eric Callahan          | @Arksine          | Bed leveling, MCU flashing |
+| James Hartley          | @JamesH1978       | Configuration files |
 | Kevin O'Connor         | @KevinOConnor     | Core motion system, Micro-controller code |
-| Paul McGowan           | @mental405        | Configuration files, documentation |
 
 Please do not "ping" any of the reviewers and please do not direct
 submissions at them. All of the reviewers monitor the forums and PRs,

@@ -4,7 +4,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
+import math, logging
 from . import bus
 
 
@@ -13,6 +13,7 @@ from . import bus
 ######################################################################
 
 REPORT_TIME = 0.300
+MAX_INVALID_COUNT = 3
 
 
 class SensorBase:
@@ -55,26 +56,30 @@ class SensorBase:
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
         self.mcu.add_config_cmd(
             "query_thermocouple oid=%u clock=%u rest_ticks=%u"
-            " min_value=%u max_value=%u"
+            " min_value=%u max_value=%u max_invalid_count=%u"
             % (
                 self.oid,
                 clock,
                 self._report_clock,
                 self.min_sample_value,
                 self.max_sample_value,
+                MAX_INVALID_COUNT,
             ),
             is_init=True,
         )
 
     def _handle_spi_response(self, params):
-        temp = self.calc_temp(params["value"], params["fault"])
+        if params["fault"]:
+            self.handle_fault(params["value"], params["fault"])
+            return
+        temp = self.calc_temp(params["value"])
         next_clock = self.mcu.clock32_to_clock64(params["next_clock"])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self.mcu.clock_to_print_time(last_read_clock)
         self._callback(last_read_time, temp)
 
-    def fault(self, msg):
-        self.printer.invoke_async_shutdown(msg)
+    def report_fault(self, msg):
+        logging.warn(msg)
 
 
 ######################################################################
@@ -140,23 +145,25 @@ class MAX31856(SensorBase):
             self, config, "MAX31856", self.build_spi_init(config)
         )
 
-    def calc_temp(self, adc, fault):
+    def handle_fault(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
-            self.fault("Max31856: Cold Junction Range Fault")
+            self.report_fault("Max31856: Cold Junction Range Fault")
         if fault & MAX31856_FAULT_TCRANGE:
-            self.fault("Max31856: Thermocouple Range Fault")
+            self.report_fault("Max31856: Thermocouple Range Fault")
         if fault & MAX31856_FAULT_CJHIGH:
-            self.fault("Max31856: Cold Junction High Fault")
+            self.report_fault("Max31856: Cold Junction High Fault")
         if fault & MAX31856_FAULT_CJLOW:
-            self.fault("Max31856: Cold Junction Low Fault")
+            self.report_fault("Max31856: Cold Junction Low Fault")
         if fault & MAX31856_FAULT_TCHIGH:
-            self.fault("Max31856: Thermocouple High Fault")
+            self.report_fault("Max31856: Thermocouple High Fault")
         if fault & MAX31856_FAULT_TCLOW:
-            self.fault("Max31856: Thermocouple Low Fault")
+            self.report_fault("Max31856: Thermocouple Low Fault")
         if fault & MAX31856_FAULT_OVUV:
-            self.fault("Max31856: Over/Under Voltage Fault")
+            self.report_fault("Max31856: Over/Under Voltage Fault")
         if fault & MAX31856_FAULT_OPEN:
-            self.fault("Max31856: Thermocouple Open Fault")
+            self.report_fault("Max31856: Thermocouple Open Fault")
+
+    def calc_temp(self, adc):
         adc = adc >> MAX31856_SCALE
         # Fix sign bit:
         if adc & 0x40000:
@@ -218,13 +225,15 @@ class MAX31855(SensorBase):
     def __init__(self, config):
         SensorBase.__init__(self, config, "MAX31855", spi_mode=0)
 
-    def calc_temp(self, adc, fault):
-        if adc & 0x1:
-            self.fault("MAX31855 : Open Circuit")
-        if adc & 0x2:
-            self.fault("MAX31855 : Short to GND")
-        if adc & 0x4:
-            self.fault("MAX31855 : Short to Vcc")
+    def handle_fault(self, adc, fault):
+        if fault & 0x1:
+            self.report_fault("MAX31855 : Open Circuit")
+        if fault & 0x2:
+            self.report_fault("MAX31855 : Short to GND")
+        if fault & 0x4:
+            self.report_fault("MAX31855 : Short to Vcc")
+
+    def calc_temp(self, adc):
         adc = adc >> MAX31855_SCALE
         # Fix sign bit:
         if adc & 0x2000:
@@ -250,11 +259,13 @@ class MAX6675(SensorBase):
     def __init__(self, config):
         SensorBase.__init__(self, config, "MAX6675", spi_mode=0)
 
-    def calc_temp(self, adc, fault):
-        if adc & 0x02:
-            self.fault("Max6675 : Device ID error")
-        if adc & 0x04:
-            self.fault("Max6675 : Thermocouple Open Fault")
+    def handle_fault(self, adc, fault):
+        if fault & 0x02:
+            self.report_fault("Max6675 : Device ID error")
+        if fault & 0x04:
+            self.report_fault("Max6675 : Thermocouple Open Fault")
+
+    def calc_temp(self, adc):
         adc = adc >> MAX6675_SCALE
         # Fix sign bit:
         if adc & 0x2000:
@@ -308,27 +319,34 @@ class MAX31865(SensorBase):
         rtd_reference_r = config.getfloat("rtd_reference_r", 430.0, above=0.0)
         adc_to_resist = rtd_reference_r / float(MAX31865_ADC_MAX)
         self.adc_to_resist_div_nominal = adc_to_resist / rtd_nominal_r
-        SensorBase.__init__(
-            self, config, "MAX31865", self.build_spi_init(config)
-        )
+        self.config_reg = self.build_spi_init(config)
+        SensorBase.__init__(self, config, "MAX31865", self.config_reg)
 
-    def calc_temp(self, adc, fault):
+    def handle_fault(self, adc, fault):
         if fault & 0x80:
-            self.fault("Max31865 RTD input is disconnected")
+            self.report_fault("Max31865 RTD input is disconnected")
         if fault & 0x40:
-            self.fault("Max31865 RTD input is shorted")
+            self.report_fault("Max31865 RTD input is shorted")
         if fault & 0x20:
-            self.fault(
+            self.report_fault(
                 "Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open"
             )
         if fault & 0x10:
-            self.fault("Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open")
+            self.report_fault(
+                "Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open"
+            )
         if fault & 0x08:
-            self.fault("Max31865 VRTD- is less than 0.85 * VBIAS, FORCE- open")
+            self.report_fault(
+                "Max31865 VRTD- is less than 0.85 * VBIAS, FORCE- open"
+            )
         if fault & 0x04:
-            self.fault("Max31865 Overvoltage or undervoltage fault")
-        if fault & 0x03:
-            self.fault("Max31865 Unspecified error")
+            self.report_fault("Max31865 Overvoltage or undervoltage fault")
+        if not fault & 0xFC:
+            self.report_fault("Max31865 Unspecified error")
+        # Attempt to clear the fault
+        self.spi.spi_send(self.config_reg)
+
+    def calc_temp(self, adc):
         adc = adc >> 1  # remove fault bit
         R_div_nominal = adc * self.adc_to_resist_div_nominal
         # Resistance (relative to rtd_nominal_r) is calculated using:

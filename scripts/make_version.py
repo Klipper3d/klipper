@@ -22,7 +22,7 @@ def main(argv):
     )
     args = p.parse_args()
     print(
-        util.get_git_version(from_file=False),
+        util.get_git_version(from_file=False)["version"],
         args.distroname.replace(" ", ""),
         sep="-",
     )

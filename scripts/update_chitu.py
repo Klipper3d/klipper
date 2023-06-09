@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Encodes STM32 firmwares to be flashable from SD card by Chitu motherboards.
 # Relocate firmware to 0x08008800!
 

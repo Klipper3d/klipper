@@ -233,6 +233,9 @@ class MCU_TMC2660_SPI:
         with self.mutex:
             self.spi.spi_send(msg, minclock)
 
+    def get_tmc_frequency(self):
+        return None
+
 
 ######################################################################
 # TMC2660 printer object

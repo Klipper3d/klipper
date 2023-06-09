@@ -379,7 +379,7 @@ class BME280:
             )
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
-        return measured_time + REPORT_TIME * 4
+        return measured_time + REPORT_TIME
 
     def _compensate_temp(self, raw_temp):
         dig = self.dig

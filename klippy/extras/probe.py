@@ -249,6 +249,7 @@ class PrinterProbe:
 
     def get_status(self, eventtime):
         return {
+            "name": self.name,
             "last_query": self.last_state,
             "last_z_result": self.last_z_result,
         }
@@ -461,7 +462,8 @@ class ProbePointsHelper:
             self.probe_points = config.getlists(
                 "points", seps=(",", "\n"), parser=float, count=2
             )
-        self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
+        def_move_z = config.getfloat("horizontal_move_z", 5.0)
+        self.default_horizontal_move_z = def_move_z
         self.speed = config.getfloat("speed", 50.0, above=0.0)
         self.use_offsets = False
         # Internal probing state
@@ -514,6 +516,8 @@ class ProbePointsHelper:
         probe = self.printer.lookup_object("probe", None)
         method = gcmd.get("METHOD", "automatic").lower()
         self.results = []
+        def_move_z = self.default_horizontal_move_z
+        self.horizontal_move_z = gcmd.get_float("HORIZONTAL_MOVE_Z", def_move_z)
         if probe is None or method != "automatic":
             # Manual probe
             self.lift_speed = self.speed

@@ -12,7 +12,26 @@
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 
-#if CONFIG_MACH_SAMD21
+#if CONFIG_MACH_SAMC21
+
+#define ADC_INPUTCTRL_MUXNEG_GND 0x18
+
+#define SAMD51_ADC_SYNC(ADC, BIT) \
+    while(ADC->SYNCBUSY.reg & ADC_SYNCBUSY_ ## BIT)
+static const uint8_t adc_pins[] = {
+    /* ADC0 */
+    GPIO('A', 2), GPIO('A', 3), GPIO('B', 8), GPIO('B', 9), GPIO('A', 4),
+    GPIO('A', 5), GPIO('A', 6), GPIO('A', 7), GPIO('A', 8), GPIO('A', 9),
+    GPIO('A', 10), GPIO('A', 11),
+    /* Padding to 16 */
+    255, 255, 255, 255,
+    /* ADC1 */
+    GPIO('B', 0), GPIO('B', 1), GPIO('B', 2), GPIO('B', 3), GPIO('B', 8),
+    GPIO('B', 9), GPIO('B', 4), GPIO('B', 5), GPIO('B', 6), GPIO('B', 7),
+    GPIO('A', 8), GPIO('A', 9)
+};
+
+#elif CONFIG_MACH_SAMD21
 
 #define SAMD51_ADC_SYNC(ADC, BIT)
 static const uint8_t adc_pins[] = {
@@ -21,7 +40,8 @@ static const uint8_t adc_pins[] = {
     GPIO('B', 2), GPIO('B', 3), GPIO('B', 4), GPIO('B', 5), GPIO('B', 6),
     GPIO('B', 7), GPIO('A', 8), GPIO('A', 9), GPIO('A', 10), GPIO('A', 11)
 };
-#elif CONFIG_MACH_SAMD51
+
+#elif CONFIG_MACH_SAMX5
 
 #define SAMD51_ADC_SYNC(ADC, BIT) \
     while(ADC->SYNCBUSY.reg & ADC_SYNCBUSY_ ## BIT)
@@ -53,7 +73,7 @@ static struct gpio_adc gpio_adc_pin_to_struct(uint8_t pin)
     }
 #if CONFIG_MACH_SAMD21
     Adc* reg = ADC;
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMC21 || CONFIG_MACH_SAMX5
     Adc* reg = (chan < 16 ? ADC0 : ADC1);
     chan %= 16;
 #endif
@@ -69,7 +89,38 @@ adc_init(void)
         return;
     have_run_init = 1;
 
-#if CONFIG_MACH_SAMD21
+#if CONFIG_MACH_SAMC21
+    // Enable adc clock
+    enable_pclock(ADC0_GCLK_ID, ID_ADC0);
+    enable_pclock(ADC1_GCLK_ID, ID_ADC1);
+
+    // Load calibration info
+    // ADC0
+    uint32_t refbuf = GET_FUSE(ADC0_FUSES_BIASREFBUF);
+    uint32_t comp = GET_FUSE(ADC0_FUSES_BIASCOMP);
+    ADC0->CALIB.reg = (ADC0_FUSES_BIASREFBUF(refbuf)
+                       | ADC0_FUSES_BIASCOMP(comp));
+
+    // ADC1
+    refbuf = GET_FUSE(ADC1_FUSES_BIASREFBUF);
+    comp = GET_FUSE(ADC1_FUSES_BIASCOMP);
+    ADC1->CALIB.reg = (ADC0_FUSES_BIASREFBUF(refbuf)
+                       | ADC0_FUSES_BIASCOMP(comp));
+
+    // Setup and enable
+    // ADC0
+    ADC0->REFCTRL.reg = ADC_REFCTRL_REFSEL_INTVCC1;
+    ADC0->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV128;
+    ADC0->SAMPCTRL.reg = ADC_SAMPCTRL_SAMPLEN(63);
+    ADC0->CTRLA.reg = ADC_CTRLA_ENABLE;
+
+    // ADC1
+    ADC1->REFCTRL.reg = ADC_REFCTRL_REFSEL_INTVCC1;
+    ADC1->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV128;
+    ADC1->SAMPCTRL.reg = ADC_SAMPCTRL_SAMPLEN(63);
+    ADC1->CTRLA.reg = ADC_CTRLA_ENABLE;
+
+#elif CONFIG_MACH_SAMD21
     // Enable adc clock
     enable_pclock(ADC_GCLK_ID, ID_ADC);
     // Load calibraiton info
@@ -85,7 +136,7 @@ adc_init(void)
     ADC->SAMPCTRL.reg = 63;
     ADC->CTRLA.reg = ADC_CTRLA_ENABLE;
 
-#elif CONFIG_MACH_SAMD51
+#elif CONFIG_MACH_SAMX5
     // Enable adc clock
     enable_pclock(ADC0_GCLK_ID, ID_ADC0);
     enable_pclock(ADC1_GCLK_ID, ID_ADC1);
@@ -135,7 +186,7 @@ gpio_adc_setup(uint8_t pin)
         SYSCTRL->VREF.reg |= SYSCTRL_VREF_TSEN;
         return (struct gpio_adc){ .regs=ADC,
                 .chan=ADC_INPUTCTRL_MUXPOS_TEMP_Val };
-#else
+#elif CONFIG_MACH_SAMX5
         SUPC->VREF.reg |= SUPC_VREF_TSEN;
         return (struct gpio_adc){ .regs=ADC0,
                 .chan=ADC_INPUTCTRL_MUXPOS_PTAT_Val };

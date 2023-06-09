@@ -4,10 +4,11 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include </usr/include/sched.h> // sched_setscheduler
+#include </usr/include/sched.h> // sched_setscheduler sched_get_priority_max
 #include <stdio.h> // fprintf
 #include <string.h> // memset
 #include <unistd.h> // getopt
+#include <sys/mman.h> // mlockall MCL_CURRENT MCL_FUTURE
 #include "board/misc.h" // console_sendf
 #include "command.h" // DECL_CONSTANT
 #include "internal.h" // console_setup
@@ -25,10 +26,16 @@ realtime_setup(void)
 {
     struct sched_param sp;
     memset(&sp, 0, sizeof(sp));
-    sp.sched_priority = 1;
+    sp.sched_priority = sched_get_priority_max(SCHED_FIFO) / 2;
     int ret = sched_setscheduler(0, SCHED_FIFO, &sp);
     if (ret < 0) {
         report_errno("sched_setscheduler", ret);
+        return -1;
+    }
+    // Lock ourselves into memory
+    ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+    if (ret) {
+        report_errno("mlockall", ret);
         return -1;
     }
     return 0;
@@ -62,7 +69,8 @@ main(int argc, char **argv)
     // Parse program args
     orig_argv = argv;
     int opt, watchdog = 0, realtime = 0;
-    while ((opt = getopt(argc, argv, "wr")) != -1) {
+    char *serial = "/tmp/klipper_host_mcu";
+    while ((opt = getopt(argc, argv, "wrI:")) != -1) {
         switch (opt) {
         case 'w':
             watchdog = 1;
@@ -70,8 +78,11 @@ main(int argc, char **argv)
         case 'r':
             realtime = 1;
             break;
+        case 'I':
+            serial = optarg;
+            break;
         default:
-            fprintf(stderr, "Usage: %s [-w] [-r]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-w] [-r] [-I path]\n", argv[0]);
             return -1;
         }
     }
@@ -82,7 +93,7 @@ main(int argc, char **argv)
         if (ret)
             return ret;
     }
-    int ret = console_setup("/tmp/klipper_host_mcu");
+    int ret = console_setup(serial);
     if (ret)
         return -1;
     if (watchdog) {

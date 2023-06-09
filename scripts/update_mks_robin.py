@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to update firmware for MKS Robin bootloader
 #
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>

@@ -23,6 +23,7 @@ class ExtruderStepper:
             ffi_lib.extruder_stepper_alloc(), ffi_lib.free
         )
         self.stepper.set_stepper_kinematics(self.sk_extruder)
+        self.motion_queue = None
         # Register commands
         self.printer.register_event_handler(
             "klippy:connect", self._handle_connect
@@ -81,6 +82,7 @@ class ExtruderStepper:
         return {
             "pressure_advance": self.pressure_advance,
             "smooth_time": self.pressure_advance_smooth_time,
+            "motion_queue": self.motion_queue,
         }
 
     def find_past_position(self, print_time):
@@ -92,6 +94,7 @@ class ExtruderStepper:
         toolhead.flush_step_generation()
         if not extruder_name:
             self.stepper.set_trapq(None)
+            self.motion_queue = None
             return
         extruder = self.printer.lookup_object(extruder_name, None)
         if extruder is None or not isinstance(extruder, PrinterExtruder):
@@ -100,6 +103,7 @@ class ExtruderStepper:
             )
         self.stepper.set_position([extruder.last_position, 0.0, 0.0])
         self.stepper.set_trapq(extruder.get_trapq())
+        self.motion_queue = extruder_name
 
     def _set_pressure_advance(self, pressure_advance, smooth_time):
         old_smooth_time = self.pressure_advance_smooth_time
@@ -179,7 +183,9 @@ class ExtruderStepper:
     def cmd_SYNC_EXTRUDER_MOTION(self, gcmd):
         ename = gcmd.get("MOTION_QUEUE")
         self.sync_to_extruder(ename)
-        gcmd.respond_info("Extruder stepper now syncing with '%s'" % (ename,))
+        gcmd.respond_info(
+            "Extruder '%s' now syncing with '%s'" % (self.name, ename)
+        )
 
     cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
 
@@ -201,7 +207,9 @@ class ExtruderStepper:
     def cmd_SYNC_STEPPER_TO_EXTRUDER(self, gcmd):
         ename = gcmd.get("EXTRUDER")
         self.sync_to_extruder(ename)
-        gcmd.respond_info("Extruder stepper now syncing with '%s'" % (ename,))
+        gcmd.respond_info(
+            "Extruder '%s' now syncing with '%s'" % (self.name, ename)
+        )
 
 
 # Tracking for hotend heater, extrusion motion queue, and extruder stepper

@@ -10,7 +10,14 @@ import numpy
 MIN_MSG_TIME = 0.100
 TCODE_ERROR = 0xFF
 
-TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2660", "tmc5160"]
+TRINAMIC_DRIVERS = [
+    "tmc2130",
+    "tmc2208",
+    "tmc2209",
+    "tmc2240",
+    "tmc2660",
+    "tmc5160",
+]
 
 CALIBRATION_BITS = 6  # 64 entries
 ANGLE_BITS = 16  # angles range from 0..65535

@@ -5,7 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import logging
-import os
 import serial
 
 from serial import SerialException
@@ -240,9 +239,8 @@ class Palette2:
     def _wait_for_heartbeat(self):
         startTs = self.reactor.monotonic()
         currTs = startTs
-        while (
-            self.heartbeat is None
-            and self.heartbeat < (currTs - SETUP_TIMEOUT)
+        while self.heartbeat is None or (
+            self.heartbeat < (currTs - SETUP_TIMEOUT)
             and startTs > (currTs - SETUP_TIMEOUT)
         ):
             currTs = self.reactor.pause(currTs + 1.0)
@@ -427,9 +425,7 @@ class Palette2:
         if len(params) > 1:
             try:
                 fw = params[0][1:]
-                logging.info(
-                    "Palette 2 firmware version %s detected" % os.fwalk
-                )
+                logging.info("Palette 2 firmware version %s detected" % fw)
             except (TypeError, IndexError):
                 logging.error("Unable to parse firmware version")
 
@@ -651,6 +647,7 @@ class Palette2:
                     logging.error("Unable to communicate with the Palette 2")
                     self.signal_disconnect = True
                     return self.reactor.NEVER
+                return eventtime + SERIAL_TIMER
         return eventtime + SERIAL_TIMER
 
     def _run_Smart_Load(self, eventtime):

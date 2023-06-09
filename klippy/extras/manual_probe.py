@@ -17,10 +17,26 @@ class ManualProbe:
             self.cmd_MANUAL_PROBE,
             desc=self.cmd_MANUAL_PROBE_help,
         )
+        # Endstop value for cartesian printers with separate Z axis
         zconfig = config.getsection("stepper_z")
         self.z_position_endstop = zconfig.getfloat(
             "position_endstop", None, note_valid=False
         )
+        # Endstop values for linear delta printers with vertical A,B,C towers
+        a_tower_config = config.getsection("stepper_a")
+        self.a_position_endstop = a_tower_config.getfloat(
+            "position_endstop", None, note_valid=False
+        )
+        b_tower_config = config.getsection("stepper_b")
+        self.b_position_endstop = b_tower_config.getfloat(
+            "position_endstop", None, note_valid=False
+        )
+        c_tower_config = config.getsection("stepper_c")
+        self.c_position_endstop = c_tower_config.getfloat(
+            "position_endstop", None, note_valid=False
+        )
+        # Conditionally register appropriate commands depending on printer
+        # Cartestian printers with separate Z Axis
         if self.z_position_endstop is not None:
             self.gcode.register_command(
                 "Z_ENDSTOP_CALIBRATE",
@@ -30,6 +46,13 @@ class ManualProbe:
             self.gcode.register_command(
                 "Z_OFFSET_APPLY_ENDSTOP",
                 self.cmd_Z_OFFSET_APPLY_ENDSTOP,
+                desc=self.cmd_Z_OFFSET_APPLY_ENDSTOP_help,
+            )
+        # Linear delta printers with A,B,C towers
+        if "delta" == config.getsection("printer").get("kinematics"):
+            self.gcode.register_command(
+                "Z_OFFSET_APPLY_ENDSTOP",
+                self.cmd_Z_OFFSET_APPLY_DELTA_ENDSTOPS,
                 desc=self.cmd_Z_OFFSET_APPLY_ENDSTOP_help,
             )
         self.reset_status()
@@ -85,6 +108,33 @@ class ManualProbe:
             )
             configfile.set(
                 "stepper_z", "position_endstop", "%.3f" % (new_calibrate,)
+            )
+
+    def cmd_Z_OFFSET_APPLY_DELTA_ENDSTOPS(self, gcmd):
+        offset = self.gcode_move.get_status()["homing_origin"].z
+        configfile = self.printer.lookup_object("configfile")
+        if offset == 0:
+            self.gcode.respond_info("Nothing to do: Z Offset is 0")
+        else:
+            new_a_calibrate = self.a_position_endstop - offset
+            new_b_calibrate = self.b_position_endstop - offset
+            new_c_calibrate = self.c_position_endstop - offset
+            self.gcode.respond_info(
+                "stepper_a: position_endstop: %.3f\n"
+                "stepper_b: position_endstop: %.3f\n"
+                "stepper_c: position_endstop: %.3f\n"
+                "The SAVE_CONFIG command will update the printer config file\n"
+                "with the above and restart the printer."
+                % (new_a_calibrate, new_b_calibrate, new_c_calibrate)
+            )
+            configfile.set(
+                "stepper_a", "position_endstop", "%.3f" % (new_a_calibrate,)
+            )
+            configfile.set(
+                "stepper_b", "position_endstop", "%.3f" % (new_b_calibrate,)
+            )
+            configfile.set(
+                "stepper_c", "position_endstop", "%.3f" % (new_c_calibrate,)
             )
 
     cmd_Z_OFFSET_APPLY_ENDSTOP_help = "Adjust the z endstop_position"

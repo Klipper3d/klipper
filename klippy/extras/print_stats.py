@@ -11,6 +11,13 @@ class PrintStats:
         self.gcode_move = printer.load_object(config, "gcode_move")
         self.reactor = printer.get_reactor()
         self.reset()
+        # Register commands
+        self.gcode = printer.lookup_object("gcode")
+        self.gcode.register_command(
+            "SET_PRINT_STATS_INFO",
+            self.cmd_SET_PRINT_STATS_INFO,
+            desc=self.cmd_SET_PRINT_STATS_INFO_help,
+        )
 
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
@@ -69,6 +76,31 @@ class PrintStats:
             self.init_duration = self.total_duration - self.prev_pause_duration
         self.print_start_time = None
 
+    cmd_SET_PRINT_STATS_INFO_help = (
+        "Pass slicer info like layer act and " "total to klipper"
+    )
+
+    def cmd_SET_PRINT_STATS_INFO(self, gcmd):
+        total_layer = gcmd.get_int(
+            "TOTAL_LAYER", self.info_total_layer, minval=0
+        )
+        current_layer = gcmd.get_int(
+            "CURRENT_LAYER", self.info_current_layer, minval=0
+        )
+        if total_layer == 0:
+            self.info_total_layer = None
+            self.info_current_layer = None
+        elif total_layer != self.info_total_layer:
+            self.info_total_layer = total_layer
+            self.info_current_layer = 0
+
+        if (
+            self.info_total_layer is not None
+            and current_layer is not None
+            and current_layer != self.info_current_layer
+        ):
+            self.info_current_layer = min(current_layer, self.info_total_layer)
+
     def reset(self):
         self.filename = self.error_message = ""
         self.state = "standby"
@@ -76,6 +108,8 @@ class PrintStats:
         self.filament_used = self.total_duration = 0.0
         self.print_start_time = self.last_pause_time = None
         self.init_duration = 0.0
+        self.info_total_layer = None
+        self.info_current_layer = None
 
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration
@@ -98,6 +132,10 @@ class PrintStats:
             "filament_used": self.filament_used,
             "state": self.state,
             "message": self.error_message,
+            "info": {
+                "total_layer": self.info_total_layer,
+                "current_layer": self.info_current_layer,
+            },
         }
 
 

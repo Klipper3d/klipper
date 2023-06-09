@@ -81,6 +81,7 @@ class PrinterTemperatureMCU:
             ("same70", self.config_same70),
             ("samd21", self.config_samd21),
             ("samd51", self.config_samd51),
+            ("same5", self.config_samd51),
             ("stm32f1", self.config_stm32f1),
             ("stm32f2", self.config_stm32f2),
             ("stm32f4", self.config_stm32f4),
@@ -88,6 +89,9 @@ class PrinterTemperatureMCU:
             ("stm32f070", self.config_stm32f070),
             ("stm32f072", self.config_stm32f0x2),
             ("stm32g0", self.config_stm32g0),
+            ("stm32g4", self.config_stm32g0),
+            ("stm32l4", self.config_stm32g0),
+            ("stm32h723", self.config_stm32h723),
             ("stm32h7", self.config_stm32h7),
             ("", self.config_unknown),
         ]
@@ -182,6 +186,12 @@ class PrinterTemperatureMCU:
     def config_stm32g0(self):
         cal_adc_30 = self.read16(0x1FFF75A8) * 3.0 / (3.3 * 4095.0)
         cal_adc_130 = self.read16(0x1FFF75CA) * 3.0 / (3.3 * 4095.0)
+        self.slope = (130.0 - 30.0) / (cal_adc_130 - cal_adc_30)
+        self.base_temperature = self.calc_base(30.0, cal_adc_30)
+
+    def config_stm32h723(self):
+        cal_adc_30 = self.read16(0x1FF1E820) / 4095.0
+        cal_adc_130 = self.read16(0x1FF1E840) / 4095.0
         self.slope = (130.0 - 30.0) / (cal_adc_130 - cal_adc_30)
         self.base_temperature = self.calc_base(30.0, cal_adc_30)
 

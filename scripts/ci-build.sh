@@ -8,6 +8,7 @@ set -eu
 MAIN_DIR=${PWD}
 BUILD_DIR=${PWD}/ci_build
 export PATH=${BUILD_DIR}/pru-gcc/bin:${PATH}
+export PATH=${BUILD_DIR}/or1k-linux-musl-cross/bin:${PATH}
 PYTHON=${BUILD_DIR}/python-env/bin/python
 PYTHON2=${BUILD_DIR}/python2-env/bin/python
 
