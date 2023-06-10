@@ -124,7 +124,7 @@ class PrinterStepperEnable:
         stepper_enable = gcmd.get_int('ENABLE', 1)
         steppers = []
         if steppers_str is None:
-            steppers = None
+            steppers = [None]
         else:
             steppers = steppers_str.split(',')
         for stepper_name in steppers:
