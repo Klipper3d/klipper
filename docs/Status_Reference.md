@@ -185,12 +185,6 @@ The following information is available in
 [gcode_button some_name](Config_Reference.md#gcode_button) objects:
 - `state`: The current button state returned as "PRESSED" or "RELEASED"
 
-## gcode_button
-
-The following information is available in
-[gcode_button some_name](Config_Reference.md#gcode_button) objects:
-- `state`: The current button state returned as "PRESSED" or "RELEASED"
-
 ## gcode_macro
 
 The following information is available in
