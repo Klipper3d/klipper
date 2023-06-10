@@ -96,17 +96,18 @@ class PrinterStepperEnable:
             el.motor_disable(print_time)
         self.printer.send_event("stepper_enable:motor_off", print_time)
         toolhead.dwell(DISABLE_STALL_TIME)
-    def motor_debug_enable(self, stepper, enable):
+    def motor_debug_enable(self, steppers, enable):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.dwell(DISABLE_STALL_TIME)
         print_time = toolhead.get_last_move_time()
-        el = self.enable_lines[stepper]
-        if enable:
-            el.motor_enable(print_time)
-            logging.info("%s has been manually enabled", stepper)
-        else:
-            el.motor_disable(print_time)
-            logging.info("%s has been manually disabled", stepper)
+        for stepper_name in steppers:
+            el = self.enable_lines[stepper_name]
+            if enable:
+                el.motor_enable(print_time)
+                logging.info("%s has been manually enabled", steppers)
+            else:
+                el.motor_disable(print_time)
+                logging.info("%s has been manually disabled", steppers)
         toolhead.dwell(DISABLE_STALL_TIME)
     def get_status(self, eventtime):
         steppers = { name: et.is_motor_enabled()
@@ -119,13 +120,19 @@ class PrinterStepperEnable:
         self.motor_off()
     cmd_SET_STEPPER_ENABLE_help = "Enable/disable individual stepper by name"
     def cmd_SET_STEPPER_ENABLE(self, gcmd):
-        stepper_name = gcmd.get('STEPPER', None)
-        if stepper_name not in self.enable_lines:
-            gcmd.respond_info('SET_STEPPER_ENABLE: Invalid stepper "%s"'
-                              % (stepper_name,))
-            return
+        steppers_str = gcmd.get('STEPPER', None)
         stepper_enable = gcmd.get_int('ENABLE', 1)
-        self.motor_debug_enable(stepper_name, stepper_enable)
+        steppers = []
+        if steppers_str is None:
+            steppers = None
+        else:
+            steppers = steppers_str.split(',')
+        for stepper_name in steppers:
+            if stepper_name not in self.enable_lines:
+                gcmd.respond_info('SET_STEPPER_ENABLE: Invalid stepper "%s"'
+                                  % (stepper_name,))
+                return
+        self.motor_debug_enable(steppers, stepper_enable)
     def lookup_enable(self, name):
         if name not in self.enable_lines:
             raise self.printer.config_error("Unknown stepper '%s'" % (name,))
