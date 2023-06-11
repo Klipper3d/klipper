@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-UPDATE_TEMPERATURE_INTERVALL = 1.0
+UPDATE_TEMPERATURE_INTERVAL = 1.0
 
 
 class PrinterSensorCombined:
@@ -56,7 +56,7 @@ class PrinterSensorCombined:
         self.temperature_callback = temperature_callback
 
     def get_report_time_delta(self):
-        return UPDATE_TEMPERATURE_INTERVALL
+        return UPDATE_TEMPERATURE_INTERVAL
 
     def update_temp(self, eventtime):
         values = []
@@ -82,7 +82,7 @@ class PrinterSensorCombined:
         # update sensor value
         self.update_temp(eventtime)
         self.temperature_callback(eventtime, self.last_temp)
-        return eventtime + UPDATE_TEMPERATURE_INTERVALL
+        return eventtime + UPDATE_TEMPERATURE_INTERVAL
 
 
 def mean(values):
