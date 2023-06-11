@@ -1,7 +1,7 @@
 # Kinematic input shaper to minimize motion vibrations in XY plane
 #
 # Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020-2023  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
@@ -127,6 +127,7 @@ class AxisInputShaper:
     def __init__(self, params):
         self.params = params
         self.n, self.A, self.T = params.get_shaper()
+        self.t_offs = self._calc_offset()
         self.saved = None
     def get_name(self):
         return 'shaper_' + self.get_axis()
@@ -134,13 +135,18 @@ class AxisInputShaper:
         return self.params.get_type()
     def get_axis(self):
         return self.params.get_axis()
-    def is_smoothing(self):
-        return False
+    def is_extruder_smoothing(self, exact_mode):
+        return not exact_mode and self.A
     def is_enabled(self):
         return self.n > 0
+    def _calc_offset(self):
+        if not self.A:
+            return 0.
+        return sum([a * t for a, t in zip(self.A, self.T)]) / sum(self.A)
     def update(self, shaper_type, gcmd):
         self.params.update(shaper_type, gcmd)
         self.n, self.A, self.T = self.params.get_shaper()
+        self.t_offs = self._calc_offset()
     def update_stepper_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
@@ -151,15 +157,25 @@ class AxisInputShaper:
             ffi_lib.input_shaper_set_shaper_params(
                     sk, axis, self.n, self.A, self.T)
         return success
-    def update_extruder_kinematics(self, sk):
+    def update_extruder_kinematics(self, sk, exact_mode):
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
-        # Make sure to disable any active input smoothing
-        coeffs, smooth_time = [], 0.
-        success = ffi_lib.extruder_set_smoothing_params(
-                sk, axis, len(coeffs), coeffs, smooth_time) == 0
-        success = ffi_lib.extruder_set_shaper_params(
-                sk, axis, self.n, self.A, self.T) == 0
+        if not self.is_extruder_smoothing(exact_mode):
+            # Make sure to disable any active input smoothing
+            coeffs, smooth_time = [], 0.
+            success = ffi_lib.extruder_set_smoothing_params(
+                    sk, axis, len(coeffs), coeffs, smooth_time, 0.) == 0
+            success = ffi_lib.extruder_set_shaper_params(
+                    sk, axis, self.n, self.A, self.T) == 0
+        else:
+            shaper_type = self.get_type()
+            extr_smoother_func = shaper_defs.EXTURDER_SMOOTHERS.get(
+                    shaper_type, shaper_defs.EXTURDER_SMOOTHERS['default'])
+            C_e, t_sm = extr_smoother_func(self.T[-1] - self.T[0],
+                                           normalize_coeffs=False)
+            smoother_offset = self.t_offs - 0.5 * (self.T[0] + self.T[-1])
+            success = ffi_lib.extruder_set_smoothing_params(
+                    sk, axis, len(C_e), C_e, t_sm, smoother_offset) == 0
         if not success:
             self.disable_shaping()
             ffi_lib.extruder_set_shaper_params(
@@ -261,6 +277,7 @@ class AxisInputSmoother:
     def __init__(self, params):
         self.params = params
         self.n, self.coeffs, self.smooth_time = params.get_smoother()
+        self.t_offs = self._calc_offset()
         self.saved_smooth_time = 0.
     def get_name(self):
         return 'smoother_' + self.axis
@@ -268,13 +285,22 @@ class AxisInputSmoother:
         return self.params.get_type()
     def get_axis(self):
         return self.params.get_axis()
-    def is_smoothing(self):
+    def is_extruder_smoothing(self, exact_mode):
         return True
     def is_enabled(self):
         return self.smooth_time > 0.
+    def _calc_offset(self):
+        int_t0 = int_t1 = 0.
+        for i, c in enumerate(self.coeffs):
+            if i & 1:
+                int_t1 += c / (2**(i+1) * (i+2))
+            else:
+                int_t0 += c / (2**i * (i+1))
+        return int_t1 * self.smooth_time / int_t0
     def update(self, shaper_type, gcmd):
         self.params.update(shaper_type, gcmd)
         self.n, self.coeffs, self.smooth_time = self.params.get_smoother()
+        self.t_offs = self._calc_offset()
     def update_stepper_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
@@ -285,14 +311,24 @@ class AxisInputSmoother:
             ffi_lib.input_shaper_set_smoother_params(
                     sk, axis, self.n, self.coeffs, self.smooth_time)
         return success
-    def update_extruder_kinematics(self, sk):
+    def update_extruder_kinematics(self, sk, exact_mode):
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
         # Make sure to disable any active input shaping
         A, T = shaper_defs.get_none_shaper()
         ffi_lib.extruder_set_shaper_params(sk, axis, len(A), A, T)
-        success = ffi_lib.extruder_set_smoothing_params(
-                sk, axis, self.n, self.coeffs, self.smooth_time) == 0
+        if exact_mode:
+            success = ffi_lib.extruder_set_smoothing_params(
+                    sk, axis, self.n, self.coeffs, self.smooth_time,
+                    self.t_offs) == 0
+        else:
+            smoother_type = self.get_type()
+            extr_smoother_func = shaper_defs.EXTURDER_SMOOTHERS.get(
+                    smoother_type, shaper_defs.EXTURDER_SMOOTHERS['default'])
+            C_e, t_sm = extr_smoother_func(self.smooth_time,
+                                           normalize_coeffs=False)
+            success = ffi_lib.extruder_set_smoothing_params(
+                    sk, axis, len(C_e), C_e, t_sm, self.t_offs) == 0
         if not success:
             self.disable_shaping()
             ffi_lib.extruder_set_smoothing_params(
@@ -362,6 +398,7 @@ class InputShaper:
         self.printer.register_event_handler("klippy:connect", self.connect)
         self.toolhead = None
         self.extruders = []
+        self.exact_mode = 0
         self.config_extruder_names = config.getlist('enabled_extruders', [])
         self.shaper_factory = ShaperFactory()
         self.shapers = [self.shaper_factory.create_shaper('x', config),
@@ -432,7 +469,8 @@ class InputShaper:
                                                              old_delay)
         for e in self.extruders:
             for es in e.get_extruder_steppers():
-                failed_shapers.extend(es.update_input_shaping(self.shapers))
+                failed_shapers.extend(es.update_input_shaping(self.shapers,
+                                                              self.exact_mode))
         if failed_shapers:
             error = error or self.printer.command_error
             raise error("Failed to configure shaper(s) %s with given parameters"
@@ -472,6 +510,7 @@ class InputShaper:
                     msg += ("Cannot enable input shaper for AXIS='%s': "
                             "was not disabled\n" % (axis_str,))
         extruders = gcmd.get('EXTRUDER', '')
+        self.exact_mode = gcmd.get_int('EXACT', self.exact_mode)
         for en in extruders.split(','):
             extruder_name = en.strip()
             if not extruder_name:
@@ -513,7 +552,7 @@ class InputShaper:
             if extruder in self.extruders:
                 to_re_enable = [s for s in self.shapers if s.disable_shaping()]
                 for es in extruder.get_extruder_steppers():
-                    es.update_input_shaping(self.shapers)
+                    es.update_input_shaping(self.shapers, self.exact_mode)
                 for shaper in to_re_enable:
                     shaper.enable_shaping()
                 self.extruders.remove(extruder)

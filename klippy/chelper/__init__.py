@@ -155,7 +155,7 @@ defs_kin_extruder = """
     int extruder_set_shaper_params(struct stepper_kinematics *sk, char axis
         , int n, double a[], double t[]);
     int extruder_set_smoothing_params(struct stepper_kinematics *sk, char axis
-        , int n, double a[], double t_sm);
+        , int n, double a[], double t_sm, double t_offs);
     double extruder_get_step_gen_window(struct stepper_kinematics *sk);
 """
 
