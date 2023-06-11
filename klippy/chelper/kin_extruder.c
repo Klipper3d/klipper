@@ -294,13 +294,14 @@ extruder_set_shaper_params(struct stepper_kinematics *sk, char axis
 
 int __visible
 extruder_set_smoothing_params(struct stepper_kinematics *sk, char axis
-                              , int n, double a[], double t_sm)
+                              , int n, double a[], double t_sm, double t_offs)
 {
     if (axis != 'x' && axis != 'y' && axis != 'z')
         return -1;
     struct extruder_stepper *es = container_of(sk, struct extruder_stepper, sk);
     struct smoother *sm = &es->sm[axis-'x'];
     int status = init_smoother(n, a, t_sm, sm);
+    sm->t_offs = t_offs;
     extruder_note_generation_time(es);
     return status;
 }

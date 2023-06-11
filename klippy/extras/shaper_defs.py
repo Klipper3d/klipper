@@ -172,6 +172,77 @@ def get_zvd_ei_smoother(shaper_freq, damping_ratio_unused=None,
               43.1595785340444,-3.577268915175282,1.083220648523371]
     return init_smoother(coeffs, 1.475 / shaper_freq, normalize_coeffs)
 
+def get_extr_zv_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [30., 0., -15., 0., 1.875]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_mzv_shaper_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [341.76438367888272,-27.466545717280418,-153.088062685115716,
+              13.7332728586402091,12.4632094027673599,-1.7166591073300261,
+              1.1121330721453511]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_zvd_shaper_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [630.74844408176386,-22.308531752627160,-307.90095218665919,
+              11.1542658763135805,35.685142827998881,-1.3942832345391976,
+              0.4670793658889200]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_ei_shaper_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [479.19339444799374,-30.811311356643330,-226.71074702571096,
+              15.4056556783216649,23.506612053856646,-1.9257069597902081,
+              0.8053718873928709]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_2hump_ei_shaper_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [6732.1368755766744,-451.56419782599357,-3806.9806651540493,
+              208.13010436901791,666.92541201595748,-19.3967650921351584,
+              -40.412386015136598,-1.1032496589986802,1.6069214755974468]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_3hump_ei_shaper_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [4862.4802465588073,-540.91386960353532,-2666.8882179975822,
+              256.61643727342101,445.67339875133428,-26.886868086047631,
+              -26.700173911045901,-0.8650310955216656,1.4965209988949661]
+    # Ideally, the following coefficients should be used, but this order
+    # is currently not supported by C integration routines
+    # coeffs = [101624.001181926069,-10140.6488068767758,-67034.280052740767,
+    #           5924.1010170704049,15212.5854866606205,-1110.64163123568596,
+    #           -1371.73807717349200,78.342425346940715,38.307990049684413,
+    #           -3.1226733743674644,1.0704518836439141]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_mzv_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [128.462077073626915,-42.165459650911941,-38.818969860871568,
+              21.0827298254559707,-4.6771545208692649,-2.6353412281819963,
+              1.5882542922463685]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_ei_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [276.191048111389079,-41.835391901208922,-117.95949005967274,
+              20.9176959506044611,7.1939235089509097,-2.6147119938255576,
+              1.2585021247513637]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_2hump_ei_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [1672.36152804372318,-70.342256841452126,-786.13315506927438,
+              -0.9529934764915708,102.73410996847843,13.665669896018062,
+              -8.4896839114829827,-2.2577576185761026,1.4522074338774609]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_zvd_ei_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [1829.54723817218109,-746.70578009311191,-927.21920387422937,
+              393.61004675467614,145.568898884847072,-56.797689609879597,
+              -13.2775511017668428,1.2660722942575129,1.5624627565635203]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+def get_extr_si_smoother(smooth_time, normalize_coeffs=True):
+    coeffs = [114.962413010742423,164.830749583661599,90.845373435141965,
+              -132.210144372387873,-42.617667050825957,35.199306639257386,
+              -2.9098248068475399,-3.1121730987848171,1.5225295066412017]
+    return init_smoother(coeffs, smooth_time, normalize_coeffs)
+
+
 # min_freq for each shaper is chosen to have projected max_accel ~= 1500
 INPUT_SHAPERS = [
     InputShaperCfg('zv', get_zv_shaper, min_freq=21.),
@@ -191,3 +262,17 @@ INPUT_SMOOTHERS = [
     InputSmootherCfg('smooth_zvd_ei', get_zvd_ei_smoother, min_freq=26.),
     InputSmootherCfg('smooth_si', get_si_smoother, min_freq=21.5),
 ]
+
+EXTURDER_SMOOTHERS = {
+        'default' : get_extr_zv_smoother,
+        'mzv' : get_extr_mzv_shaper_smoother,
+        'zvd' : get_extr_zvd_shaper_smoother,
+        'ei' : get_extr_ei_shaper_smoother,
+        '2hump_ei' : get_extr_2hump_ei_shaper_smoother,
+        '3hump_ei' : get_extr_3hump_ei_shaper_smoother,
+        'smooth_mzv' : get_extr_mzv_smoother,
+        'smooth_ei' : get_extr_ei_smoother,
+        'smooth_2hump_ei' : get_extr_2hump_ei_smoother,
+        'smooth_zvd_ei' : get_extr_zvd_ei_smoother,
+        'smooth_si' : get_extr_si_smoother,
+}
