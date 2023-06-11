@@ -33,7 +33,7 @@ class ExtruderSmoother:
         for axis in self.axes:
             if not ffi_lib.extruder_set_smoothing_params(
                     extruder_sk, axis.encode(), n, self.a,
-                    smooth_time) == 0:
+                    smooth_time, 0.) == 0:
                 success = False
         return success
     def get_status(self, eventtime):
@@ -225,18 +225,19 @@ class ExtruderStepper:
             toolhead.note_step_generation_scan_time(new_delay, old_delay)
         self.pa_model = pa_model
         self.pressure_advance_time_offset = time_offset
-    def update_input_shaping(self, shapers):
+    def update_input_shaping(self, shapers, exact_mode):
         ffi_main, ffi_lib = chelper.get_ffi()
         old_delay = ffi_lib.extruder_get_step_gen_window(self.sk_extruder)
         failed_shapers = []
         for shaper in shapers:
-            if not shaper.update_extruder_kinematics(self.sk_extruder):
+            if not shaper.update_extruder_kinematics(self.sk_extruder,
+                                                     exact_mode):
                 failed_shapers.append(shaper)
             # Pressure advance requires extruder smoothing, make sure that
             # some smoothing is enabled
-            if shaper.is_smoothing() and shaper.is_enabled():
+            if shaper.is_extruder_smoothing(exact_mode) and shaper.is_enabled():
                 self.smoother.disable_axis(shaper.get_axis())
-            elif not shaper.is_smoothing() or not shaper.is_enabled():
+            else:
                 self.smoother.enable_axis(shaper.get_axis())
         self.smoother.update_extruder_kinematics(self.sk_extruder)
         new_delay = ffi_lib.extruder_get_step_gen_window(self.sk_extruder)
