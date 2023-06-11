@@ -1429,7 +1429,7 @@
 <li>计算旋转距离为：<code>rotation_distance = &lt;旧rotation_distance&gt; * &lt;实际挤出长度&gt; / &lt;请求的挤出长度&gt;</code>。将新的 rotation_distance 取整到小数点后3位。</li>
 </ol>
 <p>如果实际挤出的长度与请求挤出的距离相差超过2毫米，那么最好再重复一次上述步骤。</p>
-<p>注意：<em>不要</em>使用"测量并修正"类的方法来校准x、y或z轴。对于这些轴来说，"测量并修剪"的方法不够精确，而且可能会导致更糟糕的配置。相反，如果需要，这些轴可以通过<a href="#obtaining-rotation_distance-by-inspecting-the-hardware">j检查皮带、滑轮和丝杆</a>来确定旋转距离。</p>
+<p>注意：<em>不要</em>使用"测量并修正"类的方法来校准x、y或z轴。对于这些轴来说，"测量并修剪"的方法不够精确，而且可能会导致更糟糕的配置。相反，如果需要，这些轴可以通过<a href="#obtaining-rotation_distance-by-inspecting-the-hardware">检查皮带、滑轮和丝杆</a>来确定旋转距离。</p>
 <h2 id="_2">通过检查硬件获得旋转距离<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>有了步进电机和打印机运动学方面的信息，就可以计算旋转距离。如果不知道steps_per_mm（每毫米的步数），或者正在设计一台新的打印机，这可能有帮助。</p>
 <h3 id="_3">皮带驱动的轴<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
