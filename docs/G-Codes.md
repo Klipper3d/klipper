@@ -1193,8 +1193,10 @@ settings. Requires `control_pin` to be provided in the config section.
 The stepper_enable module is automatically loaded.
 
 #### SET_STEPPER_ENABLE
-`SET_STEPPER_ENABLE STEPPER=<config_name> ENABLE=[0|1]`: Enable or
-disable only the given stepper. This is a diagnostic and debugging
+`SET_STEPPER_ENABLE STEPPERS=<config_name> [ENABLE=[0|1]]`: Enable or
+disable only the given steppers. `<config_name>` can be one or
+more configured steppers, delimited with comma, for example
+`STEPPERS=stepper_x,stepper_y`. This is a diagnostic and debugging
 tool and must be used with care. Disabling an axis motor does not
 reset the homing information. Manually moving a disabled stepper may
 cause the machine to operate the motor outside of safe limits. This
