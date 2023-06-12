@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-UPDATE_TEMPERATURE_INTERVAL = 1.0
+UPDATE_TEMPERATURE_INTERVAL = 0.3
 
 
 class PrinterSensorCombined:
@@ -24,20 +24,20 @@ class PrinterSensorCombined:
         self.last_temp = self.min_temp = self.max_temp = 0.0
         # add object
         self.printer.add_object("temperature_combined " + self.name, self)
-        # update sensor
-        self.temperature_update_timer = self.reactor.register_timer(
-            self._temperature_update_event)
+        # # update sensor
+        # self.temperature_update_timer = self.reactor.register_timer(
+        #     self._temperature_update_event)
         # Register commands and event handlers
         self.printer.register_event_handler('klippy:connect',
                 self._handle_connect)
-        self.printer.register_event_handler('klippy:ready',
-                self._handle_ready)
+        # self.printer.register_event_handler('klippy:ready',
+        #         self._handle_ready)
 
     def create_sensor_callbacks(self, sensor):
         def callback(read_time, temp):
             sensor.temperature_callback(read_time, temp),
             self.update_temp(read_time),
-            self.temperature_callback(read_time, self.last_temp)
+            self.temperature_callback(read_time + 0.008, self.last_temp)
         return callback
 
     def _handle_connect(self):
@@ -52,10 +52,10 @@ class PrinterSensorCombined:
         for sensor in self.sensors:
             sensor.sensor.setup_callback(self.create_sensor_callbacks(sensor))
 
-    def _handle_ready(self):
-        # Start temperature update timer
-        self.reactor.update_timer(self.temperature_update_timer,
-                                  self.reactor.NOW)
+    # def _handle_ready(self):
+    #     # Start temperature update timer
+    #     self.reactor.update_timer(self.temperature_update_timer,
+    #                               self.reactor.NOW)
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
@@ -87,11 +87,11 @@ class PrinterSensorCombined:
             'temperature': round(self.last_temp, 2),
         }
 
-    def _temperature_update_event(self, eventtime):
-        # update sensor value
-        self.update_temp(eventtime)
-        self.temperature_callback(eventtime, self.last_temp)
-        return eventtime + UPDATE_TEMPERATURE_INTERVAL
+    # def _temperature_update_event(self, eventtime):
+    #     # update sensor value
+    #     self.update_temp(eventtime)
+    #     self.temperature_callback(eventtime, self.last_temp)
+    #     return eventtime + UPDATE_TEMPERATURE_INTERVAL
 
 
 def mean(values):
