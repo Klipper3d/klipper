@@ -43,11 +43,10 @@ class PrinterSensorCombined:
             elif hasattr(sensor, 'heater'):
                 self.sensors.append(sensor.heater)
         for i, sensor in enumerate(self.sensors):
-            def temperature_callback_sensor(read_time, temp):
-                sensor.temperature_callback(read_time, temp)
-                self.update_temp(read_time)
-                self.temperature_callback(read_time, self.last_temp)
-            sensor.sensor.setup_callback(temperature_callback_sensor)
+            sensor.sensor.setup_callback(lambda read_time, temp: (
+                    sensor.temperature_callback(read_time, temp),
+                    self.update_temp(read_time),
+                    self.temperature_callback(read_time, self.last_temp)))
 
     def _handle_ready(self):
         # Start temperature update timer
