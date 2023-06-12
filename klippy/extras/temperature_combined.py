@@ -4,6 +4,7 @@
 # Copyright (C) 2023  Michael Jäger <michael@mjaeger.eu>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import threading
 
 UPDATE_TEMPERATURE_INTERVAL = 0.3
 
@@ -17,6 +18,7 @@ class PrinterSensorCombined:
         self.sensor_names = config.getlist('sensors')
         # get empty list for sensors
         self.sensors = []
+        self.lock = threading.Lock()
         # get type of algorithm to handle the different sensor values with
         algos = {'min': min, 'max': max, 'mean': mean}
         self.apply_mode = config.getchoice('type', algos)
@@ -35,9 +37,10 @@ class PrinterSensorCombined:
 
     def create_sensor_callbacks(self, sensor):
         def callback(read_time, temp):
-            sensor.temperature_callback(read_time, temp),
-            self.update_temp(read_time),
-            self.temperature_callback(read_time + 0.008, self.last_temp)
+            with self.lock:
+                sensor.temperature_callback(read_time, temp),
+                self.update_temp(read_time),
+                self.temperature_callback(read_time, self.last_temp)
         return callback
 
     def _handle_connect(self):
