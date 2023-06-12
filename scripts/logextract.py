@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to extract config and shutdown information file a klippy.log file
 #
 # Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
@@ -23,7 +23,7 @@ class GatherConfig:
         self.config_lines = []
         self.comments = []
     def add_line(self, line_num, line):
-        if line != '=======================':
+        if line != b'=======================':
             self.config_lines.append(line)
             return True
         self.finalize()
@@ -41,7 +41,10 @@ class GatherConfig:
             self.comments.append(comment)
     def write_file(self):
         f = open(self.filename, 'wb')
-        f.write('\n'.join(self.comments + self.config_lines).strip() + '\n')
+        lines = map(lambda l: l if bytes == type(l) else l.encode('utf-8'),
+                    [l for l in self.comments + self.config_lines])
+
+        f.write(b'\n'.join(list(lines)) + b'\n')
         f.close()
 
 
@@ -166,7 +169,8 @@ class MCUSentStream:
         self.sent_stream = []
         self.send_count = count
     def parse_line(self, line_num, line):
-        m = sent_r.match(line)
+        sline = str(line)
+        m = sent_r.match(sline)
         if m is not None:
             shortseq = int(m.group('shortseq'), 16)
             seq = (self.mcu.shutdown_seq + int(m.group('count'))
@@ -192,7 +196,8 @@ class MCUReceiveStream:
         self.mcu = mcu
         self.receive_stream = []
     def parse_line(self, line_num, line):
-        m = receive_r.match(line)
+        sline = str(line)
+        m = receive_r.match(sline)
         if m is not None:
             shortseq = int(m.group('shortseq'), 16)
             ts = float(m.group('time'))
@@ -251,20 +256,21 @@ class MCUStream:
             line = "mcu '%s': %s" % (self.name, line)
         return line
     def parse_line(self, line_num, line):
-        m = clock_r.match(line)
+        sline = str(line)
+        m = clock_r.match(sline)
         if m is not None:
             self.mcu_freq = int(m.group('freq'))
             st = float(m.group('st'))
             sc = int(m.group('sc'))
             f = float(m.group('f'))
             self.clock_est = (st, sc, f)
-        m = serial_dump_r.match(line)
+        m = serial_dump_r.match(sline)
         if m is not None:
             self.shutdown_seq = int(m.group('rseq'))
-        m = send_dump_r.match(line)
+        m = send_dump_r.match(sline)
         if m is not None:
             return True, MCUSentStream(self, int(m.group('count')))
-        m = receive_dump_r.match(line)
+        m = receive_dump_r.match(sline)
         if m is not None:
             return True, MCUReceiveStream(self)
         return False, None
@@ -440,7 +446,7 @@ class StatsStream:
             keyparts[mcu + name] = val
         min_ts = 0
         max_ts = 999999999999
-        for mcu_name, mcu in self.mcus.items():
+        for mcu_name, mcu in list(self.mcus.items()):
             sname = '%s:send_seq' % (mcu_name,)
             rname = '%s:receive_seq' % (mcu_name,)
             if sname not in keyparts:
@@ -453,7 +459,8 @@ class StatsStream:
                          mcu.receive_seq_to_time.get(rseq+1, 999999999999))
         return min(max(ts, min_ts + 0.00000001), max_ts - 0.00000001)
     def parse_line(self, line_num, line):
-        m = stats_r.match(line)
+        sline = str(line)
+        m = stats_r.match(sline)
         if m is not None:
             ts = float(m.group('time'))
             self.last_stat_time = ts
@@ -462,36 +469,36 @@ class StatsStream:
             self.stats_stream.append((ts, line_num, line))
             return True, None
         self.stats_stream.append((None, line_num, line))
-        m = mcu_r.match(line)
+        m = mcu_r.match(sline)
         if m is not None:
             mcu_name = m.group('mcu')
             mcu_stream = MCUStream(mcu_name)
             self.mcus[mcu_name] = mcu_stream
             return True, mcu_stream
-        m = stepper_r.match(line)
+        m = stepper_r.match(sline)
         if m is not None:
             return True, StepperStream(m.group('name'), m.group('mcu'),
                                        self.mcus)
-        m = trapq_r.match(line)
+        m = trapq_r.match(sline)
         if m is not None:
             return True, TrapQStream(m.group('name'), self.mcus)
-        m = gcode_r.match(line)
+        m = gcode_r.match(sline)
         if m is not None:
             return True, self.gcode_stream
-        m = gcode_state_r.match(line)
+        m = gcode_state_r.match(sline)
         if m is not None:
             self.gcode_stream.handle_gcode_state(line)
             return True, None
-        m = api_r.match(line)
+        m = api_r.match(sline)
         if m is not None:
             return True, APIStream()
         return False, None
     def get_lines(self):
         # Ignore old stats
         all_ts = []
-        for mcu_name, mcu in self.mcus.items():
-            all_ts.extend(mcu.sent_seq_to_time.values())
-            all_ts.extend(mcu.receive_seq_to_time.values())
+        for mcu_name, mcu in list(self.mcus.items()):
+            all_ts.extend(list(mcu.sent_seq_to_time.values()))
+            all_ts.extend(list(mcu.receive_seq_to_time.values()))
         if not all_ts:
             return []
         min_stream_ts = min(all_ts)
@@ -517,7 +524,7 @@ class GatherShutdown:
         self.filename = "%s.shutdown%05d" % (logname, line_num)
         self.comments = []
         if configs:
-            configs_by_id = {c.config_num: c for c in configs.values()}
+            configs_by_id = {c.config_num: c for c in list(configs.values())}
             config = configs_by_id[max(configs_by_id.keys())]
             config.add_comment(format_comment(line_num, recent_lines[-1][1]))
             self.comments.append("# config %s" % (config.filename,))
@@ -536,9 +543,9 @@ class GatherShutdown:
         if first is not None and last > first + 5.:
             self.finalize()
             return False
-        if (line.startswith('Git version')
-            or line.startswith('Start printer at')
-            or line == '===== Config file ====='):
+        if (line.startswith(b'Git version')
+            or line.startswith(b'Start printer at')
+            or line == b'===== Config file ====='):
             self.finalize()
             return False
         return True
@@ -562,7 +569,9 @@ class GatherShutdown:
         out.sort()
         out = [i[2] for i in out]
         f = open(self.filename, 'wb')
-        f.write('\n'.join(self.comments + out))
+        lines = map(lambda l: l if bytes == type(l) else l.encode('utf-8'),
+                    [l for l in self.comments + out])
+        f.write(b'\n'.join(lines))
         f.close()
 
 
@@ -588,22 +597,22 @@ def main():
                 continue
             recent_lines.clear()
             handler = None
-        if line.startswith('Git version'):
+        if line.startswith(b'Git version'):
             last_git = format_comment(line_num, line)
-        elif line.startswith('Start printer at'):
+        elif line.startswith(b'Start printer at'):
             last_start = format_comment(line_num, line)
-        elif line == '===== Config file =====':
+        elif line == b'===== Config file =====':
             handler = GatherConfig(configs, line_num, recent_lines, logname)
             handler.add_comment(last_git)
             handler.add_comment(last_start)
-        elif 'shutdown: ' in line or line.startswith('Dumping '):
+        elif b'shutdown: ' in line or line.startswith(b'Dumping '):
             handler = GatherShutdown(configs, line_num, recent_lines, logname)
             handler.add_comment(last_git)
             handler.add_comment(last_start)
     if handler is not None:
         handler.finalize()
     # Write found config files
-    for cfg in configs.values():
+    for cfg in list(configs.values()):
         cfg.write_file()
 
 if __name__ == '__main__':
