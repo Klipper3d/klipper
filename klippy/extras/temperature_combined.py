@@ -6,6 +6,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import threading
 
+# fake report time to default PrinterADCtoTemperature REPORT_TIME
+REPORT_TIME = 0.300
 
 class PrinterSensorCombined:
     def __init__(self, config):
@@ -26,8 +28,7 @@ class PrinterSensorCombined:
         self.last_temp = self.min_temp = self.max_temp = 0.0
         # add object
         self.printer.add_object("temperature_combined " + self.name, self)
-        self.printer.register_event_handler('klippy:connect',
-                self._handle_connect)
+        self.printer.register_event_handler('klippy:connect', self._handle_connect)
 
     def create_sensor_callbacks(self, sensor):
         def callback(read_time, temp):
@@ -49,14 +50,9 @@ class PrinterSensorCombined:
             # if heater
             elif hasattr(sensor, 'heater'):
                 self.sensors.append(sensor.heater)
-        # list of all sensor update intervals
-        update_intervals = []
-        # update sensor callbacks to update themselves, us and the provided temperature_callback
+        # update sensor callbacks to update them, ourselves and the provided temperature_callback
         for sensor in self.sensors:
             sensor.sensor.setup_callback(self.create_sensor_callbacks(sensor))
-            update_intervals.append(sensor.sensor.get_report_time_delta())
-        # update interval - this is strictly speaking an upper estimate
-        self.update_interval = min(update_intervals)
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
@@ -66,7 +62,7 @@ class PrinterSensorCombined:
         self.temperature_callback = temperature_callback
 
     def get_report_time_delta(self):
-        return self.update_interval
+        return REPORT_TIME
 
     def update_temp(self, eventtime):
         values = []
