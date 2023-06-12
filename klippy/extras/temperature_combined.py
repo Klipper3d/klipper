@@ -33,6 +33,13 @@ class PrinterSensorCombined:
         self.printer.register_event_handler('klippy:ready',
                 self._handle_ready)
 
+    def create_sensor_callbacks(self, sensor):
+        def callback(read_time, temp):
+            sensor.temperature_callback(read_time, temp),
+            self.update_temp(read_time),
+            self.temperature_callback(read_time, self.last_temp)
+        return callback
+
     def _handle_connect(self):
         for sensor_name in self.sensor_names:
             sensor = self.printer.lookup_object(sensor_name)
@@ -42,11 +49,8 @@ class PrinterSensorCombined:
             # if heater
             elif hasattr(sensor, 'heater'):
                 self.sensors.append(sensor.heater)
-        for i, sensor in enumerate(self.sensors):
-            sensor.sensor.setup_callback(lambda read_time, temp: (
-                    sensor.temperature_callback(read_time, temp),
-                    self.update_temp(read_time),
-                    self.temperature_callback(read_time, self.last_temp)))
+        for sensor in self.sensors:
+            sensor.sensor.setup_callback(self.create_sensor_callbacks(sensor))
 
     def _handle_ready(self):
         # Start temperature update timer
