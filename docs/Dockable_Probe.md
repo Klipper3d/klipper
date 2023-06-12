@@ -22,6 +22,7 @@ sample_retract_dist:
 approach_position:
 dock_position:
 detach_position:
+(check_open_attach: OR probe_sense_pin:) AND/OR dock_sense_pin:
 ```
 
 ### Attaching and Detaching Positions
@@ -192,18 +193,21 @@ Given the nature of this type of probe, it is necessary to verify whether or
 not it has successfully attached prior to attempting a probing move. Several
 methods can be used to verify probe attachment states.
 
-- `check_open_attach: False`\
-  _Default Value: False_\
+- `check_open_attach:`\
+  _Default Value: None_\
   Certain probes will report `OPEN` when they are attached and `TRIGGERED`
   when they are detached in a non-probing state. When `check_open_attach` is
   set to `True`, the state of the probe pin is checked after performing a
-  probe attach or detach maneuver. If the probe reports `TRIGGERED`
-  immediately after the toolhead leaves the dock radius, an error will be
-  raised and any further action will be aborted.
+  probe attach or detach maneuver. If the probe does not read `OPEN`
+  immediately after attaching the probe, an error will be raised and any
+  further action will be aborted.
 
   This is intended to prevent crashing the nozzle into the bed since it is
   assumed if the probe pin reads `TRIGGERED` prior to probing, the probe is
   not attached.
+  
+  Setting this to `False` will cause all action to be aborted if the probe
+  does not read `TRIGGERED` after attaching.
 
 - `probe_sense_pin:`\
   _Default Value: None_\

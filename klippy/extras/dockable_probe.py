@@ -2,8 +2,9 @@
 #   This provides support for probes that are magnetically coupled
 #   to the toolhead and stowed in a dock when not in use and
 #
-# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2023  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2021       Paul McGowan <mental405@gmail.com>
+# Copyright (C) 2023       Alan Smith <alan@airpost.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import probe
@@ -20,11 +21,14 @@ MULTI_FIRST     = 1
 MULTI_ON        = 2
 
 HINT_VERIFICATION_ERROR = """
-{0}: A probe state verification method
+{0}: A probe attachment verification method
 was not provided. A method to verify the probes attachment
 state must be specified to prevent unintended behavior.
-Please see {0}.md or config_reference.md for
-valid state verification methods and examples.
+
+At least one of the following must be specified:
+'check_open_attach', 'probe_sense_pin', 'dock_sense_pin'
+
+Please see {0}.md and config_Reference.md.
 """
 
 # Helper class to handle polling pins for probe attachment states
@@ -51,17 +55,15 @@ class PinPollingHelper:
 class ProbeState:
     def __init__(self, config, aProbe):
         self.printer = config.get_printer()
-        self.check_open_attach = config.getboolean('check_open_attach', False)
-        self.probe_sense_pin = config.get('probe_sense_pin', None)
-        self.dock_sense_pin = config.get('dock_sense_pin', None)
+
+        if (not config.fileconfig.has_option(config.section, 'check_open_attach')
+            and not config.fileconfig.has_option(config.section, 'probe_sense_pin')
+            and not config.fileconfig.has_option(config.section, 'dock_sense_pin')):
+            raise self.printer.config_error(HINT_VERIFICATION_ERROR.format(
+                aProbe.name))
+
         self.printer.register_event_handler('klippy:ready',
                                             self._handle_ready)
-
-        if not any([self.check_open_attach,
-                    self.probe_sense_pin,
-                    self.dock_sense_pin]):
-            raise self.printer.config_error(HINT_VERIFICATION_ERROR.format(
-                                            aProbe.name))
 
         # Configure sense pins as endstops so they
         # can be polled at specific times
@@ -81,19 +83,32 @@ class ProbeState:
         # Setup sensor pins, if configured, otherwise use probe endstop
         # as a dummy sensor.
         ehelper = PinPollingHelper(config, aProbe.query_endstop)
-        if self.probe_sense_pin:
+
+        # Probe sense pin is optional
+        probe_sense_pin = config.get('probe_sense_pin', None)
+        if probe_sense_pin is not None:
             probe_sense_helper = configEndstop(self.probe_sense_pin)
             self.probe_sense_pin = probe_sense_helper.query_pin
         else:
             self.probe_sense_pin = ehelper.query_pin_inv
 
-        if self.dock_sense_pin:
+        # If check_open_attach is specified, it takes precedence
+        # over probe_sense_pin
+        check_open_attach = None
+        if config.fileconfig.has_option(config.section, 'check_open_attach'):
+            check_open_attach = config.getboolean('check_open_attach')
+
+            if check_open_attach:
+                self.probe_sense_pin = ehelper.query_pin_inv
+            else:
+                self.probe_sense_pin = ehelper.query_pin
+
+        # Dock sense pin is optional
+        self.dock_sense_pin = None
+        dock_sense_pin = config.get('dock_sense_pin', None)
+        if dock_sense_pin is not None:
             dock_sense_helper = configEndstop(self.dock_sense_pin)
             self.dock_sense_pin = dock_sense_helper.query_pin
-        elif probe_sense_helper is not None:
-            self.dock_sense_pin = probe_sense_helper.query_pin_inv
-        else:
-            self.dock_sense_pin = ehelper.query_pin
 
     def _handle_ready(self):
         self.last_verify_time = 0
@@ -107,15 +122,22 @@ class ProbeState:
         if (self.last_verify_state == PROBE_UNKNOWN
             or curtime > self.last_verify_time + PROBE_VERIFY_DELAY):
             self.last_verify_time = curtime
-            a = self.probe_sense_pin(curtime)
-            d = self.dock_sense_pin(curtime)
+            self.last_verify_state = PROBE_UNKNOWN
 
-            if a and not d:
-                self.last_verify_state = PROBE_ATTACHED
-            elif d and not a:
-                self.last_verify_state = PROBE_DOCKED
+            a = self.probe_sense_pin(curtime)
+
+            if self.dock_sense_pin is not None:
+                d = self.dock_sense_pin(curtime)
+
+                if a and not d:
+                    self.last_verify_state = PROBE_ATTACHED
+                elif d and not a:
+                    self.last_verify_state = PROBE_DOCKED
             else:
-                self.last_verify_state = PROBE_UNKNOWN
+                if a:
+                    self.last_verify_state = PROBE_ATTACHED
+                elif not a:
+                    self.last_verify_state = PROBE_DOCKED
         return self.last_verify_state
 
 class DockableProbe:

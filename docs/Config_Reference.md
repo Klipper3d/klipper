@@ -1948,11 +1948,12 @@ detach_position: 0,0,0
 #travel_speed:
 #   Optional speeds used during moves.
 #   The default is to use `speed` of `probe` or 5.0.
-#check_open_attach: False
+#check_open_attach:
 #   The probe status should be verified prior to homing. Setting this option
-#   to true will ensure the probe "endstop" is "open" if the probe is attached
-#   and will abort probing if it reports "triggered" when docked.
-#   The default is False.
+#   to true will check the probe "endstop" is "open" after attaching and
+#   will abort probing if not, also checking for "triggered" after docking.
+#   Conversively, setting this to false, the probe should read "triggered"
+#   after attaching and "open" after docking. If not, probing will abort.
 #probe_sense_pin:
 #   This supplemental pin can be defined to determine an attached state
 #   instead of check_open_attach.
