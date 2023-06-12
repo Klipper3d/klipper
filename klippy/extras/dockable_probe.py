@@ -56,9 +56,12 @@ class ProbeState:
     def __init__(self, config, aProbe):
         self.printer = config.get_printer()
 
-        if (not config.fileconfig.has_option(config.section, 'check_open_attach')
-            and not config.fileconfig.has_option(config.section, 'probe_sense_pin')
-            and not config.fileconfig.has_option(config.section, 'dock_sense_pin')):
+        if (not config.fileconfig.has_option(config.section,
+                                             'check_open_attach')
+            and not config.fileconfig.has_option(config.section,
+                                               'probe_sense_pin')
+            and not config.fileconfig.has_option(config.section,
+                                               'dock_sense_pin')):
             raise self.printer.config_error(HINT_VERIFICATION_ERROR.format(
                 aProbe.name))
 
@@ -281,8 +284,8 @@ class DockableProbe:
     # GCode Commands
     #######################################################################
 
-    cmd_QUERY_DOCKABLE_PROBE_help = ("Prints the current probe state, valid probe" +
-                                 " states are UNKNOWN, ATTACHED, and DOCKED")
+    cmd_QUERY_DOCKABLE_PROBE_help = ("Prints the current probe state," +
+                " valid probe states are UNKNOWN, ATTACHED, and DOCKED")
     def cmd_QUERY_DOCKABLE_PROBE(self, gcmd):
         self.last_probe_state = self.get_probe_state()
         state = self.probe_states[self.last_probe_state]
@@ -557,7 +560,8 @@ class DockableProbe:
         return_pos = self.toolhead.get_position()
         # Move away from the bed to ensure the probe isn't triggered,
         # preventing detaching in the event there's no probe/dock sensor.
-        self.toolhead.manual_move([None, None, return_pos[2]+2], self.travel_speed)
+        self.toolhead.manual_move([None, None, return_pos[2]+2],
+                                  self.travel_speed)
         self.auto_detach_probe(return_pos)
 
     def probe_prepare(self, hmove):
@@ -584,7 +588,8 @@ class DockableProbe:
             return_pos = self.toolhead.get_position()
             # Move away from the bed to ensure the probe isn't triggered,
             # preventing detaching in the event there's no probe/dock sensor.
-            self.toolhead.manual_move([None, None, return_pos[2]+2], self.travel_speed)
+            self.toolhead.manual_move([None, None, return_pos[2]+2],
+                                      self.travel_speed)
             self.auto_detach_probe(return_pos)
 
     def get_position_endstop(self):

@@ -205,7 +205,7 @@ methods can be used to verify probe attachment states.
   This is intended to prevent crashing the nozzle into the bed since it is
   assumed if the probe pin reads `TRIGGERED` prior to probing, the probe is
   not attached.
-  
+
   Setting this to `False` will cause all action to be aborted if the probe
   does not read `TRIGGERED` after attaching.
 
