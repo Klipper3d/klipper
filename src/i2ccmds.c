@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_WANT_SOFTWARE_I2C
 #include "basecmd.h" //oid_alloc
 #include "command.h"  //sendf
 #include "sched.h" //DECL_COMMAND
@@ -56,7 +57,7 @@ command_i2c_write(uint32_t *args)
     uint8_t data_len = args[1];
     uint8_t *data = command_decode_ptr(args[2]);
     uint_fast8_t flags = i2c->flags;
-    if (flags & IF_SOFTWARE)
+    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
         i2c_software_write(i2c->i2c_software, data_len, data);
     else
         i2c_write(i2c->i2c_config, data_len, data);
@@ -73,12 +74,10 @@ command_i2c_read(uint32_t * args)
     uint8_t data_len = args[3];
     uint8_t data[data_len];
     uint_fast8_t flags = i2c->flags;
-    if (flags & IF_SOFTWARE)
-        i2c_software_read(
-            i2c->i2c_software, reg_len, reg, data_len, data);
+    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
+        i2c_software_read(i2c->i2c_software, reg_len, reg, data_len, data);
     else
-        i2c_read(
-            i2c->i2c_config, reg_len, reg, data_len, data);
+        i2c_read(i2c->i2c_config, reg_len, reg, data_len, data);
     sendf("i2c_read_response oid=%c response=%*s", oid, data_len, data);
 }
 DECL_COMMAND(command_i2c_read, "i2c_read oid=%c reg=%*s read_len=%u");
@@ -98,7 +97,7 @@ command_i2c_modify_bits(uint32_t *args)
     uint8_t receive_data[reg_len + data_len];
     uint_fast8_t flags = i2c->flags;
     memcpy(receive_data, reg, reg_len);
-    if (flags & IF_SOFTWARE)
+    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
         i2c_software_read(
             i2c->i2c_software, reg_len, reg, data_len, receive_data + reg_len);
     else
@@ -108,7 +107,7 @@ command_i2c_modify_bits(uint32_t *args)
         receive_data[reg_len + i] &= ~clear_set[i];
         receive_data[reg_len + i] |= clear_set[data_len + i];
     }
-    if (flags & IF_SOFTWARE)
+    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
         i2c_software_write(i2c->i2c_software, reg_len + data_len, receive_data);
     else
         i2c_write(i2c->i2c_config, reg_len + data_len, receive_data);

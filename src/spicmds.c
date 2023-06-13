@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "autoconf.h" // CONFIG_HAVE_GPIO_BITBANGING
+#include "autoconf.h" // CONFIG_WANT_SOFTWARE_SPI
 #include "board/gpio.h" // gpio_out_write
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
@@ -92,7 +92,7 @@ spidev_transfer(struct spidev_s *spi, uint8_t receive_data
         // Not yet initialized
         return;
 
-    if (CONFIG_HAVE_GPIO_BITBANGING && flags & SF_SOFTWARE)
+    if (CONFIG_WANT_SOFTWARE_SPI && flags & SF_SOFTWARE)
         spi_software_prepare(spi->spi_software);
     else
         spi_prepare(spi->spi_config);
@@ -100,7 +100,7 @@ spidev_transfer(struct spidev_s *spi, uint8_t receive_data
     if (flags & SF_HAVE_PIN)
         gpio_out_write(spi->pin, !!(flags & SF_CS_ACTIVE_HIGH));
 
-    if (CONFIG_HAVE_GPIO_BITBANGING && flags & SF_SOFTWARE)
+    if (CONFIG_WANT_SOFTWARE_SPI && flags & SF_SOFTWARE)
         spi_software_transfer(spi->spi_software, receive_data, data_len, data);
     else
         spi_transfer(spi->spi_config, receive_data, data_len, data);
