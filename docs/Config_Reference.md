@@ -2656,8 +2656,8 @@ watched component.
 #   The default is 1.0
 #idle_timeout:
 #   The amount of time (in seconds) after a stepper driver or heater
-#   was active and the fan should be kept running. If the value is 
-#   set to -1, the fan will keep from shutting off while idle. The 
+#   was active and the fan should be kept running. If the value is
+#   set to -1, the fan will keep from shutting off while idle. The
 #   default is 30 seconds.
 #idle_speed:
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
