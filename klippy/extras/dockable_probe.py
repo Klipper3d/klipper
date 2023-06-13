@@ -255,7 +255,7 @@ class DockableProbe:
     #
     # e.g. "233, 10, 0" -> [233, 10, 0]
     def _parse_coord(self, config, name, expected_dims=3):
-        val = config.get(name, None)
+        val = config.get(name)
         error_msg = "Unable to parse {0} in {1}: {2}"
         if not val:
             return None
