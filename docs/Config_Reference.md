@@ -1181,6 +1181,15 @@ Where x is the 0, 0 point on the bed
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#adaptive_horizontal_move_z: false
+#   Whether to use an adaptive algorithm for horizontal_move_z.
+#   This can speed up QGL by allowing correction for significant skew
+#   on the first pass, and switching to a smaller value as the error
+#   decreases. The minimum for each pass is 4 times the error or the
+#   min_horizontal_move_z setting, whichever is greater.
+#min_horizontal_move_z:
+#   The minimum height for horizontal_move_z when using adaptive mode.
+#   The default is the same as horizontal_move_z for safety.
 #max_adjust: 4
 #   Safety limit if an adjustment greater than this value is requested
 #   quad_gantry_level will abort.

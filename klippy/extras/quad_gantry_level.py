@@ -28,7 +28,12 @@ class QuadGantryLevel:
         self.retry_helper = z_tilt.RetryHelper(config,
             "Possibly Z motor numbering is wrong")
         self.max_adjust = config.getfloat("max_adjust", 4, above=0)
-        self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
+        self.initial_horizontal_move_z = config.getfloat(
+            "horizontal_move_z", 5.0)
+        self.adaptive_horizontal_move_z = config.getboolean(
+            "adaptive_horizontal_move_z", False)
+        self.min_horizontal_move_z = config.getfloat(
+            "min_horizontal_move_z", self.initial_horizontal_move_z)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         if len(self.probe_helper.probe_points) != 4:
             raise config.error(
@@ -48,6 +53,7 @@ class QuadGantryLevel:
     cmd_QUAD_GANTRY_LEVEL_help = (
         "Conform a moving, twistable gantry to the shape of a stationary bed")
     def cmd_QUAD_GANTRY_LEVEL(self, gcmd):
+        self.horizontal_move_z = self.initial_horizontal_move_z
         self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
@@ -109,8 +115,18 @@ class QuadGantryLevel:
 
         speed = self.probe_helper.get_lift_speed()
         self.z_helper.adjust_steppers(z_adjust, speed)
-        return self.z_status.check_retry_result(
+        result =  self.z_status.check_retry_result(
             self.retry_helper.check_retry(z_positions))
+        if self.adaptive_horizontal_move_z:
+            error = self.retry_helper.get_previous_error()
+            new_z = max(error * 4, self.min_horizontal_move_z)
+            if new_z < self.horizontal_move_z:
+                self.gcode.respond_info("Adaptive horizontal_move_z changed"
+                                        " from %0.6f to %0.6f"
+                                        % (self.horizontal_move_z, new_z))
+                self.horizontal_move_z = new_z
+                self.probe_helper.set_horizontal_move_z(new_z)
+        return result
 
     def linefit(self,p1,p2):
         if p1[1] == p2[1]:

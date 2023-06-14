@@ -382,6 +382,8 @@ class ProbePointsHelper:
         self.use_offsets = use_offsets
     def get_lift_speed(self):
         return self.lift_speed
+    def set_horizontal_move_z(self, hz):
+        self.horizontal_move_z = hz
     def _move_next(self):
         toolhead = self.printer.lookup_object('toolhead')
         # Lift toolhead
@@ -422,11 +424,13 @@ class ProbePointsHelper:
         # Perform automatic probing
         self.lift_speed = probe.get_lift_speed(gcmd)
         self.probe_offsets = probe.get_offsets()
-        if self.horizontal_move_z < self.probe_offsets[2]:
-            raise gcmd.error("horizontal_move_z can't be less than"
-                             " probe's z_offset")
         probe.multi_probe_begin()
         while 1:
+            # Check horizontal_move_z each probe in case the adaptive code
+            # has lowered it
+            if self.horizontal_move_z < self.probe_offsets[2]:
+                raise gcmd.error("horizontal_move_z can't be less than"
+                                 " probe's z_offset")
             done = self._move_next()
             if done:
                 break

@@ -106,6 +106,8 @@ class RetryHelper:
             self.increasing -= 1
         self.previous = error
         return self.increasing > 1
+    def get_previous_error(self):
+        return self.previous
     def check_retry(self, z_positions):
         if self.max_retries == 0:
             return
