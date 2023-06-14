@@ -10,7 +10,6 @@ config ATSAM_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM if !MACH_SAME70
-    select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_STEPPER_BOTH_EDGE
