@@ -92,6 +92,11 @@ config CLOCK_FREQ
     default 200000000 if HC32F460_CLOCK_SPEED_200M
     default 168000000 if HC32F460_CLOCK_SPEED_168M
 
+config LCD_DRIVE_INVERT
+    bool "Invert LCD Drive Polarity"
+    default n
+
+
 config MCU
     string
     default "HC32F460"

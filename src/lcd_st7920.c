@@ -12,6 +12,17 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_SHUTDOWN
 
+// some boards invert the drive pins for level-matching or strength
+#if (CONFIG_LCD_DRIVE_INVERT)
+#define SCLK_INIT_VAL 1
+#define SID_INIT_VAL  1
+#define CS_INIT_VAL   0
+#else
+#define SCLK_INIT_VAL 0
+#define SID_INIT_VAL  0
+#define CS_INIT_VAL   1
+#endif
+
 struct st7920 {
     uint32_t last_cmd_time, sync_wait_ticks, cmd_wait_ticks;
     struct gpio_out sclk, sid;
@@ -102,9 +113,9 @@ void
 command_config_st7920(uint32_t *args)
 {
     struct st7920 *s = oid_alloc(args[0], command_config_st7920, sizeof(*s));
-    s->sclk = gpio_out_setup(args[2], 0);
-    s->sid = gpio_out_setup(args[3], 0);
-    gpio_out_setup(args[1], 1);
+    s->sclk = gpio_out_setup(args[2], SCLK_INIT_VAL);
+    s->sid = gpio_out_setup(args[3], SID_INIT_VAL);
+    gpio_out_setup(args[1], CS_INIT_VAL);
 
     if (!CONFIG_HAVE_STRICT_TIMING) {
         s->sync_wait_ticks = args[4];
