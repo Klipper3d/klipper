@@ -1318,6 +1318,8 @@ configuration options" and specify the desired "CAN bus speed" in
 parameters if <code>[input_shaper]</code> was enabled already.</p>
 <p>20230407: The <code>stalled_bytes</code> counter in the log and in the
 <code>printer.mcu.last_stats</code> field has been renamed to <code>upcoming_bytes</code>.</p>
+<p>20230323: On tmc5160 drivers <code>multistep_filt</code> is now enabled by default. Set
+<code>driver_MULTISTEP_FILT: False</code> in the tmc5160 config for the previous behavior.</p>
 <p>20230304: The <code>SET_TMC_CURRENT</code> command now properly adjusts the globalscaler
 register for drivers that have it. This removes a limitation where on tmc5160,
 the currents could not be raised higher with <code>SET_TMC_CURRENT</code> than the
