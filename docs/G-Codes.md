@@ -25,6 +25,7 @@ Klipper supports the following standard G-Code commands:
 - Set extruder temperature and wait: `M109 [T<index>] S<temperature>`
   - Note: M109 always waits for temperature to settle at requested
     value
+- Enable Cold Extrusion: `M302 [T<index>] [P<enable>] [S<min_extrude_temp>]
 - Set bed temperature: `M140 [S<temperature>]`
 - Set bed temperature and wait: `M190 S<temperature>`
   - Note: M190 always waits for temperature to settle at requested
@@ -666,6 +667,12 @@ above the supplied MINIMUM and/or at or below the supplied MAXIMUM.
 `SET_HEATER_TEMPERATURE HEATER=<heater_name>
 [TARGET=<target_temperature>]`: Sets the target temperature for a
 heater. If a target temperature is not supplied, the target is 0.
+
+#### COLD_EXTRUDE
+`COLD_EXTRUDE HEATER=<heater_name> [P=<enable>] [S=<min_extrude_temp>]:
+Enables or disables cold extrusion. If neither P nor S are supplied, it
+will report the current state. If P is 0, cold extrusion is disabled,
+if it is 1 they are enabled.
 
 ### [idle_timeout]
 
