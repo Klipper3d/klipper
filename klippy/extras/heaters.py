@@ -19,6 +19,7 @@ class Heater:
     def __init__(self, config, sensor):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
+        self.configfile = self.printer.lookup_object('configfile')
         # Setup sensor
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
@@ -33,6 +34,7 @@ class Heater:
         is_fileoutput = (self.printer.get_start_args().get('debugoutput')
                          is not None)
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
+        self.cold_extrude = False
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.smooth_time = config.getfloat('smooth_time', 1., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
@@ -61,6 +63,11 @@ class Heater:
         gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
                                    self.name, self.cmd_SET_HEATER_TEMPERATURE,
                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
+        gcode.register_mux_command("COLD_EXTRUDE",
+                                        "HEATER",
+                                        self.name,
+                                        self.cmd_COLD_EXTRUDE,
+                                        desc=self.cmd_COLD_EXTRUDE_help)
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0.:
             value = 0.
@@ -84,7 +91,8 @@ class Heater:
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
-            self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
+            self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp
+                                or self.cold_extrude)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
     # External commands
     def get_pwm_delay(self):
@@ -140,6 +148,29 @@ class Heater:
         temp = gcmd.get_float('TARGET', 0.)
         pheaters = self.printer.lookup_object('heaters')
         pheaters.set_temperature(self, temp)
+    cmd_COLD_EXTRUDE_help = "Control cold extrusions"
+    def cmd_COLD_EXTRUDE(self, gcmd):
+        cold_extrude = gcmd.get_int('P', None, minval=0, maxval=1)
+        min_extrude_temp = gcmd.get_float('S',
+                                          None,
+                                          minval=self.min_temp,
+                                          maxval=self.max_temp)
+        if cold_extrude is None and min_extrude_temp is None:
+            gcmd.respond_info("Cold extrudes are %s (min temp %.2fC)"
+                              % ("enabled" if self.cold_extrude else "disabled",
+                                 self.min_extrude_temp))
+
+        self.cold_extrude = True if cold_extrude else False
+        if min_extrude_temp is not None:
+            self.min_extrude_temp = min_extrude_temp
+            self.configfile.set(self.name,
+                                'min_extrude_temp',
+                                self.min_extrude_temp)
+            gcmd.respond_info("min_extrude_temp has been saved for the "
+                              "heater [%s] for the current session.\n"
+                              "The SAVE_CONFIG command will update the "
+                              "printer config file and restart the printer."
+                              % self.name)
 
 
 ######################################################################
