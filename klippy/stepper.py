@@ -160,6 +160,8 @@ class MCU_stepper:
         count = ffi_lib.stepcompress_extract_old(self._stepqueue, data, count,
                                                  start_clock, end_clock)
         return (data, count)
+    def get_stepper_kinematics(self):
+        return self._stepper_kinematics
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         mcu_pos = 0

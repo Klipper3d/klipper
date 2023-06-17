@@ -7,7 +7,6 @@ config HC32F460_SELECT
     default y
     select HAVE_GPIO
     select HAVE_GPIO_ADC
-    select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_BOTH_EDGE
@@ -20,23 +19,27 @@ config BOARD_DIRECTORY
 ######################################################################
 # Communication interface
 ######################################################################
-
 choice
     prompt "Communication interface"
     config HC32F460_SERIAL_PA7_PA8
-        bool "Serial (PA7 & PA8) - Creality Ender 2 PRO"
+        bool "Serial (PA7 & PA8)"
+        select SERIAL
+    config HC32F460_SERIAL_PA13_PA14
+        bool "Serial (PA13 & PA14)"
         select SERIAL
     config HC32F460_SERIAL_PA3_PA2
-        bool "Serial (PA3 & PA2) - Anycube"
+        bool "Serial (PA3 & PA2)"
+        select SERIAL
+    config HC32F460_SERIAL_PH2_PB10
+        bool "Serial (PH2 & PB10)"
         select SERIAL
     config HC32F460_SERIAL_PA15_PA9
-        bool "Serial (PA15 & PA09) - Voxelab"
+        bool "Serial (PA15 & PA09)"
         select SERIAL
     config HC32F460_SERIAL_PC0_PC1
-        bool "Serial (PC0 & PC1) - on LCD connector"
+        bool "Serial (PC0 & PC1)"
         select SERIAL
 endchoice
-
 
 ######################################################################
 # Bootloader
@@ -46,8 +49,18 @@ config FLASH_SIZE
     hex
     default 0x40000
 
+choice "Application Address"
+    prompt "Application Address"
+    config HC32F460_FLASH_APPLICATION_ADDRESS_0x8000
+        bool "0x8000"
+    config HC32F460_FLASH_APPLICATION_ADDRESS_0xC000
+        bool "0xC000"
+endchoice
+
 config FLASH_APPLICATION_ADDRESS
-    default 0x8000  # Aquila is 0xC000
+    hex
+    default 0x8000 if HC32F460_FLASH_APPLICATION_ADDRESS_0x8000
+    default 0xC000 if HC32F460_FLASH_APPLICATION_ADDRESS_0xC000
 
 config FLASH_BOOT_ADDRESS
     hex
@@ -66,11 +79,18 @@ config STACK_SIZE
     int
     default 1024
 
+choice "Clock Speed"
+    prompt "Clock Speed"
+    config HC32F460_CLOCK_SPEED_168M
+        bool "168 MHz"
+    config HC32F460_CLOCK_SPEED_200M
+        bool "200 MHz"
+endchoice
 
 config CLOCK_FREQ
     int
-    default 200000000   # Voxelab uses 168000000
-
+    default 200000000 if HC32F460_CLOCK_SPEED_200M
+    default 168000000 if HC32F460_CLOCK_SPEED_168M
 
 config MCU
     string
