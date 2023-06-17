@@ -27,6 +27,7 @@ class FirmwareRetraction:
                                                           # Initialize variables
         self.unretract_length = (self.retract_length + \
             self.unretract_extra_length)
+        self.currentPos = []
         self.currentZ = 0.0
         self.z_hop_Z = 0.0                           # Z coordinate of zhop move
         self.safe_z_hop_height = self.z_hop_height #Zhop preventing out-of-range
@@ -34,11 +35,16 @@ class FirmwareRetraction:
         self.is_retracted = False                           # Retract state flag
         self.ramp_move = False                                  # Ramp move flag
         self.vsdcard_paused = False                         # VSDCard pause flag
+        self.G1_toggle_state = False                      # G1 toggle state flag
+        self.z_coord_check = False         # Z_hop move check only for cartesian
         self.stored_set_retraction_gcmds = []  # List for delayed SET_RETRACTION
         self.acc_vel_state = []                # List for accel and vel settings
 
-        zconfig = config.getsection('stepper_z')
-        self.max_z = zconfig.getfloat('position_max')
+        # Limit use of zhop only to cartesians
+        if self.config_ref.has_section('stepper_z'):
+            zconfig = config.getsection('stepper_z')
+            self.max_z = zconfig.getfloat('position_max')
+            self.z_coord_check = True
 
         printer_config = config.getsection('printer')
         self.max_vel = printer_config.getfloat('max_velocity')
@@ -126,8 +132,8 @@ class FirmwareRetraction:
             # Incl move command if z_hop_height>0 depending on z_hop_style
             if self.z_hop_height > 0.0:
                 # Set safe zhop parameters to prevent out-of-range moves when
-                # canceling or finishing print while retracted
-                self._set_safe_zhop_params()
+                # canceling or finishing print while retracted - Only Cartesian!
+                self._set_safe_zhop_retract_params()
                 retract_gcode += (
                     "SET_VELOCITY_LIMIT VELOCITY={:.5f} \
                         SQUARE_CORNER_VELOCITY={:.5f}\n"
@@ -168,6 +174,7 @@ class FirmwareRetraction:
                 # Swap original G1 handlers if z_hop enabled to offset following
                 # moves in eiter absolute or relative mode
                 self._unregister_G1()
+                self.G1_toggle_state = True #Prevent repeat unregister with flag
         else:
             if self.verbose: gcmd.respond_info('Printer is already in retract \
                 state. Command ignored!')
@@ -189,6 +196,7 @@ class FirmwareRetraction:
             else:
                 if self.z_hop_height > 0.0:    # Restore G1 handlers if z_hop on
                     self._re_register_G1()
+                    self.G1_toggle_state = False    # Prevent repeat re-register
 
                 self._save_acc_vel_state()         # Save accel and vel settings
                 unretract_gcode = (
@@ -202,6 +210,8 @@ class FirmwareRetraction:
                 if self.z_hop_height > 0.0 and self.ramp_move:
                     self.ramp_move = False  # Reset ramp flag if not used before
                 elif self.z_hop_height > 0.0:
+                    # Set maximum unretract z move to 0.0 coordinate
+                    self._set_safe_zhop_unretract_params()
                     unretract_gcode += (
                         "SET_VELOCITY_LIMIT VELOCITY={:.5f} \
                             SQUARE_CORNER_VELOCITY={:.5f}\n"       # Set max vel
@@ -296,9 +306,11 @@ class FirmwareRetraction:
         # GCode streaming
         ################ GCode streaming mode (most commonly done via OctoPrint)
         # Print is started:  Most start gcodes include a G28 command to home all
-        # axes, which is generally NOT repeated during printing. Using homing as
-        # an indicator to evaluate if a printjob has started. G28 requirement
-        # added in function description.
+        # axes, which is generally NOT repeated during printing. Using homing
+        # move as an indicator to evaluate if a printjob has started. G28
+        # requirement added in function description. Bz using homing_move rather
+        # than home_rails event, bed mesh calibration is also detected and
+        # and triggers clearing retract state.
         #
         # Print is canceled: On cancel, OctoPrint automatically disables
         # stepper, which allows identifying a canceled print.
@@ -309,7 +321,7 @@ class FirmwareRetraction:
         # disabled on host and firmware restart, thus triggering clear
         # retraction as well. Shutdown requires host and/or firmware restart,
         # thus also triggerung clear retraction.
-        self.printer.register_event_handler("homing:home_rails_begin", \
+        self.printer.register_event_handler("homing:homing_move_begin", \
             self._evaluate_retraction)
         self.printer.register_event_handler("stepper_enable:motor_off", \
             self._evaluate_retraction)
@@ -408,6 +420,7 @@ class FirmwareRetraction:
             # Note that disabling zhop while retracted id not possible as the
             # SET_RETRACTION command will not execute while retracted.
             self._re_register_G1()
+            self.G1_toggle_state = False            # Prevent repeat re-register
         self.is_retracted = False     # Reset retract flag to enable G10 command
         self.ramp_move = False                            # Reset ramp move flag
         self.stored_set_retraction_gcmds = []       # Reset list of stored comms
@@ -432,31 +445,46 @@ class FirmwareRetraction:
             self.toolhead.square_corner_velocity]
 
     ### Helper to evaluate max. possible zhop height to stay within build volume
-    def _set_safe_zhop_params(self):
-        self.currentZ = self._get_gcode_zpos()
+    def _set_safe_zhop_retract_params(self):
+        self.safe_z_hop_height = self.z_hop_height
 
-        # Set safe z_hop height to prevent out-of-range moves.
-        # Variables is used in zhop-G1 command
-        if self.currentZ + self.z_hop_height > self.max_z:
-            self.safe_z_hop_height = self.max_z - self.currentZ
-        else:
-            self.safe_z_hop_height = self.z_hop_height
+        # Check z move - only for cartesians
+        if self.z_coord_check:
+            self.currentPos = self._get_gcode_pos()
+            self.currentZ = self.currentPos[2]
+            # Set safe z_hop height to prevent out-of-range moves.
+            # Variables is used in zhop-G1 command
+            if self.currentZ + self.z_hop_height > self.max_z:
+                self.safe_z_hop_height = self.max_z - self.currentZ
 
         self.z_hop_Z = self.currentZ + self.safe_z_hop_height
 
+    ####### Helper to evaluate max. possible zhop height to prevent nozzle crash
+    def _set_safe_zhop_unretract_params(self):
+        self.currentPos = self._get_gcode_pos()
+        self.currentZ = self.currentPos[2]
+        # Set safe z_hop height to prevent nozzle crashes
+        # Variables is used in G11 command
+        if self.currentZ - self.safe_z_hop_height < 0.0:
+            self.safe_z_hop_height = -1.0 * self.currentZ
+
     ####################################### Helper to get current gcode position
-    def _get_gcode_zpos(self):
+    def _get_gcode_pos(self):
         # Get current gcode position for z_hop move if enabled
         gcodestatus = self.gcode_move.get_status()
         currentPos = gcodestatus['gcode_position']
-        return currentPos[2]
+        return currentPos
 
     ############################################ Register new G1 command handler
     def _unregister_G1(self):
-        self._toggle_gcode_comms('G1.20140114', 'G1', self._G1_zhop, \
-            'G1 command that accounts for z hop when retracted', False)
-        self._toggle_gcode_comms('G0.20140114', 'G0', self._G1_zhop, \
-            'G0 command that accounts for z hop when retracted', False)
+        # Change handler only if G1 command has not been toggled before
+        if self.G1_toggle_state == False:
+            self._toggle_gcode_comms('G1.20140114', 'G1', self._G1_zhop, \
+                'G1 command that accounts for z hop when retracted', \
+                self.G1_toggle_state)
+            self._toggle_gcode_comms('G0.20140114', 'G0', self._G1_zhop, \
+                'G0 command that accounts for z hop when retracted', \
+                self.G1_toggle_state)
 
     ##################### Helper to toggle/untoggle command handlers and methods
     def _toggle_gcode_comms(self, new_cmd_name, old_cmd_name, new_cmd_func, \
@@ -521,8 +549,12 @@ class FirmwareRetraction:
 
     ######################################### Re-register old G1 command handler
     def _re_register_G1(self):
-        self._toggle_gcode_comms('G1', 'G1.20140114', None, 'cmd_G1_help', True)
-        self._toggle_gcode_comms('G0', 'G0.20140114', None, 'cmd_G1_help', True)
+        # Change handler only if G1 command has been toggled before
+        if self.G1_toggle_state == True:
+            self._toggle_gcode_comms('G1', 'G1.20140114', None, 'cmd_G1_help', \
+                                    self.G1_toggle_state)
+            self._toggle_gcode_comms('G0', 'G0.20140114', None, 'cmd_G1_help', \
+                                    self.G1_toggle_state)
 
     ################## Helper method to return the current retraction parameters
     def get_status(self, eventtime):
