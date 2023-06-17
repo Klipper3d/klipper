@@ -20,6 +20,7 @@ class Heater:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.configfile = self.printer.lookup_object('configfile')
+        self.gcode = self.printer.lookup_object('gcode')
         # Setup sensor
         self.sensor = sensor
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
@@ -143,22 +144,13 @@ class Heater:
             last_pwm_value = self.last_pwm_value
         return {'temperature': round(smoothed_temp, 2), 'target': target_temp,
                 'power': last_pwm_value}
-    cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
-    def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
-        temp = gcmd.get_float('TARGET', 0.)
-        pheaters = self.printer.lookup_object('heaters')
-        pheaters.set_temperature(self, temp)
-    cmd_COLD_EXTRUDE_help = "Control cold extrusions"
-    def cmd_COLD_EXTRUDE(self, gcmd):
-        cold_extrude = gcmd.get_int('P', None, minval=0, maxval=1)
-        min_extrude_temp = gcmd.get_float('S',
-                                          None,
-                                          minval=self.min_temp,
-                                          maxval=self.max_temp)
+
+    def set_cold_extrude(self, cold_extrude, min_extrude_temp):
         if cold_extrude is None and min_extrude_temp is None:
-            gcmd.respond_info("Cold extrudes are %s (min temp %.2fC)"
-                              % ("enabled" if self.cold_extrude else "disabled",
-                                 self.min_extrude_temp))
+            self.gcode.respond_info("Cold extrudes are %s (min temp %.2fC)"
+                                    % ("enabled" if self.cold_extrude
+                                       else "disabled",
+                                       self.min_extrude_temp))
 
         self.cold_extrude = True if cold_extrude else False
         if min_extrude_temp is not None:
@@ -166,11 +158,25 @@ class Heater:
             self.configfile.set(self.name,
                                 'min_extrude_temp',
                                 self.min_extrude_temp)
-            gcmd.respond_info("min_extrude_temp has been saved for the "
-                              "heater [%s] for the current session.\n"
-                              "The SAVE_CONFIG command will update the "
-                              "printer config file and restart the printer."
-                              % self.name)
+            self.gcode.respond_info("min_extrude_temp has been set to %.2fC "
+                                    "for [%s] for the current session.\n"
+                                    "The SAVE_CONFIG command will update the "
+                                    "printer config file and restart the "
+                                    "printer."
+                                    % (self.min_extrude_temp, self.name))
+    cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
+    def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
+        temp = gcmd.get_float('TARGET', 0.)
+        pheaters = self.printer.lookup_object('heaters')
+        pheaters.set_temperature(self, temp)
+    cmd_COLD_EXTRUDE_help = "Control cold extrusions"
+    def cmd_COLD_EXTRUDE(self, gcmd):
+        cold_extrude = gcmd.get_int('ENABLE', None, minval=0, maxval=1)
+        min_extrude_temp = gcmd.get_float('MIN_EXTRUDE_TEMP',
+                                          None,
+                                          minval=self.min_temp,
+                                          maxval=self.max_temp)
+        self.set_cold_extrude(cold_extrude, min_extrude_temp)
 
 
 ######################################################################

@@ -310,7 +310,13 @@ class PrinterExtruder:
                 raise gcmd.error("Extruder not configured")
         else:
             extruder = self.printer.lookup_object('toolhead').get_extruder()
-        extruder.get_heater().cmd_COLD_EXTRUDE(gcmd)
+        heater = extruder.get_heater()
+        cold_extrude = gcmd.get_int('P', None, minval=0, maxval=1)
+        min_extrude_temp = gcmd.get_float('S',
+                                          None,
+                                          minval=heater.min_temp,
+                                          maxval=heater.max_temp)
+        heater.set_cold_extrude(cold_extrude, min_extrude_temp)
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
