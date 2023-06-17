@@ -669,10 +669,11 @@ above the supplied MINIMUM and/or at or below the supplied MAXIMUM.
 heater. If a target temperature is not supplied, the target is 0.
 
 #### COLD_EXTRUDE
-`COLD_EXTRUDE HEATER=<heater_name> [P=<enable>] [S=<min_extrude_temp>]:
-Enables or disables cold extrusion. If neither P nor S are supplied, it
-will report the current state. If P is 0, cold extrusion is disabled,
-if it is 1 they are enabled.
+`COLD_EXTRUDE HEATER=<heater_name> [ENABLE=<0 or 1>]
+[MIN_EXTRUDE_TEMP=<min_extrude_temp>]: Enables or disables cold extrusion.
+If neither ENABLE nor MIN_EXTRUDE_TEMP are supplied, it
+will report the current state. If ENABLE is 0, cold extrusion is disabled,
+if it is 1 it is enabled.
 
 ### [idle_timeout]
 
