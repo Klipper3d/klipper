@@ -209,11 +209,6 @@ The following information is available in the `gcode_move` object
   coordinate mode or False if in `G91` relative mode.
 - `absolute_extrude`: This returns True if in `M82` absolute extrude
   mode or False if in `M83` relative mode.
-- `saved_states`: This returns a list of states that were
-  saved using the `SAVE_GCODE_STATE` command.
-  Each state is an object containing the following information about the saved state:
-  `absolute_coord`, `absolute_extrude`, `base_position`, `last_position`,
-  `homing_position`, `speed`, `speed_factor`, and `extrude_factor`.
 
 ## hall_filament_width_sensor
 

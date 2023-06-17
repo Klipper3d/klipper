@@ -105,7 +105,6 @@ class GCodeMove:
             'homing_origin': self.Coord(*self.homing_position),
             'position': self.Coord(*self.last_position),
             'gcode_position': self.Coord(*move_position),
-            'saved_states': self.saved_states,
         }
     def reset_last_position(self):
         if self.is_printer_ready:
