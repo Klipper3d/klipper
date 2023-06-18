@@ -151,7 +151,7 @@ class Heater:
                                     % ("enabled" if self.cold_extrude
                                        else "disabled",
                                        self.min_extrude_temp))
-
+            return
         self.cold_extrude = True if cold_extrude else False
         if min_extrude_temp is not None:
             self.min_extrude_temp = min_extrude_temp
