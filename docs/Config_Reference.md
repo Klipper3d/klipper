@@ -3536,6 +3536,10 @@ run_current:
 #   (hex form is not supported). In order to compute the wave table fields,
 #   see the tmc2130 "Calculation Sheet" from the Trinamic website.
 #driver_MULTISTEP_FILT: True
+#   While the default value of this field is `True` for tmc5160, and in theory
+#   this setting should only make StealthChop2 better, there seem to be
+#   issues with some setups. If you encounter layer shifts when using
+#   StealthChop2, setting this option to `False` might help.
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2
