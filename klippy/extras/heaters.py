@@ -164,6 +164,8 @@ class Heater:
                                     "printer config file and restart the "
                                     "printer."
                                     % (self.min_extrude_temp, self.name))
+        self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp
+                            or self.cold_extrude)
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
