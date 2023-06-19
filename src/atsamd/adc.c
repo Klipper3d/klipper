@@ -14,7 +14,9 @@ DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 
 #if CONFIG_MACH_SAMC21
 
-#define ADC_INPUTCTRL_MUXNEG_GND 0x18
+DECL_CONSTANT_STR("RESERVE_PINS_adc", "PA3");
+
+#define ADC_INPUTCTRL_MUXNEG_GND ADC_INPUTCTRL_MUXNEG(0x18)
 
 #define SAMD51_ADC_SYNC(ADC, BIT) \
     while(ADC->SYNCBUSY.reg & ADC_SYNCBUSY_ ## BIT)
@@ -94,6 +96,17 @@ adc_init(void)
     enable_pclock(ADC0_GCLK_ID, ID_ADC0);
     enable_pclock(ADC1_GCLK_ID, ID_ADC1);
 
+    // Set ADC-DAC VREFA pin to ADC mode
+    gpio_peripheral(GPIO('A', 3), 'B', 0);
+
+    // Reset
+    ADC0->CTRLA.reg = ADC_CTRLA_SWRST;
+    while (ADC0->CTRLA.reg & ADC_CTRLA_SWRST)
+        ;
+    ADC1->CTRLA.reg = ADC_CTRLA_SWRST;
+    while (ADC1->CTRLA.reg & ADC_CTRLA_SWRST)
+        ;
+
     // Load calibration info
     // ADC0
     uint32_t refbuf = GET_FUSE(ADC0_FUSES_BIASREFBUF);
@@ -109,16 +122,24 @@ adc_init(void)
 
     // Setup and enable
     // ADC0
-    ADC0->REFCTRL.reg = ADC_REFCTRL_REFSEL_INTVCC1;
+    ADC0->REFCTRL.reg = ADC_REFCTRL_REFSEL_AREFA | ADC_REFCTRL_REFCOMP;
     ADC0->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV128;
     ADC0->SAMPCTRL.reg = ADC_SAMPCTRL_SAMPLEN(63);
+    while (ADC0->SYNCBUSY.reg & ADC_SYNCBUSY_SAMPCTRL)
+        ;
     ADC0->CTRLA.reg = ADC_CTRLA_ENABLE;
+    while (ADC0->SYNCBUSY.reg & ADC_SYNCBUSY_ENABLE)
+        ;
 
     // ADC1
-    ADC1->REFCTRL.reg = ADC_REFCTRL_REFSEL_INTVCC1;
+    ADC1->REFCTRL.reg = ADC_REFCTRL_REFSEL_AREFA | ADC_REFCTRL_REFCOMP;
     ADC1->CTRLB.reg = ADC_CTRLB_PRESCALER_DIV128;
     ADC1->SAMPCTRL.reg = ADC_SAMPCTRL_SAMPLEN(63);
+    while (ADC1->SYNCBUSY.reg & ADC_SYNCBUSY_SAMPCTRL)
+        ;
     ADC1->CTRLA.reg = ADC_CTRLA_ENABLE;
+    while (ADC1->SYNCBUSY.reg & ADC_SYNCBUSY_ENABLE)
+        ;
 
 #elif CONFIG_MACH_SAMD21
     // Enable adc clock
