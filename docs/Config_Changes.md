@@ -20,6 +20,9 @@ parameters if `[input_shaper]` was enabled already.
 20230407: The `stalled_bytes` counter in the log and in the
 `printer.mcu.last_stats` field has been renamed to `upcoming_bytes`.
 
+20230323: On tmc5160 drivers `multistep_filt` is now enabled by default. Set
+`driver_MULTISTEP_FILT: False` in the tmc5160 config for the previous behavior.
+
 20230304: The `SET_TMC_CURRENT` command now properly adjusts the globalscaler
 register for drivers that have it. This removes a limitation where on tmc5160,
 the currents could not be raised higher with `SET_TMC_CURRENT` than the
