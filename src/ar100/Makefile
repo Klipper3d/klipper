@@ -19,12 +19,6 @@ src-y += ar100/main.c ar100/gpio.c ar100/serial.c
 src-y += ar100/util.c ar100/timer.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
 
-# Remove files that are not needed to save space
-src-y := $(filter-out lcd_hd44780.c,$(src-y))
-src-y := $(filter-out lcd_st7920.c,$(src-y))
-src-y := $(filter-out sensor_angle.c,$(src-y))
-src-y := $(filter-out thermocouple.c,$(src-y))
-
 OBJS_klipper.elf += $(OUT)lib/ar100/start.o
 OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o
 
