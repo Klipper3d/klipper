@@ -1309,6 +1309,12 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20230619: The <code>relative_reference_index</code> option has been deprecated
+and superceded by the <code>zero_reference_position</code> option.  Refer to the
+<a href="Bed_Mesh.html#the-deprecated-relative_reference_index">Bed Mesh Documentation</a>
+for details on how to update the configuration.  With this deprecation
+the <code>RELATIVE_REFERENCE_INDEX</code> is no longer available as a parameter
+for the <code>BED_MESH_CALIBRATE</code> gcode command.</p>
 <p>20230530: The default canbus frequency in "make menuconfig" is
 now 1000000. If using canbus and using canbus with some other
 frequency is required, then be sure to select "Enable extra low-level
