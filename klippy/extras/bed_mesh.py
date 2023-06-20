@@ -278,6 +278,12 @@ class BedMesh:
             gcmd.respond_info("No mesh loaded to offset")
 
 
+class ZrefMode:
+    DISABLED = 0  # Zero reference disabled
+    IN_MESH = 1   # Zero reference position within mesh
+    PROBE = 2     # Zero refrennce position outside of mesh, probe needed
+
+
 class BedMeshCalibrate:
     ALGOS = ['lagrange', 'bicubic']
     def __init__(self, config, bedmesh):
@@ -285,17 +291,30 @@ class BedMeshCalibrate:
         self.orig_config = {'radius': None, 'origin': None}
         self.radius = self.origin = None
         self.mesh_min = self.mesh_max = (0., 0.)
+        self.zero_ref_pos = config.getfloatlist(
+            "zero_reference_position", None, count=2
+        )
         self.relative_reference_index = config.getint(
-            'relative_reference_index', None)
+            'relative_reference_index', None, minval=0)
+        config.deprecate('relative_reference_index')
+        if (
+            self.zero_ref_pos is not None and
+            self.relative_reference_index is not None
+        ):
+            self.relative_reference_index = None
+            logging.info(
+                "bed_mesh: both 'zero_reference_postion' and "
+                "'relative_reference_index' options are specified, "
+                "the 'zero_reference_position' value will be used."
+            )
+        self.zero_reference_mode = ZrefMode.DISABLED
         self.faulty_regions = []
         self.substituted_indices = collections.OrderedDict()
-        self.orig_config['rri'] = self.relative_reference_index
         self.bedmesh = bedmesh
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
         self._generate_points(config.error)
         self._profile_name = None
-        self.orig_points = self.points
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points())
         self.probe_helper.minimum_points(3)
@@ -347,8 +366,37 @@ class BedMeshCalibrate:
                             (self.origin[0] + pos_x, self.origin[1] + pos_y))
             pos_y += y_dist
         self.points = points
+        rri = self.relative_reference_index
+        if self.zero_ref_pos is None and rri is not None:
+            # Zero ref position needs to be initialized
+            if rri >= len(self.points):
+                raise error("bed_mesh: relative reference index out of range")
+            self.zero_ref_pos = points[rri]
+        if self.zero_ref_pos is None:
+            # Zero Reference Disabled
+            self.zero_reference_mode = ZrefMode.DISABLED
+        elif within(self.zero_ref_pos, self.mesh_min, self.mesh_max):
+            # Zero Reference position within mesh
+            self.zero_reference_mode = ZrefMode.IN_MESH
+        else:
+            # Zero Reference position outside of mesh
+            self.zero_reference_mode = ZrefMode.PROBE
         if not self.faulty_regions:
             return
+        self.substituted_indices.clear()
+        if self.zero_reference_mode == ZrefMode.PROBE:
+            # Cannot probe a reference within a faulty region
+            for min_c, max_c in self.faulty_regions:
+                if within(self.zero_ref_pos, min_c, max_c):
+                    opt = "zero_reference_position"
+                    if self.relative_reference_index is not None:
+                        opt = "relative_reference_index"
+                    raise error(
+                        "bed_mesh: Cannot probe zero reference position at "
+                        "(%.2f, %.2f) as it is located within a faulty region."
+                        " Check the value for option '%s'"
+                        % (self.zero_ref_pos[0], self.zero_ref_pos[1], opt,)
+                    )
         # Check to see if any points fall within faulty regions
         last_y = self.points[0][1]
         is_reversed = False
@@ -398,11 +446,18 @@ class BedMeshCalibrate:
             mesh_pt = "(%.1f, %.1f)" % (x, y)
             print_func(
                 "  %-4d| %-16s| %s" % (i, adj_pt, mesh_pt))
-        if self.relative_reference_index is not None:
+        if self.zero_ref_pos is not None:
             rri = self.relative_reference_index
-            print_func(
-                "bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
-                % (rri, self.points[rri][0], self.points[rri][1]))
+            if rri is not None:
+                print_func(
+                    "bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
+                    % (rri, self.zero_ref_pos[0], self.zero_ref_pos[1])
+                )
+            else:
+                print_func(
+                    "bed_mesh: zero_reference_position is (%.2f, %.2f)"
+                    % (self.zero_ref_pos[0], self.zero_ref_pos[1])
+                )
         if self.substituted_indices:
             print_func("bed_mesh: faulty region points")
             for i, v in self.substituted_indices.items():
@@ -522,7 +577,6 @@ class BedMeshCalibrate:
         # reset default configuration
         self.radius = self.orig_config['radius']
         self.origin = self.orig_config['origin']
-        self.relative_reference_index = self.orig_config['rri']
         self.mesh_min = self.orig_config['mesh_min']
         self.mesh_max = self.orig_config['mesh_max']
         for key in list(self.mesh_config.keys()):
@@ -530,12 +584,6 @@ class BedMeshCalibrate:
 
         params = gcmd.get_command_parameters()
         need_cfg_update = False
-        if 'RELATIVE_REFERENCE_INDEX' in params:
-            self.relative_reference_index = gcmd.get_int(
-                'RELATIVE_REFERENCE_INDEX')
-            if self.relative_reference_index < 0:
-                self.relative_reference_index = None
-            need_cfg_update = True
         if self.radius is not None:
             if "MESH_RADIUS" in params:
                 self.radius = gcmd.get_float("MESH_RADIUS")
@@ -581,21 +629,24 @@ class BedMeshCalibrate:
                               in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
-            self.points = self.orig_points
+            self._generate_points(gcmd.error)
             pts = self._get_adjusted_points()
             self.probe_helper.update_probe_points(pts, 3)
     def _get_adjusted_points(self):
-        if not self.substituted_indices:
-            return self.points
         adj_pts = []
-        last_index = 0
-        for i, pts in self.substituted_indices.items():
-            adj_pts.extend(self.points[last_index:i])
-            adj_pts.extend(pts)
-            # Add one to the last index to skip the point
-            # we are replacing
-            last_index = i + 1
-        adj_pts.extend(self.points[last_index:])
+        if self.substituted_indices:
+            last_index = 0
+            for i, pts in self.substituted_indices.items():
+                adj_pts.extend(self.points[last_index:i])
+                adj_pts.extend(pts)
+                # Add one to the last index to skip the point
+                # we are replacing
+                last_index = i + 1
+            adj_pts.extend(self.points[last_index:])
+        else:
+            adj_pts = list(self.points)
+        if self.zero_reference_mode == ZrefMode.PROBE:
+            adj_pts.append(self.zero_ref_pos)
         return adj_pts
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
@@ -609,6 +660,14 @@ class BedMeshCalibrate:
         x_offset, y_offset, z_offset = offsets
         positions = [[round(p[0], 2), round(p[1], 2), p[2]]
                      for p in positions]
+        if self.zero_reference_mode == ZrefMode.PROBE :
+            ref_pos = positions.pop()
+            logging.info(
+                "bed_mesh: z-offset replaced with probed z value at "
+                "position (%.2f, %.2f, %.6f)"
+                % (ref_pos[0], ref_pos[1], ref_pos[2])
+            )
+            z_offset = ref_pos[2]
         params = dict(self.mesh_config)
         params['min_x'] = min(positions, key=lambda p: p[0])[0] + x_offset
         params['max_x'] = max(positions, key=lambda p: p[0])[0] + x_offset
@@ -658,11 +717,6 @@ class BedMeshCalibrate:
                         ", probed = (%.2f, %.2f)"
                         % (off_pt[0], off_pt[1], probed[0], probed[1]))
             positions = corrected_pts
-
-        if self.relative_reference_index is not None:
-            # zero out probe z offset and
-            # set offset relative to reference index
-            z_offset = positions[self.relative_reference_index][2]
 
         probed_matrix = []
         row = []
@@ -720,6 +774,11 @@ class BedMeshCalibrate:
             z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(str(e))
+        if self.zero_reference_mode == ZrefMode.IN_MESH:
+            # The reference can be anywhere in the mesh, therefore
+            # it is necessary to set the reference after the initial mesh
+            # is generated to lookup the correct z value.
+            z_mesh.set_zero_reference(*self.zero_ref_pos)
         self.bedmesh.set_mesh(z_mesh)
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         self.bedmesh.save_profile(self._profile_name)
@@ -899,6 +958,16 @@ class ZMesh:
         # z step distances
         self.avg_z = round(self.avg_z, 2)
         self.print_mesh(logging.debug)
+    def set_zero_reference(self, xpos, ypos):
+        offset = self.calc_z(xpos, ypos)
+        logging.info(
+            "bed_mesh: setting zero reference at (%.2f, %.2f, %.6f)"
+            % (xpos, ypos, offset)
+        )
+        for matrix in [self.probed_matrix, self.mesh_matrix]:
+            for yidx in range(len(matrix)):
+                for xidx in range(len(matrix[yidx])):
+                    matrix[yidx][xidx] -= offset
     def set_mesh_offsets(self, offsets):
         for i, o in enumerate(offsets):
             if o is not None:

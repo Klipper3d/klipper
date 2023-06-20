@@ -966,10 +966,18 @@ Visual Examples:
 #   be applied to change the amount of slope interpolated. Larger
 #   numbers will increase the amount of slope, which results in more
 #   curvature in the mesh. Default is .2.
+#zero_reference_position:
+#   An optional X,Y coordinate that specifies the location on the bed
+#   where Z = 0.  When this option is specified the mesh will be offset
+#   so that zero Z adjustment occurs at this location.  The default is
+#   no zero reference.
 #relative_reference_index:
-#   A point index in the mesh to reference all z values to. Enabling
-#   this parameter produces a mesh relative to the probed z position
-#   at the provided index.
+#   **DEPRECATED, use the "zero_reference_position" option**
+#   The legacy option superceded by the "zero reference position".
+#   Rather than a coordinate this option takes an integer "index" that
+#   refers to the location of one of the generated points. It is recommended
+#   to use the "zero_reference_position" instead of this option for new
+#   configurations. The default is no relative reference index.
 #faulty_region_1_min:
 #faulty_region_1_max:
 #   Optional points that define a faulty region.  See docs/Bed_Mesh.md
@@ -4335,12 +4343,6 @@ i2c_address:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
-#i2c_bus:
-#i2c_software_scl_pin:
-#i2c_software_sda_pin:
-#   If the I2C implementation of your micro-controller supports
-#   multiple I2C busses, you may specify the bus name here. The
-#   default is to use the default micro-controller i2c bus.
 ```
 
 ### [samd_sercom]
@@ -4587,11 +4589,16 @@ via the `i2c_speed` parameter. All other Klipper micro-controllers use a
 #   The name of the micro-controller that the chip is connected to.
 #   The default is "mcu".
 #i2c_bus:
-#i2c_software_scl_pin:
-#i2c_software_sda_pin:
 #   If the micro-controller supports multiple I2C busses then one may
 #   specify the micro-controller bus name here. The default depends on
 #   the type of micro-controller.
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#   Specify these parameters to use micro-controller software based
+#   I2C "bit-banging" support. The two parameters should the two pins
+#   on the micro-controller to use for the scl and sda wires. The
+#   default is to use hardware based I2C support as specified by the
+#   i2c_bus parameter.
 #i2c_speed:
 #   The I2C speed (in Hz) to use when communicating with the device.
 #   The Klipper implementation on most micro-controllers is hard-coded
