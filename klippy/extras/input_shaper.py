@@ -127,7 +127,7 @@ class AxisInputShaper:
     def __init__(self, params):
         self.params = params
         self.n, self.A, self.T = params.get_shaper()
-        self.t_offs = self._calc_offset()
+        self.t_offs = shaper_defs.get_shaper_offset(self.A, self.T)
         self.saved = None
     def get_name(self):
         return 'shaper_' + self.get_axis()
@@ -139,14 +139,10 @@ class AxisInputShaper:
         return not exact_mode and self.A
     def is_enabled(self):
         return self.n > 0
-    def _calc_offset(self):
-        if not self.A:
-            return 0.
-        return sum([a * t for a, t in zip(self.A, self.T)]) / sum(self.A)
     def update(self, shaper_type, gcmd):
         self.params.update(shaper_type, gcmd)
         self.n, self.A, self.T = self.params.get_shaper()
-        self.t_offs = self._calc_offset()
+        self.t_offs = shaper_defs.get_shaper_offset(self.A, self.T)
     def update_stepper_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
@@ -277,7 +273,8 @@ class AxisInputSmoother:
     def __init__(self, params):
         self.params = params
         self.n, self.coeffs, self.smooth_time = params.get_smoother()
-        self.t_offs = self._calc_offset()
+        self.t_offs = shaper_defs.get_smoother_offset(
+                self.coeffs, self.smooth_time, normalized=False)
         self.saved_smooth_time = 0.
     def get_name(self):
         return 'smoother_' + self.axis
@@ -289,18 +286,11 @@ class AxisInputSmoother:
         return True
     def is_enabled(self):
         return self.smooth_time > 0.
-    def _calc_offset(self):
-        int_t0 = int_t1 = 0.
-        for i, c in enumerate(self.coeffs):
-            if i & 1:
-                int_t1 += c / (2**(i+1) * (i+2))
-            else:
-                int_t0 += c / (2**i * (i+1))
-        return int_t1 * self.smooth_time / int_t0
     def update(self, shaper_type, gcmd):
         self.params.update(shaper_type, gcmd)
         self.n, self.coeffs, self.smooth_time = self.params.get_smoother()
-        self.t_offs = self._calc_offset()
+        self.t_offs = shaper_defs.get_smoother_offset(
+                self.coeffs, self.smooth_time, normalized=False)
     def update_stepper_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()
         axis = self.get_axis().encode()
