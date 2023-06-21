@@ -28,6 +28,7 @@
   #define USART_RX_PIN    (Pin15)
   #define USART_TX_PORT   (PortA)
   #define USART_TX_PIN    (Pin09)
+  #define USART_NUM       1
 
 #elif CONFIG_HC32F460_SERIAL_PC0_PC1
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PC0,PC1");
@@ -35,6 +36,7 @@
   #define USART_RX_PIN    (Pin00)
   #define USART_TX_PORT   (PortC)
   #define USART_TX_PIN    (Pin01)
+  #define USART_NUM       1
 
 #elif CONFIG_HC32F460_SERIAL_PA3_PA2
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
@@ -42,6 +44,7 @@
   #define USART_RX_PIN    (Pin03)
   #define USART_TX_PORT   (PortA)
   #define USART_TX_PIN    (Pin02)
+  #define USART_NUM       1
 
 #elif CONFIG_HC32F460_SERIAL_PH2_PB10
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PH2,PB10");
@@ -49,6 +52,7 @@
   #define USART_RX_PIN    (Pin02)
   #define USART_TX_PORT   (PortB)
   #define USART_TX_PIN    (Pin10)
+  #define USART_NUM       3
 
 #elif CONFIG_HC32F460_SERIAL_PA7_PA8
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA7,PA8");
@@ -56,6 +60,7 @@
   #define USART_RX_PIN    (Pin07)
   #define USART_TX_PORT   (PortA)
   #define USART_TX_PIN    (Pin08)
+  #define USART_NUM       1
 
 #elif CONFIG_HC32F460_SERIAL_PA13_PA14
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA13,PA14");
@@ -63,19 +68,33 @@
   #define USART_RX_PIN    (Pin13)
   #define USART_TX_PORT   (PortA)
   #define USART_TX_PIN    (Pin14)
+  #define USART_NUM       1
 #endif
 
-// use USART 1 for serial connection
-#define USARTx          M4_USART1
+#if (USART_NUM == 1)
+  // use USART 1 for serial connection
+  #define USARTx          M4_USART1
+
+  #define USART_RX_FUNC   Func_Usart1_Rx
+  #define USART_TX_FUNC   Func_Usart1_Tx
+  #define USART_RI_NUM    INT_USART1_RI
+  #define USART_TI_NUM    INT_USART1_TI
+  #define USART_EI_NUM    INT_USART1_EI
+  #define USART_TCI_NUM   INT_USART1_TCI
+#elif (USART_NUM == 3)
+  // use USART 3 for serial connection
+  #define USARTx          M4_USART3
+
+  #define USART_RX_FUNC   Func_Usart3_Rx
+  #define USART_TX_FUNC   Func_Usart3_Tx
+  #define USART_RI_NUM    INT_USART3_RI
+  #define USART_TI_NUM    INT_USART3_TI
+  #define USART_EI_NUM    INT_USART3_EI
+  #define USART_TCI_NUM   INT_USART3_TCI
+#endif
+
 #define USART_ENABLE    (PWC_FCG1_PERIPH_USART1 | PWC_FCG1_PERIPH_USART2 | \
                         PWC_FCG1_PERIPH_USART3 | PWC_FCG1_PERIPH_USART4)
-
-#define USART_RX_FUNC   Func_Usart1_Rx
-#define USART_TX_FUNC   Func_Usart1_Tx
-#define USART_RI_NUM    INT_USART1_RI
-#define USART_TI_NUM    INT_USART1_TI
-#define USART_EI_NUM    INT_USART1_EI
-#define USART_TCI_NUM   INT_USART1_TCI
 
 
 void
