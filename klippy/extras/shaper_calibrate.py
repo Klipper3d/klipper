@@ -53,21 +53,6 @@ CalibrationResult = collections.namedtuple(
         'CalibrationResult',
         ('name', 'freq', 'vals', 'vibrs', 'smoothing', 'score', 'max_accel'))
 
-def get_shaper_offset(A, T):
-    return sum([a * t for a, t in zip(A, T)]) / sum(A)
-
-def get_smoother_offset(np, C, t_sm):
-    hst = t_sm * 0.5
-
-    n_t = 200
-    t, dt = np.linspace(-hst, hst, n_t, retstep=True)
-
-    w = np.zeros(shape=t.shape)
-    for c in C[::-1]:
-        w = w * (-t) + c
-
-    return -np.trapz(t * w, dx=dt)
-
 def step_response(np, t, omega, damping_ratio):
     t = np.maximum(t, 0.)
     omega = np.swapaxes(np.array(omega, ndmin=2), 0, 1)
@@ -330,7 +315,7 @@ class ShaperCalibrate:
         A, T = shaper
         inv_D = 1. / sum(A)
         n = len(T)
-        ts = get_shaper_offset(A, T)
+        ts = shaper_defs.get_shaper_offset(A, T)
 
         # Calculate offset for 90 and 180 degrees turn
         offset_90_x = offset_90_y = offset_180 = 0.

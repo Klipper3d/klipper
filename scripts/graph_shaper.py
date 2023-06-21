@@ -151,7 +151,7 @@ def plot_shaper(shaper_name, shaper_freq, freq, damping_ratio):
     for s in shaper_defs.INPUT_SHAPERS:
         if s.name == shaper_name.lower():
             A, T = s.init_func(shaper_freq, SHAPER_DAMPING_RATIO)
-            ts = shaper_calibrate.get_shaper_offset(A, T)
+            ts = shaper_defs.get_shaper_offset(A, T)
             T = [t - ts for t in T]
             shaper = A, T, s.name.upper()
             freqs, response, response_legend = gen_shaper_response(
@@ -161,7 +161,7 @@ def plot_shaper(shaper_name, shaper_freq, freq, damping_ratio):
     for s in shaper_defs.INPUT_SMOOTHERS:
         if s.name == shaper_name.lower():
             C, t_sm = s.init_func(shaper_freq)
-            t_offs = shaper_calibrate.get_smoother_offset(np, C, t_sm)
+            t_offs = shaper_defs.get_smoother_offset(C, t_sm)
             shaper = C, t_sm, t_offs, s.name.upper()
             freqs, response, response_legend = gen_shaper_response(
                     shaper, shaper_freq, shaper_calibrate.estimate_smoother)
