@@ -158,6 +158,44 @@ class GenNorm2:
         return res
 AHandlers["norm2"] = GenNorm2
 
+class GenSmoothed:
+    ParametersMin = 1
+    ParametersMax = 2
+    DataSets = [
+        ('smooth(<dataset>)', 'Generate moving weighted average of a dataset'),
+        ('smooth(<dataset>,<smooth_time>)',
+         'Generate moving weighted average of a dataset with a given'
+         ' smoothing time that defines window size'),
+    ]
+    def __init__(self, amanager, name_parts):
+        self.amanager = amanager
+        self.source = name_parts[1]
+        amanager.setup_dataset(self.source)
+        self.smooth_time = 0.01
+        if len(name_parts) > 2:
+            self.smooth_time = float(name_parts[2])
+    def get_label(self):
+        label = self.amanager.get_label(self.source)
+        return {'label': 'Smoothed ' + label['label'], 'units': label['units']}
+    def generate_data(self):
+        seg_time = self.amanager.get_segment_time()
+        src = self.amanager.get_datasets()[self.source]
+        n = len(src)
+        data = [0.] * n
+        hst = 0.5 * self.smooth_time
+        seg_half_len = round(hst / seg_time)
+        inv_norm = 1. / sum([min(k + 1, seg_half_len + seg_half_len - k)
+                             for k in range(2 * seg_half_len)])
+        for i in range(n):
+            j = max(0, i - seg_half_len)
+            je = min(n, i + seg_half_len)
+            avg_val = 0.
+            for k, v in enumerate(src[j:je]):
+                avg_val += v * min(k + 1, seg_half_len + seg_half_len - k)
+            data[i] = avg_val * inv_norm
+        return data
+AHandlers["smooth"] = GenSmoothed
+
 # Calculate a kinematic stepper position from the toolhead requested position
 class GenKinematicPosition:
     ParametersMin = ParametersMax = 1
