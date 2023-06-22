@@ -95,8 +95,9 @@ timer_init(void)
 {
     // Enable Debug Watchpoint and Trace (DWT) for its 32bit timer
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+	DWT->LAR = 0xC5ACCE55; 
     DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
     // Schedule a recurring timer on fast cpus
     timer_reset();
