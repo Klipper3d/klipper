@@ -1018,7 +1018,7 @@ frequency response is calculated (across all probe points) and written into
 
 #### SHAPER_CALIBRATE
 `SHAPER_CALIBRATE [AXIS=<axis>] [NAME=<name>] [FREQ_START=<min_freq>]
-[FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>]
+[FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>] [CHIPS=<adxl345_chip_name>]
 [MAX_SMOOTHING=<max_smoothing>]`: Similarly to `TEST_RESONANCES`, runs
 the resonance test as configured, and tries to find the optimal
 parameters for the input shaper for the requested axis (or both X and
@@ -1032,7 +1032,9 @@ frequency responses and the different input shapers values are written
 to a CSV file(s) `/tmp/calibration_data_<axis>_<name>.csv`. Unless
 specified, NAME defaults to the current time in "YYYYMMDD_HHMMSS"
 format. Note that the suggested input shaper parameters can be
-persisted in the config by issuing `SAVE_CONFIG` command.
+persisted in the config by issuing `SAVE_CONFIG` command, and if
+`[input_shaper]` was already enabled previously, these parameters
+take effect immediately.
 
 ### [respond]
 
