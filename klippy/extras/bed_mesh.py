@@ -133,7 +133,7 @@ class BedMesh:
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
             if self.base_fade_target is None:
-                self.fade_target = mesh.avg_z
+                self.fade_target = mesh.get_z_average()
             else:
                 self.fade_target = self.base_fade_target
                 min_z, max_z = mesh.get_z_range()
@@ -870,7 +870,6 @@ class ZMesh:
     def __init__(self, params):
         self.probed_matrix = self.mesh_matrix = None
         self.mesh_params = params
-        self.avg_z = 0.
         self.mesh_offsets = [0., 0.]
         logging.debug('bed_mesh: probe/mesh parameters:')
         for key, value in self.mesh_params.items():
@@ -935,7 +934,7 @@ class ZMesh:
                 msg += "Search Height: %d\n" % (move_z)
             msg += "Mesh Offsets: X=%.4f, Y=%.4f\n" % (
                 self.mesh_offsets[0], self.mesh_offsets[1])
-            msg += "Mesh Average: %.2f\n" % (self.avg_z)
+            msg += "Mesh Average: %.2f\n" % (self.get_z_average())
             rng = self.get_z_range()
             msg += "Mesh Range: min=%.4f max=%.4f\n" % (rng[0], rng[1])
             msg += "Interpolation Algorithm: %s\n" \
@@ -951,12 +950,6 @@ class ZMesh:
     def build_mesh(self, z_matrix):
         self.probed_matrix = z_matrix
         self._sample(z_matrix)
-        self.avg_z = (sum([sum(x) for x in self.mesh_matrix]) /
-                      sum([len(x) for x in self.mesh_matrix]))
-        # Round average to the nearest 100th.  This
-        # should produce an offset that is divisible by common
-        # z step distances
-        self.avg_z = round(self.avg_z, 2)
         self.print_mesh(logging.debug)
     def set_zero_reference(self, xpos, ypos):
         offset = self.calc_z(xpos, ypos)
@@ -994,6 +987,16 @@ class ZMesh:
             return mesh_min, mesh_max
         else:
             return 0., 0.
+    def get_z_average(self):
+        if self.mesh_matrix is not None:
+            avg_z = (sum([sum(x) for x in self.mesh_matrix]) /
+                     sum([len(x) for x in self.mesh_matrix]))
+            # Round average to the nearest 100th.  This
+            # should produce an offset that is divisible by common
+            # z step distances
+            return round(avg_z, 2)
+        else:
+            return 0.
     def _get_linear_index(self, coord, axis):
         if axis == 0:
             # X-axis
