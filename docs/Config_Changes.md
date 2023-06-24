@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20230820: The heater `smooth_time` now defaults to not perform any
+additional temperature smoothing. To return to the previous behavior
+of one second smoothing, set `smooth_time: 1.0` in the heater config
+section.
+
 20230810: The flash-sdcard.sh script now supports both variants of the
 Bigtreetech SKR-3, STM32H743 and STM32H723. For this, the original tag
 of btt-skr-3 now has changed to be either btt-skr-3-h743 or btt-skr-3-h723.
