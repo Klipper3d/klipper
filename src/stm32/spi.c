@@ -51,13 +51,17 @@ DECL_CONSTANT_STR("BUS_PINS_spi1a", "PB4,PB5,PB3");
 #endif
 
 static const struct spi_info spi_bus[] = {
+#ifndef STM32F070x6
     { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION },
     { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION },
+#endif
     { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION },
 #if CONFIG_MACH_STM32G4
     { SPI2, GPIO('A', 10), GPIO('A', 11), GPIO('F', 1), SPI_FUNCTION },
 #else
+#ifndef STM32F070x6
     { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION },
+#endif
 #endif
 #ifdef SPI3
     { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(6) },
