@@ -43,7 +43,11 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = {
+            'watermark': ControlBangBang,
+            'pid': ControlPID,
+            'pid_v': ControlVelocityPID
+        }
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         # Setup output heater pin
@@ -163,7 +167,8 @@ class ControlBangBang:
             self.heater.set_pwm(read_time, 0.)
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         return smoothed_temp < target_temp-self.max_delta
-
+    def get_type(self):
+        return 'watermark'
 
 ######################################################################
 # Proportional Integral Derivative (PID) control algo
@@ -216,7 +221,73 @@ class ControlPID:
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+    def get_type(self):
+        return 'pid'
 
+######################################################################
+# Velocity (PID) control algo
+######################################################################
+
+class ControlVelocityPID:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
+        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
+        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.smooth_time = heater.get_smooth_time() # smoothing window
+        self.temps = [AMBIENT_TEMP] * 3 # temperature readings
+        self.times = [0.] * 3 #temperature reading times
+        self.d1 = 0. # previous smoothed 1st derivative
+        self.d2 = 0. # previous smoothed 2nd derivative
+        self.pwm = 0. # the previous pwm setting
+
+    def temperature_update(self, read_time, temp, target_temp):
+        # update the temp and time lists
+        self.temps.pop(0)
+        self.temps.append(temp)
+        self.times.pop(0)
+        self.times.append(read_time)
+
+        # calculate the 1st derivative: p part in velocity form
+        # note the derivative is of the temp and not the error
+        # this is to prevent derivative kick
+        d1 = self.temps[-1] - self.temps[-2]
+
+        # calculate the error : i part in velocity form
+        error = self.times[-1] - self.times[-2]
+        error = error * (target_temp - self.temps[-1])
+
+        # calculate the 2nd derivative: d part in velocity form
+        # note the derivative is of the temp and not the error
+        # this is to prevent derivative kick
+        d2 = self.temps[-1] - 2.*self.temps[-2] + self.temps[-3]
+        d2 = d2 / (self.times[-1] - self.times[-2])
+
+        # smooth both the derivatives using a modified moving average
+        # that handles unevenly spaced data points
+        n = max(1.,self.smooth_time/(self.times[-1] - self.times[-2]))
+        self.d1 = ((n - 1.) * self.d1 + d1) / n
+        self.d2 = ((n - 1.) * self.d2 + d2) / n
+
+        # calculate the output
+        p = self.Kp * -self.d1 # invert sign to prevent derivative kick
+        i = self.Ki * error
+        d = self.Kd * -self.d2 # invert sign to prevent derivative kick
+
+        self.pwm = max(0., min(self.heater_max_power, self.pwm + p + i + d))
+        if target_temp == 0.:
+            self.pwm = 0.
+
+        # update the heater
+        self.heater.set_pwm(read_time, self.pwm)
+
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        temp_diff = target_temp - smoothed_temp
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.d1) > PID_SETTLE_SLOPE)
+    def get_type(self):
+        return 'pid_v'
 
 ######################################################################
 # Sensor and heater lookup
