@@ -219,11 +219,12 @@ of time, up to 10-20 minutes. Be patient and wait for the completion of
 the installation. On some occasions, if the board has too little RAM
 the installation may fail and you will need to enable swap.
 
-Afterwards, check and follow the instructions in the
-[RPi Microcontroller document](RPi_microcontroller.md) to setup the
-"linux mcu" on the Raspberry Pi.
-
 #### Configure ADXL345 With RPi
+
+First, check and follow the instructions in the
+[RPi Microcontroller document](RPi_microcontroller.md) to setup the
+"linux mcu" on the Raspberry Pi. This will configure a second Klipper
+instance that runs on your Pi.
 
 Make sure the Linux SPI driver is enabled by running `sudo
 raspi-config` and enabling SPI under the "Interfacing options" menu.
