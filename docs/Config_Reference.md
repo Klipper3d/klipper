@@ -2772,6 +2772,106 @@ with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 #   See the "fan" section for a description of the above parameters.
 ```
 
+## Tool changes
+
+### [toolchanger]
+
+Enables tool changing support, configures basic tool change parameters.
+More than one toolchanger can be configured, with arbitrary names.
+But there cannot be more than one top level toolchanger.
+
+Any parameter that can be set on a tool, can be set on the toolchanger as well
+and will provide a default value for all of its tools.
+
+```
+[toolchanger]
+# save_current_tool: false
+  #  If set, saves currently selected tool and makes it available for 
+  # initialize gcode.
+# save_offset_changes: false
+  #  If set, any manual gocde offset changes will be saved with the current tool.
+  #  Still need to call SAVE_CONFIG to persist them.
+# clear_gcode_offset_for_toolchange: true
+  # If true, toolchange GCode is run with gcode offset set to 0,0,0     
+# initialize_toolchanger_gcode: 
+  #  Gcode to run on initialize. Typically used for homing any motors, or 
+  #  reselecting saved tool.    
+# auto_initialize: true
+  # If true, the toolchanger will be initialized automatically on first
+  # tool change call.
+# params_*: 
+  # Extra params to pass to pickup/dropoff gcode. Accessible in the gcode via
+  # `toolchanger.params_name`.
+  # Also will be copied to any tools for this toolchanger with local
+  # values overriding. 
+# before_change_gcode:
+  # Common gcode to run before any tool change
+  # has `dropoff_tool` and `pickup_tool` variables available to access their
+  # config. 
+  # See [tool status](Status_Reference.md#tool) for how to use them.   
+# after_change_gcode:
+  # Common gcode to run after any tool change.
+  # EG: To set custom input shaping, accelerations, etc.  
+# parent_tool:
+  # Name of a parent tool. Marks this toolchanger as a child, meaning the parent tool
+  # will be selected in order to select any tool attached to this.
+  # Can be used for chaining multiple filament/tool changing techniques,
+  # like IDEX plus an MMU attached to one of the hotends.
+# parent_mounting_mode: parent-first 
+  # How to mount parent when the tool is selected:
+  # - parent-first - mount parent and then child
+  # - child-first - mount child before parent can be mounted
+# parent_unmounting_mode: lazy 
+  # How to unmount parent when the tool is deselected:
+  # - child-first - unmount child and then parent
+  # - parent-first - unmount parent and then child
+  # - lazy - no dot unmount the child unless a needed to mount a sibling   
+```
+
+### [tool]
+
+Defines a tool that can be selected by the toolchanger.
+Normally a tool has an assigned extruder, fans and associated printer config,
+like pressure advance. But can be purely virtual, like slot in a MMU unit.
+See [command reference](G-Codes.md#toolchanger) for how to control tools.
+
+```
+[tool tool_name]
+# toolchanger: toolchanger
+  # Which toolchanger this tool belongs to.
+# pickup_gcode:
+  # Gcode to run to pick up this tool, if empty, there is no pickup code.
+  # The gocode can use `tool` variable to access
+  # [tool status](Status_Reference.md#tool).   
+# dropoff_gcode:
+  # Gcode to run to drop off this tool, if empty, there is no dropoff code.
+# gcode_x_offset: 0
+# gcode_y_offset: 0
+# gcode_z_offset: 0
+  # The XYZ gcode offset of the toolhead. If set, overrides offset defined 
+  # by the parent. If set, even to 0, indicates the offset on that axis is 
+  # relevant for this tool and any adjustments will be attributed to this tool.  
+# params_*: 
+  # Extra params to pass to pickup/dropoff gcode. Accessible in the gcode via
+  # `tool.params_name`.
+  # Some example params:
+  #  params_dock_x: 10.0
+  #  params_dock_y: 50.0
+  #  params_input_shaper_freq_x: 100
+  #  params_retract_mm: 8 
+# extruder:
+  # Name of the extruder to activate when this tool is selected.
+  # If not specified, will use parent's extruder.
+# fan: 
+  # Name of the fan to use as print cooling fan when this tool is selected.
+  # If not set, uses parent fan or global fan.
+# register_macro: false
+  # If true <toolname> macro is automatically created for this tool.
+  # If T<N> the value is used for tool name.
+# register_macro_restore_axis: XYZ
+   # Which axis to restore the macro, see SELECT_TOOL for command for more info.    
+```
+
 ## LEDs
 
 ### [led]

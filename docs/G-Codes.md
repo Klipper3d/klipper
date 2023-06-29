@@ -1250,6 +1250,54 @@ A VELOCITY can also be specified instead of a VALUE. This velocity is
 converted to the 20bit TSTEP based value representation. Only use the VELOCITY
 argument for fields that represent velocities.
 
+### [toolchanger]
+
+The following commands are available when toolchanger is loaded.
+
+### INITIALIZE_TOOLCHANGER
+`INITIALIZE_TOOLCHANGER [TOOLCHANGER=toolchanger] [TOOL=<name>]`: Initializes or
+Re-initializes the toolchanger state. Sets toolchanger status to 'OK'.
+
+The default behavior is to auto-initialize on first tool selection call.
+This can be overriden by setting `toolchanger.auto_initialize: false`.
+Always needs to be manually re-initialized after a `SELECT_TOOL_ERROR`. 
+If `TOOL` is specified, sets the active tool without performing any tool change
+gcode. The after_change_gcode is always called. `TOOL` with empty name unselects
+tool.
+
+### SELECT_TOOL
+`SELECT_TOOL TOOL=<name> [RESTORE_AXIS=xyz]`: Select the active tool.
+The toolhead will be moved to the previous position on any axis specified in
+`RESTORE_AXIS` value. Slicer Gcode normally use `T0`, `T1`, `T2`,... to select a tool.
+Printer config should contain macros to map them to corresponding tool names,
+or set `tool.register_macro: true` to auto register a T macro.
+
+The selection sequence is as follows:
+
+- gcode state is saved
+- toolchanger.before_change_gcode is run
+- current extruder and fan are deactivated, if changed
+- current_tool.dropoff_gcode is run - if a tool is currently selected
+- new_tool.pickup_gcode is run
+- new extruder and fan are activated, if changed
+- toolchanger.after_change_gcode is run
+- gcode state is restored, without move
+- new tool is moved to the gcode position, according to RESTORE_AXIS
+
+If the tools have parents, their corresponding dropoff/pickup gcode is also run.  
+
+### SELECT_TOOL_ERROR
+`SELECT_TOOL_ERROR [MESSAGE=]`: Signals failure to select a tool. 
+Can be called from within tool macros during SELECT_TOOL and will abort any
+remaining tool change steps and put the toolchanger starting the selection in
+`ERROR` state.
+
+### UNSELECT_TOOL
+`UNSELECT_TOOL`: Unselect active tool without selecting a new one.
+
+Performs only the first part of select tool, leaving the printer with no tool 
+selected.
+
 ### [toolhead]
 
 The toolhead module is automatically loaded.
