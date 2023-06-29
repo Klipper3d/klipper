@@ -2616,7 +2616,7 @@ whenever its associated heater is active. By default, a heater_fan has
 a shutdown_speed equal to max_power.
 
 ```
-[heater_fan my_nozzle_fan]
+[heater_fan heatbreak_cooling_fan]
 #pin:
 #max_power:
 #shutdown_speed:
