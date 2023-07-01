@@ -8,8 +8,10 @@
 [axis_twist_compensation]
 horizontal_move_z: 5
 speed: 50
-calibrate_start_x: 0 ; nozzle's x coordinate at the start of the calibration ! required
-calibrate_end_x: 200 ; nozzle's x coordinate at the end of the calibration ! required
+calibrate_start_x: 0 ; nozzle's x coordinate at the start of the calibration
+    ! required
+calibrate_end_x: 200 ; nozzle's x coordinate at the end of the calibration
+    ! required
 calibrate_y: 100 ; nozzle's y coordinate during the calibration ! required
 compensation_type: multilinear
 """
@@ -30,17 +32,21 @@ class AxisTwistCompensation:
         self.gcode = self.printer.lookup_object('gcode')
 
         # get values from [axis_twist_compensation] section in printer .cfg
-        self.horizontal_move_z = config.getfloat('horizontal_move_z', DEFAULT_HORIZONTAL_MOVE_Z)
+        self.horizontal_move_z = config.getfloat('horizontal_move_z',
+                                                 DEFAULT_HORIZONTAL_MOVE_Z)
         self.speed = config.getfloat('speed', DEFAULT_SPEED)
         self.calibrate_start_x = config.getfloat('calibrate_start_x')
         self.calibrate_end_x = config.getfloat('calibrate_end_x')
         self.calibrate_y = config.getfloat('calibrate_y')
         TYPES = ['linear', 'multilinear']
-        self.compensation_type = config.getchoice('compensation_type', {t: t for t in TYPES})
+        self.compensation_type = config.getchoice('compensation_type',
+                                                  {t: t for t in TYPES})
         self.z_compensations = config.getlists('z_compensations',
                                                default=[], parser=float)
-        self.compensation_start_x = config.getfloat('compensation_start_x', default=None)
-        self.compensation_end_x = config.getfloat('compensation_start_y', default=None)
+        self.compensation_start_x = config.getfloat('compensation_start_x',
+                                                    default=None)
+        self.compensation_end_x = config.getfloat('compensation_start_y',
+                                                  default=None)
 
         self.m = None
         self.b = None
@@ -66,7 +72,8 @@ class AxisTwistCompensation:
     def _get_z_compensation_value_multilinear(self, x_coord):
         z_compensations = self.z_compensations
         sample_count = len(z_compensations)
-        spacing = (self.calibrate_end_x - self.calibrate_start_x) / (sample_count - 1)
+        spacing = ((self.calibrate_end_x - self.calibrate_start_x)
+                   / (sample_count - 1))
         interpolate_t = (x_coord - self.calibrate_start_x) / spacing
         interpolate_i = int(math.floor(interpolate_t))
         interpolate_i = BedMesh.constrain(interpolate_i, 0, sample_count - 2)
@@ -80,8 +87,8 @@ class AxisTwistCompensation:
         if self.compensation_type == 'linear' and self.m is None:
             z_compensations = self.z_compensations
             sample_count = len(z_compensations)
-            interval_dist = \
-                (self.calibrate_end_x - self.calibrate_start_x) / (sample_count - 1)
+            interval_dist = ((self.calibrate_end_x - self.calibrate_start_x)
+                             / (sample_count - 1))
             indexes = [self.calibrate_start_x + i*interval_dist
                        for i in range(0, sample_count)]
 
@@ -93,7 +100,8 @@ class AxisTwistCompensation:
             covar = sum((indexes[i] - mean_indexes) *
                         (z_compensations[i] - mean_z_compensations)
                         for i in range(sample_count))
-            var = sum((indexes[i] - mean_indexes)**2 for i in range(sample_count))
+            var = sum((indexes[i] - mean_indexes)**2
+                      for i in range(sample_count))
 
             # Compute the slope (m) and intercept (b) of the best-fit line
             self.m = covar / var
@@ -131,8 +139,10 @@ class Calibrater:
                                             self._handle_connect)
         self.speed = compensation.speed
         self.horizontal_move_z = compensation.horizontal_move_z
-        self.start_point = (compensation.calibrate_start_x, compensation.calibrate_y)
-        self.end_point = (compensation.calibrate_end_x, compensation.calibrate_y)
+        self.start_point = (compensation.calibrate_start_x,
+                            compensation.calibrate_y)
+        self.end_point = (compensation.calibrate_end_x,
+                          compensation.calibrate_y)
         self.results = None
         self.current_point_index = None
         self.gcmd = None
@@ -180,7 +190,8 @@ class Calibrater:
         # calculate some values
         x_range = self.end_point[0] - self.start_point[0]
         interval_dist = x_range / (sample_count - 1)
-        nozzle_points = self._calculate_nozzle_points(sample_count, interval_dist)
+        nozzle_points = self._calculate_nozzle_points(sample_count,
+                                                      interval_dist)
         probe_points = self._calculate_probe_points(
             nozzle_points, self.probe_x_offset, self.probe_y_offset)
 
@@ -286,8 +297,10 @@ class Calibrater:
         values_as_str = ', '.join(["{:.6f}".format(x)
                                    for x in self.results])
         configfile.set(self.configname, 'z_compensations', values_as_str)
-        configfile.set(self.configname, 'compensation_start_x', self.start_point[0])
-        configfile.set(self.configname, 'compensation_end_x', self.end_point[0])
+        configfile.set(self.configname, 'compensation_start_x',
+                       self.start_point[0])
+        configfile.set(self.configname, 'compensation_end_x',
+                       self.end_point[0])
         self.compensation.z_compensations = self.results
         self.compensation.compensation_start_x = self.start_point[0]
         self.compensation.compensation_end_x = self.end_point[0]
