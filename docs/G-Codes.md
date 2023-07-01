@@ -1322,9 +1322,9 @@ The following commands are available when the
 section](Config_Reference.md#axis_twist_compensation) is enabled.
 
 #### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [N_POINTS=<value>]`: Initiates the X twist calibration
-wizard. `N_POINTS` specifies the number of points along the X axis to calibrate
-at and defaults to 3.
+`AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=<value>]`: Initiates the X
+twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
+the X axis to calibrate at and defaults to 3.
 
 #### AXIS_TWIST_COMPENSATION_CLEAR
 `AXIS_TWIST_COMPENSATION_CLEAR`: Clears the current compensation values.

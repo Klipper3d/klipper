@@ -18,7 +18,7 @@ import math
 from . import manual_probe as ManualProbe, bed_mesh as BedMesh
 
 
-DEFAULT_N_POINTS = 3
+DEFAULT_SAMPLE_COUNT = 3
 DEFAULT_SPEED = 50.
 DEFAULT_HORIZONTAL_MOVE_Z = 5.
 
@@ -63,11 +63,11 @@ class AxisTwistCompensation:
 
     def _get_z_compensation_value_multilinear(self, x_coord):
         z_compensations = self.z_compensations
-        n_points = len(z_compensations)
-        spacing = (self.end_x - self.start_x) / (n_points - 1)
+        sample_count = len(z_compensations)
+        spacing = (self.end_x - self.start_x) / (sample_count - 1)
         interpolate_t = (x_coord - self.start_x) / spacing
         interpolate_i = int(math.floor(interpolate_t))
-        interpolate_i = BedMesh.constrain(interpolate_i, 0, n_points - 2)
+        interpolate_i = BedMesh.constrain(interpolate_i, 0, sample_count - 2)
         interpolate_t -= interpolate_i
         interpolated_z_compensation = BedMesh.lerp(
             interpolate_t, z_compensations[interpolate_i],
@@ -77,21 +77,21 @@ class AxisTwistCompensation:
     def _ensure_init(self):
         if self.type == 'linear' and self.m is None:
             z_compensations = self.z_compensations
-            n_points = len(z_compensations)
+            sample_count = len(z_compensations)
             interval_dist = \
-                (self.end_x - self.start_x) / (n_points - 1)
+                (self.end_x - self.start_x) / (sample_count - 1)
             indexes = [self.start_x + i*interval_dist
-                       for i in range(0, n_points)]
+                       for i in range(0, sample_count)]
 
             # Calculate the mean of x and y values
-            mean_indexes = sum(indexes) / n_points
-            mean_z_compensations = sum(z_compensations) / n_points
+            mean_indexes = sum(indexes) / sample_count
+            mean_z_compensations = sum(z_compensations) / sample_count
 
             # Calculate the covariance and variance
             covar = sum((indexes[i] - mean_indexes) *
                         (z_compensations[i] - mean_z_compensations)
-                        for i in range(n_points))
-            var = sum((indexes[i] - mean_indexes)**2 for i in range(n_points))
+                        for i in range(sample_count))
+            var = sum((indexes[i] - mean_indexes)**2 for i in range(sample_count))
 
             # Compute the slope (m) and intercept (b) of the best-fit line
             self.m = covar / var
@@ -165,20 +165,20 @@ class Calibrater:
 
     def cmd_AXIS_TWIST_COMPENSATION_CALIBRATE(self, gcmd):
         self.gcmd = gcmd
-        n_points = gcmd.get_int('N_POINTS', DEFAULT_N_POINTS)
+        sample_count = gcmd.get_int('SAMPLE_COUNT', DEFAULT_SAMPLE_COUNT)
 
-        # check for valid n_points
-        if n_points is None or n_points < 2:
+        # check for valid sample_count
+        if sample_count is None or sample_count < 2:
             raise self.gcmd.error(
-                "N_POINTS to probe must be at least 2")
+                "SAMPLE_COUNT to probe must be at least 2")
 
         # clear the current config
         self.compensation.clear_compensations()
 
         # calculate some values
         x_range = self.end_point[0] - self.start_point[0]
-        interval_dist = x_range / (n_points - 1)
-        nozzle_points = self._calculate_nozzle_points(n_points, interval_dist)
+        interval_dist = x_range / (sample_count - 1)
+        nozzle_points = self._calculate_nozzle_points(sample_count, interval_dist)
         probe_points = self._calculate_probe_points(
             nozzle_points, self.probe_x_offset, self.probe_y_offset)
 
@@ -190,10 +190,10 @@ class Calibrater:
         self.results = []
         self._calibration(probe_points, nozzle_points, interval_dist)
 
-    def _calculate_nozzle_points(self, n_points, interval_dist):
+    def _calculate_nozzle_points(self, sample_count, interval_dist):
         # calculate the points to put the probe at, returned as a list of tuples
         nozzle_points = []
-        for i in range(n_points):
+        for i in range(sample_count):
             x = self.start_point[0] + i * interval_dist
             y = self.start_point[1]
             nozzle_points.append((x, y))

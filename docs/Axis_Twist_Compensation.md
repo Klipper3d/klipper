@@ -25,8 +25,8 @@ first use mechanical means to fix it prior to applying software corrections.
 perform `AXIS_TWIST_COMPENSATION_CALIBRATE`
 * The calibration wizard will prompt you to measure the probe Z offset at a few
 points along the bed
-* The calibration defaults to 3 points but you can use the option `N_POINTS=` to
-use a different number.
+* The calibration defaults to 3 points but you can use the option
+`SAMPLE_COUNT=` to use a different number.
 2. [Adjust your Z offset](Probe_Calibrate.md#calibrating-probe-z-offset)
 3. Perform automatic/probe-based bed tramming operations, such as
 [Screws Tilt Adjust](G-Codes.md#screws_tilt_adjust),
