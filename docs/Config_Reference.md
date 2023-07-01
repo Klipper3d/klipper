@@ -1973,20 +1973,20 @@ detailed information regarding symptoms, configuration and setup.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
-start_x: 20
+calibrate_start_x: 20
 #   Defines the minimum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the starting
 #   calibration position. This parameter must be provided.
-end_x: 200
+calibrate_end_x: 200
 #   Defines the maximum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the ending
 #   calibration position. This parameter must be provided.
-y: 112.5
+calibrate_y: 112.5
 #   Defines the Y coordinate of the calibration
 #   This should be the Y coordinate that positions the nozzle during the
 #   calibration process. This parameter must be provided and is recommended to
 #   be near the center of the bed
-#type: multilinear
+#compensation_type: multilinear
 #   Defines the type of correction to apply. The choices are 'linear' or
 #   'multilinear'. 'linear' uses a linear regression to fit a line with the
 #   calibration points. 'multilinear' will interpolate linearly between each
