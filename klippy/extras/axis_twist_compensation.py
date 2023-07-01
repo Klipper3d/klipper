@@ -14,29 +14,16 @@ y: 100 ; nozzle's y coordinate during the calibration ! required
 type: multilinear
 """
 
-import logging
 import math
 from . import manual_probe as ManualProbe, bed_mesh as BedMesh
 
 
 DEFAULT_N_POINTS = 3
+DEFAULT_SPEED = 50.
+DEFAULT_HORIZONTAL_MOVE_Z = 5.
 
 
 class Config:
-    DEFAULT_SPEED = 50.
-    DEFAULT_HORIZONTAL_MOVE_Z = 5.
-    REQUIRED = True
-    OPTIONAL = False
-    CONFIG_OPTIONS = {
-        'horizontal_move_z': (float, OPTIONAL, DEFAULT_HORIZONTAL_MOVE_Z),
-        'speed': (float, OPTIONAL, DEFAULT_SPEED),
-        'start_x': (float, REQUIRED, None),
-        'end_x': (float, REQUIRED, None),
-        'y': (float, REQUIRED, None),
-        'type': (str, OPTIONAL, 'multilinear'),
-        'z_compensations': (str, OPTIONAL, None),
-    }
-
     @staticmethod
     def save_to_config(name, z_compensations, configfile):
         values_as_str = ', '.join([Helpers.format_float_to_n_decimals(x)
@@ -52,26 +39,15 @@ class AxisTwistCompensation:
         self.gcode = self.printer.lookup_object('gcode')
 
         # get values from [axis_twist_compensation] section in printer .cfg
-        for config_key, \
-            (config_type, required, default) in Config.CONFIG_OPTIONS.items():
-            value = None
-            if config_type == float:
-                value = config.getfloat(config_key, default)
-            elif config_key == 'z_compensations':
-                value = Helpers.parse_comma_separated_floats(
+        self.horizontal_move_z = config.getfloat('horizontal_move_z', DEFAULT_HORIZONTAL_MOVE_Z)
+        self.speed = config.getfloat('speed', DEFAULT_SPEED)
+        self.start_x = config.getfloat('start_x')
+        self.end_x = config.getfloat('end_x')
+        self.y = config.getfloat('y')
+        TYPES = ['linear', 'multilinear']
+        self.type = config.getchoice('type', {t: t for t in TYPES})
+        self.z_compensations = Helpers.parse_comma_separated_floats(
                     config.get('z_compensations', default=""))
-            else:
-                value = config.get(config_key, default)
-            if required and value is None:
-                raise config.error(
-                    "Missing required config option for section [{}]: {}"
-                    .format(config.get_name(), config_key))
-            setattr(self, config_key, value)
-
-        if self.type not in ['linear', 'multilinear']:
-                raise config.error(
-                    "Invalid axis_twist_compensation.type value: {}"
-                    .format(self.type))
 
         self.m = None
         self.b = None
@@ -93,7 +69,6 @@ class AxisTwistCompensation:
 
     def _get_z_compensation_value_linear(self, x_coord):
         return self.m * x_coord + self.b
-
 
     def _get_z_compensation_value_multilinear(self, x_coord):
         z_compensations = self.z_compensations
