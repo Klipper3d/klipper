@@ -23,14 +23,6 @@ DEFAULT_SPEED = 50.
 DEFAULT_HORIZONTAL_MOVE_Z = 5.
 
 
-class Config:
-    @staticmethod
-    def save_to_config(name, z_compensations, configfile):
-        values_as_str = ', '.join([Helpers.format_float_to_n_decimals(x)
-                                   for x in z_compensations])
-        configfile.set(name, 'z_compensations', values_as_str)
-
-
 class AxisTwistCompensation:
     def __init__(self, config):
         # get printer
@@ -46,8 +38,8 @@ class AxisTwistCompensation:
         self.y = config.getfloat('y')
         TYPES = ['linear', 'multilinear']
         self.type = config.getchoice('type', {t: t for t in TYPES})
-        self.z_compensations = Helpers.parse_comma_separated_floats(
-                    config.get('z_compensations', default=""))
+        self.z_compensations = config.getlists('z_compensations',
+                                               default=[], parser=float)
 
         self.m = None
         self.b = None
@@ -289,7 +281,9 @@ class Calibrater:
         self.results = [avg - x for x in self.results]
         # save the config
         configfile = self.printer.lookup_object('configfile')
-        Config.save_to_config(self.config.get_name(), self.results, configfile)
+        values_as_str = ', '.join(["{:.6f}".format(x)
+                                   for x in self.results])
+        configfile.set(self.config.get_name(), 'z_compensations', values_as_str)
         self.gcode.respond_info(
             "AXIS_TWIST_COMPENSATION state has been saved "
             "for the current session.  The SAVE_CONFIG command will "
@@ -301,20 +295,6 @@ class Calibrater:
             % (self.results, avg))
 
 
-class Helpers:
-    @staticmethod
-    def format_float_to_n_decimals(raw_float, n=6):
-        # format float to n decimals, defaults to 6
-        return "{:.{}f}".format(raw_float, n)
-
-    @staticmethod
-    def parse_comma_separated_floats(comma_separated_floats):
-        if not comma_separated_floats:
-            return []
-        # parse comma separated floats into list of floats
-        return [float(value) for value in comma_separated_floats.split(', ')]
-
 # klipper's entry point using [axis_twist_compensation] section in printer.cfg
-
 def load_config(config):
     return AxisTwistCompensation(config)
