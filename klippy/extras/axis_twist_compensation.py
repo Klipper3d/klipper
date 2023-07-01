@@ -26,7 +26,6 @@ DEFAULT_HORIZONTAL_MOVE_Z = 5.
 class AxisTwistCompensation:
     def __init__(self, config):
         # get printer
-        self.config = config
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
 
@@ -45,7 +44,7 @@ class AxisTwistCompensation:
         self.b = None
 
         # setup calibrater
-        self.calibrater = Calibrater(self)
+        self.calibrater = Calibrater(self, config)
 
         self._register_gcode_handlers()
 
@@ -117,11 +116,10 @@ class AxisTwistCompensation:
 
 
 class Calibrater:
-    def __init__(self, compensation):
+    def __init__(self, compensation, config):
         # setup self attributes
         self.compensation = compensation
         self.printer = compensation.printer
-        self.config = compensation.config
         self.gcode = self.printer.lookup_object('gcode')
         self.probe = None
         # probe settings are set to none, until they are available
@@ -136,6 +134,7 @@ class Calibrater:
         self.results = None
         self.current_point_index = None
         self.gcmd = None
+        self.configname = config.get_name()
 
         # register gcode handlers
         self._register_gcode_handlers()
@@ -143,7 +142,8 @@ class Calibrater:
     def _handle_connect(self):
         self.probe = self.printer.lookup_object('probe', None)
         if (self.probe is None):
-            raise self.config.error(
+            config = self.printer.lookup_object('configfile')
+            raise config.error(
                 "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
         self.lift_speed = self.probe.get_lift_speed()
         self.probe_x_offset, self.probe_y_offset, _ = \
@@ -283,7 +283,7 @@ class Calibrater:
         configfile = self.printer.lookup_object('configfile')
         values_as_str = ', '.join(["{:.6f}".format(x)
                                    for x in self.results])
-        configfile.set(self.config.get_name(), 'z_compensations', values_as_str)
+        configfile.set(self.configname, 'z_compensations', values_as_str)
         self.gcode.respond_info(
             "AXIS_TWIST_COMPENSATION state has been saved "
             "for the current session.  The SAVE_CONFIG command will "
