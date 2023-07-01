@@ -130,8 +130,10 @@ class PrinterProbe:
         # get z compensation from axis_twist_compensation
         axis_twist_compensation = self.printer.lookup_object(
             'axis_twist_compensation', None)
-        z_compensation = 0 if not axis_twist_compensation \
-            else axis_twist_compensation.get_z_compensation_value(pos[0])
+        z_compensation = 0
+        if axis_twist_compensation is not None:
+            z_compensation = (
+                axis_twist_compensation.get_z_compensation_value(pos))
         # add z compensation to probe position
         epos[2] += z_compensation
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"

@@ -1,6 +1,7 @@
 # Axis Twist Compensation
-
+#
 # Copyright (C) 2022  Jeremy Tan <jeremytkw98@gmail.com>
+#
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 """
@@ -80,15 +81,15 @@ class AxisTwistCompensation:
 
         self._register_gcode_handlers()
 
-    def get_z_compensation_value(self, x_coord):
+    def get_z_compensation_value(self, pos):
         if not self.z_compensations:
             return 0
         self._ensure_init()
 
         if self.type == 'linear':
-            return self._get_z_compensation_value_linear(x_coord)
+            return self._get_z_compensation_value_linear(pos[0])
         elif self.type == 'multilinear':
-            return self._get_z_compensation_value_multilinear(x_coord)
+            return self._get_z_compensation_value_multilinear(pos[0])
 
     def _get_z_compensation_value_linear(self, x_coord):
         return self.m * x_coord + self.b
@@ -160,7 +161,7 @@ class Calibrater:
         self.lift_speed, self.probe_x_offset, self.probe_y_offset, _ = \
             None, None, None, None
         self.printer.register_event_handler("klippy:connect",
-                                            self._handle_connect())
+                                            self._handle_connect)
         self.speed = compensation.speed
         self.horizontal_move_z = compensation.horizontal_move_z
         self.start_point = (compensation.start_x, compensation.y)
@@ -173,16 +174,13 @@ class Calibrater:
         self._register_gcode_handlers()
 
     def _handle_connect(self):
-        # gets probe settings when they are available
-        def callback():
-            self.probe = self.printer.lookup_object('probe', None)
-            if (self.probe is None):
-                raise self.config.error(
-                    "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
-            self.lift_speed = self.probe.get_lift_speed()
-            self.probe_x_offset, self.probe_y_offset, _ = \
-                self.probe.get_offsets()
-        return callback
+        self.probe = self.printer.lookup_object('probe', None)
+        if (self.probe is None):
+            raise self.config.error(
+                "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
+        self.lift_speed = self.probe.get_lift_speed()
+        self.probe_x_offset, self.probe_y_offset, _ = \
+            self.probe.get_offsets()
 
     def _register_gcode_handlers(self):
         # register gcode handlers
