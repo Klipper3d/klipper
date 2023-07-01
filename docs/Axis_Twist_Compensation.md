@@ -2,8 +2,8 @@
 
 This document describes the [axis_twist_compensation] module.
 
-Some printers exhibit different Z offsets depending on the X position of the
-probed point, and this is independent of the bed being not flat or not trammed.
+Some printers may have a small twist in their X rail which can skew the results
+of a probe attached to the X carriage.
 This is common in printers with designs like the Prusa MK3, Sovol SV06 etc and is
 further described under [probe location
 bias](Probe_Calibrate.md#location-bias-check). It may result in
@@ -20,9 +20,6 @@ first use mechanical means to fix it prior to applying software corrections.
 
 > **Tip:** Make sure the [probe X and Y offsets](Config_Reference.md#probe) are
 > correctly set as they greatly influence calibration.
-
-> **Tip:** A feeler gauge is recommended in place of paper for more accurate
-> measurements
 
 1. After setting up the [axis_twist_compensation] module,
 perform `AXIS_TWIST_COMPENSATION_CALIBRATE`
@@ -41,9 +38,9 @@ use a different number.
 > **Tip:** Bed temperature and nozzle temperature and size do not seem to have
 > an influence to the calibration process.
 
-> **Tip:** Disable the Axis twist compensation using `AXIS_TWIST_PROFILE_CLEAR`
-> and perform Screws Tilt Adjust/Z Tilt Adjust/Bed Mesh to compare the
-> difference
+> **Tip:** Disable the Axis twist compensation using
+> `AXIS_TWIST_COMPENSATION_CLEAR` and perform Screws Tilt Adjust/Z Tilt
+> Adjust/Bed Mesh to compare the difference
 
 ## [axis_twist_compensation] setup and commands
 
@@ -69,25 +66,3 @@ interpolate linearly between each pair of points.
 
 > **Tip:** It is not necessary to redo a calibration when switching between
 > linear and multilinear.
-
-### Fine-tuning
-
-If required, the user may fine tune the `z_compensations` values.
-
-For example, the value of `0.12` represents the `z_compensation` applied
-when the printer is probing at `start_x`. This means that if the non-compensated
-z-height measured at `start_x` was `2.0`, the compensated z-height is now `2.0 +
-0.12 = 2.12`, resulting in a higher point on the recorded mesh.
-
-Should the squish on the side of the bed represented by `start_x` be
-insufficient, the user may specify a lower `z_compensation` value in place of
-`0.12`, such as `0.02`. This would result in the mesh being lowered by
-`0.12 - 0.02 = 0.1mm` at points along `start_x`.
-
-## Reference
-
-The calculations for this module are largely based off those found in
-[Marlin PR #23238](https://github.com/MarlinFirmware/Marlin/pull/23238).
-
-A visualization of the issue can be found in
-[this discussion thread](https://github.com/MarlinFirmware/Marlin/issues/22791).

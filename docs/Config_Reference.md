@@ -1961,10 +1961,9 @@ z_offset:
 
 ### [axis_twist_compensation]
 
-Axis twist dependent toolhead Z position adjustment. Compensate for vertical
-toolhead movement caused by the rotation of the toolhead about the X axis due to
-a twist. See the [Axis Twist Compensation Guide](X_Twist_Compensation.md) for
-more detailed information regarding symptoms, configuration and setup.
+A tool to compensate for inaccurate probe readings due to twist in X gantry. See
+the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md) for more
+detailed information regarding symptoms, configuration and setup.
 
 ```
 [axis_twist_compensation]
