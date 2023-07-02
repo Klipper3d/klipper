@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to extract config and shutdown information file a klippy.log file
 #
 # Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
@@ -40,7 +40,7 @@ class GatherConfig:
         if comment is not None:
             self.comments.append(comment)
     def write_file(self):
-        f = open(self.filename, 'wb')
+        f = open(self.filename, 'wt')
         f.write('\n'.join(self.comments + self.config_lines).strip() + '\n')
         f.close()
 
@@ -93,7 +93,7 @@ class TMCUartHelper:
             return
         # Convert data into a long integer for easy manipulation
         mval = pos = 0
-        for d in bytearray(data):
+        for d in data:
             mval |= d << pos
             pos += 8
         # Extract register value
@@ -110,7 +110,7 @@ class TMCUartHelper:
             return
         # Convert data into a long integer for easy manipulation
         mval = pos = 0
-        for d in bytearray(data):
+        for d in data:
             mval |= d << pos
             pos += 8
         # Extract register value
@@ -218,7 +218,7 @@ repl_seq_r = re.compile(r": seq: 1" + shortseq_s)
 clock_s = r"(?P<clock>[0-9]+)"
 repl_clock_r = re.compile(r"clock=" + clock_s)
 repl_uart_r = re.compile(r"tmcuart_(?:response|send) oid=[0-9]+"
-                         + r" (?:read|write)=(?P<msg>(?:'[^']*'"
+                         + r" (?:read|write)=b?(?P<msg>(?:'[^']*'"
                          + r'|"[^"]*"))')
 
 # MCU shutdown message parsing
@@ -244,7 +244,8 @@ class MCUStream:
                 self.trans_clock(int(m.group('clock')), ts),)
         line = repl_clock_r.sub(clock_update, line)
         def uart_update(m):
-            msg = TMCUartHelper().parse_msg(ast.literal_eval(m.group('msg')))
+            msg = ast.literal_eval('b' + m.group('msg'))
+            msg = TMCUartHelper().parse_msg(msg)
             return m.group(0).rstrip() + msg
         line = repl_uart_r.sub(uart_update, line)
         if self.name != 'mcu':
@@ -383,7 +384,7 @@ class GCodeStream:
         # Produce output gcode stream
         if self.gcode_stream:
             data = [ast.literal_eval(gc) for gc in self.gcode_commands]
-            f = open(self.gcode_filename, 'wb')
+            f = open(self.gcode_filename, 'wt')
             f.write(self.gcode_state + ''.join(data))
             f.close()
         return self.gcode_stream
@@ -500,8 +501,13 @@ class StatsStream:
             if info[0] is not None and info[0] >= min_stream_ts - 5.:
                 del self.stats_stream[:i]
                 break
+        # Find the first stats timestamp
+        last_ts = min_stream_ts
+        for ts, line_num, line in self.stats_stream:
+            if ts is not None:
+                last_ts = ts
+                break
         # Improve accuracy of stats timestamps
-        last_ts = self.stats_stream[0][0]
         for i, (ts, line_num, line) in enumerate(self.stats_stream):
             if ts is not None:
                 last_ts = self.check_stats_seq(ts, line)
@@ -561,7 +567,7 @@ class GatherShutdown:
         out = [i for s in streams for i in s]
         out.sort()
         out = [i[2] for i in out]
-        f = open(self.filename, 'wb')
+        f = open(self.filename, 'wt')
         f.write('\n'.join(self.comments + out))
         f.close()
 
@@ -577,7 +583,7 @@ def main():
     handler = None
     recent_lines = collections.deque([], 200)
     # Parse log file
-    f = open(logname, 'rb')
+    f = open(logname, 'rt')
     for line_num, line in enumerate(f):
         line = line.rstrip()
         line_num += 1
