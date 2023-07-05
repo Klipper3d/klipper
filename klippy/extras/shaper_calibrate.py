@@ -138,26 +138,29 @@ def estimate_smoother(np, smoother, test_damping_ratio, test_freqs):
 
     test_freqs = np.asarray(test_freqs)
 
-    t_start = -hst
-    t_end = hst + 1.5 * np.maximum(1. / test_freqs[test_freqs > 0.], t_sm)
+    t_start = -t_sm
+    t_end = hst + np.maximum(1.5 / test_freqs[test_freqs > 0.], 2.0 * t_sm)
     n_t = 1000
     unity_range = np.linspace(0., 1., n_t)
     time = (t_end[:, np.newaxis] - t_start) * unity_range + t_start
     dt = (time[:,-1] - time[:,0]) / n_t
     tau = np.copy(time)
     tau[time > hst] = 0.
+    tau[time < -hst] = 0.
 
     w = np.zeros(shape=tau.shape)
     for c in C[::-1]:
         w = w * tau + c
     w[time > hst] = 0.
+    w[time < -hst] = 0.
     norms = (w * dt[:, np.newaxis]).sum(axis=-1)
 
     min_v = -step_response_min_velocity(test_damping_ratio)
 
     omega = 2. * math.pi * test_freqs[test_freqs > 0.]
 
-    wl = np.count_nonzero(time <= hst, axis=-1).max()
+    wm = np.count_nonzero(time < -hst, axis=-1).min()
+    wp = np.count_nonzero(time <= hst, axis=-1).max()
 
     def get_windows(m, wl):
         nrows = m.shape[-1] - wl + 1
@@ -166,8 +169,8 @@ def estimate_smoother(np, smoother, test_damping_ratio, test_freqs):
                                                strides=(m.strides[0], n, n))
 
     s_r = step_response(np, time, omega, test_damping_ratio)
-    w_dt = w[:, :wl] * (np.reciprocal(norms) * dt)[:, np.newaxis]
-    response = np.einsum("ijk,ik->ij", get_windows(s_r, wl), w_dt[:,::-1])
+    w_dt = w[:, wm:wp] * (np.reciprocal(norms) * dt)[:, np.newaxis]
+    response = np.einsum("ijk,ik->ij", get_windows(s_r, wp - wm), w_dt[:,::-1])
     velocity = (response[:,1:] - response[:,:-1]) / (omega * dt)[:, np.newaxis]
     res = np.zeros(shape=test_freqs.shape)
     res[test_freqs > 0.] = -velocity.min(axis=-1) / min_v
