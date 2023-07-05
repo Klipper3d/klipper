@@ -4,7 +4,6 @@
 # Copyright (C) 2023  Michael Jäger <michael@mjaeger.eu>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import threading
 
 REPORT_TIME = 0.300
 
@@ -20,7 +19,6 @@ class PrinterSensorCombined:
         self.sensor = self
         # get empty list for sensors, could be any sensor class or a heater
         self.sensors = []
-        self.lock = threading.Lock()
         # get type of algorithm to handle the different sensor values with
         algos = {'min': min, 'max': max, 'mean': mean}
         self.apply_mode = config.getchoice('type', algos)
@@ -88,12 +86,14 @@ class PrinterSensorCombined:
     def _temperature_update_event(self, eventtime):
         # update sensor value
         self.update_temp(eventtime)
-
+        # this is copied from temperature_host to enable time triggered updates
+        # get mcu and measured / current(?) time
         mcu = self.printer.lookup_object('mcu')
         measured_time = self.reactor.monotonic()
-
-        self.temperature_callback(mcu.estimated_print_time(measured_time), self.last_temp)
-
+        # convert to print time?! for the callback???
+        self.temperature_callback(mcu.estimated_print_time(measured_time),
+                                  self.last_temp)
+        # set next update time
         return measured_time + REPORT_TIME
 
 
