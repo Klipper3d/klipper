@@ -86,11 +86,15 @@ class PrinterSensorCombined:
                 }
 
     def _temperature_update_event(self, eventtime):
-        with self.lock:
-            # update sensor value
-            self.update_temp(eventtime)
-            self.temperature_callback(eventtime, self.last_temp)
-            return eventtime + REPORT_TIME
+        # update sensor value
+        self.update_temp(eventtime)
+
+        mcu = self.printer.lookup_object('mcu')
+        measured_time = self.reactor.monotonic()
+
+        self.temperature_callback(mcu.estimated_print_time(measured_time), self.last_temp)
+
+        return measured_time + REPORT_TIME
 
 
 def mean(values):
