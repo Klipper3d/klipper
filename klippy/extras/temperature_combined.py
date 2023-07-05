@@ -18,7 +18,7 @@ class PrinterSensorCombined:
         self.sensor_names = config.getlist('sensors')
         # ensure compatibility with itself
         self.sensor = self
-        # get empty list for sensors
+        # get empty list for sensors, could be any sensor class or a heater
         self.sensors = []
         self.lock = threading.Lock()
         # get type of algorithm to handle the different sensor values with
@@ -30,21 +30,24 @@ class PrinterSensorCombined:
         self.printer.add_object("temperature_combined " + self.name, self)
         # time-controlled sensor update
         self.temperature_update_timer = self.reactor.register_timer(
-            self._temperature_update_event)
+                self._temperature_update_event)
         self.printer.register_event_handler('klippy:connect',
                                             self._handle_connect)
         self.printer.register_event_handler('klippy:ready',
-                self._handle_ready)
+                                            self._handle_ready)
 
     def _handle_connect(self):
         for sensor_name in self.sensor_names:
             sensor = self.printer.lookup_object(sensor_name)
-            # if temperature sensor
-            if hasattr(sensor, 'get_temp'):
+            # check if sensor has get_status function and
+            # get_status has a 'temperature' value
+            if (hasattr(sensor, 'get_status') and
+                    'temperature' in sensor.get_status(self.reactor.NOW)):
                 self.sensors.append(sensor)
-            # if heater
-            elif hasattr(sensor, 'heater'):
-                self.sensors.append(sensor.heater)
+            else:
+                raise self.printer.config_error(
+                        "'%s' does not report a temperature."
+                        % (sensor_name,))
 
     def _handle_ready(self):
         # Start temperature update timer
@@ -64,8 +67,9 @@ class PrinterSensorCombined:
     def update_temp(self, eventtime):
         values = []
         for sensor in self.sensors:
-            temp_sensor, _ = sensor.get_temp(eventtime)
-            values.append(temp_sensor)
+            sensor_status = sensor.get_status(eventtime)
+            sensor_temperature = sensor_status['temperature']
+            values.append(sensor_temperature)
         temp = self.apply_mode(values)
         if temp:
             self.last_temp = temp
@@ -78,8 +82,8 @@ class PrinterSensorCombined:
 
     def get_status(self, eventtime):
         return {
-            'temperature': round(self.last_temp, 2),
-        }
+                'temperature': round(self.last_temp, 2),
+                }
 
     def _temperature_update_event(self, eventtime):
         with self.lock:
