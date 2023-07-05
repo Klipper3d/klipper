@@ -90,7 +90,7 @@ class ProbeState:
         # Probe sense pin is optional
         probe_sense_pin = config.get('probe_sense_pin', None)
         if probe_sense_pin is not None:
-            probe_sense_helper = configEndstop(self.probe_sense_pin)
+            probe_sense_helper = configEndstop(probe_sense_pin)
             self.probe_sense_pin = probe_sense_helper.query_pin
         else:
             self.probe_sense_pin = ehelper.query_pin_inv
@@ -110,7 +110,7 @@ class ProbeState:
         self.dock_sense_pin = None
         dock_sense_pin = config.get('dock_sense_pin', None)
         if dock_sense_pin is not None:
-            dock_sense_helper = configEndstop(self.dock_sense_pin)
+            dock_sense_helper = configEndstop(dock_sense_pin)
             self.dock_sense_pin = dock_sense_helper.query_pin
 
     def _handle_ready(self):
@@ -573,6 +573,13 @@ class DockableProbe:
 
     def probe_finish(self, hmove):
         self.wait_trigger_complete.wait()
+        if self.multi == MULTI_OFF:
+            return_pos = self.toolhead.get_position()
+            # Move away from the bed to ensure the probe isn't triggered,
+            # preventing detaching in the event there's no probe/dock sensor.
+            self.toolhead.manual_move([None, None, return_pos[2]+2],
+                                      self.travel_speed)
+            self.auto_detach_probe(return_pos)
 
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
@@ -584,13 +591,6 @@ class DockableProbe:
 
     def wait_for_trigger(self, eventtime):
         self.finish_home_complete.wait()
-        if self.multi == MULTI_OFF:
-            return_pos = self.toolhead.get_position()
-            # Move away from the bed to ensure the probe isn't triggered,
-            # preventing detaching in the event there's no probe/dock sensor.
-            self.toolhead.manual_move([None, None, return_pos[2]+2],
-                                      self.travel_speed)
-            self.auto_detach_probe(return_pos)
 
     def get_position_endstop(self):
         return self.position_endstop
