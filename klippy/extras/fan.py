@@ -100,22 +100,39 @@ class FanTachometer:
             rpm = None
         return {'rpm': rpm}
 
-class PrinterFan:
+class FanControllable:
     def __init__(self, config):
         self.fan = Fan(config)
-        # Register commands
-        gcode = config.get_printer().lookup_object('gcode')
-        gcode.register_command("M106", self.cmd_M106)
-        gcode.register_command("M107", self.cmd_M107)
+        self.gcode = config.get_printer().lookup_object('gcode')
+        self.name = config.get_name()
+        self.printer_fan = config.get_printer().load_object(
+            config, 'printer_fan')
+        self.register_cmds_for_name(self.name)
+
+    def register_cmds_for_name(self, name):
+        self.gcode.register_mux_command("ACTIVATE_FAN", "FAN",
+                            name, self.cmd_ACTIVATE_FAN)
+        self.gcode.register_mux_command("SET_FAN_SPEED", "FAN",
+                                name,
+                                self.cmd_SET_FAN_SPEED,
+                                desc=self.cmd_SET_FAN_SPEED_help)
+
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
-    def cmd_M106(self, gcmd):
-        # Set fan speed
-        value = gcmd.get_float('S', 255., minval=0.) / 255.
+    def set_speed_from_command(self, value):
         self.fan.set_speed_from_command(value)
-    def cmd_M107(self, gcmd):
-        # Turn fan off
-        self.fan.set_speed_from_command(0.)
+    cmd_ACTIVATE_FAN_help = 'Set this fan as the active printer fan'
+    def cmd_ACTIVATE_FAN(self, gcmd):
+        self.printer_fan.activate_fan(self)
+    cmd_SET_FAN_SPEED_help = 'Set fan speed'
+    def cmd_SET_FAN_SPEED(self, gcmd):
+        speed = gcmd.get_float('SPEED', 0.)
+        self.fan.set_speed_from_command(speed)
 
 def load_config(config):
-    return PrinterFan(config)
+    fan = FanControllable(config)
+    fan.printer_fan.activate_fan(fan)
+    return fan
+
+def load_config_prefix(config):
+    return FanControllable(config)

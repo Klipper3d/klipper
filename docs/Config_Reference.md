@@ -2539,7 +2539,13 @@ serial_no:
 
 ### [fan]
 
-Print cooling fan.
+Print cooling fan, controlled by M106/M107 gcodes.
+One may define any number of sections with a
+"fan" prefix.  Fan with no prefix is the default.
+ACTIVATE_FAN [gcode command](G-Codes.md#fan) can be used
+to select another fan to be the print cooling fan.
+When not active, can be manually controlled
+with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 
 ```
 [fan]

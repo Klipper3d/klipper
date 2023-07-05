@@ -429,6 +429,18 @@ This command is deprecated and will be removed in the near future.
 #### SYNC_STEPPER_TO_EXTRUDER
 This command is deprecated and will be removed in the near future.
 
+### [fan]
+
+The following command is available when a
+[fan config section](Config_Reference.md#fan is
+enabled.
+
+#### ACTIVATE_FAN
+
+`ACTIVATE_FAN FAN=config_name` Selects the active printer fan that reacts to
+M106/M107 gcodes. Current fan speed is transferred over to the new fan.
+Nameless [fan] is active by default.
+
 ### [fan_generic]
 
 The following command is available when a
@@ -438,6 +450,8 @@ enabled.
 #### SET_FAN_SPEED
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
+
+Can also be used with non-active [fan] entries.
 
 ### [filament_switch_sensor]
 
