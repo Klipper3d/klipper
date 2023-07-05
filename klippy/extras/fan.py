@@ -103,19 +103,78 @@ class FanTachometer:
 class PrinterFan:
     def __init__(self, config):
         self.fan = Fan(config)
-        # Register commands
+        for k,f in config.get_printer().lookup_objects(module='fan'):
+            self.controller = f.controller
+            break
+        else:
+            self.controller = FanController(config)
+        # Register both the fan name "myfan" and object name "fan myfan".
+        name = config.get_name()
+        fan_name = name.split()[-1]
+        self.controller.register_fan(config, self.fan, fan_name)
+        if name != fan_name:
+            self.controller.register_fan(config, self.fan, name)
+
+    def get_status(self, eventtime):
+        status = self.fan.get_status(eventtime)
+        status['active'] = 1 if self.fan in self.controller.active_fans else 0
+        return status
+
+# Tracks active fan
+class FanController:
+    def __init__(self, config):
+        self.name_to_fan = {}
+        self.active_fans = []
+        self.requested_speed = None
         gcode = config.get_printer().lookup_object('gcode')
         gcode.register_command("M106", self.cmd_M106)
         gcode.register_command("M107", self.cmd_M107)
-    def get_status(self, eventtime):
-        return self.fan.get_status(eventtime)
+        gcode.register_command("ACTIVATE_FAN", self.cmd_ACTIVATE_FAN)
+
+    def register_fan(self, config, fan, fan_name):
+        if fan_name in self.name_to_fan:
+            raise config.error("Duplicate fan name: %s" % (fan_name,))
+        self.name_to_fan[fan_name] = fan
+
+    def cmd_ACTIVATE_FAN(self, gcmd):
+        fan_names = gcmd.get("FAN")
+        fans = []
+        for name in fan_names.split(","):
+            fan = self.name_to_fan.get(name.strip())
+            if not fan:
+                raise gcmd.error("Fan %s not known" % (name,))
+            fans.append(fan)
+        self.activate_fans(fans)
+
+    def activate_fans(self, new_fans):
+        # Set new active fans and transfer the set speed to those fans.
+        if self.active_fans == new_fans:
+            return
+        old_fans = self.active_fans
+        self.active_fans = new_fans
+        if self.requested_speed is not None:
+            for fan in old_fans:
+                if fan not in new_fans:
+                    fan.set_speed_from_command(0.)
+            for fan in new_fans:
+                if fan not in old_fans:
+                    fan.set_speed_from_command(self.requested_speed)
     def cmd_M106(self, gcmd):
         # Set fan speed
-        value = gcmd.get_float('S', 255., minval=0.) / 255.
-        self.fan.set_speed_from_command(value)
+        self.requested_speed = gcmd.get_float('S', 255., minval=0.) / 255.
+        for fan in self.active_fans:
+            fan.set_speed_from_command(self.requested_speed)
     def cmd_M107(self, gcmd):
         # Turn fan off
-        self.fan.set_speed_from_command(0.)
+        self.requested_speed = 0.
+        for fan in self.active_fans:
+            fan.set_speed_from_command(self.requested_speed)
 
 def load_config(config):
+    fan = PrinterFan(config)
+    # Prefixless is active on startup
+    fan.controller.activate_fans([fan.fan])
+    return fan
+
+def load_config_prefix(config):
     return PrinterFan(config)
