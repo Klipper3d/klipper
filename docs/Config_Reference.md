@@ -231,6 +231,64 @@ max_z_accel:
 [stepper_z]
 ```
 
+### Cartesian Kinematics with limits for X and Y axes
+
+Behaves exactly the as cartesian kinematics, but allows to set a velocity and
+acceleration limit for X and Y axis.
+
+If you set accelerations per feature type in the slicer, and have tuned your
+acceleration to get similar resonance amplitudes and level of smoothing on X and
+Y, you may want to enable `scale_xy_accel: true`. This will scale the X and Y
+accelerations by the ratio `M204 acceleration / config.max_accel`. For example,
+if you have `max_accel: 10000` in your config and set in the slicer an
+acceleration of 5000 mm/s² (`M204 S5000`), effective `max_x_accel` and
+`max_y_accel` values will be halved compared to their original values set in the
+`[printer]` config. Otherwise, with `scale_xy_accel: false` (the default) they
+behave as machine limits, like `max_z_accel` and `max_z_velocity` always do.
+Gcode velocities under the limits are never scaled per axis and stay isotropic.
+
+```
+[printer]
+kinematics: limited_cartesian
+max_x_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the x
+#   axis. This setting can be used to restrict the maximum speed of
+#   the x stepper motor. The default is to use max_velocity for
+#   max_x_velocity.
+max_y_velocity:
+#   This sets the maximum velocity (in mm/s) of movement along the y
+#   axis. This setting can be used to restrict the maximum speed of
+#   the y stepper motor. The default is to use max_velocity for
+#   max_x_velocity.
+max_z_velocity:
+#   See cartesian above.
+max_velocity:
+#   In order to get maximum velocity gains on diagonals, this should be equal or
+#   greater than the hypotenuse (sqrt(x*x + y*y)) of max_x_velocity and
+#   max_y_velocity.
+max_x_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the x axis. It limits the acceleration of the x stepper motor. The
+#   default is to use max_accel for max_x_accel.
+max_y_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the y axis. It limits the acceleration of the y stepper motor. The
+#   default is to use max_accel for max_y_accel.
+max_z_accel:
+# See cartesian above.
+max_accel:
+#   In order to get maximum acceleration gains on diagonals, this should be
+#   equal or greater than the hypotenuse (sqrt(x*x + y*y)) of max_x_accel and
+#   max_y_accel.
+scale_xy_accel:
+#   If scale_xy_accel is False, `max_accel`, set by M204 or SET_VELOCITY_LIMIT,
+#   acts as a third limit. This means that moves with an acceleration lower
+#   than max_x_accel and max_y_accel, have no per-axis limits applied. When set
+#   to True, max_x_accel and max_y_accel are scaled by the ratio of the
+#   acceleration set at runtime and the max_accel value from the config. Then
+#   the actual acceleration will always depend on the orientation.
+```
+
 ### Linear Delta Kinematics
 
 See [example-delta.cfg](../config/example-delta.cfg) for an example
@@ -425,6 +483,54 @@ max_z_accel:
 # The stepper_z section is used to describe the stepper controlling
 # the Z axis.
 [stepper_z]
+```
+
+### CoreXY Kinematics with limits for X and Y axes
+
+Behaves exactly the as CoreXY kinematics, but allows to set a acceleration limit
+for X and Y axis.
+
+There is no velocity limits for X and Y, since on a CoreXY the pull-out velocity
+are identical on both axes.
+
+If you set accelerations per feature type in the slicer, and have tuned your
+acceleration to get similar resonance amplitudes and level of smoothing on X and
+Y, you may want to enable `scale_xy_accel: true`. This will scale the X and Y
+accelerations by the ratio `M204 acceleration / config.max_accel`. For example,
+if you have `max_accel: 10000` in your config and set in the slicer an
+acceleration of 5000 mm/s² (`M204 S5000`), effective `max_x_accel` and
+`max_y_accel` values will be halved compared to their original values set in the
+`[printer]` config. Otherwise, with `scale_xy_accel: false` (the default) they
+behave as machine limits, like `max_z_accel` always does.
+
+Derivation of the formulae is detailed [in this notebook](PerAxisLimits.ipynb)
+
+```
+[printer]
+kinematics: limited_corexy
+max_z_velocity:
+#   See cartesian above.
+max_x_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the x axis. It limits the acceleration of the x stepper motor. The
+#   default is to use max_accel for max_x_accel.
+max_y_accel:
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the y axis. It limits the acceleration of the y stepper motor. The
+#   default is to use max_accel for max_y_accel.
+max_z_accel:
+# See cartesian above.
+max_accel:
+#   In order to get maximum acceleration gains on diagonals, this should be
+#   equal or greater than the hypotenuse (sqrt(x*x + y*y)) of max_x_accel and
+#   max_y_accel.
+scale_xy_accel:
+#   If scale_xy_accel is False, `max_accel`, set by M204 or SET_VELOCITY_LIMIT,
+#   acts as a third limit. This means that moves with an acceleration lower
+#   than max_x_accel and max_y_accel, have no per-axis limits applied. When set
+#   to True, max_x_accel and max_y_accel are scaled by the ratio of the
+#   acceleration set at runtime and the max_accel value from the config. Then
+#   the actual acceleration will always depend on the orientation.
 ```
 
 ### CoreXZ Kinematics
@@ -803,8 +909,9 @@ sensor_pin:
 #   be smoothed to reduce the impact of measurement noise. The default
 #   is 1 seconds.
 control:
-#   Control algorithm (either pid or watermark). This parameter must
-#   be provided.
+#   Control algorithm (either pid, pid_v or watermark). This parameter must
+#   be provided. pid_v should only be used on well calibrated heaters with
+#   low to moderate noise.
 pid_Kp:
 pid_Ki:
 pid_Kd:
@@ -966,10 +1073,18 @@ Visual Examples:
 #   be applied to change the amount of slope interpolated. Larger
 #   numbers will increase the amount of slope, which results in more
 #   curvature in the mesh. Default is .2.
+#zero_reference_position:
+#   An optional X,Y coordinate that specifies the location on the bed
+#   where Z = 0.  When this option is specified the mesh will be offset
+#   so that zero Z adjustment occurs at this location.  The default is
+#   no zero reference.
 #relative_reference_index:
-#   A point index in the mesh to reference all z values to. Enabling
-#   this parameter produces a mesh relative to the probed z position
-#   at the provided index.
+#   **DEPRECATED, use the "zero_reference_position" option**
+#   The legacy option superceded by the "zero reference position".
+#   Rather than a coordinate this option takes an integer "index" that
+#   refers to the location of one of the generated points. It is recommended
+#   to use the "zero_reference_position" instead of this option for new
+#   configurations. The default is no relative reference index.
 #faulty_region_1_min:
 #faulty_region_1_max:
 #   Optional points that define a faulty region.  See docs/Bed_Mesh.md
@@ -1650,6 +1765,8 @@ accelerometers (one may define any number of sections with an
 #   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed: 400000
 #   See the "common I2C settings" section for a description of the
 #   above parameters. The default "i2c_speed" is 400000.
@@ -2370,6 +2487,8 @@ sensor_type: BME280
 #   (0x77).
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
@@ -2415,6 +2534,8 @@ sensor_type:
 #   Default is 64 (0x40).
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
@@ -2448,6 +2569,8 @@ sensor_type: LM75
 #   (usually with jumpers or hard wired).
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
@@ -2600,7 +2723,7 @@ whenever its associated heater is active. By default, a heater_fan has
 a shutdown_speed equal to max_power.
 
 ```
-[heater_fan my_nozzle_fan]
+[heater_fan heatbreak_cooling_fan]
 #pin:
 #max_power:
 #shutdown_speed:
@@ -2855,6 +2978,8 @@ PCA9533 LED support. The PCA9533 is used on the mightyboard.
 #   the PCA9533/1, 99 for the PCA9533/2. The default is 98.
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
@@ -2876,6 +3001,8 @@ PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
 #   96, 97, 98, or 99.  The default is 98.
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
@@ -3190,6 +3317,7 @@ run_current:
 #   set, "stealthChop" mode will be enabled if the stepper motor
 #   velocity is below this value. The default is 0, which disables
 #   "stealthChop" mode.
+#driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2
@@ -3231,6 +3359,7 @@ run_current:
 #   The address of the TMC2209 chip for UART messages (an integer
 #   between 0 and 3). This is typically used when multiple TMC2209
 #   chips are connected to the same UART pin. The default is zero.
+#driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 8
 #driver_TPOWERDOWN: 20
 #driver_TBL: 2
@@ -3405,6 +3534,7 @@ run_current:
 #   to tune a motor with unbalanced coils. See the `Sine Wave Lookup Table`
 #   section in the datasheet for information about this field and how to tune
 #   it.
+#driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 6
 #driver_IRUNDELAY: 4
 #driver_TPOWERDOWN: 10
@@ -3520,6 +3650,7 @@ run_current:
 #   values used by the driver. The value must be specified as a decimal integer
 #   (hex form is not supported). In order to compute the wave table fields,
 #   see the tmc2130 "Calculation Sheet" from the Trinamic website.
+#driver_MULTISTEP_FILT: True
 #driver_IHOLDDELAY: 6
 #driver_TPOWERDOWN: 10
 #driver_TBL: 2
@@ -3622,6 +3753,8 @@ i2c_address:
 #   parameter must be provided.
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
@@ -3658,6 +3791,8 @@ prefix).
 #   is 96.
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
@@ -3928,6 +4063,8 @@ lcd_type:
 #   Set to either "ssd1306" or "sh1106" for the given display type.
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   Optional parameters available for displays connected via an i2c
 #   bus. See the "common I2C settings" section for a description of
@@ -4308,13 +4445,11 @@ i2c_address:
 #   113. This parameter must be provided.
 #i2c_mcu:
 #i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
-#i2c_bus:
-#   If the I2C implementation of your micro-controller supports
-#   multiple I2C busses, you may specify the bus name here. The
-#   default is to use the default micro-controller i2c bus.
 ```
 
 ### [samd_sercom]
@@ -4564,6 +4699,13 @@ via the `i2c_speed` parameter. All other Klipper micro-controllers use a
 #   If the micro-controller supports multiple I2C busses then one may
 #   specify the micro-controller bus name here. The default depends on
 #   the type of micro-controller.
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#   Specify these parameters to use micro-controller software based
+#   I2C "bit-banging" support. The two parameters should the two pins
+#   on the micro-controller to use for the scl and sda wires. The
+#   default is to use hardware based I2C support as specified by the
+#   i2c_bus parameter.
 #i2c_speed:
 #   The I2C speed (in Hz) to use when communicating with the device.
 #   The Klipper implementation on most micro-controllers is hard-coded

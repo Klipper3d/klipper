@@ -5,6 +5,7 @@ GCODE move.gcode
 DICTIONARY atmega2560.dict
 CONFIG ../../config/example-cartesian.cfg
 CONFIG ../../config/example-corexy.cfg
+CONFIG ../../config/example-limited-corexy.cfg
 CONFIG ../../config/example-corexz.cfg
 CONFIG ../../config/example-hybrid-corexy.cfg
 CONFIG ../../config/example-hybrid-corexz.cfg
