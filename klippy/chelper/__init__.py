@@ -12,31 +12,34 @@ import cffi
 ######################################################################
 
 GCC_CMD = "gcc"
-COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
+COMPILE_ARGS = ("-Wall -g -O3 -shared -fPIC"
                 " -flto -fwhole-program -fno-use-linker-plugin"
+                " -march=native -mcpu=native -mtune=native"
                 " -o %s %s")
 SSE_FLAGS = "-mfpmath=sse -msse2"
+NEON_FLAGS = "-mfpu=neon"
 SOURCE_FILES = [
-    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
-    'pollreactor.c', 'msgblock.c', 'trdispatch.c',
+    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'stepcompress_hp.c',
+    'itersolve.c', 'trapq.c', 'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
-    'kin_extruder.c', 'kin_shaper.c',
+    'kin_extruder.c', 'kin_shaper.c', 'integrate.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
-    'trapq.h', 'pollreactor.h', 'msgblock.h'
+    'trapq.h', 'pollreactor.h', 'msgblock.h', 'kin_shaper.h', 'integrate.h',
 ]
 
 defs_stepcompress = """
     struct pull_history_steps {
         uint64_t first_clock, last_clock;
         int64_t start_position;
-        int step_count, interval, add;
+        int step_count, interval, add, add2, shift;
     };
 
     struct stepcompress *stepcompress_alloc(uint32_t oid);
+    struct stepcompress *stepcompress_hp_alloc(uint32_t oid);
     void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
         , int32_t queue_step_msgtag, int32_t set_next_step_dir_msgtag);
     void stepcompress_set_invert_sdir(struct stepcompress *sc
@@ -140,14 +143,29 @@ defs_kin_winch = """
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
     void extruder_set_pressure_advance(struct stepper_kinematics *sk
-        , double pressure_advance, double smooth_time);
+        , int n_params, double params[], double time_offset);
+    struct pressure_advance_params;
+    double pressure_advance_linear_model_func(double position
+        , double pa_velocity, struct pressure_advance_params *pa_params);
+    double pressure_advance_tanh_model_func(double position
+        , double pa_velocity, struct pressure_advance_params *pa_params);
+    double pressure_advance_recipr_model_func(double position
+        , double pa_velocity, struct pressure_advance_params *pa_params);
+    void extruder_set_pressure_advance_model_func(struct stepper_kinematics *sk
+        , double (*func)(double, double, struct pressure_advance_params *));
+    int extruder_set_shaper_params(struct stepper_kinematics *sk, char axis
+        , int n, double a[], double t[]);
+    int extruder_set_smoothing_params(struct stepper_kinematics *sk, char axis
+        , int n, double a[], double t_sm, double t_offs);
+    double extruder_get_step_gen_window(struct stepper_kinematics *sk);
 """
 
 defs_kin_shaper = """
-    double input_shaper_get_step_generation_window(
-        struct stepper_kinematics *sk);
+    double input_shaper_get_step_gen_window(struct stepper_kinematics *sk);
     int input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
         , int n, double a[], double t[]);
+    int input_shaper_set_smoother_params(struct stepper_kinematics *sk
+        , char axis, int n, double a[], double t_sm);
     int input_shaper_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * input_shaper_alloc(void);
@@ -269,6 +287,8 @@ def get_ffi():
         if check_build_code(srcfiles+ofiles+[__file__], destlib):
             if check_gcc_option(SSE_FLAGS):
                 cmd = "%s %s %s" % (GCC_CMD, SSE_FLAGS, COMPILE_ARGS)
+            elif check_gcc_option(NEON_FLAGS):
+                cmd = "%s %s %s" % (GCC_CMD, NEON_FLAGS, COMPILE_ARGS)
             else:
                 cmd = "%s %s" % (GCC_CMD, COMPILE_ARGS)
             logging.info("Building C code module %s", DEST_LIB)

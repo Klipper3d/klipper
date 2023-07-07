@@ -116,6 +116,11 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
+    },
+    'btt-skrat': {
+        'mcu': "stm32g0b1xx",
+        'spi_bus': "spi1",
+        "cs_pin": "PB8"
     }
 }
 
@@ -162,7 +167,8 @@ BOARD_ALIASES = {
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
-    'robin_v3': BOARD_DEFS['monster8']
+    'robin_v3': BOARD_DEFS['monster8'],
+    'btt-skrat-v1.0': BOARD_DEFS['btt-skrat']
 }
 
 def list_boards():
