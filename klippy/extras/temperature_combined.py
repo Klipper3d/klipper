@@ -15,6 +15,9 @@ class PrinterSensorCombined:
         self.name = config.get_name().split()[-1]
         # get sensor names
         self.sensor_names = config.getlist('sensors')
+        # get maximum_deviation parameter from config
+        self.max_deviation = config.getfloat('maximum_deviation',
+                                             default=999.9, above=0.)
         # ensure compatibility with itself
         self.sensor = self
         # get empty list for sensors, could be any sensor class or a heater
@@ -50,7 +53,7 @@ class PrinterSensorCombined:
     def _handle_ready(self):
         # Start temperature update timer
         self.reactor.update_timer(self.temperature_update_timer,
-                                  self.reactor.NOW)
+                                  self.reactor.monotonic())
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
@@ -68,6 +71,14 @@ class PrinterSensorCombined:
             sensor_status = sensor.get_status(eventtime)
             sensor_temperature = sensor_status['temperature']
             values.append(sensor_temperature)
+
+        # check if values are out of max_deviation range
+        if (max(values) - min(values)) > self.max_deviation:
+            self.printer.invoke_shutdown(
+                "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
+                "max value %0.1f, min value %0.1f."
+                % (self.max_deviation, max(values), min(values),))
+
         temp = self.apply_mode(values)
         if temp:
             self.last_temp = temp
@@ -79,13 +90,27 @@ class PrinterSensorCombined:
         return False, '%s: temp=%.1f' % (self.name, self.last_temp)
 
     def get_status(self, eventtime):
-        return {
-                'temperature': round(self.last_temp, 2),
+        return {'temperature': round(self.last_temp, 2),
+                'sensors': ", ".join(self.sensor_names),
+                'type': self.apply_mode.__name__,
                 }
 
     def _temperature_update_event(self, eventtime):
         # update sensor value
         self.update_temp(eventtime)
+
+        # check min / max temp values
+        if self.last_temp < self.min_temp:
+            self.printer.invoke_shutdown(
+                "COMBINED SENSOR temperature %0.1f "
+                "below minimum temperature of %0.1f."
+                % (self.last_temp, self.min_temp,))
+        if self.last_temp > self.max_temp:
+            self.printer.invoke_shutdown(
+                "COMBINED SENSOR temperature %0.1f "
+                "above maximum temperature of %0.1f."
+                % (self.last_temp, self.max_temp,))
+
         # this is copied from temperature_host to enable time triggered updates
         # get mcu and measured / current(?) time
         mcu = self.printer.lookup_object('mcu')

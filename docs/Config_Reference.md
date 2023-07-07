@@ -2531,7 +2531,10 @@ sensor_type: temperature_combined
 #   E.g. 'temperature_sensor sensor1,extruder,heater_bed'
 #type:
 #   Must be provided. Algorithm to combine the provided sensors.
-#   Available options are 'max', 'min', 'mean'
+#   Available options are 'max', 'min', 'mean'.
+#maximum_deviation:
+#   Maximum permissible deviation between the sensors to combine.
+#   The default is 999.9.
 ```
 
 ## Fans
