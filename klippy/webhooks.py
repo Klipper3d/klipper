@@ -354,9 +354,14 @@ class WebHooks:
         state_message, state = self.printer.get_state_message()
         src_path = os.path.dirname(__file__)
         klipper_path = os.path.normpath(os.path.join(src_path, ".."))
-        response = {'state': state, 'state_message': state_message,
+        response = {'state': state,
+                    'state_message': state_message,
                     'hostname': socket.gethostname(),
-                    'klipper_path': klipper_path, 'python_path': sys.executable}
+                    'klipper_path': klipper_path,
+                    'python_path': sys.executable,
+                    'process_id': os.getpid(),
+                    'user_id': os.getuid(),
+                    'group_id': os.getgid()}
         start_args = self.printer.get_start_args()
         for sa in ['log_file', 'config_file', 'software_version', 'cpu_info']:
             response[sa] = start_args.get(sa)
