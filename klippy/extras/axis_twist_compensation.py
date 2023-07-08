@@ -26,9 +26,6 @@ class AxisTwistCompensation:
         self.calibrate_start_x = config.getfloat('calibrate_start_x')
         self.calibrate_end_x = config.getfloat('calibrate_end_x')
         self.calibrate_y = config.getfloat('calibrate_y')
-        TYPES = ['linear', 'multilinear']
-        self.compensation_type = config.getchoice('compensation_type',
-                                                  {t: t for t in TYPES})
         self.z_compensations = config.getlists('z_compensations',
                                                default=[], parser=float)
         self.compensation_start_x = config.getfloat('compensation_start_x',
@@ -45,17 +42,8 @@ class AxisTwistCompensation:
     def get_z_compensation_value(self, pos):
         if not self.z_compensations:
             return 0
-        self._ensure_init()
 
-        if self.compensation_type == 'linear':
-            return self._get_z_compensation_value_linear(pos[0])
-        elif self.compensation_type == 'multilinear':
-            return self._get_z_compensation_value_multilinear(pos[0])
-
-    def _get_z_compensation_value_linear(self, x_coord):
-        return self.m * x_coord + self.b
-
-    def _get_z_compensation_value_multilinear(self, x_coord):
+        x_coord = pos[0]
         z_compensations = self.z_compensations
         sample_count = len(z_compensations)
         spacing = ((self.calibrate_end_x - self.calibrate_start_x)
@@ -68,30 +56,6 @@ class AxisTwistCompensation:
             interpolate_t, z_compensations[interpolate_i],
             z_compensations[interpolate_i + 1])
         return interpolated_z_compensation
-
-    def _ensure_init(self):
-        if self.compensation_type == 'linear' and self.m is None:
-            z_compensations = self.z_compensations
-            sample_count = len(z_compensations)
-            interval_dist = ((self.calibrate_end_x - self.calibrate_start_x)
-                             / (sample_count - 1))
-            indexes = [self.calibrate_start_x + i*interval_dist
-                       for i in range(0, sample_count)]
-
-            # Calculate the mean of x and y values
-            mean_indexes = sum(indexes) / sample_count
-            mean_z_compensations = sum(z_compensations) / sample_count
-
-            # Calculate the covariance and variance
-            covar = sum((indexes[i] - mean_indexes) *
-                        (z_compensations[i] - mean_z_compensations)
-                        for i in range(sample_count))
-            var = sum((indexes[i] - mean_indexes)**2
-                      for i in range(sample_count))
-
-            # Compute the slope (m) and intercept (b) of the best-fit line
-            self.m = covar / var
-            self.b = mean_z_compensations - self.m * mean_indexes
 
     def clear_compensations(self):
         self.z_compensations = []

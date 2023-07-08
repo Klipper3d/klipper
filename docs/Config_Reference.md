@@ -1986,12 +1986,6 @@ calibrate_y: 112.5
 #   This should be the Y coordinate that positions the nozzle during the
 #   calibration process. This parameter must be provided and is recommended to
 #   be near the center of the bed
-#compensation_type: multilinear
-#   Defines the type of correction to apply. The choices are 'linear' or
-#   'multilinear'. 'linear' uses a linear regression to fit a line with the
-#   calibration points. 'multilinear' will interpolate linearly between each
-#   pair of points. It is not necessary to redo a calibration after changing
-#   this setting.
 ```
 
 ## Additional stepper motors and extruders

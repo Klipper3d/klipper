@@ -45,20 +45,3 @@ Configuration options for [axis_twist_compensation] can be found in the
 
 Commands for [axis_twist_compensation] can be found in the
 [G-Codes Reference](G-Codes.md#axis_twist_compensation)
-
-### Type of compensation
-
-This module supports two interpolation methods for the Z offset compensation:
-linear and multilinear.
-
-Some printers which have a slight twist only require a linear compensation, so
-you can use the 'linear' mode to do a linear regression to fit a line through
-the measured compensation.
-
-It is not uncommon for printers to have multiple combined non-linear twists
-(e.g. the tool head leaning forward in the middle of the axis due to its own
-weight). For that, it is recommended to use the 'multilinear' mode which will
-interpolate linearly between each pair of points.
-
-> **Tip:** It is not necessary to redo a calibration when switching between
-> linear and multilinear.
