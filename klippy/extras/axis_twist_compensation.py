@@ -4,18 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-"""
-[axis_twist_compensation]
-horizontal_move_z: 5
-speed: 50
-calibrate_start_x: 0 ; nozzle's x coordinate at the start of the calibration
-    ! required
-calibrate_end_x: 200 ; nozzle's x coordinate at the end of the calibration
-    ! required
-calibrate_y: 100 ; nozzle's y coordinate during the calibration ! required
-compensation_type: multilinear
-"""
-
 import math
 from . import manual_probe as ManualProbe, bed_mesh as BedMesh
 
