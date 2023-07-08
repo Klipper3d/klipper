@@ -1326,9 +1326,6 @@ section](Config_Reference.md#axis_twist_compensation) is enabled.
 twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
 the X axis to calibrate at and defaults to 3.
 
-#### AXIS_TWIST_COMPENSATION_CLEAR
-`AXIS_TWIST_COMPENSATION_CLEAR`: Clears the current compensation values.
-
 ### [z_thermal_adjust]
 
 The following commands are available when the

@@ -38,10 +38,6 @@ points along the bed
 > **Tip:** Bed temperature and nozzle temperature and size do not seem to have
 > an influence to the calibration process.
 
-> **Tip:** Disable the Axis twist compensation using
-> `AXIS_TWIST_COMPENSATION_CLEAR` and perform Screws Tilt Adjust/Z Tilt
-> Adjust/Bed Mesh to compare the difference
-
 ## [axis_twist_compensation] setup and commands
 
 Configuration options for [axis_twist_compensation] can be found in the

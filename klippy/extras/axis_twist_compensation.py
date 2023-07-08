@@ -54,8 +54,6 @@ class AxisTwistCompensation:
         # setup calibrater
         self.calibrater = Calibrater(self, config)
 
-        self._register_gcode_handlers()
-
     def get_z_compensation_value(self, pos):
         if not self.z_compensations:
             return 0
@@ -111,18 +109,6 @@ class AxisTwistCompensation:
         self.z_compensations = []
         self.m = None
         self.b = None
-
-    def _register_gcode_handlers(self):
-        self.gcode.register_command(
-            'AXIS_TWIST_COMPENSATION_CLEAR',
-            self.cmd_AXIS_TWIST_COMPENSATION_CLEAR,
-            desc=self.cmd_AXIS_TWIST_COMPENSATION_CLEAR_help)
-
-    cmd_AXIS_TWIST_COMPENSATION_CLEAR_help = \
-        "Clears the active axis twist compensation"
-
-    def cmd_AXIS_TWIST_COMPENSATION_CLEAR(self, gcmd):
-        self.clear_compensations()
 
 
 class Calibrater:
