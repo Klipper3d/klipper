@@ -11,7 +11,7 @@ MAX_FREQ = 200.
 WINDOW_T_SEC = 0.5
 MAX_SHAPER_FREQ = 150.
 
-TEST_DAMPING_RATIOS=[0.075, 0.1, 0.15]
+TEST_DAMPING_RATIOS=[0.05, 0.075, 0.1]
 
 AUTOTUNE_SHAPERS = ['smooth_zv', 'smooth_mzv', 'smooth_ei', 'smooth_2hump_ei',
                     'smooth_zvd_ei', 'smooth_si', 'mzv', 'ei', '2hump_ei']
