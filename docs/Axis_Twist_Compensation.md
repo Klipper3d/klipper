@@ -16,6 +16,9 @@ This module uses manual measurements by the user to correct the probe's results.
 Note that if your axis is significantly twisted it is strongly recommended to
 first use mechanical means to fix it prior to applying software corrections.
 
+**Warning**: This module is not compatible with dockable probes yet and will
+try to probe the bed without attaching the probe if you use it.
+
 ## Overview of compensation usage
 
 > **Tip:** Make sure the [probe X and Y offsets](Config_Reference.md#probe) are
