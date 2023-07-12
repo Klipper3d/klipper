@@ -14,7 +14,7 @@ class PrinterSensorCombined:
         self.reactor = self.printer.get_reactor()
         self.name = config.get_name().split()[-1]
         # get sensor names
-        self.sensor_names = config.getlist('sensors')
+        self.sensor_names = config.getlist('sensor_list')
         # get maximum_deviation parameter from config
         self.max_deviation = config.getfloat('maximum_deviation',
                                              default=999.9, above=0.)
@@ -91,7 +91,7 @@ class PrinterSensorCombined:
 
     def get_status(self, eventtime):
         return {'temperature': round(self.last_temp, 2),
-                'sensors': ", ".join(self.sensor_names),
+                'sensor_list': ", ".join(self.sensor_names),
                 'combination_method': self.apply_mode.__name__,
                 }
 
