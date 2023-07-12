@@ -2529,8 +2529,8 @@ sensor_type: temperature_combined
 #   Must be provided. List of sensors to combine to new "virtual"
 #   sensor.
 #   E.g. 'temperature_sensor sensor1,extruder,heater_bed'
-#type:
-#   Must be provided. Algorithm to combine the provided sensors.
+#combination_method:
+#   Must be provided. Combination method used for the sensor.
 #   Available options are 'max', 'min', 'mean'.
 #maximum_deviation:
 #   Maximum permissible deviation between the sensors to combine.

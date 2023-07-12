@@ -22,9 +22,9 @@ class PrinterSensorCombined:
         self.sensor = self
         # get empty list for sensors, could be any sensor class or a heater
         self.sensors = []
-        # get type of algorithm to handle the different sensor values with
+        # get combination method to handle the different sensor values with
         algos = {'min': min, 'max': max, 'mean': mean}
-        self.apply_mode = config.getchoice('type', algos)
+        self.apply_mode = config.getchoice('combination_method', algos)
         # set default values
         self.last_temp = self.min_temp = self.max_temp = 0.0
         # add object
@@ -76,7 +76,7 @@ class PrinterSensorCombined:
         if (max(values) - min(values)) > self.max_deviation:
             self.printer.invoke_shutdown(
                 "COMBINED SENSOR maximum deviation exceeded limit of %0.1f, "
-                "max value %0.1f, min value %0.1f."
+                "max sensor value %0.1f, min sensor value %0.1f."
                 % (self.max_deviation, max(values), min(values),))
 
         temp = self.apply_mode(values)
@@ -92,7 +92,7 @@ class PrinterSensorCombined:
     def get_status(self, eventtime):
         return {'temperature': round(self.last_temp, 2),
                 'sensors': ", ".join(self.sensor_names),
-                'type': self.apply_mode.__name__,
+                'combination_method': self.apply_mode.__name__,
                 }
 
     def _temperature_update_event(self, eventtime):
