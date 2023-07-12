@@ -42,7 +42,8 @@ class PrinterSensorCombined:
             # check if sensor has get_status function and
             # get_status has a 'temperature' value
             if (hasattr(sensor, 'get_status') and
-                    'temperature' in sensor.get_status(self.reactor.monotonic())):
+                    'temperature' in sensor.get_status(
+                            self.reactor.monotonic())):
                 self.sensors.append(sensor)
             else:
                 raise self.printer.config_error(
