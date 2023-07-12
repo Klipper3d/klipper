@@ -43,7 +43,7 @@ class PrinterSensorCombined:
             # check if sensor has get_status function and
             # get_status has a 'temperature' value
             if (hasattr(sensor, 'get_status') and
-                    'temperature' in sensor.get_status(self.reactor.NOW)):
+                    'temperature' in sensor.get_status(self.reactor.monotonic())):
                 self.sensors.append(sensor)
             else:
                 raise self.printer.config_error(
@@ -53,7 +53,7 @@ class PrinterSensorCombined:
     def _handle_ready(self):
         # Start temperature update timer
         self.reactor.update_timer(self.temperature_update_timer,
-                                  self.reactor.monotonic())
+                                  self.reactor.NOW)
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
