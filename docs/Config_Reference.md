@@ -2533,8 +2533,8 @@ sensor_type: temperature_combined
 #   Must be provided. Combination method used for the sensor.
 #   Available options are 'max', 'min', 'mean'.
 #maximum_deviation:
-#   Maximum permissible deviation between the sensors to combine.
-#   The default is 999.9.
+#   Must be provided. Maximum permissible deviation between the sensors
+#   to combine (e.g. 5 degrees). To disable it, use a large value (e.g. 999.9)
 ```
 
 ## Fans

@@ -16,8 +16,7 @@ class PrinterSensorCombined:
         # get sensor names
         self.sensor_names = config.getlist('sensor_list')
         # get maximum_deviation parameter from config
-        self.max_deviation = config.getfloat('maximum_deviation',
-                                             default=999.9, above=0.)
+        self.max_deviation = config.getfloat('maximum_deviation', above=0.)
         # ensure compatibility with itself
         self.sensor = self
         # get empty list for sensors, could be any sensor class or a heater
