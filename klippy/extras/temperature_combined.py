@@ -87,7 +87,9 @@ class PrinterSensorCombined:
         return self.last_temp, 0.
 
     def stats(self, eventtime):
-        return False, '%s: temp=%.1f' % (self.name, self.last_temp)
+        return False, '%s: temp=%.1f sensor_list=%s' % (
+                self.name + "_combined_sensor",
+                self.last_temp, ", ".join(self.sensor_names))
 
     def get_status(self, eventtime):
         return {'temperature': round(self.last_temp, 2),
