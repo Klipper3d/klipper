@@ -81,10 +81,10 @@ config STACK_SIZE
 
 choice "Clock Speed"
     prompt "Clock Speed"
-    config HC32F460_CLOCK_SPEED_168M
-        bool "168 MHz"
     config HC32F460_CLOCK_SPEED_200M
         bool "200 MHz"
+    config HC32F460_CLOCK_SPEED_168M
+        bool "168 MHz"
 endchoice
 
 config CLOCK_FREQ
