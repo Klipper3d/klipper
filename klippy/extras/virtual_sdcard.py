@@ -71,7 +71,8 @@ class VirtualSD:
                     r_path = full_path[len(self.sdcard_dirname) + 1:]
                     size = os.path.getsize(full_path)
                     flist.append((r_path, size))
-            return sorted(flist, key=lambda f: -os.path.getmtime(f[0]))
+            return sorted(flist, key=lambda f: -os.path.getmtime(
+                os.path.join(self.sdcard_dirname, f[0])))
         else:
             dname = self.sdcard_dirname
             try:
