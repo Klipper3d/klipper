@@ -71,13 +71,13 @@ class VirtualSD:
                     r_path = full_path[len(self.sdcard_dirname) + 1:]
                     size = os.path.getsize(full_path)
                     flist.append((r_path, size))
-            return sorted(flist, key=lambda f: f[0].lower())
+            return sorted(flist, key=lambda f: -os.path.getmtime(f[0]))
         else:
             dname = self.sdcard_dirname
             try:
                 filenames = os.listdir(self.sdcard_dirname)
                 return [(fname, os.path.getsize(os.path.join(dname, fname)))
-                        for fname in sorted(filenames, key=str.lower)
+                        for fname in sorted(filenames, key=lambda x: -os.path.getmtime(os.path.join(dname, x)))
                         if not fname.startswith('.')
                         and os.path.isfile((os.path.join(dname, fname)))]
             except:
