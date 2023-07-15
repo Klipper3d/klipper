@@ -92,9 +92,7 @@ class HybridCoreXYKinematics:
     def home(self, homing_state):
         for axis in homing_state.get_axes():
             if self.dc_module is not None and axis == 0:
-                self.dc_module.save_idex_state()
                 self.dc_module.home(homing_state)
-                self.dc_module.restore_idex_state()
             else:
                 self.home_axis(homing_state, axis, self.rails[axis])
     def _motor_off(self, print_time):

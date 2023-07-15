@@ -85,9 +85,7 @@ class CartKinematics:
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
             if self.dc_module is not None and axis == self.dual_carriage_axis:
-                self.dc_module.save_idex_state()
                 self.dc_module.home(homing_state)
-                self.dc_module.restore_idex_state()
             else:
                 self.home_axis(homing_state, axis, self.rails[axis])
     def _motor_off(self, print_time):

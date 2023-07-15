@@ -18,7 +18,7 @@ class DualCarriages:
         self.printer = dc_config.get_printer()
         self.axis = axis
         self.dc = (rail_0, rail_1)
-        self.saved_state = None
+        self.saved_states = {}
         safe_dist = dc_config.getfloat('safe_distance', None, minval=0.)
         if safe_dist is None:
             dc0_rail = rail_0.get_rail()
@@ -26,12 +26,20 @@ class DualCarriages:
             safe_dist = min(abs(dc0_rail.position_min - dc1_rail.position_min),
                             abs(dc0_rail.position_max - dc1_rail.position_max))
         self.safe_dist = safe_dist
+        self.restore_velocity = dc_config.getfloat('restore_velocity', None,
+                                                   above=0.)
         self.printer.add_object('dual_carriage', self)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command(
                    'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
                    desc=self.cmd_SET_DUAL_CARRIAGE_help)
+        gcode.register_command(
+                   'SAVE_IDEX_STATE', self.cmd_SAVE_IDEX_STATE,
+                   desc=self.cmd_SAVE_IDEX_STATE_help)
+        gcode.register_command(
+                   'RESTORE_IDEX_STATE', self.cmd_RESTORE_IDEX_STATE,
+                   desc=self.cmd_RESTORE_IDEX_STATE_help)
     def get_rails(self):
         return self.dc
     def toggle_active_dc_rail(self, index, override_rail=False):
@@ -65,18 +73,6 @@ class DualCarriages:
     def get_status(self, eventtime=None):
         return {('carriage_%d' % (i,)) : dc.mode
                 for (i, dc) in enumerate(self.dc)}
-    def save_idex_state(self):
-        pos = self.printer.lookup_object('toolhead').get_position()
-        self.saved_state = {
-            'carriage_modes': [dc.mode for dc in self.dc],
-            'axes_positions': [dc.get_axis_position(pos) for dc in self.dc],
-            }
-    def restore_idex_state(self):
-        if self.saved_state is not None:
-            # TODO: Should we restore the carriage positions?
-            for i, dc in enumerate(self.dc):
-                saved_mode = self.saved_state['carriage_modes'][i]
-                self.activate_dc_mode(i, saved_mode)
     def get_kin_range(self, toolhead, mode):
         pos = toolhead.get_position()
         axes_pos = [dc.get_axis_position(pos) for dc in self.dc]
@@ -149,6 +145,35 @@ class DualCarriages:
                         "Axis %s must be homed prior to enabling mode=%s" %
                         (axis, mode))
         self.activate_dc_mode(index, mode)
+    cmd_SAVE_IDEX_STATE_help = "Save IDEX mode and dual carriages positions"
+    def cmd_SAVE_IDEX_STATE(self, gcmd):
+        state_name = gcmd.get('NAME', 'default')
+        pos = self.printer.lookup_object('toolhead').get_position()
+        self.saved_states[state_name] = {
+            'carriage_modes': [dc.mode for dc in self.dc],
+            'axes_positions': [dc.get_axis_position(pos) for dc in self.dc],
+        }
+    cmd_RESTORE_IDEX_STATE_help = \
+            "Restore IDEX mode and dual carriages positions"
+    def cmd_RESTORE_IDEX_STATE(self, gcmd):
+        state_name = gcmd.get('NAME', 'default')
+        saved_state = self.saved_states.get(state_name)
+        if saved_state is None:
+            raise gcmd.error("Unknown IDEX state: %s" % (state_name,))
+        move_speed = gcmd.get('MOVE_SPEED', self.restore_velocity, above=0.)
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        pos = toolhead.get_position()
+        if gcmd.get_int('MOVE', 1):
+            for i, dc in enumerate(self.dc):
+                self.toggle_active_dc_rail(i)
+                saved_pos = saved_state['axes_positions'][i]
+                toolhead.manual_move(
+                        pos[:self.axis] + [saved_pos] + pos[self.axis+1:],
+                        move_speed or dc.get_rail().homing_speed)
+        for i, dc in enumerate(self.dc):
+            saved_mode = saved_state['carriage_modes'][i]
+            self.activate_dc_mode(i, saved_mode)
 
 class DualCarriagesRail:
     def __init__(self, rail, axis, active):
