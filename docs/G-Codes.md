@@ -310,9 +310,33 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=[0|1]`: This command will set the active
-carriage. It is typically invoked from the activate_gcode and
-deactivate_gcode fields in a multiple extruder configuration.
+`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]`:
+This command will change the mode of the specified carriage.
+If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
+to `PRIMARY` deactivates the other carriage and make the specified
+carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
+modes are supported only for `CARRIAGE=1`. When set to either of these
+modes, carriage 1 will then track the subsequent moves of the carriage 0
+and either copy relative movements of it (in `COPY` mode) or execute them
+in the opposite (mirror) direction (in `MIRROR` mode).
+
+#### SAVE_IDEX_STATE
+`SAVE_IDEX_STATE [NAME=<state_name>]`: Save the current positions of
+the dual carriages and their modes. Saving and restoring IDEX state
+can be useful in scripts and macros, as well as in homing routine
+overrides. If NAME is provided it allows one to name the saved state
+to the given string. If NAME is not provided it defaults to "default".
+
+#### RESTORE_IDEX_STATE
+`RESTORE_IDEX_STATE [NAME=<state_name>] [MOVE=[0|1] [MOVE_SPEED=<speed>]]`:
+Restore the previously saved positions of the dual carriages and their modes,
+unless "MOVE=0" is specified, in which case only the IDEX mode will be
+restored, but not the positions of the carriages. If positions are being
+restored and "MOVE_SPEED" is specified, then the toolhead moves will be
+performed with the given speed (in mm/s); otherwise the toolhead move will
+use either the `restore_velocity` parameter from the config or the rail
+homing speed if `restore_velocity` was not provided. Note that
+the carriages restore their positions only over their own axis.
 
 ### [endstop_phase]
 

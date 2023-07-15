@@ -501,10 +501,11 @@ The following information is available in the `toolhead` object
 
 The following information is available in
 [dual_carriage](Config_Reference.md#dual_carriage)
-on a hybrid_corexy or hybrid_corexz robot
-- `mode`: The current mode. Possible values are: "FULL_CONTROL"
-- `active_carriage`: The current active carriage.
-Possible values are: "CARRIAGE_0", "CARRIAGE_1"
+on a cartesian, hybrid_corexy or hybrid_corexz robot
+- `carriage_0`: The mode of the carriage 0. Possible values are:
+  "INACTIVE" and "PRIMARY".
+- `carriage_1`: The mode of the carriage 1. Possible values are:
+  "INACTIVE", "PRIMARY", "COPY", and "MIRROR".
 
 ## virtual_sdcard
 
