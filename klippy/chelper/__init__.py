@@ -155,9 +155,9 @@ defs_kin_shaper = """
 defs_kin_idex = """
     void dual_carriage_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
-    void dual_carriage_set_transform(struct stepper_kinematics *sk
-        , double x_scale, double x_offs, double y_scale, double y_offs);
-    struct stepper_kinematics * dual_carriage_alloc(void);
+    int dual_carriage_set_transform(struct stepper_kinematics *sk
+        , char axis, double scale, double offs);
+    struct stepper_kinematics * dual_carriage_alloc();
 """
 
 defs_serialqueue = """

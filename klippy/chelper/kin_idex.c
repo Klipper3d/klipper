@@ -42,26 +42,37 @@ dual_carriage_set_sk(struct stepper_kinematics *sk
     dc->sk.calc_position_cb = dual_carriage_calc_position;
     dc->sk.active_flags = orig_sk->active_flags;
     dc->orig_sk = orig_sk;
-    dc->sk.commanded_pos = orig_sk->commanded_pos;
-    dc->sk.last_flush_time = orig_sk->last_flush_time;
-    dc->sk.last_move_time = orig_sk->last_move_time;
 }
 
-void __visible
-dual_carriage_set_transform(struct stepper_kinematics *sk
-                            , double x_scale, double x_offs
-                            , double y_scale, double y_offs)
+int __visible
+dual_carriage_set_transform(struct stepper_kinematics *sk, char axis
+                            , double scale, double offs)
 {
     struct dual_carriage_stepper *dc = container_of(
             sk, struct dual_carriage_stepper, sk);
-    dc->x_scale = x_scale;
-    dc->x_offs = x_offs;
-    dc->y_scale = y_scale;
-    dc->y_offs = y_offs;
+    if (axis == 'x') {
+        dc->x_scale = scale;
+        dc->x_offs = offs;
+        if (!scale)
+            dc->sk.active_flags &= ~AF_X;
+        else if (scale && dc->orig_sk->active_flags & AF_X)
+            dc->sk.active_flags |= AF_X;
+        return 0;
+    }
+    if (axis == 'y') {
+        dc->y_scale = scale;
+        dc->y_offs = offs;
+        if (!scale)
+            dc->sk.active_flags &= ~AF_Y;
+        else if (scale && dc->orig_sk->active_flags & AF_Y)
+            dc->sk.active_flags |= AF_Y;
+        return 0;
+    }
+    return -1;
 }
 
 struct stepper_kinematics * __visible
-dual_carriage_alloc(void)
+dual_carriage_alloc()
 {
     struct dual_carriage_stepper *dc = malloc(sizeof(*dc));
     memset(dc, 0, sizeof(*dc));

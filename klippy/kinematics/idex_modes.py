@@ -27,6 +27,7 @@ class DualCarriages:
                             abs(dc0_rail.position_max - dc1_rail.position_max))
         self.safe_dist = safe_dist
         self.printer.add_object('dual_carriage', self)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command(
                    'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
@@ -125,6 +126,11 @@ class DualCarriages:
             self.toggle_active_dc_rail(0)
             self.dc[index].activate(toolhead.get_position(), mode)
         kin.update_limits(self.axis, self.get_kin_range(toolhead, mode))
+    def _handle_ready(self):
+        # Apply the transform later during Klipper initialization to make sure
+        # that input shaping can pick up the correct stepper kinematic flags.
+        for dc in self.dc:
+            dc.apply_transform()
     cmd_SET_DUAL_CARRIAGE_help = "Configure the dual carriages mode"
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         index = gcmd.get_int('CARRIAGE', minval=0, maxval=1)
@@ -148,11 +154,10 @@ class DualCarriagesRail:
     def __init__(self, rail, axis, active):
         self.rail = rail
         self.axis = axis
+        self.enc_axis = ['x', 'y'][axis].encode()
         self.mode = (INACTIVE, PRIMARY)[active]
-        self.offsets = [0., 0.]
-        self.scales = [1., 1.]
-        if not active:
-            self.scales[axis] = 0.
+        self.offset = 0.
+        self.scale = 1. if active else 0.
         ffi_main, ffi_lib = chelper.get_ffi()
         self.dc_stepper_kinematics = []
         self.orig_stepper_kinematics = []
@@ -160,9 +165,6 @@ class DualCarriagesRail:
             sk = ffi_main.gc(ffi_lib.dual_carriage_alloc(), ffi_lib.free)
             orig_sk = s.get_stepper_kinematics()
             ffi_lib.dual_carriage_set_sk(sk, orig_sk)
-            ffi_lib.dual_carriage_set_transform(
-                    sk, self.scales[0], self.offsets[0],
-                    self.scales[1], self.offsets[1])
             self.dc_stepper_kinematics.append(sk)
             self.orig_stepper_kinematics.append(orig_sk)
             s.set_stepper_kinematics(sk)
@@ -171,25 +173,19 @@ class DualCarriagesRail:
     def is_active(self):
         return self.mode != INACTIVE
     def get_axis_position(self, position):
-        axis = self.axis
-        return position[axis] * self.scales[axis] + self.offsets[axis]
-    def activate(self, position, mode):
-        axis = self.axis
-        self.scales[axis] = axis_scale = -1. if mode == 'MIRROR' else 1.
-        self.offsets[axis] -= position[axis] * self.scales[axis]
+        return position[self.axis] * self.scale + self.offset
+    def apply_transform(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         for sk in self.dc_stepper_kinematics:
             ffi_lib.dual_carriage_set_transform(
-                    sk, self.scales[0], self.offsets[0],
-                    self.scales[1], self.offsets[1])
+                    sk, self.enc_axis, self.scale, self.offset)
+    def activate(self, position, mode):
+        self.scale = axis_scale = -1. if mode == MIRROR else 1.
+        self.offset -= position[self.axis] * self.scale
+        self.apply_transform()
         self.mode = mode
     def inactivate(self, position):
-        axis = self.axis
-        self.offsets[axis] += position[axis] * self.scales[axis]
-        self.scales[axis] = 0.
-        ffi_main, ffi_lib = chelper.get_ffi()
-        for sk in self.dc_stepper_kinematics:
-            ffi_lib.dual_carriage_set_transform(
-                    sk, self.scales[0], self.offsets[0],
-                    self.scales[1], self.offsets[1])
+        self.offset += position[self.axis] * self.scale
+        self.scale = 0.
+        self.apply_transform()
         self.mode = INACTIVE
