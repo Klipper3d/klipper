@@ -245,6 +245,11 @@ object is available if any heater is defined):
   temperature sensors by their full config section names,
   e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater",
   "temperature_sensor electronics_temp"]`.
+- `available_monitors`: Returns a list of all currently available
+  temperature monitors by their full config section names,
+  e.g. `["tmc2240 stepper_x"]`.  While a temperature sensor is always
+  available to read, a temperature monitor may not be available and
+  will return null in such case.
 
 ## idle_timeout
 
