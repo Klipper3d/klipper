@@ -6,7 +6,9 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // armcm_main
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
@@ -84,7 +86,7 @@ pll_setup(void)
 
     // Setup CFGR3 register
     uint32_t cfgr3 = RCC_CFGR3_I2C1SW;
-#if CONFIG_USBSERIAL
+#if CONFIG_USB
         // Select PLL as source for USB clock
         cfgr3 |= RCC_CFGR3_USBSW;
 #endif
@@ -107,7 +109,7 @@ hsi48_setup(void)
         ;
 
     // Enable USB clock recovery
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         enable_pclock(CRS_BASE);
         CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
     }
@@ -129,41 +131,15 @@ hsi14_setup(void)
 
 
 /****************************************************************
- * USB bootloader
+ * Bootloader
  ****************************************************************/
 
-#define USB_BOOT_FLAG_ADDR (CONFIG_RAM_START + CONFIG_RAM_SIZE - 1024)
-#define USB_BOOT_FLAG 0x55534220424f4f54 // "USB BOOT"
-
-// Flag that bootloader is desired and reboot
-static void
-usb_reboot_for_dfu_bootloader(void)
-{
-    irq_disable();
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = USB_BOOT_FLAG;
-    NVIC_SystemReset();
-}
-
-// Check if rebooting into system DFU Bootloader
-static void
-check_usb_dfu_bootloader(void)
-{
-    if (!CONFIG_USBSERIAL || !CONFIG_MACH_STM32F0x2
-        || *(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
-        return;
-    *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
-    uint32_t *sysbase = (uint32_t*)0x1fffc400;
-    if (CONFIG_MACH_STM32F072)
-        sysbase = (uint32_t*)0x1fffc800;
-    asm volatile("mov sp, %0\n bx %1"
-                 : : "r"(sysbase[0]), "r"(sysbase[1]));
-}
-
-// Handle USB reboot requests
+// Handle reboot requests
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
-    usb_reboot_for_dfu_bootloader();
+    try_request_canboot();
+    dfu_reboot();
 }
 
 
@@ -190,7 +166,7 @@ enable_ram_vectortable(void)
 void
 armcm_main(void)
 {
-    check_usb_dfu_bootloader();
+    dfu_reboot_check();
     SystemInit();
 
     enable_pclock(SYSCFG_BASE);
@@ -201,8 +177,7 @@ armcm_main(void)
     FLASH->ACR = (1 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Configure main clock
-    if (CONFIG_MACH_STM32F0x2 && CONFIG_STM32_CLOCK_REF_INTERNAL
-        && CONFIG_USBSERIAL)
+    if (CONFIG_MACH_STM32F0x2 && CONFIG_STM32_CLOCK_REF_INTERNAL && CONFIG_USB)
         hsi48_setup();
     else
         pll_setup();

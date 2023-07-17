@@ -10,10 +10,10 @@ config ATSAM_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM if !MACH_SAME70
-    select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
 
 config BOARD_DIRECTORY
     string
@@ -65,14 +65,13 @@ config CLOCK_FREQ
     default 120000000 if MACH_SAM4
     default 300000000 if MACH_SAME70
 
-config FLASH_START
-    hex
-    default 0x400000 if MACH_SAM4 || MACH_SAME70
-    default 0x80000
-
 config FLASH_SIZE
     hex
     default 0x80000
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
 
 config RAM_START
     hex
@@ -89,10 +88,11 @@ config STACK_SIZE
     int
     default 512
 
-config USBSERIAL
-    bool
-config SERIAL
-    bool
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x400000 if MACH_SAM4 || MACH_SAME70
+    default 0x80000
+
 choice
     prompt "Communication interface"
     config ATSAM_USB

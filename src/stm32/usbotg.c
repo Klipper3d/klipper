@@ -15,21 +15,31 @@
 #include "sched.h" // DECL_INIT
 
 #if CONFIG_STM32_USB_PB14_PB15
-#define USB_PERIPH_BASE USB_OTG_HS_PERIPH_BASE
-#define OTG_IRQn OTG_HS_IRQn
-#define USBOTGEN RCC_AHB1ENR_USB1OTGHSEN
-#define GPIO_D_NEG GPIO('B', 14)
-#define GPIO_D_POS GPIO('B', 15)
-#define GPIO_FUNC GPIO_FUNCTION(12)
-DECL_CONSTANT_STR("RESERVE_PINS_USB1", "PB14,PB15");
+  #define IS_OTG_HS 1
+  #define GPIO_D_NEG GPIO('B', 14)
+  #define GPIO_D_POS GPIO('B', 15)
+  #define GPIO_FUNC GPIO_FUNCTION(12)
+  DECL_CONSTANT_STR("RESERVE_PINS_USB1", "PB14,PB15");
 #else
-#define USB_PERIPH_BASE USB_OTG_FS_PERIPH_BASE
-#define OTG_IRQn OTG_FS_IRQn
-#define USBOTGEN RCC_AHB1ENR_USB2OTGHSEN
-#define GPIO_D_NEG GPIO('A', 11)
-#define GPIO_D_POS GPIO('A', 12)
-#define GPIO_FUNC GPIO_FUNCTION(10)
-DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
+  #if CONFIG_MACH_STM32H723
+    #define IS_OTG_HS 1
+  #else
+    #define IS_OTG_HS 0
+  #endif
+  #define GPIO_D_NEG GPIO('A', 11)
+  #define GPIO_D_POS GPIO('A', 12)
+  #define GPIO_FUNC GPIO_FUNCTION(10)
+  DECL_CONSTANT_STR("RESERVE_PINS_USB", "PA11,PA12");
+#endif
+
+#if IS_OTG_HS
+  #define USB_PERIPH_BASE USB_OTG_HS_PERIPH_BASE
+  #define OTG_IRQn OTG_HS_IRQn
+  #define USBOTGEN RCC_AHB1ENR_USB1OTGHSEN
+#else
+  #define USB_PERIPH_BASE USB_OTG_FS_PERIPH_BASE
+  #define OTG_IRQn OTG_FS_IRQn
+  #define USBOTGEN RCC_AHB1ENR_USB2OTGHSEN
 #endif
 
 static void
@@ -387,11 +397,11 @@ OTG_FS_IRQHandler(void)
     }
     if (sts & USB_OTG_GINTSTS_IEPINT) {
         // Can transmit data - disable irq and notify endpoint
-        uint32_t daint = OTGD->DAINT;
-        OTGD->DAINTMSK &= ~daint;
-        if (daint & (1 << 0))
+        uint32_t daint = OTGD->DAINT, msk = OTGD->DAINTMSK, pend = daint & msk;
+        OTGD->DAINTMSK = msk & ~daint;
+        if (pend & (1 << 0))
             usb_notify_ep0();
-        if (daint & (1 << USB_CDC_EP_BULK_IN))
+        if (pend & (1 << USB_CDC_EP_BULK_IN))
             usb_notify_bulk_in();
     }
 }
@@ -416,7 +426,7 @@ usb_init(void)
     OTG->GUSBCFG = (USB_OTG_GUSBCFG_FDMOD | USB_OTG_GUSBCFG_PHYSEL
                     | (6 << USB_OTG_GUSBCFG_TRDT_Pos));
     OTGD->DCFG |= (3 << USB_OTG_DCFG_DSPD_Pos);
-#if CONFIG_MACH_STM32F446 || CONFIG_MACH_STM32H7
+#if CONFIG_MACH_STM32F446 || CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32F7
     OTG->GOTGCTL = USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL;
 #else
     OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;

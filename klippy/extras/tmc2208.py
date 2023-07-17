@@ -173,8 +173,8 @@ SignedFields = ["cur_a", "cur_b", "pwm_scale_auto"]
 FieldFormatters = dict(tmc2130.FieldFormatters)
 FieldFormatters.update({
     "sel_a":            (lambda v: "%d(%s)" % (v, ["TMC222x", "TMC220x"][v])),
-    "s2vsa":            (lambda v: "1(LowSideShort_A!)" if v else ""),
-    "s2vsb":            (lambda v: "1(LowSideShort_B!)" if v else ""),
+    "s2vsa":            (lambda v: "1(ShortToSupply_A!)" if v else ""),
+    "s2vsb":            (lambda v: "1(ShortToSupply_B!)" if v else ""),
 })
 
 
@@ -186,7 +186,8 @@ class TMC2208:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields)
+        self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields, 0,
+                                             TMC_FREQUENCY)
         self.fields.set_field("pdn_disable", True)
         # Register commands
         current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
@@ -196,16 +197,19 @@ class TMC2208:
         self.get_status = cmdhelper.get_status
         # Setup basic register values
         self.fields.set_field("mstep_reg_select", True)
-        self.fields.set_field("multistep_filt", True)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        # GCONF
+        set_config_field(config, "multistep_filt", True)
+        # CHOPCONF
         set_config_field(config, "toff", 3)
         set_config_field(config, "hstrt", 5)
         set_config_field(config, "hend", 0)
         set_config_field(config, "tbl", 2)
+        # IHOLDIRUN
         set_config_field(config, "iholddelay", 8)
-        set_config_field(config, "tpowerdown", 20)
+        # PWMCONF
         set_config_field(config, "pwm_ofs", 36)
         set_config_field(config, "pwm_grad", 14)
         set_config_field(config, "pwm_freq", 1)
@@ -213,6 +217,8 @@ class TMC2208:
         set_config_field(config, "pwm_autograd", True)
         set_config_field(config, "pwm_reg", 8)
         set_config_field(config, "pwm_lim", 12)
+        # TPOWERDOWN
+        set_config_field(config, "tpowerdown", 20)
     def read_translate(self, reg_name, val):
         if reg_name == "IOIN":
             drv_type = self.fields.get_field("sel_a", val)

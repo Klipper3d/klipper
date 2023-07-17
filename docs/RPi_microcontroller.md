@@ -25,8 +25,8 @@ must run before the klippy process.
 After installing Klipper, install the script. run:
 ```
 cd ~/klipper/
-sudo cp "./scripts/klipper-mcu-start.sh" /etc/init.d/klipper_mcu
-sudo update-rc.d klipper_mcu defaults
+sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
+sudo systemctl enable klipper-mcu.service
 ```
 
 ## Building the micro-controller code
@@ -68,6 +68,15 @@ following the instructions in
 Make sure the Linux SPI driver is enabled by running
 `sudo raspi-config` and enabling SPI under the "Interfacing options"
 menu.
+
+## Optional: Enabling I2C
+
+Make sure the Linux I2C driver is enabled by running `sudo raspi-config`
+and enabling I2C under the "Interfacing options" menu.
+If planning to use I2C for the MPU accelerometer, it is also required
+to set the baud rate to 400000 by: adding/uncommenting
+`dtparam=i2c_arm=on,i2c_arm_baudrate=400000` in `/boot/config.txt`
+(or `/boot/firmware/config.txt` in some distros).
 
 ## Optional: Identify the correct gpiochip
 

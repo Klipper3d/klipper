@@ -16,6 +16,8 @@ DECL_CTR("DECL_INITIAL_PINS " __stringify(CONFIG_INITIAL_PINS));
 void
 initial_pins_setup(void)
 {
+    if (sizeof(CONFIG_INITIAL_PINS) <= 1)
+        return;
     int i;
     for (i=0; i<initial_pins_size; i++) {
         const struct initial_pin_s *ip = &initial_pins[i];

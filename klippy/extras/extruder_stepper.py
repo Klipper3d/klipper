@@ -15,6 +15,8 @@ class PrinterExtruderStepper:
                                             self.handle_connect)
     def handle_connect(self):
         self.extruder_stepper.sync_to_extruder(self.extruder_name)
+    def get_status(self, eventtime):
+        return self.extruder_stepper.get_status(eventtime)
 
 def load_config_prefix(config):
     return PrinterExtruderStepper(config)

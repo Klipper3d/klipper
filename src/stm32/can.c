@@ -10,9 +10,9 @@
 #include "autoconf.h" // CONFIG_MACH_STM32F1
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_CONSTANT_STR
-#include "fasthash.h" // fasthash64
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
+#include "generic/canserial.h" // CANBUS_ID_ADMIN
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
@@ -49,6 +49,7 @@
 
 #if CONFIG_MACH_STM32F0
  #define SOC_CAN CAN
+ #define FILTER_CAN CAN
  #define CAN_RX0_IRQn  CEC_CAN_IRQn
  #define CAN_RX1_IRQn  CEC_CAN_IRQn
  #define CAN_TX_IRQn   CEC_CAN_IRQn
@@ -58,6 +59,7 @@
 
 #if CONFIG_MACH_STM32F1
  #define SOC_CAN CAN1
+ #define FILTER_CAN CAN1
  #define CAN_RX0_IRQn  CAN1_RX0_IRQn
  #define CAN_RX1_IRQn  CAN1_RX1_IRQn
  #define CAN_TX_IRQn   CAN1_TX_IRQn
@@ -66,16 +68,17 @@
 #endif
 
 #if CONFIG_MACH_STM32F4
- #warning CAN on STM32F4 is untested
  #if (CONFIG_STM32_CANBUS_PA11_PA12 || CONFIG_STM32_CANBUS_PB8_PB9 \
      || CONFIG_STM32_CANBUS_PD0_PD1 || CONFIG_STM32_CANBUS_PI9_PH13)
   #define SOC_CAN CAN1
+  #define FILTER_CAN CAN1
   #define CAN_RX0_IRQn  CAN1_RX0_IRQn
   #define CAN_RX1_IRQn  CAN1_RX1_IRQn
   #define CAN_TX_IRQn   CAN1_TX_IRQn
   #define CAN_SCE_IRQn  CAN1_SCE_IRQn
  #elif CONFIG_STM32_CANBUS_PB5_PB6 || CONFIG_STM32_CANBUS_PB12_PB13
   #define SOC_CAN CAN2
+  #define FILTER_CAN CAN1
   #define CAN_RX0_IRQn  CAN2_RX0_IRQn
   #define CAN_RX1_IRQn  CAN2_RX1_IRQn
   #define CAN_TX_IRQn   CAN2_TX_IRQn
@@ -91,41 +94,9 @@
  #error No known CAN device for configured MCU
 #endif
 
-// Read the next CAN packet
-int
-canbus_read(uint32_t *id, uint8_t *data)
-{
-    if (!(SOC_CAN->RF0R & CAN_RF0R_FMP0)) {
-        // All rx mboxes empty, enable wake on rx IRQ
-        irq_disable();
-        SOC_CAN->IER |= CAN_IER_FMPIE0;
-        irq_enable();
-        return -1;
-    }
-
-    // Read and ack packet
-    CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[0];
-    uint32_t rir_id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
-    uint32_t dlc = mb->RDTR & CAN_RDT0R_DLC;
-    uint32_t rdlr = mb->RDLR, rdhr = mb->RDHR;
-    SOC_CAN->RF0R = CAN_RF0R_RFOM0;
-
-    // Return packet
-    *id = rir_id;
-    data[0] = (rdlr >>  0) & 0xff;
-    data[1] = (rdlr >>  8) & 0xff;
-    data[2] = (rdlr >> 16) & 0xff;
-    data[3] = (rdlr >> 24) & 0xff;
-    data[4] = (rdhr >>  0) & 0xff;
-    data[5] = (rdhr >>  8) & 0xff;
-    data[6] = (rdhr >> 16) & 0xff;
-    data[7] = (rdhr >> 24) & 0xff;
-    return dlc;
-}
-
 // Transmit a packet
 int
-canbus_send(uint32_t id, uint32_t len, uint8_t *data)
+canhw_send(struct canbus_msg *msg)
 {
     uint32_t tsr = SOC_CAN->TSR;
     if (!(tsr & (CAN_TSR_TME0|CAN_TSR_TME1|CAN_TSR_TME2))) {
@@ -135,83 +106,91 @@ canbus_send(uint32_t id, uint32_t len, uint8_t *data)
         irq_enable();
         return -1;
     }
-    int mbox = (tsr & CAN_TSR_CODE) >> CAN_TSR_CODE_Pos;
+    int mbox = 2;
+    if (tsr & CAN_TSR_TME0)
+        mbox = 0;
+    else if (tsr & CAN_TSR_TME1)
+        mbox = 1;
     CAN_TxMailBox_TypeDef *mb = &SOC_CAN->sTxMailBox[mbox];
 
     /* Set up the DLC */
-    mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (len & 0x0F);
+    mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (msg->dlc & 0x0F);
 
     /* Set up the data field */
-    if (len) {
-        mb->TDLR = (((uint32_t)data[3] << 24)
-                    | ((uint32_t)data[2] << 16)
-                    | ((uint32_t)data[1] << 8)
-                    | ((uint32_t)data[0] << 0));
-        mb->TDHR = (((uint32_t)data[7] << 24)
-                    | ((uint32_t)data[6] << 16)
-                    | ((uint32_t)data[5] << 8)
-                    | ((uint32_t)data[4] << 0));
-    }
+    mb->TDLR = msg->data32[0];
+    mb->TDHR = msg->data32[1];
 
     /* Request transmission */
-    mb->TIR = (id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
-    return len;
+    uint32_t tir;
+    if (msg->id & CANMSG_ID_EFF)
+        tir = ((msg->id & 0x1fffffff) << CAN_TI0R_EXID_Pos) | CAN_TI0R_IDE;
+    else
+        tir = (msg->id & 0x7ff) << CAN_TI0R_STID_Pos;
+    tir |= msg->id & CANMSG_ID_RTR ? CAN_TI0R_RTR : 0;
+    mb->TIR = (msg->id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
+    return CANMSG_DATA_LEN(msg);
 }
 
 // Setup the receive packet filter
 void
-canbus_set_filter(uint32_t id)
+canhw_set_filter(uint32_t id)
 {
+    CAN_TypeDef *fcan = FILTER_CAN;
     /* Select the start slave bank */
-    SOC_CAN->FMR |= CAN_FMR_FINIT;
+    uint32_t fmr = fcan->FMR;
+    if (FILTER_CAN != SOC_CAN)
+        // Using CAN2 with filter on CAN1 - assign CAN2 to first filter
+        fmr &= ~CAN_FMR_CAN2SB;
+    fcan->FMR = fmr | CAN_FMR_FINIT;
     /* Initialisation mode for the filter */
-    SOC_CAN->FA1R = 0;
+    fcan->FA1R = 0;
 
-    uint32_t mask = CAN_RI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
-    SOC_CAN->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
-    SOC_CAN->sFilterRegister[0].FR2 = mask;
-    SOC_CAN->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
-    SOC_CAN->sFilterRegister[1].FR2 = mask;
-    SOC_CAN->sFilterRegister[2].FR1 = id << CAN_RI0R_STID_Pos;
-    SOC_CAN->sFilterRegister[2].FR2 = mask;
+    if (CONFIG_CANBUS_FILTER) {
+        uint32_t mask = CAN_TI0R_STID | CAN_TI0R_IDE | CAN_TI0R_RTR;
+        fcan->sFilterRegister[0].FR1 = CANBUS_ID_ADMIN << CAN_RI0R_STID_Pos;
+        fcan->sFilterRegister[0].FR2 = mask;
+        fcan->sFilterRegister[1].FR1 = (id + 1) << CAN_RI0R_STID_Pos;
+        fcan->sFilterRegister[1].FR2 = mask;
+        fcan->sFilterRegister[2].FR1 = id << CAN_RI0R_STID_Pos;
+        fcan->sFilterRegister[2].FR2 = mask;
+    } else {
+        fcan->sFilterRegister[0].FR1 = 0;
+        fcan->sFilterRegister[0].FR2 = 0;
+        id = 0;
+    }
 
     /* 32-bit scale for the filter */
-    SOC_CAN->FS1R = (1<<0) | (1<<1) | (1<<2);
-
-    /* FIFO 1 assigned to 'id' */
-    SOC_CAN->FFA1R = (1<<2);
+    fcan->FS1R = (1<<0) | (1<<1) | (1<<2);
 
     /* Filter activation */
-    SOC_CAN->FA1R = (1<<0) | (id ? (1<<1) | (1<<2) : 0);
+    fcan->FA1R = (1<<0) | (id ? (1<<1) | (1<<2) : 0);
     /* Leave the initialisation mode for the filter */
-    SOC_CAN->FMR &= ~CAN_FMR_FINIT;
+    fcan->FMR = fmr & ~CAN_FMR_FINIT;
 }
 
 // This function handles CAN global interrupts
 void
 CAN_IRQHandler(void)
 {
-    if (SOC_CAN->RF1R & CAN_RF1R_FMP1) {
+    if (SOC_CAN->RF0R & CAN_RF0R_FMP0) {
         // Read and ack data packet
-        CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[1];
-        uint32_t rir_id = (mb->RIR >> CAN_RI0R_STID_Pos) & 0x7FF;
-        uint32_t dlc = mb->RDTR & CAN_RDT0R_DLC;
-        uint32_t rdlr = mb->RDLR, rdhr = mb->RDHR;
-        SOC_CAN->RF1R = CAN_RF1R_RFOM1;
+        CAN_FIFOMailBox_TypeDef *mb = &SOC_CAN->sFIFOMailBox[0];
+        uint32_t rir = mb->RIR;
+        struct canbus_msg msg;
+        if (rir & CAN_RI0R_IDE)
+            msg.id = ((rir >> CAN_RI0R_EXID_Pos) & 0x1fffffff) | CANMSG_ID_EFF;
+        else
+            msg.id = (rir >> CAN_RI0R_STID_Pos) & 0x7ff;
+        msg.id |= rir & CAN_RI0R_RTR ? CANMSG_ID_RTR : 0;
+        msg.dlc = mb->RDTR & CAN_RDT0R_DLC;
+        msg.data32[0] = mb->RDLR;
+        msg.data32[1] = mb->RDHR;
+        SOC_CAN->RF0R = CAN_RF0R_RFOM0;
 
         // Process packet
-        union {
-            struct { uint32_t rdlr, rdhr; };
-            uint8_t data[8];
-        } rdata = { .rdlr = rdlr, .rdhr = rdhr };
-        canbus_process_data(rir_id, dlc, rdata.data);
+        canbus_process_data(&msg);
     }
     uint32_t ier = SOC_CAN->IER;
-    if (ier & CAN_IER_FMPIE0 && SOC_CAN->RF0R & CAN_RF0R_FMP0) {
-        // Admin Rx
-        SOC_CAN->IER = ier = ier & ~CAN_IER_FMPIE0;
-        canbus_notify_rx();
-    }
     if (ier & CAN_IER_TMEIE
         && SOC_CAN->TSR & (CAN_TSR_RQCP0|CAN_TSR_RQCP1|CAN_TSR_RQCP2)) {
         // Tx
@@ -252,7 +231,7 @@ compute_btr(uint32_t pclock, uint32_t bitrate)
 
     uint32_t bit_clocks = pclock / bitrate; // clock ticks per bit
 
-    uint32_t sjw =  2;
+    uint32_t sjw = 2;
     uint32_t qs;
     // Find number of time quantas that gives us the exact wanted bit time
     for (qs = 18; qs > 9; qs--) {
@@ -271,7 +250,11 @@ compute_btr(uint32_t pclock, uint32_t bitrate)
 void
 can_init(void)
 {
+    // Enable clock
     enable_pclock((uint32_t)SOC_CAN);
+    if (FILTER_CAN != SOC_CAN)
+        // Also enable CAN1 clock if using CAN2 with filter on CAN1
+        enable_pclock((uint32_t)FILTER_CAN);
 
     gpio_peripheral(GPIO_Rx, CAN_FUNCTION, 1);
     gpio_peripheral(GPIO_Tx, CAN_FUNCTION, 0);
@@ -298,7 +281,7 @@ can_init(void)
         ;
 
     /*##-2- Configure the CAN Filter #######################################*/
-    canbus_set_filter(0);
+    canhw_set_filter(0);
 
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CAN_RX0_IRQn, 0);
@@ -306,10 +289,6 @@ can_init(void)
         armcm_enable_irq(CAN_IRQHandler, CAN_RX1_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_TX_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
-    SOC_CAN->IER = CAN_IER_FMPIE1;
-
-    // Convert unique 96-bit chip id into 48 bit representation
-    uint64_t hash = fasthash64((uint8_t*)UID_BASE, 12, 0xA16231A7);
-    canbus_set_uuid(&hash);
+    SOC_CAN->IER = CAN_IER_FMPIE0;
 }
 DECL_INIT(can_init);

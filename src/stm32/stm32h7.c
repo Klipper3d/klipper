@@ -6,6 +6,9 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
+#include "board/armcm_reset.h" // try_request_canboot
+#include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // get_pclock_frequency
 #include "sched.h" // sched_main
@@ -37,14 +40,25 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - D2_AHB2PERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHB2ENR, .rst=&RCC->AHB2RSTR, .bit=bit};
     } else if (periph_base >= D2_AHB1PERIPH_BASE) {
+        if (periph_base == ADC12_COMMON_BASE)
+            return (struct cline){.en = &RCC->AHB1ENR, .rst = &RCC->AHB1RSTR,
+                                  .bit = RCC_AHB1ENR_ADC12EN};
         uint32_t bit = 1 << ((periph_base - D2_AHB1PERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHB1ENR, .rst=&RCC->AHB1RSTR, .bit=bit};
     } else if (periph_base >= D2_APB2PERIPH_BASE) {
         uint32_t bit = 1 << ((periph_base - D2_APB2PERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
     } else {
-        uint32_t bit = 1 << ((periph_base - D2_APB1PERIPH_BASE) / 0x400);
-        return (struct cline){.en=&RCC->APB1LENR,.rst=&RCC->APB1LRSTR,.bit=bit};
+        uint32_t offset = ((periph_base - D2_APB1PERIPH_BASE) / 0x400);
+        if (offset < 32) {
+            uint32_t bit = 1 << offset;
+            return (struct cline){
+                .en=&RCC->APB1LENR, .rst=&RCC->APB1LRSTR, .bit=bit};
+        } else {
+            uint32_t bit = 1 << (offset - 32);
+            return (struct cline){
+                .en=&RCC->APB1HENR, .rst=&RCC->APB1HRSTR, .bit=bit};
+        }
     }
 }
 
@@ -72,10 +86,11 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 static void
 clock_setup(void)
 {
+#if !CONFIG_MACH_STM32H723
     // Ensure USB OTG ULPI is not enabled
     CLEAR_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSULPIEN);
     CLEAR_BIT(RCC->AHB1LPENR, RCC_AHB1LPENR_USB2OTGHSULPILPEN);
-
+#endif
     // Set this despite correct defaults.
     // "The software has to program the supply configuration in PWR control
     // register 3" (pg. 259)
@@ -132,10 +147,17 @@ clock_setup(void)
     // Enable VOS0 (overdrive)
     if (CONFIG_CLOCK_FREQ > 400000000) {
         RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+#if !CONFIG_MACH_STM32H723
         SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
+#else
+        PWR->CR3 |= PWR_CR3_BYPASS;
+#endif
         while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
             ;
     }
+
+    SCB_EnableICache();
+    SCB_EnableDCache();
 
     // Set flash latency according to clock frequency (pg.159)
     uint32_t flash_acr_latency = (CONFIG_CLOCK_FREQ > 450000000) ?
@@ -167,8 +189,11 @@ clock_setup(void)
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL1)
         ;
 
+    // Set the source of FDCAN clock
+    MODIFY_REG(RCC->D2CCIP1R, RCC_D2CCIP1R_FDCANSEL, RCC_D2CCIP1R_FDCANSEL_0);
+
     // Configure HSI48 clock for USB
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         SET_BIT(RCC->CR, RCC_CR_HSI48ON);
         while((RCC->CR & RCC_CR_HSI48RDY) == 0);
         SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
@@ -183,13 +208,15 @@ clock_setup(void)
 
 
 /****************************************************************
- * USB bootloader
+ * Bootloader
  ****************************************************************/
 
-// Handle USB reboot requests
+// Handle reboot requests
 void
-usb_request_bootloader(void)
+bootloader_request(void)
 {
+    try_request_canboot();
+    dfu_reboot();
 }
 
 
@@ -203,7 +230,19 @@ armcm_main(void)
 {
     // Run SystemInit() and then restore VTOR
     SystemInit();
+    RCC->D1CCIPR = 0x00000000;
+    RCC->D2CCIP1R = 0x00000000;
+    RCC->D2CCIP2R = 0x00000000;
+    RCC->D3CCIPR = 0x00000000;
+    RCC->APB1LENR = 0x00000000;
+    RCC->APB1HENR = 0x00000000;
+    RCC->APB2ENR = 0x00000000;
+    RCC->APB3ENR = 0x00000000;
+    RCC->APB4ENR = 0x00000000;
+
     SCB->VTOR = (uint32_t)VectorTable;
+
+    dfu_reboot_check();
 
     clock_setup();
 

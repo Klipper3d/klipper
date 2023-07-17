@@ -221,9 +221,9 @@ class Palette2:
     def _wait_for_heartbeat(self):
         startTs = self.reactor.monotonic()
         currTs = startTs
-        while self.heartbeat is None and self.heartbeat < (
-                currTs - SETUP_TIMEOUT) and startTs > (
-                currTs - SETUP_TIMEOUT):
+        while self.heartbeat is None or (self.heartbeat < (
+            currTs - SETUP_TIMEOUT) and startTs > (
+                currTs - SETUP_TIMEOUT)):
             currTs = self.reactor.pause(currTs + 1.)
 
         if self.heartbeat < (currTs - SETUP_TIMEOUT):
@@ -401,7 +401,7 @@ class Palette2:
             try:
                 fw = params[0][1:]
                 logging.info(
-                    "Palette 2 firmware version %s detected" % os.fwalk)
+                    "Palette 2 firmware version %s detected" % fw)
             except (TypeError, IndexError):
                 logging.error("Unable to parse firmware version")
 
@@ -544,13 +544,15 @@ class Palette2:
                 self.cmd_Disconnect()
                 return self.reactor.NEVER
             if len(raw_bytes):
-                text_buffer = self.read_buffer + str(raw_bytes.decode())
+                new_buffer = str(raw_bytes.decode(encoding='UTF-8',
+                                                  errors='ignore'))
+                text_buffer = self.read_buffer + new_buffer
                 while True:
                     i = text_buffer.find("\n")
                     if i >= 0:
-                        line = text_buffer[0:i+1]
+                        line = text_buffer[0:i + 1]
                         self.read_queue.put(line.strip())
-                        text_buffer = text_buffer[i+1:]
+                        text_buffer = text_buffer[i + 1:]
                     else:
                         break
                 self.read_buffer = text_buffer
@@ -566,7 +568,7 @@ class Palette2:
 
             heartbeat_strings = [COMMAND_HEARTBEAT, "Connection Okay"]
             if not any(x in text_line for x in heartbeat_strings):
-                logging.debug("%0.3f P2 -> : %s" %(eventtime, text_line))
+                logging.debug("%0.3f P2 -> : %s" % (eventtime, text_line))
 
             # Received a heartbeat from the device
             if text_line == COMMAND_HEARTBEAT:
@@ -581,7 +583,7 @@ class Palette2:
         self.write_queue.put(COMMAND_HEARTBEAT)
         eventtime = self.reactor.pause(eventtime + 5)
         if self.heartbeat and self.heartbeat < (
-                eventtime - HEARTBEAT_TIMEOUT):
+            eventtime - HEARTBEAT_TIMEOUT):
             logging.error(
                 "P2 has not responded to heartbeat")
             if not self.is_printing or self.is_setup_complete:
@@ -610,6 +612,7 @@ class Palette2:
                     logging.error("Unable to communicate with the Palette 2")
                     self.signal_disconnect = True
                     return self.reactor.NEVER
+                return eventtime + SERIAL_TIMER
         return eventtime + SERIAL_TIMER
 
     def _run_Smart_Load(self, eventtime):
@@ -621,7 +624,7 @@ class Palette2:
             idle_time = est_print_time - print_time
             if not lookahead_empty or idle_time < 0.5:
                 return eventtime + \
-                    max(0., min(1., print_time - est_print_time))
+                       max(0., min(1., print_time - est_print_time))
 
             extrude = abs(self.remaining_load_length)
             extrude = min(50, extrude / 2)
@@ -645,6 +648,7 @@ class Palette2:
         if self.omega_pings:
             status["ping"] = self.omega_pings[-1]
         return status
+
 
 def load_config(config):
     return Palette2(config)

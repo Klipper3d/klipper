@@ -113,6 +113,7 @@ nav:
     - Multi_MCU_Homing.md
     - Slicers.md
     - Skew_Correction.md
+    - Exclude_Object.md
     - Using_PWM_Tools.md
   - Developer Documentation:
     - Code_Overview.md
@@ -132,5 +133,7 @@ nav:
     - Beaglebone.md
     - Bootloaders.md
     - CANBUS.md
+    - CANBUS_Troubleshooting.md
     - TSL1401CL_Filament_Width_Sensor.md
     - Hall_Filament_Width_Sensor.md
+  - Sponsors.md

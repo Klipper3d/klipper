@@ -4,17 +4,18 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#define CHIP_UID_LEN 8
-
 #include <string.h> // memcpy
 #include "autoconf.h" // CONFIG_USB_SERIAL_NUMBER_CHIPID
 #include "board/irq.h" // irq_disable, irq_enable
+#include "board/canserial.h" // canserial_set_uuid
 #include "generic/usb_cdc.h" // usb_fill_serial
 #include "generic/usbstd.h" // usb_string_descriptor
 #include "sched.h" // DECL_INIT
 #include "hardware/structs/ioqspi.h" // ioqspi_hw
 #include "hardware/structs/ssi.h" // ssi_hw
 #include "internal.h"
+
+#define CHIP_UID_LEN 8
 
 static struct {
     struct usb_string_descriptor desc;
@@ -120,13 +121,15 @@ read_unique_id(uint8_t *out)
 void
 chipid_init(void)
 {
-    if (!CONFIG_USB_SERIAL_NUMBER_CHIPID)
+    if (!(CONFIG_USB_SERIAL_NUMBER_CHIPID || CONFIG_CANBUS))
         return;
 
     uint8_t data[8] = {0};
     read_unique_id(data);
 
-    usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data)
-                    , data);
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID)
+        usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data), data);
+    if (CONFIG_CANBUS)
+        canserial_set_uuid(data, CHIP_UID_LEN);
 }
 DECL_INIT(chipid_init);
