@@ -425,8 +425,9 @@ The following information is available in
 [bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
 [htu21d config_section_name](Config_Reference.md#htu21d-sensor),
 [lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
-and
 [temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
+and
+[temperature_combined config_section_name](Config_Reference.md#combined-temperature-sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`, `pressure`, `gas`: The last read values from the sensor
@@ -449,16 +450,6 @@ objects:
 - `measured_min_temp`, `measured_max_temp`: The lowest and highest
   temperature seen by the sensor since the Klipper host software was
   last restarted.
-
-## temperature_combined
-
-The following information is available in
-[temperature_combined some_name](Config_Reference.md#combined-temperature-sensor)
-objects:
-- `temperature`: The last read temperature from the sensor.
-- `sensor_list`: List of sensors the combined sensor is based on. This is a
-  string containing one or more sensor names separated by comma.
-- `combination_method`: Combination method used for the sensor.
 
 ## tmc drivers
 
