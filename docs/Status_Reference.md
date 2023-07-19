@@ -125,6 +125,7 @@ The following information is available in the
 The following information is available for extruder_stepper objects (as well as
 [extruder](Config_Reference.md#extruder) objects):
 - `pressure_advance`: The current [pressure advance](Pressure_Advance.md) value.
+- `pressure_advance_enabled`: If pressure advance is currently enabled.
 - `smooth_time`: The current pressure advance smooth time.
 - `motion_queue`: The name of the extruder that this extruder stepper is
   currently synchronized to.  This is reported as `None` if the extruder stepper

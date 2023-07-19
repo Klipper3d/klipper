@@ -392,12 +392,14 @@ changes the active hotend.
 #### SET_PRESSURE_ADVANCE
 `SET_PRESSURE_ADVANCE [EXTRUDER=<config_name>]
 [ADVANCE=<pressure_advance>]
-[SMOOTH_TIME=<pressure_advance_smooth_time>]`: Set pressure advance
+[SMOOTH_TIME=<pressure_advance_smooth_time>]
+[ENABLE=1/0]`: Set pressure advance
 parameters of an extruder stepper (as defined in an
 [extruder](Config_Reference.md#extruder) or
 [extruder_stepper](Config_Reference.md#extruder_stepper) config section).
 If EXTRUDER is not specified, it defaults to the stepper defined in
-the active hotend.
+the active hotend. Enable allows to temporarily disable the pressure advance
+without changing the configuration, IE for MMU material unload.
 
 #### SET_EXTRUDER_ROTATION_DISTANCE
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
