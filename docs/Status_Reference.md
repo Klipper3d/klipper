@@ -386,6 +386,8 @@ object:
 - `error`: Returns True if the most recent `SCREWS_TILT_CALCULATE`
   command included the `MAX_DEVIATION` parameter and any of the probed
   screw points exceeded the specified `MAX_DEVIATION`.
+- `max_deviation`: Return the last `MAX_DEVIATION` value of the most
+  recent `SCREWS_TILT_CALCULATE` command.
 - `results["<screw>"]`: A dictionary containing the following keys:
   - `z`: The measured Z height of the screw location.
   - `sign`: A string specifying the direction to turn to screw for the
