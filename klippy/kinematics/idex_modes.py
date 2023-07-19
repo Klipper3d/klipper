@@ -176,10 +176,10 @@ class DualCarriages:
             self.activate_dc_mode(i, saved_mode)
 
 class DualCarriagesRail:
+    ENC_AXES = [b'x', b'y']
     def __init__(self, rail, axis, active):
         self.rail = rail
         self.axis = axis
-        self.enc_axis = ['x', 'y'][axis].encode()
         self.mode = (INACTIVE, PRIMARY)[active]
         self.offset = 0.
         self.scale = 1. if active else 0.
@@ -190,6 +190,9 @@ class DualCarriagesRail:
             sk = ffi_main.gc(ffi_lib.dual_carriage_alloc(), ffi_lib.free)
             orig_sk = s.get_stepper_kinematics()
             ffi_lib.dual_carriage_set_sk(sk, orig_sk)
+            # Set the default transform for the other axis
+            ffi_lib.dual_carriage_set_transform(
+                    sk, self.ENC_AXES[1 - axis], 1., 0.)
             self.dc_stepper_kinematics.append(sk)
             self.orig_stepper_kinematics.append(orig_sk)
             s.set_stepper_kinematics(sk)
@@ -203,7 +206,7 @@ class DualCarriagesRail:
         ffi_main, ffi_lib = chelper.get_ffi()
         for sk in self.dc_stepper_kinematics:
             ffi_lib.dual_carriage_set_transform(
-                    sk, self.enc_axis, self.scale, self.offset)
+                    sk, self.ENC_AXES[self.axis], self.scale, self.offset)
     def activate(self, position, mode):
         self.scale = axis_scale = -1. if mode == MIRROR else 1.
         self.offset -= position[self.axis] * self.scale
