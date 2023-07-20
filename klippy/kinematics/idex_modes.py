@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math
+import chelper
 
 class DualCarriages:
     def __init__(self, printer, rail_0, rail_1, axis):
@@ -24,7 +25,8 @@ class DualCarriages:
         for i, dc in enumerate(self.dc):
             dc_rail = dc.get_rail()
             if i != index:
-                dc.inactivate(pos)
+                if dc.is_active():
+                    dc.inactivate(pos)
                 kin.override_rail(3, dc_rail)
             elif dc.is_active() is False:
                 newpos = pos[:self.axis] + [dc.axis_position] \
@@ -79,27 +81,50 @@ class DualCarriagesRail:
         self.stepper_alloc_active = stepper_alloc_active
         self.stepper_alloc_inactive = stepper_alloc_inactive
         self.axis_position = -1
-    def _stepper_alloc(self, position, active=True):
+        self.stepper_active_sk = {}
+        self.stepper_inactive_sk = {}
+        for s in rail.get_steppers():
+            self._save_sk(self.status, s, s.get_stepper_kinematics())
+    def _alloc_sk(self, alloc_func, *params):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
+    def _get_sk(self, status, stepper):
+        sk = None
+        if status == self.ACTIVE:
+            sk = self.stepper_active_sk.get(stepper, None)
+            if sk is None and self.stepper_alloc_active:
+                sk = self._alloc_sk(*self.stepper_alloc_active)
+                self._save_sk(status, stepper, sk)
+        elif status == self.INACTIVE:
+            sk = self.stepper_inactive_sk.get(stepper, None)
+            if sk is None and self.stepper_alloc_inactive:
+                sk = self._alloc_sk(*self.stepper_alloc_inactive)
+                self._save_sk(status, stepper, sk)
+        return sk
+    def _save_sk(self, status, stepper, sk):
+        if status == self.ACTIVE:
+            self.stepper_active_sk[stepper] = sk
+        elif status == self.INACTIVE:
+            self.stepper_inactive_sk[stepper] = sk
+    def _update_stepper_alloc(self, position, active=True):
         toolhead = self.printer.lookup_object('toolhead')
         self.axis_position = position[self.axis]
         self.rail.set_trapq(None)
-        if active is True:
-            self.status = self.ACTIVE
-            if self.stepper_alloc_active is not None:
-                self.rail.setup_itersolve(*self.stepper_alloc_active)
-                self.rail.set_position(position)
-                self.rail.set_trapq(toolhead.get_trapq())
-        else:
-            self.status = self.INACTIVE
-            if self.stepper_alloc_inactive is not None:
-                self.rail.setup_itersolve(*self.stepper_alloc_inactive)
-                self.rail.set_position(position)
-                self.rail.set_trapq(toolhead.get_trapq())
+        old_status = self.status
+        self.status = (self.INACTIVE, self.ACTIVE)[active]
+        for s in self.rail.get_steppers():
+            sk = self._get_sk(self.status, s)
+            if sk is None:
+                return
+            old_sk = s.set_stepper_kinematics(sk)
+            self._save_sk(old_status, s, old_sk)
+        self.rail.set_position(position)
+        self.rail.set_trapq(toolhead.get_trapq())
     def get_rail(self):
         return self.rail
     def is_active(self):
         return self.status == self.ACTIVE
     def activate(self, position):
-        self._stepper_alloc(position, active=True)
+        self._update_stepper_alloc(position, active=True)
     def inactivate(self, position):
-        self._stepper_alloc(position, active=False)
+        self._update_stepper_alloc(position, active=False)
