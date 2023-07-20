@@ -15,7 +15,7 @@ config file is successfully loaded.
 ## Verify temperature
 
 Start by verifying that temperatures are being properly reported.
-Navigate to the temperature graph section in your front end.
+Navigate to the temperature graph section in the user interface.
 Verify that the temperature of the nozzle and bed (if applicable) are
 present and not increasing. If it is increasing, remove power from the
 printer. If the temperatures are not accurate, review the
@@ -23,19 +23,19 @@ printer. If the temperatures are not accurate, review the
 
 ## Verify M112
 
-Navigate to the front end terminal/console section and issue an M112
+Navigate to the command console and issue an M112
 command in the terminal box. This command requests Klipper to go into a
-"shutdown" state. It will cause an error to show in the front end,
+"shutdown" state. It will cause an error to show,
 which can be cleared with a FIRMWARE_RESTART command in the
-console/terminal. Octoprint will also require a reconnect. Then navigate
+command console. Octoprint will also require a reconnect. Then navigate
 to the temperature graph section and verify that temperatures continue
 to update and the temperatures are not increasing.
 If temperatures are increasing, remove power from the printer.
 
 ## Verify heaters
 
-Navigate to the temperature graph section in your chosen front end
-and type in 50 followed by enter in the extruder/tool temperature box.
+Navigate to the temperature graph section and type in 50 followed by
+enter in the extruder/tool temperature box.
 The extruder temperature in the graph should start to increase
 (within about 30 seconds or so). Then go to the extruder temperature
 drop-down box and select "Off". After several minutes the temperature
@@ -59,12 +59,11 @@ example, "enable_pin: !PA1").
 ## Verify endstops
 
 Manually move all the printer axes so that none of them are in contact
-with an endstop. Send a QUERY_ENDSTOPS command via the front end
-terminal/console section. It should respond with the current state
- of all of the configured endstops and they should all report a state
- of "open". For each of the endstops, rerun the QUERY_ENDSTOPS command
-while manually triggering the endstop. The QUERY_ENDSTOPS command should
-report the endstop as "TRIGGERED".
+with an endstop. Send a QUERY_ENDSTOPS command via the command console.
+It should respond with the current state of all of the configured endstops
+and they should all report a state of "open". For each of the endstops,
+rerun the QUERY_ENDSTOPS command while manually triggering the endstop.
+The QUERY_ENDSTOPS command should report the endstop as "TRIGGERED".
 
 If the endstop appears inverted (it reports "open" when triggered and
 vice-versa) then add a "!" to the pin definition (for example,
@@ -81,12 +80,13 @@ resistor and the '^' should be present).
 
 Use the STEPPER_BUZZ command to verify the connectivity of each
 stepper motor. Start by manually positioning the given axis to a
-midway point and then run `STEPPER_BUZZ STEPPER=stepper_x`. The
-STEPPER_BUZZ command will cause the given stepper to move one
-millimeter in a positive direction and then it will return to its
-starting position. (If the endstop is defined at position_endstop=0
-then at the start of each movement the stepper will move away from the
-endstop.) It will perform this oscillation ten times.
+midway point and then run `STEPPER_BUZZ STEPPER=stepper_x` in the
+command console. The STEPPER_BUZZ command will cause the given
+stepper to move one millimeter in a positive direction and then it
+will return to its starting position. (If the endstop is defined at
+position_endstop=0 then at the start of each movement the stepper
+will move away from the endstop.) It will perform this oscillation
+ten times.
 
 If the stepper does not move at all, then verify the "enable_pin" and
 "step_pin" settings for the stepper. If the stepper motor moves but
@@ -116,8 +116,8 @@ To test the extruder motor it will be necessary to heat the extruder
 to a printing temperature. Navigate to the temperature graph section
 and select a target temperature from the temperature drop-down box (or
 manually enter an appropriate temperature). Wait for the printer to
-reach the desired temperature. Then navigate to your front end control
-section and click the "Extrude" button. Verify that the extruder motor
+reach the desired temperature. Then navigate to the command console and
+click the "Extrude" button. Verify that the extruder motor
 turns in the correct direction. If it does not, see the
 troubleshooting tips in the previous section to confirm the
 "enable_pin", "step_pin", and "dir_pin" settings for the extruder.
@@ -131,8 +131,8 @@ necessary to calibrate the PID settings on each printer (PID settings
 found in other firmwares or in the example configuration files often
 work poorly).
 
-To calibrate the extruder, navigate to the front end terminal/console
-section and run the PID_CALIBRATE command. For example: `PID_CALIBRATE
+To calibrate the extruder, navigate to the command console
+and run the PID_CALIBRATE command. For example: `PID_CALIBRATE
 HEATER=extruder TARGET=170`
 
 At the completion of the tuning test run `SAVE_CONFIG` to update the
