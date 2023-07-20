@@ -421,13 +421,14 @@ if necessary.
 Yes. In this case, one should measure the resonances twice for each carriage.
 For example, if the second (dual) carriage is installed on X axis, it is
 possible to set different input shapers for X axis for the primary and dual
-carriages. However, input shaper for Y axis should be the same for both
+carriages. However, the input shaper for Y axis should be the same for both
 carriages (as ultimately this axis is driven by one or more stepper motors each
-given the same steps). One possibility to configure the input shaper for such
-setups is to keep `[input_shaper]` section empty and additionally define a
-`[delayed_gcode]` section in thep `printer.cfg` as follows:
+commanded to perform exactly the same steps). One possibility to configure
+the input shaper for such setups is to keep `[input_shaper]` section empty and
+additionally define a `[delayed_gcode]` section in the `printer.cfg` as follows:
 ```
 [input_shaper]
+# Intentionally empty
 
 [delayed_gcode init_shaper]
 initial_duration: 0.1
@@ -438,13 +439,13 @@ gcode:
   SET_INPUT_SHAPER SHAPER_TYPE_X=<primary_carriage_shaper> SHAPER_FREQ_X=<primary_carriage_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
 ```
 Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` should be the same in both
-commands. It is also possible to put a similar snippet into the start code
-in the slicer, however then the shaper will be disabled before any print
+commands. It is also possible to put a similar snippet into the start g-code
+in the slicer, however then the shaper will not be enabled until any print
 is started.
 
-Note that input shaper only needs to be configured once. Subsequent changes
-of the carriages or their modes via `SET_DUAL_CARRIAGE` will preserve the
-configured input shaper parameters.
+Note that the input shaper only needs to be configured once. Subsequent changes
+of the carriages or their modes via `SET_DUAL_CARRIAGE` command will preserve
+the configured input shaper parameters.
 
 ### Does input_shaper affect print time?
 

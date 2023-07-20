@@ -313,7 +313,7 @@ enabled.
 `SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]`:
 This command will change the mode of the specified carriage.
 If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
-to `PRIMARY` deactivates the other carriage and make the specified
+to `PRIMARY` deactivates the other carriage and makes the specified
 carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
 modes are supported only for `CARRIAGE=1`. When set to either of these
 modes, carriage 1 will then track the subsequent moves of the carriage 0
@@ -335,8 +335,9 @@ restored, but not the positions of the carriages. If positions are being
 restored and "MOVE_SPEED" is specified, then the toolhead moves will be
 performed with the given speed (in mm/s); otherwise the toolhead move will
 use either the `restore_velocity` parameter from the config or the rail
-homing speed if `restore_velocity` was not provided. Note that
-the carriages restore their positions only over their own axis.
+homing speed if `restore_velocity` was not provided. Note that the carriages
+restore their positions only over their own axis, which may be necessary to
+correctly restore COPY and MIRROR mode of the dual carraige.
 
 ### [endstop_phase]
 
