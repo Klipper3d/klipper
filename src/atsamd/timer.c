@@ -41,8 +41,8 @@ timer_read_time(void)
 {
 #if CONFIG_MACH_SAMC21
     TCp->COUNT32.CTRLBSET.reg |= TC_CTRLBSET_CMD(TC_CTRLBCLR_CMD_READSYNC_Val);
-    while (TCp->COUNT32.SYNCBUSY.reg & TC_SYNCBUSY_COUNT)
-        ;
+    TCp->COUNT32.COUNT.reg;
+    TCp->COUNT32.COUNT.reg;
 #endif
     return TCp->COUNT32.COUNT.reg;
 }
