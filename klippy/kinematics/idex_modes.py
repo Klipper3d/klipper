@@ -58,7 +58,7 @@ class DualCarriages:
         if target_dc.mode != PRIMARY:
             newpos = pos[:self.axis] + [target_dc.get_axis_position(pos)] \
                         + pos[self.axis+1:]
-            target_dc.activate(newpos, PRIMARY)
+            target_dc.activate(PRIMARY, newpos, old_position=pos)
             if override_rail:
                 kin.override_rail(self.axis, target_dc.get_rail())
             toolhead.set_position(newpos)
@@ -120,7 +120,7 @@ class DualCarriages:
             self.toggle_active_dc_rail(index)
         else:
             self.toggle_active_dc_rail(0)
-            self.dc[index].activate(toolhead.get_position(), mode)
+            self.dc[index].activate(mode, toolhead.get_position())
         kin.update_limits(self.axis, self.get_kin_range(toolhead, mode))
     def _handle_ready(self):
         # Apply the transform later during Klipper initialization to make sure
@@ -207,13 +207,14 @@ class DualCarriagesRail:
         for sk in self.dc_stepper_kinematics:
             ffi_lib.dual_carriage_set_transform(
                     sk, self.ENC_AXES[self.axis], self.scale, self.offset)
-    def activate(self, position, mode):
-        self.scale = axis_scale = -1. if mode == MIRROR else 1.
-        self.offset -= position[self.axis] * self.scale
+    def activate(self, mode, position, old_position=None):
+        old_axis_position = self.get_axis_position(old_position or position)
+        self.scale = -1. if mode == MIRROR else 1.
+        self.offset = old_axis_position - position[self.axis] * self.scale
         self.apply_transform()
         self.mode = mode
     def inactivate(self, position):
-        self.offset += position[self.axis] * self.scale
+        self.offset = self.get_axis_position(position)
         self.scale = 0.
         self.apply_transform()
         self.mode = INACTIVE
