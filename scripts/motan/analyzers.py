@@ -165,7 +165,7 @@ class GenSmoothed:
         ('smooth(<dataset>)', 'Generate moving weighted average of a dataset'),
         ('smooth(<dataset>,<smooth_time>)',
          'Generate moving weighted average of a dataset with a given'
-         ' smoothing time that defines window size'),
+         ' smoothing time that defines the window size'),
     ]
     def __init__(self, amanager, name_parts):
         self.amanager = amanager
@@ -207,7 +207,6 @@ class GenKinematicPosition:
         stepper = name_parts[1]
         status = self.amanager.get_initial_status()
         kin = status['configfile']['settings']['printer']['kinematics']
-        kin = kin.removeprefix('limited_')
         if kin not in ['cartesian', 'corexy']:
             raise amanager.error("Unsupported kinematics '%s'" % (kin,))
         if stepper not in ['stepper_x', 'stepper_y', 'stepper_z']:

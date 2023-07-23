@@ -28,7 +28,7 @@ class ScrewsTiltAdjust:
             raise config.error("screws_tilt_adjust: Must have "
                                "at least three screws")
         self.threads = {'CW-M3': 0, 'CCW-M3': 1, 'CW-M4': 2, 'CCW-M4': 3,
-                        'CW-M5': 4, 'CCW-M5': 5}
+                        'CW-M5': 4, 'CCW-M5': 5, 'CW-M6': 6, 'CCW-M6': 7}
         self.thread = config.getchoice('screw_thread', self.threads,
                                        default='CW-M3')
         # Initialize ProbePointsHelper
@@ -66,8 +66,10 @@ class ScrewsTiltAdjust:
     def probe_finalize(self, offsets, positions):
         self.results = {}
         self.max_diff_error = False
-        # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5 and CCW-M5
-        threads_factor = {0: 0.5, 1: 0.5, 2: 0.7, 3: 0.7, 4: 0.8, 5: 0.8}
+        # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5, CCW-M5, CW-M6
+        #and CCW-M6
+        threads_factor = {0: 0.5, 1: 0.5, 2: 0.7, 3: 0.7, 4: 0.8, 5: 0.8,
+        6: 1.0, 7: 1.0}
         is_clockwise_thread = (self.thread & 1) == 0
         screw_diff = []
         # Process the read Z values
