@@ -87,8 +87,15 @@ BOARD_DEFS = {
         'spi_bus': 'spi3a',
         'cs_pin': 'PA15'
     },
-    'btt-skr-3': {
+    'btt-skr-3-h743': {
         'mcu': 'stm32h743xx',
+        'spi_bus': 'swspi',
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': 'PC11',
+        'skip_verify': True
+    },
+    'btt-skr-3-h723': {
+        'mcu': 'stm32h723xx',
         'spi_bus': 'swspi',
         'spi_pins': "PC8,PD2,PC12",
         'cs_pin': 'PC11',
