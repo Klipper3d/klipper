@@ -9,7 +9,7 @@ jobs:
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/stale@v3
+    - uses: actions/stale@v8
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-message: |
