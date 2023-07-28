@@ -1247,8 +1247,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1433,7 +1433,9 @@
 </code></pre></div>
 
 <p>A slic3r származékokban, mint például a PrusaSlicer és a SuperSlicer, a következőket kell használni:</p>
-<p>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]</p>
+<div class="highlight"><pre><span></span><code>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]
+</code></pre></div>
+
 <p>Vedd figyelembe azt is, hogy ezek a szeletelők saját fűtési kódokat adnak meg, ha bizonyos feltételek nem teljesülnek. A Curában a <code>{material_bed_temperature_layer_0}</code> és a <code>{material_print_temperature_layer_0}</code> változók létezése elegendő ennek enyhítésére. A slic3r származékokban a következőket használhatod:</p>
 <div class="highlight"><pre><span></span><code>M140 S0
 M104 S0

@@ -688,14 +688,27 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    相對參考索引
+  <a href="#configuring-the-zero-reference-position" class="md-nav__link">
+    Configuring the zero reference position
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring the zero reference position">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
+    The deprecated relative_reference_index
   </a>
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+        
           <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
+  <a href="#_9" class="md-nav__link">
     故障區域
   </a>
   
@@ -715,14 +728,14 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
+  <a href="#_10" class="md-nav__link">
     校準
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
+  <a href="#_11" class="md-nav__link">
     配置
   </a>
   
@@ -742,14 +755,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
+  <a href="#_12" class="md-nav__link">
     輸出
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
+  <a href="#_13" class="md-nav__link">
     清除網格狀態
   </a>
   
@@ -1329,8 +1342,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1469,14 +1482,27 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
-    相對參考索引
+  <a href="#configuring-the-zero-reference-position" class="md-nav__link">
+    Configuring the zero reference position
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring the zero reference position">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
+    The deprecated relative_reference_index
   </a>
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+        
           <li class="md-nav__item">
-  <a href="#_10" class="md-nav__link">
+  <a href="#_9" class="md-nav__link">
     故障區域
   </a>
   
@@ -1496,14 +1522,14 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_11" class="md-nav__link">
+  <a href="#_10" class="md-nav__link">
     校準
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_12" class="md-nav__link">
+  <a href="#_11" class="md-nav__link">
     配置
   </a>
   
@@ -1523,14 +1549,14 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_13" class="md-nav__link">
+  <a href="#_12" class="md-nav__link">
     輸出
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_14" class="md-nav__link">
+  <a href="#_13" class="md-nav__link">
     清除網格狀態
   </a>
   
@@ -1662,22 +1688,35 @@ fade_target: 0
 <li><code>fade_end: 10</code> <em>預設值：0</em> 網格淡出完成的 Z 高度。 如果此值低於<code>fade_start</code>，則禁用網格淡出。 該值可以根據列印表面的彎曲程度進行調整。 明顯彎曲的表面應該在將網格淡出的距離長。 接近平坦的表面可能能夠降低該值以更快地逐步淘汰。 如果對 <code>fade_start</code> 使用預設值 1，則 10mm 是一個合理的值。</li>
 <li><code>fade_target: 0</code> <em>Default Value: The average Z value of the mesh</em> The <code>fade_target</code> can be thought of as an additional Z offset applied to the entire bed after fade completes. Generally speaking we would like this value to be 0, however there are circumstances where it should not be. For example, lets assume your homing position on the bed is an outlier, its .2 mm lower than the average probed height of the bed. If the <code>fade_target</code> is 0, fade will shrink the print by an average of .2 mm across the bed. By setting the <code>fade_target</code> to .2, the homed area will expand by .2 mm, however, the rest of the bed will be accurately sized. Generally its a good idea to leave <code>fade_target</code> out of the configuration so the average height of the mesh is used, however it may be desirable to manually adjust the fade target if one wants to print on a specific portion of the bed.</li>
 </ul>
-<h3 id="_9">相對參考索引<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
-<p>Most probes are susceptible to drift, ie: inaccuracies in probing introduced by heat or interference. This can make calculating the probe's z-offset challenging, particularly at different bed temperatures. As such, some printers use an endstop for homing the Z axis, and a probe for calibrating the mesh. These printers can benefit from configuring the relative reference index.</p>
+<h3 id="configuring-the-zero-reference-position">Configuring the zero reference position<a class="headerlink" href="#configuring-the-zero-reference-position" title="Permanent link">&para;</a></h3>
+<p>Many probes are susceptible to "drift", ie: inaccuracies in probing introduced by heat or interference. This can make calculating the probe's z-offset challenging, particularly at different bed temperatures. As such, some printers use an endstop for homing the Z axis and a probe for calibrating the mesh. In this configuration it is possible offset the mesh so that the (X, Y) <code>reference position</code> applies zero adjustment. The <code>reference postion</code> should be the location on the bed where a <a href="./Manual_Level#calibrating-a-z-endstop">Z_ENDSTOP_CALIBRATE</a> paper test is performed. The bed_mesh module provides the <code>zero_reference_position</code> option for specifying this coordinate:</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
 mesh_min: 35, 6
 mesh_max: 240, 198
+zero_reference_position: 125, 110
 probe_count: 5, 3
-relative_reference_index: 7
 </code></pre></div>
 
 <ul>
-<li><code>relative_reference_index: 7</code><em>預設值：無（禁用）</em>產生探測點時，為每個點分配一個索引。您可以使用網床輸出或在 klippy.log 中查詢此索引（有關詳細資訊，請參閱下面的網床 G程式碼部分）。如果您為 <code>relative_reference_index</code> 選項分配了索引，則在該座標處探測的值將替換探針的 Z偏移值。 這將把這個座標作為「零高度」的參考。</li>
+<li><code>zero_reference_position:</code> <em>Default Value: None (disabled)</em> The <code>zero_reference_position</code> expects an (X, Y) coordinate matching that of the <code>reference position</code> described above. If the coordinate lies within the mesh then the mesh will be offset so the reference position applies zero adjustment. If the coordinate lies outside of the mesh then the coordinate will be probed after calibration, with the resulting z-value used as the z-offset. Note that this coordinate must NOT be in a location specified as a <code>faulty_region</code> if a probe is necessary.</li>
 </ul>
-<p>使用相對參考指數時，應選擇距離床身 Z 限位器校準點最近的指數。 請注意，在網床輸出或在日誌中查詢索引時，您應該使用「探針」標題下列出的座標來查詢正確的索引。</p>
-<h3 id="_10">故障區域<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<h4 id="the-deprecated-relative_reference_index">The deprecated relative_reference_index<a class="headerlink" href="#the-deprecated-relative_reference_index" title="Permanent link">&para;</a></h4>
+<p>Existing configurations using the <code>relative_reference_index</code> option must be updated to use the <code>zero_reference_position</code>. The response to the <a href="#output">BED_MESH_OUTPUT PGP=1</a> gcode command will include the (X, Y) coordinate associated with the index; this position may be used as the value for the <code>zero_reference_position</code>. The output will look similar to the following:</p>
+<div class="highlight"><pre><span></span><code>// bed_mesh: generated points
+// Index | Tool Adjusted | Probe
+// 0 | (1.0, 1.0) | (24.0, 6.0)
+// 1 | (36.7, 1.0) | (59.7, 6.0)
+// 2 | (72.3, 1.0) | (95.3, 6.0)
+// 3 | (108.0, 1.0) | (131.0, 6.0)
+... (additional generated points)
+// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
+</code></pre></div>
+
+<p><em>Note: The above output is also printed in <code>klippy.log</code> during initialization.</em></p>
+<p>Using the example above we see that the <code>relative_reference_index</code> is printed along with its coordinate. Thus the <code>zero_reference_position</code> is <code>131.5, 108</code>.</p>
+<h3 id="_9">故障區域<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>由於特定位置的「故障」，熱床的某些區域在探測時可能會報告不準確的結果。 最好的例子是帶有用彈簧鋼板的磁鐵熱床。 這些磁鐵處和周圍的磁場可能干擾探針觸發的高度，從而導致網格無法準確表示這些位置的表面。 <strong>注意：不要與探頭位置偏差導致探測結果不準確的結果混淆。</strong></p>
 <p>可以配置 <code>faulty_region</code> 選項來避免這種影響。 如果產生的點位於故障區域內，熱床網格將嘗試在該區域的邊界處探測最多 4 個點。 這些探測的平均值將插入網床中作為產生的 (X, Y) 座標處的 Z 值。</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
@@ -1702,7 +1741,7 @@ faulty_region_4_max: 45.0, 210.0
 <p>下面的圖片說明了當一個產生的探測點位於一個故障區域內時，如何產生替代探測點。所顯示的區域與上述樣本配置中的區域一致。替代點和它們的座標以綠色標識。</p>
 <p><img alt="bedmesh_interpolated" src="img/bedmesh_faulty_regions.svg" /></p>
 <h2 id="g">床網 G程式碼<a class="headerlink" href="#g" title="Permanent link">&para;</a></h2>
-<h3 id="_11">校準<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<h3 id="_10">校準<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CALIBRATE PROFILE=&lt;名稱&gt; METHOD=[manual | automatic] [&lt;probe_parameter&gt;=&lt;值&gt;] [&lt;mesh_parameter&gt;=&lt;值&gt;]</code> <em>預設配置：default</em> <em>預設方法：如果檢測到探針則自動，否則手動</em></p>
 <p>啟動床網校準的探測程式。</p>
 <p>網格將被儲存到由 <code>PROFILE</code> 參數指定的配置中，如果沒有指定，則使用 <code>default</code>。如果選擇了 <code>METHOD=manual</code> ，那麼將進行手動探測。在自動和手動探測之間切換時，產生的網格點會自動調整。</p>
@@ -1721,13 +1760,12 @@ faulty_region_4_max: 45.0, 210.0
 </ul>
 </li>
 <li>全部列印床：<ul>
-<li><code>RELATIVE_REFERNCE_INDEX</code></li>
 <li><code>ALGORITHM</code></li>
 </ul>
 </li>
 </ul>
 <p>有關在網格中使用的配置參數詳見配置文件。</p>
-<h3 id="_12">配置<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<h3 id="_11">配置<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_PROFILE SAVE=&lt;名稱&gt; LOAD=&lt;名稱&gt; REMOVE=&lt;名稱&gt;</code></p>
 <p>在執行 BED_MESH_CALIBRATE 后，可以將目前網格狀態儲存到一個命名的配置中。這樣不需要重新探測列印床就可以載入一個網格。在使用<code>BED_MESH_PROFILE SAVE=&lt;名稱&gt;</code>儲存了一個配置檔案后，可以執行<code>SAVE_CONFIG</code> G程式碼將配置寫入 printer.cfg。</p>
 <p>可以通過執行 <code>BED_MESH_PROFILE LOAD=&lt;名稱&gt;</code> 來載入配置。</p>
@@ -1743,7 +1781,7 @@ faulty_region_4_max: 45.0, 210.0
 <span class="w">  </span><span class="na">BED_MESH_PROFILE LOAD</span><span class="o">=</span><span class="s">default</span>
 </code></pre></div>
 
-<h3 id="_13">輸出<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<h3 id="_12">輸出<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_OUTPUT PGP=[0 | 1]</code></p>
 <p>將目前網格狀態輸出到終端。請注意，輸出的是網格本身</p>
 <p>PGP 參數是「列印產生的點」的簡寫。如果設定了<code>PGP=1</code>，產生的探測點將輸出到終端：</p>
@@ -1767,7 +1805,7 @@ faulty_region_4_max: 45.0, 210.0
 </code></pre></div>
 
 <p>"Tool Adjusted"（工具調整）點指每個點的噴嘴位置，"Probe"（探針）點指探頭位置。請注意，手動探測時"Probe"（探針）點時將同時指工具和噴嘴位置。</p>
-<h3 id="_14">清除網格狀態<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<h3 id="_13">清除網格狀態<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CLEAR</code></p>
 <p>此 gcode 可用於清除內部網格狀態。</p>
 <h3 id="xy">應用X/Y偏移量<a class="headerlink" href="#xy" title="Permanent link">&para;</a></h3>

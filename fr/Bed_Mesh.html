@@ -688,9 +688,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#lindice-de-reference-relatif" class="md-nav__link">
-    L'indice de référence relatif
+  <a href="#configuring-the-zero-reference-position" class="md-nav__link">
+    Configuring the zero reference position
   </a>
+  
+    <nav class="md-nav" aria-label="Configuring the zero reference position">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
+    The deprecated relative_reference_index
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1329,8 +1342,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1469,9 +1482,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#lindice-de-reference-relatif" class="md-nav__link">
-    L'indice de référence relatif
+  <a href="#configuring-the-zero-reference-position" class="md-nav__link">
+    Configuring the zero reference position
   </a>
+  
+    <nav class="md-nav" aria-label="Configuring the zero reference position">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
+    The deprecated relative_reference_index
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1662,21 +1688,34 @@ fade_target: 0
 <li><code>fade_end : 10</code> <em>Valeur par défaut : 0</em> La hauteur Z à laquelle le fondu doit s'arrêter. Si cette valeur est inférieure à <code>fade_start</code>, le fondu est désactivé. Cette valeur peut être ajustée en fonction de la déformation de la surface d'impression. Une surface fortement déformée devrait s'estomper sur une plus grande distance. Une surface presque plate peut être capable de réduire cette valeur pour s'estomper plus rapidement. 10mm est une valeur raisonnable pour commencer si vous utilisez la valeur par défaut de 1 pour <code>fade_start</code>.</li>
 <li><code>fade_target : 0</code> <em>Valeur par défaut : la valeur Z moyenne du maillage</em> Le <code>fade_target</code> peut être considéré comme un décalage Z supplémentaire appliqué à l'ensemble du lit une fois l'interpolation terminée . L'idéal serait d'avoir cette valeur à 0, mais il y a des circonstances où elle ne peut pas l'être. Par exemple, supposons que votre position de référence sur le lit est une valeur aberrante, 0,2 mm inférieure à la hauteur moyenne sondée du lit. Si le <code>fade_target</code> est 0, le fondu réduira l'impression de 0,2 mm en moyenne sur le lit. En réglant <code>fade_target</code> sur 0,2, la zone référencée s'agrandira de 0,2 mm, cependant, le reste du lit sera dimensionné avec précision. Généralement, c'est une bonne idée de laisser <code>fade_target</code> hors de la configuration afin que la hauteur moyenne du maillage soit utilisée, cependant il peut être souhaitable d'ajuster manuellement cette valeur si l'on veut imprimer sur une partie spécifique du lit.</li>
 </ul>
-<h3 id="lindice-de-reference-relatif">L'indice de référence relatif<a class="headerlink" href="#lindice-de-reference-relatif" title="Permanent link">&para;</a></h3>
-<p>La plupart des sondes sont sensibles à la dérive, c'est-à-dire aux imprécisions de sonde introduites par la chaleur ou les interférences. Cela peut compliquer le calcul du décalage z de la sonde, en particulier à différentes températures de lit. Ainsi, certaines imprimantes utilisent une butée pour la prise d'origine de l'axe Z et une sonde pour calibrer le maillage. Ces imprimantes peuvent bénéficier de la configuration de l'index de référence relatif.</p>
+<h3 id="configuring-the-zero-reference-position">Configuring the zero reference position<a class="headerlink" href="#configuring-the-zero-reference-position" title="Permanent link">&para;</a></h3>
+<p>Many probes are susceptible to "drift", ie: inaccuracies in probing introduced by heat or interference. This can make calculating the probe's z-offset challenging, particularly at different bed temperatures. As such, some printers use an endstop for homing the Z axis and a probe for calibrating the mesh. In this configuration it is possible offset the mesh so that the (X, Y) <code>reference position</code> applies zero adjustment. The <code>reference postion</code> should be the location on the bed where a <a href="./Manual_Level#calibrating-a-z-endstop">Z_ENDSTOP_CALIBRATE</a> paper test is performed. The bed_mesh module provides the <code>zero_reference_position</code> option for specifying this coordinate:</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
 mesh_min: 35, 6
 mesh_max: 240, 198
+zero_reference_position: 125, 110
 probe_count: 5, 3
-relative_reference_index: 7
 </code></pre></div>
 
 <ul>
-<li><code>relative_reference_index : 7</code> <em>Valeur par défaut : None (désactivé)</em> Lorsque les points palpés sont générés, un index leur est attribué. Vous pouvez consulter cet index dans klippy.log ou en utilisant BED_MESH_OUTPUT (voir la section sur les GCodes de maillage de lit ci-dessous pour plus d'informations). Si vous assignez un index à l'option <code>relative_reference_index</code>, la valeur palpée à cette coordonnée remplacera le z_offset de la sonde. Ce qui fait de cette coordonnée la référence "zéro" pour le maillage.</li>
+<li><code>zero_reference_position:</code> <em>Default Value: None (disabled)</em> The <code>zero_reference_position</code> expects an (X, Y) coordinate matching that of the <code>reference position</code> described above. If the coordinate lies within the mesh then the mesh will be offset so the reference position applies zero adjustment. If the coordinate lies outside of the mesh then the coordinate will be probed after calibration, with the resulting z-value used as the z-offset. Note that this coordinate must NOT be in a location specified as a <code>faulty_region</code> if a probe is necessary.</li>
 </ul>
-<p>Lorsque vous utilisez l'indice de référence relatif, vous devez choisir l'indice le plus proche de l'endroit du lit où le calibrage de la butée Z a été effectué. Notez que lorsque vous recherchez l'indice en utilisant le journal ou BED_MESH_OUTPUT, vous devez utiliser les coordonnées listées sous l'en-tête "Probe" pour trouver l'indice correct.</p>
+<h4 id="the-deprecated-relative_reference_index">The deprecated relative_reference_index<a class="headerlink" href="#the-deprecated-relative_reference_index" title="Permanent link">&para;</a></h4>
+<p>Existing configurations using the <code>relative_reference_index</code> option must be updated to use the <code>zero_reference_position</code>. The response to the <a href="#output">BED_MESH_OUTPUT PGP=1</a> gcode command will include the (X, Y) coordinate associated with the index; this position may be used as the value for the <code>zero_reference_position</code>. The output will look similar to the following:</p>
+<div class="highlight"><pre><span></span><code>// bed_mesh: generated points
+// Index | Tool Adjusted | Probe
+// 0 | (1.0, 1.0) | (24.0, 6.0)
+// 1 | (36.7, 1.0) | (59.7, 6.0)
+// 2 | (72.3, 1.0) | (95.3, 6.0)
+// 3 | (108.0, 1.0) | (131.0, 6.0)
+... (additional generated points)
+// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
+</code></pre></div>
+
+<p><em>Note: The above output is also printed in <code>klippy.log</code> during initialization.</em></p>
+<p>Using the example above we see that the <code>relative_reference_index</code> is printed along with its coordinate. Thus the <code>zero_reference_position</code> is <code>131.5, 108</code>.</p>
 <h3 id="regions-defectueuses">Régions défectueuses<a class="headerlink" href="#regions-defectueuses" title="Permanent link">&para;</a></h3>
 <p>Il est possible que certaines zones d'un lit donnent des résultats inexacts lors du palpage en raison d'un "défaut" à des endroits particuliers. Le meilleur exemple de ce phénomène est celui des lits comportant une série d'aimants intégrés utilisés pour retenir les tôles d'acier amovibles. Le champ magnétique au niveau et autour de ces aimants peut faire qu'une sonde inductive se déclenche à une distance plus élevée ou plus basse qu'elle ne le ferait autrement, ce qui donne un maillage ne représentant pas précisément la surface à ces endroits. <strong>Remarque : Il ne faut pas confondre ce phénomène avec le biais de l'emplacement de la sonde, qui produit des résultats inexacts sur l'ensemble du lit.</strong></p>
 <p>Les options <code>faulty_region</code> peuvent être configurées pour compenser cet effet. Si un point généré se trouve dans une région défectueuse, le maillage du lit tentera de palper jusqu'à 4 points aux limites de cette région. Ces valeurs palpées seront moyennées et insérées dans le maillage comme valeur Z à la coordonnée (X, Y) générée.</p>
@@ -1721,7 +1760,6 @@ faulty_region_4_max: 45.0, 210.0
 </ul>
 </li>
 <li>Tous les lits :<ul>
-<li><code>RELATIVE_REFERNCE_INDEX</code></li>
 <li><code>ALGORITHM</code></li>
 </ul>
 </li>

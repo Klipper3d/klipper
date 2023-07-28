@@ -880,6 +880,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gcode_button" class="md-nav__link">
+    gcode_button
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gcode_macro" class="md-nav__link">
     gcode_macro
   </a>
@@ -1494,8 +1501,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1657,6 +1664,13 @@
         <li class="md-nav__item">
   <a href="#firmware_retraction" class="md-nav__link">
     firmware_retraction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcode_button" class="md-nav__link">
+    gcode_button
   </a>
   
 </li>
@@ -2002,6 +2016,11 @@
 <ul>
 <li><code>retract_length</code>, <code>retract_speed</code>, <code>unretract_extra_length</code>, <code>unretract_speed</code> : sont les paramètres du module firmware_retraction. Ces paramètres peuvent différer du fichier de configuration si une commande <code>SET_RETRACTION</code> les modifie.</li>
 </ul>
+<h2 id="gcode_button">gcode_button<a class="headerlink" href="#gcode_button" title="Permanent link">&para;</a></h2>
+<p>The following information is available in <a href="Config_Reference.html#gcode_button">gcode_button some_name</a> objects:</p>
+<ul>
+<li><code>state</code>: The current button state returned as "PRESSED" or "RELEASED"</li>
+</ul>
 <h2 id="gcode_macro">gcode_macro<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans les objets <a href="Config_Reference.html#gcode_macro">gcode_macro nom_de_la_macro</a> :</p>
 <ul>
@@ -2167,6 +2186,7 @@
 <li><code>mcu_phase_offset</code> : la position du moteur pas à pas du microcontrôleur correspondant à la phase "zéro" du pilote. Ce champ peut être nul si le déphasage n'est pas connu.</li>
 <li><code>phase_offset_position</code> : La "position commandée" correspondant à la phase "zéro" du driver. Ce champ peut être nul si le déphasage n'est pas connu.</li>
 <li><code>drv_status</code> : les résultats de la dernière requête d'état du pilote. (Seuls les champs non nuls sont signalés.) Ce champ sera nul si le pilote n'est pas activé (et n'est donc pas interrogé périodiquement).</li>
+<li><code>temperature</code>: The internal temperature reported by the driver. This field will be null if the driver is not enabled or if the driver does not support temperature reporting.</li>
 <li><code>run_current</code> : le courant de fonctionnement actuellement défini.</li>
 <li><code>hold_current</code> : Le courant de maintien actuellement défini.</li>
 </ul>

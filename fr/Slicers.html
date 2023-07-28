@@ -1247,8 +1247,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1433,7 +1433,9 @@
 </code></pre></div>
 
 <p>Dans slic3r et ses dérivés tels que PrusaSlicer et SuperSlicer, les éléments suivants seraient utilisés :</p>
-<p>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]</p>
+<div class="highlight"><pre><span></span><code>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]
+</code></pre></div>
+
 <p>Notez également que ces trancheurs insèrent leurs propres codes de chauffe lorsque certaines conditions ne sont pas remplies. Dans Cura, l'existence des variables <code>{material_bed_temperature_layer_0}</code> et <code>{material_print_temperature_layer_0}</code> suffit à supprimer ces code de chauffe. Dans les dérivés slic3r, vous utiliseriez :</p>
 <div class="highlight"><pre><span></span><code>M140 S0
 M104 S0

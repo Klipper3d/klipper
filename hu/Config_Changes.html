@@ -1196,8 +1196,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1307,8 +1307,13 @@
 <p>Ez a dokumentum a konfigurációs fájl legújabb szoftveres változtatásait tartalmazza, amelyek nem kompatibilisek visszafelé. A Klipper szoftver frissítésekor érdemes áttanulmányozni ezt a dokumentumot.</p>
 <p>A dokumentumban szereplő valamennyi dátum hozzávetőleges.</p>
 <h2 id="valtozasok">Változások<a class="headerlink" href="#valtozasok" title="Permanent link">&para;</a></h2>
-<p>20230304: The <code>SET_TMC_CURRENT</code> command now properly adjusts the globalscaler register for drivers that have it. This removes a limitation where on tmc5160, the currents could not be raised higher with <code>SET_TMC_CURRENT</code> than the <code>run_current</code> value set in the config file. However, this has a side effect: After running <code>SET_TMC_CURRENT</code>, the stepper must be held at standstill for &gt;130ms in case StealthChop2 is used so that the AT#1 calibration gets executed by the driver.</p>
-<p>20230202: The format of the <code>printer.screws_tilt_adjust</code> status information has changed. The information is now stored as a dictionary of screws with the resulting measurements. See the <a href="Status_Reference.html#screws_tilt_adjust">status reference</a> for details.</p>
+<p>20230619: The <code>relative_reference_index</code> option has been deprecated and superceded by the <code>zero_reference_position</code> option. Refer to the <a href="Bed_Mesh.html#the-deprecated-relative_reference_index">Bed Mesh Documentation</a> for details on how to update the configuration. With this deprecation the <code>RELATIVE_REFERENCE_INDEX</code> is no longer available as a parameter for the <code>BED_MESH_CALIBRATE</code> gcode command.</p>
+<p>20230530: The default canbus frequency in "make menuconfig" is now 1000000. If using canbus and using canbus with some other frequency is required, then be sure to select "Enable extra low-level configuration options" and specify the desired "CAN bus speed" in "make menuconfig" when compiling and flashing the micro-controller.</p>
+<p>20230525: <code>SHAPER_CALIBRATE</code> command immediately applies input shaper parameters if <code>[input_shaper]</code> was enabled already.</p>
+<p>20230407: The <code>stalled_bytes</code> counter in the log and in the <code>printer.mcu.last_stats</code> field has been renamed to <code>upcoming_bytes</code>.</p>
+<p>20230323: On tmc5160 drivers <code>multistep_filt</code> is now enabled by default. Set <code>driver_MULTISTEP_FILT: False</code> in the tmc5160 config for the previous behavior.</p>
+<p>20230304: A <code>SET_TMC_CURRENT</code> parancs mostantól megfelelően beállítja a globális skálázó regisztert az ezzel rendelkező meghajtók esetében. Ez megszünteti azt a korlátozást, amikor a TMC5160 esetében az áramok nem voltak növelhetők magasabbra a <code>SET_TMC_CURRENT</code> paranccsal, mint a konfigurációs fájlban beállított <code>run_current</code> érték. Ennek azonban van egy mellékhatása: A <code>SET_TMC_CURRENT</code> futtatása után a StealthChop2 használata esetén &gt;130 ms-ig álló helyzetben kell tartani a léptetőt, hogy az AT#1 kalibrációt a meghajtó végre tudja hajtani.</p>
+<p>20230202: A <code>printer.screws_tilt_adjust</code> állapotinformáció formátuma megváltozott. Az információ mostantól a csavarok szótáraként kerül tárolásra, a kapott mérésekkel együtt. A részletekért lásd a <a href="Status_Reference.html#screws_tilt_adjust">Referencia állapot</a> című dokumentumot.</p>
 <p>20230201: A <code>[bed_mesh]</code> modul már nem tölti be az <code>alapértelmezett</code> profilt indításkor. Az <code>alapértelmezett</code> profilt használó felhasználóknak ajánlott a <code>BED_MESH_PROFILE LOAD=default</code> hozzáadni a <code>START_PRINT</code> makróhoz (vagy adott esetben a szeletelő "Start G-Code" konfigurációjához).</p>
 <p>20230103: A flash-sdcard.sh szkript segítségével mostantól a Bigtreetech SKR-2 mindkét változata, az STM32F407 és az STM32F429 is égethető. Ez azt jelenti, hogy az eredeti btt-skr2 címke mostantól vagy btt-skr-2-f407-re, vagy btt-skr-2-f429-re változik.</p>
 <p>20221128: Klipper v0.11.0 megjelent.</p>

@@ -1218,6 +1218,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tips-for-troubleshooting" class="md-nav__link">
+    Tips for troubleshooting
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1233,8 +1240,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1358,6 +1365,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tips-for-troubleshooting" class="md-nav__link">
+    Tips for troubleshooting
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1378,25 +1392,20 @@
 <h1 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h1>
 <p>Ez a dokumentum a Klipper CAN busz támogatását írja le.</p>
 <h2 id="eszkoz-hardver">Eszköz Hardver<a class="headerlink" href="#eszkoz-hardver" title="Permanent link">&para;</a></h2>
-<p>A Klipper jelenleg támogatja a CAN-t az stm32, same5x és rp2040 chipeken. Ezenkívül a mikrokontroller chipnek olyan lapkán kell lennie, amely rendelkezik CAN csatlakozással.</p>
+<p>Klipper currently supports CAN on stm32, SAME5x, and rp2040 chips. In addition, the micro-controller chip must be on a board that has a CAN transceiver.</p>
 <p>A CAN-hez való fordításhoz futtasd a <code>make menuconfig</code> parancsot, és válaszd a "CAN busz" kommunikációs interfészt. Végül fordítsd le a mikrokontroller kódját, és égesd a céllapra.</p>
 <h2 id="gazdagep-hardver">Gazdagép Hardver<a class="headerlink" href="#gazdagep-hardver" title="Permanent link">&para;</a></h2>
-<p>A CAN-busz használatához szükség van egy host-adapterre. Jelenleg két elterjedt lehetőség van:</p>
-<ol>
-<li>Használj egy <a href="https://www.waveshare.com/rs485-can-hat.htm">Waveshare Raspberry Pi CAN sapkát</a> vagy annak számos klónja közül egyet.</li>
-<li>Használj USB CAN-adaptert (például <a href="https://hacker-gadgets.com/product/cantact-usb-can-adapter/">https://hacker-gadgets.com/product/cantact-usb-can-adapter/</a>). Számos különböző USB-CAN adapter áll rendelkezésre - az adapter kiválasztásakor javasoljuk, hogy ellenőrizd, hogy képes-e a <a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a> futtatására. (Sajnos azt tapasztaltuk, hogy néhány USB-adapter hibás firmware-t futtat, és le van zárva, ezért vásárlás előtt ellenőrizd.)</li>
-</ol>
+<p>In order to use a CAN bus, it is necessary to have a host adapter. It is recommended to use a "USB to CAN adapter". There are many different USB to CAN adapters available from different manufacturers. When choosing one, we recommend verifying that the firmware can be updated on it. (Unfortunately, we've found some USB adapters run defective firmware and are locked down, so verify before purchasing.) Look for adapters that can run Klipper directly (in its "USB to CAN bridge mode") or that run the <a href="https://github.com/candle-usb/candleLight_fw">candlelight firmware</a>.</p>
 <p>Az adapter használatához a gazdagép operációs rendszert is konfigurálni kell. Ez általában úgy történik, hogy létrehozunk egy új <code>/etc/network/interfaces.d/can0</code> nevű fájlt a következő tartalommal:</p>
-<div class="highlight"><pre><span></span><code>auto can0
+<div class="highlight"><pre><span></span><code>allow-hotplug can0
 iface can0 can static
-    bitrate 500000
+    bitrate 1000000
     up ifconfig $IFACE txqueuelen 128
 </code></pre></div>
 
-<p>Ne feledd, hogy a "Raspberry Pi CAN sapka" is megköveteli a <a href="https://www.waveshare.com/wiki/RS485_CAN_HAT">config.txt módosítását</a>.</p>
 <h2 id="az-ellenallasok-megszuntetese">Az ellenállások megszüntetése<a class="headerlink" href="#az-ellenallasok-megszuntetese" title="Permanent link">&para;</a></h2>
 <p>A CAN-buszon két 120 ohmos ellenállásnak kell lennie a CANH és CANL vezetékek között. Ideális esetben egy-egy ellenállás a busz mindkét végén található.</p>
-<p>Vedd figyelembe, hogy egyes eszközök beépített 120 ohmos ellenállással rendelkeznek (például a "Waveshare Raspberry Pi CAN sapka" egy beforrasztott ellenállással rendelkezik, amelyet nem lehet könnyen eltávolítani). Egyes eszközök egyáltalán nem tartalmaznak ellenállást. Más eszközök rendelkeznek egy mechanizmussal az ellenállás kiválasztására (általában egy "pin jumper" csatlakoztatásával). Mindenképpen ellenőrizd a CAN-buszon lévő összes eszköz kapcsolási rajzát, hogy a buszon két és csak két 120 Ohm-os ellenállás van-e.</p>
+<p>Note that some devices have a builtin 120 ohm resistor that can not be easily removed. Some devices do not include a resistor at all. Other devices have a mechanism to select the resistor (typically by connecting a "pin jumper"). Be sure to check the schematics of all devices on the CAN bus to verify that there are two and only two 120 Ohm resistors on the bus.</p>
 <p>Az ellenállások értékének teszteléséhez a nyomtatót áramtalaníthatod, és egy multiméterrel ellenőrizheted a CANH és CANL vezetékek közötti ellenállást. Egy helyesen bekötött CAN-buszon ~60 ohmot kell mérned.</p>
 <h2 id="a-canbus_uuid-keresese-uj-mikrovezerlokhoz">A canbus_uuid keresése új mikrovezérlőkhöz<a class="headerlink" href="#a-canbus_uuid-keresese-uj-mikrovezerlokhoz" title="Permanent link">&para;</a></h2>
 <p>A CAN-buszon lévő minden mikrovezérlőhöz egyedi azonosítót rendelnek a gyári chipazonosító alapján, amely minden mikrovezérlőbe kódolva van. Az egyes mikrokontrollerek eszközazonosítójának megtalálásához győződj meg arról, hogy a hardver megfelelően van bekapcsolva és bekötve, majd futtasd le:</p>
@@ -1416,19 +1425,30 @@ canbus_uuid: 11aa22bb33cc
 </code></pre></div>
 
 <h2 id="usb-es-can-busz-kozotti-hid-uzemmod">USB és CAN-busz közötti híd üzemmód<a class="headerlink" href="#usb-es-can-busz-kozotti-hid-uzemmod" title="Permanent link">&para;</a></h2>
-<p>Egyes mikrovezérlők támogatják az "USB to CAN bus bridge" üzemmód kiválasztását a "make menuconfig" alatt. Ez az üzemmód lehetővé teheti, hogy egy mikrokontrollert "USB CAN busz adapterként" és Klipper csomópontként is használjunk.</p>
-<p>Amikor a Klipper ezt az üzemmódot használja, a mikrokontroller "USB CAN busz adapterként" jelenik meg Linux alatt. Maga a "Klipper bridge mcu" úgy jelenik meg, mintha ezen a CAN buszon lenne. A <code>canbus_query.py</code> segítségével azonosítható és konfigurálható, mint a többi CAN buszos Klipper csomópont. A többi, ténylegesen a CAN-buszon lévő eszköz mellett fog megjelenni.</p>
+<p>Some micro-controllers support selecting "USB to CAN bus bridge" mode during Klipper's "make menuconfig". This mode may allow one to use a micro-controller as both a "USB to CAN bus adapter" and as a Klipper node.</p>
+<p>When Klipper uses this mode the micro-controller appears as a "USB CAN bus adapter" under Linux. The "Klipper bridge mcu" itself will appear as if it was on this CAN bus - it can be identified via <code>canbus_query.py</code> and it must be configured like other CAN bus Klipper nodes.</p>
 <p>Néhány fontos megjegyzés ennek az üzemmódnak a használatához:</p>
 <ul>
-<li>A "bridge mcu" valójában nem a CAN-buszon van. A hozzá érkező és tőle érkező üzenetek nem fogyasztanak sávszélességet a CAN-buszon. Az MCU-t nem láthatják más adapterek, amelyek esetleg a CAN-buszon vannak.</li>
 <li>A busszal való kommunikációhoz szükséges a <code>can0</code> (vagy hasonló) interfész konfigurálása Linuxban. A Linux CAN-busz sebességét és a CAN-busz bit-időzítési beállításait azonban a Klipper figyelmen kívül hagyja. Jelenleg a CAN-busz frekvenciáját a "make menuconfig" futtatása során kell megadni, és a Linuxban megadott buszsebességet figyelmen kívül hagyjuk.</li>
-<li>Amikor a "bridge mcu" visszaáll, a Linux letiltja a megfelelő <code>can0</code> interfészt. A FIRMWARE_RESTART és a RESTART parancsok megfelelő kezelése érdekében ajánlott az <code>/etc/network/interfaces.d/can0</code> fájlban az <code>auto</code> helyett az <code>allow-hotplug</code> parancsot használni. Például:</li>
+<li>Whenever the "bridge mcu" is reset, Linux will disable the corresponding <code>can0</code> interface. To ensure proper handling of FIRMWARE_RESTART and RESTART commands, it is recommended to use <code>allow-hotplug</code> in the <code>/etc/network/interfaces.d/can0</code> file. For example:</li>
 </ul>
 <div class="highlight"><pre><span></span><code>allow-hotplug can0
 iface can0 can static
-    bitrate 500000
+    bitrate 1000000
     up ifconfig $IFACE txqueuelen 128
 </code></pre></div>
+
+<ul>
+<li>
+<p>The "bridge mcu" is not actually on the CAN bus. Messages to and from the bridge mcu will not be seen by other adapters that may be on the CAN bus.</p>
+<ul>
+<li>The available bandwidth to both the "bridge mcu" itself and all devices on the CAN bus is effectively limited by the CAN bus frequency. As a result, it is recommended to use a CAN bus frequency of 1000000 when using "USB to CAN bus bridge mode".Even at a CAN bus frequency of 1000000, there may not be sufficient bandwidth to run a <code>SHAPER_CALIBRATE</code> test if both the XY steppers and the accelerometer all communicate via a single "USB to CAN bus" interface.</li>
+<li>A USB to CAN bridge board will not appear as a USB serial device, it will not show up when running <code>ls /dev/serial/by-id</code>, and it can not be configured in Klipper's printer.cfg file with a <code>serial:</code> parameter. The bridge board appears as a "USB CAN adapter" and it is configured in the printer.cfg as a <a href="#configuring-klipper">CAN node</a>.</li>
+</ul>
+</li>
+</ul>
+<h2 id="tips-for-troubleshooting">Tips for troubleshooting<a class="headerlink" href="#tips-for-troubleshooting" title="Permanent link">&para;</a></h2>
+<p>See the <a href="CANBUS_Troubleshooting.html">CAN bus troubleshooting</a> document.</p>
 
               
             </article>
@@ -1463,13 +1483,13 @@ iface can0 can static
       
       
         
-        <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-footer__link md-footer__link--next" aria-label="Következő: TSL1401CL nyomtatószál szélesség érzékelő" rel="next">
+        <a href="CANBUS_Troubleshooting.html" class="md-footer__link md-footer__link--next" aria-label="Következő: CANBUS Troubleshooting" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Következő
               </span>
-              TSL1401CL nyomtatószál szélesség érzékelő
+              CANBUS Troubleshooting
             </div>
           </div>
           <div class="md-footer__button md-icon">

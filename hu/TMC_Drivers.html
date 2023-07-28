@@ -990,8 +990,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
-    TMC reports error: ... ShortToGND OR ShortToSupply
+  <a href="#tmc-hibat-jelent-shorttognd-vagy-shorttosupply" class="md-nav__link">
+    TMC hibát jelent: ... ShortToGND VAGY ShortToSupply
   </a>
   
 </li>
@@ -1404,8 +1404,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1663,8 +1663,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#tmc-reports-error-shorttognd-or-shorttosupply" class="md-nav__link">
-    TMC reports error: ... ShortToGND OR ShortToSupply
+  <a href="#tmc-hibat-jelent-shorttognd-vagy-shorttosupply" class="md-nav__link">
+    TMC hibát jelent: ... ShortToGND VAGY ShortToSupply
   </a>
   
 </li>
@@ -1736,7 +1736,7 @@
 <p>Javasoljuk, hogy mindig a "SpreadCycle" módot használd (nem megadva a <code>stealthchop_threshold</code> értéket) vagy mindig a "StealthChop" módot (a <code>stealthchop_threshold</code> 999999-re állítva). Sajnos a meghajtók gyakran rossz és zavaros eredményeket produkálnak, ha a mód változik, miközben a motor nem álló állapotban van.</p>
 <h2 id="a-tmc-interpolacios-beallitasa-kis-pozicioelterest-eredmenyez">A TMC interpolációs beállítása kis pozícióeltérést eredményez<a class="headerlink" href="#a-tmc-interpolacios-beallitasa-kis-pozicioelterest-eredmenyez" title="Permanent link">&para;</a></h2>
 <p>A TMC motorvezérlő <code>interpolate</code> beállítása csökkentheti a nyomtató mozgásának hallható zaját, de ennek ára egy kis rendszerszintű helyzeti hiba. Ez a rendszerszintű helyzeti hiba abból adódik, hogy a motorvezérlő késve hajtja végre a Klipper által küldött "lépéseket". Állandó sebességű mozgások során ez a késleltetés közel fél konfigurált mikrolépésnyi pozícióhibát eredményez (pontosabban a hiba fél mikrolépésnyi távolság mínusz a teljes lépés távolság 512-ed része). Például egy 40 mm-es rotation_distance, 200 steps_per_rotation és 16 microstep tengelyen az állandó sebességű mozgások során bevezetett rendszerszintű hiba ~0,006 mm.</p>
-<p>A legjobb helymeghatározási pontosság érdekében fontold meg a SpreadCycle mód használatát és az interpoláció kikapcsolását (állítsd be az <code>interpolate: False</code> értéket a TMC motorvezérlő konfigurációjában). Ilyen konfiguráció esetén növelhetjük a <code>microstep</code> beállítást a léptető mozgása közbeni hallható zajok csökkentése érdekében. Általában a <code>64</code> vagy <code>128</code> mikrolépés beállítása az interpolációhoz hasonló hallható zajjal jár, és mindezt anélkül, hogy rendszerszintű helyzeti hibát vezetne be.</p>
+<p>A legjobb helymeghatározási pontosság érdekében fontold meg a SpreadCycle mód használatát és az interpoláció kikapcsolását (állítsd be az <code>interpolate: False</code> értéket a TMC motorvezérlő konfigurációjában). Ilyen konfiguráció esetén növelhetjük a <code>microstep</code> beállítást a léptető mozgása közbeni hallható zajok csökkentése érdekében. Általában a <code>64</code> vagy <code>128</code> mikrolépés beállítása az interpolációhoz hasonló hallható zajjal jár, és mindezt anélkül, hogy rendszerszintű helyzeti hibát jelezne.</p>
 <p>Ha a StealthChop módot használod, akkor az interpolációból eredő helyzeti pontatlanság kicsi a StealthChop módból eredő helyzeti pontatlansághoz képest. Ezért az interpoláció hangolása nem tekinthető hasznosnak StealthChop üzemmódban, és az interpoláció alapértelmezett állapotban hagyható.</p>
 <h2 id="erzekelo-nelkuli-kezdopont">Érzékelő nélküli kezdőpont<a class="headerlink" href="#erzekelo-nelkuli-kezdopont" title="Permanent link">&para;</a></h2>
 <p>Az érzékelő nélküli kezdőpont felvétel lehetővé teszi a tengely kezdőpont felvételét fizikai végálláskapcsoló nélkül. Ehelyett a tengelyen lévő kocsit a mechanikus végállásba mozgatja, így a léptetőmotor lépéseket veszít. A léptető meghajtó érzékeli az elveszett lépéseket, és ezt egy tű csatlakozáson jelzi a vezérlő MCU-nak (Klipper). Ezt az információt a Klipper a tengely végállásaként használhatja.</p>
@@ -1837,7 +1837,7 @@ homing_retract_dist: 0
 <h4 id="makrok-hasznalata-a-kezdopont-felvetel-soran">Makrók használata a kezdőpont felvétel során<a class="headerlink" href="#makrok-hasznalata-a-kezdopont-felvetel-soran" title="Permanent link">&para;</a></h4>
 <p>Az érzékelő nélküli kezdőpont felvétel befejezése után a kocsi a sín végéhez lesz nyomva, és a léptető erőt fejt ki a keretre, amíg a kocsi el nem mozdul. Jó ötlet egy makrót létrehozni a tengely kezdőpont felvételéhez, és azonnal elmozdítani a kocsit a sín végétől.</p>
 <p>Jó ötlet, ha a makró legalább 2 másodperc szünetet tart az érzékelő nélküli kezdőpont felvétel elindítása előtt (vagy más módon biztosítja, hogy a léptetőn 2 másodpercig nem volt mozgás). A késleltetés nélkül lehetséges, hogy a meghajtó belső leállási jelzője még mindig be van állítva egy korábbi mozgás miatt.</p>
-<p>Az is hasznos lehet, ha ez a makró beállítja a meghajtó áramát a kezdőpont felvétel előtt, és új áramot állít be, miután a kocsi elindult.</p>
+<p>Az is hasznos lehet, ha ez a makró beállítja a meghajtó áramát a kezdőpont felvétel előtt, és új áramot állít be, a kocsi indulásakor.</p>
 <p>Egy példamakró így nézhet ki:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro SENSORLESS_HOME_X]
 gcode:
@@ -1911,7 +1911,7 @@ gcode:
 <p>Néhány gyakori hiba és tipp a diagnosztizáláshoz:</p>
 <h4 id="tmc-hibat-jelent-ot1overtemperror">TMC hibát jelent: <code>... ot=1(OvertempError!)</code><a class="headerlink" href="#tmc-hibat-jelent-ot1overtemperror" title="Permanent link">&para;</a></h4>
 <p>Ez azt jelzi, hogy a motorvezérlő kikapcsolta magát, mert túlmelegedett. A tipikus megoldások a léptetőmotor áramának csökkentése, a motorvezérlő és/vagy a léptetőmotor hűtése.</p>
-<h4 id="tmc-reports-error-shorttognd-or-shorttosupply">TMC reports error: <code>... ShortToGND</code> OR <code>ShortToSupply</code><a class="headerlink" href="#tmc-reports-error-shorttognd-or-shorttosupply" title="Permanent link">&para;</a></h4>
+<h4 id="tmc-hibat-jelent-shorttognd-vagy-shorttosupply">TMC hibát jelent: <code>... ShortToGND</code> VAGY <code>ShortToSupply</code><a class="headerlink" href="#tmc-hibat-jelent-shorttognd-vagy-shorttosupply" title="Permanent link">&para;</a></h4>
 <p>Ez azt jelzi, hogy a motorvezérlő letiltotta magát, mert nagyon magas áramot érzékelt a meghajtón keresztül. Ez azt jelezheti, hogy meglazult vagy rövidre zárt vezeték van a léptetőmotorban vagy magához a léptetőmotorhoz futó vezeték hibás.</p>
 <p>Ez a hiba akkor is előfordulhat, ha StealthChop üzemmódot használsz, és a TMC motorvezérlő nem képes pontosan megjósolni a motor mechanikai terhelését. (Ha a motorvezérlő rosszul jósol, akkor előfordulhat, hogy túl nagy áramot küld a motoron keresztül, és ezzel kiváltja saját túláram-érzékelését). Ennek teszteléséhez kapcsold ki a StealthChop üzemmódot, és ellenőrizd, hogy a hibák továbbra is előfordulnak-e.</p>
 <h4 id="a-tmc-hibat-jelent-reset1reset-vagy-cs_actual0reset-vagy-se0reset">A TMC hibát jelent: <code>... reset=1(Reset)</code> VAGY <code>CS_ACTUAL=0(Reset?)</code> VAGY <code>SE=0(Reset?)</code><a class="headerlink" href="#a-tmc-hibat-jelent-reset1reset-vagy-cs_actual0reset-vagy-se0reset" title="Permanent link">&para;</a></h4>

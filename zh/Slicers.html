@@ -1247,8 +1247,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1433,7 +1433,9 @@
 </code></pre></div>
 
 <p>在PrusaSlicer和SuperSlicer等sli3er衍生版本中，使用以下G代码：</p>
-<p>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]</p>
+<div class="highlight"><pre><span></span><code>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]
+</code></pre></div>
+
 <p>还要注意，当某些条件不满足时，这些切片软件会插入自己的加热代码。在Cura中，存在<code>{material_bed_temperature_layer_0}</code>和<code>{material_print_temperature_layer_0}</code>这两个变量就足够了。在slic3r衍生品中，你需要使用：</p>
 <div class="highlight"><pre><span></span><code>M140 S0
 M104 S0

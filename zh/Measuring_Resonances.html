@@ -707,6 +707,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#mcus-with-klipper-i2c-fast-mode-support" class="md-nav__link">
+    MCUs with Klipper I2C fast-mode Support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
     安装指南
   </a>
@@ -719,8 +726,7 @@
     接线
   </a>
   
-    <nav class="md-nav" aria-label="接线">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#spi-accelerometers" class="md-nav__link">
@@ -773,6 +779,14 @@
           <li class="md-nav__item">
   <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
     MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  </a>
+  
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-connection-scheme-for-i2ctwi-on-the-avr-atmega328p-arduino-nano" class="md-nav__link">
+    Recommended connection scheme for I2C(TWI) on the AVR ATmega328P Arduino Nano:
   </a>
   
 </li>
@@ -844,8 +858,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#configure-mpu-60009000-series-with-pico" class="md-nav__link">
-    Configure MPU-6000/9000 series With PICO
+  <a href="#configure-mpu-9520-compatibles-with-pico" class="md-nav__link">
+    Configure MPU-9520 Compatibles With Pico
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-9520-compatibles-with-avr" class="md-nav__link">
+    Configure MPU-9520 Compatibles with AVR
   </a>
   
 </li>
@@ -1429,8 +1450,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1513,6 +1534,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#mcus-with-klipper-i2c-fast-mode-support" class="md-nav__link">
+    MCUs with Klipper I2C fast-mode Support
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
     安装指南
   </a>
@@ -1525,8 +1553,7 @@
     接线
   </a>
   
-    <nav class="md-nav" aria-label="接线">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#spi-accelerometers" class="md-nav__link">
@@ -1579,6 +1606,14 @@
           <li class="md-nav__item">
   <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
     MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  </a>
+  
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-connection-scheme-for-i2ctwi-on-the-avr-atmega328p-arduino-nano" class="md-nav__link">
+    Recommended connection scheme for I2C(TWI) on the AVR ATmega328P Arduino Nano:
   </a>
   
 </li>
@@ -1650,8 +1685,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#configure-mpu-60009000-series-with-pico" class="md-nav__link">
-    Configure MPU-6000/9000 series With PICO
+  <a href="#configure-mpu-9520-compatibles-with-pico" class="md-nav__link">
+    Configure MPU-9520 Compatibles With Pico
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-mpu-9520-compatibles-with-avr" class="md-nav__link">
+    Configure MPU-9520 Compatibles with AVR
   </a>
   
 </li>
@@ -1766,23 +1808,66 @@
 
 
 <h1 id="_1">共振值测量<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>Klipper内建有ADXL345加速度传感器驱动，可用以测量打印机不同运动轴发生共振的频率，从而自动进行 <a href="Resonance_Compensation.html">输入整形</a> 以实现共振补偿。注意使用ADXL345需要进行焊接和压线。ADXL345可以直接连接到树莓派，也可以连接到MCU的SPI总线（注意MCU有一定的性能需求）。</p>
-<p>When sourcing ADXL345, be aware that there is a variety of different PCB board designs and different clones of them. Make sure that the board supports SPI mode (small number of boards appear to be hard-configured for I2C by pulling SDO to GND), and, if it is going to be connected to a 5V printer MCU, that it has a voltage regulator and a level shifter.</p>
+<p>Klipper has built-in support for the ADXL345 and MPU-9250 compatible accelerometers which can be used to measure resonance frequencies of the printer for different axes, and auto-tune <a href="Resonance_Compensation.html">input shapers</a> to compensate for resonances. Note that using accelerometers requires some soldering and crimping. The ADXL345 can be connected to the SPI interface of a Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can be connected to the I2C interface of a Raspberry Pi directly, or to an I2C interface of an MCU board that supports 400kbit/s <em>fast mode</em> in Klipper.</p>
+<p>When sourcing accelerometers, be aware that there are a variety of different PCB board designs and different clones of them. If it is going to be connected to a 5V printer MCU ensure it has a voltage regulator and level shifters.</p>
+<p>For ADXL345s, make sure that the board supports SPI mode (a small number of boards appear to be hard-configured for I2C by pulling SDO to GND).</p>
+<p>For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s there are also a variety of board designs and clones with different I2C pull-up resistors which will need supplementing.</p>
+<h2 id="mcus-with-klipper-i2c-fast-mode-support">MCUs with Klipper I2C <em>fast-mode</em> Support<a class="headerlink" href="#mcus-with-klipper-i2c-fast-mode-support" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th align="center">MCU Family</th>
+<th align="left">MCU(s) Tested</th>
+<th align="left">MCU(s) with Support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">Raspberry Pi</td>
+<td align="left">3B+, Pico</td>
+<td align="left">3A, 3A+, 3B, 4</td>
+</tr>
+<tr>
+<td align="center">AVR ATmega</td>
+<td align="left">ATmega328p</td>
+<td align="left">ATmega32u4, ATmega128, ATmega168, ATmega328, ATmega644p, ATmega1280, ATmega1284, ATmega2560</td>
+</tr>
+<tr>
+<td align="center">AVR AT90</td>
+<td align="left">-</td>
+<td align="left">AT90usb646, AT90usb1286</td>
+</tr>
+</tbody>
+</table>
 <h2 id="_2">安装指南<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <h3 id="_3">接线<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<p>An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrity over a long distance. If you still experience signal integrity issues (SPI/I2C errors), shorten the cable.</p>
-<p>Connect ethernet cable shielding to the controller board/RPI ground.</p>
+<p>An ethernet cable with shielded twisted pairs (cat5e or better) is recommended for signal integrity over a long distance. If you still experience signal integrity issues (SPI/I2C errors):</p>
+<ul>
+<li>Double check the wiring with a digital multimeter for:<ul>
+<li>Correct connections when turned off (continuity)</li>
+<li>Correct power and ground voltages</li>
+</ul>
+</li>
+<li>I2C only:<ul>
+<li>Check the SCL and SDA lines' resistances to 3.3V are in the range of 900 ohms to 1.8K</li>
+<li>For full technical details consult <a href="https://www.pololu.com/file/0J435/UM10204.pdf">chapter 7 of the I2C-bus specification and user manual UM10204</a> for <em>fast-mode</em></li>
+</ul>
+</li>
+<li>Shorten the cable</li>
+</ul>
+<p>Connect ethernet cable shielding only to the MCU board/Pi ground.</p>
 <p><strong><em>Double-check your wiring before powering up to prevent damaging your MCU/Raspberry Pi or the accelerometer.</em></strong></p>
-<h4 id="spi-accelerometers">SPI Accelerometers<a class="headerlink" href="#spi-accelerometers" title="Permanent link">&para;</a></h4>
-<p>Suggested twisted pair order:</p>
+<h3 id="spi-accelerometers">SPI Accelerometers<a class="headerlink" href="#spi-accelerometers" title="Permanent link">&para;</a></h3>
+<p>Suggested twisted pair order for three twisted pairs:</p>
 <div class="highlight"><pre><span></span><code>GND+MISO
 3.3V+MOSI
 SCLK+CS
 </code></pre></div>
 
-<h5 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h5>
-<h6 id="direct-to-raspberry-pi">Direct to Raspberry Pi<a class="headerlink" href="#direct-to-raspberry-pi" title="Permanent link">&para;</a></h6>
-<p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode(eg Pi Pico), wiring and configuration will vary according to your specific board and available pins.</strong></p>
+<p>Note that unlike a cable shield, GND must be connected at both ends.</p>
+<h4 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h4>
+<h5 id="direct-to-raspberry-pi">Direct to Raspberry Pi<a class="headerlink" href="#direct-to-raspberry-pi" title="Permanent link">&para;</a></h5>
+<p><strong>Note: Many MCUs will work with an ADXL345 in SPI mode (e.g. Pi Pico), wiring and configuration will vary according to your specific board and available pins.</strong></p>
 <p>我们需要将ADXL345连接到树莓派的SPI接口。注意，尽管ADXL345文档推荐使用I2C，但其数据吞吐能力不足，<strong>不能</strong>实现共振测量的要求。推荐的接线图为：</p>
 <table>
 <thead>
@@ -1827,7 +1912,7 @@ SCLK+CS
 </table>
 <p>部分ADXL345开发板的Fritzing接线图如下：</p>
 <p><img alt="ADXL345-树莓派" src="img/adxl345-fritzing.png" /></p>
-<h6 id="using-raspberry-pi-pico">Using Raspberry Pi Pico<a class="headerlink" href="#using-raspberry-pi-pico" title="Permanent link">&para;</a></h6>
+<h5 id="using-raspberry-pi-pico">Using Raspberry Pi Pico<a class="headerlink" href="#using-raspberry-pi-pico" title="Permanent link">&para;</a></h5>
 <p>You may connect the ADXL345 to your Raspberry Pi Pico and then connect the Pico to your Raspberry Pi via USB. This makes it easy to reuse the accelerometer on other Klipper devices, as you can connect via USB instead of GPIO. The Pico does not have much processing power, so make sure it is only running the accelerometer and not performing any other duties.</p>
 <p>In order to avoid damage to your RPi make sure to connect the ADXL345 to 3.3V only. Depending on the board's layout, a level shifter may be present, which makes 5V dangerous for your RPi.</p>
 <table>
@@ -1873,14 +1958,21 @@ SCLK+CS
 </table>
 <p>Wiring diagrams for some of the ADXL345 boards:</p>
 <p><img alt="ADXL345-Pico" src="img/adxl345-pico.png" /></p>
-<h4 id="i2c-accelerometers">I2C Accelerometers<a class="headerlink" href="#i2c-accelerometers" title="Permanent link">&para;</a></h4>
-<p>Suggested twisted pair order:</p>
+<h3 id="i2c-accelerometers">I2C Accelerometers<a class="headerlink" href="#i2c-accelerometers" title="Permanent link">&para;</a></h3>
+<p>Suggested twisted pair order for three pairs (preferred):</p>
+<div class="highlight"><pre><span></span><code>3.3V+GND
+SDA+GND
+SCL+GND
+</code></pre></div>
+
+<p>or for two pairs:</p>
 <div class="highlight"><pre><span></span><code>3.3V+SDA
 GND+SCL
 </code></pre></div>
 
-<h5 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" title="Permanent link">&para;</a></h5>
-<p>Alternatives to the ADXL345 are MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500. These accelerometers have been tested to work over I2C on the RPi or RP2040(pico) at 400kbaud.</p>
+<p>Note that unlike a cable shield, any GND(s) should be connected at both ends.</p>
+<h4 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" title="Permanent link">&para;</a></h4>
+<p>These accelerometers have been tested to work over I2C on the RPi, RP2040 (Pico) and AVR at 400kbit/s (<em>fast mode</em>). Some MPU accelerometer modules include pull-ups, but some are too large at 10K and must be changed or supplemented by smaller parallel resistors.</p>
 <p>Recommended connection scheme for I2C on the Raspberry Pi:</p>
 <table>
 <thead>
@@ -1913,20 +2005,21 @@ GND+SCL
 </tr>
 </tbody>
 </table>
-<p><img alt="MPU-9250 connected to RPI" src="img/mpu9250-PI-fritzing.png" /></p>
-<p>Recommended connection scheme for I2C(i2c0a) on the RP2040:</p>
+<p>The RPi has buit-in 1.8K pull-ups on both SCL and SDA.</p>
+<p><img alt="MPU-9250 connected to Pi" src="img/mpu9250-PI-fritzing.png" /></p>
+<p>Recommended connection scheme for I2C (i2c0a) on the RP2040:</p>
 <table>
 <thead>
 <tr>
 <th align="center">MPU-9250 pin</th>
 <th align="center">RP2040 pin</th>
-<th align="center">树莓派引脚名称</th>
+<th align="center">RP2040 pin name</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td align="center">VCC</td>
-<td align="center">39</td>
+<td align="center">36</td>
 <td align="center">3v3</td>
 </tr>
 <tr>
@@ -1946,7 +2039,46 @@ GND+SCL
 </tr>
 </tbody>
 </table>
-<p><img alt="MPU-9250 connected to PICO" src="img/mpu9250-PICO-fritzing.png" /></p>
+<p>The Pico does not include any built-in I2C pull-up resistors.</p>
+<p><img alt="MPU-9250 connected to Pico" src="img/mpu9250-PICO-fritzing.png" /></p>
+<h5 id="recommended-connection-scheme-for-i2ctwi-on-the-avr-atmega328p-arduino-nano">Recommended connection scheme for I2C(TWI) on the AVR ATmega328P Arduino Nano:<a class="headerlink" href="#recommended-connection-scheme-for-i2ctwi-on-the-avr-atmega328p-arduino-nano" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 pin</th>
+<th align="center">Atmega328P TQFP32 pin</th>
+<th align="center">Atmega328P pin name</th>
+<th align="center">Arduino Nano pin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">VCC</td>
+<td align="center">39</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">地（GND）</td>
+<td align="center">GND</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">27</td>
+<td align="center">SDA</td>
+<td align="center">A4</td>
+</tr>
+<tr>
+<td align="center">SCL</td>
+<td align="center">28</td>
+<td align="center">SCL</td>
+<td align="center">A5</td>
+</tr>
+</tbody>
+</table>
+<p>The Arduino Nano does not include any built-in pull-up resistors nor a 3.3V power pin.</p>
 <h3 id="_4">固定加速度传感器<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>加速度传感器应固定在打印头上。应根据打印机的情况设计合适的固定件。推荐将加速度的测量轴与打印机运行轴的方向进行对齐。然而，如果轴对齐极其麻烦，可以将打印机的轴使用其他测量轴对齐，比如打印机+X对应传感器-X，甚至打印机+X对应传感器-Z等。</p>
 <p>下面是ADXL345固定到SmartEffector的示例：</p>
@@ -1964,8 +2096,8 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
 </code></pre></div>
 
 <p>Note that, depending on the performance of the CPU, it may take <em>a lot</em> of time, up to 10-20 minutes. Be patient and wait for the completion of the installation. On some occasions, if the board has too little RAM the installation may fail and you will need to enable swap.</p>
-<p>之后，参考<a href="RPi_microcontroller.html">树莓派作为微控制器文档</a>的指引完成“LINUX微处理器”的设置。</p>
 <h4 id="configure-adxl345-with-rpi">Configure ADXL345 With RPi<a class="headerlink" href="#configure-adxl345-with-rpi" title="Permanent link">&para;</a></h4>
+<p>First, check and follow the instructions in the <a href="RPi_microcontroller.html">RPi Microcontroller document</a> to setup the "linux mcu" on the Raspberry Pi. This will configure a second Klipper instance that runs on your Pi.</p>
 <p>通过运行<code>sudo raspi-config</code> 后的 "Interfacing options"菜单中启用 SPI 以确保Linux SPI 驱动已启用。</p>
 <p>在printer.cfg中添加以下内容：</p>
 <div class="highlight"><pre><span></span><code>[mcu rpi]
@@ -2037,10 +2169,10 @@ probe_points:
     100, 100, 20  # an example
 </code></pre></div>
 
-<h4 id="configure-mpu-60009000-series-with-pico">Configure MPU-6000/9000 series With PICO<a class="headerlink" href="#configure-mpu-60009000-series-with-pico" title="Permanent link">&para;</a></h4>
-<p>PICO I2C is set to 400000 on default. Simply add the following to the printer.cfg:</p>
+<h4 id="configure-mpu-9520-compatibles-with-pico">Configure MPU-9520 Compatibles With Pico<a class="headerlink" href="#configure-mpu-9520-compatibles-with-pico" title="Permanent link">&para;</a></h4>
+<p>Pico I2C is set to 400000 on default. Simply add the following to the printer.cfg:</p>
 <div class="highlight"><pre><span></span><code>[mcu pico]
-serial: /dev/serial/by-id/&lt;your PICO&#39;s serial ID&gt;
+serial: /dev/serial/by-id/&lt;your Pico&#39;s serial ID&gt;
 
 [mpu9250]
 i2c_mcu: pico
@@ -2052,7 +2184,21 @@ probe_points:
     100, 100, 20  # an example
 
 [static_digital_output pico_3V3pwm] # Improve power stability
-pin: pico:gpio23
+pins: pico:gpio23
+</code></pre></div>
+
+<h4 id="configure-mpu-9520-compatibles-with-avr">Configure MPU-9520 Compatibles with AVR<a class="headerlink" href="#configure-mpu-9520-compatibles-with-avr" title="Permanent link">&para;</a></h4>
+<p>AVR I2C will be set to 400000 by the mpu9250 option. Simply add the following to the printer.cfg:</p>
+<div class="highlight"><pre><span></span><code>[mcu nano]
+serial: /dev/serial/by-id/&lt;your nano&#39;s serial ID&gt;
+
+[mpu9250]
+i2c_mcu: nano
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
 </code></pre></div>
 
 <p>通过<code>RESTART</code>命令重启Klipper。</p>
@@ -2068,7 +2214,7 @@ pin: pico:gpio23
 </code></pre></div>
 
 <p>If you get an error like <code>Invalid adxl345 id (got xx vs e5)</code>, where <code>xx</code> is some other ID, immediately try again. There's an issue with SPI initialization. If you still get an error, it is indicative of the connection problem with ADXL345, or the faulty sensor. Double-check the power, the wiring (that it matches the schematics, no wire is broken or loose, etc.), and soldering quality.</p>
-<p><strong>If you are using MPU-6000/9000 series accelerometer and it show up as <code>mpu-unknown</code>, use with caution! They are probably refurbished chips!</strong></p>
+<p><strong>If you are using a MPU-9250 compatible accelerometer and it shows up as <code>mpu-unknown</code>, use with caution! They are probably refurbished chips!</strong></p>
 <p>下一步，在Octoprint中输入 <code>MEASURE_AXES_NOISE</code>，之后将会显示各个轴的基准测量噪声（其值应在1-100之间）。如果轴的噪声极高（例如 1000 或更高）可能意味着3D打印机上存在传感器问题、电源问题或不平衡的风扇。</p>
 <h3 id="_8">测量共振值<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>现在可以运行进行实测。运行以下命令:</p>
@@ -2122,7 +2268,7 @@ max_accel: 3000  # should not exceed the estimated max_accel for X and Y axes
 <p>Note that alternatively you can run the input shaper auto-calibration from Klipper <a href="#input-shaper-auto-calibration">directly</a>, which can be convenient, for example, for the input shaper <a href="#input-shaper-re-calibration">re-calibration</a>.</p>
 <h3 id="_9">平行于喷嘴移动打印床的打印机<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>如果打印机的打印床可以平行于喷嘴移动，测量X和Y轴时需要改变加速度计的安装位置。安装加速度计到打印头以测量X轴共振，安装到打印床以测量Y轴（该类打印机的常见配置）。</p>
-<p>也可以同时连接两个加速度计，尽管它们必须连接到不同的主板（例如，连接到树莓派和MCU），或者连接到同一板上两个不同的物理SPI接口（大多数情况下不可用）。然后可以按以下方式配置它们：</p>
+<p>However, you can also connect two accelerometers simultaneously, though the ADXL345 must be connected to different boards (say, to an RPi and printer MCU board), or to two different physical SPI interfaces on the same board (rarely available). Then they can be configured in the following manner:</p>
 <div class="highlight"><pre><span></span><code>[adxl345 hotend]
 # Assuming `hotend` chip is connected to an RPi
 cs_pin: rpi:None
@@ -2138,6 +2284,25 @@ accel_chip_y: adxl345 bed
 probe_points: ...
 </code></pre></div>
 
+<p>Two MPUs can share one I2C bus, but they <strong>cannot</strong> measure simultaneously as the 400kbit/s I2C bus is not fast enough. One must have its AD0 pin pulled-down to 0V (address 104) and the other its AD0 pin pulled-up to 3.3V (address 105):</p>
+<div class="highlight"><pre><span></span><code>[mpu9250 hotend]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+i2c_address: 104 # This MPU has pin AD0 pulled low
+
+[mpu9250 bed]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+i2c_address: 105 # This MPU has pin AD0 pulled high
+
+[resonance_tester]
+# Assuming the typical setup of the bed slinger printer
+accel_chip_x: mpu9250 hotend
+accel_chip_y: mpu9250 bed
+probe_points: ...
+</code></pre></div>
+
+<p>[Test with each MPU individually before connecting both to the bus for easy debugging.]</p>
 <p>然后，命令<code>TEST_RESONANCES AXIS=X</code>和<code>TEST_RESONANCES AXIS=Y</code>会使用每个轴相应的加速度计。</p>
 <h3 id="_10">最大平滑度<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p>请注意，输入整形器会在使一些打印的路径被平滑。由执行<code>calibrate_shaper.py</code>脚本或<code>SHAPER_CALIBRATE</code>命令自动得出的输入整形器会尽量不加剧平滑的同时试图最小化产生的振动。脚本可能会得出不是最优的整形器的频率，或者你可能希望以更强的剩余振动为代价来减少平滑度。在这些情况下，可以要求脚本限制输入整形器的最大平滑度。</p>

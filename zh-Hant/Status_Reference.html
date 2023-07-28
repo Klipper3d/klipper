@@ -880,6 +880,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gcode_button" class="md-nav__link">
+    gcode_button
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gcode_macro" class="md-nav__link">
     gcode_macro
   </a>
@@ -1494,8 +1501,8 @@
   
   
     <li class="md-nav__item">
-      <a href="CANBUS_Troubleshooting.md" class="md-nav__link">
-        None
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS Troubleshooting
       </a>
     </li>
   
@@ -1657,6 +1664,13 @@
         <li class="md-nav__item">
   <a href="#firmware_retraction" class="md-nav__link">
     firmware_retraction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gcode_button" class="md-nav__link">
+    gcode_button
   </a>
   
 </li>
@@ -2002,6 +2016,11 @@
 <ul>
 <li><code>retract_length</code>、<code>retract_speed</code>、<code>unretract_extra_length</code>、<code>unretract_speed</code>：firmware_retraction 模組的當前設定。如果 <code>SET_RETRACTION</code> 命令改變它們，這些設定可能與配置檔案不同。</li>
 </ul>
+<h2 id="gcode_button">gcode_button<a class="headerlink" href="#gcode_button" title="Permanent link">&para;</a></h2>
+<p>The following information is available in <a href="Config_Reference.html#gcode_button">gcode_button some_name</a> objects:</p>
+<ul>
+<li><code>state</code>: The current button state returned as "PRESSED" or "RELEASED"</li>
+</ul>
 <h2 id="gcode_macro">gcode_macro<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#gcode_macro">gcode_macro &lt;名稱&gt;</a> 對像提供了以下資訊：</p>
 <ul>
@@ -2167,6 +2186,7 @@
 <li><code>mcu_phase_offset</code>：微控制器步進位置與驅動器的"零"相位的相對位置。如果相位偏移未知，則此欄位可能為空。</li>
 <li><code>phase_offset_position</code>：對應電機「零」相位的「指令位置」。如果相位偏移未知，則該欄位可以為空。</li>
 <li><code>drv_status</code>：上次驅動狀態查詢結果。（僅報告非零欄位。如果驅動沒有被啟用（因此沒有輪詢），則此欄位將為 null。</li>
+<li><code>temperature</code>: The internal temperature reported by the driver. This field will be null if the driver is not enabled or if the driver does not support temperature reporting.</li>
 <li><code>run_current</code>：目前設定的執行電流。</li>
 <li><code>hold_current</code>：目前設定的保持電流。</li>
 </ul>
