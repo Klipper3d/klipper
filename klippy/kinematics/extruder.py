@@ -70,15 +70,11 @@ class ExtruderStepper:
         self.stepper.set_trapq(extruder.get_trapq())
         self.motion_queue = extruder_name
     def _set_pressure_advance(self, pressure_advance, smooth_time):
-        old_smooth_time = self.pressure_advance_smooth_time
-        if not self.pressure_advance:
-            old_smooth_time = 0.
         new_smooth_time = smooth_time
         if not pressure_advance:
             new_smooth_time = 0.
         toolhead = self.printer.lookup_object("toolhead")
-        toolhead.note_step_generation_scan_time(new_smooth_time * .5,
-                                                old_delay=old_smooth_time * .5)
+        toolhead.note_step_generation_scan_time(self, new_smooth_time * .5)
         ffi_main, ffi_lib = chelper.get_ffi()
         espa = ffi_lib.extruder_set_pressure_advance
         espa(self.sk_extruder, pressure_advance, new_smooth_time)
