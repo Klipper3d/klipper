@@ -3488,7 +3488,7 @@ configuration fields.
 ```
 [tmc2240 stepper_x]
 interface: uart
-uart_pin: 
+uart_pin:
 #diag_pin:
 ```
 
