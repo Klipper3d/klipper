@@ -335,6 +335,6 @@ def add_printer_objects(config):
         if i:
             section = 'extruder%d' % (i,)
         if not config.has_section(section):
-            break
+            continue
         pe = PrinterExtruder(config.getsection(section), i)
         printer.add_object(section, pe)

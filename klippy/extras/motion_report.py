@@ -261,7 +261,7 @@ class PrinterMotionReport:
                 ename = "extruder"
             extruder = self.printer.lookup_object(ename, None)
             if extruder is None:
-                break
+                continue
             etrapq = extruder.get_trapq()
             self.trapqs[ename] = DumpTrapQ(self.printer, ename, etrapq)
         # Populate 'trapq' and 'steppers' in get_status result
