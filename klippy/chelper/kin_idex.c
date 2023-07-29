@@ -72,7 +72,7 @@ dual_carriage_set_transform(struct stepper_kinematics *sk, char axis
 }
 
 struct stepper_kinematics * __visible
-dual_carriage_alloc()
+dual_carriage_alloc(void)
 {
     struct dual_carriage_stepper *dc = malloc(sizeof(*dc));
     memset(dc, 0, sizeof(*dc));

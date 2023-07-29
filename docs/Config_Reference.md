@@ -2043,9 +2043,6 @@ axis:
 #   to 0 (or safe_distance is unset and position_min and position_max are
 #   identical for the primary and dual carraiges), the carriages proximity
 #   checks will be disabled.
-#restore_velocity:
-#   Velocity in mm/sec to move the carriages when restoring their positions
-#   as a result of RESTORE_IDEX_STATE command.
 #step_pin:
 #dir_pin:
 #enable_pin:

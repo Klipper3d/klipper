@@ -320,24 +320,23 @@ modes, carriage 1 will then track the subsequent moves of the carriage 0
 and either copy relative movements of it (in `COPY` mode) or execute them
 in the opposite (mirror) direction (in `MIRROR` mode).
 
-#### SAVE_IDEX_STATE
-`SAVE_IDEX_STATE [NAME=<state_name>]`: Save the current positions of
-the dual carriages and their modes. Saving and restoring IDEX state
-can be useful in scripts and macros, as well as in homing routine
+#### SAVE_DUAL_CARRIAGE_STATE
+`SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
+of the dual carriages and their modes. Saving and restoring DUAL_CARRIAGE
+state can be useful in scripts and macros, as well as in homing routine
 overrides. If NAME is provided it allows one to name the saved state
 to the given string. If NAME is not provided it defaults to "default".
 
-#### RESTORE_IDEX_STATE
-`RESTORE_IDEX_STATE [NAME=<state_name>] [MOVE=[0|1] [MOVE_SPEED=<speed>]]`:
+#### RESTORE_DUAL_CARRIAGE_STATE
+`RESTORE_DUAL_CARRIAGE_STATE [NAME=<state_name>] [MOVE=[0|1] [MOVE_SPEED=<speed>]]`:
 Restore the previously saved positions of the dual carriages and their modes,
-unless "MOVE=0" is specified, in which case only the IDEX mode will be
+unless "MOVE=0" is specified, in which case only the saved modes will be
 restored, but not the positions of the carriages. If positions are being
 restored and "MOVE_SPEED" is specified, then the toolhead moves will be
 performed with the given speed (in mm/s); otherwise the toolhead move will
-use either the `restore_velocity` parameter from the config or the rail
-homing speed if `restore_velocity` was not provided. Note that the carriages
-restore their positions only over their own axis, which may be necessary to
-correctly restore COPY and MIRROR mode of the dual carraige.
+use the rail homing speed. Note that the carriages restore their positions
+only over their own axis, which may be necessary to correctly restore COPY
+and MIRROR mode of the dual carraige.
 
 ### [endstop_phase]
 

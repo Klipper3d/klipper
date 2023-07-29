@@ -8,7 +8,7 @@ All dates in this document are approximate.
 
 ## Changes
 
-20230720: The exported status for `dual_carriage` is changed. Instead of
+20230729: The exported status for `dual_carriage` is changed. Instead of
 exporting `mode` and `active_carriage`, the individual modes for each
 carriage are exported as `printer.dual_carriage.carriage_0` and
 `printer.dual_carriage.carriage_1`.
