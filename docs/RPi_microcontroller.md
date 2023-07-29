@@ -233,6 +233,7 @@ cycle_time: 0.000001
 [output_pin beeper]
 pin: host:pwmchip0/pwm1
 pwm: True
+hardware_pwm: True
 value: 0
 shutdown_value: 0
 cycle_time: 0.0005
