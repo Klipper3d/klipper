@@ -3362,6 +3362,7 @@ the name of the corresponding stepper config section (for example,
 
 ```
 [tmc2240 stepper_x]
+interface: spi
 cs_pin:
 #   The pin corresponding to the TMC2240 chip select line. This pin
 #   will be set to low at the start of SPI messages and raised to high
@@ -3472,6 +3473,23 @@ run_current:
 #   "sensorless homing". (Be sure to also set driver_SGT to an
 #   appropriate sensitivity value.) The default is to not enable
 #   sensorless homing.
+```
+
+### [tmc2240] UART
+
+Configure a TMC2240 stepper motor driver via UART. To use this
+feature, define a config section with a "tmc2240" prefix followed by
+the name of the corresponding stepper config section (for example,
+"[tmc2240 stepper_x]").
+
+See the [TMC2240 config reference](Config_Reference.html#tmc2240) for additional
+configuration fields.
+
+```
+[tmc2240 stepper_x]
+interface: uart
+uart_pin: 
+#diag_pin:
 ```
 
 ### [tmc5160]
