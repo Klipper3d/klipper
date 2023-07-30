@@ -65,6 +65,14 @@ BOARD_DEFS = {
         'cs_pin': "PC11",
         'skip_verify': True
     },
+    'btt-octopus-pro-h723-v1': {
+        'mcu': "stm32h723xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True
+    },
+
     'btt-skr-pro': {
         'mcu': "stm32f407xx",
         'spi_bus': "swspi",
@@ -159,6 +167,7 @@ BOARD_ALIASES = {
     'btt-octopus-f446-v1.1': BOARD_DEFS['btt-octopus-f446-v1'],
     'btt-octopus-pro-f429-v1.0': BOARD_DEFS['btt-octopus-f429-v1'],
     'btt-octopus-pro-f446-v1.0': BOARD_DEFS['btt-octopus-f446-v1'],
+    'btt-octopus-pro-h723-v1.1': BOARD_DEFS['btt-octopus-pro-h723-v1'],
     'btt-skr-pro-v1.1': BOARD_DEFS['btt-skr-pro'],
     'btt-skr-pro-v1.2': BOARD_DEFS['btt-skr-pro'],
     'btt-gtr-v1': BOARD_DEFS['btt-gtr'],
