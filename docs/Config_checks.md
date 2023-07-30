@@ -15,10 +15,7 @@ config file is successfully loaded.
 ## Verify temperature
 
 Start by verifying that temperatures are being properly reported.
-Navigate to the Octoprint temperature tab.
-
-![octoprint-temperature](img/octoprint-temperature.png)
-
+Navigate to the temperature graph section in the user interface.
 Verify that the temperature of the nozzle and bed (if applicable) are
 present and not increasing. If it is increasing, remove power from the
 printer. If the temperatures are not accurate, review the
@@ -26,28 +23,25 @@ printer. If the temperatures are not accurate, review the
 
 ## Verify M112
 
-Navigate to the Octoprint terminal tab and issue an M112 command in
-the terminal box. This command requests Klipper to go into a
-"shutdown" state. It will cause Octoprint to disconnect from Klipper -
-navigate to the Connection area and click on "Connect" to cause
-Octoprint to reconnect. Then navigate to the Octoprint temperature tab
-and verify that temperatures continue to update and the temperatures
-are not increasing. If temperatures are increasing, remove power from
-the printer.
-
-The M112 command causes Klipper to go into a "shutdown" state. To
-clear this state, issue a FIRMWARE_RESTART command in the Octoprint
-terminal tab.
+Navigate to the command console and issue an M112
+command in the terminal box. This command requests Klipper to go into a
+"shutdown" state. It will cause an error to show,
+which can be cleared with a FIRMWARE_RESTART command in the
+command console. Octoprint will also require a reconnect. Then navigate
+to the temperature graph section and verify that temperatures continue
+to update and the temperatures are not increasing.
+If temperatures are increasing, remove power from the printer.
 
 ## Verify heaters
 
-Navigate to the Octoprint temperature tab and type in 50 followed by
-enter in the "Tool" temperature box. The extruder temperature in the
-graph should start to increase (within about 30 seconds or so). Then
-go to the "Tool" temperature drop-down box and select "Off". After
-several minutes the temperature should start to return to its initial
-room temperature value. If the temperature does not increase then
-verify the "heater_pin" setting in the config.
+Navigate to the temperature graph section and type in 50 followed by
+enter in the extruder/tool temperature box.
+The extruder temperature in the graph should start to increase
+(within about 30 seconds or so). Then go to the extruder temperature
+drop-down box and select "Off". After several minutes the temperature
+should start to return to its initial room temperature value. If the
+temperature does not increase then verify the "heater_pin" setting
+in the config.
 
 If the printer has a heated bed then perform the above test again with
 the bed.
@@ -60,21 +54,20 @@ the motors. If any of the axes still can not move freely, then verify
 the stepper "enable_pin" configuration for the given axis. On most
 commodity stepper motor drivers, the motor enable pin is "active low"
 and therefore the enable pin should have a "!" before the pin (for
-example, "enable_pin: !ar38").
+example, "enable_pin: !PA1").
 
 ## Verify endstops
 
 Manually move all the printer axes so that none of them are in contact
-with an endstop. Send a QUERY_ENDSTOPS command via the Octoprint
-terminal tab. It should respond with the current state of all of the
-configured endstops and they should all report a state of "open". For
-each of the endstops, rerun the QUERY_ENDSTOPS command while manually
-triggering the endstop. The QUERY_ENDSTOPS command should report the
-endstop as "TRIGGERED".
+with an endstop. Send a QUERY_ENDSTOPS command via the command console.
+It should respond with the current state of all of the configured endstops
+and they should all report a state of "open". For each of the endstops,
+rerun the QUERY_ENDSTOPS command while manually triggering the endstop.
+The QUERY_ENDSTOPS command should report the endstop as "TRIGGERED".
 
 If the endstop appears inverted (it reports "open" when triggered and
 vice-versa) then add a "!" to the pin definition (for example,
-"endstop_pin: ^!ar3"), or remove the "!" if there is already one
+"endstop_pin: ^PA2"), or remove the "!" if there is already one
 present.
 
 If the endstop does not change at all then it generally indicates that
@@ -87,12 +80,13 @@ resistor and the '^' should be present).
 
 Use the STEPPER_BUZZ command to verify the connectivity of each
 stepper motor. Start by manually positioning the given axis to a
-midway point and then run `STEPPER_BUZZ STEPPER=stepper_x`. The
-STEPPER_BUZZ command will cause the given stepper to move one
-millimeter in a positive direction and then it will return to its
-starting position. (If the endstop is defined at position_endstop=0
-then at the start of each movement the stepper will move away from the
-endstop.) It will perform this oscillation ten times.
+midway point and then run `STEPPER_BUZZ STEPPER=stepper_x` in the
+command console. The STEPPER_BUZZ command will cause the given
+stepper to move one millimeter in a positive direction and then it
+will return to its starting position. (If the endstop is defined at
+position_endstop=0 then at the start of each movement the stepper
+will move away from the endstop.) It will perform this oscillation
+ten times.
 
 If the stepper does not move at all, then verify the "enable_pin" and
 "step_pin" settings for the stepper. If the stepper motor moves but
@@ -119,11 +113,11 @@ Rerun the endstop and stepper motor verification steps if necessary.
 ## Verify extruder motor
 
 To test the extruder motor it will be necessary to heat the extruder
-to a printing temperature. Navigate to the Octoprint temperature tab
+to a printing temperature. Navigate to the temperature graph section
 and select a target temperature from the temperature drop-down box (or
 manually enter an appropriate temperature). Wait for the printer to
-reach the desired temperature. Then navigate to the Octoprint control
-tab and click the "Extrude" button. Verify that the extruder motor
+reach the desired temperature. Then navigate to the command console and
+click the "Extrude" button. Verify that the extruder motor
 turns in the correct direction. If it does not, see the
 troubleshooting tips in the previous section to confirm the
 "enable_pin", "step_pin", and "dir_pin" settings for the extruder.
@@ -137,8 +131,8 @@ necessary to calibrate the PID settings on each printer (PID settings
 found in other firmwares or in the example configuration files often
 work poorly).
 
-To calibrate the extruder, navigate to the OctoPrint terminal tab and
-run the PID_CALIBRATE command. For example: `PID_CALIBRATE
+To calibrate the extruder, navigate to the command console
+and run the PID_CALIBRATE command. For example: `PID_CALIBRATE
 HEATER=extruder TARGET=170`
 
 At the completion of the tuning test run `SAVE_CONFIG` to update the
