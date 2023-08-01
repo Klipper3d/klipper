@@ -2296,6 +2296,8 @@ object:</p>
 <li><code>error</code>: Returns True if the most recent <code>SCREWS_TILT_CALCULATE</code>
   command included the <code>MAX_DEVIATION</code> parameter and any of the probed
   screw points exceeded the specified <code>MAX_DEVIATION</code>.</li>
+<li><code>max_deviation</code>: Return the last <code>MAX_DEVIATION</code> value of the most
+  recent <code>SCREWS_TILT_CALCULATE</code> command.</li>
 <li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
 <li><code>z</code>: The measured Z height of the screw location.</li>
 <li><code>sign</code>: A string specifying the direction to turn to screw for the
