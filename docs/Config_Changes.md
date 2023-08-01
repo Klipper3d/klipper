@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20230729: The exported status for `dual_carriage` is changed. Instead of
+exporting `mode` and `active_carriage`, the individual modes for each
+carriage are exported as `printer.dual_carriage.carriage_0` and
+`printer.dual_carriage.carriage_1`.
+
 20230619: The `relative_reference_index` option has been deprecated
 and superceded by the `zero_reference_position` option.  Refer to the
 [Bed Mesh Documentation](./Bed_Mesh.md#the-deprecated-relative_reference_index)
