@@ -427,8 +427,9 @@ The following information is available in
 [bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
 [htu21d config_section_name](Config_Reference.md#htu21d-sensor),
 [lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
-and
 [temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
+and
+[temperature_combined config_section_name](Config_Reference.md#combined-temperature-sensor)
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`, `pressure`, `gas`: The last read values from the sensor

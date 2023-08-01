@@ -2583,6 +2583,24 @@ serial_no:
 #   The micro-controller to read from. Must be the host_mcu
 ```
 
+### Combined temperature sensor
+
+Combined temperature sensor is a virtual temperature sensor based on several other sensors. This sensor can be used with extruders, heater_generic and heater beds.
+
+```
+sensor_type: temperature_combined
+#sensor_list:
+#   Must be provided. List of sensors to combine to new "virtual"
+#   sensor.
+#   E.g. 'temperature_sensor sensor1,extruder,heater_bed'
+#combination_method:
+#   Must be provided. Combination method used for the sensor.
+#   Available options are 'max', 'min', 'mean'.
+#maximum_deviation:
+#   Must be provided. Maximum permissible deviation between the sensors
+#   to combine (e.g. 5 degrees). To disable it, use a large value (e.g. 999.9)
+```
+
 ## Fans
 
 ### [fan]
