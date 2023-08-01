@@ -2413,11 +2413,12 @@ objects (eg, <code>[tmc2208 stepper_x]</code>):</p>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
 <p>The following information is available in
 <a href="Config_Reference.html#dual_carriage">dual_carriage</a>
-on a hybrid_corexy or hybrid_corexz robot</p>
+on a cartesian, hybrid_corexy or hybrid_corexz robot</p>
 <ul>
-<li><code>mode</code>: The current mode. Possible values are: "FULL_CONTROL"</li>
-<li><code>active_carriage</code>: The current active carriage.
-Possible values are: "CARRIAGE_0", "CARRIAGE_1"</li>
+<li><code>carriage_0</code>: The mode of the carriage 0. Possible values are:
+  "INACTIVE" and "PRIMARY".</li>
+<li><code>carriage_1</code>: The mode of the carriage 1. Possible values are:
+  "INACTIVE", "PRIMARY", "COPY", and "MIRROR".</li>
 </ul>
 <h2 id="virtual_sdcard">virtual_sdcard<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the

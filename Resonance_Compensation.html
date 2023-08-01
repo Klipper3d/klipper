@@ -1910,17 +1910,33 @@ good idea to check and re-measure the ringing frequencies as described in
 <a href="#ringing-frequency">Ringing frequency</a> section and update your config file
 if necessary.</p>
 <h3 id="is-dual-carriage-setup-supported-with-input-shapers">Is dual carriage setup supported with input shapers?<a class="headerlink" href="#is-dual-carriage-setup-supported-with-input-shapers" title="Permanent link">&para;</a></h3>
-<p>There is no dedicated support for dual carriages with input shapers, but it does
-not mean this setup will not work. One should run the tuning twice for each
-of the carriages, and calculate the ringing frequencies for X and Y axes for
-each of the carriages independently. Then put the values for carriage 0 into
-[input_shaper] section, and change the values on the fly when changing
-carriages, e.g. as a part of some macro:</p>
-<div class="highlight"><pre><span></span><code>SET_DUAL_CARRIAGE CARRIAGE=1
-SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
+<p>Yes. In this case, one should measure the resonances twice for each carriage.
+For example, if the second (dual) carriage is installed on X axis, it is
+possible to set different input shapers for X axis for the primary and dual
+carriages. However, the input shaper for Y axis should be the same for both
+carriages (as ultimately this axis is driven by one or more stepper motors each
+commanded to perform exactly the same steps). One possibility to configure
+the input shaper for such setups is to keep <code>[input_shaper]</code> section empty and
+additionally define a <code>[delayed_gcode]</code> section in the <code>printer.cfg</code> as follows:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+# Intentionally empty
+
+[delayed_gcode init_shaper]
+initial_duration: 0.1
+gcode:
+  SET_DUAL_CARRIAGE CARRIAGE=1
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;dual_carriage_shaper&gt; SHAPER_FREQ_X=&lt;dual_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
+  SET_DUAL_CARRIAGE CARRIAGE=0
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_shaper&gt; SHAPER_FREQ_X=&lt;primary_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
 </code></pre></div>
 
-<p>And similarly when switching back to carriage 0.</p>
+<p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both
+commands. It is also possible to put a similar snippet into the start g-code
+in the slicer, however then the shaper will not be enabled until any print
+is started.</p>
+<p>Note that the input shaper only needs to be configured once. Subsequent changes
+of the carriages or their modes via <code>SET_DUAL_CARRIAGE</code> command will preserve
+the configured input shaper parameters.</p>
 <h3 id="does-input_shaper-affect-print-time">Does input_shaper affect print time?<a class="headerlink" href="#does-input_shaper-affect-print-time" title="Permanent link">&para;</a></h3>
 <p>No, <code>input_shaper</code> feature has pretty much no impact on the print times by
 itself. However, the value of <code>max_accel</code> certainly does (tuning of this

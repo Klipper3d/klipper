@@ -1309,6 +1309,10 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20230729: The exported status for <code>dual_carriage</code> is changed. Instead of
+exporting <code>mode</code> and <code>active_carriage</code>, the individual modes for each
+carriage are exported as <code>printer.dual_carriage.carriage_0</code> and
+<code>printer.dual_carriage.carriage_1</code>.</p>
 <p>20230619: The <code>relative_reference_index</code> option has been deprecated
 and superceded by the <code>zero_reference_position</code> option.  Refer to the
 <a href="Bed_Mesh.html#the-deprecated-relative_reference_index">Bed Mesh Documentation</a>
