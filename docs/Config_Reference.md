@@ -2616,15 +2616,14 @@ Print cooling fan.
 pin:
 #   Output pin controlling the fan. This parameter must be provided.
 #max_power: 1.0
-#   The maximum power (expressed as a value from 0.0 to 1.0) that the
-#   pin may be set to. The value 1.0 allows the pin to be set fully
-#   enabled for extended periods, while a value of 0.5 would allow the
-#   pin to be enabled for no more than half the time. This setting may
-#   be used to limit the total power output (over extended periods) to
-#   the fan. If this value is less than 1.0 then fan speed requests
-#   will be scaled between zero and max_power (for example, if
-#   max_power is .9 and a fan speed of 80% is requested then the fan
-#   power will be set to 72%). The default is 1.0.
+#   The maximum power (0.0 to 1.0) that the pin may be set to. A value
+#   of 1.0 enables the pin fully for extended periods, while 0.5 allows
+#   it for no more than half the time. Use it to limit total power output
+#   (over extended periods) to the fan. This value is combined with
+#   min_power to scale fan speed. With `min_power` at 0.3 and
+#   `max_power` at 1.0, fan speed request scales between 0.3 (min_power)
+#   and 1.0 (max_power). Requesting 10% fan speed results in a value of
+#   0.37. Default is 1.0.
 #shutdown_speed: 0
 #   The desired fan speed (expressed as a value from 0.0 to 1.0) if
 #   the micro-controller software enters an error state. The default
@@ -2644,18 +2643,14 @@ pin:
 #   Time (in seconds) to run the fan at full speed when either first
 #   enabling or increasing it by more than 50% (helps get the fan
 #   spinning). The default is 0.100 seconds.
-#off_below: 0.0
-#   The minimum input speed which will power the fan (expressed as a
-#   value from 0.0 to 1.0). When a speed lower than off_below is
-#   requested the fan will instead be turned off. This setting may be
-#   used to prevent fan stalls and to ensure kick starts are
-#   effective. The default is 0.0.
+#min_power: 0.0
+#   The minimum input power which will power the fan (expressed as a
+#   value from 0.0 to 1.0). The default is 0.0.
 #
-#   This setting should be recalibrated whenever max_power is adjusted.
-#   To calibrate this setting, start with off_below set to 0.0 and the
-#   fan spinning. Gradually lower the fan speed to determine the lowest
+#   To calibrate this setting, start with min_power=0 and max_power=1
+#   Gradually lower the fan speed to determine the lowest
 #   input speed which reliably drives the fan without stalls. Set
-#   off_below to the duty cycle corresponding to this value (for
+#   min_power to the duty cycle corresponding to this value (for
 #   example, 12% -> 0.12) or slightly higher.
 #tachometer_pin:
 #   Tachometer input pin for monitoring fan speed. A pullup is generally
@@ -2693,7 +2688,7 @@ a shutdown_speed equal to max_power.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
-#off_below:
+#min_power:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
@@ -2730,7 +2725,7 @@ watched component.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
-#off_below:
+#min_power:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
@@ -2776,7 +2771,7 @@ information.
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
-#off_below:
+#min_power:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
@@ -2834,7 +2829,7 @@ with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 #cycle_time:
 #hardware_pwm:
 #kick_start_time:
-#off_below:
+#min_power:
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
