@@ -1168,6 +1168,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#combined-temperature-sensor" class="md-nav__link">
+    Combined temperature sensor
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3134,6 +3141,13 @@
           <li class="md-nav__item">
   <a href="#ds18b20-temperature-sensor" class="md-nav__link">
     DS18B20 temperature sensor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined-temperature-sensor" class="md-nav__link">
+    Combined temperature sensor
   </a>
   
 </li>
@@ -5953,6 +5967,21 @@ serial_no:
 #   Interval in seconds between readings. Default is 3.0, with a minimum of 1.0
 #sensor_mcu:
 #   The micro-controller to read from. Must be the host_mcu
+</code></pre></div>
+
+<h3 id="combined-temperature-sensor">Combined temperature sensor<a class="headerlink" href="#combined-temperature-sensor" title="Permanent link">&para;</a></h3>
+<p>Combined temperature sensor is a virtual temperature sensor based on several other sensors. This sensor can be used with extruders, heater_generic and heater beds.</p>
+<div class="highlight"><pre><span></span><code>sensor_type: temperature_combined
+#sensor_list:
+#   Must be provided. List of sensors to combine to new &quot;virtual&quot;
+#   sensor.
+#   E.g. &#39;temperature_sensor sensor1,extruder,heater_bed&#39;
+#combination_method:
+#   Must be provided. Combination method used for the sensor.
+#   Available options are &#39;max&#39;, &#39;min&#39;, &#39;mean&#39;.
+#maximum_deviation:
+#   Must be provided. Maximum permissible deviation between the sensors
+#   to combine (e.g. 5 degrees). To disable it, use a large value (e.g. 999.9)
 </code></pre></div>
 
 <h2 id="fans">Fans<a class="headerlink" href="#fans" title="Permanent link">&para;</a></h2>
