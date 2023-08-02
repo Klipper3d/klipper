@@ -261,8 +261,8 @@ DECL_COMMAND(command_finalize_config, "finalize_config crc=%u");
 void
 config_reset(uint32_t *args)
 {
-    if (! sched_is_shutdown())
-        shutdown("config_reset only available when shutdown");
+    // if (! sched_is_shutdown())
+    //     shutdown("config_reset only available when shutdown");
     irq_disable();
     config_crc = 0;
     oid_count = 0;
