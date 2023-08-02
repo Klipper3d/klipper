@@ -161,7 +161,7 @@ class DualCarriages:
         saved_state = self.saved_states.get(state_name)
         if saved_state is None:
             raise gcmd.error("Unknown DUAL_CARRIAGE state: %s" % (state_name,))
-        move_speed = gcmd.get('MOVE_SPEED', 0., above=0.)
+        move_speed = gcmd.get_float('MOVE_SPEED', 0., above=0.)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
         pos = toolhead.get_position()
