@@ -125,6 +125,9 @@ class TMCErrorCheck:
         # Setup for temperature query
         self.adc_temp = None
         self.adc_temp_reg = self.fields.lookup_register("adc_temp")
+        if self.adc_temp_reg is not None:
+            pheaters = self.printer.load_object(config, 'heaters')
+            pheaters.register_monitor(config)
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         cleared_flags = 0

@@ -101,6 +101,7 @@ nav:
       - Manual_Level.md
       - Bed_Mesh.md
       - Endstop_Phase.md
+      - Axis_Twist_Compensation.md
     - Resonance Compensation:
       - Resonance_Compensation.md
       - Measuring_Resonances.md
