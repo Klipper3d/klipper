@@ -65,7 +65,13 @@ class DualCarriages:
         kin.update_limits(self.axis, target_dc.get_rail().get_range())
     def home(self, homing_state):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for i, dc_rail in enumerate(self.dc):
+        enumerated_dcs = list(enumerate(self.dc))
+        if (self.get_dc_order(0, 1) > 0) != \
+                self.dc[0].get_rail().get_homing_info().positive_dir:
+            # The second carriage must home first, because the carriages home in
+            # the same direction and the first carriage homes on the second one
+            enumerated_dcs.reverse()
+        for i, dc_rail in enumerated_dcs:
             self.toggle_active_dc_rail(i, override_rail=True)
             kin.home_axis(homing_state, self.axis, dc_rail.get_rail())
         # Restore the original rails ordering
@@ -88,7 +94,7 @@ class DualCarriages:
             range_max = min(range_max,
                             axes_pos[0] - axes_pos[1] + dc1_rail.position_max)
         elif mode == MIRROR:
-            if dc0_rail.get_homing_info().positive_dir:
+            if self.get_dc_order(0, 1) > 0:
                 range_min = max(range_min,
                                 0.5 * (sum(axes_pos) + safe_dist))
                 range_max = min(range_max,
@@ -105,11 +111,28 @@ class DualCarriages:
             if active_idx:
                 range_min = dc1_rail.position_min
                 range_max = dc1_rail.position_max
-            if self.dc[active_idx].get_rail().get_homing_info().positive_dir:
+            if self.get_dc_order(active_idx, inactive_idx) > 0:
                 range_min = max(range_min, axes_pos[inactive_idx] + safe_dist)
             else:
                 range_max = min(range_max, axes_pos[inactive_idx] - safe_dist)
         return (range_min, range_max)
+    def get_dc_order(self, first, second):
+        if first == second:
+            return 0
+        # Check the relative order of the first and second carriages and
+        # return -1 if the first carriage position is always smaller
+        # than the second one and 1 otherwise
+        first_rail = self.dc[first].get_rail()
+        second_rail = self.dc[second].get_rail()
+        first_homing_info = first_rail.get_homing_info()
+        second_homing_info = second_rail.get_homing_info()
+        if first_homing_info.positive_dir != second_homing_info.positive_dir:
+            # Carriages home away from each other
+            return 1 if first_homing_info.positive_dir else -1
+        # Carriages home in the same direction
+        if first_rail.position_endstop > second_rail.position_endstop:
+            return 1
+        return -1
     def activate_dc_mode(self, index, mode):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
