@@ -6,7 +6,7 @@
 
 class PrintStats:
     def __init__(self, config):
-        printer = config.get_printer()
+        printer = self.printer = config.get_printer()
         self.gcode_move = printer.load_object(config, 'gcode_move')
         self.reactor = printer.get_reactor()
         self.reset()
@@ -37,6 +37,7 @@ class PrintStats:
         gc_status = self.gcode_move.get_status(curtime)
         self.last_epos = gc_status['position'].e
         self.state = "printing"
+        self.printer.send_event("print_stats:start_printing")
         self.error_message = ""
     def note_pause(self):
         if self.last_pause_time is None:
@@ -46,12 +47,15 @@ class PrintStats:
             self._update_filament_usage(curtime)
         if self.state != "error":
             self.state = "paused"
+            self.printer.send_event("print_stats:paused_printing")
     def note_complete(self):
         self._note_finish("complete")
+        self.printer.send_event("print_stats:complete_printing")
     def note_error(self, message):
         self._note_finish("error", message)
     def note_cancel(self):
         self._note_finish("cancelled")
+        self.printer.send_event("print_stats:cancelled_printing")
     def _note_finish(self, state, error_message = ""):
         if self.print_start_time is None:
             return
