@@ -25,7 +25,7 @@ install_packages()
 
     # Install desired packages
      report_status "Installing packages..."
-     sudo pacman -S ${PKGLIST}
+     sudo pacman --needed -S ${PKGLIST}
      $AURCLIENT build ${AURLIST}
 }
 
