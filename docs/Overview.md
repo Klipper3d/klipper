@@ -35,6 +35,8 @@ communication with the Klipper developers.
     locations.
   - [Endstop phase](Endstop_Phase.md): Stepper assisted Z endstop
     positioning.
+  - [Axis Twist Compensation](Axis_Twist_Compensation.md): A tool to compensate
+    for inaccurate probe readings due to twist in X gantry.
 - [Resonance compensation](Resonance_Compensation.md): A tool to
   reduce ringing in prints.
   - [Measuring resonances](Measuring_Resonances.md): Information on

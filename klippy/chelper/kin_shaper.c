@@ -204,11 +204,11 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sp = axis == 'x' ? &is->sx : &is->sy;
     int status = 0;
-    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y))
+    // Ignore input shaper update if the axis is not active
+    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y)) {
         status = init_shaper(n, a, t, sp);
-    else
-        sp->num_pulses = 0;
-    shaper_note_generation_time(is);
+        shaper_note_generation_time(is);
+    }
     return status;
 }
 
