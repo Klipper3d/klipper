@@ -491,10 +491,10 @@ reduce stringing during travel moves (non-extrusion) from one part of the
 print to another. Note that pressure advance should be properly configured
 before retraction parameters are tuned to ensure optimal results.
 - `G10`: Retracts the filament using the currently configured
-  parameters. If z_hop_height is set to a value greater cero,
+  parameters. If z_hop_height is set to a value greater zero,
   besides retracting the filament, the nozzle is lifted by set value.
 - `G11`: Unretracts the filament using the currently configured
-  parameters. If z_hop_height is set to a value greater cero,
+  parameters. If z_hop_height is set to a value greater zero,
   besides unretracting the filament, the nozzle is lowered back on the print
   with a vertical movement.
 

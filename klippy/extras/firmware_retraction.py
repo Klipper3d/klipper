@@ -3,6 +3,7 @@
 #   - Standard zhop (vertical move up, travel, vertical move down)
 #
 # Copyright (C) 2023  Florian-Patrice Nagel <flopana77@gmail.com>
+# Copyright (C) 2019  Len Trigg <lenbok@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -191,7 +192,7 @@ class FirmwareRetraction:
         zhop_gcode = ""                                 # Reset zhop move string
 
         if self.retract_length == 0.0:          # Check if FW retraction enabled
-            gcmd.respond_info('Retraction length cero. Firmware retraction \
+            gcmd.respond_info('Retraction length zero. Firmware retraction \
                 disabled. Command ignored!')
         elif not self.is_retracted:  # If filament isn't retracted, build G-Code
             # Incl move command if z_hop_height > 0
@@ -245,7 +246,7 @@ class FirmwareRetraction:
         unzhop_gcode = ""                            # Reset un-zhop move string
 
         if self.retract_length == 0.0:          # Check if FW retraction enabled
-            gcmd.respond_info('Retraction length cero. Firmware retraction \
+            gcmd.respond_info('Retraction length zero. Firmware retraction \
                 disabled. Command ignored!')
         elif self.is_retracted:             # Check if the filament is retracted
             if self.z_hop_height > 0.0:
