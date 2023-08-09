@@ -3,7 +3,7 @@
 
 PYTHONDIR="${HOME}/klippy-env"
 SYSTEMDDIR="/etc/systemd/system"
-AURCLIENT="pamac"
+TMPDIR="/tmp"
 KLIPPER_USER=$USER
 KLIPPER_GROUP=$KLIPPER_USER
 
@@ -19,17 +19,31 @@ install_packages()
     # AVR chip installation and building
     PKGLIST="${PKGLIST} avrdude avr-gcc avr-binutils avr-libc"
     # ARM chip installation and building
-    AURLIST="stm32flash"
     PKGLIST="${PKGLIST} arm-none-eabi-newlib"
     PKGLIST="${PKGLIST} arm-none-eabi-gcc arm-none-eabi-binutils"
 
     # Install desired packages
      report_status "Installing packages..."
      sudo pacman --needed -S ${PKGLIST}
-     $AURCLIENT build ${AURLIST}
 }
 
-# Step 2: Create python virtual environment
+# Step 2: Install aur packages
+install_aur_packages()
+{
+     # AUR Package Array, separate by space
+     AURLIST=("stm32flash")
+
+     report_status "Installing AUR packages..."
+     for PKG in ${AURLIST[@]}; do
+        git clone https://aur.archlinux.org/${PKG}.git ${TMPDIR}/${PKG}
+        cd ${TMPDIR}/${PKG}
+        makepkg
+        sudo pacman -U ${PKG}-*.pkg.tar.zst
+        rm -rf ${TMPDIR}/${PKG}
+     done
+}
+
+# Step 3: Create python virtual environment
 create_virtualenv()
 {
     report_status "Updating python virtual environment..."
@@ -41,7 +55,7 @@ create_virtualenv()
     ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
 }
 
-# Step 3: Install startup script
+# Step 4: Install startup script
 install_script()
 {
 # Create systemd service file
@@ -67,7 +81,7 @@ EOF
     report_status "Make sure to add $KLIPPER_USER to the user group controlling your serial printer port"
 }
 
-# Step 4: Start host software
+# Step 5: Start host software
 start_software()
 {
     report_status "Launching Klipper host software..."
@@ -97,6 +111,7 @@ SRCDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 # Run installation steps defined above
 verify_ready
 install_packages
+install_aur_packages()
 create_virtualenv
 install_script
 start_software
