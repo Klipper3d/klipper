@@ -3,7 +3,7 @@ name: Build test
 on:
   pull_request_review:
     types: [submitted]
-  
+
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -34,11 +34,11 @@ jobs:
 
       - name: Prepare tests
         if: steps.should_test.outputs.run_test == 'true'
-        run: ./scripts/ci-install.sh
+        run: docker build -t klipper-build -f scripts/Dockerfile-build .
 
       - name: Test
         if: steps.should_test.outputs.run_test == 'true'
-        run: ./scripts/ci-build.sh 2>&1
+        run: docker run klipper-build "./scripts/ci-build.sh" 2>&1
 
       - name: Upload micro-controller data dictionaries
         if: steps.should_test.outputs.run_test == 'true'
