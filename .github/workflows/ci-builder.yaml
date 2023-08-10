@@ -1,0 +1,22 @@
+name: Klipper Container Build and Push
+
+on: workflow_dispatch
+
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build
+        run: docker build -f scripts/Dockerfile-build -t ${{ secrets.DOCKERHUB_USERNAME }}/klipper-build:latest .
+
+      - name: Push
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/klipper-build:latest
