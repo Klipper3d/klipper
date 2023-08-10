@@ -100,6 +100,10 @@ config WANT_SENSORS
     bool
     depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
     default y
+config WANT_LIS2DW
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
 config WANT_SOFTWARE_I2C
     bool
     depends on HAVE_GPIO && HAVE_GPIO_I2C
@@ -119,6 +123,9 @@ config WANT_DISPLAYS
 config WANT_SENSORS
     bool "Support external sensor devices"
     depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+config WANT_LIS2DW
+    bool "Support lis2dw 3-axis accelerometer"
+    depends on HAVE_GPIO_SPI
 config WANT_SOFTWARE_I2C
     bool "Support software based I2C \"bit-banging\""
     depends on HAVE_GPIO && HAVE_GPIO_I2C
