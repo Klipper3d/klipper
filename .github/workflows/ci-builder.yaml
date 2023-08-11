@@ -1,6 +1,8 @@
 name: Klipper Container Build and Push
 
-on: workflow_dispatch
+on:
+  schedule:
+    - cron: "0 0 * * 0" # at 00.00 on Sunday
 
 jobs:
   login:

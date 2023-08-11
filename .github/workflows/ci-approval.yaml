@@ -10,12 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup cache
-        uses: actions/cache@v2
-        with:
-          path: ci_cache
-          key: ${{ runner.os }}-build-${{ hashFiles('scripts/ci-install.sh') }}
-
       - uses: dorny/paths-filter@v2
         id: changes
         with:
@@ -31,14 +25,9 @@ jobs:
         run: |
           echo "::set-output name=run_test::true"
 
-
-      - name: Prepare tests
-        if: steps.should_test.outputs.run_test == 'true'
-        run: docker build -t klipper-build -f scripts/Dockerfile-build .
-
       - name: Test
         if: steps.should_test.outputs.run_test == 'true'
-        run: docker run klipper-build "./scripts/ci-build.sh" 2>&1
+        run: docker run ${{ secrets.DOCKERHUB_USERNAME }}/klipper-build:latest "./scripts/ci-build.sh" 2>&1
 
       - name: Upload micro-controller data dictionaries
         if: steps.should_test.outputs.run_test == 'true'
