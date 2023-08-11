@@ -14,19 +14,23 @@ class Fan:
         self.last_fan_value = 0.0
         self.last_fan_time = 0.0
         # Read config
-        self.kick_start_time = config.getfloat('kick_start_time', 0.1,
-                                               minval=0.)
-        self.min_power = config.getfloat('min_power', default=0.,
-                                         minval=0., maxval=1.)
-        self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
+        self.kick_start_time = config.getfloat(
+            "kick_start_time", 0.1, minval=0.0
+        )
+        self.min_power = config.getfloat(
+            "min_power", default=0.0, minval=0.0, maxval=1.0
+        )
+        self.max_power = config.getfloat(
+            "max_power", 1.0, above=0.0, maxval=1.0
+        )
         if self.min_power > self.max_power:
             raise config.error(
                 "min_power=%f can't be larger than max_power=%f"
                 % (self.min_power, self.max_power)
             )
 
-        cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
-        hardware_pwm = config.getboolean('hardware_pwm', False)
+        cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
+        hardware_pwm = config.getboolean("hardware_pwm", False)
         shutdown_speed = config.getfloat(
             "shutdown_speed", default_shutdown_speed, minval=0.0, maxval=1.0
         )
@@ -60,8 +64,9 @@ class Fan:
             return
         if value > 0:
             # Scale value between min_power and max_power
-            pwm_value =\
+            pwm_value = (
                 value * (self.max_power - self.min_power) + self.min_power
+            )
             pwm_value = max(self.min_power, min(self.max_power, pwm_value))
         else:
             pwm_value = 0
