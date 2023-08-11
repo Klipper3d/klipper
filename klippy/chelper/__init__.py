@@ -37,6 +37,7 @@ SOURCE_FILES = [
     "kin_winch.c",
     "kin_extruder.c",
     "kin_shaper.c",
+    "kin_idex.c",
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -122,7 +123,6 @@ defs_trapq = """
 
 defs_kin_cartesian = """
     struct stepper_kinematics *cartesian_stepper_alloc(char axis);
-    struct stepper_kinematics *cartesian_reverse_stepper_alloc(char axis);
 """
 
 defs_kin_corexy = """
@@ -172,6 +172,14 @@ defs_kin_shaper = """
     int input_shaper_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * input_shaper_alloc(void);
+"""
+
+defs_kin_idex = """
+    void dual_carriage_set_sk(struct stepper_kinematics *sk
+        , struct stepper_kinematics *orig_sk);
+    int dual_carriage_set_transform(struct stepper_kinematics *sk
+        , char axis, double scale, double offs);
+    struct stepper_kinematics * dual_carriage_alloc(void);
 """
 
 defs_serialqueue = """
@@ -245,6 +253,7 @@ defs_all = [
     defs_kin_winch,
     defs_kin_extruder,
     defs_kin_shaper,
+    defs_kin_idex,
 ]
 
 # Update filenames to an absolute path

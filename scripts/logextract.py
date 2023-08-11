@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Script to extract config and shutdown information file a klippy.log file
 #
 # Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, re, collections, ast
+import sys, re, collections, ast, itertools
 
 
 def format_comment(line_num, line):
@@ -46,9 +46,10 @@ class GatherConfig:
             self.comments.append(comment)
 
     def write_file(self):
-        f = open(self.filename, "wb")
-        f.write("\n".join(self.comments + self.config_lines).strip() + "\n")
-        f.close()
+        lines = itertools.chain(self.comments, self.config_lines)
+        lines = ("%s\n" % l for l in lines)
+        with open(self.filename, "wt") as f:
+            f.writelines(lines)
 
 
 ######################################################################
@@ -113,7 +114,7 @@ class TMCUartHelper:
             return
         # Convert data into a long integer for easy manipulation
         mval = pos = 0
-        for d in bytearray(data):
+        for d in data:
             mval |= d << pos
             pos += 8
         # Extract register value
@@ -131,7 +132,7 @@ class TMCUartHelper:
             return
         # Convert data into a long integer for easy manipulation
         mval = pos = 0
-        for d in bytearray(data):
+        for d in data:
             mval |= d << pos
             pos += 8
         # Extract register value
@@ -275,7 +276,7 @@ clock_s = r"(?P<clock>[0-9]+)"
 repl_clock_r = re.compile(r"clock=" + clock_s)
 repl_uart_r = re.compile(
     r"tmcuart_(?:response|send) oid=[0-9]+"
-    + r" (?:read|write)=(?P<msg>(?:'[^']*'"
+    + r" (?:read|write)=b?(?P<msg>(?:'[^']*'"
     + r'|"[^"]*"))'
 )
 
@@ -308,7 +309,8 @@ class MCUStream:
         line = repl_clock_r.sub(clock_update, line)
 
         def uart_update(m):
-            msg = TMCUartHelper().parse_msg(ast.literal_eval(m.group("msg")))
+            msg = ast.literal_eval("b" + m.group("msg"))
+            msg = TMCUartHelper().parse_msg(msg)
             return m.group(0).rstrip() + msg
 
         line = repl_uart_r.sub(uart_update, line)
@@ -464,10 +466,9 @@ class GCodeStream:
     def get_lines(self):
         # Produce output gcode stream
         if self.gcode_stream:
-            data = [ast.literal_eval(gc) for gc in self.gcode_commands]
-            f = open(self.gcode_filename, "wb")
-            f.write(self.gcode_state + "".join(data))
-            f.close()
+            data = (ast.literal_eval(gc) for gc in self.gcode_commands)
+            with open(self.gcode_filename, "wt") as f:
+                f.write(self.gcode_state + "".join(data))
         return self.gcode_stream
 
 
@@ -607,8 +608,13 @@ class StatsStream:
             if info[0] is not None and info[0] >= min_stream_ts - 5.0:
                 del self.stats_stream[:i]
                 break
+        # Find the first stats timestamp
+        last_ts = min_stream_ts
+        for ts, line_num, line in self.stats_stream:
+            if ts is not None:
+                last_ts = ts
+                break
         # Improve accuracy of stats timestamps
-        last_ts = self.stats_stream[0][0]
         for i, (ts, line_num, line) in enumerate(self.stats_stream):
             if ts is not None:
                 last_ts = self.check_stats_seq(ts, line)
@@ -675,10 +681,10 @@ class GatherShutdown:
         # Produce output sorted by timestamp
         out = [i for s in streams for i in s]
         out.sort()
-        out = [i[2] for i in out]
-        f = open(self.filename, "wb")
-        f.write("\n".join(self.comments + out))
-        f.close()
+        lines = itertools.chain(self.comments, (i[2] for i in out))
+        lines = ("%s\n" % l for l in lines)
+        with open(self.filename, "wt") as f:
+            f.writelines(lines)
 
 
 ######################################################################
@@ -693,29 +699,31 @@ def main():
     handler = None
     recent_lines = collections.deque([], 200)
     # Parse log file
-    f = open(logname, "rb")
-    for line_num, line in enumerate(f):
-        line = line.rstrip()
-        line_num += 1
-        recent_lines.append((line_num, line))
-        if handler is not None:
-            ret = handler.add_line(line_num, line)
-            if ret:
-                continue
-            recent_lines.clear()
-            handler = None
-        if line.startswith("Git version"):
-            last_git = format_comment(line_num, line)
-        elif line.startswith("Start printer at"):
-            last_start = format_comment(line_num, line)
-        elif line == "===== Config file =====":
-            handler = GatherConfig(configs, line_num, recent_lines, logname)
-            handler.add_comment(last_git)
-            handler.add_comment(last_start)
-        elif "shutdown: " in line or line.startswith("Dumping "):
-            handler = GatherShutdown(configs, line_num, recent_lines, logname)
-            handler.add_comment(last_git)
-            handler.add_comment(last_start)
+    with open(logname, "rt") as f:
+        for line_num, line in enumerate(f):
+            line = line.rstrip()
+            line_num += 1
+            recent_lines.append((line_num, line))
+            if handler is not None:
+                ret = handler.add_line(line_num, line)
+                if ret:
+                    continue
+                recent_lines.clear()
+                handler = None
+            if line.startswith("Git version"):
+                last_git = format_comment(line_num, line)
+            elif line.startswith("Start printer at"):
+                last_start = format_comment(line_num, line)
+            elif line == "===== Config file =====":
+                handler = GatherConfig(configs, line_num, recent_lines, logname)
+                handler.add_comment(last_git)
+                handler.add_comment(last_start)
+            elif "shutdown: " in line or line.startswith("Dumping "):
+                handler = GatherShutdown(
+                    configs, line_num, recent_lines, logname
+                )
+                handler.add_comment(last_git)
+                handler.add_comment(last_start)
     if handler is not None:
         handler.finalize()
     # Write found config files

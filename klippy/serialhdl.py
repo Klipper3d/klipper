@@ -157,7 +157,7 @@ class SerialReader:
                     bustype="socketcan",
                 )
                 bus.send(set_id_msg)
-            except can.CanError as e:
+            except (can.CanError, os.error) as e:
                 logging.warn(
                     "%sUnable to open CAN port: %s", self.warn_prefix, e
                 )

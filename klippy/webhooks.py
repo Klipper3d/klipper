@@ -391,6 +391,9 @@ class WebHooks:
             "hostname": socket.gethostname(),
             "klipper_path": klipper_path,
             "python_path": sys.executable,
+            "process_id": os.getpid(),
+            "user_id": os.getuid(),
+            "group_id": os.getgid(),
         }
         start_args = self.printer.get_start_args()
         for sa in ["log_file", "config_file", "software_version", "cpu_info"]:

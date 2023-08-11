@@ -64,36 +64,9 @@ BOARD_DEFS = {
         "mcu": "stm32f446xx",
         "spi_bus": "spi1",
         "cs_pin": "PA4",
-    },
-    "btt-gtr": {"mcu": "stm32f407xx", "spi_bus": "spi1", "cs_pin": "PA4"},
-    "fysetc-spider": {
-        "mcu": "stm32f446xx",
-        "spi_bus": "spi1",
-        "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN",
     },
-    "btt-skr-3": {
-        "mcu": "stm32h743xx",
-        "spi_bus": "swspi",
-        "spi_pins": "PC8,PD2,PC12",
-        "cs_pin": "PC11",
-        "skip_verify": True,
-    },
-    "creality-v4.2.2": {
-        "mcu": "stm32f103xe",
-        "spi_bus": "swspi",
-        "spi_pins": "PC8,PD2,PC12",
-        "cs_pin": "PC11",
-        "skip_verify": True,
-    },
-    "monster8": {"mcu": "stm32f407xx", "spi_bus": "spi3a", "cs_pin": "PC9"},
-    "fly-gemini-v2": {"mcu": "stm32f405xx", "spi_bus": "spi1", "cs_pin": "PA4"},
-    "fysetc-cheetah": {
-        "mcu": "stm32f401xc",
-        "spi_bus": "spi1",
-        "cs_pin": "PA4",
-        "current_firmware_path": "OLD.BIN",
-    },
+    "btt-skrat": {"mcu": "stm32g0b1xx", "spi_bus": "spi1", "cs_pin": "PB8"},
 }
 
 ###########################################################
@@ -140,6 +113,7 @@ BOARD_ALIASES = {
     "fysetc-s6-v1.2": BOARD_DEFS["fysetc-spider"],
     "fysetc-s6-v2": BOARD_DEFS["fysetc-spider"],
     "robin_v3": BOARD_DEFS["monster8"],
+    "btt-skrat-v1.0": BOARD_DEFS["btt-skrat"],
 }
 
 

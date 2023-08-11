@@ -36,6 +36,8 @@ class ScrewsTiltAdjust:
             "CCW-M4": 3,
             "CW-M5": 4,
             "CCW-M5": 5,
+            "CW-M6": 6,
+            "CCW-M6": 7,
         }
         self.thread = config.getchoice(
             "screw_thread", self.threads, default="CW-M3"
@@ -75,13 +77,27 @@ class ScrewsTiltAdjust:
         self.probe_helper.start_probe(gcmd)
 
     def get_status(self, eventtime):
-        return {"error": self.max_diff_error, "results": self.results}
+        return {
+            "error": self.max_diff_error,
+            "max_deviation": self.max_diff,
+            "results": self.results,
+        }
 
     def probe_finalize(self, offsets, positions):
         self.results = {}
         self.max_diff_error = False
-        # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5 and CCW-M5
-        threads_factor = {0: 0.5, 1: 0.5, 2: 0.7, 3: 0.7, 4: 0.8, 5: 0.8}
+        # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5, CCW-M5, CW-M6
+        # and CCW-M6
+        threads_factor = {
+            0: 0.5,
+            1: 0.5,
+            2: 0.7,
+            3: 0.7,
+            4: 0.8,
+            5: 0.8,
+            6: 1.0,
+            7: 1.0,
+        }
         is_clockwise_thread = (self.thread & 1) == 0
         screw_diff = []
         # Process the read Z values
