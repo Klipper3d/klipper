@@ -1588,16 +1588,27 @@ dtoverlay=pwm,pin=12,func=4
 </code></pre></div>
 
 <p>This example enables only PWM0 and routes it to gpio12. If both PWM
-channels need to be enabled you can use <code>pwm-2chan</code>.</p>
-<p>The overlay does not expose the pwm line on sysfs on boot and needs to
-be exported by echo'ing the number of the pwm channel to
-<code>/sys/class/pwm/pwmchip0/export</code>:</p>
-<div class="highlight"><pre><span></span><code>echo 0 &gt; /sys/class/pwm/pwmchip0/export
+channels need to be enabled you can use <code>pwm-2chan</code>:</p>
+<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interface
+dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 </code></pre></div>
 
-<p>This will create device <code>/sys/class/pwm/pwmchip0/pwm0</code> in the
+<p>This example additionaly enables PWM1 and routes it to gpio13.</p>
+<p>The overlay does not expose the pwm line on sysfs on boot and needs to
+be exported by echo'ing the number of the pwm channel to
+<code>/sys/class/pwm/pwmchip0/export</code>. This will create device <code>/sys/class/pwm/pwmchip0/pwm0</code> in the
 filesystem. The easiest way to do this is by adding this to
-<code>/etc/rc.local</code> before the <code>exit 0</code> line.</p>
+<code>/etc/rc.local</code> before the <code>exit 0</code> line:</p>
+<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interface
+echo 0 &gt; /sys/class/pwm/pwmchip0/export
+</code></pre></div>
+
+<p>When using both PWM channels, the number of the second channel needs to be echo'd as well:</p>
+<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interface
+echo 0 &gt; /sys/class/pwm/pwmchip0/export
+echo 1 &gt; /sys/class/pwm/pwmchip0/export
+</code></pre></div>
+
 <p>With the sysfs in place, you can now use either the pwm channel(s) by
 adding the following piece of configuration to your <code>printer.cfg</code>:</p>
 <div class="highlight"><pre><span></span><code>[output_pin caselight]
@@ -1605,10 +1616,18 @@ pin: host:pwmchip0/pwm0
 pwm: True
 hardware_pwm: True
 cycle_time: 0.000001
+
+[output_pin beeper]
+pin: host:pwmchip0/pwm1
+pwm: True
+hardware_pwm: True
+value: 0
+shutdown_value: 0
+cycle_time: 0.0005
 </code></pre></div>
 
-<p>This will add hardware pwm control to gpio12 on the Pi (because the
-overlay was configured to route pwm0 to pin=12).</p>
+<p>This will add hardware pwm control to gpio12 and gpio13 on the Pi (because the
+overlay was configured to route pwm0 to pin=12 and pwm1 to pin=13).</p>
 <p>PWM0 can be routed to gpio12 and gpio18, PWM1 can be routed to gpio13
 and gpio19:</p>
 <table>
