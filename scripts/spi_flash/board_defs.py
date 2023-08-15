@@ -166,6 +166,7 @@ BOARD_ALIASES = {
     'btt-octopus-f446-v1.1': BOARD_DEFS['btt-octopus-f446-v1'],
     'btt-octopus-pro-f429-v1.0': BOARD_DEFS['btt-octopus-f429-v1'],
     'btt-octopus-pro-f446-v1.0': BOARD_DEFS['btt-octopus-f446-v1'],
+    'btt-octopus-pro-h723-v1.1': BOARD_DEFS['btt-skr-3-h723'],
     'btt-skr-pro-v1.1': BOARD_DEFS['btt-skr-pro'],
     'btt-skr-pro-v1.2': BOARD_DEFS['btt-skr-pro'],
     'btt-gtr-v1': BOARD_DEFS['btt-gtr'],
