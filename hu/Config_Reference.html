@@ -1099,8 +1099,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#kozvetlenul-csatlakoztatott-pt1000-erzekelo" class="md-nav__link">
-    Közvetlenül csatlakoztatott PT1000 érzékelő
+  <a href="#kozvetlenul-csatlakozo-pt1000-erzekelo" class="md-nav__link">
+    Közvetlenül csatlakozó PT1000 érzékelő
   </a>
   
 </li>
@@ -3062,8 +3062,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#kozvetlenul-csatlakoztatott-pt1000-erzekelo" class="md-nav__link">
-    Közvetlenül csatlakoztatott PT1000 érzékelő
+  <a href="#kozvetlenul-csatlakozo-pt1000-erzekelo" class="md-nav__link">
+    Közvetlenül csatlakozó PT1000 érzékelő
   </a>
   
 </li>
@@ -5371,7 +5371,7 @@ extruder:
 </code></pre></div>
 
 <h3 id="thermistor">[thermistor]<a class="headerlink" href="#thermistor" title="Permanent link">&para;</a></h3>
-<p>Egyéni termisztorok (tetszőleges számú szakasz definiálható "termisztor" előtaggal). Egyéni termisztor használható a fűtőberendezés konfigurációs szakaszának sensor_type mezőjében. (Ha például egy "[thermistor my_thermistor]" szekciót definiálunk, akkor a fűtőelem definiálásakor használhatjuk a "sensor_type: my_thermistor" mezőt.) Ügyelj arra, hogy a termisztor szekciót a konfigurációs fájlban az első fűtőszekcióban való használata fölé helyezd.</p>
+<p>Egyéni termisztorok (tetszőleges számú szakasz definiálható "thermistor" előtaggal). Egyéni termisztor használható a fűtőberendezés konfigurációs szakaszának sensor_type mezőjében. (Ha például egy "[thermistor my_thermistor]" szekciót definiálunk, akkor a fűtőelem definiálásakor használhatjuk a "sensor_type: my_thermistor" mezőt.) Ügyelj arra, hogy a termisztor szekciót a konfigurációs fájlban az első fűtőszekcióban való használata fölé helyezd.</p>
 <div class="highlight"><pre><span></span><code>[thermistor my_thermistor]
 #temperature1:
 #resistance1:
@@ -5455,7 +5455,7 @@ extruder:
 <h2 id="homerseklet-erzekelok">Hőmérséklet-érzékelők<a class="headerlink" href="#homerseklet-erzekelok" title="Permanent link">&para;</a></h2>
 <p>A Klipper számos típusú hőmérséklet-érzékelő definícióját tartalmazza. Ezek az érzékelők bármely olyan konfigurációs szakaszban használhatók, amely hőmérséklet-érzékelőt igényel (például az <code>[extruder]</code> vagy a <code>[heater_bed]</code> szakaszban).</p>
 <h3 id="kozos-termisztorok">Közös termisztorok<a class="headerlink" href="#kozos-termisztorok" title="Permanent link">&para;</a></h3>
-<p>Közönséges termisztorok. A következő paraméterek állnak rendelkezésre azokban a fűtőszakaszban, amelyek ezen érzékelők valamelyikét használják.</p>
+<p>Közönséges termisztorok. A következő paraméterek állnak rendelkezésre azokban a fűtőszakaszokban, amelyek ezen érzékelők valamelyikét használják.</p>
 <div class="highlight"><pre><span></span><code>sensor_type:
 #   Az egyik &quot;EPCOS 100K B57560G104F&quot;, &quot;ATC Semitec 104GT-2&quot;,
 #   &quot;ATC Semitec 104NT-4-R025H42G&quot;, &quot;Generic 3950&quot;,
@@ -5488,7 +5488,7 @@ sensor_pin:
 #   Az ADC feszültség eltolása (V-ban). Az alapértelmezett érték 0.
 </code></pre></div>
 
-<h3 id="kozvetlenul-csatlakoztatott-pt1000-erzekelo">Közvetlenül csatlakoztatott PT1000 érzékelő<a class="headerlink" href="#kozvetlenul-csatlakoztatott-pt1000-erzekelo" title="Permanent link">&para;</a></h3>
+<h3 id="kozvetlenul-csatlakozo-pt1000-erzekelo">Közvetlenül csatlakozó PT1000 érzékelő<a class="headerlink" href="#kozvetlenul-csatlakozo-pt1000-erzekelo" title="Permanent link">&para;</a></h3>
 <p>Közvetlenül csatlakoztatott PT1000 érzékelő. A következő paraméterek állnak rendelkezésre azokban a fűtési szakaszokban, amelyek valamelyik érzékelőt használják.</p>
 <div class="highlight"><pre><span></span><code>sensor_type: PT1000
 sensor_pin:

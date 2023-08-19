@@ -1472,34 +1472,34 @@
 <h1 id="_1">版本发布<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>Klipper版本发布。如何安装Klipper ，请查看<a href="Installation.html">installation</a>。</p>
 <h2 id="klipper-0110">Klipper 0.11.0<a class="headerlink" href="#klipper-0110" title="Permanent link">&para;</a></h2>
-<p>Available on 20221128. Major changes in this release:</p>
+<p>发布于2022年11月28日。此版本的主要更新：</p>
 <ul>
-<li>Trinamic stepper motor driver "step on both edges" optimization.</li>
-<li>Support for Python3. The Klipper host code will run with either Python2 or Python3.</li>
-<li>Enhanced CAN bus support. Support for CAN bus on rp2040, stm32g0, stm32h7, same51, and same54 chips. Support for "USB to CAN bus bridge" mode.</li>
-<li>Support for CanBoot bootloader.</li>
-<li>Support for mpu9250 and mpu6050 accelerometers.</li>
-<li>Improved error handling for max31856, max31855, max31865, and max6675 temperature sensors.</li>
+<li>优化了Trinamic驱动的 "step on both edges"功能。</li>
+<li>添加对Python3的支持。现在Klipper Host 的代码可以运行在Python2 或 Python3中。</li>
+<li>改进了CAN Bus 支持。在rp2040 stm32g0 stm32h7 same51 以及 same54 芯片上支持了CAN Bus。并支持了"USB to CAN bus bridge" 模式。</li>
+<li>添加了对CanBoot bootloader的支持。</li>
+<li>添加了对mpu9250以及mpu6050 加速度计的支持。</li>
+<li>改进了对温度传感器max31856 max31855 max31865 max6675的错误处理。</li>
 <li>It is now possible to configure LEDs to update during long running G-Code commands using LED "template" support.</li>
-<li>Several micro-controller improvements. New support for stm32h743, stm32h750, stm32l412, stm32g0b1, same70, same51, and same54 chips. Support for i2c reads on atsamd and stm32f0. Hardware pwm support on stm32. Linux mcu signal based event dispatch. New rp2040 support for "make flash", i2c, and rp2040-e5 USB errata.</li>
+<li>多项微控制器改进。 新增对 stm32h743 stm32h750 stm32l412 stm32g0b1 same70 same51 same54 芯片的支持。在 atsamd 和 stm32f0 上支持 i2c 读取。在 stm32 上支持硬件 pwm。基于 Linux mcu 信号的事件分派。 新的 rp2040 支持 "make flash" i2c 以及 rp2040-e5 USB 勘误。</li>
 <li>New modules added: angle, dac084S085, exclude_object, led, mpu9250, pca9632, smart_effector, z_thermal_adjust. New deltesian kinematics added. New dump_mcu tool added.</li>
 <li>几个错误的修复和代码的清理。</li>
 </ul>
 <h2 id="klipper-0100">Klipper 0.10.0<a class="headerlink" href="#klipper-0100" title="Permanent link">&para;</a></h2>
-<p>Available on 20210929. Major changes in this release:</p>
+<p>发布于2021年9月29日。此版本主要更新：</p>
 <ul>
-<li>Support for "Multi-MCU Homing". It is now possible for a stepper motor and its endstop to be wired to separate micro-controllers. This simplifies wiring of Z probes on "toolhead boards".</li>
-<li>Klipper now has a <a href="https://discord.klipper3d.org">Community Discord Server</a> and a <a href="https://community.klipper3d.org">Community Discourse Server</a>.</li>
-<li>The <a href="https://www.klipper3d.org">Klipper website</a> now uses the "mkdocs" infrastructure. There is also a <a href="https://github.com/Klipper3d/klipper-translations">Klipper Translations</a> project.</li>
-<li>Automated support for flashing firmware via sdcard on many boards.</li>
-<li>New kinematic support for "Hybrid CoreXY" and "Hybrid CoreXZ" printers.</li>
-<li>Klipper now uses <code>rotation_distance</code> to configure stepper motor travel distances.</li>
-<li>The main Klipper host code can now directly communicate with micro-controllers using CAN bus.</li>
-<li>New "motion analysis" system. Klipper's internal motion updates and sensor results can be tracked and logged for analysis.</li>
-<li>Trinamic stepper motor drivers are now continuously monitored for error conditions.</li>
-<li>Support for the rp2040 micro-controller (Raspberry Pi Pico boards).</li>
-<li>The "make menuconfig" system now utilizes kconfiglib.</li>
-<li>Many additional modules added: ds18b20, duplicate_pin_override, filament_motion_sensor, palette2, motion_report, pca9533, pulse_counter, save_variables, sdcard_loop, temperature_host, temperature_mcu</li>
+<li>支持“多微控制器归位”。现在可以将步进电机和限位连接到单独的微控制器上。此举简化了“工具板”上的Z探头的接线。</li>
+<li>klipper 现在有<a href="https://discord.klipper3d.org">社区Discord 服务器</a>和<a href="https://community.klipper3d.org">社区论坛</a>.</li>
+<li><a href="https://www.klipper3d.org">Klipper官网</a>现在使用“mkdocs”基础架构。还有一个<a href="https://github.com/Klipper3d/klipper-translations">翻译Klipper</a>项目。</li>
+<li>在许多开发板上通过sdcard自动更新固件。</li>
+<li>添加了新的运动学"Hybrid CoreXY"和"Hybrid CoreXZ"的打印机支持。</li>
+<li>Klipper 现在使用<code>rotation_distance</code>来配置步进电机的行程距离。</li>
+<li>Klipper上位机现在可以使用CAN总线与微控制器进行通信。</li>
+<li>新的“运动分析”系统。可以追踪和记录Klipper内部的运动更新和传感器结果以供分析。</li>
+<li>Trinamic步进电机驱动现在可以连续监控错误情况。</li>
+<li>添加了对RP2040 MCU的支持（Raspberry Pi Pico）。</li>
+<li>"make menuconfig"系统现在使用 kconfiglib。</li>
+<li>添加了许多附加模块：ds18b20, duplicate_pin_override, filament_motion_sensor, palette2, motion_report, pca9533, pulse_counter, save_variables, sdcard_loop, temperature_host, temperature_mcu</li>
 <li>几个错误的修复和代码的清理。</li>
 </ul>
 <h2 id="klipper-090">Klipper 0.9.0<a class="headerlink" href="#klipper-090" title="Permanent link">&para;</a></h2>
@@ -1566,7 +1566,7 @@
 <li>几个新模块：temperature_fan, sx1509, force_move, mcp4451, z_tilt, quad_gantry_level, endstop_phase, bltouch</li>
 <li>添加了几个新命令：SAVE_CONFIG、SET_PRESSURE_ADVANCE、SET_GCODE_OFFSET、SET_VELOCITY_LIMIT、STEPPER_BUZZ、TURN_OFF_HEATERS、M204、自定义G代码宏</li>
 <li>扩展 LCD 显示支持：<ul>
-<li>Support for run-time menus</li>
+<li>支持实时菜单</li>
 <li>新的显示屏图标</li>
 <li>对“uc1701”和“ssd1306”显示器的支持</li>
 </ul>
@@ -1591,73 +1591,73 @@
 <li>初步支持对三角洲的自动参数校准（通过一个新的delta_calibrate命令）</li>
 <li>最初支持打印床倾斜补偿（通过bed_tilt_calibrate命令）</li>
 <li>初步支持 "安全归位 "和归位重写</li>
-<li>Initial support for displaying status on RepRapDiscount style 2004 and 12864 displays</li>
-<li>New multi-extruder improvements:<ul>
-<li>Support for shared heaters</li>
-<li>Initial support for dual carriages</li>
+<li>初步支持在RepRapDiscount 样式的2004和12864屏幕上显示状态（STATUS）</li>
+<li>全新多挤出机改进：<ul>
+<li>支持共享加热头（二合一或者多合一模式）</li>
+<li>对于双步进模式的初步支持</li>
 </ul>
 </li>
-<li>Support for configuring multiple steppers per axis (eg, dual Z)</li>
-<li>Support for custom digital and pwm output pins (with a new SET_PIN command)</li>
-<li>Initial support for a "virtual sdcard" that allows printing directly from Klipper (helps on machines too slow to run OctoPrint well)</li>
-<li>Support for setting different arm lengths on each tower of a delta</li>
-<li>Support for G-Code M220/M221 commands (speed factor override / extrude factor override)</li>
-<li>Several documentation updates:<ul>
+<li>支持为每个轴配置多个步进电机（例如：双Z）</li>
+<li>支持自定义数字和PWM输出引脚（使用新的 SET_PIN 命令）</li>
+<li>初步支持Klipper从“虚拟SDCard”直接开始打印（有助于在由于机器速度太慢而无法运行OctoPrint的情况）</li>
+<li>支持在三角洲机型上每个柱上设置不同的打印臂长度</li>
+<li>支持 G-Code M220/M221 指令（运行速度系数/运行挤出系数）</li>
+<li>几个文档更新：<ul>
 <li>为常见的商品打印机提供了许多新的配置文件范例</li>
-<li>New multiple MCU config example</li>
-<li>New bltouch sensor config example</li>
-<li>New FAQ, config check, and G-Code documents</li>
+<li>新增多微控制器配置示例</li>
+<li>新增bltouch传感器配置示例</li>
+<li>新的常见问题，配置检查和G-Code文档</li>
 </ul>
 </li>
-<li>Initial support for continuous integration testing on all github commits</li>
+<li>初步支持所有github提交的持续集成测试</li>
 <li>修复了几个错误并整理了代码</li>
 </ul>
 <h2 id="klipper-050">Klipper 0.5.0<a class="headerlink" href="#klipper-050" title="Permanent link">&para;</a></h2>
-<p>Available on 20171025. Major changes in this release:</p>
+<p>发布于2017年10月25日。此版本的主要更新：</p>
 <ul>
-<li>Support for printers with multiple extruders.</li>
-<li>Initial support for running on the Beaglebone PRU. Initial support for the Replicape board.</li>
-<li>Initial support for running the micro-controller code in a real-time Linux process.</li>
-<li>Support for multiple micro-controllers. (For example, one could control an extruder with one micro-controller and the rest of the printer with another.) Software clock synchronization is implemented to coordinate actions between micro-controllers.</li>
-<li>Stepper performance improvements (20Mhz AVRs up to 189K steps per second).</li>
-<li>Support for controlling servos and support for defining nozzle cooling fans.</li>
+<li>支持拥有多个挤出机的打印机。</li>
+<li>初步支持在Beaglebone 可编程实时单元上运行。初步支持其复制板。</li>
+<li>初步支持在实时Linux进程中运行微控制器代码。</li>
+<li>支持多个微控制器。（例如，可以在一个微控制器控制挤出机，而用另外一个微控制器控制打印机的其他部分）实现软件时钟同步用来协调微控制器之间的动作。</li>
+<li>步进器性能提升（20Mhz AVR单片机可提升至每秒189千步）。</li>
+<li>支持控制舵机，支持自定义喷嘴冷却风扇。</li>
 <li>修复了几个错误并整理了代码</li>
 </ul>
 <h2 id="klipper-040">Klipper 0.4.0<a class="headerlink" href="#klipper-040" title="Permanent link">&para;</a></h2>
-<p>Available on 20170503. Major changes in this release:</p>
+<p>发布于2017年5月3日。此版本主要更新：</p>
 <ul>
-<li>Improved installation on Raspberry Pi machines. Most of the install is now scripted.</li>
-<li>Support for corexy kinematics</li>
-<li>Documentation updates: New Kinematics document, new Pressure Advance tuning guide, new example config files, and more</li>
-<li>Stepper performance improvements (20Mhz AVRs over 175K steps per second, Arduino Due over 460K)</li>
-<li>Support for automatic micro-controller resets. Support for resets via toggling USB power on Raspberry Pi.</li>
-<li>The pressure advance algorithm now works with look-ahead to reduce pressure changes during cornering.</li>
-<li>Support for limiting the top speed of short zigzag moves</li>
-<li>Support for AD595 sensors</li>
+<li>改进树莓派机器上的安装。现在大部分安装都是脚本化方式执行。</li>
+<li>支持CoreXY运动学机型</li>
+<li>文档更新：全新运动学文档，全新压力提前调整指南，全新示例配置文件等</li>
+<li>步进器性能改进（20Mhz的AVR单片机每秒超过175千步，Arduino Due超过460千步）</li>
+<li>支持自动微控制器复位。支持在树莓派上切换USB电源进行重置。</li>
+<li>压力提前算法现在与前瞻（look-ahead）算法一起使用，以减少转弯过程中的压力变化。</li>
+<li>支持限制短之字形移动的最高速度</li>
+<li>支持了AD595 传感器</li>
 <li>修复了几个错误并整理了代码</li>
 </ul>
 <h2 id="klipper-030">Klipper 0.3.0<a class="headerlink" href="#klipper-030" title="Permanent link">&para;</a></h2>
-<p>Available on 20161223. Major changes in this release:</p>
+<p>发布于2016年12月23日。此版本的主要更新：</p>
 <ul>
-<li>Improved documentation</li>
-<li>Support for robots with delta kinematics</li>
-<li>Support for Arduino Due micro-controller (ARM cortex-M3)</li>
-<li>Support for USB based AVR micro-controllers</li>
-<li>Support for "pressure advance" algorithm - it reduces ooze during prints.</li>
-<li>New "stepper phased based endstop" feature - enables higher precision on endstop homing.</li>
-<li>Support for "extended g-code" commands such as "help", "restart", and "status".</li>
-<li>Support for reloading the Klipper config and restarting the host software by issuing a "restart" command from the terminal.</li>
-<li>Stepper performance improvements (20Mhz AVRs up to 158K steps per second).</li>
-<li>Improved error reporting. Most errors now shown via the terminal along with help on how to resolve.</li>
+<li>改进文档</li>
+<li>支持delta运动学的机器</li>
+<li>添加了Arduino Due MCU (ARM cortex-M3)的支持</li>
+<li>添加了对USB based 的AVR MCU 支持</li>
+<li>添加了对"pressure advance"算法的支持 - 以减少打印过程中的溢出。</li>
+<li>添加了"stepper phased based endstop"特性 - 以获得更高的限位精度。</li>
+<li>添加了对"extended g-code"的支持，例如"help" "restart"和 "status"。</li>
+<li>支持重新加载 Klipper 配置，并通过终端发出 "restart"命令重启主机软件。</li>
+<li>步进电机性能提升（20Mhz AVRs 可以到达158K steps 每秒）。</li>
+<li>改善了报错。绝大多数错误会在终端中显示并且有解决方法。</li>
 <li>修复了几个错误并整理了代码</li>
 </ul>
 <h2 id="klipper-020">Klipper 0.2.0<a class="headerlink" href="#klipper-020" title="Permanent link">&para;</a></h2>
-<p>Initial release of Klipper. Available on 20160525. Major features available in the initial release include:</p>
+<p>Klipper的最初版本。发布于2016年5月25日。初始版本中提供的主要功能包括：</p>
 <ul>
-<li>Basic support for cartesian printers (steppers, extruder, heated bed, cooling fan).</li>
-<li>Support for common g-code commands. Support for interfacing with OctoPrint.</li>
-<li>Acceleration and lookahead handling</li>
-<li>Support for AVR micro-controllers via standard serial ports</li>
+<li>对于笛卡尔打印机（步进电机、挤出机、热床、冷却风扇）的初步支持。</li>
+<li>支持常见的G-Code命令。支持OctoPrint的接口。</li>
+<li>加速和前瞻处理</li>
+<li>通过标准串行接口支持AVR微控制器</li>
 </ul>
 
               

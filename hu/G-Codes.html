@@ -4440,7 +4440,7 @@
 <h4 id="accelerometer_debug_read">ACCELEROMETER_DEBUG_READ<a class="headerlink" href="#accelerometer_debug_read" title="Permanent link">&para;</a></h4>
 <p><code>ACCELEROMETER_DEBUG_READ [CHIP=&lt;config_name&gt;] REG=&lt;register&gt;</code>: lekérdezi az ADXL345 "register" (pl. 44 vagy 0x2C) regiszterét. Hasznos lehet hibakeresési célokra.</p>
 <h4 id="accelerometer_debug_write">ACCELEROMETER_DEBUG_WRITE<a class="headerlink" href="#accelerometer_debug_write" title="Permanent link">&para;</a></h4>
-<p><code>ACCELEROMETER_DEBUG_WRITE [CHIP=&lt;config_name&gt;] REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Nyers "érték" írása a "register"-be. Mind az "érték", mind a "register" lehet decimális vagy hexadecimális egész szám. Használd óvatosan, és hivatkozzon az ADXL345 adatlapjára.</p>
+<p><code>ACCELEROMETER_DEBUG_WRITE [CHIP=&lt;config_name&gt;] REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Nyers "érték" írása a "register"-be. Mind az "érték", mind a "register" lehet decimális vagy hexadecimális egész szám. Használd óvatosan, és hivatkozz az ADXL345 adatlapjára.</p>
 <h3 id="angle">[angle]<a class="headerlink" href="#angle" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha az <a href="Config_Reference.html#angle">szög konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="angle_calibrate">ANGLE_CALIBRATE<a class="headerlink" href="#angle_calibrate" title="Permanent link">&para;</a></h4>
@@ -4450,7 +4450,7 @@
 <h4 id="angle_debug_write">ANGLE_DEBUG_WRITE<a class="headerlink" href="#angle_debug_write" title="Permanent link">&para;</a></h4>
 <p><code>ANGLE_DEBUG_WRITE CHIP=&lt;config_name&gt; REG=&lt;register&gt; VAL=&lt;value&gt;</code>: Nyers "érték" írása a "register" regiszterébe. Mind az "érték", mind a "regiszter" lehet decimális vagy hexadecimális egész szám. Használd óvatosan, és hivatkozzon az érzékelő adatlapjára. Ez csak a TLE5012B chipek esetében érhető el.</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
-<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_mesh">bed_mesh konfigurációs szakasz</a> engedélyezve van (lásd még az <a href="Bed_Mesh.html">tárgyasztal háló útmutatót</a>).</p>
+<p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_mesh">bed_mesh konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Bed_Mesh.html">tárgyasztal háló útmutatót</a>).</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: Ez a parancs a konfigban megadott paraméterek által meghatározott generált pontok segítségével szondázza az ágyat. A szondázás után egy háló generálódik, és a Z elmozdulás a hálónak megfelelően kerül beállításra. Az opcionális szondázási paraméterekkel kapcsolatos részletekért lásd a PROBE parancsot. Ha a METHOD=manual parancsot adtad meg, akkor a kézi szondázó eszköz aktiválódik - az eszköz aktiválása közben elérhető további parancsok részleteit lásd a fenti MANUAL_PROBE parancsban. Az opcionális <code>HORIZONTAL_MOVE_Z</code> érték felülírja a konfigurációs fájlban megadott <code>horizontal_move_z</code> opciót.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>

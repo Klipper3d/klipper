@@ -1010,8 +1010,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    订阅
+  <a href="#subscriptions" class="md-nav__link">
+    订阅（Subscriptions）
   </a>
   
 </li>
@@ -1025,8 +1025,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    信息
+  <a href="#info" class="md-nav__link">
+    info
   </a>
   
 </li>
@@ -1484,8 +1484,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_2" class="md-nav__link">
-    订阅
+  <a href="#subscriptions" class="md-nav__link">
+    订阅（Subscriptions）
   </a>
   
 </li>
@@ -1499,8 +1499,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
-    信息
+  <a href="#info" class="md-nav__link">
+    info
   </a>
   
 </li>
@@ -1684,7 +1684,7 @@
 <p>请求的字典可以包含一个可以是任何 JSON类型的"id"参数。如果"id"存在，那么 Klipper 将用一个包含该"id"的响应信息来回应请求。如果"id"被省略（或设置为 JSON 的 "null" 值），那么 Klipper 将不会对该请求进行任何响应。响应信息是一个 包含 "id" 和 "result"的 JSON 字典。"result"总是一个字典--它的内容是特定于处理请求的"endstop"。</p>
 <p>如果处理的请求造成了错误，则响应消息将包含"error"字段，而不是"result"字段。例如，请求： <code>{"id"： 123， "method"： "gcode/script"， "params"： {"script"： "G1 X200"}}</code> 可能会返回错误响应，例如： <code>{"id"： 123， "error"： {"message"： "Must home axis first： 200.000 0.000 0.000 [0.000]"， "error"： "WebRequestError"}}</code></p>
 <p>Klipper 会按照收到请求的顺序依次处理请求。然而，一些请求可能不会立即完成，这可能会导致相关的响应与其他请求的响应不按顺序发送。一个 JSON 请求永远不会暂停对未来JSON 请求的处理。</p>
-<h2 id="_2">订阅<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h2 id="subscriptions">订阅（Subscriptions）<a class="headerlink" href="#subscriptions" title="Permanent link">&para;</a></h2>
 <p>一些 Klipper 的"endpoint"可以以 "订阅" 的形式接收未来的异步更新消息。</p>
 <p>例如：</p>
 <p><code>{"id": 123, "method": "gcode/subscribe_output", "params": {"response_template":{"key": 345}}}</code></p>
@@ -1695,13 +1695,13 @@
 <p>A subscription request accepts a "response_template" dictionary in the "params" field of the request. That "response_template" dictionary is used as a template for future asynchronous messages - it may contain arbitrary key/value pairs. When sending these future asynchronous messages, Klipper will add a "params" field containing a dictionary with "endpoint" specific contents to the response template and then send that template. If a "response_template" field is not provided then it defaults to an empty dictionary (<code>{}</code>).</p>
 <h2 id="endpoint">可用的"endpoint"<a class="headerlink" href="#endpoint" title="Permanent link">&para;</a></h2>
 <p>By convention, Klipper "endpoints" are of the form <code>&lt;module_name&gt;/&lt;some_name&gt;</code>. When making a request to an "endpoint", the full name must be set in the "method" parameter of the request dictionary (eg, <code>{"method"="gcode/restart"}</code>).</p>
-<h3 id="_3">信息<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<h3 id="info">info<a class="headerlink" href="#info" title="Permanent link">&para;</a></h3>
 <p>“info” 用于从Klipper获取系统和版本信息。同时也被用来向Klipper提供客户端的版本信息。比如说<code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}</code></p>
 <p>If present, the "client_info" parameter must be a dictionary, but that dictionary may have arbitrary contents. Clients are encouraged to provide the name of the client and its software version when first connecting to the Klipper API server.</p>
 <h3 id="emergency_stop">emergency_stop<a class="headerlink" href="#emergency_stop" title="Permanent link">&para;</a></h3>
-<p>The "emergency_stop" endpoint is used to instruct Klipper to transition to a "shutdown" state. It behaves similarly to the G-Code <code>M112</code> command. For example: <code>{"id": 123, "method": "emergency_stop"}</code></p>
+<p>"emergency_stop"端点用于指示 Klipper 过渡到 "shutdown"状态。它的行为类似于 G 代码 "M112 "命令。例如：<code>{"id"： 123, "method"： "emergency_stop"}</code></p>
 <h3 id="register_remote_method">register_remote_method<a class="headerlink" href="#register_remote_method" title="Permanent link">&para;</a></h3>
-<p>This endpoint allows clients to register methods that can be called from klipper. It will return an empty object upon success.</p>
+<p>该端点允许客户端注册可从 klipper 调用的方法。成功后将返回一个空对象。</p>
 <p>For example: <code>{"id": 123, "method": "register_remote_method", "params": {"response_template": {"action": "run_paneldue_beep"}, "remote_method": "paneldue_beep"}}</code> will return: <code>{"id": 123, "result": {}}</code></p>
 <p>The remote method <code>paneldue_beep</code> may now be called from Klipper. Note that if the method takes parameters they should be provided as keyword arguments. Below is an example of how it may called from a gcode_macro:</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro PANELDUE_BEEP]
