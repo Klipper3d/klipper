@@ -31,6 +31,8 @@ jobs:
         exempt-issue-labels: 'enhancement,bug'
         days-before-stale: 35
         days-before-close: 7
+        days-before-pr-stale: -1
+        days-before-pr-close: -1
   # Close tickets marked with "not on github" label
   close_not_on_github:
     if: github.repository == 'Klipper3d/klipper'
