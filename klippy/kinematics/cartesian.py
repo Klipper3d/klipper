@@ -30,7 +30,8 @@ class CartKinematics:
             self.rails[3].setup_itersolve('cartesian_stepper_alloc',
                                           dc_axis.encode())
             dc_rail_0 = idex_modes.DualCarriagesRail(
-                    self.rails[0], axis=self.dual_carriage_axis, active=True)
+                    self.rails[self.dual_carriage_axis],
+                    axis=self.dual_carriage_axis, active=True)
             dc_rail_1 = idex_modes.DualCarriagesRail(
                     self.rails[3], axis=self.dual_carriage_axis, active=False)
             self.dc_module = idex_modes.DualCarriages(

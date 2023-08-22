@@ -16,5 +16,6 @@ src-$(CONFIG_WANT_SOFTWARE_SPI) += spi_software.c
 src-$(CONFIG_WANT_SOFTWARE_I2C) += i2c_software.c
 sensors-src-$(CONFIG_HAVE_GPIO_SPI) := thermocouple.c sensor_adxl345.c \
     sensor_angle.c
+src-$(CONFIG_WANT_LIS2DW) += sensor_lis2dw.c
 sensors-src-$(CONFIG_HAVE_GPIO_I2C) += sensor_mpu9250.c
 src-$(CONFIG_WANT_SENSORS) += $(sensors-src-y)
