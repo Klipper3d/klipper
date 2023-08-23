@@ -8,6 +8,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import probe
+from mcu import MCU_endstop
 from math import sin, cos, atan2, pi, sqrt
 
 PROBE_VERIFY_DELAY         = .1
@@ -27,6 +28,18 @@ state must be specified to prevent unintended behavior.
 
 At least one of the following must be specified:
 'check_open_attach', 'probe_sense_pin', 'dock_sense_pin'
+
+Please see {0}.md and config_Reference.md.
+"""
+
+HINT_VIRTUAL_ENDSTOP_ERROR = """
+{0}: Using a 'probe:z_virtual_endstop' Z endstop is
+incompatible with 'approach_position'/'dock_position'
+containing a Z coordinate.
+
+If the toolhead doesn't need to move in Z to reach the
+dock then no Z coordinate should be specified in
+'approach_position'/'dock_position'.
 
 Please see {0}.md and config_Reference.md.
 """
@@ -279,6 +292,18 @@ class DockableProbe:
 
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
+
+        # If neither position config options contain a Z coordinate return early
+        if len(self.dock_position) <= 2 and len(self.approach_position) <= 2:
+            return
+
+        query_endstops = self.printer.lookup_object('query_endstops')
+        for endstop, name in query_endstops.endstops:
+            if name == 'z':
+                # Check for probe being used as virtual endstop
+                if not isinstance(endstop, MCU_endstop):
+                    raise self.printer.config_error(
+                        HINT_VIRTUAL_ENDSTOP_ERROR.format(self.name))
 
     #######################################################################
     # GCode Commands
