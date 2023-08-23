@@ -20,6 +20,8 @@ class DualCarriages:
         self.dc = (rail_0, rail_1)
         self.saved_states = {}
         safe_dist = dc_config.getfloat('safe_distance', None, minval=0.)
+        invert_axis = dc_config.getboolean('invert_axis', False)
+        self.invert_axis = invert_axis
         if safe_dist is None:
             dc0_rail = rail_0.get_rail()
             dc1_rail = rail_1.get_rail()

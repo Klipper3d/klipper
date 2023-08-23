@@ -12,28 +12,40 @@ class HybridCoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         printer_config = config.getsection('printer')
+
+        dc_config = None
+        invert_axis = False
+        if config.has_section('dual_carriage'):
+            dc_config = config.getsection('dual_carriage')
+            invert_axis = dc_config.getboolean('invert_axis', False)
+
         # itersolve parameters
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
                        stepper.LookupMultiRail(config.getsection('stepper_y')),
                        stepper.LookupMultiRail(config.getsection('stepper_z'))]
         self.rails[1].get_endstops()[0][0].add_stepper(
             self.rails[0].get_steppers()[0])
-        self.rails[0].setup_itersolve('corexy_stepper_alloc', b'-')
+        if invert_axis == False:
+            self.rails[0].setup_itersolve('corexy_stepper_alloc', b'-')
+        else:
+            self.rails[0].setup_itersolve('corexy_stepper_alloc', b'+')
         self.rails[1].setup_itersolve('cartesian_stepper_alloc', b'y')
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
         self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
         self.dc_module = None
-        if config.has_section('dual_carriage'):
-            dc_config = config.getsection('dual_carriage')
+        if dc_config != None:
             # dummy for cartesian config users
             dc_config.getchoice('axis', {'x': 'x'}, default='x')
             # setup second dual carriage rail
             self.rails.append(stepper.PrinterRail(dc_config))
             self.rails[1].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
-            self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
+            if invert_axis == False:
+                self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
+            else:
+                self.rails[3].setup_itersolve('corexy_stepper_alloc', b'-')
             dc_rail_0 = idex_modes.DualCarriagesRail(
                     self.rails[0], axis=0, active=True)
             dc_rail_1 = idex_modes.DualCarriagesRail(
