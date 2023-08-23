@@ -1970,8 +1970,6 @@ detach_position: 0,0,0
 #samples_result:
 #samples_tolerance:
 #samples_tolerance_retries:
-#activate_gcode:
-#deactivate_gcode:
 #   See the "probe" section for information on these parameters.
 ```
 
