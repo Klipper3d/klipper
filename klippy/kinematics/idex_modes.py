@@ -84,9 +84,15 @@ class DualCarriages:
         axes_pos = [dc.get_axis_position(pos) for dc in self.dc]
         dc0_rail = self.dc[0].get_rail()
         dc1_rail = self.dc[1].get_rail()
-        range_min = dc0_rail.position_min
-        range_max = dc0_rail.position_max
+        if mode != PRIMARY or self.dc[0].is_active():
+            range_min = dc0_rail.position_min
+            range_max = dc0_rail.position_max
+        else:
+            range_min = dc1_rail.position_min
+            range_max = dc1_rail.position_max
         safe_dist = self.safe_dist
+        if not safe_dist:
+            return (range_min, range_max)
 
         if mode == COPY:
             range_min = max(range_min,
@@ -108,9 +114,6 @@ class DualCarriages:
             # mode == PRIMARY
             active_idx = 1 if self.dc[1].is_active() else 0
             inactive_idx = 1 - active_idx
-            if active_idx:
-                range_min = dc1_rail.position_min
-                range_max = dc1_rail.position_max
             if self.get_dc_order(active_idx, inactive_idx) > 0:
                 range_min = max(range_min, axes_pos[inactive_idx] + safe_dist)
             else:
