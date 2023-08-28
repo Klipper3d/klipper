@@ -87,6 +87,7 @@ def parse_gcmd_coord(gcmd, name):
 class BedMesh:
     FADE_DISABLE = 0x7FFFFFFF
     def __init__(self, config):
+        self.name = config.get_name()
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
@@ -264,6 +265,13 @@ class BedMesh:
             gcmd.respond_info("Bed has not been probed")
     cmd_BED_MESH_CLEAR_help = "Clear the Mesh so no z-adjustment is made"
     def cmd_BED_MESH_CLEAR(self, gcmd):
+        # Remove the current bed mesh profile from the config file.
+        # We do this because BedMeshCalibrate.probe_finalize() updates
+        # the config file, which can lead to the wrong mesh being saved.
+        profile_name = self.pmgr.get_current_profile()
+        configfile = self.printer.lookup_object('configfile')
+        cfg_name = self.name + " " + profile_name
+        configfile.remove_section(cfg_name)
         self.set_mesh(None)
     cmd_BED_MESH_OFFSET_help = "Add X/Y offsets to the mesh lookup"
     def cmd_BED_MESH_OFFSET(self, gcmd):
