@@ -4030,6 +4030,11 @@ a0_pin:
 #contrast:
 #   The contrast to set. The value may range from 0 to 63 and the
 #   default is 40.
+#x_offset: 0
+#   Set the horizontal offset value on UC1701 displays. The value may
+#   range from 0 to 4 and the default is 0.
+#columns: 128
+#   Set the number of columns on UC1701 displays. The default is 128.
 ...
 ```
 

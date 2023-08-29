@@ -167,7 +167,9 @@ class ResetHelper:
 class UC1701(DisplayBase):
     def __init__(self, config):
         io = SPI4wire(config, "a0_pin")
-        DisplayBase.__init__(self, io)
+        x_offset = config.getint('x_offset', 0, minval=0, maxval=4)
+        columns = config.getint('columns', 128)
+        DisplayBase.__init__(self, io, columns=columns, x_offset=x_offset)
         self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
         self.reset = ResetHelper(config.get("rst_pin", None), io.spi)
     def init(self):
