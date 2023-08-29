@@ -179,6 +179,8 @@ Recv: // rear right screw : y=155.0, y=190.0, z=2.71500 : adjust CCW 00:50
 Recv: // read left screw : x=-5.0, y=190.0, z=2.47250 : adjust CW 00:02
 Recv: ok
 ```
+Counter clockwise:   tighten the screw so that the bed goes down. 
+clockwise:           loosen the screw so that the bed goes up.
 
 This means that:
 - front left screw is the reference point you must not change it.
