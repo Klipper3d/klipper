@@ -2100,7 +2100,7 @@ GND+SCL
 <p>Vedd figyelembe, hogy egy tárgyasztal csúsztatós nyomtatónál 2 rögzítést kell tervezni: egyet a nyomtatófejhez és egyet a tárgyasztalhoz, és a méréseket kétszer kell elvégezni. További részletekért lásd a megfelelő <a href="#bed-slinger-nyomtatok">szakaszt</a>.</p>
 <p><strong>Figyelem:</strong> győződj meg arról, hogy a gyorsulásmérő és a helyére rögzítő csavarok nem érnek a nyomtató fém részeihez. Alapvetően a rögzítést úgy kell kialakítani, hogy biztosítsa a gyorsulásmérő elektromos szigetelését a nyomtató keretétől. Ennek elmulasztása földhurkot hozhat létre a rendszerben, ami károsíthatja az elektronikát.</p>
 <h3 id="szoftver-telepitese">Szoftver telepítése<a class="headerlink" href="#szoftver-telepitese" title="Permanent link">&para;</a></h3>
-<p>Vedd figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először futtassa a Raspberry Pi számítógépén a következő parancsokat:</p>
+<p>Vedd figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először futtasd a Raspberry Pi számítógépen a következő parancsokat:</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
 sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
 </code></pre></div>
@@ -2109,7 +2109,7 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v numpy
 </code></pre></div>
 
-<p>Vedd figyelembe, hogy a CPU teljesítményétől függően ez <em>sok</em> időt vehet igénybe, akár 10-20 percet is. Legyen türelmes, és várja meg a telepítés befejezését. Bizonyos esetekben, ha a kártyán túl kevés RAM van, a telepítés meghiúsulhat, és engedélyeznie kell a swapot.</p>
+<p>Vedd figyelembe, hogy a CPU teljesítményétől függően ez <em>sok</em> időt vehet igénybe, akár 10-20 percet is. Legyél türelmes, és várd meg a telepítés befejezését. Bizonyos esetekben, ha a kártyán túl kevés RAM van, a telepítés meghiúsulhat, és engedélyezned kell a swapot.</p>
 <h4 id="adxl345-konfiguralasa-rpi-vel">ADXL345 konfigurálása RPi-vel<a class="headerlink" href="#adxl345-konfiguralasa-rpi-vel" title="Permanent link">&para;</a></h4>
 <p>First, check and follow the instructions in the <a href="RPi_microcontroller.html">RPi Microcontroller document</a> to setup the "linux mcu" on the Raspberry Pi. This will configure a second Klipper instance that runs on your Pi.</p>
 <p>Győződjünk meg róla, hogy a Linux SPI-illesztőprogram engedélyezve van a <code>sudo raspi-config</code> futtatásával és az SPI engedélyezésével az "Interfacing options" menüben.</p>
@@ -2180,7 +2180,7 @@ i2c_bus: i2c.1
 [resonance_tester]
 accel_chip: mpu9250
 probe_points:
-    100, 100, 20  # an example
+    100, 100, 20  # egy példa
 </code></pre></div>
 
 <h4 id="configure-mpu-9520-compatibles-with-pico">Configure MPU-9520 Compatibles With Pico<a class="headerlink" href="#configure-mpu-9520-compatibles-with-pico" title="Permanent link">&para;</a></h4>
@@ -2247,7 +2247,7 @@ probe_points: ...
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=Y
 </code></pre></div>
 
-<p>Ez 2 CSV fájlt fog létrehozni (<code>/tmp/resonances_x_*.csv</code> és <code>/tmp/resonances_y_*.csv</code>) Ezeket a fájlokat a Raspberry Pi-n lévő önálló szkript segítségével lehet feldolgozni. Ehhez futtassa a következő parancsokat:</p>
+<p>Ez 2 CSV fájlt fog létrehozni (<code>/tmp/resonances_x_*.csv</code> és <code>/tmp/resonances_y_*.csv</code>) Ezeket a fájlokat a Raspberry Pi-n lévő önálló szkript segítségével lehet feldolgozni. Ehhez futtasd a következő parancsokat:</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
 </code></pre></div>

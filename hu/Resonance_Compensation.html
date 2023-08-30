@@ -1587,8 +1587,8 @@
 <h3 id="gyurodesi-frekvencia">Gyűrődési frekvencia<a class="headerlink" href="#gyurodesi-frekvencia" title="Permanent link">&para;</a></h3>
 <p>Először is mérd meg a <strong>gyűrődési frekvenciát</strong>.</p>
 <ol>
-<li>Ha a <code>square_corner_velocity</code> paramétert megváltoztattuk, állítsuk vissza az 5.0-ra. Nem tanácsos növelni, ha bemeneti alakítót használ, mert ez nagyobb simítást okozhat az alkatrészekben - helyette jobb, ha nagyobb gyorsulási értéket használ.</li>
-<li>Növelje a <code>max_accel_to_decel</code> értéket a következő parancs kiadásával: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Ha a <code>square_corner_velocity</code> paramétert megváltoztattuk, állítsuk vissza az 5.0-ra. Nem tanácsos növelni, ha bemeneti alakítót használsz, mert ez nagyobb simítást okozhat az alkatrészeken - helyette jobb, ha nagyobb gyorsulási értéket használsz.</li>
+<li>Növeld a <code>max_accel_to_decel</code> értéket a következő parancs kiadásával: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
 <li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Ha már hozzáadtad az <code>[input_shaper]</code> részt a printer.cfg fájlhoz, akkor hajtsd végre a <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code> parancsot. Ha "Unknown command" hibát kapsz, nyugodtan figyelmen kívül hagyhatod ezen a ponton, és folytathatod a méréseket.</li>
 <li>Végezd el a parancsot: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Alapvetően a gyorsulás különböző nagy értékeinek beállításával próbáljuk a gyűrődést hangsúlyosabbá tenni. Ez a parancs 1500 mm/sec^2-től kezdve 5 mm-enként növeli a gyorsulást: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 és így tovább, egészen 7000 mm/sec^2-ig az utolsó sávra.</li>
@@ -1628,7 +1628,7 @@ shaper_freq_y: ...  # a tesztmodell Y jelének frekvenciája
 <p>A legtöbb nyomtatóhoz MZV vagy EI alakítók ajánlhatók. Ez a szakasz egy tesztelési eljárást ír le a kettő közötti választáshoz, valamint néhány egyéb kapcsolódó paraméter meghatározásához.</p>
 <p>Nyomtasd ki a gyűrődési tesztmodellt az alábbiak szerint:</p>
 <ol>
-<li>Indítsa újra a firmware-t: <code>RESTART</code></li>
+<li>Indítsd újra a firmware-t: <code>RESTART</code></li>
 <li>Készülj fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
 <li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Add ki a parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
@@ -1637,7 +1637,7 @@ shaper_freq_y: ...  # a tesztmodell Y jelének frekvenciája
 </ol>
 <p>Ha ezen a ponton nem látsz gyűrődést, akkor az MZV formázó használatát lehet javasolni.</p>
 <p>Ha mégis gyűrődést észlelsz, mérd meg újra a frekvenciákat a <a href="#ringing-frequency">Gyűrődési frekvencia</a> szakaszban leírt (8)-(10) lépésekkel. Ha a frekvenciák jelentősen eltérnek a korábban kapott értékektől, akkor összetettebb bemeneti alakító konfigurációra van szükség. Lásd a <a href="#input-shapers">Bemeneti alakítók</a> szakasz műszaki részleteit. Ellenkező esetben folytasd a következő lépéssel.</p>
-<p>Most próbáld ki az EI bemeneti alakítót. Ehhez ismételje meg a fenti (1)-(6) lépéseket, de a 4. lépésnél hajtsd végre a következő parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>.</p>
+<p>Most próbáld ki az EI bemeneti alakítót. Ehhez ismételd meg a fenti (1)-(6) lépéseket, de a 4. lépésnél hajtsd végre a következő parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>.</p>
 <p>Két nyomat összehasonlítása MZV és EI bemeneti alakítóval. Ha az EI észrevehetően jobb eredményt mutat, mint az MZV, akkor használd az EI alakítót, egyébként inkább az MZV-t. Vedd figyelembe, hogy az EI shaper több simítást okoz a nyomtatott alkatrészeken (további részletekért lásd a következő szakaszt). Add hozzá a <code>shaper_type: mzv</code> (vagy ei) paramétert az [input_shaper] szakaszhoz, pl.:</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]
 shaper_freq_x: ...
@@ -1651,7 +1651,7 @@ shaper_type: mzv
 <li>A delta kinematika természetéből adódóan a rezonanciafrekvenciák a térfogat különböző részein nagymértékben eltérhetnek. Ezért az EI alakító jobban illeszkedhet a delta nyomtatókhoz, mint az MZV vagy a ZV, és megfontolandó a használata. Ha a rezonanciafrekvencia kellően nagy (50-60 Hz-nél nagyobb), akkor akár meg is próbálkozhatunk a 2HUMP_EI shaper tesztelésével (a fent javasolt teszt futtatásával a <code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI</code>), de ellenőrizd <a href="#a-max_accel-kivalasztasa">ebben a szakaszban</a> található megfontolásokat, mielőtt engedélyeznéd.</li>
 </ul>
 <h3 id="a-max_accel-kivalasztasa">A max_accel kiválasztása<a class="headerlink" href="#a-max_accel-kivalasztasa" title="Permanent link">&para;</a></h3>
-<p>Az előző lépésben kiválasztott formázóhoz nyomtatott tesztet kell készítenie (ha nem nyomtatja ki a <a href="#tuning">javasolt paraméterekkel</a> felszeletelt tesztmodellt a nyomás előtolás kikapcsolásával <code>SET_PRESSURE_ADVANCE ADVANCE=0</code> és a tuningtorony engedélyezésével <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code>). Vedd figyelembe, hogy nagyon nagy gyorsulásoknál a rezonanciafrekvenciától és a választott bemeneti alakítótól függően (pl. az EI alakító nagyobb simítást hoz létre, mint az MZV) a bemeneti alakítás túl nagy simítást és az alkatrészek lekerekítését okozhatja. A max_accel értéket tehát úgy kell megválasztani, hogy ezt megakadályozza. Egy másik paraméter, amely hatással lehet a simításra, az <code>square_corner_velocity</code>, ezért nem tanácsos az alapértelmezett 5 mm/sec fölé növelni, hogy megakadályozzuk a fokozott simítást.</p>
+<p>Az előző lépésben kiválasztott formázóhoz nyomtatott tesztet kell készítened (ha nem nyomtatod ki a <a href="#tuning">javasolt paraméterekkel</a> felszeletelt tesztmodellt a nyomás előtolás kikapcsolásával <code>SET_PRESSURE_ADVANCE ADVANCE=0</code> és a tuningtorony engedélyezésével <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code>). Vedd figyelembe, hogy nagyon nagy gyorsulásoknál a rezonanciafrekvenciától és a választott bemeneti alakítótól függően (pl. az EI alakító nagyobb simítást hoz létre, mint az MZV) a bemeneti alakítás túl nagy simítást és az alkatrészek lekerekítését okozhatja. A max_accel értéket tehát úgy kell megválasztani, hogy ezt megakadályozd. Egy másik paraméter, amely hatással lehet a simításra, az <code>square_corner_velocity</code>, ezért nem tanácsos az alapértelmezett 5 mm/sec fölé növelni, hogy megakadályozzuk a fokozott simítást.</p>
 <p>A megfelelő max_accel érték kiválasztásához vizsgáld meg a kiválasztott bemeneti alakító modelljét. Először is jegyezd meg, hogy melyik gyorsulásnál még kicsi a gyorsulás gyűrődése hogy Neked ez megfeleljen.</p>
 <p>Ezután ellenőrizd a simítást. Ennek elősegítése érdekében a tesztmodellben egy kis rés van a falon (0,15 mm):</p>
 <p><img alt="Test gap" src="img/smoothing-test.png" /></p>

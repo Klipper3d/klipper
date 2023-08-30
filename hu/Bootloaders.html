@@ -1787,7 +1787,7 @@ at91samd bootloader 16384
 <div class="highlight"><pre><span></span><code>stm32flash -w out/klipper.bin -v -g 0 /dev/ttyAMA0
 </code></pre></div>
 
-<p>Vedd figyelembe, hogy ha Raspberry Pi-t használ a 3,3V-os soros kapcsolathoz, az stm32flash protokoll olyan soros paritásmódot használ, amelyet a Raspberry Pi "mini UART" nem támogat. Lásd <a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a> a teljes uart engedélyezéséről a Raspberry Pi GPIO tűin.</p>
+<p>Vedd figyelembe, hogy ha Raspberry Pi-t használsz a 3,3V-os soros kapcsolathoz, az stm32flash protokoll olyan soros paritásmódot használ, amelyet a Raspberry Pi "mini UART" nem támogat. Lásd <a href="https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts">https://www.raspberrypi.com/documentation/computers/configuration.html#configuring-uarts</a> a teljes uart engedélyezéséről a Raspberry Pi GPIO tűin.</p>
 <p>Az égetés után állítsd vissza a "boot 0" és a "boot 1" értéket alacsonyra, hogy a jövőben az égetésről induló rendszer újrainduljon.</p>
 <h3 id="stm32f103-stm32duino-bootloaderrel">STM32F103 stm32duino bootloaderrel<a class="headerlink" href="#stm32f103-stm32duino-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>Az "stm32duino" projekt rendelkezik USB-képes bootloaderrel. Lásd: <a href="https://github.com/rogerclarkmelbourne/STM32duino-bootloader">https://github.com/rogerclarkmelbourne/STM32duino-bootloader</a></p>
@@ -1865,7 +1865,7 @@ make
 <div class="highlight"><pre><span></span><code> dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s0x08000000:leave
 </code></pre></div>
 
-<p>Ez a bootloader 8KiB vagy 16KiB flash helyet használ, lásd a bootloader leírását (az alkalmazást a megfelelő kezdőcímmel kell lefordítani).</p>
+<p>Ez a bootloader 8KiB vagy 16KiB memória helyet használ, lásd a bootloader leírását (az alkalmazást a megfelelő kezdőcímmel kell lefordítani).</p>
 <p>A bootloader a kártya reset gombjának kétszeri megnyomásával aktiválható. Amint a bootloader aktiválódik, a kártya USB flash meghajtóként jelenik meg, amelyre a klipper.bin fájl másolható.</p>
 <h3 id="stm32f103stm32f0x2-canboot-bootloaderrel">STM32F103/STM32F0x2 CanBoot bootloaderrel<a class="headerlink" href="#stm32f103stm32f0x2-canboot-bootloaderrel" title="Permanent link">&para;</a></h3>
 <p>A <a href="https://github.com/Arksine/CanBoot">CanBoot</a> bootloader lehetőséget biztosít a Klipper firmware feltöltésére CANBUS-on keresztül. Maga a bootloader a Klipper forráskódjából származik. A CanBoot jelenleg az STM32F103, STM32F042 és STM32F072 modelleket támogatja.</p>
@@ -1876,7 +1876,7 @@ make
 </code></pre></div>
 
 <p>Ez visszaadja az összes olyan csatlakoztatott csomópont UUID-jét, amelyhez jelenleg nem tartozik UUID. Ennek tartalmaznia kell a jelenlegi bootloaderben lévő összes csomópontot.</p>
-<p>Ha megvan az UUID, a következő paranccsal tölthet fel firmware-t:</p>
+<p>Ha megvan az UUID, a következő paranccsal tölthetsz fel firmware-t:</p>
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u aabbccddeeff
 </code></pre></div>
 
