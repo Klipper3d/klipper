@@ -1,0 +1,81 @@
+# Kconfig T5UID1 settings for STM32 processors
+
+config STM32_SERIAL_USART1_USED
+    bool
+    depends on SERIAL
+    default y if STM32_SERIAL_USART1 || STM32_SERIAL_USART1_ALT_PB7_PB6
+
+config STM32_SERIAL_USART2_USED
+    bool
+    depends on SERIAL
+    default y if STM32_SERIAL_USART2 || STM32_SERIAL_USART2_ALT_PA15_PA14 || STM32_SERIAL_USART2_ALT_PD6_PD5
+
+config STM32_SERIAL_USART3_USED
+    bool
+    depends on SERIAL
+    default y if STM32_SERIAL_USART3 || STM32_SERIAL_USART3_ALT_PD9_PD8
+
+config STM32_SERIAL_UART4_USED
+    bool
+    depends on SERIAL
+    default y if STM32_SERIAL_UART4
+
+config T5UID1_SERIAL
+    bool "Enable DGUS T5UID1 screen"
+    depends on !MACH_STM32F031
+    default n
+
+config STM32_T5UID1_SERIAL_USART1
+    bool
+    default n
+
+config STM32_T5UID1_SERIAL_USART2
+    bool
+    default n
+
+config STM32_T5UID1_SERIAL_USART3
+    bool
+    default n
+
+config STM32_T5UID1_SERIAL_UART4
+    bool
+    default n
+
+choice
+    depends on T5UID1_SERIAL
+    prompt "Screen serial interface" if LOW_LEVEL_OPTIONS
+    default STM32_T5UID1_SERIAL_USART2_PA3_PA2 if !STM32_SERIAL_USART2_USED
+    default STM32_T5UID1_SERIAL_USART1_PA10_PA9
+    config STM32_T5UID1_SERIAL_USART1_PA10_PA9
+        bool "USART1 (on PA10/PA9)"
+        depends on !STM32_SERIAL_USART1_USED
+        select STM32_T5UID1_SERIAL_USART1
+    config STM32_T5UID1_SERIAL_USART1_PB7_PB6
+        bool "USART1 (on PB7/PB6)"
+        depends on !STM32_SERIAL_USART1_USED
+        select STM32_T5UID1_SERIAL_USART1
+    config STM32_T5UID1_SERIAL_USART2_PA3_PA2
+        bool "USART2 (on PA3/PA2)"
+        depends on !STM32_SERIAL_USART2_USED
+        select STM32_T5UID1_SERIAL_USART2
+    config STM32_T5UID1_SERIAL_USART2_PA15_PA14
+        bool "USART2 (on PA15/PA14)" if MACH_STM32F0
+        depends on !STM32_SERIAL_USART2_USED
+        select STM32_T5UID1_SERIAL_USART2
+    config STM32_T5UID1_SERIAL_USART2_PD6_PD5
+        bool "USART2 (on PD6/PD5)" if !MACH_STM32F0
+        depends on !STM32_SERIAL_USART2_USED
+        select STM32_T5UID1_SERIAL_USART2
+    config STM32_T5UID1_SERIAL_USART3_PB11_PB10
+        bool "USART3 (on PB11/PB10)" if !MACH_STM32F0 && !MACH_STM32F401
+        depends on !STM32_SERIAL_USART3_USED
+        select STM32_T5UID1_SERIAL_USART3
+    config STM32_T5UID1_SERIAL_USART3_PD9_PD8
+        bool "USART3 (on PD9/PD8)" if !MACH_STM32F0 && !MACH_STM32F401
+        depends on !STM32_SERIAL_USART3_USED
+        select STM32_T5UID1_SERIAL_USART3
+    config STM32_T5UID1_SERIAL_UART4_PA1_PA0
+        bool "UART4 (on PA1/PA0)" if MACH_STM32H7
+        depends on !STM32_SERIAL_UART4_USED
+        select STM32_T5UID1_SERIAL_UART4
+endchoice
