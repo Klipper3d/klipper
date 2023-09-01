@@ -1457,7 +1457,8 @@ path:
 #   be provided.
 #on_error_gcode:
 #   A list of G-Code commands to execute when an error is reported.
-
+#with_subdirs: False
+#   Enable subdirs into menu and M20, M23 commands. The default is False.
 ```
 
 ### [sdcard_loop]
