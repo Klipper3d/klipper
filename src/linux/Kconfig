@@ -20,4 +20,18 @@ config CLOCK_FREQ
     int
     default 50000000
 
+config WIRINGPI
+    bool "Use wiringPi"
+    default n
+    depends on HAVE_GPIO
+    help
+        Gpio control with wiringPi API.
+        Unlike conventional methods of opening files and requesting R/W operations,
+        it is a method of putting values directly into memory mapped in mmap.
+        It will improve speed.
+
+        Require some packages.
+        [libwiringpi2], [libwiringpi-dev] is required.
+        In other words, wiringPi must be supported for use it.
+
 endif

@@ -14,6 +14,10 @@
 #include "internal.h" // console_setup
 #include "sched.h" // sched_main
 
+#if defined(WIRINGPI)
+#include <wiringPi.h>
+#endif
+
 DECL_CONSTANT_STR("MCU", "linux");
 
 
@@ -88,6 +92,9 @@ main(int argc, char **argv)
     }
 
     // Initial setup
+#if defined(WIRINGPI)
+    wiringPiSetup();
+#endif
     if (realtime) {
         int ret = realtime_setup();
         if (ret)
