@@ -187,8 +187,8 @@ class DockableProbe:
         self.dock_position     = self._parse_coord(config, 'dock_position')
         self.z_hop             = config.getfloat('z_hop', 0., above=0.)
 
-        self.dock_requires_z = (self.approach_position[2] is not None
-                                or self.dock_position[2] is not None)
+        self.dock_requires_z = (len(self.approach_position) > 2
+                                or len(self.dock_position) > 2)
 
         self.dock_angle, self.approach_distance = self._get_vector(
                                                         self.dock_position,
@@ -280,7 +280,7 @@ class DockableProbe:
         if not 2 <= supplied_dims <= expected_dims:
             raise config.error(error_msg.format(name, self.name,
                                 "Invalid number of coordinates"))
-        p = [None] * 3
+        p = [None] * supplied_dims
         p[:supplied_dims] = vals
         return p
 
@@ -294,7 +294,7 @@ class DockableProbe:
         self.toolhead = self.printer.lookup_object('toolhead')
 
         # If neither position config options contain a Z coordinate return early
-        if len(self.dock_position) <= 2 and len(self.approach_position) <= 2:
+        if not self.dock_requires_z:
             return
 
         query_endstops = self.printer.lookup_object('query_endstops')
