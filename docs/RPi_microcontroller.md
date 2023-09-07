@@ -198,18 +198,28 @@ default on a Raspberry and can be activated by adding a line to
 dtoverlay=pwm,pin=12,func=4
 ```
 This example enables only PWM0 and routes it to gpio12. If both PWM
-channels need to be enabled you can use `pwm-2chan`.
+channels need to be enabled you can use `pwm-2chan`:
+```
+# Enable pwmchip sysfs interface
+dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
+```
+This example additionaly enables PWM1 and routes it to gpio13.
 
 The overlay does not expose the pwm line on sysfs on boot and needs to
 be exported by echo'ing the number of the pwm channel to
-`/sys/class/pwm/pwmchip0/export`:
+`/sys/class/pwm/pwmchip0/export`. This will create device `/sys/class/pwm/pwmchip0/pwm0` in the
+filesystem. The easiest way to do this is by adding this to
+`/etc/rc.local` before the `exit 0` line:
 ```
+# Enable pwmchip sysfs interface
 echo 0 > /sys/class/pwm/pwmchip0/export
 ```
-
-This will create device `/sys/class/pwm/pwmchip0/pwm0` in the
-filesystem. The easiest way to do this is by adding this to
-`/etc/rc.local` before the `exit 0` line.
+When using both PWM channels, the number of the second channel needs to be echo'd as well:
+```
+# Enable pwmchip sysfs interface
+echo 0 > /sys/class/pwm/pwmchip0/export
+echo 1 > /sys/class/pwm/pwmchip0/export
+```
 
 With the sysfs in place, you can now use either the pwm channel(s) by
 adding the following piece of configuration to your `printer.cfg`:
@@ -219,9 +229,17 @@ pin: host:pwmchip0/pwm0
 pwm: True
 hardware_pwm: True
 cycle_time: 0.000001
+
+[output_pin beeper]
+pin: host:pwmchip0/pwm1
+pwm: True
+hardware_pwm: True
+value: 0
+shutdown_value: 0
+cycle_time: 0.0005
 ```
-This will add hardware pwm control to gpio12 on the Pi (because the
-overlay was configured to route pwm0 to pin=12).
+This will add hardware pwm control to gpio12 and gpio13 on the Pi (because the
+overlay was configured to route pwm0 to pin=12 and pwm1 to pin=13).
 
 PWM0 can be routed to gpio12 and gpio18, PWM1 can be routed to gpio13
 and gpio19:

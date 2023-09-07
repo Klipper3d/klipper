@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20230810: The flash-sdcard.sh script now supports both variants of the
+Bigtreetech SKR-3, STM32H743 and STM32H723. For this, the original tag
+of btt-skr-3 now has changed to be either btt-skr-3-h743 or btt-skr-3-h723.
+
 20230729: The exported status for `dual_carriage` is changed. Instead of
 exporting `mode` and `active_carriage`, the individual modes for each
 carriage are exported as `printer.dual_carriage.carriage_0` and
