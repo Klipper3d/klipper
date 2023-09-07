@@ -532,10 +532,9 @@ class DockableProbe:
 
     # Align z axis to prevent crashes
     def _align_z(self):
-        if not self._last_homed:
-            curtime = self.printer.get_reactor().monotonic()
-            homed_axes = self.toolhead.get_status(curtime)['homed_axes']
-            self._last_homed = homed_axes
+        curtime = self.printer.get_reactor().monotonic()
+        homed_axes = self.toolhead.get_status(curtime)['homed_axes']
+        self._last_homed = homed_axes
 
         if self.dock_requires_z:
             self._align_z_required()
