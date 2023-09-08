@@ -1,6 +1,8 @@
 #!/bin/bash
 # This script installs the necessary build tools for the MCU code on MacOS
+# Unlike other install scripts, it does not install the klippy host
 
+# Step 1: Install system packages
 install_packages()
 {
     PKGLIST=""
@@ -40,5 +42,6 @@ verify_ready()
 # Force script to exit if an error occurs
 set -e
 
+# Run installation steps defined above
 verify_ready
 install_packages
