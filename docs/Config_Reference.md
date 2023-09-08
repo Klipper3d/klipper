@@ -798,10 +798,10 @@ sensor_pin:
 #   The resistance (in ohms) of the pullup attached to the thermistor.
 #   This parameter is only valid when the sensor is a thermistor. The
 #   default is 4700 ohms.
-#smooth_time: 1.0
+#smooth_time:
 #   A time value (in seconds) over which temperature measurements will
 #   be smoothed to reduce the impact of measurement noise. The default
-#   is 1 seconds.
+#   is to not perform any additional temperature smoothing.
 control:
 #   Control algorithm (either pid or watermark). This parameter must
 #   be provided.
