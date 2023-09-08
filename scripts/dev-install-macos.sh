@@ -4,20 +4,29 @@
 install_packages()
 {
     PKGLIST=""
-    TAPLIST="osx-cross/avr osx-cross/arm"
+    TAPLIST="osx-cross/homebrew-avr osx-cross/homebrew-arm"
     # AVR chip installation and building
     PKGLIST="${PKGLIST} avrdude avr-gcc"
     # ARM chip installation and building
-    PKGLIST="${PKGLIST} stm32flash wxmac arm-gcc-bin"
+    PKGLIST="${PKGLIST} stm32flash wxwidgets arm-gcc-bin"
 
     # Tap necessary package repos
     report_status "Tapping formula repositories..."
-    brew tap ${TAPLIST}
+    for TAP in $TAPLIST
+    do
+        brew tap $TAP
+    done
     brew update
 
     # Install desired packages
     report_status "Installing packages..."
     brew install ${PKGLIST}
+}
+
+# Helper functions
+report_status()
+{
+    echo -e "\n\n###### $1"
 }
 
 verify_ready()
