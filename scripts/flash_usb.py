@@ -29,7 +29,8 @@ def translate_serial_to_tty(device):
     ttyname = os.path.realpath(device)
     if not os.path.exists('/dev/serial/by-path/'):
         if os.path.basename(ttyname).startswith("tty."):
-            fname = os.path.dirname(ttyname) + "/cu." + os.path.basename(ttyname).split(".", 1)[1]
+            fname = (os.path.dirname(ttyname) + "/cu."
+                   + os.path.basename(ttyname).split(".", 1)[1])
             if os.path.exists(fname):
                 return ttyname, fname
         elif os.path.basename(ttyname).startswith("cu."):
