@@ -3362,7 +3362,6 @@ the name of the corresponding stepper config section (for example,
 
 ```
 [tmc2240 stepper_x]
-interface: spi
 cs_pin:
 #   The pin corresponding to the TMC2240 chip select line. This pin
 #   will be set to low at the start of SPI messages and raised to high
