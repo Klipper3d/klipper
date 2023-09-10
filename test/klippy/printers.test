@@ -220,6 +220,7 @@ CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
 CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
+CONFIG ../../config/generic-mks-monster8.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
 CONFIG ../../config/generic-th3d-ezboard-v2.0.cfg
