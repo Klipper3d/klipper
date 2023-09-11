@@ -320,9 +320,10 @@ class MAX31865(SensorBase):
     def calc_adc(self, temp):
         # Calculate relative resistance via Callendar-Van Dusen formula:
         #  resistance = rtd_nominal_r * (1 + CVD_A * temp + CVD_B * temp**2)
+        temp = min(temp, 1768.3)  # Melting point of platinum
         R_div_nominal = 1. + CVD_A * temp + CVD_B * temp * temp
         adc = int(R_div_nominal / self.adc_to_resist_div_nominal + 0.5)
-        adc = max(0, min(MAX31865_ADC_MAX, adc))
+        adc = max(0, min(MAX31865_ADC_MAX - 1, adc))
         adc = adc << 1 # Add fault bit
         return adc
     def build_spi_init(self, config):
