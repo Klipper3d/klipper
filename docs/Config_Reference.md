@@ -3549,7 +3549,7 @@ run_current:
 
 ### [tmc2240]
 
-Configure a TMC2240 stepper motor driver via SPI bus. To use this
+Configure a TMC2240 stepper motor driver via SPI bus or UART. To use this
 feature, define a config section with a "tmc2240" prefix followed by
 the name of the corresponding stepper config section (for example,
 "[tmc2240 stepper_x]").
@@ -3567,6 +3567,9 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
+#uart_pin:
+#   The pin connected to the TMC2240 DIAG1/SW line. If this parameter
+#   is provided UART communication is used rather then SPI.
 #chain_position:
 #chain_length:
 #   These parameters configure an SPI daisy chain. The two parameters

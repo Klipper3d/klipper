@@ -221,6 +221,7 @@ CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
 CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
+CONFIG ../../config/generic-mks-monster8.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
 CONFIG ../../config/generic-th3d-ezboard-v2.0.cfg
@@ -258,10 +259,14 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 DICTIONARY rp2040.dict
 CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
 
-# Anycubic Printers using trigorilla board with the hc32f460
+# Printers using the hc32f460 with serial on PA3 PA2
 DICTIONARY hc32f460-serial-PA3PA2.dict
 CONFIG ../../config/printer-anycubic-kobra-go-2022.cfg
 CONFIG ../../config/printer-anycubic-kobra-plus-2022.cfg
+
+# Printers using the hc32f460 with serial on PA7 PA8
+DICTIONARY hc32f460-serial-PA7PA8.dict
+CONFIG ../../config/printer-creality-ender2pro-hc32-2022.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict
