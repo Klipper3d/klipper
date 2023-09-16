@@ -4,8 +4,8 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <string.h> // memmove
-#include "autoconf.h" // CONFIG_USB_VENDOR_ID
+#include <string.h> // memmove memcmp
+#include "autoconf.h" // CONFIG_USB_VENDOR_ID CONFIG_HAVE_BOOTLOADER_REQUEST
 #include "board/misc.h" // console_sendf
 #include "board/pgm.h" // PROGMEM
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
@@ -113,6 +113,9 @@ usb_bulk_out_task(void)
     }
     // Process a message block
     int_fast8_t ret = command_find_and_dispatch(receive_buf, rpos, &pop_count);
+    if (CONFIG_HAVE_BOOTLOADER_REQUEST && ret < 0 && pop_count == 32
+            && !memcmp(receive_buf, " \x1c Request Serial Bootloader!! ~", 32))
+            bootloader_request();
     if (ret) {
         // Move buffer
         uint_fast8_t needcopy = rpos - pop_count;
