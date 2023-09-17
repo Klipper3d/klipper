@@ -25,12 +25,12 @@ constants = {
         'bed': 60
     },
     'temp_abs': {
-        'hotend': 240,
-        'bed': 80
+        'hotend': 230,
+        'bed': 90
     },
     'temp_petg': {
-        'hotend': 240,
-        'bed': 60
+        'hotend': 230,
+        'bed': 80
     },
 
     'popup_confirmed':  1,
