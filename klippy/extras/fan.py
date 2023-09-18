@@ -5,8 +5,6 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import pulse_counter
 
-FAN_MIN_TIME = 0.100
-
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.):
         self.printer = config.get_printer()
@@ -18,6 +16,7 @@ class Fan:
                                                minval=0.)
         self.off_below = config.getfloat('off_below', default=0.,
                                          minval=0., maxval=1.)
+        self.min_time = config.getfloat('min_time', 0.1, above=0.)
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         shutdown_speed = config.getfloat(
@@ -51,7 +50,7 @@ class Fan:
         value = max(0., min(self.max_power, value * self.max_power))
         if value == self.last_fan_value:
             return
-        print_time = max(self.last_fan_time + FAN_MIN_TIME, print_time)
+        print_time = max(self.last_fan_time + self.min_time, print_time)
         if self.enable_pin:
             if value > 0 and self.last_fan_value == 0:
                 self.enable_pin.set_digital(print_time, 1)

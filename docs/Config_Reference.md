@@ -2661,6 +2661,12 @@ pin:
 #   Time (in seconds) to run the fan at full speed when either first
 #   enabling or increasing it by more than 50% (helps get the fan
 #   spinning). The default is 0.100 seconds.
+#min_time: 0.1
+#   The minimum time in seconds during which the fan will execute the
+#   previous set speed value and not start executing the next one.
+#   The default is 0.100 seconds.
+#   The value can be changed downwards if the gcode contains a lot of
+#   fast fan speed changes.
 #off_below: 0.0
 #   The minimum input speed which will power the fan (expressed as a
 #   value from 0.0 to 1.0). When a speed lower than off_below is
