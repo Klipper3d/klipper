@@ -22,8 +22,10 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
     return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 # return true if a coordinate is within the region
-# specified by min_c and max_c
-def within(coord, min_c, max_c, tol=0.0):
+# specified by c_a and c_b
+def within(coord, c_a, c_b, tol=0.0):
+    min_c = [min(c_a[0], c_b[0]), min(c_a[1], c_b[1])]
+    max_c = [max(c_a[0], c_b[0]), max(c_a[1], c_b[1])]
     return (max_c[0] + tol) >= coord[0] >= (min_c[0] - tol) and \
         (max_c[1] + tol) >= coord[1] >= (min_c[1] - tol)
 
@@ -333,7 +335,7 @@ class BedMeshCalibrate:
         # floor distances down to next hundredth
         x_dist = math.floor(x_dist * 100) / 100
         y_dist = math.floor(y_dist * 100) / 100
-        if x_dist < 1. or y_dist < 1.:
+        if abs(x_dist) < 1. or abs(y_dist) < 1.:
             raise error("bed_mesh: min/max points too close together")
 
         if self.radius is not None:
@@ -486,8 +488,7 @@ class BedMeshCalibrate:
             x_cnt, y_cnt = parse_config_pair(config, 'probe_count', 3, minval=3)
             min_x, min_y = config.getfloatlist('mesh_min', count=2)
             max_x, max_y = config.getfloatlist('mesh_max', count=2)
-            if max_x <= min_x or max_y <= min_y:
-                raise config.error('bed_mesh: invalid min/max points')
+
         orig_cfg['x_count'] = mesh_cfg['x_count'] = x_cnt
         orig_cfg['y_count'] = mesh_cfg['y_count'] = y_cnt
         orig_cfg['mesh_min'] = self.mesh_min = (min_x, min_y)
@@ -718,56 +719,59 @@ class BedMeshCalibrate:
                         % (off_pt[0], off_pt[1], probed[0], probed[1]))
             positions = corrected_pts
 
-        probed_matrix = []
-        row = []
-        prev_pos = positions[0]
+        # turn list of probed positions to 2D list of results
+        probed_matrix = [[None]*x_cnt for _ in range(y_cnt)]
+        x_dist = params['max_x'] - params['min_x']
+        y_dist = params['max_y'] - params['min_y']
         for pos in positions:
-            if not isclose(pos[1], prev_pos[1], abs_tol=.1):
-                # y has changed, append row and start new
-                probed_matrix.append(row)
-                row = []
-            if pos[0] > prev_pos[0]:
-                # probed in the positive direction
-                row.append(pos[2] - z_offset)
-            else:
-                # probed in the negative direction
-                row.insert(0, pos[2] - z_offset)
-            prev_pos = pos
-        # append last row
-        probed_matrix.append(row)
+            y = (pos[1] + y_offset - params['min_y']) / y_dist * (y_cnt - 1)
+            x = (pos[0] + x_offset - params['min_x']) / x_dist * (x_cnt - 1)
+            probed_matrix[int(round(y))][int(round(x))] = pos[2] - z_offset
 
         # make sure the y-axis is the correct length
-        if len(probed_matrix) != y_cnt:
+        missing_rows = list(map(
+            lambda prow: prow.count(None) == x_cnt,
+            probed_matrix)).count(True)
+        if missing_rows > 0:
             raise self.gcode.error(
                 ("bed_mesh: Invalid y-axis table length\n"
                  "Probed table length: %d Probed Table:\n%s") %
-                (len(probed_matrix), str(probed_matrix)))
+                ((x_cnt - missing_rows), str(probed_matrix)))
 
+        # round bed, extrapolate probed values to create a square mesh
         if self.radius is not None:
-            # round bed, extrapolate probed values to create a square mesh
-            for row in probed_matrix:
-                row_size = len(row)
-                if not row_size & 1:
-                    # an even number of points in a row shouldn't be possible
-                    msg = "bed_mesh: incorrect number of points sampled on X\n"
-                    msg += "Probed Table:\n"
-                    msg += str(probed_matrix)
-                    raise self.gcode.error(msg)
-                buf_cnt = (x_cnt - row_size) // 2
-                if buf_cnt == 0:
-                    continue
-                left_buffer = [row[0]] * buf_cnt
-                right_buffer = [row[row_size-1]] * buf_cnt
-                row[0:0] = left_buffer
-                row.extend(right_buffer)
-
-        #  make sure that the x-axis is the correct length
-        for row in probed_matrix:
-            if len(row) != x_cnt:
+            if len(probed_matrix) % 2 == 0 or \
+                any(list(map(
+                    lambda prow: (len(prow) - prow.count(None)) % 2 == 0,
+                    probed_matrix))):
+                # an even number of points in a row shouldn't be possible
                 raise self.gcode.error(
-                    ("bed_mesh: invalid x-axis table length\n"
-                        "Probed table length: %d Probed Table:\n%s") %
-                    (len(probed_matrix), str(probed_matrix)))
+                    ("bed_mesh: incorrect number of points sampled\n"
+                        "Probed Table:\n%s") %
+                    str(probed_matrix))
+            # work our way from inside out,
+            # extrapolating using the average of two neighbouring points
+            for i in range(0, int(math.floor(y_cnt / 2) + 1)):
+                for j in range(0, int(math.floor(x_cnt / 2) + 1)):
+                    if i == 0 and j == 0:
+                        continue
+                    for k in range(-1, int(i!=0) * 2, 2):
+                        for l in range(-1, int(j!=0) * 2, 2):
+                            y = int(math.floor(y_cnt / 2) + (i*k))
+                            x = int(math.floor(x_cnt / 2) + (j*l))
+                            if probed_matrix[y][x] is None:
+                                probed_matrix[y][x] = \
+                                    (probed_matrix[y][x-1*l] + \
+                                     probed_matrix[y-1*k][x]) / 2
+
+        # final check if mesh is complete
+        if list(map(
+            lambda prow: prow.count(None),
+            probed_matrix)).count(not 0) > 0:
+            raise self.gcode.error(
+                ("bed_mesh: invalid mesh\n"
+                    "Probed Table:\n%s") %
+                (str(probed_matrix)))
 
         z_mesh = ZMesh(params)
         try:
