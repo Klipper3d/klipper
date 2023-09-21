@@ -289,12 +289,12 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
     struct shaper_pulses *sp = axis == 'x' ? &is->sp_x : &is->sp_y;
     struct smoother *sm = axis == 'x' ? &is->sm_x : &is->sm_y;
     int status = 0;
-    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y))
+    // Ignore input shaper update if the axis is not active
+    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y)) {
         status = init_shaper(n, a, t, sp);
-    else
-        sp->num_pulses = 0;
-    memset(sm, 0, sizeof(*sm));
-    shaper_note_generation_time(is);
+        memset(sm, 0, sizeof(*sm));
+        shaper_note_generation_time(is);
+    }
     return status;
 }
 
@@ -308,12 +308,11 @@ input_shaper_set_smoother_params(struct stepper_kinematics *sk, char axis
     struct shaper_pulses *sp = axis == 'x' ? &is->sp_x : &is->sp_y;
     struct smoother *sm = axis == 'x' ? &is->sm_x : &is->sm_y;
     int status = 0;
-    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y))
+    if (is->orig_sk->active_flags & (axis == 'x' ? AF_X : AF_Y)) {
         status = init_smoother(n, a, t_sm, sm);
-    else
-        memset(sm, 0, sizeof(*sm));
-    sp->num_pulses = 0;
-    shaper_note_generation_time(is);
+        sp->num_pulses = 0;
+        shaper_note_generation_time(is);
+    }
     return status;
 }
 

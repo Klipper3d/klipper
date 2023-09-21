@@ -56,7 +56,7 @@ class VirtualSDGCodeProvider:
             self.current_file.close()
             self.current_file = None
             self.filename = ''
-        self.file_position = self.file_size = 0.
+        self.file_position = self.file_size = 0
     def get_gcode(self):
         logging.info("Starting SD card print (position %d)", self.file_position)
         try:
