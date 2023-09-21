@@ -16,6 +16,7 @@ class PIDCalibrate:
     def cmd_PID_CALIBRATE(self, gcmd):
         heater_name = gcmd.get('HEATER')
         target = gcmd.get_float('TARGET')
+        tune_pid_delta = gcmd.get_float('TUNE_PID_DELTA', 5.0) 
         write_file = gcmd.get_int('WRITE_FILE', 0)
         pheaters = self.printer.lookup_object('heaters')
         try:
@@ -23,7 +24,7 @@ class PIDCalibrate:
         except self.printer.config_error as e:
             raise gcmd.error(str(e))
         self.printer.lookup_object('toolhead').get_last_move_time()
-        calibrate = ControlAutoTune(heater, target)
+        calibrate = ControlAutoTune(heater, target, tune_pid_delta)
         old_control = heater.set_control(calibrate)
         try:
             pheaters.set_temperature(heater, target, True)
@@ -39,6 +40,7 @@ class PIDCalibrate:
         Kp, Ki, Kd = calibrate.calc_final_pid()
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
         gcmd.respond_info(
+            "File had been changed."
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer." % (Kp, Ki, Kd))
@@ -49,13 +51,13 @@ class PIDCalibrate:
         configfile.set(heater_name, 'pid_Ki', "%.3f" % (Ki,))
         configfile.set(heater_name, 'pid_Kd', "%.3f" % (Kd,))
 
-TUNE_PID_DELTA = 5.0
 
 class ControlAutoTune:
-    def __init__(self, heater, target):
+    def __init__(self, heater, target, tune_pid_delta):
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
         self.calibrate_temp = target
+        self.tune_pid_delta = tune_pid_delta
         # Heating control
         self.heating = False
         self.peak = 0.
@@ -80,7 +82,7 @@ class ControlAutoTune:
         if self.heating and temp >= target_temp:
             self.heating = False
             self.check_peaks()
-            self.heater.alter_target(self.calibrate_temp - TUNE_PID_DELTA)
+            self.heater.alter_target(self.calibrate_temp - self.tune_pid_delta)
         elif not self.heating and temp <= target_temp:
             self.heating = True
             self.check_peaks()
