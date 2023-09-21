@@ -55,52 +55,50 @@
 
 // Layout of the USB transfer memory
 #define EPM ((epmword_t*)USB_PMAADDR)
-#define EPM_EP_DESC(ep) (&EPM[(ep) * (8 / WSIZE)])
+#define EPM_EP_DESC(ep, bufnum) (&EPM[((ep)*2 + (bufnum)) * (4 / WSIZE)])
 #define EPM_BUF_OFFSET 0x10
 #define EPM_EP_BUF_SIZE (64 / WSIZE + 1)
-#define EPM_EP_TX_BUF(ep) (&EPM[EPM_BUF_OFFSET + (ep)*2*EPM_EP_BUF_SIZE])
-#define EPM_EP_RX_BUF(ep) (&EPM[EPM_BUF_OFFSET + (1+(ep)*2)*EPM_EP_BUF_SIZE])
+#define EPM_EP_BUF(ep, bufnum)                                          \
+    (&EPM[EPM_BUF_OFFSET + ((ep)*2 + (bufnum)) * EPM_EP_BUF_SIZE])
+#define BUFTX 0
+#define BUFRX 1
 
 // Configure the usb descriptor for an endpoint
 static void
-epm_ep_desc_setup(int ep, int rx_size)
+epm_ep_desc_setup(int ep, int bufnum, int rx_size)
 {
-    uint32_t addr_tx = (EPM_EP_TX_BUF(ep) - EPM) * WSIZE, count_tx = 0;
-    uint32_t addr_rx = (EPM_EP_RX_BUF(ep) - EPM) * WSIZE;
+    uint32_t addr = (EPM_EP_BUF(ep, bufnum) - EPM) * WSIZE;
     uint32_t count_rx = (rx_size <= 30 ? DIV_ROUND_UP(rx_size, 2) << 10
                          : ((DIV_ROUND_UP(rx_size, 32) - 1) << 10) | 0x8000);
-    epmword_t *desc = EPM_EP_DESC(ep);
+    epmword_t *desc = EPM_EP_DESC(ep, bufnum);
     if (WSIZE == 2) {
-        desc[0] = addr_tx;
-        desc[1] = count_tx;
-        desc[2] = addr_rx;
-        desc[3] = count_rx;
+        desc[0] = addr;
+        desc[1] = count_rx;
     } else {
-        desc[0] = addr_tx | (count_tx << 16);
-        desc[1] = addr_rx | (count_rx << 16);
+        *desc = addr | (count_rx << 16);
     }
 }
 
 // Return number of read bytes on an rx endpoint
 static uint32_t
-epm_get_ep_count_rx(int ep)
+epm_get_ep_count_rx(int ep, int bufnum)
 {
-    epmword_t *desc = EPM_EP_DESC(ep);
+    epmword_t *desc = EPM_EP_DESC(ep, bufnum);
     if (WSIZE == 2)
-        return desc[3] & 0x3ff;
-    return (desc[1] >> 16) & 0x3ff;
+        return desc[1] & 0x3ff;
+    return (*desc >> 16) & 0x3ff;
 }
 
 // Set number of bytes ready to be transmitted on a tx endpoint
 static void
-epm_set_ep_count_tx(int ep, uint32_t count)
+epm_set_ep_count_tx(int ep, int bufnum, uint32_t count)
 {
-    epmword_t *desc = EPM_EP_DESC(ep);
+    epmword_t *desc = EPM_EP_DESC(ep, bufnum);
     if (WSIZE == 2) {
         desc[1] = count;
     } else {
-        uint32_t addr_tx = (EPM_EP_TX_BUF(ep) - EPM) * WSIZE;
-        desc[0] = addr_tx | (count << 16);
+        uint32_t addr_tx = (EPM_EP_BUF(ep, bufnum) - EPM) * WSIZE;
+        *desc = addr_tx | (count << 16);
     }
 }
 
@@ -108,18 +106,22 @@ epm_set_ep_count_tx(int ep, uint32_t count)
 static void
 btable_configure(void)
 {
-    epm_ep_desc_setup(0, USB_CDC_EP0_SIZE);
-    epm_ep_desc_setup(USB_CDC_EP_ACM, 0);
-    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, USB_CDC_EP_BULK_OUT_SIZE);
-    epm_ep_desc_setup(USB_CDC_EP_BULK_IN, 0);
+    epm_ep_desc_setup(0, BUFTX, 0);
+    epm_ep_desc_setup(0, BUFRX, USB_CDC_EP0_SIZE);
+    epm_ep_desc_setup(USB_CDC_EP_ACM, BUFTX, 0);
+    epm_ep_desc_setup(USB_CDC_EP_ACM, BUFRX, 0);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, BUFTX, 0);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, BUFRX, USB_CDC_EP_BULK_OUT_SIZE);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_IN, BUFTX, 0);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_IN, BUFRX, 0);
 }
 
 // Read a packet stored in dedicated usb memory
 static uint32_t
-btable_read_packet(int ep, uint8_t *dest, int max_len)
+btable_read_packet(int ep, int bufnum, uint8_t *dest, int max_len)
 {
-    epmword_t *src = EPM_EP_RX_BUF(ep);
-    uint32_t count = epm_get_ep_count_rx(ep);
+    epmword_t *src = EPM_EP_BUF(ep, bufnum);
+    uint32_t count = epm_get_ep_count_rx(ep, bufnum);
     if (count > max_len)
         count = max_len;
     int i;
@@ -145,9 +147,9 @@ btable_read_packet(int ep, uint8_t *dest, int max_len)
 
 // Write a packet to dedicated usb memory
 static void
-btable_write_packet(int ep, const uint8_t *src, int count)
+btable_write_packet(int ep, int bufnum, const uint8_t *src, int count)
 {
-    epmword_t *dest = EPM_EP_TX_BUF(ep);
+    epmword_t *dest = EPM_EP_BUF(ep, bufnum);
     int i;
     for (i=0; i<count/WSIZE; i++) {
         uint8_t b1 = *src++, b2 = *src++, b3 = 0, b4 = 0;
@@ -165,7 +167,7 @@ btable_write_packet(int ep, const uint8_t *src, int count)
             d |= *src++ << 16;
         *dest = d;
     }
-    epm_set_ep_count_tx(ep, count);
+    epm_set_ep_count_tx(ep, bufnum, count);
 }
 
 
@@ -202,7 +204,7 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
     if ((epr & USB_EPRX_STAT) == USB_EP_RX_VALID)
         // No data ready
         return -1;
-    uint32_t count = btable_read_packet(ep, data, max_len);
+    uint32_t count = btable_read_packet(ep, BUFRX, data, max_len);
     USB_EPR[ep] = calc_epr_bits(epr, USB_EPRX_STAT, USB_EP_RX_VALID);
     return count;
 }
@@ -214,7 +216,7 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
     if ((epr & USB_EPTX_STAT) != USB_EP_TX_NAK)
         // No buffer space available
         return -1;
-    btable_write_packet(ep, data, len);
+    btable_write_packet(ep, BUFTX, data, len);
     USB_EPR[ep] = calc_epr_bits(epr, USB_EPTX_STAT, USB_EP_TX_VALID);
     return len;
 }
@@ -226,7 +228,7 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
     if ((epr & USB_EPRX_STAT) != USB_EP_RX_NAK)
         // No data ready
         return -1;
-    uint32_t count = btable_read_packet(ep, data, max_len);
+    uint32_t count = btable_read_packet(ep, BUFRX, data, max_len);
     USB_EPR[ep] = calc_epr_bits(epr, USB_EPRX_STAT | USB_EPTX_STAT
                                 , USB_EP_RX_VALID | USB_EP_TX_NAK);
     return count;
@@ -248,7 +250,7 @@ usb_send_ep0(const void *data, uint_fast8_t len)
     if ((epr & USB_EPTX_STAT) != USB_EP_TX_NAK)
         // No buffer space available
         return -1;
-    btable_write_packet(ep, data, len);
+    btable_write_packet(ep, BUFTX, data, len);
     USB_EPR[ep] = calc_epr_bits(epr, USB_EPTX_STAT, USB_EP_TX_VALID);
     return len;
 }
