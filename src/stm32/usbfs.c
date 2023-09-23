@@ -48,6 +48,12 @@
   #define USB_CNTR_FRES USB_CNTR_USBRST
 #endif
 
+// Some chip variants do not define these fields
+#ifndef USB_EP_DTOG_TX_Pos
+#define USB_EP_DTOG_TX_Pos 6
+#define USB_EP_DTOG_RX_Pos 14
+#endif
+
 
 /****************************************************************
  * USB transfer memory
@@ -110,8 +116,8 @@ btable_configure(void)
     epm_ep_desc_setup(0, BUFRX, USB_CDC_EP0_SIZE);
     epm_ep_desc_setup(USB_CDC_EP_ACM, BUFTX, 0);
     epm_ep_desc_setup(USB_CDC_EP_ACM, BUFRX, 0);
-    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, BUFTX, 0);
-    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, BUFRX, USB_CDC_EP_BULK_OUT_SIZE);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, 0, USB_CDC_EP_BULK_OUT_SIZE);
+    epm_ep_desc_setup(USB_CDC_EP_BULK_OUT, 1, USB_CDC_EP_BULK_OUT_SIZE);
     epm_ep_desc_setup(USB_CDC_EP_BULK_IN, BUFTX, 0);
     epm_ep_desc_setup(USB_CDC_EP_BULK_IN, BUFRX, 0);
 }
@@ -192,20 +198,41 @@ calc_epr_bits(uint32_t epr, uint32_t mask, uint32_t value)
     return (((epr & (EPR_RWBITS | tmask)) ^ tvalue) & ~rwmask) | rwbits | cbits;
 }
 
+// Check if double buffering endpoint hardware can no longer send/receive
+static int
+epr_is_dbuf_blocking(uint32_t epr)
+{
+    return !(((epr >> (USB_EP_DTOG_RX_Pos - USB_EP_DTOG_TX_Pos)) ^ epr)
+             & USB_EP_DTOG_TX);
+}
+
 
 /****************************************************************
  * USB interface
  ****************************************************************/
 
+static uint32_t bulk_out_pop_count, bulk_out_push_flag;
+
 int_fast8_t
 usb_read_bulk_out(void *data, uint_fast8_t max_len)
 {
-    uint32_t ep = USB_CDC_EP_BULK_OUT, epr = USB_EPR[ep];
-    if ((epr & USB_EPRX_STAT) == USB_EP_RX_VALID)
+    if (readl(&bulk_out_push_flag))
         // No data ready
         return -1;
-    uint32_t count = btable_read_packet(ep, BUFRX, data, max_len);
-    USB_EPR[ep] = calc_epr_bits(epr, USB_EPRX_STAT, USB_EP_RX_VALID);
+    uint32_t ep = USB_CDC_EP_BULK_OUT;
+    int bufnum = bulk_out_pop_count & 1;
+    bulk_out_pop_count++;
+    uint32_t count = btable_read_packet(ep, bufnum, data, max_len);
+    writel(&bulk_out_push_flag, USB_EP_DTOG_TX);
+
+    // Check if irq handler pulled another packet before push flag update
+    uint32_t epr = USB_EPR[ep];
+    if (epr_is_dbuf_blocking(epr) && readl(&bulk_out_push_flag)) {
+        // Second packet was already read - must notify hardware
+        writel(&bulk_out_push_flag, 0);
+        USB_EPR[ep] = calc_epr_bits(epr, 0, 0) | USB_EP_DTOG_TX;
+    }
+
     return count;
 }
 
@@ -275,6 +302,9 @@ usb_set_address(uint_fast8_t addr)
 void
 usb_set_configure(void)
 {
+    uint32_t ep = USB_CDC_EP_BULK_OUT;
+    bulk_out_pop_count = 0;
+    USB_EPR[ep] = calc_epr_bits(USB_EPR[ep], USB_EPRX_STAT, USB_EP_RX_VALID);
 }
 
 
@@ -294,8 +324,9 @@ usb_reset(void)
                    | USB_EP_RX_NAK | USB_EP_TX_NAK);
 
     ep = USB_CDC_EP_BULK_OUT;
-    USB_EPR[ep] = (USB_CDC_EP_BULK_OUT | USB_EP_BULK
-                   | USB_EP_RX_VALID | USB_EP_TX_NAK);
+    USB_EPR[ep] = (USB_CDC_EP_BULK_OUT | USB_EP_BULK | USB_EP_KIND
+                   | USB_EP_RX_VALID | USB_EP_TX_NAK | USB_EP_DTOG_TX);
+    bulk_out_push_flag = USB_EP_DTOG_TX;
 
     ep = USB_CDC_EP_BULK_IN;
     USB_EPR[ep] = (USB_CDC_EP_BULK_IN | USB_EP_BULK
@@ -313,18 +344,22 @@ USB_IRQHandler(void)
     if (istr & USB_ISTR_CTR) {
         // Endpoint activity
         uint32_t ep = istr & USB_ISTR_EP_ID, epr = USB_EPR[ep];
-        USB_EPR[ep] = calc_epr_bits(epr, USB_EP_CTR_RX | USB_EP_CTR_TX, 0);
-        if (ep == 0) {
+        if (ep == USB_CDC_EP_BULK_OUT) {
+            USB_EPR[ep] = (calc_epr_bits(epr, USB_EP_CTR_RX | USB_EP_CTR_TX, 0)
+                           | bulk_out_push_flag);
+            bulk_out_push_flag = 0;
+            usb_notify_bulk_out();
+        } else if (ep == USB_CDC_EP_BULK_IN) {
+            USB_EPR[ep] = calc_epr_bits(epr, USB_EP_CTR_RX | USB_EP_CTR_TX, 0);
+            usb_notify_bulk_in();
+        } else if (ep == 0) {
+            USB_EPR[ep] = calc_epr_bits(epr, USB_EP_CTR_RX | USB_EP_CTR_TX, 0);
             usb_notify_ep0();
             if (epr & USB_EP_CTR_TX && set_address) {
                 // Apply address after last "in" message transmitted
                 USB->DADDR = set_address;
                 set_address = 0;
             }
-        } else if (ep == USB_CDC_EP_BULK_OUT) {
-            usb_notify_bulk_out();
-        } else if (ep == USB_CDC_EP_BULK_IN) {
-            usb_notify_bulk_in();
         }
     }
     if (istr & USB_ISTR_RESET) {
