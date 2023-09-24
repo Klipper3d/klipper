@@ -11,13 +11,13 @@ from . import idex_modes
 class HybridCoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
-        printer_config = config.getsection('printer')
 
+        self.gcode = self.printer.lookup_object('gcode')
         dc_config = None
-        invert_axis = False
+        self.inverted = False
         if config.has_section('dual_carriage'):
             dc_config = config.getsection('dual_carriage')
-            invert_axis = dc_config.getboolean('invert_axis', False)
+            self.inverted = dc_config.getboolean('inverted', False)
 
         # itersolve parameters
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
@@ -25,7 +25,7 @@ class HybridCoreXYKinematics:
                        stepper.LookupMultiRail(config.getsection('stepper_z'))]
         self.rails[1].get_endstops()[0][0].add_stepper(
             self.rails[0].get_steppers()[0])
-        if invert_axis == False:
+        if self.inverted == False:
             self.rails[0].setup_itersolve('corexy_stepper_alloc', b'-')
         else:
             self.rails[0].setup_itersolve('corexy_stepper_alloc', b'+')
@@ -42,7 +42,7 @@ class HybridCoreXYKinematics:
             self.rails.append(stepper.PrinterRail(dc_config))
             self.rails[1].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
-            if invert_axis == False:
+            if self.inverted == False:
                 self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
             else:
                 self.rails[3].setup_itersolve('corexy_stepper_alloc', b'-')
@@ -70,9 +70,15 @@ class HybridCoreXYKinematics:
         pos = [stepper_positions[rail.get_name()] for rail in self.rails]
         if (self.dc_module is not None and 'PRIMARY' == \
                     self.dc_module.get_status()['carriage_1']):
-            return [pos[0] - pos[1], pos[1], pos[2]]
+            if self.inverted == False:
+                return [pos[0] - pos[1], pos[1], pos[2]]
+            else:
+                return [pos[0] + pos[1], pos[1], pos[2]]
         else:
-            return [pos[0] + pos[1], pos[1], pos[2]]
+            if self.inverted == False:
+                return [pos[0] + pos[1], pos[1], pos[2]]
+            else:
+                return [pos[0] - pos[1], pos[1], pos[2]]
     def update_limits(self, i, range):
         l, h = self.limits[i]
         # Only update limits if this axis was already homed,

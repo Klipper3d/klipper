@@ -43,6 +43,7 @@ class HomingMove:
             toolhead = printer.lookup_object('toolhead')
         self.toolhead = toolhead
         self.stepper_positions = []
+        self.gcode = self.printer.lookup_object('gcode')
     def get_mcu_endstops(self):
         return [es for es, name in self.endstops]
     def _calc_endstop_rate(self, mcu_endstop, movepos, speed):
@@ -64,7 +65,21 @@ class HomingMove:
             sname = stepper.get_name()
             kin_spos[sname] += offsets.get(sname, 0) * stepper.get_step_dist()
         thpos = self.toolhead.get_position()
-        return list(kin.calc_position(kin_spos))[:3] + thpos[3:]
+
+        # ##################################################
+        # self.gcode.respond_info("HomingMove calc_toolhead_pos kin_spos: " + str(kin_spos))
+        # self.gcode.respond_info("HomingMove calc_toolhead_pos thpos: " + str(thpos))
+        # ##################################################
+        # # thpos: [150.0, 150.0, 1.57, 0.0]
+        # # kin_spos: {'stepper_x': 80.5, 'stepper_y': 150.0, 'stepper_y1': 150.0, 'stepper_z': 1.5665625, 'stepper_z1': 1.5665625, 'stepper_z2': 1.5665625, 'dual_carriage': 0.0}
+
+        dc = self.printer.lookup_object('dual_carriage')
+        if dc is None:
+            return list(kin.calc_position(kin_spos))[:3] + thpos[3:]
+        else:
+            # to do
+            return list(kin.calc_position(kin_spos))[:3] + thpos[3:]
+
     def homing_move(self, movepos, speed, probe_pos=False,
                     triggered=True, check_triggered=True):
         # Notify start of homing/probing move
@@ -77,6 +92,7 @@ class HomingMove:
         self.stepper_positions = [ StepperPosition(s, name)
                                    for es, name in self.endstops
                                    for s in es.get_steppers() ]
+
         # Start endstop checking
         print_time = self.toolhead.get_last_move_time()
         endstop_triggers = []
@@ -126,7 +142,14 @@ class HomingMove:
                 self.toolhead.set_position(movepos)
                 halt_kin_spos = {s.get_name(): s.get_commanded_position()
                                  for s in kin.get_steppers()}
+                # ##################################################
+                # self.gcode.respond_info("HomingMove homing_move halt_kin_spos: " + str(halt_kin_spos))
+                # self.gcode.respond_info("HomingMove homing_move haltpos A: " + str(haltpos))
+                # ##################################################
                 haltpos = self.calc_toolhead_pos(halt_kin_spos, over_steps)
+                # ##################################################
+                # self.gcode.respond_info("HomingMove homing_move haltpos B: " + str(haltpos))
+                # ##################################################
         self.toolhead.set_position(haltpos)
         # Signal homing/probing move complete
         try:
@@ -153,6 +176,8 @@ class Homing:
         self.changed_axes = []
         self.trigger_mcu_pos = {}
         self.adjust_pos = {}
+        self.gcode = self.printer.lookup_object('gcode')
+
     def set_axes(self, axes):
         self.changed_axes = axes
     def get_axes(self):

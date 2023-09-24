@@ -1,0 +1,15 @@
+HomingMove homing_move kin_spos: {'stepper_x': 260.0, 'stepper_y': 260.0, 'stepper_y1': 260.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'dual_carriage': -260.0}
+HomingMove homing_move kin_spos: {'stepper_x': -153.0, 'stepper_y': -153.0, 'stepper_y1': -153.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'dual_carriage': 153.0}
+G28 Y
+
+
+HomingMove homing_move kin_spos: {'stepper_x': 410.0, 'stepper_y': 260.0, 'stepper_y1': 260.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'dual_carriage': 112.0}
+HomingMove homing_move kin_spos: {'stepper_x': -3.0, 'stepper_y': -153.0, 'stepper_y1': -153.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'dual_carriage': 525.0}
+G28 Y
+
+HomingMove homing_move kin_spos: {'dual_carriage': 336.0, 'stepper_y': 0.0, 'stepper_y1': 0.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'stepper_x': -73.6875}
+HomingMove homing_move kin_spos: {'dual_carriage': -299.0, 'stepper_y': 0.0, 'stepper_y1': 0.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'stepper_x': -73.6875}
+HomingMove homing_move kin_spos: {'stepper_x': -34.0, 'stepper_y': 0.0, 'stepper_y1': 0.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'dual_carriage': 0.0}
+HomingMove homing_move kin_spos: {'stepper_x': 601.0, 'stepper_y': 0.0, 'stepper_y1': 0.0, 'stepper_z': 5.0, 'stepper_z1': 5.0, 'stepper_z2': 5.0, 'dual_carriage': 0.0}
+DualCarriages home
+G28 X
