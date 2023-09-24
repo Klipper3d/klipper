@@ -26,29 +26,67 @@
 
 #define DPBUF_SIZE 64
 
+// Get the offset of a given endpoint's base buffer
 static uint32_t
 usb_buf_offset(uint32_t ep)
 {
     return 0x100 + ep * DPBUF_SIZE * 2;
 }
 
+// Obtain a pointer to an endpoint buffer
+static void*
+usb_buf_addr(uint32_t ep, int bufnum)
+{
+    return (void*)usb_dpram + usb_buf_offset(ep) + bufnum * DPBUF_SIZE;
+}
+
+// Return a pointer to the ep_buf_ctrl register for an endpoint
+static volatile uint16_t *
+lookup_epbufctrl(uint32_t ep, int is_rx, int bufnum)
+{
+    volatile uint16_t *epbp;
+    if (is_rx)
+        epbp = (void*)&usb_dpram->ep_buf_ctrl[ep].out;
+    else
+        epbp = (void*)&usb_dpram->ep_buf_ctrl[ep].in;
+    return &epbp[bufnum];
+}
+
+// Determine the next transfer PID id from the last PID
+static uint32_t
+next_data_pid(uint32_t epb)
+{
+    return (epb ^ USB_BUF_CTRL_DATA1_PID) & USB_BUF_CTRL_DATA1_PID;
+}
+
+// Extract the number of bytes in an rx buffer
+static uint32_t
+get_rx_count(uint32_t epb, uint32_t max_len)
+{
+    uint32_t c = epb & USB_BUF_CTRL_LEN_MASK;
+    if (c > max_len)
+        c = max_len;
+    return c;
+}
+
 static int_fast8_t
 usb_write_packet(uint32_t ep, const void *data, uint_fast8_t len)
 {
     // Check if there is room for this packet
-    uint32_t epb = usb_dpram->ep_buf_ctrl[ep].in;
+    volatile uint16_t *epbp = lookup_epbufctrl(ep, 0, 0);
+    uint32_t epb = *epbp;
     if (epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL))
         return -1;
-    uint32_t pid = (epb ^ USB_BUF_CTRL_DATA1_PID) & USB_BUF_CTRL_DATA1_PID;
+    // Determine the next packet header
+    uint32_t pid = next_data_pid(epb);
     uint32_t new_epb = USB_BUF_CTRL_FULL | USB_BUF_CTRL_LAST | pid | len;
-    usb_dpram->ep_buf_ctrl[ep].in = new_epb;
+    *epbp = new_epb;
+    barrier();
     // Copy the packet to the hw buffer
-    void *addr = (void*)usb_dpram + usb_buf_offset(ep);
-    barrier();
-    memcpy(addr, data, len);
-    barrier();
+    memcpy(usb_buf_addr(ep, 0), data, len);
     // Inform the USB hardware of the available packet
-    usb_dpram->ep_buf_ctrl[ep].in = new_epb | USB_BUF_CTRL_AVAIL;
+    barrier();
+    *epbp = new_epb | USB_BUF_CTRL_AVAIL;
     return len;
 }
 
@@ -56,22 +94,20 @@ static int_fast8_t
 usb_read_packet(uint32_t ep, void *data, uint_fast8_t max_len)
 {
     // Check if there is a packet ready
-    uint32_t epb = usb_dpram->ep_buf_ctrl[ep].out;
+    volatile uint16_t *epbp = lookup_epbufctrl(ep, 1, 0);
+    uint32_t epb = *epbp;
     if ((epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL)) != USB_BUF_CTRL_FULL)
         return -1;
+    // Determine the next packet header
+    uint32_t new_epb = USB_BUF_CTRL_LAST | next_data_pid(epb) | DPBUF_SIZE;
+    *epbp = new_epb;
+    barrier();
     // Copy the packet to the given buffer
-    uint32_t pid = (epb ^ USB_BUF_CTRL_DATA1_PID) & USB_BUF_CTRL_DATA1_PID;
-    uint32_t new_epb = USB_BUF_CTRL_LAST | pid | DPBUF_SIZE;
-    usb_dpram->ep_buf_ctrl[ep].out = new_epb;
-    uint32_t c = epb & USB_BUF_CTRL_LEN_MASK;
-    if (c > max_len)
-        c = max_len;
-    void *addr = (void*)usb_dpram + usb_buf_offset(ep);
-    barrier();
-    memcpy(data, addr, c);
-    barrier();
+    uint32_t c = get_rx_count(epb, max_len);
+    memcpy(data, usb_buf_addr(ep, 0), c);
     // Notify the USB hardware that the space is now available
-    usb_dpram->ep_buf_ctrl[ep].out = new_epb | USB_BUF_CTRL_AVAIL;
+    barrier();
+    *epbp = new_epb | USB_BUF_CTRL_AVAIL;
     return c;
 }
 
