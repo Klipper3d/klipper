@@ -1,6 +1,6 @@
 // Hardware interface to USB on rp2040
 //
-// Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2021-2023  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -74,22 +74,27 @@ get_rx_count(uint32_t epb, uint32_t max_len)
  * Interface
  ****************************************************************/
 
+static uint32_t bulk_out_push_count;
+
 int_fast8_t
 usb_read_bulk_out(void *data, uint_fast8_t max_len)
 {
     // Check if there is a packet ready
+    uint32_t bopc = bulk_out_push_count, bufnum = bopc & 1;
     uint32_t ep = USB_CDC_EP_BULK_OUT;
-    volatile uint16_t *epbp = lookup_epbufctrl(ep, 1, 0);
+    volatile uint16_t *epbp = lookup_epbufctrl(ep, 1, bufnum);
     uint32_t epb = *epbp;
     if ((epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL)) != USB_BUF_CTRL_FULL)
         return -1;
     // Determine the next packet header
-    uint32_t new_epb = USB_BUF_CTRL_LAST | next_data_pid(epb) | DPBUF_SIZE;
+    bulk_out_push_count = bopc + 1;
+    uint32_t pid = bufnum ? USB_BUF_CTRL_DATA1_PID : 0;
+    uint32_t new_epb = USB_BUF_CTRL_LAST | pid | DPBUF_SIZE;
     *epbp = new_epb;
     barrier();
     // Copy the packet to the given buffer
     uint32_t c = get_rx_count(epb, max_len);
-    memcpy(data, usb_buf_addr(ep, 0), c);
+    memcpy(data, usb_buf_addr(ep, bufnum), c);
     // Notify the USB hardware that the space is now available
     barrier();
     *epbp = new_epb | USB_BUF_CTRL_AVAIL;
@@ -215,8 +220,11 @@ void
 usb_set_configure(void)
 {
     usb_dpram->ep_buf_ctrl[USB_CDC_EP_BULK_IN].in = USB_BUF_CTRL_DATA1_PID;
-    usb_dpram->ep_buf_ctrl[USB_CDC_EP_BULK_OUT].out = (
-        USB_BUF_CTRL_AVAIL | USB_BUF_CTRL_LAST | DPBUF_SIZE);
+
+    bulk_out_push_count = 0;
+    uint32_t epb0 = USB_BUF_CTRL_AVAIL | USB_BUF_CTRL_LAST | DPBUF_SIZE;
+    uint32_t epb1 = epb0 | USB_BUF_CTRL_DATA1_PID;
+    usb_dpram->ep_buf_ctrl[USB_CDC_EP_BULK_OUT].out = epb0 | (epb1 << 16);
 }
 
 
@@ -348,6 +356,7 @@ endpoint_setup(void)
     usb_dpram->ep_ctrl[USB_CDC_EP_ACM-1].in = ep_acm;
     // BULK
     uint32_t ep_out = (EP_CTRL_ENABLE_BITS | usb_buf_offset(USB_CDC_EP_BULK_OUT)
+                       | EP_CTRL_DOUBLE_BUFFERED_BITS
                        | EP_CTRL_INTERRUPT_PER_BUFFER
                        | (USB_ENDPOINT_XFER_BULK << EP_CTRL_BUFFER_TYPE_LSB));
     usb_dpram->ep_ctrl[USB_CDC_EP_BULK_OUT-1].out = ep_out;
