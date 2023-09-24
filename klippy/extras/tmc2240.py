@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
-from . import bus, tmc, tmc2130
+from . import bus, tmc, tmc2130, tmc_uart
 
 TMC_FREQUENCY=12500000.
 
@@ -343,8 +343,14 @@ class TMC2240:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields,
-                                           TMC_FREQUENCY)
+        if config.get("uart_pin", None) is not None:
+            # use UART for communication
+            self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields,
+                                                 3, TMC_FREQUENCY)
+        else:
+            # Use SPI bus for communication
+            self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields,
+                                               TMC_FREQUENCY)
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
