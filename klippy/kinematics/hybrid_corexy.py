@@ -11,14 +11,12 @@ from . import idex_modes
 class HybridCoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
-
         self.gcode = self.printer.lookup_object('gcode')
         dc_config = None
         self.inverted = False
         if config.has_section('dual_carriage'):
             dc_config = config.getsection('dual_carriage')
             self.inverted = dc_config.getboolean('inverted', False)
-
         # itersolve parameters
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
                        stepper.LookupMultiRail(config.getsection('stepper_y')),
