@@ -101,22 +101,26 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
     return c;
 }
 
+static uint32_t bulk_in_pop_count;
+
 int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
 {
     // Check if there is room for this packet
+    uint32_t bipc = bulk_in_pop_count, bufnum = bipc & 1;
     uint32_t ep = USB_CDC_EP_BULK_IN;
-    volatile uint16_t *epbp = lookup_epbufctrl(ep, 0, 0);
+    volatile uint16_t *epbp = lookup_epbufctrl(ep, 0, bufnum);
     uint32_t epb = *epbp;
     if (epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL))
         return -1;
     // Determine the next packet header
-    uint32_t pid = next_data_pid(epb);
+    bulk_in_pop_count = bipc + 1;
+    uint32_t pid = bufnum ? USB_BUF_CTRL_DATA1_PID : 0;
     uint32_t new_epb = USB_BUF_CTRL_FULL | USB_BUF_CTRL_LAST | pid | len;
     *epbp = new_epb;
     barrier();
     // Copy the packet to the hw buffer
-    memcpy(usb_buf_addr(ep, 0), data, len);
+    memcpy(usb_buf_addr(ep, bufnum), data, len);
     // Inform the USB hardware of the available packet
     barrier();
     *epbp = new_epb | USB_BUF_CTRL_AVAIL;
@@ -219,7 +223,8 @@ usb_set_address(uint_fast8_t addr)
 void
 usb_set_configure(void)
 {
-    usb_dpram->ep_buf_ctrl[USB_CDC_EP_BULK_IN].in = USB_BUF_CTRL_DATA1_PID;
+    bulk_in_pop_count = 0;
+    usb_dpram->ep_buf_ctrl[USB_CDC_EP_BULK_IN].in = 0;
 
     bulk_out_push_count = 0;
     uint32_t epb0 = USB_BUF_CTRL_AVAIL | USB_BUF_CTRL_LAST | DPBUF_SIZE;
@@ -361,6 +366,7 @@ endpoint_setup(void)
                        | (USB_ENDPOINT_XFER_BULK << EP_CTRL_BUFFER_TYPE_LSB));
     usb_dpram->ep_ctrl[USB_CDC_EP_BULK_OUT-1].out = ep_out;
     uint32_t ep_in = (EP_CTRL_ENABLE_BITS | usb_buf_offset(USB_CDC_EP_BULK_IN)
+                      | EP_CTRL_DOUBLE_BUFFERED_BITS
                       | EP_CTRL_INTERRUPT_PER_BUFFER
                       | (USB_ENDPOINT_XFER_BULK << EP_CTRL_BUFFER_TYPE_LSB));
     usb_dpram->ep_ctrl[USB_CDC_EP_BULK_IN-1].in = ep_in;
