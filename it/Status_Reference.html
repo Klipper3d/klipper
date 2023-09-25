@@ -2005,7 +2005,7 @@
 <ul>
 <li><code>pressure_advance</code>: il valore corrente di <a href="Pressure_Advance.html">pressure advance</a>.</li>
 <li><code>smooth_time</code>: il tempo di avanzamento graduale della pressure advance corrente.</li>
-<li><code>motion_queue</code>: The name of the extruder that this extruder stepper is currently synchronized to. This is reported as <code>None</code> if the extruder stepper is not currently associated with an extruder.</li>
+<li><code>motion_queue</code>: il nome dell'estrusore con cui è attualmente sincronizzato questo stepper estrusore. Questo viene segnalato come <code>None</code> se lo stepper dell'estrusore non è attualmente associato a un estrusore.</li>
 </ul>
 <h2 id="fan">fan<a class="headerlink" href="#fan" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#fan">fan</a>, <a href="Config_Reference.html#heater_fan">heater_fan some_name</a> e <a href="Config_Reference.html#controller_fan">controller_fan some_name</a>:</p>
@@ -2134,7 +2134,7 @@
 <h2 id="probe">probe<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#probe">probe</a> (questo oggetto è disponibile anche se è definita una sezione di configurazione <a href="Config_Reference.html#bltouch">bltouch</a>):</p>
 <ul>
-<li><code>name</code>: Returns the name of the probe in use.</li>
+<li><code>name</code>: restituisce il nome della sonda in uso.</li>
 <li><code>last_query</code>: Restituisce True se il probe è stato segnalato come "attivato" durante l'ultimo comando QUERY_PROBE. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando QUERY_PROBE deve essere eseguito prima della macro contenente questo riferimento.</li>
 <li><code>last_z_result</code>: Restituisce il valore del risultato Z dell'ultimo comando PROBE. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando PROBE (o simile) deve essere eseguito prima della macro contenente questo riferimento.</li>
 </ul>
@@ -2152,11 +2152,11 @@
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>screws_tilt_adjust</code>:</p>
 <ul>
 <li><code>error</code>: restituisce True se il comando <code>SCREWS_TILT_CALCULATE</code> più recente includeva il parametro <code>MAX_DEVIATION</code> e uno qualsiasi dei punti della vite rilevati superava il <code>MAX_DEVIATION</code> specificato.</li>
-<li><code>results["&lt;screw&gt;"]</code>: A dictionary containing the following keys:<ul>
+<li><code>results["&lt;screw&gt;"]</code>: un dizionario contenente le seguenti chiavi:<ul>
 <li><code>z</code>: L'altezza Z misurata della posizione della vite.</li>
-<li><code>sign</code>: A string specifying the direction to turn to screw for the necessary adjustment. Either "CW" for clockwise or "CCW" for counterclockwise.</li>
+<li><code>sign</code>: una stringa che specifica la direzione in cui ruotare la vite per la regolazione necessaria. O "CW" per senso orario o "CCW" per senso antiorario.</li>
 <li><code>adjust</code>: il numero di giri di vite per regolare la vite, dato nel formato "HH:MM", dove "HH" è il numero di giri di vite completi e "MM" è il numero di "minuti di un quadrante di orologio" che rappresenta un giro di vite parziale. (Es. "01:15" significherebbe girare la vite di un giro e un quarto.)</li>
-<li><code>is_base</code>: Returns True if this is the base screw.</li>
+<li><code>is_base</code>: Restituisce True se questa è la vite di base.</li>
 </ul>
 </li>
 </ul>
@@ -2166,9 +2166,9 @@
 <li><code>printer["servo &lt;config_name&gt;"].value</code>: l'ultima impostazione del pin PWM (un valore compreso tra 0.0 e 1.0) associata al servo.</li>
 </ul>
 <h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
-<p>The following information is available in the <code>stepper_enable</code> object (this object is available if any stepper is defined):</p>
+<p>Le seguenti informazioni sono disponibili nell'oggetto <code>stepper_enable</code> (questo oggetto è disponibile se è definito uno stepper):</p>
 <ul>
-<li><code>steppers["&lt;stepper&gt;"]</code>: Returns True if the given stepper is enabled.</li>
+<li><code>steppers["&lt;stepper&gt;"]</code>: Restituisce True se lo stepper specificato è abilitato.</li>
 </ul>
 <h2 id="system_stats">system_stats<a class="headerlink" href="#system_stats" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>system_stats</code> (questo oggetto è sempre disponibile):</p>

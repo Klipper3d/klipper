@@ -4558,7 +4558,7 @@ max_temp:
 </code></pre></div>
 
 <h3 id="z_thermal_adjust">[z_thermal_adjust]<a class="headerlink" href="#z_thermal_adjust" title="Permanent link">&para;</a></h3>
-<p>Temperature-dependant toolhead Z position adjustment. Compensate for vertical toolhead movement caused by thermal expansion of the printer's frame in real-time using a temperature sensor (typically coupled to a vertical section of frame).</p>
+<p>基于温度的工具头Z位置调整。使用温度传感器（通常连接到框架的垂直部分）实时补偿由于打印机框架的热膨胀引起的垂直方向工具头移动。</p>
 <p>另请参阅：<a href="G-Codes.html#z_thermal_adjust">扩展G代码命令</a>。</p>
 <div class="highlight"><pre><span></span><code>[z_thermal_adjust]
 #temp_coeff:
@@ -4701,7 +4701,7 @@ gcode:
 </code></pre></div>
 
 <h3 id="save_variables">[save_variables]<a class="headerlink" href="#save_variables" title="Permanent link">&para;</a></h3>
-<p>Support saving variables to disk so that they are retained across restarts. See <a href="Command_Templates.html#save-variables-to-disk">command templates</a> and <a href="G-Codes.html#save_variables">G-Code reference</a> for further information.</p>
+<p>支持将变量保存到磁盘，以便在重新启动后保留。有关更多信息，请参阅<a href="Command_Templates.html#save-variables-to-disk">命令模板</a>和<a href="G-Codes.html#save_variables">G-Code参考文档</a>。</p>
 <div class="highlight"><pre><span></span><code>[save_variables]
 filename:
 #   必须提供一个可以用来保存参数到磁盘的文件名。
@@ -4741,7 +4741,7 @@ path:
 </code></pre></div>
 
 <h3 id="force_move">[force_move]<a class="headerlink" href="#force_move" title="Permanent link">&para;</a></h3>
-<p>Support manually moving stepper motors for diagnostic purposes. Note, using this feature may place the printer in an invalid state - see the <a href="G-Codes.html#force_move">command reference</a> for important details.</p>
+<p>支持手动移动步进电机以进行诊断。注意，使用此功能可能会使打印机处于无效状态——有关重要细节，请参阅<a href="G-Codes.html#force_move">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[force_move]
 #enable_force_move: False
 #   设置为true来启用 FORCE_MOVE 和 SET_KINEMATIC_POSITION 扩展 
@@ -4834,7 +4834,7 @@ path:
 </code></pre></div>
 
 <h3 id="adxl345">[adxl345]<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h3>
-<p>Support for ADXL345 accelerometers. This support allows one to query accelerometer measurements from the sensor. This enables an ACCELEROMETER_MEASURE command (see <a href="G-Codes.html#adxl345">G-Codes</a> for more information). The default chip name is "default", but one may specify an explicit name (eg, [adxl345 my_chip_name]).</p>
+<p>对 ADXL345 加速度传感器的支持。该支持允许用户从传感器获取加速度测量数据。这启用了一个 ACCELEROMETER_MEASURE 命令（有关更多信息，请参见 <a href="G-Codes.html#adxl345">G-Codes</a>）。默认的芯片名称为 "default"，但您也可以指定一个明确的名称（例如，[adxl345 芯片名称]）。</p>
 <div class="highlight"><pre><span></span><code>[adxl345]
 cs_pin:
 #   传感器的 SPI 启用引脚。
@@ -4863,7 +4863,7 @@ cs_pin:
 </code></pre></div>
 
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
-<p>Support for MPU-9250, MPU-9255, MPU-6515, MPU-6050, and MPU-6500 accelerometers (one may define any number of sections with an "mpu9250" prefix).</p>
+<p>支持 MPU-9250、MPU-9255、MPU-6515、MPU-6050 和 MPU-6500 加速度计（可通过“mpu9250”前缀定义任意数量的分段）。</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
 #i2c_address:
 #   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
@@ -4879,7 +4879,7 @@ cs_pin:
 </code></pre></div>
 
 <h3 id="resonance_tester">[resonance_tester]<a class="headerlink" href="#resonance_tester" title="Permanent link">&para;</a></h3>
-<p>Support for resonance testing and automatic input shaper calibration. In order to use most of the functionality of this module, additional software dependencies must be installed; refer to <a href="Measuring_Resonances.html">Measuring Resonances</a> and the <a href="G-Codes.html#resonance_tester">command reference</a> for more information. See the <a href="Measuring_Resonances.html#max-smoothing">Max smoothing</a> section of the measuring resonances guide for more information on <code>max_smoothing</code> parameter and its use.</p>
+<p>支持共振测试和自动输入整形器校准。为了使用该模块的大多数功能，必须安装额外的软件依赖项；参考<a href="Measuring_Resonances.html">测量共振</a>和<a href="G-Codes.html#resonance_tester">命令参考</a>以获取更多信息。有关 <code>max_smoothing</code> 参数及其用途的更多信息，请查阅测量共振指南的 <a href="Measuring_Resonances.html#max-smoothing">Max smoothing</a> 章节。</p>
 <div class="highlight"><pre><span></span><code>[resonance_tester]
 #probe_points:
 #   共振测试点的列表（每行一个X,Y,Z坐标点），至少指定一个点。请确保
@@ -5127,7 +5127,7 @@ z_offset:
 </code></pre></div>
 
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
-<p>Support for cartesian printers with dual carriages on a single axis. The active carriage is set via the SET_DUAL_CARRIAGE extended g-code command. The "SET_DUAL_CARRIAGE CARRIAGE=1" command will activate the carriage defined in this section (CARRIAGE=0 will return activation to the primary carriage). Dual carriage support is typically combined with extra extruders - the SET_DUAL_CARRIAGE command is often called at the same time as the ACTIVATE_EXTRUDER command. Be sure to park the carriages during deactivation.</p>
+<p>对单轴上具有双滑车的笛卡尔打印机的支持。通过 SET_DUAL_CARRIAGE 扩展G代码命令来设置活跃的滑车。"SET_DUAL_CARRIAGE CARRIAGE=1" 命令将激活在此分段中定义的滑车（CARRIAGE=0 将重新激活主滑车）。双滑车支持通常与额外的挤出机组合在一起 - SET_DUAL_CARRIAGE 命令通常与 ACTIVATE_EXTRUDER 命令同时调用。在停用期间，请务必将滑车停放到适当的位置。</p>
 <p>Idex参考示例<a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-idex.cfg">sample-idex.cfg</a></p>
 <div class="highlight"><pre><span></span><code>[dual_carriage]
 axis:
@@ -5700,7 +5700,7 @@ pin:
 
 <h2 id="leds">LEDs<a class="headerlink" href="#leds" title="Permanent link">&para;</a></h2>
 <h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
-<p>Support for LEDs (and LED strips) controlled via micro-controller PWM pins (one may define any number of sections with an "led" prefix). See the <a href="G-Codes.html#led">command reference</a> for more information.</p>
+<p>支持通过微控制器 PWM 引脚控制的 LED（和 LED 条）（可通过“led”前缀定义任意数量的分段）。有关更多信息，请参阅<a href="G-Codes.html#led">命令参考</a>。</p>
 <div class="highlight"><pre><span></span><code>[led my_led]
 #red_pin:
 #green_pin:
@@ -6720,7 +6720,7 @@ lcd_type:
 </code></pre></div>
 
 <h3 id="display_data">[display_data]<a class="headerlink" href="#display_data" title="Permanent link">&para;</a></h3>
-<p>Support for displaying custom data on an lcd screen. One may create any number of display groups and any number of data items under those groups. The display will show all the data items for a given group if the display_group option in the [display] section is set to the given group name.</p>
+<p>支持在LCD屏幕上显示自定义数据。您可以创建任意数量的显示组和该组下的任意数量的数据项。如果[display]分段中的display_group参数设置为给定的组名，则显示屏将显示该组下的所有数据项。</p>
 <p>一套<a href="https://github.com/Klipper3d/klipper/blob/master/klippy/extras/display/display.cfg">默认显示组</a>将被自动创建。通过覆盖打印机的 printer.cfg 主配置文件中的默认值可以替换或扩展这些 display_data 项。</p>
 <div class="highlight"><pre><span></span><code>[display_data my_group_name my_data_name]
 position:
