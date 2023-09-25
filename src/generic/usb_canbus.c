@@ -116,8 +116,8 @@ static struct usbcan_data {
     uint32_t assigned_id;
 
     // Data from physical canbus interface
-    uint32_t pull_pos, push_pos;
-    struct canbus_msg queue[32];
+    uint32_t canhw_pull_pos, canhw_push_pos;
+    struct canbus_msg canhw_queue[32];
 } UsbCan;
 
 enum {
@@ -139,16 +139,16 @@ void
 canbus_process_data(struct canbus_msg *msg)
 {
     // Add to admin command queue
-    uint32_t pushp = UsbCan.push_pos;
-    if (pushp - UsbCan.pull_pos >= ARRAY_SIZE(UsbCan.queue))
+    uint32_t pushp = UsbCan.canhw_push_pos;
+    if (pushp - UsbCan.canhw_pull_pos >= ARRAY_SIZE(UsbCan.canhw_queue))
         // No space - drop message
         return;
     if (UsbCan.assigned_id && (msg->id & ~1) == UsbCan.assigned_id)
         // Id reserved for local
         return;
-    uint32_t pos = pushp % ARRAY_SIZE(UsbCan.queue);
-    memcpy(&UsbCan.queue[pos], msg, sizeof(*msg));
-    UsbCan.push_pos = pushp + 1;
+    uint32_t pos = pushp % ARRAY_SIZE(UsbCan.canhw_queue);
+    memcpy(&UsbCan.canhw_queue[pos], msg, sizeof(*msg));
+    UsbCan.canhw_push_pos = pushp + 1;
     usb_notify_bulk_out();
 }
 
@@ -167,24 +167,24 @@ send_frame(struct canbus_msg *msg)
 
 // Send any pending hw frames to host
 static void
-drain_hw_queue(void)
+drain_canhw_queue(void)
 {
-    uint32_t pull_pos = UsbCan.pull_pos;
+    uint32_t pull_pos = UsbCan.canhw_pull_pos;
     for (;;) {
-        uint32_t push_pos = readl(&UsbCan.push_pos);
+        uint32_t push_pos = readl(&UsbCan.canhw_push_pos);
         if (push_pos == pull_pos) {
             // No more data to send
             UsbCan.usb_send_busy = 0;
             return;
         }
-        uint32_t pos = pull_pos % ARRAY_SIZE(UsbCan.queue);
-        int ret = send_frame(&UsbCan.queue[pos]);
+        uint32_t pos = pull_pos % ARRAY_SIZE(UsbCan.canhw_queue);
+        int ret = send_frame(&UsbCan.canhw_queue[pos]);
         if (ret < 0) {
             // USB is busy - retry later
             UsbCan.usb_send_busy = 1;
             return;
         }
-        UsbCan.pull_pos = pull_pos = pull_pos + 1;
+        UsbCan.canhw_pull_pos = pull_pos = pull_pos + 1;
     }
 }
 
@@ -195,7 +195,7 @@ usbcan_task(void)
         return;
 
     // Send any pending hw frames to host
-    drain_hw_queue();
+    drain_canhw_queue();
 
     for (;;) {
         // See if previous host frame needs to be transmitted
