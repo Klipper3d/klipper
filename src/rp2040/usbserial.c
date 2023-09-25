@@ -69,31 +69,16 @@ get_rx_count(uint32_t epb, uint32_t max_len)
     return c;
 }
 
-static int_fast8_t
-usb_write_packet(uint32_t ep, const void *data, uint_fast8_t len)
-{
-    // Check if there is room for this packet
-    volatile uint16_t *epbp = lookup_epbufctrl(ep, 0, 0);
-    uint32_t epb = *epbp;
-    if (epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL))
-        return -1;
-    // Determine the next packet header
-    uint32_t pid = next_data_pid(epb);
-    uint32_t new_epb = USB_BUF_CTRL_FULL | USB_BUF_CTRL_LAST | pid | len;
-    *epbp = new_epb;
-    barrier();
-    // Copy the packet to the hw buffer
-    memcpy(usb_buf_addr(ep, 0), data, len);
-    // Inform the USB hardware of the available packet
-    barrier();
-    *epbp = new_epb | USB_BUF_CTRL_AVAIL;
-    return len;
-}
 
-static int_fast8_t
-usb_read_packet(uint32_t ep, void *data, uint_fast8_t max_len)
+/****************************************************************
+ * Interface
+ ****************************************************************/
+
+int_fast8_t
+usb_read_bulk_out(void *data, uint_fast8_t max_len)
 {
     // Check if there is a packet ready
+    uint32_t ep = USB_CDC_EP_BULK_OUT;
     volatile uint16_t *epbp = lookup_epbufctrl(ep, 1, 0);
     uint32_t epb = *epbp;
     if ((epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL)) != USB_BUF_CTRL_FULL)
@@ -111,21 +96,26 @@ usb_read_packet(uint32_t ep, void *data, uint_fast8_t max_len)
     return c;
 }
 
-
-/****************************************************************
- * Interface
- ****************************************************************/
-
-int_fast8_t
-usb_read_bulk_out(void *data, uint_fast8_t max_len)
-{
-    return usb_read_packet(USB_CDC_EP_BULK_OUT, data, max_len);
-}
-
 int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
 {
-    return usb_write_packet(USB_CDC_EP_BULK_IN, data, len);
+    // Check if there is room for this packet
+    uint32_t ep = USB_CDC_EP_BULK_IN;
+    volatile uint16_t *epbp = lookup_epbufctrl(ep, 0, 0);
+    uint32_t epb = *epbp;
+    if (epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL))
+        return -1;
+    // Determine the next packet header
+    uint32_t pid = next_data_pid(epb);
+    uint32_t new_epb = USB_BUF_CTRL_FULL | USB_BUF_CTRL_LAST | pid | len;
+    *epbp = new_epb;
+    barrier();
+    // Copy the packet to the hw buffer
+    memcpy(usb_buf_addr(ep, 0), data, len);
+    // Inform the USB hardware of the available packet
+    barrier();
+    *epbp = new_epb | USB_BUF_CTRL_AVAIL;
+    return len;
 }
 
 int_fast8_t
@@ -154,19 +144,51 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
 int_fast8_t
 usb_read_ep0(void *data, uint_fast8_t max_len)
 {
+    // Check if there is a packet ready
+    uint32_t ep = 0;
     if (usb_hw->intr & USB_INTR_SETUP_REQ_BITS)
         // Early end of transmission
         return -2;
-    return usb_read_packet(0, data, max_len);
+    volatile uint16_t *epbp = lookup_epbufctrl(ep, 1, 0);
+    uint32_t epb = *epbp;
+    if ((epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL)) != USB_BUF_CTRL_FULL)
+        return -1;
+    // Determine the next packet header
+    uint32_t new_epb = USB_BUF_CTRL_LAST | next_data_pid(epb) | DPBUF_SIZE;
+    *epbp = new_epb;
+    barrier();
+    // Copy the packet to the given buffer
+    uint32_t c = get_rx_count(epb, max_len);
+    memcpy(data, usb_buf_addr(ep, 0), c);
+    // Notify the USB hardware that the space is now available
+    barrier();
+    *epbp = new_epb | USB_BUF_CTRL_AVAIL;
+    return c;
 }
 
 int_fast8_t
 usb_send_ep0(const void *data, uint_fast8_t len)
 {
+    // Check if there is room for this packet
+    uint32_t ep = 0;
     if (usb_hw->intr & USB_INTR_SETUP_REQ_BITS || usb_hw->buf_status & 2)
         // Early end of transmission
         return -2;
-    return usb_write_packet(0, data, len);
+    volatile uint16_t *epbp = lookup_epbufctrl(ep, 0, 0);
+    uint32_t epb = *epbp;
+    if (epb & (USB_BUF_CTRL_AVAIL|USB_BUF_CTRL_FULL))
+        return -1;
+    // Determine the next packet header
+    uint32_t pid = next_data_pid(epb);
+    uint32_t new_epb = USB_BUF_CTRL_FULL | USB_BUF_CTRL_LAST | pid | len;
+    *epbp = new_epb;
+    barrier();
+    // Copy the packet to the hw buffer
+    memcpy(usb_buf_addr(ep, 0), data, len);
+    // Inform the USB hardware of the available packet
+    barrier();
+    *epbp = new_epb | USB_BUF_CTRL_AVAIL;
+    return len;
 }
 
 void
