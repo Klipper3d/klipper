@@ -1,21 +1,21 @@
 # Manual Installation
 
-These instructions are for people who want to run klipper on 
+These instructions are for people who want to run klipper on
 custom system that's not debian-based. Flashing steps are same
-as in [Installation](Installation.md) instruction. 
+as in [Installation](Installation.md) instruction.
 Naturally this instruction is for more advanced users.
 
 # Preparing for installation
 
-First you need to install required packages. This step is different 
+First you need to install required packages. This step is different
 for every other package manager and distribution so provided are
-debian packages and fiding package names for your distribution are 
+debian packages and fiding package names for your distribution are
 up to you.
 
 ```
 virtualenv python-dev libffi-dev build-essential libncurses-dev
-libusb-dev avrdude gcc-avr binutils-avr avr-libc stm32flash 
-libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi 
+libusb-dev avrdude gcc-avr binutils-avr avr-libc stm32flash
+libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi
 libusb-1.0 pkg-config
 ```
 
@@ -28,7 +28,7 @@ usermod -aG tty klippy
 usermod -aG dialout klippy
 ```
 
-Then after you login as a user you need to go to desired installation 
+Then after you login as a user you need to go to desired installation
 directory which can be home directory, clone klipper repo
 
 ```
@@ -36,18 +36,18 @@ git clone https://github.com/Klipper3d/klipper.git
 ```
 
 At this point it would be best to follow step second step in [Installation](Installation.md#obtain-a-klipper-configuration-file)
-and obtain the configuration file. 
+and obtain the configuration file.
 
 # Creating python virtual environment
 
-We need to create python virtual environment now. Place for it is 
+We need to create python virtual environment now. Place for it is
 entirely up to you but it has to be done from user and accessible.
 
 ```
 # Assuming we're in desired directory
 virtualenv .
 # Replace klipper_directory with path to klipper
-./bin/pip install -r klipper_directory/scripts/klippy-requirements.txt 
+./bin/pip install -r klipper_directory/scripts/klippy-requirements.txt
 ```
 
 Python3 works fine, you might have issues with gcc13 and above.
@@ -73,7 +73,7 @@ KLIPPY_ARGS="klipper_directory/klippy/klippy.py config_directory/printer.cfg -l 
 EOF
 ```
 
-Of course you need to adjust user, `venv_directory`, `klipper_directory`, 
+Of course you need to adjust user, `venv_directory`, `klipper_directory`,
 `config_directory` and log file location.
 Then you can start it using `sudo /etc/init.d/klipper restart`
 
@@ -99,7 +99,7 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Of course you need to adjust user, `venv_directory`, `klipper_directory`, 
+Of course you need to adjust user, `venv_directory`, `klipper_directory`,
 `config_directory` and log file location.
 Afterwards you can start it using `systemctl start klipper`.
 
