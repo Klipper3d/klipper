@@ -122,6 +122,10 @@ class PrinterProbe:
         pos[2] = self.z_position
         try:
             epos = phoming.probing_move(self.mcu_probe, pos, speed)
+            # cache the current xy position in case of a IDEX
+            if self.printer.lookup_object('dual_carriage') is not None:
+                epos[0] = pos[0]
+                epos[1] = pos[1]
         except self.printer.command_error as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
@@ -136,6 +140,9 @@ class PrinterProbe:
                 axis_twist_compensation.get_z_compensation_value(pos))
         # add z compensation to probe position
         epos[2] += z_compensation
+        # set the toolhead to the cached xy position in case of a IDEX
+        if self.printer.lookup_object('dual_carriage') is not None:
+            toolhead.set_position(epos)
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                                 % (epos[0], epos[1], epos[2]))
         return epos[:3]
