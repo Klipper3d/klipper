@@ -6,7 +6,7 @@ sponsors.
 
 ## BIGTREETECH
 
-[<img src="./img/sponsors/BTT_BTT.png" width="200" />](https://bigtree-tech.com/collections/all-products)
+[<img src="./img/sponsors/BTT_BTT.png" width="200" style="margin:25px"/>](https://bigtree-tech.com/collections/all-products)
 
 BIGTREETECH is the official mainboard sponsor of Klipper. BIGTREETECH
 is committed to developing innovative and competitive products to
@@ -16,7 +16,8 @@ serve the 3D printing community better. Follow them on
 
 ## Sponsors
 
-[<img src="./img/sponsors/obico-light-horizontal.png" width="200" />](https://obico.io/klipper.html?source=klipper_sponsor)
+[<img src="./img/sponsors/obico-light-horizontal.png" width="200" style="margin:25px" />](https://obico.io/klipper.html?source=klipper_sponsor)
+[<img src="./img/sponsors/peopoly-logo.png" width="200" style="margin:25px" />](https://peopoly.net)
 
 ## Klipper Developers
 
