@@ -69,14 +69,14 @@ class HybridCoreXYKinematics:
         if (self.dc_module is not None and 'PRIMARY' == \
                     self.dc_module.get_status()['carriage_1']):
             if self.inverted == False:
-                return [pos[0] - pos[1], pos[1], pos[2]]
+                return [stepper_positions['dual_carriage'] - pos[1], pos[1], pos[2]]
             else:
-                return [pos[0] + pos[1], pos[1], pos[2]]
+                return [stepper_positions['dual_carriage'] + pos[1], pos[1], pos[2]]
         else:
             if self.inverted == False:
-                return [pos[0] + pos[1], pos[1], pos[2]]
+                return [stepper_positions['stepper_x'] + pos[1], pos[1], pos[2]]
             else:
-                return [pos[0] - pos[1], pos[1], pos[2]]
+                return [stepper_positions['stepper_x'] - pos[1], pos[1], pos[2]]
     def update_limits(self, i, range):
         l, h = self.limits[i]
         # Only update limits if this axis was already homed,
