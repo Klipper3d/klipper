@@ -221,7 +221,7 @@ class MPU9250:
         systime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
         reqclock = self.mcu.print_time_to_clock(print_time)
-        rest_ticks = self.mcu.seconds_to_clock(1. / self.data_rate)
+        rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
         self.query_rate = self.data_rate
         self.query_mpu9250_cmd.send([self.oid, reqclock, rest_ticks],
                                     reqclock=reqclock)

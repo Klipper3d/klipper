@@ -87,8 +87,15 @@ BOARD_DEFS = {
         'spi_bus': 'spi3a',
         'cs_pin': 'PA15'
     },
-    'btt-skr-3': {
+    'btt-skr-3-h743': {
         'mcu': 'stm32h743xx',
+        'spi_bus': 'swspi',
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': 'PC11',
+        'skip_verify': True
+    },
+    'btt-skr-3-h723': {
+        'mcu': 'stm32h723xx',
         'spi_bus': 'swspi',
         'spi_pins': "PC8,PD2,PC12",
         'cs_pin': 'PC11',
@@ -116,6 +123,11 @@ BOARD_DEFS = {
         'spi_bus': "spi1",
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
+    },
+    'btt-skrat': {
+        'mcu': "stm32g0b1xx",
+        'spi_bus': "spi1",
+        "cs_pin": "PB8"
     }
 }
 
@@ -154,6 +166,7 @@ BOARD_ALIASES = {
     'btt-octopus-f446-v1.1': BOARD_DEFS['btt-octopus-f446-v1'],
     'btt-octopus-pro-f429-v1.0': BOARD_DEFS['btt-octopus-f429-v1'],
     'btt-octopus-pro-f446-v1.0': BOARD_DEFS['btt-octopus-f446-v1'],
+    'btt-octopus-pro-h723-v1.1': BOARD_DEFS['btt-skr-3-h723'],
     'btt-skr-pro-v1.1': BOARD_DEFS['btt-skr-pro'],
     'btt-skr-pro-v1.2': BOARD_DEFS['btt-skr-pro'],
     'btt-gtr-v1': BOARD_DEFS['btt-gtr'],
@@ -162,7 +175,8 @@ BOARD_ALIASES = {
     'fysetc-spider-v1': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
-    'robin_v3': BOARD_DEFS['monster8']
+    'robin_v3': BOARD_DEFS['monster8'],
+    'btt-skrat-v1.0': BOARD_DEFS['btt-skrat']
 }
 
 def list_boards():
