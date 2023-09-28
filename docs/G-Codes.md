@@ -1291,7 +1291,7 @@ The tuning_tower module is automatically loaded.
 `TUNING_TOWER COMMAND=<command> PARAMETER=<name> START=<value>
 [SKIP=<value>] [FACTOR=<value> [BAND=<value>]] | [STEP_DELTA=<value>
 STEP_HEIGHT=<value>]`: A tool for tuning a parameter on each Z height
-during a print. The tool will run the given `COMMAND` with the given
+during a print (requires extrusion). The tool will run the given `COMMAND` with the given
 `PARAMETER` assigned to a value that varies with `Z` according to a
 formula. Use `FACTOR` if you will use a ruler or calipers to measure
 the Z height of the optimum value, or `STEP_DELTA` and `STEP_HEIGHT`
