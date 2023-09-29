@@ -9,7 +9,7 @@ Naturally this instruction is for more advanced users.
 
 First you need to install required packages. This step is different
 for every other package manager and distribution so provided are
-debian packages and fiding package names for your distribution are
+debian packages and finding package names for your distribution are
 up to you.
 
 ```
