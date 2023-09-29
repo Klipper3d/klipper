@@ -118,16 +118,18 @@ class DualCarriages:
                 range_min = max(range_min, axes_pos[inactive_idx] + safe_dist)
             else:
                 range_max = min(range_max, axes_pos[inactive_idx] - safe_dist)
-        # During multi-MCU homing it is possible that the carriage
-        # position will end up below position_min or above position_max
-        # if position_endstop is too close to the rail motion ends due
-        # to inherent latencies of the data transmission between MCUs.
-        # This can result in the calculated values range_max < range_min
-        # in certain modes, which would reset homing state instead of just
-        # blocking the carriage motion until a mode is selected which
-        # actually permits carriage motion. Using max(range_min, range_max)
-        # as the upper range end fixes this undesired behavior.
-        return (range_min, max(range_min, range_max))
+        if range_min > range_max:
+            # During multi-MCU homing it is possible that the carriage
+            # position will end up below position_min or above position_max
+            # if position_endstop is too close to the rail motion ends due
+            # to inherent latencies of the data transmission between MCUs.
+            # This can result in an invalid range_min > range_max range
+            # in certain modes, which may confuse the kinematics code.
+            # So, return an empty range instead, which will correctly
+            # block the carriage motion until a different mode is selected
+            # which actually permits carriage motion.
+            return (range_min, range_min)
+        return (range_min, range_max)
     def get_dc_order(self, first, second):
         if first == second:
             return 0
