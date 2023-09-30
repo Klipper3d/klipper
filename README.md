@@ -58,9 +58,9 @@ all components.
 
 SSH into the Pi (user pi, password is what you set up when you created
 the SD card).  Execute the following commands:
-mv klipper klipper-orig
-git clone https://github.com/dockterj/klipper
-systemctl restart klipper
+- mv klipper klipper-orig
+- git clone https://github.com/dockterj/klipper
+- systemctl restart klipper
 
 At this point if you refresh update manager on the machine page it will
 say that klipper is invalid.  Ignore this and don't click on "hard recovery"
@@ -76,7 +76,7 @@ rename it to printer.cfg.
 
 Plug the printer in to the Pi's usb port and verify that the device
 appears in /dev/serial/by-id by executing the following:
-ls /dev/serial/by-id
+- ls /dev/serial/by-id
 Make a note of the name of the printer so you can update
 printer.cfg in the next steps.
 
@@ -84,13 +84,17 @@ Edit this file to add/remove features specific to your printer
 (e.g. remove HBP, change the HBP sensor to match what you have,
 change x,y, and z limits).  Update the "serial:" line under [mcu]
 to match the filename found in the previous step.  Add the following
-two lines at the top of you printer.cfg file to enable Mainsail
+line at the top of you printer.cfg file to enable Mainsail
 support.
-[include mainsail.cfg]
+- [include mainsail.cfg]
 Click save and restart.
 
 Following the normal installation steps, run make menuconfig.  Choose 
 an atmega1280, 16mhz, and uart0.  (see below for note about atmega2560).
+
+Edit src/svr/Makefile and change the line that sets FLASH_DEVICE to
+point to your mcu (the same /dev/serial/by-id that you changed in
+printer.cfg).  Save your changes.
 
 Run make flash.  This should flash your mightyboard.  If not, I have
 found times where I needed to power the mightboard off and back on
