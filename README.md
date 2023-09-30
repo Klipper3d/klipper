@@ -38,8 +38,9 @@ repo include:
 * Removes the need for specifying dummy pins for software spi devices
 * Adds example g code macros to emulate some original Makerbot behaviors
 
-- `[/config/printer-makerbot-replicator2x-2012.cfg](/config/printer-makerbot-replicator2x-2012.cfg)` can be used as a starting point for the Replicator 2X.
-- `[/config/printer-makerbot-replicator2-2012.cfg](/config/printer-makerbot-replicator2-2012.cfg)` can be used as a starting point for the Replicator 2.
+`[/config/printer-makerbot-replicator2x-2012.cfg](/config/printer-makerbot-replicator2x-2012.cfg)` can be used as a starting point for the Replicator 2X.
+
+`[/config/printer-makerbot-replicator2-2012.cfg](/config/printer-makerbot-replicator2-2012.cfg)` can be used as a starting point for the Replicator 2.
 
 # Installation
 
