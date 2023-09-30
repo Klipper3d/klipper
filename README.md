@@ -10,7 +10,7 @@ of printers and more wide spread testing would be appreciated.
 The example config file will be updated to incorporate
 setting hold currents while pre-heating.
 
-**Supported clones**
+**Supported Clones -**
 Currently, no clones have example config files or instructions
 for flashing Klipper.  If you have a Replicator clone that
 uses k type thermocouples and/or an ADS1118 ADC chip and
@@ -18,8 +18,7 @@ want to get Klipper running on it let me know and submit
 a sample config file and flashing instructions and I will
 include them in this repo.
 
-Printers that may use ADS1118 ADCs and may work with this
-repo include:
+**Printers that may use ADS1118 ADCs and may work with this repo include:**
 - FlashForge Dreamer NX
 - FlashForge Dreamer
 - FlashForge Inventor
@@ -37,6 +36,8 @@ repo include:
 * Adds support for multiple buttons with same action in display
 * Removes the need for specifying dummy pins for software spi devices
 * Adds example g code macros to emulate some original Makerbot behaviors
+
+**Example Configs:**
 
 `/config/printer-makerbot-replicator2-2012.cfg` can be used as a starting point for the Replicator 2.
 
@@ -224,17 +225,17 @@ of your printer and to learn the specifics of what Klipper is capable of.
 <details><summary>Mainsail OS</summary>
 <p>
 
-**NOTE:** I am using Mainsail OS for these install instructions but you can
-use any frontend and install method you want.  The only changes needed from
-this repo are in Klipper.
+**NOTE:** You can use any frontend and install method you want.  The only changes needed from
+this repo are already built into Klipper.
 
-Create an SD card with Mainsail OS (using Raspberry Pi Imager).  [Follow the
-instructions from Mainsail OS](https://docs.mainsail.xyz/setup/mainsail-os).
-Note that there is a bug in Mainsail OS v1.0.1 that will cause the wifi
+**NOTE:** There is a bug in Mainsail OS v1.0.1 that will cause the wifi
 connection to bounce up and down until Sonar is updated.  To work around
 this bug, once the Pi has booted IMMEDIATELY SSH into the Pi and execute
-"systemctl stop sonar".  After that navigate to the Machine page and update
+`systemctl stop sonar`.  After that navigate to the Machine page and update
 all components.
+
+Create an SD card with Mainsail OS using [Raspberry Pi Imager](https://www.raspberrypi.com/software/) [Follow the
+instructions from [Mainsail OS](https://docs.mainsail.xyz/setup/mainsail-os)].
 
 SSH into the Pi (user pi, password is what you set up when you created
 the SD card).  Execute the following commands:
@@ -250,12 +251,11 @@ say that klipper is invalid.  Ignore this and don't click on `"hard recovery"`
 or `"soft recovery"`.  Klipper should also report `ERROR`.  This is normal as
 there is no printer configured yet.
 
-Copy [/config/printer-makerbot-replicator2x-2012.cfg](/config/printer-makerbot-replicator2x-2012.cfg) or [/config/printer-makerbot-replicator2-2012.cfg](/config/printer-makerbot-replicator2-2012.cfg) to printer.cfg.  An
+Copy [/config/printer-makerbot-replicator2-2012.cfg](/config/printer-makerbot-replicator2-2012.cfg) or [/config/printer-makerbot-replicator2x-2012.cfg](/config/printer-makerbot-replicator2x-2012.cfg) to printer.cfg.  An
 easy way to do this is to change the root directory in Config File
-(on the Machine tab) to config_examples.  Find the
-`printer-makerbot-replicator2x-2012.cfg` file, right click and "download"
-it.  Change the root directory back to config, upload that file, then
-rename it to `printer.cfg`.
+(on the Machine tab) to `config_examples`.  Find `printer-makerbot-replicator2-2012.cfg` or `printer-makerbot-replicator2x-2012.cfg`, right click and download
+it.  Change the root directory back to `config`, upload that file, then
+rename it `printer.cfg`.
 
 Plug the printer into the Pi's usb port and verify that the device
 appears in /dev/serial/by-id by executing the following:
@@ -267,27 +267,28 @@ It should return a line similar to the following:
 /dev/serial/by-id/usb-MakerBot_Industries_The_Replicator_A413936383135181D010-if00
 ```
 Make a note of this so that you can update
-printer.cfg in the next steps.
+`printer.cfg` in the next steps.
 
-Edit this file to add/remove features specific to your printer
+You can edit `printer.cfg` to add/remove features specific to your printer
 (e.g. remove HBP, change the HBP sensor to match what you have,
-change x,y, and z limits).  Update the `serial:` line under the [mcu] 
+change x,y, and z limits, etc...).  Update the `serial:` line under the `[mcu]` 
 section to match the filename found in the previous step.  Add the following 
-line at the top of you printer.cfg file to enable Mainsail support.
+line at the top of your `printer.cfg` to enable Mainsail support.
 ```
 [include mainsail.cfg]
 ```
 Click Save and Restart.
 
 Following the normal installation steps, run `make menuconfig`.  Choose 
-an atmega1280, 16mhz, and uart0.  (see below for note about atmega2560).
+an atmega1280, 16mhz, and uart0.  (see [below for note about atmega2560](#notes)).
 
 Run `make flash`.  This should flash your mightyboard.  If not, I have
-found times where I needed to power the mightboard off and back on
+found times where I needed to power the mightyboard off and back on
 or attempt to connect and disconnect with Klipper (i.e. connect at a baud rate
 other than 57600 first) before it would flash.
 
 At this point you should have Klipper running on your Replicator.
+
 Follow the normal [Klipper documentation](https://www.klipper3d.org/) for further tuning.
 
 </p>
@@ -295,25 +296,28 @@ Follow the normal [Klipper documentation](https://www.klipper3d.org/) for furthe
 
 # Notes
 * The Sailfish firmware has profiles for Mightyboard Rev G and Rev
-H printers that have atmega2560 instead of atmega1280.  If you have
-one of these please let me know so I can get a known working config.
+H printers that have an atmega2560 instead of an atmega1280.  If you have
+one of these please let me know so I can get a known working config for them.
 I believe you should be able to get this working by changing the MCU
-processor in make menuconfig and editing src/arv/Makefile and changing
-the last line from "-C stk500v1" to "-C stk500v2".  Software reset
+processor in `make menuconfig`, editing `src/arv/Makefile`, and changing
+the last line from `-C stk500v1` to `-C stk500v2`.  Software reset
 should work but needs to be tested to confirm.
-* The generic-mightyboard.cfg in the main repo should NOT be use
+
+* The `generic-mightyboard.cfg` in the main repo should NOT be use
 for these printers.  That config file is for the original
 Makerbot Replicator and clones and does not work with printers
 that have ADS1118 ADC and thermocouples.
+
 * There is no specific error for a disconnected thermocouple, however
 the printer will shut down if a thermocouple is not attached (this
 triggers a temperature out of range error).
-* The included
-printer.cfg changes the origin (0,0) to be in the left front of the build
+
+* The included `printer.cfg` changes the origin (0,0) to be in the left front of the build
 plate to be consistent with other cartesian printers.  Keeping the original
-Replicator origin (which resembles a delta printer) requires updating
+Replicator origin (which resembles a delta printer, i.e. origin is in the center of the bed) requires updating
 position_min, position_max, position_endstop, and bed_screws values for the
-x and y axix
+x and y axes.
+
 * Please watch or star this repo if you are interested.  The more
 people that use this the better the chances of getting it included
 upstream.  Feel free to file issues in this repo for questions or
