@@ -2172,6 +2172,14 @@ in this section (CARRIAGE=0 will return activation to the primary carriage).
 Dual carriage support is typically combined with extra extruders - the
 SET_DUAL_CARRIAGE command is often called at the same time as the
 ACTIVATE_EXTRUDER command. Be sure to park the carriages during deactivation.
+Note that during G28 homing, typically the primary carriage is homed first
+followed by the carriage defined in the `[dual_carriage]` config section.
+However, the `[dual_carriage]` carriage will be homed first if both carriages
+home in a positive direction and the [dual_carriage] carriage has a
+`position_endstop` greater than the primary carriage, or if both carriages home
+in a negative direction and the `[dual_carriage]` carriage has a
+`position_endstop` less than the primary carriage.
+
 Additionally, one could use "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=COPY" or
 "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=MIRROR" commands to activate either copying
 or mirroring mode of the dual carriage, in which case it will follow the

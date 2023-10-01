@@ -203,7 +203,7 @@ channels need to be enabled you can use `pwm-2chan`:
 # Enable pwmchip sysfs interface
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 ```
-This example additionaly enables PWM1 and routes it to gpio13.
+This example additionally enables PWM1 and routes it to gpio13.
 
 The overlay does not expose the pwm line on sysfs on boot and needs to
 be exported by echo'ing the number of the pwm channel to
