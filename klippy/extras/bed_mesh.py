@@ -805,7 +805,7 @@ class BedMeshCalibrate:
 class MoveSplitter:
     def __init__(self, config, gcode):
         self.split_delta_z = config.getfloat(
-            'split_delta_z', .025, minval=0.01)
+            'split_delta_z', .025, minval=0.001)
         self.move_check_distance = config.getfloat(
             'move_check_distance', 5., minval=3.)
         self.z_mesh = None
