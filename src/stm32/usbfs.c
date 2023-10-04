@@ -342,12 +342,12 @@ usb_reset(void)
 
     ep = USB_CDC_EP_BULK_OUT;
     USB_EPR[ep] = (USB_CDC_EP_BULK_OUT | USB_EP_BULK | USB_EP_KIND
-                   | USB_EP_RX_VALID | USB_EP_TX_NAK | USB_EP_DTOG_TX);
+                   | USB_EP_RX_NAK | USB_EP_DTOG_TX);
     bulk_out_push_flag = USB_EP_DTOG_TX;
 
     ep = USB_CDC_EP_BULK_IN;
     USB_EPR[ep] = (USB_CDC_EP_BULK_IN | USB_EP_BULK | USB_EP_KIND
-                   | USB_EP_RX_NAK | USB_EP_TX_NAK);
+                   | USB_EP_TX_NAK);
     bulk_in_pop_flag = USB_EP_DTOG_RX;
 
     USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM;
