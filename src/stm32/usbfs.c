@@ -236,7 +236,8 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
     return count;
 }
 
-static uint32_t bulk_in_push_count, bulk_in_pop_flag;
+static uint32_t bulk_in_push_pos, bulk_in_pop_flag;
+#define BI_START 2
 
 int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
@@ -245,8 +246,8 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
         // No buffer space available
         return -1;
     uint32_t ep = USB_CDC_EP_BULK_IN;
-    int bufnum = bulk_in_push_count & 1;
-    bulk_in_push_count++;
+    uint32_t bipp = bulk_in_push_pos, bufnum = bipp & 1;
+    bulk_in_push_pos = bipp ^ 1;
     btable_write_packet(ep, bufnum, data, len);
     writel(&bulk_in_pop_flag, USB_EP_DTOG_RX);
 
@@ -254,7 +255,17 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
     uint32_t epr = USB_EPR[ep];
     if (epr_is_dbuf_blocking(epr) && readl(&bulk_in_pop_flag)) {
         writel(&bulk_in_pop_flag, 0);
-        USB_EPR[ep] = calc_epr_bits(epr, 0, 0) | USB_EP_DTOG_RX;
+        if (bipp & BI_START) {
+            // Two packets are always sent when starting in double
+            // buffering mode, so wait for second packet before starting.
+            if (bipp == (BI_START | 1)) {
+                bulk_in_push_pos = 0;
+                USB_EPR[ep] = calc_epr_bits(epr, USB_EPTX_STAT
+                                            , USB_EP_TX_VALID);
+            }
+        } else {
+            USB_EPR[ep] = calc_epr_bits(epr, 0, 0) | USB_EP_DTOG_RX;
+        }
     }
 
     return len;
@@ -319,9 +330,8 @@ usb_set_configure(void)
     USB_EPR[ep] = calc_epr_bits(USB_EPR[ep], USB_EPRX_STAT, USB_EP_RX_VALID);
 
     ep = USB_CDC_EP_BULK_IN;
-    bulk_in_push_count = 0;
+    bulk_in_push_pos = BI_START;
     writel(&bulk_in_pop_flag, 0);
-    USB_EPR[ep] = calc_epr_bits(USB_EPR[ep], USB_EPTX_STAT, USB_EP_TX_VALID);
 }
 
 
