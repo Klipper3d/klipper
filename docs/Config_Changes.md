@@ -135,8 +135,8 @@ packages (e.g. `sudo apt install python3-numpy python3-matplotlib`) to
 continue using these scripts. For more details, refer to
 [Software installation](Measuring_Resonances.md#software-installation).
 Alternatively, users can temporarily force the execution of these scripts
-under Python 2 by explicitly calling Python2 interpretor in the console:
-`python2 ~/klipper/scripts/calibrate_shaper.py ...`
+under Python 2 by explicitly calling Python3 interpretor in the console:
+`python3 ~/klipper/scripts/calibrate_shaper.py ...`
 
 20211110: The "NTC 100K beta 3950" temperature sensor is deprecated.
 This sensor will be removed in the near future.  Most users will find
