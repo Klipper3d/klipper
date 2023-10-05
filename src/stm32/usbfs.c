@@ -255,11 +255,12 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
     uint32_t epr = USB_EPR[ep];
     if (epr_is_dbuf_blocking(epr) && readl(&bulk_in_pop_flag)) {
         writel(&bulk_in_pop_flag, 0);
-        if (bipp & BI_START) {
+        if (unlikely(bipp & BI_START)) {
             // Two packets are always sent when starting in double
             // buffering mode, so wait for second packet before starting.
             if (bipp == (BI_START | 1)) {
                 bulk_in_push_pos = 0;
+                writel(&bulk_in_pop_flag, USB_EP_KIND); // Dummy flag
                 USB_EPR[ep] = calc_epr_bits(epr, USB_EPTX_STAT
                                             , USB_EP_TX_VALID);
             }
