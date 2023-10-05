@@ -8,8 +8,8 @@ are as follows:
 
 Klipper uses a C module to handle some kinematics calculations more quickly.
 This module needs to be compiled at packaging time to avoid introducing a
-runtime dependency on a compiler. To compile the C module, run `python2
-klippy/chelper/__init__.py`.
+runtime dependency on a compiler. To compile the C module, run 
+`~/klippy-env/bin/python -V klippy/chelper/__init__.py`.
 
 ## Compiling python code
 
