@@ -59,8 +59,8 @@ class PrinterHeaterFan:
         if has_err:
             self.num_err += 1
             if self.num_err > self.max_err:
-                msg = "'%s' spinning below minimum safe speed of %d rev/min"
-                    % (self.name, self.min_rpm)
+                msg = "'%s' spinning below minimum safe speed of %d rev/min" % (
+                    self.name, self.min_rpm)
                 logging.error(msg)
                 self.printer.invoke_shutdown(msg)
                 return self.printer.get_reactor().NEVER
