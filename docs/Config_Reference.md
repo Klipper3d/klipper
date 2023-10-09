@@ -2707,6 +2707,11 @@ a shutdown_speed equal to max_power.
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
 #   will be set to when its associated heater is enabled. The default
 #   is 1.0
+#min_rpm: 0
+#   The minimum expected fan speed in RPM. Klipper shuts down if the 
+#   fan is enabled but fan RPM reading from the tachometer is below 
+#   this value. This parameter is optional but tachometer_pin must 
+#   be specified for this parameter to be valid.
 ```
 
 ### [controller_fan]
