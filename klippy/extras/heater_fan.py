@@ -24,7 +24,8 @@ class PrinterHeaterFan:
         self.max_err = 3
         self.min_rpm = config.getint("min_rpm", 0, minval=0)
         if self.min_rpm > 0 and self.fan.tachometer._freq_counter is None:
-            raise config.error("'tachometer_pin' must be specified before enabling `min_rpm`")
+            raise config.error(
+                "'tachometer_pin' must be specified before enabling `min_rpm`")
     def handle_ready(self):
         pheaters = self.printer.lookup_object('heaters')
         self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
@@ -58,8 +59,8 @@ class PrinterHeaterFan:
         if has_err:
             self.num_err += 1
             if self.num_err > self.max_err:
-                msg = "'%s' spinning below minimum safe speed of %d rev/min" % (
-                    self.name, self.min_rpm)
+                msg = "'%s' spinning below minimum safe speed of %d rev/min" 
+                    % (self.name, self.min_rpm)
                 logging.error(msg)
                 self.printer.invoke_shutdown(msg)
                 return self.printer.get_reactor().NEVER
