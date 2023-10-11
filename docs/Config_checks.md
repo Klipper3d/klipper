@@ -67,7 +67,7 @@ The QUERY_ENDSTOPS command should report the endstop as "TRIGGERED".
 
 If the endstop appears inverted (it reports "open" when triggered and
 vice-versa) then add a "!" to the pin definition (for example,
-"endstop_pin: ^PA2"), or remove the "!" if there is already one
+"endstop_pin: ^!PA2"), or remove the "!" if there is already one
 present.
 
 If the endstop does not change at all then it generally indicates that
