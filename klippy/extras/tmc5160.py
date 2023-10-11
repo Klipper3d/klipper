@@ -257,7 +257,6 @@ FieldFormatters.update({
 ######################################################################
 
 VREF = 0.325
-MAX_CURRENT = 3.000
 
 class TMC5160CurrentHelper:
     def __init__(self, config, mcu_tmc):
@@ -265,16 +264,19 @@ class TMC5160CurrentHelper:
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
-        run_current = config.getfloat('run_current',
-                                      above=0., maxval=MAX_CURRENT)
-        hold_current = config.getfloat('hold_current', MAX_CURRENT,
-                                       above=0., maxval=MAX_CURRENT)
-        self.req_hold_current = hold_current
         self.sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
+        max_current = self._calc_max_current()
+        run_current = config.getfloat('run_current',
+                                      above=0., maxval=max_current)
+        hold_current = config.getfloat('hold_current', max_current,
+                                       above=0., maxval=max_current)
+        self.req_hold_current = hold_current
         gscaler, irun, ihold = self._calc_current(run_current, hold_current)
         self.fields.set_field("globalscaler", gscaler)
         self.fields.set_field("ihold", ihold)
         self.fields.set_field("irun", irun)
+    def _calc_max_current(self):
+        return (VREF / (math.sqrt(2.) * self.sense_resistor))
     def _calc_globalscaler(self, current):
         globalscaler = int((current * 256. * math.sqrt(2.)
                             * self.sense_resistor / VREF) + .5)
@@ -304,7 +306,8 @@ class TMC5160CurrentHelper:
     def get_current(self):
         run_current = self._calc_current_from_field("irun")
         hold_current = self._calc_current_from_field("ihold")
-        return run_current, hold_current, self.req_hold_current, MAX_CURRENT
+        max_current = self._calc_max_current()
+        return run_current, hold_current, self.req_hold_current, max_current
     def set_current(self, run_current, hold_current, print_time):
         self.req_hold_current = hold_current
         gscaler, irun, ihold = self._calc_current(run_current, hold_current)
