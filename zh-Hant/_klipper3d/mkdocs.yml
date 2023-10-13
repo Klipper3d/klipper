@@ -133,6 +133,7 @@ nav:
     - RPi_microcontroller.md
     - Beaglebone.md
     - Bootloaders.md
+    - Bootloader_Entry.md
     - CANBUS.md
     - CANBUS_Troubleshooting.md
     - TSL1401CL_Filament_Width_Sensor.md
