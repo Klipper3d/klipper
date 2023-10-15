@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2020  Eric Callahan <arksine.code@gmail.com>
 #
-# BMP180 sensor support by VAXXi <github@vaxxi.net>
+# BMP180 sensor support by VAXXi Popescu <github@vaxxi.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
