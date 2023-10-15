@@ -18,14 +18,13 @@ LD=$(CROSS_PREFIX)ld
 OBJCOPY=$(CROSS_PREFIX)objcopy
 OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
+CPP=cpp
 PYTHON=python3
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
-# cpp on MacOS forces a specific input directory, so directly use clang instead
+CPP_VERSION := $(shell $(CPP) --version)
+ifeq ($(findstring clang,$(CPP_VERSION)),clang)
+# The clang version of cpp forces a specific input directory, so directly use clang instead
 CPP=clang -E
-else
-CPP=cpp
 endif
 
 # Source files
