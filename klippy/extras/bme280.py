@@ -240,8 +240,9 @@ class BME280:
         self.write_register('RESET', [RESET_CHIP_VALUE])
         self.reactor.pause(self.reactor.monotonic() + .5)
 
-        # Make sure non-volatile memory has been copied to registers, except BMP180 which has no status
+        # Make sure non-volatile memory has been copied to registers
         if self.chip_type != 'BMP180':
+            # BMP180 has no status register available
             status = self.read_register('STATUS', 1)[0]
             while status & STATUS_IM_UPDATE:
                 self.reactor.pause(self.reactor.monotonic() + .01)
@@ -403,7 +404,7 @@ class BME280:
         try:
             time.sleep(0.005)
             data = self.read_register('REG_MSB', 3)
-            UP = ( (data[0] << 16) | (data[1] << 8) | data[2] ) >> (8 - self.os_pres)
+            UP = ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
         except Exception:
             logging.exception("BMP180: Error reading pressure")
             self.temp = self.pressure = .0
