@@ -4464,7 +4464,7 @@
 <h4 id="angle_debug_write">ANGLE_DEBUG_WRITE<a class="headerlink" href="#angle_debug_write" title="Permanent link">&para;</a></h4>
 <p><code>ANGLE_DEBUG_WRITE CHIP=&lt;配置名&gt; REG=&lt;寄存器&gt; VAL=&lt;值&gt;</code>：将“值”写入“寄存器”。“值”和“寄存器”可以是十进制或十六进制整数。请小心使用，并参考传感器数据手册。仅适用于 tle5012b芯片。</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> is enabled (also see the <a href="Bed_Mesh.html">bed mesh guide</a>).</p>
+<p>启用[床网格配置部分]（config_Reference.md#bed_mesh）时，以下命令可用（另请参阅[床网格指南]（bed_mesh.md））。</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: This command probes the bed using generated points specified by the parameters in the config. After probing, a mesh is generated and z-movement is adjusted according to the mesh. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
@@ -4819,7 +4819,7 @@
 <h4 id="set_tmc_current">SET_TMC_CURRENT<a class="headerlink" href="#set_tmc_current" title="Permanent link">&para;</a></h4>
 <p><code>SET_TMC_CURRENT STEPPER=&lt;name&gt; CURRENT=&lt;amps&gt; HOLDCURRENT=&lt;amps&gt;</code>: This will adjust the run and hold currents of the TMC driver. <code>HOLDCURRENT</code> is not applicable to tmc2660 drivers. When used on a driver which has the <code>globalscaler</code> field (tmc5160 and tmc2240), if StealthChop2 is used, the stepper must be held at standstill for &gt;130ms so that the driver executes the AT#1 calibration.</p>
 <h4 id="set_tmc_field">SET_TMC_FIELD<a class="headerlink" href="#set_tmc_field" title="Permanent link">&para;</a></h4>
-<p><code>SET_TMC_FIELD STEPPER=&lt;name&gt; FIELD=&lt;field&gt; VALUE=&lt;value&gt; VELOCITY=&lt;value&gt;</code>: This will alter the value of the specified register field of the TMC driver. This command is intended for low-level diagnostics and debugging only because changing the fields during run-time can lead to undesired and potentially dangerous behavior of your printer. Permanent changes should be made using the printer configuration file instead. No sanity checks are performed for the given values. A VELOCITY can also be specified instead of a VALUE. This velocity is converted to the 20bit TSTEP based value representation. Only use the VELOCITY argument for fields that represent velocities.</p>
+<p><code>SET_TMC_FIELD STEPPER=&lt;name&gt;FIELD=&lt;FIELD&gt;VALUE=&lt;VALUE&gt;VELOCITY=&lt;VALUE&gt;</code>：这将更改TMC驱动器的指定寄存器字段的值。此命令仅用于低级别诊断和调试，因为在运行时更改字段可能会导致打印机出现不希望出现的潜在危险行为。应使用打印机配置文件进行永久性更改。没有对给定的值执行健全性检查。也可以指定VELOCITY而不是VALUE。该速度被转换为基于20位TSTEP的值表示。仅对表示速度的字段使用VELOCITY参数。</p>
 <h3 id="toolhead">[toolhead]<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h3>
 <p>The toolhead module is automatically loaded.</p>
 <h4 id="set_velocity_limit">SET_VELOCITY_LIMIT<a class="headerlink" href="#set_velocity_limit" title="Permanent link">&para;</a></h4>
@@ -4856,7 +4856,7 @@
 <h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
-<p><code>Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then make independent adjustments to each Z stepper to compensate for tilt. See the PROBE command for details on the optional probe parameters. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
+<p>`Z_TILT_ADJUST[HORIZONTAL_MOVE_Z=<value>][<probe_parameter>=<value>&gt;：此命令将探测配置中指定的点，然后对每个Z步进器进行独立调整以补偿倾斜。有关可选探测参数的详细信息，请参阅PROBE命令。可选的“HORIZONTAL_MOVE_Z”值将覆盖配置文件中指定的“HORIZONTAL_MOVE_Z”选项。</p>
 
               
             </article>

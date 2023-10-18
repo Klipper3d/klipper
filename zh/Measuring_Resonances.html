@@ -2261,7 +2261,7 @@ probe_points: ...
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=Y
 </code></pre></div>
 
-<p>This will generate 2 CSV files (<code>/tmp/resonances_x_*.csv</code> and <code>/tmp/resonances_y_*.csv</code>). These files can be processed with the stand-alone script on a Raspberry Pi. To do that, run the following commands:</p>
+<p>这将生成2个CSV文件（<code>/tmp/reonances_x_*.CSV</code>和`/tmp/Reonances_y_*.CSV'）。这些文件可以在树莓派上使用独立脚本进行处理。要执行此操作，请运行以下命令：</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
 </code></pre></div>
@@ -2448,7 +2448,7 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 </code></pre></div>
 
 <p>ignoring any errors for <code>SET_INPUT_SHAPER</code> command. For <code>TEST_RESONANCES</code> command, specify the desired test axis. The raw data will be written into <code>/tmp</code> directory on the RPi.</p>
-<p>The raw data can also be obtained by running the command <code>ACCELEROMETER_MEASURE</code> command twice during some normal printer activity - first to start the measurements, and then to stop them and write the output file. Refer to <a href="G-Codes.html#adxl345">G-Codes</a> for more details.</p>
+<p>在一些正常的打印机活动中，也可以通过运行命令“ACCELEROMETER_MEASURE”两次来获得原始数据——首先是开始测量，然后是停止测量并写入输出文件。有关更多详细信息，请参阅[G-Codes]（G-Codes.md#adxl345）。</p>
 <p>The data can be processed later by the following scripts: <code>scripts/graph_accelerometer.py</code> and <code>scripts/calibrate_shaper.py</code>. Both of them accept one or several raw csv files as the input depending on the mode. The graph_accelerometer.py script supports several modes of operation:</p>
 <ul>
 <li>plotting raw accelerometer data (use <code>-r</code> parameter), only 1 input is supported;</li>

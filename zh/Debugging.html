@@ -1052,14 +1052,14 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#motion-analysis-and-data-logging" class="md-nav__link">
-    Motion analysis and data logging
+  <a href="#_4" class="md-nav__link">
+    运动分析和数据记录
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     生成负载图
   </a>
   
@@ -1386,14 +1386,14 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#motion-analysis-and-data-logging" class="md-nav__link">
-    Motion analysis and data logging
+  <a href="#_4" class="md-nav__link">
+    运动分析和数据记录
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     生成负载图
   </a>
   
@@ -1446,8 +1446,8 @@
 <h1 id="_1">调试<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>本文档描述了一些 Klipper 调试工具。</p>
 <h2 id="_2">运行回归测试<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>The main Klipper GitHub repository uses "github actions" to run a series of regression tests. It can be useful to run some of these tests locally.</p>
-<p>The source code "whitespace check" can be run with:</p>
+<p>Klipper GitHub主存储库使用“GitHub操作”来运行一系列回归测试。在本地运行其中一些测试可能很有用。</p>
+<p>源代码“whitespace check(空白检查)”可以使用以下代码运行：</p>
 <div class="highlight"><pre><span></span><code>./scripts/check_whitespace.sh
 </code></pre></div>
 
@@ -1480,13 +1480,13 @@ make
 
 <p>生成的文件 <strong>test.txt</strong> 包含可读的微控制器命令列表。</p>
 <p>为了使批处理模式正常运行，一些响应和请求命令被禁用了。因此，实际命令和上述输出之间会有一些差异。生成的数据可以用于测试和检查，但是它不能被发送到真正的微控制器。</p>
-<h2 id="motion-analysis-and-data-logging">Motion analysis and data logging<a class="headerlink" href="#motion-analysis-and-data-logging" title="Permanent link">&para;</a></h2>
-<p>Klipper supports logging its internal motion history, which can be later analyzed. To use this feature, Klipper must be started with the <a href="API_Server.html">API Server</a> enabled.</p>
-<p>Data logging is enabled with the <code>data_logger.py</code> tool. For example:</p>
+<h2 id="_4">运动分析和数据记录<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>Klipper支持记录其内部运动历史，稍后可以对其进行分析。若要使用此功能，Klipper必须在启用[API服务器]（API_Server.md）的情况下启动。</p>
+<p>使用 <code>data_logger.py</code> 工具启用数据日志记录。例如：</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog
 </code></pre></div>
 
-<p>This command will connect to the Klipper API Server, subscribe to status and motion information, and log the results. Two files are generated - a compressed data file and an index file (eg, <code>mylog.json.gz</code> and <code>mylog.index.gz</code>). After starting the logging, it is possible to complete prints and other actions - the logging will continue in the background. When done logging, hit <code>ctrl-c</code> to exit from the <code>data_logger.py</code> tool.</p>
+<p>此命令将连接到Klipper API服务器，订阅状态和运动信息，并记录结果。生成两个文件-一个压缩数据文件和一个索引文件（例如“mylog.json.gz”和“mylog.index.gz”）。启动日志记录后，可以完成打印和其他操作-日志记录将在后台继续。完成日志记录后，点击“ctrl-c”退出“data_logger.py”工具。</p>
 <p>The resulting files can be read and graphed using the <code>motan_graph.py</code> tool. To generate graphs on a Raspberry Pi, a one time step is necessary to install the "matplotlib" package:</p>
 <div class="highlight"><pre><span></span><code>sudo apt-get update
 sudo apt-get install python-matplotlib
@@ -1501,7 +1501,7 @@ sudo apt-get install python-matplotlib
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/motan_graph.py mylog -g &#39;[[&quot;trapq(toolhead,velocity)&quot;], [&quot;trapq(toolhead,accel)&quot;]]&#39;
 </code></pre></div>
 
-<p>The list of available datasets can be found using the <code>-l</code> option - for example:</p>
+<p>可用数据集的列表可以使用“-l”选项找到，例如：</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/motan_graph.py -l
 </code></pre></div>
 
@@ -1512,7 +1512,7 @@ sudo apt-get install python-matplotlib
 <p>Many matplotlib options are available; some examples are "color", "label", "alpha", and "linestyle".</p>
 <p>The <code>motan_graph.py</code> tool supports several other command-line options - use the <code>--help</code> option to see a list. It may also be convenient to view/modify the <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/motan/motan_graph.py">motan_graph.py</a> script itself.</p>
 <p>The raw data logs produced by the <code>data_logger.py</code> tool follow the format described in the <a href="API_Server.html">API Server</a>. It may be useful to inspect the data with a Unix command like the following: <code>gunzip &lt; mylog.json.gz | tr '\03' '\n' | less</code></p>
-<h2 id="_4">生成负载图<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<h2 id="_5">生成负载图<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>Klippy日志文件（/tmp/klippy.log）存储了关于带宽、微控制器负载和主机缓冲区负载的统计数据。在打印之后，绘制这些统计数字可能会很有用。</p>
 <p>为了生成图形，有必要安装"matplotlib"包：</p>
 <div class="highlight"><pre><span></span><code>sudo apt-get update

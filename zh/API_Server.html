@@ -1706,18 +1706,18 @@
 <p><code>{"id": 123, "result": {}}</code></p>
 <p>并导致 Klipper 在未来发送类似于以下内容的消息：</p>
 <p><code>{"params": {"response": "ok B:22.8 /0.0 T0:22.4 /0.0"}, "key": 345}</code></p>
-<p>A subscription request accepts a "response_template" dictionary in the "params" field of the request. That "response_template" dictionary is used as a template for future asynchronous messages - it may contain arbitrary key/value pairs. When sending these future asynchronous messages, Klipper will add a "params" field containing a dictionary with "endpoint" specific contents to the response template and then send that template. If a "response_template" field is not provided then it defaults to an empty dictionary (<code>{}</code>).</p>
+<p>订阅请求接受请求的“params”字段中的“response_template”字典。“response_template”字典被用作未来异步消息的模板——它可能包含任意的键/值对。当发送这些未来的异步消息时，Klipper将在响应模板中添加一个“params”字段，该字段包含一个具有“端点”特定内容的字典，然后发送该模板。如果没有提供“response_template”字段，则默认为空字典（<code>{}</code>）。</p>
 <h2 id="endpoint">可用的"endpoint"<a class="headerlink" href="#endpoint" title="Permanent link">&para;</a></h2>
-<p>By convention, Klipper "endpoints" are of the form <code>&lt;module_name&gt;/&lt;some_name&gt;</code>. When making a request to an "endpoint", the full name must be set in the "method" parameter of the request dictionary (eg, <code>{"method"="gcode/restart"}</code>).</p>
+<p>按照惯例，Klipper“端点”的形式为“<module_name>/<some_name>'”。当向“端点”发出请求时，必须在请求字典的“方法”参数中设置全名（例如，<code>{“方法”=“gcode/restart”}</code>）。</p>
 <h3 id="info">info<a class="headerlink" href="#info" title="Permanent link">&para;</a></h3>
 <p>“info” 用于从Klipper获取系统和版本信息。同时也被用来向Klipper提供客户端的版本信息。比如说<code>{"id": 123, "method": "info", "params": { "client_info": { "version": "v1"}}}</code></p>
-<p>If present, the "client_info" parameter must be a dictionary, but that dictionary may have arbitrary contents. Clients are encouraged to provide the name of the client and its software version when first connecting to the Klipper API server.</p>
+<p>如果存在，“client_info”参数必须是一个字典，但该字典可能具有任意内容。鼓励客户端在首次连接到Klipper API服务器时提供客户端名称及其软件版本。</p>
 <h3 id="emergency_stop">emergency_stop<a class="headerlink" href="#emergency_stop" title="Permanent link">&para;</a></h3>
 <p>"emergency_stop"端点用于指示 Klipper 过渡到 "shutdown"状态。它的行为类似于 G 代码 "M112 "命令。例如：<code>{"id"： 123, "method"： "emergency_stop"}</code></p>
 <h3 id="register_remote_method">register_remote_method<a class="headerlink" href="#register_remote_method" title="Permanent link">&para;</a></h3>
 <p>该端点允许客户端注册可从 klipper 调用的方法。成功后将返回一个空对象。</p>
-<p>For example: <code>{"id": 123, "method": "register_remote_method", "params": {"response_template": {"action": "run_paneldue_beep"}, "remote_method": "paneldue_beep"}}</code> will return: <code>{"id": 123, "result": {}}</code></p>
-<p>The remote method <code>paneldue_beep</code> may now be called from Klipper. Note that if the method takes parameters they should be provided as keyword arguments. Below is an example of how it may called from a gcode_macro:</p>
+<p>例如：<code>{“id”：123，“method”：“register_remote_method”，“params”：{“response_template”：｛“action”：“run_paneldue_deep”}，“remote_method“：”paneldue_beep</code></p>
+<p>现在可以从Klipper调用远程方法“paneldue_beep”。请注意，如果方法采用参数，则应将它们作为关键字参数提供。以下是如何从gcode_macro调用它的示例：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro PANELDUE_BEEP]
 gcode:
   {action_call_remote_method(&quot;paneldue_beep&quot;, frequency=300, duration=1.0)}
@@ -1725,7 +1725,7 @@ gcode:
 
 <p>当PANELDUE_BEEP gcode宏被执行时，Klipper将通过套接字发送类似以下内容：<code>{"action": "run_paneldue_beep", "params": {"frequency": 300, "duration": 1.0}}</code></p>
 <h3 id="objectslist">objects/list<a class="headerlink" href="#objectslist" title="Permanent link">&para;</a></h3>
-<p>This endpoint queries the list of available printer "objects" that one may query (via the "objects/query" endpoint). For example: <code>{"id": 123, "method": "objects/list"}</code> might return: <code>{"id": 123, "result": {"objects": ["webhooks", "configfile", "heaters", "gcode_move", "query_endstops", "idle_timeout", "toolhead", "extruder"]}}</code></p>
+<p>该端点查询可用打印机“对象”的列表，可以查询（通过“对象/查询”端点）。例如：<code>｛“id”：123，“method”：“objects/list”｝</code>可能返回： <code>{"id": 123, "result": {"objects": ["webhooks", "configfile", "heaters", "gcode_move", "query_endstops", "idle_timeout", "toolhead", "extruder"]}}</code></p>
 <h3 id="objectsquery">objects/query<a class="headerlink" href="#objectsquery" title="Permanent link">&para;</a></h3>
 <p>这个endpoint允许从打印机对象中查询信息。比如说：<code>{"id": 123, "method": "objects/query", "params": {"objects": {"toolhead": ["position"], "webhooks": null}}}</code> 可能返回。<code>{"id": 123, "result": {"status": {"webhooks": {"state": "ready", "state_message": "Printer is ready"}, "toolhead": {"position": [0.0, 0.0, 0.0, 0.0]}}, "eventtime": 3051555.377933684}}</code></p>
 <p>请求中的 "objects "参数必须是一个包含要查询的打印机对象的字典 - 键包含打印机对象名称，值是 "null"（查询所有字段）或一个字段名的列表。</p>
