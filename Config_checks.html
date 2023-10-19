@@ -1500,7 +1500,7 @@ rerun the QUERY_ENDSTOPS command while manually triggering the endstop.
 The QUERY_ENDSTOPS command should report the endstop as "TRIGGERED".</p>
 <p>If the endstop appears inverted (it reports "open" when triggered and
 vice-versa) then add a "!" to the pin definition (for example,
-"endstop_pin: ^PA2"), or remove the "!" if there is already one
+"endstop_pin: ^!PA2"), or remove the "!" if there is already one
 present.</p>
 <p>If the endstop does not change at all then it generally indicates that
 the endstop is connected to a different pin. However, it may also
