@@ -239,7 +239,8 @@ class ToolHead:
         self.drip_completion = None
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
-        self.kin_flush_times = []
+        # Map from requester to requested time
+        self.kin_flush_times = {self: SDS_CHECK_TIME}
         self.force_flush_time = self.last_kin_move_time = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -526,15 +527,15 @@ class ToolHead:
         return self.trapq
     def register_step_generator(self, handler):
         self.step_generators.append(handler)
-    def note_step_generation_scan_time(self, delay, old_delay=0.):
+    def note_step_generation_scan_time(self, requester, delay):
         self.flush_step_generation()
-        cur_delay = self.kin_flush_delay
-        if old_delay:
-            self.kin_flush_times.pop(self.kin_flush_times.index(old_delay))
+        if delay == self.kin_flush_times.get(requester, None):
+            return
         if delay:
-            self.kin_flush_times.append(delay)
-        new_delay = max(self.kin_flush_times + [SDS_CHECK_TIME])
-        self.kin_flush_delay = new_delay
+            self.kin_flush_times[requester] = delay
+        elif requester in self.kin_flush_times:
+            del self.kin_flush_times[requester]
+        self.kin_flush_delay = max(self.kin_flush_times.values())
     def register_lookahead_callback(self, callback):
         last_move = self.move_queue.get_last()
         if last_move is None:
