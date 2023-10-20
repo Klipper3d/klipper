@@ -2,11 +2,8 @@
 #
 # Copyright (C) 2020  Eric Callahan <arksine.code@gmail.com>
 #
-# BMP180 sensor support by VAXXi Popescu <github@vaxxi.net>
-#
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import time
 from . import bus
 
 REPORT_TIME = .8
@@ -390,7 +387,8 @@ class BME280:
         self.write_register('CTRL_MEAS', meas)
 
         try:
-            time.sleep(0.005)
+            for i in range(94000):
+                pass
             data = self.read_register('REG_MSB', 2)
             UT = (data[0] << 8) | data[1]
         except Exception:
