@@ -141,7 +141,7 @@ class InputShaper:
                 if not shaper.set_shaper_kinematics(is_sk):
                     failed_shapers.append(shaper)
             new_delay = ffi_lib.input_shaper_get_step_generation_window(is_sk)
-            self.toolhead.note_step_generation_scan_time(self, new_delay)
+            self.toolhead.note_step_generation_scan_time(s, new_delay)
         if failed_shapers:
             error = error or self.printer.command_error
             raise error("Failed to configure shaper(s) %s with given parameters"
