@@ -400,7 +400,8 @@ class BME280:
         self.write_register('CTRL_MEAS', meas)
 
         try:
-            time.sleep(0.005)
+            for i in range(94000):
+                pass
             data = self.read_register('REG_MSB', 3)
             UP = ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
         except Exception:
