@@ -887,6 +887,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lis2dw" class="md-nav__link">
+    [lis2dw]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mpu9250" class="md-nav__link">
     [mpu9250]
   </a>
@@ -964,6 +971,13 @@
           <li class="md-nav__item">
   <a href="#smart_effector" class="md-nav__link">
     [smart_effector]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#axis_twist_compensation" class="md-nav__link">
+    [axis_twist_compensation]
   </a>
   
 </li>
@@ -1157,6 +1171,13 @@
           <li class="md-nav__item">
   <a href="#sensore-di-temperatura-ds18b20" class="md-nav__link">
     Sensore di temperatura DS18B20
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined-temperature-sensor" class="md-nav__link">
+    Combined temperature sensor
   </a>
   
 </li>
@@ -1819,8 +1840,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Axis_Twist_Compensation.md" class="md-nav__link">
-        None
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Axis Twist Compensation
       </a>
     </li>
   
@@ -2352,8 +2373,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Bootloader_Entry.md" class="md-nav__link">
-        None
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader Entry
       </a>
     </li>
   
@@ -2864,6 +2885,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lis2dw" class="md-nav__link">
+    [lis2dw]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mpu9250" class="md-nav__link">
     [mpu9250]
   </a>
@@ -2941,6 +2969,13 @@
           <li class="md-nav__item">
   <a href="#smart_effector" class="md-nav__link">
     [smart_effector]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#axis_twist_compensation" class="md-nav__link">
+    [axis_twist_compensation]
   </a>
   
 </li>
@@ -3134,6 +3169,13 @@
           <li class="md-nav__item">
   <a href="#sensore-di-temperatura-ds18b20" class="md-nav__link">
     Sensore di temperatura DS18B20
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined-temperature-sensor" class="md-nav__link">
+    Combined temperature sensor
   </a>
   
 </li>
@@ -5002,6 +5044,24 @@ cs_pin:
 #   measurements.
 </code></pre></div>
 
+<h3 id="lis2dw">[lis2dw]<a class="headerlink" href="#lis2dw" title="Permanent link">&para;</a></h3>
+<p>Support for LIS2DW accelerometers.</p>
+<div class="highlight"><pre><span></span><code>[lis2dw]
+cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided.
+#spi_speed: 5000000
+#   The SPI speed (in hz) to use when communicating with the chip.
+#   The default is 5000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters.
+#axes_map: x, y, z
+#   See the &quot;adxl345&quot; section for information on this parameter.
+</code></pre></div>
+
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
 <p>Supporto per accelerometri MPU-9250, MPU-9255, MPU-6515, MPU-6050 e MPU-6500 (è possibile definire un numero qualsiasi di sezioni con un prefisso "mpu9250").</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
@@ -5262,6 +5322,30 @@ z_offset:
 #   Vedere la sezione &quot;probe&quot; per ulteriori informazioni sui parametri di cui sopra.
 </code></pre></div>
 
+<h3 id="axis_twist_compensation">[axis_twist_compensation]<a class="headerlink" href="#axis_twist_compensation" title="Permanent link">&para;</a></h3>
+<p>A tool to compensate for inaccurate probe readings due to twist in X gantry. See the <a href="Axis_Twist_Compensation.html">Axis Twist Compensation Guide</a> for more detailed information regarding symptoms, configuration and setup.</p>
+<div class="highlight"><pre><span></span><code>[axis_twist_compensation]
+#speed: 50
+#   The speed (in mm/s) of non-probing moves during the calibration.
+#   The default is 50.
+#horizontal_move_z: 5
+#   The height (in mm) that the head should be commanded to move to
+#   just prior to starting a probe operation. The default is 5.
+calibrate_start_x: 20
+#   Defines the minimum X coordinate of the calibration
+#   This should be the X coordinate that positions the nozzle at the starting
+#   calibration position. This parameter must be provided.
+calibrate_end_x: 200
+#   Defines the maximum X coordinate of the calibration
+#   This should be the X coordinate that positions the nozzle at the ending
+#   calibration position. This parameter must be provided.
+calibrate_y: 112.5
+#   Defines the Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle during the
+#   calibration process. This parameter must be provided and is recommended to
+#   be near the center of the bed
+</code></pre></div>
+
 <h2 id="motori-passo-passo-ed-estrusori-aggiuntivi">Motori passo-passo ed estrusori aggiuntivi<a class="headerlink" href="#motori-passo-passo-ed-estrusori-aggiuntivi" title="Permanent link">&para;</a></h2>
 <h3 id="stepper_z1">[stepper_z1]<a class="headerlink" href="#stepper_z1" title="Permanent link">&para;</a></h3>
 <p>Assi multi-stepper. Su una stampante in stile cartesiano, lo stepper che controlla un dato asse può avere blocchi di configurazione aggiuntivi che definiscono gli stepper che dovrebbero essere azionati insieme allo stepper primario. Si può definire un numero qualsiasi di sezioni con un suffisso numerico che inizia da 1 (ad esempio, "stepper_z1", "stepper_z2", ecc.).</p>
@@ -5293,12 +5377,22 @@ z_offset:
 </code></pre></div>
 
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
-<p>Supporto per stampanti cartesiane con doppi carrelli su un unico asse. Il carrello attivo viene impostato tramite il comando G-code esteso SET_DUAL_CARRIAGE. Il comando "SET_DUAL_CARRIAGE CARRIAGE=1" attiverà il carrello definito in questa sezione (CARRIAGE=0 riporterà l'attivazione al carrello principale). Il supporto del doppio carrello è in genere combinato con estrusori extra: il comando SET_DUAL_CARRIAGE viene spesso chiamato contemporaneamente al comando ACTIVATE_EXTRUDER. Assicurati di parcheggiare i carrelli durante la disattivazione.</p>
+<p>Support for cartesian and hybrid_corexy/z printers with dual carriages on a single axis. The carriage mode can be set via the SET_DUAL_CARRIAGE extended g-code command. For example, "SET_DUAL_CARRIAGE CARRIAGE=1" command will activate the carriage defined in this section (CARRIAGE=0 will return activation to the primary carriage). Dual carriage support is typically combined with extra extruders - the SET_DUAL_CARRIAGE command is often called at the same time as the ACTIVATE_EXTRUDER command. Be sure to park the carriages during deactivation. Note that during G28 homing, typically the primary carriage is homed first followed by the carriage defined in the <code>[dual_carriage]</code> config section. However, the <code>[dual_carriage]</code> carriage will be homed first if both carriages home in a positive direction and the [dual_carriage] carriage has a <code>position_endstop</code> greater than the primary carriage, or if both carriages home in a negative direction and the <code>[dual_carriage]</code> carriage has a <code>position_endstop</code> less than the primary carriage.</p>
+<p>Additionally, one could use "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=COPY" or "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=MIRROR" commands to activate either copying or mirroring mode of the dual carriage, in which case it will follow the motion of the carriage 0 accordingly. These commands can be used to print two parts simultaneously - either two identical parts (in COPY mode) or mirrored parts (in MIRROR mode). Note that COPY and MIRROR modes also require appropriate configuration of the extruder on the dual carriage, which can typically be achieved with "SYNC_EXTRUDER_MOTION MOTION_QUEUE=extruder EXTRUDER=<dual_carriage_extruder>" or a similar command.</p>
 <p>Vedere <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-idex.cfg">sample-idex.cfg</a> per un esempio di configurazione.</p>
 <div class="highlight"><pre><span></span><code>[dual_carriage]
 axis:
-#   L&#39;asse su cui si trova questo carrello aggiuntivo (x o y). Questo parametro
-#   deve essere fornito
+#   The axis this extra carriage is on (either x or y). This parameter
+#   must be provided.
+#safe_distance:
+#   The minimum distance (in mm) to enforce between the dual and the primary
+#   carriages. If a G-Code command is executed that will bring the carriages
+#   closer than the specified limit, such a command will be rejected with an
+#   error. If safe_distance is not provided, it will be inferred from
+#   position_min and position_max for the dual and primary carriages. If set
+#   to 0 (or safe_distance is unset and position_min and position_max are
+#   identical for the primary and dual carraiges), the carriages proximity
+#   checks will be disabled.
 #step_pin:
 #dir_pin:
 #enable_pin:
@@ -5308,7 +5402,7 @@ axis:
 #position_endstop:
 #position_min:
 #position_max:
-#   Vedere la sezione &quot;stepper&quot; per la definizione dei parametri di cui sopra.
+#   See the &quot;stepper&quot; section for the definition of the above parameters.
 </code></pre></div>
 
 <h3 id="extruder_stepper">[extruder_stepper]<a class="headerlink" href="#extruder_stepper" title="Permanent link">&para;</a></h3>
@@ -5688,6 +5782,21 @@ serial_no:
 #   minimo di 1.0
 #sensor_mcu:
 #   Il microcontrollore da cui leggere. Deve essere host_mcu
+</code></pre></div>
+
+<h3 id="combined-temperature-sensor">Combined temperature sensor<a class="headerlink" href="#combined-temperature-sensor" title="Permanent link">&para;</a></h3>
+<p>Combined temperature sensor is a virtual temperature sensor based on several other sensors. This sensor can be used with extruders, heater_generic and heater beds.</p>
+<div class="highlight"><pre><span></span><code>sensor_type: temperature_combined
+#sensor_list:
+#   Must be provided. List of sensors to combine to new &quot;virtual&quot;
+#   sensor.
+#   E.g. &#39;temperature_sensor sensor1,extruder,heater_bed&#39;
+#combination_method:
+#   Must be provided. Combination method used for the sensor.
+#   Available options are &#39;max&#39;, &#39;min&#39;, &#39;mean&#39;.
+#maximum_deviation:
+#   Must be provided. Maximum permissible deviation between the sensors
+#   to combine (e.g. 5 degrees). To disable it, use a large value (e.g. 999.9)
 </code></pre></div>
 
 <h2 id="ventole">Ventole<a class="headerlink" href="#ventole" title="Permanent link">&para;</a></h2>
@@ -6397,7 +6506,7 @@ run_current:
 </code></pre></div>
 
 <h3 id="tmc2240">[tmc2240]<a class="headerlink" href="#tmc2240" title="Permanent link">&para;</a></h3>
-<p>Configurare un driver del motore passo-passo TMC2240 tramite bus SPI. Per utilizzare questa funzionalità, definire una sezione di configurazione con un prefisso "tmc2240" seguito dal nome della sezione di configurazione dello stepper corrispondente (ad esempio, "[tmc2240 stepper_x]").</p>
+<p>Configure a TMC2240 stepper motor driver via SPI bus or UART. To use this feature, define a config section with a "tmc2240" prefix followed by the name of the corresponding stepper config section (for example, "[tmc2240 stepper_x]").</p>
 <div class="highlight"><pre><span></span><code>[tmc2240 stepper_x]
 cs_pin:
 #   The pin corresponding to the TMC2240 chip select line. This pin
@@ -6410,6 +6519,9 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the &quot;common SPI settings&quot; section for a description of the
 #   above parameters.
+#uart_pin:
+#   The pin connected to the TMC2240 DIAG1/SW line. If this parameter
+#   is provided UART communication is used rather then SPI.
 #chain_position:
 #chain_length:
 #   These parameters configure an SPI daisy chain. The two parameters

@@ -624,8 +624,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Axis_Twist_Compensation.md" class="md-nav__link">
-        None
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Axis Twist Compensation
       </a>
     </li>
   
@@ -1323,8 +1323,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Bootloader_Entry.md" class="md-nav__link">
-        None
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader Entry
       </a>
     </li>
   
@@ -1748,12 +1748,21 @@ shaper_type: 2hump_ei
 <h3 id="_8">成功打印一段時間後沒有環紋，它似乎又回來了<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>有可能在一段時間後共振頻率發生了變化。例如。可能是皮帶張力發生了變化（皮帶變得更鬆了）等。最好按照 <a href="#ringing-frequency">Ringing frequency</a> 部分中的說明檢查並重新測量環紋頻率，並在必要時更新配置文件.</p>
 <h3 id="input-shaper_2">input shaper是否支持雙步進匣設置？<a class="headerlink" href="#input-shaper_2" title="Permanent link">&para;</a></h3>
-<p>沒有對帶有input shaper的雙筆架的專門支持，但這並不意味著此設置不起作用。應該對每個托架運行兩次調諧，並獨立計算每個托架的 X 軸和 Y 軸的環紋頻率。然後將托架 0 的值放入 [input_shaper] 部分，並在更改托架時即時更改值，例如作為一些宏的一部分：</p>
-<div class="highlight"><pre><span></span><code>SET_DUAL_CARRIAGE CARRIAGE=1
-SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
+<p>Yes. In this case, one should measure the resonances twice for each carriage. For example, if the second (dual) carriage is installed on X axis, it is possible to set different input shapers for X axis for the primary and dual carriages. However, the input shaper for Y axis should be the same for both carriages (as ultimately this axis is driven by one or more stepper motors each commanded to perform exactly the same steps). One possibility to configure the input shaper for such setups is to keep <code>[input_shaper]</code> section empty and additionally define a <code>[delayed_gcode]</code> section in the <code>printer.cfg</code> as follows:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+# Intentionally empty
+
+[delayed_gcode init_shaper]
+initial_duration: 0.1
+gcode:
+  SET_DUAL_CARRIAGE CARRIAGE=1
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;dual_carriage_shaper&gt; SHAPER_FREQ_X=&lt;dual_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
+  SET_DUAL_CARRIAGE CARRIAGE=0
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_shaper&gt; SHAPER_FREQ_X=&lt;primary_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
 </code></pre></div>
 
-<p>同樣當切換回步進匣 0 時。</p>
+<p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both commands. It is also possible to put a similar snippet into the start g-code in the slicer, however then the shaper will not be enabled until any print is started.</p>
+<p>Note that the input shaper only needs to be configured once. Subsequent changes of the carriages or their modes via <code>SET_DUAL_CARRIAGE</code> command will preserve the configured input shaper parameters.</p>
 <h3 id="input_shaper_1">input_shaper 會影響打印時間嗎？<a class="headerlink" href="#input_shaper_1" title="Permanent link">&para;</a></h3>
 <p>不，<code>input_shaper</code> 功能本身對打印時間幾乎沒有影響。但是，<code>max_accel</code> 的值肯定會起作用（在 <a href="#selecting-max_accel">this section</a> 中描述了此參數的調整）。</p>
 <h2 id="_9">技術細節<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
@@ -1834,7 +1843,7 @@ SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="Endstop_Phase.html" class="md-footer__link md-footer__link--prev" aria-label="上一頁: 限位相位" rel="prev">
+        <a href="Axis_Twist_Compensation.html" class="md-footer__link md-footer__link--prev" aria-label="上一頁: Axis Twist Compensation" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1843,7 +1852,7 @@ SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
               <span class="md-footer__direction">
                 上一頁
               </span>
-              限位相位
+              Axis Twist Compensation
             </div>
           </div>
         </a>

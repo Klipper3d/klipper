@@ -622,8 +622,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Axis_Twist_Compensation.md" class="md-nav__link">
-        None
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Axis Twist Compensation
       </a>
     </li>
   
@@ -1239,6 +1239,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#samdc21-micro-controllers-duet3d-toolboard-1lc" class="md-nav__link">
+    SAMDC21 micro-controllers (Duet3D Toolboard 1LC)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#microcontrollori-samd21-arduino-zero" class="md-nav__link">
     Microcontrollori SAMD21 (Arduino Zero)
   </a>
@@ -1363,8 +1370,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Bootloader_Entry.md" class="md-nav__link">
-        None
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader Entry
       </a>
     </li>
   
@@ -1532,6 +1539,13 @@
         <li class="md-nav__item">
   <a href="#microcontrollori-sam4-duet-wifi" class="md-nav__link">
     Microcontrollori SAM4 (Duet Wifi)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#samdc21-micro-controllers-duet3d-toolboard-1lc" class="md-nav__link">
+    SAMDC21 micro-controllers (Duet3D Toolboard 1LC)
   </a>
   
 </li>
@@ -1752,6 +1766,39 @@ bossac -U -p /dev/ttyACM0 -R
 <p>Il codice in <a href="https://github.com/shumatech/BOSSA">https://github.com/shumatech/BOSSA</a> può essere utilizzato per programmare il SAM4. È necessario utilizzare la versione <code>1.8.0</code> o successiva.</p>
 <p>Per eseguire il flashing di un'applicazione, utilizzare qualcosa come:</p>
 <div class="highlight"><pre><span></span><code>bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
+</code></pre></div>
+
+<h2 id="samdc21-micro-controllers-duet3d-toolboard-1lc">SAMDC21 micro-controllers (Duet3D Toolboard 1LC)<a class="headerlink" href="#samdc21-micro-controllers-duet3d-toolboard-1lc" title="Permanent link">&para;</a></h2>
+<p>The SAMC21 is flashed via the ARM Serial Wire Debug (SWD) interface. This is commonly done with a dedicated SWD hardware dongle. Alternatively, one can use a <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi with OpenOCD</a>.</p>
+<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Rasberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
+<div class="highlight"><pre><span></span><code>SWCLK=25
+SWDIO=24
+SRST=18
+
+echo &quot;Exporting SWCLK and SRST pins.&quot;
+echo $SWCLK &gt; /sys/class/gpio/export
+echo $SRST &gt; /sys/class/gpio/export
+echo &quot;out&quot; &gt; /sys/class/gpio/gpio$SWCLK/direction
+echo &quot;out&quot; &gt; /sys/class/gpio/gpio$SRST/direction
+
+echo &quot;Setting SWCLK low and pulsing SRST.&quot;
+echo &quot;0&quot; &gt; /sys/class/gpio/gpio$SWCLK/value
+echo &quot;0&quot; &gt; /sys/class/gpio/gpio$SRST/value
+echo &quot;1&quot; &gt; /sys/class/gpio/gpio$SRST/value
+
+echo &quot;Unexporting SWCLK and SRST pins.&quot;
+echo $SWCLK &gt; /sys/class/gpio/unexport
+echo $SRST &gt; /sys/class/gpio/unexport
+</code></pre></div>
+
+<p>To flash a program with OpenOCD use the following chip config:</p>
+<div class="highlight"><pre><span></span><code>source [find target/at91samdXX.cfg]
+</code></pre></div>
+
+<p>Obtain a program; for instance, klipper can be built for this chip. Flash with OpenOCD commands similar to:</p>
+<div class="highlight"><pre><span></span><code>at91samd chip-erase
+at91samd bootloader 0
+program out/klipper.elf verify
 </code></pre></div>
 
 <h2 id="microcontrollori-samd21-arduino-zero">Microcontrollori SAMD21 (Arduino Zero)<a class="headerlink" href="#microcontrollori-samd21-arduino-zero" title="Permanent link">&para;</a></h2>
@@ -2022,13 +2069,13 @@ gdb out/klipper.elf
       
       
         
-        <a href="CANBUS.html" class="md-footer__link md-footer__link--next" aria-label="Prossimo: CANBUS" rel="next">
+        <a href="Bootloader_Entry.html" class="md-footer__link md-footer__link--next" aria-label="Prossimo: Bootloader Entry" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Prossimo
               </span>
-              CANBUS
+              Bootloader Entry
             </div>
           </div>
           <div class="md-footer__button md-icon">

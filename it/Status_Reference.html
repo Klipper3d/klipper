@@ -624,8 +624,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Axis_Twist_Compensation.md" class="md-nav__link">
-        None
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Axis Twist Compensation
       </a>
     </li>
   
@@ -1501,8 +1501,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Bootloader_Entry.md" class="md-nav__link">
-        None
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader Entry
       </a>
     </li>
   
@@ -2086,6 +2086,7 @@
 <ul>
 <li><code>disponibili_riscaldatori</code>: restituisce un elenco di tutti i riscaldatori attualmente disponibili in base ai nomi completi delle sezioni di configurazione, ad es. <code>["extruder", "heater_bed", "heater_generic my_custom_heater"]</code>.</li>
 <li><code>available_sensors</code>: restituisce un elenco di tutti i riscaldatori attualmente disponibili in base ai nomi completi delle sezioni di configurazione, ad es. <code>["extruder", "heater_bed", "heater_generic my_custom_heater"]</code>.</li>
+<li><code>available_monitors</code>: Returns a list of all currently available temperature monitors by their full config section names, e.g. <code>["tmc2240 stepper_x"]</code>. While a temperature sensor is always available to read, a temperature monitor may not be available and will return null in such case.</li>
 </ul>
 <h2 id="idle_timeout">idle_timeout<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#idle_timeout">idle_timeout</a> (questo oggetto è sempre disponibile):</p>
@@ -2166,6 +2167,7 @@
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>screws_tilt_adjust</code>:</p>
 <ul>
 <li><code>error</code>: restituisce True se il comando <code>SCREWS_TILT_CALCULATE</code> più recente includeva il parametro <code>MAX_DEVIATION</code> e uno qualsiasi dei punti della vite rilevati superava il <code>MAX_DEVIATION</code> specificato.</li>
+<li><code>max_deviation</code>: Return the last <code>MAX_DEVIATION</code> value of the most recent <code>SCREWS_TILT_CALCULATE</code> command.</li>
 <li><code>results["&lt;screw&gt;"]</code>: un dizionario contenente le seguenti chiavi:<ul>
 <li><code>z</code>: L'altezza Z misurata della posizione della vite.</li>
 <li><code>sign</code>: una stringa che specifica la direzione in cui ruotare la vite per la regolazione necessaria. O "CW" per senso orario o "CCW" per senso antiorario.</li>
@@ -2191,7 +2193,7 @@
 </ul>
 <h2 id="sensori-di-temperatura">sensori di temperatura<a class="headerlink" href="#sensori-di-temperatura" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili in</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a> e <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name </a>:</p>
+<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
 <ul>
 <li><code>temperature</code>: l'ultima temperatura letta dal sensore.</li>
 <li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: gli ultimi valori letti dal sensore (solo sui sensori bme280, htu21d e lm75).</li>
@@ -2230,10 +2232,10 @@
 <li><code>stalls</code>: il numero totale di volte (dall'ultimo riavvio) che la stampante ha dovuto essere messa in pausa perché la testina si muoveva più velocemente di quanto fosse possibile leggere i movimenti dall'input del G-code.</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
-<p>Le seguenti informazioni sono disponibili in <a href="Config_Reference.html#dual_carriage">dual_carriage</a> su una macchina hybrid_corexy o hybrid_corexz</p>
+<p>The following information is available in <a href="Config_Reference.html#dual_carriage">dual_carriage</a> on a cartesian, hybrid_corexy or hybrid_corexz robot</p>
 <ul>
-<li><code>mode</code>: la modalità corrente. I valori possibili sono: "FULL_CONTROL"</li>
-<li><code>active_carriage</code>: il carrello attivo corrente. I valori possibili sono: "CARRIAGE_0", "CARRIAGE_1"</li>
+<li><code>carriage_0</code>: The mode of the carriage 0. Possible values are: "INACTIVE" and "PRIMARY".</li>
+<li><code>carriage_1</code>: The mode of the carriage 1. Possible values are: "INACTIVE", "PRIMARY", "COPY", and "MIRROR".</li>
 </ul>
 <h2 id="virtual_sdcard">virtual_sdcard<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a>:</p>

@@ -624,8 +624,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Axis_Twist_Compensation.md" class="md-nav__link">
-        None
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Axis Twist Compensation
       </a>
     </li>
   
@@ -1501,8 +1501,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Bootloader_Entry.md" class="md-nav__link">
-        None
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader Entry
       </a>
     </li>
   
@@ -2086,6 +2086,7 @@
 <ul>
 <li><code>available_heaters</code>：返回所有当前可用加热器的完整配置分段名称，例如 <code>["extruder"、"heater_bed"、"heater_generic my_custom_heater"]</code>。</li>
 <li><code>available_sensors</code>：返回所有当前可用的温度传感器的完整配置分段名称列表，例如：<code>["extruder", "heater_bed", "heater_generic my_custom_heater", "temperature_sensor electronics_temp"]</code>。</li>
+<li><code>available_monitors</code>: Returns a list of all currently available temperature monitors by their full config section names, e.g. <code>["tmc2240 stepper_x"]</code>. While a temperature sensor is always available to read, a temperature monitor may not be available and will return null in such case.</li>
 </ul>
 <h2 id="idle_timeout">idle_timeout<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#idle_timeout">idle_timeout</a> 对象中提供了以下信息（该对象始终可用）：</p>
@@ -2166,6 +2167,7 @@
 <p>以下信息可在<code>screws_tilt_adjust</code>对象中获取：</p>
 <ul>
 <li><code>error</code>: 如果最近的 <code>SCREWS_TILT_CALCULATE</code> 命令包含了 <code>MAX_DEVIATION</code> 参数，并且任何一个已探测的螺丝坐标超过了指定的 <code>MAX_DEVIATION</code>，则返回 True。</li>
+<li><code>max_deviation</code>: Return the last <code>MAX_DEVIATION</code> value of the most recent <code>SCREWS_TILT_CALCULATE</code> command.</li>
 <li><code>results["&lt;螺丝&gt;"]</code>：包含以下键的字典：<ul>
 <li><code>z</code>: 螺丝坐标测量的 Z 高度。</li>
 <li><code>sign</code>：一个字符串，指定进行必要的调整时旋转螺丝的方向。“CW”表示顺时针，“CCW”表示逆时针。</li>
@@ -2191,7 +2193,7 @@
 </ul>
 <h2 id="_2">温度传感器<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>以下信息可在</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>、<a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>、<a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>和<a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> 对象：</p>
+<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
 <ul>
 <li><code>temperature</code>：上一次从传感器读取的温度。</li>
 <li><code>hemidity</code>、<code>pressure</code>和<code>gas</code>：传感器上一次读取的值（仅在bme280、htu21d和lm75传感器上）。</li>
@@ -2230,10 +2232,10 @@
 <li><code>stalls</code>：由于工具头移动速度快于从 G 代码输入读取的移动速度，因此打印机必须暂停的总次数（自上次重新启动以来）。</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
-<p>使用了 hybrid_corexy 或 hybrid_corexz 运动学的 <a href="Config_Reference.html#dual_carriage">dual_carriage</a> 对象提供了以下信息</p>
+<p>The following information is available in <a href="Config_Reference.html#dual_carriage">dual_carriage</a> on a cartesian, hybrid_corexy or hybrid_corexz robot</p>
 <ul>
-<li><code>mode</code>：当前模式。可能的值："FULL_CONTROL"</li>
-<li><code>active_carriage</code>：当前的活跃的滑车。可能的值是"CARRIAGE_0"和"CARRIAGE_1"</li>
+<li><code>carriage_0</code>: The mode of the carriage 0. Possible values are: "INACTIVE" and "PRIMARY".</li>
+<li><code>carriage_1</code>: The mode of the carriage 1. Possible values are: "INACTIVE", "PRIMARY", "COPY", and "MIRROR".</li>
 </ul>
 <h2 id="virtual_sdcard">virtual_sdcard<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a>对象提供了以下信息：</p>
