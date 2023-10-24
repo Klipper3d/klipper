@@ -4,4 +4,3 @@ out
 .config
 .config.old
 klippy/.version
-klippy/extras/bme280.py~
