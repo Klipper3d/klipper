@@ -387,8 +387,7 @@ class BME280:
         self.write_register('CTRL_MEAS', meas)
 
         try:
-            for i in range(94000):
-                pass
+            self.reactor.pause(self.reactor.monotonic() + .01)
             data = self.read_register('REG_MSB', 2)
             UT = (data[0] << 8) | data[1]
         except Exception:
@@ -400,8 +399,7 @@ class BME280:
         self.write_register('CTRL_MEAS', meas)
 
         try:
-            for i in range(94000):
-                pass
+            self.reactor.pause(self.reactor.monotonic() + .01)
             data = self.read_register('REG_MSB', 3)
             UP = ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
         except Exception:
@@ -531,33 +529,33 @@ class BME280:
 
     def _compensate_temp_bmp180(self, raw_temp):
         dig = self.dig
-        X1 = (raw_temp - dig['AC6']) * dig['AC5'] / 32768.
-        X2 = dig['MC'] * 2048 / (X1 + dig['MD'])
-        B5 = X1 + X2
-        self.t_fine = B5
-        return (B5 + 8)/16./10.
+        x1 = (raw_temp - dig['AC6']) * dig['AC5'] / 32768.
+        x2 = dig['MC'] * 2048 / (x1 + dig['MD'])
+        b5 = x1 + x2
+        self.t_fine = b5
+        return (b5 + 8)/16./10.
 
     def _compensate_pressure_bmp180(self, raw_pressure):
         dig = self.dig
-        B5 = self.t_fine
-        B6 = B5 - 4000
-        X1 = (dig['B2'] * (B6 * B6 / 4096)) / 2048
-        X2 = dig['AC2'] * B6 / 2048
-        X3 = X1 + X2
-        B3 = ((int(dig['AC1'] * 4 + X3) << self.os_pres) + 2) / 4
-        X1 = dig['AC3'] * B6 / 8192
-        X2 = (dig['B1'] * (B6 * B6 / 4096)) / 65536
-        X3 = ((X1 + X2) + 2) / 4
-        B4 = dig['AC4'] * (X3 + 32768) / 32768
-        B7 = (raw_pressure - B3) * (50000 >> self.os_pres)
-        if (B7 < 0x80000000):
-            p = (B7 * 2) / B4
+        b5 = self.t_fine
+        b6 = b5 - 4000
+        x1 = (dig['B2'] * (b6 * b6 / 4096)) / 2048
+        x2 = dig['AC2'] * b6 / 2048
+        x3 = x1 + x2
+        b3 = ((int(dig['AC1'] * 4 + x3) << self.os_pres) + 2) / 4
+        x1 = dig['AC3'] * b6 / 8192
+        x2 = (dig['B1'] * (b6 * b6 / 4096)) / 65536
+        X3 = ((x1 + x2) + 2) / 4
+        b4 = dig['AC4'] * (x3 + 32768) / 32768
+        b7 = (raw_pressure - b3) * (50000 >> self.os_pres)
+        if (b7 < 0x80000000):
+            p = (b7 * 2) / b4
         else:
-            p = (B7 / B4) * 2
-        X1 = (p / 256) * (p / 256)
-        X1 = (X1 * 3038) / 65536
-        X2 = (-7357 * p) / 65536
-        p = p + (X1 + X2 + 3791) / 16.
+            p = (b7 / b4) * 2
+        x1 = (p / 256) * (p / 256)
+        x1 = (x1 * 3038) / 65536
+        x2 = (-7357 * p) / 65536
+        p = p + (x1 + x2 + 3791) / 16.
         return p
 
     def read_id(self):
