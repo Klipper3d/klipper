@@ -8,7 +8,6 @@ from . import bus
 
 REPORT_TIME = .8
 BME280_CHIP_ADDR = 0x76
-BMP180_CHIP_ADDR = 0x77
 
 BME280_REGS = {
     'RESET': 0xE0, 'CTRL_HUM': 0xF2,
