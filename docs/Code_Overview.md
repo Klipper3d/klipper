@@ -236,6 +236,15 @@ then the software will automatically attempt to load the python module
 klippy/extras/my_module.py . This module system is the preferred
 method for adding new functionality to Klipper.
 
+This Klipper "host module" system is an internal abstraction used to
+facilitate long-term code maintenance within Klipper. It is not an API
+for external code, nor is it a "plugin system". Also, note that
+Klipper uses the [GNU GPLv3 license](../COPYING). Any code utilizing
+the Klipper "host module" interface is also subject to the GNU GPLv3
+licensing requirements. See the Klipper [API Server](API_Server.md)
+documentation if interested in interacting with Klipper from external
+code.
+
 The easiest way to add a new module is to use an existing module as a
 reference - see **klippy/extras/servo.py** as an example.
 
@@ -366,6 +375,11 @@ Useful steps:
    [debugging documentation](Debugging.md) to convert this g-code file
    to micro-controller commands. This is useful to exercise corner
    cases and to check for regressions.
+
+Note that Klipper uses the [GNU GPLv3 license](../COPYING). The
+interface to kinematic code in Klipper is an internal abstraction, and
+any code utilizing that interface is also subject to the GNU GPLv3
+licensing requirements.
 
 ## Porting to a new micro-controller
 

@@ -20,6 +20,14 @@ document) take a string value which is automatically converted to an
 integer value for the micro-controller. This is common with parameters
 named "pin" (or that have a suffix of "_pin").
 
+Note that Klipper uses the [GNU GPLv3 license](../COPYING). The
+Klipper host to micro-controller interface described here is an
+internal abstraction used to facilitate communication within the
+Klipper code. Any code utilizing this Klipper interface is also
+subject to the GNU GPLv3 licensing requirements. See the Klipper [API
+Server](API_Server.md) documentation if interested in interacting with
+Klipper from external code.
+
 ## Startup Commands
 
 It may be necessary to take certain one-time actions to configure the
