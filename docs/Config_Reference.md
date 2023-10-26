@@ -1773,7 +1773,7 @@ aliases_<name>:
 
 Include file support. One may include additional config file from the
 main printer config file. Wildcards may also be used (eg,
-"configs/*.cfg").
+"configs/\*.cfg", "configs/\*\*/\*.cfg").
 
 ```
 [include my_other_config.cfg]
