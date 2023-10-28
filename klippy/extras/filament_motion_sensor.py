@@ -69,6 +69,7 @@ class EncoderSensor:
     def encoder_event(self, eventtime, state):
         if self.extruder is not None:
             self._update_filament_runout_pos(eventtime)
+            self.runout_helper.switch_pin_state = state
             # Check for filament insertion
             # Filament is always assumed to be present on an encoder event
             self.runout_helper.note_filament_present(True)
