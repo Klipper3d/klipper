@@ -29,6 +29,7 @@ class RunoutHelper:
         self.min_event_systime = self.reactor.NEVER
         self.filament_present = False
         self.sensor_enabled = True
+        self.switch_pin_state = False
         # Register commands and event handlers
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.gcode.register_mux_command(
@@ -91,7 +92,8 @@ class RunoutHelper:
     def get_status(self, eventtime):
         return {
             "filament_detected": bool(self.filament_present),
-            "enabled": bool(self.sensor_enabled)}
+            "enabled": bool(self.sensor_enabled),
+            "switch_pin_state": bool(self.switch_pin_state)}
     cmd_QUERY_FILAMENT_SENSOR_help = "Query the status of the Filament Sensor"
     def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
         if self.filament_present:
@@ -112,6 +114,7 @@ class SwitchSensor:
         self.runout_helper = RunoutHelper(config)
         self.get_status = self.runout_helper.get_status
     def _button_handler(self, eventtime, state):
+        self.runout_helper.switch_pin_state = state
         self.runout_helper.note_filament_present(state)
 
 def load_config_prefix(config):
