@@ -243,6 +243,7 @@ CONFIG ../../config/printer-ratrig-v-minion-2021.cfg
 # Printers using the stm32h723
 DICTIONARY stm32h723.dict
 CONFIG ../../config/generic-bigtreetech-octopus-max-ez.cfg
+CONFIG ../../config/generic-bigtreetech-octopus-pro-v1.1.cfg
 
 # Printers using the stm32h743
 DICTIONARY stm32h743.dict
