@@ -94,22 +94,27 @@ bug. Please follow these steps:
    about the software and its environment (software version, hardware
    type, configuration, event timing, and hundreds of other
    questions).
-   1. The Klipper log file is located in `/tmp/klippy.log` on the
-      Klipper "host" computer (the Raspberry Pi).
-   2. An "scp" or "sftp" utility is needed to copy this log file to
-      your desktop computer. The "scp" utility comes standard with
-      Linux and MacOS desktops. There are freely available scp
-      utilities for other desktops (eg, WinSCP). If using a graphical
-      scp utility that can not directly copy `/tmp/klippy.log` then
-      repeatedly click on `..` or `parent folder` until you get to the
-      root directory, click on the `tmp` folder, and then select the
-      `klippy.log` file.
-   3. Copy the log file to your desktop so that it can be attached to
+   1. Dedicated Klipper web interfaces have the ability to directly
+      obtain the Klipper log file. It's the easiest way to obtain the
+      log when using one of these interfaces. Otherwise, an "scp" or
+      "sftp" utility is needed to copy the log file to your desktop
+      computer. The "scp" utility comes standard with Linux and MacOS
+      desktops. There are freely available scp utilities for other
+      desktops (eg, WinSCP). The log file may be located in the
+      `~/printer_data/logs/klippy.log` file (if using a graphical scp
+      utility, look for the "printer_data" folder, then the "logs"
+      folder under that, then the `klippy.log` file). The log file may
+      alternatively be located in the `/tmp/klippy.log` file (if using
+      a graphical scp utility that can not directly copy
+      `/tmp/klippy.log` then repeatedly click on `..` or
+      "parent folder" until reaching the root directory, click on
+      the `tmp` folder, and then select the `klippy.log` file).
+   2. Copy the log file to your desktop so that it can be attached to
       an issue report.
-   4. Do not modify the log file in any way; do not provide a snippet
+   3. Do not modify the log file in any way; do not provide a snippet
       of the log. Only the full unmodified log file provides the
       necessary information.
-   5. It is a good idea to compress the log file with zip or gzip.
+   4. It is a good idea to compress the log file with zip or gzip.
 5. Open a new topic on the [Klipper Discourse Forum](#discourse-forum)
    and provide a clear description of the problem. Other Klipper
    contributors will need to understand what steps were taken, what
