@@ -10,22 +10,34 @@ an issue or for details on contacting the developers.
 
 Contributions to Klipper generally follow a high-level process:
 
-1. A submitter starts by creating a
-   [GitHub Pull Request](https://github.com/Klipper3d/klipper/pulls)
-   when a submission is ready for widespread deployment.
-2. When a [reviewer](#reviewers) is available to
-   [review](#what-to-expect-in-a-review) the submission, they will
-   assign themselves to the Pull Request on GitHub. The goal of the
-   review is to look for defects and to check that the submission
-   follows documented guidelines.
-3. After a successful review, the reviewer will "approve the review"
+1. Start a topic on [Klipper Discourse](Contact.md) to discuss any new
+   functionality that is to be added or any notable change in
+   behavior. This offers a place to propose the change, provide status
+   on the work, find users interested in the functionality, and allow
+   users to provide testing feedback. It also allows other developers
+   to find out about the work and offer assistance.
+2. When the work is ready for widespread deployment and a
+   [reviewer](#reviewers) indicates they are ready to
+   [review](#what-to-expect-in-a-review) the submission, the submitter
+   should create a
+   [GitHub Pull Request](https://github.com/Klipper3d/klipper/pulls).
+   When creating a Pull Request be sure to provide a
+   ["Signed-off-by" line](#format-of-commit-messages).
+3. The [reviewer](#reviewers) will then assign themselves to the Pull
+   Request on GitHub.
+4. After a successful review, the reviewer will "approve the review"
    on GitHub and a [maintainer](#reviewers) will commit the change to
    the Klipper master branch.
 
-When working on enhancements, consider starting (or contributing to) a
-topic on [Klipper Discourse](Contact.md). An ongoing discussion on the
-forum can improve visibility of development work and may attract
-others interested in testing new work.
+In some cases, where a change is simple, one may start at step 2 and
+create a GitHub Pull Request for the change. This is normally only
+applicable for simple bug fixes, simple example config file changes,
+and straight forward updates to documentation. In most other cases, it
+is unlikely a reviewer will be available. We prefer to track ongoing
+development work on [Klipper Discourse](Contact.md) as that provides
+information on user engagement and user testing, which helps allow the
+limited number of reviewers to prioritize those changes that are
+merged into the main Klipper repository.
 
 ## What to expect in a review
 
