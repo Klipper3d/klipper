@@ -169,7 +169,9 @@ class HTU21D:
             rtemp  = response[0] << 8
             rtemp |= response[1]
             if self._chekCRC8(rtemp) != response[2]:
-                logging.warning("htu21d: Checksum error on Temperature reading!")
+                logging.warning(
+                    "htu21d: Checksum error on Temperature reading!"
+                )
             else:
                 self.temp = (0.002681 * float(rtemp) - 46.85)
                 logging.debug("htu21d: Temperature %.2f " % self.temp)
