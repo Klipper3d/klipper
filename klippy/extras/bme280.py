@@ -388,7 +388,7 @@ class BME280:
         try:
             self.reactor.pause(self.reactor.monotonic() + .01)
             data = self.read_register('REG_MSB', 2)
-            UT = (data[0] << 8) | data[1]
+            temp_raw = (data[0] << 8) | data[1]
         except Exception:
             logging.exception("BMP180: Error reading temperature")
             self.temp = self.pressure = .0
@@ -400,14 +400,14 @@ class BME280:
         try:
             self.reactor.pause(self.reactor.monotonic() + .01)
             data = self.read_register('REG_MSB', 3)
-            UP = ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
+            pressure_raw = ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
         except Exception:
             logging.exception("BMP180: Error reading pressure")
             self.temp = self.pressure = .0
             return self.reactor.NEVER
 
-        self.temp = self._compensate_temp_bmp180(UT)
-        self.pressure = self._compensate_pressure_bmp180(UP) / 100.
+        self.temp = self._compensate_temp_bmp180(temp_raw)
+        self.pressure = self._compensate_pressure_bmp180(pressure_raw) / 100.
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
                 "BMP180 temperature %0.1f outside range of %0.1f:%.01f"
@@ -544,7 +544,7 @@ class BME280:
         b3 = ((int(dig['AC1'] * 4 + x3) << self.os_pres) + 2) / 4
         x1 = dig['AC3'] * b6 / 8192
         x2 = (dig['B1'] * (b6 * b6 / 4096)) / 65536
-        X3 = ((x1 + x2) + 2) / 4
+        x3 = ((x1 + x2) + 2) / 4
         b4 = dig['AC4'] * (x3 + 32768) / 32768
         b7 = (raw_pressure - b3) * (50000 >> self.os_pres)
         if (b7 < 0x80000000):
