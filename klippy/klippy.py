@@ -147,9 +147,9 @@ class Printer:
         host_version = self.start_args['software_version']
         msg_update = []
         msg_updated = []
-        for mcu_name, mcu in self.lookup_objects('mcu'):
+        for mcu_name, mcu_obj in self.lookup_objects('mcu'):
             try:
-                mcu_version = mcu.get_status()['mcu_version']
+                mcu_version = mcu_obj.get_status()['mcu_version']
             except:
                 logging.exception("Unable to retrieve mcu_version from mcu")
                 continue
