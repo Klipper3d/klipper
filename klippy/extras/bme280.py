@@ -400,7 +400,8 @@ class BME280:
         try:
             self.reactor.pause(self.reactor.monotonic() + .01)
             data = self.read_register('REG_MSB', 3)
-            pressure_raw = ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
+            pressure_raw = \ 
+                ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
         except Exception:
             logging.exception("BMP180: Error reading pressure")
             self.temp = self.pressure = .0
