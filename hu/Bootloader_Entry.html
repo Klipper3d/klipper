@@ -13,7 +13,7 @@
     
     
       
-        <title>Bootloader Entry - Klipper dokumentáció</title>
+        <title>Bootloader belépés - Klipper dokumentáció</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bootloader-entry" class="md-skip">
+        <a href="#bootloader-belepes" class="md-skip">
           Kihagyás
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bootloader Entry
+              Bootloader belépés
             
           </span>
         </div>
@@ -623,7 +623,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        Tengely fordulat kompenzáció
       </a>
     </li>
   
@@ -1167,12 +1167,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Bootloader Entry
+          Bootloader belépés
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Bootloader_Entry.html" class="md-nav__link md-nav__link--active">
-        Bootloader Entry
+        Bootloader belépés
       </a>
       
         
@@ -1191,19 +1191,19 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requesting-the-bootloader" class="md-nav__link">
-    Requesting the bootloader
+  <a href="#a-bootloader-kerese" class="md-nav__link">
+    A bootloader kérése
   </a>
   
-    <nav class="md-nav" aria-label="Requesting the bootloader">
+    <nav class="md-nav" aria-label="A bootloader kérése">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#virtual-serial" class="md-nav__link">
-    Virtual Serial
+  <a href="#virtualis-sorozat" class="md-nav__link">
+    Virtuális sorozat
   </a>
   
-    <nav class="md-nav" aria-label="Virtual Serial">
+    <nav class="md-nav" aria-label="Virtuális sorozat">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1327,7 +1327,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        CANBUS Hibaelhárítás
       </a>
     </li>
   
@@ -1410,19 +1410,19 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requesting-the-bootloader" class="md-nav__link">
-    Requesting the bootloader
+  <a href="#a-bootloader-kerese" class="md-nav__link">
+    A bootloader kérése
   </a>
   
-    <nav class="md-nav" aria-label="Requesting the bootloader">
+    <nav class="md-nav" aria-label="A bootloader kérése">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#virtual-serial" class="md-nav__link">
-    Virtual Serial
+  <a href="#virtualis-sorozat" class="md-nav__link">
+    Virtuális sorozat
   </a>
   
-    <nav class="md-nav" aria-label="Virtual Serial">
+    <nav class="md-nav" aria-label="Virtuális sorozat">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1533,11 +1533,11 @@
 </a>
 
 
-<h1 id="bootloader-entry">Bootloader Entry<a class="headerlink" href="#bootloader-entry" title="Permanent link">&para;</a></h1>
-<p>Klipper can be instructed to reboot into a <a href="Bootloaders.html">Bootloader</a> in one of the following ways:</p>
-<h2 id="requesting-the-bootloader">Requesting the bootloader<a class="headerlink" href="#requesting-the-bootloader" title="Permanent link">&para;</a></h2>
-<h3 id="virtual-serial">Virtual Serial<a class="headerlink" href="#virtual-serial" title="Permanent link">&para;</a></h3>
-<p>If a virtual (USB-ACM) serial port is in use, pulsing DTR while at 1200 baud will request the bootloader.</p>
+<h1 id="bootloader-belepes">Bootloader belépés<a class="headerlink" href="#bootloader-belepes" title="Permanent link">&para;</a></h1>
+<p>Klipper utasítható, hogy újraindítsa a <a href="Bootloaders.html">Bootloadert</a> az alábbi módok egyikében:</p>
+<h2 id="a-bootloader-kerese">A bootloader kérése<a class="headerlink" href="#a-bootloader-kerese" title="Permanent link">&para;</a></h2>
+<h3 id="virtualis-sorozat">Virtuális sorozat<a class="headerlink" href="#virtualis-sorozat" title="Permanent link">&para;</a></h3>
+<p>Ha virtuális (USB-ACM) soros port van használatban, a DTR pulzálása 1200 baud mellett kéri a rendszerbetöltőt.</p>
 <h4 id="python-with-flash_usb">Python (with <code>flash_usb</code>)<a class="headerlink" href="#python-with-flash_usb" title="Permanent link">&para;</a></h4>
 <p>To enter the bootloader using python (using <code>flash_usb</code>):</p>
 <div class="highlight"><pre><span></span><code>&gt;<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>klipper/scripts

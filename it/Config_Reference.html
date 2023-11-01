@@ -1134,8 +1134,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#aht10aht20aht21-temperature-sensor" class="md-nav__link">
-    AHT10/AHT20/AHT21 temperature sensor
+  <a href="#sensore-temperatura-aht10aht20aht21" class="md-nav__link">
+    Sensore temperatura AHT10/AHT20/AHT21
   </a>
   
 </li>
@@ -3132,8 +3132,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#aht10aht20aht21-temperature-sensor" class="md-nav__link">
-    AHT10/AHT20/AHT21 temperature sensor
+  <a href="#sensore-temperatura-aht10aht20aht21" class="md-nav__link">
+    Sensore temperatura AHT10/AHT20/AHT21
   </a>
   
 </li>
@@ -5323,7 +5323,7 @@ z_offset:
 </code></pre></div>
 
 <h3 id="axis_twist_compensation">[axis_twist_compensation]<a class="headerlink" href="#axis_twist_compensation" title="Permanent link">&para;</a></h3>
-<p>A tool to compensate for inaccurate probe readings due to twist in X gantry. See the <a href="Axis_Twist_Compensation.html">Axis Twist Compensation Guide</a> for more detailed information regarding symptoms, configuration and setup.</p>
+<p>Uno strumento per compensare letture imprecise della sonda dovute alla torsione nel portale X. Consultare la <a href="Axis_Twist_Compensation.html">Guida alla compensazione della torsione dell'asse</a> per informazioni più dettagliate su sintomi, configurazione e impostazione.</p>
 <div class="highlight"><pre><span></span><code>[axis_twist_compensation]
 #speed: 50
 #   The speed (in mm/s) of non-probing moves during the calibration.
@@ -5378,7 +5378,7 @@ calibrate_y: 112.5
 
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
 <p>Support for cartesian and hybrid_corexy/z printers with dual carriages on a single axis. The carriage mode can be set via the SET_DUAL_CARRIAGE extended g-code command. For example, "SET_DUAL_CARRIAGE CARRIAGE=1" command will activate the carriage defined in this section (CARRIAGE=0 will return activation to the primary carriage). Dual carriage support is typically combined with extra extruders - the SET_DUAL_CARRIAGE command is often called at the same time as the ACTIVATE_EXTRUDER command. Be sure to park the carriages during deactivation. Note that during G28 homing, typically the primary carriage is homed first followed by the carriage defined in the <code>[dual_carriage]</code> config section. However, the <code>[dual_carriage]</code> carriage will be homed first if both carriages home in a positive direction and the [dual_carriage] carriage has a <code>position_endstop</code> greater than the primary carriage, or if both carriages home in a negative direction and the <code>[dual_carriage]</code> carriage has a <code>position_endstop</code> less than the primary carriage.</p>
-<p>Additionally, one could use "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=COPY" or "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=MIRROR" commands to activate either copying or mirroring mode of the dual carriage, in which case it will follow the motion of the carriage 0 accordingly. These commands can be used to print two parts simultaneously - either two identical parts (in COPY mode) or mirrored parts (in MIRROR mode). Note that COPY and MIRROR modes also require appropriate configuration of the extruder on the dual carriage, which can typically be achieved with "SYNC_EXTRUDER_MOTION MOTION_QUEUE=extruder EXTRUDER=<dual_carriage_extruder>" or a similar command.</p>
+<p>Inoltre, è possibile utilizzare i comandi "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=COPY" o "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=MIRROR" per attivare la modalità di copia o di mirroring del doppio carrello, nel qual caso seguirà di conseguenza il movimento del carrello 0 . Questi comandi possono essere utilizzati per stampare due parti contemporaneamente: due parti identiche (in modalità COPIA) o parti specchiate (in modalità SPECCHIO). Tieni presente che le modalità COPY e MIRROR richiedono anche la configurazione appropriata dell'estrusore sul doppio carrello, che in genere può essere ottenuta con "SYNC_EXTRUDER_MOTION MOTION_QUEUE=extruder EXTRUDER=<dual_carriage_extruder>" o un comando simile.</p>
 <p>Vedere <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-idex.cfg">sample-idex.cfg</a> per un esempio di configurazione.</p>
 <div class="highlight"><pre><span></span><code>[dual_carriage]
 axis:
@@ -5666,8 +5666,8 @@ sensor_pin:
 #   above parameters.
 </code></pre></div>
 
-<h3 id="aht10aht20aht21-temperature-sensor">AHT10/AHT20/AHT21 temperature sensor<a class="headerlink" href="#aht10aht20aht21-temperature-sensor" title="Permanent link">&para;</a></h3>
-<p>AHT10/AHT20/AHT21 two wire interface (I2C) environmental sensors. Note that these sensors are not intended for use with extruders and heater beds, but rather for monitoring ambient temperature (C) and relative humidity. See <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> for a gcode_macro that may be used to report humidity in addition to temperature.</p>
+<h3 id="sensore-temperatura-aht10aht20aht21">Sensore temperatura AHT10/AHT20/AHT21<a class="headerlink" href="#sensore-temperatura-aht10aht20aht21" title="Permanent link">&para;</a></h3>
+<p>Sensori ambientali con interfaccia a due fili (I2C) AHT10/AHT20/AHT21. Si noti che questi sensori non sono destinati all'uso con estrusori e letti riscaldanti, ma piuttosto per il monitoraggio della temperatura ambiente (C) e dell'umidità relativa. Vedi <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> per un gcode_macro che può essere utilizzato per segnalare l'umidità oltre alla temperatura.</p>
 <div class="highlight"><pre><span></span><code>sensor_type: AHT10
 #   Also use AHT10 for AHT20 and AHT21 sensors.
 #i2c_address:

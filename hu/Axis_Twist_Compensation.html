@@ -13,7 +13,7 @@
     
     
       
-        <title>Axis Twist Compensation - Klipper dokumentáció</title>
+        <title>Tengely fordulat kompenzáció - Klipper dokumentáció</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#axis-twist-compensation" class="md-skip">
+        <a href="#tengely-fordulat-kompenzacio" class="md-skip">
           Kihagyás
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Axis Twist Compensation
+              Tengely fordulat kompenzáció
             
           </span>
         </div>
@@ -636,12 +636,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Axis Twist Compensation
+          Tengely fordulat kompenzáció
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Axis_Twist_Compensation.html" class="md-nav__link md-nav__link--active">
-        Axis Twist Compensation
+        Tengely fordulat kompenzáció
       </a>
       
         
@@ -1208,7 +1208,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        Bootloader belépés
       </a>
     </li>
   
@@ -1236,7 +1236,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        CANBUS Hibaelhárítás
       </a>
     </li>
   
@@ -1349,12 +1349,12 @@
 </a>
 
 
-<h1 id="axis-twist-compensation">Axis Twist Compensation<a class="headerlink" href="#axis-twist-compensation" title="Permanent link">&para;</a></h1>
-<p>This document describes the [axis_twist_compensation] module.</p>
+<h1 id="tengely-fordulat-kompenzacio">Tengely fordulat kompenzáció<a class="headerlink" href="#tengely-fordulat-kompenzacio" title="Permanent link">&para;</a></h1>
+<p>Ez a dokumentum leírja az [axis_twist_compensation] modult.</p>
 <p>Some printers may have a small twist in their X rail which can skew the results of a probe attached to the X carriage. This is common in printers with designs like the Prusa MK3, Sovol SV06 etc and is further described under <a href="Probe_Calibrate.html#location-bias-check">probe location
 bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed Mesh</a>, <a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a>, <a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a> etc returning inaccurate representations of the bed.</p>
-<p>This module uses manual measurements by the user to correct the probe's results. Note that if your axis is significantly twisted it is strongly recommended to first use mechanical means to fix it prior to applying software corrections.</p>
-<p><strong>Warning</strong>: This module is not compatible with dockable probes yet and will try to probe the bed without attaching the probe if you use it.</p>
+<p>Ez a modul kézi méréseket használ a felhasználó számára, hogy korrigálja a szonda eredményeit. Vedd figyelembe, hogy ha a tengely jelentősen csavart, akkor határozottan ajánlott először mechanikai eszközöket használni a szoftveres korrekciók alkalmazása előtt.</p>
+<p><strong>Figyelem</strong>: Ez a modul még nem kompatibilis a dokkolható szondákkal, és a szonda csatlakoztatása nélkül próbáld meg megmérni az ágyat, mielőtt használod.</p>
 <h2 id="overview-of-compensation-usage">Overview of compensation usage<a class="headerlink" href="#overview-of-compensation-usage" title="Permanent link">&para;</a></h2>
 <blockquote>
 <p><strong>Tip:</strong> Make sure the <a href="Config_Reference.html#probe">probe X and Y offsets</a> are correctly set as they greatly influence calibration.</p>
