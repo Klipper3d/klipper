@@ -21,15 +21,19 @@ class HybridCoreXYKinematics:
         for s in self.rails[0].get_steppers():
             self.rails[1].get_endstops()[0][0].add_stepper(s)
         if self.inverted == False:
-            self.rails[0].steppers[0].setup_itersolve('corexy_stepper_alloc', b'-')
+            self.rails[0].steppers[0].setup_itersolve(
+                'corexy_stepper_alloc', b'-')
             if len(self.rails[0].steppers)==2:
-                self.rails[0].steppers[1].setup_itersolve('corexy_stepper_alloc', b'+')
+                self.rails[0].steppers[1].setup_itersolve(
+                    'corexy_stepper_alloc', b'+')
             if len(self.rails[0].steppers)>2:
                 raise self.error("Unexpected stepper configuration")
         else:
-            self.rails[0].steppers[0].setup_itersolve('corexy_stepper_alloc', b'+')
+            self.rails[0].steppers[0].setup_itersolve(
+                'corexy_stepper_alloc', b'+')
             if len(self.rails[0].steppers)==2:
-                self.rails[0].steppers[1].setup_itersolve('corexy_stepper_alloc', b'-')
+                self.rails[0].steppers[1].setup_itersolve(
+                    'corexy_stepper_alloc', b'-')
             if len(self.rails[0].steppers)>2:
                 raise self.error("Unexpected stepper configuration")
         self.rails[1].setup_itersolve('cartesian_stepper_alloc', b'y')
@@ -47,15 +51,19 @@ class HybridCoreXYKinematics:
             for s in self.rails[3].get_steppers():
                 self.rails[1].get_endstops()[0][0].add_stepper(s)
             if self.inverted == False:
-                self.rails[3].steppers[0].setup_itersolve('corexy_stepper_alloc', b'+')
+                self.rails[3].steppers[0].setup_itersolve(
+                    'corexy_stepper_alloc', b'+')
                 if len(self.rails[3].steppers)==2:
-                    self.rails[3].steppers[1].setup_itersolve('corexy_stepper_alloc', b'-')
+                    self.rails[3].steppers[1].setup_itersolve(
+                        'corexy_stepper_alloc', b'-')
                 if len(self.rails[3].steppers)>2:
                     raise self.error("Unexpected stepper configuration")
             else:
-                self.rails[3].steppers[0].setup_itersolve('corexy_stepper_alloc', b'-')
+                self.rails[3].steppers[0].setup_itersolve(
+                    'corexy_stepper_alloc', b'-')
                 if len(self.rails[3].steppers)==2:
-                    self.rails[3].steppers[1].setup_itersolve('corexy_stepper_alloc', b'+')
+                    self.rails[3].steppers[1].setup_itersolve(
+                        'corexy_stepper_alloc', b'+')
                 if len(self.rails[3].steppers)>2:
                     raise self.error("Unexpected stepper configuration")
             dc_rail_0 = idex_modes.DualCarriagesRail(
