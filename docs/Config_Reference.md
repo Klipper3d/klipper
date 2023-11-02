@@ -2115,6 +2115,12 @@ inverted:
 #   See the "stepper" section for the definition of the above parameters.
 ```
 
+```
+[hybrid_corexy]
+inverted:
+#   Set to True in case you have a inverted hybrid core-xy setup.
+```
+
 ### [extruder_stepper]
 
 Support for additional steppers synchronized to the movement of an
