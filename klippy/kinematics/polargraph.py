@@ -9,7 +9,8 @@ import stepper
 class PolargraphKinematics:
     def __init__(self, toolhead, config):
         self.rails = [
-            stepper.LookupMultiRail(config.getsection("stepper_" + n)) for n in "lrz"
+            stepper.LookupMultiRail(config.getsection("stepper_" + n))
+            for n in "lrz"
         ]
         for s in self.rails[1].get_steppers():
             self.rails[0].get_endstops()[0][0].add_stepper(s)
@@ -17,8 +18,12 @@ class PolargraphKinematics:
             self.rails[1].get_endstops()[0][0].add_stepper(s)
         polargraph_config = config.getsection("drawbot")
         self.width = polargraph_config.getfloat("width", above=0.0)
-        self.rails[0].setup_itersolve("polargraph_stepper_alloc", self.width, b"l")
-        self.rails[1].setup_itersolve("polargraph_stepper_alloc", self.width, b"r")
+        self.rails[0].setup_itersolve(
+            "polargraph_stepper_alloc", self.width, b"l"
+        )
+        self.rails[1].setup_itersolve(
+            "polargraph_stepper_alloc", self.width, b"r"
+        )
         self.rails[2].setup_itersolve("cartesian_stepper_alloc", b"z")
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
@@ -44,7 +49,9 @@ class PolargraphKinematics:
 
     def calc_position(self, stepper_positions):
         x = self.width - (
-            stepper_positions["l"] ** 2 - stepper_positions["r"] ** 2 + self.width**2
+            stepper_positions["l"] ** 2
+            - stepper_positions["r"] ** 2
+            + self.width**2
         ) / (2 * self.width)
         return [
             x,
@@ -122,7 +129,9 @@ class PolargraphKinematics:
         # Move with Z - update velocity and accel for slower Z axis
         self._check_endstops(move)
         z_ratio = move.move_d / abs(move.axes_d[2])
-        move.limit_speed(self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+        move.limit_speed(
+            self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio
+        )
 
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
