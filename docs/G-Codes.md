@@ -956,7 +956,7 @@ setting in the [probe config section](Config_Reference.md#probe).
 "open").
 
 #### PROBE_ACCURACY
-`PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+`PROBE_ACCURACY [LIFT_SPEED=<mm/s>] [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
 [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
