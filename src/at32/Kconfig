@@ -1,0 +1,149 @@
+# Kconfig settings for AT32F40X processors
+
+if MACH_AT32
+
+config AT32_SELECT 
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+#    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_PRTOUCH
+    select HAVE_GPIO_BITBANGING
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+	select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_BOTH_EDGE
+
+config BOARD_DIRECTORY
+    string
+    default "at32"
+
+choice
+    prompt "Processor model"
+    config MACH_AT32F403A
+        bool "at32f403a"
+		select MACH_AT32F403Ax
+    config MACH_AT32F407
+        bool "at32f407"
+		select MACH_AT32F407x
+    config MACH_AT32F415
+        bool "at32f415"
+		select MACH_AT32F415x
+    config MACH_AT32F425
+        bool "at32f425"
+		select MACH_AT32F425x
+    config MACH_AT32F421
+        bool "at32f421"
+		select MACH_AT32F421x
+endchoice
+
+config MCU_TYPE
+    string
+	default "a" if MACH_AT32F403A
+	default "b" if MACH_AT32F407
+	default "c" if MACH_AT32F415
+	default "d" if MACH_AT32F421
+	default "e" if MACH_AT32F425
+
+config MACH_AT32F403Ax
+	bool
+config MACH_AT32F407x
+	bool
+config MACH_AT32F415x
+	bool
+config MACH_AT32F425x
+	bool
+config MACH_AT32F421x
+	bool
+
+config MCU
+    string
+    default "at32f403a" if MACH_AT32F403A
+    default "at32f407" if MACH_AT32F407
+    default "at32f415" if MACH_AT32F415
+    default "at32f425" if MACH_AT32F425
+    default "at32f421" if MACH_AT32F421
+
+config CLOCK_FREQ
+    int
+    default 240000000 if (MACH_AT32F403A || MACH_AT32F407)
+    default 144000000 if MACH_AT32F415
+    default 96000000 if MACH_AT32F425
+    default 120000000 if MACH_AT32F421
+	
+#config FLASH_START
+#    hex
+#    default 0x08000000
+
+config FLASH_SIZE
+    hex
+    default 0x00100000 if (MACH_AT32F403A || MACH_AT32F407)
+    default 0x00040000 if MACH_AT32F415
+    default 0x00010000 if MACH_AT32F425
+    default 0x00008000 if MACH_AT32F421
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x8000000
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x18000 if (MACH_AT32F403A || MACH_AT32F407)
+    default 0x8000 if MACH_AT32F415
+    default 0x5000 if MACH_AT32F425
+    default 0x4000 if MACH_AT32F421
+
+config STACK_SIZE
+    int
+    default 512
+
+
+######################################################################
+# Bootloader
+######################################################################
+
+choice
+    prompt "Bootloader offset"
+    config AT32_FLASH_START_1400
+        bool "5KiB bootloader"
+    config AT32_FLASH_START_0000
+        bool "No bootloader"
+endchoice
+
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x8001400 if AT32_FLASH_START_1400
+    default 0x8000000
+
+config RAW_BOOTLOADER
+    bool "Boot Code from Artery at 0x1FFFAC00, which programs flash with USART1 or USB port."
+    default y
+
+config USBSERIAL
+    bool
+config SERIAL
+    bool
+choice
+    prompt "Communication interface"
+    config AT32_SERIAL_USART1_PA9_PA10
+        bool "Serial (on USART1 PA9/PA10)"
+        select SERIAL
+    config AT32_SERIAL_USART2_PA2_PA3
+        bool "Serial (on USART2 PA2/PA3)"
+        select SERIAL
+    config AT32_SERIAL_USART2_PD5_PD6
+        bool "Serial (on USART2 PD5/PD6)"
+		depends on !MACH_AT32F421x
+        select SERIAL
+    config AT32_USB
+        bool "USB"
+        select USBSERIAL
+endchoice
+
+endif
