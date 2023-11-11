@@ -804,7 +804,6 @@ class PRTouchEndstopWrapper:
 
 def load_config(config):
     prt = PRTouchEndstopWrapper(config)
-    config.get_printer().add_object('probe', probe.PrinterProbe(config, prt))
     return prt
 
 # G28
