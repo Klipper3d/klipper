@@ -88,6 +88,7 @@ class PRTouchOBJ:
         self.mcu = None
         self.dirzctl = None
         self.kin = None
+        self.probe = None
         self.gcode = self.printer.lookup_object('gcode')
         pass
 
@@ -102,6 +103,7 @@ class PRTouchOBJ:
         self.mcu = self.hx711s.mcu
         self.filter = self.printer.lookup_object('filter')
         self.kin = self.toolhead.get_kinematics()
+        self.probe = self.printer.lookup_object('probe', None)
         pass
 
 
@@ -114,6 +116,7 @@ class PRTouchEndstopWrapper:
         self.obj.printer.register_event_handler('klippy:mcu_identify', self._handle_mcu_identify)
         self.obj.gcode.register_command('PRTOUCH_TEST', self.cmd_PRTOUCH_TEST, desc=self.cmd_PRTOUCH_TEST_help)
         self.obj.gcode.register_command('PRTOUCH_READY', self.cmd_PRTOUCH_READY, desc=self.cmd_PRTOUCH_READY_help)
+        self.obj.gcode.register_command('PRTOUCH_PROBE_ZOFFSET', self.cmd_PRTOUCH_PROBE_ZOFFSET, desc=self.cmd_PRTOUCH_PROBE_ZOFFSET_help)
         self.obj.gcode.register_command('NOZZLE_CLEAR', self.cmd_NOZZLE_CLEAR, desc=self.cmd_NOZZLE_CLEAR_help)
         self.obj.gcode.register_command('CHECK_BED_MESH', self.cmd_CHECK_BED_MESH, desc=self.cmd_CHECK_BED_MESH_help)
         self.obj.gcode.register_command('MEASURE_GAP_TEST', self.cmd_MEASURE_GAP_TEST, desc=self.cmd_MEASURE_GAP_TEST_help)
@@ -508,6 +511,11 @@ class PRTouchEndstopWrapper:
         self.obj.bed_mesh.set_mesh(mesh)
         pass
 
+    def probe_z_offset(self):
+        self._ck_g28ed()
+        z_offset = self._probe_times(3, [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err + 1.], self.cfg.g29_speed, 10, 0.2, self.cfg.min_hold, self.cfg.max_hold)
+        return z_offset
+
     def check_bed_mesh(self, auto_g29=True):
         min_x, min_y = self.obj.bed_mesh.bmc.mesh_min
         max_x, max_y = self.obj.bed_mesh.bmc.mesh_max
@@ -786,6 +794,22 @@ class PRTouchEndstopWrapper:
 
     def change_hot_min_temp(self, temp):
         self.cfg.hot_min_temp = temp
+
+    cmd_PRTOUCH_PROBE_ZOFFSET_help = "Probe the z-offset"
+    def cmd_PRTOUCH_PROBE_ZOFFSET(self, gcmd):
+        self._ck_g28ed()
+        probe_x_offset, probe_y_offset = self.obj.probe.get_offsets()[:2]
+        probe_x = self.cfg.sensor_x - probe_x_offset
+        probe_y = self.cfg.sensor_y - probe_y_offset
+        self.pnt_msg("Checking z-position of probe (%.2f, %.2f)" % (probe_x, probe_y))
+        self._move([probe_x, probe_y, self.cfg.bed_max_err + 1.], self.cfg.g29_xy_speed)
+        z_probe = self.obj.probe.run_probe(gcmd)
+        z_offset = self.probe_z_offset() - z_probe[2]
+        self.pnt_msg('Z_OFFSET: %.2f' % z_offset)
+        z_probe[2] = -z_offset
+        self.obj.probe.z_offset = z_probe[2]
+        self.obj.probe.probe_calibrate_finalize(z_probe)
+
 
 def load_config(config):
     prt = PRTouchEndstopWrapper(config)
