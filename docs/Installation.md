@@ -2,7 +2,7 @@
 
 These instructions assume the software will run on a Raspberry Pi
 computer in conjunction with OctoPrint. It is recommended that a
-Raspberry Pi 2, 3, or 4 computer be used as the host machine (see the
+Raspberry Pi computer be used as the host machine (see the
 [FAQ](FAQ.md#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
 for other machines).
 
