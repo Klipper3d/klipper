@@ -57,7 +57,6 @@ class PRTouchCFG:
         self.check_bed_mesh_max_err = config.getfloat('check_bed_mesh_max_err', default=0.2, minval=0.01, maxval=1)
         self.tri_wave_ip    = config.get('tri_wave_ip', None)
         self.self_z_offset = config.getfloat('self_z_offset', default=0.0, minval=-2, maxval=2)
-        self.gcode = config.get_printer().lookup_object("gcode")
 
         self.stored_profs = config.get_prefix_sections('prtouch')
         self.stored_profs = self.stored_profs[1] if (len(self.stored_profs) == 2 and self.need_measure_gap) else None
@@ -506,7 +505,6 @@ class PRTouchEndstopWrapper:
 
         z_offset = self._probe_times(3, [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err + 1.], self.cfg.g29_speed, 10, 0.2, self.cfg.min_hold, self.cfg.max_hold)
         self.pnt_msg("z_offset = %.2f" % z_offset)
-        self.cfg.gcode.respond_info("z_offset = %.2f" % z_offset)
         self.obj.bed_mesh.set_mesh(mesh)
         pass
 
