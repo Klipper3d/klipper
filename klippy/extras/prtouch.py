@@ -57,6 +57,7 @@ class PRTouchCFG:
         self.check_bed_mesh_max_err = config.getfloat('check_bed_mesh_max_err', default=0.2, minval=0.01, maxval=1)
         self.tri_wave_ip    = config.get('tri_wave_ip', None)
         self.self_z_offset = config.getfloat('self_z_offset', default=0.0, minval=-2, maxval=2)
+        self.gcode = config.get_printer().lookup_object("gcode")
 
         self.stored_profs = config.get_prefix_sections('prtouch')
         self.stored_profs = self.stored_profs[1] if (len(self.stored_profs) == 2 and self.need_measure_gap) else None
@@ -500,28 +501,12 @@ class PRTouchEndstopWrapper:
         min_x, min_y = self.obj.bed_mesh.bmc.mesh_min
         max_x, max_y = self.obj.bed_mesh.bmc.mesh_max
         random.seed(time.time()) 
-        self.val.rdy_pos = [[min_x, min_y, self.cfg.bed_max_err + 1.],
-                            [min_x, max_y, self.cfg.bed_max_err + 1.],
-                            [max_x, max_y, self.cfg.bed_max_err + 1.],
-                            [max_x, min_y, self.cfg.bed_max_err + 1.]]
         mesh = self.obj.bed_mesh.get_mesh()
         self.obj.bed_mesh.set_mesh(None)
-        for i in range(4):
-            self.val.rdy_pos[i][2] = self._probe_times(3, self.val.rdy_pos[i], self.cfg.g29_speed, 10, 0.2, self.cfg.min_hold, self.cfg.max_hold)
-            # if self.cfg.need_measure_gap:
-            #     self.val.gap_pos[i] = [x for x in self.val.rdy_pos[i]]
-            #     self.val.gap_pos[i][2] = self._gap_times(3, self.val.rdy_pos[i][2])
-            # else:
-            #     self.val.gap_pos[i][2] = 0
-            pass
-        if self.cfg.need_measure_gap:        
-            configfile = self.obj.printer.lookup_object('configfile')
-            configfile.set('prtouch default', 'z_gap_00', self.val.gap_pos[0][2])
-            configfile.set('prtouch default', 'z_gap_01', self.val.gap_pos[1][2])
-            configfile.set('prtouch default', 'z_gap_11', self.val.gap_pos[2][2])
-            configfile.set('prtouch default', 'z_gap_10', self.val.gap_pos[3][2])
-        self.pnt_msg("RDY_POS = [00=%.2f, 01=%.2f, 11=%.2f, 10=%.2f]" % (self.val.rdy_pos[0][2], self.val.rdy_pos[1][2], self.val.rdy_pos[2][2], self.val.rdy_pos[3][2]))
-        self.pnt_msg("GAP_POS = [00=%.2f, 01=%.2f, 11=%.2f, 10=%.2f]" % (self.val.gap_pos[0][2], self.val.gap_pos[1][2], self.val.gap_pos[2][2], self.val.gap_pos[3][2]))
+
+        z_offset = self._probe_times(3, [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err + 1.], self.cfg.g29_speed, 10, 0.2, self.cfg.min_hold, self.cfg.max_hold)
+        self.pnt_msg("z_offset = %.2f" % z_offset)
+        self.cfg.gcode.respond_info("z_offset = %.2f" % z_offset)
         self.obj.bed_mesh.set_mesh(mesh)
         pass
 
