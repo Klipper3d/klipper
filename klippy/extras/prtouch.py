@@ -26,10 +26,11 @@ class PRTouchCFG:
         self.pa_fil_dis_mm = config.getint('pa_fil_dis_mm', default=30, minval=2, maxval=100)
         self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=20, minval=2, maxval=100)
         self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
+        self.clear_nozzle = config.getboolean('clear_nozzle', default=False)
         self.clr_noz_start_x = config.getfloat('clr_noz_start_x', default=0, minval=0, maxval=1000)
         self.clr_noz_start_y = config.getfloat('clr_noz_start_y', default=0, minval=0, maxval=1000)
-        self.clr_noz_len_x = config.getfloat('clr_noz_len_x', default=0, minval=self.pa_clr_dis_mm + 6, maxval=1000)
-        self.clr_noz_len_y = config.getfloat('clr_noz_len_y', default=0, minval=0, maxval=1000)
+        self.clr_noz_len_x = config.getfloat('clr_noz_len_x', default=0, minval=0, maxval=1000)
+        self.clr_noz_len_y = config.getfloat('clr_noz_len_y', default=0, minval=self.pa_clr_dis_mm + 5, maxval=1000)
         self.bed_max_err = config.getint('bed_max_err', default=2, minval=2, maxval=10)
         self.max_z = config.getsection('stepper_z').getfloat('position_max', default=300, minval=100, maxval=500)
         self.g29_xy_speed = config.getfloat('g29_xy_speed', default=150, minval=10, maxval=1000)
@@ -135,10 +136,10 @@ class PRTouchEndstopWrapper:
                             [max_x - 1., max_y - 1., self.cfg.z_gap_11], # if self.cfg.stored_profs is None else self.cfg.stored_profs.getfloat('z_gap_11', default=self.cfg.z_gap_11, minval=0, maxval=1)],
                             [max_x - 1., min_y + 1., self.cfg.z_gap_10]] # if self.cfg.stored_profs is None else self.cfg.stored_profs.getfloat('z_gap_10', default=self.cfg.z_gap_10, minval=0, maxval=1)]]
         if self.cfg.clr_noz_start_x <= 0 or self.cfg.clr_noz_start_y <= 0 or self.cfg.clr_noz_len_x <= 0 or self.cfg.clr_noz_len_y <= 0:
-            self.cfg.clr_noz_start_x = (max_x - min_x) * 1 / 3 + min_x
-            self.cfg.clr_noz_start_y = max_y - 6
-            self.cfg.clr_noz_len_x = (max_x - min_x) * 1 / 3
-            self.cfg.clr_noz_len_y = 5
+            self.cfg.clr_noz_start_x = self.cfg.sensor_x - 10.
+            self.cfg.clr_noz_start_y = self.cfg.sensor_y - 10.
+            self.cfg.clr_noz_len_x = 0
+            self.cfg.clr_noz_len_y = self.cfg.pa_clr_dis_mm + 5.
         self.val.home_xy = [(max_x - min_x) / 2 + min_x, (max_y - min_y) / 2 + min_y]
         pass
 
@@ -363,20 +364,20 @@ class PRTouchEndstopWrapper:
         self._ck_g28ed(False)
         random.seed(time.time())  
         cur_pos = self.obj.toolhead.get_position()
-        src_pos = [min_x + random.uniform(0, self.cfg.clr_noz_len_x - self.cfg.pa_clr_dis_mm - 5), 
+        src_pos = [min_x + random.uniform(0, self.cfg.clr_noz_len_x), 
                    min_y + random.uniform(0, self.cfg.clr_noz_len_y), self.cfg.bed_max_err + 1, cur_pos[3]]
-        end_pos = [src_pos[0] + self.cfg.pa_clr_dis_mm, src_pos[1], src_pos[2], src_pos[3]]
+        end_pos = [src_pos[0], src_pos[1] + self.cfg.pa_clr_dis_mm, src_pos[2], src_pos[3]]
         self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=True, err=10)   
-        src_pos[2] = self._probe_times(3, [src_pos[0] - 5, src_pos[1], src_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold * 2, max_hold)
+        src_pos[2] = self._probe_times(3, [src_pos[0], src_pos[1], src_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold * 2, max_hold)
         self._set_hot_temps(temp=hot_min_temp + 40, fan_spd=0, wait=False, err=10)
-        end_pos[2] = self._probe_times(3, [end_pos[0] - 5, end_pos[1], end_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold * 2, max_hold)     
+        end_pos[2] = self._probe_times(3, [end_pos[0], end_pos[1], end_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold * 2, max_hold)     
         self._move(src_pos[:2] + [self.cfg.bed_max_err + 1], self.cfg.g29_xy_speed) 
         self._move(src_pos[:2] + [src_pos[2] + 0.2], self.cfg.g29_rdy_speed) 
         self._set_hot_temps(temp=hot_max_temp, fan_spd=0, wait=True, err=10)
         self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=False)
         self._move(end_pos[:2] + [end_pos[2] + self.cfg.pa_clr_down_mm], self.cfg.g29_speed)
         self._set_hot_temps(temp=hot_min_temp, fan_spd=255, wait=True, err=5)
-        self._move([end_pos[0] + 10, end_pos[1], end_pos[2] + 10], self.cfg.g29_speed)
+        self._move([end_pos[0], end_pos[1] + 10, end_pos[2] + 10], self.cfg.g29_speed)
         self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=False) 
         self._set_bed_temps(temp=bed_max_temp, wait=True, err=5)
 
@@ -513,7 +514,7 @@ class PRTouchEndstopWrapper:
 
     def probe_z_offset(self):
         self._ck_g28ed()
-        z_offset = self._probe_times(3, [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err + 1.], self.cfg.g29_speed, 10, 0.2, self.cfg.min_hold, self.cfg.max_hold)
+        z_offset = self._probe_times(3, [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err + 1.], self.cfg.g29_speed, 10, self.cfg.check_bed_mesh_max_err, self.cfg.min_hold, self.cfg.max_hold)
         return z_offset
 
     def check_bed_mesh(self, auto_g29=True):
@@ -798,6 +799,9 @@ class PRTouchEndstopWrapper:
     cmd_PRTOUCH_PROBE_ZOFFSET_help = "Probe the z-offset"
     def cmd_PRTOUCH_PROBE_ZOFFSET(self, gcmd):
         self._ck_g28ed()
+        if self.cfg.clear_nozzle:
+            self.clear_nozzle(self.cfg.hot_min_temp, self.cfg.hot_max_temp, self.cfg.bed_max_temp,
+                            self.cfg.min_hold, self.cfg.max_hold)
         probe_x_offset, probe_y_offset = self.obj.probe.get_offsets()[:2]
         probe_x = self.cfg.sensor_x - probe_x_offset
         probe_y = self.cfg.sensor_y - probe_y_offset
