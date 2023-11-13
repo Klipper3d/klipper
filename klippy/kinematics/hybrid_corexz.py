@@ -33,17 +33,13 @@ class HybridCoreXZKinematics:
             self.rails.append(stepper.PrinterRail(dc_config))
             self.rails[2].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
-            self.rails[3].setup_itersolve('cartesian_stepper_alloc', b'z')
+            self.rails[3].setup_itersolve('corexz_stepper_alloc', b'+')
             dc_rail_0 = idex_modes.DualCarriagesRail(
-                self.printer, self.rails[0], axis=0, active=True,
-                stepper_alloc_active=('corexz_stepper_alloc', b'-'),
-                stepper_alloc_inactive=('cartesian_reverse_stepper_alloc',b'z'))
+                self.rails[0], axis=0, active=True)
             dc_rail_1 = idex_modes.DualCarriagesRail(
-                self.printer, self.rails[3], axis=0, active=False,
-                stepper_alloc_active=('corexz_stepper_alloc', b'+'),
-                stepper_alloc_inactive=('cartesian_stepper_alloc', b'z'))
-            self.dc_module = idex_modes.DualCarriages(self.printer,
-                        dc_rail_0, dc_rail_1, axis=0)
+                self.rails[3], axis=0, active=False)
+            self.dc_module = idex_modes.DualCarriages(
+                    dc_config, dc_rail_0, dc_rail_1, axis=0)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
@@ -60,8 +56,8 @@ class HybridCoreXZKinematics:
         return [s for rail in self.rails for s in rail.get_steppers()]
     def calc_position(self, stepper_positions):
         pos = [stepper_positions[rail.get_name()] for rail in self.rails]
-        if (self.dc_module is not None and 'CARRIAGE_1' == \
-                    self.dc_module.get_status()['active_carriage']):
+        if (self.dc_module is not None and 'PRIMARY' == \
+                    self.dc_module.get_status()['carriage_1']):
             return [pos[0] - pos[2], pos[1], pos[2]]
         else:
             return [pos[0] + pos[2], pos[1], pos[2]]
@@ -81,7 +77,7 @@ class HybridCoreXZKinematics:
     def note_z_not_homed(self):
         # Helper for Safe Z Home
         self.limits[2] = (1.0, -1.0)
-    def _home_axis(self, homing_state, axis, rail):
+    def home_axis(self, homing_state, axis, rail):
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
         homepos = [None, None, None, None]
@@ -95,14 +91,10 @@ class HybridCoreXZKinematics:
         homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         for axis in homing_state.get_axes():
-            if (self.dc_module is not None and axis == 0):
-                self.dc_module.save_idex_state()
-                for i in [0,1]:
-                    self.dc_module.toggle_active_dc_rail(i)
-                    self._home_axis(homing_state, axis, self.rails[0])
-                self.dc_module.restore_idex_state()
+            if self.dc_module is not None and axis == 0:
+                self.dc_module.home(homing_state)
             else:
-                self._home_axis(homing_state, axis, self.rails[axis])
+                self.home_axis(homing_state, axis, self.rails[axis])
     def _motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
     def _check_endstops(self, move):

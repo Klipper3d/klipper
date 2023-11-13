@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
         rc = 1;
         goto do_exit;
     }
-    fprintf(stderr, "Loaded UF2 image with %lu pages\n", image->num_blocks);
+    fprintf(stderr, "Loaded UF2 image with %zu pages\n", image->num_blocks);
 
     bool has_target = false;
     uint8_t target_bus = 0;
