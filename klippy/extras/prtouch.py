@@ -58,6 +58,7 @@ class PRTouchCFG:
         self.check_bed_mesh_max_err = config.getfloat('check_bed_mesh_max_err', default=0.2, minval=0.01, maxval=1)
         self.tri_wave_ip    = config.get('tri_wave_ip', None)
         self.self_z_offset = config.getfloat('self_z_offset', default=0.0, minval=-2, maxval=2)
+        self.wipe_retract_distance = config.getfloat('wipe_retract_distance', default=0, minval=0, maxval=50)
 
         self.stored_profs = config.get_prefix_sections('prtouch')
         self.stored_profs = self.stored_profs[1] if (len(self.stored_profs) == 2 and self.need_measure_gap) else None
@@ -375,6 +376,11 @@ class PRTouchEndstopWrapper:
         self._move(src_pos[:2] + [src_pos[2] + 0.2], self.cfg.g29_rdy_speed) 
         self._set_hot_temps(temp=hot_max_temp, fan_spd=0, wait=True, err=10)
         self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=False)
+        # retract filament
+        if self.cfg.wipe_retract_distance > 0:
+            self.obj.gcode.run_script_from_command('G91')
+            self.obj.gcode.run_script_from_command('G1 E-%.2f F600' % self.cfg.wipe_retract_distance)
+            self.obj.gcode.run_script_from_command('G90')
         self._move(end_pos[:2] + [end_pos[2] + self.cfg.pa_clr_down_mm], self.cfg.g29_speed)
         self._set_hot_temps(temp=hot_min_temp, fan_spd=255, wait=True, err=5)
         self._move([end_pos[0], end_pos[1] + 10, end_pos[2] + 10], self.cfg.g29_speed)
