@@ -798,7 +798,7 @@ class PRTouchEndstopWrapper:
 
     cmd_PRTOUCH_PROBE_ZOFFSET_help = "Probe the z-offset"
     def cmd_PRTOUCH_PROBE_ZOFFSET(self, gcmd):
-        self._ck_g28ed()
+        self.obj.gcode.run_script_from_command('G28')
         if self.cfg.clear_nozzle:
             self.clear_nozzle(self.cfg.hot_min_temp, self.cfg.hot_max_temp, self.cfg.bed_max_temp,
                             self.cfg.min_hold, self.cfg.max_hold)
