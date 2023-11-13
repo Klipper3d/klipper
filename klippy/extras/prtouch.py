@@ -816,8 +816,8 @@ class PRTouchEndstopWrapper:
         z_probe = self.obj.probe.run_probe(gcmd)
         z_offset = self.probe_z_offset() - z_probe[2]
         self.pnt_msg('Z_OFFSET: %.2f' % z_offset)
-        z_probe[2] = -z_offset
-        self.obj.probe.z_offset = z_probe[2]
+        self.obj.probe.z_offset = -z_offset
+        z_probe[2] = z_offset
         self.obj.probe.probe_calibrate_finalize(z_probe)
 
 
