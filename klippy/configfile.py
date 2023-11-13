@@ -223,7 +223,11 @@ class PrinterConfig:
         dirname = os.path.dirname(source_filename)
         include_spec = include_spec.strip()
         include_glob = os.path.join(dirname, include_spec)
-        include_filenames = glob.glob(include_glob, recursive=True)
+        include_filenames = None
+        if sys.version_info >= (3, 5):
+            include_filenames = glob.glob(include_glob, recursive=True)
+        else:
+            include_filenames = glob.glob(include_glob)
         if not include_filenames and not glob.has_magic(include_glob):
             # Empty set is OK if wildcard but not for direct file reference
             raise error("Include file '%s' does not exist" % (include_glob,))
