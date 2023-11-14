@@ -813,9 +813,11 @@ class PRTouchEndstopWrapper:
         probe_y = self.cfg.sensor_y - probe_y_offset
         self.pnt_msg("Checking z-position of probe (%.2f, %.2f)" % (probe_x, probe_y))
         self._move([probe_x, probe_y, self.cfg.bed_max_err + 1.], self.cfg.g29_xy_speed)
-        z_probe = self.obj.probe.run_probe(gcmd)
+        probe_gcmd = self.obj.gcode.create_gcode_command("PROBE", "PROBE", {'SAMPLES': '2'})
+        z_probe = self.obj.probe.run_probe(probe_gcmd)
+        self.pnt_msg('Z_PROBE: %.3f' % z_probe[2])
         z_offset = self.probe_z_offset() - z_probe[2]
-        self.pnt_msg('Z_OFFSET: %.2f' % z_offset)
+        self.pnt_msg('Z_OFFSET: %.3f' % z_offset)
         self.obj.probe.z_offset = -z_offset
         z_probe[2] = z_offset
         self.obj.probe.probe_calibrate_finalize(z_probe)
