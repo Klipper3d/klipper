@@ -92,6 +92,7 @@ class PRTouchOBJ:
         self.kin = None
         self.probe = None
         self.gcode = self.printer.lookup_object('gcode')
+        self.gcode_move = self.printer.lookup_object('gcode_move')
         pass
 
     def find_objs(self):
@@ -804,10 +805,17 @@ class PRTouchEndstopWrapper:
 
     cmd_PRTOUCH_PROBE_ZOFFSET_help = "Probe the z-offset"
     def cmd_PRTOUCH_PROBE_ZOFFSET(self, gcmd):
-        self.obj.gcode.run_script_from_command('G28')
+        self._ck_g28ed()
+
+        homing_origin = self.obj.gcode_move.get_status()['homing_origin']
+        self.pnt_array('homing_origin: ', homing_origin, len(homing_origin))
+        start_z_offset = self.obj.probe.get_offsets()[2]
+        self.pnt_msg('Start z_offset: %.3f' % start_z_offset)
+
         if self.cfg.clear_nozzle:
             self.clear_nozzle(self.cfg.hot_min_temp, self.cfg.hot_max_temp, self.cfg.bed_max_temp,
                             self.cfg.min_hold, self.cfg.max_hold)
+
         probe_x_offset, probe_y_offset = self.obj.probe.get_offsets()[:2]
         probe_x = self.cfg.sensor_x - probe_x_offset
         probe_y = self.cfg.sensor_y - probe_y_offset
@@ -815,11 +823,19 @@ class PRTouchEndstopWrapper:
         self._move([probe_x, probe_y, self.cfg.bed_max_err + 1.], self.cfg.g29_xy_speed)
         probe_gcmd = self.obj.gcode.create_gcode_command("PROBE", "PROBE", {'SAMPLES': '2'})
         z_probe = self.obj.probe.run_probe(probe_gcmd)
-        self.pnt_msg('Z_PROBE: %.3f' % z_probe[2])
-        z_offset = self.probe_z_offset() - z_probe[2]
-        self.pnt_msg('Z_OFFSET: %.3f' % z_offset)
-        self.obj.probe.z_offset = -z_offset
-        z_probe[2] = z_offset
+        self.pnt_msg('Probe at sensor: %.3f' % z_probe[2])
+
+        nozzle_z_offset = self.probe_z_offset()
+        self.pnt_msg('Nozzle z_offset: %.3f' % nozzle_z_offset)
+
+        z_offset = nozzle_z_offset - z_probe[2]
+        self.pnt_msg('Calculated z_offset: %.3f' % z_offset)
+
+        z_adjust = z_offset + start_z_offset
+        self.pnt_msg('z_adjust: %.3f' % z_adjust)
+        self.obj.gcode.run_script_from_command('SET_GCODE_OFFSET Z_ADJUST=%f MOVE=1' % (z_adjust))
+
+        z_probe[2] = homing_origin[2] + z_adjust - start_z_offset
         self.obj.probe.probe_calibrate_finalize(z_probe)
 
 
