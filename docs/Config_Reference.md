@@ -58,6 +58,13 @@ serial:
 #   sending a Klipper command to the micro-controller so that it can
 #   reset itself. The default is 'arduino' if the micro-controller
 #   communicates over a serial port, 'command' otherwise.
+#trsync_timeout: 0.025
+#   Sync limit for multi-mcu homing in seconds. The default is 0.025.
+#   Should Klipper detect a communication issue between micro-controllers during
+#   multi-mcu homing then it will raise a "Communication timeout during homing"
+#   error.
+#trsync_single_mcu_timeout: 0.250
+#   Sync limit for single-mcu homing in seconds. The default is 0.250.
 ```
 
 ### [mcu my_extra_mcu]
@@ -71,7 +78,11 @@ pins such as "extra_mcu:ar9" may then be used elsewhere in the config
 
 ```
 [mcu my_extra_mcu]
-# See the "mcu" section for configuration parameters.
+#   See the "mcu" section for configuration parameters.
+#trsync_timeout:
+#   See the "mcu" section for details. The default is the setting of the "mcu"
+#trsync_single_mcu_timeout:
+#   See the "mcu" section for details. The default is the setting of the "mcu"
 ```
 
 ## Common kinematic settings
