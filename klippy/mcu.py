@@ -903,9 +903,9 @@ class MCU:
         return self._serial.get_msgparser().get_constants()
     def get_constant_float(self, name):
         return self._serial.get_msgparser().get_constant_float(name)
-    def get_trsync_timeout(self) -> float:
+    def get_trsync_timeout(self):
         return self._trsync_timeout
-    def get_trsync_single_mcu_timeout(self) -> float:
+    def get_trsync_single_mcu_timeout(self):
         return self._trsync_single_mcu_timeout
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
