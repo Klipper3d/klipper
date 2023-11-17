@@ -41,13 +41,13 @@ i2c_init(uint32_t bus, SercomI2cm *si)
 }
 
 struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr, uint16_t timeout)
 {
     Sercom *sercom = sercom_enable_pclock(bus);
     sercom_i2c_pins(bus);
     SercomI2cm *si = &sercom->I2CM;
     i2c_init(bus, si);
-    return (struct i2c_config){ .si=si, .addr=addr<<1 };
+    return (struct i2c_config){ .si=si, .addr=addr<<1, .timeout=timeout };
 }
 
 static void

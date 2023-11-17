@@ -142,7 +142,7 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
 
 # Helper code for working with devices connected to an MCU via an I2C bus
 class MCU_I2C:
-    def __init__(self, mcu, bus, addr, speed, sw_pins=None):
+    def __init__(self, mcu, bus, addr, speed, timeout, sw_pins=None):
         self.mcu = mcu
         self.bus = bus
         self.i2c_address = addr
@@ -156,8 +156,8 @@ class MCU_I2C:
                 % (self.oid, sw_pins[0], sw_pins[1], speed, addr))
         else:
             self.config_fmt = (
-                "i2c_set_bus oid=%d i2c_bus=%%s rate=%d address=%d"
-                % (self.oid, speed, addr))
+                "i2c_set_bus oid=%d i2c_bus=%%s rate=%d address=%d timeout=%d"
+                % (self.oid, speed, addr, timeout))
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
         self.i2c_write_cmd = self.i2c_read_cmd = self.i2c_modify_bits_cmd = None
@@ -213,6 +213,7 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     printer = config.get_printer()
     i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', 'mcu'))
     speed = config.getint('i2c_speed', default_speed, minval=100000)
+    timeout = config.getint('i2c_timeout', 5000, minval=0, maxval=65535)
     if default_addr is None:
         addr = config.getint('i2c_address', minval=0, maxval=127)
     else:
@@ -230,7 +231,7 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
         bus = config.get('i2c_bus', None)
         sw_pins = None
     # Create MCU_I2C object
-    return MCU_I2C(i2c_mcu, bus, addr, speed, sw_pins)
+    return MCU_I2C(i2c_mcu, bus, addr, speed, timeout, sw_pins)
 
 
 ######################################################################

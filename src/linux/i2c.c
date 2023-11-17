@@ -73,7 +73,7 @@ fail:
 }
 
 struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr, uint16_t timeout)
 {
     // Note:  The rate is set by the kernel driver, for a Raspberry Pi this
     // is done with the following setting in /boot/config.txt:
@@ -81,7 +81,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     // dtparam=i2c_baudrate=<rate>
 
     int fd = i2c_open(bus, addr);
-    return (struct i2c_config){.fd=fd, .addr=addr};
+    return (struct i2c_config){.fd=fd, .addr=addr, .timeout=timeout};
 }
 
 void

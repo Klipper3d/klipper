@@ -62,7 +62,7 @@ i2c_busy_errata(uint8_t scl_pin, uint8_t sda_pin)
 }
 
 struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr, uint16_t timeout)
 {
     // Lookup requested i2c bus
     if (bus >= ARRAY_SIZE(i2c_bus))
@@ -87,7 +87,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         i2c->CR1 = I2C_CR1_PE;
     }
 
-    return (struct i2c_config){ .i2c=i2c, .addr=addr<<1 };
+    return (struct i2c_config){ .i2c=i2c, .addr=addr<<1, .timeout=timeout };
 }
 
 static uint32_t
@@ -151,7 +151,7 @@ void
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
     I2C_TypeDef *i2c = config.i2c;
-    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint32_t timeout = timer_read_time() + timer_from_us(config.timeout);
 
     i2c_start(i2c, config.addr, write_len, timeout);
     while (write_len--)
@@ -164,7 +164,7 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
     I2C_TypeDef *i2c = config.i2c;
-    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint32_t timeout = timer_read_time() + timer_from_us(config.timeout);
     uint8_t addr = config.addr | 0x01;
 
     if (reg_len) {

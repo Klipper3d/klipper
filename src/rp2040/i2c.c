@@ -68,7 +68,7 @@ static const struct i2c_info i2c_bus[] = {
 };
 
 struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr, uint16_t timeout)
 {
     if (bus > ARRAY_SIZE(i2c_bus))
         shutdown("Invalid i2c bus");
@@ -115,7 +115,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
                         I2C_IC_SDA_HOLD_IC_SDA_TX_HOLD_BITS);
     }
 
-    return (struct i2c_config){ .i2c=info->i2c, .addr=addr };
+    return (struct i2c_config){ .i2c=info->i2c, .addr=addr, .timeout=timeout };
 }
 
 static void
@@ -193,7 +193,7 @@ void
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
     i2c_hw_t *i2c = (i2c_hw_t*)config.i2c;
-    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint32_t timeout = timer_read_time() + timer_from_us(config.timeout);
 
     i2c_start(i2c, config.addr);
     i2c_do_write(i2c, config.addr, write_len, write, 1, timeout);
@@ -205,7 +205,7 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
     i2c_hw_t *i2c = (i2c_hw_t*)config.i2c;
-    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint32_t timeout = timer_read_time() + timer_from_us(config.timeout);
 
     i2c_start(i2c, config.addr);
     if (reg_len != 0)

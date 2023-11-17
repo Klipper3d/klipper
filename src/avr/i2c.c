@@ -28,7 +28,7 @@ DECL_CONSTANT_STR("BUS_PINS_twi", "PD0,PD1");
 #endif
 
 struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr, uint16_t timeout)
 {
     if (bus)
         shutdown("Unsupported i2c bus");
@@ -48,7 +48,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         // Enable interface
         TWCR = (1<<TWEN);
     }
-    return (struct i2c_config){ .addr=addr<<1 };
+    return (struct i2c_config){ .addr=addr<<1, .timeout=timeout };
 }
 
 static void
@@ -97,7 +97,7 @@ i2c_stop(uint32_t timeout)
 void
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
-    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint32_t timeout = timer_read_time() + timer_from_us(config.timeout);
 
     i2c_start(timeout);
     i2c_send_byte(config.addr, timeout);
@@ -110,7 +110,7 @@ void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint32_t timeout = timer_read_time() + timer_from_us(config.timeout);
     i2c_start(timeout);
     i2c_send_byte(config.addr, timeout);
     while (reg_len--)

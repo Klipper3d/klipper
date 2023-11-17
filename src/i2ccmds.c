@@ -36,11 +36,11 @@ command_i2c_set_bus(uint32_t *args)
 {
     uint8_t addr = args[3] & 0x7f;
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
-    i2c->i2c_config = i2c_setup(args[1], args[2], addr);
+    i2c->i2c_config = i2c_setup(args[1], args[2], addr, args[4]);
     i2c->flags |= IF_HARDWARE;
 }
 DECL_COMMAND(command_i2c_set_bus,
-             "i2c_set_bus oid=%c i2c_bus=%u rate=%u address=%u");
+             "i2c_set_bus oid=%c i2c_bus=%u rate=%u address=%u timeout=%u");
 
 void
 i2cdev_set_software_bus(struct i2cdev_s *i2c, struct i2c_software *is)

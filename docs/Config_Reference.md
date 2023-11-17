@@ -4722,4 +4722,8 @@ via the `i2c_speed` parameter. All other Klipper micro-controllers use a
 #   The Klipper implementation on most micro-controllers is hard-coded
 #   to 100000 and changing this value has no effect. The default is
 #   100000. Linux, RP2040 and ATmega support 400000.
+#i2c_timeout:
+#   The time in microseconds after which a i2c timeout occurs. Defaults
+#   to 5000 (5ms). Some architectures like Linux do not support this, in
+#   which case the value is ignored.
 ```
