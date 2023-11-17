@@ -172,16 +172,16 @@ class PrinterConfig:
             autosave_data = data[pos + len(AUTOSAVE_HEADER):].strip()
         # Check for errors and strip line prefixes
         if "\n#*# " in regular_data:
-            logging.warn("Can't read autosave from config file"
-                         " - autosave state corrupted")
+            logging.warning("Can't read autosave from config file"
+                            " - autosave state corrupted")
             return data, ""
         out = [""]
         for line in autosave_data.split('\n'):
             if ((not line.startswith("#*#")
                  or (len(line) >= 4 and not line.startswith("#*# ")))
                 and autosave_data):
-                logging.warn("Can't read autosave from config file"
-                             " - modifications after header")
+                logging.warning("Can't read autosave from config file"
+                                " - modifications after header")
                 return data, ""
             out.append(line[4:])
         out.append("")
