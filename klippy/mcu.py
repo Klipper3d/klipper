@@ -25,14 +25,16 @@ class RetryAsyncCommand:
         self.reactor = serial.get_reactor()
         self.completion = self.reactor.completion()
         self.min_query_time = self.reactor.monotonic()
+        self.need_response = True
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
-        if params['#sent_time'] >= self.min_query_time:
-            self.min_query_time = self.reactor.NEVER
+        if self.need_response and params['#sent_time'] >= self.min_query_time:
+            self.need_response = False
             self.reactor.async_complete(self.completion, params)
     def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
         cmd, = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
+        self.min_query_time = 0.
         first_query_time = query_time = self.reactor.monotonic()
         while 1:
             params = self.completion.wait(query_time + self.RETRY_TIME)

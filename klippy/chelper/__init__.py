@@ -21,7 +21,7 @@ SOURCE_FILES = [
     'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
-    'kin_extruder.c', 'kin_shaper.c',
+    'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -48,6 +48,8 @@ defs_stepcompress = """
     int64_t stepcompress_find_past_position(struct stepcompress *sc
         , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
+        , uint32_t *data, int len);
+    int stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
         , uint32_t *data, int len);
     int stepcompress_extract_old(struct stepcompress *sc
         , struct pull_history_steps *p, int max
@@ -101,7 +103,6 @@ defs_trapq = """
 
 defs_kin_cartesian = """
     struct stepper_kinematics *cartesian_stepper_alloc(char axis);
-    struct stepper_kinematics *cartesian_reverse_stepper_alloc(char axis);
 """
 
 defs_kin_corexy = """
@@ -144,13 +145,21 @@ defs_kin_extruder = """
 """
 
 defs_kin_shaper = """
-    double input_shaper_get_step_generation_window(int n, double a[]
-        , double t[]);
+    double input_shaper_get_step_generation_window(
+        struct stepper_kinematics *sk);
     int input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
         , int n, double a[], double t[]);
     int input_shaper_set_sk(struct stepper_kinematics *sk
         , struct stepper_kinematics *orig_sk);
     struct stepper_kinematics * input_shaper_alloc(void);
+"""
+
+defs_kin_idex = """
+    void dual_carriage_set_sk(struct stepper_kinematics *sk
+        , struct stepper_kinematics *orig_sk);
+    int dual_carriage_set_transform(struct stepper_kinematics *sk
+        , char axis, double scale, double offs);
+    struct stepper_kinematics * dual_carriage_alloc(void);
 """
 
 defs_serialqueue = """
@@ -211,7 +220,7 @@ defs_all = [
     defs_itersolve, defs_trapq, defs_trdispatch,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
     defs_kin_deltesian, defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch,
-    defs_kin_extruder, defs_kin_shaper,
+    defs_kin_extruder, defs_kin_shaper, defs_kin_idex,
 ]
 
 # Update filenames to an absolute path

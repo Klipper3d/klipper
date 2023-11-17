@@ -5,7 +5,6 @@
 //
 // Based on Kevin's stm32f1x code, but modified for N32G45x specific ADC
 //
-// This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
@@ -32,6 +31,7 @@ static const uint8_t adc_pins[] = {
     0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
+
     /* ADC2 */
     0, GPIO('A', 4), GPIO('A', 5), GPIO('B', 1),
     GPIO('A', 7), GPIO('C', 4), GPIO('C', 0), GPIO('C', 1),
@@ -41,6 +41,7 @@ static const uint8_t adc_pins[] = {
     0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
+
     // fixme: n32g455 only
     /* ADC3 */
     0, GPIO('B', 11), GPIO('E', 9), GPIO('E', 13),
@@ -51,6 +52,7 @@ static const uint8_t adc_pins[] = {
     0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
+
     /* ADC4 */
     0, GPIO('E', 14), GPIO('E', 15), GPIO('B', 12),
     GPIO('B', 14), GPIO('B', 15), 0, 0,
@@ -59,8 +61,8 @@ static const uint8_t adc_pins[] = {
     0, 0, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
-    0, 0, 0, 0,
 };
+
 
 // Perform calibration
 static void
@@ -155,8 +157,6 @@ gpio_adc_sample(struct gpio_adc g)
         return 0;
     }
     ADC_ConfigRegularChannel(adc, g.chan, 1, ADC_SAMP_TIME_55CYCLES5);
-    adc->CTRL2 |= CTRL2_AD_ON_SET;
-    adc->CTRL2 |= CTRL2_EXT_TRIG_SWSTART_SET;
 
 need_delay:
     return timer_from_us(20);

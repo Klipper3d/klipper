@@ -221,6 +221,8 @@ class MCU_TMC2660_SPI:
         msg = [((val >> 16) | reg) & 0xff, (val >> 8) & 0xff, val & 0xff]
         with self.mutex:
             self.spi.spi_send(msg, minclock)
+    def get_tmc_frequency(self):
+        return None
 
 
 ######################################################################
