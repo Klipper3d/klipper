@@ -26,7 +26,6 @@ class PRTouchCFG:
         self.pa_fil_dis_mm = config.getint('pa_fil_dis_mm', default=30, minval=2, maxval=100)
         self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=20, minval=2, maxval=100)
         self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
-        self.clear_nozzle = config.getboolean('clear_nozzle', default=False)
         self.clr_noz_start_x = config.getfloat('clr_noz_start_x', default=0, minval=0, maxval=1000)
         self.clr_noz_start_y = config.getfloat('clr_noz_start_y', default=0, minval=0, maxval=1000)
         self.clr_noz_len_x = config.getfloat('clr_noz_len_x', default=0, minval=0, maxval=1000)
@@ -812,7 +811,7 @@ class PRTouchEndstopWrapper:
         start_z_offset = self.obj.probe.get_offsets()[2]
         self.pnt_msg('Start z_offset: %.3f' % start_z_offset)
 
-        if self.cfg.clear_nozzle:
+        if gcmd.get_int('CLEAR_NOZZLE', 0) == 1:
             self.clear_nozzle(self.cfg.hot_min_temp, self.cfg.hot_max_temp, self.cfg.bed_max_temp,
                             self.cfg.min_hold, self.cfg.max_hold)
 
