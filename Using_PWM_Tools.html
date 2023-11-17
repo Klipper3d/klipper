@@ -906,13 +906,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#current-limitations" class="md-nav__link">
-    Current Limitations
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#commands" class="md-nav__link">
     Commands
   </a>
@@ -1338,13 +1331,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#current-limitations" class="md-nav__link">
-    Current Limitations
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#commands" class="md-nav__link">
     Commands
   </a>
@@ -1377,7 +1363,7 @@
 
 <h1 id="using-pwm-tools">Using PWM tools<a class="headerlink" href="#using-pwm-tools" title="Permanent link">&para;</a></h1>
 <p>This document describes how to setup a PWM-controlled laser or spindle
-using <code>output_pin</code> and some macros.</p>
+using <code>pwm_tool</code> and some macros.</p>
 <h2 id="how-does-it-work">How does it work?<a class="headerlink" href="#how-does-it-work" title="Permanent link">&para;</a></h2>
 <p>With re-purposing the printhead's fan pwm output, you can control
 lasers or spindles.
@@ -1396,12 +1382,6 @@ and to disconnect the laser when it is not needed.
 Also, you should configure a safety timeout,
 so that when your host or MCU encounters an error, the tool will stop.</p>
 <p>For an example configuration, see <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>.</p>
-<h2 id="current-limitations">Current Limitations<a class="headerlink" href="#current-limitations" title="Permanent link">&para;</a></h2>
-<p>There is a limitation of how frequent PWM updates may occur.
-While being very precise, a PWM update may only occur every 0.1 seconds,
-rendering it almost useless for raster engraving.
-However, there exists an <a href="https://github.com/Cirromulus/klipper/tree/laser_tool">experimental branch</a> with its own tradeoffs.
-In long term, it is planned to add this functionality to main-line klipper.</p>
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <p><code>M3/M4 S&lt;value&gt;</code> : Set PWM duty-cycle. Values between 0 and 255.
 <code>M5</code> : Stop PWM output to shutdown value.</p>
