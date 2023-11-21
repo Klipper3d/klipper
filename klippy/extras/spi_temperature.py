@@ -62,7 +62,7 @@ class SensorBase:
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
         self._callback(last_read_time, temp)
     def report_fault(self, msg):
-        logging.warn(msg)
+        logging.warning(msg)
 
 
 ######################################################################

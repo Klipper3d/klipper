@@ -8,6 +8,7 @@ from . import bus
 
 REPORT_TIME = .8
 BME280_CHIP_ADDR = 0x76
+
 BME280_REGS = {
     'RESET': 0xE0, 'CTRL_HUM': 0xF2,
     'STATUS': 0xF3, 'CTRL_MEAS': 0xF4, 'CONFIG': 0xF5,
@@ -46,6 +47,16 @@ BME680_GAS_CONSTANTS = {
     15: (1., 244.140625)
 }
 
+BMP180_REGS = {
+    'RESET': 0xE0,
+    'CAL_1': 0xAA,
+    'CTRL_MEAS': 0xF4,
+    'REG_MSB': 0xF6,
+    'REG_LSB': 0xF7,
+    'CRV_TEMP': 0x2E,
+    'CRV_PRES': 0x34
+}
+
 STATUS_MEASURING = 1 << 3
 STATUS_IM_UPDATE = 1
 MODE = 1
@@ -57,7 +68,7 @@ MEASURE_DONE = 1 << 5
 RESET_CHIP_VALUE = 0xB6
 
 BME_CHIPS = {
-    0x58: 'BMP280', 0x60: 'BME280', 0x61: 'BME680'
+    0x58: 'BMP280', 0x60: 'BME280', 0x61: 'BME680', 0x55: 'BMP180'
 }
 BME_CHIP_ID_REG = 0xD0
 
@@ -80,6 +91,14 @@ def get_signed_short(bits):
 def get_signed_byte(bits):
     return get_twos_complement(bits, 8)
 
+
+def get_unsigned_short_msb(bits):
+    return bits[0] << 8 | bits[1]
+
+
+def get_signed_short_msb(bits):
+    val = get_unsigned_short_msb(bits)
+    return get_twos_complement(val, 16)
 
 class BME280:
     def __init__(self, config):
@@ -188,6 +207,23 @@ class BME280:
             dig['G3'] = get_signed_byte(calib_data_2[13])
             return dig
 
+        def read_calibration_data_bmp180(calib_data_1):
+            dig = {}
+            dig['AC1'] = get_signed_short_msb(calib_data_1[0:2])
+            dig['AC2'] = get_signed_short_msb(calib_data_1[2:4])
+            dig['AC3'] = get_signed_short_msb(calib_data_1[4:6])
+            dig['AC4'] = get_unsigned_short_msb(calib_data_1[6:8])
+            dig['AC5'] = get_unsigned_short_msb(calib_data_1[8:10])
+            dig['AC6'] = get_unsigned_short_msb(calib_data_1[10:12])
+
+            dig['B1'] = get_signed_short_msb(calib_data_1[12:14])
+            dig['B2'] = get_signed_short_msb(calib_data_1[14:16])
+
+            dig['MB'] = get_signed_short_msb(calib_data_1[16:18])
+            dig['MC'] = get_signed_short_msb(calib_data_1[18:20])
+            dig['MD'] = get_signed_short_msb(calib_data_1[20:22])
+            return dig
+
         chip_id = self.read_id()
         if chip_id not in BME_CHIPS.keys():
             logging.info("bme280: Unknown Chip ID received %#x" % chip_id)
@@ -201,15 +237,21 @@ class BME280:
         self.reactor.pause(self.reactor.monotonic() + .5)
 
         # Make sure non-volatile memory has been copied to registers
-        status = self.read_register('STATUS', 1)[0]
-        while status & STATUS_IM_UPDATE:
-            self.reactor.pause(self.reactor.monotonic() + .01)
+        if self.chip_type != 'BMP180':
+            # BMP180 has no status register available
             status = self.read_register('STATUS', 1)[0]
+            while status & STATUS_IM_UPDATE:
+                self.reactor.pause(self.reactor.monotonic() + .01)
+                status = self.read_register('STATUS', 1)[0]
 
         if self.chip_type == 'BME680':
             self.max_sample_time = 0.5
             self.sample_timer = self.reactor.register_timer(self._sample_bme680)
             self.chip_registers = BME680_REGS
+        elif self.chip_type == 'BMP180':
+            self.max_sample_time = (1.25 + ((2.3 * self.os_pres) + .575)) / 1000
+            self.sample_timer = self.reactor.register_timer(self._sample_bmp180)
+            self.chip_registers = BMP180_REGS
         else:
             self.max_sample_time = \
                 (1.25 + (2.3 * self.os_temp) + ((2.3 * self.os_pres) + .575)
@@ -221,14 +263,19 @@ class BME280:
             self.write_register('CONFIG', (self.iir_filter & 0x07) << 2)
 
         # Read out and calculate the trimming parameters
-        cal_1 = self.read_register('CAL_1', 26)
-        cal_2 = self.read_register('CAL_2', 16)
+        if self.chip_type == 'BMP180':
+            cal_1 = self.read_register('CAL_1', 22)
+        else:
+            cal_1 = self.read_register('CAL_1', 26)
+            cal_2 = self.read_register('CAL_2', 16)
         if self.chip_type == 'BME280':
             self.dig = read_calibration_data_bme280(cal_1, cal_2)
         elif self.chip_type == 'BMP280':
             self.dig = read_calibration_data_bmp280(cal_1)
         elif self.chip_type == 'BME680':
             self.dig = read_calibration_data_bme680(cal_1, cal_2)
+        elif self.chip_type == 'BMP180':
+            self.dig = read_calibration_data_bmp180(cal_1)
 
     def _sample_bme280(self, eventtime):
         # Enter forced mode
@@ -333,6 +380,43 @@ class BME280:
         measured_time = self.reactor.monotonic()
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
         return measured_time + REPORT_TIME
+
+    def _sample_bmp180(self, eventtime):
+        meas = self.chip_registers['CRV_TEMP']
+        self.write_register('CTRL_MEAS', meas)
+
+        try:
+            self.reactor.pause(self.reactor.monotonic() + .01)
+            data = self.read_register('REG_MSB', 2)
+            temp_raw = (data[0] << 8) | data[1]
+        except Exception:
+            logging.exception("BMP180: Error reading temperature")
+            self.temp = self.pressure = .0
+            return self.reactor.NEVER
+
+        meas = self.chip_registers['CRV_PRES'] | (self.os_pres << 6)
+        self.write_register('CTRL_MEAS', meas)
+
+        try:
+            self.reactor.pause(self.reactor.monotonic() + .01)
+            data = self.read_register('REG_MSB', 3)
+            pressure_raw = \
+                ((data[0] << 16)|(data[1] << 8)|data[2]) >> (8 - self.os_pres)
+        except Exception:
+            logging.exception("BMP180: Error reading pressure")
+            self.temp = self.pressure = .0
+            return self.reactor.NEVER
+
+        self.temp = self._compensate_temp_bmp180(temp_raw)
+        self.pressure = self._compensate_pressure_bmp180(pressure_raw) / 100.
+        if self.temp < self.min_temp or self.temp > self.max_temp:
+            self.printer.invoke_shutdown(
+                "BMP180 temperature %0.1f outside range of %0.1f:%.01f"
+                % (self.temp, self.min_temp, self.max_temp))
+        measured_time = self.reactor.monotonic()
+        self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
+        return measured_time + REPORT_TIME
+
 
     def _compensate_temp(self, raw_temp):
         dig = self.dig
@@ -442,6 +526,37 @@ class BME280:
             duration_reg = duration_ms + (factor * 64)
 
         return duration_reg
+
+    def _compensate_temp_bmp180(self, raw_temp):
+        dig = self.dig
+        x1 = (raw_temp - dig['AC6']) * dig['AC5'] / 32768.
+        x2 = dig['MC'] * 2048 / (x1 + dig['MD'])
+        b5 = x1 + x2
+        self.t_fine = b5
+        return (b5 + 8)/16./10.
+
+    def _compensate_pressure_bmp180(self, raw_pressure):
+        dig = self.dig
+        b5 = self.t_fine
+        b6 = b5 - 4000
+        x1 = (dig['B2'] * (b6 * b6 / 4096)) / 2048
+        x2 = dig['AC2'] * b6 / 2048
+        x3 = x1 + x2
+        b3 = ((int(dig['AC1'] * 4 + x3) << self.os_pres) + 2) / 4
+        x1 = dig['AC3'] * b6 / 8192
+        x2 = (dig['B1'] * (b6 * b6 / 4096)) / 65536
+        x3 = ((x1 + x2) + 2) / 4
+        b4 = dig['AC4'] * (x3 + 32768) / 32768
+        b7 = (raw_pressure - b3) * (50000 >> self.os_pres)
+        if (b7 < 0x80000000):
+            p = (b7 * 2) / b4
+        else:
+            p = (b7 / b4) * 2
+        x1 = (p / 256) * (p / 256)
+        x1 = (x1 * 3038) / 65536
+        x2 = (-7357 * p) / 65536
+        p = p + (x1 + x2 + 3791) / 16.
+        return p
 
     def read_id(self):
         # read chip id register

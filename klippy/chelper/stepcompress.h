@@ -66,6 +66,8 @@ int64_t stepcompress_find_past_position(struct stepcompress *sc
                                         , uint64_t clock);
 void stepcompress_calc_last_step_print_time(struct stepcompress *sc);
 int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
+int stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
+                              , uint32_t *data, int len);
 int stepcompress_extract_old(struct stepcompress *sc
                              , struct pull_history_steps *p, int max
                              , uint64_t start_clock, uint64_t end_clock);
