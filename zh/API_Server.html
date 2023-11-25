@@ -1717,7 +1717,7 @@
 <h3 id="register_remote_method">register_remote_method<a class="headerlink" href="#register_remote_method" title="Permanent link">&para;</a></h3>
 <p>该端点允许客户端注册可从 klipper 调用的方法。成功后将返回一个空对象。</p>
 <p>例如：<code>{“id”：123，“method”：“register_remote_method”，“params”：{“response_template”：｛“action”：“run_paneldue_deep”}，“remote_method“：”paneldue_beep</code></p>
-<p>现在可以从Klipper调用远程方法“paneldue_beep”。请注意，如果方法采用参数，则应将它们作为关键字参数提供。以下是如何从gcode_macro调用它的示例：</p>
+<p>现在可以从Klipper调用远程方法 <code>paneldue_beep</code>。请注意，如果方法采用参数，则应将它们作为关键字参数提供。以下是如何从gcode_macro调用它的示例：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro PANELDUE_BEEP]
 gcode:
   {action_call_remote_method(&quot;paneldue_beep&quot;, frequency=300, duration=1.0)}

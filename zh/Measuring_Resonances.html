@@ -2480,7 +2480,7 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 </code></pre></div>
 
 <p>ignoring any errors for <code>SET_INPUT_SHAPER</code> command. For <code>TEST_RESONANCES</code> command, specify the desired test axis. The raw data will be written into <code>/tmp</code> directory on the RPi.</p>
-<p>在一些正常的打印机活动中，也可以通过运行命令“ACCELEROMETER_MEASURE”两次来获得原始数据——首先是开始测量，然后是停止测量并写入输出文件。有关更多详细信息，请参阅[G-Codes]（G-Codes.md#adxl345）。</p>
+<p>在一些正常的打印机活动中，也可以通过运行命令 <code>ACCELEROMETER_MEASURE</code>两次来获得原始数据——首先是开始测量，然后是停止测量并写入输出文件。有关更多详细信息，请参阅<a href="G-Codes.html#adxl345">G-Codes</a>。</p>
 <p>The data can be processed later by the following scripts: <code>scripts/graph_accelerometer.py</code> and <code>scripts/calibrate_shaper.py</code>. Both of them accept one or several raw csv files as the input depending on the mode. The graph_accelerometer.py script supports several modes of operation:</p>
 <ul>
 <li>plotting raw accelerometer data (use <code>-r</code> parameter), only 1 input is supported;</li>

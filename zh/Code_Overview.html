@@ -1469,7 +1469,7 @@
 <h2 id="_5">典型运动命令的代码流<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>典型的打印机运动始于klipper上位机接收到"G1"命令，并在微控制器发出对应的步进脉冲结束。本节将简述典型运动命令的代码流。<a href="Kinematics.html">运动学</a>文档将更为细致的描述运动的机械原理。</p>
 <ul>
-<li>移动命令的处理始于gcode.py，该代码将G代码转化为内部调用。G1命令将调用klippy/extras/gcode_move.py中的cmd_G1()函数。gcode_move.py中的代码将处理 原点变换（G92），绝对坐标模式（G90）和单位变换（如F6000=100mm/s）。一个移动命令的处理路径为：<code>_process_data() -&gt; _process_commands() -&gt; cmd_G1()</code>。最终将调用ToolHead类的方法实现移动 <code>cmd_G1() -&gt; ToolHead.move()</code>。</li>
+<li>移动命令的处理始于gcode.py，该代码将G代码转化为内部调用。G1命令将调用klippy/extras/gcode_move.py中的cmd_G1()函数。gcode_move.py中的代码将处理 原点变换（G92），绝对坐标模式（G90）和单位变换（如F6000=100mm/s）。一个移动命令的处理路径为：<code>_process_data() -&gt; _process_commands() -&gt; cmd_G1()</code>。最终将调用ToolHead类的方法实现移动 <code>cmd_G1() -&gt; ToolHead.move()</code></li>
 <li>ToolHead类（位于toolhead.py）处理“前瞻”行为和记录打印的时间点。移动命令的代码路径为 <code>ToolHead.move() -&gt; MoveQueue.add_move() -&gt; MoveQueue.flush() -&gt; Move.set_junction() -&gt; ToolHead._process_moves()</code>。<ul>
 <li>ToolHead.move()将创建一个Move()对象实例，其中将包含移动的参数（在笛卡尔空间中，并这些参数以mm和s为单位）。</li>
 <li>kinematics类将检查每个运动命令（<code>ToolHead.move() -&gt; kin.check_move()</code>）。各种kinematics类存放于 klippy/kinematics/ 目录。check_move()能在运动命令不合理时抛出错误。如果 check_move()成功，这意味着打印机必定能完成运动命令。</li>
@@ -1505,7 +1505,7 @@
 <li>如果模块需要使用系统时钟或外部文件描述符，可通过<code>printer.get_reactor()</code>对获取全局事件反应器进行访问（event reactor）。通过该反应器类可以部署定时器，等待文件描述符输入，或者“挂起”上位机程序。</li>
 <li>不应使用全局变量。全部状态量应存储于 "printer objects"，并通过 <code>load_config()</code>进行访问。否则，RESTART命令的行为将无法预测。同样，任何在运行时打开的外部文件（或套接字），应在"klippy:disconnect"的事件内注册相应的回调函数进行关闭。</li>
 <li>应避免访问其他"printer objects"私有对象属性（或调用命名以下划线开始的方法）。遵循这一方式可方便之后的变更。</li>
-<li>推荐在类的工厂函数中将所有成员变量实例化（即避免使用Python的动态变动成员变量的功能）。</li>
+<li>推荐在类的工厂函数中将所有成员变量实例化（即避免使用Python的动态变动成员变量的功能。）</li>
 <li>若一Python变量存放有一浮点数，那么建议该变量应总赋予浮点类型的量，并仅使用浮点数常量进行值运算（并绝不使用整形常数进行运算）。例如，应使用<code>self.speed = 1.</code>而非<code>self.speed = 1</code>，并以<code>self.speed = 2. * x</code> 替代 <code>self.speed = 2 *x</code>。一致地使用浮点值可以避免Python类型转换中难以调试的怪异现象。</li>
 <li>若需向 klipper 母分支提交模块的代码，请在模块代码的头部加入版权声明。详请参考已有模块的格式。</li>
 </ul>
