@@ -186,8 +186,12 @@ class MoveQueue:
             # Enough moves have been queued to reach the target flush time.
             self.flush(lazy=True)
 
+BUFFER_TIME_LOW = 1.0
+BUFFER_TIME_HIGH = 2.0
+BUFFER_TIME_START = 0.250
 MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
+STEPCOMPRESS_FLUSH_TIME = 0.050
 SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
 
 DRIP_SEGMENT_TIME = 0.050
@@ -221,19 +225,11 @@ class ToolHead:
         self.junction_deviation = 0.
         self._calc_junction_deviation()
         # Print time tracking
-        self.buffer_time_low = config.getfloat(
-            'buffer_time_low', 1.000, above=0.)
-        self.buffer_time_high = config.getfloat(
-            'buffer_time_high', 2.000, above=self.buffer_time_low)
-        self.buffer_time_start = config.getfloat(
-            'buffer_time_start', 0.250, above=0.)
-        self.move_flush_time = config.getfloat(
-            'move_flush_time', 0.050, above=0.)
         self.print_time = 0.
         self.special_queuing_state = "Flushed"
         self.need_check_stall = -1.
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
-        self.move_queue.set_flush_time(self.buffer_time_high)
+        self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
         self.idle_flush_print_time = 0.
         self.print_stall = 0
         self.drip_completion = None
@@ -288,7 +284,7 @@ class ToolHead:
             free_time = max(fft, sg_flush_time - kin_flush_delay)
             self.trapq_finalize_moves(self.trapq, free_time)
             self.extruder.update_move_time(free_time)
-            mcu_flush_time = max(fft, sg_flush_time - self.move_flush_time)
+            mcu_flush_time = max(fft, sg_flush_time - STEPCOMPRESS_FLUSH_TIME)
             for m in self.all_mcus:
                 m.flush_moves(mcu_flush_time)
             if self.print_time >= next_print_time:
@@ -298,7 +294,7 @@ class ToolHead:
         est_print_time = self.mcu.estimated_print_time(curtime)
         kin_time = max(est_print_time + MIN_KIN_TIME, self.force_flush_time)
         kin_time += self.kin_flush_delay
-        min_print_time = max(est_print_time + self.buffer_time_start, kin_time)
+        min_print_time = max(est_print_time + BUFFER_TIME_START, kin_time)
         if min_print_time > self.print_time:
             self.print_time = min_print_time
             self.printer.send_event("toolhead:sync_print_time",
@@ -339,7 +335,7 @@ class ToolHead:
         self.special_queuing_state = "Flushed"
         self.need_check_stall = -1.
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
-        self.move_queue.set_flush_time(self.buffer_time_high)
+        self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
         self.idle_flush_print_time = 0.
         # Determine actual last "itersolve" flush time
         lastf = self.print_time - self.kin_flush_delay
@@ -377,7 +373,7 @@ class ToolHead:
         while 1:
             est_print_time = self.mcu.estimated_print_time(eventtime)
             buffer_time = self.print_time - est_print_time
-            stall_time = buffer_time - self.buffer_time_high
+            stall_time = buffer_time - BUFFER_TIME_HIGH
             if stall_time <= 0.:
                 break
             if not self.can_pause:
@@ -386,15 +382,14 @@ class ToolHead:
             eventtime = self.reactor.pause(eventtime + min(1., stall_time))
         if not self.special_queuing_state:
             # In main state - defer stall checking until needed
-            self.need_check_stall = (est_print_time + self.buffer_time_high
-                                     + 0.100)
+            self.need_check_stall = est_print_time + BUFFER_TIME_HIGH + 0.100
     def _flush_handler(self, eventtime):
         try:
             print_time = self.print_time
             buffer_time = print_time - self.mcu.estimated_print_time(eventtime)
-            if buffer_time > self.buffer_time_low:
+            if buffer_time > BUFFER_TIME_LOW:
                 # Running normally - reschedule check
-                return eventtime + buffer_time - self.buffer_time_low
+                return eventtime + buffer_time - BUFFER_TIME_LOW
             # Under ran low buffer mark - flush lookahead queue
             self.flush_step_generation()
             if print_time != self.print_time:
@@ -452,7 +447,7 @@ class ToolHead:
         return self.extruder
     # Homing "drip move" handling
     def _update_drip_move_time(self, next_print_time):
-        flush_delay = DRIP_TIME + self.move_flush_time + self.kin_flush_delay
+        flush_delay = DRIP_TIME + STEPCOMPRESS_FLUSH_TIME + self.kin_flush_delay
         while self.print_time < next_print_time:
             if self.drip_completion.test():
                 raise DripModeEndSignal()
@@ -472,7 +467,7 @@ class ToolHead:
         self.special_queuing_state = "Drip"
         self.need_check_stall = self.reactor.NEVER
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
-        self.move_queue.set_flush_time(self.buffer_time_high)
+        self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
         self.idle_flush_print_time = 0.
         self.drip_completion = drip_completion
         # Submit move
