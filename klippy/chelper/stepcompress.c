@@ -623,6 +623,21 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
     return 0;
 }
 
+// Queue an mcu command that will consume space in the mcu move queue
+int __visible
+stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
+                          , uint32_t *data, int len)
+{
+    int ret = stepcompress_flush(sc, UINT64_MAX);
+    if (ret)
+        return ret;
+
+    struct queue_message *qm = message_alloc_and_encode(data, len);
+    qm->min_clock = qm->req_clock = req_clock;
+    list_add_tail(&qm->node, &sc->msg_queue);
+    return 0;
+}
+
 // Return history of queue_step commands
 int __visible
 stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
