@@ -207,13 +207,9 @@ class ToolHead:
         self.all_mcus = [
             m for n, m in self.printer.lookup_objects(module='mcu')]
         self.mcu = self.all_mcus[0]
-        self.can_pause = True
-        if self.mcu.is_fileoutput():
-            self.can_pause = False
         self.move_queue = MoveQueue(self)
+        self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
         self.commanded_pos = [0., 0., 0., 0.]
-        self.printer.register_event_handler("klippy:shutdown",
-                                            self._handle_shutdown)
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
@@ -224,14 +220,18 @@ class ToolHead:
             'square_corner_velocity', 5., minval=0.)
         self.junction_deviation = 0.
         self._calc_junction_deviation()
+        # Input stall detection
+        self.check_stall_time = 0.
+        self.print_stall = 0
+        # Input pause tracking
+        self.can_pause = True
+        if self.mcu.is_fileoutput():
+            self.can_pause = False
+        self.need_check_pause = -1.
         # Print time tracking
         self.print_time = 0.
         self.special_queuing_state = "Flushed"
-        self.need_check_stall = -1.
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
-        self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
-        self.idle_flush_print_time = 0.
-        self.print_stall = 0
         self.drip_completion = None
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
@@ -266,6 +266,8 @@ class ToolHead:
                                self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self._handle_shutdown)
         # Load some default modules
         modules = ["gcode_move", "homing", "idle_timeout", "statistics",
                    "manual_probe", "tuning_tower"]
@@ -305,7 +307,7 @@ class ToolHead:
             if self.special_queuing_state != "Drip":
                 # Transition from "Flushed"/"Priming" state to main state
                 self.special_queuing_state = ""
-                self.need_check_stall = -1.
+                self.need_check_pause = -1.
                 self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
             self._calc_print_time()
         # Queue moves into trapezoid motion queue (trapq)
@@ -333,10 +335,10 @@ class ToolHead:
         # Transition from "Flushed"/"Priming"/main state to "Flushed" state
         self.move_queue.flush()
         self.special_queuing_state = "Flushed"
-        self.need_check_stall = -1.
+        self.need_check_pause = -1.
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
-        self.idle_flush_print_time = 0.
+        self.check_stall_time = 0.
         # Determine actual last "itersolve" flush time
         lastf = self.print_time - self.kin_flush_delay
         # Calculate flush time that includes kinematic scan windows
@@ -356,33 +358,33 @@ class ToolHead:
         if self.special_queuing_state:
             self._calc_print_time()
         return self.print_time
-    def _check_stall(self):
+    def _check_pause(self):
         eventtime = self.reactor.monotonic()
         if self.special_queuing_state:
-            if self.idle_flush_print_time:
+            if self.check_stall_time:
                 # Was in "Flushed" state and got there from idle input
                 est_print_time = self.mcu.estimated_print_time(eventtime)
-                if est_print_time < self.idle_flush_print_time:
+                if est_print_time < self.check_stall_time:
                     self.print_stall += 1
-                self.idle_flush_print_time = 0.
+                self.check_stall_time = 0.
             # Transition from "Flushed"/"Priming" state to "Priming" state
             self.special_queuing_state = "Priming"
-            self.need_check_stall = -1.
+            self.need_check_pause = -1.
             self.reactor.update_timer(self.flush_timer, eventtime + 0.100)
-        # Check if there are lots of queued moves and stall if so
+        # Check if there are lots of queued moves and pause if so
         while 1:
             est_print_time = self.mcu.estimated_print_time(eventtime)
             buffer_time = self.print_time - est_print_time
-            stall_time = buffer_time - BUFFER_TIME_HIGH
-            if stall_time <= 0.:
+            pause_time = buffer_time - BUFFER_TIME_HIGH
+            if pause_time <= 0.:
                 break
             if not self.can_pause:
-                self.need_check_stall = self.reactor.NEVER
+                self.need_check_pause = self.reactor.NEVER
                 return
-            eventtime = self.reactor.pause(eventtime + min(1., stall_time))
+            eventtime = self.reactor.pause(eventtime + min(1., pause_time))
         if not self.special_queuing_state:
-            # In main state - defer stall checking until needed
-            self.need_check_stall = est_print_time + BUFFER_TIME_HIGH + 0.100
+            # In main state - defer pause checking until needed
+            self.need_check_pause = est_print_time + BUFFER_TIME_HIGH + 0.100
     def _flush_handler(self, eventtime):
         try:
             print_time = self.print_time
@@ -393,7 +395,7 @@ class ToolHead:
             # Under ran low buffer mark - flush lookahead queue
             self.flush_step_generation()
             if print_time != self.print_time:
-                self.idle_flush_print_time = self.print_time
+                self.check_stall_time = self.print_time
         except:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
@@ -419,8 +421,8 @@ class ToolHead:
             self.extruder.check_move(move)
         self.commanded_pos[:] = move.end_pos
         self.move_queue.add_move(move)
-        if self.print_time > self.need_check_stall:
-            self._check_stall()
+        if self.print_time > self.need_check_pause:
+            self._check_pause()
     def manual_move(self, coord, speed):
         curpos = list(self.commanded_pos)
         for i in range(len(coord)):
@@ -431,7 +433,7 @@ class ToolHead:
     def dwell(self, delay):
         next_print_time = self.get_last_move_time() + max(0., delay)
         self._update_move_time(next_print_time)
-        self._check_stall()
+        self._check_pause()
     def wait_moves(self):
         self._flush_lookahead()
         eventtime = self.reactor.monotonic()
@@ -465,10 +467,10 @@ class ToolHead:
         # Transition from "Flushed"/"Priming"/main state to "Drip" state
         self.move_queue.flush()
         self.special_queuing_state = "Drip"
-        self.need_check_stall = self.reactor.NEVER
+        self.need_check_pause = self.reactor.NEVER
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
-        self.idle_flush_print_time = 0.
+        self.check_stall_time = 0.
         self.drip_completion = drip_completion
         # Submit move
         try:
