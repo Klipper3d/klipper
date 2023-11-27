@@ -232,6 +232,7 @@ class ToolHead:
         self.print_time = 0.
         self.special_queuing_state = "Flushed"
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
+        self.priming_timer = None
         self.drip_completion = None
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
@@ -360,21 +361,24 @@ class ToolHead:
         return self.print_time
     def _check_pause(self):
         eventtime = self.reactor.monotonic()
+        est_print_time = self.mcu.estimated_print_time(eventtime)
+        buffer_time = self.print_time - est_print_time
         if self.special_queuing_state:
             if self.check_stall_time:
                 # Was in "Flushed" state and got there from idle input
-                est_print_time = self.mcu.estimated_print_time(eventtime)
                 if est_print_time < self.check_stall_time:
                     self.print_stall += 1
                 self.check_stall_time = 0.
             # Transition from "Flushed"/"Priming" state to "Priming" state
             self.special_queuing_state = "Priming"
             self.need_check_pause = -1.
-            self.reactor.update_timer(self.flush_timer, eventtime + 0.100)
+            if self.priming_timer is None:
+                self.priming_timer = self.reactor.register_timer(
+                    self._priming_handler)
+            wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_LOW)
+            self.reactor.update_timer(self.priming_timer, wtime)
         # Check if there are lots of queued moves and pause if so
         while 1:
-            est_print_time = self.mcu.estimated_print_time(eventtime)
-            buffer_time = self.print_time - est_print_time
             pause_time = buffer_time - BUFFER_TIME_HIGH
             if pause_time <= 0.:
                 break
@@ -382,9 +386,22 @@ class ToolHead:
                 self.need_check_pause = self.reactor.NEVER
                 return
             eventtime = self.reactor.pause(eventtime + min(1., pause_time))
+            est_print_time = self.mcu.estimated_print_time(eventtime)
+            buffer_time = self.print_time - est_print_time
         if not self.special_queuing_state:
             # In main state - defer pause checking until needed
             self.need_check_pause = est_print_time + BUFFER_TIME_HIGH + 0.100
+    def _priming_handler(self, eventtime):
+        self.reactor.unregister_timer(self.priming_timer)
+        self.priming_timer = None
+        try:
+            if self.special_queuing_state == "Priming":
+                self.flush_step_generation()
+                self.check_stall_time = self.print_time
+        except:
+            logging.exception("Exception in priming_handler")
+            self.printer.invoke_shutdown("Exception in priming_handler")
+        return self.reactor.NEVER
     def _flush_handler(self, eventtime):
         try:
             print_time = self.print_time
